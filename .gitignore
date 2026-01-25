@@ -1,0 +1,6 @@
+.lake/
+lake-packages/
+build/
+.cache/
+*.olean
+.claude/
