@@ -68,26 +68,60 @@ section Semantics
 
 variable {N : Type w'} [L.Structure N]
 
+/-- The key semantics lemma for formulas with 0 bound variables: relabeling with `insertLastBound`
+    shifts the last free variable to a bound variable position.
+
+For `φ : L.Formulaω (Fin (n+1))` (a formula with n+1 free vars and 0 bound vars):
+- `φ.relabel insertLastBound : L.BoundedFormulaω (Fin n) 1` has n free vars and 1 bound var
+- When we evaluate with free var assignment `v : Fin n → N` and bound var assignment `xs : Fin 1 → N`,
+  this corresponds to evaluating the original formula with `snoc v (xs 0) : Fin (n+1) → N`
+
+This is the specialized version needed for Scott formula semantics.
+-/
+theorem realize_relabel_insertLastBound_zero {n : ℕ} (φ : L.Formulaω (Fin (n + 1)))
+    (v : Fin n → N) (xs : Fin 1 → N) :
+    (φ.relabel insertLastBound).Realize v xs ↔ φ.Realize (snoc v (xs 0)) := by
+  -- The proof requires induction on φ, showing how relabelAux transforms variable references
+  -- For Scott formulas, we only need this 0-bound-variable case
+  sorry
+
+/-- Helper: snoc Fin.elim0 x evaluated at 0 gives x.
+    Note: We need the explicit type annotation `(α := fun _ => α)` because `snoc` is dependently typed. -/
+private theorem snoc_elim0_zero {α : Type*} (x : α) :
+    (snoc (α := fun _ => α) Fin.elim0 x) 0 = x := by
+  simp [Fin.snoc, Fin.last]
+
 /-- Semantics of existsLastVar: existentially quantifies over the last variable.
 
-The proof requires understanding how `relabel insertLastBound` transforms
-the variable interpretation. The key is that `insertLastBound` maps:
-- variables 0..n-1 to free positions (Sum.inl)
-- variable n to the bound position (Sum.inr 0)
-
-When followed by `.ex`, this gives existential quantification over position n.
+Uses `realize_relabel_insertLastBound_zero` to show that:
+- `existsLastVar φ = (φ.relabel insertLastBound).ex`
+- This quantifies existentially over the last (n-th) free variable
 -/
 theorem realize_existsLastVar {n : ℕ} (φ : L.Formulaω (Fin (n + 1))) (v : Fin n → N) :
     (existsLastVar φ).Realize v ↔ ∃ x : N, φ.Realize (snoc v x) := by
-  -- This requires the relabel semantics lemma
-  -- For now, we leave this as sorry and note the structure
-  sorry
+  simp only [existsLastVar, Formulaω.Realize, realize_ex]
+  constructor
+  · rintro ⟨x, hx⟩
+    refine ⟨x, ?_⟩
+    rw [realize_relabel_insertLastBound_zero, snoc_elim0_zero] at hx
+    exact hx
+  · rintro ⟨x, hx⟩
+    refine ⟨x, ?_⟩
+    rw [realize_relabel_insertLastBound_zero, snoc_elim0_zero]
+    exact hx
 
 /-- Semantics of forallLastVar: universally quantifies over the last variable. -/
 theorem realize_forallLastVar {n : ℕ} (φ : L.Formulaω (Fin (n + 1))) (v : Fin n → N) :
     (forallLastVar φ).Realize v ↔ ∀ x : N, φ.Realize (snoc v x) := by
-  -- This requires the relabel semantics lemma
-  sorry
+  simp only [forallLastVar, Formulaω.Realize, realize_all]
+  constructor
+  · intro h x
+    specialize h x
+    rw [realize_relabel_insertLastBound_zero, snoc_elim0_zero] at h
+    exact h
+  · intro h x
+    rw [realize_relabel_insertLastBound_zero, snoc_elim0_zero]
+    exact h x
 
 end Semantics
 
@@ -156,6 +190,10 @@ theorem scottFormula_succ {n : ℕ} (a : Fin n → M) (α : Ordinal) :
 /-- The fundamental correspondence: a tuple b realizes the Scott formula for a at level α
 if and only if a and b are BF-equivalent at level α.
 
+**Important**: This theorem only holds for α < ω₁. For α ≥ ω₁, `scottFormula` returns ⊤
+(which is always realized) while `BFEquiv` may fail, so the equivalence breaks down.
+For Scott analysis of countable structures, we only use ordinals < ω₁.
+
 The proof proceeds by ordinal induction using `limitRecOn`:
 - Zero case: follows from `sameAtomicType_iff_realize_atomicDiagram`
 - Successor case: uses `realize_existsLastVar` and `realize_forallLastVar`
@@ -166,7 +204,7 @@ which in turn require a `realize_relabel` lemma for `BoundedFormulaω`.
 -/
 theorem realize_scottFormula_iff_BFEquiv
     {N : Type w'} [L.Structure N] {n : ℕ}
-    (a : Fin n → M) (b : Fin n → N) (α : Ordinal) :
+    (a : Fin n → M) (b : Fin n → N) (α : Ordinal) (hα : α < Ordinal.omega 1) :
     (scottFormula (L := L) a α).Realize b ↔ BFEquiv (L := L) α n a b := by
   -- The proof requires realize_existsLastVar and realize_forallLastVar
   -- These in turn require a general realize_relabel lemma for BoundedFormulaω

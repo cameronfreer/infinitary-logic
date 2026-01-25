@@ -117,7 +117,13 @@ noncomputable def atomicDiagram [Countable (Σ l, L.Relations l)] (a : Fin n →
   exact BoundedFormulaω.einf fun idx : L.AtomicIdx n =>
     if idx.holds a then atomicFormulaω idx else (atomicFormulaω idx).not
 
-/-- Two tuples have the same atomic type if they satisfy exactly the same atomic formulas. -/
+/-- Two tuples have the same atomic type if they satisfy exactly the same atomic formulas.
+
+**Note on `IsRelational`**: While this definition is well-formed without `[L.IsRelational]`,
+the notion of "same atomic type" only captures the full atomic equivalence for relational
+languages. With function symbols, `AtomicIdx` doesn't cover terms built from functions,
+so this would be a weaker notion than the standard "same atomic type" in model theory.
+For Scott analysis, we restrict to relational languages where this captures the full notion. -/
 def SameAtomicType {N : Type w'} [L.Structure N] (a : Fin n → M) (b : Fin n → N) : Prop :=
   ∀ idx : L.AtomicIdx n, idx.holds a ↔ idx.holds b
 
