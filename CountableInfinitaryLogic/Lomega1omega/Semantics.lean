@@ -184,6 +184,14 @@ theorem realize_inf (φ ψ : L.Formulaω α) :
 theorem realize_sup (φ ψ : L.Formulaω α) :
     Realize (φ ⊔ ψ) v ↔ Realize φ v ∨ Realize ψ v := BoundedFormulaω.realize_sup φ ψ
 
+@[simp]
+theorem realize_einf {ι : Type*} [Encodable ι] (φs : ι → L.Formulaω α) :
+    Realize (BoundedFormulaω.einf φs) v ↔ ∀ i, Realize (φs i) v := BoundedFormulaω.realize_einf φs
+
+@[simp]
+theorem realize_esup {ι : Type*} [Encodable ι] (φs : ι → L.Formulaω α) :
+    Realize (BoundedFormulaω.esup φs) v ↔ ∃ i, Realize (φs i) v := BoundedFormulaω.realize_esup φs
+
 end Formulaω
 
 namespace Sentenceω
