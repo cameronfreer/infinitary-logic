@@ -124,7 +124,28 @@ theorem sameAtomicType_iff_realize_atomicDiagram [Countable (Σ l, L.Relations l
     {N : Type w'} [L.Structure N] (a : Fin n → M) (b : Fin n → N) :
     SameAtomicType (L := L) (M := M) (N := N) a b ↔
       Formulaω.Realize (atomicDiagram (L := L) (M := M) a) b := by
-  sorry -- Proof involves unfolding atomicDiagram and using realize_einf
+  classical
+  simp only [atomicDiagram, Formulaω.Realize, BoundedFormulaω.realize_einf]
+  constructor
+  · intro h idx
+    specialize h idx
+    by_cases ha : idx.holds a
+    · simp only [ha, ↓reduceIte, realize_atomicFormulaω] at *
+      exact h.mp ha
+    · simp only [ha, ↓reduceIte, BoundedFormulaω.realize_not, realize_atomicFormulaω] at *
+      exact fun hb => ha (h.mpr hb)
+  · intro h idx
+    constructor
+    · intro ha
+      have := h idx
+      simp only [ha, ↓reduceIte, realize_atomicFormulaω] at this
+      exact this
+    · intro hb
+      have := h idx
+      by_cases ha : idx.holds a
+      · exact ha
+      · simp only [ha, ↓reduceIte, BoundedFormulaω.realize_not, realize_atomicFormulaω] at this
+        exact (this hb).elim
 
 /-- Same atomic type is reflexive. -/
 @[refl]
