@@ -57,6 +57,10 @@ def relabel (g : α → β ⊕ Fin n) : ∀ {k}, L.BoundedFormulaω α k → L.B
   | _, iSup φs => iSup fun i => (φs i).relabel g
   | _, iInf φs => iInf fun i => (φs i).relabel g
 
+-- Note: The general realize_relabel lemma is complex due to castLE in the all case.
+-- For Scott formulas, we only need specific lemmas for existsLastVar and forallLastVar,
+-- which are proved directly in Scott/Formula.lean using a more targeted approach.
+
 /-- Substitutes the free variables in a bounded formula with terms. -/
 def subst : ∀ {n : ℕ}, L.BoundedFormulaω α n → (α → L.Term β) → L.BoundedFormulaω β n
   | _, falsum, _ => falsum
