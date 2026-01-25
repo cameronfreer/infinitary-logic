@@ -21,7 +21,12 @@ with countable conjunctions and disjunctions.
 ## Implementation Notes
 
 The formulas are defined inductively with constructors for the standard first-order connectives
-plus countable indexed conjunction (`iInf`) and disjunction (`iSup`).
+plus ℕ-indexed conjunction (`iInf`) and disjunction (`iSup`). The `einf` and `esup` variants
+handle general countable indices via `Encodable`.
+
+The derived connectives (`and`, `or`, `ex`) are defined classically via De Morgan laws.
+This matches Mathlib's `BoundedFormula` conventions and ensures compatibility with
+classical semantics.
 -/
 
 universe u v u'
@@ -45,9 +50,9 @@ inductive BoundedFormulaω (α : Type u') : ℕ → Type max u v u' where
   | imp {n} (φ ψ : BoundedFormulaω α n) : BoundedFormulaω α n
   /-- Universal quantification. -/
   | all {n} (φ : BoundedFormulaω α (n + 1)) : BoundedFormulaω α n
-  /-- Countable indexed disjunction (supremum). -/
+  /-- ℕ-indexed disjunction (supremum). Use `esup` for general countable indices. -/
   | iSup {n} (φs : ℕ → BoundedFormulaω α n) : BoundedFormulaω α n
-  /-- Countable indexed conjunction (infimum). -/
+  /-- ℕ-indexed conjunction (infimum). Use `einf` for general countable indices. -/
   | iInf {n} (φs : ℕ → BoundedFormulaω α n) : BoundedFormulaω α n
 
 /-- Lω₁ω formulas with no bound variables in scope. -/
@@ -96,15 +101,17 @@ protected def ex (φ : L.BoundedFormulaω α (n + 1)) : L.BoundedFormulaω α n 
 protected def iff (φ ψ : L.BoundedFormulaω α n) : L.BoundedFormulaω α n :=
   (φ.imp ψ) ⊓ (ψ.imp φ)
 
-/-- Countable indexed conjunction over an encodable type. -/
-noncomputable def einf {ι : Type*} [Encodable ι] (φs : ι → L.BoundedFormulaω α n) :
+/-- Indexed conjunction over any `Encodable` type. This extends `iInf` from ℕ-indexed
+to general countable indices by encoding. -/
+def einf {ι : Type*} [Encodable ι] (φs : ι → L.BoundedFormulaω α n) :
     L.BoundedFormulaω α n :=
   iInf fun k => match Encodable.decode (α := ι) k with
     | some i => φs i
     | none => ⊤
 
-/-- Countable indexed disjunction over an encodable type. -/
-noncomputable def esup {ι : Type*} [Encodable ι] (φs : ι → L.BoundedFormulaω α n) :
+/-- Indexed disjunction over any `Encodable` type. This extends `iSup` from ℕ-indexed
+to general countable indices by encoding. -/
+def esup {ι : Type*} [Encodable ι] (φs : ι → L.BoundedFormulaω α n) :
     L.BoundedFormulaω α n :=
   iSup fun k => match Encodable.decode (α := ι) k with
     | some i => φs i
