@@ -43,6 +43,50 @@ open FirstOrder Structure Fin Ordinal BoundedFormulaω Substructure
 -- We fix the ordinal universe to avoid metavariable issues
 -- In practice, we typically work with Ordinal.{0}
 
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
+/-- An isomorphism induces BF-equivalence at all ordinal levels. -/
+theorem equiv_implies_BFEquiv {M N : Type w} [L.Structure M] [L.Structure N]
+    (e : M ≃[L] N) (α : Ordinal) (n : ℕ) (a : Fin n → M) :
+    BFEquiv (L := L) α n a (e ∘ a) := by
+  induction α using Ordinal.limitRecOn generalizing n a with
+  | zero =>
+    rw [BFEquiv.zero]
+    intro idx
+    cases idx with
+    | eq i j =>
+      simp only [AtomicIdx.holds, Function.comp_apply]
+      constructor
+      · intro h; exact congrArg e h
+      · intro h; exact e.injective h
+    | rel R f =>
+      simp only [AtomicIdx.holds]
+      have hassoc : (e ∘ a) ∘ f = e ∘ (a ∘ f) := Function.comp_assoc e a f
+      rw [hassoc]
+      exact (e.map_rel R (a ∘ f)).symm
+  | succ β ih =>
+    rw [BFEquiv.succ]
+    refine ⟨ih n a, ?_, ?_⟩
+    · intro m
+      use e m
+      have : Fin.snoc (e ∘ a) (e m) = e ∘ Fin.snoc a m := by
+        ext i; simp only [Fin.snoc, Function.comp_apply]
+        split_ifs <;> rfl
+      rw [this]
+      exact ih (n + 1) (Fin.snoc a m)
+    · intro n'
+      use e.symm n'
+      have h1 : Fin.snoc (e ∘ a) n' = e ∘ Fin.snoc a (e.symm n') := by
+        ext i; simp only [Fin.snoc, Function.comp_apply]
+        split_ifs with h
+        · rfl
+        · simp [Equiv.apply_symm_apply]
+      rw [h1]
+      exact ih (n + 1) (Fin.snoc a (e.symm n'))
+  | limit β hβ ih =>
+    rw [BFEquiv.limit β hβ]
+    intro γ hγ
+    exact ih γ hγ n a
+
 /-- BF-equivalence at level α + 1 with the empty tuple implies that we can extend any
 finitely-generated partial isomorphism to include any element of M. This is the
 key connection to `IsExtensionPair`. -/
