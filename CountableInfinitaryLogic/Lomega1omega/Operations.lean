@@ -43,6 +43,59 @@ def castLE : ∀ {m n : ℕ} (_h : m ≤ n), L.BoundedFormulaω α m → L.Bound
   | _, _, h, iSup φs => iSup fun i => (φs i).castLE h
   | _, _, h, iInf φs => iInf fun i => (φs i).castLE h
 
+/-- Relabeling a term by the identity function returns the same term. -/
+theorem Term.relabel_id' {α : Type*} (t : L.Term α) : t.relabel id = t := by
+  induction t with
+  | var => rfl
+  | func f ts ih =>
+    simp only [Term.relabel]
+    congr 1
+    funext i
+    exact ih i
+
+/-- `castLE (le_refl n)` is the identity on formulas. -/
+theorem castLE_refl : (φ : L.BoundedFormulaω α n) → φ.castLE (le_refl n) = φ := by
+  intro φ
+  induction φ with
+  | falsum => rfl
+  | @equal m t₁ t₂ =>
+    simp only [castLE]
+    congr 1 <;> {
+      have h : Sum.map id (Fin.castLE (le_refl m)) = (id : α ⊕ Fin m → α ⊕ Fin m) := by
+        funext x; cases x <;> rfl
+      rw [h, Term.relabel_id']
+    }
+  | @rel m l R ts =>
+    simp only [castLE]
+    congr 1
+    funext i
+    have h : Sum.map id (Fin.castLE (le_refl m)) = (id : α ⊕ Fin m → α ⊕ Fin m) := by
+      funext x; cases x <;> rfl
+    rw [h, Term.relabel_id']
+  | imp φ ψ ih_φ ih_ψ =>
+    simp only [castLE, ih_φ, ih_ψ]
+  | all φ ih =>
+    simp only [castLE, ih]
+  | iSup φs ih =>
+    simp only [castLE]
+    congr 1
+    funext i
+    exact ih i
+  | iInf φs ih =>
+    simp only [castLE]
+    congr 1
+    funext i
+    exact ih i
+
+variable {M : Type*} [L.Structure M]
+
+/-- `castLE (le_refl n)` preserves semantics. -/
+theorem realize_castLE_refl {n : ℕ} (φ : L.BoundedFormulaω α n)
+    (v : α → M) (xs : Fin n → M) :
+    (φ.castLE (le_refl n)).Realize v xs ↔ φ.Realize v xs := by
+  rw [castLE_refl]
+
+variable {M : Type*} in
 /-- A function to help relabel the variables in bounded formulas. -/
 def relabelAux (g : α → β ⊕ Fin n) (k : ℕ) : α ⊕ Fin k → β ⊕ Fin (n + k) :=
   Sum.map id finSumFinEquiv ∘ Equiv.sumAssoc _ _ _ ∘ Sum.map g id

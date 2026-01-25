@@ -68,111 +68,99 @@ section Semantics
 
 variable {N : Type w'} [L.Structure N]
 
-/-- Helper lemma: the composition of `Sum.elim v xs` with `relabelAux insertLastBound 0`
-equals `Sum.elim (snoc v (xs 0)) Fin.elim0`. This is the key for proving semantics of relabeling. -/
-private lemma sum_elim_relabelAux_insertLastBound (v : Fin n → N) (xs : Fin 1 → N) :
-    Sum.elim v xs ∘ BoundedFormulaω.relabelAux insertLastBound 0 =
-    Sum.elim (snoc v (xs 0)) Fin.elim0 := by
+/-- Maps `j : Fin k` to `⟨j.val + 1, ...⟩ : Fin (1 + k)`. Used for bound variable shifting. -/
+def Fin.succShift {k : ℕ} : Fin k → Fin (1 + k) :=
+  fun j => ⟨j.val + 1, by omega⟩
+
+/-- Helper lemma: the composition of `Sum.elim v xs` with `relabelAux insertLastBound k`
+equals `Sum.elim (snoc v (xs 0)) (xs ∘ Fin.succShift)`. This is the key for proving
+semantics of relabeling for formulas with k bound variables. -/
+private lemma sum_elim_relabelAux_insertLastBound {k : ℕ} (v : Fin n → N) (xs : Fin (1 + k) → N) :
+    Sum.elim v xs ∘ BoundedFormulaω.relabelAux insertLastBound k =
+    Sum.elim (snoc v (xs 0)) (xs ∘ Fin.succShift) := by
   funext x
   cases x with
   | inl i =>
-    simp only [Function.comp_apply, BoundedFormulaω.relabelAux, Sum.map_inl, Sum.elim_inl]
-    simp only [insertLastBound]
+    simp only [Function.comp_apply, BoundedFormulaω.relabelAux, Sum.map_inl, Sum.elim_inl, insertLastBound]
     split_ifs with h
-    · simp only [Equiv.sumAssoc_apply_inl_inl, Sum.map_inl, Sum.elim_inl, snoc, h, dite_true, cast_eq]
-      congr 1
-    · simp only [Equiv.sumAssoc_apply_inl_inr, Sum.map_inr, Sum.elim_inr, snoc, h, dite_false]
-      congr 1
+    · simp only [Equiv.sumAssoc_apply_inl_inl, Sum.map_inl, Sum.elim_inl, snoc, h, dite_true]; congr 1
+    · simp only [Equiv.sumAssoc_apply_inl_inr, Sum.map_inr, Sum.elim_inr, finSumFinEquiv_apply_left]
+      have hi : i = last n := by ext; simp only [last]; omega
+      rw [hi, snoc_last]; rfl
   | inr j =>
-    exact j.elim0
+    simp only [Function.comp_apply, BoundedFormulaω.relabelAux, Sum.map_inr, Sum.elim_inr]
+    simp only [Equiv.sumAssoc_apply_inr, Sum.map_inr, Sum.elim_inr, finSumFinEquiv_apply_right, Fin.succShift]
+    congr 1; ext; simp only [Fin.natAdd, id_eq]; ring
 
--- Individual case lemmas for relabeling semantics.
--- These cover all constructors except `all`, which is not used at the top level of Scott formulas.
+/-- Helper: composition of snoc with succShift. -/
+private lemma snoc_comp_succShift_eq {k : ℕ} (xs : Fin (1 + k) → N) (y : N) :
+    snoc xs y ∘ Fin.succShift = snoc (xs ∘ Fin.succShift) y := by
+  funext j
+  simp only [Function.comp_apply]
+  cases j using lastCases with
+  | last =>
+    simp only [snoc_last]
+    have hsuc : Fin.succShift (last k) = last (1 + k) := by ext; simp only [Fin.succShift, last]; ring
+    simp only [hsuc, snoc_last]
+  | cast j' =>
+    simp only [snoc_castSucc]; unfold snoc
+    have hlt : (Fin.succShift (castSucc j')).val < 1 + k := by simp [Fin.succShift, castSucc]; omega
+    simp only [hlt, dite_true]
+    have heq : castLT (Fin.succShift (castSucc j')) hlt = Fin.succShift j' := by ext; simp [castLT, Fin.succShift, castSucc]
+    rw [heq]; rfl
 
-omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-private theorem realize_relabel_insertLastBound_falsum (v : Fin n → N) (xs : Fin 1 → N) :
-    ((BoundedFormulaω.falsum : L.Formulaω (Fin (n + 1))).relabel insertLastBound).Realize v xs ↔
-    Formulaω.Realize (BoundedFormulaω.falsum : L.Formulaω (Fin (n + 1))) (snoc v (xs 0)) := by
-  simp only [BoundedFormulaω.relabel, BoundedFormulaω.realize_falsum, Formulaω.Realize]
-
-omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-private theorem realize_relabel_insertLastBound_equal
-    (t₁ t₂ : L.Term (Fin (n + 1) ⊕ Fin 0)) (v : Fin n → N) (xs : Fin 1 → N) :
-    ((BoundedFormulaω.equal t₁ t₂ : L.Formulaω (Fin (n + 1))).relabel insertLastBound).Realize v xs ↔
-    Formulaω.Realize (BoundedFormulaω.equal t₁ t₂) (snoc v (xs 0)) := by
-  simp only [BoundedFormulaω.relabel, BoundedFormulaω.realize_equal, Formulaω.Realize]
-  rw [Term.realize_relabel, Term.realize_relabel, sum_elim_relabelAux_insertLastBound]
-
-omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-private theorem realize_relabel_insertLastBound_rel {l : ℕ}
-    (R : L.Relations l) (ts : Fin l → L.Term (Fin (n + 1) ⊕ Fin 0))
-    (v : Fin n → N) (xs : Fin 1 → N) :
-    ((BoundedFormulaω.rel R ts : L.Formulaω (Fin (n + 1))).relabel insertLastBound).Realize v xs ↔
-    Formulaω.Realize (BoundedFormulaω.rel R ts) (snoc v (xs 0)) := by
-  simp only [BoundedFormulaω.relabel, BoundedFormulaω.realize_rel, Formulaω.Realize]
-  constructor <;> intro h <;> convert h using 1 <;> funext i <;>
-    rw [Term.realize_relabel, sum_elim_relabelAux_insertLastBound]
-
-omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-private theorem realize_relabel_insertLastBound_imp
-    (φ ψ : L.Formulaω (Fin (n + 1))) (v : Fin n → N) (xs : Fin 1 → N)
-    (ih_φ : (φ.relabel insertLastBound).Realize v xs ↔ Formulaω.Realize φ (snoc v (xs 0)))
-    (ih_ψ : (ψ.relabel insertLastBound).Realize v xs ↔ Formulaω.Realize ψ (snoc v (xs 0))) :
-    ((φ.imp ψ).relabel insertLastBound).Realize v xs ↔
-    Formulaω.Realize (φ.imp ψ) (snoc v (xs 0)) := by
-  simp only [BoundedFormulaω.relabel, BoundedFormulaω.realize_imp, Formulaω.Realize]
-  exact Iff.imp ih_φ ih_ψ
+/-- Helper: snoc xs y at position 0 equals xs at position 0. -/
+private lemma snoc_zero_eq {k : ℕ} (xs : Fin (1 + k) → N) (y : N) :
+    (snoc (α := fun _ => N) xs y) (0 : Fin (1 + k + 1)) = xs (0 : Fin (1 + k)) := by
+  simp only [snoc]
+  have h0 : (0 : Fin (1 + k + 1)).val < 1 + k := by simp only [Fin.val_zero]; omega
+  simp only [h0, dite_true, castLT, cast_eq]
+  have h_eq : (⟨(0 : Fin (1 + k + 1)).val, h0⟩ : Fin (1 + k)) = (0 : Fin (1 + k)) := by ext; simp only [Fin.val_zero]
+  rw [h_eq]
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-private theorem realize_relabel_insertLastBound_iSup
-    (φs : ℕ → L.Formulaω (Fin (n + 1))) (v : Fin n → N) (xs : Fin 1 → N)
-    (ih : ∀ i, ((φs i).relabel insertLastBound).Realize v xs ↔ Formulaω.Realize (φs i) (snoc v (xs 0))) :
-    ((BoundedFormulaω.iSup φs).relabel insertLastBound).Realize v xs ↔
-    Formulaω.Realize (BoundedFormulaω.iSup φs) (snoc v (xs 0)) := by
-  simp only [BoundedFormulaω.relabel, BoundedFormulaω.realize_iSup, Formulaω.Realize]
-  exact exists_congr ih
+/-- The general semantics lemma for relabeling with `insertLastBound`:
+    For a formula with k bound variables, relabeling shifts the last free variable
+    to bound position 0, while bound variables shift up by 1.
+
+This handles all cases including `all`, which appears in Scott formulas due to
+`forallLastVar` applications at earlier stages. -/
+private theorem realize_relabel_insertLastBound {n : ℕ} :
+    ∀ {k : ℕ} (φ : L.BoundedFormulaω (Fin (n + 1)) k) (v : Fin n → N) (xs : Fin (1 + k) → N),
+    (φ.relabel insertLastBound).Realize v xs ↔ φ.Realize (snoc v (xs 0)) (xs ∘ Fin.succShift) := by
+  intro k φ
+  induction φ with
+  | falsum => intro v xs; simp only [relabel, realize_falsum]
+  | equal t₁ t₂ => intro v xs; simp only [relabel, realize_equal, Term.realize_relabel, sum_elim_relabelAux_insertLastBound]
+  | rel R ts =>
+    intro v xs; simp only [relabel, realize_rel]
+    have key := sum_elim_relabelAux_insertLastBound (k := _) v xs
+    constructor <;> intro h <;> simp only [Term.realize_relabel, key] at h ⊢ <;> exact h
+  | imp φ ψ ih_φ ih_ψ => intro v xs; simp only [relabel, realize_imp]; exact Iff.imp (ih_φ v xs) (ih_ψ v xs)
+  | all φ ih =>
+    intro v xs; simp only [relabel, realize_all]
+    constructor <;> intro hall y
+    · specialize hall y; rw [realize_castLE_refl] at hall; rw [ih v (snoc xs y)] at hall; rw [snoc_zero_eq, snoc_comp_succShift_eq] at hall; exact hall
+    · rw [realize_castLE_refl, ih v (snoc xs y), snoc_zero_eq, snoc_comp_succShift_eq]; exact hall y
+  | iSup φs ih => intro v xs; simp only [relabel, realize_iSup]; exact exists_congr (fun i => ih i v xs)
+  | iInf φs ih => intro v xs; simp only [relabel, realize_iInf]; exact forall_congr' (fun i => ih i v xs)
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-private theorem realize_relabel_insertLastBound_iInf
-    (φs : ℕ → L.Formulaω (Fin (n + 1))) (v : Fin n → N) (xs : Fin 1 → N)
-    (ih : ∀ i, ((φs i).relabel insertLastBound).Realize v xs ↔ Formulaω.Realize (φs i) (snoc v (xs 0))) :
-    ((BoundedFormulaω.iInf φs).relabel insertLastBound).Realize v xs ↔
-    Formulaω.Realize (BoundedFormulaω.iInf φs) (snoc v (xs 0)) := by
-  simp only [BoundedFormulaω.relabel, BoundedFormulaω.realize_iInf, Formulaω.Realize]
-  exact forall_congr' ih
-
 /-- The key semantics lemma for formulas with 0 bound variables: relabeling with `insertLastBound`
     shifts the last free variable to a bound variable position.
 
 For `φ : L.Formulaω (Fin (n+1))` (a formula with n+1 free vars and 0 bound vars):
 - `φ.relabel insertLastBound : L.BoundedFormulaω (Fin n) 1` has n free vars and 1 bound var
 - When we evaluate with free var assignment `v : Fin n → N` and bound var assignment `xs : Fin 1 → N`,
-  this corresponds to evaluating the original formula with `snoc v (xs 0) : Fin (n+1) → N`
-
-This is the specialized version needed for Scott formula semantics.
-
-**TODO**: The `all` case is needed for Scott formulas because `scottFormula` at successor stages
-contains `forallLastVar` applications from earlier levels, resulting in nested `all` constructors.
-When we relabel such a formula, the `relabel` function recurses into `iInf`/`imp` and eventually
-hits these `all` nodes.
-
-The `all` case of `relabel` produces:
-  `(φ.relabel g).castLE (Nat.add_right_comm ...).all`
-This requires a `realize_castLE` lemma relating semantics before/after `castLE`, which involves
-careful handling of bound variable reindexing. See mathlib's `BoundedFormula.realize_relabel`
-for the analogous finitary case.
-
-The individual case lemmas (`realize_relabel_insertLastBound_falsum`, `_equal`, `_rel`, `_imp`,
-`_iSup`, `_iInf`) are proven above and handle all constructors except `all`.
--/
+  this corresponds to evaluating the original formula with `snoc v (xs 0) : Fin (n+1) → N` -/
 theorem realize_relabel_insertLastBound_zero {n : ℕ} (φ : L.Formulaω (Fin (n + 1)))
     (v : Fin n → N) (xs : Fin 1 → N) :
     (φ.relabel insertLastBound).Realize v xs ↔ φ.Realize (snoc v (xs 0)) := by
-  -- TODO: Prove the all case using realize_castLE.
-  -- The proof requires showing that castLE with a reflexivity proof (modulo addition reordering)
-  -- preserves semantics, and that the bound variable assignments compose correctly through
-  -- snoc and Fin.castLE.
-  sorry
+  have h := realize_relabel_insertLastBound (k := 0) φ v xs
+  rw [h]
+  simp only [Formulaω.Realize]
+  have heq : (xs ∘ Fin.succShift : Fin 0 → N) = Fin.elim0 := by ext i; exact i.elim0
+  rw [heq]
 
 /-- Helper: snoc Fin.elim0 x evaluated at 0 gives x.
     Note: We need the explicit type annotation `(α := fun _ => α)` because `snoc` is dependently typed. -/
@@ -180,6 +168,7 @@ private theorem snoc_elim0_zero {α : Type*} (x : α) :
     (snoc (α := fun _ => α) Fin.elim0 x) 0 = x := by
   simp [Fin.snoc, Fin.last]
 
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- Semantics of existsLastVar: existentially quantifies over the last variable.
 
 Uses `realize_relabel_insertLastBound_zero` to show that:
@@ -199,6 +188,7 @@ theorem realize_existsLastVar {n : ℕ} (φ : L.Formulaω (Fin (n + 1))) (v : Fi
     rw [realize_relabel_insertLastBound_zero, snoc_elim0_zero]
     exact hx
 
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- Semantics of forallLastVar: universally quantifies over the last variable. -/
 theorem realize_forallLastVar {n : ℕ} (φ : L.Formulaω (Fin (n + 1))) (v : Fin n → N) :
     (forallLastVar φ).Realize v ↔ ∀ x : N, φ.Realize (snoc v x) := by
@@ -276,6 +266,7 @@ theorem scottFormula_succ {n : ℕ} (a : Fin n → M) (α : Ordinal) :
   haveI : Encodable M := Encodable.ofCountable M
   simp only [scottFormula, Ordinal.limitRecOn_succ]
 
+omit [L.IsRelational] in
 /-- The fundamental correspondence: a tuple b realizes the Scott formula for a at level α
 if and only if a and b are BF-equivalent at level α.
 
