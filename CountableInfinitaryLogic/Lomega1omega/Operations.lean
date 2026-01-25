@@ -88,11 +88,13 @@ variable {M : Type*} [L.Structure M] {v : α → M} {xs : Fin n → M}
 theorem realize_toLω (φ : L.BoundedFormula α n) :
     φ.toLω.Realize v xs ↔ φ.Realize v xs := by
   induction φ with
-  | falsum => simp [toLω]
-  | equal => simp [toLω, BoundedFormulaω.Realize]
-  | rel => simp [toLω, BoundedFormulaω.Realize]
-  | imp _ _ ih₁ ih₂ => simp [toLω, BoundedFormulaω.Realize, ih₁, ih₂]
-  | all _ ih => simp [toLω, BoundedFormulaω.Realize, ih]
+  | falsum => rfl
+  | equal => rfl
+  | rel => rfl
+  | imp _ _ ih₁ ih₂ =>
+    simp only [toLω, BoundedFormulaω.realize_imp, BoundedFormula.realize_imp, ih₁, ih₂]
+  | all _ ih =>
+    simp only [toLω, BoundedFormulaω.realize_all, BoundedFormula.realize_all, ih]
 
 end BoundedFormula
 
@@ -103,7 +105,7 @@ def toLω (φ : L.Formula α) : L.Formulaω α := BoundedFormula.toLω φ
 
 @[simp]
 theorem realize_toLω {M : Type*} [L.Structure M] {v : α → M} (φ : L.Formula α) :
-    φ.toLω.Realize v Fin.elim0 ↔ φ.Realize v :=
+    Formulaω.Realize φ.toLω v ↔ φ.Realize v :=
   BoundedFormula.realize_toLω φ
 
 end Formula
@@ -115,8 +117,13 @@ def toLω (φ : L.Sentence) : L.Sentenceω := Formula.toLω φ
 
 @[simp]
 theorem realize_toLω {M : Type*} [L.Structure M] [Nonempty M] (φ : L.Sentence) :
-    φ.toLω.Realize (Empty.elim : Empty → M) Fin.elim0 ↔ M ⊨ φ :=
-  Formula.realize_toLω φ
+    Sentenceω.Realize φ.toLω M ↔ M ⊨ φ := by
+  -- M ⊨ φ uses `default : Empty → M`, while Sentenceω.Realize uses `Empty.elim`
+  -- These are propositionally equal
+  have h : (default : Empty → M) = (fun e : Empty => e.elim) := by
+    funext e; exact e.elim
+  simp only [Sentenceω.Realize, Sentence.Realize, Formula.Realize, toLω, Formula.toLω, h]
+  exact BoundedFormula.realize_toLω φ
 
 end Sentence
 

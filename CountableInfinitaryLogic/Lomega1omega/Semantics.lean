@@ -37,14 +37,14 @@ namespace BoundedFormulaω
 
 /-- A bounded Lω₁ω formula can be evaluated as true or false by giving values to each
 free and bound variable. -/
-def Realize : L.BoundedFormulaω α n → (α → M) → (Fin n → M) → Prop
-  | falsum, _, _ => False
-  | equal t₁ t₂, v, xs => t₁.realize (Sum.elim v xs) = t₂.realize (Sum.elim v xs)
-  | rel R ts, v, xs => RelMap R fun i => (ts i).realize (Sum.elim v xs)
-  | imp φ ψ, v, xs => Realize φ v xs → Realize ψ v xs
-  | all φ, v, xs => ∀ x : M, Realize φ v (snoc xs x)
-  | iSup φs, v, xs => ∃ i, Realize (φs i) v xs
-  | iInf φs, v, xs => ∀ i, Realize (φs i) v xs
+def Realize : {n : ℕ} → L.BoundedFormulaω α n → (α → M) → (Fin n → M) → Prop
+  | _, falsum, _, _ => False
+  | _, equal t₁ t₂, v, xs => t₁.realize (Sum.elim v xs) = t₂.realize (Sum.elim v xs)
+  | _, rel R ts, v, xs => RelMap R fun i => (ts i).realize (Sum.elim v xs)
+  | _, imp φ ψ, v, xs => Realize φ v xs → Realize ψ v xs
+  | _, all φ, v, xs => ∀ x : M, Realize φ v (snoc xs x)
+  | _, iSup φs, v, xs => ∃ i, Realize (φs i) v xs
+  | _, iInf φs, v, xs => ∀ i, Realize (φs i) v xs
 
 variable {v : α → M} {xs : Fin n → M}
 
@@ -82,17 +82,17 @@ theorem realize_iInf (φs : ℕ → L.BoundedFormulaω α n) :
 
 @[simp]
 theorem realize_top : (⊤ : L.BoundedFormulaω α n).Realize v xs ↔ True := by
-  simp [Top.top, BoundedFormulaω.top]
+  simp only [Top.top, BoundedFormulaω.top, realize_imp, realize_falsum, false_implies]
 
 @[simp]
 theorem realize_not (φ : L.BoundedFormulaω α n) :
     φ.not.Realize v xs ↔ ¬φ.Realize v xs := by
-  simp [BoundedFormulaω.not]
+  simp only [BoundedFormulaω.not, realize_imp, realize_bot]
 
 @[simp]
 theorem realize_and (φ ψ : L.BoundedFormulaω α n) :
     (φ.and ψ).Realize v xs ↔ φ.Realize v xs ∧ ψ.Realize v xs := by
-  simp [BoundedFormulaω.and]
+  simp only [BoundedFormulaω.and, realize_not, realize_imp]
   tauto
 
 @[simp]
@@ -103,7 +103,7 @@ theorem realize_inf (φ ψ : L.BoundedFormulaω α n) :
 @[simp]
 theorem realize_or (φ ψ : L.BoundedFormulaω α n) :
     (φ.or ψ).Realize v xs ↔ φ.Realize v xs ∨ ψ.Realize v xs := by
-  simp [BoundedFormulaω.or]
+  simp only [BoundedFormulaω.or, realize_not, realize_imp]
   tauto
 
 @[simp]
@@ -114,12 +114,14 @@ theorem realize_sup (φ ψ : L.BoundedFormulaω α n) :
 @[simp]
 theorem realize_ex (φ : L.BoundedFormulaω α (n + 1)) :
     φ.ex.Realize v xs ↔ ∃ x : M, φ.Realize v (snoc xs x) := by
-  simp [BoundedFormulaω.ex]
+  simp only [BoundedFormulaω.ex, realize_not, realize_all]
+  push_neg
+  rfl
 
 @[simp]
 theorem realize_iff (φ ψ : L.BoundedFormulaω α n) :
     (φ.iff ψ).Realize v xs ↔ (φ.Realize v xs ↔ ψ.Realize v xs) := by
-  simp [BoundedFormulaω.iff, iff_def]
+  simp only [BoundedFormulaω.iff, realize_inf, realize_imp, iff_def]
 
 @[simp]
 theorem realize_einf {ι : Type*} [Encodable ι] (φs : ι → L.BoundedFormulaω α n) :
@@ -132,7 +134,7 @@ theorem realize_einf {ι : Type*} [Encodable ι] (φs : ι → L.BoundedFormula�
     exact this
   · intro h k
     cases hd : Encodable.decode (α := ι) k with
-    | none => simp
+    | none => simp only [realize_top]
     | some i => exact h i
 
 @[simp]
@@ -142,7 +144,7 @@ theorem realize_esup {ι : Type*} [Encodable ι] (φs : ι → L.BoundedFormula�
   constructor
   · rintro ⟨k, hk⟩
     cases hd : Encodable.decode (α := ι) k with
-    | none => simp [hd] at hk
+    | none => simp only [hd, realize_bot] at hk
     | some i =>
       use i
       simp only [hd] at hk
@@ -157,30 +159,30 @@ namespace Formulaω
 
 /-- A formula can be evaluated by giving values to its free variables. -/
 def Realize (φ : L.Formulaω α) (v : α → M) : Prop :=
-  φ.Realize v Fin.elim0
+  BoundedFormulaω.Realize φ v Fin.elim0
 
 variable {φ : L.Formulaω α} {v : α → M}
 
 @[simp]
-theorem realize_not : φ.not.Realize v ↔ ¬φ.Realize v := BoundedFormulaω.realize_not φ
+theorem realize_not : Realize φ.not v ↔ ¬Realize φ v := BoundedFormulaω.realize_not φ
 
 @[simp]
-theorem realize_bot : (⊥ : L.Formulaω α).Realize v ↔ False := BoundedFormulaω.realize_bot
+theorem realize_bot : Realize (⊥ : L.Formulaω α) v ↔ False := BoundedFormulaω.realize_bot
 
 @[simp]
-theorem realize_top : (⊤ : L.Formulaω α).Realize v ↔ True := BoundedFormulaω.realize_top
+theorem realize_top : Realize (⊤ : L.Formulaω α) v ↔ True := BoundedFormulaω.realize_top
 
 @[simp]
 theorem realize_imp (φ ψ : L.Formulaω α) :
-    (φ.imp ψ).Realize v ↔ (φ.Realize v → ψ.Realize v) := BoundedFormulaω.realize_imp φ ψ
+    Realize (φ.imp ψ) v ↔ (Realize φ v → Realize ψ v) := BoundedFormulaω.realize_imp φ ψ
 
 @[simp]
 theorem realize_inf (φ ψ : L.Formulaω α) :
-    (φ ⊓ ψ).Realize v ↔ φ.Realize v ∧ ψ.Realize v := BoundedFormulaω.realize_inf φ ψ
+    Realize (φ ⊓ ψ) v ↔ Realize φ v ∧ Realize ψ v := BoundedFormulaω.realize_inf φ ψ
 
 @[simp]
 theorem realize_sup (φ ψ : L.Formulaω α) :
-    (φ ⊔ ψ).Realize v ↔ φ.Realize v ∨ ψ.Realize v := BoundedFormulaω.realize_sup φ ψ
+    Realize (φ ⊔ ψ) v ↔ Realize φ v ∨ Realize ψ v := BoundedFormulaω.realize_sup φ ψ
 
 end Formulaω
 
@@ -188,7 +190,7 @@ namespace Sentenceω
 
 /-- A sentence can be evaluated in a structure. -/
 def Realize (φ : L.Sentenceω) (M : Type w) [L.Structure M] : Prop :=
-  φ.Realize (Empty.elim : Empty → M)
+  BoundedFormulaω.Realize φ (Empty.elim : Empty → M) Fin.elim0
 
 /-- Notation for a structure satisfying a sentence. -/
 scoped notation:51 M " ⊨ω " φ:51 => Sentenceω.Realize φ M
