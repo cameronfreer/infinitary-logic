@@ -151,19 +151,27 @@ For `φ : L.Formulaω (Fin (n+1))` (a formula with n+1 free vars and 0 bound var
 
 This is the specialized version needed for Scott formula semantics.
 
-**Note**: The `all` case requires handling `castLE` which is complex. However, Scott formulas
-never have `all` at the top level of the formula being relabeled - the quantifiers come from
-`existsLastVar`/`forallLastVar` which wrap the relabeled formula. The individual case lemmas
-(`realize_relabel_insertLastBound_falsum`, `_equal`, `_rel`, `_imp`, `_iSup`, `_iInf`) are
-all proven above. The general lemma is stated here for convenience; it uses sorry because
-structural induction on `BoundedFormulaω` requires handling all cases including `all`.
+**TODO**: The `all` case is needed for Scott formulas because `scottFormula` at successor stages
+contains `forallLastVar` applications from earlier levels, resulting in nested `all` constructors.
+When we relabel such a formula, the `relabel` function recurses into `iInf`/`imp` and eventually
+hits these `all` nodes.
+
+The `all` case of `relabel` produces:
+  `(φ.relabel g).castLE (Nat.add_right_comm ...).all`
+This requires a `realize_castLE` lemma relating semantics before/after `castLE`, which involves
+careful handling of bound variable reindexing. See mathlib's `BoundedFormula.realize_relabel`
+for the analogous finitary case.
+
+The individual case lemmas (`realize_relabel_insertLastBound_falsum`, `_equal`, `_rel`, `_imp`,
+`_iSup`, `_iInf`) are proven above and handle all constructors except `all`.
 -/
 theorem realize_relabel_insertLastBound_zero {n : ℕ} (φ : L.Formulaω (Fin (n + 1)))
     (v : Fin n → N) (xs : Fin 1 → N) :
     (φ.relabel insertLastBound).Realize v xs ↔ φ.Realize (snoc v (xs 0)) := by
-  -- The individual case lemmas are proven above. The general statement requires handling
-  -- the `all` case which involves castLE. Since Scott formulas don't use `all` at the top
-  -- level of relabeled formulas, those case lemmas suffice in practice.
+  -- TODO: Prove the all case using realize_castLE.
+  -- The proof requires showing that castLE with a reflexivity proof (modulo addition reordering)
+  -- preserves semantics, and that the bound variable assignments compose correctly through
+  -- snoc and Fin.castLE.
   sorry
 
 /-- Helper: snoc Fin.elim0 x evaluated at 0 gives x.
