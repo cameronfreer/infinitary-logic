@@ -88,6 +88,7 @@ def atomicFormula (idx : L.AtomicIdx n) : L.BoundedFormula (Fin n) 0 :=
 def atomicFormulaω (idx : L.AtomicIdx n) : L.BoundedFormulaω (Fin n) 0 :=
   (atomicFormula idx).toLω
 
+omit [L.IsRelational] in
 @[simp]
 theorem realize_atomicFormula (idx : L.AtomicIdx n) (a : Fin n → M) :
     (atomicFormula idx).Realize a Fin.elim0 ↔ idx.holds a := by
@@ -97,6 +98,7 @@ theorem realize_atomicFormula (idx : L.AtomicIdx n) (a : Fin n → M) :
     simp only [atomicFormula, AtomicIdx.holds, Relations.formula, BoundedFormula.realize_rel]
     constructor <;> intro h <;> convert h using 1
 
+omit [L.IsRelational] in
 @[simp]
 theorem realize_atomicFormulaω (idx : L.AtomicIdx n) (a : Fin n → M) :
     (atomicFormulaω idx).Realize a Fin.elim0 ↔ idx.holds a := by
@@ -119,6 +121,7 @@ noncomputable def atomicDiagram [Countable (Σ l, L.Relations l)] (a : Fin n →
 def SameAtomicType {N : Type w'} [L.Structure N] (a : Fin n → M) (b : Fin n → N) : Prop :=
   ∀ idx : L.AtomicIdx n, idx.holds a ↔ idx.holds b
 
+omit [L.IsRelational] in
 /-- The correspondence between atomic diagrams and same atomic type. -/
 theorem sameAtomicType_iff_realize_atomicDiagram [Countable (Σ l, L.Relations l)]
     {N : Type w'} [L.Structure N] (a : Fin n → M) (b : Fin n → N) :
@@ -147,11 +150,13 @@ theorem sameAtomicType_iff_realize_atomicDiagram [Countable (Σ l, L.Relations l
       · simp only [ha, ↓reduceIte, BoundedFormulaω.realize_not, realize_atomicFormulaω] at this
         exact (this hb).elim
 
+omit [L.IsRelational] in
 /-- Same atomic type is reflexive. -/
 @[refl]
 theorem SameAtomicType.refl (a : Fin n → M) : SameAtomicType (L := L) (M := M) (N := M) a a :=
   fun _ => Iff.rfl
 
+omit [L.IsRelational] in
 /-- Same atomic type is symmetric. -/
 @[symm]
 theorem SameAtomicType.symm {N : Type w'} [L.Structure N]
@@ -159,6 +164,7 @@ theorem SameAtomicType.symm {N : Type w'} [L.Structure N]
     SameAtomicType (L := L) (M := N) (N := M) b a :=
   fun idx => (h idx).symm
 
+omit [L.IsRelational] in
 /-- Same atomic type is transitive. -/
 @[trans]
 theorem SameAtomicType.trans {N P : Type*} [L.Structure N] [L.Structure P]

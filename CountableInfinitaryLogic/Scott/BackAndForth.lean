@@ -65,14 +65,17 @@ noncomputable def BFEquiv (α : Ordinal) (n : ℕ) (a : Fin n → M) (b : Fin n 
 
 variable {n : ℕ}
 
+omit [L.IsRelational] in
 theorem BFEquiv.zero (a : Fin n → M) (b : Fin n → N) :
     BFEquiv (L := L) 0 n a b ↔ SameAtomicType (L := L) (M := M) (N := N) a b := by
   simp only [BFEquiv, Ordinal.limitRecOn_zero]
 
+omit [L.IsRelational] in
 theorem BFEquiv.zero_iff_sameAtomicType (a : Fin n → M) (b : Fin n → N) :
     BFEquiv (L := L) 0 n a b ↔ SameAtomicType (L := L) (M := M) (N := N) a b :=
   BFEquiv.zero a b
 
+omit [L.IsRelational] in
 theorem BFEquiv.succ (α : Ordinal) (a : Fin n → M) (b : Fin n → N) :
     BFEquiv (L := L) (Order.succ α) n a b ↔
       BFEquiv (L := L) α n a b ∧
@@ -80,16 +83,19 @@ theorem BFEquiv.succ (α : Ordinal) (a : Fin n → M) (b : Fin n → N) :
       (∀ n' : N, ∃ m : M, BFEquiv (L := L) α (n + 1) (snoc a m) (snoc b n')) := by
   simp only [BFEquiv, Ordinal.limitRecOn_succ]
 
+omit [L.IsRelational] in
 theorem BFEquiv.limit (α : Ordinal) (hα : Order.IsSuccLimit α) (a : Fin n → M) (b : Fin n → N) :
-    BFEquiv (L := L) α n a b ↔ ∀ β (hβ : β < α), BFEquiv (L := L) β n a b := by
+    BFEquiv (L := L) α n a b ↔ ∀ β, β < α → BFEquiv (L := L) β n a b := by
   unfold BFEquiv
   rw [Ordinal.limitRecOn_limit _ _ _ _ hα]
 
+omit [L.IsRelational] in
 /-- BF-equivalence at level α + 1 implies BF-equivalence at level α. -/
 theorem BFEquiv.of_succ {α : Ordinal} {a : Fin n → M} {b : Fin n → N}
     (h : BFEquiv (L := L) (Order.succ α) n a b) : BFEquiv (L := L) α n a b :=
   ((BFEquiv.succ α a b).mp h).1
 
+omit [L.IsRelational] in
 /-- BF-equivalence is monotone: higher ordinals imply lower ordinals. -/
 theorem BFEquiv.monotone {α β : Ordinal} (hαβ : α ≤ β)
     {a : Fin n → M} {b : Fin n → N} (h : BFEquiv (L := L) β n a b) :
@@ -108,23 +114,27 @@ theorem BFEquiv.monotone {α β : Ordinal} (hαβ : α ≤ β)
     · exact (BFEquiv.limit γ hγ a b).mp h α hαβ'
     · exact h
 
+omit [L.IsRelational] in
 /-- The "forth" property at a successor level. -/
 theorem BFEquiv.forth {α : Ordinal} {a : Fin n → M} {b : Fin n → N}
     (h : BFEquiv (L := L) (Order.succ α) n a b) (m : M) :
     ∃ n' : N, BFEquiv (L := L) α (n + 1) (snoc a m) (snoc b n') :=
   ((BFEquiv.succ α a b).mp h).2.1 m
 
+omit [L.IsRelational] in
 /-- The "back" property at a successor level. -/
 theorem BFEquiv.back {α : Ordinal} {a : Fin n → M} {b : Fin n → N}
     (h : BFEquiv (L := L) (Order.succ α) n a b) (n' : N) :
     ∃ m : M, BFEquiv (L := L) α (n + 1) (snoc a m) (snoc b n') :=
   ((BFEquiv.succ α a b).mp h).2.2 n'
 
+omit [L.IsRelational] in
 /-- BF-equivalence at level 0 is reflexive. -/
 theorem BFEquiv.refl_zero (a : Fin n → M) :
     BFEquiv (L := L) (M := M) (N := M) (0 : Ordinal) n a a :=
   (BFEquiv.zero a a).mpr (SameAtomicType.refl a)
 
+omit [L.IsRelational] in
 /-- BF-equivalence is symmetric at all levels. -/
 theorem BFEquiv.symm {α : Ordinal} {a : Fin n → M} {b : Fin n → N}
     (h : BFEquiv (L := L) α n a b) : BFEquiv (L := L) (M := N) (N := M) α n b a := by
