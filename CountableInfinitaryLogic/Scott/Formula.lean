@@ -69,7 +69,7 @@ section Semantics
 variable {N : Type w'} [L.Structure N]
 
 /-- Maps `j : Fin k` to `⟨j.val + 1, ...⟩ : Fin (1 + k)`. Used for bound variable shifting. -/
-def Fin.succShift {k : ℕ} : Fin k → Fin (1 + k) :=
+private def Fin.succShift {k : ℕ} : Fin k → Fin (1 + k) :=
   fun j => ⟨j.val + 1, by omega⟩
 
 /-- Helper lemma: the composition of `Sum.elim v xs` with `relabelAux insertLastBound k`
