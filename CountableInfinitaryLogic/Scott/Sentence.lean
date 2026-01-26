@@ -210,38 +210,32 @@ theorem BFEquiv_implies_isExtensionPair {M N : Type w} [L.Structure M] [L.Struct
     L.IsExtensionPair M N := by
   sorry -- Uses BFEquiv.forth repeatedly
 
-/-- For any countable structure M, there exists an ordinal α < ω₁ such that BF-equivalence
-at level α (with the empty tuple) characterizes isomorphism with M.
+/-- For any countable structure M in a relational countable language, there exists an ordinal
+α < ω₁ (the Scott rank of M) such that BF-equivalence at level α (with the empty tuple)
+characterizes isomorphism with M among countable structures.
 
-For countable structures in relational countable languages, we can take α = ω.
-The proof shows:
-- (←) If M ≃[L] N, then BFEquiv α by `equiv_implies_BFEquiv`
-- (→) If BFEquiv ω, then M ≃[L] N by back-and-forth (`BFEquiv_omega_implies_equiv`)
+**Important**: The ordinal α depends on M and can be any countable ordinal. It is NOT
+always ω. The Scott rank of a structure can be arbitrarily large below ω₁.
+
+The proof relies on a cardinality argument:
+1. At each ordinal level α, the "α-type" of a tuple (which formulas it satisfies) takes
+   only countably many values (since the language is countable).
+2. As α increases, the α-types form a refining sequence (splitting or staying same).
+3. Since there are only countably many tuples and the sequence must eventually stabilize,
+   stabilization occurs at some countable ordinal α < ω₁.
+4. At the stabilization ordinal, BFEquiv characterizes isomorphism.
 -/
 theorem exists_stabilization (M : Type w) [L.Structure M] [Countable M] :
     ∃ α < Ordinal.omega 1, ∀ (N : Type w) [L.Structure N] [Countable N],
       BFEquiv (L := L) α 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) ↔
         Nonempty (M ≃[L] N) := by
-  -- We take α = ω, which is less than ω₁
-  use ω
-  constructor
-  · -- ω < ω₁
-    exact Ordinal.omega0_lt_omega_one
-  · -- The characterization
-    intro N _ _
-    constructor
-    · -- (→) BFEquiv ω → Nonempty (M ≃[L] N)
-      -- This follows from the back-and-forth construction.
-      -- The proof requires BFEquiv_omega_implies_equiv, which is still a sorry.
-      intro hBF
-      sorry
-    · -- (←) Nonempty (M ≃[L] N) → BFEquiv ω
-      intro ⟨e⟩
-      -- Use equiv_implies_BFEquiv with the isomorphism
-      have h := equiv_implies_BFEquiv e (ω : Ordinal) 0 Fin.elim0
-      -- h gives BFEquiv ω 0 Fin.elim0 (e ∘ Fin.elim0)
-      -- But e ∘ Fin.elim0 = Fin.elim0 since Fin 0 is empty
-      convert h using 2
+  -- The proof requires the cardinality argument described above.
+  -- Key steps:
+  -- 1. Define the stabilization ordinal as the least α where the α-types stabilize
+  -- 2. Show this ordinal is < ω₁ using the countability of types
+  -- 3. Show that at this ordinal, BFEquiv implies isomorphism (back-and-forth)
+  -- 4. Show that isomorphism implies BFEquiv (already proved in equiv_implies_BFEquiv)
+  sorry
 
 /-- The stabilization ordinal for a structure M: the least ordinal where the Scott analysis
 stabilizes. -/

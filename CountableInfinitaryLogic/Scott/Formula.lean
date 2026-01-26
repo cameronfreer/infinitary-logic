@@ -140,8 +140,9 @@ private theorem realize_relabel_insertLastBound {n : ℕ} :
   | all φ ih =>
     intro v xs; simp only [relabel, realize_all]
     constructor <;> intro hall y
-    · specialize hall y; rw [realize_castLE_refl] at hall; rw [ih v (snoc xs y)] at hall; rw [snoc_zero_eq, snoc_comp_succShift_eq] at hall; exact hall
-    · rw [realize_castLE_refl, ih v (snoc xs y), snoc_zero_eq, snoc_comp_succShift_eq]; exact hall y
+    -- Use realize_castLE_self which handles any proof of n ≤ n, not just le_refl
+    · specialize hall y; rw [realize_castLE_self] at hall; rw [ih v (snoc xs y)] at hall; rw [snoc_zero_eq, snoc_comp_succShift_eq] at hall; exact hall
+    · rw [realize_castLE_self, ih v (snoc xs y), snoc_zero_eq, snoc_comp_succShift_eq]; exact hall y
   | iSup φs ih => intro v xs; simp only [relabel, realize_iSup]; exact exists_congr (fun i => ih i v xs)
   | iInf φs ih => intro v xs; simp only [relabel, realize_iInf]; exact forall_congr' (fun i => ih i v xs)
 

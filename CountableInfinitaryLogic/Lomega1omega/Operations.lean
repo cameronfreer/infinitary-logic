@@ -89,11 +89,31 @@ theorem castLE_refl : (φ : L.BoundedFormulaω α n) → φ.castLE (le_refl n) =
 
 variable {M : Type*} [L.Structure M]
 
+/-- `castLE` over a proof of `m ≤ m` preserves semantics.
+This is more general than matching on `le_refl` directly, as it works for any
+proof `h : m ≤ m` regardless of how it was constructed. -/
+theorem realize_castLE_of_eq {m n : ℕ} (φ : L.BoundedFormulaω α m) (h : m ≤ n) (heq : m = n)
+    (v : α → M) (xs : Fin n → M) :
+    (φ.castLE h).Realize v xs ↔ φ.Realize v (xs ∘ Fin.cast heq) := by
+  subst heq
+  have hcast : Fin.cast (Eq.refl m) = id := funext (fun i => rfl)
+  simp only [hcast, Function.comp_id]
+  have : h = le_refl m := rfl
+  rw [this, castLE_refl]
+
 /-- `castLE (le_refl n)` preserves semantics. -/
 theorem realize_castLE_refl {n : ℕ} (φ : L.BoundedFormulaω α n)
     (v : α → M) (xs : Fin n → M) :
     (φ.castLE (le_refl n)).Realize v xs ↔ φ.Realize v xs := by
   rw [castLE_refl]
+
+/-- `castLE` over any proof `h : n ≤ n` preserves semantics.
+This handles the case where the proof term is not definitionally `le_refl`
+(e.g., constructed via rewriting or other means). -/
+theorem realize_castLE_self {n : ℕ} (φ : L.BoundedFormulaω α n) (h : n ≤ n)
+    (v : α → M) (xs : Fin n → M) :
+    (φ.castLE h).Realize v xs ↔ φ.Realize v xs :=
+  realize_castLE_of_eq φ h rfl v xs
 
 variable {M : Type*} in
 /-- A function to help relabel the variables in bounded formulas. -/
