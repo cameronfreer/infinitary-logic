@@ -117,6 +117,79 @@ theorem BFEquiv_succ_forth_extend {M N : Type w} [L.Structure M] [L.Structure N]
     (m : M) : ∃ n' : N, BFEquiv (L := L) (k : Ordinal.{0}) (n + 1) (Fin.snoc a m) (Fin.snoc b n') :=
   (BFEquiv.succ (k : Ordinal.{0}) a b).mp hBF |>.2.1 m
 
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
+/-- From BFEquiv at a successor level, we get same atomic type. -/
+theorem BFEquiv_succ_implies_sameAtomicType {M N : Type w} [L.Structure M] [L.Structure N]
+    {α : Ordinal} {n : ℕ} {a : Fin n → M} {b : Fin n → N}
+    (hBF : BFEquiv (L := L) (Order.succ α) n a b) :
+    SameAtomicType (L := L) a b := by
+  have h := (BFEquiv.succ α a b).mp hBF
+  have hzero : (0 : Ordinal) ≤ α := zero_le α
+  exact (BFEquiv.zero a b).mp (BFEquiv.monotone hzero h.1)
+
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
+/-- BFEquiv at level k allows building partial isomorphisms of size up to k.
+This is the key lemma for the back-and-forth construction.
+
+Given BFEquiv (2k) 0 at empty tuples and any sequence of k "forth" choices
+(elements of M), there exist corresponding elements of N such that the
+resulting tuples have the same atomic type. -/
+theorem BFEquiv_build_matching_tuples_forth {M N : Type w} [L.Structure M] [L.Structure N]
+    {k : ℕ} (hBF : BFEquiv (L := L) ((2 * k : ℕ) : Ordinal.{0}) 0
+      (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N))
+    (ms : Fin k → M) :
+    ∃ ns : Fin k → N, SameAtomicType (L := L) ms ns := by
+  induction k with
+  | zero =>
+    -- For empty tuples, SameAtomicType follows from hBF which is BFEquiv 0 0 Fin.elim0 Fin.elim0
+    -- This is just SameAtomicType between empty tuples in M and N
+    use Fin.elim0
+    intro idx
+    -- ms : Fin 0 → M equals Fin.elim0
+    have hms : ms = Fin.elim0 := funext (fun i => i.elim0)
+    rw [hms]
+    -- Now we need: idx.holds (Fin.elim0 : Fin 0 → M) ↔ idx.holds (Fin.elim0 : Fin 0 → N)
+    -- This follows from hBF : BFEquiv 0 0 Fin.elim0 Fin.elim0 = SameAtomicType Fin.elim0 Fin.elim0
+    have h0 : ((2 * 0 : ℕ) : Ordinal.{0}) = 0 := by norm_num
+    rw [h0] at hBF
+    exact (BFEquiv.zero (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)).mp hBF idx
+  | succ k ih =>
+    -- Get BFEquiv (2k+2) 0 [] []
+    have h2kp2 : ((2 * (k + 1) : ℕ) : Ordinal.{0}) = (2 * k + 2 : ℕ) := by ring_nf
+    rw [h2kp2] at hBF
+    -- Use IH to get matching tuples of length k
+    have hBF_2k : BFEquiv (L := L) ((2 * k : ℕ) : Ordinal.{0}) 0
+        (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) :=
+      BFEquiv.monotone (by norm_cast; omega) hBF
+    obtain ⟨ns_init, hns_init⟩ := ih hBF_2k (ms ∘ Fin.castSucc)
+    -- Now we need to extend by one more element
+    -- From BFEquiv (2k+2) 0 [] [], by k forth and k back steps, we can get BFEquiv 2 k
+    -- Then one more forth gives us the extension
+    -- For now, we construct this using choice
+    sorry
+
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
+/-- BFEquiv at ω with empty tuples implies isomorphism for countable structures.
+This is the key direction of the Scott sentence theorem. -/
+theorem BFEquiv_omega_implies_equiv {M N : Type w} [L.Structure M] [L.Structure N]
+    [Countable M] [Countable N]
+    (hBF : BFEquiv (L := L) (ω : Ordinal.{0}) 0
+      (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)) :
+    Nonempty (M ≃[L] N) := by
+  -- The proof uses the back-and-forth construction.
+  -- Since both M and N are countable, we can enumerate them and build
+  -- a sequence of partial bijections that eventually cover everything.
+  --
+  -- From BFEquiv ω 0 [] [], we have BFEquiv n 0 [] [] for all n < ω.
+  -- This gives us enough "fuel" to do n steps of back-and-forth.
+  --
+  -- The construction:
+  -- 1. Enumerate M = {m₀, m₁, ...} and N = {n₀, n₁, ...}
+  -- 2. At stage 2k, ensure mₖ is in the domain (use forth)
+  -- 3. At stage 2k+1, ensure nₖ is in the codomain (use back)
+  -- 4. The union is an isomorphism
+  sorry
+
 /-- BF-equivalence at level α + 1 with the empty tuple implies that we can extend any
 finitely-generated partial isomorphism to include any element of M. This is the
 key connection to `IsExtensionPair`. -/
@@ -138,12 +211,37 @@ theorem BFEquiv_implies_isExtensionPair {M N : Type w} [L.Structure M] [L.Struct
   sorry -- Uses BFEquiv.forth repeatedly
 
 /-- For any countable structure M, there exists an ordinal α < ω₁ such that BF-equivalence
-at level α (with the empty tuple) characterizes isomorphism with M. -/
+at level α (with the empty tuple) characterizes isomorphism with M.
+
+For countable structures in relational countable languages, we can take α = ω.
+The proof shows:
+- (←) If M ≃[L] N, then BFEquiv α by `equiv_implies_BFEquiv`
+- (→) If BFEquiv ω, then M ≃[L] N by back-and-forth (`BFEquiv_omega_implies_equiv`)
+-/
 theorem exists_stabilization (M : Type w) [L.Structure M] [Countable M] :
     ∃ α < Ordinal.omega 1, ∀ (N : Type w) [L.Structure N] [Countable N],
       BFEquiv (L := L) α 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) ↔
         Nonempty (M ≃[L] N) := by
-  sorry -- The key cardinality argument about countable ordinals
+  -- We take α = ω, which is less than ω₁
+  use ω
+  constructor
+  · -- ω < ω₁
+    exact Ordinal.omega0_lt_omega_one
+  · -- The characterization
+    intro N _ _
+    constructor
+    · -- (→) BFEquiv ω → Nonempty (M ≃[L] N)
+      -- This follows from the back-and-forth construction.
+      -- The proof requires BFEquiv_omega_implies_equiv, which is still a sorry.
+      intro hBF
+      sorry
+    · -- (←) Nonempty (M ≃[L] N) → BFEquiv ω
+      intro ⟨e⟩
+      -- Use equiv_implies_BFEquiv with the isomorphism
+      have h := equiv_implies_BFEquiv e (ω : Ordinal) 0 Fin.elim0
+      -- h gives BFEquiv ω 0 Fin.elim0 (e ∘ Fin.elim0)
+      -- But e ∘ Fin.elim0 = Fin.elim0 since Fin 0 is empty
+      convert h using 2
 
 /-- The stabilization ordinal for a structure M: the least ordinal where the Scott analysis
 stabilizes. -/
@@ -165,10 +263,23 @@ def Formulaω.realize_as_sentence (φ : L.Formulaω (Fin 0)) (N : Type w) [L.Str
   φ.Realize (Fin.elim0 : Fin 0 → N)
 
 /-- The main theorem: a countable structure N satisfies the Scott sentence of M
-if and only if M and N are isomorphic. -/
+if and only if M and N are isomorphic.
+
+The proof uses:
+1. `scottSentence` is defined as `scottFormula Fin.elim0 (stabilizationOrdinal M)`
+2. `realize_scottFormula_iff_BFEquiv` converts Scott formula realization to BFEquiv
+3. `exists_stabilization` shows that BFEquiv at the stabilization ordinal characterizes isomorphism
+-/
 theorem scottSentence_characterizes (M : Type w) [L.Structure M] [Countable M]
     (N : Type w) [L.Structure N] [Countable N] :
     (scottSentence (L := L) M).realize_as_sentence N ↔ Nonempty (M ≃[L] N) := by
+  -- The proof requires connecting stabilizationOrdinal to the BFEquiv characterization.
+  -- This depends on:
+  -- 1. stabilizationOrdinal M < ω₁ (follows from exists_stabilization)
+  -- 2. realize_scottFormula_iff_BFEquiv (proven in Formula.lean)
+  -- 3. The BFEquiv characterization at the stabilization ordinal (from exists_stabilization)
+  --
+  -- Since exists_stabilization still has a sorry, we mark this sorry too.
   sorry
 
 /-- The forward direction: if N realizes the Scott sentence of M, then M ≃[L] N. -/
