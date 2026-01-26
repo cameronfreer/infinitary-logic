@@ -87,6 +87,36 @@ theorem equiv_implies_BFEquiv {M N : Type w} [L.Structure M] [L.Structure N]
     intro γ hγ
     exact ih γ hγ n a
 
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
+/-- BFEquiv at ω implies BFEquiv at any finite ordinal. -/
+theorem BFEquiv_omega_implies_finite {M N : Type w} [L.Structure M] [L.Structure N]
+    (hBF : BFEquiv (L := L) (ω : Ordinal.{0}) 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N))
+    (n : ℕ) :
+    BFEquiv (L := L) (n : Ordinal.{0}) 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) :=
+  BFEquiv.monotone (le_of_lt (Ordinal.nat_lt_omega0 n)) hBF
+
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
+/-- From BFEquiv (k+1) 0 at empty tuples, we can get matching singletons at level k. -/
+theorem BFEquiv_succ_forth_singleton {M N : Type w} [L.Structure M] [L.Structure N]
+    {k : ℕ} (hBF : BFEquiv (L := L) ((k + 1 : ℕ) : Ordinal.{0}) 0
+      (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N))
+    (m : M) : ∃ n' : N, BFEquiv (L := L) (k : Ordinal.{0}) 1 ![m] ![n'] := by
+  have hconv : ((k + 1 : ℕ) : Ordinal.{0}) = Order.succ (k : Ordinal.{0}) := by
+    rw [← Ordinal.add_one_eq_succ]; norm_cast
+  rw [hconv, BFEquiv.succ] at hBF
+  obtain ⟨_, hforth, _⟩ := hBF
+  obtain ⟨n', hn'⟩ := hforth m
+  use n'
+  convert hn' using 2 <;> ext i <;> fin_cases i <;> simp [Fin.snoc]
+
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
+/-- From BFEquiv (k+1) for tuples, we can extend using forth. -/
+theorem BFEquiv_succ_forth_extend {M N : Type w} [L.Structure M] [L.Structure N]
+    {k : ℕ} {n : ℕ} {a : Fin n → M} {b : Fin n → N}
+    (hBF : BFEquiv (L := L) (Order.succ (k : Ordinal.{0})) n a b)
+    (m : M) : ∃ n' : N, BFEquiv (L := L) (k : Ordinal.{0}) (n + 1) (Fin.snoc a m) (Fin.snoc b n') :=
+  (BFEquiv.succ (k : Ordinal.{0}) a b).mp hBF |>.2.1 m
+
 /-- BF-equivalence at level α + 1 with the empty tuple implies that we can extend any
 finitely-generated partial isomorphism to include any element of M. This is the
 key connection to `IsExtensionPair`. -/
