@@ -58,10 +58,21 @@ theorem stabilizationOrdinal_le_scottRank (M : Type w) [L.Structure M] [Countabl
     stabilizationOrdinal (L := L) M ≤ scottRank (L := L) M := by
   sorry
 
-/-- Scott rank of a countable structure is a countable ordinal. -/
+/-- Scott rank of a countable structure is a countable ordinal.
+
+The proof uses that:
+1. M is countable, so we're taking the sup of countably many ordinals
+2. Each elementRank m < ω₁ (by elementRank_lt_omega1)
+3. The sup of countably many ordinals below ω₁ is below ω₁
+   (because cof(ω₁) = ω₁ > ω ≥ |M|, via Ordinal.iSup_lt_ord_lift)
+-/
 theorem scottRank_lt_omega1 (M : Type w) [L.Structure M] [Countable M] :
     scottRank (L := L) M < Ordinal.omega 1 := by
-  sorry -- Uses that M is countable and each elementRank is countable
+  -- The proof requires:
+  -- 1. elementRank_lt_omega1 for each element
+  -- 2. Ordinal.iSup_lt_ord_lift with proper universe handling
+  -- There are universe constraints that need careful handling.
+  sorry
 
 /-- The stabilization ordinal is below ω₁. -/
 theorem stabilizationOrdinal_lt_omega1 (M : Type w) [L.Structure M] [Countable M] :
@@ -73,9 +84,22 @@ theorem scottSentence_eq_scottFormula_rank (M : Type w) [L.Structure M] [Countab
     scottSentence (L := L) M = scottFormula (L := L) (M := M) Fin.elim0 (scottRank (L := L) M) := by
   sorry
 
-/-- Element rank is bounded by the cardinality of types. -/
+/-- Element rank is bounded by ω₁.
+
+This is the key cardinality argument: at each ordinal level α, the "α-type" of an
+element m (which formulas it satisfies) takes only countably many values because:
+1. The language is countable
+2. M is countable, so there are countably many possible extensions
+
+Since the α-types form a refining sequence as α increases, and there are only
+countably many possible types, stabilization must occur at some countable ordinal.
+-/
 theorem elementRank_lt_omega1 {M : Type w} [L.Structure M] [Countable M] (m : M) :
     elementRank (L := L) m < Ordinal.omega 1 := by
+  -- The proof requires formalizing the cardinality argument:
+  -- 1. Define the "α-type" of m as the set of Scott formulas it satisfies at level α
+  -- 2. Show there are ≤ countably many α-types
+  -- 3. Use well-foundedness to show stabilization occurs before ω₁
   sorry
 
 end Language
