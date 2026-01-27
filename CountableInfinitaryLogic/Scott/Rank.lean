@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import CountableInfinitaryLogic.Scott.Sentence
+import Mathlib.SetTheory.Cardinal.Regular
 
 /-!
 # Scott Rank
@@ -53,37 +54,6 @@ noncomputable def elementRank {M : Type w} [L.Structure M] (m : M) : Ordinal :=
 noncomputable def scottRank (M : Type w) [L.Structure M] [Countable M] : Ordinal :=
   ⨆ (m : M), elementRank (L := L) m + 1
 
-/-- The stabilization ordinal is at most the Scott rank. -/
-theorem stabilizationOrdinal_le_scottRank (M : Type w) [L.Structure M] [Countable M] :
-    stabilizationOrdinal (L := L) M ≤ scottRank (L := L) M := by
-  sorry
-
-/-- Scott rank of a countable structure is a countable ordinal.
-
-The proof uses that:
-1. M is countable, so we're taking the sup of countably many ordinals
-2. Each elementRank m < ω₁ (by elementRank_lt_omega1)
-3. The sup of countably many ordinals below ω₁ is below ω₁
-   (because cof(ω₁) = ω₁ > ω ≥ |M|, via Ordinal.iSup_lt_ord_lift)
--/
-theorem scottRank_lt_omega1 (M : Type w) [L.Structure M] [Countable M] :
-    scottRank (L := L) M < Ordinal.omega 1 := by
-  -- The proof requires:
-  -- 1. elementRank_lt_omega1 for each element
-  -- 2. Ordinal.iSup_lt_ord_lift with proper universe handling
-  -- There are universe constraints that need careful handling.
-  sorry
-
-/-- The stabilization ordinal is below ω₁. -/
-theorem stabilizationOrdinal_lt_omega1 (M : Type w) [L.Structure M] [Countable M] :
-    stabilizationOrdinal (L := L) M < Ordinal.omega 1 :=
-  lt_of_le_of_lt (stabilizationOrdinal_le_scottRank M) (scottRank_lt_omega1 M)
-
-/-- The Scott sentence can be taken at the Scott rank level. -/
-theorem scottSentence_eq_scottFormula_rank (M : Type w) [L.Structure M] [Countable M] :
-    scottSentence (L := L) M = scottFormula (L := L) (M := M) Fin.elim0 (scottRank (L := L) M) := by
-  sorry
-
 /-- Element rank is bounded by ω₁.
 
 This is the key cardinality argument: at each ordinal level α, the "α-type" of an
@@ -100,6 +70,63 @@ theorem elementRank_lt_omega1 {M : Type w} [L.Structure M] [Countable M] (m : M)
   -- 1. Define the "α-type" of m as the set of Scott formulas it satisfies at level α
   -- 2. Show there are ≤ countably many α-types
   -- 3. Use well-foundedness to show stabilization occurs before ω₁
+  sorry
+
+/-- Scott rank of a countable structure is a countable ordinal.
+
+The proof uses that:
+1. M is countable, so we're taking the sup of countably many ordinals
+2. Each elementRank m < ω₁ (by elementRank_lt_omega1)
+3. The sup of countably many ordinals below ω₁ is below ω₁
+   (because cof(ω₁) = ω₁ > ω ≥ |M|, via Ordinal.iSup_lt_ord_lift)
+-/
+theorem scottRank_lt_omega1 (M : Type w) [L.Structure M] [Countable M] :
+    scottRank (L := L) M < Ordinal.omega (1 : Ordinal.{w}) := by
+  -- scottRank M = ⨆ (m : M), elementRank m + 1
+  -- Strategy: Use that ℵ₁ is regular (cof ℵ₁ = ℵ₁ > ℵ₀ ≥ |M|) so the sup of
+  -- countably many ordinals below ω₁ is still below ω₁.
+  unfold scottRank
+  simp only [← Cardinal.ord_aleph]
+  apply @Cardinal.iSup_lt_ord_lift_of_isRegular.{w, 0} M _ (Cardinal.aleph 1)
+    Cardinal.isRegular_aleph_one
+  · -- Need: lift.{0, w} (Cardinal.mk M) < ℵ₁
+    calc Cardinal.lift.{0, w} (Cardinal.mk M) ≤ Cardinal.lift.{0, w} Cardinal.aleph0 :=
+        Cardinal.lift_le.mpr Cardinal.mk_le_aleph0
+      _ = Cardinal.aleph0 := Cardinal.lift_aleph0
+      _ < Cardinal.aleph 1 := Cardinal.aleph0_lt_aleph_one
+  · -- Need: ∀ m, elementRank m + 1 < (ℵ₁).ord = ω₁
+    intro m
+    rw [Cardinal.ord_aleph]
+    -- ω₁ is a limit ordinal, so adding 1 stays below it
+    have h_elt := elementRank_lt_omega1 (L := L) m
+    have h_limit : Order.IsSuccLimit (Ordinal.omega (1 : Ordinal.{w})) :=
+      Cardinal.isSuccLimit_omega 1
+    -- succ (elementRank m) < ω₁ because ω₁ is a limit ordinal
+    have h_succ := h_limit.succ_lt h_elt
+    -- elementRank m + 1 = succ (elementRank m)
+    rw [Ordinal.add_one_eq_succ]
+    exact h_succ
+
+/-- The stabilization ordinal is below ω₁.
+
+This follows from `stabilizationOrdinal_lt_omega1'` in Sentence.lean, which is the
+direct bound from `exists_stabilization`. -/
+theorem stabilizationOrdinal_lt_omega1 (M : Type w) [L.Structure M] [Countable M] :
+    stabilizationOrdinal (L := L) M < Ordinal.omega 1 :=
+  stabilizationOrdinal_lt_omega1' M
+
+/-- The stabilization ordinal is at most the Scott rank.
+
+Note: This theorem involves comparing ordinals potentially in different universes
+(stabilizationOrdinal is in Ordinal.{0}, scottRank is in Ordinal.{w}).
+The comparison is well-defined when both ordinals are below ω₁. -/
+theorem stabilizationOrdinal_le_scottRank (M : Type w) [L.Structure M] [Countable M] :
+    stabilizationOrdinal (L := L) M ≤ scottRank (L := L) M := by
+  sorry
+
+/-- The Scott sentence can be taken at the Scott rank level. -/
+theorem scottSentence_eq_scottFormula_rank (M : Type w) [L.Structure M] [Countable M] :
+    scottSentence (L := L) M = scottFormula (L := L) (M := M) Fin.elim0 (scottRank (L := L) M) := by
   sorry
 
 end Language

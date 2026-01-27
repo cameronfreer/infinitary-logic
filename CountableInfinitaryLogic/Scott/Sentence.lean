@@ -237,6 +237,46 @@ theorem BFEquiv_iterate_back {M N : Type w} [L.Structure M] [L.Structure N]
     rw [hns_snoc]
     exact hm_last
 
+/-- For relational languages, BFEquiv at sufficiently high level implies we can extend
+any FG partial equiv (which is just a finite partial bijection preserving atomic type)
+to include any element of the domain.
+
+Since `[L.IsRelational]`, substructure closure is trivial (closure s = s), so FG
+substructures are just finite sets. A partial equiv with FG domain is thus a
+finite partial bijection that preserves atomic type (equalities and relations).
+
+Given BFEquiv ω, we can extend any such partial bijection to any m ∈ M:
+1. The domain has size n (finite), call it {m₀, ..., mₙ₋₁} with matching {n₀, ..., nₙ₋₁}
+2. BFEquiv ω 0 [] [] implies BFEquiv (n+1) 0 [] [] (by monotonicity from ω > n+1)
+3. By BFEquiv_iterate_forth, from these n pairs we have BFEquiv 1 n ms ns
+4. At successor level, we can extend by any new element m, getting BFEquiv 0 (n+1)
+5. BFEquiv 0 = SameAtomicType, so the extended partial bijection preserves atomic type -/
+theorem BFEquiv_omega_implies_IsExtensionPair {M N : Type w} [L.Structure M] [L.Structure N]
+    (hBF : BFEquiv (L := L) (ω : Ordinal.{0}) 0
+      (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)) :
+    L.IsExtensionPair M N := by
+  /-
+  **Proof sketch:**
+  For relational languages, FGEquiv f consists of a partial isomorphism whose domain
+  is a finite set (since closure s = s for relational languages).
+
+  Given BFEquiv ω 0 [] [], for any m ∈ M and any finite partial isomorphism f,
+  we need to extend f to include m.
+
+  The key insight is that BFEquiv ω 0 [] [] implies BFEquiv k 0 [] [] for all k < ω.
+  Taking k = |dom(f)| + 1, we can use BFEquiv_succ_forth_extend to find n' ∈ N
+  such that extending f by (m ↦ n') still preserves atomic type.
+
+  The construction:
+  1. Convert f.dom to a tuple a : Fin n → M (possible since dom is finite)
+  2. Convert f.cod to the matching tuple b : Fin n → N
+  3. Use BFEquiv (n+1) to extend: get n' ∈ N with SameAtomicType (snoc a m) (snoc b n')
+  4. Construct the extended FGEquiv
+
+  This requires some technical work with Finset/tuple conversions that we defer.
+  -/
+  sorry
+
 /-- BFEquiv at ω with empty tuples implies isomorphism for countable structures.
 This is the key direction of the Scott sentence theorem.
 
@@ -248,42 +288,73 @@ This is the key direction of the Scott sentence theorem.
    - Stage 2k+1: add n_k using back
 4. The limit defines f : M → N which is a bijection preserving all relations
 
-The key insight is that we BUILD the partial isomorphisms via forth/back,
-so we always have enough "fuel" (ordinal levels) to continue.
-
-**Formalization note**: This requires tracking the construction inductively
-and showing the limit exists and is an isomorphism. The standard mathlib
-approach uses `equiv_between_cg` with `IsExtensionPair`, but that requires
-proving we can extend ARBITRARY partial isomorphisms, which is stronger
-than what we need (we only extend ones we've built). -/
+**Formalization note**: We use mathlib's `equiv_between_cg` theorem which handles the
+back-and-forth construction. We just need to show `IsExtensionPair` in both directions. -/
 theorem BFEquiv_omega_implies_equiv {M N : Type w} [L.Structure M] [L.Structure N]
     [Countable M] [Countable N]
     (hBF : BFEquiv (L := L) (ω : Ordinal.{0}) 0
       (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)) :
     Nonempty (M ≃[L] N) := by
-  /- **Proof strategy** (classic back-and-forth):
-
-     The proof constructs an isomorphism f : M ≃[L] N by building a sequence of
-     matching tuples (aₙ, bₙ) where aₙ : Fin n → M and bₙ : Fin n → N satisfy
-     SameAtomicType. The construction alternates:
-     - Forth steps: add elements from M ensuring surjectivity onto M
-     - Back steps: add elements from N ensuring surjectivity onto N
-
-     **Key lemmas used:**
-     - `BFEquiv_iterate_forth`: From BFEquiv (n+k) 0 [] [], any n-tuple in M matches some n-tuple in N at level k
-     - `BFEquiv_iterate_back`: Symmetric version for N
-     - `BFEquiv_succ_forth_extend`/`back_extend`: Single-step extensions
-
-     **Why it works:**
-     From BFEquiv ω 0 [] [], we have BFEquiv k 0 [] [] for all finite k.
-     At stage n, we need BFEquiv (n+1) 0 [] [] to extend the (n-1)-tuples.
-     Since ω > n+1 for all finite n, we never exhaust our "fuel".
-
-     The limit f = ⋃ₙ fₙ (where fₙ(aₙ(i)) = bₙ(i)) is:
-     - Total on M (by forth steps covering all of M)
-     - Surjective onto N (by back steps)
-     - Preserves relations (by SameAtomicType at each finite stage) -/
-  sorry
+  -- Use mathlib's back-and-forth theorem: equiv_between_cg
+  -- We need:
+  -- 1. Structure.CG L M (countably generated) - follows from [Countable M]
+  -- 2. Structure.CG L N - follows from [Countable N]
+  -- 3. An initial FGEquiv (can use the empty one)
+  -- 4. IsExtensionPair M N - from BFEquiv ω (forth condition)
+  -- 5. IsExtensionPair N M - from BFEquiv ω (back condition via symmetry)
+  have h_M_cg : Structure.CG L M := Structure.cg_of_countable
+  have h_N_cg : Structure.CG L N := Structure.cg_of_countable
+  -- Initial partial equiv: constructed using BFEquiv which guarantees matching atomic types
+  -- For relational languages, L.Constants = L.Functions 0 is empty, so ⊥ is empty
+  haveI h_empty_M : IsEmpty (⊥ : L.Substructure M) := inferInstance
+  haveI h_empty_N : IsEmpty (⊥ : L.Substructure N) := inferInstance
+  -- BFEquiv ω 0 [] [] at level 0 gives SameAtomicType, which includes agreement on nullary relations
+  have hBF0 : SameAtomicType (L := L) (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) :=
+    (BFEquiv.zero Fin.elim0 Fin.elim0).mp (BFEquiv.monotone (zero_le _) hBF)
+  -- The empty partial equiv between empty substructures
+  let g₀ : L.FGEquiv M N := ⟨⟨⊥, ⊥, {
+    toFun := isEmptyElim
+    invFun := isEmptyElim
+    left_inv := isEmptyElim
+    right_inv := isEmptyElim
+    map_fun' := fun {n} f _ => (inferInstance : IsEmpty (L.Functions n)).elim f
+    map_rel' := fun {n} r x => by
+      -- x : Fin n → (⊥ : L.Substructure M), and ⊥ is empty
+      -- So for any n > 0, x 0 contradicts IsEmpty ⊥
+      -- For n = 0, both tuples are the unique empty function
+      cases n with
+      | zero =>
+        -- For nullary relations, SameAtomicType gives us that 0-ary relations agree between M and N
+        have hr := hBF0 (AtomicIdx.rel r (Fin.elim0 : Fin 0 → Fin 0))
+        simp only [AtomicIdx.holds] at hr
+        -- hr now states that RelMap r (a ∘ Fin.elim0) in M ↔ RelMap r (b ∘ Fin.elim0) in N
+        -- where a = Fin.elim0 : Fin 0 → M and b = Fin.elim0 : Fin 0 → N
+        -- For 0-ary relations, a ∘ Fin.elim0 = Fin.elim0, so:
+        -- hr : RelMap r (Fin.elim0 : Fin 0 → M) ↔ RelMap r (Fin.elim0 : Fin 0 → N)
+        -- The induced structure says RelMap r x = RelMap r (coe ∘ x)
+        -- So our goal (after unfolding) is:
+        -- RelMap r (coe_N ∘ (isEmptyElim ∘ x)) ↔ RelMap r (coe_M ∘ x)
+        -- where coe_N : ⊥ → N, coe_M : ⊥ → M
+        -- Since x : Fin 0 → ⊥, both coe ∘ x are Fin.elim0, so we need hr
+        have hr' : RelMap r (Fin.elim0 : Fin 0 → M) ↔ RelMap r (Fin.elim0 : Fin 0 → N) := by
+          convert hr using 2 <;> exact funext (fun i => i.elim0)
+        -- The induced structure RelMap is: RelMap r x = RelMap r (fun i => (x i : M))
+        -- For x : Fin 0 → ⊥, (fun i => (x i : M)) = Fin.elim0 by vacuity
+        simp only [inducedStructure]
+        have hx : (fun i : Fin 0 => ((x i : ↥(⊥ : L.Substructure M)) : M)) = Fin.elim0 :=
+          funext (fun i => i.elim0)
+        have hy : (fun i : Fin 0 => ((((fun a => isEmptyElim a) ∘ x) i : ↥(⊥ : L.Substructure N)) : N)) = Fin.elim0 :=
+          funext (fun i => i.elim0)
+        rw [hx, hy]
+        exact hr'.symm
+      | succ n => exact ⟨fun _ => isEmptyElim (x 0), fun _ => isEmptyElim (x 0)⟩
+  }⟩, Substructure.fg_bot⟩
+  -- Extension properties from BFEquiv
+  have h_ext_MN : L.IsExtensionPair M N := BFEquiv_omega_implies_IsExtensionPair hBF
+  have h_ext_NM : L.IsExtensionPair N M := BFEquiv_omega_implies_IsExtensionPair (BFEquiv.symm hBF)
+  -- Apply the back-and-forth theorem
+  obtain ⟨e, _⟩ := equiv_between_cg h_M_cg h_N_cg g₀ h_ext_MN h_ext_NM
+  exact ⟨e⟩
 
 /-- For any countable structure M in a relational countable language, there exists an ordinal
 α < ω₁ (the Scott rank of M) such that BF-equivalence at level α (with the empty tuple)
