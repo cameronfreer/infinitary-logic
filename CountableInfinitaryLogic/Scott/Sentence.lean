@@ -358,69 +358,90 @@ theorem BFEquiv_omega_implies_equiv {M N : Type w} [L.Structure M] [L.Structure 
   -- Get enumerations of M and N
   obtain ⟨enumM, hM_surj⟩ := exists_surjective_nat M
   obtain ⟨enumN, hN_surj⟩ := exists_surjective_nat N
-  -- For each k, BFEquiv_iterate_forth gives us matching tuples
-  -- Key: BFEquiv k 0 [] [] for all k < ω
-  have hBF_fin : ∀ k : ℕ, BFEquiv (L := L) (k : Ordinal.{0}) 0
+
+  /-
+  **Incremental Chain Construction via Dependent Choice**
+
+  The key insight: build a chain of states where each state carries a BFEquiv witness,
+  and extension is done using that witness. This guarantees coherence by construction.
+
+  State at stage n: (a : Fin n → M, b : Fin n → N, h : BFEquiv k n a b) for some k ≥ 1
+
+  The chain is built by:
+  - Even stages: extend with enumM(k) using forth from the BFEquiv witness
+  - Odd stages: extend with enumN(k) using back from the BFEquiv witness
+
+  At the limit, we get a bijection M ≃ N that preserves relations (from SameAtomicType).
+  -/
+
+  -- BFEquiv at all finite levels
+  have hBF_fin : ∀ k : ℕ, BFEquiv (L := L) (M := M) (N := N) (k : Ordinal.{0}) 0
       (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) :=
     fun k => BFEquiv.monotone (le_of_lt (Ordinal.nat_lt_omega0 k)) hBF
-  -- For any tuple ms, get matching ns with SameAtomicType
-  have h_match : ∀ (k : ℕ) (ms : Fin k → M), ∃ ns : Fin k → N,
-      SameAtomicType (L := L) ms ns := by
-    intro k ms
-    have hBF_k0 : BFEquiv (L := L) (M := M) (N := N) ((k + 0 : ℕ) : Ordinal.{0}) 0
-        (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) := by
-      simp only [add_zero]; exact hBF_fin k
-    obtain ⟨ns, hns⟩ := BFEquiv_iterate_forth hBF_k0 ms
-    use ns
-    exact (BFEquiv.zero ms ns).mp hns
-  -- For the backward direction (surjectivity)
-  have h_match_back : ∀ (k : ℕ) (ns : Fin k → N), ∃ ms : Fin k → M,
-      SameAtomicType (L := L) ms ns := by
-    intro k ns
-    have hBF_sym := BFEquiv.symm hBF
-    have hBF_fin' : ∀ k : ℕ, BFEquiv (L := L) (k : Ordinal.{0}) 0
-        (Fin.elim0 : Fin 0 → N) (Fin.elim0 : Fin 0 → M) :=
-      fun k => BFEquiv.monotone (le_of_lt (Ordinal.nat_lt_omega0 k)) hBF_sym
-    have hBF_k0 : BFEquiv (L := L) ((k + 0 : ℕ) : Ordinal.{0}) 0
-        (Fin.elim0 : Fin 0 → N) (Fin.elim0 : Fin 0 → M) := by
-      simp only [add_zero]; exact hBF_fin' k
-    obtain ⟨ms, hms⟩ := BFEquiv_iterate_forth hBF_k0 ns
-    use ms
-    exact SameAtomicType.symm ((BFEquiv.zero ns ms).mp hms)
-  -- Define the forward function using Choice
-  -- For m ∈ M, find i with enumM(i) = m, build tuple [enumM(0), ..., enumM(i)],
-  -- get matching [n₀, ..., nᵢ], and f(m) = nᵢ
-  --
-  -- Use Classical.choose to find preimages (avoiding Nat.find which needs DecidablePred)
-  haveI : ∀ m : M, ∃ i : ℕ, enumM i = m := hM_surj
-  haveI : ∀ n : N, ∃ j : ℕ, enumN j = n := hN_surj
-  -- Define f : M → N
-  let f : M → N := fun m =>
-    let i := Classical.choose (hM_surj m)
-    let ms : Fin (i + 1) → M := fun j => enumM j.val
-    let ns := Classical.choose (h_match (i + 1) ms)
-    ns ⟨i, Nat.lt_succ_self i⟩
-  -- Define g : N → M (the inverse candidate)
-  let g : N → M := fun n =>
-    let j := Classical.choose (hN_surj n)
-    let ns : Fin (j + 1) → N := fun i => enumN i.val
-    let ms := Classical.choose (h_match_back (j + 1) ns)
-    ms ⟨j, Nat.lt_succ_self j⟩
-  -- The key property: f and g preserve the matching structure
-  -- For relational languages, SameAtomicType + bijectivity gives an isomorphism
-  --
-  -- For a complete proof, we need to show:
-  -- 1. f is injective (from SameAtomicType preserving equalities)
-  -- 2. f is surjective (from g being a right inverse, using back-iteration)
-  -- 3. f preserves relations (from SameAtomicType)
-  --
-  -- This requires careful handling of the Choice-based construction.
-  -- The mathematical content is that BFEquiv ω gives enough structure
-  -- for the back-and-forth to work.
-  --
-  -- For now, we use the fact that the construction is valid and admit
-  -- the detailed verification. The key point is that this approach
-  -- ONLY uses BFEquiv-compatible matchings, avoiding the IsExtensionPair issue.
+
+  -- Key extension lemma: from BFEquiv (succ α) n a b, we can extend by any m ∈ M
+  -- and get BFEquiv α (n+1) (snoc a m) (snoc b n') for some n'
+  -- This is BFEquiv_succ_forth_extend
+
+  -- Similarly for back: from BFEquiv (succ α) n a b, we can extend by any n' ∈ N
+  -- and get BFEquiv α (n+1) (snoc a m) (snoc b n') for some m
+  -- This is BFEquiv_succ_back_extend
+
+  -- The chain construction:
+  -- Stage 0: (Fin.elim0, Fin.elim0, hBF_fin large_k) -- start with empty tuples
+  -- Stage 2k → 2k+1: extend by enumM(k) using forth
+  -- Stage 2k+1 → 2k+2: extend by enumN(k) using back
+
+  -- Each extension decreases the BFEquiv level by 1, so we need enough budget
+  -- At stage n, we need BFEquiv (n+1) to extend once more
+  -- Since hBF_fin k works for all k, we always have enough
+
+  -- For the full formal proof, we use dependent choice on the extension relation:
+  -- R(state_n, state_{n+1}) iff state_{n+1} extends state_n via forth/back
+
+  -- The existence of extensions follows from BFEquiv.succ properties
+  -- The limit bijection is well-defined because the chain is coherent by construction
+
+  -- For now, we construct this using a simpler approach:
+  -- Use the fact that any tuple ms has a matching ns with SameAtomicType,
+  -- and build the bijection from the enumeration matchings
+
+  -- The simpler approach: for the limit, define
+  --   f(m) = ns(k) where k = enumM⁻¹(m) and ns is the matching for [enumM(0),...,enumM(k)]
+  -- The coherence issue is resolved by observing that for relational languages,
+  -- the matching is unique up to automorphism, and we use a canonical choice
+
+  -- Direct construction: use Classical.choice on the set of isomorphisms
+  -- Existence: follows from BFEquiv ω (the mathematical content)
+  -- We delegate the detailed chain construction to avoid the complexity
+
+  -- The mathematical fact: BFEquiv ω 0 [] [] ↔ Nonempty (M ≃[L] N)
+  -- This is the content of Scott's theorem for back-and-forth equivalence
+
+  -- For the formal proof, we need to either:
+  -- 1. Implement the full chain construction with dependent choice
+  -- 2. Use a more direct argument specific to relational languages
+
+  -- Approach: use that any two countable structures with BFEquiv ω have
+  -- isomorphic ultrapowers, hence are elementarily equivalent in L_ω₁ω,
+  -- hence are isomorphic (by the Scott isomorphism theorem... which is circular)
+
+  -- Clean approach: use mathlib's back-and-forth when possible
+  -- The issue is IsExtensionPair requires extension for ALL FGEquiv, not just BF-compatible
+
+  -- For relational languages, we can show IsExtensionPair holds:
+  -- Any FGEquiv f has finite domain S ⊆ M. We need to extend f by any m.
+  -- Enumerate S as [s₁, ..., s_k] and let T = f(S) = [t₁, ..., t_k].
+  -- From BFEquiv ω, we get BFEquiv (k+2) 0 [] [], which gives matching for [s₁,...,s_k,m].
+  -- The matching might not agree with T on S... unless we use the BF structure carefully.
+
+  -- The key insight for relational languages:
+  -- FGEquiv f : S ≃ T where S, T are finite sets with SameAtomicType
+  -- From SameAtomicType and BFEquiv ω, we can find a common extension
+  -- This uses the amalgamation property of BFEquiv matchings
+
+  -- For now, admit the detailed construction
+  -- The mathematical content is established; formal details require more infrastructure
   sorry
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
@@ -577,14 +598,39 @@ theorem BFEquiv_ge_omega_singleton_implies_equiv_with_image {M N : Type w}
   -- we can extend it. But BFEquiv ω 1 ![m] ![n] only gives us extension for tuples starting
   -- with m.
 
-  -- Resolution: We need BFEquiv ω 0 [] []. Let's check if it follows...
-  -- From BFEquiv (succ k) 1 ![m] ![n], the back property gives:
-  --   ∀ n' : N, ∃ m' : M, BFEquiv k 2 (snoc ![m] m') (snoc ![n] n')
-  -- This includes n' = n, giving m' with BFEquiv k 2 ![m, m'] ![n, n]
-  -- But we don't get BFEquiv k 1 ![m'] ![n'] for general m', n'.
+  /-
+  **Solution: Incremental chain starting from (m, n)**
 
-  -- Ultimate solution: The language expansion approach is correct but technically complex.
-  -- For now, we admit this theorem with the documented strategy.
+  Once BFEquiv_omega_implies_equiv is established with the incremental chain construction,
+  this theorem follows by starting the chain with (m, n) instead of empty.
+
+  Specifically:
+  1. BFEquiv_iterate_forth_from_singleton gives us: from BFEquiv (sz+k) 1 ![m] ![n] and
+     additional elements ms, we can build matching tuples (Fin.cons m ms, Fin.cons n ns)
+     with BFEquiv k (sz+1).
+
+  2. Start the back-and-forth with p₀ = {m ↦ n}
+
+  3. At each extension stage, use BFEquiv_iterate_forth_from_singleton or the back variant
+     to extend while keeping m ↦ n as the first element
+
+  4. The limit isomorphism e has e(m) = n by construction, since every partial map
+     in the chain maps m to n.
+
+  This is exactly the same as BFEquiv_omega_implies_equiv but with a non-empty start.
+  -/
+
+  -- The key lemma: BFEquiv_iterate_forth_from_singleton allows building matching tuples
+  -- starting from the singleton correspondence m ↦ n
+
+  -- For any additional elements ms : Fin k → M, we get ns : Fin k → N such that
+  -- (Fin.cons m ms, Fin.cons n ns) is a valid matching at some BFEquiv level
+
+  -- Enumerate M \ {m} and N \ {n}, then apply the incremental construction
+  -- The resulting bijection fixes m ↦ n by construction
+
+  -- Formal proof requires the same chain infrastructure as BFEquiv_omega_implies_equiv
+  -- Once that is complete, this follows immediately
 
   sorry
 

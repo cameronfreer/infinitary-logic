@@ -133,11 +133,30 @@ private theorem stabilizationOrdinal_mem_elementRank_set {M : Type w} [L.Structu
     -- Both sides are true
     exact ⟨fun _ => hBF_succ_N', fun _ => hBF_succ_N⟩
   · -- Case: stabilizationOrdinal < ω
-    -- This case requires different handling - at finite ordinals, the extension properties
-    -- are weaker. However, by definition of stabilizationOrdinal, StabilizesAt holds,
-    -- which means BFEquiv0 characterizes isomorphism.
-    -- For now, we admit this case as it requires showing that BFEquiv at singleton
-    -- implies BFEquiv0 at these finite levels.
+    /-
+    **Language expansion approach**:
+
+    When stabilizationOrdinal < ω, we use language expansion to reduce singleton BFEquiv
+    to empty-tuple BFEquiv in an expanded language.
+
+    1. Let L' = L with a new constant symbol c (using Language.withConstants or constantsOn)
+    2. Interpret c as m in M, giving M' : L'.Structure
+    3. For any N with BFEquiv α 1 ![m] b, interpret c as b(0) in N, giving N'
+    4. Key lemma: BFEquiv (L') α 0 [] [] ↔ BFEquiv (L) α 1 ![m] b
+       (The constant c encodes the singleton correspondence)
+    5. Apply StabilizesAt at α in L' to the expanded structures:
+       BFEquiv (L') α 0 [] [] ↔ Nonempty (M' ≃[L'] N')
+    6. An L'-isomorphism preserves c, hence sends m ↦ b(0)
+    7. From this L'-isomorphism, extract an L-isomorphism with the same property
+
+    The technical details require:
+    - Language.withConstants (available in mathlib LanguageMap.lean)
+    - BoundedFormula.constantsVarsEquiv (constants ↔ variables bijection)
+    - Showing StabilizesAt transfers between L and L'
+
+    This approach cleanly handles the case where stabilizationOrdinal < ω by reducing
+    to the 0-tuple case where StabilizesAt applies directly.
+    -/
     sorry
 
 theorem elementRank_lt_omega1 {M : Type w} [L.Structure M] [Countable M] (m : M) :
@@ -208,20 +227,28 @@ The comparison is well-defined when both ordinals are below ω₁. -/
 theorem stabilizationOrdinal_le_scottRank (M : Type w) [L.Structure M] [Countable M] :
     stabilizationOrdinal (L := L) M ≤ scottRank (L := L) M := by
   /-
-  Proof strategy: Show StabilizesAt M (scottRank M), then use csInf_le'.
+  **Proof strategy**: Show StabilizesAt M (scottRank M), then use csInf_le'.
 
-  The key insight is that at the Scott rank, all elements are "distinguished" -
-  their element ranks are below the Scott rank, so their α-types have stabilized.
-  This means BFEquiv at the Scott rank level characterizes isomorphism.
+  Key insight: At scottRank, every element m has elementRank m + 1 ≤ scottRank.
+  The elementRank property ensures that at elementRank m, BFEquiv behavior is determined.
+  Thus at scottRank, all elements have "stabilized" and we can build isomorphisms.
 
-  More precisely:
-  1. scottRank M = ⨆ (m : M), elementRank m + 1
-  2. For any m, elementRank m < scottRank M
-  3. At elementRank m, the succ behavior is determined by the current behavior
-  4. At scottRank M, all elements have reached their stabilization points
-  5. Therefore, BFEquiv0 at scottRank characterizes isomorphism
+  Steps:
+  1. elementRank m ≤ stabilizationOrdinal M for all m (by csInf_le')
+  2. scottRank M = ⨆ m, elementRank m + 1
+  3. For StabilizesAt (scottRank M), show BFEquiv0 (scottRank) ↔ Nonempty (M ≃[L] N)
+     - Forward: BFEquiv0 (scottRank) ⟹ isomorphism via back-and-forth
+       At scottRank, each element m has been "handled" (elementRank m < scottRank)
+       The extension property holds because succ behavior is determined
+     - Backward: isomorphism ⟹ BFEquiv at all levels (equiv_implies_BFEquiv)
 
-  The formal proof requires showing that StabilizesAt holds at scottRank.
+  4. Apply csInf_le' to conclude stabilizationOrdinal ≤ scottRank
+
+  **Alternative bound**: From the definitions:
+  - stabilizationOrdinal M ≤ ω (since ω is in the stabilization set)
+  - scottRank M ≥ ⨆ m, elementRank m + 1
+  - If we can show elementRank m ≥ some bound related to stabilizationOrdinal,
+    we get the inequality directly
   -/
   sorry
 
@@ -233,18 +260,29 @@ the same class of structures (those isomorphic to M), so they are equivalent sen
 theorem scottSentence_eq_scottFormula_rank (M : Type w) [L.Structure M] [Countable M] :
     scottSentence (L := L) M = scottFormula (L := L) (M := M) Fin.elim0 (scottRank (L := L) M) := by
   /-
-  Proof strategy: Show semantic equivalence using BFEquiv characterization.
+  **Proof strategy**: Semantic equivalence via BFEquiv monotonicity.
 
-  Both formulas are realized by exactly the same countable structures (those isomorphic to M).
+  Both formulas are realized by exactly the same countable structures (those ≃[L] M).
 
-  1. scottSentence M = scottFormula Fin.elim0 (stabilizationOrdinal M)
-  2. Both are realized by N iff BFEquiv0 α iff Nonempty (M ≃[L] N)
-  3. By stabilizationOrdinal_le_scottRank, we have stabilizationOrdinal ≤ scottRank
-  4. BFEquiv is monotone, so the two formulas capture the same structures
-  5. By extensionality, the formulas are equal
+  Key steps:
+  1. scottSentence M = scottFormula Fin.elim0 (stabilizationOrdinal M) (by definition)
+  2. scottFormula at level α is realized by N iff BFEquiv0 α M N (realize_scottFormula_iff_BFEquiv)
+  3. StabilizesAt (stabilizationOrdinal M) means: BFEquiv0 (stab) ↔ Nonempty (M ≃[L] N)
+  4. From stabilizationOrdinal_le_scottRank: stabilizationOrdinal ≤ scottRank
+  5. BFEquiv is monotone in the ordinal level:
+     - BFEquiv0 (scottRank) ⟹ BFEquiv0 (stab) (by monotonicity)
+     - BFEquiv0 (stab) ⟹ isomorphism (by StabilizesAt)
+     - isomorphism ⟹ BFEquiv0 (scottRank) (by equiv_implies_BFEquiv)
+  6. Therefore both formulas define the same class of countable structures
 
-  The formal proof needs careful handling of the BFEquiv monotonicity and
-  the relationship between formula realization and BFEquiv.
+  **For definitional equality**:
+  - If scottRank = stabilizationOrdinal, we're done by definition
+  - Otherwise, need Formulaω extensionality or weaken to semantic equivalence:
+    ∀ N [L.Structure N] [Countable N],
+      (scottSentence M).Realize (Fin.elim0 : Fin 0 → N) ↔
+      (scottFormula Fin.elim0 (scottRank M)).Realize (Fin.elim0 : Fin 0 → N)
+
+  The proof uses the characterization theorems from Sentence.lean.
   -/
   sorry
 
