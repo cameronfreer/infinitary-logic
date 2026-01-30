@@ -381,6 +381,7 @@ theorem BFEquiv_omega_implies_equiv {M N : Type w} [L.Structure M] [L.Structure 
   obtain ⟨e, _⟩ := equiv_between_cg h_M_cg h_N_cg g₀ h_ext_MN h_ext_NM
   exact ⟨e⟩
 
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- BFEquiv at level k starting from singletons allows iteration of forth to build matching tuples.
 
 From BFEquiv (sz + k) 1 ![m] ![n₀] and sz additional elements starting from m, we can build
@@ -397,9 +398,64 @@ theorem BFEquiv_iterate_forth_from_singleton {M N : Type w} [L.Structure M] [L.S
     (ms : Fin sz → M) :
     ∃ ns : Fin sz → N, BFEquiv (L := L) (k : Ordinal.{0}) (sz + 1)
       (Fin.cons m ms) (Fin.cons n₀ ns) := by
-  -- The proof follows the same structure as BFEquiv_iterate_forth, but starting from
-  -- singletons instead of empty tuples.
-  sorry
+  induction sz generalizing k with
+  | zero =>
+    use Fin.elim0
+    -- Fin.cons m Fin.elim0 = ![m] and Fin.cons n₀ Fin.elim0 = ![n₀]
+    have hms : ms = Fin.elim0 := funext (fun i => i.elim0)
+    have h1 : Fin.cons m (Fin.elim0 : Fin 0 → M) = ![m] := by ext i; fin_cases i; rfl
+    have h2 : Fin.cons n₀ (Fin.elim0 : Fin 0 → N) = ![n₀] := by ext i; fin_cases i; rfl
+    rw [hms, h1, h2]
+    convert hBF using 2; omega
+  | succ sz ih =>
+    -- Type annotations to help inference
+    let ms_init : Fin sz → M := ms ∘ Fin.castSucc
+    let ms_last : M := ms (Fin.last sz)
+    -- From BFEquiv ((sz+1) + k) 1 ![m] ![n₀], rewrite as BFEquiv (sz + (k+1)) 1 ...
+    have hrewrite : ((sz + 1 + k : ℕ) : Ordinal.{0}) = ((sz + (k + 1) : ℕ) : Ordinal.{0}) := by
+      norm_cast; omega
+    rw [hrewrite] at hBF
+    -- Get matching sz-tuple at level k+1 using IH
+    obtain ⟨ns_init, hns_init⟩ := ih hBF ms_init
+    -- hns_init : BFEquiv (k + 1) (sz + 1) (Fin.cons m ms_init) (Fin.cons n₀ ns_init)
+    -- Use forth to extend by one more element
+    have hsucc : (k + 1 : ℕ) = Order.succ (k : Ordinal.{0}) := by
+      rw [← Ordinal.add_one_eq_succ]; norm_cast
+    have hns_init' : BFEquiv (L := L) (Order.succ (k : Ordinal.{0})) (sz + 1)
+        (Fin.cons m ms_init) (Fin.cons n₀ ns_init) := by
+      convert hns_init using 2
+    -- Apply forth with the last element ms_last : M
+    obtain ⟨n_last, hn_last⟩ := BFEquiv_succ_forth_extend hns_init' ms_last
+    -- hn_last : BFEquiv k ((sz + 1) + 1) (Fin.snoc (Fin.cons m ms_init) ms_last)
+    --                                    (Fin.snoc (Fin.cons n₀ ns_init) n_last)
+    use Fin.snoc ns_init n_last
+    -- Need to show: Fin.cons m ms = Fin.snoc (Fin.cons m ms_init) ms_last
+    -- and: Fin.cons n₀ (Fin.snoc ns_init n_last) = Fin.snoc (Fin.cons n₀ ns_init) n_last
+    -- Use Fin.cons_snoc_eq_snoc_cons: cons a (snoc q b) = snoc (cons a q) b
+    have hns_eq : Fin.cons n₀ (Fin.snoc ns_init n_last) =
+        (Fin.snoc (Fin.cons n₀ ns_init) n_last : Fin (sz + 2) → N) :=
+      Fin.cons_snoc_eq_snoc_cons n₀ ns_init n_last
+    -- For hms_eq, we need: Fin.cons m ms = Fin.snoc (Fin.cons m ms_init) ms_last
+    -- Since ms_init = ms ∘ castSucc and ms_last = ms (last sz), this is:
+    -- Fin.cons m ms = Fin.snoc (Fin.cons m (ms ∘ castSucc)) (ms (last sz))
+    -- By cons_snoc_eq_snoc_cons: Fin.cons m (Fin.snoc (ms ∘ castSucc) (ms (last sz))) = RHS
+    -- So we need: ms = Fin.snoc (ms ∘ castSucc) (ms (last sz))
+    have hms_decomp : ms = Fin.snoc (ms ∘ Fin.castSucc) (ms (Fin.last sz)) := by
+      ext i
+      simp only [Fin.snoc, Function.comp_apply]
+      split_ifs with h
+      · simp only [Fin.castSucc, Fin.castLT]; rfl
+      · have hi : i = Fin.last sz := by
+          ext
+          simp only [Fin.val_last]
+          omega
+        simp only [hi, cast_eq]
+    have hms_eq : Fin.cons m ms =
+        (Fin.snoc (Fin.cons m ms_init) ms_last : Fin (sz + 2) → M) := by
+      rw [hms_decomp]
+      exact Fin.cons_snoc_eq_snoc_cons m ms_init ms_last
+    rw [hms_eq, hns_eq]
+    convert hn_last
 
 theorem BFEquiv_ge_omega_singleton_implies_equiv_with_image {M N : Type w}
     [L.Structure M] [L.Structure N] [Countable M] [Countable N]
