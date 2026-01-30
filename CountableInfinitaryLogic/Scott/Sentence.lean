@@ -256,24 +256,23 @@ theorem BFEquiv_omega_implies_IsExtensionPair {M N : Type w} [L.Structure M] [L.
       (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)) :
     L.IsExtensionPair M N := by
   /-
-  **Proof sketch:**
-  For relational languages, FGEquiv f consists of a partial isomorphism whose domain
-  is a finite set (since closure s = s for relational languages).
+  We use the alternate characterization: show for any FG substructure S and embedding f : S ↪[L] N,
+  we can extend to (closure L {m} ⊔ S) ↪[L] N. For relational languages, closure L {m} = {m}.
 
-  Given BFEquiv ω 0 [] [], for any m ∈ M and any finite partial isomorphism f,
-  we need to extend f to include m.
+  The key is that BFEquiv ω lets us find matching elements via back-and-forth.
+  Given f : S ↪[L] N (with S finite, since L is relational), enumerate S as a tuple a : Fin n → M.
+  The embedding f gives us a matching tuple b : Fin n → N with SameAtomicType a b.
 
-  The key insight is that BFEquiv ω 0 [] [] implies BFEquiv k 0 [] [] for all k < ω.
-  Taking k = |dom(f)| + 1, we can use BFEquiv_succ_forth_extend to find n' ∈ N
-  such that extending f by (m ↦ n') still preserves atomic type.
+  From BFEquiv ω 0 [] [], we get BFEquiv (n+1) 0 [] []. The back-and-forth properties let us
+  iterate to build BFEquiv 1 n a b, then extend to BFEquiv 0 (n+1) (snoc a m) (snoc b n')
+  for some n', giving SameAtomicType (snoc a m) (snoc b n').
 
-  The construction:
-  1. Convert f.dom to a tuple a : Fin n → M (possible since dom is finite)
-  2. Convert f.cod to the matching tuple b : Fin n → N
-  3. Use BFEquiv (n+1) to extend: get n' ∈ N with SameAtomicType (snoc a m) (snoc b n')
-  4. Construct the extended FGEquiv
+  The technical challenge is showing the (a, b) from f matches what BFEquiv iteration gives.
+  A cleaner approach: show f's image is compatible with BFEquiv by using that both preserve
+  atomic type, and BFEquiv_iterate_back can recover the matching.
 
-  This requires some technical work with Finset/tuple conversions that we defer.
+  For now, we leave this as sorry, noting that the mathematical content is clear but the
+  formalization requires careful handling of the tuple-FGEquiv correspondence.
   -/
   sorry
 

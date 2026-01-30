@@ -66,10 +66,30 @@ countably many possible types, stabilization must occur at some countable ordina
 -/
 theorem elementRank_lt_omega1 {M : Type w} [L.Structure M] [Countable M] (m : M) :
     elementRank (L := L) m < Ordinal.omega 1 := by
-  -- The proof requires formalizing the cardinality argument:
-  -- 1. Define the "α-type" of m as the set of Scott formulas it satisfies at level α
-  -- 2. Show there are ≤ countably many α-types
-  -- 3. Use well-foundedness to show stabilization occurs before ω₁
+  /-
+  Strategy: Show ω is in the defining set of elementRank, hence sInf ≤ ω < ω₁.
+
+  The elementRank definition asks: at what ordinal α does the (succ α)-behavior become
+  determined by the α-behavior across all countable models?
+
+  At level ω, the condition requires: for all countable N, N', if BFEquiv ω 1 ![m] b
+  and BFEquiv ω 1 ![m] b', then (BFEquiv (succ ω) 1 ![m] b ↔ BFEquiv (succ ω) 1 ![m] b').
+
+  This is a stabilization condition. The proof requires showing that BFEquiv at level ω
+  determines BFEquiv at level (succ ω) for singletons. This follows from the back-and-forth
+  properties: BFEquiv ω gives enough information to determine extensions.
+
+  The mathematical content is that countable ω-categorical structures have this property,
+  but the formal proof requires careful analysis of the BFEquiv structure.
+  -/
+  unfold elementRank
+  have h_omega_lt : (ω : Ordinal) < Ordinal.omega 1 := Ordinal.omega0_lt_omega_one
+  apply lt_of_le_of_lt _ h_omega_lt
+  apply csInf_le'
+  -- Show ω is in the defining set
+  -- The proof that the stabilization condition holds at ω requires showing that
+  -- BFEquiv ω 1 ![m] b determines BFEquiv (succ ω) 1 ![m] b uniformly across models.
+  -- This is the core of the Scott analysis.
   sorry
 
 /-- Scott rank of a countable structure is a countable ordinal.
