@@ -237,59 +237,26 @@ theorem BFEquiv_iterate_back {M N : Type w} [L.Structure M] [L.Structure N]
     rw [hns_snoc]
     exact hm_last
 
-/-- For relational languages, BFEquiv at sufficiently high level implies we can extend
-any FG partial equiv (which is just a finite partial bijection preserving atomic type)
-to include any element of the domain.
+/-- **NOTE**: This theorem as stated is too strong. BFEquiv ω 0 [] [] only guarantees
+extension for FGEquivs that arise from the back-and-forth construction, not for
+arbitrary FGEquivs. The correct statement would restrict to "BFEquiv-compatible" FGEquivs.
 
-Since `[L.IsRelational]`, substructure closure is trivial (closure s = s), so FG
-substructures are just finite sets. A partial equiv with FG domain is thus a
-finite partial bijection that preserves atomic type (equalities and relations).
+For the main theorem `BFEquiv_omega_implies_equiv`, we use a direct construction
+instead of `equiv_between_cg`, avoiding the need for this general `IsExtensionPair`.
 
-Given BFEquiv ω, we can extend any such partial bijection to any m ∈ M:
-1. The domain has size n (finite), call it {m₀, ..., mₙ₋₁} with matching {n₀, ..., nₙ₋₁}
-2. BFEquiv ω 0 [] [] implies BFEquiv (n+1) 0 [] [] (by monotonicity from ω > n+1)
-3. By BFEquiv_iterate_forth, from these n pairs we have BFEquiv 1 n ms ns
-4. At successor level, we can extend by any new element m, getting BFEquiv 0 (n+1)
-5. BFEquiv 0 = SameAtomicType, so the extended partial bijection preserves atomic type -/
+This theorem is kept for documentation but should not be used. -/
 theorem BFEquiv_omega_implies_IsExtensionPair {M N : Type w} [L.Structure M] [L.Structure N]
     (hBF : BFEquiv (L := L) (ω : Ordinal.{0}) 0
       (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)) :
     L.IsExtensionPair M N := by
-  /-
-  For relational languages, FGEquiv = finite partial bijection preserving atomic type.
-  We use the alternate characterization via embeddings.
-
-  Given S (FG substructure), f : S ↪[L] N, and m : M:
-  - If m ∈ S, the extension is trivial
-  - If m ∉ S, we find n' ∈ N via BFEquiv iteration
-
-  For relational L:
-  - closure L {m} = {m} (no function symbols)
-  - FG substructure = finite set
-  - Embedding = injection preserving relations
-
-  The construction:
-  1. S is finite (FG + relational)
-  2. Enumerate S as tuple ms : Fin k → M
-  3. f gives ns = f ∘ ms : Fin k → N with SameAtomicType
-  4. From BFEquiv ω, use back-iteration to get ms' with BFEquiv 1 k ms' ns
-  5. Use forth to extend by m, getting n' with BFEquiv 0 (k+1) (snoc ms' m) (snoc ns n')
-  6. Key: BFEquiv 0 = SameAtomicType, and for m ∉ S, the extended tuple preserves
-     the correspondence we need
-
-  The mathematical content is that BFEquiv ω provides enough extensions to cover
-  any finite configuration. The formalization requires building the embedding explicitly.
-  -/
   rw [isExtensionPair_iff_exists_embedding_closure_singleton_sup]
   intro S hS_FG f m
   by_cases hm : m ∈ S
   · -- m ∈ S: trivial extension
-    -- closure L {m} ⊔ S = S since m ∈ S and closure L {m} = {m} for relational L
     have hsup_le : Substructure.closure L {m} ⊔ S ≤ S := by
       rw [sup_le_iff]
       constructor
-      · -- closure L {m} ≤ S because m ∈ S
-        rw [Substructure.closure_le]
+      · rw [Substructure.closure_le]
         exact Set.singleton_subset_iff.mpr hm
       · exact le_refl S
     have hle_sup : S ≤ Substructure.closure L {m} ⊔ S := le_sup_right
@@ -297,9 +264,9 @@ theorem BFEquiv_omega_implies_IsExtensionPair {M N : Type w} [L.Structure M] [L.
     use f.comp (Substructure.inclusion (by rw [heq]))
     ext ⟨x, hx⟩
     simp only [Embedding.comp_apply, Substructure.coe_inclusion]
-  · -- m ∉ S: need to genuinely extend
-    -- This requires constructing the extension using BFEquiv
-    -- The construction is involved; we admit it for now
+  · -- m ∉ S: This case requires BFEquiv-compatible FGEquivs.
+    -- For general FGEquivs, the extension may not exist.
+    -- See the note above - this theorem statement is too strong.
     sorry
 
 /-- BFEquiv at ω with empty tuples implies isomorphism for countable structures.
