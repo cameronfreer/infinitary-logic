@@ -381,11 +381,26 @@ theorem BFEquiv_omega_implies_equiv {M N : Type w} [L.Structure M] [L.Structure 
   obtain ⟨e, _⟩ := equiv_between_cg h_M_cg h_N_cg g₀ h_ext_MN h_ext_NM
   exact ⟨e⟩
 
-/-- BFEquiv at any ordinal α ≥ ω for singleton tuples implies isomorphism sending the element
-to its match.
+/-- BFEquiv at level k starting from singletons allows iteration of forth to build matching tuples.
 
-This generalizes `BFEquiv_omega_implies_equiv` to track where a specific element is sent.
-Given BFEquiv α 1 ![m] ![n] for α ≥ ω, we construct an isomorphism e : M ≃ N with e(m) = n. -/
+From BFEquiv (sz + k) 1 ![m] ![n₀] and sz additional elements starting from m, we can build
+matching (sz+1)-tuples at BFEquiv level k.
+
+This is the key lemma that allows building isomorphisms tracking where m is sent.
+
+**Proof idea**: Induction on sz. At each step, use the forth property of BFEquiv at successor
+level to extend the tuple by one element. The base case (sz = 0) just rewrites the tuples
+to singleton form. -/
+theorem BFEquiv_iterate_forth_from_singleton {M N : Type w} [L.Structure M] [L.Structure N]
+    {m : M} {n₀ : N}
+    {sz k : ℕ} (hBF : BFEquiv (L := L) ((sz + k : ℕ) : Ordinal.{0}) 1 ![m] ![n₀])
+    (ms : Fin sz → M) :
+    ∃ ns : Fin sz → N, BFEquiv (L := L) (k : Ordinal.{0}) (sz + 1)
+      (Fin.cons m ms) (Fin.cons n₀ ns) := by
+  -- The proof follows the same structure as BFEquiv_iterate_forth, but starting from
+  -- singletons instead of empty tuples.
+  sorry
+
 theorem BFEquiv_ge_omega_singleton_implies_equiv_with_image {M N : Type w}
     [L.Structure M] [L.Structure N] [Countable M] [Countable N]
     {α : Ordinal.{0}} (hα : ω ≤ α)
@@ -393,28 +408,86 @@ theorem BFEquiv_ge_omega_singleton_implies_equiv_with_image {M N : Type w}
     (hBF : BFEquiv (L := L) α 1 ![m] ![n]) :
     ∃ e : M ≃[L] N, e m = n := by
   /-
-  **Proof strategy via language expansion:**
+  **Proof strategy: Direct back-and-forth construction starting from (m, n)**
 
-  1. Expand L to L' = L[[Unit]] (add one constant c)
-  2. Give M an L'-structure where c is interpreted as m
-  3. Give N an L'-structure where c is interpreted as n
-  4. Key lemma needed: BFEquiv (L') α 0 [] [] ↔ BFEquiv (L) α 1 ![m] ![n]
-     - The constant c in L' plays the role of the fixed first variable
-     - Atomic formulas involving c in L' correspond to atomic formulas involving ![m], ![n] in L
-  5. By hypothesis, BFEquiv (L) α 1 ![m] ![n], so BFEquiv (L') α 0 [] []
-  6. Since α ≥ ω, apply BFEquiv_omega_implies_equiv for L' to get e' : M ≃[L'] N
-  7. An L'-isomorphism preserves c, so e'(m) = e'(c_M) = c_N = n
-  8. The underlying L-isomorphism is e := e'.toLEquiv, which satisfies e(m) = n
-
-  **Mathlib support:**
-  - Language.withConstants L α gives L[[α]]
-  - Language.con a gives the constant symbol for a : α
-  - constantsOn.structure gives the interpretation of constants
-  - LHom.IsExpansionOn relates L and L[[α]] structures
-
-  The formalization requires connecting BFEquiv definitions across the language expansion,
-  which involves showing that atomic diagrams and extension properties transfer correctly.
+  1. From BFEquiv α 1 ![m] ![n] with α ≥ ω, we have BFEquiv k 1 ![m] ![n] for all k < ω
+  2. Use BFEquiv_iterate_forth_from_singleton to build matching tuples starting from (m, n)
+  3. Build the back-and-forth chain keeping m ↦ n as the first pair
+  4. The resulting isomorphism has e(m) = n by construction
   -/
+  -- First show BFEquiv ω 1 ![m] ![n] by monotonicity
+  have hBF_omega : BFEquiv (L := L) ω 1 ![m] ![n] := BFEquiv.monotone hα hBF
+  -- Now build IsExtensionPair relative to tuples starting from m
+  -- We adapt the approach from BFEquiv_omega_implies_equiv
+  -- Key: all partial maps in our construction will have m ↦ n as the first pair
+
+  -- Get CG instances
+  haveI h_M_cg : Structure.CG L M := Structure.cg_of_countable
+  haveI h_N_cg : Structure.CG L N := Structure.cg_of_countable
+
+  -- Build initial FGEquiv g₀ mapping the closure of {m} to closure of {n}
+  -- For relational languages, closure of {m} is just {m} itself
+  have hBF0 : SameAtomicType (L := L) ![m] ![n] :=
+    (BFEquiv.zero ![m] ![n]).mp (BFEquiv.monotone (zero_le _) hBF_omega)
+
+  -- Key insight: We need to show that from any partial bijection starting with m ↦ n,
+  -- we can extend it. This follows from BFEquiv_iterate_forth_from_singleton.
+
+  -- Construct the isomorphism directly via the back-and-forth, always keeping m ↦ n
+  -- For this, we use equiv_between_cg with a singleton initial FGEquiv
+
+  -- Show that any singleton substructure is just a point in relational languages
+  -- closure({m}) in a relational language is just {m} since there are no functions
+  have hclosure_m : (closure L {m} : Set M) = {m} :=
+    Substructure.closure_eq_of_isRelational L {m}
+
+  have hclosure_n : (closure L {n} : Set N) = {n} :=
+    Substructure.closure_eq_of_isRelational L {n}
+
+  -- Build an FGEquiv from {m} to {n}
+  -- We need: PartialEquiv with dom = closure L {m}, cod = closure L {n}, and toEquiv
+
+  -- For now, we derive IsExtensionPair from BFEquiv ω 0 [] [] which we get from BFEquiv ω 1 ![m] ![n]
+  -- Actually, we can't derive BFEquiv ω 0 [] [] from BFEquiv ω 1 ![m] ![n] directly.
+
+  -- Alternative: prove directly that we can build an isomorphism with the property
+
+  -- The key is BFEquiv_iterate_forth_from_singleton: starting from m ↦ n,
+  -- we can extend to any tuple, and then use back to balance.
+
+  -- For the full proof, we need to show that the partial maps can be extended arbitrarily.
+  -- Since this requires significant infrastructure (adapting equiv_between_cg),
+  -- we use the observation that BFEquiv_omega_implies_equiv gives SOME isomorphism,
+  -- and we need to show the BFEquiv structure gives us one with e(m) = n.
+
+  -- From BFEquiv ω 0 [] [] we would get an isomorphism.
+  -- But we have BFEquiv ω 1 ![m] ![n].
+
+  -- New approach: From the back-and-forth at singleton level, any m' has a match n'
+  -- at succ level. This gives us the extension property starting from (m, n).
+
+  -- The iteration: enumerate M and N, use forth/back alternating, always keeping m first.
+
+  -- For a complete formal proof, we'd need to formalize the back-and-forth construction
+  -- that tracks the initial correspondence. For now, we note that this follows from the
+  -- standard back-and-forth argument starting from a non-empty partial isomorphism.
+
+  -- Technical detail: The standard mathlib `equiv_between_cg` starts from any FGEquiv g
+  -- and produces an isomorphism extending g. Our g₀ maps m ↦ n, so the result has e(m) = n.
+
+  -- We need to verify IsExtensionPair holds. This requires showing that for ANY FGEquiv f,
+  -- we can extend it. But BFEquiv ω 1 ![m] ![n] only gives us extension for tuples starting
+  -- with m.
+
+  -- Resolution: We need BFEquiv ω 0 [] []. Let's check if it follows...
+  -- From BFEquiv (succ k) 1 ![m] ![n], the back property gives:
+  --   ∀ n' : N, ∃ m' : M, BFEquiv k 2 (snoc ![m] m') (snoc ![n] n')
+  -- This includes n' = n, giving m' with BFEquiv k 2 ![m, m'] ![n, n]
+  -- But we don't get BFEquiv k 1 ![m'] ![n'] for general m', n'.
+
+  -- Ultimate solution: The language expansion approach is correct but technically complex.
+  -- For now, we admit this theorem with the documented strategy.
+
   sorry
 
 /-- For any countable structure M in a relational countable language, there exists an ordinal
