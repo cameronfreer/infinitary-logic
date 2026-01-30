@@ -12,7 +12,7 @@ A Lean 4 formalization of countable infinitary logic Lω₁ω and Scott sentence
 
 ## Current Status
 
-The project compiles successfully with Mathlib v4.27.0. Core definitions are complete; main theorems have proof scaffolding with documented sorries.
+The project compiles successfully with Mathlib v4.27.0. Core definitions and main theorem statements are complete; proofs have documented sorries for chain construction lemmas.
 
 ### Completed
 
@@ -23,12 +23,23 @@ The project compiles successfully with Mathlib v4.27.0. Core definitions are com
 - Back-and-forth equivalence (`BFEquiv`) indexed by ordinals
 - Scott formula and Scott sentence definitions
 - Scott rank definition
+- `realize_scottFormula_iff_BFEquiv` (Scott formula captures BF-equivalence)
+- `scottSentence_characterizes` (main characterization theorem)
+- `scottRank_lt_omega1` (countable bound on Scott rank)
 
-### In Progress
+### Remaining Sorries (6)
 
-- Proof of `realize_scottFormula_iff_BFEquiv` (Scott formula captures BF-equivalence)
-- Proof of `scottSentence_characterizes` (main characterization theorem)
-- Proof of `scottRank_lt_omega1` (countable bound on Scott rank)
+The main theorems above are proven modulo 6 helper lemmas requiring back-and-forth chain constructions:
+
+**Sentence.lean:**
+1. `BFEquiv_omega_implies_IsExtensionPair` (line 248) - Extension property from BFEquiv ω
+2. `BFEquiv_omega_implies_equiv` (line 289) - Back-and-forth chain construction
+3. `BFEquiv_ge_omega_singleton_implies_equiv_with_image` (line 523) - Chain preserving initial pair
+
+**Rank.lean:**
+4. `stabilizationOrdinal_mem_elementRank_set` (line 70) - Language expansion argument
+5. `stabilizationOrdinal_le_scottRank` (line 227) - Stabilization bound
+6. `scottSentence_eq_scottFormula_rank` (line 260) - Semantic equivalence
 
 ## File Structure
 
