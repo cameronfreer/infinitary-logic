@@ -1,7 +1,7 @@
-name = "CountableInfinitaryLogic"
+name = "InfinitaryLogic"
 version = "0.1.0"
 keywords = ["math"]
-defaultTargets = ["CountableInfinitaryLogic"]
+defaultTargets = ["InfinitaryLogic"]
 
 [[require]]
 name = "mathlib"
@@ -9,4 +9,4 @@ git = "https://github.com/leanprover-community/mathlib4"
 rev = "v4.27.0"
 
 [[lean_lib]]
-name = "CountableInfinitaryLogic"
+name = "InfinitaryLogic"

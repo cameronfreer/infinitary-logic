@@ -1,6 +1,6 @@
-# Countable Infinitary Logic (Lω₁ω) in Lean 4
+# Infinitary Logic in Lean 4
 
-A Lean 4 formalization of countable infinitary logic Lω₁ω and Scott sentences, building on Mathlib.
+A Lean 4 formalization of infinitary logic and Scott sentences, building on Mathlib.
 
 ## Goals
 
@@ -16,9 +16,20 @@ The project compiles successfully with Mathlib v4.27.0. Core definitions and mai
 
 ### Completed
 
-- Lω₁ω syntax (`BoundedFormulaω` with countable conjunctions/disjunctions)
+**L∞ω (arbitrary infinitary logic):**
+- L∞ω syntax (`BoundedFormulaInf` with arbitrary index types for iSup/iInf)
+- L∞ω semantics (`Realize` with simp lemmas for all connectives)
+- `IsCountable` predicate characterizing membership in Lω₁ω
+- `IsKappa` predicate characterizing membership in Lκω
+- `isCountable_iff_isKappa_aleph1` (IsCountable ↔ IsKappa ℵ₁)
+
+**Lω₁ω (countable infinitary logic):**
+- Lω₁ω syntax (`BoundedFormulaω` with ℕ-indexed conjunctions/disjunctions)
 - Lω₁ω semantics (`Realize` with simp lemmas for all connectives)
-- Embedding of first-order logic into Lω₁ω
+- Embedding of first-order logic into Lω₁ω (`BoundedFormula.toLω`)
+- Embedding of Lω₁ω into L∞ω (`BoundedFormulaω.toLinf`)
+
+**Scott sentences:**
 - Atomic diagrams for relational languages
 - Back-and-forth equivalence (`BFEquiv`) indexed by ordinals
 - Scott formula and Scott sentence definitions
@@ -27,30 +38,37 @@ The project compiles successfully with Mathlib v4.27.0. Core definitions and mai
 - `scottSentence_characterizes` (main characterization theorem)
 - `scottRank_lt_omega1` (countable bound on Scott rank)
 
-### Remaining Sorries (6)
+### Remaining Sorries (7)
 
-The main theorems above are proven modulo 6 helper lemmas requiring back-and-forth chain constructions:
+The main theorems above are proven modulo 7 helper lemmas requiring back-and-forth chain constructions:
 
 **Sentence.lean:**
-1. `BFEquiv_omega_implies_IsExtensionPair` (line 248) - Extension property from BFEquiv ω
-2. `BFEquiv_omega_implies_equiv` (line 289) - Back-and-forth chain construction
-3. `BFEquiv_ge_omega_singleton_implies_equiv_with_image` (line 523) - Chain preserving initial pair
+1. `BFEquiv_omega_forth_extend` (line 152) - Key helper for chain extension
+2. `BFEquiv_omega_implies_IsExtensionPair` (line 271) - Extension property from BFEquiv ω
+3. `BFEquiv_omega_implies_equiv` (line 312) - Back-and-forth chain construction
+4. `BFEquiv_ge_omega_singleton_implies_equiv_with_image` (line 556) - Chain preserving initial pair
 
 **Rank.lean:**
-4. `stabilizationOrdinal_mem_elementRank_set` (line 70) - Language expansion argument
-5. `stabilizationOrdinal_le_scottRank` (line 227) - Stabilization bound
-6. `scottSentence_eq_scottFormula_rank` (line 260) - Semantic equivalence
+5. `stabilizationOrdinal_mem_elementRank_set` (line 70) - Language expansion argument
+6. `stabilizationOrdinal_le_scottRank` (line 227) - Stabilization bound
+7. `scottSentence_eq_scottFormula_rank` (line 260) - Semantic equivalence
 
 ## File Structure
 
 ```
-CountableInfinitaryLogic/
+InfinitaryLogic/
 ├── Basic.lean                    # Re-exports all modules
-├── Lomega1omega/
-│   ├── Syntax.lean               # BoundedFormulaω inductive type
+├── Linf/                         # L∞ω infrastructure
+│   ├── Syntax.lean               # BoundedFormulaInf with arbitrary index types
 │   ├── Semantics.lean            # Realize function and simp lemmas
-│   └── Operations.lean           # relabel, castLE, subst, FO embedding
-└── Scott/
+│   ├── Operations.lean           # relabel, castLE, subst, FO embedding
+│   └── Countability.lean         # IsCountable, IsKappa predicates
+├── Lomega1omega/                 # Lω₁ω infrastructure
+│   ├── Syntax.lean               # BoundedFormulaω with ℕ-indexed connectives
+│   ├── Semantics.lean            # Realize function and simp lemmas
+│   ├── Operations.lean           # relabel, castLE, subst, FO embedding
+│   └── Embedding.lean            # toLinf embedding into L∞ω
+└── Scott/                        # Scott sentences and rank
     ├── AtomicDiagram.lean        # AtomicIdx, atomicFormula, SameAtomicType
     ├── BackAndForth.lean         # BFEquiv predicate via Ordinal.limitRecOn
     ├── Formula.lean              # scottFormula construction
@@ -59,6 +77,19 @@ CountableInfinitaryLogic/
 ```
 
 ## Key Definitions
+
+### L∞ω Formulas
+
+```lean
+inductive BoundedFormulaInf (L : Language) (α : Type*) : ℕ → Type _
+  | falsum : BoundedFormulaInf α n
+  | equal : L.Term (α ⊕ Fin n) → L.Term (α ⊕ Fin n) → BoundedFormulaInf α n
+  | rel : L.Relations l → (Fin l → L.Term (α ⊕ Fin n)) → BoundedFormulaInf α n
+  | imp : BoundedFormulaInf α n → BoundedFormulaInf α n → BoundedFormulaInf α n
+  | all : BoundedFormulaInf α (n + 1) → BoundedFormulaInf α n
+  | iSup {ι : Type} : (ι → BoundedFormulaInf α n) → BoundedFormulaInf α n  -- arbitrary disjunction
+  | iInf {ι : Type} : (ι → BoundedFormulaInf α n) → BoundedFormulaInf α n  -- arbitrary conjunction
+```
 
 ### Lω₁ω Formulas
 
