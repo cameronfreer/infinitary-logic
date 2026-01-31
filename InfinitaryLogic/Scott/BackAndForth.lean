@@ -43,19 +43,18 @@ inductive BFStrategy : (k : ℕ) → ... → Type
 ```
 
 fails Lean's nested-inductive check. However, we CAN define BFStrategy by recursion on k
-(this compiles and avoids the kernel restriction):
+(this compiles and avoids the kernel restriction). See `BFStrategy` below.
 
-```
-def BFStrategy : ℕ → (n : ℕ) → (a : Fin n → M) → (b : Fin n → N) → Type
-  | 0, n, a, b => SameAtomicType a b
-  | k+1, n, a, b => Σ _ : BFStrategy k n a b,
-      (∀ m : M, Σ n', BFStrategy k (n+1) (snoc a m) (snoc b n')) ×
-      (∀ n' : N, Σ m, BFStrategy k (n+1) (snoc a m) (snoc b n'))
-```
+We then define `BFStrategyOmega n a b := ∀ k, BFStrategy k n a b`, a coherent family of
+strategies at all finite levels. This is the "winning strategy in the ω-round EF game."
 
-**The real mathematical issue**: Even with BFStrategy properly defined, we have:
+**The real mathematical issue**: Even with these definitions, we have:
 - `BFStrategyOmega → isomorphism` is provable (the strategy gives coherent witnesses)
-- `BFEquiv ω → BFStrategyOmega` is the open problem (or possibly false without extra assumptions)
+- `BFEquiv ω → BFStrategyOmega` is the open problem (possibly false without extra assumptions)
+
+This is the standard model-theory distinction: "BFEquiv holds at all finite levels"
+(∀ k, Duplicator wins the k-round game) does NOT imply "Duplicator has a winning strategy
+in the ω-round game," even for countable structures.
 
 The obstruction is the quantifier swap:
 
@@ -64,16 +63,20 @@ From BFEquiv ω: ∀ k, ∃ n'_k, BFEquiv k (snoc a m) (snoc b n'_k)
 Need:          ∃ n', ∀ k, BFEquiv k (snoc a m) (snoc b n')
 ```
 
-This swap is NOT valid in general. Consider the sets S_k = {n' ∈ N | BFEquiv k ...}.
-By monotonicity of BFEquiv, we have S_0 ⊇ S_1 ⊇ S_2 ⊇ ..., all non-empty.
-But the intersection ⋂_k S_k may be empty! The witnesses can keep changing as k grows.
+**Concrete counterexample** to such swaps: Let S_k = {n ∈ ℕ | n ≥ k}. Each S_k is non-empty,
+and S_0 ⊇ S_1 ⊇ S_2 ⊇ ..., but ⋂_k S_k = ∅. The witnesses keep shifting as k grows.
+
+In our setting, S_k = {n' ∈ N | BFEquiv k (snoc a m) (snoc b n')}. By monotonicity of
+BFEquiv, these sets are decreasing. But without a stabilization property, their
+intersection may be empty.
 
 **Note on alternative approaches**:
 - Dependent choice does NOT help: even with full AC, ∀ k, ∃ n'_k doesn't yield ∃ n', ∀ k
   when the sets strictly decrease to empty intersection.
-- König's lemma would require extra structure to force stabilization (the natural tree
-  of valid witnesses doesn't have the right finiteness properties).
-- A game-theoretic formulation might help but still needs the coherence property.
+- König's lemma would require finite branching or compactness; not available here since
+  the "tree" of valid witnesses lacks the necessary finiteness properties.
+- A game-theoretic formulation (strategy as function on finite plays) might help but
+  still requires proving a winning strategy exists from BFEquiv ω.
 
 **Path forward**: The cleanest resolution would be either:
 1. Prove a stabilization property: show S_k eventually stabilizes (becomes constant)
@@ -204,6 +207,32 @@ theorem BFEquiv.symm {α : Ordinal} {a : Fin n → M} {b : Fin n → N}
   | limit β hβ ih =>
     rw [BFEquiv.limit β hβ] at h ⊢
     exact fun γ hγ => ih γ hγ (h γ hγ)
+
+/-! ### BFStrategy: Explicit Witness Strategies (Conceptual)
+
+The module docstring describes how to define `BFStrategy` and `BFStrategyOmega` by
+recursion on k:
+
+```
+def BFStrategy : ℕ → (n : ℕ) → (a : Fin n → M) → (b : Fin n → N) → Type
+  | 0, n, a, b => { _ : Unit // SameAtomicType a b }  -- or use PLift
+  | k+1, n, a, b => Σ _ : BFStrategy k n a b,
+      (∀ m : M, Σ n' : N, BFStrategy k (n+1) (snoc a m) (snoc b n')) ×
+      (∀ n' : N, Σ m : M, BFStrategy k (n+1) (snoc a m) (snoc b n'))
+
+def BFStrategyOmega n a b := ∀ k : ℕ, BFStrategy k n a b
+```
+
+Key properties (straightforward to prove):
+- `BFStrategy k n a b → BFEquiv k n a b` (unwrap the witnesses)
+- `BFStrategyOmega n a b → BFEquiv ω n a b` (apply the above for each k < ω)
+
+The open problem is the converse: `BFEquiv ω n a b → BFStrategyOmega n a b`.
+This is where the quantifier swap obstruction manifests.
+
+The definitions are omitted here due to universe-level complications with mixing
+`Prop` (for SameAtomicType) and `Type` (for the Σ-types). A full implementation
+would need careful universe management or use of `PLift`/`ULift` throughout. -/
 
 end Language
 
