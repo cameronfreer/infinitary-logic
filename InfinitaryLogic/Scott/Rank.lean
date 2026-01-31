@@ -100,6 +100,9 @@ private theorem stabilizationOrdinal_mem_elementRank_set {M : Type w} [L.Structu
   -- Case split on whether stabilizationOrdinal ≥ ω
   by_cases hge : ω ≤ stabilizationOrdinal (L := L) M
   · -- Case: stabilizationOrdinal ≥ ω
+    -- NOTE: This case uses BFEquiv_ge_omega_singleton_implies_equiv_with_image which has
+    -- a sorry. That sorry depends on solving the coherent ω-level extension problem.
+    -- See InfinitaryLogic/Scott/Sentence.lean "Important Limitation" section.
     -- Convert b and b' to ![...] form for the theorem
     have hb_eq : b = ![b 0] := by ext i; fin_cases i; rfl
     have hb'_eq : b' = ![b' 0] := by ext i; fin_cases i; rfl
@@ -134,28 +137,36 @@ private theorem stabilizationOrdinal_mem_elementRank_set {M : Type w} [L.Structu
     exact ⟨fun _ => hBF_succ_N', fun _ => hBF_succ_N⟩
   · -- Case: stabilizationOrdinal < ω
     /-
-    **Language expansion approach**:
+    **BLOCKED**: This case requires additional infrastructure.
 
-    When stabilizationOrdinal < ω, we use language expansion to reduce singleton BFEquiv
-    to empty-tuple BFEquiv in an expanded language.
+    **Attempted approach (language expansion)**:
+    The idea was to use L' = L[[Fin 1]] with constant c interpreted as m in M and b(0) in N.
+    Then BFEquiv L' α 0 [] [] would encode BFEquiv L α 1 ![m] ![b(0)].
 
-    1. Let L' = L with a new constant symbol c (using Language.withConstants or constantsOn)
-    2. Interpret c as m in M, giving M' : L'.Structure
-    3. For any N with BFEquiv α 1 ![m] b, interpret c as b(0) in N, giving N'
-    4. Key lemma: BFEquiv (L') α 0 [] [] ↔ BFEquiv (L) α 1 ![m] b
-       (The constant c encodes the singleton correspondence)
-    5. Apply StabilizesAt at α in L' to the expanded structures:
-       BFEquiv (L') α 0 [] [] ↔ Nonempty (M' ≃[L'] N')
-    6. An L'-isomorphism preserves c, hence sends m ↦ b(0)
-    7. From this L'-isomorphism, extract an L-isomorphism with the same property
+    **Problem**: L' = L[[Fin 1]] has constants (0-ary functions), so it's NOT relational.
+    Our BFEquiv and StabilizesAt machinery assumes [L.IsRelational].
 
-    The technical details require:
-    - Language.withConstants (available in mathlib LanguageMap.lean)
-    - BoundedFormula.constantsVarsEquiv (constants ↔ variables bijection)
-    - Showing StabilizesAt transfers between L and L'
+    **What's needed to complete this case**:
+    Option A: Extend BFEquiv/SameAtomicType to non-relational languages
+      - AtomicIdx would need to include terms built from function symbols
+      - This is significant work and changes the theory's scope
 
-    This approach cleanly handles the case where stabilizationOrdinal < ω by reducing
-    to the 0-tuple case where StabilizesAt applies directly.
+    Option B: Use a different encoding that stays in relational languages
+      - E.g., add a unary relation R_m with R_m(x) ↔ x = m
+      - This requires extending the signature with a relation, not a constant
+      - L' = L.sum (Language.mk₂ Empty (λ _ => Empty) Empty (λ _ => Unit) Empty)
+      - Still requires showing BFEquiv transfers appropriately
+
+    Option C: Prove the ω ≤ stab case works for ALL structures
+      - Show that stabilizationOrdinal M ≥ ω always (i.e., nothing stabilizes before ω)
+      - This would make the finite case vacuously true
+      - Requires understanding when structures can stabilize early
+
+    Option D: Prove elementRank m ≤ stabilizationOrdinal M directly
+      - Without going through the membership condition
+      - Use the definition of elementRank as an infimum
+
+    For now, this sorry blocks the proof of scottRank_lt_omega1.
     -/
     sorry
 
@@ -223,67 +234,46 @@ theorem stabilizationOrdinal_lt_omega1 (M : Type w) [L.Structure M] [Countable M
 
 Note: This theorem involves comparing ordinals potentially in different universes
 (stabilizationOrdinal is in Ordinal.{0}, scottRank is in Ordinal.{w}).
-The comparison is well-defined when both ordinals are below ω₁. -/
+The comparison is well-defined when both ordinals are below ω₁.
+
+**BLOCKED**: This theorem requires showing StabilizesAt M (scottRank M). This in turn
+requires showing that BFEquiv0 at scottRank implies isomorphism, which has the same
+issues as BFEquiv_omega_implies_equiv (coherent ω-level extensions).
+
+The proof strategy would be:
+1. Show StabilizesAt M (scottRank M)
+2. Apply csInf_le' to get stabilizationOrdinal ≤ scottRank
+
+Step 1 requires proving BFEquiv0 (scottRank) → isomorphism, which needs either:
+- A working BFEquiv_omega_implies_equiv, or
+- The strategy-based BFEquiv approach
+
+See InfinitaryLogic/Scott/Sentence.lean "Important Limitation" section. -/
 theorem stabilizationOrdinal_le_scottRank (M : Type w) [L.Structure M] [Countable M] :
     stabilizationOrdinal (L := L) M ≤ scottRank (L := L) M := by
-  /-
-  **Proof strategy**: Show StabilizesAt M (scottRank M), then use csInf_le'.
-
-  Key insight: At scottRank, every element m has elementRank m + 1 ≤ scottRank.
-  The elementRank property ensures that at elementRank m, BFEquiv behavior is determined.
-  Thus at scottRank, all elements have "stabilized" and we can build isomorphisms.
-
-  Steps:
-  1. elementRank m ≤ stabilizationOrdinal M for all m (by csInf_le')
-  2. scottRank M = ⨆ m, elementRank m + 1
-  3. For StabilizesAt (scottRank M), show BFEquiv0 (scottRank) ↔ Nonempty (M ≃[L] N)
-     - Forward: BFEquiv0 (scottRank) ⟹ isomorphism via back-and-forth
-       At scottRank, each element m has been "handled" (elementRank m < scottRank)
-       The extension property holds because succ behavior is determined
-     - Backward: isomorphism ⟹ BFEquiv at all levels (equiv_implies_BFEquiv)
-
-  4. Apply csInf_le' to conclude stabilizationOrdinal ≤ scottRank
-
-  **Alternative bound**: From the definitions:
-  - stabilizationOrdinal M ≤ ω (since ω is in the stabilization set)
-  - scottRank M ≥ ⨆ m, elementRank m + 1
-  - If we can show elementRank m ≥ some bound related to stabilizationOrdinal,
-    we get the inequality directly
-  -/
   sorry
 
 /-- The Scott sentence can be taken at the Scott rank level.
 
 Both scottSentence (at stabilizationOrdinal) and scottFormula at scottRank characterize
 the same class of structures (those isomorphic to M), so they are equivalent sentences.
--/
+
+**BLOCKED**: This theorem depends on `stabilizationOrdinal_le_scottRank` which requires
+showing StabilizesAt at scottRank level. That has the same issues as the main
+BFEquiv_omega_implies_equiv theorem.
+
+**Note on theorem statement**: This states syntactic equality of formulas. For this to hold,
+we'd need stabilizationOrdinal = scottRank. Otherwise, we can only prove SEMANTIC equivalence:
+both formulas characterize the same class of structures.
+
+Once the blockers are resolved, the proof would use:
+1. stabilizationOrdinal_le_scottRank to compare ordinals
+2. BFEquiv.monotone to transfer between levels
+3. stabilizationOrdinal_stabilizes for the characterization at stab level
+
+See InfinitaryLogic/Scott/Sentence.lean "Important Limitation" section. -/
 theorem scottSentence_eq_scottFormula_rank (M : Type w) [L.Structure M] [Countable M] :
     scottSentence (L := L) M = scottFormula (L := L) (M := M) Fin.elim0 (scottRank (L := L) M) := by
-  /-
-  **Proof strategy**: Semantic equivalence via BFEquiv monotonicity.
-
-  Both formulas are realized by exactly the same countable structures (those ≃[L] M).
-
-  Key steps:
-  1. scottSentence M = scottFormula Fin.elim0 (stabilizationOrdinal M) (by definition)
-  2. scottFormula at level α is realized by N iff BFEquiv0 α M N (realize_scottFormula_iff_BFEquiv)
-  3. StabilizesAt (stabilizationOrdinal M) means: BFEquiv0 (stab) ↔ Nonempty (M ≃[L] N)
-  4. From stabilizationOrdinal_le_scottRank: stabilizationOrdinal ≤ scottRank
-  5. BFEquiv is monotone in the ordinal level:
-     - BFEquiv0 (scottRank) ⟹ BFEquiv0 (stab) (by monotonicity)
-     - BFEquiv0 (stab) ⟹ isomorphism (by StabilizesAt)
-     - isomorphism ⟹ BFEquiv0 (scottRank) (by equiv_implies_BFEquiv)
-  6. Therefore both formulas define the same class of countable structures
-
-  **For definitional equality**:
-  - If scottRank = stabilizationOrdinal, we're done by definition
-  - Otherwise, need Formulaω extensionality or weaken to semantic equivalence:
-    ∀ N [L.Structure N] [Countable N],
-      (scottSentence M).Realize (Fin.elim0 : Fin 0 → N) ↔
-      (scottFormula Fin.elim0 (scottRank M)).Realize (Fin.elim0 : Fin 0 → N)
-
-  The proof uses the characterization theorems from Sentence.lean.
-  -/
   sorry
 
 end Language

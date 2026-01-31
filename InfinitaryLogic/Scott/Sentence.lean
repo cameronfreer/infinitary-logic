@@ -494,32 +494,48 @@ theorem BFEquiv_omega_implies_equiv {M N : Type w} [L.Structure M] [L.Structure 
   -- The formal details require dependent choice infrastructure.
   -- For now, we use the established mathematical content to complete the proof.
 
-  -- Use hBF to get matching tuples at each stage and build the isomorphism:
-  haveI h_M_cg : Structure.CG L M := Structure.cg_of_countable
-  haveI h_N_cg : Structure.CG L N := Structure.cg_of_countable
+  /-
+  **Coherent Back-and-Forth Chain Construction**
 
-  -- Build the isomorphism via back-and-forth at level ω.
-  -- The key lemma is that from BFEquiv ω, we can always extend partial matchings.
-  -- This follows from the definition of BFEquiv at successor ordinals.
+  The key insight is that we need to build a SINGLE coherent chain, not independent
+  matchings at each level. Here's how:
 
-  -- From matchM and matchN, we know matching tuples exist for any finite prefix.
-  -- The coherent chain construction (via dependent choice) builds the isomorphism.
+  1. Define a chain type: ChainState k = {(a : Fin k → M) × (b : Fin k → N) // BFEquiv (ω - k) k a b}
+     where the BFEquiv level decreases as tuple size increases.
 
-  -- We construct the bijection f : M → N as follows:
-  -- Define firstIndexM : M → ℕ such that enumM (firstIndexM m) = m
-  -- Then f(m) = (Classical.choose (matchM (firstIndexM m + 1))) (Fin.last (firstIndexM m))
+  2. Extension step: From ChainState k with BFEquiv (ω - k) k a b, we can extend to
+     ChainState (k+1) using forth or back (since ω - k > 0, we have successor structure).
 
-  -- For injectivity: if f(m₁) = f(m₂), then the SameAtomicType condition
-  -- implies that m₁ and m₂ satisfy the same equality predicates as their images.
-  -- Since f(m₁) = f(m₂), the equality m₁ = m₂ must hold (by SameAtomicType).
+  3. The sequence of ChainStates forms a coherent chain where each step extends the previous.
 
-  -- For surjectivity: use the back direction (matchN) to show every n ∈ N
-  -- is in the range of some matching tuple, hence in the range of f.
+  4. Taking the limit: Define f(enumM i) = b(i) for the k-th chain state where k > i.
 
-  -- For relation preservation: SameAtomicType ensures all relations are preserved.
+  However, the decreasing ordinal trick requires ordinal subtraction which complicates things.
+  Alternative: Use that BFEquiv ω n a b implies BFEquiv k n a b for all k < ω.
 
-  -- The formal construction requires tracking coherence carefully.
-  -- This is the standard back-and-forth argument for countable structures.
+  **Better approach**: Build the chain using BFEquiv_iterate_forth directly but track
+  that the construction is COHERENT across different calls.
+
+  Actually, looking at BFEquiv_iterate_forth more carefully:
+  - It returns ∃ ns : Fin n → N, BFEquiv k n ms ns
+  - The ns is constructed by EXTENDING at each step using forth
+  - So for a FIXED ms (our enumeration), calling with n and n+1 would give
+    consistent results IF we use the same extension choices.
+
+  The issue is Classical.choose might give different answers. What we need is to
+  show that any ns satisfying BFEquiv 0 n ms ns has the same SameAtomicType,
+  and we can pick a canonical representative.
+
+  For now, we defer to the existing helper theorems and note that completing this
+  proof requires either:
+  1. A strategy-based BFEquiv definition (making extension deterministic)
+  2. A proof that the limit construction is well-defined regardless of choices
+  3. Use of mathlib's equiv_between_cg with a weaker IsExtensionPair for BFEquiv-derived equivs
+  -/
+
+  -- The mathematical argument is sound; the formal construction needs more infrastructure.
+  -- For the main theorem scottSentence_characterizes, we can use stabilizationOrdinal_spec
+  -- which will be established once the Rank.lean machinery is complete.
 
   sorry
 
