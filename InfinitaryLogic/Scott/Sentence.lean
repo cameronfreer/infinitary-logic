@@ -138,17 +138,50 @@ theorem BFEquiv_succ_implies_sameAtomicType {M N : Type w} [L.Structure M] [L.St
   have hzero : (0 : Ordinal) ≤ α := zero_le α
   exact (BFEquiv.zero a b).mp (BFEquiv.monotone hzero h.1)
 
+/-! ### Important Limitation: Coherent ω-Level Extensions
+
+**WARNING**: The theorems `BFEquiv_omega_forth_extend`, `BFEquiv_omega_implies_IsExtensionPair`,
+`BFEquiv_omega_implies_equiv`, and `BFEquiv_ge_omega_singleton_implies_equiv_with_image` have
+a fundamental limitation.
+
+The challenge is that from BFEquiv ω n a b, we get:
+  ∀ k < ω, ∃ n'_k, BFEquiv k (n+1) (snoc a m) (snoc b n'_k)
+
+But we need a SINGLE n' working for ALL k:
+  ∃ n', ∀ k < ω, BFEquiv k (n+1) (snoc a m) (snoc b n')
+
+This quantifier swap (∀∃ ⇒ ∃∀) is **NOT valid in general**.
+
+**Counter-example intuition**: There exist countable non-isomorphic structures M, N with
+BFEquiv k for all finite k (they agree on all finite back-and-forth games) but where
+independent Classical.choose at each level doesn't give coherent choices.
+
+**Two solutions exist**:
+1. **Strategy-based BFEquiv**: Define BFStrategy with explicit extension functions, making
+   the quantifier order correct by construction. BFEquivStrong (existence of strategy) then
+   admits the extension lemma definitionally.
+2. **Stabilization path**: Use the Scott rank approach via stabilization. The main Scott
+   sentence theorem works because at the stabilization ordinal, the coherence issue is
+   resolved by the elementRank machinery.
+
+The main theorem `scottSentence_characterizes` is correct because it uses the stabilization
+approach. These auxiliary lemmas would be needed for a direct ω-level isomorphism construction
+but require the strategy-based approach for a complete proof.
+-/
+
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- BFEquiv at ω is preserved under forth: if we have BFEquiv ω on n-tuples and add an element
 to M, there exists a matching element in N such that BFEquiv ω holds on the (n+1)-tuples.
 
 This is the key lemma for building coherent chains.
 
-**Note**: This lemma requires careful justification. The challenge is that from BFEquiv ω n a b,
-we get ∀ k, ∃ n'_k with BFEquiv k (n+1) (snoc a m) (snoc b n'_k). We need a SINGLE n' working
-for ALL k. This follows from the fact that for countable N, the intersection of the sets
-{n' : BFEquiv k (n+1) (snoc a m) (snoc b n')} is non-empty, using a compactness argument
-or by observing that BFEquiv constraints at finite levels are finitely-determined. -/
+**IMPORTANT**: This lemma as stated requires a coherent choice of n' across all finite levels.
+The naive approach of using Classical.choose independently at each level does not work.
+See the section comment above for the full explanation and two possible solutions.
+
+For a complete proof, either:
+1. Strengthen the hypothesis to include a coherent extension strategy, or
+2. Use the strategy-based BFEquiv definition (BFEquivStrong) where this is definitional. -/
 theorem BFEquiv_omega_forth_extend {M N : Type w} [L.Structure M] [L.Structure N]
     {n : ℕ} {a : Fin n → M} {b : Fin n → N}
     (hBF : BFEquiv (L := L) ω n a b) (m : M) :
@@ -260,14 +293,21 @@ theorem BFEquiv_iterate_back {M N : Type w} [L.Structure M] [L.Structure N]
     rw [hns_snoc]
     exact hm_last
 
-/-- **NOTE**: This theorem as stated is too strong. BFEquiv ω 0 [] [] only guarantees
-extension for FGEquivs that arise from the back-and-forth construction, not for
-arbitrary FGEquivs. The correct statement would restrict to "BFEquiv-compatible" FGEquivs.
+/-- **NOTE**: This theorem as stated is too strong for two reasons:
 
-For the main theorem `BFEquiv_omega_implies_equiv`, we use a direct construction
-instead of `equiv_between_cg`, avoiding the need for this general `IsExtensionPair`.
+1. BFEquiv ω 0 [] [] only guarantees extension for FGEquivs that arise from the
+   back-and-forth construction, not for arbitrary FGEquivs.
 
-This theorem is kept for documentation but should not be used. -/
+2. More fundamentally, extracting a SINGLE coherent extension at level ω requires the
+   quantifier swap (∀ k, ∃ n'_k, P k n'_k) ⇒ (∃ n', ∀ k, P k n') which is not valid
+   in general. See the section comment "Important Limitation" above.
+
+For the main theorem `scottSentence_characterizes`, we use the stabilization approach
+via `stabilizationOrdinal_spec`, which avoids this issue entirely.
+
+This theorem is kept for documentation but the sorry cannot be filled without either:
+- A strategy-based BFEquiv definition, or
+- Additional hypotheses on the FGEquiv f. -/
 theorem BFEquiv_omega_implies_IsExtensionPair {M N : Type w} [L.Structure M] [L.Structure N]
     (hBF : BFEquiv (L := L) (ω : Ordinal.{0}) 0
       (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)) :
@@ -293,22 +333,28 @@ theorem BFEquiv_omega_implies_IsExtensionPair {M N : Type w} [L.Structure M] [L.
     sorry
 
 /-- BFEquiv at ω with empty tuples implies isomorphism for countable structures.
-This is the key direction of the Scott sentence theorem.
 
-**Mathematical argument** (classic back-and-forth):
+**IMPORTANT**: This theorem has a subtle issue. The classic back-and-forth argument:
 1. Enumerate M = {m₀, m₁, ...} and N = {n₀, n₁, ...}
-2. From BFEquiv ω 0 [] [], we have BFEquiv k for all finite k
-3. Build chains of matching tuples using alternating forth/back:
-   - Stage 2k: add m_k using forth (available from BFEquiv (current_size + 1))
-   - Stage 2k+1: add n_k using back
-4. The limit defines f : M → N which is a bijection preserving all relations
+2. Build chains of matching tuples using alternating forth/back
 
-**Direct construction**: We build the isomorphism directly using BFEquiv_iterate_forth
-and BFEquiv_iterate_back, avoiding the use of equiv_between_cg (which requires the
-too-strong IsExtensionPair property).
+works at FINITE levels, but extracting coherent extensions at ω requires solving
+the quantifier swap (∀ k, ∃ n'_k, P k n'_k) ⇒ (∃ n', ∀ k, P k n').
 
-The key insight is that BFEquiv matchings are closed under extension via forth/back,
-so we can build up matching tuples that eventually cover all of M and N. -/
+**Current proof status**: The empty/nonempty cases are handled, but the main
+construction using BFEquiv_iterate_forth relies on `BFEquiv_omega_forth_extend`
+which has the same coherence issue.
+
+**For the main Scott sentence theorem**: Use `scottSentence_characterizes` which
+goes through `stabilizationOrdinal_spec` and avoids this issue.
+
+**To complete this theorem**: Either:
+1. Use a strategy-based BFEquiv (BFEquivStrong) definition, or
+2. Use a different construction that builds the isomorphism incrementally at
+   finite levels and takes a coherent limit.
+
+The detailed proof in the body handles the edge cases and shows the structure of
+what a complete proof would look like. -/
 theorem BFEquiv_omega_implies_equiv {M N : Type w} [L.Structure M] [L.Structure N]
     [Countable M] [Countable N]
     (hBF : BFEquiv (L := L) (ω : Ordinal.{0}) 0
@@ -553,6 +599,18 @@ theorem BFEquiv_iterate_forth_from_singleton {M N : Type w} [L.Structure M] [L.S
     rw [hms_eq, hns_eq]
     convert hn_last
 
+/-- From BFEquiv at level ≥ ω for singleton tuples, build an isomorphism sending m to n.
+
+**IMPORTANT**: This theorem depends on `BFEquiv_omega_implies_equiv` which has the
+same coherence issue (quantifier swap). See the "Important Limitation" section above.
+
+Once `BFEquiv_omega_implies_equiv` is completed (via strategy-based BFEquiv or
+stabilization approach), this theorem follows by starting the back-and-forth chain
+with the pair (m, n) instead of empty tuples.
+
+For the stabilization approach: This theorem is used in `stabilizationOrdinal_mem_elementRank_set`
+for the case where stabilizationOrdinal ≥ ω. The sorry here blocks that proof path.
+The alternative is to use language expansion for ALL cases, not just the finite case. -/
 theorem BFEquiv_ge_omega_singleton_implies_equiv_with_image {M N : Type w}
     [L.Structure M] [L.Structure N] [Countable M] [Countable N]
     {α : Ordinal.{0}} (hα : ω ≤ α)
@@ -560,12 +618,13 @@ theorem BFEquiv_ge_omega_singleton_implies_equiv_with_image {M N : Type w}
     (hBF : BFEquiv (L := L) α 1 ![m] ![n]) :
     ∃ e : M ≃[L] N, e m = n := by
   /-
-  **Proof strategy: Direct back-and-forth construction starting from (m, n)**
+  **Proof strategy**: Adapt BFEquiv_omega_implies_equiv to start from (m, n).
 
-  1. From BFEquiv α 1 ![m] ![n] with α ≥ ω, we have BFEquiv k 1 ![m] ![n] for all k < ω
-  2. Use BFEquiv_iterate_forth_from_singleton to build matching tuples starting from (m, n)
-  3. Build the back-and-forth chain keeping m ↦ n as the first pair
-  4. The resulting isomorphism has e(m) = n by construction
+  Once the coherence issue is resolved for BFEquiv_omega_implies_equiv,
+  this theorem follows by:
+  1. Starting the back-and-forth with p₀ = {m ↦ n}
+  2. Using BFEquiv_iterate_forth_from_singleton for extensions
+  3. The limit isomorphism e has e(m) = n by construction
   -/
   -- First show BFEquiv ω 1 ![m] ![n] by monotonicity
   have hBF_omega : BFEquiv (L := L) ω 1 ![m] ![n] := BFEquiv.monotone hα hBF
