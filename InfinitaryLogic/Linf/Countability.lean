@@ -114,6 +114,55 @@ theorem isCountable_iff_isKappa_aleph1 {φ : L.BoundedFormulaInf α n} :
     IsCountable φ ↔ IsKappa (Cardinal.aleph 1) φ :=
   ⟨IsCountable.toIsKappa_aleph1, IsKappa.toIsCountable⟩
 
+/-- The supremum of cardinalities of all index types appearing in iSup/iInf constructors.
+This bounds the "size" of the formula's infinitary structure. -/
+noncomputable def indexBound : ∀ {n}, L.BoundedFormulaInf α n → Cardinal
+  | _, .falsum => 0
+  | _, .equal _ _ => 0
+  | _, .rel _ _ => 0
+  | _, .imp φ ψ => max (indexBound φ) (indexBound ψ)
+  | _, .all φ => indexBound φ
+  | _, .iSup (ι := ι) φs => max (Cardinal.mk ι) (⨆ i, indexBound (φs i))
+  | _, .iInf (ι := ι) φs => max (Cardinal.mk ι) (⨆ i, indexBound (φs i))
+
+/-- Every formula belongs to L_(indexBound φ + 1)ω. -/
+theorem isKappa_succ_indexBound (φ : L.BoundedFormulaInf α n) :
+    IsKappa (Order.succ (indexBound φ)) φ := by
+  induction φ with
+  | falsum => exact IsKappa.falsum
+  | equal t₁ t₂ => exact IsKappa.equal t₁ t₂
+  | rel R ts => exact IsKappa.rel R ts
+  | imp φ ψ ih₁ ih₂ =>
+    simp only [indexBound]
+    exact IsKappa.imp
+      (ih₁.mono (Order.succ_le_succ (le_max_left _ _)))
+      (ih₂.mono (Order.succ_le_succ (le_max_right _ _)))
+  | all φ ih =>
+    simp only [indexBound]
+    exact IsKappa.all ih
+  | iSup φs ih =>
+    simp only [indexBound]
+    apply IsKappa.iSup
+    · exact Order.lt_succ_of_le (le_max_left _ _)
+    · intro i
+      apply (ih i).mono
+      apply Order.succ_le_succ
+      apply le_trans _ (le_max_right _ _)
+      exact le_ciSup (Cardinal.bddAbove_range _) i
+  | iInf φs ih =>
+    simp only [indexBound]
+    apply IsKappa.iInf
+    · exact Order.lt_succ_of_le (le_max_left _ _)
+    · intro i
+      apply (ih i).mono
+      apply Order.succ_le_succ
+      apply le_trans _ (le_max_right _ _)
+      exact le_ciSup (Cardinal.bddAbove_range _) i
+
+/-- Every L∞ω formula belongs to some Lκω. This establishes L∞ω as the union of all Lκω. -/
+theorem exists_isKappa (φ : L.BoundedFormulaInf α n) : ∃ κ : Cardinal, IsKappa κ φ :=
+  ⟨Order.succ (indexBound φ), isKappa_succ_indexBound φ⟩
+
 end BoundedFormulaInf
 
 end Language

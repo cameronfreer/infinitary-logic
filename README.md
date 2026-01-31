@@ -22,12 +22,15 @@ The project compiles successfully with Mathlib v4.27.0. Core definitions and mai
 - `IsCountable` predicate characterizing membership in Lω₁ω
 - `IsKappa` predicate characterizing membership in Lκω
 - `isCountable_iff_isKappa_aleph1` (IsCountable ↔ IsKappa ℵ₁)
+- `indexBound` computing maximum index type cardinality
+- `exists_isKappa` (union view: every L∞ω formula belongs to some Lκω)
 
 **Lω₁ω (countable infinitary logic):**
 - Lω₁ω syntax (`BoundedFormulaω` with ℕ-indexed conjunctions/disjunctions)
 - Lω₁ω semantics (`Realize` with simp lemmas for all connectives)
 - Embedding of first-order logic into Lω₁ω (`BoundedFormula.toLω`)
 - Embedding of Lω₁ω into L∞ω (`BoundedFormulaω.toLinf`)
+- Conversion from countable L∞ω to Lω₁ω (`BoundedFormulaInf.ofCountable`)
 
 **Scott sentences:**
 - Atomic diagrams for relational languages
@@ -67,7 +70,7 @@ InfinitaryLogic/
 │   ├── Syntax.lean               # BoundedFormulaω with ℕ-indexed connectives
 │   ├── Semantics.lean            # Realize function and simp lemmas
 │   ├── Operations.lean           # relabel, castLE, subst, FO embedding
-│   └── Embedding.lean            # toLinf embedding into L∞ω
+│   └── Embedding.lean            # toLinf, ofCountable conversions
 └── Scott/                        # Scott sentences and rank
     ├── AtomicDiagram.lean        # AtomicIdx, atomicFormula, SameAtomicType
     ├── BackAndForth.lean         # BFEquiv predicate via Ordinal.limitRecOn
