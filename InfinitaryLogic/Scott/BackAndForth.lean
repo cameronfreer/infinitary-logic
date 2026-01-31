@@ -19,6 +19,8 @@ indexed by ordinals. This is the semantic predicate that corresponds to Scott fo
 
 - `BFEquiv.zero_iff_sameAtomicType`: At level 0, BF-equivalence is atomic type equivalence.
 - `BFEquiv.monotone`: BF-equivalence at higher ordinals implies equivalence at lower ordinals.
+- `BFEquiv.forth`/`BFEquiv.back`: Extension properties at successor ordinals.
+- `BFEquiv.symm`: BF-equivalence is symmetric.
 
 ## Implementation Notes
 
@@ -26,6 +28,59 @@ We use `Ordinal.limitRecOn` for the definition, which requires handling three ca
 - Zero: same atomic type
 - Successor `Order.succ α`: equivalence at α plus forth and back conditions
 - Limit (with `Order.IsSuccLimit`): equivalence at all smaller ordinals
+
+## Known Limitation: ω-Level Coherence and Quantifier Swap
+
+A natural approach to proving `BFEquiv_omega_implies_equiv` (BF-equivalence at ω implies
+isomorphism) is to define a "strategy" type that carries explicit witnesses instead of
+just existence claims. The inductive definition:
+
+```
+inductive BFStrategy : (k : ℕ) → ... → Type
+  | zero : SameAtomicType a b → BFStrategy 0 n a b
+  | succ : BFStrategy k n a b →
+           (forth : (m : M) → Σ n', BFStrategy k (n+1) ...) → ...
+```
+
+fails Lean's nested-inductive check. However, we CAN define BFStrategy by recursion on k
+(this compiles and avoids the kernel restriction):
+
+```
+def BFStrategy : ℕ → (n : ℕ) → (a : Fin n → M) → (b : Fin n → N) → Type
+  | 0, n, a, b => SameAtomicType a b
+  | k+1, n, a, b => Σ _ : BFStrategy k n a b,
+      (∀ m : M, Σ n', BFStrategy k (n+1) (snoc a m) (snoc b n')) ×
+      (∀ n' : N, Σ m, BFStrategy k (n+1) (snoc a m) (snoc b n'))
+```
+
+**The real mathematical issue**: Even with BFStrategy properly defined, we have:
+- `BFStrategyOmega → isomorphism` is provable (the strategy gives coherent witnesses)
+- `BFEquiv ω → BFStrategyOmega` is the open problem (or possibly false without extra assumptions)
+
+The obstruction is the quantifier swap:
+
+```
+From BFEquiv ω: ∀ k, ∃ n'_k, BFEquiv k (snoc a m) (snoc b n'_k)
+Need:          ∃ n', ∀ k, BFEquiv k (snoc a m) (snoc b n')
+```
+
+This swap is NOT valid in general. Consider the sets S_k = {n' ∈ N | BFEquiv k ...}.
+By monotonicity of BFEquiv, we have S_0 ⊇ S_1 ⊇ S_2 ⊇ ..., all non-empty.
+But the intersection ⋂_k S_k may be empty! The witnesses can keep changing as k grows.
+
+**Note on alternative approaches**:
+- Dependent choice does NOT help: even with full AC, ∀ k, ∃ n'_k doesn't yield ∃ n', ∀ k
+  when the sets strictly decrease to empty intersection.
+- König's lemma would require extra structure to force stabilization (the natural tree
+  of valid witnesses doesn't have the right finiteness properties).
+- A game-theoretic formulation might help but still needs the coherence property.
+
+**Path forward**: The cleanest resolution would be either:
+1. Prove a stabilization property: show S_k eventually stabilizes (becomes constant)
+2. Work with BFStrategyOmega directly as the hypothesis for isomorphism theorems
+3. Add structure to the problem that forces uniform witnesses
+
+For now, the ω-level coherence proofs remain incomplete (marked with `sorry`).
 -/
 
 universe u v w w'
