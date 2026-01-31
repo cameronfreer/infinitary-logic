@@ -84,14 +84,15 @@ InfinitaryLogic/
 ### L∞ω Formulas
 
 ```lean
-inductive BoundedFormulaInf (L : Language) (α : Type*) : ℕ → Type _
+-- Index types live in universe uι (parameterized)
+inductive BoundedFormulaInf (L : Language) (α : Type u') : ℕ → Type (max u v u' (uι + 1))
   | falsum : BoundedFormulaInf α n
   | equal : L.Term (α ⊕ Fin n) → L.Term (α ⊕ Fin n) → BoundedFormulaInf α n
   | rel : L.Relations l → (Fin l → L.Term (α ⊕ Fin n)) → BoundedFormulaInf α n
   | imp : BoundedFormulaInf α n → BoundedFormulaInf α n → BoundedFormulaInf α n
   | all : BoundedFormulaInf α (n + 1) → BoundedFormulaInf α n
-  | iSup {ι : Type} : (ι → BoundedFormulaInf α n) → BoundedFormulaInf α n  -- arbitrary disjunction
-  | iInf {ι : Type} : (ι → BoundedFormulaInf α n) → BoundedFormulaInf α n  -- arbitrary conjunction
+  | iSup {ι : Type uι} : (ι → BoundedFormulaInf α n) → BoundedFormulaInf α n  -- arbitrary disjunction
+  | iInf {ι : Type uι} : (ι → BoundedFormulaInf α n) → BoundedFormulaInf α n  -- arbitrary conjunction
 ```
 
 ### Lω₁ω Formulas

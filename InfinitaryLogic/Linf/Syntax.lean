@@ -24,12 +24,12 @@ L∞ω is the union of all Lκω for cardinals κ. Each formula belongs to some 
 the cardinality of all index sets used in infinitary connectives. The `IsKappa` predicate
 characterizes membership in Lκω; `IsCountable` is the special case for Lω₁ω.
 
-The formulas are defined with `ι : Type` (universe 0) as the index type for iSup/iInf.
-This is sufficient for most applications and avoids universe issues. For higher universes,
-one would need a universe-polymorphic definition.
+The formulas are parameterized by a universe `uι` for index types. All index types in iSup/iInf
+must live in `Type uι`. Choose `uι` large enough for your application; for countable logic,
+`uι = 0` suffices.
 -/
 
-universe u v u'
+universe u v u' uι
 
 namespace FirstOrder
 
@@ -39,8 +39,8 @@ variable (L : Language.{u, v})
 
 /-- L∞ω bounded formulas: first-order formulas extended with arbitrary conjunctions and
 disjunctions. `BoundedFormulaInf L α n` has free variables indexed by `α` and `n` bound variables.
-The index type `ι` for iSup/iInf is `Type` (universe 0). -/
-inductive BoundedFormulaInf (α : Type u') : ℕ → Type max u v u' 1 where
+The index type `ι` for iSup/iInf lives in universe `uι`. -/
+inductive BoundedFormulaInf (α : Type u') : ℕ → Type max u v u' (uι + 1) where
   /-- The false formula. -/
   | falsum {n} : BoundedFormulaInf α n
   /-- Equality of two terms. -/
@@ -51,10 +51,10 @@ inductive BoundedFormulaInf (α : Type u') : ℕ → Type max u v u' 1 where
   | imp {n} (φ ψ : BoundedFormulaInf α n) : BoundedFormulaInf α n
   /-- Universal quantification. -/
   | all {n} (φ : BoundedFormulaInf α (n + 1)) : BoundedFormulaInf α n
-  /-- Arbitrary-indexed disjunction (supremum). The index type is `Type` (universe 0). -/
-  | iSup {n} {ι : Type} (φs : ι → BoundedFormulaInf α n) : BoundedFormulaInf α n
-  /-- Arbitrary-indexed conjunction (infimum). The index type is `Type` (universe 0). -/
-  | iInf {n} {ι : Type} (φs : ι → BoundedFormulaInf α n) : BoundedFormulaInf α n
+  /-- Arbitrary-indexed disjunction (supremum). The index type lives in universe `uι`. -/
+  | iSup {n} {ι : Type uι} (φs : ι → BoundedFormulaInf α n) : BoundedFormulaInf α n
+  /-- Arbitrary-indexed conjunction (infimum). The index type lives in universe `uι`. -/
+  | iInf {n} {ι : Type uι} (φs : ι → BoundedFormulaInf α n) : BoundedFormulaInf α n
 
 /-- L∞ω formulas with no bound variables in scope. -/
 abbrev FormulaInf (α : Type u') := L.BoundedFormulaInf α 0
