@@ -750,6 +750,139 @@ theorem BFEquiv_omega_implies_equiv {M N : Type w} [L.Structure M] [L.Structure 
   -- Alternative: use BFStrategyOmega_implies_equiv with a strategy hypothesis.
   sorry
 
+/-- General iteration: from strategy at level sz for n-tuples, extend by sz elements.
+
+This is the core workhorse that handles arbitrary starting tuples. The key properties:
+- Level decreases by 1 for each forth application
+- Tuple size increases by 1 for each forth application
+- After sz applications, level is 0 (gives SameAtomicType)
+
+Returns ns : Fin sz → N and a proof of SameAtomicType for the extended tuples. -/
+noncomputable def iterateForthGeneral {M N : Type w} [L.Structure M] [L.Structure N] :
+    (sz n : ℕ) → (a : Fin n → M) → (b : Fin n → N) →
+    (strat : BFStrategyT L M N sz n a b) → (ms : Fin sz → M) →
+    { ns : Fin sz → N // SameAtomicType (L := L) (Fin.append a ms) (Fin.append b ns) } := by
+  intro sz
+  induction sz with
+  | zero =>
+    intro n a b strat ms
+    -- sz = 0: no elements to add, strat is already at level 0
+    refine ⟨Fin.elim0, ?_⟩
+    -- Need: SameAtomicType (Fin.append a Fin.elim0) (Fin.append b Fin.elim0)
+    -- strat : BFStrategyT 0 n a b = { _ : PUnit // SameAtomicType a b }
+    have hms : ms = Fin.elim0 := funext (fun i => i.elim0)
+    subst hms
+    -- Fin.append a Fin.elim0 = a (after identifying n + 0 with n)
+    convert strat.property using 2 <;>
+    · ext i
+      simp only [Fin.append, Fin.addCases]
+      have hi : (i : ℕ) < n := i.isLt
+      simp [hi, Fin.castLT]
+  | succ sz ih =>
+    intro n a b strat ms
+    -- strat : BFStrategyT (sz+1) n a b
+    -- ms : Fin (sz+1) → M
+    obtain ⟨_, forth, _⟩ := strat
+    let m₀ := ms 0
+    obtain ⟨n₀, strat_ext⟩ := forth m₀
+    -- strat_ext : BFStrategyT sz (n+1) (Fin.snoc a m₀) (Fin.snoc b n₀)
+    let ms' : Fin sz → M := ms ∘ Fin.succ
+    -- Apply IH with n' = n+1
+    obtain ⟨ns', sat_ext⟩ := ih (n + 1) (Fin.snoc a m₀) (Fin.snoc b n₀) strat_ext ms'
+    -- ns' : Fin sz → N
+    -- sat_ext : SameAtomicType (Fin.append (Fin.snoc a m₀) ms')
+    --                          (Fin.append (Fin.snoc b n₀) ns')
+    let ns : Fin (sz + 1) → N := Fin.cons n₀ ns'
+    refine ⟨ns, ?_⟩
+    -- Key: Fin.append a (Fin.cons m₀ ms') = Fin.append (Fin.snoc a m₀) ms' (after reindexing)
+    have hms_eq : ms = Fin.cons m₀ ms' := by
+      ext i; cases i using Fin.cases <;> rfl
+    have hns_eq : ns = Fin.cons n₀ ns' := rfl
+    rw [hms_eq, hns_eq]
+    have hsize : n + (sz + 1) = (n + 1) + sz := by omega
+    -- The key identity: appending (a, cons m₀ ms') = appending (snoc a m₀, ms') after reindexing
+    -- Use SameAtomicType.relabel with explicit index computation
+    -- The key identity: appending (a, cons m₀ ms') = appending (snoc a m₀, ms') after reindexing
+    -- Both represent the same (n + sz + 1)-tuple: a(0), ..., a(n-1), m₀, ms'(0), ..., ms'(sz-1)
+    -- The Fin index manipulation is tedious bookkeeping; the mathematical content is that
+    -- these tuples contain the same elements in the same order.
+    -- sat_ext gives: SameAtomicType (Fin.append (Fin.snoc a m₀) ms') (Fin.append (Fin.snoc b n₀) ns')
+    -- We need:      SameAtomicType (Fin.append a (Fin.cons m₀ ms')) (Fin.append b (Fin.cons n₀ ns'))
+    -- These are the same tuples, just with different Fin indexing conventions.
+    -- The conversion is: Fin.snoc a m₀ = (a(0), ..., a(n-1), m₀) as (n+1)-tuple
+    --                    Fin.cons m₀ ms' = (m₀, ms'(0), ..., ms'(sz-1)) as (sz+1)-tuple
+    -- So Fin.append (Fin.snoc a m₀) ms' = (a(0), ..., a(n-1), m₀, ms'(0), ..., ms'(sz-1))
+    --    Fin.append a (Fin.cons m₀ ms') = (a(0), ..., a(n-1), m₀, ms'(0), ..., ms'(sz-1))
+    -- They are the same sequence, just indexed differently: (n+1)+sz vs n+(sz+1).
+    -- sat_ext : SameAtomicType (Fin.append (Fin.snoc a m₀) ms') (Fin.append (Fin.snoc b n₀) ns')
+    -- We need: SameAtomicType (Fin.append a (Fin.cons m₀ ms')) (Fin.append b (Fin.cons n₀ ns'))
+    -- The tuples are identical sequences, just reindexed:
+    --   Fin.append (Fin.snoc a m₀) ms' = (a(0), ..., a(n-1), m₀, ms'(0), ..., ms'(sz-1))
+    --   Fin.append a (Fin.cons m₀ ms') = (a(0), ..., a(n-1), m₀, ms'(0), ..., ms'(sz-1))
+    -- The difference is (n+1)+sz vs n+(sz+1) indexing.
+    -- Use append_right_cons: Fin.append a (Fin.cons m₀ ms') = Fin.append (Fin.snoc a m₀) ms' ∘ Fin.cast ...
+    rw [Fin.append_right_cons, Fin.append_right_cons]
+    exact sat_ext.relabel _
+
+/-- Build matching k-tuple in N from strategy at level k for empty tuples.
+This is the core helper for the back-and-forth construction.
+
+Uses `iterateForthGeneral` to iterate forth k times, starting from empty tuples. -/
+noncomputable def buildMatchingTuple {M N : Type w} [L.Structure M] [L.Structure N]
+    (k : ℕ) (strat : BFStrategyT L M N k 0 Fin.elim0 Fin.elim0) (ms : Fin k → M) :
+    { ns : Fin k → N // SameAtomicType (L := L) ms ns } := by
+  obtain ⟨ns, sat⟩ := iterateForthGeneral k 0 Fin.elim0 Fin.elim0 strat ms
+  refine ⟨ns, ?_⟩
+  -- sat : SameAtomicType (Fin.append Fin.elim0 ms) (Fin.append Fin.elim0 ns)
+  -- Use elim0_append: Fin.append Fin.elim0 ms = ms ∘ Fin.cast (Nat.zero_add k)
+  rw [Fin.elim0_append, Fin.elim0_append] at sat
+  exact sat.relabel (Fin.cast (Nat.zero_add k).symm)
+
+/-- General iteration using back: from strategy at level sz for n-tuples, extend by sz elements.
+
+This is the back version of `iterateForthGeneral`. -/
+noncomputable def iterateBackGeneral {M N : Type w} [L.Structure M] [L.Structure N] :
+    (sz n : ℕ) → (a : Fin n → M) → (b : Fin n → N) →
+    (strat : BFStrategyT L M N sz n a b) → (ns : Fin sz → N) →
+    { ms : Fin sz → M // SameAtomicType (L := L) (Fin.append a ms) (Fin.append b ns) } := by
+  intro sz
+  induction sz with
+  | zero =>
+    intro n a b strat ns
+    refine ⟨Fin.elim0, ?_⟩
+    have hns : ns = Fin.elim0 := funext (fun i => i.elim0)
+    subst hns
+    convert strat.property using 2 <;>
+    · ext i
+      simp only [Fin.append, Fin.addCases]
+      have hi : (i : ℕ) < n := i.isLt
+      simp [hi, Fin.castLT]
+  | succ sz ih =>
+    intro n a b strat ns
+    obtain ⟨_, _, back⟩ := strat
+    let n₀ := ns 0
+    obtain ⟨m₀, strat_ext⟩ := back n₀
+    let ns' : Fin sz → N := ns ∘ Fin.succ
+    obtain ⟨ms', sat_ext⟩ := ih (n + 1) (Fin.snoc a m₀) (Fin.snoc b n₀) strat_ext ns'
+    let ms : Fin (sz + 1) → M := Fin.cons m₀ ms'
+    refine ⟨ms, ?_⟩
+    have hns_eq : ns = Fin.cons n₀ ns' := by
+      ext i; cases i using Fin.cases <;> rfl
+    have hms_eq : ms = Fin.cons m₀ ms' := rfl
+    rw [hns_eq, hms_eq]
+    rw [Fin.append_right_cons, Fin.append_right_cons]
+    exact sat_ext.relabel _
+
+/-- Build matching k-tuple in M from strategy at level k for empty tuples, using back.
+This is the back version of `buildMatchingTuple`. -/
+noncomputable def buildMatchingTupleBack {M N : Type w} [L.Structure M] [L.Structure N]
+    (k : ℕ) (strat : BFStrategyT L M N k 0 Fin.elim0 Fin.elim0) (ns : Fin k → N) :
+    { ms : Fin k → M // SameAtomicType (L := L) ms ns } := by
+  obtain ⟨ms, sat⟩ := iterateBackGeneral k 0 Fin.elim0 Fin.elim0 strat ns
+  refine ⟨ms, ?_⟩
+  rw [Fin.elim0_append, Fin.elim0_append] at sat
+  exact sat.relabel (Fin.cast (Nat.zero_add k).symm)
+
 /-- From a coherent Type-valued ω-strategy on empty tuples, build an isomorphism.
 
 This is the strategy-based version that SOLVES the quantifier swap problem in
@@ -830,59 +963,79 @@ theorem BFStrategyOmegaT_implies_equiv {M N : Type w} [L.Structure M] [L.Structu
 
   Key insight: `hStrat k` gives `BFStrategyT L M N k 0 [] []`.
 
-  Applying forth i times consumes i levels of budget, giving a strategy at level k-i
-  for i-tuples. So from `hStrat (k+1)`, we can build a k-tuple matching.
+  From `hStrat k` for empty tuples, applying forth k times gives a strategy at level 0
+  for k-tuples, which means SameAtomicType holds for the resulting k-tuples.
 
-  The construction:
-  1. Build `matchM k` = matching N-tuple for `(enumM 0, ..., enumM (k-1))`
-     using `hStrat k` and k-1 forth applications
-  2. Define `f : M → N` by `f(enumM k) = matchM(k+1) (Fin.last k)`
-  3. Similarly for `g : N → M`
-  4. Show f, g are inverses and preserve relations
+  The construction iterates forth starting from hStrat k:
+  - forth(enumM 0) → level k-1 for 1-tuple
+  - forth(enumM 1) → level k-2 for 2-tuple
+  - ...
+  - forth(enumM (k-1)) → level 0 for k-tuple (SameAtomicType)
   -/
 
-  -- Helper: iterate forth from a strategy to build matching tuples
-  -- From strategy at level (sz+k) for n-tuples, build (n+sz)-tuple matching
-  -- by applying forth sz times with elements ms : Fin sz → M
+  -- The key lemma: from BFStrategyOmegaT, we can build any finite matching
+  -- This follows because hStrat k allows k forth applications
 
-  -- Build the M-indexed chain: for each k, match first k elements of enumM
-  -- Using hStrat (k) to build k-tuple (needs k forth applications from level k)
+  -- For the isomorphism, we need:
+  -- 1. A function f : M → N where f(enumM i) is the witness from i+1 forth iterations
+  -- 2. A function g : N → M where g(enumN j) is the witness from j+1 back iterations
+  -- 3. Proof that f, g are inverses (from determinism of witnesses)
+  -- 4. Proof that f preserves relations (from SameAtomicType at level 0)
 
-  -- Actually: hStrat k for 0-tuples → k forth apps → level 0 for k-tuples
-  -- So from hStrat k, we can build k-tuple matching with SameAtomicType
+  /-
+  **Construction using buildMatchingTuple**
 
-  -- Recursive builder using forth
-  have buildMatchM : (k : ℕ) → (Fin k → N) := by
-    intro k
-    -- Use hStrat k to build k-tuple matching
-    -- Apply forth k times
-    induction k with
-    | zero => exact Fin.elim0
-    | succ k ih =>
-      -- ih gives Fin k → N matching enumM|_k
-      -- Need to extend by one using forth
-      -- But we need a strategy at level ≥ 1 for the k-tuple (enumM|_k, ih)
-      -- to apply forth
-      --
-      -- The issue: hStrat k gives strategy for EMPTY tuples, not for (enumM|_k, ih)
-      -- We need to BUILD a strategy for (enumM|_k, ih) by iterating from hStrat
-      --
-      -- Key: from hStrat (2k+1), apply forth k times → strategy at level k+1 for k-tuples
-      -- Then apply forth once more → N-witness and strategy at level k for (k+1)-tuples
-      sorry
+  Define f : M → N using the strategy witnesses:
+  - For m = enumM i, construct the (i+1)-tuple [enumM 0, ..., enumM i]
+  - Use hStrat (i+1) with buildMatchingTuple to get matching [n_0, ..., n_i]
+  - Define f(m) = n_i (the last element)
 
-  -- Define f : M → N
-  -- For m, find k such that enumM k = m, then f(m) = buildMatchM (k+1) (Fin.last k)
+  The challenge is showing this is an isomorphism:
+  1. f is well-defined (doesn't depend on choice of enumeration index)
+  2. f is injective (from SameAtomicType equalities)
+  3. f is surjective (build inverse using back operations)
+  4. f preserves relations (from SameAtomicType)
+
+  For (1): If m = enumM i = enumM j with i < j, then both definitions give the same value
+  because SameAtomicType forces equalities between positions.
+
+  For (3): Define g similarly using back operations from the strategy.
+  -/
+
+  -- Helper: get matching tuple for first k elements of enumM
+  let getMTuple : (k : ℕ) → { ns : Fin k → N // SameAtomicType (L := L) (enumM ∘ Fin.val) ns } :=
+    fun k => buildMatchingTuple k (hStrat k) (fun i => enumM i.val)
+
+  -- Define f: for each m, find its index and look up the corresponding n
+  -- Use Classical.choose since Nat.find requires DecidablePred
   let indexM : M → ℕ := fun m => Classical.choose (hM_surj m)
+  let f : M → N := fun m =>
+    let i := indexM m
+    (getMTuple (i + 1)).val (Fin.last i)
 
-  -- The formal proof requires showing:
-  -- 1. buildMatchM is well-defined (the strategy iteration works)
-  -- 2. f is injective (from SameAtomicType)
-  -- 3. f is surjective (the analogous buildMatchN construction)
-  -- 4. f preserves relations (from SameAtomicType at level 0)
+  -- Similarly for g using back operations
+  -- Helper: get matching tuple for first k elements of enumN using back
+  let getMTupleBack : (k : ℕ) → { ms : Fin k → M // SameAtomicType (L := L) ms (enumN ∘ Fin.val) } :=
+    fun k => buildMatchingTupleBack k (hStrat k) (fun i => enumN i.val)
 
-  -- With Type-valued strategies, there's no coherence issue: the witness functions
-  -- are deterministic, so buildMatchM k and buildMatchM (k+1) are compatible.
+  let indexN : N → ℕ := fun n => Classical.choose (hN_surj n)
+  let g : N → M := fun n =>
+    let j := indexN n
+    (getMTupleBack (j + 1)).val (Fin.last j)
+
+  /-
+  **Remaining proof obligations**:
+  1. Show f ∘ g = id and g ∘ f = id
+  2. Show f preserves relations
+  3. Show g preserves relations (follows from 1 and 2)
+
+  The key for (1) is that SameAtomicType includes equalities, so:
+  - If enumM i = enumM j, then the witnesses n_i and n_j must be equal
+  - This "locks in" the correspondence and forces f, g to be inverses
+
+  The proof requires careful analysis of how indices interact, but the
+  mathematical content is straightforward with the strategy structure.
+  -/
 
   sorry
 

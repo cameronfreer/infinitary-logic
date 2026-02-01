@@ -70,11 +70,29 @@ instance [Countable (Σ l, L.Relations l)] : Countable (L.AtomicIdx n) := by
       | rel R f => rfl
   }
 
+omit [L.IsRelational] in
 /-- Evaluates whether an atomic formula indexed by `idx` holds for a tuple `a`. -/
 def holds (idx : L.AtomicIdx n) (a : Fin n → M) : Prop :=
   match idx with
   | eq i j => a i = a j
   | rel R f => RelMap R (a ∘ f)
+
+omit [L.IsRelational] in
+/-- Pushforward an atomic index through a function σ : Fin m → Fin n.
+This transforms an atomic index over m variables to one over n variables by composing indices. -/
+def pushforward {m : ℕ} (idx : L.AtomicIdx m) (σ : Fin m → Fin n) : L.AtomicIdx n :=
+  match idx with
+  | eq i j => eq (σ i) (σ j)
+  | rel R f => rel R (σ ∘ f)
+
+omit [L.IsRelational] in
+/-- The key lemma: holds on composed tuple equals holds of pushforward on original tuple. -/
+theorem holds_comp_eq_holds_pushforward {m : ℕ} (idx : L.AtomicIdx m)
+    (a : Fin n → M) (σ : Fin m → Fin n) :
+    idx.holds (a ∘ σ) = (idx.pushforward σ).holds a := by
+  cases idx with
+  | eq i j => simp only [holds, pushforward, Function.comp_apply]
+  | rel R f => simp only [holds, pushforward, Function.comp_assoc]
 
 end AtomicIdx
 
@@ -117,6 +135,7 @@ noncomputable def atomicDiagram [Countable (Σ l, L.Relations l)] (a : Fin n →
   exact BoundedFormulaω.einf fun idx : L.AtomicIdx n =>
     if idx.holds a then atomicFormulaω idx else (atomicFormulaω idx).not
 
+omit [L.IsRelational] in
 /-- Two tuples have the same atomic type if they satisfy exactly the same atomic formulas.
 
 **Note on `IsRelational`**: While this definition is well-formed without `[L.IsRelational]`,
@@ -179,6 +198,17 @@ theorem SameAtomicType.trans {N P : Type*} [L.Structure N] [L.Structure P]
     (hbc : SameAtomicType (L := L) (M := N) (N := P) b c) :
     SameAtomicType (L := L) (M := M) (N := P) a c :=
   fun idx => (hab idx).trans (hbc idx)
+
+omit [L.IsRelational] in
+/-- Same atomic type is preserved under relabeling.
+If `SameAtomicType a b` and `σ : Fin m → Fin n`, then `SameAtomicType (a ∘ σ) (b ∘ σ)`. -/
+theorem SameAtomicType.relabel {N : Type w'} [L.Structure N] {n m : ℕ}
+    {a : Fin n → M} {b : Fin n → N} (h : SameAtomicType (L := L) a b) (σ : Fin m → Fin n) :
+    SameAtomicType (L := L) (a ∘ σ) (b ∘ σ) := by
+  intro idx
+  -- Use holds_comp_eq_holds_pushforward to relate to the original tuples
+  rw [AtomicIdx.holds_comp_eq_holds_pushforward, AtomicIdx.holds_comp_eq_holds_pushforward]
+  exact h (idx.pushforward σ)
 
 end Language
 
