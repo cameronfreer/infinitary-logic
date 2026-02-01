@@ -253,28 +253,45 @@ theorem stabilizationOrdinal_le_scottRank (M : Type w) [L.Structure M] [Countabl
     stabilizationOrdinal (L := L) M ≤ scottRank (L := L) M := by
   sorry
 
-/-- The Scott sentence can be taken at the Scott rank level.
+/-- The Scott sentence and Scott formula at Scott rank level are semantically equivalent.
 
 Both scottSentence (at stabilizationOrdinal) and scottFormula at scottRank characterize
-the same class of structures (those isomorphic to M), so they are equivalent sentences.
+the same class of structures (those isomorphic to M), so they have the same realizations.
+
+Note: This is semantic equivalence (same realizations), not syntactic equality. The two
+formulas may differ syntactically when stabilizationOrdinal ≠ scottRank.
+
+The proof uses:
+1. `stabilizationOrdinal_le_scottRank` to show stab ≤ scottRank
+2. `BFEquiv.monotone` to transfer between levels
+3. `scottSentence_characterizes` for the characterization at stabilization level
 
 **BLOCKED**: This theorem depends on `stabilizationOrdinal_le_scottRank` which requires
-showing StabilizesAt at scottRank level. That has the same issues as the main
-BFEquiv_omega_implies_equiv theorem.
-
-**Note on theorem statement**: This states syntactic equality of formulas. For this to hold,
-we'd need stabilizationOrdinal = scottRank. Otherwise, we can only prove SEMANTIC equivalence:
-both formulas characterize the same class of structures.
-
-Once the blockers are resolved, the proof would use:
-1. stabilizationOrdinal_le_scottRank to compare ordinals
-2. BFEquiv.monotone to transfer between levels
-3. stabilizationOrdinal_stabilizes for the characterization at stab level
-
-See InfinitaryLogic/Scott/Sentence.lean "Important Limitation" section. -/
-theorem scottSentence_eq_scottFormula_rank (M : Type w) [L.Structure M] [Countable M] :
-    scottSentence (L := L) M = scottFormula (L := L) (M := M) Fin.elim0 (scottRank (L := L) M) := by
-  sorry
+showing StabilizesAt at scottRank level. -/
+theorem scottSentence_equiv_scottFormula_rank (M : Type w) [L.Structure M] [Countable M]
+    (N : Type w) [L.Structure N] [Countable N] :
+    (scottSentence (L := L) M).realize_as_sentence N ↔
+    (scottFormula (L := L) (M := M) Fin.elim0 (scottRank (L := L) M)).Realize
+      (Fin.elim0 : Fin 0 → N) := by
+  -- Both characterize isomorphism with M
+  rw [scottSentence_characterizes M N]
+  -- Need to show: scottFormula at scottRank characterizes iso
+  rw [realize_scottFormula_iff_BFEquiv _ _ _ (scottRank_lt_omega1 M)]
+  -- BFEquiv at scottRank ↔ iso
+  -- This requires showing StabilizesAt M (scottRank M), which needs stabilizationOrdinal_le_scottRank
+  constructor
+  · intro ⟨e⟩
+    -- Isomorphism implies BFEquiv at all levels
+    have h : (e : M → N) ∘ Fin.elim0 = Fin.elim0 := funext (fun i => i.elim0)
+    rw [← h]
+    exact equiv_implies_BFEquiv e (scottRank (L := L) M) 0 Fin.elim0
+  · -- BFEquiv at scottRank implies iso
+    -- This is the hard direction that requires stabilizationOrdinal_le_scottRank
+    intro hBF
+    -- scottRank ≥ stabilizationOrdinal, so BFEquiv at scottRank implies BFEquiv at stab
+    have hle := stabilizationOrdinal_le_scottRank (L := L) M
+    have hBF_stab := BFEquiv.monotone hle hBF
+    exact (stabilizationOrdinal_spec M N).mp hBF_stab
 
 end Language
 

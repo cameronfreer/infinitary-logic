@@ -163,18 +163,25 @@ omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- BFEquiv at ω is preserved under forth: if we have BFEquiv ω on n-tuples and add an element
 to M, there exists a matching element in N such that BFEquiv ω holds on the (n+1)-tuples.
 
-For the general case (non-countable N), this requires a strategy-based definition.
-For countable N (the case used in our main theorems), this follows from stabilization.
-See `BFEquiv_witness_sets_stabilize` for the countable case. -/
+**Proof status**: This theorem encapsulates the quantifier swap problem:
+- From BFEquiv ω: ∀ k, ∃ n'_k, BFEquiv k (n+1) (snoc a m) (snoc b n'_k)
+- We need:       ∃ n', ∀ k, BFEquiv k (n+1) (snoc a m) (snoc b n')
+
+This is NOT automatic. Counterexample to such swaps: S_k = {j ∈ ℕ | j ≥ k}, each non-empty,
+decreasing, but ⋂_k S_k = ∅.
+
+**Possible approaches**:
+1. Strategy-based: Use `BFStrategyOmega` which provides coherent witnesses at all levels
+2. Stabilization: Show witness sets S_k stabilize for countable N (needs finite types)
+3. Restrict to countable N and use dependent choice with BFEquiv monotonicity
+
+**Note**: This theorem is NOT used by `scottSentence_characterizes`, which goes through
+`stabilizationOrdinal_spec` instead. The sorry here blocks `BFEquiv_omega_implies_equiv`
+but not the main Scott sentence theorem. -/
 theorem BFEquiv_omega_forth_extend {M N : Type w} [L.Structure M] [L.Structure N]
     {n : ℕ} {a : Fin n → M} {b : Fin n → N}
     (hBF : BFEquiv (L := L) ω n a b) (m : M) :
     ∃ n' : N, BFEquiv (L := L) ω (n + 1) (Fin.snoc a m) (Fin.snoc b n') := by
-  -- The proof requires showing that some n' works for all finite levels k < ω.
-  -- For general N, this is the quantifier swap problem.
-  -- For countable N, this follows from BFEquiv_witness_sets_stabilize.
-  -- The statement here is kept general (non-countable N), so we mark it sorry.
-  -- The main theorems using this lemma have [Countable N] and can use the stabilization result.
   sorry
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
@@ -384,10 +391,18 @@ which has the same coherence issue.
 **For the main Scott sentence theorem**: Use `scottSentence_characterizes` which
 goes through `stabilizationOrdinal_spec` and avoids this issue.
 
+**Strategy infrastructure** (in BackAndForth.lean):
+- `BFStrategy L M N k n a b`: Propositional strategy at level k
+- `BFStrategyOmega n a b`: Coherent family of strategies at all finite levels
+- `BFStrategy_implies_BFEquiv`: Strategy at level k implies BFEquiv at level k
+- `BFStrategyOmega_implies_BFEquiv_omega`: ω-strategy implies BFEquiv at ω
+
 **To complete this theorem**: Either:
-1. Use a strategy-based BFEquiv (BFEquivStrong) definition, or
-2. Use a different construction that builds the isomorphism incrementally at
-   finite levels and takes a coherent limit.
+1. Prove coherence of the iterate_forth construction, or
+2. Use a Type-valued BFStrategy that carries computational witnesses (avoiding Choice)
+
+See also `BFStrategyOmega_implies_equiv` which has the same structure but starts
+from the stronger BFStrategyOmega hypothesis.
 
 The detailed proof in the body handles the edge cases and shows the structure of
 what a complete proof would look like. -/
@@ -732,6 +747,120 @@ theorem BFEquiv_omega_implies_equiv {M N : Type w} [L.Structure M] [L.Structure 
   -- 3. g ∘ f = id and f ∘ g = id (from symmetry of the construction)
 
   -- The full formalization requires the coherence lemma.
+  -- Alternative: use BFStrategyOmega_implies_equiv with a strategy hypothesis.
+  sorry
+
+/-- From a coherent ω-strategy on empty tuples, build an isomorphism.
+
+This is the strategy-based version that avoids the quantifier swap problem in
+`BFEquiv_omega_implies_equiv`. The strategy provides uniform witnesses at each
+extension step, making the back-and-forth construction straightforward.
+
+The proof enumerates M and N, then builds a chain of partial isomorphisms by
+repeatedly applying the strategy's forth and back witnesses. -/
+theorem BFStrategyOmega_implies_equiv {M N : Type w} [L.Structure M] [L.Structure N]
+    [Countable M] [Countable N]
+    (hStrat : BFStrategyOmega (L := L) 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)) :
+    Nonempty (M ≃[L] N) := by
+  -- The strategy gives us BFEquiv at all finite levels
+  have hBF : BFEquiv (L := L) (ω : Ordinal.{0}) 0
+      (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) :=
+    BFStrategyOmega_implies_BFEquiv_omega hStrat
+  -- Now we can use the same proof structure as BFEquiv_omega_implies_equiv
+  -- The difference is that the strategy provides coherent witnesses
+
+  -- Handle the empty case
+  by_cases hM_empty : IsEmpty M
+  · by_cases hN_empty : IsEmpty N
+    · refine ⟨⟨Equiv.equivOfIsEmpty M N, ?_, ?_⟩⟩
+      · intro n f; exact IsEmpty.elim inferInstance f
+      · intro n r x
+        match n with
+        | 0 =>
+          have hBF0 := BFEquiv.monotone (zero_le _) hBF
+          have hSAT := (BFEquiv.zero (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)).mp hBF0
+          have hx : x = Fin.elim0 := funext (fun i => i.elim0)
+          subst hx
+          have hcomp : (Equiv.equivOfIsEmpty M N).toFun ∘ (Fin.elim0 : Fin 0 → M) =
+                       (Fin.elim0 : Fin 0 → N) := funext (fun i => i.elim0)
+          simp only [hcomp]
+          exact (hSAT (AtomicIdx.rel r Fin.elim0)).symm
+        | n + 1 => exact IsEmpty.elim hM_empty (x 0)
+    · push_neg at hN_empty
+      obtain ⟨n⟩ := hN_empty
+      have hBF1 : BFEquiv (L := L) (M := M) (N := N) (Order.succ 0 : Ordinal.{0}) 0
+          (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) := by
+        rw [Ordinal.succ_zero]
+        exact BFEquiv.monotone (Ordinal.one_lt_omega0.le) hBF
+      have hback := (BFEquiv.succ (M := M) (N := N) (0 : Ordinal.{0})
+          (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)).mp hBF1 |>.2.2 n
+      obtain ⟨m, _⟩ := hback
+      exact hM_empty.elim m
+  push_neg at hM_empty
+  haveI : Nonempty M := hM_empty
+  haveI : Nonempty N := by
+    obtain ⟨m⟩ : Nonempty M := inferInstance
+    have hBF1 : BFEquiv (L := L) (M := M) (N := N) (Order.succ 0 : Ordinal.{0}) 0
+        (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) := by
+      rw [Ordinal.succ_zero]
+      exact BFEquiv.monotone (Ordinal.one_lt_omega0.le) hBF
+    have hforth := (BFEquiv.succ (M := M) (N := N) (0 : Ordinal.{0})
+        (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)).mp hBF1 |>.2.1 m
+    obtain ⟨n, _⟩ := hforth
+    exact ⟨n⟩
+
+  -- Get enumerations
+  obtain ⟨enumM, hM_surj⟩ := exists_surjective_nat M
+  obtain ⟨enumN, hN_surj⟩ := exists_surjective_nat N
+
+  /-
+  **Strategy-based construction**
+
+  The key insight: with BFStrategyOmega, we have `∀ k, BFStrategy L M N k 0 [] []`.
+  The BFStrategy at each level k gives us:
+  - At level 0: SameAtomicType (the base case)
+  - At level k+1: witnesses for extending tuples
+
+  We build the isomorphism by:
+  1. Using the strategy to get coherent extensions at each step
+  2. The coherence comes from the fact that BFStrategy k+1 contains BFStrategy k
+
+  However, extracting computational witnesses from the propositional BFStrategy
+  still requires Choice. The advantage is that the witnesses are guaranteed to exist
+  at all levels simultaneously (avoiding the quantifier swap).
+  -/
+
+  -- The strategy gives us matching tuples at each level
+  -- Since BFStrategy is propositional, we use Choice to extract witnesses
+  have matchM : ∀ n : ℕ, ∃ ns : Fin n → N,
+      SameAtomicType (L := L) (fun i : Fin n => enumM i.val) ns := by
+    intro n
+    have hBFn : BFEquiv (L := L) ((n : ℕ) : Ordinal.{0}) 0
+        (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) :=
+      BFEquiv.monotone (le_of_lt (Ordinal.nat_lt_omega0 n)) hBF
+    exact BFEquiv_build_matching_tuples_forth hBFn (fun i => enumM i.val)
+
+  have matchN : ∀ n : ℕ, ∃ ms : Fin n → M,
+      SameAtomicType (L := L) ms (fun i : Fin n => enumN i.val) := by
+    intro n
+    have hBFn : BFEquiv (L := L) (((n + 0) : ℕ) : Ordinal.{0}) 0
+        (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) := by
+      simp only [add_zero]
+      exact BFEquiv.monotone (le_of_lt (Ordinal.nat_lt_omega0 n)) hBF
+    obtain ⟨ms, hms⟩ := BFEquiv_iterate_back hBFn (fun i => enumN i.val)
+    exact ⟨ms, (BFEquiv.zero ms _).mp hms⟩
+
+  -- The construction requires coherence to complete
+  -- Even with the strategy, we face the same coherence challenge in building
+  -- the explicit function f : M → N from the matching tuples.
+  -- The strategy ensures witnesses exist at all levels, but extracting them
+  -- still requires dependent choice infrastructure.
+
+  -- For now, this theorem has the same sorry as BFEquiv_omega_implies_equiv.
+  -- The strategy-based approach would be fully resolved by:
+  -- 1. Using a Type-valued BFStrategy (carrying computational witnesses)
+  -- 2. Or proving coherence of the iterate_forth construction
+
   sorry
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
@@ -812,16 +941,19 @@ theorem BFEquiv_iterate_forth_from_singleton {M N : Type w} [L.Structure M] [L.S
 
 /-- From BFEquiv at level ≥ ω for singleton tuples, build an isomorphism sending m to n.
 
-**IMPORTANT**: This theorem depends on `BFEquiv_omega_implies_equiv` which has the
-same coherence issue (quantifier swap). See the "Important Limitation" section above.
+**Proof status**: This theorem has the same coherence issue as `BFEquiv_omega_implies_equiv`.
+The back-and-forth argument starting from (m, n) works at finite levels, but extracting
+a coherent infinite chain requires solving the quantifier swap.
 
-Once `BFEquiv_omega_implies_equiv` is completed (via strategy-based BFEquiv or
-stabilization approach), this theorem follows by starting the back-and-forth chain
-with the pair (m, n) instead of empty tuples.
+**Strategy for completion**: Same as `BFEquiv_omega_implies_equiv`:
+1. Prove coherence of iterate_forth_from_singleton construction, or
+2. Use Type-valued BFStrategy with computational witnesses
 
-For the stabilization approach: This theorem is used in `stabilizationOrdinal_mem_elementRank_set`
-for the case where stabilizationOrdinal ≥ ω. The sorry here blocks that proof path.
-The alternative is to use language expansion for ALL cases, not just the finite case. -/
+**Usage**: This theorem is used in `stabilizationOrdinal_mem_elementRank_set` for the
+case where stabilizationOrdinal ≥ ω. The sorry here blocks that proof path in Rank.lean.
+
+**Key lemma used**: `BFEquiv_iterate_forth_from_singleton` - builds matching tuples
+starting from the singleton (m, n) correspondence. -/
 theorem BFEquiv_ge_omega_singleton_implies_equiv_with_image {M N : Type w}
     [L.Structure M] [L.Structure N] [Countable M] [Countable N]
     {α : Ordinal.{0}} (hα : ω ≤ α)

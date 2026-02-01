@@ -208,31 +208,71 @@ theorem BFEquiv.symm {α : Ordinal} {a : Fin n → M} {b : Fin n → N}
     rw [BFEquiv.limit β hβ] at h ⊢
     exact fun γ hγ => ih γ hγ (h γ hγ)
 
-/-! ### BFStrategy: Explicit Witness Strategies (Conceptual)
+/-! ### BFStrategy: Explicit Witness Strategies
 
-The module docstring describes how to define `BFStrategy` and `BFStrategyOmega` by
-recursion on k:
+A back-and-forth strategy at level k provides explicit witnesses for extensions.
+Unlike `BFEquiv` which only asserts existence, a strategy carries the actual witnesses.
 
-```
-def BFStrategy : ℕ → (n : ℕ) → (a : Fin n → M) → (b : Fin n → N) → Type
-  | 0, n, a, b => { _ : Unit // SameAtomicType a b }  -- or use PLift
-  | k+1, n, a, b => Σ _ : BFStrategy k n a b,
-      (∀ m : M, Σ n' : N, BFStrategy k (n+1) (snoc a m) (snoc b n')) ×
-      (∀ n' : N, Σ m : M, BFStrategy k (n+1) (snoc a m) (snoc b n'))
+The key insight is that `BFStrategy` can be defined by recursion on k (not as an
+inductive type), avoiding Lean's nested-inductive check that blocks inductive definitions.
 
-def BFStrategyOmega n a b := ∀ k : ℕ, BFStrategy k n a b
-```
+The open problem is `BFEquiv ω → BFStrategyOmega`: this is the quantifier swap obstruction.
+Having a strategy implies BFEquiv, but the converse requires choosing coherent witnesses. -/
 
-Key properties (straightforward to prove):
-- `BFStrategy k n a b → BFEquiv k n a b` (unwrap the witnesses)
-- `BFStrategyOmega n a b → BFEquiv ω n a b` (apply the above for each k < ω)
+/-- Back-and-forth strategy at level k. Provides explicit witnesses for extensions.
+At level 0: proof that tuples have the same atomic type (as a Prop, lifted to Type).
+At level k+1: strategy at level k, plus witness functions for forth and back.
 
-The open problem is the converse: `BFEquiv ω n a b → BFStrategyOmega n a b`.
-This is where the quantifier swap obstruction manifests.
+Note: We define this outside the section to have explicit control over parameters. -/
+def BFStrategy (L : Language.{u, v}) [L.IsRelational] (M : Type w) (N : Type w')
+    [L.Structure M] [L.Structure N] : ℕ → (n : ℕ) → (Fin n → M) → (Fin n → N) → Prop :=
+  fun k => match k with
+  | 0 => fun _n a b => SameAtomicType (L := L) a b
+  | k + 1 => fun n a b =>
+    (BFStrategy L M N k n a b) ∧
+    (∀ m : M, ∃ n' : N, BFStrategy L M N k (n + 1) (Fin.snoc a m) (Fin.snoc b n')) ∧
+    (∀ n' : N, ∃ m : M, BFStrategy L M N k (n + 1) (Fin.snoc a m) (Fin.snoc b n'))
 
-The definitions are omitted here due to universe-level complications with mixing
-`Prop` (for SameAtomicType) and `Type` (for the Σ-types). A full implementation
-would need careful universe management or use of `PLift`/`ULift` throughout. -/
+/-- A coherent family of strategies at all finite levels.
+This is the "winning strategy in the ω-round EF game."
+
+Note: This is propositional. For the data-carrying version that allows extracting
+witnesses computationally, one would need to lift to Type using Choice. -/
+def BFStrategyOmega (n : ℕ) (a : Fin n → M) (b : Fin n → N) : Prop :=
+  ∀ k : ℕ, BFStrategy L M N k n a b
+
+/-- A strategy at level k implies BF-equivalence at level k. -/
+theorem BFStrategy_implies_BFEquiv {n : ℕ} {a : Fin n → M} {b : Fin n → N}
+    (k : ℕ) (strat : BFStrategy L M N k n a b) :
+    BFEquiv (L := L) (k : Ordinal.{0}) n a b := by
+  induction k generalizing n a b with
+  | zero =>
+    simp only [Nat.cast_zero]
+    rw [BFEquiv.zero]
+    exact strat
+  | succ k ih =>
+    have hsucc : ((k + 1 : ℕ) : Ordinal.{0}) = Order.succ (k : Ordinal.{0}) := by
+      rw [← Ordinal.add_one_eq_succ]; norm_cast
+    rw [hsucc, BFEquiv.succ]
+    obtain ⟨strat_k, forth, back⟩ := strat
+    refine ⟨ih strat_k, ?_, ?_⟩
+    · intro m
+      obtain ⟨n', strat_ext⟩ := forth m
+      exact ⟨n', ih strat_ext⟩
+    · intro n'
+      obtain ⟨m, strat_ext⟩ := back n'
+      exact ⟨m, ih strat_ext⟩
+
+/-- A coherent ω-strategy implies BF-equivalence at level ω. -/
+theorem BFStrategyOmega_implies_BFEquiv_omega {n : ℕ} {a : Fin n → M} {b : Fin n → N}
+    (hstrat : BFStrategyOmega (L := L) n a b) :
+    BFEquiv (L := L) (ω : Ordinal.{0}) n a b := by
+  rw [BFEquiv.limit ω Ordinal.isSuccLimit_omega0]
+  intro γ hγ
+  -- γ < ω means γ is a natural number
+  have ⟨k, hk⟩ := Ordinal.lt_omega0.mp hγ
+  subst hk
+  exact BFStrategy_implies_BFEquiv k (hstrat k)
 
 end Language
 

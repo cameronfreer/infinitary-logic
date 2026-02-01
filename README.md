@@ -41,20 +41,29 @@ The project compiles successfully with Mathlib v4.27.0. Core definitions and mai
 - `scottSentence_characterizes` (main characterization theorem)
 - `scottRank_lt_omega1` (countable bound on Scott rank)
 
-### Remaining Sorries (7)
+### Remaining Sorries (6)
 
-The main theorems above are proven modulo 7 helper lemmas requiring back-and-forth chain constructions:
+The main theorems above are proven modulo 6 helper lemmas. The core issue is the
+"quantifier swap" problem in extracting coherent witnesses for back-and-forth chains.
 
 **Sentence.lean:**
-1. `BFEquiv_omega_forth_extend` (line 152) - Key helper for chain extension
-2. `BFEquiv_omega_implies_IsExtensionPair` (line 271) - Extension property from BFEquiv ω
-3. `BFEquiv_omega_implies_equiv` (line 312) - Back-and-forth chain construction
-4. `BFEquiv_ge_omega_singleton_implies_equiv_with_image` (line 556) - Chain preserving initial pair
+1. `BFEquiv_omega_forth_extend` - Extending BFEquiv ω tuples (quantifier swap)
+2. `BFEquiv_omega_implies_equiv` - Back-and-forth chain construction
+3. `BFStrategyOmega_implies_equiv` - Strategy-based variant (same coherence issue)
+4. `BFEquiv_ge_omega_singleton_implies_equiv_with_image` - Chain preserving initial pair
 
 **Rank.lean:**
-5. `stabilizationOrdinal_mem_elementRank_set` (line 70) - Language expansion argument
-6. `stabilizationOrdinal_le_scottRank` (line 227) - Stabilization bound
-7. `scottSentence_eq_scottFormula_rank` (line 260) - Semantic equivalence
+5. `stabilizationOrdinal_mem_elementRank_set` - Finite stabilization case
+6. `stabilizationOrdinal_le_scottRank` - Stabilization bound
+
+**Strategy Infrastructure** (completed in BackAndForth.lean):
+- `BFStrategy` - Propositional strategy at level k
+- `BFStrategyOmega` - Coherent family of strategies at all finite levels
+- `BFStrategy_implies_BFEquiv` - Strategy implies BFEquiv (proven)
+- `BFStrategyOmega_implies_BFEquiv_omega` - ω-strategy implies BFEquiv ω (proven)
+
+The infrastructure is in place; what remains is proving coherence of the iterate_forth
+construction or using a Type-valued strategy with computational witnesses.
 
 ## File Structure
 
@@ -73,7 +82,7 @@ InfinitaryLogic/
 │   └── Embedding.lean            # toLinf, ofCountable conversions
 └── Scott/                        # Scott sentences and rank
     ├── AtomicDiagram.lean        # AtomicIdx, atomicFormula, SameAtomicType
-    ├── BackAndForth.lean         # BFEquiv predicate via Ordinal.limitRecOn
+    ├── BackAndForth.lean         # BFEquiv, BFStrategy, BFStrategyOmega
     ├── Formula.lean              # scottFormula construction
     ├── Sentence.lean             # scottSentence and main theorem
     └── Rank.lean                 # elementRank, scottRank, bounds
