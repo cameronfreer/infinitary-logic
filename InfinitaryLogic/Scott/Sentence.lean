@@ -389,12 +389,7 @@ via a different argument.
 
 /-- BFEquiv at ω with empty tuples implies isomorphism for countable structures.
 
-**WARNING: THIS THEOREM IS MATHEMATICALLY FALSE IN GENERAL.**
-
-Counterexample: Algebraically closed fields of characteristic 0 but different
-transcendence degrees (both countable, both infinite). They satisfy BFEquiv ω
-because the theory of ACF₀ has quantifier elimination and all finite partial
-isomorphisms extend. But they are not isomorphic (different transcendence degrees).
+**WARNING: THIS THEOREM STATEMENT IS LIKELY FALSE IN GENERAL.**
 
 The issue is the **quantifier swap problem**:
 - From BFEquiv ω: ∀ k, ∃ n'_k, BFEquiv k (n+1) (snoc a m) (snoc b n'_k)
@@ -402,6 +397,11 @@ The issue is the **quantifier swap problem**:
 
 Without a stabilization property, the witnesses n'_k may be different for each k,
 and their "intersection" may be empty (like S_k = {j ∈ ℕ | j ≥ k}).
+
+BFEquiv ω (Duplicator winning all finite EF games) is equivalent to elementary
+equivalence, which does not imply isomorphism in general. Potential counterexamples
+in relational languages include equivalence relations with the same finite-class
+structure but different arrangements of infinite classes.
 
 **Correct approach**: Use `BFEquiv_stabilization_implies_equiv` with a complete
 stabilization ordinal α where BFEquiv α ↔ BFEquiv (succ α). At such an ordinal,
@@ -411,7 +411,7 @@ witnesses stay stable, allowing the back-and-forth to close.
 goes through `stabilizationOrdinal_spec` with the correct stabilization argument.
 
 This theorem is kept for historical reference but should NOT be used. The sorry
-here is intentional - it marks a mathematically unprovable statement.
+here is intentional - it marks a likely unprovable statement.
 -/
 theorem BFEquiv_omega_implies_equiv {M N : Type w} [L.Structure M] [L.Structure N]
     [Countable M] [Countable N]
