@@ -387,375 +387,46 @@ it still produces SameAtomicType matchings which suffice for the isomorphism con
 via a different argument.
 -/
 
-/-- BFEquiv at ω with empty tuples implies isomorphism for countable structures.
+/-! ### BFEquiv ω and Elementary Equivalence
 
-**WARNING: THIS THEOREM STATEMENT IS LIKELY FALSE IN GENERAL.**
+BFEquiv at level ω is equivalent to elementary equivalence (Duplicator winning all finite
+Ehrenfeucht-Fraïssé games). This is a standard result in model theory.
 
-The issue is the **quantifier swap problem**:
+**Important**: Elementary equivalence does NOT imply isomorphism in general. Two countable
+structures can be elementarily equivalent (satisfy exactly the same first-order sentences)
+without being isomorphic. Potential examples in relational languages include equivalence
+relations with matching finite-class structure but different arrangements of infinite classes.
+
+The **quantifier swap problem** explains why BFEquiv ω alone doesn't give isomorphism:
 - From BFEquiv ω: ∀ k, ∃ n'_k, BFEquiv k (n+1) (snoc a m) (snoc b n'_k)
-- We need:       ∃ n', ∀ k, BFEquiv k (n+1) (snoc a m) (snoc b n')
+- For isomorphism we'd need: ∃ n', ∀ k, BFEquiv k (n+1) (snoc a m) (snoc b n')
 
-Without a stabilization property, the witnesses n'_k may be different for each k,
-and their "intersection" may be empty (like S_k = {j ∈ ℕ | j ≥ k}).
+The witnesses n'_k may differ for each k with empty "intersection" (like S_k = {j | j ≥ k}).
 
-BFEquiv ω (Duplicator winning all finite EF games) is equivalent to elementary
-equivalence, which does not imply isomorphism in general. Potential counterexamples
-in relational languages include equivalence relations with the same finite-class
-structure but different arrangements of infinite classes.
+**Correct approach**: Use `BFEquiv_stabilization_implies_equiv` with a complete stabilization
+ordinal α where BFEquiv α ↔ BFEquiv (succ α). At such an ordinal, witnesses stay stable.
 
-**Correct approach**: Use `BFEquiv_stabilization_implies_equiv` with a complete
-stabilization ordinal α where BFEquiv α ↔ BFEquiv (succ α). At such an ordinal,
-witnesses stay stable, allowing the back-and-forth to close.
-
-**For the main Scott sentence theorem**: Use `scottSentence_characterizes` which
-goes through `stabilizationOrdinal_spec` with the correct stabilization argument.
-
-This theorem is kept for historical reference but should NOT be used. The sorry
-here is intentional - it marks a likely unprovable statement.
+**For the main Scott sentence theorem**: Use `scottSentence_characterizes` which goes through
+`stabilizationOrdinal_spec` with the correct stabilization argument.
 -/
-theorem BFEquiv_omega_implies_equiv {M N : Type w} [L.Structure M] [L.Structure N]
-    [Countable M] [Countable N]
-    (hBF : BFEquiv (L := L) (ω : Ordinal.{0}) 0
-      (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)) :
-    Nonempty (M ≃[L] N) := by
-  /-
-  Direct back-and-forth construction:
-  1. Enumerate M and N using their Countable instances
-  2. For each m ∈ M, use BFEquiv_iterate_forth to find a matching n ∈ N
-  3. Show this defines a bijection (using BFEquiv_iterate_back for surjectivity)
-  4. Show it preserves relations (from SameAtomicType in BFEquiv)
 
-  The construction maintains BFEquiv invariants, so we never need the general
-  IsExtensionPair property - only extension of BFEquiv-compatible matchings.
-  -/
-  -- Handle the empty case separately
-  by_cases hM_empty : IsEmpty M
-  · -- M is empty, check if N is also empty
-    by_cases hN_empty : IsEmpty N
-    · -- Both empty: trivial L-isomorphism
-      refine ⟨⟨Equiv.equivOfIsEmpty M N, ?_, ?_⟩⟩
-      · -- map_fun': vacuously true for relational L (no function symbols)
-        intro n f
-        exact IsEmpty.elim inferInstance f
-      · -- map_rel': for n ≥ 1, Fin n → M is empty; for n = 0, use SameAtomicType
-        intro n r x
-        match n with
-        | 0 =>
-          -- x : Fin 0 → M, so x = Fin.elim0. Need: RelMap r (e ∘ x) ↔ RelMap r x
-          -- Both are evaluated at empty tuple. From BFEquiv ω, get SameAtomicType.
-          have hBF0 := BFEquiv.monotone (zero_le _) hBF
-          have hSAT := (BFEquiv.zero (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)).mp hBF0
-          -- hSAT : SameAtomicType Fin.elim0 Fin.elim0
-          have hx : x = Fin.elim0 := funext (fun i => i.elim0)
-          subst hx
-          have hcomp : (Equiv.equivOfIsEmpty M N).toFun ∘ (Fin.elim0 : Fin 0 → M) =
-                       (Fin.elim0 : Fin 0 → N) := funext (fun i => i.elim0)
-          simp only [hcomp]
-          -- hSAT (AtomicIdx.rel r Fin.elim0) gives RelMap r Fin.elim0 (M) ↔ RelMap r Fin.elim0 (N)
-          exact (hSAT (AtomicIdx.rel r Fin.elim0)).symm
-        | n + 1 =>
-          -- For n ≥ 1, x : Fin (n+1) → M cannot exist since M is empty
-          exact IsEmpty.elim hM_empty (x 0)
-    · -- M empty, N nonempty: contradicts BFEquiv (back would give element in M)
-      push_neg at hN_empty
-      obtain ⟨n⟩ := hN_empty
-      -- Get BFEquiv at level 1 = Order.succ 0
-      have hBF1 : BFEquiv (L := L) (M := M) (N := N) (Order.succ 0 : Ordinal.{0}) 0
-          (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) := by
-        rw [Ordinal.succ_zero]
-        exact BFEquiv.monotone (Ordinal.one_lt_omega0.le) hBF
-      have hback := (BFEquiv.succ (M := M) (N := N) (0 : Ordinal.{0})
-          (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)).mp hBF1 |>.2.2 n
-      obtain ⟨m, _⟩ := hback
-      exact hM_empty.elim m
-  -- M is nonempty
-  push_neg at hM_empty
-  haveI : Nonempty M := hM_empty
-  -- N must also be nonempty (from forth condition)
-  haveI : Nonempty N := by
-    obtain ⟨m⟩ : Nonempty M := inferInstance
-    have hBF1 : BFEquiv (L := L) (M := M) (N := N) (Order.succ 0 : Ordinal.{0}) 0
-        (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) := by
-      rw [Ordinal.succ_zero]
-      exact BFEquiv.monotone (Ordinal.one_lt_omega0.le) hBF
-    have hforth := (BFEquiv.succ (M := M) (N := N) (0 : Ordinal.{0})
-        (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)).mp hBF1 |>.2.1 m
-    obtain ⟨n, _⟩ := hforth
-    exact ⟨n⟩
-  -- Get enumerations of M and N
-  obtain ⟨enumM, hM_surj⟩ := exists_surjective_nat M
-  obtain ⟨enumN, hN_surj⟩ := exists_surjective_nat N
-
-  /-
-  **Back-and-Forth Chain Construction**
-
-  We build chains of matching tuples that cover M and N.
-  From BFEquiv ω 0 [] [], we can use BFEquiv_iterate_forth to build matching n-tuples.
-  The limit of this construction gives an isomorphism.
-
-  Key insight: We don't need coherence between independent iterate_forth calls.
-  Instead, we use a single recursive construction that extends step by step.
-  -/
-
-  -- For any n, we can build matching n-tuples using BFEquiv_iterate_forth
-  have matchM : ∀ n : ℕ, ∃ ns : Fin n → N,
-      SameAtomicType (L := L) (fun i : Fin n => enumM i.val) ns := by
-    intro n
-    have hstart : BFEquiv (L := L) ((n + 0 : ℕ) : Ordinal.{0}) 0
-        (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) := by
-      simp only [add_zero]
-      exact BFEquiv.monotone (le_of_lt (Ordinal.nat_lt_omega0 n)) hBF
-    exact BFEquiv_build_matching_tuples_forth hstart (fun i => enumM i.val)
-
-  -- The back-and-forth proof uses matchM to define the function f : M → N
-  -- via a coherent chain construction.
-
-  -- For each n, matchM n gives ns with SameAtomicType (enumM|_n) ns.
-  -- The limit defines f(m) where f(enumM k) = ns (Fin.last k) for suitable ns.
-
-  -- Similarly, use BFEquiv_iterate_back to show surjectivity:
-  have matchN : ∀ n : ℕ, ∃ ms : Fin n → M,
-      SameAtomicType (L := L) ms (fun i : Fin n => enumN i.val) := by
-    intro n
-    have hstart : BFEquiv (L := L) ((n + 0 : ℕ) : Ordinal.{0}) 0
-        (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) := by
-      simp only [add_zero]
-      exact BFEquiv.monotone (le_of_lt (Ordinal.nat_lt_omega0 n)) hBF
-    have hrewrite : ((n + 0 : ℕ) : Ordinal.{0}) = ((n + 0 : ℕ) : Ordinal.{0}) := rfl
-    obtain ⟨ms, hms⟩ := BFEquiv_iterate_back hstart (fun i => enumN i.val)
-    use ms
-    exact (BFEquiv.zero ms (fun i => enumN i.val)).mp hms
-
-  -- The construction: define f : M → N by f(m) = chainB(firstIndex m)
-  -- where chainB is built coherently using the back-and-forth.
-
-  -- For the formal proof, we use that:
-  -- 1. From matchM, for any finite subset of M, there exists a matching subset of N
-  -- 2. From matchN, for any finite subset of N, there exists a matching subset of M
-  -- 3. The alternating back-and-forth ensures all elements are eventually covered
-  -- 4. The limit is a bijection that preserves atomic types, hence all relations
-
-  -- The key observation: for relational languages, SameAtomicType implies
-  -- the bijection preserves all relations (not just atomic formulas).
-  -- This is because all relations are captured by AtomicIdx.
-
-  -- Construct the isomorphism using the standard back-and-forth argument:
-  -- We show that from BFEquiv ω, we can build an isomorphism.
-  -- The construction uses alternating forth and back extensions.
-
-  -- For the existence proof, we use the following key facts:
-  -- 1. BFEquiv_iterate_forth builds matching tuples for M's enumeration
-  -- 2. BFEquiv_iterate_back builds matching tuples for N's enumeration
-  -- 3. The SameAtomicType condition ensures injectivity and relation preservation
-  -- 4. The alternating construction ensures surjectivity
-
-  -- The formal details require dependent choice infrastructure.
-  -- For now, we use the established mathematical content to complete the proof.
-
-  /-
-  **Coherent Back-and-Forth Chain Construction**
-
-  The key insight is that we need to build a SINGLE coherent chain, not independent
-  matchings at each level. Here's how:
-
-  1. Define a chain type: ChainState k = {(a : Fin k → M) × (b : Fin k → N) // BFEquiv (ω - k) k a b}
-     where the BFEquiv level decreases as tuple size increases.
-
-  2. Extension step: From ChainState k with BFEquiv (ω - k) k a b, we can extend to
-     ChainState (k+1) using forth or back (since ω - k > 0, we have successor structure).
-
-  3. The sequence of ChainStates forms a coherent chain where each step extends the previous.
-
-  4. Taking the limit: Define f(enumM i) = b(i) for the k-th chain state where k > i.
-
-  However, the decreasing ordinal trick requires ordinal subtraction which complicates things.
-  Alternative: Use that BFEquiv ω n a b implies BFEquiv k n a b for all k < ω.
-
-  **Better approach**: Build the chain using BFEquiv_iterate_forth directly but track
-  that the construction is COHERENT across different calls.
-
-  Actually, looking at BFEquiv_iterate_forth more carefully:
-  - It returns ∃ ns : Fin n → N, BFEquiv k n ms ns
-  - The ns is constructed by EXTENDING at each step using forth
-  - So for a FIXED ms (our enumeration), calling with n and n+1 would give
-    consistent results IF we use the same extension choices.
-
-  The issue is Classical.choose might give different answers. What we need is to
-  show that any ns satisfying BFEquiv 0 n ms ns has the same SameAtomicType,
-  and we can pick a canonical representative.
-
-  For now, we defer to the existing helper theorems and note that completing this
-  proof requires either:
-  1. A strategy-based BFEquiv definition (making extension deterministic)
-  2. A proof that the limit construction is well-defined regardless of choices
-  3. Use of mathlib's equiv_between_cg with a weaker IsExtensionPair for BFEquiv-derived equivs
-  -/
-
-  /-
-  **Direct Construction using iterate_forth coherence**
-
-  Key insight: `BFEquiv_iterate_forth` is coherent by construction. For a fixed ms, it
-  deterministically produces ns (via Classical.choose which is proof-irrelevant for Props).
-
-  The ns for ms : Fin (k+1) → M extends the ns for (ms ∘ castSucc) : Fin k → M because
-  the inductive construction of iterate_forth builds ns_{k+1} = snoc ns_k (n_last) where
-  ns_k is computed first and n_last is then chosen.
-
-  This means we can define:
-  - chainB : (k : ℕ) → Fin k → N as the ns produced by iterate_forth for (enumM|_k)
-
-  And chainB is coherent: chainB (k+1) ∘ castSucc = chainB k.
-
-  From chainB, define f : M → N by f(enumM k) = chainB (k+1) (Fin.last k).
-  -/
-
-  -- Define the choice function for N-tuples matching M-tuples
-  -- For each k, this gives ns : Fin k → N with SameAtomicType (enumM|_k) ns
-  have choose_ns : (k : ℕ) → { ns : Fin k → N // SameAtomicType (L := L)
-      (fun i : Fin k => enumM i.val) ns } := fun k =>
-    let hBFk : BFEquiv (L := L) ((k : ℕ) : Ordinal.{0}) 0
-        (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) :=
-      BFEquiv.monotone (le_of_lt (Ordinal.nat_lt_omega0 k)) hBF
-    ⟨Classical.choose (BFEquiv_build_matching_tuples_forth hBFk (fun i => enumM i.val)),
-     Classical.choose_spec (BFEquiv_build_matching_tuples_forth hBFk (fun i => enumM i.val))⟩
-
-  -- Similarly for the back direction
-  have choose_ms : (k : ℕ) → { ms : Fin k → M // SameAtomicType (L := L)
-      ms (fun i : Fin k => enumN i.val) } := fun k =>
-    let hBFk : BFEquiv (L := L) ((k : ℕ) : Ordinal.{0}) 0
-        (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) :=
-      BFEquiv.monotone (le_of_lt (Ordinal.nat_lt_omega0 k)) hBF
-    let hBFk' : BFEquiv (L := L) (((k : ℕ) + 0 : ℕ) : Ordinal.{0}) 0
-        (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) := by simp only [add_zero]; exact hBFk
-    let result := Classical.choose (BFEquiv_iterate_back hBFk' (fun i => enumN i.val))
-    ⟨result, (BFEquiv.zero result (fun i => enumN i.val)).mp
-      (Classical.choose_spec (BFEquiv_iterate_back hBFk' (fun i => enumN i.val)))⟩
-
-  -- Define f : M → N using the choose_ns function
-  -- For m = enumM k, we define f(m) = (choose_ns (k+1)).val (Fin.last k)
-  -- But we need the preimage function to find k from m
-
-  -- Use the surjectivity of enumM to find the index
-  -- Note: This is not canonical, but we use Classical.choose to pick one
-  let indexM : M → ℕ := fun m => Classical.choose (hM_surj m)
-  have hindexM : ∀ m, enumM (indexM m) = m := fun m => Classical.choose_spec (hM_surj m)
-
-  let indexN : N → ℕ := fun n => Classical.choose (hN_surj n)
-  have hindexN : ∀ n, enumN (indexN n) = n := fun n => Classical.choose_spec (hN_surj n)
-
-  -- Define f : M → N
-  let f : M → N := fun m =>
-    let k := indexM m
-    (choose_ns (k + 1)).val ⟨k, Nat.lt_succ_self k⟩
-
-  -- For the inverse, we use choose_ms
-  let g : N → M := fun n =>
-    let k := indexN n
-    (choose_ms (k + 1)).val ⟨k, Nat.lt_succ_self k⟩
-
-  -- We need to show f ∘ g = id and g ∘ f = id
-  -- This requires showing that choose_ns and choose_ms are compatible
-
-  -- The key observation: From SameAtomicType, if ms and ns match, then
-  -- ms(i) = ms(j) ↔ ns(i) = ns(j)
-
-  -- For f(m) to be well-defined regardless of which index k we choose for m,
-  -- we need: if enumM k = enumM k' = m, then (choose_ns (k+1))(k) = (choose_ns (k'+1))(k')
-
-  -- This follows from SameAtomicType applied to AtomicIdx.eq:
-  -- SameAtomicType (enumM|_{k+1}) ((choose_ns (k+1)).val) tells us
-  -- enumM i = enumM j ↔ (choose_ns (k+1))(i) = (choose_ns (k+1))(j)
-
-  -- But this only tells us about equality WITHIN a single call to choose_ns,
-  -- not ACROSS different calls.
-
-  -- The issue: Different indices k, k' for the same m give different calls to choose_ns.
-  -- We need coherence: (choose_ns (k+1))(k) = (choose_ns (k'+1))(k') when enumM k = enumM k'.
-
-  -- This is NOT automatic from the definition. It requires either:
-  -- 1. Showing iterate_forth is coherent across calls (hard)
-  -- 2. Defining f differently to ensure well-definedness
-
-  -- Alternative: Use the first index where m appears (canonical choice)
-  -- But this doesn't help with the coherence issue.
-
-  -- The fundamental problem: choose_ns k and choose_ns (k+1) might not be compatible.
-  -- Even though both satisfy SameAtomicType with different prefixes of enumM,
-  -- the specific elements chosen at each position can differ.
-
-  -- This is exactly the coherence problem we've been discussing.
-  -- The proof requires either:
-  -- 1. A coherent definition of the chain (using recursion that extends)
-  -- 2. Or showing that any two choices satisfying SameAtomicType must agree on values
-
-  -- Option 2 is false in general: there can be multiple n' satisfying SameAtomicType.
-
-  -- Option 1 requires building a SINGLE coherent chain, not independent choose_ns calls.
-
-  -- Let's try option 1: Build the chain by recursion
-  -- chainN : (k : ℕ) → Fin k → N where chainN 0 = Fin.elim0 and
-  -- chainN (k+1) = Fin.snoc (chainN k) (extend using BFEquiv)
-
-  -- But this requires extending from (enumM|_k, chainN k) which has SameAtomicType,
-  -- not BFEquiv at higher levels.
-
-  -- Key insight: From BFEquiv (k+1) 0 [] [], using iterate_forth on enumM|_{k+1},
-  -- the SAME call builds chainN for all prefixes coherently!
-
-  -- That is: BFEquiv_iterate_forth, when applied to enumM|_{k+1}, internally builds
-  -- the ns for enumM|_1, then enumM|_2, etc., extending at each step.
-  -- So (result of iterate_forth on enumM|_{k+1}) restricted to first i elements
-  -- equals (result of iterate_forth on enumM|_i) IF the construction is deterministic.
-
-  -- By proof-irrelevance of Classical.choose for Props, this should hold.
-
-  -- But the challenge is that iterate_forth uses BFEquiv at different levels for different k.
-  -- For enumM|_k, it uses BFEquiv k 0 [] [].
-  -- For enumM|_{k+1}, it uses BFEquiv (k+1) 0 [] [].
-  -- These are different proofs, so Classical.choose might give different results.
-
-  -- Unless... the choice depends only on the STATEMENT "∃ ns, ...", not the proof.
-  -- And the statement IS the same for the recursive calls within iterate_forth.
-
-  -- Actually, let me trace through iterate_forth more carefully:
-  -- iterate_forth hBF (enumM|_{k+1}) where hBF : BFEquiv (k+1) 0 [] []
-  -- = let ⟨ns_init, _⟩ := iterate_forth hBF' (enumM|_k) where hBF' : BFEquiv (k+1-1+1) 0 = BFEquiv (k+1) 0
-  -- Hmm, the ordinal arithmetic is tricky here.
-
-  -- The key observation: iterate_forth uses "BFEquiv ((n+1) + k) 0" for size n+1 at level k.
-  -- For size k at level 0, it needs BFEquiv (k + 0) 0 = BFEquiv k 0.
-  -- For size k+1 at level 0, it needs BFEquiv ((k+1) + 0) 0 = BFEquiv (k+1) 0.
-
-  -- The recursive call for enumM|_k inside the call for enumM|_{k+1}:
-  -- Uses BFEquiv ((k+1) + 0 - 1 + 1) 0 = BFEquiv (k+1) 0 at level 1.
-  -- Wait, let me re-read the proof...
-
-  -- From the iterate_forth code:
-  -- For n+1 at level k: uses BFEquiv ((n+1) + k) 0 = BFEquiv (n + (k+1)) 0
-  -- Recursively calls for n at level k+1, so uses BFEquiv (n + (k+1)) 0
-
-  -- So for enumM|_{k+1} at level 0: uses BFEquiv ((k+1) + 0) 0 = BFEquiv (k+1) 0
-  -- Recursively calls for enumM|_k at level 1: needs BFEquiv (k + 1) 0 = BFEquiv (k+1) 0
-
-  -- These are the SAME BFEquiv level! So the recursive call uses the same proof.
-  -- Therefore Classical.choose should give the same result.
-
-  -- This suggests coherence DOES hold! Let me verify by stating and proving it.
-
-  -- For now, we accept the coherence and complete the proof using the assumption.
-  -- The formal coherence proof requires careful unfolding which we defer.
-
-  -- Assume coherence: (choose_ns (k+1)).val ∘ Fin.castSucc = (choose_ns k).val
-  -- (This is mathematically justified by the iterate_forth construction.)
-
-  -- Under this assumption, f is well-defined and we can show:
-  -- 1. f preserves relations (from SameAtomicType)
-  -- 2. f is injective (from SameAtomicType equalities + enumM injectivity on f's image)
-  -- 3. g ∘ f = id and f ∘ g = id (from symmetry of the construction)
-
-  -- The full formalization requires the coherence lemma.
-  -- Alternative: use BFStrategyOmega_implies_equiv with a strategy hypothesis.
-  sorry
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
+/-- BFEquiv ω is equivalent to BFEquiv k for all finite k. This captures the fact that
+BFEquiv at ω means "winning all finite Ehrenfeucht-Fraïssé games." -/
+theorem BFEquiv_omega_iff_forall_finite {M N : Type w} [L.Structure M] [L.Structure N]
+    {n : ℕ} {a : Fin n → M} {b : Fin n → N} :
+    BFEquiv (L := L) (ω : Ordinal.{0}) n a b ↔ ∀ k : ℕ, BFEquiv (L := L) (k : Ordinal.{0}) n a b := by
+  constructor
+  · -- BFEquiv ω → ∀ k, BFEquiv k
+    intro hω k
+    exact BFEquiv.monotone (le_of_lt (Ordinal.nat_lt_omega0 k)) hω
+  · -- ∀ k, BFEquiv k → BFEquiv ω
+    intro hk
+    rw [BFEquiv.limit ω Ordinal.isSuccLimit_omega0]
+    intro γ hγ
+    obtain ⟨k, hk_eq⟩ := Ordinal.lt_omega0.mp hγ
+    subst hk_eq
+    exact hk k
 
 /-- General iteration: from strategy at level sz for n-tuples, extend by sz elements.
 
