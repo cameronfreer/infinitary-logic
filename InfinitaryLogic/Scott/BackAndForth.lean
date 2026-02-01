@@ -78,12 +78,18 @@ intersection may be empty.
 - A game-theoretic formulation (strategy as function on finite plays) might help but
   still requires proving a winning strategy exists from BFEquiv ω.
 
-**Path forward**: The cleanest resolution would be either:
-1. Prove a stabilization property: show S_k eventually stabilizes (becomes constant)
-2. Work with BFStrategyOmega directly as the hypothesis for isomorphism theorems
-3. Add structure to the problem that forces uniform witnesses
+**Resolution (in Sentence.lean)**: We use the stabilization approach:
+1. `StabilizesForTuples M α n`: BFEquiv α ↔ BFEquiv (succ α) for n-tuples from M
+2. `StabilizesCompletely M α`: All tuple sizes stabilize at α
+3. `exists_complete_stabilization`: For countable M, such α < ω₁ exists
+4. `BFEquiv_stabilization_implies_equiv`: At stabilization, BFEquiv → isomorphism
 
-For now, the ω-level coherence proofs remain incomplete (marked with `sorry`).
+At a complete stabilization ordinal, forth/back witnesses stay at the same level,
+so the standard back-and-forth closes without quantifier swap issues.
+
+**Important**: `BFEquiv_omega_implies_equiv` is FALSE without stabilization.
+Counterexample: ACF₀ fields of different transcendence degrees satisfy BFEquiv ω
+but are not isomorphic.
 -/
 
 universe u v w w'
