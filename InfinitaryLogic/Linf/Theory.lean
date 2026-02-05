@@ -66,6 +66,55 @@ def Valid (φ : L.SentenceInf) : Prop := ∀ (M : Type) [L.Structure M], Sentenc
 
 end TheoryInf
 
+/-! ### Isomorphism Invariance of Realization -/
+
+/-- Realization of L∞ω formulas is preserved by language isomorphisms.
+
+Given an isomorphism `e : M ≃[L] N`, a formula realized in M with variable assignments
+`v` and `xs` is also realized in N with the transported assignments `e ∘ v` and `e ∘ xs`. -/
+theorem BoundedFormulaInf.realize_equiv {M N : Type w} [L.Structure M] [L.Structure N]
+    (e : M ≃[L] N) {α : Type*} {n : ℕ} (φ : L.BoundedFormulaInf α n)
+    (v : α → M) (xs : Fin n → M) :
+    φ.Realize v xs ↔ φ.Realize (e ∘ v) (e ∘ xs) := by
+  have h_elim : ∀ {m : ℕ} (v' : α → M) (xs' : Fin m → M),
+      Sum.elim (⇑e ∘ v') (⇑e ∘ xs') = ⇑e ∘ Sum.elim v' xs' := by
+    intro m v' xs'; funext x; cases x <;> rfl
+  induction φ with
+  | falsum => simp [BoundedFormulaInf.Realize]
+  | equal t₁ t₂ =>
+    simp only [BoundedFormulaInf.Realize, h_elim, HomClass.realize_term e]
+    exact e.injective.eq_iff.symm
+  | rel R ts =>
+    simp only [BoundedFormulaInf.Realize]
+    simp_rw [h_elim, HomClass.realize_term e]
+    exact (StrongHomClass.map_rel e R _).symm
+  | imp φ ψ ihφ ihψ =>
+    simp only [BoundedFormulaInf.Realize]
+    exact Iff.imp (ihφ xs) (ihψ xs)
+  | all φ ih =>
+    simp only [BoundedFormulaInf.Realize]
+    have snoc_comp : ∀ {m : ℕ} (xs' : Fin m → M) (x : M),
+        ⇑e ∘ Fin.snoc xs' x = Fin.snoc (⇑e ∘ xs') (e x) := by
+      intro m xs' x; funext i; refine Fin.lastCases ?_ ?_ i
+      · simp [Fin.snoc]
+      · intro j; simp [Fin.snoc]
+    constructor
+    · intro h y
+      have h1 := (ih (Fin.snoc xs (e.symm y))).mp (h (e.symm y))
+      rwa [snoc_comp, e.apply_symm_apply] at h1
+    · intro h x
+      have h1 := h (e x)
+      rw [← snoc_comp] at h1
+      exact (ih (Fin.snoc xs x)).mpr h1
+  | iSup φs ih =>
+    simp only [BoundedFormulaInf.Realize]
+    exact ⟨fun ⟨i, hi⟩ => ⟨i, (ih i xs).mp hi⟩,
+           fun ⟨i, hi⟩ => ⟨i, (ih i xs).mpr hi⟩⟩
+  | iInf φs ih =>
+    simp only [BoundedFormulaInf.Realize]
+    exact ⟨fun h i => (ih i xs).mp (h i),
+           fun h i => (ih i xs).mpr (h i)⟩
+
 /-! ### L∞ω Elementary Equivalence -/
 
 /-- Two structures are L∞ω-elementarily equivalent if they satisfy the same L∞ω sentences.
@@ -92,14 +141,17 @@ theorem trans (h₁ : LinfEquiv L M N) (h₂ : LinfEquiv L N P) : LinfEquiv L M 
 
 /-- Isomorphic structures are L∞ω-equivalent.
 
-This theorem states that isomorphism implies L∞ω-equivalence. The proof uses induction
-on formula structure, showing that satisfaction is preserved by isomorphism. -/
+The proof transports variable assignments along the isomorphism using
+`BoundedFormulaInf.realize_equiv`, then observes that `e ∘ Empty.elim = Empty.elim`
+and `e ∘ Fin.elim0 = Fin.elim0` since both domains are empty. -/
 theorem of_equiv (e : M ≃[L] N) : LinfEquiv L M N := by
   intro φ
-  -- φ is a sentence, i.e., BoundedFormulaInf Empty 0
-  -- Need to show: φ.Realize M ↔ φ.Realize N
-  -- where Realize for sentences uses Empty.elim and Fin.elim0
-  sorry
+  have h := BoundedFormulaInf.realize_equiv e φ (Empty.elim : Empty → M) (Fin.elim0 : Fin 0 → M)
+  have hv : ⇑e ∘ (Empty.elim : Empty → M) = (Empty.elim : Empty → N) :=
+    funext (fun x => x.elim)
+  have hxs : ⇑e ∘ (Fin.elim0 : Fin 0 → M) = (Fin.elim0 : Fin 0 → N) :=
+    funext (fun x => x.elim0)
+  rw [hv, hxs] at h; exact h
 
 end LinfEquiv
 
@@ -109,8 +161,13 @@ end LinfEquiv
 theorem TheoryInf.Model.of_equiv {T : L.TheoryInf} {M N : Type w} [L.Structure M]
     [L.Structure N] (hM : T.Model M) (e : M ≃[L] N) : T.Model N := by
   intro φ hφ
-  -- The universe of φ may differ from 0, so we need a more general argument
-  sorry
+  have h := BoundedFormulaInf.realize_equiv e φ (Empty.elim : Empty → M) (Fin.elim0 : Fin 0 → M)
+  have hv : ⇑e ∘ (Empty.elim : Empty → M) = (Empty.elim : Empty → N) :=
+    funext (fun x => x.elim)
+  have hxs : ⇑e ∘ (Fin.elim0 : Fin 0 → M) = (Fin.elim0 : Fin 0 → N) :=
+    funext (fun x => x.elim0)
+  rw [hv, hxs] at h
+  exact h.mp (hM φ hφ)
 
 end Language
 

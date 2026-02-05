@@ -77,6 +77,55 @@ def Valid (φ : L.Sentenceω) : Prop := ∀ (M : Type) [L.Structure M], Sentence
 
 end Theoryω
 
+/-! ### Isomorphism Invariance of Realization -/
+
+/-- Realization of Lω₁ω formulas is preserved by language isomorphisms.
+
+Given an isomorphism `e : M ≃[L] N`, a formula realized in M with variable assignments
+`v` and `xs` is also realized in N with the transported assignments `e ∘ v` and `e ∘ xs`. -/
+theorem BoundedFormulaω.realize_equiv {M N : Type w} [L.Structure M] [L.Structure N]
+    (e : M ≃[L] N) {α : Type*} {n : ℕ} (φ : L.BoundedFormulaω α n)
+    (v : α → M) (xs : Fin n → M) :
+    φ.Realize v xs ↔ φ.Realize (e ∘ v) (e ∘ xs) := by
+  have h_elim : ∀ {m : ℕ} (v' : α → M) (xs' : Fin m → M),
+      Sum.elim (⇑e ∘ v') (⇑e ∘ xs') = ⇑e ∘ Sum.elim v' xs' := by
+    intro m v' xs'; funext x; cases x <;> rfl
+  induction φ with
+  | falsum => simp [BoundedFormulaω.Realize]
+  | equal t₁ t₂ =>
+    simp only [BoundedFormulaω.Realize, h_elim, HomClass.realize_term e]
+    exact e.injective.eq_iff.symm
+  | rel R ts =>
+    simp only [BoundedFormulaω.Realize]
+    simp_rw [h_elim, HomClass.realize_term e]
+    exact (StrongHomClass.map_rel e R _).symm
+  | imp φ ψ ihφ ihψ =>
+    simp only [BoundedFormulaω.Realize]
+    exact Iff.imp (ihφ xs) (ihψ xs)
+  | all φ ih =>
+    simp only [BoundedFormulaω.Realize]
+    have snoc_comp : ∀ {m : ℕ} (xs' : Fin m → M) (x : M),
+        ⇑e ∘ Fin.snoc xs' x = Fin.snoc (⇑e ∘ xs') (e x) := by
+      intro m xs' x; funext i; refine Fin.lastCases ?_ ?_ i
+      · simp [Fin.snoc]
+      · intro j; simp [Fin.snoc]
+    constructor
+    · intro h y
+      have h1 := (ih (Fin.snoc xs (e.symm y))).mp (h (e.symm y))
+      rwa [snoc_comp, e.apply_symm_apply] at h1
+    · intro h x
+      have h1 := h (e x)
+      rw [← snoc_comp] at h1
+      exact (ih (Fin.snoc xs x)).mpr h1
+  | iSup φs ih =>
+    simp only [BoundedFormulaω.Realize]
+    exact ⟨fun ⟨i, hi⟩ => ⟨i, (ih i xs).mp hi⟩,
+           fun ⟨i, hi⟩ => ⟨i, (ih i xs).mpr hi⟩⟩
+  | iInf φs ih =>
+    simp only [BoundedFormulaω.Realize]
+    exact ⟨fun h i => (ih i xs).mp (h i),
+           fun h i => (ih i xs).mpr (h i)⟩
+
 /-! ### Lω₁ω Elementary Equivalence -/
 
 /-- Two structures are Lω₁ω-elementarily equivalent if they satisfy the same Lω₁ω sentences. -/
@@ -101,15 +150,18 @@ theorem trans (h₁ : LomegaEquiv L M N) (h₂ : LomegaEquiv L N P) : LomegaEqui
 
 /-- Isomorphic structures are Lω₁ω-equivalent.
 
-This theorem states that isomorphism implies Lω₁ω-equivalence. The proof uses induction
-on formula structure, showing that satisfaction is preserved by isomorphism. -/
+The proof transports variable assignments along the isomorphism using
+`BoundedFormulaω.realize_equiv`, then observes that `e ∘ Empty.elim = Empty.elim`
+and `e ∘ Fin.elim0 = Fin.elim0` since both domains are empty. -/
 theorem of_equiv {M N : Type w} [L.Structure M] [L.Structure N] (e : M ≃[L] N) :
     LomegaEquiv L M N := by
   intro φ
-  -- φ is a sentence, i.e., BoundedFormulaω Empty 0
-  -- Need to show: φ.Realize M ↔ φ.Realize N
-  -- where Realize for sentences uses Empty.elim and Fin.elim0
-  sorry
+  have h := BoundedFormulaω.realize_equiv e φ (Empty.elim : Empty → M) (Fin.elim0 : Fin 0 → M)
+  have hv : ⇑e ∘ (Empty.elim : Empty → M) = (Empty.elim : Empty → N) :=
+    funext (fun x => x.elim)
+  have hxs : ⇑e ∘ (Fin.elim0 : Fin 0 → M) = (Fin.elim0 : Fin 0 → N) :=
+    funext (fun x => x.elim0)
+  rw [hv, hxs] at h; exact h
 
 end LomegaEquiv
 
