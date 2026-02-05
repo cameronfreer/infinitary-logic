@@ -38,6 +38,16 @@ import InfinitaryLogic.ModelExistence.ConsistencyProperty
 import InfinitaryLogic.ModelExistence.Theorem
 import InfinitaryLogic.ModelExistence.Completeness
 
+-- Model theory
+import InfinitaryLogic.ModelTheory.LowenheimSkolem
+import InfinitaryLogic.ModelTheory.Hanf
+import InfinitaryLogic.ModelTheory.CountingModels
+
+-- Admissible sets and Barwise
+import InfinitaryLogic.Admissible.Fragment
+import InfinitaryLogic.Admissible.Compactness
+import InfinitaryLogic.Admissible.NadelBound
+
 /-!
 # Infinitary Logic
 
@@ -85,4 +95,14 @@ This library formalizes infinitary logic, including:
 - `ModelExistence/ConsistencyProperty.lean`: Consistency property axioms (C0)-(C7)
 - `ModelExistence/Theorem.lean`: Model existence theorem
 - `ModelExistence/Completeness.lean`: Karp completeness and omitting types
+
+### Model theory (ModelTheory/)
+- `ModelTheory/LowenheimSkolem.lean`: Downward Löwenheim-Skolem for Lω₁ω
+- `ModelTheory/Hanf.lean`: Hanf numbers and Morley-Hanf bound
+- `ModelTheory/CountingModels.lean`: Scott rank and model counting
+
+### Admissible sets (Admissible/)
+- `Admissible/Fragment.lean`: Abstract admissible fragments
+- `Admissible/Compactness.lean`: Barwise compactness and completeness
+- `Admissible/NadelBound.lean`: Nadel bound on Scott height
 -/
