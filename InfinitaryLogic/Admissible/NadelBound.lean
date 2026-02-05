@@ -40,19 +40,19 @@ Informally, this means that M (as a set-theoretic object) is an element of the
 admissible set corresponding to A. The full formalization would require
 set-theoretic infrastructure (KP set theory, HYP(M), etc.).
 
-We axiomatize this as an opaque class to avoid a vacuously true hypothesis. -/
-class AdmissibleFragment.CodedIn (A : AdmissibleFragment L)
+Declared `opaque` so that it cannot be constructed or unfolded — callers must
+receive a `CodedIn` witness from outside the formal system. -/
+opaque AdmissibleFragment.CodedIn (A : AdmissibleFragment L)
     (M : Type w) [L.Structure M] [Countable M] : Prop
 
 /-- **Nadel Bound** (KK04 Theorem 4.3.2): The Scott height of a countable structure
 coded in an admissible fragment A is bounded by o(A), the ordinal height of A.
 
-The hypothesis `hM_coded` asserts that M is coded in the admissible set
-corresponding to A. Formalizing this fully requires set-theoretic infrastructure
-(KP set theory, HYP(M), etc.), so we use the abstract `CodedIn` predicate. -/
+Formalizing the coding hypothesis fully requires set-theoretic infrastructure
+(KP set theory, HYP(M), etc.), so we use the opaque `CodedIn` predicate. -/
 theorem nadel_bound (A : AdmissibleFragment L)
     (M : Type w) [L.Structure M] [Countable M]
-    [A.CodedIn M] :
+    (hM : A.CodedIn M) :
     scottHeight (L := L) M < A.height := by
   sorry
 
