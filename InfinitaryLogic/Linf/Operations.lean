@@ -129,6 +129,48 @@ def relabel (g : α → β ⊕ Fin n) : ∀ {k}, L.BoundedFormulaInf α k → L.
   | _, iSup φs => iSup fun i => (φs i).relabel g
   | _, iInf φs => iInf fun i => (φs i).relabel g
 
+/-- Renames free variables in a bounded formula using a function f : α → β.
+
+Unlike `relabel`, which can move free variables into bound positions, `mapFreeVars`
+simply renames free variables while preserving the bound variable structure. -/
+def mapFreeVars (f : α → β) : ∀ {n}, L.BoundedFormulaInf α n → L.BoundedFormulaInf β n
+  | _, .falsum => .falsum
+  | _, .equal t₁ t₂ => .equal (t₁.relabel (Sum.map f id)) (t₂.relabel (Sum.map f id))
+  | _, .rel R ts => .rel R (fun i => (ts i).relabel (Sum.map f id))
+  | _, .imp φ ψ => .imp (φ.mapFreeVars f) (ψ.mapFreeVars f)
+  | _, .all φ => .all (φ.mapFreeVars f)
+  | _, .iSup φs => .iSup (fun i => (φs i).mapFreeVars f)
+  | _, .iInf φs => .iInf (fun i => (φs i).mapFreeVars f)
+
+private theorem sum_elim_comp_sum_map (f : α → β) (v : β → M) (xs : Fin n → M) :
+    Sum.elim v xs ∘ Sum.map f id = Sum.elim (v ∘ f) xs := by
+  funext x; cases x <;> rfl
+
+/-- Realization commutes with free variable renaming. -/
+theorem realize_mapFreeVars {M : Type*} [L.Structure M]
+    (f : α → β) (φ : L.BoundedFormulaInf α n) (v : β → M) (xs : Fin n → M) :
+    (φ.mapFreeVars f).Realize v xs ↔ φ.Realize (v ∘ f) xs := by
+  induction φ with
+  | falsum => simp [mapFreeVars, Realize]
+  | equal t₁ t₂ =>
+    simp only [mapFreeVars, realize_equal, Term.realize_relabel, sum_elim_comp_sum_map]
+  | rel R ts =>
+    simp only [mapFreeVars, realize_rel]
+    constructor <;> intro h
+    · convert h using 1; ext i; simp [Term.realize_relabel, sum_elim_comp_sum_map]
+    · convert h using 1; ext i; simp [Term.realize_relabel, sum_elim_comp_sum_map]
+  | imp φ ψ ihφ ihψ =>
+    simp only [mapFreeVars, realize_imp, ihφ xs, ihψ xs]
+  | all φ ih =>
+    simp only [mapFreeVars, realize_all]
+    exact forall_congr' fun x => ih (Fin.snoc xs x)
+  | iSup φs ih =>
+    simp only [mapFreeVars]
+    exact exists_congr fun i => ih i xs
+  | iInf φs ih =>
+    simp only [mapFreeVars]
+    exact forall_congr' fun i => ih i xs
+
 /-- Substitutes the free variables in a bounded formula with terms. -/
 def subst : ∀ {n : ℕ}, L.BoundedFormulaInf α n → (α → L.Term β) → L.BoundedFormulaInf β n
   | _, falsum, _ => falsum

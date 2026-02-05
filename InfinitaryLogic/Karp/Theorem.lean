@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Karp.PotentialIso
+import InfinitaryLogic.Linf.Operations
 import InfinitaryLogic.Linf.QuantifierRank
 import InfinitaryLogic.Linf.Theory
 

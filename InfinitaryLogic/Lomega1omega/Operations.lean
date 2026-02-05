@@ -147,7 +147,71 @@ def subst : ∀ {n : ℕ}, L.BoundedFormulaω α n → (α → L.Term β) → L.
   | _, iSup φs, tf => iSup fun i => (φs i).subst tf
   | _, iInf φs, tf => iInf fun i => (φs i).subst tf
 
+/-- Renames free variables in a bounded formula using a function f : α → β.
+
+Unlike `relabel`, which can move free variables into bound positions, `mapFreeVars`
+simply renames free variables while preserving the bound variable structure. -/
+def mapFreeVars (f : α → β) : ∀ {n}, L.BoundedFormulaω α n → L.BoundedFormulaω β n
+  | _, .falsum => .falsum
+  | _, .equal t₁ t₂ => .equal (t₁.relabel (Sum.map f id)) (t₂.relabel (Sum.map f id))
+  | _, .rel R ts => .rel R (fun i => (ts i).relabel (Sum.map f id))
+  | _, .imp φ ψ => .imp (φ.mapFreeVars f) (ψ.mapFreeVars f)
+  | _, .all φ => .all (φ.mapFreeVars f)
+  | _, .iSup φs => .iSup (fun k => (φs k).mapFreeVars f)
+  | _, .iInf φs => .iInf (fun k => (φs k).mapFreeVars f)
+
+private theorem sum_elim_comp_sum_map (f : α → β) (v : β → M) (xs : Fin n → M) :
+    Sum.elim v xs ∘ Sum.map f id = Sum.elim (v ∘ f) xs := by
+  funext x; cases x <;> rfl
+
+/-- Realization commutes with free variable renaming. -/
+theorem realize_mapFreeVars {M : Type*} [L.Structure M]
+    (f : α → β) (φ : L.BoundedFormulaω α n) (v : β → M) (xs : Fin n → M) :
+    (φ.mapFreeVars f).Realize v xs ↔ φ.Realize (v ∘ f) xs := by
+  induction φ with
+  | falsum => simp [mapFreeVars, Realize]
+  | equal t₁ t₂ =>
+    simp only [mapFreeVars, realize_equal, Term.realize_relabel, sum_elim_comp_sum_map]
+  | rel R ts =>
+    simp only [mapFreeVars, realize_rel]
+    constructor <;> intro h
+    · convert h using 1; ext i; simp [Term.realize_relabel, sum_elim_comp_sum_map]
+    · convert h using 1; ext i; simp [Term.realize_relabel, sum_elim_comp_sum_map]
+  | imp φ ψ ihφ ihψ =>
+    simp only [mapFreeVars, realize_imp, ihφ xs, ihψ xs]
+  | all φ ih =>
+    simp only [mapFreeVars, realize_all]
+    exact forall_congr' fun x => ih (Fin.snoc xs x)
+  | iSup φs ih =>
+    simp only [mapFreeVars, realize_iSup]
+    exact exists_congr fun k => ih k xs
+  | iInf φs ih =>
+    simp only [mapFreeVars, realize_iInf]
+    exact forall_congr' fun k => ih k xs
+
 end BoundedFormulaω
+
+namespace Formulaω
+
+/-- Converts a formula with `Fin 0` free variables to a sentence (with `Empty` free variables).
+
+Since both `Fin 0` and `Empty` are empty types, this is a purely type-theoretic conversion
+that does not change the semantics of the formula. -/
+def toSentenceω (φ : L.Formulaω (Fin 0)) : L.Sentenceω :=
+  φ.mapFreeVars Fin.elim0
+
+/-- `toSentenceω` preserves semantics: the sentence realizes in M iff the original
+formula realizes with the `Fin.elim0` assignment. -/
+theorem realize_toSentenceω {M : Type*} [L.Structure M]
+    (φ : L.Formulaω (Fin 0)) :
+    Sentenceω.Realize φ.toSentenceω M ↔ Formulaω.Realize φ (Fin.elim0 : Fin 0 → M) := by
+  unfold toSentenceω Sentenceω.Realize Formulaω.Realize
+  rw [BoundedFormulaω.realize_mapFreeVars]
+  have h : (Empty.elim : Empty → M) ∘ (Fin.elim0 : Fin 0 → Empty) = (Fin.elim0 : Fin 0 → M) :=
+    funext (fun x => Fin.elim0 x)
+  simp only [h]
+
+end Formulaω
 
 namespace BoundedFormula
 

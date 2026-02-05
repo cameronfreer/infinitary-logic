@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Karp.Theorem
 import InfinitaryLogic.Lomega1omega.Theory
+import InfinitaryLogic.Lomega1omega.Embedding
 import InfinitaryLogic.Scott.Sentence
 
 /-!
@@ -47,7 +48,17 @@ theorem countable_LomegaEquiv_implies_iso
     {M : Type w} [L.Structure M] [Countable M]
     {N : Type w} [L.Structure N] [Countable N] :
     LomegaEquiv L M N → Nonempty (M ≃[L] N) := by
-  sorry
+  intro hEquiv
+  -- M satisfies its own Scott sentence
+  have hM := scottSentence_self (L := L) M
+  -- Convert from Formulaω (Fin 0) to Sentenceω so LomegaEquiv applies
+  have hMω := (Formulaω.realize_toSentenceω (scottSentence (L := L) M) (M := M)).mpr hM
+  -- Transfer from M to N via LomegaEquiv
+  have hNω := (hEquiv _).mp hMω
+  -- Convert back to Formulaω (Fin 0) realization
+  have hN := (Formulaω.realize_toSentenceω (scottSentence (L := L) M) (M := N)).mp hNω
+  -- Scott sentence characterizes isomorphism for countable structures
+  exact (scottSentence_characterizes M N).mp hN
 
 /-- For countable structures in a countable relational language, L∞ω-elementary
 equivalence implies isomorphism.
@@ -58,7 +69,13 @@ theorem countable_LinfEquiv_implies_iso
     {M : Type w} [L.Structure M] [Countable M]
     {N : Type w} [L.Structure N] [Countable N] :
     LinfEquiv L M N → Nonempty (M ≃[L] N) := by
-  sorry
+  intro hLinf
+  apply countable_LomegaEquiv_implies_iso
+  -- L∞ω-equivalence implies Lω₁ω-equivalence via the embedding
+  intro φ
+  have h := hLinf (Sentenceω.toLinf φ)
+  simp only [Sentenceω.realize_toLinf] at h
+  exact h
 
 /-- For countable structures, potential isomorphism implies actual isomorphism.
 
