@@ -25,6 +25,8 @@ import InfinitaryLogic.Scott.BackAndForth
 import InfinitaryLogic.Scott.Formula
 import InfinitaryLogic.Scott.Sentence
 import InfinitaryLogic.Scott.Rank
+import InfinitaryLogic.Scott.QuantifierRank
+import InfinitaryLogic.Scott.Height
 
 -- Karp's theorem
 import InfinitaryLogic.Karp.PotentialIso
@@ -66,6 +68,8 @@ This library formalizes infinitary logic, including:
 - `Scott/Formula.lean`: Scott formula construction
 - `Scott/Sentence.lean`: Scott sentence and characterization theorem
 - `Scott/Rank.lean`: Scott rank definition and bounds
+- `Scott/QuantifierRank.lean`: Quantifier rank bounds on Scott formulas
+- `Scott/Height.lean`: Scott height, canonical Scott sentence, sr/SR
 
 ### Karp's theorem (Karp/)
 - `Karp/PotentialIso.lean`: Potential isomorphism definition
