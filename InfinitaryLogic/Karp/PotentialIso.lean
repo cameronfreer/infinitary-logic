@@ -113,12 +113,54 @@ for the empty tuple. This is the main characterization theorem for potential iso
     BFEquiv α n a b holds for all α.
 
 Note: This theorem is stated for relational languages. -/
+private theorem potentialIso_family_BFEquiv [Countable (Σ l, L.Relations l)]
+    {M : Type w} [L.Structure M]
+    {N : Type w} [L.Structure N]
+    (P : PotentialIso L M N) (α : Ordinal)
+    {n : ℕ} {a : Fin n → M} {b : Fin n → N}
+    (hab : ⟨n, a, b⟩ ∈ P.family) : BFEquiv (L := L) α n a b := by
+  induction α using Ordinal.limitRecOn generalizing n a b with
+  | zero =>
+    exact (BFEquiv.zero a b).mpr (P.compatible _ hab)
+  | succ β ih =>
+    rw [BFEquiv.succ]
+    refine ⟨ih hab, ?_, ?_⟩
+    · intro m
+      obtain ⟨n', hn'⟩ := P.forth _ hab m
+      exact ⟨n', ih hn'⟩
+    · intro n'
+      obtain ⟨m, hm⟩ := P.back _ hab n'
+      exact ⟨m, ih hm⟩
+  | limit β hβ ih =>
+    rw [BFEquiv.limit β hβ]
+    exact fun γ hγ => ih γ hγ hab
+
 theorem potentialIso_iff_BFEquiv_all [Countable (Σ l, L.Relations l)]
     {M : Type w} [L.Structure M]
     {N : Type w} [L.Structure N] :
     Nonempty (PotentialIso L M N) ↔
     ∀ α : Ordinal, BFEquiv (L := L) α 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) := by
-  sorry
+  constructor
+  · -- (→) PotentialIso → BFEquiv at all ordinals
+    intro ⟨P⟩ α
+    exact potentialIso_family_BFEquiv P α P.empty_mem
+  · -- (←) BFEquiv at all ordinals → PotentialIso
+    intro hBF
+    -- Define the family as all pairs (a, b) that are BFEquiv at all ordinals
+    refine ⟨{
+      family := { p | ∀ α : Ordinal, BFEquiv (L := L) α p.1 p.2.1 p.2.2 }
+      empty_mem := fun α => hBF α
+      compatible := fun p hp => (BFEquiv.zero p.2.1 p.2.2).mp (hp 0)
+      forth := fun ⟨n, a, b⟩ hp m => ?_
+      back := fun ⟨n, a, b⟩ hp n' => ?_
+    }⟩
+    · -- Forth: need ∃ n' such that ∀ α, BFEquiv α (n+1) (snoc a m) (snoc b n')
+      -- From hp: ∀ α, BFEquiv α n a b, so BFEquiv (succ α) n a b for each α
+      -- By forth: ∀ α, ∃ n'_α, BFEquiv α (n+1) (snoc a m) (snoc b n'_α)
+      -- Need quantifier swap: ∃ n', ∀ α, BFEquiv α (n+1) (snoc a m) (snoc b n')
+      sorry
+    · -- Back: symmetric to forth
+      sorry
 
 end Language
 

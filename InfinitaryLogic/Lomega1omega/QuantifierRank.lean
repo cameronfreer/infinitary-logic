@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Lomega1omega.Semantics
+import InfinitaryLogic.Lomega1omega.Operations
 import Mathlib.SetTheory.Ordinal.Basic
 
 /-!
@@ -164,7 +165,45 @@ theorem qrank_esup {ι : Type*} [Encodable ι] (φs : ι → L.BoundedFormulaω 
         | some i => φs i | none => ⊥).qrank) (Encodable.encode i))
     simp [Encodable.encodek]
 
+/-- `castLE` preserves quantifier rank. -/
+theorem qrank_castLE {m n : ℕ} (h : m ≤ n) (φ : L.BoundedFormulaω α m) :
+    (φ.castLE h).qrank = φ.qrank := by
+  induction φ generalizing n with
+  | falsum => rfl
+  | equal => rfl
+  | rel => rfl
+  | imp φ ψ ihφ ihψ =>
+    simp only [castLE, qrank_imp, ihφ h, ihψ h]
+  | all φ ih =>
+    simp only [castLE, qrank_all, ih (Nat.succ_le_succ h)]
+  | iSup φs ih =>
+    simp only [castLE, qrank_iSup]
+    congr 1; funext i; exact ih i h
+  | iInf φs ih =>
+    simp only [castLE, qrank_iInf]
+    congr 1; funext i; exact ih i h
+
 end BoundedFormulaω
+
+open BoundedFormulaω in
+/-- `relabel` preserves quantifier rank. -/
+theorem BoundedFormulaω.qrank_relabel {α β : Type w} {p : ℕ} (g : α → β ⊕ Fin p)
+    {k : ℕ} (φ : L.BoundedFormulaω α k) :
+    (φ.relabel g).qrank = φ.qrank := by
+  induction φ generalizing p β with
+  | falsum => rfl
+  | equal => rfl
+  | rel => rfl
+  | imp φ ψ ihφ ihψ =>
+    simp only [relabel, qrank_imp, ihφ g, ihψ g]
+  | all φ ih =>
+    simp only [relabel, qrank_all, qrank_castLE, ih g]
+  | iSup φs ih =>
+    simp only [relabel, qrank_iSup]
+    congr 1; funext i; exact ih i g
+  | iInf φs ih =>
+    simp only [relabel, qrank_iInf]
+    congr 1; funext i; exact ih i g
 
 /-! ### Equivalence up to Quantifier Rank -/
 

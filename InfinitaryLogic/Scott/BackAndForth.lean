@@ -200,6 +200,19 @@ theorem BFEquiv.refl_zero (a : Fin n → M) :
   (BFEquiv.zero a a).mpr (SameAtomicType.refl a)
 
 omit [L.IsRelational] in
+/-- BF-equivalence is reflexive at all levels. -/
+theorem BFEquiv.refl (α : Ordinal) (a : Fin n → M) :
+    BFEquiv (L := L) (M := M) (N := M) α n a a := by
+  induction α using Ordinal.limitRecOn generalizing n a with
+  | zero => exact (BFEquiv.zero a a).mpr (SameAtomicType.refl a)
+  | succ β ih =>
+    rw [BFEquiv.succ]
+    exact ⟨ih a, fun m => ⟨m, ih (snoc a m)⟩, fun m => ⟨m, ih (snoc a m)⟩⟩
+  | limit β hβ ih =>
+    rw [BFEquiv.limit β hβ]
+    exact fun γ hγ => ih γ hγ a
+
+omit [L.IsRelational] in
 /-- BF-equivalence is symmetric at all levels. -/
 theorem BFEquiv.symm {α : Ordinal} {a : Fin n → M} {b : Fin n → N}
     (h : BFEquiv (L := L) α n a b) : BFEquiv (L := L) (M := N) (N := M) α n b a := by

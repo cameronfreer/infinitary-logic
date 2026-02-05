@@ -146,9 +146,10 @@ Note: The two sides quantify over ordinals in potentially different universes
 When both sides are specialized to `Ordinal.{0}`, this follows directly from
 `BFEquiv_implies_EquivQRInf` and `EquivQRInf_implies_BFEquiv`. -/
 theorem BFEquiv_all_iff_EquivQRInf_all {M N : Type w} [L.Structure M] [L.Structure N] :
-    (∀ α : Ordinal, BFEquiv (L := L) α 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)) ↔
-    (∀ α : Ordinal, EquivQRInf L α M N) := by
-  sorry
+    (∀ α : Ordinal.{0}, BFEquiv (L := L) α 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)) ↔
+    (∀ α : Ordinal.{0}, EquivQRInf L α M N) :=
+  ⟨fun h α => BFEquiv_implies_EquivQRInf α (h α),
+   fun h α => EquivQRInf_implies_BFEquiv α (h α)⟩
 
 /-- **Karp's Theorem** (KK04 Theorem 1.2.1): For relational languages, two structures
 are potentially isomorphic if and only if they are L∞ω-elementarily equivalent.
