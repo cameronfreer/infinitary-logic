@@ -123,10 +123,17 @@ which is `⨆ m, elementRank m + 1` (denoted `SR(M)` or `α(M)`). -/
 noncomputable def sr (M : Type w) [L.Structure M] [Countable M] : Ordinal.{0} :=
   ⨆ (m : M), elementRank (L := L) m
 
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- sr ≤ scottRank always holds, since scottRank = ⨆ m, elementRank m + 1 ≥ ⨆ m, elementRank m. -/
 theorem sr_le_scottRank (M : Type w) [L.Structure M] [Countable M] :
     sr (L := L) M ≤ scottRank (L := L) M := by
-  sorry
+  unfold sr scottRank
+  haveI : Small.{0} M := Countable.toSmall M
+  apply Ordinal.iSup_le
+  intro m
+  calc elementRank (L := L) m
+      ≤ elementRank (L := L) m + 1 := le_self_add
+    _ ≤ ⨆ m, elementRank (L := L) m + 1 := Ordinal.le_iSup _ m
 
 /-- scottHeight ≤ scottRank for nonempty structures.
 

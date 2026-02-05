@@ -128,7 +128,10 @@ theorem qrank_ex (φ : L.BoundedFormulaω α (n + 1)) :
     φ.ex.qrank = φ.qrank + 1 := by
   simp only [BoundedFormulaω.ex, qrank_not, qrank_all]
 
-/-- The quantifier rank of einf is the sup of the family's ranks. -/
+/-- The quantifier rank of einf is the sup of the family's ranks.
+
+Note: This requires careful universe handling since `einf` encodes `ι` into `ℕ`,
+which changes the universe of the supremum. -/
 theorem qrank_einf {ι : Type*} [Encodable ι] (φs : ι → L.BoundedFormulaω α n) :
     (einf φs).qrank = ⨆ i, (φs i).qrank := by
   sorry
