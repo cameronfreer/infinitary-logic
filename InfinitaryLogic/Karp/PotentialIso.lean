@@ -14,8 +14,8 @@ back-and-forth equivalence at all ordinal levels.
 
 ## Main Definitions
 
-- `PotentialIso`: A potential isomorphism between structures M and N is a nonempty
-  family of finite partial maps that is closed under extension in both directions.
+- `PotentialIso`: A potential isomorphism between structures M and N is a family of
+  finite partial maps containing the empty map and closed under extension in both directions.
 
 ## Main Results
 
@@ -37,9 +37,9 @@ variable {L : Language.{u, v}} [L.IsRelational]
 
 open FirstOrder Structure Fin Ordinal
 
-/-- A potential isomorphism between structures M and N is a nonempty family of
-finite partial maps (given as pairs of compatible tuples) that is closed under
-extension in both directions.
+/-- A potential isomorphism between structures M and N is a family of finite partial
+maps (given as pairs of compatible tuples) that contains the empty map and is closed
+under extension in both directions.
 
 This is the model-theoretic notion corresponding to "back-and-forth system" or
 "winning strategy in the infinite EF game." -/
@@ -47,8 +47,8 @@ structure PotentialIso (L : Language.{u, v}) [L.IsRelational]
     (M : Type w) (N : Type w') [L.Structure M] [L.Structure N] where
   /-- The family of partial maps, represented as pairs of tuples of equal length. -/
   family : Set (Σ n : ℕ, (Fin n → M) × (Fin n → N))
-  /-- The family is nonempty (contains at least the empty map). -/
-  nonempty : family.Nonempty
+  /-- The family contains the empty map. -/
+  empty_mem : ⟨0, Fin.elim0, Fin.elim0⟩ ∈ family
   /-- Each pair in the family preserves atomic type. -/
   compatible : ∀ p ∈ family, SameAtomicType (L := L) p.2.1 p.2.2
   /-- Forth: for any pair and any element of M, there's an extension in the family. -/
@@ -66,7 +66,7 @@ variable {N : Type w'} [L.Structure N]
 /-- The trivial potential isomorphism from M to itself via the identity. -/
 noncomputable def refl (M : Type w) [L.Structure M] : PotentialIso L M M where
   family := { p | SameAtomicType (L := L) p.2.1 p.2.2 ∧ p.2.1 = p.2.2 }
-  nonempty := ⟨⟨0, Fin.elim0, Fin.elim0⟩, SameAtomicType.refl _, rfl⟩
+  empty_mem := by simp only [Set.mem_setOf_eq]; exact ⟨SameAtomicType.refl _, trivial⟩
   compatible := fun p hp => hp.1
   forth := fun p hp m => by
     simp only [Set.mem_setOf_eq] at hp ⊢
@@ -86,9 +86,9 @@ noncomputable def refl (M : Type w) [L.Structure M] : PotentialIso L M M where
 /-- Potential isomorphism is symmetric. -/
 noncomputable def symm (p : PotentialIso L M N) : PotentialIso L N M where
   family := { q | ⟨q.1, q.2.2, q.2.1⟩ ∈ p.family }
-  nonempty := by
-    obtain ⟨⟨n, a, b⟩, hp⟩ := p.nonempty
-    exact ⟨⟨n, b, a⟩, hp⟩
+  empty_mem := by
+    simp only [Set.mem_setOf_eq]
+    exact p.empty_mem
   compatible := fun q hq => by
     simp only [Set.mem_setOf_eq] at hq
     exact (p.compatible ⟨q.1, q.2.2, q.2.1⟩ hq).symm
