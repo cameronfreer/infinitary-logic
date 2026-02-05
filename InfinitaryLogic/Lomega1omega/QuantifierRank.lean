@@ -50,7 +50,7 @@ open FirstOrder Structure Ordinal
 - Countable connectives take the sup of their arguments
 
 Note: For Lω₁ω, the quantifier rank is always a countable ordinal (< ω₁). -/
-noncomputable def BoundedFormulaω.qrank : L.BoundedFormulaω α n → Ordinal
+noncomputable def BoundedFormulaω.qrank : L.BoundedFormulaω α n → Ordinal.{0}
   | .falsum       => 0
   | .equal _ _    => 0
   | .rel _ _      => 0
@@ -60,11 +60,11 @@ noncomputable def BoundedFormulaω.qrank : L.BoundedFormulaω α n → Ordinal
   | .iInf φs      => ⨆ (k : ℕ), (φs k).qrank
 
 /-- Quantifier rank of a formula (no bound variables). -/
-noncomputable abbrev Formulaω.qrank (φ : L.Formulaω α) : Ordinal :=
+noncomputable abbrev Formulaω.qrank (φ : L.Formulaω α) : Ordinal.{0} :=
   BoundedFormulaω.qrank φ
 
 /-- Quantifier rank of a sentence. -/
-noncomputable abbrev Sentenceω.qrank (φ : L.Sentenceω) : Ordinal :=
+noncomputable abbrev Sentenceω.qrank (φ : L.Sentenceω) : Ordinal.{0} :=
   BoundedFormulaω.qrank φ
 
 /-! ### Quantifier Rank Lemmas -/
@@ -131,15 +131,38 @@ theorem qrank_ex (φ : L.BoundedFormulaω α (n + 1)) :
 /-- The quantifier rank of einf is the sup of the family's ranks.
 
 Note: This requires careful universe handling since `einf` encodes `ι` into `ℕ`,
-which changes the universe of the supremum. -/
+which changes the universe of the supremum. We need `Small.{0} ι` (from `Encodable`)
+for `Ordinal.le_iSup` to work at `Ordinal.{0}`. -/
 theorem qrank_einf {ι : Type*} [Encodable ι] (φs : ι → L.BoundedFormulaω α n) :
     (einf φs).qrank = ⨆ i, (φs i).qrank := by
-  sorry
+  haveI : Small.{0} ι := Countable.toSmall ι
+  simp only [einf, qrank_iInf]
+  apply le_antisymm
+  · apply Ordinal.iSup_le; intro k
+    match h : Encodable.decode (α := ι) k with
+    | none => simp
+    | some i => exact Ordinal.le_iSup _ i
+  · apply Ordinal.iSup_le; intro i
+    refine le_trans ?_ (Ordinal.le_iSup
+      (fun k : ℕ => (match Encodable.decode (α := ι) k with
+        | some i => φs i | none => ⊤).qrank) (Encodable.encode i))
+    simp [Encodable.encodek]
 
 /-- The quantifier rank of esup is the sup of the family's ranks. -/
 theorem qrank_esup {ι : Type*} [Encodable ι] (φs : ι → L.BoundedFormulaω α n) :
     (esup φs).qrank = ⨆ i, (φs i).qrank := by
-  sorry
+  haveI : Small.{0} ι := Countable.toSmall ι
+  simp only [esup, qrank_iSup]
+  apply le_antisymm
+  · apply Ordinal.iSup_le; intro k
+    match h : Encodable.decode (α := ι) k with
+    | none => simp
+    | some i => exact Ordinal.le_iSup _ i
+  · apply Ordinal.iSup_le; intro i
+    refine le_trans ?_ (Ordinal.le_iSup
+      (fun k : ℕ => (match Encodable.decode (α := ι) k with
+        | some i => φs i | none => ⊥).qrank) (Encodable.encode i))
+    simp [Encodable.encodek]
 
 end BoundedFormulaω
 
@@ -149,7 +172,7 @@ end BoundedFormulaω
 Lω₁ω sentences of quantifier rank ≤ α.
 
 This is a semantic relation that captures agreement on formulas of bounded complexity. -/
-def EquivQRω (L : Language) (α : Ordinal) (M N : Type w)
+def EquivQRω (L : Language) (α : Ordinal.{0}) (M N : Type w)
     [L.Structure M] [L.Structure N] : Prop :=
   ∀ (φ : L.Sentenceω), φ.qrank ≤ α → (Sentenceω.Realize φ M ↔ Sentenceω.Realize φ N)
 
@@ -179,7 +202,9 @@ theorem monotone {α β : Ordinal} (hαβ : α ≤ β) (h : EquivQRω L β M N) 
 theorem zero_iff_agree_atomic : EquivQRω L 0 M N ↔
     ∀ φ : L.Sentenceω, φ.qrank = 0 →
       (Sentenceω.Realize φ M ↔ Sentenceω.Realize φ N) := by
-  sorry
+  constructor
+  · intro h φ hφ; exact h φ (le_of_eq hφ)
+  · intro h φ hφ; exact h φ (nonpos_iff_eq_zero.mp hφ)
 
 end EquivQRω
 

@@ -46,7 +46,7 @@ open FirstOrder Structure Ordinal
 - Implication takes the max of its arguments
 - Universal quantification adds 1
 - Infinitary connectives take the sup of their arguments -/
-noncomputable def BoundedFormulaInf.qrank : L.BoundedFormulaInf α n → Ordinal
+noncomputable def BoundedFormulaInf.qrank : L.BoundedFormulaInf α n → Ordinal.{0}
   | .falsum       => 0
   | .equal _ _    => 0
   | .rel _ _      => 0
@@ -56,11 +56,11 @@ noncomputable def BoundedFormulaInf.qrank : L.BoundedFormulaInf α n → Ordinal
   | .iInf φs      => ⨆ i, (φs i).qrank
 
 /-- Quantifier rank of a formula (no bound variables). -/
-noncomputable abbrev FormulaInf.qrank (φ : L.FormulaInf α) : Ordinal :=
+noncomputable abbrev FormulaInf.qrank (φ : L.FormulaInf α) : Ordinal.{0} :=
   BoundedFormulaInf.qrank φ
 
 /-- Quantifier rank of a sentence. -/
-noncomputable abbrev SentenceInf.qrank (φ : L.SentenceInf) : Ordinal :=
+noncomputable abbrev SentenceInf.qrank (φ : L.SentenceInf) : Ordinal.{0} :=
   BoundedFormulaInf.qrank φ
 
 /-! ### Quantifier Rank Lemmas -/
@@ -133,7 +133,7 @@ sentences of quantifier rank ≤ α.
 
 This is a semantic relation that captures agreement on formulas of bounded complexity.
 For L∞ω, this uses sentences with index types in universe 0. -/
-def EquivQRInf (L : Language.{u, v}) (α : Ordinal) (M N : Type w)
+def EquivQRInf (L : Language.{u, v}) (α : Ordinal.{0}) (M N : Type w)
     [L.Structure M] [L.Structure N] : Prop :=
   ∀ (φ : BoundedFormulaInf.{u, v, 0, 0} L Empty 0),
     φ.qrank ≤ α → (SentenceInf.Realize φ M ↔ SentenceInf.Realize φ N)
@@ -164,7 +164,9 @@ theorem monotone {α β : Ordinal} (hαβ : α ≤ β) (h : EquivQRInf L β M N)
 theorem zero_iff_agree_atomic : EquivQRInf L 0 M N ↔
     ∀ φ : BoundedFormulaInf.{u, v, 0, 0} L Empty 0, φ.qrank = 0 →
       (SentenceInf.Realize φ M ↔ SentenceInf.Realize φ N) := by
-  sorry
+  constructor
+  · intro h φ hφ; exact h φ (le_of_eq hφ)
+  · intro h φ hφ; exact h φ (nonpos_iff_eq_zero.mp hφ)
 
 end EquivQRInf
 
