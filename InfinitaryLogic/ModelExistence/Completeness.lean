@@ -32,31 +32,39 @@ variable {L : Language.{u, v}}
 
 open FirstOrder Structure
 
-/-- **Karp Completeness**: A sentence that belongs to some consistency property has a model.
+/-- **Karp Completeness**: A sentence in a countable language that belongs to some
+consistency property with equality axioms has a countable model.
 
 This is a sentence-level consequence of the model existence theorem. -/
-theorem karp_completeness (φ : L.Sentenceω)
-    (h : ∃ C : ConsistencyProperty L, {φ} ∈ C.sets) :
-    ∃ (M : Type) (_ : L.Structure M), Sentenceω.Realize φ M := by
+theorem karp_completeness [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relations l)]
+    (φ : L.Sentenceω)
+    (h : ∃ C : ConsistencyPropertyEq L, {φ} ∈ C.toConsistencyProperty.sets) :
+    ∃ (M : Type) (_ : L.Structure M) (_ : Countable M), Sentenceω.Realize φ M := by
   obtain ⟨C, hC⟩ := h
-  obtain ⟨M, hStr, _, hModel⟩ := model_existence C {φ} hC
-  exact ⟨M, hStr, hModel φ (Set.mem_singleton φ)⟩
+  obtain ⟨M, hStr, hCount, hModel⟩ := model_existence C {φ} hC (Set.countable_singleton φ)
+  exact ⟨M, hStr, hCount, hModel φ (Set.mem_singleton φ)⟩
+
+/-- A type (set of formulas in one free variable) is omitted by a structure M
+if no element of M realizes all formulas in the type simultaneously. -/
+def OmitsType (M : Type*) [L.Structure M] (p : Set (L.Formulaω (Fin 1))) : Prop :=
+  ∀ m : M, ∃ φ ∈ p, ¬ Formulaω.Realize φ (fun _ => m)
 
 /-- **Omitting Types Theorem** for Lω₁ω.
 
-Given a consistent theory T and a collection of types to omit (each of which is not
-isolated by any formula), there exists a model of T that omits all the given types.
+Given a countable consistent theory T in a countable language and a countable collection
+of types to omit (each of which is not isolated by any formula consistent with T),
+there exists a countable model of T that omits all the given types.
 
 This is a powerful generalization of the standard omitting types theorem from
 first-order logic to the countable infinitary setting. -/
-theorem omitting_types
-    (T : L.Theoryω)
+theorem omitting_types [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relations l)]
+    (T : L.Theoryω) (hT_countable : T.Countable)
     (Γ : Set (Set (L.Formulaω (Fin 1))))
-    (hT : ∃ C : ConsistencyProperty L, T ∈ C.sets)
+    (hT : ∃ C : ConsistencyPropertyEq L, T ∈ C.toConsistencyProperty.sets)
     (hΓ : Γ.Countable)
     (h_not_isolated : ∀ p ∈ Γ, True) :  -- schematic non-isolation condition
     ∃ (M : Type) (_ : L.Structure M) (_ : Countable M),
-      Theoryω.Model T M := by
+      Theoryω.Model T M ∧ ∀ p ∈ Γ, OmitsType (L := L) M p := by
   sorry
 
 end Language

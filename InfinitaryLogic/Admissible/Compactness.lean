@@ -53,18 +53,20 @@ theorem barwise_compactness (A : AdmissibleFragment L)
 
 /-- **Barwise Completeness II** (KK04 Theorem 3.1.2).
 
-A theory in an admissible fragment that is consistent has a model.
+A countable theory in an admissible fragment of a countable language that is consistent
+(with equality axioms) has a countable model.
 
 Here "consistent" is stated schematically as membership in some consistency
 property restricted to the fragment. The full statement requires a proof system
 for the admissible fragment, which we do not formalize. -/
-theorem barwise_completeness_II (A : AdmissibleFragment L)
-    {T : Set L.Sentenceω} (hT : T ⊆ A.formulas)
-    (hcons : ∃ C : ConsistencyProperty L, T ∈ C.sets) :
+theorem barwise_completeness_II [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relations l)]
+    (A : AdmissibleFragment L)
+    {T : Set L.Sentenceω} (_hT : T ⊆ A.formulas) (hT_countable : T.Countable)
+    (hcons : ∃ C : ConsistencyPropertyEq L, T ∈ C.toConsistencyProperty.sets) :
     ∃ (M : Type) (_ : L.Structure M) (_ : Countable M),
       Theoryω.Model T M := by
   obtain ⟨C, hC⟩ := hcons
-  exact model_existence C T hC
+  exact model_existence C T hC hT_countable
 
 end Language
 
