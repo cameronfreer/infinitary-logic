@@ -33,6 +33,11 @@ import InfinitaryLogic.Karp.PotentialIso
 import InfinitaryLogic.Karp.Theorem
 import InfinitaryLogic.Karp.CountableCorollary
 
+-- Model existence
+import InfinitaryLogic.ModelExistence.ConsistencyProperty
+import InfinitaryLogic.ModelExistence.Theorem
+import InfinitaryLogic.ModelExistence.Completeness
+
 /-!
 # Infinitary Logic
 
@@ -75,4 +80,9 @@ This library formalizes infinitary logic, including:
 - `Karp/PotentialIso.lean`: Potential isomorphism definition
 - `Karp/Theorem.lean`: Karp's theorem (potential iso ↔ L∞ω-equivalence)
 - `Karp/CountableCorollary.lean`: Countable structures corollary
+
+### Model existence (ModelExistence/)
+- `ModelExistence/ConsistencyProperty.lean`: Consistency property axioms (C0)-(C7)
+- `ModelExistence/Theorem.lean`: Model existence theorem
+- `ModelExistence/Completeness.lean`: Karp completeness and omitting types
 -/
