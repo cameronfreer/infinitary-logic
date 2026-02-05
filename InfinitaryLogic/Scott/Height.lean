@@ -128,11 +128,16 @@ theorem sr_le_scottRank (M : Type w) [L.Structure M] [Countable M] :
     sr (L := L) M ≤ scottRank (L := L) M := by
   sorry
 
-/-- scottHeight ≤ scottRank.
+/-- scottHeight ≤ scottRank for nonempty structures.
 
 The Scott height is at most the Scott rank because the Scott rank bounds the
-element ranks, and the element ranks bound the stabilization levels. -/
-theorem scottHeight_le_scottRank (M : Type w) [L.Structure M] [Countable M] :
+element ranks, and the element ranks bound the stabilization levels.
+
+The `[Nonempty M]` hypothesis is necessary: for empty M, `scottRank = 0`
+(empty supremum) but `scottHeight ≥ 1` since BFEquiv 0 between empty M and
+nonempty N holds trivially while BFEquiv 1 fails (the back condition cannot
+produce elements from the empty domain). -/
+theorem scottHeight_le_scottRank (M : Type w) [L.Structure M] [Countable M] [Nonempty M] :
     scottHeight (L := L) M ≤ scottRank (L := L) M := by
   sorry
 
