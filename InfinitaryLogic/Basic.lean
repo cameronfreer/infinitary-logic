@@ -8,12 +8,16 @@ import InfinitaryLogic.Linf.Syntax
 import InfinitaryLogic.Linf.Semantics
 import InfinitaryLogic.Linf.Operations
 import InfinitaryLogic.Linf.Countability
+import InfinitaryLogic.Linf.Theory
+import InfinitaryLogic.Linf.QuantifierRank
 
 -- Lω₁ω (countable infinitary logic)
 import InfinitaryLogic.Lomega1omega.Syntax
 import InfinitaryLogic.Lomega1omega.Semantics
 import InfinitaryLogic.Lomega1omega.Operations
 import InfinitaryLogic.Lomega1omega.Embedding
+import InfinitaryLogic.Lomega1omega.Theory
+import InfinitaryLogic.Lomega1omega.QuantifierRank
 
 -- Scott sentences and ranks
 import InfinitaryLogic.Scott.AtomicDiagram
@@ -21,6 +25,11 @@ import InfinitaryLogic.Scott.BackAndForth
 import InfinitaryLogic.Scott.Formula
 import InfinitaryLogic.Scott.Sentence
 import InfinitaryLogic.Scott.Rank
+
+-- Karp's theorem
+import InfinitaryLogic.Karp.PotentialIso
+import InfinitaryLogic.Karp.Theorem
+import InfinitaryLogic.Karp.CountableCorollary
 
 /-!
 # Infinitary Logic
@@ -57,4 +66,9 @@ This library formalizes infinitary logic, including:
 - `Scott/Formula.lean`: Scott formula construction
 - `Scott/Sentence.lean`: Scott sentence and characterization theorem
 - `Scott/Rank.lean`: Scott rank definition and bounds
+
+### Karp's theorem (Karp/)
+- `Karp/PotentialIso.lean`: Potential isomorphism definition
+- `Karp/Theorem.lean`: Karp's theorem (potential iso ↔ L∞ω-equivalence)
+- `Karp/CountableCorollary.lean`: Countable structures corollary
 -/
