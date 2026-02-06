@@ -45,36 +45,44 @@ open FirstOrder Structure
 /-! ### Maximal Consistent Sets -/
 
 /-- A set is maximal consistent in a consistency property if it is consistent
-and no proper extension (adding a single sentence) remains consistent. -/
+and no proper superset is consistent. Uses Mathlib's `Maximal` predicate:
+`Maximal (· ∈ C.sets) S` means `S ∈ C.sets ∧ ∀ S', S' ∈ C.sets → S ⊆ S' → S = S'`. -/
 def ConsistencyProperty.MaximalConsistent (C : ConsistencyProperty L)
     (S : Set L.Sentenceω) : Prop :=
-  S ∈ C.sets ∧ ∀ φ, φ ∉ S → S ∪ {φ} ∉ C.sets
+  Maximal (· ∈ C.sets) S
 
 /-- Every consistent set in a consistency property can be extended to a maximal
-consistent set.
+consistent set, by Zorn's lemma.
 
-For countable languages, this follows by sequential enumeration: enumerate all
-sentences and greedily add each to the set if consistency is preserved. For
-general languages, Zorn's lemma applies if `C.sets` is closed under chain
-unions. Both approaches require infrastructure beyond the basic consistency
-property axioms. -/
+The chain-closure axiom of `ConsistencyProperty` ensures that the union of any
+nonempty chain of consistent sets remains consistent, providing the upper bound
+required by Zorn's lemma. -/
 theorem ConsistencyProperty.exists_maximal (C : ConsistencyProperty L)
     (S : Set L.Sentenceω) (hS : S ∈ C.sets) :
     ∃ S', S ⊆ S' ∧ C.MaximalConsistent S' := by
-  sorry
+  obtain ⟨m, hSm, hmax⟩ := zorn_subset_nonempty C.sets
+    (fun chain hchain hIsChain hne => ⟨⋃₀ chain, C.chain_closure chain hchain hIsChain hne,
+      fun s hs => Set.subset_sUnion_of_mem hs⟩) S hS
+  exact ⟨m, hSm, hmax⟩
 
 /-! ### Properties of Maximal Consistent Sets
 
 These properties follow from maximality: if adding a sentence preserves
 consistency, then it must already be in the maximal set. -/
 
-/-- A maximal consistent set has no proper consistent extension by a single sentence. -/
+/-- A maximal consistent set is consistent. -/
+theorem ConsistencyProperty.MaximalConsistent.consistent
+    {C : ConsistencyProperty L} {S : Set L.Sentenceω}
+    (hmax : C.MaximalConsistent S) : S ∈ C.sets :=
+  hmax.prop
+
+/-- If S ∪ {φ} is consistent and S is maximal, then φ ∈ S. -/
 theorem ConsistencyProperty.MaximalConsistent.mem_of_union_consistent
     {C : ConsistencyProperty L} {S : Set L.Sentenceω}
     (hmax : C.MaximalConsistent S) {φ : L.Sentenceω} (h : S ∪ {φ} ∈ C.sets) :
     φ ∈ S := by
-  by_contra hφ
-  exact hmax.2 φ hφ h
+  have heq := hmax.eq_of_ge h Set.subset_union_left
+  exact heq ▸ Set.mem_union_right S (Set.mem_singleton φ)
 
 /-- In a maximal consistent set, for every implication φ → ψ in S,
 either ¬φ ∈ S or ψ ∈ S. -/
@@ -83,7 +91,7 @@ theorem ConsistencyProperty.MaximalConsistent.imp_mem
     (hmax : C.MaximalConsistent S)
     {φ ψ : L.Sentenceω} (h : BoundedFormulaω.imp φ ψ ∈ S) :
     φ.not ∈ S ∨ ψ ∈ S := by
-  rcases C.C1_imp S hmax.1 φ ψ h with h1 | h2
+  rcases C.C1_imp S hmax.consistent φ ψ h with h1 | h2
   · exact Or.inl (hmax.mem_of_union_consistent h1)
   · exact Or.inr (hmax.mem_of_union_consistent h2)
 
@@ -93,7 +101,7 @@ theorem ConsistencyProperty.MaximalConsistent.not_not_mem
     (hmax : C.MaximalConsistent S)
     {φ : L.Sentenceω} (h : φ.not.not ∈ S) :
     φ ∈ S :=
-  hmax.mem_of_union_consistent (C.C2_not_not S hmax.1 φ h)
+  hmax.mem_of_union_consistent (C.C2_not_not S hmax.consistent φ h)
 
 /-- In a maximal consistent set, if ⋀ᵢ φᵢ ∈ S, then φₖ ∈ S for all k. -/
 theorem ConsistencyProperty.MaximalConsistent.iInf_mem
@@ -101,7 +109,7 @@ theorem ConsistencyProperty.MaximalConsistent.iInf_mem
     (hmax : C.MaximalConsistent S)
     {φs : ℕ → L.Sentenceω} (h : BoundedFormulaω.iInf φs ∈ S) (k : ℕ) :
     φs k ∈ S :=
-  hmax.mem_of_union_consistent (C.C3_iInf S hmax.1 φs h k)
+  hmax.mem_of_union_consistent (C.C3_iInf S hmax.consistent φs h k)
 
 /-- In a maximal consistent set, if ⋁ᵢ φᵢ ∈ S, then φₖ ∈ S for some k. -/
 theorem ConsistencyProperty.MaximalConsistent.iSup_mem
@@ -109,7 +117,7 @@ theorem ConsistencyProperty.MaximalConsistent.iSup_mem
     (hmax : C.MaximalConsistent S)
     {φs : ℕ → L.Sentenceω} (h : BoundedFormulaω.iSup φs ∈ S) :
     ∃ k, φs k ∈ S := by
-  obtain ⟨k, hk⟩ := C.C4_iSup S hmax.1 φs h
+  obtain ⟨k, hk⟩ := C.C4_iSup S hmax.consistent φs h
   exact ⟨k, hmax.mem_of_union_consistent hk⟩
 
 /-! ### Term Model Construction

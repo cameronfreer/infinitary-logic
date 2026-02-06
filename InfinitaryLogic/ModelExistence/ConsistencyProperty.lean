@@ -61,6 +61,13 @@ structure ConsistencyProperty (L : Language.{u, v}) where
       such that S ∪ {φₖ} is consistent. -/
   C4_iSup : ∀ S ∈ sets, ∀ φs : ℕ → L.Sentenceω,
     BoundedFormulaω.iSup φs ∈ S → ∃ k, S ∪ {φs k} ∈ sets
+  /-- Chain closure: the union of a nonempty ⊆-chain of consistent sets is
+      consistent. This enables the Zorn's lemma argument for maximal consistent
+      extensions. In standard presentations, this follows from the finite character
+      of consistency (S is consistent iff every finite subset is). -/
+  chain_closure : ∀ (chain : Set (Set L.Sentenceω)),
+    chain ⊆ sets → IsChain (· ⊆ ·) chain → chain.Nonempty →
+    ⋃₀ chain ∈ sets
 
 /-- A set of sentences is consistent with respect to a consistency property. -/
 def ConsistencyProperty.Consistent (C : ConsistencyProperty L) (S : Set L.Sentenceω) : Prop :=
