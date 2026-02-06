@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.ModelExistence.ConsistencyProperty
+import InfinitaryLogic.ModelExistence.HenkinConstruction
 
 /-!
 # Model Existence Theorem

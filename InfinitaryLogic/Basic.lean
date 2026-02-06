@@ -35,6 +35,7 @@ import InfinitaryLogic.Karp.CountableCorollary
 
 -- Model existence
 import InfinitaryLogic.ModelExistence.ConsistencyProperty
+import InfinitaryLogic.ModelExistence.HenkinConstruction
 import InfinitaryLogic.ModelExistence.Theorem
 import InfinitaryLogic.ModelExistence.Completeness
 
@@ -93,6 +94,7 @@ This library formalizes infinitary logic, including:
 
 ### Model existence (ModelExistence/)
 - `ModelExistence/ConsistencyProperty.lean`: Consistency property axioms (C0)-(C7)
+- `ModelExistence/HenkinConstruction.lean`: Henkin construction infrastructure (maximal consistent sets)
 - `ModelExistence/Theorem.lean`: Model existence theorem
 - `ModelExistence/Completeness.lean`: Karp completeness and omitting types
 

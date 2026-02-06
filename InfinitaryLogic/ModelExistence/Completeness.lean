@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.ModelExistence.Theorem
+import InfinitaryLogic.Lomega1omega.Operations
 
 /-!
 # Karp Completeness
@@ -62,7 +63,11 @@ theorem omitting_types [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Rel
     (Γ : Set (Set (L.Formulaω (Fin 1))))
     (hT : ∃ C : ConsistencyPropertyEq L, T ∈ C.toConsistencyProperty.sets)
     (hΓ : Γ.Countable)
-    (h_not_isolated : ∀ p ∈ Γ, True) :  -- schematic non-isolation condition
+    (h_not_isolated : ∀ p ∈ Γ, ∀ (C : ConsistencyPropertyEq L)
+      (φ : L.Formulaω (Fin 1)),
+      T ∪ {(φ.relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).ex} ∈ C.toConsistencyProperty.sets →
+      ∃ ψ ∈ p, T ∪ {((φ.and ψ.not).relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).ex}
+        ∈ C.toConsistencyProperty.sets) :
     ∃ (M : Type) (_ : L.Structure M) (_ : Countable M),
       Theoryω.Model T M ∧ ∀ p ∈ Γ, OmitsType (L := L) M p := by
   sorry

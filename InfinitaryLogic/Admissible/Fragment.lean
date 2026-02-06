@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Lomega1omega.Semantics
+import InfinitaryLogic.Lomega1omega.Operations
 import Mathlib.SetTheory.Ordinal.Basic
 
 /-!
@@ -61,6 +62,14 @@ structure AdmissibleFragment (L : Language.{u, v}) where
   /-- Closure under countable disjunction (for families in the fragment). -/
   closed_iSup : ∀ φs : ℕ → L.Sentenceω,
     (∀ k, φs k ∈ formulas) → BoundedFormulaω.iSup φs ∈ formulas
+  /-- Closure under quantifier instances: if an existential sentence
+      `(φ.relabel Sum.inr).ex` is in the fragment, then the substitution
+      instance `φ.subst (fun _ => t)` is also in the fragment for any
+      closed term t. This ensures Henkin witnesses stay within the fragment
+      and is needed for the consistency property in Barwise compactness. -/
+  closed_quantifier_instance : ∀ (φ : L.Formulaω (Fin 1)) (t : L.Term Empty),
+    (φ.relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).ex ∈ formulas →
+    φ.subst (fun _ => t) ∈ formulas
 
 /-- A set of sentences is A-finite (finite and contained in the fragment). -/
 def AdmissibleFragment.AFinite (A : AdmissibleFragment L) (S : Set L.Sentenceω) : Prop :=
