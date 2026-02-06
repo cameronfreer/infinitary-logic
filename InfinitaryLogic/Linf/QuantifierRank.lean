@@ -3,7 +3,7 @@ Copyright (c) 2026 Cameron Freer. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
-import InfinitaryLogic.Linf.Semantics
+import InfinitaryLogic.Linf.Operations
 import Mathlib.SetTheory.Ordinal.Basic
 
 /-!
@@ -124,6 +124,27 @@ theorem qrank_ex (φ : L.BoundedFormulaInf α (n + 1)) :
     φ.ex.qrank = φ.qrank + 1 := by
   simp only [BoundedFormulaInf.ex, qrank_not, qrank_all]
 
+/-- `mapFreeVars` preserves quantifier rank. Renaming free variables does not
+change the logical complexity of a formula. -/
+@[simp]
+theorem qrank_mapFreeVars {α α' : Type w'} (f : α → α') {n : ℕ}
+    (φ : L.BoundedFormulaInf α n) :
+    (φ.mapFreeVars f).qrank = φ.qrank := by
+  induction φ with
+  | falsum => rfl
+  | equal => rfl
+  | rel => rfl
+  | imp φ ψ ihφ ihψ =>
+    simp only [mapFreeVars, qrank_imp, ihφ, ihψ]
+  | all φ ih =>
+    simp only [mapFreeVars, qrank_all, ih]
+  | iSup φs ih =>
+    simp only [mapFreeVars, qrank_iSup]
+    congr 1; funext i; exact ih i
+  | iInf φs ih =>
+    simp only [mapFreeVars, qrank_iInf]
+    congr 1; funext i; exact ih i
+
 end BoundedFormulaInf
 
 /-! ### Equivalence up to Quantifier Rank -/
@@ -131,8 +152,10 @@ end BoundedFormulaInf
 /-- Two structures are equivalent up to quantifier rank α if they satisfy the same
 sentences of quantifier rank ≤ α.
 
-This is a semantic relation that captures agreement on formulas of bounded complexity.
-For L∞ω, this uses sentences with index types in universe 0. -/
+Both the ordinal `α` and the formula universe are pinned to `Ordinal.{0}` and
+`BoundedFormulaInf.{u, v, 0, 0}` respectively. This is inherent: `qrank` returns
+`Ordinal.{0}`, so the inequality `φ.qrank ≤ α` requires `α : Ordinal.{0}`.
+See `LinfEquiv` for discussion of the `uι = 0` restriction. -/
 def EquivQRInf (L : Language.{u, v}) (α : Ordinal.{0}) (M N : Type w)
     [L.Structure M] [L.Structure N] : Prop :=
   ∀ (φ : BoundedFormulaInf.{u, v, 0, 0} L Empty 0),

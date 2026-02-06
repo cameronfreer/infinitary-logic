@@ -17,6 +17,14 @@ This file defines operations on L∞ω formulas including relabeling, casting, a
 - `BoundedFormulaInf.subst`: Substitutes terms for free variables.
 - `BoundedFormula.toLinf`: Embeds first-order formulas into L∞ω.
 - `BoundedFormulaω.toLinf`: Embeds Lω₁ω formulas into L∞ω.
+
+## Implementation Notes
+
+The operations here (castLE, relabel, mapFreeVars, subst) closely mirror those in
+`Lomega1omega/Operations.lean`. The duplication exists because `BoundedFormulaInf` and
+`BoundedFormulaω` are separate inductive types: the former uses arbitrary `{ι : Type uι}`
+for `iSup`/`iInf` while the latter uses `ℕ`. Factoring into a shared abstraction would
+require a typeclass over the formula type, deferred for future work.
 -/
 
 universe u v u'
@@ -114,7 +122,6 @@ theorem realize_castLE_self {n : ℕ} (φ : L.BoundedFormulaInf α n) (h : n ≤
     (φ.castLE h).Realize v xs ↔ φ.Realize v xs :=
   realize_castLE_of_eq φ h rfl v xs
 
-variable {M : Type*} in
 /-- A function to help relabel the variables in bounded formulas. -/
 def relabelAux (g : α → β ⊕ Fin n) (k : ℕ) : α ⊕ Fin k → β ⊕ Fin (n + k) :=
   Sum.map id finSumFinEquiv ∘ Equiv.sumAssoc _ _ _ ∘ Sum.map g id

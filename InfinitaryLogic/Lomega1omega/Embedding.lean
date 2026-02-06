@@ -189,6 +189,15 @@ theorem realize_ofCountable {φ : L.BoundedFormulaInf α n} (h : φ.IsCountable)
     simp only [ofCountable, BoundedFormulaω.realize_einf, realize_iInf]
     exact forall_congr' fun i => ih i
 
+/-- Encoding independence: different `IsCountable` proofs for the same formula
+yield semantically equivalent Lω₁ω formulas. The `ofCountable` function uses
+`Encodable.ofCountable` (a choice function) at each `iSup`/`iInf` node, so different
+proofs may produce syntactically different formulas, but their realizations agree. -/
+theorem realize_ofCountable_irrel {φ : L.BoundedFormulaInf α n}
+    (h₁ h₂ : φ.IsCountable) (v : α → M) (xs : Fin n → M) :
+    (ofCountable h₁).Realize v xs ↔ (ofCountable h₂).Realize v xs :=
+  (realize_ofCountable h₁).trans (realize_ofCountable h₂).symm
+
 end BoundedFormulaInf
 
 namespace FormulaInf
@@ -217,6 +226,12 @@ theorem realize_ofCountable {M : Type w} [L.Structure M]
     Sentenceω.Realize (ofCountable h) M ↔ SentenceInf.Realize φ M := by
   simp only [Sentenceω.Realize, SentenceInf.Realize, ofCountable, FormulaInf.ofCountable]
   exact BoundedFormulaInf.realize_ofCountable h
+
+/-- Encoding independence at the sentence level. -/
+theorem realize_ofCountable_irrel {φ : L.SentenceInf}
+    (h₁ h₂ : φ.IsCountable) (M : Type w) [L.Structure M] :
+    Sentenceω.Realize (ofCountable h₁) M ↔ Sentenceω.Realize (ofCountable h₂) M := by
+  simp [realize_ofCountable]
 
 end SentenceInf
 

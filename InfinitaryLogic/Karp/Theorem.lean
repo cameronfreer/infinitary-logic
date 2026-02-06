@@ -50,46 +50,6 @@ theorem BFEquiv_iff_agreeQR {M N : Type w} [L.Structure M] [L.Structure N]
   sorry
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-/-- `mapFreeVars` preserves quantifier rank. -/
-private theorem qrank_mapFreeVars_empty_fin0 {n : ℕ}
-    (f : Empty → Fin 0) (φ : BoundedFormulaInf.{u, v, 0, 0} L Empty n) :
-    (φ.mapFreeVars f).qrank = φ.qrank := by
-  induction φ with
-  | falsum => rfl
-  | equal => rfl
-  | rel => rfl
-  | imp φ ψ ihφ ihψ =>
-    simp only [BoundedFormulaInf.mapFreeVars, BoundedFormulaInf.qrank_imp, ihφ, ihψ]
-  | all φ ih =>
-    simp only [BoundedFormulaInf.mapFreeVars, BoundedFormulaInf.qrank_all, ih]
-  | iSup φs ih =>
-    simp only [BoundedFormulaInf.mapFreeVars, BoundedFormulaInf.qrank_iSup]
-    congr 1; funext i; exact ih i
-  | iInf φs ih =>
-    simp only [BoundedFormulaInf.mapFreeVars, BoundedFormulaInf.qrank_iInf]
-    congr 1; funext i; exact ih i
-
-omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-/-- `mapFreeVars` preserves quantifier rank (Fin 0 → Empty direction). -/
-private theorem qrank_mapFreeVars_fin0_empty {n : ℕ}
-    (f : Fin 0 → Empty) (φ : BoundedFormulaInf.{u, v, 0, 0} L (Fin 0) n) :
-    (φ.mapFreeVars f).qrank = φ.qrank := by
-  induction φ with
-  | falsum => rfl
-  | equal => rfl
-  | rel => rfl
-  | imp φ ψ ihφ ihψ =>
-    simp only [BoundedFormulaInf.mapFreeVars, BoundedFormulaInf.qrank_imp, ihφ, ihψ]
-  | all φ ih =>
-    simp only [BoundedFormulaInf.mapFreeVars, BoundedFormulaInf.qrank_all, ih]
-  | iSup φs ih =>
-    simp only [BoundedFormulaInf.mapFreeVars, BoundedFormulaInf.qrank_iSup]
-    congr 1; funext i; exact ih i
-  | iInf φs ih =>
-    simp only [BoundedFormulaInf.mapFreeVars, BoundedFormulaInf.qrank_iInf]
-    congr 1; funext i; exact ih i
-
-omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- Bridge between SentenceInf.Realize and FormulaInf.Realize via mapFreeVars. -/
 private theorem sentenceInf_realize_iff_mapFreeVars
     {M : Type*} [L.Structure M] (φ : BoundedFormulaInf.{u, v, 0, 0} L Empty 0) :
@@ -122,7 +82,7 @@ theorem BFEquiv_implies_EquivQRInf {M N : Type w} [L.Structure M] [L.Structure N
   intro φ hφ
   have hAgree := (BFEquiv_iff_agreeQR α (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)).mp h
   have hφ' : (φ.mapFreeVars (Empty.elim : Empty → Fin 0)).qrank ≤ α := by
-    rw [qrank_mapFreeVars_empty_fin0]; exact hφ
+    simp [BoundedFormulaInf.qrank_mapFreeVars]; exact hφ
   have hR := hAgree _ hφ'
   exact (sentenceInf_realize_iff_mapFreeVars φ (M := M)).trans
     (hR.trans (sentenceInf_realize_iff_mapFreeVars φ (M := N)).symm)
@@ -134,7 +94,7 @@ theorem EquivQRInf_implies_BFEquiv {M N : Type w} [L.Structure M] [L.Structure N
   rw [BFEquiv_iff_agreeQR]
   intro φ hφ
   have hφ' : (φ.mapFreeVars (Fin.elim0 : Fin 0 → Empty)).qrank ≤ α := by
-    rw [qrank_mapFreeVars_fin0_empty]; exact hφ
+    simp [BoundedFormulaInf.qrank_mapFreeVars]; exact hφ
   have hR := h _ hφ'
   exact (formulaInf_realize_iff_mapFreeVars φ (M := M)).trans
     (hR.trans (formulaInf_realize_iff_mapFreeVars φ (M := N)).symm)
@@ -163,10 +123,12 @@ theorem karp_theorem {M N : Type w} [L.Structure M] [L.Structure N] :
     Nonempty (PotentialIso L M N) ↔ LinfEquiv L M N := by
   constructor
   · intro hp
+    -- Specialize at Ordinal.{0}: qrank returns Ordinal.{0}, so BFEquiv must match
     have hBF := (@potentialIso_iff_BFEquiv_all.{u, v, w, 0} L _ _ M _ N _).mp hp
     intro φ
     exact BFEquiv_implies_EquivQRInf φ.qrank (hBF φ.qrank) φ le_rfl
   · intro hL
+    -- Specialize at Ordinal.{0} to match EquivQRInf's universe
     apply (@potentialIso_iff_BFEquiv_all.{u, v, w, 0} L _ _ M _ N _).mpr
     intro α
     exact EquivQRInf_implies_BFEquiv α (fun φ _ => hL φ)

@@ -16,6 +16,11 @@ This file defines operations on Lω₁ω formulas including relabeling, casting,
 - `BoundedFormulaω.castLE`: Increases the number of bound variables.
 - `BoundedFormulaω.subst`: Substitutes terms for free variables.
 - `BoundedFormula.toLω`: Embeds first-order formulas into Lω₁ω.
+
+## Implementation Notes
+
+The operations here closely mirror those in `Linf/Operations.lean`. See that file's
+implementation notes for discussion of the duplication.
 -/
 
 universe u v u'
@@ -115,7 +120,6 @@ theorem realize_castLE_self {n : ℕ} (φ : L.BoundedFormulaω α n) (h : n ≤ 
     (φ.castLE h).Realize v xs ↔ φ.Realize v xs :=
   realize_castLE_of_eq φ h rfl v xs
 
-variable {M : Type*} in
 /-- A function to help relabel the variables in bounded formulas. -/
 def relabelAux (g : α → β ⊕ Fin n) (k : ℕ) : α ⊕ Fin k → β ⊕ Fin (n + k) :=
   Sum.map id finSumFinEquiv ∘ Equiv.sumAssoc _ _ _ ∘ Sum.map g id
