@@ -141,10 +141,10 @@ theorem EquivQRInf_implies_BFEquiv {M N : Type w} [L.Structure M] [L.Structure N
 
 /-- BFEquiv at all ordinals is equivalent to EquivQRInf at all ordinals.
 
-Note: The two sides quantify over ordinals in potentially different universes
-(`potentialIso_iff_BFEquiv_all` leaves BFEquiv's ordinal universe free).
-When both sides are specialized to `Ordinal.{0}`, this follows directly from
-`BFEquiv_implies_EquivQRInf` and `EquivQRInf_implies_BFEquiv`. -/
+Both sides are quantified over `Ordinal.{0}` because `EquivQRInf` is defined via
+`BoundedFormulaInf.qrank`, which returns `Ordinal.{0}`. The `karp_theorem` handles
+the universe mismatch with `potentialIso_iff_BFEquiv_all` by specializing at universe 0
+via `@potentialIso_iff_BFEquiv_all.{u, v, w, 0}`. -/
 theorem BFEquiv_all_iff_EquivQRInf_all {M N : Type w} [L.Structure M] [L.Structure N] :
     (∀ α : Ordinal.{0}, BFEquiv (L := L) α 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)) ↔
     (∀ α : Ordinal.{0}, EquivQRInf L α M N) :=

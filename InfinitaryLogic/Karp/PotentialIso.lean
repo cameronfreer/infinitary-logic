@@ -103,17 +103,14 @@ noncomputable def symm (p : PotentialIso L M N) : PotentialIso L N M where
 
 end PotentialIso
 
-/-- A potential isomorphism exists if and only if BFEquiv holds at all ordinals
-for the empty tuple. This is the main characterization theorem for potential isomorphism.
+/-- Given a potential isomorphism, BFEquiv holds at every ordinal level for any pair
+in the family. This is the key inductive step for the (→) direction of the
+potential isomorphism characterization.
 
-**Proof strategy**:
-(→) Given a potential isomorphism, prove BFEquiv by induction on ordinals. The family
-    provides witnesses for the forth/back conditions.
-(←) Given BFEquiv at all ordinals, construct the family as all pairs (a, b) such that
-    BFEquiv α n a b holds for all α.
-
-Note: This theorem is stated for relational languages. -/
-private theorem potentialIso_family_BFEquiv [Countable (Σ l, L.Relations l)]
+The proof proceeds by ordinal induction: the zero case uses atomic type preservation,
+the successor case uses the forth/back extension properties, and the limit case
+follows from the induction hypothesis. -/
+theorem potentialIso_family_BFEquiv [Countable (Σ l, L.Relations l)]
     {M : Type w} [L.Structure M]
     {N : Type w} [L.Structure N]
     (P : PotentialIso L M N) (α : Ordinal)
@@ -135,32 +132,38 @@ private theorem potentialIso_family_BFEquiv [Countable (Σ l, L.Relations l)]
     rw [BFEquiv.limit β hβ]
     exact fun γ hγ => ih γ hγ hab
 
+/-- A potential isomorphism implies BF-equivalence at all ordinals for the empty tuple. -/
+theorem PotentialIso.implies_BFEquiv_all [Countable (Σ l, L.Relations l)]
+    {M : Type w} [L.Structure M]
+    {N : Type w} [L.Structure N]
+    (P : PotentialIso L M N) (α : Ordinal) :
+    BFEquiv (L := L) α 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) :=
+  potentialIso_family_BFEquiv P α P.empty_mem
+
+/-- BF-equivalence at all ordinals implies potential isomorphism.
+
+TODO: Requires quantifier swap argument — a decreasing transfinite chain of nonempty
+finite subsets must stabilize. -/
+theorem BFEquiv_all_implies_potentialIso [Countable (Σ l, L.Relations l)]
+    {M : Type w} [L.Structure M]
+    {N : Type w} [L.Structure N]
+    (hBF : ∀ α : Ordinal, BFEquiv (L := L) α 0
+      (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)) :
+    Nonempty (PotentialIso L M N) := by
+  sorry
+
+/-- A potential isomorphism exists if and only if BFEquiv holds at all ordinals
+for the empty tuple. This is the main characterization theorem for potential isomorphism.
+
+The (→) direction is fully proved in `PotentialIso.implies_BFEquiv_all`.
+The (←) direction (`BFEquiv_all_implies_potentialIso`) requires a quantifier swap
+argument and remains sorry. -/
 theorem potentialIso_iff_BFEquiv_all [Countable (Σ l, L.Relations l)]
     {M : Type w} [L.Structure M]
     {N : Type w} [L.Structure N] :
     Nonempty (PotentialIso L M N) ↔
-    ∀ α : Ordinal, BFEquiv (L := L) α 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) := by
-  constructor
-  · -- (→) PotentialIso → BFEquiv at all ordinals
-    intro ⟨P⟩ α
-    exact potentialIso_family_BFEquiv P α P.empty_mem
-  · -- (←) BFEquiv at all ordinals → PotentialIso
-    intro hBF
-    -- Define the family as all pairs (a, b) that are BFEquiv at all ordinals
-    refine ⟨{
-      family := { p | ∀ α : Ordinal, BFEquiv (L := L) α p.1 p.2.1 p.2.2 }
-      empty_mem := fun α => hBF α
-      compatible := fun p hp => (BFEquiv.zero p.2.1 p.2.2).mp (hp 0)
-      forth := fun ⟨n, a, b⟩ hp m => ?_
-      back := fun ⟨n, a, b⟩ hp n' => ?_
-    }⟩
-    · -- Forth: need ∃ n' such that ∀ α, BFEquiv α (n+1) (snoc a m) (snoc b n')
-      -- From hp: ∀ α, BFEquiv α n a b, so BFEquiv (succ α) n a b for each α
-      -- By forth: ∀ α, ∃ n'_α, BFEquiv α (n+1) (snoc a m) (snoc b n'_α)
-      -- Need quantifier swap: ∃ n', ∀ α, BFEquiv α (n+1) (snoc a m) (snoc b n')
-      sorry
-    · -- Back: symmetric to forth
-      sorry
+    ∀ α : Ordinal, BFEquiv (L := L) α 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) :=
+  ⟨fun ⟨P⟩ α => P.implies_BFEquiv_all α, BFEquiv_all_implies_potentialIso⟩
 
 end Language
 
