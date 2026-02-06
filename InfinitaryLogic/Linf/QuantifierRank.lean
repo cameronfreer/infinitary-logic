@@ -152,10 +152,10 @@ end BoundedFormulaInf
 /-- Two structures are equivalent up to quantifier rank α if they satisfy the same
 sentences of quantifier rank ≤ α.
 
-Both the ordinal `α` and the formula universe are pinned to `Ordinal.{0}` and
-`BoundedFormulaInf.{u, v, 0, 0}` respectively. This is inherent: `qrank` returns
-`Ordinal.{0}`, so the inequality `φ.qrank ≤ α` requires `α : Ordinal.{0}`.
-See `LinfEquiv` for discussion of the `uι = 0` restriction. -/
+The current definition pins both the ordinal `α` and the formula universe to
+`Ordinal.{0}` and `BoundedFormulaInf.{u, v, 0, 0}` respectively. This is a
+practical choice: `qrank` returns `Ordinal.{0}`, so the inequality `φ.qrank ≤ α`
+requires `α : Ordinal.{0}`. See `LinfEquiv` for discussion of the `uι = 0` choice. -/
 def EquivQRInf (L : Language.{u, v}) (α : Ordinal.{0}) (M N : Type w)
     [L.Structure M] [L.Structure N] : Prop :=
   ∀ (φ : BoundedFormulaInf.{u, v, 0, 0} L Empty 0),

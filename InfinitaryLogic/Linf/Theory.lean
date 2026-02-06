@@ -119,11 +119,11 @@ theorem BoundedFormulaInf.realize_equiv {M N : Type w} [L.Structure M] [L.Struct
 
 /-- Two structures are L∞ω-elementarily equivalent if they satisfy the same L∞ω sentences.
 
-This quantifies over `BoundedFormulaInf.{u, v, 0, 0}`, pinning the free-variable universe
-(`u'`) and index-type universe (`uι`) to 0. The `uι = 0` restriction is inherent:
-`BoundedFormulaInf.qrank` returns `Ordinal.{0}` because the supremum `⨆ i, (φs i).qrank`
-must live in a fixed universe, and pinning to 0 suffices for all standard applications
-(any countable or `Type 0` index type falls within this definition). -/
+The current definition quantifies over `BoundedFormulaInf.{u, v, 0, 0}`, pinning the
+free-variable universe (`u'`) and index-type universe (`uι`) to 0 for practicality.
+The `uι = 0` choice ensures compatibility with `qrank : Ordinal.{0}` (whose suprema
+at `iSup`/`iInf` nodes must live in a fixed universe) and suffices for all standard
+applications (any countable or `Type 0` index type falls within this definition). -/
 def LinfEquiv (L : Language.{u, v}) (M N : Type w) [L.Structure M] [L.Structure N] : Prop :=
   ∀ φ : BoundedFormulaInf.{u, v, 0, 0} L Empty 0, SentenceInf.Realize φ M ↔ SentenceInf.Realize φ N
 
