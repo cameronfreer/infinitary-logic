@@ -40,7 +40,14 @@ open FirstOrder Structure Cardinal Ordinal
 isomorphism between countable models is equivalent to BF-equivalence at level α.
 
 This reduces the isomorphism problem to a finite-level back-and-forth comparison,
-which is key for descriptive set-theoretic analyses of the isomorphism relation. -/
+which is key for descriptive set-theoretic analyses of the isomorphism relation.
+
+**Status**:
+- Forward (iso → BFEquiv): Available via `equiv_implies_BFEquiv` in Scott/Sentence.lean.
+- Backward (BFEquiv α → iso): Needs `scottHeight_le_scottRank` (Height.lean sorry),
+  `stabilizationOrdinal_le_scottRank` (Rank.lean sorry), and the fact that BFEquiv at
+  the Scott rank of countable structures implies actual isomorphism. Blocked by Scott
+  infrastructure sorries. -/
 theorem bounded_scottRank_iso_eq_BFEquiv
     {φ : L.Sentenceω} {α : Ordinal} (hα : α < Ordinal.omega 1)
     (hbound : ∀ (M : Type w) [L.Structure M] [Countable M],
@@ -51,6 +58,7 @@ theorem bounded_scottRank_iso_eq_BFEquiv
     BFEquiv (L := L) α 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) := by
   sorry
 
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- The number of isomorphism classes of countable models of an Lω₁ω sentence
 is either at most ℵ₁ or exactly 2^ℵ₀ (Morley's counting theorem).
 
@@ -60,7 +68,7 @@ significant descriptive set theory infrastructure.
 
 The result uses the Silver-Burgess theorem from descriptive set theory. -/
 theorem morley_counting_dichotomy
-    (φ : L.Sentenceω) :
+    (_φ : L.Sentenceω) :
     True := by  -- Schematic: see docstring for the actual mathematical content
   trivial
 
