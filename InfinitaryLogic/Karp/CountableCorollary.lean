@@ -93,7 +93,7 @@ theorem countable_PotentialIso_implies_iso
 theorem countable_BFEquiv_all_implies_iso
     {M : Type w} [L.Structure M] [Countable M]
     {N : Type w} [L.Structure N] [Countable N]
-    (h : ∀ α, BFEquiv (L := L) α 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)) :
+    (h : ∀ α : Ordinal.{w}, BFEquiv (L := L) α 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)) :
     Nonempty (M ≃[L] N) := by
   apply countable_PotentialIso_implies_iso
   exact potentialIso_iff_BFEquiv_all.mpr h

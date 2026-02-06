@@ -142,27 +142,66 @@ theorem PotentialIso.implies_BFEquiv_all [Countable (Σ l, L.Relations l)]
 
 /-- BF-equivalence at all ordinals implies potential isomorphism.
 
-TODO: Requires quantifier swap argument — a decreasing transfinite chain of nonempty
-finite subsets must stabilize. -/
+The proof constructs the family of tuples `(n, a, b)` such that `BFEquiv α n a b` holds
+for every ordinal `α`, and verifies the forth and back properties by a supremum
+contradiction argument.
+
+**Universe constraint**: The proof requires the ordinal universe to match the type universe
+`w` (via `Ordinal.bddAbove_range`). This is because the contradiction argument takes a
+supremum of ordinals indexed by `N : Type w`, which requires `Ordinal.{w}`. The forward
+direction (`PotentialIso.implies_BFEquiv_all`) is fully universe-polymorphic. -/
 theorem BFEquiv_all_implies_potentialIso [Countable (Σ l, L.Relations l)]
     {M : Type w} [L.Structure M]
     {N : Type w} [L.Structure N]
-    (hBF : ∀ α : Ordinal, BFEquiv (L := L) α 0
+    (hBF : ∀ α : Ordinal.{w}, BFEquiv (L := L) α 0
       (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)) :
     Nonempty (PotentialIso L M N) := by
-  sorry
+  refine ⟨{
+    family := { p | ∀ α : Ordinal.{w}, BFEquiv (L := L) α p.1 p.2.1 p.2.2 }
+    empty_mem := ?_
+    compatible := ?_
+    forth := ?_
+    back := ?_
+  }⟩
+  · -- empty_mem: the hypothesis gives BFEquiv at all ordinals for the empty tuple
+    exact fun α => hBF α
+  · -- compatible: BFEquiv at level 0 gives SameAtomicType
+    intro p hp
+    exact (BFEquiv.zero p.2.1 p.2.2).mp (BFEquiv.monotone (zero_le _) (hp 0))
+  · -- forth: by sSup contradiction
+    intro ⟨n, a, b⟩ hfamily m
+    simp only [Set.mem_setOf_eq] at hfamily ⊢
+    by_contra h_no
+    push_neg at h_no
+    -- For each n' : N, choose an ordinal where BFEquiv fails
+    choose αbad hbad using h_no
+    -- The supremum exists because N : Type w and ordinals are in Ordinal.{w}
+    have hbdd : BddAbove (Set.range αbad) := Ordinal.bddAbove_range αbad
+    -- At Order.succ of the supremum, BFEquiv.forth gives a witness
+    obtain ⟨n'₀, hn'₀⟩ := BFEquiv.forth (hfamily (Order.succ (⨆ n', αbad n'))) m
+    -- But αbad n'₀ ≤ ⨆, so by monotonicity BFEquiv holds at αbad n'₀, contradiction
+    exact hbad n'₀ (BFEquiv.monotone (le_ciSup hbdd n'₀) hn'₀)
+  · -- back: symmetric argument
+    intro ⟨n, a, b⟩ hfamily n'
+    simp only [Set.mem_setOf_eq] at hfamily ⊢
+    by_contra h_no
+    push_neg at h_no
+    choose αbad hbad using h_no
+    have hbdd : BddAbove (Set.range αbad) := Ordinal.bddAbove_range αbad
+    obtain ⟨m₀, hm₀⟩ := BFEquiv.back (hfamily (Order.succ (⨆ m, αbad m))) n'
+    exact hbad m₀ (BFEquiv.monotone (le_ciSup hbdd m₀) hm₀)
 
 /-- A potential isomorphism exists if and only if BFEquiv holds at all ordinals
 for the empty tuple. This is the main characterization theorem for potential isomorphism.
 
-The (→) direction is fully proved in `PotentialIso.implies_BFEquiv_all`.
-The (←) direction (`BFEquiv_all_implies_potentialIso`) requires a quantifier swap
-argument and remains sorry. -/
+**Universe note**: The ordinal universe is constrained to match the type universe `w`
+by `BFEquiv_all_implies_potentialIso` (which uses a supremum over `N : Type w`).
+The forward direction is universe-polymorphic; the backward direction requires this match. -/
 theorem potentialIso_iff_BFEquiv_all [Countable (Σ l, L.Relations l)]
     {M : Type w} [L.Structure M]
     {N : Type w} [L.Structure N] :
     Nonempty (PotentialIso L M N) ↔
-    ∀ α : Ordinal, BFEquiv (L := L) α 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) :=
+    ∀ α : Ordinal.{w}, BFEquiv (L := L) α 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) :=
   ⟨fun ⟨P⟩ α => P.implies_BFEquiv_all α, BFEquiv_all_implies_potentialIso⟩
 
 end Language

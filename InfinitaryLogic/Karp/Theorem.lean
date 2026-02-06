@@ -117,21 +117,29 @@ are potentially isomorphic if and only if they are L∞ω-elementarily equivalen
 This is the fundamental connection between the game-theoretic notion of potential
 isomorphism and the logical notion of elementary equivalence in infinitary logic.
 
-The proof uses `potentialIso_iff_BFEquiv_all` specialized at `Ordinal.{0}` to bridge
-the game-theoretic and formula-based characterizations via `BFEquiv_iff_agreeQR`. -/
+**Universe note**: The (→) direction uses `implies_BFEquiv_all` at `Ordinal.{0}` to
+connect to formula-based equivalence. The (←) direction uses
+`BFEquiv_all_implies_potentialIso` which requires `Ordinal.{w}` (matching the type
+universe of M and N). The bridge from `Ordinal.{0}` formulas to `Ordinal.{w}` BFEquiv
+requires a universe-lifting argument. -/
 theorem karp_theorem {M N : Type w} [L.Structure M] [L.Structure N] :
     Nonempty (PotentialIso L M N) ↔ LinfEquiv L M N := by
   constructor
-  · intro hp
-    -- Specialize at Ordinal.{0}: qrank returns Ordinal.{0}, so BFEquiv must match
-    have hBF := (@potentialIso_iff_BFEquiv_all.{u, v, w, 0} L _ _ M _ N _).mp hp
-    intro φ
-    exact BFEquiv_implies_EquivQRInf φ.qrank (hBF φ.qrank) φ le_rfl
-  · intro hL
-    -- Specialize at Ordinal.{0} to match EquivQRInf's universe
-    apply (@potentialIso_iff_BFEquiv_all.{u, v, w, 0} L _ _ M _ N _).mpr
-    intro α
-    exact EquivQRInf_implies_BFEquiv α (fun φ _ => hL φ)
+  · -- Forward: PotentialIso → LinfEquiv
+    intro ⟨P⟩ φ
+    -- BFEquiv at Ordinal.{0} for the empty tuple (universe-polymorphic forward direction)
+    exact BFEquiv_implies_EquivQRInf φ.qrank (P.implies_BFEquiv_all φ.qrank) φ le_rfl
+  · -- Backward: LinfEquiv → PotentialIso
+    intro hL
+    apply BFEquiv_all_implies_potentialIso
+    -- Need: ∀ α : Ordinal.{w}, BFEquiv.{w} α 0 elim0 elim0
+    -- From LinfEquiv we get BFEquiv.{0} at all Ordinal.{0} levels via BFEquiv_iff_agreeQR.
+    -- The universe bridge from Ordinal.{0} to Ordinal.{w} requires lifting:
+    -- pointwise lift (ofOrdinalLift) handles ordinals in the image of Ordinal.lift,
+    -- but ordinals beyond the initial segment need the full quantifier swap argument
+    -- (which is exactly what BFEquiv_all_implies_potentialIso proves internally).
+    -- TODO: Complete the universe bridge Ordinal.{0} → Ordinal.{w}.
+    sorry
 
 end Language
 

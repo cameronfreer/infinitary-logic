@@ -304,6 +304,58 @@ theorem BFStrategyOmegaT_implies_BFEquiv_omega {n : ℕ} {a : Fin n → M} {b : 
   subst hk
   exact BFStrategyT_implies_BFEquiv k (hstrat k)
 
+/-! ### Universe Lifting for BFEquiv
+
+BFEquiv is defined by `Ordinal.limitRecOn`, which is universe-specific. These lemmas
+transport BFEquiv between ordinal universes via `Ordinal.lift`. -/
+
+omit [L.IsRelational] in
+/-- Lift BFEquiv from `Ordinal.{0}` to `Ordinal.{w}` at a specific ordinal.
+If `BFEquiv β n a b` holds at `β : Ordinal.{0}`, then it holds at
+`Ordinal.lift β : Ordinal.{w}`. -/
+theorem BFEquiv.ofOrdinalLift
+    {M : Type w} [L.Structure M] {N : Type w} [L.Structure N]
+    {β : Ordinal.{0}} {n : ℕ} {a : Fin n → M} {b : Fin n → N}
+    (h : BFEquiv.{u, v, w, w, 0} (L := L) β n a b) :
+    BFEquiv.{u, v, w, w, w} (L := L) (Ordinal.lift.{w, 0} β) n a b := by
+  induction β using Ordinal.limitRecOn generalizing n a b with
+  | zero =>
+    rw [Ordinal.lift_zero, BFEquiv.zero] at *; exact h
+  | succ γ ih =>
+    rw [Ordinal.lift_succ, BFEquiv.succ] at *
+    exact ⟨ih h.1,
+           fun m => let ⟨n', hn'⟩ := h.2.1 m; ⟨n', ih hn'⟩,
+           fun n' => let ⟨m, hm⟩ := h.2.2 n'; ⟨m, ih hm⟩⟩
+  | limit γ hγ ih =>
+    rw [BFEquiv.limit _ (Ordinal.isSuccLimit_lift.mpr hγ)]
+    intro δ hδ
+    obtain ⟨γ', hγ'lt, rfl⟩ := Ordinal.lt_lift_iff.mp hδ
+    exact ih γ' hγ'lt ((BFEquiv.limit γ hγ a b).mp h γ' hγ'lt)
+
+omit [L.IsRelational] in
+/-- Lower BFEquiv from `Ordinal.{w}` back to `Ordinal.{0}` at a specific ordinal.
+If `BFEquiv (Ordinal.lift β) n a b` holds at the lifted ordinal, then
+`BFEquiv β n a b` holds at the original. -/
+theorem BFEquiv.toOrdinalLift
+    {M : Type w} [L.Structure M] {N : Type w} [L.Structure N]
+    {β : Ordinal.{0}} {n : ℕ} {a : Fin n → M} {b : Fin n → N}
+    (h : BFEquiv.{u, v, w, w, w} (L := L) (Ordinal.lift.{w, 0} β) n a b) :
+    BFEquiv.{u, v, w, w, 0} (L := L) β n a b := by
+  induction β using Ordinal.limitRecOn generalizing n a b with
+  | zero =>
+    rw [Ordinal.lift_zero, BFEquiv.zero] at *; exact h
+  | succ γ ih =>
+    rw [Ordinal.lift_succ, BFEquiv.succ] at h; rw [BFEquiv.succ]
+    exact ⟨ih h.1,
+           fun m => let ⟨n', hn'⟩ := h.2.1 m; ⟨n', ih hn'⟩,
+           fun n' => let ⟨m, hm⟩ := h.2.2 n'; ⟨m, ih hm⟩⟩
+  | limit γ hγ ih =>
+    rw [BFEquiv.limit _ hγ]
+    intro γ' hγ'lt
+    apply ih γ' hγ'lt
+    exact (BFEquiv.limit _ (Ordinal.isSuccLimit_lift.mpr hγ) a b).mp h
+      (Ordinal.lift γ') (Ordinal.lift_lt.mpr hγ'lt)
+
 end Language
 
 end FirstOrder
