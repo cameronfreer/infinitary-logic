@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Lomega1omega.Theory
+import InfinitaryLogic.Lomega1omega.Operations
 
 /-!
 # Consistency Properties
@@ -72,19 +73,38 @@ construction in the model existence theorem. Without these, `ConsistencyProperty
 alone is too weak to guarantee model existence (it allows contradictory sets
 that contain both φ and ¬φ without containing ⊥).
 
-**Design note**: The quantifier conditions (C5)-(C7) involve expanding the language
-with Henkin witnesses. For this formalization, we state a simplified version that
-captures the essential algebraic structure. The full version with language expansion
-would require additional infrastructure for Henkin constants. -/
+**Design note**: Formulas with a "hole" (one free variable) are represented as
+`L.Formulaω (Fin 1)` (= `BoundedFormulaω (Fin 1) 0`). Substitution of a closed
+term `t : L.Term Empty` into such a formula uses `φ.subst (fun _ => t)`, which
+produces a sentence (`Formulaω Empty = Sentenceω`). The quantifier axiom (C7)
+requires Henkin witnesses — fresh constant symbols that witness existential
+statements. Callers construct these via `L[[ℕ]]` (Mathlib's
+`Language.withConstants`) for the standard Henkin construction. -/
 structure ConsistencyPropertyEq (L : Language.{u, v}) extends ConsistencyProperty L where
   /-- (C5) Equality is reflexive: for any closed term t, S ∪ {t = t} is consistent. -/
   C5_eq_refl : ∀ S ∈ toConsistencyProperty.sets,
     ∀ t : L.Term (Empty ⊕ Fin 0), S ∪ {BoundedFormulaω.equal t t} ∈ toConsistencyProperty.sets
-  /-- (C6) Substitution of equals (schematic). -/
-  C6_eq_subst : True  -- Schematic; full version requires term substitution infrastructure
-  /-- (C7) Quantifier witness: if ∃x φ(x) ∈ S, then S ∪ {φ(c)} is consistent for
-      some Henkin constant c. -/
-  C7_quantifier : True  -- Schematic; full version requires Henkin constant infrastructure
+  /-- (C6) Substitution of equals: if t₁ = t₂ ∈ S and φ(t₁) ∈ S, then
+      S ∪ {φ(t₂)} is consistent. Here φ is a formula with one free variable
+      (`Fin 1`), and `φ.subst (fun _ => tᵢ)` substitutes a closed term to
+      produce a sentence. -/
+  C6_eq_subst : ∀ S ∈ toConsistencyProperty.sets,
+    ∀ (t₁ t₂ : L.Term Empty) (φ : L.Formulaω (Fin 1)),
+      BoundedFormulaω.equal
+        (t₁.relabel (Sum.inl : Empty → Empty ⊕ Fin 0))
+        (t₂.relabel (Sum.inl : Empty → Empty ⊕ Fin 0)) ∈ S →
+      φ.subst (fun _ => t₁) ∈ S →
+      S ∪ {φ.subst (fun _ => t₂)} ∈ toConsistencyProperty.sets
+  /-- (C7) Quantifier witness: if ∃x φ(x) ∈ S, then there exists a closed term t
+      such that S ∪ {φ(t)} is consistent. Here φ has one free variable (`Fin 1`),
+      and the existential `(φ.relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).ex`
+      converts it to a sentence with one bound variable and takes its existential.
+      In the full Henkin construction, the witnesses come from Henkin constants. -/
+  C7_quantifier : ∀ S ∈ toConsistencyProperty.sets,
+    ∀ (φ : L.Formulaω (Fin 1)),
+      (φ.relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).ex ∈ S →
+      ∃ (t : L.Term Empty),
+        S ∪ {φ.subst (fun _ => t)} ∈ toConsistencyProperty.sets
 
 end Language
 

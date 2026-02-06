@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Lomega1omega.Theory
 import Mathlib.SetTheory.Cardinal.Ordinal
+import Mathlib.SetTheory.Cardinal.Aleph
 
 /-!
 # Hanf Numbers
@@ -61,24 +62,28 @@ noncomputable def HanfNumber (φ : L.Sentenceω) : Cardinal :=
 
 This is a fundamental structural result about Lω₁ω. -/
 theorem hanf_existence (φ : L.Sentenceω) : ∃ κ, IsHanfBound φ κ := by
-  sorry
-
-/-- The beth function iterated along ordinals.
-
-beth 0 = ℵ₀, beth (α+1) = 2^(beth α), beth λ = ⨆_{β<λ} beth β. -/
-noncomputable def bethOrd : Ordinal → Cardinal
-  | α => Ordinal.limitRecOn α
-    Cardinal.aleph0
-    (fun _β ih => (2 : Cardinal) ^ ih)
-    (fun _β _hβ ih => ⨆ (γ : {γ // γ < _β}), ih γ.1 γ.2)
+  by_cases h : HasArbLargeModels φ
+  · -- Any κ works: the conclusion `HasArbLargeModels φ` is always true
+    exact ⟨0, fun _ => h⟩
+  · -- ¬HasArbLargeModels: ∃ κ₀ with no model of size ≥ κ₀, so premise is vacuously false
+    simp only [HasArbLargeModels, not_forall] at h
+    obtain ⟨κ₀, hκ₀⟩ := h
+    push_neg at hκ₀
+    exact ⟨κ₀, fun ⟨M, hStr, hM, hge⟩ => absurd hge (not_le.mpr (hκ₀ M hStr hM))⟩
 
 /-- **Morley-Hanf Theorem**: For a countable language, the Hanf number of any Lω₁ω
 sentence is bounded by ℶ_ω₁ (the ω₁-th beth number).
 
 This gives an explicit upper bound on the Hanf number in terms of the beth
-hierarchy. -/
+hierarchy. Uses Mathlib's `Cardinal.beth` function which satisfies
+`beth 0 = ℵ₀`, `beth (succ α) = 2 ^ beth α`.
+
+The proof requires Ehrenfeucht-Mostowski indiscernibles or deep type-counting
+arguments (Ramsey/Erdős-Rado partition calculus, indiscernible sequences for Lω₁ω,
+type-counting over countable parameter sets). None of this infrastructure currently
+exists in the project or Mathlib. -/
 theorem morley_hanf [Countable (Σ l, L.Relations l)] (φ : L.Sentenceω) :
-    IsHanfBound φ (bethOrd (Ordinal.omega 1)) := by
+    IsHanfBound φ (Cardinal.beth (Ordinal.omega 1)) := by
   sorry
 
 end Language
