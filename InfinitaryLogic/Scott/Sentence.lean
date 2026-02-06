@@ -1391,11 +1391,21 @@ theorem exists_stabilization_for_tuples (M : Type w) [L.Structure M] [Countable 
     intro N _ _ a b
     cases n with
     | zero =>
-      -- For 0-tuples (empty tuples), the stabilization proof involves showing that
-      -- the back condition at BFEquiv (succ 1) is equivalent to that at BFEquiv 1.
-      -- Both require ∃ m ∈ M, ... which is false since M is empty.
-      -- Therefore both BFEquiv 1 and BFEquiv (succ 1) have the same truth value.
-      sorry
+      -- For 0-tuples with empty M, BFEquiv 1 already forces N to be empty
+      -- (back condition requires ∃ m : M, ... which is impossible).
+      -- So BFEquiv (succ 1) adds nothing: forth/back are both vacuous.
+      constructor
+      · intro h1
+        have hNe : IsEmpty N := by
+          by_contra hne
+          rw [not_isEmpty_iff] at hne
+          obtain ⟨n'⟩ := hne
+          have h1s : BFEquiv (L := L) (Order.succ 0) 0 a b := by
+            rwa [Ordinal.succ_zero]
+          exact IsEmpty.false (BFEquiv.back h1s n').choose
+        rw [BFEquiv.succ]
+        exact ⟨h1, fun m => isEmptyElim m, fun n' => isEmptyElim n'⟩
+      · exact BFEquiv.of_succ
     | succ k => exact (IsEmpty.false (a 0)).elim
   haveI : Nonempty M := hM_nonempty
   haveI : Nonempty ((Fin n → M) × (Fin n → M)) :=

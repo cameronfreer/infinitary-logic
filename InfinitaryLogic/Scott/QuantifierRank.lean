@@ -5,6 +5,8 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Scott.Formula
 import InfinitaryLogic.Lomega1omega.QuantifierRank
+import InfinitaryLogic.Lomega1omega.Embedding
+import InfinitaryLogic.Karp.Theorem
 
 /-!
 # Quantifier Rank of Scott Formulas
@@ -119,18 +121,41 @@ theorem scottFormula_qrank_le {M : Type w} [L.Structure M] [Countable M]
     apply Ordinal.iSup_le; intro ⟨γ, hγ⟩
     exact le_trans (ih γ hγ a (lt_trans hγ hα)) (le_of_lt hγ)
 
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
+/-- The `toLinf` embedding preserves quantifier rank. -/
+private theorem toLinf_qrank {α : Type*} {n : ℕ} (φ : L.BoundedFormulaω α n) :
+    (φ.toLinf).qrank = φ.qrank := by
+  induction φ with
+  | falsum => rfl
+  | equal => rfl
+  | rel => rfl
+  | imp φ ψ ih₁ ih₂ =>
+    simp only [BoundedFormulaω.toLinf, BoundedFormulaInf.qrank_imp, BoundedFormulaω.qrank_imp,
+      ih₁, ih₂]
+  | all φ ih =>
+    simp only [BoundedFormulaω.toLinf, BoundedFormulaInf.qrank_all, BoundedFormulaω.qrank_all, ih]
+  | iSup φs ih =>
+    simp only [BoundedFormulaω.toLinf, BoundedFormulaInf.qrank_iSup, BoundedFormulaω.qrank_iSup]
+    congr 1; funext i; exact ih i
+  | iInf φs ih =>
+    simp only [BoundedFormulaω.toLinf, BoundedFormulaInf.qrank_iInf, BoundedFormulaω.qrank_iInf]
+    congr 1; funext i; exact ih i
+
 /-- BF-equivalence at level α implies agreement on Lω₁ω formulas of quantifier rank ≤ α.
 
-This direction follows from Scott formulas: the Scott formula captures BFEquiv and
-has quantifier rank ≤ α, so any Lω₁ω formula of the same rank is a consequence. -/
+This is derived from the sorry-free forward direction of the Karp lemma
+(`BFEquiv_implies_agreeQR`) by embedding Lω₁ω into L∞ω via `toLinf`. -/
 theorem BFEquiv_implies_agree_formulas_omega {M : Type w} [L.Structure M] [Countable M]
     {N : Type w} [L.Structure N] [Countable N]
     {n : ℕ} (a : Fin n → M) (b : Fin n → N)
-    (α : Ordinal) (hα : α < Ordinal.omega 1) :
+    (α : Ordinal) (_hα : α < Ordinal.omega 1) :
     BFEquiv (L := L) α n a b →
     ∀ (φ : L.Formulaω (Fin n)), φ.qrank ≤ α →
       (Formulaω.Realize φ a ↔ Formulaω.Realize φ b) := by
-  sorry
+  intro hBF φ hφ
+  have hLinf := BFEquiv_implies_agreeQR α a b hBF φ.toLinf (toLinf_qrank φ ▸ hφ)
+  simp only [Formulaω.realize_toLinf] at hLinf
+  exact hLinf
 
 omit [L.IsRelational] in
 /-- Agreement on all Lω₁ω formulas of quantifier rank ≤ α implies BF-equivalence.
