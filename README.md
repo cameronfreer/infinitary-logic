@@ -1,6 +1,6 @@
 # Infinitary Logic in Lean 4
 
-A Lean 4 formalization of infinitary logic and Scott sentences, building on Mathlib.
+A Lean 4 formalization of infinitary logic and Scott sentences, building on Mathlib. This project is under active development.
 
 ## Goals
 
@@ -8,13 +8,17 @@ A Lean 4 formalization of infinitary logic and Scott sentences, building on Math
 
 2. **Scott Rank < ω₁** - The Scott rank of any countable structure is a countable ordinal.
 
-3. **López-Escobar Theorem** (future) - Borel isomorphism-invariant sets of structures are Lω₁ω-definable.
+3. **Karp's Theorem** - Back-and-forth equivalence at all ordinals characterizes Lω₁ω elementary equivalence.
+
+4. **Model Existence / Completeness** - Consistency properties yield models for Lω₁ω theories.
+
+5. **López-Escobar Theorem** (future) - Borel isomorphism-invariant sets of structures are Lω₁ω-definable.
 
 ## Current Status
 
-The project compiles successfully with Mathlib v4.27.0. Core definitions and main theorem statements are complete; proofs have documented sorries for chain construction lemmas.
+The project compiles with Mathlib v4.27.0. Core definitions and main theorem statements are complete, but **34 sorry placeholders** remain across multiple modules (see breakdown below). Results that depend on sorries should be considered provisional.
 
-### Completed
+### Implemented Results
 
 **L∞ω (arbitrary infinitary logic):**
 - L∞ω syntax (`BoundedFormulaInf` with arbitrary index types for iSup/iInf)
@@ -31,62 +35,96 @@ The project compiles successfully with Mathlib v4.27.0. Core definitions and mai
 - Embedding of first-order logic into Lω₁ω (`BoundedFormula.toLω`)
 - Embedding of Lω₁ω into L∞ω (`BoundedFormulaω.toLinf`)
 - Conversion from countable L∞ω to Lω₁ω (`BoundedFormulaInf.ofCountable`)
+- Quantifier rank definitions and monotonicity lemmas
 
-**Scott sentences:**
+**Scott sentences** (provisional — depends on sorries in Scott/Sentence.lean, Scott/Rank.lean):
 - Atomic diagrams for relational languages
 - Back-and-forth equivalence (`BFEquiv`) indexed by ordinals
 - Scott formula and Scott sentence definitions
 - Scott rank definition
 - `realize_scottFormula_iff_BFEquiv` (Scott formula captures BF-equivalence)
-- `scottSentence_characterizes` (main characterization theorem)
-- `scottRank_lt_omega1` (countable bound on Scott rank)
+- `scottSentence_characterizes` — depends on chain-construction sorries
+- `scottRank_lt_omega1` — depends on stabilization sorries
 
-### Remaining Sorries (6)
+**Karp's theorem** (provisional — depends on sorries in Karp/Theorem.lean, Karp/PotentialIso.lean):
+- `karp_theorem` (BFEquiv at all ordinals ↔ agree on all Lω₁ω sentences)
+- `BFEquiv_iff_agree_formulas_omega` — depends on sorry in Scott/QuantifierRank.lean
 
-The main theorems above are proven modulo 6 helper lemmas.
+**Model existence** (provisional — depends on sorries in ModelExistence/):
+- Consistency properties and model construction
+- Completeness for Lω₁ω
 
-**Sentence.lean:**
-1. `BFEquiv_omega_forth_extend` - Extending BFEquiv ω tuples (quantifier swap problem)
-2. `BFEquiv_omega_implies_equiv` - BFEquiv ω → isomorphism (needs extra structure)
-3. `BFStrategyOmegaT_implies_equiv` - Type-valued strategy → isomorphism (chain bookkeeping)
-4. `BFEquiv_ge_omega_singleton_implies_equiv_with_image` - Chain preserving initial pair
+**Model theory** (provisional — depends on sorries in ModelTheory/):
+- Downward Löwenheim–Skolem for Lω₁ω
+- Hanf number bounds
+- Counting models results
 
-**Rank.lean:**
-5. `stabilizationOrdinal_mem_elementRank_set` - Finite stabilization case
-6. `stabilizationOrdinal_le_scottRank` - Stabilization bound
+**Admissible fragments** (provisional — depends on sorries in Admissible/):
+- Barwise compactness
+- Nadel bound
 
-**Type-valued Strategy Infrastructure** (in BackAndForth.lean):
-- `BFStrategyT` - Type-valued strategy carrying actual witnesses
-- `BFStrategyOmegaT` - Coherent family at all finite levels (STRONGER than BFEquiv ω)
-- `BFStrategyT_implies_BFEquiv` - Strategy → BFEquiv (proven)
-- `BFStrategyOmegaT_implies_BFEquiv_omega` - ω-strategy → BFEquiv ω (proven)
+### Remaining Sorries (34)
 
-**Key insight**: `BFEquiv ω` (winning all finite games) does NOT imply isomorphism.
-`BFStrategyOmegaT` is genuinely stronger because it carries computational witnesses.
-The `BFStrategyOmegaT_implies_equiv` sorry is just dependent type bookkeeping—the
-mathematical content is straightforward with Type-valued strategies.
+| File | Count |
+|------|------:|
+| Scott/Sentence.lean | 15 |
+| Scott/Height.lean | 5 |
+| Scott/Rank.lean | 2 |
+| Scott/QuantifierRank.lean | 1 |
+| Karp/Theorem.lean | 1 |
+| Karp/PotentialIso.lean | 1 |
+| ModelExistence/Theorem.lean | 1 |
+| ModelExistence/Completeness.lean | 1 |
+| ModelTheory/LowenheimSkolem.lean | 2 |
+| ModelTheory/Hanf.lean | 2 |
+| ModelTheory/CountingModels.lean | 1 |
+| Admissible/Compactness.lean | 1 |
+| Admissible/NadelBound.lean | 1 |
 
 ## File Structure
 
 ```
+InfinitaryLogic.lean                     # Top-level entrypoint (imports Basic)
 InfinitaryLogic/
-├── Basic.lean                    # Re-exports all modules
-├── Linf/                         # L∞ω infrastructure
-│   ├── Syntax.lean               # BoundedFormulaInf with arbitrary index types
-│   ├── Semantics.lean            # Realize function and simp lemmas
-│   ├── Operations.lean           # relabel, castLE, subst, FO embedding
-│   └── Countability.lean         # IsCountable, IsKappa predicates
-├── Lomega1omega/                 # Lω₁ω infrastructure
-│   ├── Syntax.lean               # BoundedFormulaω with ℕ-indexed connectives
-│   ├── Semantics.lean            # Realize function and simp lemmas
-│   ├── Operations.lean           # relabel, castLE, subst, FO embedding
-│   └── Embedding.lean            # toLinf, ofCountable conversions
-└── Scott/                        # Scott sentences and rank
-    ├── AtomicDiagram.lean        # AtomicIdx, atomicFormula, SameAtomicType
-    ├── BackAndForth.lean         # BFEquiv, BFStrategy, BFStrategyOmega
-    ├── Formula.lean              # scottFormula construction
-    ├── Sentence.lean             # scottSentence and main theorem
-    └── Rank.lean                 # elementRank, scottRank, bounds
+├── Basic.lean                           # Re-exports all modules
+├── Linf/                                # L∞ω infrastructure
+│   ├── Syntax.lean                      # BoundedFormulaInf with arbitrary index types
+│   ├── Semantics.lean                   # Realize function and simp lemmas
+│   ├── Operations.lean                  # relabel, castLE, subst, FO embedding
+│   ├── Countability.lean                # IsCountable, IsKappa predicates
+│   ├── Theory.lean                      # L∞ω theories
+│   └── QuantifierRank.lean              # Quantifier rank for L∞ω
+├── Lomega1omega/                        # Lω₁ω infrastructure
+│   ├── Syntax.lean                      # BoundedFormulaω with ℕ-indexed connectives
+│   ├── Semantics.lean                   # Realize function and simp lemmas
+│   ├── Operations.lean                  # relabel, castLE, subst, FO embedding
+│   ├── Embedding.lean                   # toLinf, ofCountable conversions
+│   ├── Theory.lean                      # Lω₁ω theories
+│   └── QuantifierRank.lean              # Quantifier rank for Lω₁ω
+├── Scott/                               # Scott sentences and rank
+│   ├── AtomicDiagram.lean               # AtomicIdx, atomicFormula, SameAtomicType
+│   ├── BackAndForth.lean                # BFEquiv, BFStrategy, BFStrategyOmega
+│   ├── Formula.lean                     # scottFormula construction
+│   ├── Sentence.lean                    # scottSentence and main theorem
+│   ├── Rank.lean                        # elementRank, scottRank, bounds
+│   ├── Height.lean                      # Scott height and related bounds
+│   └── QuantifierRank.lean              # Quantifier rank lemmas for Scott constructs
+├── Karp/                                # Karp's theorem
+│   ├── Theorem.lean                     # karp_theorem main statement
+│   ├── PotentialIso.lean                # Potential isomorphisms and BFEquiv
+│   └── CountableCorollary.lean          # Corollaries for countable structures
+├── ModelExistence/                      # Model existence for Lω₁ω
+│   ├── ConsistencyProperty.lean         # Consistency property definition
+│   ├── Theorem.lean                     # Model existence theorem
+│   └── Completeness.lean                # Completeness for Lω₁ω
+├── ModelTheory/                         # Classical model-theoretic results
+│   ├── LowenheimSkolem.lean             # Downward Löwenheim–Skolem for Lω₁ω
+│   ├── Hanf.lean                        # Hanf number bounds
+│   └── CountingModels.lean              # Counting models results
+└── Admissible/                          # Admissible fragments
+    ├── Fragment.lean                     # Admissible fragment definitions
+    ├── Compactness.lean                  # Barwise compactness
+    └── NadelBound.lean                   # Nadel bound
 ```
 
 ## Key Definitions
@@ -139,9 +177,14 @@ The Scott sentence of M characterizes M up to isomorphism among countable struct
 
 ## Assumptions
 
-- **Relational languages** (`[L.IsRelational]`) - no function symbols
-- **Countable languages** (`[Countable (Σ l, L.Relations l)]`)
-- **Countable structures** (`[Countable M]`)
+**Core syntax/semantics** (Linf, Lomega1omega): General first-order languages, no restrictions.
+
+**Scott/Karp results:**
+- Relational languages (`[L.IsRelational]`) — no function symbols
+- Countable relation symbols (`[Countable (Σ l, L.Relations l)]`)
+- Countable structures (`[Countable M]`)
+
+**Model existence/completeness:** Additionally assumes countable function symbols (`[Countable (Σ l, L.Functions l)]`).
 
 ## Building
 
