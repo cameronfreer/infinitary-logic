@@ -37,17 +37,170 @@ variable [Countable (Σ l, L.Relations l)]
 
 open FirstOrder Structure Fin Ordinal
 
+/-! ### Helpers for BFEquiv_iff_agreeQR -/
+
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
+/-- In a relational language, every term is a variable. -/
+private theorem Term.eq_var_of_isRelational [L.IsRelational] (t : L.Term α) :
+    ∃ x, t = Term.var x := by
+  cases t with
+  | var x => exact ⟨x, rfl⟩
+  | func f => exact (IsEmpty.false f).elim
+
+/-- Builds an L∞ω atomic formula from an `AtomicIdx`. -/
+private def atomicFormulaInf (idx : L.AtomicIdx n) :
+    BoundedFormulaInf.{u, v, 0, 0} L (Fin n) 0 :=
+  match idx with
+  | .eq i j => .equal (.var (.inl i)) (.var (.inl j))
+  | .rel R f => .rel R (fun k => .var (.inl (f k)))
+
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
+private theorem qrank_atomicFormulaInf (idx : L.AtomicIdx n) :
+    (atomicFormulaInf (L := L) idx).qrank = 0 := by
+  cases idx <;> rfl
+
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
+private theorem realize_atomicFormulaInf {M : Type*} [L.Structure M]
+    (idx : L.AtomicIdx n) (v : Fin n → M) :
+    FormulaInf.Realize (atomicFormulaInf (L := L) idx) v ↔ idx.holds v := by
+  cases idx with
+  | eq i j =>
+    simp only [atomicFormulaInf, FormulaInf.Realize, BoundedFormulaInf.realize_equal,
+      Term.realize, Sum.elim_inl, AtomicIdx.holds]
+  | rel R f =>
+    simp only [atomicFormulaInf, FormulaInf.Realize, BoundedFormulaInf.realize_rel,
+      Term.realize, Sum.elim_inl, AtomicIdx.holds]
+    constructor <;> intro h <;> convert h using 1
+
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
+/-- `Sum.elim v xs` agrees with `Fin.append v xs ∘ finSumFinEquiv`. -/
+private theorem sumElim_eq_append_comp {γ : Type*} {n k : ℕ}
+    (v : Fin n → γ) (xs : Fin k → γ) :
+    Sum.elim v xs = Fin.append v xs ∘ finSumFinEquiv := by
+  exact (Fin.append_comp_sumElim (xs := v) (ys := xs)).symm
+
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
+/-- `Fin.snoc` distributes into `Fin.append` on the right component. -/
+private theorem snoc_append_eq_append_snoc {γ : Type*} {n k : ℕ}
+    (v : Fin n → γ) (xs : Fin k → γ) (x : γ) :
+    Fin.snoc (Fin.append v xs) x = Fin.append v (Fin.snoc xs x) := by
+  exact (Fin.append_snoc v xs x).symm
+
+/-- The forward direction of the Karp lemma, generalized to handle bound variables.
+BFEquiv at level α implies agreement on formulas of rank ≤ α. -/
+private theorem BFEquiv_implies_agree_aux {M N : Type w} [L.Structure M] [L.Structure N]
+    (α : Ordinal) {n k : ℕ}
+    (φ : BoundedFormulaInf.{u, v, 0, 0} L (Fin n) k) (hφ : φ.qrank ≤ α)
+    (v : Fin n → M) (w : Fin n → N) (xs : Fin k → M) (ys : Fin k → N)
+    (hBF : BFEquiv (L := L) α (n + k) (Fin.append v xs) (Fin.append w ys)) :
+    (φ.Realize v xs ↔ φ.Realize w ys) := by
+  induction φ generalizing α with
+  | falsum => simp
+  | equal t₁ t₂ =>
+    obtain ⟨x₁, rfl⟩ := Term.eq_var_of_isRelational t₁
+    obtain ⟨x₂, rfl⟩ := Term.eq_var_of_isRelational t₂
+    simp only [BoundedFormulaInf.realize_equal, Term.realize]
+    have hSAT : SameAtomicType (L := L) (Fin.append v xs) (Fin.append w ys) :=
+      (BFEquiv.zero _ _).mp (BFEquiv.monotone (zero_le _) hBF)
+    rw [sumElim_eq_append_comp v xs, sumElim_eq_append_comp w ys]
+    simp only [Function.comp]
+    exact hSAT (.eq (finSumFinEquiv x₁) (finSumFinEquiv x₂))
+  | rel R ts =>
+    simp only [BoundedFormulaInf.realize_rel]
+    have hSAT : SameAtomicType (L := L) (Fin.append v xs) (Fin.append w ys) :=
+      (BFEquiv.zero _ _).mp (BFEquiv.monotone (zero_le _) hBF)
+    have hvars : ∀ i, ∃ x, ts i = Term.var x := fun i => Term.eq_var_of_isRelational (ts i)
+    choose ts_var hts using hvars
+    have hM : (RelMap R fun i => (ts i).realize (Sum.elim v xs)) ↔
+              RelMap R (Fin.append v xs ∘ (fun i => finSumFinEquiv (ts_var i))) := by
+      constructor <;> intro h <;> convert h using 1 <;> ext i <;>
+        simp [hts i, sumElim_eq_append_comp v xs, Function.comp]
+    have hN : (RelMap R fun i => (ts i).realize (Sum.elim w ys)) ↔
+              RelMap R (Fin.append w ys ∘ (fun i => finSumFinEquiv (ts_var i))) := by
+      constructor <;> intro h <;> convert h using 1 <;> ext i <;>
+        simp [hts i, sumElim_eq_append_comp w ys, Function.comp]
+    rw [hM, hN]
+    exact hSAT (.rel R (fun i => finSumFinEquiv (ts_var i)))
+  | imp φ ψ ihφ ihψ =>
+    simp only [BoundedFormulaInf.realize_imp, BoundedFormulaInf.qrank_imp] at hφ ⊢
+    exact imp_congr
+      (ihφ α (le_of_max_le_left hφ) xs ys hBF)
+      (ihψ α (le_of_max_le_right hφ) xs ys hBF)
+  | all φ ih =>
+    simp only [BoundedFormulaInf.realize_all, BoundedFormulaInf.qrank_all] at hφ ⊢
+    have hSucc : Order.succ φ.qrank ≤ α := by rwa [Ordinal.add_one_eq_succ] at hφ
+    have hBF' := BFEquiv.monotone hSucc hBF
+    constructor
+    · intro hAll y
+      obtain ⟨m, hm⟩ := BFEquiv.back hBF' y
+      rw [snoc_append_eq_append_snoc, snoc_append_eq_append_snoc] at hm
+      exact (ih φ.qrank le_rfl (Fin.snoc xs m) (Fin.snoc ys y) hm).mp (hAll m)
+    · intro hAll x
+      obtain ⟨y, hy⟩ := BFEquiv.forth hBF' x
+      rw [snoc_append_eq_append_snoc, snoc_append_eq_append_snoc] at hy
+      exact (ih φ.qrank le_rfl (Fin.snoc xs x) (Fin.snoc ys y) hy).mpr (hAll y)
+  | iSup φs ih =>
+    simp only [BoundedFormulaInf.realize_iSup, BoundedFormulaInf.qrank_iSup] at hφ ⊢
+    exact exists_congr fun i =>
+      ih i α (le_trans (Ordinal.le_iSup (fun i => (φs i).qrank) i) hφ) xs ys hBF
+  | iInf φs ih =>
+    simp only [BoundedFormulaInf.realize_iInf, BoundedFormulaInf.qrank_iInf] at hφ ⊢
+    exact forall_congr' fun i =>
+      ih i α (le_trans (Ordinal.le_iSup (fun i => (φs i).qrank) i) hφ) xs ys hBF
+
+/-- The backward direction of the Karp lemma: agreement on formulas of rank ≤ α
+implies BFEquiv at level α. -/
+private theorem agree_implies_BFEquiv {M N : Type w} [L.Structure M] [L.Structure N]
+    (α : Ordinal) {n : ℕ} (a : Fin n → M) (b : Fin n → N)
+    (h : ∀ φ : BoundedFormulaInf.{u, v, 0, 0} L (Fin n) 0, φ.qrank ≤ α →
+      (FormulaInf.Realize φ a ↔ FormulaInf.Realize φ b)) :
+    BFEquiv (L := L) α n a b := by
+  induction α using Ordinal.limitRecOn generalizing n a b with
+  | zero =>
+    rw [BFEquiv.zero]
+    intro idx
+    exact (realize_atomicFormulaInf idx a).symm.trans
+      ((h _ (le_of_eq (qrank_atomicFormulaInf idx))).trans (realize_atomicFormulaInf idx b))
+  | succ β ih =>
+    rw [BFEquiv.succ]
+    refine ⟨?_, ?_, ?_⟩
+    · -- BFEquiv at level β
+      exact ih a b fun φ hφ => h φ (le_trans hφ (Order.le_succ β))
+    · -- Forth: ∀ m : M, ∃ n' : N, BFEquiv β (n+1) (snoc a m) (snoc b n')
+      -- This requires constructing a formula ∃x. ⋀_{n':N} ψ_{n'} indexed by N : Type w.
+      -- Since BoundedFormulaInf.{u,v,0,0} only allows Type 0 index types,
+      -- this is impossible when w > 0 (universe obstruction).
+      sorry
+    · -- Back: symmetric universe obstruction
+      sorry
+  | limit β hβ ih =>
+    rw [BFEquiv.limit β hβ]
+    intro γ hγ
+    exact ih γ hγ a b fun φ hφ => h φ (le_trans hφ (le_of_lt hγ))
+
 /-- **Karp Lemma** (KK04 Lemma 1.3.3): BF-equivalence at level α between tuples is
 equivalent to agreement on all formulas of quantifier rank ≤ α.
 
 This is the key inductive lemma relating the game-theoretic BFEquiv to the
-formula-based EquivQR. -/
+formula-based EquivQR.
+
+**Implementation note**: The forward direction is fully proved by structural induction
+on formulas. The backward direction's successor case has a universe obstruction:
+the forth/back witnesses require constructing formulas with `iInf` indexed by
+`N : Type w`, but `BoundedFormulaInf.{u,v,0,0}` only allows `Type 0` indices. -/
 theorem BFEquiv_iff_agreeQR {M N : Type w} [L.Structure M] [L.Structure N]
     (α : Ordinal) {n : ℕ} (a : Fin n → M) (b : Fin n → N) :
     BFEquiv (L := L) α n a b ↔
     ∀ (φ : BoundedFormulaInf.{u, v, 0, 0} L (Fin n) 0), φ.qrank ≤ α →
       (FormulaInf.Realize φ a ↔ FormulaInf.Realize φ b) := by
-  sorry
+  constructor
+  · intro hBF φ hφ
+    have ha : Fin.append a (Fin.elim0 : Fin 0 → M) = a := by
+      ext ⟨i, hi⟩; simp [Fin.append, Fin.addCases, show i < n from hi]
+    have hb : Fin.append b (Fin.elim0 : Fin 0 → N) = b := by
+      ext ⟨i, hi⟩; simp [Fin.append, Fin.addCases, show i < n from hi]
+    exact BFEquiv_implies_agree_aux α φ hφ a b Fin.elim0 Fin.elim0 (by rwa [ha, hb])
+  · exact agree_implies_BFEquiv α a b
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- Bridge between SentenceInf.Realize and FormulaInf.Realize via mapFreeVars. -/
