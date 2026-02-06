@@ -969,199 +969,15 @@ at successor levels involves forth/back which creates tuples of size (n+1).
 The correct approach is to use StabilizesCompletely which ensures all tuple sizes
 stabilize simultaneously. See BFEquiv_upgrade_at_stabilization. -/
 
-/-- Helper lemma: given a family of stabilization ordinals f(k) for each k-tuple,
-and a supremum β that is past all f(k), we can upgrade BFEquiv from f(n) to β.
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
+/-- Self-stabilization: BFEquiv α on n-tuples from M vs M equals BFEquiv (succ α)
+for all n. This is weaker than `StabilizesCompletely` which requires the iff
+to hold for all countable N, not just M itself. -/
+def SelfStabilizesCompletely (M : Type w) [L.Structure M] (α : Ordinal) : Prop :=
+  ∀ (n : ℕ) (a a' : Fin n → M),
+    BFEquiv (L := L) α n a a' ↔ BFEquiv (L := L) (Order.succ α) n a a'
 
-The hypothesis h : BFEquiv (f n) n a b states that a and b are BF-equivalent at
-level f(n), which is the stabilization ordinal for n-tuples. The conclusion is
-that they're also BF-equivalent at the higher level β.
-
-**Key insight**: The witnesses from forth/back at level f(n) (for n-tuples) give
-(n+1)-tuples at level (f n) - 1 = pred (f n). But for upgrading (n+1)-tuples,
-we need to reach the (n+1)-tuple stabilization level f(n+1).
-
-**Gap issue**: When f(n) < f(n+1), the (n+1)-tuple witness at f(n) is BELOW
-the (n+1)-tuple stabilization point. The recursive call for (n+1)-tuples needs
-input at f(n+1), but we only have f(n). This creates "gap cases" in the proof.
-
-**Monotonization approach** (not implemented): Define g(n) = sup{f(k) | k ≤ n}.
-Then g is nondecreasing and (n+1)-tuples at g(n) are at or past their stabilization
-point g(n+1) ≥ f(n+1). However, this changes the induction structure.
-
-**Actual usage**: In exists_complete_stabilization, the input comes from forth at
-succ (f (k+1)), giving (k+1)-tuples at f(k+1). When recursing with n = k+1, the
-input IS at f(n). But the recursive forth/back for (k+2)-tuples creates the gap. -/
-private theorem BFEquiv_upgrade_from_family_aux {M N : Type w} [L.Structure M] [L.Structure N]
-    [Countable N]
-    {f : ℕ → Ordinal} (hf_stab : ∀ k, StabilizesForTuples (L := L) M (f k) k)
-    {n : ℕ} {a : Fin n → M} {b : Fin n → N}
-    (h : BFEquiv (L := L) (f n) n a b) (β : Ordinal) (hβ : ∀ k, f k ≤ β) :
-    BFEquiv (L := L) β n a b := by
-  -- The proof uses ordinal induction on β, generalizing over n, a, b.
-  -- The key is that h is at level f(n), the stabilization point for n-tuples.
-  -- We use stabilization to move from f(n) to succ(f(n)), then use monotonicity
-  -- or recursive IH to reach β.
-  induction β using Ordinal.limitRecOn generalizing n a b with
-  | zero =>
-    -- β = 0: f(n) ≤ 0 implies f(n) = 0, so h is already at level 0
-    have hfn0 : f n = 0 := le_antisymm (hβ n) (zero_le _)
-    rwa [hfn0] at h
-  | succ γ ih =>
-    -- β = succ γ: Either f(n) = β (done) or f(n) < β (need construction)
-    rcases (hβ n).lt_or_eq with hfn_lt | hfn_eq
-    · -- f(n) < succ γ, so f(n) ≤ γ
-      rw [Order.lt_succ_iff] at hfn_lt
-      rw [BFEquiv.succ]
-      refine ⟨?base, ?forth, ?back⟩
-      case base =>
-        -- BFEquiv γ n a b: use stabilization + monotonicity or IH
-        have h_stab := (hf_stab n N a b).mp h
-        -- h_stab : BFEquiv (succ (f n)) n a b
-        by_cases hcase : γ ≤ Order.succ (f n)
-        · -- γ ≤ succ (f n): monotonicity down to γ
-          exact BFEquiv.monotone hcase h_stab
-        · -- γ > succ (f n): need to bridge from succ (f n) to γ
-          push_neg at hcase
-          -- Use IH: ih requires h at f(n) and bound ∀ k, f k ≤ γ
-          -- We have bound ∀ k, f k ≤ succ γ. Need ∀ k, f k ≤ γ.
-          -- If some f k = succ γ, we can't use IH directly.
-          -- However, the key observation: stabilization at f(n) gives us
-          -- BFEquiv (succ (f n)) n a b. From this, we want BFEquiv γ n a b
-          -- where γ > succ (f n).
-          -- Use the same stabilization repeatedly: at each ordinal level α ≥ f(n),
-          -- we have BFEquiv α n a b ↔ BFEquiv (succ α) n a b (by stabilization).
-          -- This isn't quite right: stabilization is specifically at f(n), not at all α ≥ f(n).
-          -- The correct interpretation: stabilization means once past f(n), BFEquiv
-          -- for n-tuples is constant. So BFEquiv (f n) = BFEquiv γ for all γ ≥ f n.
-          -- We prove this direction (f n → γ) using the BFEquiv.succ structure:
-          -- BFEquiv (succ α) ↔ BFEquiv α ∧ forth ∧ back
-          -- From stabilization, BFEquiv (f n) ↔ BFEquiv (succ (f n)).
-          -- For forth at succ (f n): witnesses at f n for (n+1)-tuples.
-          -- For back: similar.
-          -- The recursive structure: to prove BFEquiv γ from BFEquiv (f n):
-          -- - If γ is successor of δ: prove BFEquiv δ recursively, then add forth/back.
-          --   The forth/back at δ need (n+1)-tuples at δ-1 (or δ for limits).
-          --   These come from stabilization at f(n), giving (n+1) at f(n)-1.
-          --   To upgrade to δ-1, recursively apply for (n+1)-tuples if f(n+1) ≤ δ-1.
-          -- This is exactly the structure of the IH. The challenge is the bound.
-          -- For IH at γ, we need ∀ k, f k ≤ γ. If some f k = succ γ, fail.
-          -- BUT: in this branch, we're computing BFEquiv γ FOR n-tuples only.
-          -- The (n+1)-tuples at γ-1 are handled by recursion with n+1.
-          -- That recursion needs bound ∀ k, f k ≤ γ-1 or similar.
-          -- SIMPLIFICATION: Use the bound we have. If IH fails due to bound,
-          -- handle those cases with monotonicity.
-          -- Actually, for n-tuples, stabilization at f(n) means:
-          -- For any α ≥ f(n), BFEquiv (f n) n a b → BFEquiv α n a b.
-          -- Proof: induction on α - f(n). At each step, use stabilization iff
-          -- plus the IH for forth/back. The forth/back for n-tuples at α need
-          -- (n+1)-tuples at α. These come from... where?
-          -- From stabilization at f(n): BFEquiv (f n) → BFEquiv (succ (f n)).
-          -- Forth at succ (f n) gives witnesses at f(n) for (n+1)-tuples.
-          -- To get (n+1)-tuples at α, need to upgrade from f(n) to α.
-          -- If f(n+1) ≤ f(n), monotonicity down to f(n+1), then stabilization up.
-          -- If f(n+1) > f(n), the (n+1)-tuple at f(n) is BELOW stabilization.
-          -- In this case, (n+1) hasn't stabilized yet at f(n).
-          -- To reach α for (n+1): if α < f(n+1), monotonicity works (f(n) to α).
-          --   Wait, monotonicity goes DOWN: BFEquiv (f n) → BFEquiv α for α ≤ f n.
-          --   Here α ≥ f(n), so monotonicity doesn't help directly.
-          -- RESOLUTION: The witnesses from forth at succ (f n) are at f(n).
-          -- For (n+1)-tuples, if f(n) ≥ f(n+1), monotone to f(n+1), then IH.
-          -- If f(n) < f(n+1) ≤ α, we need BFEquiv α (n+1) from BFEquiv (f n) (n+1).
-          -- Since f(n) < f(n+1), the (n+1)-tuple hasn't stabilized at f(n).
-          -- So BFEquiv (f n) (n+1) ↔ BFEquiv (f(n+1)) (n+1) is NOT guaranteed.
-          -- However, if f(n) ≥ α, monotonicity DOWN gives BFEquiv α from BFEquiv (f n).
-          -- If f(n) < α: we're asking for a STRONGER condition.
-          -- CONCLUSION: When f(n) < f(n+1) and f(n) < α < f(n+1), we're stuck.
-          -- But in the ACTUAL USAGE, the witnesses come from forth at succ (f (k+1)),
-          -- which gives (k+1)-tuples at f(k+1), the stabilization point!
-          -- So for the recursive call, n becomes k+1, and h is at f(k+1) = f(n).
-          -- This means the bound works out: we're always at stabilization points.
-          -- For this inner proof (base case), we just need BFEquiv γ for n-tuples.
-          -- We have h at f(n), and stabilization gives succ (f n).
-          -- From succ (f n) to γ > succ (f n), use IH. But IH needs bound.
-          -- If bound fails (some f k > γ), use monotonicity for those k's contributions.
-          -- For n-tuples specifically, stabilization at f(n) gives the upgrade.
-          -- The bound issue is for (n+1)-tuples in forth/back.
-          sorry
-      case forth =>
-        intro m
-        have h_stab := (hf_stab n N a b).mp h
-        obtain ⟨n', hn'⟩ := BFEquiv.forth h_stab m
-        use n'
-        -- hn' : BFEquiv (f n) (n+1) (snoc a m) (snoc b n')
-        -- Need: BFEquiv γ (n+1)
-        -- Case analysis on where f(n), f(n+1), and γ stand relative to each other.
-        -- If f(n) ≥ γ: monotonicity DOWN gives the result.
-        -- If f(n) < γ ≤ f(n+1): need to go UP, but (n+1) hasn't stabilized yet.
-        --   In this case, we actually need witnesses at higher levels, which
-        --   we don't have directly from hn' at f(n).
-        -- If f(n+1) ≤ γ: (n+1)-tuples are stable. Use IH to upgrade.
-        --   But IH for (n+1)-tuples expects input at f(n+1), not f(n).
-        --   If f(n) ≥ f(n+1): monotonicity gives f(n+1) from f(n).
-        --   If f(n) < f(n+1): we're in a gap.
-        -- The resolution: in actual usage, hn' comes from forth at level
-        -- succ (f (k+1)) for k-tuples, giving (k+1)-tuples at f(k+1).
-        -- When we recurse with n = k+1, the input IS at f(n) = f(k+1).
-        by_cases hfn_γ : γ ≤ f n
-        · -- γ ≤ f(n): monotonicity DOWN from f(n) to γ
-          exact BFEquiv.monotone hfn_γ hn'
-        · -- f(n) < γ: need to go UP
-          push_neg at hfn_γ
-          -- Check if (n+1)-tuples have stabilized by γ
-          by_cases hfn1_γ : f (n + 1) ≤ γ
-          · -- f(n+1) ≤ γ: (n+1)-tuples are stable at γ
-            -- Need BFEquiv γ (n+1) from BFEquiv (f n) (n+1)
-            -- If f(n) ≥ f(n+1): mono to f(n+1), then IH for (n+1)
-            -- If f(n) < f(n+1): hn' is at f(n) < f(n+1) ≤ γ
-            --   Use IH for (n+1): requires input at f(n+1).
-            --   From hn' at f(n), if f(n) ≥ f(n+1), mono gives it.
-            --   If f(n) < f(n+1), we need stabilization for (n+1) to bridge.
-            --   Stabilization at f(n+1): BFEquiv (f(n+1)) ↔ BFEquiv (succ (f(n+1)))
-            --   But we don't have BFEquiv (f(n+1)) (n+1), only (f n) (n+1).
-            --   STUCK unless f(n) ≥ f(n+1).
-            -- Need to upgrade (n+1)-tuples from f(n) to γ where f(n+1) ≤ γ
-            -- This requires IH for (n+1)-tuples, but the bound is tricky.
-            -- The IH requires ∀ k, f k ≤ γ, but we only have ∀ k, f k ≤ succ γ.
-            -- For now, use sorry and note this is the key technical gap.
-            sorry
-          · -- f(n+1) > γ: (n+1)-tuples not yet stable at γ
-            push_neg at hfn1_γ
-            -- f(n) < γ < f(n+1): in the gap before (n+1) stabilizes
-            -- We have hn' at f(n), want γ, and both f(n) < γ and γ < f(n+1).
-            -- Without additional structure, we can't bridge this gap.
-            sorry
-      case back =>
-        intro n'
-        have h_stab := (hf_stab n N a b).mp h
-        obtain ⟨m, hm⟩ := BFEquiv.back h_stab n'
-        use m
-        -- Symmetric to forth
-        by_cases hfn_γ : γ ≤ f n
-        · exact BFEquiv.monotone hfn_γ hm
-        · push_neg at hfn_γ
-          by_cases hfn1_γ : f (n + 1) ≤ γ
-          · -- Similar to forth case
-            sorry
-          · push_neg at hfn1_γ
-            sorry
-    · -- f(n) = succ γ = β: h is already at level β
-      rw [← hfn_eq]; exact h
-  | limit β hβlim ih =>
-    -- β is a limit: BFEquiv β ↔ ∀ γ < β, BFEquiv γ
-    rw [BFEquiv.limit β hβlim]
-    intro γ hγ
-    by_cases hfn_γ : f n ≤ γ
-    · -- f(n) ≤ γ: need to go from f(n) to γ, use IH
-      by_cases hall : ∀ k, f k ≤ γ
-      · exact @ih γ hγ n a b h hall
-      · -- Some f(k) > γ: can't use IH directly
-        -- For n-tuples, if f(n) ≤ γ, stabilization should give the upgrade.
-        -- But forth/back need (n+1)-tuples at γ, which may not be bounded.
-        sorry
-    · -- f(n) > γ: monotonicity DOWN from f(n) to γ
-      push_neg at hfn_γ
-      exact BFEquiv.monotone (le_of_lt hfn_γ) h
-
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- At a complete stabilization ordinal, BFEquiv upgrades to all higher ordinals.
 This is the key lemma that resolves the quantifier swap problem.
 
@@ -1232,371 +1048,148 @@ theorem StabilizesCompletely.toStrongStabilizesForTuples {M : Type w} [L.Structu
   · exact fun h => BFEquiv_upgrade_at_stabilization hstab h β hαβ
   · exact BFEquiv.monotone hαβ
 
-/-- For countable M and each n, there exists α < ω₁ where n-tuples stabilize.
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
+/-- For countable M, there exists α < ω₁ where all tuple sizes self-stabilize
+(BFEquiv α n a a' ↔ BFEquiv (succ α) n a a' for all n and all a, a' : Fin n → M).
 
-**Proof idea**: Consider the sequence of equivalence relations Eα on (Fin n → M) × Σ N, (Fin n → N)
-defined by (a, N, b) Eα (a', N', b') iff a = a' and for all countable P and c : Fin n → P,
-BFEquiv α n a c ↔ BFEquiv α n a' c.
+**Proof idea**: For each triple (n, a, a'), the sequence α ↦ BFEquiv α n a a' is
+antitone (by `BFEquiv.monotone`). Define the "change ordinal" as
+`sInf {γ | ¬BFEquiv γ n a a'}` when this set is nonempty; this is the ordinal where
+the truth value permanently drops from True to False. For α past the change ordinal,
+both BFEquiv α and BFEquiv (succ α) are False, so the iff holds. If the change ordinal
+does not exist (BFEquiv is True everywhere) or is ≥ ω₁, then for any α < ω₁ with
+succ α < ω₁, both sides are True.
 
-This is a refining sequence: Eβ ⊆ Eα when α < β (because BFEquiv is antimonotone in α).
-For countable M, (Fin n → M) is countable, so there are at most countably many Eα-classes.
-A decreasing chain of partitions with countably many classes must stabilize at some
-countable ordinal.
-
-Note: The proof of StabilizesForTuples requires showing that BFEquiv α ↔ BFEquiv (succ α) for
-n-tuples, which involves forth/back conditions that use (n+1)-tuples. The proper way to prove
-this is through the complete stabilization machinery, which handles all tuple sizes simultaneously.
-This theorem provides the per-tuple-size existence which is then combined in
-`exists_complete_stabilization`. -/
-theorem exists_stabilization_for_tuples (M : Type w) [L.Structure M] [Countable M] (n : ℕ) :
-    ∃ α < (Ordinal.omega 1 : Ordinal.{0}), StabilizesForTuples (L := L) M α n := by
-  /-
-  **Proof outline**: We use the Scott formula characterization of BFEquiv.
-
-  The key insight is that BFEquiv α n a b ↔ (scottFormula a α).Realize b
-  (by `realize_scottFormula_iff_BFEquiv`). Since the Scott formula depends only on M, a, and α:
-  - For fixed a, b: as α increases, the formula gets stronger (implies lower-level formulas)
-  - The stabilization condition BFEquiv α ↔ BFEquiv (succ α) means the formulas at α and succ α
-    are logically equivalent (for the purpose of testing against countable structures)
-
-  For each pair (a, a') of n-tuples from M, define:
-    stab(a, a') = sInf {α | BFEquiv α n a a' ↔ BFEquiv (succ α) n a a'}
-
-  This set is nonempty (it contains all ordinals ≥ ω since eventually stabilizes) and the
-  infimum is well-defined. The key facts are:
-  1. For each pair, stab(a, a') < ω₁ (antitone sequence stabilizes before ω₁)
-  2. There are countably many pairs (M^n × M^n is countable)
-  3. The supremum of countably many ordinals < ω₁ is < ω₁ (regularity of ω₁)
-
-  The proof proceeds by showing self-stabilization (M testing against M) implies full
-  stabilization (M testing against all countable N) via the Scott formula.
-  -/
-
-  -- Step 1: Define per-pair stabilization for M testing against M
-  -- For each pair (a, a'), consider the set of α where BFEquiv α n a a' ↔ BFEquiv (succ α) n a a'
-  let selfStabSet : (Fin n → M) → (Fin n → M) → Set Ordinal.{0} := fun a a' =>
-    {α | BFEquiv (L := L) α n a a' ↔ BFEquiv (L := L) (Order.succ α) n a a'}
-
-  -- Step 2: Show each selfStabSet is nonempty and has an element < ω₁
-  -- The key is that the BFEquiv relation, when restricted to M × M, forms a decreasing
-  -- sequence of equivalence relations. Eventually it must stabilize.
-  have hSelfStab : ∀ a a' : Fin n → M, ∃ α < Ordinal.omega 1, α ∈ selfStabSet a a' := by
-    intro a a'
-    -- The BFEquiv relation for (a, a') forms an antitone sequence of truth values.
-    -- There are only two possible values (True/False), so it stabilizes.
-    -- The stabilization point is the infimum of {α | BFEquiv α n a a' = BFEquiv (succ α) n a a'}.
-    -- This is well-defined because:
-    -- 1. At level 0, BFEquiv may or may not hold
-    -- 2. The sequence is antitone: β ≥ α → (BFEquiv β n a a' → BFEquiv α n a a')
-    -- 3. Either BFEquiv holds eventually for all levels, or it fails at some level
-    -- 4. If it fails at level β, then for all γ ≥ β, BFEquiv γ n a a' = False
-    -- 5. If it holds for all levels, stabilization is at 0
-    --
-    -- More precisely: define change(a,a') = sInf {α | ¬BFEquiv α n a a'} if nonempty, else 0.
-    -- Then for α ≥ change(a,a'), BFEquiv α n a a' is constantly False (if change exists)
-    -- or constantly True (if no change). In either case, stabilization occurs.
-    --
-    -- The change point (if it exists) is < ω₁ because:
-    -- - If BFEquiv fails at some level, it's witnessed by some finite stage of the
-    --   back-and-forth construction failing
-    -- - Such failures are determined by the countable structure M
-    -- - The failure point is thus below ω₁
-    -- Split: either some failure occurs before ω₁, or BFEquiv holds at all levels < ω₁
-    by_cases hBeforeOmega1 : ∃ γ < (Ordinal.omega 1 : Ordinal.{0}), ¬BFEquiv (L := L) γ n a a'
-    · -- Case: BFEquiv fails at some level < ω₁
-      obtain ⟨γ, hγ_lt, hγ_fail⟩ := hBeforeOmega1
-      -- The infimum of failure levels is ≤ γ < ω₁
-      let changePoint := sInf {β : Ordinal.{0} | ¬BFEquiv (L := L) β n a a'}
-      have hNonempty : {β : Ordinal.{0} | ¬BFEquiv (L := L) β n a a'}.Nonempty := ⟨γ, hγ_fail⟩
-      have hFalseAt : ¬BFEquiv (L := L) changePoint n a a' := csInf_mem hNonempty
-      have hFalseAbove : ∀ β ≥ changePoint, ¬BFEquiv (L := L) β n a a' := by
-        intro β hβ hBF; exact hFalseAt (BFEquiv.monotone hβ hBF)
-      use changePoint
-      exact ⟨lt_of_le_of_lt (csInf_le' hγ_fail) hγ_lt,
-        ⟨fun h => absurd h hFalseAt,
-         fun h => absurd h (hFalseAbove _ (Order.le_succ changePoint))⟩⟩
-    · -- Case: BFEquiv holds at all levels < ω₁
-      push_neg at hBeforeOmega1
-      -- hBeforeOmega1 : ∀ γ < ω₁, BFEquiv γ n a a'
-      -- Any ordinal < ω₁ is a stabilization point (both sides of the ↔ are True)
-      by_cases hEventuallyFalse : ∃ β, ¬BFEquiv (L := L) β n a a'
-      · -- BFEquiv fails at some β ≥ ω₁, but holds at all γ < ω₁
-        -- Use 0 as stabilization: BFEquiv 0 ↔ BFEquiv (succ 0), both True
-        use 0
-        refine ⟨Ordinal.omega_pos 1, ?_⟩
-        have h0 := hBeforeOmega1 0 (Ordinal.omega_pos 1)
-        have h1 := hBeforeOmega1 (Order.succ 0)
-          (Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) (Ordinal.omega_pos 1))
-        exact ⟨fun _ => h1, fun _ => h0⟩
-      · -- BFEquiv holds at ALL levels
-        push_neg at hEventuallyFalse
-        use 0
-        exact ⟨Ordinal.omega_pos 1,
-          ⟨fun _ => hEventuallyFalse (Order.succ 0),
-           fun _ => hEventuallyFalse 0⟩⟩
-
-  -- Step 3: Extract the per-pair stabilization ordinals
-  choose stabOrd hstabOrd_lt hstabOrd_mem using hSelfStab
-
-  -- Step 4: Enumerate all pairs (using countability of M^n × M^n)
-  haveI : Countable (Fin n → M) := inferInstance
-  haveI : Countable ((Fin n → M) × (Fin n → M)) := inferInstance
-  -- Handle case when M is empty
+Take globalStab = sup of all change ordinals that are < ω₁ (one per triple).
+By countability of the sigma type and regularity of ω₁, globalStab < ω₁.
+At globalStab, for each triple, either the change ordinal is ≤ globalStab (both sides
+False) or > globalStab (both sides True since succ globalStab < ω₁). -/
+theorem exists_complete_self_stabilization (M : Type w) [L.Structure M] [Countable M] :
+    ∃ α < (Ordinal.omega 1 : Ordinal.{0}), SelfStabilizesCompletely (L := L) M α := by
+  -- For each triple (n, a, a'), define the "change ordinal":
+  -- the first level where BFEquiv fails, or 0 if it never fails below ω₁.
+  -- We collect an ordinal < ω₁ for each triple such that globalStab past all of them works.
+  -- The key: for each triple, either BFEquiv fails at some γ < ω₁ (contribute γ to sup)
+  -- or BFEquiv holds at all levels < ω₁ (contribute 0 to sup).
+  -- At globalStab = sup + 1:
+  --   Failing triples: change ordinal ≤ γ ≤ globalStab, so both sides False, iff holds.
+  --   Non-failing triples: BFEquiv True at all < ω₁, and succ globalStab < ω₁, so both True.
+  --
+  -- Step 1: For each triple, extract a "bound ordinal" < ω₁
+  have hTriple : ∀ (t : Σ n, (Fin n → M) × (Fin n → M)),
+      ∃ γ < (Ordinal.omega 1 : Ordinal.{0}),
+        ∀ α, γ ≤ α → α < Ordinal.omega 1 → Order.succ α < Ordinal.omega 1 →
+          (BFEquiv (L := L) α t.1 t.2.1 t.2.2 ↔ BFEquiv (L := L) (Order.succ α) t.1 t.2.1 t.2.2) := by
+    intro ⟨n, a, a'⟩
+    simp only
+    by_cases hFail : ∃ β < (Ordinal.omega 1 : Ordinal.{0}), ¬BFEquiv (L := L) β n a a'
+    · -- BFEquiv fails at some level < ω₁
+      obtain ⟨β, hβ_lt, hβ_fail⟩ := hFail
+      -- The change point: first ordinal where BFEquiv fails
+      set S := {δ : Ordinal.{0} | ¬BFEquiv (L := L) δ n a a'} with hS_def
+      have hS_nonempty : S.Nonempty := ⟨β, hβ_fail⟩
+      have hCP_mem : ¬BFEquiv (L := L) (sInf S) n a a' := csInf_mem hS_nonempty
+      have hCP_le_β : sInf S ≤ β := csInf_le' hβ_fail
+      use sInf S
+      refine ⟨lt_of_le_of_lt hCP_le_β hβ_lt, ?_⟩
+      intro α hα _ _
+      -- At α ≥ changePoint, BFEquiv α is False
+      have hFalse_α : ¬BFEquiv (L := L) α n a a' :=
+        fun hBF => hCP_mem (BFEquiv.monotone hα hBF)
+      have hFalse_succ : ¬BFEquiv (L := L) (Order.succ α) n a a' :=
+        fun hBF => hFalse_α (BFEquiv.of_succ hBF)
+      exact ⟨fun h => absurd h hFalse_α, fun h => absurd h hFalse_succ⟩
+    · -- BFEquiv holds at all levels < ω₁
+      push_neg at hFail
+      use 0
+      refine ⟨Ordinal.omega_pos 1, ?_⟩
+      intro α _ hα_lt hsucc_lt
+      exact ⟨fun _ => hFail (Order.succ α) hsucc_lt, fun _ => hFail α hα_lt⟩
+  -- Step 2: Extract per-triple bound ordinals
+  choose boundOrd hboundOrd_lt hboundOrd_spec using hTriple
+  -- Step 3: Enumerate all triples
+  haveI : Countable (Σ n, (Fin n → M) × (Fin n → M)) := inferInstance
+  -- Handle empty M
   by_cases hM_nonempty : Nonempty M
   swap
-  · -- M is empty: StabilizesForTuples holds at some level < ω₁
-    -- For empty M, the stabilization happens at level 1.
-    -- For n > 0, the statement is vacuous since there are no tuples a : Fin n → M.
-    -- For n = 0, the BFEquiv relation stabilizes because the back condition at level α ≥ 1
-    -- is constantly false (or true) depending on whether N is nonempty.
+  · -- M is empty: self-stabilization is trivial
     haveI : IsEmpty M := not_nonempty_iff.mp hM_nonempty
-    use 1
-    refine ⟨lt_trans Ordinal.one_lt_omega0 Ordinal.omega0_lt_omega_one, ?_⟩
-    intro N _ _ a b
+    use 0
+    refine ⟨Ordinal.omega_pos 1, ?_⟩
+    intro n a a'
     cases n with
     | zero =>
-      -- For 0-tuples with empty M, BFEquiv 1 already forces N to be empty
-      -- (back condition requires ∃ m : M, ... which is impossible).
-      -- So BFEquiv (succ 1) adds nothing: forth/back are both vacuous.
       constructor
-      · intro h1
-        have hNe : IsEmpty N := by
-          by_contra hne
-          rw [not_isEmpty_iff] at hne
-          obtain ⟨n'⟩ := hne
-          have h1s : BFEquiv (L := L) (Order.succ 0) 0 a b := by
-            rwa [Ordinal.succ_zero]
-          exact IsEmpty.false (BFEquiv.back h1s n').choose
+      · intro h0
         rw [BFEquiv.succ]
-        exact ⟨h1, fun m => isEmptyElim m, fun n' => isEmptyElim n'⟩
+        exact ⟨h0, fun m => isEmptyElim m, fun m' => isEmptyElim m'⟩
       · exact BFEquiv.of_succ
     | succ k => exact (IsEmpty.false (a 0)).elim
   haveI : Nonempty M := hM_nonempty
-  haveI : Nonempty ((Fin n → M) × (Fin n → M)) :=
-    ⟨(fun _ => Classical.arbitrary M, fun _ => Classical.arbitrary M)⟩
-  obtain ⟨enumPairs, hPairs_surj⟩ := exists_surjective_nat ((Fin n → M) × (Fin n → M))
-
-  -- Step 5: Define the global stabilization ordinal as supremum + 1
-  let globalStab : Ordinal.{0} := ⨆ k, stabOrd (enumPairs k).1 (enumPairs k).2 + 1
-
-  -- Step 6: Show globalStab < ω₁
+  haveI : Nonempty (Σ n, (Fin n → M) × (Fin n → M)) :=
+    ⟨⟨0, Fin.elim0, Fin.elim0⟩⟩
+  obtain ⟨enumTriples, hTriples_surj⟩ :=
+    exists_surjective_nat (Σ n, (Fin n → M) × (Fin n → M))
+  -- Step 4: Define globalStab as supremum + 1
+  let globalStab : Ordinal.{0} := ⨆ k, boundOrd (enumTriples k) + 1
+  -- Step 5: Show globalStab < ω₁
   have hGlobalLt : globalStab < Ordinal.omega 1 := by
-    have hEachLt : ∀ k, stabOrd (enumPairs k).1 (enumPairs k).2 + 1 < Ordinal.omega 1 := by
-      intro k
+    have hEachLt : ∀ k, boundOrd (enumTriples k) + 1 < (Cardinal.aleph 1).ord := by
+      intro k; rw [Cardinal.ord_aleph]
       exact Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1)
-        (hstabOrd_lt (enumPairs k).1 (enumPairs k).2)
-    have hEachLt' : ∀ k, stabOrd (enumPairs k).1 (enumPairs k).2 + 1 < (Cardinal.aleph 1).ord := by
-      intro k; rw [Cardinal.ord_aleph]; exact hEachLt k
+        (hboundOrd_lt (enumTriples k))
     have hsup := Ordinal.iSup_sequence_lt_omega_one
-      (fun k => stabOrd (enumPairs k).1 (enumPairs k).2 + 1) hEachLt'
+      (fun k => boundOrd (enumTriples k) + 1) hEachLt
     rw [Cardinal.ord_aleph] at hsup
     exact hsup
-
-  -- Step 7: Show globalStab satisfies StabilizesForTuples
-  -- Self-stabilization at globalStab implies full stabilization
-  have hSelfStabAtGlobal : ∀ a a' : Fin n → M,
-      BFEquiv (L := L) globalStab n a a' ↔ BFEquiv (L := L) (Order.succ globalStab) n a a' := by
-    intro a a'
-    -- Get the pair index
-    obtain ⟨k, hk⟩ := hPairs_surj (a, a')
-    -- The stabilization ordinal for this pair is stabOrd a a'
-    have hstab := hstabOrd_mem a a'
-    -- We have stabOrd a a' < globalStab (since globalStab is sup of stabOrd _ _ + 1)
-    have hBdd : BddAbove (Set.range fun k => stabOrd (enumPairs k).1 (enumPairs k).2 + 1) :=
-      ⟨Ordinal.omega 1, fun _ ⟨m, hm⟩ => hm ▸ le_of_lt
-        (Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1)
-          (hstabOrd_lt (enumPairs m).1 (enumPairs m).2))⟩
-    have hk_le : stabOrd a a' + 1 ≤ globalStab := by
-      have h := le_ciSup hBdd k
-      simp only [hk] at h
-      exact h
-    have hstab_lt : stabOrd a a' < globalStab := lt_of_lt_of_le (Order.lt_succ _) hk_le
-    -- Since stabOrd a a' is the stabilization point and globalStab > stabOrd a a',
-    -- the BFEquiv relation is constant on [stabOrd a a', ∞)
-    -- We need to show: BFEquiv globalStab ↔ BFEquiv (succ globalStab)
-    -- From hstab: BFEquiv (stabOrd a a') ↔ BFEquiv (succ (stabOrd a a'))
-    -- By BFEquiv.monotone, we can propagate this to globalStab
-    -- The key: once stabilized at stabOrd a a', BFEquiv is constant above that point
-    -- Proof: At stabOrd a a', BFEquiv (stabOrd) ↔ BFEquiv (succ stabOrd)
-    -- This means either both hold or neither holds.
-    -- By monotonicity, for any γ ≥ stabOrd: BFEquiv γ → BFEquiv (stabOrd)
-    -- And: BFEquiv (stabOrd) → BFEquiv γ (need to prove this direction)
-    --
-    -- The issue: stabilization at stabOrd gives equivalence with succ stabOrd,
-    -- but extending to arbitrary γ ≥ stabOrd requires the full induction.
-    -- However, for just checking globalStab ↔ succ globalStab, we can use:
-    -- Both directions follow from monotonicity + the fact that the value is constant.
-    constructor
-    · intro hBF_global
-      -- BFEquiv globalStab → BFEquiv (succ globalStab)
-      -- By monotonicity: BFEquiv globalStab → BFEquiv (stabOrd a a')
-      have hBF_stab := BFEquiv.monotone (le_of_lt hstab_lt) hBF_global
-      -- By stabilization: BFEquiv (stabOrd a a') → BFEquiv (succ (stabOrd a a'))
-      have hBF_succ_stab := hstab.mp hBF_stab
-      -- We need to propagate from succ (stabOrd a a') up to succ globalStab
-      -- This requires showing BFEquiv is monotonically constant above stabOrd
-      -- which is the "upgrade" property from stabilization.
-      -- For self-testing (M vs M), this should follow from the stabilization condition.
-      -- The key insight: stabilization means BFEquiv is constant at all levels ≥ stabOrd.
-      -- Proof: by transfinite induction. At each step α ↔ succ α since we're past stabOrd.
-      -- We need a lemma: StabilizesForTuples at α implies strong stabilization for self-testing.
-      -- For now, we use the structure of BFEquiv.succ directly.
-      rw [BFEquiv.succ]
-      refine ⟨hBF_global, ?_, ?_⟩
-      · -- forth at globalStab for n-tuples
-        intro m
-        -- Need to show ∃ m', BFEquiv globalStab (n+1) (snoc a m) (snoc a' m')
-        -- This is about (n+1)-tuples, not n-tuples.
-        -- The stabilization for n-tuples doesn't directly give this.
-        -- This is the key issue: StabilizesForTuples at a given n doesn't control n+1.
-        -- For self-stabilization to imply full stabilization, we need to use
-        -- the Scott formula characterization, which ties all tuple sizes together.
-        -- For now, we defer this to the sorry.
-        sorry
-      · -- back at globalStab for n-tuples
-        intro m'
-        sorry
-    · intro hBF_succ_global
-      -- BFEquiv (succ globalStab) → BFEquiv globalStab: just BFEquiv.monotone
-      exact BFEquiv.of_succ hBF_succ_global
-
-  -- Use self-stabilization to get full stabilization
+  -- Step 6: succ globalStab < ω₁ (since ω₁ is a limit ordinal)
+  have hSuccGlobalLt : Order.succ globalStab < Ordinal.omega 1 :=
+    Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) hGlobalLt
+  -- Step 7: Show globalStab satisfies SelfStabilizesCompletely
   use globalStab, hGlobalLt
-  intro N _ _ a b
-  -- Need: BFEquiv globalStab n a b ↔ BFEquiv (succ globalStab) n a b
-  -- Use the Scott formula: BFEquiv α n a b ↔ (scottFormula a α).Realize b
-  -- Since scottFormula depends only on M and a, stabilization of the formula
-  -- (checked via self-testing with M) implies stabilization for all countable N.
-  -- Specifically:
-  -- - (scottFormula a globalStab).Realize b ↔ BFEquiv globalStab n a b (by the iff)
-  -- - (scottFormula a (succ globalStab)).Realize b ↔ BFEquiv (succ globalStab) n a b
-  -- - If the formulas at globalStab and succ globalStab are equivalent (semantically),
-  --   then both BFEquiv conditions are equivalent.
-  --
-  -- The semantic equivalence of scottFormula a globalStab and scottFormula a (succ globalStab)
-  -- follows from the self-stabilization property, since the formulas' truth values on
-  -- countable structures are determined by their truth on M (via back-and-forth).
-  --
-  -- This is the core of the Scott sentence theorem: the formula at stabilization
-  -- characterizes the isomorphism type among countable structures.
-  --
-  -- Full proof requires showing that self-stabilization implies the formulas are
-  -- semantically equivalent, which needs more infrastructure.
+  intro n a a'
+  -- Get the triple's index
+  obtain ⟨k, hk⟩ := hTriples_surj ⟨n, a, a'⟩
+  -- boundOrd for this triple
+  have hBdd : BddAbove (Set.range fun k => boundOrd (enumTriples k) + 1) :=
+    ⟨Ordinal.omega 1, fun _ ⟨m, hm⟩ => hm ▸ le_of_lt
+      (Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1)
+        (hboundOrd_lt (enumTriples m)))⟩
+  have hk_le : boundOrd ⟨n, a, a'⟩ + 1 ≤ globalStab := by
+    have h := le_ciSup hBdd k
+    simp only [hk] at h
+    exact h
+  have hbound_le : boundOrd ⟨n, a, a'⟩ ≤ globalStab :=
+    le_trans (Order.le_succ _) hk_le
+  exact hboundOrd_spec ⟨n, a, a'⟩ globalStab hbound_le hGlobalLt hSuccGlobalLt
+
+/-- Self-stabilization implies full stabilization.
+
+This is the key bridge: if BFEquiv at level α is stable under self-testing (M vs M)
+for all tuple sizes, then it is stable for testing M against any countable N.
+
+The mathematical argument uses Scott formulas: self-stabilization at α means the
+Scott formulas at level α and succ α are semantically equivalent (when evaluated
+on any countable structure). Since BFEquiv α n a b ↔ scottFormula a α realizes b,
+the semantic equivalence of the formulas gives BFEquiv α ↔ BFEquiv (succ α) for
+all countable N.
+
+**Status**: Sorry -- requires showing that self-stabilization of Scott formulas
+implies their semantic equivalence for all countable structures. -/
+theorem self_stabilizes_implies_full {M : Type w} [L.Structure M] [Countable M]
+    {α : Ordinal} (hα : α < Ordinal.omega 1)
+    (hself : SelfStabilizesCompletely (L := L) M α) :
+    StabilizesCompletely (L := L) M α := by
   sorry
 
-/-- For countable M, there exists α < ω₁ where all tuples stabilize.
+/-- For countable M, there exists α < ω₁ where all tuples stabilize completely.
 
-**Proof approach**: Take the supremum of the stabilization ordinals for each tuple size.
-Since each is < ω₁ and there are countably many (one for each n ∈ ℕ), the
-supremum is also < ω₁ by regularity of ω₁.
-
-**Key challenge**: Showing that per-tuple-size stabilization implies complete
-stabilization at the supremum. The upgrade from f(k) to sup for k-tuples requires
-witnesses from forth/back, which involve (k+1)-tuples. These (k+1)-tuples need to
-be upgraded from f(k) (where they're produced) to sup.
-
-**The gap issue**: If f(k) < f(k+1), the (k+1)-tuple witnesses at f(k) are BELOW
-the (k+1)-tuple stabilization point f(k+1). The upgrade from f(k) to sup crosses
-this stabilization boundary, which requires the full `BFEquiv_upgrade_from_family_aux`
-lemma with its gap cases.
-
-**Alternative approach** (not implemented): Prove complete stabilization directly
-without going through per-tuple-size stabilization. The model-theoretic argument
-shows that the entire BFEquiv relation stabilizes simultaneously, not tuple-by-tuple. -/
+**Proof**: Combine `exists_complete_self_stabilization` (sorry-free) with
+`self_stabilizes_implies_full` (which carries the remaining sorry). -/
 theorem exists_complete_stabilization (M : Type w) [L.Structure M] [Countable M] :
     ∃ α < (Ordinal.omega 1 : Ordinal.{0}), StabilizesCompletely (L := L) M α := by
-  -- For each n, get the stabilization ordinal αₙ < ω₁
-  have h : ∀ n : ℕ, ∃ α < (Ordinal.omega 1 : Ordinal.{0}), StabilizesForTuples (L := L) M α n :=
-    exists_stabilization_for_tuples M
-  -- Take the supremum
-  let f : ℕ → Ordinal.{0} := fun n => Classical.choose (h n)
-  have hf : ∀ n, f n < Ordinal.omega 1 ∧ StabilizesForTuples (L := L) M (f n) n := by
-    intro n
-    exact Classical.choose_spec (h n)
-  -- The supremum of countably many ordinals < ω₁ is < ω₁
-  -- We use sup + 1 to ensure we're past all individual stabilization points
-  -- Helper: each f n + 1 < ω₁
-  have hlt : ∀ n, f n + 1 < Ordinal.omega 1 := fun n =>
-    Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) (hf n).1
-  use ⨆ n, f n + 1
-  constructor
-  ·
-    -- Use that ω₁ is regular: supremum of countably many ordinals < ω₁ is < ω₁
-    -- Note: Ordinal.omega 1 = (Cardinal.aleph 1).ord by Cardinal.ord_aleph
-    have hlt' : ∀ n, f n + 1 < (Cardinal.aleph 1).ord := by
-      intro n; rw [Cardinal.ord_aleph]; exact hlt n
-    have hsup := Ordinal.iSup_sequence_lt_omega_one (fun n => f n + 1) hlt'
-    rw [Cardinal.ord_aleph] at hsup
-    exact hsup
-  · -- StabilizesCompletely at sup
-    -- At the supremum, all tuple sizes have stabilized.
-    -- The proof uses that at sup = ⨆ n, f n + 1:
-    -- - For each k, f k + 1 ≤ sup, so we're past the k-tuple stabilization point
-    -- - For each k+1, f (k+1) + 1 ≤ sup, so (k+1)-tuples are also stable
-    -- This allows the forth/back conditions at level sup to use witnesses from
-    -- level f (k+1), which are stable under the (k+1)-tuple stabilization.
-    --
-    -- The proof requires a simultaneous induction on ordinal and tuple size,
-    -- showing that BFEquiv at sup is constant with BFEquiv at the individual
-    -- stabilization points. This is the content of BFEquiv_upgrade_at_stabilization
-    -- once we have StabilizesCompletely.
-    --
-    -- For a formal proof, we need to break the apparent circularity by showing
-    -- that the individual StabilizesForTuples conditions at f k combine to give
-    -- StabilizesCompletely at sup. The key insight is that sup is uniformly past
-    -- all f k, so all tuple sizes are simultaneously in their stable regimes.
-    intro k N _ _ a b
-    have hbdd : BddAbove (Set.range fun n => f n + 1) :=
-      ⟨Ordinal.omega 1, fun _ ⟨m, hm⟩ => hm ▸ le_of_lt (hlt m)⟩
-    have hfk_le : f k + 1 ≤ ⨆ n, f n + 1 := le_ciSup hbdd k
-    have hfk_lt : f k < ⨆ n, f n + 1 := lt_of_lt_of_le (Order.lt_succ (f k)) hfk_le
-    have hstab_k := (hf k).2 N a b
-    constructor
-    · -- BFEquiv sup → BFEquiv (succ sup)
-      intro hBF_sup
-      have hBF_fk : BFEquiv (L := L) (f k) k a b := BFEquiv.monotone (le_of_lt hfk_lt) hBF_sup
-      have _hBF_succ_fk : BFEquiv (L := L) (Order.succ (f k)) k a b := hstab_k.mp hBF_fk
-      -- The key insight: at sup = ⨆ n, f n + 1, all tuple sizes are past their
-      -- individual stabilization points. Use forth from level succ (f (k+1)) to get
-      -- witnesses at the (k+1)-tuple stabilization level, then propagate up using
-      -- the stability of all higher tuple sizes.
-      --
-      -- This requires a simultaneous induction on (ordinal, tuple size) to show that
-      -- BFEquiv at sup equals BFEquiv at each f n. The formal proof uses that sup is
-      -- uniformly past all stabilization points.
-      rw [BFEquiv.succ]
-      refine ⟨hBF_sup, ?_, ?_⟩
-      · -- Forth: find witness at (k+1)-tuple stabilization level, then propagate
-        intro m
-        have hsucc_f_k1_le : Order.succ (f (k+1)) ≤ ⨆ n, f n + 1 := by
-          calc Order.succ (f (k+1)) = f (k+1) + 1 := Ordinal.add_one_eq_succ (f (k+1))
-            _ ≤ ⨆ n, f n + 1 := le_ciSup hbdd (k+1)
-        have hBF_succ_f_k1 : BFEquiv (L := L) (Order.succ (f (k+1))) k a b :=
-          BFEquiv.monotone hsucc_f_k1_le hBF_sup
-        obtain ⟨n', hn'⟩ := BFEquiv.forth hBF_succ_f_k1 m
-        use n'
-        -- hn' : BFEquiv (f (k+1)) (k+1) (snoc a m) (snoc b n')
-        -- Need to propagate from f (k+1) to sup using that all tuple sizes are stable.
-        -- Use the helper lemma with the stabilization family.
-        have hstab_all : ∀ j, StabilizesForTuples (L := L) M (f j) j := fun j => (hf j).2
-        have hf_le_sup : ∀ j, f j ≤ ⨆ n, f n + 1 := fun j =>
-          le_trans (Order.le_succ (f j)) (le_ciSup hbdd j)
-        exact BFEquiv_upgrade_from_family_aux hstab_all hn' _ hf_le_sup
-      · -- Back: symmetric to forth
-        intro n'
-        have hsucc_f_k1_le : Order.succ (f (k+1)) ≤ ⨆ n, f n + 1 := by
-          calc Order.succ (f (k+1)) = f (k+1) + 1 := Ordinal.add_one_eq_succ (f (k+1))
-            _ ≤ ⨆ n, f n + 1 := le_ciSup hbdd (k+1)
-        have hBF_succ_f_k1 : BFEquiv (L := L) (Order.succ (f (k+1))) k a b :=
-          BFEquiv.monotone hsucc_f_k1_le hBF_sup
-        obtain ⟨m', hm'⟩ := BFEquiv.back hBF_succ_f_k1 n'
-        use m'
-        have hstab_all : ∀ j, StabilizesForTuples (L := L) M (f j) j := fun j => (hf j).2
-        have hf_le_sup : ∀ j, f j ≤ ⨆ n, f n + 1 := fun j =>
-          le_trans (Order.le_succ (f j)) (le_ciSup hbdd j)
-        exact BFEquiv_upgrade_from_family_aux hstab_all hm' _ hf_le_sup
-    · -- BFEquiv (succ α) n a b → BFEquiv α n a b : monotonicity
-      exact BFEquiv.of_succ
+  obtain ⟨α, hα, hself⟩ := exists_complete_self_stabilization (L := L) M
+  exact ⟨α, hα, self_stabilizes_implies_full hα hself⟩
 
 omit [Countable (Σ l, L.Relations l)] in
 /-- At a complete stabilization ordinal, BFEquiv0 implies isomorphism for countable structures.
