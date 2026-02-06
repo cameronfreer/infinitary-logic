@@ -67,7 +67,33 @@ noncomputable def scottHeight (M : Type w) [L.Structure M] [Countable M] : Ordin
 /-- Scott height is less than ω₁ for countable structures. -/
 theorem scottHeight_lt_omega1 (M : Type w) [L.Structure M] [Countable M] :
     scottHeight (L := L) M < Ordinal.omega 1 := by
-  sorry
+  obtain ⟨α, hα_lt, hstab⟩ := exists_complete_stabilization (L := L) M
+  have h_mem : α ∈ {α : Ordinal.{0} | ∀ {n : ℕ} (a : Fin n → M)
+      (N : Type w) [L.Structure N] [Countable N] (b : Fin n → N),
+      BFEquiv (L := L) α n a b → BFEquiv (L := L) (Order.succ α) n a b} := by
+    intro n a N _ _ b hBF
+    exact (hstab n N a b).mp hBF
+  exact lt_of_le_of_lt (csInf_le ⟨0, fun _ _ => zero_le _⟩ h_mem) hα_lt
+
+/-- At Scott height, all tuple sizes have stabilized (BFEquiv α ↔ BFEquiv (succ α)). -/
+private theorem scottHeight_stabilizesCompletely (M : Type w) [L.Structure M] [Countable M] :
+    StabilizesCompletely (L := L) M (scottHeight (L := L) M) := by
+  obtain ⟨α, _, hstab⟩ := exists_complete_stabilization (L := L) M
+  intro n N _ _ a b
+  constructor
+  · intro hBF
+    -- scottHeight M is the infimum of ordinals where BFEquiv → BFEquiv (succ)
+    -- Show scottHeight M is in this set via csInf_mem
+    suffices h : ∀ {k : ℕ} (a' : Fin k → M) (N' : Type w) [L.Structure N']
+        [Countable N'] (b' : Fin k → N'),
+        BFEquiv (L := L) (scottHeight (L := L) M) k a' b' →
+        BFEquiv (L := L) (Order.succ (scottHeight (L := L) M)) k a' b' from h a N b hBF
+    show scottHeight (L := L) M ∈ {α : Ordinal.{0} | ∀ {n : ℕ} (a : Fin n → M)
+        (N : Type w) [L.Structure N] [Countable N] (b : Fin n → N),
+        BFEquiv (L := L) α n a b → BFEquiv (L := L) (Order.succ α) n a b}
+    apply csInf_mem
+    exact ⟨α, fun {k} a' N' _ _ b' hBF' => (hstab k N' a' b').mp hBF'⟩
+  · exact BFEquiv.of_succ
 
 /-! ### Canonical Scott Sentence -/
 
@@ -90,7 +116,31 @@ theorem canonicalScottSentence_iff_potentialIso
     {N : Type w} [L.Structure N] [Countable N] :
     (canonicalScottSentence (L := L) M).realize_as_sentence N ↔
     Nonempty (PotentialIso L M N) := by
-  sorry
+  constructor
+  · -- Forward: realize → BFEquiv at scottHeight → construct PotentialIso from stabilization
+    intro h
+    unfold canonicalScottSentence Formulaω.realize_as_sentence at h
+    rw [realize_scottFormula_iff_BFEquiv _ _ _ (scottHeight_lt_omega1 M)] at h
+    have hstab := scottHeight_stabilizesCompletely (L := L) M
+    exact ⟨{
+      family := { p | BFEquiv (L := L) (scottHeight (L := L) M) p.1 p.2.1 p.2.2 }
+      empty_mem := h
+      compatible := fun p hp =>
+        (BFEquiv.zero p.2.1 p.2.2).mp (BFEquiv.monotone (zero_le _) hp)
+      forth := fun ⟨k, a, b⟩ hp m => by
+        simp only [Set.mem_setOf_eq] at hp ⊢
+        obtain ⟨n', hn'⟩ := BFEquiv.forth ((hstab k N a b).mp hp) m
+        exact ⟨n', hn'⟩
+      back := fun ⟨k, a, b⟩ hp n' => by
+        simp only [Set.mem_setOf_eq] at hp ⊢
+        obtain ⟨m, hm⟩ := BFEquiv.back ((hstab k N a b).mp hp) n'
+        exact ⟨m, hm⟩
+    }⟩
+  · -- Backward: PotentialIso → BFEquiv at scottHeight → realize
+    intro ⟨P⟩
+    unfold canonicalScottSentence Formulaω.realize_as_sentence
+    rw [realize_scottFormula_iff_BFEquiv _ _ _ (scottHeight_lt_omega1 M)]
+    exact P.implies_BFEquiv_all (scottHeight (L := L) M)
 
 /-- For countable structures, the canonical Scott sentence characterizes isomorphism.
 
@@ -101,7 +151,16 @@ theorem canonicalScottSentence_characterizes
     {N : Type w} [L.Structure N] [Countable N] :
     (canonicalScottSentence (L := L) M).realize_as_sentence N ↔
     Nonempty (M ≃[L] N) := by
-  sorry
+  unfold canonicalScottSentence Formulaω.realize_as_sentence
+  rw [realize_scottFormula_iff_BFEquiv _ _ _ (scottHeight_lt_omega1 M)]
+  constructor
+  · -- Forward: BFEquiv at scottHeight + stabilization → isomorphism
+    exact BFEquiv_stabilization_implies_equiv (scottHeight_stabilizesCompletely (L := L) M)
+  · -- Backward: isomorphism → BFEquiv at scottHeight
+    intro ⟨e⟩
+    have h : (e : M → N) ∘ Fin.elim0 = Fin.elim0 := funext (fun i => i.elim0)
+    rw [← h]
+    exact equiv_implies_BFEquiv e _ 0 Fin.elim0
 
 /-- The canonical Scott sentence is semantically equivalent to the standard Scott sentence.
 
@@ -165,7 +224,12 @@ theorem canonicalScottSentence_qrank
     (M : Type w) [L.Structure M] [Countable M] :
     (canonicalScottSentence (L := L) M).qrank ≤
     scottHeight (L := L) M + Ordinal.omega0 := by
-  sorry
+  -- canonicalScottSentence = scottFormula Fin.elim0 (scottHeight M)
+  -- scottFormula_qrank_le gives qrank ≤ scottHeight M
+  -- scottHeight M ≤ scottHeight M + omega0
+  exact le_trans
+    (scottFormula_qrank_le Fin.elim0 _ (scottHeight_lt_omega1 M))
+    le_self_add
 
 end Language
 
