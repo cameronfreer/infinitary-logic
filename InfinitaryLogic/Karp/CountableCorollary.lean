@@ -79,15 +79,14 @@ theorem countable_LinfEquiv_implies_iso
 
 /-- For countable structures, potential isomorphism implies actual isomorphism.
 
-This is a consequence of Karp's theorem and the countable corollary:
-potential isomorphism ↔ L∞ω-equivalence → isomorphism for countable structures. -/
+This is proved by direct back-and-forth construction on the PotentialIso family,
+avoiding the need for Scott sentences or Karp's theorem. -/
 theorem countable_PotentialIso_implies_iso
     {M : Type w} [L.Structure M] [Countable M]
     {N : Type w} [L.Structure N] [Countable N] :
     Nonempty (PotentialIso L M N) → Nonempty (M ≃[L] N) := by
-  intro hp
-  apply countable_LinfEquiv_implies_iso
-  exact karp_theorem.mp hp
+  intro ⟨P⟩
+  exact P.countable_toEquiv
 
 /-- For countable structures, BFEquiv at all ordinals implies isomorphism. -/
 theorem countable_BFEquiv_all_implies_iso

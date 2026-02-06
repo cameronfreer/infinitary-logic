@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Scott.Formula
+import InfinitaryLogic.Karp.PotentialIso
 import Mathlib.ModelTheory.PartialEquiv
 
 /-!
@@ -1300,76 +1301,39 @@ theorem exists_stabilization_for_tuples (M : Type w) [L.Structure M] [Countable 
     --   back-and-forth construction failing
     -- - Such failures are determined by the countable structure M
     -- - The failure point is thus below ω₁
-    by_cases hEventuallyFalse : ∃ β, ¬BFEquiv (L := L) β n a a'
-    · -- Case: BFEquiv eventually becomes False
-      -- Take the infimum of levels where it's False
+    -- Split: either some failure occurs before ω₁, or BFEquiv holds at all levels < ω₁
+    by_cases hBeforeOmega1 : ∃ γ < (Ordinal.omega 1 : Ordinal.{0}), ¬BFEquiv (L := L) γ n a a'
+    · -- Case: BFEquiv fails at some level < ω₁
+      obtain ⟨γ, hγ_lt, hγ_fail⟩ := hBeforeOmega1
+      -- The infimum of failure levels is ≤ γ < ω₁
       let changePoint := sInf {β : Ordinal.{0} | ¬BFEquiv (L := L) β n a a'}
-      have hNonempty : {β : Ordinal.{0} | ¬BFEquiv (L := L) β n a a'}.Nonempty :=
-        hEventuallyFalse
-      -- The changePoint is the first level where BFEquiv is False
+      have hNonempty : {β : Ordinal.{0} | ¬BFEquiv (L := L) β n a a'}.Nonempty := ⟨γ, hγ_fail⟩
       have hFalseAt : ¬BFEquiv (L := L) changePoint n a a' := csInf_mem hNonempty
-      -- For all β > changePoint, BFEquiv β n a a' is also False (by monotonicity)
       have hFalseAbove : ∀ β ≥ changePoint, ¬BFEquiv (L := L) β n a a' := by
-        intro β hβ
-        intro hBF
-        have hContra := BFEquiv.monotone hβ hBF
-        exact hFalseAt hContra
-      -- So changePoint is a stabilization point
+        intro β hβ hBF; exact hFalseAt (BFEquiv.monotone hβ hBF)
       use changePoint
-      constructor
-      · -- changePoint < ω₁
-        -- The changePoint is the sInf of a nonempty set of ordinals
-        -- We need to show this sInf is < ω₁
-        -- This follows from the fact that if any element of the set is < ω₁,
-        -- then the infimum is ≤ that element < ω₁
-        -- We'll show that ω itself is in the set (or past the change point)
-        -- Actually, we need a more careful argument...
-        -- The change point could be any ordinal. But for countable structures,
-        -- by the Scott sentence theory, stabilization occurs at some countable ordinal.
-        -- For now, we use a simpler bound: if BFEquiv fails at β, then β provides
-        -- a witness. The first such β is the change point.
-        -- We need: every such β that witnesses failure has β < ω₁.
-        -- This is because BFEquiv at level β is determined by back-and-forth games
-        -- of length β. For countable structures, the relevant distinctions are
-        -- captured by ordinals < ω₁.
-        --
-        -- Alternative: use that the set of n-tuples (a, a') is countable,
-        -- so we can use a diagonal argument later. For each individual pair,
-        -- we just need SOME bound < ω₁.
-        -- Use that ω is past any finite stabilization
-        -- Actually, a cleaner approach: by well-foundedness, the infimum exists.
-        -- We show changePoint ≤ ω for countable structures by the nature of
-        -- BFEquiv (if two elements differ, they differ at some finite stage).
-        -- But this requires more careful analysis of BFEquiv structure.
-        --
-        -- Simplest approach: use that ω ∈ the upper set, so changePoint ≤ ω < ω₁.
-        -- But we need to verify ω is an upper bound for the change set,
-        -- which isn't generally true.
-        --
-        -- Use a different approach: the Scott formula characterization.
-        -- At level α, BFEquiv α n a a' ↔ (scottFormula a α).Realize a'.
-        -- The scottFormula is in L_ω₁ω (infinitary formulas with countable conjunctions).
-        -- For countable M, the semantics of such formulas stabilize below ω₁.
-        --
-        -- For now, we use sorry for this bound, as the full proof requires
-        -- additional model-theoretic machinery about L_ω₁ω semantics.
-        sorry
-      · -- changePoint is a stabilization point
-        show BFEquiv changePoint n a a' ↔ BFEquiv (Order.succ changePoint) n a a'
-        -- Both sides are False
-        constructor
-        · intro h; exact absurd h hFalseAt
-        · intro h; exact absurd h (hFalseAbove (Order.succ changePoint) (Order.le_succ changePoint))
-    · -- Case: BFEquiv is True at all levels
-      push_neg at hEventuallyFalse
-      -- BFEquiv α n a a' is True for all α, so 0 is a stabilization point
-      use 0
-      constructor
-      · exact Ordinal.omega_pos 1
-      · -- 0 is a stabilization point: BFEquiv 0 ↔ BFEquiv (succ 0)
-        constructor
-        · intro _; exact hEventuallyFalse (Order.succ 0)
-        · intro _; exact hEventuallyFalse 0
+      exact ⟨lt_of_le_of_lt (csInf_le' hγ_fail) hγ_lt,
+        ⟨fun h => absurd h hFalseAt,
+         fun h => absurd h (hFalseAbove _ (Order.le_succ changePoint))⟩⟩
+    · -- Case: BFEquiv holds at all levels < ω₁
+      push_neg at hBeforeOmega1
+      -- hBeforeOmega1 : ∀ γ < ω₁, BFEquiv γ n a a'
+      -- Any ordinal < ω₁ is a stabilization point (both sides of the ↔ are True)
+      by_cases hEventuallyFalse : ∃ β, ¬BFEquiv (L := L) β n a a'
+      · -- BFEquiv fails at some β ≥ ω₁, but holds at all γ < ω₁
+        -- Use 0 as stabilization: BFEquiv 0 ↔ BFEquiv (succ 0), both True
+        use 0
+        refine ⟨Ordinal.omega_pos 1, ?_⟩
+        have h0 := hBeforeOmega1 0 (Ordinal.omega_pos 1)
+        have h1 := hBeforeOmega1 (Order.succ 0)
+          (Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) (Ordinal.omega_pos 1))
+        exact ⟨fun _ => h1, fun _ => h0⟩
+      · -- BFEquiv holds at ALL levels
+        push_neg at hEventuallyFalse
+        use 0
+        exact ⟨Ordinal.omega_pos 1,
+          ⟨fun _ => hEventuallyFalse (Order.succ 0),
+           fun _ => hEventuallyFalse 0⟩⟩
 
   -- Step 3: Extract the per-pair stabilization ordinals
   choose stabOrd hstabOrd_lt hstabOrd_mem using hSelfStab
@@ -1634,6 +1598,7 @@ theorem exists_complete_stabilization (M : Type w) [L.Structure M] [Countable M]
     · -- BFEquiv (succ α) n a b → BFEquiv α n a b : monotonicity
       exact BFEquiv.of_succ
 
+omit [Countable (Σ l, L.Relations l)] in
 /-- At a complete stabilization ordinal, BFEquiv0 implies isomorphism for countable structures.
 This is the corrected version of BFEquiv_omega_implies_equiv. -/
 theorem BFEquiv_stabilization_implies_equiv {M N : Type w} [L.Structure M] [L.Structure N]
@@ -1641,129 +1606,19 @@ theorem BFEquiv_stabilization_implies_equiv {M N : Type w} [L.Structure M] [L.St
     {α : Ordinal} (hstab : StabilizesCompletely (L := L) M α)
     (h : BFEquiv (L := L) α 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)) :
     Nonempty (M ≃[L] N) := by
-  /-
-  **Proof strategy**: Standard back-and-forth, but now it works because:
-
-  1. At level α (stabilization), forth gives witness n' with BFEquiv α (n+1) (snoc a m) (snoc b n')
-  2. By upgrade lemma, this witness works at ALL levels ≥ α
-  3. So we can iterate without losing levels - witnesses stay at level α
-  4. The limit of finite matchings is the isomorphism
-
-  The key difference from BFEquiv_omega_implies_equiv: at ω, witnesses might only work
-  at lower levels (quantifier swap problem). At stabilization, witnesses stay stable.
-  -/
-  -- Handle empty cases
-  by_cases hM_empty : IsEmpty M
-  · by_cases hN_empty : IsEmpty N
-    · -- Both empty: construct trivial isomorphism
-      refine ⟨⟨Equiv.equivOfIsEmpty M N, ?_, ?_⟩⟩
-      · -- map_fun': vacuously true (no elements)
-        intro n f; exact IsEmpty.elim inferInstance f
-      · -- map_rel': for n ≥ 1, x : Fin n → M is impossible
-        intro n r x
-        match n with
-        | 0 =>
-          -- x : Fin 0 → M must be Fin.elim0
-          have hSAT := (BFEquiv.zero (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)).mp
-            (BFEquiv.monotone (zero_le _) h)
-          have hx : x = Fin.elim0 := funext (fun i => i.elim0)
-          subst hx
-          have hcomp : (Equiv.equivOfIsEmpty M N).toFun ∘ (Fin.elim0 : Fin 0 → M) =
-                       (Fin.elim0 : Fin 0 → N) := funext (fun i => i.elim0)
-          rw [hcomp]
-          exact (hSAT (AtomicIdx.rel r Fin.elim0)).symm
-        | n + 1 => exact IsEmpty.elim hM_empty (x 0)
-    · -- M empty, N nonempty: contradiction
-      push_neg at hN_empty
-      obtain ⟨n⟩ := hN_empty
-      -- Use back at succ α to get element in M
-      have hBF_succ := (hstab 0 N Fin.elim0 Fin.elim0).mp h
-      have hback := BFEquiv.back hBF_succ n
-      obtain ⟨m, _⟩ := hback
-      exact hM_empty.elim m
-  push_neg at hM_empty
-  haveI : Nonempty M := hM_empty
-
-  -- N must also be nonempty
-  haveI : Nonempty N := by
-    obtain ⟨m⟩ : Nonempty M := inferInstance
-    have hBF_succ := (hstab 0 N Fin.elim0 Fin.elim0).mp h
-    have hforth := BFEquiv.forth hBF_succ m
-    obtain ⟨n, _⟩ := hforth
-    exact ⟨n⟩
-
-  -- Get enumerations
-  obtain ⟨enumM, hM_surj⟩ := exists_surjective_nat M
-  obtain ⟨enumN, hN_surj⟩ := exists_surjective_nat N
-
-  /-
-  **Back-and-forth construction using stabilization**
-
-  Build a sequence of partial bijections:
-  - p₀ : ∅ → ∅
-  - p₁ extends p₀ with enumM(0) in domain
-  - p₂ extends p₁ with enumN(0) in codomain (if not already there)
-  - p₃ extends p₂ with enumM(1) in domain (if not already there)
-  - ...
-
-  At each step, we maintain BFEquiv α on the tuple pairs. Since α is a complete
-  stabilization ordinal, the upgrade lemma ensures witnesses stay at level α.
-
-  The limit is a bijection M ≃ N preserving atomic type, hence an isomorphism.
-  -/
-
-  -- The key difference from BFEquiv_omega_implies_equiv is that at stabilization,
-  -- witnesses at level α remain valid at level α (not just at lower levels).
-  -- This resolves the quantifier swap problem:
-  -- From BFEquiv α, forth gives witness n' with BFEquiv α (n+1) ...
-  -- This witness stays at level α for ALL future extensions.
-
-  -- The construction uses the following invariant:
-  -- At step k, we have a partial bijection pk : dom_k → cod_k where:
-  -- - |dom_k| = |cod_k| = k (k elements each)
-  -- - dom_k ⊆ M, cod_k ⊆ N
-  -- - The correspondence preserves BFEquiv α: BFEquiv α k (pk.dom) (pk.cod)
-  -- - SameAtomicType (pk.dom) (pk.cod)
-
-  -- The limit bijection is defined by:
-  -- For each m ∈ M, find the first stage where m enters the domain.
-  -- The image of m is the corresponding element in the codomain.
-
-  -- Since the construction is quite involved (tracking partial bijections,
-  -- ensuring totality via enumeration, proving the limit is an isomorphism),
-  -- we accept the standard back-and-forth result and note that stabilization
-  -- provides the key property that makes it work.
-
-  -- The formal proof would involve:
-  -- 1. Defining the chain of partial bijections as a function ℕ → Σ k, (Fin k → M) × (Fin k → N)
-  -- 2. Showing coherence: pk+1 extends pk
-  -- 3. Showing coverage: every m ∈ M appears in some pk.dom (via enumM)
-  -- 4. Showing coverage: every n ∈ N appears in some pk.cod (via enumN)
-  -- 5. Taking the union to get a bijection f : M → N
-  -- 6. Proving f preserves relations (from SameAtomicType at each stage)
-
-  -- The standard approach is to use mathlib's `equiv_between_cg` which takes:
-  -- - Countably generated M and N (we have countable → CG)
-  -- - A starting FGEquiv (we use the empty one)
-  -- - IsExtensionPair M N (we derive from stabilization + forth)
-  -- - IsExtensionPair N M (we derive from stabilization + back)
-  --
-  -- The key lemma needed: at stabilization α, BFEquiv α gives IsExtensionPair.
-  -- This requires showing that for any FGEquiv f : M ≃ₚ N with BFEquiv α on its graph,
-  -- and any m : M, we can extend f to include m while maintaining BFEquiv α.
-  --
-  -- The proof: Use (hstab n N a b).mp to upgrade to BFEquiv (succ α), then BFEquiv.forth
-  -- to get a witness n' with BFEquiv α (n+1). Since we're at stabilization, this works.
-  --
-  -- However, the connection between FGEquiv (which carries SameAtomicType via the
-  -- isomorphism between substructures) and BFEquiv (which is defined semantically)
-  -- requires additional infrastructure. For relational languages, SameAtomicType
-  -- is equivalent to BFEquiv 0, and we need to show that extensions preserve this.
-  --
-  -- For a complete formal proof, we would need a lemma:
-  -- "BFEquiv α on tuples + stabilization → IsExtensionPair"
-  -- This is the content of the back-and-forth argument.
-  sorry
+  -- Construct PotentialIso from stabilization: the family of tuples with BFEquiv α
+  -- At stabilization, BFEquiv α ↔ BFEquiv (succ α), so forth/back witnesses stay at level α
+  exact (PotentialIso.mk
+    { p | BFEquiv (L := L) α p.1 p.2.1 p.2.2 }
+    h
+    (fun p hp => (BFEquiv.zero p.2.1 p.2.2).mp (BFEquiv.monotone (zero_le _) hp))
+    (fun ⟨k, a, b⟩ hp m => by
+      simp only [Set.mem_setOf_eq] at hp ⊢
+      exact BFEquiv.forth ((hstab k N a b).mp hp) m)
+    (fun ⟨k, a, b⟩ hp n' => by
+      simp only [Set.mem_setOf_eq] at hp ⊢
+      exact BFEquiv.back ((hstab k N a b).mp hp) n')
+  ).countable_toEquiv
 
 /-- For any countable structure M in a relational countable language, there exists an ordinal
 α < ω₁ such that BF-equivalence at level α (with the empty tuple) characterizes isomorphism

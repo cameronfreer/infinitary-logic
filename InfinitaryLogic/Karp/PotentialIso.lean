@@ -103,6 +103,216 @@ noncomputable def symm (p : PotentialIso L M N) : PotentialIso L N M where
 
 end PotentialIso
 
+/-! ### PotentialIso implies isomorphism for countable structures -/
+
+/-- Build a chain of compatible matchings from a PotentialIso by alternating forth and back
+steps using the enumerations of M and N. The chain at step i has size i and is in P.family. -/
+private noncomputable def PotentialIso.buildChain
+    {M : Type w} [L.Structure M] {N : Type w'} [L.Structure N]
+    (P : PotentialIso L M N) (enumM : ℕ → M) (enumN : ℕ → N) :
+    (i : ℕ) → { p : (Fin i → M) × (Fin i → N) // ⟨i, p.1, p.2⟩ ∈ P.family }
+  | 0 => ⟨(Fin.elim0, Fin.elim0), P.empty_mem⟩
+  | i + 1 =>
+    let ⟨(a, b), hmem⟩ := P.buildChain enumM enumN i
+    if i % 2 = 0 then
+      let m := enumM (i / 2)
+      let h := P.forth ⟨i, a, b⟩ hmem m
+      ⟨(Fin.snoc a m, Fin.snoc b (Classical.choose h)), Classical.choose_spec h⟩
+    else
+      let n := enumN (i / 2)
+      let h := P.back ⟨i, a, b⟩ hmem n
+      ⟨(Fin.snoc a (Classical.choose h), Fin.snoc b n), Classical.choose_spec h⟩
+
+/-- The chain at step i+1 extends the chain at step i: the first i elements are preserved. -/
+private theorem PotentialIso.buildChain_coherent_fst
+    {M : Type w} [L.Structure M] {N : Type w'} [L.Structure N]
+    (P : PotentialIso L M N) (enumM : ℕ → M) (enumN : ℕ → N) (i : ℕ) (j : Fin i) :
+    (P.buildChain enumM enumN (i + 1)).val.1 (Fin.castSucc j) =
+    (P.buildChain enumM enumN i).val.1 j := by
+  simp only [PotentialIso.buildChain]
+  split <;> simp [Fin.snoc_castSucc]
+
+/-- Same coherence for the N-side. -/
+private theorem PotentialIso.buildChain_coherent_snd
+    {M : Type w} [L.Structure M] {N : Type w'} [L.Structure N]
+    (P : PotentialIso L M N) (enumM : ℕ → M) (enumN : ℕ → N) (i : ℕ) (j : Fin i) :
+    (P.buildChain enumM enumN (i + 1)).val.2 (Fin.castSucc j) =
+    (P.buildChain enumM enumN i).val.2 j := by
+  simp only [PotentialIso.buildChain]
+  split <;> simp [Fin.snoc_castSucc]
+
+/-- At a forth step (even i), the last M-element is enumM(i/2). -/
+private theorem PotentialIso.buildChain_forth_last
+    {M : Type w} [L.Structure M] {N : Type w'} [L.Structure N]
+    (P : PotentialIso L M N) (enumM : ℕ → M) (enumN : ℕ → N) (i : ℕ) (hi : i % 2 = 0) :
+    (P.buildChain enumM enumN (i + 1)).val.1 (Fin.last i) = enumM (i / 2) := by
+  simp only [PotentialIso.buildChain, hi, ↓reduceIte, Fin.snoc_last]
+
+/-- At a back step (odd i), the last N-element is enumN(i/2). -/
+private theorem PotentialIso.buildChain_back_last
+    {M : Type w} [L.Structure M] {N : Type w'} [L.Structure N]
+    (P : PotentialIso L M N) (enumM : ℕ → M) (enumN : ℕ → N) (i : ℕ) (hi : ¬ i % 2 = 0) :
+    (P.buildChain enumM enumN (i + 1)).val.2 (Fin.last i) = enumN (i / 2) := by
+  simp only [PotentialIso.buildChain, hi, ↓reduceIte, Fin.snoc_last]
+
+/-- SameAtomicType holds at every chain step. -/
+private theorem PotentialIso.buildChain_sat
+    {M : Type w} [L.Structure M] {N : Type w'} [L.Structure N]
+    (P : PotentialIso L M N) (enumM : ℕ → M) (enumN : ℕ → N) (i : ℕ) :
+    SameAtomicType (L := L) (P.buildChain enumM enumN i).val.1
+                             (P.buildChain enumM enumN i).val.2 :=
+  P.compatible _ (P.buildChain enumM enumN i).prop
+
+/-- Extended coherence: the value at position j < k in the chain at step k
+equals the value at position j in the chain at step j+1. -/
+private theorem PotentialIso.buildChain_coherent_fst_general
+    {M : Type w} [L.Structure M] {N : Type w'} [L.Structure N]
+    (P : PotentialIso L M N) (enumM : ℕ → M) (enumN : ℕ → N)
+    {k : ℕ} {j : ℕ} (hjk : j < k) :
+    (P.buildChain enumM enumN k).val.1 ⟨j, hjk⟩ =
+    (P.buildChain enumM enumN (j + 1)).val.1 (Fin.last j) := by
+  induction k with
+  | zero => omega
+  | succ k ih =>
+    by_cases hjk' : j < k
+    · rw [show (⟨j, hjk⟩ : Fin (k + 1)) = Fin.castSucc ⟨j, hjk'⟩ from rfl]
+      rw [P.buildChain_coherent_fst enumM enumN k ⟨j, hjk'⟩]
+      exact ih hjk'
+    · have hjeqk : j = k := by omega
+      subst hjeqk
+      rfl
+
+/-- Extended coherence for the N-side. -/
+private theorem PotentialIso.buildChain_coherent_snd_general
+    {M : Type w} [L.Structure M] {N : Type w'} [L.Structure N]
+    (P : PotentialIso L M N) (enumM : ℕ → M) (enumN : ℕ → N)
+    {k : ℕ} {j : ℕ} (hjk : j < k) :
+    (P.buildChain enumM enumN k).val.2 ⟨j, hjk⟩ =
+    (P.buildChain enumM enumN (j + 1)).val.2 (Fin.last j) := by
+  induction k with
+  | zero => omega
+  | succ k ih =>
+    by_cases hjk' : j < k
+    · rw [show (⟨j, hjk⟩ : Fin (k + 1)) = Fin.castSucc ⟨j, hjk'⟩ from rfl]
+      rw [P.buildChain_coherent_snd enumM enumN k ⟨j, hjk'⟩]
+      exact ih hjk'
+    · have hjeqk : j = k := by omega
+      subst hjeqk
+      rfl
+
+/-- For countable structures, a potential isomorphism implies actual isomorphism.
+
+This is a direct back-and-forth construction that doesn't go through Scott sentences
+or Karp's theorem, avoiding circular dependencies in the formalization. -/
+theorem PotentialIso.countable_toEquiv
+    {M : Type w} [L.Structure M] [Countable M]
+    {N : Type w} [L.Structure N] [Countable N]
+    (P : PotentialIso L M N) : Nonempty (M ≃[L] N) := by
+  classical
+  -- Handle empty M
+  by_cases hM : IsEmpty M
+  · have hN : IsEmpty N := by
+      by_contra hN; rw [not_isEmpty_iff] at hN
+      exact hM.elim (P.back _ P.empty_mem hN.some).choose
+    have hSAT₀ := P.compatible _ P.empty_mem
+    refine ⟨⟨Equiv.equivOfIsEmpty M N,
+      fun f' _ => (IsEmpty.false f').elim,
+      fun {k} r x => ?_⟩⟩
+    -- x : Fin k → M with IsEmpty M forces k = 0
+    have hk : k = 0 := by by_contra h; exact hM.elim (x ⟨0, Nat.pos_of_ne_zero h⟩)
+    subst hk
+    have hrel := hSAT₀ (AtomicIdx.rel r Fin.elim0)
+    simp only [AtomicIdx.holds] at hrel
+    constructor
+    · intro h; convert hrel.symm.mp (by convert h)
+    · intro h; convert hrel.symm.mpr (by convert h)
+  rw [not_isEmpty_iff] at hM
+  haveI : Nonempty M := hM
+  haveI : Nonempty N := ⟨(P.forth _ P.empty_mem (Classical.arbitrary M)).choose⟩
+  -- Get enumerations
+  obtain ⟨enumM, hM_surj⟩ := exists_surjective_nat M
+  obtain ⟨enumN, hN_surj⟩ := exists_surjective_nat N
+  -- Build chain of compatible matchings
+  let chain := P.buildChain enumM enumN
+  let aSeq : ℕ → M := fun i => (chain (i + 1)).val.1 (Fin.last i)
+  let bSeq : ℕ → N := fun i => (chain (i + 1)).val.2 (Fin.last i)
+  -- aSeq(2k) = enumM(k) and bSeq(2k+1) = enumN(k)
+  have haSeq : ∀ k, aSeq (2 * k) = enumM k := fun k => by
+    show (chain (2 * k + 1)).val.1 (Fin.last (2 * k)) = enumM k
+    have h := P.buildChain_forth_last enumM enumN (2 * k) (by omega)
+    rwa [show 2 * k / 2 = k by omega] at h
+  have hbSeq : ∀ k, bSeq (2 * k + 1) = enumN k := fun k => by
+    show (chain (2 * k + 1 + 1)).val.2 (Fin.last (2 * k + 1)) = enumN k
+    have h := P.buildChain_back_last enumM enumN (2 * k + 1) (by omega)
+    rwa [show (2 * k + 1) / 2 = k by omega] at h
+  have hSAT : ∀ s, SameAtomicType (L := L) (chain s).val.1 (chain s).val.2 :=
+    P.buildChain_sat enumM enumN
+  -- Equality preservation: aSeq(i) = aSeq(j) ↔ bSeq(i) = bSeq(j) for i,j < s
+  have hEq : ∀ {i j s : ℕ} (_ : i < s) (_ : j < s),
+      aSeq i = aSeq j ↔ bSeq i = bSeq j := by
+    intro i j s hi hj
+    have h := hSAT s (AtomicIdx.eq ⟨i, hi⟩ ⟨j, hj⟩)
+    simp only [AtomicIdx.holds] at h
+    rw [P.buildChain_coherent_fst_general enumM enumN hi,
+        P.buildChain_coherent_fst_general enumM enumN hj,
+        P.buildChain_coherent_snd_general enumM enumN hi,
+        P.buildChain_coherent_snd_general enumM enumN hj] at h
+    exact h
+  -- Define f : M → N and g : N → M
+  let idxM : M → ℕ := fun m => 2 * Nat.find (hM_surj m)
+  have hidxM : ∀ m, aSeq (idxM m) = m := fun m => by
+    simp only [idxM]; rw [haSeq]; exact Nat.find_spec (hM_surj m)
+  let f : M → N := fun m => bSeq (idxM m)
+  let idxN : N → ℕ := fun n => 2 * Nat.find (hN_surj n) + 1
+  have hidxN : ∀ n, bSeq (idxN n) = n := fun n => by
+    simp only [idxN]; rw [hbSeq]; exact Nat.find_spec (hN_surj n)
+  let g : N → M := fun n => aSeq (idxN n)
+  -- f and g are inverses
+  have hgf : ∀ m, g (f m) = m := by
+    intro m
+    show aSeq (idxN (bSeq (idxM m))) = m
+    conv_rhs => rw [← hidxM m]
+    exact (hEq (by omega : idxN (bSeq (idxM m)) < idxN (bSeq (idxM m)) + idxM m + 2)
+               (by omega : idxM m < idxN (bSeq (idxM m)) + idxM m + 2)).mpr
+      (hidxN (bSeq (idxM m)))
+  have hfg : ∀ n, f (g n) = n := by
+    intro n
+    show bSeq (idxM (aSeq (idxN n))) = n
+    conv_rhs => rw [← hidxN n]
+    exact (hEq (by omega : idxM (aSeq (idxN n)) < idxM (aSeq (idxN n)) + idxN n + 2)
+               (by omega : idxN n < idxM (aSeq (idxN n)) + idxN n + 2)).mp
+      (hidxM (aSeq (idxN n)))
+  let e : M ≃ N := {
+    toFun := f
+    invFun := g
+    left_inv := hgf
+    right_inv := hfg
+  }
+  -- Relation preservation
+  refine ⟨⟨e, fun f' _ => (IsEmpty.false f').elim, fun r x => ?_⟩⟩
+  -- Choose s large enough to contain all idxM(x i) positions
+  let s := (Finset.sup Finset.univ (fun i : Fin _ => idxM (x i))) + 1
+  have hi_lt : ∀ i, idxM (x i) < s :=
+    fun i => Nat.lt_add_one_iff.mpr (Finset.le_sup (f := fun j => idxM (x j)) (Finset.mem_univ i))
+  have hRel := hSAT s (AtomicIdx.rel r (fun i => ⟨idxM (x i), hi_lt i⟩))
+  simp only [AtomicIdx.holds] at hRel
+  have hM_eq : ∀ i, (chain s).val.1 ⟨idxM (x i), hi_lt i⟩ = x i :=
+    fun i => (P.buildChain_coherent_fst_general enumM enumN (hi_lt i)).trans (hidxM (x i))
+  have hN_eq : ∀ i, (chain s).val.2 ⟨idxM (x i), hi_lt i⟩ = f (x i) :=
+    fun i => P.buildChain_coherent_snd_general enumM enumN (hi_lt i)
+  -- Goal: RelMap r (e ∘ x) ↔ RelMap r x
+  constructor
+  · intro hfx
+    have h1 : RelMap r (fun i => (chain s).val.2 ⟨idxM (x i), hi_lt i⟩) := by
+      convert hfx using 1; exact funext fun i => hN_eq i
+    show RelMap r x
+    convert hRel.mpr h1 using 1; exact (funext fun i => hM_eq i).symm
+  · intro hx
+    have h1 : RelMap r (fun i => (chain s).val.1 ⟨idxM (x i), hi_lt i⟩) := by
+      convert hx using 1; exact funext fun i => hM_eq i
+    show RelMap r (fun i => f (x i))
+    convert hRel.mp h1 using 1; exact (funext fun i => hN_eq i).symm
+
 /-- Given a potential isomorphism, BFEquiv holds at every ordinal level for any pair
 in the family. This is the key inductive step for the (→) direction of the
 potential isomorphism characterization.
