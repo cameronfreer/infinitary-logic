@@ -370,12 +370,12 @@ theorem Embedding.sameAtomicType_comp {S : Type*} {T : Type*}
   intro idx
   cases idx with
   | eq i j =>
-    simp only [AtomicIdx.holds, Function.comp_apply]
+    simp only [AtomicIdx.holds]
     constructor
     · intro h; exact congrArg f h
     · intro h; exact f.injective h
   | rel R g =>
-    simp only [AtomicIdx.holds, Function.comp_apply]
+    simp only [AtomicIdx.holds]
     have hassoc : (f ∘ ms) ∘ g = f ∘ (ms ∘ g) := Function.comp_assoc f ms g
     rw [hassoc]
     exact (f.map_rel R (ms ∘ g)).symm
@@ -1036,6 +1036,7 @@ theorem BFEquiv_upgrade_at_stabilization {M N : Type w} [L.Structure M] [L.Struc
     · push_neg at hαγ
       exact BFEquiv.monotone (le_of_lt hαγ) h
 
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- `StabilizesCompletely` implies `StrongStabilizesForTuples` for all tuple sizes.
 This is the key property that allows upgrading BFEquiv to arbitrary higher ordinals.
 This is essentially a restatement of `BFEquiv_upgrade_at_stabilization` in terms of
@@ -1047,6 +1048,44 @@ theorem StabilizesCompletely.toStrongStabilizesForTuples {M : Type w} [L.Structu
   constructor
   · exact fun h => BFEquiv_upgrade_at_stabilization hstab h β hαβ
   · exact BFEquiv.monotone hαβ
+
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
+/-- **Downward propagation**: If (n+1)-tuples have full stabilization at α, then n-tuples
+have full stabilization at succ α.
+
+The key insight: BFEquiv (succ(succ α)) n a b requires BFEquiv (succ α) n a b plus
+forth/back at level succ α. The forth/back at succ α involves BFEquiv (succ α) (n+1),
+which by the (n+1)-stabilization hypothesis equals BFEquiv α (n+1). But BFEquiv (succ α) n a b
+already implies forth/back involving BFEquiv α (n+1) (from the succ definition). So the
+additional forth/back at succ α adds no new information, giving the iff. -/
+theorem StabilizesForTuples.downward_propagation
+    {M : Type w} [L.Structure M]
+    {α : Ordinal} {n : ℕ}
+    (hstab : StabilizesForTuples (L := L) M α (n + 1)) :
+    StabilizesForTuples (L := L) M (Order.succ α) n := by
+  intro N _ _ a b
+  constructor
+  · -- Forward: BFEquiv (succ α) n a b → BFEquiv (succ(succ α)) n a b
+    intro hBF
+    rw [BFEquiv.succ]
+    -- BFEquiv (succ(succ α)) = BFEquiv (succ α) ∧ forth(succ α) ∧ back(succ α)
+    refine ⟨hBF, ?_, ?_⟩
+    · -- Forth at level succ α: for each m, ∃n', BFEquiv (succ α) (n+1) (snoc a m) (snoc b n')
+      intro m
+      -- From hBF : BFEquiv (succ α) n a b, the succ structure gives forth at α:
+      -- ∃n', BFEquiv α (n+1) (snoc a m) (snoc b n')
+      obtain ⟨n', hn'⟩ := BFEquiv.forth hBF m
+      use n'
+      -- hn' : BFEquiv α (n+1) (snoc a m) (snoc b n')
+      -- By (n+1)-stabilization: BFEquiv α (n+1) ↔ BFEquiv (succ α) (n+1)
+      exact (hstab N (Fin.snoc a m) (Fin.snoc b n')).mp hn'
+    · -- Back at level succ α: for each n', ∃m, BFEquiv (succ α) (n+1) (snoc a m) (snoc b n')
+      intro n'
+      obtain ⟨m, hm⟩ := BFEquiv.back hBF n'
+      use m
+      exact (hstab N (Fin.snoc a m) (Fin.snoc b n')).mp hm
+  · -- Backward: BFEquiv (succ(succ α)) n a b → BFEquiv (succ α) n a b
+    exact BFEquiv.of_succ
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- For countable M, there exists α < ω₁ where all tuple sizes self-stabilize
@@ -1163,33 +1202,48 @@ theorem exists_complete_self_stabilization (M : Type w) [L.Structure M] [Countab
     le_trans (Order.le_succ _) hk_le
   exact hboundOrd_spec ⟨n, a, a'⟩ globalStab hbound_le hGlobalLt hSuccGlobalLt
 
-/-- Self-stabilization implies full stabilization.
+/-- For countable M, there exists α < ω₁ where all tuples stabilize completely:
+`BFEquiv α n a b ↔ BFEquiv (succ α) n a b` for ALL countable N and tuples b.
 
-This is the key bridge: if BFEquiv at level α is stable under self-testing (M vs M)
-for all tuple sizes, then it is stable for testing M against any countable N.
+This is a standard result in infinitary model theory (see Marker, "Lectures on
+Infinitary Model Theory", or Keisler-Knight §1.3). The key point is that for countable
+structures, the BFEquiv refinement chain must stabilize at a countable ordinal.
 
-The mathematical argument uses Scott formulas: self-stabilization at α means the
-Scott formulas at level α and succ α are semantically equivalent (when evaluated
-on any countable structure). Since BFEquiv α n a b ↔ scottFormula a α realizes b,
-the semantic equivalence of the formulas gives BFEquiv α ↔ BFEquiv (succ α) for
-all countable N.
+**Mathematical argument**: For each n-tuple `a` from M, the Scott formula
+`scottFormula a α` gets logically stronger as α increases. The set of structures
+satisfying it shrinks monotonically. Full stabilization at α means the formulas
+`SF a α` and `SF a (succ α)` are logically equivalent (agree on ALL structures),
+which is strictly stronger than self-stabilization (agreement on M only).
 
-**Status**: Sorry -- requires showing that self-stabilization of Scott formulas
-implies their semantic equivalence for all countable structures. -/
-theorem self_stabilizes_implies_full {M : Type w} [L.Structure M] [Countable M]
-    {α : Ordinal} (hα : α < Ordinal.omega 1)
-    (hself : SelfStabilizesCompletely (L := L) M α) :
-    StabilizesCompletely (L := L) M α := by
-  sorry
+**Important**: Self-stabilization (`SelfStabilizesCompletely`) does NOT imply full
+stabilization (`StabilizesCompletely`). Counterexample: M = {a, b} with an empty
+relational language, N = {c} (one element), α = 1. Self-stabilization holds at α = 1
+(all M-types are stable), but `BFEquiv 1 0 elim0 elim0_N` holds while
+`BFEquiv 2 0 elim0 elim0_N` fails (the forth condition at level 1 detects the
+cardinality mismatch). Full stabilization holds at α = 2 for this example.
 
-/-- For countable M, there exists α < ω₁ where all tuples stabilize completely.
+**Proof strategy** (using `StabilizesForTuples.downward_propagation`):
 
-**Proof**: Combine `exists_complete_self_stabilization` (sorry-free) with
-`self_stabilizes_implies_full` (which carries the remaining sorry). -/
+1. By `downward_propagation`: `StabilizesForTuples M α (n+1) → StabilizesForTuples M (succ α) n`.
+   So full stabilization at tuple-size (n+1) implies full stabilization at tuple-size n.
+
+2. For each M-tuple `a`, define `γ(a) = sInf {α | SF a α ⟷ SF a (succ α)}`.
+   Once all (n+1)-extensions `(snoc a m)` have stabilized (at ordinals γ(snoc a m)),
+   the FORTH/BACK conditions at level `sup_m γ(snoc a m)` become consequences of
+   `SF a` (because the inner formulas have stabilized and the existentials are "baked in"
+   at the next level). So `γ(a) ≤ succ(sup_m γ(snoc a m))`.
+
+3. The recursion `γ(a) ≤ succ(sup_m γ(snoc a m))` goes to higher tuple sizes.
+   Each `γ(snoc a m) < ω₁` implies `γ(a) < ω₁` (by regularity of ω₁ and
+   countability of M). The chain of γ-values across all tuple sizes is bounded
+   because at each ordinal α, only countably many M-tuples can have γ = α.
+
+**Status**: Sorry — the coinductive argument showing γ(a) < ω₁ for all a
+requires careful handling of the proper class of countable structures. The result
+is mathematically standard (see Marker, Barwise, or Keisler-Knight). -/
 theorem exists_complete_stabilization (M : Type w) [L.Structure M] [Countable M] :
     ∃ α < (Ordinal.omega 1 : Ordinal.{0}), StabilizesCompletely (L := L) M α := by
-  obtain ⟨α, hα, hself⟩ := exists_complete_self_stabilization (L := L) M
-  exact ⟨α, hα, self_stabilizes_implies_full hα hself⟩
+  sorry
 
 omit [Countable (Σ l, L.Relations l)] in
 /-- At a complete stabilization ordinal, BFEquiv0 implies isomorphism for countable structures.

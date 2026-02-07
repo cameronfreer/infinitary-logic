@@ -77,6 +77,7 @@ theorem countable_LinfEquiv_implies_iso
   simp only [Sentenceω.realize_toLinf] at h
   exact h
 
+omit [Countable (Σ l, L.Relations l)] in
 /-- For countable structures, potential isomorphism implies actual isomorphism.
 
 This is proved by direct back-and-forth construction on the PotentialIso family,

@@ -99,6 +99,7 @@ private theorem realize_atomicFormulaInf {M : Type*} [L.Structure M]
       Term.realize, Sum.elim_inl, AtomicIdx.holds]
     constructor <;> intro h <;> convert h using 1
 
+omit [Countable (Σ l, L.Relations l)] in
 /-- The forward direction of the Karp lemma, generalized to handle bound variables.
 BFEquiv at level α implies agreement on formulas of rank ≤ α. -/
 private theorem BFEquiv_implies_agree_aux {M N : Type w} [L.Structure M] [L.Structure N]
