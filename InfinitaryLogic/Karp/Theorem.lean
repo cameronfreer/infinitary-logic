@@ -312,18 +312,16 @@ theorem karp_theorem {M N : Type w} [L.Structure M] [L.Structure N] :
   constructor
   · -- Forward: PotentialIso → LinfEquiv
     intro ⟨P⟩ φ
-    -- BFEquiv at Ordinal.{0} for the empty tuple (universe-polymorphic forward direction)
     exact BFEquiv_implies_EquivQRInf φ.qrank (P.implies_BFEquiv_all φ.qrank) φ le_rfl
   · -- Backward: LinfEquiv → PotentialIso
     intro hL
     apply BFEquiv_all_implies_potentialIso
-    -- Need: ∀ α : Ordinal.{w}, BFEquiv.{w} α 0 elim0 elim0
+    -- Need: ∀ α : Ordinal.{w}, BFEquiv α 0 elim0 elim0
     -- From LinfEquiv we get BFEquiv.{0} at all Ordinal.{0} levels via BFEquiv_iff_agreeQR.
     -- The universe bridge from Ordinal.{0} to Ordinal.{w} requires lifting:
     -- pointwise lift (ofOrdinalLift) handles ordinals in the image of Ordinal.lift,
     -- but ordinals beyond the initial segment need the full quantifier swap argument
     -- (which is exactly what BFEquiv_all_implies_potentialIso proves internally).
-    -- TODO: Complete the universe bridge Ordinal.{0} → Ordinal.{w}.
     sorry
 
 /-- **Karp's Theorem at universe 0** (sorry-free).

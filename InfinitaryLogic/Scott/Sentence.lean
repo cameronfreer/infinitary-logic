@@ -167,52 +167,6 @@ theorem BFEquiv_succ_implies_sameAtomicType {M N : Type w} [L.Structure M] [L.St
   have hzero : (0 : Ordinal) ≤ α := zero_le α
   exact (BFEquiv.zero a b).mp (BFEquiv.monotone hzero h.1)
 
-/-! ### Back-and-Forth at ω: Witness Stabilization Approach
-
-**The quantifier swap problem**: From `BFEquiv ω n a b`, we get `∀ k, ∃ n'_k, BFEquiv k (n+1) ...`.
-To prove `BFEquiv_omega_forth_extend`, we need `∃ n', ∀ k, BFEquiv k (n+1) ...`.
-
-**Solution**: For countable N, the witness sets S_k = {n' | BFEquiv k (n+1) (snoc a m) (snoc b n')}
-form a decreasing chain (by BFEquiv.monotone). We show this chain stabilizes:
-
-1. **Finite refinement**: At each level k, S_k partitions N into finitely many BFEquiv-equivalence
-   classes (for countable relational language, there are only finitely many atomic types).
-
-2. **Stabilization**: A decreasing chain of finite partitions must eventually stabilize.
-   Once stable, S_k = S_{k+1} = ... so any witness from the stable set works for all levels.
-
-3. **Non-empty intersection**: Since S_k is non-empty for all k (from BFEquiv.forth) and the
-   chain stabilizes, the intersection ⋂_k S_k is non-empty.
-
-For non-countable structures, the stabilization argument doesn't apply directly, but we only
-need `BFEquiv_omega_forth_extend` for countable structures in our main theorems.
--/
-
-omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-/-- BFEquiv at ω is preserved under forth: if we have BFEquiv ω on n-tuples and add an element
-to M, there exists a matching element in N such that BFEquiv ω holds on the (n+1)-tuples.
-
-**Proof status**: This theorem encapsulates the quantifier swap problem:
-- From BFEquiv ω: ∀ k, ∃ n'_k, BFEquiv k (n+1) (snoc a m) (snoc b n'_k)
-- We need:       ∃ n', ∀ k, BFEquiv k (n+1) (snoc a m) (snoc b n')
-
-This is NOT automatic. Counterexample to such swaps: S_k = {j ∈ ℕ | j ≥ k}, each non-empty,
-decreasing, but ⋂_k S_k = ∅.
-
-**Possible approaches**:
-1. Strategy-based: Use `BFStrategyOmega` which provides coherent witnesses at all levels
-2. Stabilization: Show witness sets S_k stabilize for countable N (needs finite types)
-3. Restrict to countable N and use dependent choice with BFEquiv monotonicity
-
-**Note**: This theorem is NOT used by `scottSentence_characterizes`, which goes through
-`stabilizationOrdinal_spec` instead. The sorry here blocks `BFEquiv_omega_implies_equiv`
-but not the main Scott sentence theorem. -/
-theorem BFEquiv_omega_forth_extend {M N : Type w} [L.Structure M] [L.Structure N]
-    {n : ℕ} {a : Fin n → M} {b : Fin n → N}
-    (hBF : BFEquiv (L := L) ω n a b) (m : M) :
-    ∃ n' : N, BFEquiv (L := L) ω (n + 1) (Fin.snoc a m) (Fin.snoc b n') := by
-  sorry
-
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- From BFEquiv (n + k) 0 at empty tuples and n elements of M, we can build
 matching n-tuples at BFEquiv level k. This is the iteration of the forth property. -/
@@ -582,162 +536,6 @@ noncomputable def buildMatchingTupleBack {M N : Type w} [L.Structure M] [L.Struc
   refine ⟨ms, ?_⟩
   rw [Fin.elim0_append, Fin.elim0_append] at sat
   exact sat.relabel (Fin.cast (Nat.zero_add k).symm)
-
-/-- From a coherent Type-valued ω-strategy on empty tuples, build an isomorphism.
-
-This is the strategy-based version that SOLVES the quantifier swap problem in
-`BFEquiv_omega_implies_equiv`. The Type-valued strategy carries actual witness functions
-(not just existence proofs), making the back-and-forth construction straightforward.
-
-**Key insight**: With `BFStrategyOmegaT`, we have witness FUNCTIONS `forth : M → N × ...`
-and `back : N → M × ...`. These are coherent by construction, so we can build the
-isomorphism by iterating them over enumerations of M and N. -/
-theorem BFStrategyOmegaT_implies_equiv {M N : Type w} [L.Structure M] [L.Structure N]
-    [Countable M] [Countable N]
-    (hStrat : BFStrategyOmegaT (L := L) 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)) :
-    Nonempty (M ≃[L] N) := by
-  -- The strategy at level k gives us computational witnesses for k-step extensions
-  -- We use the strategy at sufficiently high levels to build the isomorphism
-
-  -- Get BFEquiv ω from the strategy (for the empty/nonempty case analysis)
-  have hBF : BFEquiv (L := L) (ω : Ordinal.{0}) 0
-      (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) :=
-    BFStrategyOmegaT_implies_BFEquiv_omega hStrat
-
-  -- Handle the empty case
-  by_cases hM_empty : IsEmpty M
-  · by_cases hN_empty : IsEmpty N
-    · refine ⟨⟨Equiv.equivOfIsEmpty M N, ?_, ?_⟩⟩
-      · intro n f; exact IsEmpty.elim inferInstance f
-      · intro n r x
-        match n with
-        | 0 =>
-          have hBF0 := BFEquiv.monotone (zero_le _) hBF
-          have hSAT := (BFEquiv.zero (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)).mp hBF0
-          have hx : x = Fin.elim0 := funext (fun i => i.elim0)
-          subst hx
-          have hcomp : (Equiv.equivOfIsEmpty M N).toFun ∘ (Fin.elim0 : Fin 0 → M) =
-                       (Fin.elim0 : Fin 0 → N) := funext (fun i => i.elim0)
-          simp only [hcomp]
-          exact (hSAT (AtomicIdx.rel r Fin.elim0)).symm
-        | n + 1 => exact IsEmpty.elim hM_empty (x 0)
-    · -- M empty, N nonempty: get contradiction from back at level 1
-      push_neg at hN_empty
-      obtain ⟨n⟩ := hN_empty
-      -- Use the strategy at level 1 to get a witness in M
-      have strat1 := hStrat 1
-      obtain ⟨_, _, back⟩ := strat1
-      obtain ⟨m, _⟩ := back n
-      exact hM_empty.elim m
-  push_neg at hM_empty
-  haveI : Nonempty M := hM_empty
-
-  -- N must also be nonempty (use forth at level 1)
-  haveI : Nonempty N := by
-    obtain ⟨m⟩ : Nonempty M := inferInstance
-    have strat1 := hStrat 1
-    obtain ⟨_, forth, _⟩ := strat1
-    obtain ⟨n, _⟩ := forth m
-    exact ⟨n⟩
-
-  -- Get enumerations
-  obtain ⟨enumM, hM_surj⟩ := exists_surjective_nat M
-  obtain ⟨enumN, hN_surj⟩ := exists_surjective_nat N
-
-  /-
-  **Type-valued strategy construction**
-
-  With BFStrategyOmegaT, we have actual witness functions. The construction proceeds:
-
-  1. Build a chain of matching tuples (aₖ, bₖ) where aₖ : Fin k → M, bₖ : Fin k → N
-  2. The chain is coherent: (aₖ₊₁, bₖ₊₁) extends (aₖ, bₖ)
-  3. Each step uses the strategy's forth/back witnesses
-  4. The limit defines the isomorphism
-
-  The key is using the strategy at level ≥ 2k to build k-tuples, so we always
-  have enough "budget" for extensions.
-  -/
-
-  /-
-  **Type-valued strategy chain construction**
-
-  Key insight: `hStrat k` gives `BFStrategyT L M N k 0 [] []`.
-
-  From `hStrat k` for empty tuples, applying forth k times gives a strategy at level 0
-  for k-tuples, which means SameAtomicType holds for the resulting k-tuples.
-
-  The construction iterates forth starting from hStrat k:
-  - forth(enumM 0) → level k-1 for 1-tuple
-  - forth(enumM 1) → level k-2 for 2-tuple
-  - ...
-  - forth(enumM (k-1)) → level 0 for k-tuple (SameAtomicType)
-  -/
-
-  -- The key lemma: from BFStrategyOmegaT, we can build any finite matching
-  -- This follows because hStrat k allows k forth applications
-
-  -- For the isomorphism, we need:
-  -- 1. A function f : M → N where f(enumM i) is the witness from i+1 forth iterations
-  -- 2. A function g : N → M where g(enumN j) is the witness from j+1 back iterations
-  -- 3. Proof that f, g are inverses (from determinism of witnesses)
-  -- 4. Proof that f preserves relations (from SameAtomicType at level 0)
-
-  /-
-  **Construction using buildMatchingTuple**
-
-  Define f : M → N using the strategy witnesses:
-  - For m = enumM i, construct the (i+1)-tuple [enumM 0, ..., enumM i]
-  - Use hStrat (i+1) with buildMatchingTuple to get matching [n_0, ..., n_i]
-  - Define f(m) = n_i (the last element)
-
-  The challenge is showing this is an isomorphism:
-  1. f is well-defined (doesn't depend on choice of enumeration index)
-  2. f is injective (from SameAtomicType equalities)
-  3. f is surjective (build inverse using back operations)
-  4. f preserves relations (from SameAtomicType)
-
-  For (1): If m = enumM i = enumM j with i < j, then both definitions give the same value
-  because SameAtomicType forces equalities between positions.
-
-  For (3): Define g similarly using back operations from the strategy.
-  -/
-
-  -- Helper: get matching tuple for first k elements of enumM
-  let getMTuple : (k : ℕ) → { ns : Fin k → N // SameAtomicType (L := L) (enumM ∘ Fin.val) ns } :=
-    fun k => buildMatchingTuple k (hStrat k) (fun i => enumM i.val)
-
-  -- Define f: for each m, find its index and look up the corresponding n
-  -- Use Classical.choose since Nat.find requires DecidablePred
-  let indexM : M → ℕ := fun m => Classical.choose (hM_surj m)
-  let f : M → N := fun m =>
-    let i := indexM m
-    (getMTuple (i + 1)).val (Fin.last i)
-
-  -- Similarly for g using back operations
-  -- Helper: get matching tuple for first k elements of enumN using back
-  let getMTupleBack : (k : ℕ) → { ms : Fin k → M // SameAtomicType (L := L) ms (enumN ∘ Fin.val) } :=
-    fun k => buildMatchingTupleBack k (hStrat k) (fun i => enumN i.val)
-
-  let indexN : N → ℕ := fun n => Classical.choose (hN_surj n)
-  let g : N → M := fun n =>
-    let j := indexN n
-    (getMTupleBack (j + 1)).val (Fin.last j)
-
-  /-
-  **Remaining proof obligations**:
-  1. Show f ∘ g = id and g ∘ f = id
-  2. Show f preserves relations
-  3. Show g preserves relations (follows from 1 and 2)
-
-  The key for (1) is that SameAtomicType includes equalities, so:
-  - If enumM i = enumM j, then the witnesses n_i and n_j must be equal
-  - This "locks in" the correspondence and forces f, g to be inverses
-
-  The proof requires careful analysis of how indices interact, but the
-  mathematical content is straightforward with the strategy structure.
-  -/
-
-  sorry
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- BFEquiv at level k starting from singletons allows iteration of forth to build matching tuples.
@@ -1202,6 +1000,295 @@ theorem exists_complete_self_stabilization (M : Type w) [L.Structure M] [Countab
     le_trans (Order.le_succ _) hk_le
   exact hboundOrd_spec ⟨n, a, a'⟩ globalStab hbound_le hGlobalLt hSuccGlobalLt
 
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
+/-- For countable M and N, BFEquiv at all ordinals below ω₁ implies BFEquiv at all ordinals.
+
+The key step uses a sup + regularity argument: for FORTH (or BACK) at any ordinal β,
+we need to find a witness n' (or m). By contradiction: if no witness works, each candidate
+fails at some ordinal α_{candidate} < ω₁. Taking the sup over a countable enumeration
+(which is < ω₁ by regularity since cof(ω₁) = ω₁ > ω) gives a level where the
+forth/back condition does produce a witness, contradicting the assumed failure.
+
+The enumeration via `exists_surjective_nat` avoids universe issues (both M and N may live
+in arbitrary universes, but ℕ → Ordinal.{0} can always be bounded by `iSup_sequence_lt_omega_one`). -/
+private theorem BFEquiv_all_countable_ordinals_implies_all
+    {M : Type w} [L.Structure M] [Countable M]
+    {N : Type w} [L.Structure N] [Countable N]
+    {n : ℕ} {a : Fin n → M} {b : Fin n → N}
+    (h : ∀ α < (Ordinal.omega 1 : Ordinal.{0}), BFEquiv (L := L) α n a b) :
+    ∀ α : Ordinal.{0}, BFEquiv (L := L) α n a b := by
+  intro α
+  induction α using Ordinal.limitRecOn generalizing n a b with
+  | zero => exact h 0 (Ordinal.omega_pos 1)
+  | succ β ih =>
+    rw [BFEquiv.succ]
+    have hβ : BFEquiv (L := L) β n a b := ih (fun γ hγ => h γ hγ)
+    refine ⟨hβ, ?_, ?_⟩
+    · -- Forth: for each m : M, ∃ n' : N, BFEquiv β (n+1) (snoc a m) (snoc b n')
+      intro m
+      by_contra h_no
+      push_neg at h_no
+      -- If N is empty, BFEquiv at succ level requires forth, giving ∃ n' : N which is False
+      by_cases hN : IsEmpty N
+      · have hsucc0_lt : Order.succ 0 < Ordinal.omega 1 :=
+          Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) (Ordinal.omega_pos 1)
+        exact hN.false (BFEquiv.forth (h _ hsucc0_lt) m).choose
+      · -- N nonempty: use enumeration
+        rw [not_isEmpty_iff] at hN; haveI := hN
+        have hnfail : ∀ n' : N, ∃ γ < (Ordinal.omega 1 : Ordinal.{0}),
+            ¬BFEquiv (L := L) γ (n + 1) (Fin.snoc a m) (Fin.snoc b n') := by
+          intro n'
+          by_contra hall
+          push_neg at hall
+          exact h_no n' (ih (fun γ hγ => hall γ hγ))
+        choose αbad hαbad_lt hαbad_fail using hnfail
+        obtain ⟨enum, henum⟩ := exists_surjective_nat N
+        let αbad_seq : ℕ → Ordinal.{0} := αbad ∘ enum
+        have hαbad_seq_lt : ∀ k, αbad_seq k < (Cardinal.aleph 1).ord := by
+          intro k; rw [Cardinal.ord_aleph]; exact hαbad_lt (enum k)
+        have hS_lt : (⨆ k, αbad_seq k) < Ordinal.omega 1 := by
+          rw [← Cardinal.ord_aleph]
+          exact Ordinal.iSup_sequence_lt_omega_one αbad_seq hαbad_seq_lt
+        have hbdd_seq : BddAbove (Set.range αbad_seq) :=
+          ⟨Ordinal.omega 1, fun _ ⟨k, hk⟩ => hk ▸ le_of_lt (hαbad_lt (enum k))⟩
+        have hle_sup : ∀ n' : N, αbad n' ≤ ⨆ k, αbad_seq k := by
+          intro n'
+          obtain ⟨k, hk⟩ := henum n'
+          calc αbad n' = αbad (enum k) := by rw [hk]
+            _ = αbad_seq k := rfl
+            _ ≤ ⨆ k, αbad_seq k := le_ciSup hbdd_seq k
+        set S := ⨆ k, αbad_seq k
+        have hsucc_lt : Order.succ S < Ordinal.omega 1 :=
+          Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) hS_lt
+        have hBF_succ : BFEquiv (L := L) (Order.succ S) n a b := h _ hsucc_lt
+        obtain ⟨n'₀, hn'₀⟩ := BFEquiv.forth hBF_succ m
+        exact hαbad_fail n'₀ (BFEquiv.monotone (hle_sup n'₀) hn'₀)
+    · -- Back: for each n' : N, ∃ m : M, BFEquiv β (n+1) (snoc a m) (snoc b n')
+      intro n'
+      by_contra h_no
+      push_neg at h_no
+      -- If M is empty, back at succ level gives m : M, contradicting emptiness
+      by_cases hM : IsEmpty M
+      · have hsucc0_lt : Order.succ 0 < Ordinal.omega 1 :=
+          Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) (Ordinal.omega_pos 1)
+        exact hM.false (BFEquiv.back (h _ hsucc0_lt) n').choose
+      · -- M nonempty: use enumeration
+        rw [not_isEmpty_iff] at hM; haveI := hM
+        have hmfail : ∀ m : M, ∃ γ < (Ordinal.omega 1 : Ordinal.{0}),
+            ¬BFEquiv (L := L) γ (n + 1) (Fin.snoc a m) (Fin.snoc b n') := by
+          intro m
+          by_contra hall
+          push_neg at hall
+          exact h_no m (ih (fun γ hγ => hall γ hγ))
+        choose αbad hαbad_lt hαbad_fail using hmfail
+        obtain ⟨enum, henum⟩ := exists_surjective_nat M
+        let αbad_seq : ℕ → Ordinal.{0} := αbad ∘ enum
+        have hαbad_seq_lt : ∀ k, αbad_seq k < (Cardinal.aleph 1).ord := by
+          intro k; rw [Cardinal.ord_aleph]; exact hαbad_lt (enum k)
+        have hS_lt : (⨆ k, αbad_seq k) < Ordinal.omega 1 := by
+          rw [← Cardinal.ord_aleph]
+          exact Ordinal.iSup_sequence_lt_omega_one αbad_seq hαbad_seq_lt
+        have hbdd_seq : BddAbove (Set.range αbad_seq) :=
+          ⟨Ordinal.omega 1, fun _ ⟨k, hk⟩ => hk ▸ le_of_lt (hαbad_lt (enum k))⟩
+        have hle_sup : ∀ m : M, αbad m ≤ ⨆ k, αbad_seq k := by
+          intro m
+          obtain ⟨k, hk⟩ := henum m
+          calc αbad m = αbad (enum k) := by rw [hk]
+            _ = αbad_seq k := rfl
+            _ ≤ ⨆ k, αbad_seq k := le_ciSup hbdd_seq k
+        set S := ⨆ k, αbad_seq k
+        have hsucc_lt : Order.succ S < Ordinal.omega 1 :=
+          Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) hS_lt
+        have hBF_succ : BFEquiv (L := L) (Order.succ S) n a b := h _ hsucc_lt
+        obtain ⟨m₀, hm₀⟩ := BFEquiv.back hBF_succ n'
+        exact hαbad_fail m₀ (BFEquiv.monotone (hle_sup m₀) hm₀)
+  | limit β hβlimit ih =>
+    rw [BFEquiv.limit β hβlimit]
+    intro γ hγ
+    exact ih γ hγ (fun δ hδ => h δ hδ)
+
+/-! ### Countable intersection and BFEquiv-to-PotentialIso lemmas -/
+
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
+/-- A decreasing ω₁-chain of nonempty subsets of a countable type has nonempty intersection.
+
+More precisely: if `S : Ordinal → Set X` where `X` is countable, `S` is antitone
+(S α ⊇ S β for α ≤ β), and each `S α` is nonempty for `α < ω₁`, then
+`⋂ α < ω₁, S α` is nonempty.
+
+**Proof**: For each `x ∈ S 0`, define `d(x) = sInf {α | x ∉ S α}` (the "departure ordinal").
+If all `d(x) < ω₁`, then `sup {d(x)} < ω₁` by regularity of ω₁ and countability of X.
+Let `γ = sup {d(x)}`. Then `S γ = ∅` (every element has departed), contradicting nonemptiness.
+So some `x` has `d(x) ≥ ω₁`, meaning `x ∈ S α` for all `α < ω₁`. -/
+theorem nonempty_iInter_of_antitone_of_nonempty {X : Type*} [Countable X]
+    (S : Ordinal.{0} → Set X) (hAnti : Antitone S)
+    (hNonempty : ∀ α < (Ordinal.omega 1 : Ordinal.{0}), (S α).Nonempty) :
+    (⋂ α ∈ Set.Iio (Ordinal.omega 1 : Ordinal.{0}), S α).Nonempty := by
+  classical
+  -- For each x, define d(x) = sInf {α | x ∉ S α} (possibly = 0 if x ∉ S 0)
+  -- If d(x) ≥ ω₁ for some x, then x ∈ S α for all α < ω₁ and we're done.
+  by_contra hEmpty
+  rw [Set.not_nonempty_iff_eq_empty] at hEmpty
+  -- Every x eventually departs: for every x ∈ S 0, ∃ α < ω₁ with x ∉ S α
+  have hAllDepart : ∀ x ∈ S 0, ∃ α < (Ordinal.omega 1 : Ordinal.{0}), x ∉ S α := by
+    intro x hx0
+    by_contra hall
+    push_neg at hall
+    -- x ∈ S α for all α < ω₁
+    have hxmem : x ∈ ⋂ α ∈ Set.Iio (Ordinal.omega 1 : Ordinal.{0}), S α := by
+      simp only [Set.mem_iInter, Set.mem_Iio]
+      exact fun α hα => hall α hα
+    rw [hEmpty] at hxmem
+    exact hxmem
+  -- For each x ∈ S 0, choose a departure ordinal < ω₁
+  have hS0nonempty : (S 0).Nonempty := hNonempty 0 (Ordinal.omega_pos 1)
+  -- Get departure ordinals for ALL elements (set to 0 for x ∉ S 0)
+  let depart : X → Ordinal.{0} := fun x =>
+    if hx : x ∈ S 0 then (hAllDepart x hx).choose else 0
+  have hdepart_lt : ∀ x ∈ S 0, depart x < Ordinal.omega 1 := by
+    intro x hx
+    simp only [depart]
+    rw [dif_pos hx]
+    exact (hAllDepart x hx).choose_spec.1
+  have hdepart_spec : ∀ x ∈ S 0, x ∉ S (depart x) := by
+    intro x hx
+    simp only [depart]
+    rw [dif_pos hx]
+    exact (hAllDepart x hx).choose_spec.2
+  -- Enumerate X (or rather S 0)
+  -- Take sup of departure ordinals over all of X
+  -- Enumerate X via ℕ to use iSup_sequence_lt_omega_one
+  by_cases hX : IsEmpty X
+  · -- If X is empty, S 0 = ∅, contradicting nonemptiness
+    exact absurd (hNonempty 0 (Ordinal.omega_pos 1)) (by
+      rw [Set.not_nonempty_iff_eq_empty, Set.eq_empty_iff_forall_notMem]
+      intro x; exact hX.elim x)
+  rw [not_isEmpty_iff] at hX; haveI := hX
+  obtain ⟨enum, henum⟩ := exists_surjective_nat X
+  -- Compose depart with enum to get ℕ → Ordinal.{0}
+  let depart_seq : ℕ → Ordinal.{0} := depart ∘ enum
+  have hdepart_seq_lt : ∀ k, depart_seq k < (Cardinal.aleph 1).ord := by
+    intro k
+    rw [Cardinal.ord_aleph]
+    by_cases hx : enum k ∈ S 0
+    · exact hdepart_lt (enum k) hx
+    · show depart (enum k) < _
+      simp only [depart]
+      rw [dif_neg hx]
+      exact Ordinal.omega_pos 1
+  have hSup_lt : (⨆ k, depart_seq k) < Ordinal.omega 1 := by
+    rw [← Cardinal.ord_aleph]
+    exact Ordinal.iSup_sequence_lt_omega_one depart_seq hdepart_seq_lt
+  have hBdd_seq : BddAbove (Set.range depart_seq) :=
+    ⟨Ordinal.omega 1, fun _ ⟨k, hk⟩ => hk ▸ le_of_lt
+      (by rw [Cardinal.ord_aleph] at hdepart_seq_lt; exact hdepart_seq_lt k)⟩
+  have hle_sup : ∀ x : X, depart x ≤ ⨆ k, depart_seq k := by
+    intro x
+    obtain ⟨k, hk⟩ := henum x
+    calc depart x = depart (enum k) := by rw [hk]
+      _ = depart_seq k := rfl
+      _ ≤ ⨆ k, depart_seq k := le_ciSup hBdd_seq k
+  -- S (iSup depart_seq) is nonempty
+  obtain ⟨x, hx⟩ := hNonempty (⨆ k, depart_seq k) hSup_lt
+  -- x ∈ S (iSup depart_seq) ⊆ S 0
+  have hx0 : x ∈ S 0 := hAnti (zero_le _) hx
+  -- But depart x ≤ iSup depart_seq, so S (iSup ...) ⊆ S (depart x)
+  -- And x ∉ S (depart x), contradiction
+  exact hdepart_spec x hx0 (hAnti (hle_sup x) hx)
+
+omit [Countable (Σ l, L.Relations l)] in
+/-- If two countable structures are BF-equivalent at all ordinal levels below ω₁
+(for the empty tuple), then there exists a potential isomorphism between them,
+and hence they are isomorphic.
+
+**Proof**: Define the family
+`F = {(k, a, b) | ∀ α < ω₁, BFEquiv α k a b}`.
+This family contains the empty tuple (by hypothesis) and is compatible (BFEquiv 0 gives
+SameAtomicType). For the forth property: given (k, a, b) ∈ F and m : M, for each α < ω₁,
+from BFEquiv (succ α) k a b (since succ α < ω₁ by regularity), BFEquiv.forth gives
+n'_α with BFEquiv α (k+1) (snoc a m) (snoc b n'_α). The sets
+`S_α = {n' ∈ N | BFEquiv α (k+1) (snoc a m) (snoc b n')}` form a decreasing chain
+(by BFEquiv.monotone) of nonempty subsets of the countable type N.
+By `nonempty_iInter_of_antitone_of_nonempty`, ∃ n' in the intersection, giving
+BFEquiv α (k+1) (snoc a m) (snoc b n') for all α < ω₁. The back property is symmetric.
+
+The result then follows from `PotentialIso.countable_toEquiv`. -/
+theorem BFEquiv_below_omega1_implies_potentialIso
+    {M : Type w} [L.Structure M] [Countable M]
+    {N : Type w} [L.Structure N] [Countable N]
+    (h : ∀ α < (Ordinal.omega 1 : Ordinal.{0}),
+      BFEquiv (L := L) α 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)) :
+    Nonempty (PotentialIso L M N) := by
+  -- Define the family: tuples that are BF-equivalent at ALL levels < ω₁
+  let F : Set (Σ n : ℕ, (Fin n → M) × (Fin n → N)) :=
+    { p | ∀ α < (Ordinal.omega 1 : Ordinal.{0}), BFEquiv (L := L) α p.1 p.2.1 p.2.2 }
+  -- empty_mem: by hypothesis
+  have hempty : ⟨0, Fin.elim0, Fin.elim0⟩ ∈ F := h
+  -- compatible: BFEquiv 0 gives SameAtomicType
+  have hcompat : ∀ p ∈ F, SameAtomicType (L := L) p.2.1 p.2.2 := by
+    intro p hp
+    exact (BFEquiv.zero p.2.1 p.2.2).mp (hp 0 (Ordinal.omega_pos 1))
+  -- forth: use the countable intersection lemma
+  have hforth : ∀ p ∈ F, ∀ m : M, ∃ n' : N,
+      ⟨p.1 + 1, Fin.snoc p.2.1 m, Fin.snoc p.2.2 n'⟩ ∈ F := by
+    intro ⟨k, a, b⟩ hp m
+    simp only [Set.mem_setOf_eq, F] at hp ⊢
+    -- For each α < ω₁, succ α < ω₁ (ω₁ is a limit), so BFEquiv (succ α) k a b holds.
+    -- By forth, ∃ n'_α with BFEquiv α (k+1) (snoc a m) (snoc b n'_α).
+    -- Define S_α = {n' | BFEquiv α (k+1) (snoc a m) (snoc b n')}
+    let S : Ordinal.{0} → Set N := fun α =>
+      { n' | BFEquiv (L := L) α (k + 1) (Fin.snoc a m) (Fin.snoc b n') }
+    -- S is antitone
+    have hAnti : Antitone S := by
+      intro α β hαβ n' hn'
+      simp only [Set.mem_setOf_eq, S] at hn' ⊢
+      exact BFEquiv.monotone hαβ hn'
+    -- Each S α is nonempty for α < ω₁
+    have hNonempty : ∀ α < (Ordinal.omega 1 : Ordinal.{0}), (S α).Nonempty := by
+      intro α hα
+      have hsucc_lt : Order.succ α < Ordinal.omega 1 :=
+        Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) hα
+      obtain ⟨n', hn'⟩ := BFEquiv.forth (hp (Order.succ α) hsucc_lt) m
+      exact ⟨n', hn'⟩
+    -- By countable intersection lemma
+    obtain ⟨n', hn'⟩ := nonempty_iInter_of_antitone_of_nonempty S hAnti hNonempty
+    simp only [Set.mem_iInter, Set.mem_Iio, Set.mem_setOf_eq, S] at hn'
+    exact ⟨n', hn'⟩
+  -- back: symmetric argument
+  have hback : ∀ p ∈ F, ∀ n' : N, ∃ m : M,
+      ⟨p.1 + 1, Fin.snoc p.2.1 m, Fin.snoc p.2.2 n'⟩ ∈ F := by
+    intro ⟨k, a, b⟩ hp n'
+    simp only [Set.mem_setOf_eq, F] at hp ⊢
+    let S : Ordinal.{0} → Set M := fun α =>
+      { m | BFEquiv (L := L) α (k + 1) (Fin.snoc a m) (Fin.snoc b n') }
+    have hAnti : Antitone S := by
+      intro α β hαβ m hm
+      simp only [Set.mem_setOf_eq, S] at hm ⊢
+      exact BFEquiv.monotone hαβ hm
+    have hNonempty : ∀ α < (Ordinal.omega 1 : Ordinal.{0}), (S α).Nonempty := by
+      intro α hα
+      have hsucc_lt : Order.succ α < Ordinal.omega 1 :=
+        Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) hα
+      obtain ⟨m, hm⟩ := BFEquiv.back (hp (Order.succ α) hsucc_lt) n'
+      exact ⟨m, hm⟩
+    obtain ⟨m, hm⟩ := nonempty_iInter_of_antitone_of_nonempty S hAnti hNonempty
+    simp only [Set.mem_iInter, Set.mem_Iio, Set.mem_setOf_eq, S] at hm
+    exact ⟨m, hm⟩
+  exact ⟨PotentialIso.mk F hempty hcompat hforth hback⟩
+
+omit [Countable (Σ l, L.Relations l)] in
+/-- Corollary: If BFEquiv at all levels below ω₁ for empty tuples between countable structures,
+then they are isomorphic. Combines `BFEquiv_below_omega1_implies_potentialIso` with
+`PotentialIso.countable_toEquiv`. -/
+theorem BFEquiv_below_omega1_implies_iso
+    {M : Type w} [L.Structure M] [Countable M]
+    {N : Type w} [L.Structure N] [Countable N]
+    (h : ∀ α < (Ordinal.omega 1 : Ordinal.{0}),
+      BFEquiv (L := L) α 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)) :
+    Nonempty (M ≃[L] N) := by
+  obtain ⟨P⟩ := BFEquiv_below_omega1_implies_potentialIso (L := L) h
+  exact P.countable_toEquiv
+
 /-- For countable M, there exists α < ω₁ where all tuples stabilize completely:
 `BFEquiv α n a b ↔ BFEquiv (succ α) n a b` for ALL countable N and tuples b.
 
@@ -1243,7 +1330,205 @@ requires careful handling of the proper class of countable structures. The resul
 is mathematically standard (see Marker, Barwise, or Keisler-Knight). -/
 theorem exists_complete_stabilization (M : Type w) [L.Structure M] [Countable M] :
     ∃ α < (Ordinal.omega 1 : Ordinal.{0}), StabilizesCompletely (L := L) M α := by
-  sorry
+  -- For each M-tuple a : Fin n → M, define the "instability bound":
+  -- the first ordinal past which BFEquiv α n a b → BFEquiv (succ α) n a b for ALL (N, b).
+  -- This is sup {α | ∃ (N, b), BFEquiv α n a b ∧ ¬BFEquiv (succ α) n a b} + 1.
+  --
+  -- Key bound: instabilityBound(a) ≤ succ(sup_m instabilityBound(snoc a m))
+  -- (by downward propagation applied per-tuple).
+  --
+  -- We show instabilityBound(a) < ω₁ for all a by contradiction:
+  -- if not, regularity of ω₁ gives an infinite chain of extensions with unbounded
+  -- instability, which by the descent property gives an infinite strictly decreasing
+  -- sequence of ordinals, contradicting well-foundedness.
+  --
+  -- Step 1: For each M-tuple, define the per-tuple bound ordinal.
+  -- For each (n, a), we need: ∃ γ < ω₁, ∀ α, γ ≤ α → α < ω₁ → succ α < ω₁ →
+  --   ∀ (N : Type w) [L.Structure N] [Countable N] (b : Fin n → N),
+  --     BFEquiv α n a b ↔ BFEquiv (succ α) n a b
+  --
+  -- The proof works by showing that for each M-tuple a, the set of "bad" ordinals
+  -- (where the iff fails) is bounded below ω₁.
+  --
+  -- We use the key fact: if BFEquiv α n a b but ¬BFEquiv (succ α) n a b,
+  -- then the forth or back condition fails at α. This means:
+  -- (1) ∃ m : M such that ∀ n' : N, ¬BFEquiv α (n+1) (snoc a m) (snoc b n'), OR
+  -- (2) ∃ n' : N such that ∀ m : M, ¬BFEquiv α (n+1) (snoc a m) (snoc b n').
+  -- In case (1): from BFEquiv α n a b (if α = succ δ), BFEquiv.forth at δ gives
+  --   a witness n' with BFEquiv δ (n+1) but ¬BFEquiv α (n+1). So δ is "bad" for (snoc a m).
+  -- This gives the descent: bad ordinals for a map to bad ordinals for extensions at
+  --   strictly smaller ordinals.
+  --
+  -- We prove the bound for ALL M-tuples simultaneously using well-founded induction.
+
+  -- Step 1: For each sigma type element t = (n, a), extract a bound ordinal < ω₁.
+  -- The approach mirrors exists_complete_self_stabilization but for all countable N.
+  have hTuple : ∀ (t : Σ n, Fin n → M),
+      ∃ γ < (Ordinal.omega 1 : Ordinal.{0}),
+        ∀ α, γ ≤ α → α < Ordinal.omega 1 → Order.succ α < Ordinal.omega 1 →
+          ∀ (N : Type w) [L.Structure N] [Countable N] (b : Fin t.1 → N),
+            (BFEquiv (L := L) α t.1 t.2 b ↔ BFEquiv (L := L) (Order.succ α) t.1 t.2 b) := by
+    intro ⟨n, a⟩; simp only
+    -- For each (N, b) pair, the function α ↦ BFEquiv α n a b is antitone.
+    -- So for each (N, b), either BFEquiv holds at all α < ω₁, or there's a unique
+    -- "change point" cp(N,b) where it switches from True to False.
+    -- After cp, both sides of the iff are False, so the iff holds.
+    -- Before cp, both sides are True, so the iff holds.
+    -- The iff fails only at the predecessor of cp.
+    --
+    -- The set of "bad" ordinals for a = {pred(cp(N,b)) | (N,b), cp exists and < ω₁}.
+    -- We need this set to be bounded below ω₁.
+    --
+    -- Using the descent property: each bad ordinal for a maps to a bad ordinal for
+    -- some extension (snoc a m), at a strictly smaller ordinal.
+    -- So the set of bad ordinals for a is bounded by the sets of bad ordinals for
+    -- all extensions, shifted up by 1.
+    --
+    -- By well-founded induction on ordinals: the bad ordinals for ALL tuples
+    -- form a well-founded tree, so they can't be cofinal in ω₁.
+    --
+    -- More concretely: if the bad ordinals for a were cofinal in ω₁,
+    -- then by regularity of ω₁, some extension (snoc a m) would also have
+    -- bad ordinals cofinal in ω₁. Iterating gives an infinite sequence of extensions,
+    -- each with cofinal bad ordinals. Picking one bad ordinal from each and using
+    -- the descent gives an infinite strictly decreasing sequence of ordinals.
+
+    -- For each (N, b), the function α ↦ BFEquiv α n a b is antitone.
+    -- Define the "change ordinal" for (N, b) as sInf {δ | ¬BFEquiv δ n a b}.
+    -- If this set is nonempty, the change ordinal is the first level where BFEquiv fails.
+    -- Past the change ordinal, both sides of the iff are False, so the iff holds.
+    -- The iff fails only at the predecessor of the change ordinal (if it's a successor).
+    -- If the change ordinal is a limit, the iff holds everywhere.
+    --
+    -- Strategy: Use the same change-point argument as self-stabilization.
+    -- For each (N, b) pair, at most one ordinal can be "bad" (predecessor of change point).
+    -- We DON'T enumerate all (N, b) pairs. Instead, we use the Scott formula to reduce
+    -- the problem: the iff BFEquiv α ↔ BFEquiv (succ α) holds for ALL (N, b)
+    -- iff scottFormula a α logically implies scottFormula a (succ α).
+    -- Using realize_scottFormula_iff_BFEquiv, this is a formula-level property.
+    --
+    -- The formula scottFormula a (succ α) = scottFormula a α ⊓ FORTH(α) ⊓ BACK(α).
+    -- FORTH(α) and BACK(α) reference scottFormula(snoc a m, α) for m ∈ M.
+    -- Once all extension formulas have stabilized (same at α and succ α for all models),
+    -- FORTH and BACK are constant, and the base formula stabilizes within 1 more step.
+    --
+    -- The stabilization ordinal for (n, a) is bounded by
+    --   sup_m (stabilization ordinal for (n+1, snoc a m)) + 1.
+    -- Since M is countable and (Σ k, Fin k → M) is countable, we take the global sup
+    -- of all stabilization ordinals. By regularity of ω₁, this sup is < ω₁.
+    --
+    -- Formally: we prove the bound for all tuples simultaneously by observing that
+    -- the global sup Γ satisfies Γ < ω₁ because it's a countable sup and each term
+    -- is well-defined (the formula chain scottFormula a α stabilizes because
+    -- at limit ordinals, once extensions have stabilized, FORTH/BACK are implied
+    -- by the conjunction of earlier levels which already includes them).
+    --
+    -- For now, we use the self-stabilization ordinal plus the recursive bound.
+    -- At self-stabilization α₀: BFEquiv partition on M is fixed.
+    -- The formula scottFormula c α₀ is the "final M-type" of c.
+    -- Past α₀, the formulas can still change on non-M models, but each successor step
+    -- adds conjuncts built from FIXED M-types. The chain of conjuncts stabilizes
+    -- because the set of possible conjuncts is determined by M (countable).
+
+    -- Use the same approach as self-stabilization: for each (N, b) pair,
+    -- define the change point and show it contributes at most one bad ordinal.
+    -- The set of bad ordinals equals {pred(cp) | (N,b) with successor change point}.
+    -- This set is bounded by the self-stabilization analysis applied to formulas.
+
+    -- Proof by contradiction using the descent property of bad ordinals.
+    -- A "bad ordinal" for (n, a) is an ordinal α where ∃ (N, b) with
+    -- BFEquiv α n a b ∧ ¬BFEquiv (succ α) n a b.
+    --
+    -- Key descent property: from any bad ordinal α for (n, a, N, b), we can
+    -- find a strictly smaller bad ordinal for some extension (n+1, snoc a m, N, snoc b n').
+    --
+    -- If the bad ordinals for (n, a) were unbounded in ω₁, we could build an infinite
+    -- strictly decreasing sequence of ordinals, contradicting well-foundedness.
+    --
+    -- For successor α = succ β: BFEquiv (succ β) n a b gives forth at β, producing
+    -- n' with BFEquiv β (n+1). Since BFEquiv (succ(succ β)) fails, FORTH at succ β
+    -- fails, meaning BFEquiv (succ β) (n+1) fails for the witness n'. So β is bad
+    -- for (n+1, snoc a m, N, snoc b n').
+    --
+    -- For limit α: BFEquiv α = ∀ γ < α, BFEquiv γ. FORTH at α fails for some m:
+    -- ∀ n', ¬BFEquiv α (n+1) (snoc a m) (snoc b n'). For each n', BFEquiv fails
+    -- at some γ_n' < α. Since each γ_n' is a change point (successor ordinal),
+    -- the predecessor δ_n' < α is bad for the extension. Any such δ_n' < α works.
+    --
+    -- Formal proof using well-founded descent:
+    by_contra h_unbounded
+    push_neg at h_unbounded
+    -- h_unbounded : ∀ γ < ω₁, ∃ α ≥ γ, α < ω₁ ∧ succ α < ω₁ ∧
+    --   ∃ N, ∃ _ : L.Structure N, ∃ _ : Countable N, ∃ b,
+    --     ¬(BFEquiv α n a b ↔ BFEquiv (succ α) n a b)
+    -- Actually the negation is more complex. Let me restructure.
+    -- The claim is: ∃ γ < ω₁, ∀ α ≥ γ, α < ω₁ → succ α < ω₁ →
+    --   ∀ N b, BFEquiv α n a b ↔ BFEquiv (succ α) n a b.
+    -- Negation: ∀ γ < ω₁, ∃ α ≥ γ, α < ω₁ ∧ succ α < ω₁ ∧
+    --   ∃ N b, ¬(BFEquiv α n a b ↔ BFEquiv (succ α) n a b).
+    -- Since BFEquiv (succ α) → BFEquiv α (by of_succ), the iff fails only when
+    -- BFEquiv α holds but BFEquiv (succ α) doesn't.
+    -- So: ∃ N b, BFEquiv α n a b ∧ ¬BFEquiv (succ α) n a b.
+    sorry
+  -- Step 2: Extract per-tuple bound ordinals
+  choose boundOrd hboundOrd_lt hboundOrd_spec using hTuple
+  -- Step 3: Enumerate all tuples and take supremum
+  haveI : Countable (Σ n, Fin n → M) := inferInstance
+  by_cases hM_nonempty : Nonempty M
+  swap
+  · -- M is empty: complete stabilization is trivial
+    haveI : IsEmpty M := not_nonempty_iff.mp hM_nonempty
+    use 1
+    constructor
+    · -- 1 < ω₁
+      calc (1 : Ordinal) < ω := Ordinal.one_lt_omega0
+        _ ≤ Ordinal.omega 1 := Ordinal.omega0_le_omega 1
+    · intro n N _ _ a b
+      cases n with
+      | zero =>
+        constructor
+        · intro hBF
+          -- Since M is empty: a, b are Fin.elim0.
+          -- BFEquiv 1 0 means BFEquiv (succ 0), which requires
+          -- back: ∀ n' : N, ∃ m : M, ... For empty M this forces N empty.
+          have h1eq : (1 : Ordinal) = Order.succ 0 := by
+            rw [← Ordinal.add_one_eq_succ]; simp
+          rw [h1eq] at hBF ⊢
+          rw [BFEquiv.succ] at hBF
+          rw [BFEquiv.succ]
+          refine ⟨(BFEquiv.succ 0 a b).mpr hBF, fun m => isEmptyElim m, fun n' => ?_⟩
+          exact isEmptyElim (hBF.2.2 n').choose
+        · exact BFEquiv.of_succ
+      | succ k => exact (IsEmpty.false (a 0)).elim
+  haveI : Nonempty M := hM_nonempty
+  haveI : Nonempty (Σ n, Fin n → M) := ⟨⟨0, Fin.elim0⟩⟩
+  obtain ⟨enumTuples, hTuples_surj⟩ := exists_surjective_nat (Σ n, Fin n → M)
+  let globalStab : Ordinal.{0} := ⨆ k, boundOrd (enumTuples k) + 1
+  have hGlobalLt : globalStab < Ordinal.omega 1 := by
+    have hEachLt : ∀ k, boundOrd (enumTuples k) + 1 < (Cardinal.aleph 1).ord := by
+      intro k; rw [Cardinal.ord_aleph]
+      exact Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1)
+        (hboundOrd_lt (enumTuples k))
+    have hsup := Ordinal.iSup_sequence_lt_omega_one
+      (fun k => boundOrd (enumTuples k) + 1) hEachLt
+    rw [Cardinal.ord_aleph] at hsup
+    exact hsup
+  have hSuccGlobalLt : Order.succ globalStab < Ordinal.omega 1 :=
+    Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) hGlobalLt
+  use globalStab, hGlobalLt
+  intro n N _ _ a b
+  obtain ⟨k, hk⟩ := hTuples_surj ⟨n, a⟩
+  have hBdd : BddAbove (Set.range fun k => boundOrd (enumTuples k) + 1) :=
+    ⟨Ordinal.omega 1, fun _ ⟨m, hm⟩ => hm ▸ le_of_lt
+      (Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1)
+        (hboundOrd_lt (enumTuples m)))⟩
+  have hk_le : boundOrd ⟨n, a⟩ + 1 ≤ globalStab := by
+    have h := le_ciSup hBdd k
+    simp only [hk] at h
+    exact h
+  have hbound_le : boundOrd ⟨n, a⟩ ≤ globalStab :=
+    le_trans (Order.le_succ _) hk_le
+  exact hboundOrd_spec ⟨n, a⟩ globalStab hbound_le hGlobalLt hSuccGlobalLt N b
 
 omit [Countable (Σ l, L.Relations l)] in
 /-- At a complete stabilization ordinal, BFEquiv0 implies isomorphism for countable structures.
