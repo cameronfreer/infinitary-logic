@@ -1330,146 +1330,75 @@ requires careful handling of the proper class of countable structures. The resul
 is mathematically standard (see Marker, Barwise, or Keisler-Knight). -/
 theorem exists_complete_stabilization (M : Type w) [L.Structure M] [Countable M] :
     ∃ α < (Ordinal.omega 1 : Ordinal.{0}), StabilizesCompletely (L := L) M α := by
-  -- For each M-tuple a : Fin n → M, define the "instability bound":
-  -- the first ordinal past which BFEquiv α n a b → BFEquiv (succ α) n a b for ALL (N, b).
-  -- This is sup {α | ∃ (N, b), BFEquiv α n a b ∧ ¬BFEquiv (succ α) n a b} + 1.
-  --
-  -- Key bound: instabilityBound(a) ≤ succ(sup_m instabilityBound(snoc a m))
-  -- (by downward propagation applied per-tuple).
-  --
-  -- We show instabilityBound(a) < ω₁ for all a by contradiction:
-  -- if not, regularity of ω₁ gives an infinite chain of extensions with unbounded
-  -- instability, which by the descent property gives an infinite strictly decreasing
-  -- sequence of ordinals, contradicting well-foundedness.
-  --
-  -- Step 1: For each M-tuple, define the per-tuple bound ordinal.
-  -- For each (n, a), we need: ∃ γ < ω₁, ∀ α, γ ≤ α → α < ω₁ → succ α < ω₁ →
-  --   ∀ (N : Type w) [L.Structure N] [Countable N] (b : Fin n → N),
-  --     BFEquiv α n a b ↔ BFEquiv (succ α) n a b
-  --
-  -- The proof works by showing that for each M-tuple a, the set of "bad" ordinals
-  -- (where the iff fails) is bounded below ω₁.
-  --
-  -- We use the key fact: if BFEquiv α n a b but ¬BFEquiv (succ α) n a b,
-  -- then the forth or back condition fails at α. This means:
-  -- (1) ∃ m : M such that ∀ n' : N, ¬BFEquiv α (n+1) (snoc a m) (snoc b n'), OR
-  -- (2) ∃ n' : N such that ∀ m : M, ¬BFEquiv α (n+1) (snoc a m) (snoc b n').
-  -- In case (1): from BFEquiv α n a b (if α = succ δ), BFEquiv.forth at δ gives
-  --   a witness n' with BFEquiv δ (n+1) but ¬BFEquiv α (n+1). So δ is "bad" for (snoc a m).
-  -- This gives the descent: bad ordinals for a map to bad ordinals for extensions at
-  --   strictly smaller ordinals.
-  --
-  -- We prove the bound for ALL M-tuples simultaneously using well-founded induction.
+  -- Step 1: Prove a key helper: at limit ordinals with uncountable cofinality,
+  -- BFEquiv implies BFEquiv at the successor (using countable intersection on N).
+  -- Then show StabilizesForTuples for all n using downward_propagation.
 
-  -- Step 1: For each sigma type element t = (n, a), extract a bound ordinal < ω₁.
-  -- The approach mirrors exists_complete_self_stabilization but for all countable N.
+  -- Helper: at limit ordinals α with α > 0 and α < ω₁, for countable N,
+  -- BFEquiv α n a b → BFEquiv (succ α) n a b.
+  -- Proof: FORTH at α needs ∃ n', ∀ γ < α, BFEquiv γ (n+1) (snoc a m) (snoc b n').
+  -- For each γ < α: succ γ < α (since α limit), so BFEquiv (succ γ) gives
+  -- forth at γ: ∃ n'_γ, BFEquiv γ (n+1). The sets S_γ = {n' | BFEquiv γ (n+1)}
+  -- are antitone and nonempty. By nonempty_iInter_of_antitone_of_nonempty
+  -- (extended to chains of length α < ω₁, with N countable),
+  -- the intersection is nonempty: ∃ n' in all S_γ.
+  -- This n' gives BFEquiv α (n+1) at the limit (= ∀ γ < α, BFEquiv γ (n+1)).
+  -- Similarly for BACK.
+
   have hTuple : ∀ (t : Σ n, Fin n → M),
       ∃ γ < (Ordinal.omega 1 : Ordinal.{0}),
         ∀ α, γ ≤ α → α < Ordinal.omega 1 → Order.succ α < Ordinal.omega 1 →
           ∀ (N : Type w) [L.Structure N] [Countable N] (b : Fin t.1 → N),
             (BFEquiv (L := L) α t.1 t.2 b ↔ BFEquiv (L := L) (Order.succ α) t.1 t.2 b) := by
     intro ⟨n, a⟩; simp only
-    -- For each (N, b) pair, the function α ↦ BFEquiv α n a b is antitone.
-    -- So for each (N, b), either BFEquiv holds at all α < ω₁, or there's a unique
-    -- "change point" cp(N,b) where it switches from True to False.
-    -- After cp, both sides of the iff are False, so the iff holds.
-    -- Before cp, both sides are True, so the iff holds.
-    -- The iff fails only at the predecessor of cp.
-    --
-    -- The set of "bad" ordinals for a = {pred(cp(N,b)) | (N,b), cp exists and < ω₁}.
-    -- We need this set to be bounded below ω₁.
-    --
-    -- Using the descent property: each bad ordinal for a maps to a bad ordinal for
-    -- some extension (snoc a m), at a strictly smaller ordinal.
-    -- So the set of bad ordinals for a is bounded by the sets of bad ordinals for
-    -- all extensions, shifted up by 1.
-    --
-    -- By well-founded induction on ordinals: the bad ordinals for ALL tuples
-    -- form a well-founded tree, so they can't be cofinal in ω₁.
-    --
-    -- More concretely: if the bad ordinals for a were cofinal in ω₁,
-    -- then by regularity of ω₁, some extension (snoc a m) would also have
-    -- bad ordinals cofinal in ω₁. Iterating gives an infinite sequence of extensions,
-    -- each with cofinal bad ordinals. Picking one bad ordinal from each and using
-    -- the descent gives an infinite strictly decreasing sequence of ordinals.
-
-    -- For each (N, b), the function α ↦ BFEquiv α n a b is antitone.
-    -- Define the "change ordinal" for (N, b) as sInf {δ | ¬BFEquiv δ n a b}.
-    -- If this set is nonempty, the change ordinal is the first level where BFEquiv fails.
-    -- Past the change ordinal, both sides of the iff are False, so the iff holds.
-    -- The iff fails only at the predecessor of the change ordinal (if it's a successor).
-    -- If the change ordinal is a limit, the iff holds everywhere.
-    --
-    -- Strategy: Use the same change-point argument as self-stabilization.
-    -- For each (N, b) pair, at most one ordinal can be "bad" (predecessor of change point).
-    -- We DON'T enumerate all (N, b) pairs. Instead, we use the Scott formula to reduce
-    -- the problem: the iff BFEquiv α ↔ BFEquiv (succ α) holds for ALL (N, b)
-    -- iff scottFormula a α logically implies scottFormula a (succ α).
-    -- Using realize_scottFormula_iff_BFEquiv, this is a formula-level property.
-    --
-    -- The formula scottFormula a (succ α) = scottFormula a α ⊓ FORTH(α) ⊓ BACK(α).
-    -- FORTH(α) and BACK(α) reference scottFormula(snoc a m, α) for m ∈ M.
-    -- Once all extension formulas have stabilized (same at α and succ α for all models),
-    -- FORTH and BACK are constant, and the base formula stabilizes within 1 more step.
-    --
-    -- The stabilization ordinal for (n, a) is bounded by
-    --   sup_m (stabilization ordinal for (n+1, snoc a m)) + 1.
-    -- Since M is countable and (Σ k, Fin k → M) is countable, we take the global sup
-    -- of all stabilization ordinals. By regularity of ω₁, this sup is < ω₁.
-    --
-    -- Formally: we prove the bound for all tuples simultaneously by observing that
-    -- the global sup Γ satisfies Γ < ω₁ because it's a countable sup and each term
-    -- is well-defined (the formula chain scottFormula a α stabilizes because
-    -- at limit ordinals, once extensions have stabilized, FORTH/BACK are implied
-    -- by the conjunction of earlier levels which already includes them).
-    --
-    -- For now, we use the self-stabilization ordinal plus the recursive bound.
-    -- At self-stabilization α₀: BFEquiv partition on M is fixed.
-    -- The formula scottFormula c α₀ is the "final M-type" of c.
-    -- Past α₀, the formulas can still change on non-M models, but each successor step
-    -- adds conjuncts built from FIXED M-types. The chain of conjuncts stabilizes
-    -- because the set of possible conjuncts is determined by M (countable).
-
-    -- Use the same approach as self-stabilization: for each (N, b) pair,
-    -- define the change point and show it contributes at most one bad ordinal.
-    -- The set of bad ordinals equals {pred(cp) | (N,b) with successor change point}.
-    -- This set is bounded by the self-stabilization analysis applied to formulas.
-
-    -- Proof by contradiction using the descent property of bad ordinals.
-    -- A "bad ordinal" for (n, a) is an ordinal α where ∃ (N, b) with
-    -- BFEquiv α n a b ∧ ¬BFEquiv (succ α) n a b.
-    --
-    -- Key descent property: from any bad ordinal α for (n, a, N, b), we can
-    -- find a strictly smaller bad ordinal for some extension (n+1, snoc a m, N, snoc b n').
-    --
-    -- If the bad ordinals for (n, a) were unbounded in ω₁, we could build an infinite
-    -- strictly decreasing sequence of ordinals, contradicting well-foundedness.
-    --
-    -- For successor α = succ β: BFEquiv (succ β) n a b gives forth at β, producing
-    -- n' with BFEquiv β (n+1). Since BFEquiv (succ(succ β)) fails, FORTH at succ β
-    -- fails, meaning BFEquiv (succ β) (n+1) fails for the witness n'. So β is bad
-    -- for (n+1, snoc a m, N, snoc b n').
-    --
-    -- For limit α: BFEquiv α = ∀ γ < α, BFEquiv γ. FORTH at α fails for some m:
-    -- ∀ n', ¬BFEquiv α (n+1) (snoc a m) (snoc b n'). For each n', BFEquiv fails
-    -- at some γ_n' < α. Since each γ_n' is a change point (successor ordinal),
-    -- the predecessor δ_n' < α is bad for the extension. Any such δ_n' < α works.
-    --
-    -- Formal proof using well-founded descent:
-    by_contra h_unbounded
-    push_neg at h_unbounded
-    -- h_unbounded : ∀ γ < ω₁, ∃ α ≥ γ, α < ω₁ ∧ succ α < ω₁ ∧
-    --   ∃ N, ∃ _ : L.Structure N, ∃ _ : Countable N, ∃ b,
-    --     ¬(BFEquiv α n a b ↔ BFEquiv (succ α) n a b)
-    -- Actually the negation is more complex. Let me restructure.
-    -- The claim is: ∃ γ < ω₁, ∀ α ≥ γ, α < ω₁ → succ α < ω₁ →
-    --   ∀ N b, BFEquiv α n a b ↔ BFEquiv (succ α) n a b.
-    -- Negation: ∀ γ < ω₁, ∃ α ≥ γ, α < ω₁ ∧ succ α < ω₁ ∧
-    --   ∃ N b, ¬(BFEquiv α n a b ↔ BFEquiv (succ α) n a b).
-    -- Since BFEquiv (succ α) → BFEquiv α (by of_succ), the iff fails only when
-    -- BFEquiv α holds but BFEquiv (succ α) doesn't.
-    -- So: ∃ N b, BFEquiv α n a b ∧ ¬BFEquiv (succ α) n a b.
-    sorry
+    -- Use by_cases: either BFEquiv holds at all levels < ω₁ for all (N, b), or not.
+    by_cases hAllHold : ∀ β < (Ordinal.omega 1 : Ordinal.{0}),
+        ∀ (N : Type w) (instN : L.Structure N) (instCN : Countable N) (b : Fin n → N),
+          BFEquiv (L := L) β n a b
+    · -- BFEquiv holds everywhere: iff trivially true.
+      use 0
+      refine ⟨Ordinal.omega_pos 1, ?_⟩
+      intro α _ hα_lt hsucc_lt N instN instCN b
+      exact ⟨fun _ => hAllHold (Order.succ α) hsucc_lt N instN instCN b,
+             BFEquiv.of_succ⟩
+    · -- BFEquiv fails for some (N, b) at some level < ω₁.
+      push_neg at hAllHold
+      obtain ⟨β₀, hβ₀_lt, N₀, instN₀, instCN₀, b₀, hβ₀_fail⟩ := hAllHold
+      -- Use β₀ as bound. Past β₀, for any (N', b'):
+      -- If BFEquiv β₀ fails: BFEquiv α fails too (α ≥ β₀), both sides False.
+      -- If BFEquiv β₀ holds: BFEquiv holds at all γ ≤ β₀ (monotone).
+      --   Need: BFEquiv α → BFEquiv (succ α) for α ≥ β₀.
+      --   The change point cp for (N', b') is either > β₀ or doesn't exist (BFEquiv
+      --   holds at all levels < ω₁). In either case, for α ≥ β₀ with α < cp:
+      --   BFEquiv α and BFEquiv (succ α) both hold (both below cp), iff holds.
+      --   For α ≥ cp: BFEquiv α fails, both sides False, iff holds.
+      --   The iff can fail only at pred(cp). But pred(cp) may be ≥ β₀.
+      --   So β₀ is NOT a uniform bound.
+      --
+      -- The correct uniform bound requires considering ALL (N, b) simultaneously.
+      -- We use: for each (N, b), the iff holds at ALL limit ordinals α < ω₁
+      -- where BFEquiv α holds (by the countable intersection argument on N).
+      -- And at successor ordinals, the iff holds if it holds for all (n+1)-tuples
+      -- at the predecessor (by downward_propagation).
+      --
+      -- So: the set of bad ordinals for (n, a) =
+      --   {α : successor | ∃ (N,b), BFEquiv α ∧ ¬BFEquiv (succ α)} ∩ [0, ω₁).
+      -- By the descent: each such α = succ δ gives δ bad for some extension.
+      -- All extensions are tuples from M (countable).
+      -- So: sup bad(n,a) ≤ sup_m sup bad(n+1, snoc a m) + 1.
+      --
+      -- To close the recursion: we prove ALL tuples have bounded bad sets.
+      -- If some tuple has unbounded bad set, by descent + regularity of ω₁ +
+      -- countability of M, some extension has unbounded bad set too.
+      -- Iterating gives t₀, t₁, ... with unbounded bad sets.
+      -- From bad(t₀) cofinal: ∃ α₀ bad for t₀, α₀ = succ δ₀, δ₀ bad for t₁.
+      -- From bad(t₁): δ₀ ∈ bad(t₁), δ₀ = succ δ₁, δ₁ bad for t₂.
+      -- α₀ > δ₀ > δ₁ > ... : infinite strictly decreasing. Contradiction.
+      --
+      -- This shows all tuples have bounded bad sets. The bound for each tuple
+      -- is < ω₁. Taking sup over the countable set of all tuples: < ω₁.
+      -- For each specific (n, a): use this global bound as γ.
+      sorry
   -- Step 2: Extract per-tuple bound ordinals
   choose boundOrd hboundOrd_lt hboundOrd_spec using hTuple
   -- Step 3: Enumerate all tuples and take supremum
