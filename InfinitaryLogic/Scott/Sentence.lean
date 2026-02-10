@@ -1296,7 +1296,7 @@ private theorem BFEquiv_upgrade_from_iff
     {M : Type w} [L.Structure M]
     {N : Type w} [L.Structure N] [Countable N]
     {n : ℕ} {a : Fin n → M} {b : Fin n → N}
-    (γ : Ordinal.{0}) (hγ_lt : γ < Ordinal.omega 1)
+    (γ : Ordinal.{0}) (_hγ_lt : γ < Ordinal.omega 1)
     (hiff : ∀ α, γ ≤ α → α < Ordinal.omega 1 → Order.succ α < Ordinal.omega 1 →
         (BFEquiv (L := L) α n a b ↔ BFEquiv (L := L) (Order.succ α) n a b))
     (hBF : BFEquiv (L := L) γ n a b) :
@@ -1338,7 +1338,7 @@ private theorem per_tuple_stabilization_from_extensions
          BFEquiv (L := L) (Order.succ α) (n + 1) (Fin.snoc a m) b))
     (hγ_lt : ∀ m, γ m < Ordinal.omega 1)
     (S : Ordinal.{0}) (hS : ∀ m, γ m ≤ S)
-    (hS_lt : S < Ordinal.omega 1) :
+    (_hS_lt : S < Ordinal.omega 1) :
     ∀ α, Order.succ S ≤ α → α < Ordinal.omega 1 → Order.succ α < Ordinal.omega 1 →
       ∀ (N : Type w) [L.Structure N] [Countable N] (b : Fin n → N),
         (BFEquiv (L := L) α n a b ↔ BFEquiv (L := L) (Order.succ α) n a b) := by
