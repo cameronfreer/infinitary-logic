@@ -59,14 +59,9 @@ noncomputable def scottRank (M : Type w) [L.Structure M] [Countable M] : Ordinal
 
 /-- At the stabilization ordinal, for any element m, the defining set of elementRank is nonempty.
 
-Strategy: We show that the stabilization ordinal is in the defining set by proving that
-at this level, BFEquiv behavior is determined by isomorphism. Specifically:
-- If BFEquiv (stab) 1 ![m] b holds, the structures M and N are isomorphic
-- Isomorphism at the stabilization level means BFEquiv holds at all higher levels
-- Hence the iff in the defining set is trivially true (both sides true or both false based on iso)
-
-The key insight is that at stabilization ordinal, having BFEquiv for a singleton tuple implies
-there's an isomorphism extending the partial map m ↦ b(0). -/
+Note: This theorem is no longer used by `elementRank_lt_omega1` or `scottRank_lt_omega1`,
+which now go through `completeStab_mem_elementRank_set` and `exists_complete_stabilization`
+instead. It is kept for potential future use. -/
 private theorem stabilizationOrdinal_mem_elementRank_set {M : Type w} [L.Structure M] [Countable M]
     (m : M) : stabilizationOrdinal (L := L) M ∈
     {α : Ordinal.{0} | ∀ (N : Type w) [L.Structure N] [Countable N] (b : Fin 1 → N),
@@ -75,146 +70,57 @@ private theorem stabilizationOrdinal_mem_elementRank_set {M : Type w} [L.Structu
           BFEquiv (L := L) (M := M) (N := N') α 1 ![m] b' →
             (BFEquiv (L := L) (M := M) (N := N) (Order.succ α) 1 ![m] b ↔
              BFEquiv (L := L) (M := M) (N := N') (Order.succ α) 1 ![m] b')} := by
+  sorry
+
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
+/-- At a complete stabilization ordinal, the elementRank defining set is satisfied trivially:
+`StabilizesCompletely M α` gives `BFEquiv α ↔ BFEquiv (succ α)` for all tuples, so both
+directions of the iff hold. -/
+private theorem completeStab_mem_elementRank_set {M : Type w} [L.Structure M] [Countable M]
+    {α : Ordinal.{0}} (hstab : StabilizesCompletely (L := L) M α) (m : M) :
+    α ∈ {α : Ordinal.{0} | ∀ (N : Type w) [L.Structure N] [Countable N] (b : Fin 1 → N),
+      BFEquiv (L := L) (M := M) (N := N) α 1 ![m] b →
+        ∀ (N' : Type w) [L.Structure N'] [Countable N'] (b' : Fin 1 → N'),
+          BFEquiv (L := L) (M := M) (N := N') α 1 ![m] b' →
+            (BFEquiv (L := L) (M := M) (N := N) (Order.succ α) 1 ![m] b ↔
+             BFEquiv (L := L) (M := M) (N := N') (Order.succ α) 1 ![m] b')} := by
   intro N _ _ b hBFN N' _ _ b' hBFN'
-  /-
-  At the stabilization ordinal:
-  - The stabilization ordinal is ≥ ω (actually = ω, but we only need ≥)
-  - Wait, this is not true. The stabilization ordinal could be < ω for some structures.
-    However, we know ω ∈ the stabilization set, so stabilizationOrdinal ≤ ω.
-  - For the proof, we need to show that at stabilizationOrdinal, having BFEquiv for singleton
-    tuples allows us to build isomorphisms.
+  exact ⟨fun _ => (hstab 1 N' ![m] b').mp hBFN', fun _ => (hstab 1 N ![m] b).mp hBFN⟩
 
-  Actually, the key insight is different:
-  - StabilizesAt α means BFEquiv0 α ↔ isomorphism
-  - We need: BFEquiv α 1 ![m] b implies BFEquiv (succ α) 1 ![m] b ↔ similarly for b'
-
-  At stabilization ordinal, if BFEquiv (stab) 1 ![m] b holds:
-  - We need to know if this implies M ≃ N (to then use equiv_implies_BFEquiv)
-  - The issue: BFEquiv for singleton ≠ BFEquiv0
-
-  Alternative approach: at sufficiently high ordinals (≥ ω), BFEquiv for singletons implies
-  isomorphism extending the correspondence. We use BFEquiv_ge_omega_singleton_implies_equiv_with_image.
-
-  But stabilizationOrdinal might be < ω. So we need a different argument for that case.
-  -/
-  -- Case split on whether stabilizationOrdinal ≥ ω
-  by_cases hge : ω ≤ stabilizationOrdinal (L := L) M
-  · -- Case: stabilizationOrdinal ≥ ω
-    -- NOTE: This case uses BFEquiv_ge_omega_singleton_implies_equiv_with_image which has
-    -- a sorry. That sorry depends on solving the coherent ω-level extension problem.
-    -- See InfinitaryLogic/Scott/Sentence.lean "Important Limitation" section.
-    -- Convert b and b' to ![...] form for the theorem
-    have hb_eq : b = ![b 0] := by ext i; fin_cases i; rfl
-    have hb'_eq : b' = ![b' 0] := by ext i; fin_cases i; rfl
-    -- Get isomorphisms from BFEquiv at stabilizationOrdinal
-    have hBFN_form : BFEquiv (L := L) (stabilizationOrdinal (L := L) M) 1 ![m] ![b 0] := by
-      rw [← hb_eq]; exact hBFN
-    have hBFN'_form : BFEquiv (L := L) (stabilizationOrdinal (L := L) M) 1 ![m] ![b' 0] := by
-      rw [← hb'_eq]; exact hBFN'
-    obtain ⟨e, he⟩ := BFEquiv_ge_omega_singleton_implies_equiv_with_image hge hBFN_form
-    obtain ⟨e', he'⟩ := BFEquiv_ge_omega_singleton_implies_equiv_with_image hge hBFN'_form
-    -- From isomorphisms, get BFEquiv at all levels
-    -- he : e m = b 0, he' : e' m = b' 0
-    have hBF_succ_N : BFEquiv (L := L) (Order.succ (stabilizationOrdinal (L := L) M)) 1 ![m] b := by
-      have h := equiv_implies_BFEquiv e (Order.succ (stabilizationOrdinal (L := L) M)) 1 ![m]
-      -- h : BFEquiv ... ![m] (e ∘ ![m])
-      -- e ∘ ![m] = ![e m] = ![b 0] = b (by hb_eq)
-      have hcomp : e ∘ ![m] = b := by
-        rw [hb_eq]
-        ext i; fin_cases i
-        simp only [Function.comp_apply, Matrix.cons_val_fin_one, he]
-      rw [← hcomp]
-      exact h
-    have hBF_succ_N' : BFEquiv (L := L) (Order.succ (stabilizationOrdinal (L := L) M)) 1 ![m] b' := by
-      have h := equiv_implies_BFEquiv e' (Order.succ (stabilizationOrdinal (L := L) M)) 1 ![m]
-      have hcomp : e' ∘ ![m] = b' := by
-        rw [hb'_eq]
-        ext i; fin_cases i
-        simp only [Function.comp_apply, Matrix.cons_val_fin_one, he']
-      rw [← hcomp]
-      exact h
-    -- Both sides are true
-    exact ⟨fun _ => hBF_succ_N', fun _ => hBF_succ_N⟩
-  · -- Case: stabilizationOrdinal < ω
-    /-
-    **BLOCKED**: This case requires additional infrastructure.
-
-    **Attempted approach (language expansion)**:
-    The idea was to use L' = L[[Fin 1]] with constant c interpreted as m in M and b(0) in N.
-    Then BFEquiv L' α 0 [] [] would encode BFEquiv L α 1 ![m] ![b(0)].
-
-    **Problem**: L' = L[[Fin 1]] has constants (0-ary functions), so it's NOT relational.
-    Our BFEquiv and StabilizesAt machinery assumes [L.IsRelational].
-
-    **What's needed to complete this case**:
-    Option A: Extend BFEquiv/SameAtomicType to non-relational languages
-      - AtomicIdx would need to include terms built from function symbols
-      - This is significant work and changes the theory's scope
-
-    Option B: Use a different encoding that stays in relational languages
-      - E.g., add a unary relation R_m with R_m(x) ↔ x = m
-      - This requires extending the signature with a relation, not a constant
-      - L' = L.sum (Language.mk₂ Empty (λ _ => Empty) Empty (λ _ => Unit) Empty)
-      - Still requires showing BFEquiv transfers appropriately
-
-    Option C: Prove the ω ≤ stab case works for ALL structures
-      - Show that stabilizationOrdinal M ≥ ω always (i.e., nothing stabilizes before ω)
-      - This would make the finite case vacuously true
-      - Requires understanding when structures can stabilize early
-
-    Option D: Prove elementRank m ≤ stabilizationOrdinal M directly
-      - Without going through the membership condition
-      - Use the definition of elementRank as an infimum
-
-    For now, this sorry blocks the proof of scottRank_lt_omega1.
-    -/
-    sorry
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
+/-- The elementRank of any element is bounded by any complete stabilization ordinal. -/
+private theorem elementRank_le_completeStab {M : Type w} [L.Structure M] [Countable M]
+    {α : Ordinal.{0}} (hstab : StabilizesCompletely (L := L) M α) (m : M) :
+    elementRank (L := L) m ≤ α :=
+  csInf_le' (completeStab_mem_elementRank_set hstab m)
 
 theorem elementRank_lt_omega1 {M : Type w} [L.Structure M] [Countable M] (m : M) :
     elementRank (L := L) m < (Ordinal.omega 1 : Ordinal.{0}) := by
-  /-
-  Strategy: The stabilization ordinal is in the defining set of elementRank,
-  hence sInf ≤ stabilizationOrdinal < ω₁.
-  -/
-  unfold elementRank
-  have h_stab_lt := stabilizationOrdinal_lt_omega1' (L := L) M
-  apply lt_of_le_of_lt _ h_stab_lt
-  exact csInf_le' (stabilizationOrdinal_mem_elementRank_set m)
+  obtain ⟨α, hα_lt, hstab⟩ := exists_complete_stabilization (L := L) M
+  exact lt_of_le_of_lt (elementRank_le_completeStab hstab m) hα_lt
 
 /-- Scott rank of a countable structure is a countable ordinal.
 
 The proof uses that:
-1. M is countable, so we're taking the sup of countably many ordinals
-2. Each elementRank m ≤ stabilizationOrdinal M (by definition)
-3. stabilizationOrdinal M < ω₁
-4. Adding 1 and taking sup over countable set preserves < ω₁
+1. Each elementRank m ≤ α for a complete stabilization ordinal α < ω₁
+2. So scottRank = ⨆ m, elementRank m + 1 ≤ α + 1 < ω₁
 -/
 theorem scottRank_lt_omega1 (M : Type w) [L.Structure M] [Countable M] :
     scottRank (L := L) M < (Ordinal.omega 1 : Ordinal.{0}) := by
-  -- scottRank M = ⨆ (m : M), elementRank m + 1
-  -- Each elementRank m ≤ stabilizationOrdinal by definition
-  -- So scottRank ≤ stabilizationOrdinal + 1 < ω₁
+  obtain ⟨α, hα_lt, hstab⟩ := exists_complete_stabilization (L := L) M
   unfold scottRank
-  have h_stab := stabilizationOrdinal_lt_omega1' (L := L) M
   have h_limit : Order.IsSuccLimit (Ordinal.omega (1 : Ordinal.{0})) :=
     Cardinal.isSuccLimit_omega 1
-  -- Each elementRank m ≤ stabilizationOrdinal M
-  have h_bound : ∀ m : M, elementRank (L := L) m ≤ stabilizationOrdinal (L := L) M := by
-    intro m
-    exact csInf_le' (stabilizationOrdinal_mem_elementRank_set m)
-  -- So elementRank m + 1 ≤ stabilizationOrdinal + 1
-  have h_bound' : ∀ m : M, elementRank (L := L) m + 1 ≤ stabilizationOrdinal (L := L) M + 1 := by
+  have h_bound : ∀ m : M, elementRank (L := L) m ≤ α :=
+    fun m => elementRank_le_completeStab hstab m
+  have h_bound' : ∀ m : M, elementRank (L := L) m + 1 ≤ α + 1 := by
     intro m
     have h := (Ordinal.add_le_add_iff_right 1).mpr (h_bound m)
     convert h using 2 <;> simp [Nat.cast_one]
-  -- Handle empty M case
   by_cases h_nonempty : Nonempty M
-  · -- The sup is bounded by stabilizationOrdinal + 1
-    calc ⨆ m, elementRank (L := L) m + 1 ≤ stabilizationOrdinal (L := L) M + 1 :=
-        ciSup_le h_bound'
-      _ < Ordinal.omega 1 := h_limit.succ_lt h_stab
-  · -- M is empty, so scottRank = 0 < ω₁
-    haveI : IsEmpty M := not_nonempty_iff.mp h_nonempty
+  · calc ⨆ m, elementRank (L := L) m + 1 ≤ α + 1 := ciSup_le h_bound'
+      _ < Ordinal.omega 1 := h_limit.succ_lt hα_lt
+  · haveI : IsEmpty M := not_nonempty_iff.mp h_nonempty
     have h_zero : (⨆ (m : M), elementRank (L := L) m + 1) = 0 := by
       rw [Ordinal.iSup_eq_zero_iff]
       intro m
