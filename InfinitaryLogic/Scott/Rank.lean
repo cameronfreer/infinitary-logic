@@ -127,6 +127,9 @@ Note: This theorem involves comparing ordinals potentially in different universe
 (stabilizationOrdinal is in Ordinal.{0}, scottRank is in Ordinal.{w}).
 The comparison is well-defined when both ordinals are below ω₁.
 
+**Not on critical path**: Only called by `scottSentence_equiv_scottFormula_rank` (no callers).
+The critical path goes through `exists_complete_stabilization → scottSentence_characterizes`.
+
 **BLOCKED**: This theorem requires showing StabilizesAt M (scottRank M). This in turn
 requires showing that BFEquiv0 at scottRank implies isomorphism, which has the same
 issues as BFEquiv_omega_implies_equiv (coherent ω-level extensions).

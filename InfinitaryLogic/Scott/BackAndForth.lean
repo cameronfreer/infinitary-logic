@@ -88,9 +88,9 @@ At a complete stabilization ordinal, forth/back witnesses stay at the same level
 so the standard back-and-forth closes without quantifier swap issues.
 
 **Important**: BFEquiv ω is equivalent to elementary equivalence (winning all finite EF games),
-which does NOT imply isomorphism. See `BFEquiv_omega_iff_forall_finite` in Sentence.lean.
-Potential counterexamples in relational languages include equivalence relations with
-matching finite-class structure but different arrangements of infinite classes.
+which does NOT imply isomorphism. Potential counterexamples in relational languages include
+equivalence relations with matching finite-class structure but different arrangements of
+infinite classes.
 -/
 
 universe u v w w'

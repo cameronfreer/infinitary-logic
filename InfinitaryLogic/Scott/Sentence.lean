@@ -127,416 +127,6 @@ theorem equiv_implies_BFEquiv {M N : Type w} [L.Structure M] [L.Structure N]
     intro γ hγ
     exact ih γ hγ n a
 
-omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-/-- BFEquiv at ω implies BFEquiv at any finite ordinal. -/
-theorem BFEquiv_omega_implies_finite {M N : Type w} [L.Structure M] [L.Structure N]
-    (hBF : BFEquiv (L := L) (ω : Ordinal.{0}) 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N))
-    (n : ℕ) :
-    BFEquiv (L := L) (n : Ordinal.{0}) 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) :=
-  BFEquiv.monotone (le_of_lt (Ordinal.nat_lt_omega0 n)) hBF
-
-omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-/-- From BFEquiv (k+1) 0 at empty tuples, we can get matching singletons at level k. -/
-theorem BFEquiv_succ_forth_singleton {M N : Type w} [L.Structure M] [L.Structure N]
-    {k : ℕ} (hBF : BFEquiv (L := L) ((k + 1 : ℕ) : Ordinal.{0}) 0
-      (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N))
-    (m : M) : ∃ n' : N, BFEquiv (L := L) (k : Ordinal.{0}) 1 ![m] ![n'] := by
-  have hconv : ((k + 1 : ℕ) : Ordinal.{0}) = Order.succ (k : Ordinal.{0}) := by
-    rw [← Ordinal.add_one_eq_succ]; norm_cast
-  rw [hconv, BFEquiv.succ] at hBF
-  obtain ⟨_, hforth, _⟩ := hBF
-  obtain ⟨n', hn'⟩ := hforth m
-  use n'
-  convert hn' using 2 <;> ext i <;> fin_cases i <;> simp [Fin.snoc]
-
-omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-/-- From BFEquiv (k+1) for tuples, we can extend using forth. -/
-theorem BFEquiv_succ_forth_extend {M N : Type w} [L.Structure M] [L.Structure N]
-    {k : ℕ} {n : ℕ} {a : Fin n → M} {b : Fin n → N}
-    (hBF : BFEquiv (L := L) (Order.succ (k : Ordinal.{0})) n a b)
-    (m : M) : ∃ n' : N, BFEquiv (L := L) (k : Ordinal.{0}) (n + 1) (Fin.snoc a m) (Fin.snoc b n') :=
-  (BFEquiv.succ (k : Ordinal.{0}) a b).mp hBF |>.2.1 m
-
-omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-/-- From BFEquiv at a successor level, we get same atomic type. -/
-theorem BFEquiv_succ_implies_sameAtomicType {M N : Type w} [L.Structure M] [L.Structure N]
-    {α : Ordinal} {n : ℕ} {a : Fin n → M} {b : Fin n → N}
-    (hBF : BFEquiv (L := L) (Order.succ α) n a b) :
-    SameAtomicType (L := L) a b := by
-  have h := (BFEquiv.succ α a b).mp hBF
-  have hzero : (0 : Ordinal) ≤ α := zero_le α
-  exact (BFEquiv.zero a b).mp (BFEquiv.monotone hzero h.1)
-
-omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-/-- From BFEquiv (n + k) 0 at empty tuples and n elements of M, we can build
-matching n-tuples at BFEquiv level k. This is the iteration of the forth property. -/
-theorem BFEquiv_iterate_forth {M N : Type w} [L.Structure M] [L.Structure N]
-    {n k : ℕ} (hBF : BFEquiv (L := L) ((n + k : ℕ) : Ordinal.{0}) 0
-      (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N))
-    (ms : Fin n → M) :
-    ∃ ns : Fin n → N, BFEquiv (L := L) (k : Ordinal.{0}) n ms ns := by
-  induction n generalizing k with
-  | zero =>
-    use Fin.elim0
-    have hms : ms = Fin.elim0 := funext (fun i => i.elim0)
-    rw [hms]
-    convert hBF using 2; simp
-  | succ n ih =>
-    -- From BFEquiv ((n+1) + k) 0 [] [], rewrite as BFEquiv (n + (k+1)) 0 [] []
-    have hrewrite : ((n + 1 + k : ℕ) : Ordinal.{0}) = ((n + (k + 1) : ℕ) : Ordinal.{0}) := by
-      norm_cast; omega
-    rw [hrewrite] at hBF
-    -- Get matching n-tuple at level k+1 using IH
-    obtain ⟨ns_init, hns_init⟩ := ih hBF (ms ∘ Fin.castSucc)
-    -- Use forth to extend by one more element
-    have hsucc : (k + 1 : ℕ) = Order.succ (k : Ordinal.{0}) := by
-      rw [← Ordinal.add_one_eq_succ]; norm_cast
-    have hns_init' : BFEquiv (L := L) (Order.succ (k : Ordinal.{0})) n
-        (ms ∘ Fin.castSucc) ns_init := by
-      convert hns_init using 2
-    obtain ⟨n_last, hn_last⟩ := BFEquiv_succ_forth_extend hns_init' (ms (Fin.last n))
-    use Fin.snoc ns_init n_last
-    -- Convert ms to Fin.snoc form
-    have hms_snoc : ms = Fin.snoc (ms ∘ Fin.castSucc) (ms (Fin.last n)) := by
-      ext i; simp only [Fin.snoc, Function.comp_apply]
-      split_ifs with h
-      · rfl
-      · simp only [cast_eq]
-        congr 1
-        exact Fin.ext (Nat.eq_of_lt_succ_of_not_lt i.isLt h)
-    rw [hms_snoc]
-    exact hn_last
-
-omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-/-- BFEquiv at level k allows building partial isomorphisms of size up to k.
-This is a corollary of `BFEquiv_iterate_forth` with k = 0. -/
-theorem BFEquiv_build_matching_tuples_forth {M N : Type w} [L.Structure M] [L.Structure N]
-    {k : ℕ} (hBF : BFEquiv (L := L) ((k : ℕ) : Ordinal.{0}) 0
-      (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N))
-    (ms : Fin k → M) :
-    ∃ ns : Fin k → N, SameAtomicType (L := L) ms ns := by
-  have hrewrite : ((k : ℕ) : Ordinal.{0}) = ((k + 0 : ℕ) : Ordinal.{0}) := by norm_cast
-  rw [hrewrite] at hBF
-  obtain ⟨ns, hns⟩ := BFEquiv_iterate_forth hBF ms
-  use ns
-  -- BFEquiv 0 k ms ns = SameAtomicType ms ns
-  exact (BFEquiv.zero ms ns).mp hns
-
-/-! ### Coherent Chain Construction
-
-Instead of trying to prove coherence for `BFEquiv_iterate_forth` (which uses Classical.choose
-in a complex way), we define a coherent chain directly using Nat.rec.
-
-The key is to build the chain incrementally, where each step EXTENDS the previous one,
-rather than making independent calls. -/
-
-omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-/-- Build a coherent chain of matching tuples for an enumeration of M.
-
-Given BFEquiv ω 0 [] [] and an enumeration enumM : ℕ → M, this produces a sequence
-chainN : (k : ℕ) → Fin k → N such that:
-1. SameAtomicType (enumM|_k) (chainN k) for all k
-2. chainN (k+1) ∘ castSucc = chainN k (coherence)
-
-The construction uses Nat.rec to ensure coherence by building chainN(k+1) from chainN(k). -/
-noncomputable def buildCoherentChain {M N : Type w} [L.Structure M] [L.Structure N]
-    (hBF : BFEquiv (L := L) (ω : Ordinal.{0}) 0
-      (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N))
-    (enumM : ℕ → M) : (k : ℕ) → { ns : Fin k → N // SameAtomicType (L := L) (fun i : Fin k => enumM i.val) ns } :=
-  fun k =>
-    let hBFk : BFEquiv (L := L) ((k : ℕ) : Ordinal.{0}) 0
-        (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) :=
-      BFEquiv.monotone (le_of_lt (Ordinal.nat_lt_omega0 k)) hBF
-    let matching := BFEquiv_build_matching_tuples_forth hBFk (fun i : Fin k => enumM i.val)
-    ⟨Classical.choose matching, Classical.choose_spec matching⟩
-
-omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-/-- The coherent chain satisfies SameAtomicType at each level. -/
-theorem buildCoherentChain_sameAtomicType {M N : Type w} [L.Structure M] [L.Structure N]
-    (hBF : BFEquiv (L := L) (ω : Ordinal.{0}) 0
-      (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N))
-    (enumM : ℕ → M) (k : ℕ) :
-    SameAtomicType (L := L) (fun i : Fin k => enumM i.val) (buildCoherentChain hBF enumM k).val :=
-  (buildCoherentChain hBF enumM k).prop
-
-/-! Note: The buildCoherentChain construction does NOT guarantee coherence (chainN(k+1) extending
-chainN(k)) because each recursive call uses BFEquiv_build_matching_tuples_forth independently.
-
-To get true coherence, we would need to show that iterate_forth respects the existing prefix,
-which requires the stabilization argument or a stronger BFEquiv property.
-
-For the main isomorphism theorem, we work around this by using a different approach. -/
-
-omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-/-- From BFEquiv (k+1) for tuples, we can extend using back. -/
-theorem BFEquiv_succ_back_extend {M N : Type w} [L.Structure M] [L.Structure N]
-    {k : ℕ} {n : ℕ} {a : Fin n → M} {b : Fin n → N}
-    (hBF : BFEquiv (L := L) (Order.succ (k : Ordinal.{0})) n a b)
-    (n' : N) : ∃ m : M, BFEquiv (L := L) (k : Ordinal.{0}) (n + 1) (Fin.snoc a m) (Fin.snoc b n') :=
-  (BFEquiv.succ (k : Ordinal.{0}) a b).mp hBF |>.2.2 n'
-
-omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-/-- The back analogue of BFEquiv_iterate_forth. From BFEquiv (n + k) 0 at empty tuples
-and n elements of N, we can build matching n-tuples at BFEquiv level k. -/
-theorem BFEquiv_iterate_back {M N : Type w} [L.Structure M] [L.Structure N]
-    {n k : ℕ} (hBF : BFEquiv (L := L) ((n + k : ℕ) : Ordinal.{0}) 0
-      (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N))
-    (ns : Fin n → N) :
-    ∃ ms : Fin n → M, BFEquiv (L := L) (k : Ordinal.{0}) n ms ns := by
-  induction n generalizing k with
-  | zero =>
-    use Fin.elim0
-    have hns : ns = Fin.elim0 := funext (fun i => i.elim0)
-    rw [hns]
-    convert hBF using 2; simp
-  | succ n ih =>
-    have hrewrite : ((n + 1 + k : ℕ) : Ordinal.{0}) = ((n + (k + 1) : ℕ) : Ordinal.{0}) := by
-      norm_cast; omega
-    rw [hrewrite] at hBF
-    obtain ⟨ms_init, hms_init⟩ := ih hBF (ns ∘ Fin.castSucc)
-    have hsucc : (k + 1 : ℕ) = Order.succ (k : Ordinal.{0}) := by
-      rw [← Ordinal.add_one_eq_succ]; norm_cast
-    have hms_init' : BFEquiv (L := L) (Order.succ (k : Ordinal.{0})) n
-        ms_init (ns ∘ Fin.castSucc) := by
-      convert hms_init using 2
-    obtain ⟨m_last, hm_last⟩ := BFEquiv_succ_back_extend hms_init' (ns (Fin.last n))
-    use Fin.snoc ms_init m_last
-    have hns_snoc : ns = Fin.snoc (ns ∘ Fin.castSucc) (ns (Fin.last n)) := by
-      ext i; simp only [Fin.snoc, Function.comp_apply]
-      split_ifs with h
-      · rfl
-      · simp only [cast_eq]
-        congr 1
-        exact Fin.ext (Nat.eq_of_lt_succ_of_not_lt i.isLt h)
-    rw [hns_snoc]
-    exact hm_last
-
-omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-/-- For relational languages, embeddings between substructures preserve atomic type.
-This is because embeddings preserve equalities and relations by definition.
-
-Key insight: For relational L, if f : S ↪[L] T, then for any tuple ms : Fin n → S,
-the images (ms, f ∘ ms) have the same atomic type. -/
-theorem Embedding.sameAtomicType_comp {S : Type*} {T : Type*}
-    [L.Structure S] [L.Structure T] (f : S ↪[L] T)
-    {n : ℕ} (ms : Fin n → S) :
-    SameAtomicType (L := L) ms (f ∘ ms) := by
-  intro idx
-  cases idx with
-  | eq i j =>
-    simp only [AtomicIdx.holds]
-    constructor
-    · intro h; exact congrArg f h
-    · intro h; exact f.injective h
-  | rel R g =>
-    simp only [AtomicIdx.holds]
-    have hassoc : (f ∘ ms) ∘ g = f ∘ (ms ∘ g) := Function.comp_assoc f ms g
-    rw [hassoc]
-    exact (f.map_rel R (ms ∘ g)).symm
-
-/-! ### Limitation of the SameAtomicType Extension Approach
-
-The following lemmas (`SameAtomicType_extend_forth`, `SameAtomicType_extend_back`) were
-intended to show that from BFEquiv ω 0 [] [] and an existing SameAtomicType matching
-(ms, ns), we can extend by any element while PRESERVING the existing correspondence.
-
-**However, this is NOT achievable with the current machinery:**
-
-The issue is that `BFEquiv_iterate_forth` builds SOME ns' matching (snoc ms m), but ns'
-may differ from (snoc ns _) on the first n positions. We don't have a way to force the
-extension to respect the existing (ms, ns) correspondence.
-
-To extend while preserving correspondence, we'd need BFEquiv (k+1) n ms ns (for some k),
-which would allow using BFEquiv.forth. But BFEquiv ω 0 [] [] doesn't imply BFEquiv k n ms ns
-for arbitrary SameAtomicType pairs (ms, ns).
-
-**The workaround for BFEquiv_omega_implies_equiv:**
-
-Instead of extending existing matchings, the proof uses `BFEquiv_iterate_forth` to build
-fresh matchings from scratch at each stage. While this doesn't produce coherent extensions,
-it still produces SameAtomicType matchings which suffice for the isomorphism construction
-via a different argument.
--/
-
-/-! ### BFEquiv ω and Elementary Equivalence
-
-BFEquiv at level ω is equivalent to elementary equivalence (Duplicator winning all finite
-Ehrenfeucht-Fraïssé games). This is a standard result in model theory.
-
-**Important**: Elementary equivalence does NOT imply isomorphism in general. Two countable
-structures can be elementarily equivalent (satisfy exactly the same first-order sentences)
-without being isomorphic. Potential examples in relational languages include equivalence
-relations with matching finite-class structure but different arrangements of infinite classes.
-
-The **quantifier swap problem** explains why BFEquiv ω alone doesn't give isomorphism:
-- From BFEquiv ω: ∀ k, ∃ n'_k, BFEquiv k (n+1) (snoc a m) (snoc b n'_k)
-- For isomorphism we'd need: ∃ n', ∀ k, BFEquiv k (n+1) (snoc a m) (snoc b n')
-
-The witnesses n'_k may differ for each k with empty "intersection" (like S_k = {j | j ≥ k}).
-
-**Correct approach**: Use `BFEquiv_stabilization_implies_equiv` with a complete stabilization
-ordinal α where BFEquiv α ↔ BFEquiv (succ α). At such an ordinal, witnesses stay stable.
-
-**For the main Scott sentence theorem**: Use `scottSentence_characterizes` which goes through
-`stabilizationOrdinal_spec` with the correct stabilization argument.
--/
-
-omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-/-- BFEquiv ω is equivalent to BFEquiv k for all finite k. This captures the fact that
-BFEquiv at ω means "winning all finite Ehrenfeucht-Fraïssé games."
-
-**Note**: ω is typically NOT a stabilization point. At each finite level k, we get witnesses
-n'_k, but these witnesses may shift as k grows (the "quantifier swap problem"). Stabilization
-requires finding a level α where witnesses remain constant, which happens at some countable
-ordinal (possibly much larger than ω) for countable structures. -/
-theorem BFEquiv_omega_iff_forall_finite {M N : Type w} [L.Structure M] [L.Structure N]
-    {n : ℕ} {a : Fin n → M} {b : Fin n → N} :
-    BFEquiv (L := L) (ω : Ordinal.{0}) n a b ↔ ∀ k : ℕ, BFEquiv (L := L) (k : Ordinal.{0}) n a b := by
-  constructor
-  · -- BFEquiv ω → ∀ k, BFEquiv k
-    intro hω k
-    exact BFEquiv.monotone (le_of_lt (Ordinal.nat_lt_omega0 k)) hω
-  · -- ∀ k, BFEquiv k → BFEquiv ω
-    intro hk
-    rw [BFEquiv.limit ω Ordinal.isSuccLimit_omega0]
-    intro γ hγ
-    obtain ⟨k, hk_eq⟩ := Ordinal.lt_omega0.mp hγ
-    subst hk_eq
-    exact hk k
-
-/-- General iteration: from strategy at level sz for n-tuples, extend by sz elements.
-
-This is the core workhorse that handles arbitrary starting tuples. The key properties:
-- Level decreases by 1 for each forth application
-- Tuple size increases by 1 for each forth application
-- After sz applications, level is 0 (gives SameAtomicType)
-
-Returns ns : Fin sz → N and a proof of SameAtomicType for the extended tuples. -/
-noncomputable def iterateForthGeneral {M N : Type w} [L.Structure M] [L.Structure N] :
-    (sz n : ℕ) → (a : Fin n → M) → (b : Fin n → N) →
-    (strat : BFStrategyT L M N sz n a b) → (ms : Fin sz → M) →
-    { ns : Fin sz → N // SameAtomicType (L := L) (Fin.append a ms) (Fin.append b ns) } := by
-  intro sz
-  induction sz with
-  | zero =>
-    intro n a b strat ms
-    -- sz = 0: no elements to add, strat is already at level 0
-    refine ⟨Fin.elim0, ?_⟩
-    -- Need: SameAtomicType (Fin.append a Fin.elim0) (Fin.append b Fin.elim0)
-    -- strat : BFStrategyT 0 n a b = { _ : PUnit // SameAtomicType a b }
-    have hms : ms = Fin.elim0 := funext (fun i => i.elim0)
-    subst hms
-    -- Fin.append a Fin.elim0 = a (after identifying n + 0 with n)
-    convert strat.property using 2 <;>
-    · ext i
-      simp only [Fin.append, Fin.addCases]
-      have hi : (i : ℕ) < n := i.isLt
-      simp [hi, Fin.castLT]
-  | succ sz ih =>
-    intro n a b strat ms
-    -- strat : BFStrategyT (sz+1) n a b
-    -- ms : Fin (sz+1) → M
-    obtain ⟨_, forth, _⟩ := strat
-    let m₀ := ms 0
-    obtain ⟨n₀, strat_ext⟩ := forth m₀
-    -- strat_ext : BFStrategyT sz (n+1) (Fin.snoc a m₀) (Fin.snoc b n₀)
-    let ms' : Fin sz → M := ms ∘ Fin.succ
-    -- Apply IH with n' = n+1
-    obtain ⟨ns', sat_ext⟩ := ih (n + 1) (Fin.snoc a m₀) (Fin.snoc b n₀) strat_ext ms'
-    -- ns' : Fin sz → N
-    -- sat_ext : SameAtomicType (Fin.append (Fin.snoc a m₀) ms')
-    --                          (Fin.append (Fin.snoc b n₀) ns')
-    let ns : Fin (sz + 1) → N := Fin.cons n₀ ns'
-    refine ⟨ns, ?_⟩
-    -- Key: Fin.append a (Fin.cons m₀ ms') = Fin.append (Fin.snoc a m₀) ms' (after reindexing)
-    have hms_eq : ms = Fin.cons m₀ ms' := by
-      ext i; cases i using Fin.cases <;> rfl
-    have hns_eq : ns = Fin.cons n₀ ns' := rfl
-    rw [hms_eq, hns_eq]
-    have hsize : n + (sz + 1) = (n + 1) + sz := by omega
-    -- The key identity: appending (a, cons m₀ ms') = appending (snoc a m₀, ms') after reindexing
-    -- Use SameAtomicType.relabel with explicit index computation
-    -- The key identity: appending (a, cons m₀ ms') = appending (snoc a m₀, ms') after reindexing
-    -- Both represent the same (n + sz + 1)-tuple: a(0), ..., a(n-1), m₀, ms'(0), ..., ms'(sz-1)
-    -- The Fin index manipulation is tedious bookkeeping; the mathematical content is that
-    -- these tuples contain the same elements in the same order.
-    -- sat_ext gives: SameAtomicType (Fin.append (Fin.snoc a m₀) ms') (Fin.append (Fin.snoc b n₀) ns')
-    -- We need:      SameAtomicType (Fin.append a (Fin.cons m₀ ms')) (Fin.append b (Fin.cons n₀ ns'))
-    -- These are the same tuples, just with different Fin indexing conventions.
-    -- The conversion is: Fin.snoc a m₀ = (a(0), ..., a(n-1), m₀) as (n+1)-tuple
-    --                    Fin.cons m₀ ms' = (m₀, ms'(0), ..., ms'(sz-1)) as (sz+1)-tuple
-    -- So Fin.append (Fin.snoc a m₀) ms' = (a(0), ..., a(n-1), m₀, ms'(0), ..., ms'(sz-1))
-    --    Fin.append a (Fin.cons m₀ ms') = (a(0), ..., a(n-1), m₀, ms'(0), ..., ms'(sz-1))
-    -- They are the same sequence, just indexed differently: (n+1)+sz vs n+(sz+1).
-    -- sat_ext : SameAtomicType (Fin.append (Fin.snoc a m₀) ms') (Fin.append (Fin.snoc b n₀) ns')
-    -- We need: SameAtomicType (Fin.append a (Fin.cons m₀ ms')) (Fin.append b (Fin.cons n₀ ns'))
-    -- The tuples are identical sequences, just reindexed:
-    --   Fin.append (Fin.snoc a m₀) ms' = (a(0), ..., a(n-1), m₀, ms'(0), ..., ms'(sz-1))
-    --   Fin.append a (Fin.cons m₀ ms') = (a(0), ..., a(n-1), m₀, ms'(0), ..., ms'(sz-1))
-    -- The difference is (n+1)+sz vs n+(sz+1) indexing.
-    -- Use append_right_cons: Fin.append a (Fin.cons m₀ ms') = Fin.append (Fin.snoc a m₀) ms' ∘ Fin.cast ...
-    rw [Fin.append_right_cons, Fin.append_right_cons]
-    exact sat_ext.relabel _
-
-/-- Build matching k-tuple in N from strategy at level k for empty tuples.
-This is the core helper for the back-and-forth construction.
-
-Uses `iterateForthGeneral` to iterate forth k times, starting from empty tuples. -/
-noncomputable def buildMatchingTuple {M N : Type w} [L.Structure M] [L.Structure N]
-    (k : ℕ) (strat : BFStrategyT L M N k 0 Fin.elim0 Fin.elim0) (ms : Fin k → M) :
-    { ns : Fin k → N // SameAtomicType (L := L) ms ns } := by
-  obtain ⟨ns, sat⟩ := iterateForthGeneral k 0 Fin.elim0 Fin.elim0 strat ms
-  refine ⟨ns, ?_⟩
-  -- sat : SameAtomicType (Fin.append Fin.elim0 ms) (Fin.append Fin.elim0 ns)
-  -- Use elim0_append: Fin.append Fin.elim0 ms = ms ∘ Fin.cast (Nat.zero_add k)
-  rw [Fin.elim0_append, Fin.elim0_append] at sat
-  exact sat.relabel (Fin.cast (Nat.zero_add k).symm)
-
-/-- General iteration using back: from strategy at level sz for n-tuples, extend by sz elements.
-
-This is the back version of `iterateForthGeneral`. -/
-noncomputable def iterateBackGeneral {M N : Type w} [L.Structure M] [L.Structure N] :
-    (sz n : ℕ) → (a : Fin n → M) → (b : Fin n → N) →
-    (strat : BFStrategyT L M N sz n a b) → (ns : Fin sz → N) →
-    { ms : Fin sz → M // SameAtomicType (L := L) (Fin.append a ms) (Fin.append b ns) } := by
-  intro sz
-  induction sz with
-  | zero =>
-    intro n a b strat ns
-    refine ⟨Fin.elim0, ?_⟩
-    have hns : ns = Fin.elim0 := funext (fun i => i.elim0)
-    subst hns
-    convert strat.property using 2 <;>
-    · ext i
-      simp only [Fin.append, Fin.addCases]
-      have hi : (i : ℕ) < n := i.isLt
-      simp [hi, Fin.castLT]
-  | succ sz ih =>
-    intro n a b strat ns
-    obtain ⟨_, _, back⟩ := strat
-    let n₀ := ns 0
-    obtain ⟨m₀, strat_ext⟩ := back n₀
-    let ns' : Fin sz → N := ns ∘ Fin.succ
-    obtain ⟨ms', sat_ext⟩ := ih (n + 1) (Fin.snoc a m₀) (Fin.snoc b n₀) strat_ext ns'
-    let ms : Fin (sz + 1) → M := Fin.cons m₀ ms'
-    refine ⟨ms, ?_⟩
-    have hns_eq : ns = Fin.cons n₀ ns' := by
-      ext i; cases i using Fin.cases <;> rfl
-    have hms_eq : ms = Fin.cons m₀ ms' := rfl
-    rw [hns_eq, hms_eq]
-    rw [Fin.append_right_cons, Fin.append_right_cons]
-    exact sat_ext.relabel _
-
-/-- Build matching k-tuple in M from strategy at level k for empty tuples, using back.
-This is the back version of `buildMatchingTuple`. -/
-noncomputable def buildMatchingTupleBack {M N : Type w} [L.Structure M] [L.Structure N]
-    (k : ℕ) (strat : BFStrategyT L M N k 0 Fin.elim0 Fin.elim0) (ns : Fin k → N) :
-    { ms : Fin k → M // SameAtomicType (L := L) ms ns } := by
-  obtain ⟨ms, sat⟩ := iterateBackGeneral k 0 Fin.elim0 Fin.elim0 strat ns
-  refine ⟨ms, ?_⟩
-  rw [Fin.elim0_append, Fin.elim0_append] at sat
-  exact sat.relabel (Fin.cast (Nat.zero_add k).symm)
-
 /-! ### Stabilization Theory
 
 The key insight is that for countable structures, the BFEquiv equivalence classes form
@@ -1174,6 +764,31 @@ private theorem per_tuple_stabilization_from_extensions
         (le_trans (hS m₀) (Order.le_succ S |>.trans hα_ge)) hα_lt⟩
   · exact BFEquiv.of_succ
 
+/-- Per-tuple stabilization: for any tuple (n, a) from a countable structure M,
+there exists γ < ω₁ such that for all α ≥ γ (with α, succ α < ω₁), the BFEquiv iff
+holds uniformly for all countable structures N and tuples b.
+
+This is the key per-tuple lemma for `exists_complete_stabilization`. The trivial case
+(BFEquiv holds universally) is immediate; the hard case (some failure exists) requires
+showing a uniform bound exists despite quantifying over all countable N. -/
+private theorem per_tuple_stabilization_below_omega1
+    {M : Type w} [L.Structure M] [Countable M]
+    (n : ℕ) (a : Fin n → M) :
+    ∃ γ < (Ordinal.omega 1 : Ordinal.{0}),
+      ∀ α, γ ≤ α → α < Ordinal.omega 1 → Order.succ α < Ordinal.omega 1 →
+        ∀ (N : Type w) [L.Structure N] [Countable N] (b : Fin n → N),
+          (BFEquiv (L := L) α n a b ↔ BFEquiv (L := L) (Order.succ α) n a b) := by
+  by_cases hAllHold : ∀ β < (Ordinal.omega 1 : Ordinal.{0}),
+      ∀ (N : Type w) (instN : L.Structure N) (instCN : Countable N) (b : Fin n → N),
+        BFEquiv (L := L) β n a b
+  · -- BFEquiv holds everywhere: iff trivially true
+    exact ⟨0, Ordinal.omega_pos 1, fun α _ hα_lt hsucc_lt N instN instCN b =>
+      ⟨fun _ => hAllHold (Order.succ α) hsucc_lt N instN instCN b, BFEquiv.of_succ⟩⟩
+  · -- BFEquiv fails for some (N, b) at some level < ω₁
+    push_neg at hAllHold
+    obtain ⟨β₀, hβ₀_lt, N₀, instN₀, instCN₀, b₀, hβ₀_fail⟩ := hAllHold
+    sorry
+
 /-- For countable M, there exists α < ω₁ where all tuples stabilize completely:
 `BFEquiv α n a b ↔ BFEquiv (succ α) n a b` for ALL countable N and tuples b.
 
@@ -1181,95 +796,19 @@ This is a standard result in infinitary model theory (see Marker, "Lectures on
 Infinitary Model Theory", or Keisler-Knight §1.3). The key point is that for countable
 structures, the BFEquiv refinement chain must stabilize at a countable ordinal.
 
-**Mathematical argument**: For each n-tuple `a` from M, the Scott formula
-`scottFormula a α` gets logically stronger as α increases. The set of structures
-satisfying it shrinks monotonically. Full stabilization at α means the formulas
-`SF a α` and `SF a (succ α)` are logically equivalent (agree on ALL structures),
-which is strictly stronger than self-stabilization (agreement on M only).
-
 **Important**: Self-stabilization (`SelfStabilizesCompletely`) does NOT imply full
-stabilization (`StabilizesCompletely`). Counterexample: M = {a, b} with an empty
-relational language, N = {c} (one element), α = 1. Self-stabilization holds at α = 1
-(all M-types are stable), but `BFEquiv 1 0 elim0 elim0_N` holds while
-`BFEquiv 2 0 elim0 elim0_N` fails (the forth condition at level 1 detects the
-cardinality mismatch). Full stabilization holds at α = 2 for this example.
+stabilization (`StabilizesCompletely`). See docstring on
+`per_tuple_stabilization_below_omega1` for the per-tuple argument.
 
-**Proof strategy** (using `StabilizesForTuples.downward_propagation`):
-
-1. By `downward_propagation`: `StabilizesForTuples M α (n+1) → StabilizesForTuples M (succ α) n`.
-   So full stabilization at tuple-size (n+1) implies full stabilization at tuple-size n.
-
-2. For each M-tuple `a`, define `γ(a) = sInf {α | SF a α ⟷ SF a (succ α)}`.
-   Once all (n+1)-extensions `(snoc a m)` have stabilized (at ordinals γ(snoc a m)),
-   the FORTH/BACK conditions at level `sup_m γ(snoc a m)` become consequences of
-   `SF a` (because the inner formulas have stabilized and the existentials are "baked in"
-   at the next level). So `γ(a) ≤ succ(sup_m γ(snoc a m))`.
-
-3. The recursion `γ(a) ≤ succ(sup_m γ(snoc a m))` goes to higher tuple sizes.
-   Each `γ(snoc a m) < ω₁` implies `γ(a) < ω₁` (by regularity of ω₁ and
-   countability of M). The chain of γ-values across all tuple sizes is bounded
-   because at each ordinal α, only countably many M-tuples can have γ = α.
-
-**Status**: Sorry — the coinductive argument showing γ(a) < ω₁ for all a
-requires careful handling of the proper class of countable structures. The result
-is mathematically standard (see Marker, Barwise, or Keisler-Knight). -/
+**Status**: The sorry is in `per_tuple_stabilization_below_omega1` (hard case). -/
 theorem exists_complete_stabilization (M : Type w) [L.Structure M] [Countable M] :
     ∃ α < (Ordinal.omega 1 : Ordinal.{0}), StabilizesCompletely (L := L) M α := by
-  -- Step 1: Prove a key helper: at limit ordinals with uncountable cofinality,
-  -- BFEquiv implies BFEquiv at the successor (using countable intersection on N).
-  -- Then show StabilizesForTuples for all n using downward_propagation.
-
-  -- Helper: at limit ordinals α with α > 0 and α < ω₁, for countable N,
-  -- BFEquiv α n a b → BFEquiv (succ α) n a b.
-  -- Proof: FORTH at α needs ∃ n', ∀ γ < α, BFEquiv γ (n+1) (snoc a m) (snoc b n').
-  -- For each γ < α: succ γ < α (since α limit), so BFEquiv (succ γ) gives
-  -- forth at γ: ∃ n'_γ, BFEquiv γ (n+1). The sets S_γ = {n' | BFEquiv γ (n+1)}
-  -- are antitone and nonempty. By nonempty_iInter_of_antitone_of_nonempty
-  -- (extended to chains of length α < ω₁, with N countable),
-  -- the intersection is nonempty: ∃ n' in all S_γ.
-  -- This n' gives BFEquiv α (n+1) at the limit (= ∀ γ < α, BFEquiv γ (n+1)).
-  -- Similarly for BACK.
-
   have hTuple : ∀ (t : Σ n, Fin n → M),
       ∃ γ < (Ordinal.omega 1 : Ordinal.{0}),
         ∀ α, γ ≤ α → α < Ordinal.omega 1 → Order.succ α < Ordinal.omega 1 →
           ∀ (N : Type w) [L.Structure N] [Countable N] (b : Fin t.1 → N),
-            (BFEquiv (L := L) α t.1 t.2 b ↔ BFEquiv (L := L) (Order.succ α) t.1 t.2 b) := by
-    -- Prove for all tuples by contradiction + per_tuple_stabilization_from_extensions.
-    -- If some tuple has no bound < ω₁, by the contrapositive of
-    -- per_tuple_stabilization_from_extensions, some extension also has no bound.
-    -- Iterating gives an infinite chain of unbounded tuples. But then we can build
-    -- an infinite strictly decreasing sequence of ordinals, contradicting
-    -- well-foundedness.
-    --
-    -- Key mathematical facts used:
-    -- 1. Change points are always successor ordinals (at limit ordinals, BFEquiv =
-    --    conjunction of all smaller levels by BFEquiv.limit).
-    -- 2. per_tuple_stabilization_from_extensions: bounded extensions → bounded tuple.
-    -- 3. not_strictAnti_of_wellFoundedLT: no infinite strictly decreasing ordinals.
-    --
-    -- The proof proceeds in two phases:
-    -- Phase 1: Show the bound exists (by contradiction).
-    -- Phase 2: Extract the bound (using Classical.choice).
-    --
-    -- TODO: This is a standard result in infinitary model theory (see Marker,
-    -- "Lectures on Infinitary Model Theory", or Keisler-Knight §1.3).
-    -- The formal proof requires carefully combining per_tuple_stabilization_from_extensions
-    -- with a global argument over all tuples to break the circularity.
-    intro ⟨n, a⟩; simp only
-    by_cases hAllHold : ∀ β < (Ordinal.omega 1 : Ordinal.{0}),
-        ∀ (N : Type w) (instN : L.Structure N) (instCN : Countable N) (b : Fin n → N),
-          BFEquiv (L := L) β n a b
-    · -- BFEquiv holds everywhere: iff trivially true.
-      use 0
-      refine ⟨Ordinal.omega_pos 1, ?_⟩
-      intro α _ hα_lt hsucc_lt N instN instCN b
-      exact ⟨fun _ => hAllHold (Order.succ α) hsucc_lt N instN instCN b,
-             BFEquiv.of_succ⟩
-    · -- BFEquiv fails for some (N, b) at some level < ω₁.
-      push_neg at hAllHold
-      obtain ⟨β₀, hβ₀_lt, N₀, instN₀, instCN₀, b₀, hβ₀_fail⟩ := hAllHold
-      sorry
+            (BFEquiv (L := L) α t.1 t.2 b ↔ BFEquiv (L := L) (Order.succ α) t.1 t.2 b) :=
+    fun ⟨n, a⟩ => per_tuple_stabilization_below_omega1 n a
   -- Step 2: Extract per-tuple bound ordinals
   choose boundOrd hboundOrd_lt hboundOrd_spec using hTuple
   -- Step 3: Enumerate all tuples and take supremum
