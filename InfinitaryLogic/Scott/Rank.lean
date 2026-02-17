@@ -57,21 +57,6 @@ We use Ordinal.{0} for consistency with elementRank and stabilizationOrdinal. -/
 noncomputable def scottRank (M : Type w) [L.Structure M] [Countable M] : Ordinal.{0} :=
   ⨆ (m : M), elementRank (L := L) m + 1
 
-/-- At the stabilization ordinal, for any element m, the defining set of elementRank is nonempty.
-
-Note: This theorem is no longer used by `elementRank_lt_omega1` or `scottRank_lt_omega1`,
-which now go through `completeStab_mem_elementRank_set` and `exists_complete_stabilization`
-instead. It is kept for potential future use. -/
-private theorem stabilizationOrdinal_mem_elementRank_set {M : Type w} [L.Structure M] [Countable M]
-    (m : M) : stabilizationOrdinal (L := L) M ∈
-    {α : Ordinal.{0} | ∀ (N : Type w) [L.Structure N] [Countable N] (b : Fin 1 → N),
-      BFEquiv (L := L) (M := M) (N := N) α 1 ![m] b →
-        ∀ (N' : Type w) [L.Structure N'] [Countable N'] (b' : Fin 1 → N'),
-          BFEquiv (L := L) (M := M) (N := N') α 1 ![m] b' →
-            (BFEquiv (L := L) (M := M) (N := N) (Order.succ α) 1 ![m] b ↔
-             BFEquiv (L := L) (M := M) (N := N') (Order.succ α) 1 ![m] b')} := by
-  sorry
-
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- At a complete stabilization ordinal, the elementRank defining set is satisfied trivially:
 `StabilizesCompletely M α` gives `BFEquiv α ↔ BFEquiv (succ α)` for all tuples, so both
