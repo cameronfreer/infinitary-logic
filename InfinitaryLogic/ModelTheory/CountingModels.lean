@@ -44,10 +44,8 @@ which is key for descriptive set-theoretic analyses of the isomorphism relation.
 
 **Status**:
 - Forward (iso → BFEquiv): Available via `equiv_implies_BFEquiv` in Scott/Sentence.lean.
-- Backward (BFEquiv α → iso): Needs `scottHeight_le_scottRank` (Height.lean sorry),
-  `stabilizationOrdinal_le_scottRank` (Rank.lean sorry), and the fact that BFEquiv at
-  the Scott rank of countable structures implies actual isomorphism. Blocked by Scott
-  infrastructure sorries. -/
+- Backward (BFEquiv α → iso): Needs showing that BFEquiv at the Scott rank of
+  countable structures implies actual isomorphism (requires `StabilizesAt M (scottRank M)`). -/
 theorem bounded_scottRank_iso_eq_BFEquiv
     {φ : L.Sentenceω} {α : Ordinal} (hα : α < Ordinal.omega 1)
     (hbound : ∀ (M : Type w) [L.Structure M] [Countable M],

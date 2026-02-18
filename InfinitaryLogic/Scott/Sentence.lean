@@ -770,7 +770,16 @@ holds uniformly for all countable structures N and tuples b.
 
 This is the key per-tuple lemma for `exists_complete_stabilization`. The trivial case
 (BFEquiv holds universally) is immediate; the hard case (some failure exists) requires
-showing a uniform bound exists despite quantifying over all countable N. -/
+showing a uniform bound exists despite quantifying over all countable N.
+
+**Proof strategy**: The standard argument uses `per_tuple_stabilization_from_extensions`
+recursively: for each m ∈ M, the (n+1)-extension `(Fin.snoc a m)` has a stabilization
+bound `γ(m) < ω₁`, and then `per_tuple_stabilization_from_extensions` gives a bound for
+the n-tuple at `Order.succ (⨆ m, γ(m))`. The recursion is well-founded because each
+recursive call decreases the ordinal parameter (from `succ α` to `α`). The challenge is
+that the `by_cases` structure pre-commits to a specific β₀ which cannot serve as a
+uniform bound; the correct approach may require restructuring to use the recursive
+argument directly (avoiding the easy/hard case split). -/
 private theorem per_tuple_stabilization_below_omega1
     {M : Type w} [L.Structure M] [Countable M]
     (n : ℕ) (a : Fin n → M) :

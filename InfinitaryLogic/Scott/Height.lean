@@ -26,7 +26,6 @@ analysis stabilizes) and the canonical Scott sentence (the Scott formula at Scot
   potential isomorphism.
 - `canonicalScottSentence_characterizes`: For countable structures, the canonical Scott
   sentence characterizes isomorphism.
-- `scottHeight_le_scottRank`: Scott height is at most Scott rank.
 
 ## References
 
@@ -193,19 +192,6 @@ theorem sr_le_scottRank (M : Type w) [L.Structure M] [Countable M] :
   calc elementRank (L := L) m
       ≤ elementRank (L := L) m + 1 := le_self_add
     _ ≤ ⨆ m, elementRank (L := L) m + 1 := Ordinal.le_iSup _ m
-
-/-- scottHeight ≤ scottRank for nonempty structures.
-
-The Scott height is at most the Scott rank because the Scott rank bounds the
-element ranks, and the element ranks bound the stabilization levels.
-
-The `[Nonempty M]` hypothesis is necessary: for empty M, `scottRank = 0`
-(empty supremum) but `scottHeight ≥ 1` since BFEquiv 0 between empty M and
-nonempty N holds trivially while BFEquiv 1 fails (the back condition cannot
-produce elements from the empty domain). -/
-theorem scottHeight_le_scottRank (M : Type w) [L.Structure M] [Countable M] [Nonempty M] :
-    scottHeight (L := L) M ≤ scottRank (L := L) M := by
-  sorry
 
 /-! ### Attained Scott Rank -/
 
