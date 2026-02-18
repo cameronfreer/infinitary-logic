@@ -193,6 +193,38 @@ theorem zero_iff_agree_atomic : EquivQRInf L 0 M N ↔
 
 end EquivQRInf
 
+/-! ### Universe-correct Equivalence up to Quantifier Rank -/
+
+/-- Equivalence up to quantifier rank α with index types matching the structure universe.
+
+Unlike `EquivQRInf` which pins `uι = 0`, this version uses `BoundedFormulaInf.{u, v, 0, w}`
+so that index types for `iSup`/`iInf` may be any `Type w`. This is the companion of
+`LinfEquivW` for tracking quantifier rank bounds. -/
+def EquivQRInfW (L : Language.{u, v}) (α : Ordinal.{0}) (M N : Type w)
+    [L.Structure M] [L.Structure N] : Prop :=
+  ∀ (φ : BoundedFormulaInf.{u, v, 0, w} L Empty 0),
+    φ.qrank ≤ α → (SentenceInf.Realize φ M ↔ SentenceInf.Realize φ N)
+
+namespace EquivQRInfW
+
+variable {L : Language.{u, v}}
+variable {M : Type w} [L.Structure M]
+variable {N : Type w} [L.Structure N]
+variable {P : Type w} [L.Structure P]
+
+theorem refl (α : Ordinal) : EquivQRInfW L α M M := fun _ _ => Iff.rfl
+
+theorem symm (h : EquivQRInfW L α M N) : EquivQRInfW L α N M :=
+  fun φ hφ => (h φ hφ).symm
+
+theorem trans (h₁ : EquivQRInfW L α M N) (h₂ : EquivQRInfW L α N P) : EquivQRInfW L α M P :=
+  fun φ hφ => (h₁ φ hφ).trans (h₂ φ hφ)
+
+theorem monotone {α β : Ordinal} (hαβ : α ≤ β) (h : EquivQRInfW L β M N) :
+    EquivQRInfW L α M N := fun φ hφ => h φ (le_trans hφ hαβ)
+
+end EquivQRInfW
+
 end Language
 
 end FirstOrder

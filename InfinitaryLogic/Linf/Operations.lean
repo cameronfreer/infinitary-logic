@@ -191,6 +191,221 @@ def subst : ∀ {n : ℕ}, L.BoundedFormulaInf α n → (α → L.Term β) → L
   | _, iSup φs, tf => iSup fun i => (φs i).subst tf
   | _, iInf φs, tf => iInf fun i => (φs i).subst tf
 
+/-! ### Universe lifting for index types -/
+
+section LiftUI
+
+universe w
+
+/-- Lift a formula from index universe 0 to index universe `w` by ULifting each index type.
+This maps `BoundedFormulaInf.{u,v,u',0}` to `BoundedFormulaInf.{u,v,u',w}`, preserving
+semantics and quantifier rank. -/
+def liftUI : ∀ {n}, BoundedFormulaInf.{u, v, u', 0} L α n →
+    BoundedFormulaInf.{u, v, u', w} L α n
+  | _, falsum => falsum
+  | _, equal t₁ t₂ => equal t₁ t₂
+  | _, rel R ts => rel R ts
+  | _, imp φ ψ => imp (liftUI φ) (liftUI ψ)
+  | _, all φ => all (liftUI φ)
+  | _, iSup φs => iSup (ι := ULift.{w} _) (fun i => liftUI (φs i.down))
+  | _, iInf φs => iInf (ι := ULift.{w} _) (fun i => liftUI (φs i.down))
+
+variable {M : Type*} [L.Structure M]
+
+/-- Universe lifting preserves semantics. -/
+theorem realize_liftUI :
+    ∀ {n} (φ : BoundedFormulaInf.{u, v, u', 0} L α n) (v : α → M) (xs : Fin n → M),
+    (liftUI.{u, v, u', w} φ).Realize v xs ↔ φ.Realize v xs := by
+  intro n φ
+  induction φ with
+  | falsum => intro v xs; rfl
+  | equal => intro v xs; rfl
+  | rel => intro v xs; rfl
+  | imp φ ψ ihφ ihψ =>
+    intro v xs; simp only [liftUI, realize_imp]; exact Iff.imp (ihφ v xs) (ihψ v xs)
+  | all φ ih =>
+    intro v xs; simp only [liftUI, realize_all]
+    exact forall_congr' fun x => ih v (Fin.snoc xs x)
+  | iSup φs ih =>
+    intro v xs
+    show (∃ i : ULift _, _) ↔ ∃ i, _
+    constructor
+    · rintro ⟨⟨i⟩, hi⟩; exact ⟨i, (ih i v xs).mp hi⟩
+    · rintro ⟨i, hi⟩; exact ⟨⟨i⟩, (ih i v xs).mpr hi⟩
+  | iInf φs ih =>
+    intro v xs
+    show (∀ i : ULift _, _) ↔ ∀ i, _
+    constructor
+    · intro h i; exact (ih i v xs).mp (h ⟨i⟩)
+    · intro h ⟨i⟩; exact (ih i v xs).mpr (h i)
+
+end LiftUI
+
+/-! ### Quantifying over the last free variable -/
+
+section LastVar
+
+variable {γ : Type*}
+
+/-- Maps the last variable of `Fin (n+1)` to a bound variable position,
+keeping the first n as free variables. This is identical to the version
+in `Scott/Formula.lean` for `BoundedFormulaω`, redefined here to avoid
+importing the Scott module. -/
+private def insertLastBoundInf {n : ℕ} : Fin (n + 1) → Fin n ⊕ Fin 1 :=
+  fun i => if h : i.val < n then Sum.inl ⟨i.val, h⟩ else Sum.inr 0
+
+/-- Existentially quantify over the last free variable of an L∞ω formula. -/
+def existsLastVarInf {n : ℕ} (φ : L.FormulaInf (Fin (n + 1))) : L.FormulaInf (Fin n) :=
+  (φ.relabel insertLastBoundInf).ex
+
+/-- Universally quantify over the last free variable of an L∞ω formula. -/
+def forallLastVarInf {n : ℕ} (φ : L.FormulaInf (Fin (n + 1))) : L.FormulaInf (Fin n) :=
+  (φ.relabel insertLastBoundInf).all
+
+/-- Maps `j : Fin k` to `⟨j.val + 1, ...⟩ : Fin (1 + k)`. -/
+private def Fin.succShiftInf {k : ℕ} : Fin k → Fin (1 + k) :=
+  fun j => ⟨j.val + 1, by omega⟩
+
+/-- The composition of `Sum.elim v xs` with `relabelAux insertLastBoundInf k`
+equals `Sum.elim (Fin.snoc v (xs 0)) (xs ∘ Fin.succShiftInf)`. -/
+private lemma sum_elim_relabelAux_insertLastBoundInf {n : ℕ} {k : ℕ}
+    (v : Fin n → γ) (xs : Fin (1 + k) → γ) :
+    Sum.elim v xs ∘ relabelAux insertLastBoundInf k =
+    Sum.elim (Fin.snoc v (xs 0)) (xs ∘ Fin.succShiftInf) := by
+  funext x
+  cases x with
+  | inl i =>
+    simp only [Function.comp_apply, relabelAux, Sum.map_inl, Sum.elim_inl, insertLastBoundInf]
+    split_ifs with h
+    · simp only [Equiv.sumAssoc_apply_inl_inl, Sum.map_inl, Sum.elim_inl, Fin.snoc, h, dite_true]
+      congr 1
+    · simp only [Equiv.sumAssoc_apply_inl_inr, Sum.map_inr, Sum.elim_inr, finSumFinEquiv_apply_left]
+      have hi : i = Fin.last n := by ext; simp only [Fin.last]; omega
+      rw [hi, Fin.snoc_last]; rfl
+  | inr j =>
+    simp only [Function.comp_apply, relabelAux, Sum.map_inr, Sum.elim_inr]
+    simp only [Equiv.sumAssoc_apply_inr, Sum.map_inr, Sum.elim_inr, finSumFinEquiv_apply_right,
+      Fin.succShiftInf]
+    congr 1; ext; simp only [Fin.natAdd, id_eq]; omega
+
+/-- snoc xs y at position 0 equals xs at position 0. -/
+private lemma snoc_zero_eq_inf {k : ℕ} (xs : Fin (1 + k) → γ) (y : γ) :
+    (Fin.snoc (α := fun _ => γ) xs y) (0 : Fin (1 + k + 1)) = xs (0 : Fin (1 + k)) := by
+  simp [Fin.snoc, show (0 : ℕ) < 1 + k from by omega]
+
+/-- snoc composed with succShiftInf: on LHS, `Fin.succShiftInf` is at `k+1`
+(mapping `Fin (k+1) → Fin (1+k+1)`); on RHS, it is at `k` (mapping `Fin k → Fin (1+k)`).
+Lean infers the different implicit args from the types of `Fin.snoc xs y` and `xs`. -/
+private lemma snoc_comp_succShiftInf_eq {k : ℕ} (xs : Fin (1 + k) → γ) (y : γ) :
+    Fin.snoc xs y ∘ Fin.succShiftInf = Fin.snoc (xs ∘ Fin.succShiftInf) y := by
+  funext i
+  simp only [Function.comp_apply]
+  -- i : Fin (k+1); LHS succShiftInf: Fin (k+1) → Fin (1+k+1); RHS snoc: Fin (k+1) → γ
+  cases i using Fin.lastCases with
+  | last =>
+    -- LHS: snoc xs y (succShiftInf (last k))
+    -- succShiftInf (last k) : Fin (1+k+1), val = k + 1 = last (1+k)
+    have h1 : Fin.succShiftInf (Fin.last k) = Fin.last (1 + k) :=
+      Fin.ext (by simp [Fin.succShiftInf, Fin.last]; omega)
+    rw [h1, Fin.snoc_last, Fin.snoc_last]
+  | cast j =>
+    rw [Fin.snoc_castSucc]
+    -- Goal: snoc xs y (succShiftInf (castSucc j)) = (xs ∘ succShiftInf) j
+    simp only [Function.comp_apply]
+    -- Goal: snoc xs y (succShiftInf (castSucc j)) = xs (succShiftInf j)
+    unfold Fin.snoc
+    have hlt : (Fin.succShiftInf (j.castSucc)).val < 1 + k := by
+      simp [Fin.succShiftInf, Fin.castSucc]; omega
+    simp only [hlt, dite_true]
+    apply congrArg xs
+    exact Fin.ext (by simp [Fin.succShiftInf, Fin.castSucc, Fin.castLT])
+
+variable {M : Type*} [L.Structure M]
+
+/-- The general semantics lemma for relabeling with `insertLastBoundInf`:
+    For a formula with k bound variables, relabeling shifts the last free variable
+    to bound position 0, while bound variables shift up by 1. -/
+private theorem realize_relabel_insertLastBoundInf {n : ℕ} :
+    ∀ {k : ℕ} (φ : L.BoundedFormulaInf (Fin (n + 1)) k) (v : Fin n → M)
+      (xs : Fin (1 + k) → M),
+    (φ.relabel insertLastBoundInf).Realize v xs ↔
+    φ.Realize (Fin.snoc v (xs 0)) (xs ∘ Fin.succShiftInf) := by
+  intro k φ
+  induction φ with
+  | falsum => intro v xs; simp only [relabel, realize_falsum]
+  | equal t₁ t₂ =>
+    intro v xs
+    simp only [relabel, realize_equal, Term.realize_relabel,
+      sum_elim_relabelAux_insertLastBoundInf]
+  | rel R ts =>
+    intro v xs; simp only [relabel, realize_rel]
+    constructor <;> intro h <;> convert h using 1 <;> ext i <;>
+      simp [Term.realize_relabel, sum_elim_relabelAux_insertLastBoundInf]
+  | imp φ ψ ih_φ ih_ψ =>
+    intro v xs; simp only [relabel, realize_imp]
+    exact Iff.imp (ih_φ v xs) (ih_ψ v xs)
+  | all φ ih =>
+    intro v xs; simp only [relabel, realize_all]
+    constructor <;> intro hall y
+    · specialize hall y; rw [realize_castLE_self] at hall
+      rw [ih v (Fin.snoc xs y)] at hall
+      rw [snoc_zero_eq_inf, snoc_comp_succShiftInf_eq] at hall; exact hall
+    · rw [realize_castLE_self, ih v (Fin.snoc xs y), snoc_zero_eq_inf,
+        snoc_comp_succShiftInf_eq]; exact hall y
+  | iSup φs ih =>
+    intro v xs; simp only [relabel]
+    exact exists_congr (fun i => ih i v xs)
+  | iInf φs ih =>
+    intro v xs; simp only [relabel]
+    exact forall_congr' (fun i => ih i v xs)
+
+/-- The key semantics lemma for formulas with 0 bound variables. -/
+private theorem realize_relabel_insertLastBoundInf_zero {n : ℕ}
+    (φ : L.FormulaInf (Fin (n + 1)))
+    (v : Fin n → M) (xs : Fin 1 → M) :
+    (φ.relabel insertLastBoundInf).Realize v xs ↔
+    φ.Realize (Fin.snoc v (xs 0)) := by
+  have h := realize_relabel_insertLastBoundInf (k := 0) φ v xs
+  rw [h]
+  simp only [FormulaInf.Realize]
+  have heq : (xs ∘ Fin.succShiftInf : Fin 0 → M) = Fin.elim0 := by
+    ext i; exact i.elim0
+  rw [heq]
+
+/-- Helper: `Fin.snoc Fin.elim0 x` evaluated at 0 gives x. -/
+private theorem snoc_elim0_zero_inf (x : M) :
+    (Fin.snoc (α := fun _ => M) Fin.elim0 x) 0 = x := by
+  simp [Fin.snoc, Fin.last]
+
+/-- Semantics of `existsLastVarInf`: existentially quantifies over the last variable. -/
+theorem realize_existsLastVarInf {n : ℕ} (φ : L.FormulaInf (Fin (n + 1))) (v : Fin n → M) :
+    FormulaInf.Realize (existsLastVarInf φ) v ↔ ∃ x : M, FormulaInf.Realize φ (Fin.snoc v x) := by
+  simp only [existsLastVarInf, FormulaInf.Realize, realize_ex]
+  constructor
+  · rintro ⟨x, hx⟩
+    refine ⟨x, ?_⟩
+    rw [realize_relabel_insertLastBoundInf_zero, snoc_elim0_zero_inf] at hx
+    exact hx
+  · rintro ⟨x, hx⟩
+    refine ⟨x, ?_⟩
+    rw [realize_relabel_insertLastBoundInf_zero, snoc_elim0_zero_inf]
+    exact hx
+
+/-- Semantics of `forallLastVarInf`: universally quantifies over the last variable. -/
+theorem realize_forallLastVarInf {n : ℕ} (φ : L.FormulaInf (Fin (n + 1))) (v : Fin n → M) :
+    FormulaInf.Realize (forallLastVarInf φ) v ↔ ∀ x : M, FormulaInf.Realize φ (Fin.snoc v x) := by
+  simp only [forallLastVarInf, FormulaInf.Realize, realize_all]
+  constructor
+  · intro h x
+    specialize h x
+    rw [realize_relabel_insertLastBoundInf_zero, snoc_elim0_zero_inf] at h
+    exact h
+  · intro h x
+    rw [realize_relabel_insertLastBoundInf_zero, snoc_elim0_zero_inf]
+    exact h x
+
+end LastVar
+
 end BoundedFormulaInf
 
 namespace BoundedFormula

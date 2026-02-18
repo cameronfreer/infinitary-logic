@@ -160,6 +160,43 @@ theorem of_equiv (e : M ≃[L] N) : LinfEquiv L M N := by
 
 end LinfEquiv
 
+/-! ### Universe-correct L∞ω Elementary Equivalence -/
+
+/-- L∞ω-elementary equivalence with index types matching the structure universe.
+
+Unlike `LinfEquiv` which pins `uι = 0`, this version uses `BoundedFormulaInf.{u, v, 0, w}`
+so that index types for `iSup`/`iInf` may be any `Type w`. This is the "universe-correct"
+version needed for the sorry-free Karp theorem at higher universes: the backward direction
+requires constructing formulas with `iInf` indexed by `N : Type w`, which needs `uι = w`. -/
+def LinfEquivW (L : Language.{u, v}) (M N : Type w) [L.Structure M] [L.Structure N] : Prop :=
+  ∀ φ : BoundedFormulaInf.{u, v, 0, w} L Empty 0,
+    SentenceInf.Realize φ M ↔ SentenceInf.Realize φ N
+
+namespace LinfEquivW
+
+variable {L : Language.{u, v}}
+variable {M : Type w} [L.Structure M]
+variable {N : Type w} [L.Structure N]
+variable {P : Type w} [L.Structure P]
+
+theorem refl : LinfEquivW L M M := fun _ => Iff.rfl
+
+theorem symm (h : LinfEquivW L M N) : LinfEquivW L N M := fun φ => (h φ).symm
+
+theorem trans (h₁ : LinfEquivW L M N) (h₂ : LinfEquivW L N P) : LinfEquivW L M P :=
+  fun φ => (h₁ φ).trans (h₂ φ)
+
+theorem of_equiv (e : M ≃[L] N) : LinfEquivW L M N := by
+  intro φ
+  have h := BoundedFormulaInf.realize_equiv e φ (Empty.elim : Empty → M) (Fin.elim0 : Fin 0 → M)
+  have hv : ⇑e ∘ (Empty.elim : Empty → M) = (Empty.elim : Empty → N) :=
+    funext (fun x => x.elim)
+  have hxs : ⇑e ∘ (Fin.elim0 : Fin 0 → M) = (Fin.elim0 : Fin 0 → N) :=
+    funext (fun x => x.elim0)
+  rw [hv, hxs] at h; exact h
+
+end LinfEquivW
+
 /-! ### Invariance under Isomorphism -/
 
 /-- Models of a theory are preserved under isomorphism. -/
