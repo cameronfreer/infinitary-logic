@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.ModelExistence.ConsistencyProperty
 import Mathlib.Order.Zorn
+import Mathlib.Data.Fintype.Quotient
 
 /-!
 # Henkin Construction
@@ -292,17 +293,25 @@ and relation symbols by checking membership in the maximal consistent set S*. -/
 def TermModel.mk (t : L.Term Empty) : TermModel C S hmax :=
   Quotient.mk (termSetoid C S hmax) t
 
-/-- The language structure on the term model.
+/-- The constant family of setoids for the quotient lifting. -/
+private def termSetoidFamily (C : ConsistencyPropertyEq L) (S : Set L.Sentenceω)
+    (hmax : C.toConsistencyProperty.MaximalConsistent S) (n : ℕ) :
+    ∀ (_ : Fin n), Setoid (L.Term Empty) :=
+  fun _ => termSetoid C S hmax
 
-**Function interpretation**: For `f : L.Functions n` and representatives `t₁,...,tₙ`,
-`funMap f [⟦t₁⟧,...,⟦tₙ⟧] = ⟦f(t₁,...,tₙ)⟧`.
-
-**Relation interpretation**: For `R : L.Relations n` and representatives `t₁,...,tₙ`,
-`RelMap R [⟦t₁⟧,...,⟦tₙ⟧] ↔ rel R [t₁,...,tₙ] ∈ S*`. -/
 noncomputable instance termModelStructure :
     L.Structure (TermModel C S hmax) where
-  funMap {n} f xs := sorry
-  RelMap {n} R xs := sorry
+  funMap {n} f xs :=
+    @Quotient.finLiftOn (Fin n) _ _ (fun _ => L.Term Empty) (termSetoidFamily C S hmax n)
+      (TermModel C S hmax) xs
+      (fun ts => TermModel.mk (Term.func f ts))
+      (fun _a _b _hab => sorry)
+  RelMap {n} R xs :=
+    @Quotient.finLiftOn (Fin n) _ _ (fun _ => L.Term Empty) (termSetoidFamily C S hmax n)
+      Prop xs
+      (fun ts => BoundedFormulaω.rel R
+        (fun i => (ts i).relabel (Sum.inl : Empty → Empty ⊕ Fin 0)) ∈ S)
+      (fun _a _b _hab => sorry)
 
 /-! ### Truth Lemma
 
