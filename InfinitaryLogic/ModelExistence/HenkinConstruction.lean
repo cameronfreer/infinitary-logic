@@ -299,19 +299,284 @@ private def termSetoidFamily (C : ConsistencyPropertyEq L) (S : Set L.Sentenceω
     ∀ (_ : Fin n), Setoid (L.Term Empty) :=
   fun _ => termSetoid C S hmax
 
+/-- Auxiliary: substituting a closed term into a term with no real variables. -/
+private theorem term_subst_empty_aux (t t' : L.Term Empty) :
+    (t.relabel (Sum.inl ∘ Empty.elim : Empty → Fin 1 ⊕ Fin 0)).subst
+      (Sum.elim (Term.relabel Sum.inl ∘ fun (_ : Fin 1) => t') (Term.var ∘ Sum.inr)) =
+    t.relabel (Sum.inl : Empty → Empty ⊕ Fin 0) := by
+  induction t with
+  | var e => exact Empty.elim e
+  | func f ts ih =>
+    simp only [Term.relabel, Term.subst]
+    congr 1; funext i; exact ih i
+
+/-- Single-step congruence: replacing one argument preserves term equivalence. -/
+private theorem func_congr_step (f : L.Functions n) (args : Fin n → L.Term Empty)
+    (i : Fin n) (t : L.Term Empty)
+    (ht : termEquiv C S hmax (args i) t) :
+    termEquiv C S hmax (Term.func f args) (Term.func f (Function.update args i t)) := by
+  -- Build the formula φ(x) = "f(args_with_x_at_i) = f(args)"
+  -- where the i-th argument on the left is the free variable x
+  let φ : L.Formulaω (Fin 1) :=
+    BoundedFormulaω.equal
+      (Term.func f (fun j =>
+        if j = i then Term.var (Sum.inl (0 : Fin 1))
+        else (args j).relabel (Sum.inl ∘ Empty.elim)))
+      (Term.func f (fun j => (args j).relabel (Sum.inl ∘ Empty.elim)))
+  -- Compute what φ.subst (fun _ => s) gives for any closed term s
+  have hφ_subst : ∀ s : L.Term Empty,
+      φ.subst (fun _ => s) = BoundedFormulaω.equal
+        (Term.func f (fun j =>
+          if j = i then s.relabel (Sum.inl : Empty → Empty ⊕ Fin 0)
+          else (args j).relabel (Sum.inl : Empty → Empty ⊕ Fin 0)))
+        (Term.func f (fun j => (args j).relabel (Sum.inl : Empty → Empty ⊕ Fin 0))) := by
+    intro s
+    show BoundedFormulaω.equal
+      ((Term.func f (fun j =>
+        if j = i then Term.var (Sum.inl (0 : Fin 1))
+        else (args j).relabel (Sum.inl ∘ Empty.elim))).subst
+          (Sum.elim (Term.relabel Sum.inl ∘ fun _ => s) (Term.var ∘ Sum.inr)))
+      ((Term.func f (fun j => (args j).relabel (Sum.inl ∘ Empty.elim))).subst
+          (Sum.elim (Term.relabel Sum.inl ∘ fun _ => s) (Term.var ∘ Sum.inr))) = _
+    simp only [Term.subst]
+    congr 1
+    · congr 1; funext j
+      split
+      · simp [Term.subst, Sum.elim_inl, Function.comp_apply]
+      · exact term_subst_empty_aux (args j) s
+    · congr 1; funext j; exact term_subst_empty_aux (args j) s
+  -- φ(args i) = "f(args) = f(args)" which is in S by C5 (reflexivity)
+  have hφ_ai : φ.subst (fun _ => args i) ∈ S := by
+    rw [hφ_subst]
+    have : (fun j => if j = i then (args i).relabel (Sum.inl : Empty → Empty ⊕ Fin 0)
+        else (args j).relabel (Sum.inl : Empty → Empty ⊕ Fin 0)) =
+        (fun j => (args j).relabel (Sum.inl : Empty → Empty ⊕ Fin 0)) := by
+      funext j; split <;> simp_all
+    rw [this]
+    exact hmax.mem_of_union_consistent (C.C5_eq_refl S hmax.consistent _)
+  -- C6 gives S ∪ {φ(t)} ∈ C.sets from (args i = t) ∈ S and φ(args i) ∈ S
+  have hc6 : S ∪ {φ.subst (fun _ => t)} ∈ C.toConsistencyProperty.sets :=
+    C.C6_eq_subst S hmax.consistent (args i) t φ ht hφ_ai
+  rw [hφ_subst] at hc6
+  -- φ(t) = "f(update args i t) = f(args)", which gives termEquiv symmetrically
+  have hkey : BoundedFormulaω.equal
+      (Term.func f (fun j =>
+        if j = i then t.relabel (Sum.inl : Empty → Empty ⊕ Fin 0)
+        else (args j).relabel (Sum.inl : Empty → Empty ⊕ Fin 0)))
+      (Term.func f (fun j => (args j).relabel (Sum.inl : Empty → Empty ⊕ Fin 0))) ∈ S :=
+    hmax.mem_of_union_consistent hc6
+  -- Rewrite the if-then-else to Function.update
+  have hlhs : (fun j =>
+      if j = i then t.relabel (Sum.inl : Empty → Empty ⊕ Fin 0)
+      else (args j).relabel (Sum.inl : Empty → Empty ⊕ Fin 0)) =
+      (fun j => (Function.update args i t j).relabel (Sum.inl : Empty → Empty ⊕ Fin 0)) := by
+    funext j; simp [Function.update]; split <;> simp_all
+  rw [hlhs] at hkey
+  -- Now hkey : "f(update args i t) = f(args)" ∈ S, which is the symmetric version
+  -- We need "f(args) = f(update args i t)" ∈ S, so use symmetry of termEquiv
+  -- termEquiv is defined as: termEquiv _ _ _ t₁ t₂ ↔ equal (t₁.relabel Sum.inl) (t₂.relabel Sum.inl) ∈ S
+  -- hkey gives the reverse direction, so we use the symmetry from termEquiv_equivalence
+  exact (termEquiv_equivalence C S hmax).symm hkey
+
+/-- Function congruence for term equivalence: if `a i ~ b i` for all i, then
+`f(a₁,...,aₙ) ~ f(b₁,...,bₙ)`. Proved by inductively replacing arguments using C6. -/
+private theorem func_congr (f : L.Functions n) (a b : Fin n → L.Term Empty)
+    (hab : ∀ i, termEquiv C S hmax (a i) (b i)) :
+    termEquiv C S hmax (Term.func f a) (Term.func f b) := by
+  -- Replace arguments one at a time from a to b
+  -- Define mixed k = (fun j => if j.val < k then b j else a j)
+  -- mixed 0 = a, mixed n = b
+  -- Each step: mixed k → mixed (k+1) by replacing argument at position k
+  suffices h : ∀ k : ℕ, (hk : k ≤ n) →
+      termEquiv C S hmax (Term.func f a)
+        (Term.func f (fun j => if j.val < k then b j else a j)) from by
+    have hmixed_n := h n le_rfl
+    have heq : (fun j : Fin n => if j.val < n then b j else a j) = b := by
+      funext j; simp [j.isLt]
+    rwa [heq] at hmixed_n
+  intro k
+  induction k with
+  | zero =>
+    intro _
+    simp only [Nat.not_lt_zero, ite_false]
+    exact (termEquiv_equivalence C S hmax).refl _
+  | succ k ih =>
+    intro hk
+    have hk' : k < n := Nat.lt_of_succ_le hk
+    have hkn : k ≤ n := Nat.le_of_lt hk'
+    -- By IH: func f a ~ func f (mixed k)
+    have step_k := ih hkn
+    -- Now replace argument at position ⟨k, hk'⟩
+    let i : Fin n := ⟨k, hk'⟩
+    let args_k : Fin n → L.Term Empty := fun j => if j.val < k then b j else a j
+    -- func_congr_step: func f args_k ~ func f (update args_k i (b i))
+    have hab_i : termEquiv C S hmax (args_k i) (b i) := by
+      show termEquiv C S hmax (if (i : Fin n).val < k then b i else a i) (b i)
+      simp only [show (i : Fin n).val = k from rfl, lt_irrefl, ite_false]
+      exact hab ⟨k, hk'⟩
+    have step := func_congr_step f args_k i (b i) hab_i
+    -- update args_k i (b i) = mixed (k+1)
+    have hupdate : Function.update args_k i (b i) =
+        (fun j => if j.val < k + 1 then b j else a j) := by
+      funext j
+      simp only [Function.update]
+      split
+      · -- j = i, i.e., j.val = k
+        rename_i heq
+        subst heq
+        simp only [show (i : Fin n).val = k from rfl, Nat.lt_succ_iff, le_refl, ite_true]
+      · -- j ≠ i
+        rename_i hne
+        have hne_val : j.val ≠ k := by
+          intro h; exact hne (Fin.ext h)
+        show (if j.val < k then b j else a j) = (if j.val < k + 1 then b j else a j)
+        by_cases hjk : j.val < k
+        · simp only [hjk, ite_true, Nat.lt_succ_of_lt hjk]
+        · have hjk1 : ¬(j.val < k + 1) := by omega
+          simp only [hjk, ite_false, hjk1]
+    rw [hupdate] at step
+    exact (termEquiv_equivalence C S hmax).trans step_k step
+
+/-- Single-step relation congruence: replacing one argument preserves membership in S. -/
+private theorem rel_mem_of_update (R : L.Relations n) (args : Fin n → L.Term Empty)
+    (i : Fin n) (t : L.Term Empty)
+    (ht : termEquiv C S hmax (args i) t)
+    (hmem : BoundedFormulaω.rel R
+      (fun j => (args j).relabel (Sum.inl : Empty → Empty ⊕ Fin 0)) ∈ S) :
+    BoundedFormulaω.rel R
+      (fun j => (Function.update args i t j).relabel (Sum.inl : Empty → Empty ⊕ Fin 0)) ∈ S := by
+  -- Build the formula φ(x) = "R(args_with_x_at_i)" with one free variable
+  let φ : L.Formulaω (Fin 1) :=
+    BoundedFormulaω.rel R (fun j =>
+      if j = i then Term.var (Sum.inl (0 : Fin 1))
+      else (args j).relabel (Sum.inl ∘ Empty.elim))
+  -- Compute what φ.subst (fun _ => s) gives for any closed term s
+  have hφ_subst : ∀ s : L.Term Empty,
+      φ.subst (fun _ => s) = BoundedFormulaω.rel R (fun j =>
+        if j = i then s.relabel (Sum.inl : Empty → Empty ⊕ Fin 0)
+        else (args j).relabel (Sum.inl : Empty → Empty ⊕ Fin 0)) := by
+    intro s
+    show BoundedFormulaω.rel R
+      (fun j => ((if j = i then Term.var (Sum.inl (0 : Fin 1))
+        else (args j).relabel (Sum.inl ∘ Empty.elim)).subst
+          (Sum.elim (Term.relabel Sum.inl ∘ fun _ => s) (Term.var ∘ Sum.inr)))) = _
+    congr 1; funext j
+    split
+    · simp [Term.subst, Sum.elim_inl, Function.comp_apply]
+    · exact term_subst_empty_aux (args j) s
+  -- φ(args i) = "R(args)" which is in S by hypothesis
+  have hφ_ai : φ.subst (fun _ => args i) ∈ S := by
+    rw [hφ_subst]
+    convert hmem using 2
+    funext j; split <;> simp_all
+  -- C6 gives S ∪ {φ(t)} ∈ C.sets
+  have hc6 : S ∪ {φ.subst (fun _ => t)} ∈ C.toConsistencyProperty.sets :=
+    C.C6_eq_subst S hmax.consistent (args i) t φ ht hφ_ai
+  rw [hφ_subst] at hc6
+  have hkey := hmax.mem_of_union_consistent hc6
+  -- Rewrite the if-then-else to Function.update
+  convert hkey using 2
+  funext j; simp [Function.update]; split <;> simp_all
+
+/-- Relation congruence for term equivalence: if `a i ~ b i` for all i, then
+`R(a₁,...,aₙ) ∈ S ↔ R(b₁,...,bₙ) ∈ S`. -/
+private theorem rel_congr (R : L.Relations n) (a b : Fin n → L.Term Empty)
+    (hab : ∀ i, termEquiv C S hmax (a i) (b i)) :
+    (BoundedFormulaω.rel R (fun i => (a i).relabel (Sum.inl : Empty → Empty ⊕ Fin 0)) ∈ S) =
+    (BoundedFormulaω.rel R (fun i => (b i).relabel (Sum.inl : Empty → Empty ⊕ Fin 0)) ∈ S) := by
+  -- Replace arguments one at a time from a to b (same strategy as func_congr)
+  suffices h : ∀ k : ℕ, (hk : k ≤ n) →
+      (BoundedFormulaω.rel R (fun j => (a j).relabel (Sum.inl : Empty → Empty ⊕ Fin 0)) ∈ S ↔
+       BoundedFormulaω.rel R (fun j =>
+        ((if j.val < k then b j else a j).relabel (Sum.inl : Empty → Empty ⊕ Fin 0))) ∈ S) from by
+    have hmixed_n := h n le_rfl
+    have heq : (fun j : Fin n => (if j.val < n then b j else a j).relabel
+        (Sum.inl : Empty → Empty ⊕ Fin 0)) =
+        (fun j => (b j).relabel (Sum.inl : Empty → Empty ⊕ Fin 0)) := by
+      funext j; simp [j.isLt]
+    rw [heq] at hmixed_n
+    exact propext hmixed_n
+  intro k
+  induction k with
+  | zero =>
+    intro _
+    simp only [Nat.not_lt_zero, ite_false]
+  | succ k ih =>
+    intro hk
+    have hk' : k < n := Nat.lt_of_succ_le hk
+    have hkn : k ≤ n := Nat.le_of_lt hk'
+    have step_k := ih hkn
+    let idx : Fin n := ⟨k, hk'⟩
+    let args_k : Fin n → L.Term Empty := fun j => if j.val < k then b j else a j
+    -- Show args_k idx = a idx (since idx.val = k, not < k)
+    have hab_idx : termEquiv C S hmax (args_k idx) (b idx) := by
+      show termEquiv C S hmax (if (idx : Fin n).val < k then b idx else a idx) (b idx)
+      simp only [show (idx : Fin n).val = k from rfl, lt_irrefl, ite_false]
+      exact hab ⟨k, hk'⟩
+    -- Show Function.update args_k idx (b idx) = mixed (k+1)
+    have hupdate : (fun j => (Function.update args_k idx (b idx) j).relabel
+        (Sum.inl : Empty → Empty ⊕ Fin 0)) =
+        (fun j => ((if j.val < k + 1 then b j else a j).relabel
+          (Sum.inl : Empty → Empty ⊕ Fin 0))) := by
+      funext j
+      simp only [Function.update]
+      split
+      · rename_i heq; subst heq
+        simp only [show (idx : Fin n).val = k from rfl, Nat.lt_succ_iff, le_refl, ite_true]
+      · rename_i hne
+        have hne_val : j.val ≠ k := fun h => hne (Fin.ext h)
+        show ((if j.val < k then b j else a j).relabel _) =
+            ((if j.val < k + 1 then b j else a j).relabel _)
+        congr 1
+        by_cases hjk : j.val < k
+        · simp only [hjk, ite_true, Nat.lt_succ_of_lt hjk]
+        · have hjk1 : ¬(j.val < k + 1) := by omega
+          simp only [hjk, ite_false, hjk1]
+    constructor
+    · intro hmem
+      have hmem_k := step_k.mp hmem
+      have hmem_step := rel_mem_of_update R args_k idx (b idx) hab_idx hmem_k
+      rwa [hupdate] at hmem_step
+    · intro hmem
+      have hmem_k : BoundedFormulaω.rel R
+          (fun j => (Function.update args_k idx (b idx) j).relabel
+            (Sum.inl : Empty → Empty ⊕ Fin 0)) ∈ S := by
+        rwa [hupdate]
+      -- Need to go backwards: from update to args_k, using symmetry of termEquiv
+      have hab_idx_sym : termEquiv C S hmax (b idx) (args_k idx) := by
+        show termEquiv C S hmax (b idx) (if (idx : Fin n).val < k then b idx else a idx)
+        simp only [show (idx : Fin n).val = k from rfl, lt_irrefl, ite_false]
+        exact (termEquiv_equivalence C S hmax).symm (hab ⟨k, hk'⟩)
+      -- Function.update (Function.update args_k idx (b idx)) idx (args_k idx) = args_k
+      have hrevert : Function.update (Function.update args_k idx (b idx)) idx (args_k idx) =
+          args_k := by
+        rw [Function.update_idem, Function.update_eq_self]
+      have htermequiv : termEquiv C S hmax
+          (Function.update args_k idx (b idx) idx) (args_k idx) := by
+        rw [Function.update_self]
+        exact hab_idx_sym
+      have hmem_revert := rel_mem_of_update R (Function.update args_k idx (b idx))
+        idx (args_k idx) htermequiv hmem_k
+      rw [hrevert] at hmem_revert
+      exact step_k.mpr hmem_revert
+
+/-- The language structure on the term model.
+
+**Function interpretation**: `funMap f [⟦t₁⟧,...,⟦tₙ⟧] = ⟦f(t₁,...,tₙ)⟧`.
+**Relation interpretation**: `RelMap R [⟦t₁⟧,...,⟦tₙ⟧] ↔ rel R [t₁,...,tₙ] ∈ S*`. -/
 noncomputable instance termModelStructure :
     L.Structure (TermModel C S hmax) where
   funMap {n} f xs :=
     @Quotient.finLiftOn (Fin n) _ _ (fun _ => L.Term Empty) (termSetoidFamily C S hmax n)
       (TermModel C S hmax) xs
       (fun ts => TermModel.mk (Term.func f ts))
-      (fun _a _b _hab => sorry)
+      (fun a b hab => Quotient.sound (func_congr f a b hab))
   RelMap {n} R xs :=
     @Quotient.finLiftOn (Fin n) _ _ (fun _ => L.Term Empty) (termSetoidFamily C S hmax n)
       Prop xs
       (fun ts => BoundedFormulaω.rel R
         (fun i => (ts i).relabel (Sum.inl : Empty → Empty ⊕ Fin 0)) ∈ S)
-      (fun _a _b _hab => sorry)
+      (fun a b hab => rel_congr R a b hab)
 
 /-! ### Truth Lemma
 
