@@ -53,9 +53,13 @@ theorem model_existence [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Re
     (C : ConsistencyPropertyEq L)
     (S : Set L.Sentenceω) (hS : S ∈ C.toConsistencyProperty.sets)
     (hS_countable : S.Countable) :
-    ∃ (M : Type) (_ : L.Structure M) (_ : Countable M),
+    ∃ (M : Type u) (_ : L.Structure M) (_ : Countable M),
       Theoryω.Model S M := by
-  sorry
+  -- Step 1: Extend S to a maximal consistent set S*
+  obtain ⟨S', hSS', hmax⟩ := C.toConsistencyProperty.exists_maximal S hS
+  -- Step 2: Build the term model from S*
+  exact ⟨TermModel C S' hmax, termModelStructure, sorry,
+    fun φ hφ => (truthLemma φ).mp (hSS' hφ)⟩
 
 /-- A consistent countable theory in a countable language has a countable model.
 
@@ -64,9 +68,9 @@ theorem consistent_theory_has_model [Countable (Σ l, L.Functions l)] [Countable
     (C : ConsistencyPropertyEq L)
     (T : L.Theoryω) (hT : T ∈ C.toConsistencyProperty.sets)
     (hT_countable : T.Countable) :
-    ∃ (M : Type) (_ : L.Structure M) (_ : Countable M),
-      T.Model M := by
-  exact model_existence C T hT hT_countable
+    ∃ (M : Type u) (_ : L.Structure M) (_ : Countable M),
+      T.Model M :=
+  model_existence C T hT hT_countable
 
 end Language
 

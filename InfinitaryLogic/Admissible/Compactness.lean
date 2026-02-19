@@ -63,7 +63,7 @@ theorem barwise_completeness_II [Countable (Σ l, L.Functions l)] [Countable (Σ
     (A : AdmissibleFragment L)
     {T : Set L.Sentenceω} (_hT : T ⊆ A.formulas) (hT_countable : T.Countable)
     (hcons : ∃ C : ConsistencyPropertyEq L, T ∈ C.toConsistencyProperty.sets) :
-    ∃ (M : Type) (_ : L.Structure M) (_ : Countable M),
+    ∃ (M : Type u) (_ : L.Structure M) (_ : Countable M),
       Theoryω.Model T M := by
   obtain ⟨C, hC⟩ := hcons
   exact model_existence C T hC hT_countable

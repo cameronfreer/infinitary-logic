@@ -149,8 +149,19 @@ theorem ConsistencyPropertyEq.MaximalConsistent.all_mem
     (hmax : C.toConsistencyProperty.MaximalConsistent S)
     {φ : L.Formulaω (Fin 1)}
     (h : (φ.relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).all ∈ S)
-    (t : L.Term Empty) : φ.subst (fun _ => t) ∈ S := by
-  sorry
+    (t : L.Term Empty) : φ.subst (fun _ => t) ∈ S :=
+  hmax.mem_of_union_consistent (C.C7_all S hmax.consistent φ h t)
+
+/-- In a maximal consistent set with ConsistencyPropertyEq, existential quantification:
+    if `(∃x.φ) ∈ S*` then there exists a closed term t with `φ[x/t] ∈ S*`. -/
+theorem ConsistencyPropertyEq.MaximalConsistent.ex_mem
+    {C : ConsistencyPropertyEq L} {S : Set L.Sentenceω}
+    (hmax : C.toConsistencyProperty.MaximalConsistent S)
+    {φ : L.Formulaω (Fin 1)}
+    (h : (φ.relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).ex ∈ S) :
+    ∃ t : L.Term Empty, φ.subst (fun _ => t) ∈ S := by
+  obtain ⟨t, ht⟩ := C.C7_quantifier S hmax.consistent φ h
+  exact ⟨t, hmax.mem_of_union_consistent ht⟩
 
 /-! ### Term Model Construction
 
@@ -254,6 +265,73 @@ theorem termEquiv_equivalence (C : ConsistencyPropertyEq L) (S : Set L.Sentence�
       C.C6_eq_subst S hmax.consistent t₂ t₃ φ h₂ hφt₂
     rw [hφ] at hc6
     exact hmax.mem_of_union_consistent hc6
+
+/-! ### Term Setoid and Quotient -/
+
+/-- The Setoid on closed terms induced by the equivalence relation from S*. -/
+def termSetoid (C : ConsistencyPropertyEq L) (S : Set L.Sentenceω)
+    (hmax : C.toConsistencyProperty.MaximalConsistent S) : Setoid (L.Term Empty) where
+  r := termEquiv C S hmax
+  iseqv := termEquiv_equivalence C S hmax
+
+/-- The carrier of the term model: closed terms quotiented by the equivalence
+relation `t₁ ~ t₂ ↔ (t₁ = t₂) ∈ S*`. -/
+def TermModel (C : ConsistencyPropertyEq L) (S : Set L.Sentenceω)
+    (hmax : C.toConsistencyProperty.MaximalConsistent S) : Type _ :=
+  Quotient (termSetoid C S hmax)
+
+variable {C : ConsistencyPropertyEq L} {S : Set L.Sentenceω}
+  {hmax : C.toConsistencyProperty.MaximalConsistent S}
+
+/-! ### Language Structure on the Term Model
+
+The structure interprets function symbols by applying them to representative terms,
+and relation symbols by checking membership in the maximal consistent set S*. -/
+
+/-- Embed a closed term into the term model as its equivalence class. -/
+def TermModel.mk (t : L.Term Empty) : TermModel C S hmax :=
+  Quotient.mk (termSetoid C S hmax) t
+
+/-- The language structure on the term model.
+
+**Function interpretation**: For `f : L.Functions n` and representatives `t₁,...,tₙ`,
+`funMap f [⟦t₁⟧,...,⟦tₙ⟧] = ⟦f(t₁,...,tₙ)⟧`.
+
+**Relation interpretation**: For `R : L.Relations n` and representatives `t₁,...,tₙ`,
+`RelMap R [⟦t₁⟧,...,⟦tₙ⟧] ↔ rel R [t₁,...,tₙ] ∈ S*`. -/
+noncomputable instance termModelStructure :
+    L.Structure (TermModel C S hmax) where
+  funMap {n} f xs := sorry
+  RelMap {n} R xs := sorry
+
+/-! ### Truth Lemma
+
+The fundamental theorem connecting membership in the maximal consistent set with
+truth in the term model. -/
+
+/-- **Truth Lemma**: A sentence belongs to the maximal consistent set S* if and
+only if it is true in the term model.
+
+This is proved by structural induction on the sentence, using:
+- (C0) for `falsum`
+- (C1) for `imp`
+- (C2) for double negation
+- (C3) for `iInf` (countable conjunction)
+- (C4) for `iSup` (countable disjunction)
+- (C5,C6) for `equal`
+- (C7,C7_all) for `all` / `ex`
+- Maximality (decidability) for the reverse directions -/
+theorem truthLemma (σ : L.Sentenceω) :
+    σ ∈ S ↔ Sentenceω.Realize σ (TermModel C S hmax) := by
+  sorry
+
+/-! ### Model Existence from Truth Lemma -/
+
+/-- The term model satisfies every sentence in S*. -/
+theorem termModel_models_maximal :
+    Theoryω.Model S (TermModel C S hmax) := by
+  intro φ hφ
+  exact (truthLemma φ).mp hφ
 
 end Language
 

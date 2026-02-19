@@ -40,7 +40,7 @@ This is a sentence-level consequence of the model existence theorem. -/
 theorem karp_completeness [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relations l)]
     (φ : L.Sentenceω)
     (h : ∃ C : ConsistencyPropertyEq L, {φ} ∈ C.toConsistencyProperty.sets) :
-    ∃ (M : Type) (_ : L.Structure M) (_ : Countable M), Sentenceω.Realize φ M := by
+    ∃ (M : Type u) (_ : L.Structure M) (_ : Countable M), Sentenceω.Realize φ M := by
   obtain ⟨C, hC⟩ := h
   obtain ⟨M, hStr, hCount, hModel⟩ := model_existence C {φ} hC (Set.countable_singleton φ)
   exact ⟨M, hStr, hCount, hModel φ (Set.mem_singleton φ)⟩
@@ -68,7 +68,7 @@ theorem omitting_types [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Rel
       T ∪ {(φ.relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).ex} ∈ C.toConsistencyProperty.sets →
       ∃ ψ ∈ p, T ∪ {((φ.and ψ.not).relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).ex}
         ∈ C.toConsistencyProperty.sets) :
-    ∃ (M : Type) (_ : L.Structure M) (_ : Countable M),
+    ∃ (M : Type u) (_ : L.Structure M) (_ : Countable M),
       Theoryω.Model T M ∧ ∀ p ∈ Γ, OmitsType (L := L) M p := by
   sorry
 

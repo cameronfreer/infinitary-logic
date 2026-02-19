@@ -117,6 +117,15 @@ structure ConsistencyPropertyEq (L : Language.{u, v}) extends ConsistencyPropert
       (φ.relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).ex ∈ S →
       ∃ (t : L.Term Empty),
         S ∪ {φ.subst (fun _ => t)} ∈ toConsistencyProperty.sets
+  /-- (C7') Universal instantiation: if ∀x φ(x) ∈ S, then S ∪ {φ(t)} is consistent
+      for every closed term t. Here φ has one free variable (`Fin 1`),
+      and `(φ.relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).all` converts it to a
+      sentence with one bound variable and takes its universal quantification. -/
+  C7_all : ∀ S ∈ toConsistencyProperty.sets,
+    ∀ (φ : L.Formulaω (Fin 1)),
+      (φ.relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).all ∈ S →
+      ∀ (t : L.Term Empty),
+        S ∪ {φ.subst (fun _ => t)} ∈ toConsistencyProperty.sets
 
 end Language
 
