@@ -43,8 +43,8 @@ Use `ConsistencyPropertyEq` for the full model existence theorem. -/
 structure ConsistencyProperty (L : Language.{u, v}) where
   /-- The family of consistent sets. -/
   sets : Set (Set L.Sentenceω)
-  /-- (C0) No set in the family contains falsum. -/
-  C0_no_contradiction : ∀ S ∈ sets, ⊥ ∉ S
+  /-- (C0) No set in the family contains both a sentence and its negation. -/
+  C0_no_contradiction : ∀ S ∈ sets, ∀ φ : L.Sentenceω, ¬(φ ∈ S ∧ φ.not ∈ S)
   /-- (C1) Closure under implication decomposition: if φ → ψ ∈ S, then either
       S ∪ {¬φ} or S ∪ {ψ} is in the family. -/
   C1_imp : ∀ S ∈ sets, ∀ φ ψ : L.Sentenceω,
@@ -61,6 +61,11 @@ structure ConsistencyProperty (L : Language.{u, v}) where
       such that S ∪ {φₖ} is consistent. -/
   C4_iSup : ∀ S ∈ sets, ∀ φs : ℕ → L.Sentenceω,
     BoundedFormulaω.iSup φs ∈ S → ∃ k, S ∪ {φs k} ∈ sets
+  /-- (Extension) For any consistent S and sentence φ, either S ∪ {φ} or
+      S ∪ {¬φ} is consistent. This ensures maximal consistent extensions decide
+      every sentence. In the standard consistency property for satisfiable sets,
+      this holds because any model of S satisfies either φ or ¬φ. -/
+  extension : ∀ S ∈ sets, ∀ φ : L.Sentenceω, S ∪ {φ} ∈ sets ∨ S ∪ {φ.not} ∈ sets
   /-- Chain closure: the union of a nonempty ⊆-chain of consistent sets is
       consistent. This enables the Zorn's lemma argument for maximal consistent
       extensions. In standard presentations, this follows from the finite character

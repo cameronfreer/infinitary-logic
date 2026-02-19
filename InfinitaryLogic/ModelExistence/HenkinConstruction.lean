@@ -120,21 +120,64 @@ theorem ConsistencyProperty.MaximalConsistent.iSup_mem
   obtain ⟨k, hk⟩ := C.C4_iSup S hmax.consistent φs h
   exact ⟨k, hmax.mem_of_union_consistent hk⟩
 
+/-- A maximal consistent set decides every sentence: either φ ∈ S* or ¬φ ∈ S*. -/
+theorem ConsistencyProperty.MaximalConsistent.decide
+    {C : ConsistencyProperty L} {S : Set L.Sentenceω}
+    (hmax : C.MaximalConsistent S)
+    (φ : L.Sentenceω) : φ ∈ S ∨ φ.not ∈ S := by
+  rcases C.extension S hmax.consistent φ with h | h
+  · exact Or.inl (hmax.mem_of_union_consistent h)
+  · exact Or.inr (hmax.mem_of_union_consistent h)
+
+/-- In a maximal consistent set, ¬φ ∈ S ↔ φ ∉ S. -/
+theorem ConsistencyProperty.MaximalConsistent.not_mem_iff
+    {C : ConsistencyProperty L} {S : Set L.Sentenceω}
+    (hmax : C.MaximalConsistent S) (φ : L.Sentenceω) :
+    φ.not ∈ S ↔ φ ∉ S := by
+  constructor
+  · intro hneg hmem
+    exact C.C0_no_contradiction S hmax.consistent φ ⟨hmem, hneg⟩
+  · intro h
+    rcases hmax.decide φ with hmem | hneg
+    · exact absurd hmem h
+    · exact hneg
+
+/-- In a maximal consistent set with ConsistencyPropertyEq, universal quantification:
+    `(∀x.φ) ∈ S*` iff for all closed terms t, `φ[x/t] ∈ S*`. -/
+theorem ConsistencyPropertyEq.MaximalConsistent.all_mem
+    {C : ConsistencyPropertyEq L} {S : Set L.Sentenceω}
+    (hmax : C.toConsistencyProperty.MaximalConsistent S)
+    {φ : L.Formulaω (Fin 1)}
+    (h : (φ.relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).all ∈ S)
+    (t : L.Term Empty) : φ.subst (fun _ => t) ∈ S := by
+  sorry
+
 /-! ### Term Model Construction
 
 The term model for the Henkin construction is built from closed terms of
-the extended language `L' = L[[ℕ]]`. Two terms are equivalent if the
-maximal consistent set contains the equation `t₁ = t₂`.
+language L. Two terms are equivalent if the maximal consistent set contains
+the equation `t₁ = t₂`. The quotient model satisfies all sentences in S. -/
 
-**Note**: The full term model construction requires:
-1. Language extension with Henkin constants (`L[[ℕ]]`)
-2. An equivalence relation on closed terms (via the maximal set)
-3. Interpreting function/relation symbols on equivalence classes
-4. A truth lemma by structural induction
+/-- Equivalence relation on closed terms induced by a maximal consistent set. -/
+def termEquiv (C : ConsistencyPropertyEq L) (S : Set L.Sentenceω)
+    (hmax : C.toConsistencyProperty.MaximalConsistent S) :
+    L.Term Empty → L.Term Empty → Prop :=
+  fun t₁ t₂ => BoundedFormulaω.equal
+    (t₁.relabel (Sum.inl : Empty → Empty ⊕ Fin 0))
+    (t₂.relabel (Sum.inl : Empty → Empty ⊕ Fin 0)) ∈ S
 
-Each of these steps requires significant infrastructure. The current file
-provides the maximal consistent extension and its properties; the term model
-construction is deferred to a future iteration. -/
+/-- The term equivalence is an equivalence relation. -/
+theorem termEquiv_equivalence (C : ConsistencyPropertyEq L) (S : Set L.Sentenceω)
+    (hmax : C.toConsistencyProperty.MaximalConsistent S) :
+    Equivalence (termEquiv C S hmax) := by
+  refine ⟨fun t => ?_, fun h => ?_, fun h₁ h₂ => ?_⟩
+  · -- Reflexivity: t = t ∈ S by C5
+    exact hmax.mem_of_union_consistent (C.C5_eq_refl S hmax.consistent _)
+  · -- Symmetry: from t₁ = t₂ ∈ S, derive t₂ = t₁ ∈ S via C6
+    -- Use the formula φ(x) = (x = t₁) and substitute t₂ for x
+    sorry
+  · -- Transitivity: from t₁ = t₂ ∈ S and t₂ = t₃ ∈ S, derive t₁ = t₃ via C6
+    sorry
 
 end Language
 

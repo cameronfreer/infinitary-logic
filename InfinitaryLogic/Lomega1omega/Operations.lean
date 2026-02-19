@@ -193,6 +193,44 @@ theorem realize_mapFreeVars {M : Type*} [L.Structure M]
     simp only [mapFreeVars, realize_iInf]
     exact forall_congr' fun k => ih k xs
 
+private theorem sum_elim_subst_tf {M : Type*} [L.Structure M]
+    (tf : α → L.Term β) (v : β → M) (xs : Fin n → M) :
+    (fun a : α ⊕ Fin n =>
+      ((Sum.elim (Term.relabel Sum.inl ∘ tf) (Term.var ∘ Sum.inr) a).realize
+        (Sum.elim v xs))) =
+    Sum.elim (fun a => (tf a).realize v) xs := by
+  funext x
+  rcases x with a | j
+  · simp [Term.realize_relabel, Sum.elim_comp_inl]
+  · simp
+
+/-- Realization commutes with free variable substitution.
+
+This is the Lω₁ω analogue of Mathlib's `BoundedFormula.realize_subst`. -/
+@[simp]
+theorem realize_subst {M : Type*} [L.Structure M]
+    (tf : α → L.Term β) (φ : L.BoundedFormulaω α n) (v : β → M) (xs : Fin n → M) :
+    (φ.subst tf).Realize v xs ↔ φ.Realize (fun a => (tf a).realize v) xs := by
+  induction φ with
+  | falsum => simp [subst, Realize]
+  | equal t₁ t₂ =>
+    simp only [subst, realize_equal, Term.realize_subst, sum_elim_subst_tf]
+  | rel R ts =>
+    simp only [subst, realize_rel]
+    constructor <;> intro h <;> convert h using 1 <;> ext i <;>
+      simp [Term.realize_subst, sum_elim_subst_tf]
+  | imp φ ψ ihφ ihψ =>
+    simp only [subst, realize_imp, ihφ xs, ihψ xs]
+  | all φ ih =>
+    simp only [subst, realize_all]
+    exact forall_congr' fun x => ih (Fin.snoc xs x)
+  | iSup φs ih =>
+    simp only [subst, realize_iSup]
+    exact exists_congr fun k => ih k xs
+  | iInf φs ih =>
+    simp only [subst, realize_iInf]
+    exact forall_congr' fun k => ih k xs
+
 end BoundedFormulaω
 
 namespace Formulaω
