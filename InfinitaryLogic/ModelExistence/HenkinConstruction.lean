@@ -174,10 +174,86 @@ theorem termEquiv_equivalence (C : ConsistencyPropertyEq L) (S : Set L.Sentence�
   · -- Reflexivity: t = t ∈ S by C5
     exact hmax.mem_of_union_consistent (C.C5_eq_refl S hmax.consistent _)
   · -- Symmetry: from t₁ = t₂ ∈ S, derive t₂ = t₁ ∈ S via C6
-    -- Use the formula φ(x) = (x = t₁) and substitute t₂ for x
-    sorry
+    rename_i t₁ t₂
+    -- Helper: for any t : L.Term Empty, (t.relabel (Sum.inl ∘ Empty.elim)).subst σ = t.relabel Sum.inl
+    -- This holds because t has no variables (Empty), so relabel/subst only act on func nodes.
+    have term_subst_empty : ∀ (t t' : L.Term Empty),
+        (t.relabel (Sum.inl ∘ Empty.elim : Empty → Fin 1 ⊕ Fin 0)).subst
+          (Sum.elim (Term.relabel Sum.inl ∘ fun (_ : Fin 1) => t') (Term.var ∘ Sum.inr)) =
+        t.relabel (Sum.inl : Empty → Empty ⊕ Fin 0) := by
+      intro t t'
+      induction t with
+      | var e => exact Empty.elim e
+      | func f ts ih =>
+        simp only [Term.relabel, Term.subst]
+        congr 1; funext i; exact ih i
+    -- Use the formula φ(x) = "x = t₁" with one free variable
+    let φ : L.Formulaω (Fin 1) :=
+      BoundedFormulaω.equal
+        (Term.var (Sum.inl (0 : Fin 1)))
+        (t₁.relabel (Sum.inl ∘ Empty.elim))
+    -- Show φ.subst computes as expected
+    have hφ : ∀ t : L.Term Empty,
+        φ.subst (fun _ => t) = BoundedFormulaω.equal
+          (t.relabel (Sum.inl : Empty → Empty ⊕ Fin 0))
+          (t₁.relabel (Sum.inl : Empty → Empty ⊕ Fin 0)) := by
+      intro t
+      show BoundedFormulaω.equal
+        ((Term.var (Sum.inl (0 : Fin 1))).subst
+          (Sum.elim (Term.relabel Sum.inl ∘ fun _ => t) (Term.var ∘ Sum.inr)))
+        ((t₁.relabel (Sum.inl ∘ Empty.elim)).subst
+          (Sum.elim (Term.relabel Sum.inl ∘ fun _ => t) (Term.var ∘ Sum.inr))) =
+        BoundedFormulaω.equal (t.relabel Sum.inl) (t₁.relabel Sum.inl)
+      simp only [Term.subst, Sum.elim_inl, Function.comp_apply]
+      congr 1
+      exact term_subst_empty t₁ t
+    -- C6 gives S ∪ {φ(t₂)} ∈ C.sets from (t₁ = t₂) ∈ S and φ(t₁) ∈ S
+    -- φ(t₁) = (t₁ = t₁) ∈ S by C5
+    have hrefl : φ.subst (fun _ => t₁) ∈ S := by
+      rw [hφ]
+      exact hmax.mem_of_union_consistent (C.C5_eq_refl S hmax.consistent _)
+    have hc6 : S ∪ {φ.subst (fun _ => t₂)} ∈ C.toConsistencyProperty.sets :=
+      C.C6_eq_subst S hmax.consistent t₁ t₂ φ h hrefl
+    rw [hφ] at hc6
+    exact hmax.mem_of_union_consistent hc6
   · -- Transitivity: from t₁ = t₂ ∈ S and t₂ = t₃ ∈ S, derive t₁ = t₃ via C6
-    sorry
+    rename_i t₁ t₂ t₃
+    -- Helper for empty-variable terms
+    have term_subst_empty : ∀ (t t' : L.Term Empty),
+        (t.relabel (Sum.inl ∘ Empty.elim : Empty → Fin 1 ⊕ Fin 0)).subst
+          (Sum.elim (Term.relabel Sum.inl ∘ fun (_ : Fin 1) => t') (Term.var ∘ Sum.inr)) =
+        t.relabel (Sum.inl : Empty → Empty ⊕ Fin 0) := by
+      intro t t'
+      induction t with
+      | var e => exact Empty.elim e
+      | func f ts ih =>
+        simp only [Term.relabel, Term.subst]
+        congr 1; funext i; exact ih i
+    -- Use the formula φ(x) = "t₁ = x" with one free variable
+    let φ : L.Formulaω (Fin 1) :=
+      BoundedFormulaω.equal
+        (t₁.relabel (Sum.inl ∘ Empty.elim))
+        (Term.var (Sum.inl (0 : Fin 1)))
+    have hφ : ∀ t : L.Term Empty,
+        φ.subst (fun _ => t) = BoundedFormulaω.equal
+          (t₁.relabel (Sum.inl : Empty → Empty ⊕ Fin 0))
+          (t.relabel (Sum.inl : Empty → Empty ⊕ Fin 0)) := by
+      intro t
+      show BoundedFormulaω.equal
+        ((t₁.relabel (Sum.inl ∘ Empty.elim)).subst
+          (Sum.elim (Term.relabel Sum.inl ∘ fun _ => t) (Term.var ∘ Sum.inr)))
+        ((Term.var (Sum.inl (0 : Fin 1))).subst
+          (Sum.elim (Term.relabel Sum.inl ∘ fun _ => t) (Term.var ∘ Sum.inr))) =
+        BoundedFormulaω.equal (t₁.relabel Sum.inl) (t.relabel Sum.inl)
+      simp only [Term.subst, Sum.elim_inl, Function.comp_apply]
+      congr 1
+      exact term_subst_empty t₁ t
+    -- C6: from (t₂ = t₃) ∈ S and φ(t₂) = (t₁ = t₂) ∈ S, get S ∪ {φ(t₃)} ∈ C.sets
+    have hφt₂ : φ.subst (fun _ => t₂) ∈ S := by rw [hφ]; exact h₁
+    have hc6 : S ∪ {φ.subst (fun _ => t₃)} ∈ C.toConsistencyProperty.sets :=
+      C.C6_eq_subst S hmax.consistent t₂ t₃ φ h₂ hφt₂
+    rw [hφ] at hc6
+    exact hmax.mem_of_union_consistent hc6
 
 end Language
 
