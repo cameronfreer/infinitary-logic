@@ -578,10 +578,30 @@ noncomputable instance termModelStructure :
         (fun i => (ts i).relabel (Sum.inl : Empty → Empty ⊕ Fin 0)) ∈ S)
       (fun a b hab => rel_congr R a b hab)
 
-/-! ### Truth Lemma
+/-! ### Truth Lemma Infrastructure -/
 
-The fundamental theorem connecting membership in the maximal consistent set with
-truth in the term model. -/
+/-- In the term model, evaluating a closed term gives its equivalence class. -/
+theorem term_realize_eq_mk (t : L.Term Empty) :
+    t.realize (Empty.elim : Empty → TermModel C S hmax) = TermModel.mk t := by
+  induction t with
+  | var e => exact Empty.elim e
+  | func f ts ih =>
+    simp only [Term.realize, TermModel.mk]
+    show Structure.funMap f (fun i => (ts i).realize Empty.elim) = _
+    have h_eq : (fun i => (ts i).realize (Empty.elim : Empty → TermModel C S hmax)) =
+        (fun i => TermModel.mk (ts i)) := funext ih
+    rw [h_eq]
+    show termModelStructure.funMap f (fun i => TermModel.mk (ts i)) = TermModel.mk (Term.func f ts)
+    -- funMap is defined via Quotient.finLiftOn; when applied to reps, it gives the function applied to reps
+    unfold termModelStructure TermModel.mk
+    exact congr_fun (congr_fun (Quotient.finLiftOn_mk ts) _) _
+
+/-- Every element of the term model is the equivalence class of some term. -/
+theorem TermModel.exists_rep (x : TermModel C S hmax) :
+    ∃ t : L.Term Empty, TermModel.mk t = x :=
+  Quotient.exists_rep x
+
+/-! ### Truth Lemma -/
 
 /-- **Truth Lemma**: A sentence belongs to the maximal consistent set S* if and
 only if it is true in the term model.

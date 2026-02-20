@@ -43,7 +43,9 @@ Use `ConsistencyPropertyEq` for the full model existence theorem. -/
 structure ConsistencyProperty (L : Language.{u, v}) where
   /-- The family of consistent sets. -/
   sets : Set (Set L.Sentenceω)
-  /-- (C0) No set in the family contains both a sentence and its negation. -/
+  /-- (C0a) No set in the family contains falsum. -/
+  C0_no_falsum : ∀ S ∈ sets, (BoundedFormulaω.falsum : L.Sentenceω) ∉ S
+  /-- (C0b) No set in the family contains both a sentence and its negation. -/
   C0_no_contradiction : ∀ S ∈ sets, ∀ φ : L.Sentenceω, ¬(φ ∈ S ∧ φ.not ∈ S)
   /-- (C1) Closure under implication decomposition: if φ → ψ ∈ S, then either
       S ∪ {¬φ} or S ∪ {ψ} is in the family. -/
