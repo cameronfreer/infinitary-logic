@@ -170,12 +170,8 @@ private theorem snoc_elim0_eq_const (m : M) :
 
 /-- Given a model M with a naming function, the true-in-M family forms a `ConsistencyPropertyEq`.
 
-The C7 axioms involving `relabel Sum.inr` (C7_quantifier, C7_all, C7_neg_all, C7_neg_ex)
-are left as sorry because proving them requires a general `realize_relabel` lemma for
-`BoundedFormulaω` which is complex due to the `castLE` in the `all` case.
-
-The C7 axioms involving `openBounds` (C7_all_bound, C7_neg_all_bound) are fully proved,
-and these are the ones actually used by `truthLemma` and `model_existence`. -/
+All C7 axioms are proved using `realize_relabel_sumInr_zero` (for the `relabel Sum.inr` variants)
+and `realize_openBounds` (for the `openBounds` variants). -/
 noncomputable def trueInModelConsistencyPropertyEq
     (M : Type w) [L.Structure M] (ι : NamingFunction L M) :
     ConsistencyPropertyEq L where
@@ -202,23 +198,42 @@ noncomputable def trueInModelConsistencyPropertyEq
   C7_quantifier := by
     intro S hS φ hmem
     have hsat := hS hmem
-    -- (φ.relabel Sum.inr).ex ∈ S means ∃x. φ(x) is true in M
-    -- Need: realize_relabel for Sum.inr to extract witness
-    sorry
+    simp only [trueInModel, Set.mem_setOf_eq, Sentenceω.Realize, realize_ex] at hsat
+    obtain ⟨m, hm⟩ := hsat
+    rw [snoc_elim0_eq_const, realize_relabel_sumInr_zero] at hm
+    exact ⟨ι.name m, union_subset_trueInModel hS ((realize_subst_name ι φ m).mpr hm)⟩
   C7_all := by
     intro S hS φ hmem t
     have hsat := hS hmem
-    -- (φ.relabel Sum.inr).all ∈ S means ∀x. φ(x) is true in M
-    -- Need: realize_relabel for Sum.inr
-    sorry
+    simp only [trueInModel, Set.mem_setOf_eq, Sentenceω.Realize, realize_all] at hsat
+    have hm := hsat (t.realize (Empty.elim : Empty → M))
+    rw [snoc_elim0_eq_const, realize_relabel_sumInr_zero] at hm
+    exact union_subset_trueInModel hS (by
+      simp only [Sentenceω.Realize, realize_subst]
+      convert hm)
   C7_neg_all := by
     intro S hS φ hmem
     have hsat := hS hmem
-    sorry
+    simp only [trueInModel, Set.mem_setOf_eq, Sentenceω.Realize, realize_not, realize_all] at hsat
+    push_neg at hsat
+    obtain ⟨m, hm⟩ := hsat
+    rw [snoc_elim0_eq_const, realize_relabel_sumInr_zero] at hm
+    refine ⟨ι.name m, union_subset_trueInModel hS ?_⟩
+    show Sentenceω.Realize (φ.subst (fun _ => ι.name m)).not M
+    simp only [Sentenceω.Realize, realize_not]
+    intro h
+    exact hm ((realize_subst_name ι φ m).mp h)
   C7_neg_ex := by
     intro S hS φ hmem t
     have hsat := hS hmem
-    sorry
+    simp only [trueInModel, Set.mem_setOf_eq, Sentenceω.Realize, realize_not, realize_ex] at hsat
+    push_neg at hsat
+    have hm := hsat (t.realize (Empty.elim : Empty → M))
+    rw [snoc_elim0_eq_const, realize_relabel_sumInr_zero] at hm
+    exact union_subset_trueInModel hS (by
+      simp only [Sentenceω.Realize, realize_not, realize_subst]
+      intro h; apply hm
+      convert h)
   C7_all_bound := by
     intro S hS φ hmem t
     have hsat := hS hmem

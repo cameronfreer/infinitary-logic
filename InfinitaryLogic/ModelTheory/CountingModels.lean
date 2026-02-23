@@ -42,19 +42,40 @@ isomorphism between countable models is equivalent to BF-equivalence at level α
 This reduces the isomorphism problem to a finite-level back-and-forth comparison,
 which is key for descriptive set-theoretic analyses of the isomorphism relation.
 
-**Status**:
-- Forward (iso → BFEquiv): Available via `equiv_implies_BFEquiv` in Scott/Sentence.lean.
-- Backward (BFEquiv α → iso): Needs showing that BFEquiv at the Scott rank of
-  countable structures implies actual isomorphism (requires `StabilizesAt M (scottRank M)`). -/
+**Proof**:
+- Forward (iso → BFEquiv): Via `equiv_implies_BFEquiv`.
+- Backward (BFEquiv α → iso): Uses `scottRank_le_implies_stabilizesCompletely` to get
+  `StabilizesCompletely M α`, then upgrades BFEquiv to all levels via
+  `BFEquiv_upgrade_at_stabilization`, then applies `BFEquiv_below_omega1_implies_iso`.
+
+**Status**: Inherits sorry from `per_tuple_stabilization_below_omega1` (via
+`scottRank_le_implies_stabilizesCompletely`). -/
 theorem bounded_scottRank_iso_eq_BFEquiv
-    {φ : L.Sentenceω} {α : Ordinal} (hα : α < Ordinal.omega 1)
+    {φ : L.Sentenceω} {α : Ordinal} (_hα : α < Ordinal.omega 1)
     (hbound : ∀ (M : Type w) [L.Structure M] [Countable M],
       Sentenceω.Realize φ M → scottRank (L := L) M ≤ α)
     {M N : Type w} [L.Structure M] [L.Structure N] [Countable M] [Countable N]
-    (hM : Sentenceω.Realize φ M) (hN : Sentenceω.Realize φ N) :
+    (hM : Sentenceω.Realize φ M) (_hN : Sentenceω.Realize φ N) :
     Nonempty (M ≃[L] N) ↔
     BFEquiv (L := L) α 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) := by
-  sorry
+  constructor
+  · -- Forward: isomorphism → BFEquiv α
+    intro ⟨e⟩
+    have h : (e : M → N) ∘ Fin.elim0 = Fin.elim0 := funext fun i => i.elim0
+    rw [← h]
+    exact equiv_implies_BFEquiv e α 0 Fin.elim0
+  · -- Backward: BFEquiv α → isomorphism
+    intro hBF
+    -- scottRank M ≤ α gives StabilizesCompletely M α
+    have hstabM := scottRank_le_implies_stabilizesCompletely M (hbound M hM)
+    -- Upgrade BFEquiv from α to all levels γ ≥ α
+    have hAll : ∀ γ < (Ordinal.omega 1 : Ordinal.{0}),
+        BFEquiv (L := L) γ 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) := by
+      intro γ _
+      rcases le_or_gt γ α with hγα | hαγ
+      · exact BFEquiv.monotone hγα hBF
+      · exact BFEquiv_upgrade_at_stabilization hstabM hBF γ hαγ.le
+    exact BFEquiv_below_omega1_implies_iso hAll
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- The number of isomorphism classes of countable models of an Lω₁ω sentence

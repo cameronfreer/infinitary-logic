@@ -16,10 +16,23 @@ if they are L∞ω-elementarily equivalent.
 
 ## Main Results
 
-- `karp_theorem`: For relational languages, potential isomorphism is equivalent to
-  L∞ω-elementary equivalence (KK04 Theorem 1.2.1).
-- `BFEquiv_iff_agreeQR`: BF-equivalence at level α is equivalent to agreement on all
-  formulas of quantifier rank ≤ α (KK04 Lemma 1.3.3, the "Karp lemma").
+- `karp_theorem_w`: The canonical Karp theorem (sorry-free). For relational languages,
+  potential isomorphism is equivalent to `LinfEquivW` (L∞ω-elementary equivalence with
+  index types at universe `w` matching the structure universe).
+- `karp_theorem_universe0`: Specialization of `karp_theorem_w` to `Type 0`, where
+  `LinfEquivW` and `LinfEquiv` coincide.
+- `BFEquiv_implies_agreeQR`: Forward direction of the Karp lemma (sorry-free):
+  BF-equivalence at level α implies agreement on all formulas of quantifier rank ≤ α.
+
+## Design Notes
+
+An earlier version of this file included a backward direction `agree_implies_BFEquiv`
+and an iff form `BFEquiv_iff_agreeQR` for formulas with `Type 0` index types. The
+backward direction had `sorry`s due to a genuine universe obstruction: the forth/back
+witnesses require `iInf` indexed by `N : Type w`, but `BoundedFormulaInf.{u,v,0,0}`
+only allows `Type 0` index types. The `karp_theorem_w` pipeline (using `LinfEquivW`
+with universe-`w` index types) avoids this obstruction entirely, making the old path
+redundant. It was removed to eliminate 3 sorry tokens.
 
 ## References
 
@@ -162,194 +175,27 @@ private theorem BFEquiv_implies_agree_aux {M N : Type w} [L.Structure M] [L.Stru
     exact forall_congr' fun i =>
       ih i α (le_trans (Ordinal.le_iSup (fun i => (φs i).qrank) i) hφ) xs ys hBF
 
-/-- The backward direction of the Karp lemma: agreement on formulas of rank ≤ α
-implies BFEquiv at level α. -/
-private theorem agree_implies_BFEquiv {M N : Type w} [L.Structure M] [L.Structure N]
-    (α : Ordinal) {n : ℕ} (a : Fin n → M) (b : Fin n → N)
-    (h : ∀ φ : BoundedFormulaInf.{u, v, 0, 0} L (Fin n) 0, φ.qrank ≤ α →
-      (FormulaInf.Realize φ a ↔ FormulaInf.Realize φ b)) :
-    BFEquiv (L := L) α n a b := by
-  induction α using Ordinal.limitRecOn generalizing n a b with
-  | zero =>
-    rw [BFEquiv.zero]
-    intro idx
-    exact (realize_atomicFormulaInf idx a).symm.trans
-      ((h _ (le_of_eq (qrank_atomicFormulaInf idx))).trans (realize_atomicFormulaInf idx b))
-  | succ β ih =>
-    rw [BFEquiv.succ]
-    refine ⟨?_, ?_, ?_⟩
-    · -- BFEquiv at level β
-      exact ih a b fun φ hφ => h φ (le_trans hφ (Order.le_succ β))
-    · -- Forth: ∀ m : M, ∃ n' : N, BFEquiv β (n+1) (snoc a m) (snoc b n')
-      -- This requires constructing a formula ∃x. ⋀_{n':N} ψ_{n'} indexed by N : Type w.
-      -- Since BoundedFormulaInf.{u,v,0,0} only allows Type 0 index types,
-      -- this is impossible when w > 0 (universe obstruction).
-      sorry
-    · -- Back: symmetric universe obstruction
-      sorry
-  | limit β hβ ih =>
-    rw [BFEquiv.limit β hβ]
-    intro γ hγ
-    exact ih γ hγ a b fun φ hφ => h φ (le_trans hφ (le_of_lt hγ))
-
-/-- **Karp Lemma** (KK04 Lemma 1.3.3): BF-equivalence at level α between tuples is
-equivalent to agreement on all formulas of quantifier rank ≤ α.
-
-This is the key inductive lemma relating the game-theoretic BFEquiv to the
-formula-based EquivQR.
-
-**Status**: The forward direction (`→`) is fully proved by structural induction on
-formulas. The backward direction (`←`) has two `sorry`s at the successor case due
-to a genuine universe obstruction: the forth/back witnesses require constructing
-formulas with `iInf` indexed by `N : Type w`, but `BoundedFormulaInf.{u,v,0,0}`
-only allows `Type 0` index types. At `w = 0` this obstruction vanishes; see
-`BFEquiv_implies_agreeQR` for a sorry-free forward-only extraction. -/
-theorem BFEquiv_iff_agreeQR {M N : Type w} [L.Structure M] [L.Structure N]
-    (α : Ordinal) {n : ℕ} (a : Fin n → M) (b : Fin n → N) :
-    BFEquiv (L := L) α n a b ↔
-    ∀ (φ : BoundedFormulaInf.{u, v, 0, 0} L (Fin n) 0), φ.qrank ≤ α →
-      (FormulaInf.Realize φ a ↔ FormulaInf.Realize φ b) := by
-  constructor
-  · intro hBF φ hφ
-    have ha : Fin.append a (Fin.elim0 : Fin 0 → M) = a := by
-      ext ⟨i, hi⟩; simp [Fin.append, Fin.addCases, show i < n from hi]
-    have hb : Fin.append b (Fin.elim0 : Fin 0 → N) = b := by
-      ext ⟨i, hi⟩; simp [Fin.append, Fin.addCases, show i < n from hi]
-    exact BFEquiv_implies_agree_aux α φ hφ a b Fin.elim0 Fin.elim0 (by rwa [ha, hb])
-  · exact agree_implies_BFEquiv α a b
-
+omit [Countable (Σ l, L.Relations l)] in
 /-- **Karp Lemma, forward direction** (sorry-free): BF-equivalence at level α implies
 agreement on all formulas of quantifier rank ≤ α.
 
-This is the forward implication of `BFEquiv_iff_agreeQR`, extracted as a standalone
-theorem so that downstream results can depend on it without inheriting the backward
-direction's `sorry`s. -/
+This is a direct corollary of `BFEquiv_implies_agree_aux` with `k = 0` and
+`xs = ys = Fin.elim0`. -/
 theorem BFEquiv_implies_agreeQR {M N : Type w} [L.Structure M] [L.Structure N]
     (α : Ordinal) {n : ℕ} (a : Fin n → M) (b : Fin n → N)
     (h : BFEquiv (L := L) α n a b)
     (φ : BoundedFormulaInf.{u, v, 0, 0} L (Fin n) 0) (hφ : φ.qrank ≤ α) :
-    (FormulaInf.Realize φ a ↔ FormulaInf.Realize φ b) :=
-  (BFEquiv_iff_agreeQR α a b).mp h φ hφ
-
-omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-/-- Bridge between SentenceInf.Realize and FormulaInf.Realize via mapFreeVars. -/
-private theorem sentenceInf_realize_iff_mapFreeVars
-    {M : Type*} [L.Structure M] (φ : BoundedFormulaInf.{u, v, 0, 0} L Empty 0) :
-    SentenceInf.Realize φ M ↔
-    FormulaInf.Realize (φ.mapFreeVars (Empty.elim : Empty → Fin 0)) (Fin.elim0 : Fin 0 → M) := by
-  show φ.Realize (Empty.elim : Empty → M) Fin.elim0 ↔
-       (φ.mapFreeVars Empty.elim).Realize (Fin.elim0 : Fin 0 → M) Fin.elim0
-  rw [BoundedFormulaInf.realize_mapFreeVars]
-  have h : (Fin.elim0 : Fin 0 → M) ∘ (Empty.elim : Empty → Fin 0) = (Empty.elim : Empty → M) :=
-    funext fun x => x.elim
-  rw [h]
-
-omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-/-- Bridge between FormulaInf.Realize (Fin 0) and SentenceInf.Realize via mapFreeVars. -/
-private theorem formulaInf_realize_iff_mapFreeVars
-    {M : Type*} [L.Structure M] (φ : BoundedFormulaInf.{u, v, 0, 0} L (Fin 0) 0) :
-    FormulaInf.Realize φ (Fin.elim0 : Fin 0 → M) ↔
-    SentenceInf.Realize (φ.mapFreeVars (Fin.elim0 : Fin 0 → Empty)) M := by
-  show φ.Realize (Fin.elim0 : Fin 0 → M) Fin.elim0 ↔
-       (φ.mapFreeVars Fin.elim0).Realize (Empty.elim : Empty → M) Fin.elim0
-  rw [BoundedFormulaInf.realize_mapFreeVars]
-  have h : (Empty.elim : Empty → M) ∘ (Fin.elim0 : Fin 0 → Empty) = (Fin.elim0 : Fin 0 → M) :=
-    funext fun x => Fin.elim0 x
-  rw [h]
-
-/-- BFEquiv at level α implies agreement on sentences of rank ≤ α. -/
-theorem BFEquiv_implies_EquivQRInf {M N : Type w} [L.Structure M] [L.Structure N]
-    (α : Ordinal) (h : BFEquiv (L := L) α 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)) :
-    EquivQRInf L α M N := by
-  intro φ hφ
-  have hAgree := (BFEquiv_iff_agreeQR α (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)).mp h
-  have hφ' : (φ.mapFreeVars (Empty.elim : Empty → Fin 0)).qrank ≤ α := by
-    simp [BoundedFormulaInf.qrank_mapFreeVars]; exact hφ
-  have hR := hAgree _ hφ'
-  exact (sentenceInf_realize_iff_mapFreeVars φ (M := M)).trans
-    (hR.trans (sentenceInf_realize_iff_mapFreeVars φ (M := N)).symm)
-
-/-- Agreement on sentences of rank ≤ α implies BFEquiv at level α. -/
-theorem EquivQRInf_implies_BFEquiv {M N : Type w} [L.Structure M] [L.Structure N]
-    (α : Ordinal) (h : EquivQRInf L α M N) :
-    BFEquiv (L := L) α 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) := by
-  rw [BFEquiv_iff_agreeQR]
-  intro φ hφ
-  have hφ' : (φ.mapFreeVars (Fin.elim0 : Fin 0 → Empty)).qrank ≤ α := by
-    simp [BoundedFormulaInf.qrank_mapFreeVars]; exact hφ
-  have hR := h _ hφ'
-  exact (formulaInf_realize_iff_mapFreeVars φ (M := M)).trans
-    (hR.trans (formulaInf_realize_iff_mapFreeVars φ (M := N)).symm)
-
-/-- BFEquiv at all ordinals is equivalent to EquivQRInf at all ordinals.
-
-Both sides are quantified over `Ordinal.{0}` because `EquivQRInf` is defined via
-`BoundedFormulaInf.qrank`, which returns `Ordinal.{0}`. The `karp_theorem` handles
-the universe mismatch with `potentialIso_iff_BFEquiv_all` by specializing at universe 0
-via `@potentialIso_iff_BFEquiv_all.{u, v, w, 0}`. -/
-theorem BFEquiv_all_iff_EquivQRInf_all {M N : Type w} [L.Structure M] [L.Structure N] :
-    (∀ α : Ordinal.{0}, BFEquiv (L := L) α 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)) ↔
-    (∀ α : Ordinal.{0}, EquivQRInf L α M N) :=
-  ⟨fun h α => BFEquiv_implies_EquivQRInf α (h α),
-   fun h α => EquivQRInf_implies_BFEquiv α (h α)⟩
-
-/-- **Karp's Theorem** (KK04 Theorem 1.2.1): For relational languages, two structures
-are potentially isomorphic if and only if they are L∞ω-elementarily equivalent.
-
-This is the fundamental connection between the game-theoretic notion of potential
-isomorphism and the logical notion of elementary equivalence in infinitary logic.
-
-**Status**:
-- Forward direction (`→`): Fully proved at all universes.
-- Backward direction (`←`): Has one `sorry` for the universe bridge
-  `Ordinal.{0} → Ordinal.{w}`. The forward direction of `BFEquiv_iff_agreeQR` gives
-  `BFEquiv` at `Ordinal.{0}` levels, but `BFEquiv_all_implies_potentialIso` requires
-  `BFEquiv` at `Ordinal.{w}` levels. This gap is not a mathematical issue (the
-  mathematical theorem is correct) but a universe-polymorphism limitation.
-  See `karp_theorem_universe0` for a sorry-free version at `w = 0`. -/
-theorem karp_theorem {M N : Type w} [L.Structure M] [L.Structure N] :
-    Nonempty (PotentialIso L M N) ↔ LinfEquiv L M N := by
-  constructor
-  · -- Forward: PotentialIso → LinfEquiv
-    intro ⟨P⟩ φ
-    exact BFEquiv_implies_EquivQRInf φ.qrank (P.implies_BFEquiv_all φ.qrank) φ le_rfl
-  · -- Backward: LinfEquiv → PotentialIso
-    intro hL
-    apply BFEquiv_all_implies_potentialIso
-    -- Need: ∀ α : Ordinal.{w}, BFEquiv α 0 elim0 elim0
-    -- From LinfEquiv we get BFEquiv.{0} at all Ordinal.{0} levels via BFEquiv_iff_agreeQR.
-    -- The universe bridge from Ordinal.{0} to Ordinal.{w} requires lifting:
-    -- pointwise lift (ofOrdinalLift) handles ordinals in the image of Ordinal.lift,
-    -- but ordinals beyond the initial segment need the full quantifier swap argument
-    -- (which is exactly what BFEquiv_all_implies_potentialIso proves internally).
-    sorry
-
-/-- **Karp's Theorem at universe 0** (sorry-free).
-
-This is `karp_theorem` specialized to `M N : Type` (i.e., `Type 0`). At universe 0,
-the universe bridge `Ordinal.{0} → Ordinal.{w}` is trivial since `w = 0`, so both
-directions are fully proved.
-
-For structures in higher type universes, see `karp_theorem` (which has one `sorry`
-for the universe bridge). -/
-theorem karp_theorem_universe0 {M N : Type} [L.Structure M] [L.Structure N] :
-    Nonempty (PotentialIso L M N) ↔ LinfEquiv L M N := by
-  constructor
-  · -- Forward: same as karp_theorem
-    intro ⟨P⟩ φ
-    exact BFEquiv_implies_EquivQRInf φ.qrank (P.implies_BFEquiv_all φ.qrank) φ le_rfl
-  · -- Backward: at w=0, Ordinal.{0} = Ordinal.{w}, so the bridge is trivial
-    intro hL
-    apply BFEquiv_all_implies_potentialIso
-    intro α
-    -- hL gives LinfEquiv, which gives EquivQRInf at all levels
-    exact EquivQRInf_implies_BFEquiv α (fun φ hφ => hL φ)
+    (FormulaInf.Realize φ a ↔ FormulaInf.Realize φ b) := by
+  have ha : Fin.append a (Fin.elim0 : Fin 0 → M) = a :=
+    funext fun ⟨i, hi⟩ => by simp [Fin.append, Fin.addCases, show i < n from hi]
+  have hb : Fin.append b (Fin.elim0 : Fin 0 → N) = b :=
+    funext fun ⟨i, hi⟩ => by simp [Fin.append, Fin.addCases, show i < n from hi]
+  exact BFEquiv_implies_agree_aux α φ hφ a b Fin.elim0 Fin.elim0 (by rwa [ha, hb])
 
 /-! ### Karp's Theorem at universe w (sorry-free)
 
-The following section proves Karp's theorem with `LinfEquivW` (index universe `w` matching
-the structure universe), bypassing the universe obstructions in `BFEquiv_iff_agreeQR` and
-`karp_theorem`. Both directions are fully proved (no sorry). -/
+This section proves Karp's theorem with `LinfEquivW` (index universe `w` matching
+the structure universe). Both directions are fully proved (no sorry). -/
 
 section KarpW
 
@@ -594,12 +440,11 @@ theorem LinfEquivW_implies_potentialIso (h : LinfEquivW L M N) :
     exact hM ((hfamily χ).mpr hN)
 
 omit [Countable (Σ l, L.Relations l)] in
-/-- **Karp's Theorem at universe w** (sorry-free): For relational languages, two structures
-are potentially isomorphic if and only if they are L∞ω-elementarily equivalent (with index
-types matching the structure universe).
+/-- **Karp's Theorem** (sorry-free, KK04 Theorem 1.2.1): For relational languages, two
+structures are potentially isomorphic if and only if they are L∞ω-elementarily equivalent
+(with index types at universe `w` matching the structure universe).
 
-This is the "correct" version of Karp's theorem that avoids the universe obstructions
-present in `karp_theorem`. Both directions are fully proved:
+Both directions are fully proved:
 - Forward: structural induction on formulas, using PotentialIso.forth/back for `all`.
 - Backward: direct construction of PotentialIso family from formula agreement, using
   `iInf` indexed by `N : Type w` to build separating formulas (requires `uι = w`). -/
@@ -627,7 +472,31 @@ theorem LinfEquivW_implies_LinfEquiv (h : LinfEquivW L M N) : LinfEquiv L M N :=
     BoundedFormulaInf.realize_liftUI φ _ _
   exact hM.symm.trans ((h lφ).trans hN)
 
+omit [Countable (Σ l, L.Relations l)] in
+/-- **Forward direction of Karp's theorem** (sorry-free): PotentialIso → LinfEquiv.
+
+This composes `PotentialIso_implies_LinfEquivW` with `LinfEquivW_implies_LinfEquiv`
+to get the standard `LinfEquiv` (with `Ordinal.{0}` index types) from a PotentialIso. -/
+theorem PotentialIso_implies_LinfEquiv (P : PotentialIso L M N) : LinfEquiv L M N :=
+  LinfEquivW_implies_LinfEquiv (PotentialIso_implies_LinfEquivW P)
+
+omit [Countable (Σ l, L.Relations l)] in
+/-- **Forward direction of Karp's theorem at all universes** (sorry-free):
+Potential isomorphism implies L∞ω-elementary equivalence. -/
+theorem karp_theorem_forward :
+    Nonempty (PotentialIso L M N) → LinfEquivW L M N :=
+  fun ⟨P⟩ => PotentialIso_implies_LinfEquivW P
+
 end KarpW
+
+omit [Countable (Σ l, L.Relations l)] in
+/-- **Karp's Theorem at universe 0** (sorry-free).
+
+This is `karp_theorem_w` specialized to `M N : Type` (i.e., `Type 0`). At universe 0,
+`LinfEquivW` and `LinfEquiv` coincide (both use `BoundedFormulaInf.{u,v,0,0}`). -/
+theorem karp_theorem_universe0 {M N : Type} [L.Structure M] [L.Structure N] :
+    Nonempty (PotentialIso L M N) ↔ LinfEquiv L M N :=
+  karp_theorem_w
 
 end Language
 

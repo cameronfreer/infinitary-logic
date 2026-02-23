@@ -145,6 +145,125 @@ def relabel (g : α → β ⊕ Fin n) : ∀ {k}, L.BoundedFormulaω α k → L.B
 -- Note: The general realize_relabel lemma is complex due to castLE in the all case.
 -- For Scott formulas, we only need specific lemmas for existsLastVar and forallLastVar,
 -- which are proved directly in Scott/Formula.lean using a more targeted approach.
+-- Below we prove realize_relabel for the specific case g = Sum.inr, needed for the C7 axioms.
+
+/-- Helper: `Sum.elim Empty.elim xs ∘ relabelAux Sum.inr k` maps free variables to the
+first bound positions and shifts existing bound variables.
+
+Concretely, for `g = Sum.inr : Fin n → Empty ⊕ Fin n`:
+- `Sum.inl (i : Fin n)` maps to `xs (Fin.castAdd k i)` (free var → first n bound positions)
+- `Sum.inr (j : Fin k)` maps to `xs (Fin.natAdd n j)` (bound var → shifted positions) -/
+private lemma sum_elim_relabelAux_sumInr {n k : ℕ} (xs : Fin (n + k) → M) :
+    Sum.elim (Empty.elim : Empty → M) xs ∘ relabelAux (Sum.inr : Fin n → Empty ⊕ Fin n) k =
+    Sum.elim (xs ∘ Fin.castAdd k) (xs ∘ Fin.natAdd n) := by
+  funext x
+  cases x with
+  | inl i =>
+    simp only [Function.comp_apply, relabelAux, Sum.map_inl, Sum.elim_inl]
+    simp only [Equiv.sumAssoc_apply_inl_inr, Sum.map_inr, Sum.elim_inr]
+    rfl
+  | inr j =>
+    simp only [Function.comp_apply, relabelAux, Sum.map_inr, Sum.elim_inr]
+    simp only [Equiv.sumAssoc_apply_inr, Sum.map_inr, Sum.elim_inr]
+    rfl
+
+/-- Helper: snoc distributes over castAdd/natAdd for the all case. -/
+private lemma snoc_comp_castAdd_natAdd {n k : ℕ} (xs : Fin (n + k) → M) (y : M) :
+    (Fin.snoc xs y ∘ Fin.castAdd (k + 1)) = (xs ∘ Fin.castAdd k) := by
+  funext i
+  simp only [Function.comp_apply, Fin.snoc]
+  -- For i : Fin n, castAdd (k+1) i has value i.val < n ≤ n + k
+  have hlt : (Fin.castAdd (k + 1) i).val < n + k := by
+    have hi : i.val < n := i.is_lt
+    have cast_val : (Fin.castAdd (k + 1) i).val = i.val := rfl
+    simp only [cast_val]
+    omega
+  -- Both sides apply xs to elements with the same value
+  have eq_cast : (Fin.castAdd (k + 1) i).castLT hlt = Fin.castAdd k i := by
+    ext
+    simp only [Fin.castAdd]
+    rfl
+  simp only [hlt, dite_true, eq_cast]
+  rfl
+
+private lemma snoc_comp_natAdd_succ {n k : ℕ} (xs : Fin (n + k) → M) (y : M) :
+    (Fin.snoc xs y ∘ Fin.natAdd n) = Fin.snoc (xs ∘ Fin.natAdd n) y := by
+  funext j
+  simp only [Function.comp_apply, Fin.snoc]
+  by_cases hj : j.val = k
+  · -- j is the last element, so natAdd n j has value n + k
+    have hj_last : j = Fin.last k := by ext; exact hj
+    subst hj_last
+    simp only [Fin.natAdd, Fin.last]
+    -- Both sides have condition that is false (can't have n+k < n+k or k < k) so return y
+    have h1_false : ¬ n + k < n + k := by omega
+    have h2_false : ¬ k < k := by omega
+    simp only [h1_false, h2_false, dite_false]
+  · -- j is not the last element, so natAdd n j has value n + j.val < n + k
+    have hjlt : j.val < k := by omega
+    have h1_lt : (Fin.natAdd n j).val < n + k := by
+      simp only [Fin.natAdd]
+      omega
+    have h2_lt : j.val < k := hjlt
+    simp only [h1_lt, h2_lt, dite_true]
+    rfl
+
+/-- Realize commutes with `relabel Sum.inr`: relabeling free variables `Fin n` into
+bound positions via `Sum.inr` shifts them into the first `n` bound variable slots.
+
+For `φ : L.BoundedFormulaω (Fin n) k`:
+- The relabeled formula `φ.relabel Sum.inr` has type `L.BoundedFormulaω Empty (n + k)`
+- Realizing with `Empty.elim` and `xs : Fin (n + k) → M` is equivalent to
+  realizing the original formula with `xs ∘ Fin.castAdd k` for free variables
+  and `xs ∘ Fin.natAdd n` for bound variables. -/
+theorem realize_relabel_sumInr {n : ℕ} :
+    ∀ {k : ℕ} (φ : L.BoundedFormulaω (Fin n) k) (xs : Fin (n + k) → M),
+    (φ.relabel (Sum.inr : Fin n → Empty ⊕ Fin n)).Realize (Empty.elim : Empty → M) xs ↔
+    φ.Realize (xs ∘ Fin.castAdd k) (xs ∘ Fin.natAdd n) := by
+  intro k φ
+  induction φ with
+  | falsum => intro xs; simp [relabel, Realize]
+  | equal t₁ t₂ =>
+    intro xs
+    simp only [relabel, realize_equal, Term.realize_relabel, sum_elim_relabelAux_sumInr]
+  | rel R ts =>
+    intro xs
+    simp only [relabel, realize_rel]
+    constructor <;> intro h
+    · convert h using 1; ext i; simp [Term.realize_relabel, sum_elim_relabelAux_sumInr]
+    · convert h using 1; ext i; simp [Term.realize_relabel, sum_elim_relabelAux_sumInr]
+  | imp φ ψ ih_φ ih_ψ =>
+    intro xs; simp only [relabel, realize_imp]; exact Iff.imp (ih_φ xs) (ih_ψ xs)
+  | all φ ih =>
+    intro xs; simp only [relabel, realize_all]
+    constructor <;> intro hall y
+    · specialize hall y
+      rw [realize_castLE_self] at hall
+      rw [ih (Fin.snoc xs y)] at hall
+      rw [snoc_comp_castAdd_natAdd, snoc_comp_natAdd_succ] at hall
+      exact hall
+    · rw [realize_castLE_self, ih (Fin.snoc xs y), snoc_comp_castAdd_natAdd, snoc_comp_natAdd_succ]
+      exact hall y
+  | iSup φs ih =>
+    intro xs; simp only [relabel, realize_iSup]; exact exists_congr (fun i => ih i xs)
+  | iInf φs ih =>
+    intro xs; simp only [relabel, realize_iInf]; exact forall_congr' (fun i => ih i xs)
+
+/-- Specialization of `realize_relabel_sumInr` for formulas (k = 0 bound variables).
+
+For `φ : L.Formulaω (Fin n)` (a formula with n free variables and 0 bound variables):
+- `φ.relabel Sum.inr : L.BoundedFormulaω Empty n` has 0 free vars and n bound vars
+- Realizing the relabeled formula with bound assignment `xs : Fin n → M` is equivalent
+  to realizing the original formula with free variable assignment `xs`. -/
+theorem realize_relabel_sumInr_zero {n : ℕ} (φ : L.Formulaω (Fin n)) (xs : Fin n → M) :
+    (φ.relabel (Sum.inr : Fin n → Empty ⊕ Fin n)).Realize (Empty.elim : Empty → M) xs ↔
+    Formulaω.Realize φ xs := by
+  have h := realize_relabel_sumInr (k := 0) φ xs
+  simp only [Formulaω.Realize] at h ⊢
+  rw [h]
+  have h1 : xs ∘ Fin.castAdd 0 = xs := by funext i; simp [Fin.castAdd]
+  have h2 : (xs ∘ Fin.natAdd n : Fin 0 → M) = Fin.elim0 := by ext i; exact i.elim0
+  rw [h1, h2]
 
 /-- Substitutes the free variables in a bounded formula with terms. -/
 def subst : ∀ {n : ℕ}, L.BoundedFormulaω α n → (α → L.Term β) → L.BoundedFormulaω β n

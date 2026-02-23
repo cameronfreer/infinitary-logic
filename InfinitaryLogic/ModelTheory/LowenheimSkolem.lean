@@ -7,6 +7,7 @@ import InfinitaryLogic.Lomega1omega.Theory
 import InfinitaryLogic.ModelExistence.Theorem
 import InfinitaryLogic.ModelExistence.SatisfiableConsistencyProperty
 import InfinitaryLogic.Lomega1omega.Operations
+import Mathlib.ModelTheory.LanguageMap
 
 /-!
 # Downward Löwenheim-Skolem for Lω₁ω
@@ -37,7 +38,7 @@ in L without extension using `NamingFunction`.
 - [Keisler-Knight, "Barwise: Infinitary Logic and Admissible Sets", 2004]
 -/
 
-universe u v w
+universe u u' v v' w
 
 namespace FirstOrder
 
@@ -47,35 +48,47 @@ variable {L : Language.{u, v}}
 
 open FirstOrder Structure
 
-/-- **Downward Löwenheim-Skolem for Lω₁ω**: Any satisfiable sentence in a countable
-language has a countable model.
+/-- The naming function for the extended language `L[[M]]`: each element `m : M`
+is named by the constant symbol `L.con m`, which evaluates to `m` in the
+canonical `L[[M]]`-structure on `M`. -/
+noncomputable def namingFunctionWithConstants (L : Language.{u, v}) (M : Type u) [L.Structure M] :
+    NamingFunction L[[M]] M where
+  name m := Term.func (Sum.inr m : L[[M]].Functions 0) Fin.elim0
+  sound m := by
+    simp only [Term.realize]
+    rfl
 
-The proof uses the model existence theorem with the "true in model" consistency property.
-Given a model M of φ, we extend L with constants naming each element of M, apply
-model existence in the extended language, then restrict back.
+/-- The sum language `L.sum L'` has countable function symbols when both L and L' do. -/
+instance countable_sum_functions
+    (L₁ : Language.{u, v}) (L₂ : Language.{u', v'})
+    [Countable (Σ l, L₁.Functions l)] [Countable (Σ l, L₂.Functions l)] :
+    Countable (Σ l, (L₁.sum L₂).Functions l) :=
+  Countable.of_equiv _ (Equiv.sigmaSumDistrib L₁.Functions L₂.Functions).symm
 
-**Hypotheses**: Both function and relation symbols must be countable, because the
-model existence theorem requires enumerating all sentences. -/
-theorem downward_LS [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relations l)]
-    (φ : L.Sentenceω) (M : Type*) [L.Structure M]
-    (hM : Sentenceω.Realize φ M) :
-    ∃ (N : Type u) (_ : L.Structure N) (_ : Countable N),
-      Sentenceω.Realize φ N := by
-  -- The consistency property is for L extended with constants from M.
-  -- For now, we use a simplified approach: construct ConsistencyPropertyEq
-  -- directly for L, assuming a naming function exists.
-  -- If the language L has no function symbols, L.Term Empty is empty,
-  -- so we need a different approach (language extension).
-  sorry
+/-- The sum language `L.sum L'` has countable relation symbols when both L and L' do. -/
+instance countable_sum_relations
+    (L₁ : Language.{u, v}) (L₂ : Language.{u', v'})
+    [Countable (Σ l, L₁.Relations l)] [Countable (Σ l, L₂.Relations l)] :
+    Countable (Σ l, (L₁.sum L₂).Relations l) :=
+  Countable.of_equiv _ (Equiv.sigmaSumDistrib L₁.Relations L₂.Relations).symm
 
-/-- Downward LS for theories: any satisfiable Lω₁ω theory in a countable language
-has a countable model. -/
-theorem downward_LS_theory [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relations l)]
-    (T : L.Theoryω) (M : Type*) [L.Structure M]
-    (hM : T.Model M) :
-    ∃ (N : Type u) (_ : L.Structure N) (_ : Countable N),
-      T.Model N := by
-  sorry
+/-- The constantsOn language has countable function symbols when the index type is countable. -/
+instance countable_constantsOn_functions (α : Type*) [Countable α] :
+    Countable (Σ l, (constantsOn α).Functions l) := by
+  change Countable (Σ l, constantsOnFunc α l)
+  let e : α ≃ Σ l, constantsOnFunc α l :=
+    { toFun := fun a => ⟨0, a⟩
+      invFun := fun ⟨l, f⟩ => match l, f with | 0, c => c | _ + 1, c => c.elim
+      left_inv := fun _ => rfl
+      right_inv := fun ⟨l, f⟩ => match l, f with | 0, _ => rfl | _ + 1, c => c.elim }
+  exact Countable.of_equiv α e
+
+/-- The constantsOn language has countable relation symbols (they're all empty). -/
+instance countable_constantsOn_relations (α : Type*) :
+    Countable (Σ l, (constantsOn α).Relations l) :=
+  have : IsEmpty (Σ l, (constantsOn α).Relations l) :=
+    ⟨fun ⟨_, e⟩ => (e : Empty).elim⟩
+  inferInstance
 
 /-- **Downward Löwenheim-Skolem with naming function**: If a countable language has
 a naming function (every element is named by a closed term), then any satisfiable
@@ -105,6 +118,78 @@ theorem downward_LS_theory_with_naming
       T.Model N := by
   exact model_existence (trueInModelConsistencyPropertyEq M ι) T
     (subset_trueInModel_in_sets ι T hM) hT_countable
+
+/-- **Downward Löwenheim-Skolem for Lω₁ω**: Any satisfiable sentence in a countable
+language with a countable model has a countable model (in universe `u`).
+
+The proof extends L with constants for each element of M to form `L[[M]]`, constructs
+a naming function, applies model existence, then restricts back. The countability
+condition on M is needed so that `L[[M]]` remains countable.
+
+For the version without the `[Countable M]` assumption (but with a naming function
+already available), see `downward_LS_with_naming`. -/
+theorem downward_LS [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relations l)]
+    (φ : L.Sentenceω) (M : Type u) [L.Structure M] [Countable M]
+    (hM : Sentenceω.Realize φ M) :
+    ∃ (N : Type u) (_ : L.Structure N) (_ : Countable N),
+      Sentenceω.Realize φ N := by
+  -- Step 1: Extend L with constants for M. L[[M]] is countable since L and M are.
+  letI := Language.withConstantsSelfStructure (L := L) (M := M)
+  -- Step 2: Lift φ to L[[M]]
+  let φ' : L[[M]].Sentenceω := φ.mapLanguage (L.lhomWithConstants M)
+  -- Step 3: φ' is true in M (by realize_mapLanguage with the expansion)
+  have hM' : Sentenceω.Realize φ' M := by
+    simp only [φ', Sentenceω.Realize]
+    rw [BoundedFormulaω.realize_mapLanguage]
+    exact hM
+  -- Step 4: Apply downward_LS_with_naming in L[[M]]
+  haveI : Countable (Σ l, L[[M]].Functions l) :=
+    countable_sum_functions L (constantsOn M)
+  haveI : Countable (Σ l, L[[M]].Relations l) :=
+    countable_sum_relations L (constantsOn M)
+  obtain ⟨N, hStrN, hCountN, hNφ'⟩ :=
+    downward_LS_with_naming φ' M (namingFunctionWithConstants L M) hM'
+  -- Step 5: Restrict N from L[[M]] back to L
+  letI : L.Structure N := (L.lhomWithConstants M).reduct N
+  exact ⟨N, inferInstance, hCountN, by
+    simp only [Sentenceω.Realize]
+    have := hNφ'
+    simp only [φ', Sentenceω.Realize] at this
+    rwa [BoundedFormulaω.realize_mapLanguage] at this⟩
+
+/-- Downward LS for theories: any satisfiable Lω₁ω theory in a countable language
+with a countable model has a countable model. -/
+theorem downward_LS_theory [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relations l)]
+    (T : L.Theoryω) (M : Type u) [L.Structure M] [Countable M]
+    (hM : T.Model M) (hT_countable : T.Countable) :
+    ∃ (N : Type u) (_ : L.Structure N) (_ : Countable N),
+      T.Model N := by
+  -- Lift T to L[[M]], apply model_existence, restrict back
+  letI := Language.withConstantsSelfStructure (L := L) (M := M)
+  haveI : Countable (Σ l, L[[M]].Functions l) :=
+    countable_sum_functions L (constantsOn M)
+  haveI : Countable (Σ l, L[[M]].Relations l) :=
+    countable_sum_relations L (constantsOn M)
+  let ι := namingFunctionWithConstants L M
+  -- The lifted theory
+  let T' : Set L[[M]].Sentenceω := BoundedFormulaω.mapLanguage (L.lhomWithConstants M) '' T
+  have hT'_countable : T'.Countable := hT_countable.image _
+  -- All sentences in T' are true in M
+  have hM' : ∀ σ' ∈ T', Sentenceω.Realize σ' M := by
+    rintro _ ⟨σ, hσ, rfl⟩
+    simp only [Sentenceω.Realize]
+    rw [BoundedFormulaω.realize_mapLanguage]
+    exact hM σ hσ
+  -- Apply model_existence in L[[M]]
+  obtain ⟨N, hStrN, hCountN, hModel'⟩ :=
+    model_existence (trueInModelConsistencyPropertyEq M ι) T' hM' hT'_countable
+  -- Restrict N to L
+  letI : L.Structure N := (L.lhomWithConstants M).reduct N
+  exact ⟨N, inferInstance, hCountN, by
+    intro σ hσ
+    have h := hModel' (σ.mapLanguage (L.lhomWithConstants M)) ⟨σ, hσ, rfl⟩
+    simp only [Sentenceω.Realize] at h ⊢
+    rwa [BoundedFormulaω.realize_mapLanguage] at h⟩
 
 end Language
 
