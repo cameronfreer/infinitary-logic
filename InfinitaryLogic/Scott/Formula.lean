@@ -51,11 +51,6 @@ attribute [local instance] Encodable.ofCountable
 
 open FirstOrder Structure Fin Ordinal BoundedFormulaω
 
-/-- Maps the last variable of Fin (n+1) to a bound variable position,
-keeping the first n as free variables. Used for quantifying over the last position. -/
-def insertLastBound {n : ℕ} : Fin (n + 1) → Fin n ⊕ Fin 1 :=
-  fun i => if h : i.val < n then Sum.inl ⟨i.val, h⟩ else Sum.inr 0
-
 /-- Existentially quantify over the last free variable of a formula. -/
 def existsLastVar {n : ℕ} (φ : L.Formulaω (Fin (n + 1))) : L.Formulaω (Fin n) :=
   (φ.relabel insertLastBound).ex

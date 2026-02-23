@@ -34,6 +34,14 @@ variable {α β : Type u'} {n m : ℕ}
 
 open FirstOrder Structure Fin
 
+/-- Maps the last variable of `Fin (n+1)` to a bound variable position,
+keeping the first `n` as free variables. Used for quantifying over the last position.
+
+This function is used by `openBounds` (for the `all` case) and by `existsLastVar`/`forallLastVar`
+in `Scott/Formula.lean`. -/
+def insertLastBound {n : ℕ} : Fin (n + 1) → Fin n ⊕ Fin 1 :=
+  fun i => if h : i.val < n then Sum.inl ⟨i.val, h⟩ else Sum.inr 0
+
 namespace BoundedFormulaω
 
 /-- Casts a bounded formula to one with more bound variables. -/
@@ -230,6 +238,168 @@ theorem realize_subst {M : Type*} [L.Structure M]
   | iInf φs ih =>
     simp only [subst, realize_iInf]
     exact forall_congr' fun k => ih k xs
+
+/-- Convert a `BoundedFormulaω Empty n` to a `Formulaω (Fin n)` by reinterpreting
+bound variables as free variables. Since there are no free variables (`Empty`),
+the bound variables `Fin n` become the only variables, now treated as free.
+
+For the `all` case, the last free variable is re-bound using `relabel` with
+`insertLastBound`. -/
+def openBounds : ∀ {n : ℕ}, L.BoundedFormulaω Empty n → L.Formulaω (Fin n)
+  | _, .falsum => .falsum
+  | _, .equal t₁ t₂ =>
+    .equal (t₁.relabel (Sum.elim Empty.elim Sum.inl))
+           (t₂.relabel (Sum.elim Empty.elim Sum.inl))
+  | _, .rel R ts =>
+    .rel R (fun i => (ts i).relabel (Sum.elim Empty.elim Sum.inl))
+  | _, .imp φ ψ => (openBounds φ).imp (openBounds ψ)
+  | _, .all φ => ((openBounds φ).relabel insertLastBound).all
+  | _, .iSup φs => .iSup (fun i => openBounds (φs i))
+  | _, .iInf φs => .iInf (fun i => openBounds (φs i))
+
+/-! ### Language Maps -/
+
+/-- Lifts a bounded Lω₁ω formula along a language homomorphism `L →ᴸ L'`.
+
+This maps function and relation symbols in the formula using the language homomorphism,
+while preserving the variable structure. It is the Lω₁ω analogue of Mathlib's
+`LHom.onBoundedFormula`. -/
+def mapLanguage {L' : Language.{u, v}} (g : L →ᴸ L') :
+    ∀ {n}, L.BoundedFormulaω α n → L'.BoundedFormulaω α n
+  | _, falsum => falsum
+  | _, equal t₁ t₂ => equal (g.onTerm t₁) (g.onTerm t₂)
+  | _, rel R ts => rel (g.onRelation R) (fun i => g.onTerm (ts i))
+  | _, imp φ ψ => (φ.mapLanguage g).imp (ψ.mapLanguage g)
+  | _, all φ => (φ.mapLanguage g).all
+  | _, iSup φs => iSup fun i => (φs i).mapLanguage g
+  | _, iInf φs => iInf fun i => (φs i).mapLanguage g
+
+/-- Realization of a formula is preserved by language homomorphisms that are expansions.
+
+If `g : L →ᴸ L'` is an expansion on `M` (i.e., `g` maps symbols to the corresponding
+symbols in `M`'s `L'`-structure), then `(φ.mapLanguage g).Realize v xs ↔ φ.Realize v xs`
+where the left side uses the `L'`-structure and the right side uses the `L`-structure. -/
+theorem realize_mapLanguage {L' : Language.{u, v}} (g : L →ᴸ L')
+    {M : Type*} [L.Structure M] [L'.Structure M] [g.IsExpansionOn M]
+    (φ : L.BoundedFormulaω α n) (v : α → M) (xs : Fin n → M) :
+    (φ.mapLanguage g).Realize v xs ↔ φ.Realize v xs := by
+  induction φ with
+  | falsum => rfl
+  | equal t₁ t₂ =>
+    simp only [mapLanguage, realize_equal, LHom.realize_onTerm]
+  | rel R ts =>
+    simp only [mapLanguage, realize_rel, LHom.map_onRelation, LHom.realize_onTerm]
+  | imp φ ψ ihφ ihψ =>
+    simp only [mapLanguage, realize_imp, ihφ xs, ihψ xs]
+  | all φ ih =>
+    simp only [mapLanguage, realize_all]
+    exact forall_congr' fun x => ih (Fin.snoc xs x)
+  | iSup φs ih =>
+    simp only [mapLanguage, realize_iSup]
+    exact exists_congr fun k => ih k xs
+  | iInf φs ih =>
+    simp only [mapLanguage, realize_iInf]
+    exact forall_congr' fun k => ih k xs
+
+/-- `mapLanguage` commutes with `not`. -/
+@[simp]
+theorem mapLanguage_not {L' : Language.{u, v}} (g : L →ᴸ L') (φ : L.BoundedFormulaω α n) :
+    (φ.not).mapLanguage g = (φ.mapLanguage g).not := by
+  show (φ.imp falsum).mapLanguage g = (φ.mapLanguage g).imp falsum
+  rfl
+
+/-- `mapLanguage` commutes with `imp`. -/
+@[simp]
+theorem mapLanguage_imp {L' : Language.{u, v}} (g : L →ᴸ L')
+    (φ ψ : L.BoundedFormulaω α n) :
+    (φ.imp ψ).mapLanguage g = (φ.mapLanguage g).imp (ψ.mapLanguage g) := by
+  simp only [mapLanguage]
+
+/-- `mapLanguage` commutes with `ex`. -/
+@[simp]
+theorem mapLanguage_ex {L' : Language.{u, v}} (g : L →ᴸ L')
+    (φ : L.BoundedFormulaω α (n + 1)) :
+    (φ.ex).mapLanguage g = (φ.mapLanguage g).ex := by
+  show (φ.not.all.not).mapLanguage g = (φ.mapLanguage g).not.all.not
+  rw [mapLanguage_not, mapLanguage, mapLanguage_not]
+
+/-- `LHom.onTerm` commutes with `Term.relabel`. -/
+theorem LHom.onTerm_relabel {L' : Language.{u, v}} (g : L →ᴸ L')
+    {γ δ : Type*} (f : γ → δ) (t : L.Term γ) :
+    g.onTerm (t.relabel f) = (g.onTerm t).relabel f := by
+  induction t with
+  | var => simp [Term.relabel, LHom.onTerm]
+  | func fn ts ih =>
+    simp only [Term.relabel, LHom.onTerm]
+    congr 1; funext i; exact ih i
+
+/-- `LHom.onTerm` commutes with `Term.subst`. -/
+theorem LHom.onTerm_subst {L' : Language.{u, v}} (g : L →ᴸ L')
+    {γ δ : Type*} (tf : γ → L.Term δ) (t : L.Term γ) :
+    g.onTerm (t.subst tf) = (g.onTerm t).subst (fun a => g.onTerm (tf a)) := by
+  induction t with
+  | var => simp [Term.subst, LHom.onTerm]
+  | func fn ts ih =>
+    simp only [Term.subst, LHom.onTerm]
+    congr 1; funext i; exact ih i
+
+/-- `mapLanguage` commutes with `castLE`. -/
+theorem mapLanguage_castLE {L' : Language.{u, v}} (g : L →ᴸ L')
+    (h : m ≤ n) (φ : L.BoundedFormulaω α m) :
+    (φ.castLE h).mapLanguage g = (φ.mapLanguage g).castLE h := by
+  induction φ generalizing n with
+  | falsum => rfl
+  | equal t₁ t₂ =>
+    simp only [castLE, mapLanguage, LHom.onTerm_relabel]
+  | rel R ts =>
+    simp only [castLE, mapLanguage]
+    congr 1; funext i; exact LHom.onTerm_relabel g _ (ts i)
+  | imp _ _ ih₁ ih₂ => simp only [castLE, mapLanguage, ih₁ h, ih₂ h]
+  | all _ ih =>
+    simp only [castLE, mapLanguage, ih (Nat.succ_le_succ h)]
+  | iSup _ ih => simp only [castLE, mapLanguage]; congr 1; funext i; exact ih i h
+  | iInf _ ih => simp only [castLE, mapLanguage]; congr 1; funext i; exact ih i h
+
+/-- `mapLanguage` commutes with `relabel`. -/
+theorem mapLanguage_relabel {L' : Language.{u, v}} (g : L →ᴸ L')
+    {γ : Type u'} (f : α → γ ⊕ Fin n) (φ : L.BoundedFormulaω α m) :
+    (φ.relabel f).mapLanguage g = (φ.mapLanguage g).relabel f := by
+  induction φ with
+  | falsum => rfl
+  | equal t₁ t₂ =>
+    simp only [BoundedFormulaω.relabel, mapLanguage, LHom.onTerm_relabel]
+  | rel R ts =>
+    simp only [BoundedFormulaω.relabel, mapLanguage]
+    congr 1; funext i; exact LHom.onTerm_relabel g _ (ts i)
+  | imp _ _ ih₁ ih₂ => simp only [BoundedFormulaω.relabel, mapLanguage, ih₁, ih₂]
+  | all _ ih =>
+    simp only [BoundedFormulaω.relabel, mapLanguage]
+    rw [mapLanguage_castLE, ih]
+  | iSup _ ih => simp only [BoundedFormulaω.relabel, mapLanguage]; congr 1; funext i; exact ih i
+  | iInf _ ih => simp only [BoundedFormulaω.relabel, mapLanguage]; congr 1; funext i; exact ih i
+
+/-- `mapLanguage` commutes with `subst`. -/
+theorem mapLanguage_subst {L' : Language.{u, v}} (g : L →ᴸ L')
+    (tf : α → L.Term β) (φ : L.BoundedFormulaω α n) :
+    (φ.subst tf).mapLanguage g = (φ.mapLanguage g).subst (fun a => g.onTerm (tf a)) := by
+  induction φ with
+  | falsum => rfl
+  | equal t₁ t₂ =>
+    simp only [subst, mapLanguage, LHom.onTerm_subst]
+    congr 1 <;> congr 1 <;> funext x <;> cases x with
+    | inl a => simp [LHom.onTerm_relabel]
+    | inr j => simp [LHom.onTerm]
+  | rel R ts =>
+    simp only [subst, mapLanguage]
+    congr 1; funext i
+    rw [LHom.onTerm_subst]
+    congr 1; funext x; cases x with
+    | inl a => simp [LHom.onTerm_relabel]
+    | inr j => simp [LHom.onTerm]
+  | imp _ _ ih₁ ih₂ => simp only [subst, mapLanguage, ih₁, ih₂]
+  | all _ ih => simp only [subst, mapLanguage, ih]
+  | iSup _ ih => simp only [subst, mapLanguage]; congr 1; funext i; exact ih i
+  | iInf _ ih => simp only [subst, mapLanguage]; congr 1; funext i; exact ih i
 
 end BoundedFormulaω
 

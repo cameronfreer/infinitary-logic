@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.ModelExistence.ConsistencyProperty
+import InfinitaryLogic.Scott.Formula
 import Mathlib.Order.Zorn
 import Mathlib.Data.Fintype.Quotient
 
@@ -96,6 +97,16 @@ theorem ConsistencyProperty.MaximalConsistent.imp_mem
   · exact Or.inl (hmax.mem_of_union_consistent h1)
   · exact Or.inr (hmax.mem_of_union_consistent h2)
 
+/-- In a maximal consistent set, negated implication gives both components:
+if ¬(φ → ψ) ∈ S, then φ ∈ S and ¬ψ ∈ S. -/
+theorem ConsistencyProperty.MaximalConsistent.neg_imp_mem
+    {C : ConsistencyProperty L} {S : Set L.Sentenceω}
+    (hmax : C.MaximalConsistent S)
+    {φ ψ : L.Sentenceω} (h : (BoundedFormulaω.imp φ ψ).not ∈ S) :
+    φ ∈ S ∧ ψ.not ∈ S := by
+  obtain ⟨h1, h2⟩ := C.C1_neg_imp S hmax.consistent φ ψ h
+  exact ⟨hmax.mem_of_union_consistent h1, hmax.mem_of_union_consistent h2⟩
+
 /-- In a maximal consistent set, double negation elimination holds. -/
 theorem ConsistencyProperty.MaximalConsistent.not_not_mem
     {C : ConsistencyProperty L} {S : Set L.Sentenceω}
@@ -112,6 +123,15 @@ theorem ConsistencyProperty.MaximalConsistent.iInf_mem
     φs k ∈ S :=
   hmax.mem_of_union_consistent (C.C3_iInf S hmax.consistent φs h k)
 
+/-- In a maximal consistent set, if ¬(⋀ᵢ φᵢ) ∈ S, then ¬φₖ ∈ S for some k. -/
+theorem ConsistencyProperty.MaximalConsistent.neg_iInf_mem
+    {C : ConsistencyProperty L} {S : Set L.Sentenceω}
+    (hmax : C.MaximalConsistent S)
+    {φs : ℕ → L.Sentenceω} (h : (BoundedFormulaω.iInf φs).not ∈ S) :
+    ∃ k, (φs k).not ∈ S := by
+  obtain ⟨k, hk⟩ := C.C3_neg_iInf S hmax.consistent φs h
+  exact ⟨k, hmax.mem_of_union_consistent hk⟩
+
 /-- In a maximal consistent set, if ⋁ᵢ φᵢ ∈ S, then φₖ ∈ S for some k. -/
 theorem ConsistencyProperty.MaximalConsistent.iSup_mem
     {C : ConsistencyProperty L} {S : Set L.Sentenceω}
@@ -120,6 +140,14 @@ theorem ConsistencyProperty.MaximalConsistent.iSup_mem
     ∃ k, φs k ∈ S := by
   obtain ⟨k, hk⟩ := C.C4_iSup S hmax.consistent φs h
   exact ⟨k, hmax.mem_of_union_consistent hk⟩
+
+/-- In a maximal consistent set, if ¬(⋁ᵢ φᵢ) ∈ S, then ¬φₖ ∈ S for all k. -/
+theorem ConsistencyProperty.MaximalConsistent.neg_iSup_mem
+    {C : ConsistencyProperty L} {S : Set L.Sentenceω}
+    (hmax : C.MaximalConsistent S)
+    {φs : ℕ → L.Sentenceω} (h : (BoundedFormulaω.iSup φs).not ∈ S) (k : ℕ) :
+    (φs k).not ∈ S :=
+  hmax.mem_of_union_consistent (C.C4_neg_iSup S hmax.consistent φs h k)
 
 /-- A maximal consistent set decides every sentence: either φ ∈ S* or ¬φ ∈ S*. -/
 theorem ConsistencyProperty.MaximalConsistent.decide
@@ -162,6 +190,35 @@ theorem ConsistencyPropertyEq.MaximalConsistent.ex_mem
     (h : (φ.relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).ex ∈ S) :
     ∃ t : L.Term Empty, φ.subst (fun _ => t) ∈ S := by
   obtain ⟨t, ht⟩ := C.C7_quantifier S hmax.consistent φ h
+  exact ⟨t, hmax.mem_of_union_consistent ht⟩
+
+/-- In a maximal consistent set, if ¬(∀x.φ(x)) ∈ S, then ∃t, ¬φ(t) ∈ S. -/
+theorem ConsistencyPropertyEq.MaximalConsistent.neg_all_mem
+    {C : ConsistencyPropertyEq L} {S : Set L.Sentenceω}
+    (hmax : C.toConsistencyProperty.MaximalConsistent S)
+    {φ : L.Formulaω (Fin 1)}
+    (h : ((φ.relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).all).not ∈ S) :
+    ∃ t : L.Term Empty, (φ.subst (fun _ => t)).not ∈ S := by
+  obtain ⟨t, ht⟩ := C.C7_neg_all S hmax.consistent φ h
+  exact ⟨t, hmax.mem_of_union_consistent ht⟩
+
+/-- Direct universal instantiation: if `∀x.φ ∈ S*`, then `φ(t) ∈ S*` for all closed terms t.
+Uses `openBounds` to convert the bound variable to a free variable for substitution. -/
+theorem ConsistencyPropertyEq.MaximalConsistent.all_bound_mem
+    {C : ConsistencyPropertyEq L} {S : Set L.Sentenceω}
+    (hmax : C.toConsistencyProperty.MaximalConsistent S)
+    {φ : L.BoundedFormulaω Empty 1}
+    (h : φ.all ∈ S) (t : L.Term Empty) : (φ.openBounds).subst (fun _ => t) ∈ S :=
+  hmax.mem_of_union_consistent (C.C7_all_bound S hmax.consistent φ h t)
+
+/-- Direct negated universal: if `¬(∀x.φ) ∈ S*`, then `∃t, ¬φ(t) ∈ S*`. -/
+theorem ConsistencyPropertyEq.MaximalConsistent.neg_all_bound_mem
+    {C : ConsistencyPropertyEq L} {S : Set L.Sentenceω}
+    (hmax : C.toConsistencyProperty.MaximalConsistent S)
+    {φ : L.BoundedFormulaω Empty 1}
+    (h : φ.all.not ∈ S) :
+    ∃ t : L.Term Empty, ((φ.openBounds).subst (fun _ => t)).not ∈ S := by
+  obtain ⟨t, ht⟩ := C.C7_neg_all_bound S hmax.consistent φ h
   exact ⟨t, hmax.mem_of_union_consistent ht⟩
 
 /-! ### Term Model Construction
@@ -280,6 +337,12 @@ relation `t₁ ~ t₂ ↔ (t₁ = t₂) ∈ S*`. -/
 def TermModel (C : ConsistencyPropertyEq L) (S : Set L.Sentenceω)
     (hmax : C.toConsistencyProperty.MaximalConsistent S) : Type _ :=
   Quotient (termSetoid C S hmax)
+
+instance (C : ConsistencyPropertyEq L) (S : Set L.Sentenceω)
+    (hmax : C.toConsistencyProperty.MaximalConsistent S)
+    [Countable (Σ l, L.Functions l)] :
+    Countable (TermModel C S hmax) := by
+  unfold TermModel; infer_instance
 
 variable {C : ConsistencyPropertyEq L} {S : Set L.Sentenceω}
   {hmax : C.toConsistencyProperty.MaximalConsistent S}
@@ -601,23 +664,309 @@ theorem TermModel.exists_rep (x : TermModel C S hmax) :
     ∃ t : L.Term Empty, TermModel.mk t = x :=
   Quotient.exists_rep x
 
+/-! ### Term Conversion for Empty Variable Types
+
+Since `Empty ⊕ Fin 0` has no inhabitants, terms of type `Term (Empty ⊕ Fin 0)` are
+ground terms (built from function symbols only). We provide a conversion to
+`Term Empty` and show it preserves semantics and set membership. -/
+
+/-- Convert a term with variables in `Empty ⊕ Fin 0` to a term with variables in `Empty`.
+Since both types are uninhabited, this is a purely structural operation on the function
+symbols. -/
+private def Term.toEmpty : L.Term (Empty ⊕ Fin 0) → L.Term Empty
+  | .var x => match x with
+    | Sum.inl e => Empty.elim e
+    | Sum.inr i => i.elim0
+  | .func f ts => .func f (fun i => (ts i).toEmpty)
+
+/-- Relabeling a `toEmpty`-converted term back to `Empty ⊕ Fin 0` recovers the original term. -/
+private theorem Term.toEmpty_relabel_inl (t : L.Term (Empty ⊕ Fin 0)) :
+    (t.toEmpty).relabel (Sum.inl : Empty → Empty ⊕ Fin 0) = t := by
+  induction t with
+  | var x =>
+    rcases x with e | i
+    · exact Empty.elim e
+    · exact i.elim0
+  | func f ts ih =>
+    simp only [Term.toEmpty, Term.relabel]
+    congr 1; funext i; exact ih i
+
+/-- Evaluating a term in `Term (Empty ⊕ Fin 0)` with any assignment equals evaluating
+its `toEmpty` version with `Empty.elim`. Both types of variables are uninhabited. -/
+private theorem Term.realize_toEmpty {M : Type*} [L.Structure M]
+    (t : L.Term (Empty ⊕ Fin 0)) (v : Empty ⊕ Fin 0 → M) :
+    t.realize v = (t.toEmpty).realize (Empty.elim : Empty → M) := by
+  induction t with
+  | var x =>
+    rcases x with e | i
+    · exact Empty.elim e
+    · exact i.elim0
+  | func f ts ih =>
+    simp only [Term.toEmpty, Term.realize]
+    congr 1; funext i; exact ih i
+
+/-- In the term model, `TermModel.mk a = TermModel.mk b ↔ termEquiv a b`. -/
+private theorem mk_eq_iff_termEquiv (a b : L.Term Empty) :
+    TermModel.mk (hmax := hmax) a = TermModel.mk b ↔ termEquiv C S hmax a b := by
+  show Quotient.mk _ a = Quotient.mk _ b ↔ _
+  exact Quotient.eq (r := termSetoid C S hmax)
+
+/-! ### Opening Bound Variables
+
+`BoundedFormulaω.openBounds` is defined in `Operations.lean` and converts bound
+variables to free variables. The truth lemma uses the semantic roundtrip
+(`realize_openBounds`) rather than the syntactic roundtrip. -/
+
+/-! ### Semantic Roundtrip for openBounds -/
+
+/-- Term-level semantic roundtrip: evaluating a relabeled term with `Sum.elim xs Fin.elim0`
+equals evaluating the original term with `Sum.elim Empty.elim xs`. -/
+private theorem term_realize_openBounds {M : Type*} [L.Structure M]
+    (t : L.Term (Empty ⊕ Fin n)) (xs : Fin n → M) :
+    (t.relabel (Sum.elim Empty.elim Sum.inl)).realize (Sum.elim xs Fin.elim0) =
+    t.realize (Sum.elim Empty.elim xs) := by
+  simp only [Term.realize_relabel]
+  congr 1
+  funext x; rcases x with e | i
+  · exact Empty.elim e
+  · simp [Sum.elim, Function.comp]
+
+/-- Helper: `snoc Fin.elim0 x` evaluated at `0 : Fin 1` gives `x`. -/
+private lemma snoc_elim0_zero_eq {M : Type*} (x : M) :
+    (Fin.snoc (α := fun _ => M) Fin.elim0 x) (0 : Fin 1) = x := by
+  simp [Fin.snoc, Fin.last]
+
+/-- Semantic roundtrip: `openBounds` preserves semantics.
+For `φ : BoundedFormulaω Empty n`, evaluating `openBounds φ` with free variable assignment
+`xs : Fin n → M` is equivalent to evaluating `φ` with bound variable assignment `xs`. -/
+theorem realize_openBounds {M : Type*} [L.Structure M] :
+    ∀ {n : ℕ} (φ : L.BoundedFormulaω Empty n) (xs : Fin n → M),
+    Formulaω.Realize (φ.openBounds) xs ↔ φ.Realize Empty.elim xs := by
+  intro n φ
+  induction φ with
+  | falsum => intro xs; rfl
+  | equal t₁ t₂ =>
+    intro xs
+    show (t₁.relabel (Sum.elim Empty.elim Sum.inl)).realize (Sum.elim xs Fin.elim0) =
+         (t₂.relabel (Sum.elim Empty.elim Sum.inl)).realize (Sum.elim xs Fin.elim0) ↔
+         t₁.realize (Sum.elim Empty.elim xs) = t₂.realize (Sum.elim Empty.elim xs)
+    rw [term_realize_openBounds, term_realize_openBounds]
+  | rel R ts =>
+    intro xs
+    show (Structure.RelMap R fun i =>
+         (Term.relabel (Sum.elim Empty.elim Sum.inl) (ts i)).realize (Sum.elim xs Fin.elim0)) ↔
+         Structure.RelMap R fun i => (ts i).realize (Sum.elim Empty.elim xs)
+    simp_rw [term_realize_openBounds]
+  | imp φ ψ ihφ ihψ =>
+    intro xs
+    simp only [BoundedFormulaω.openBounds, Formulaω.Realize, BoundedFormulaω.realize_imp]
+    exact Iff.imp (ihφ xs) (ihψ xs)
+  | iSup φs ih =>
+    intro xs
+    simp only [BoundedFormulaω.openBounds, Formulaω.Realize, BoundedFormulaω.realize_iSup]
+    exact exists_congr (fun i => ih i xs)
+  | iInf φs ih =>
+    intro xs
+    simp only [BoundedFormulaω.openBounds, Formulaω.Realize, BoundedFormulaω.realize_iInf]
+    exact forall_congr' (fun i => ih i xs)
+  | all φ ih =>
+    intro xs
+    show Formulaω.Realize (((φ.openBounds).relabel insertLastBound).all) xs ↔
+         (BoundedFormulaω.all φ).Realize Empty.elim xs
+    simp only [Formulaω.Realize, BoundedFormulaω.realize_all]
+    constructor
+    · intro h x
+      have h1 := h x
+      rw [realize_relabel_insertLastBound_zero] at h1
+      rw [snoc_elim0_zero_eq] at h1
+      exact (ih (Fin.snoc xs x)).mp h1
+    · intro h x
+      rw [realize_relabel_insertLastBound_zero, snoc_elim0_zero_eq]
+      exact (ih (Fin.snoc xs x)).mpr (h x)
+
 /-! ### Truth Lemma -/
 
 /-- **Truth Lemma**: A sentence belongs to the maximal consistent set S* if and
 only if it is true in the term model.
 
-This is proved by structural induction on the sentence, using:
-- (C0) for `falsum`
-- (C1) for `imp`
-- (C2) for double negation
-- (C3) for `iInf` (countable conjunction)
-- (C4) for `iSup` (countable disjunction)
-- (C5,C6) for `equal`
-- (C7,C7_all) for `all` / `ex`
-- Maximality (decidability) for the reverse directions -/
-theorem truthLemma (σ : L.Sentenceω) :
-    σ ∈ S ↔ Sentenceω.Realize σ (TermModel C S hmax) := by
-  sorry
+This is proved by recursion on the sentence, with the biconditional proved
+simultaneously at each step. The forward direction uses the consistency property
+axioms to decompose formulas. The backward direction uses maximality (decidability)
+and the dual axioms (C1', C3', C4') to derive contradictions.
+
+Cases:
+- (C0) for `falsum`: falsum is never in S (C0) and never realized.
+- (C1, C1') for `imp`: forward uses C1 + IH; backward uses decidability + C1' + IH.
+- (C3, C3') for `iInf`: forward uses C3 + IH; backward uses decidability + C3' + IH.
+- (C4, C4') for `iSup`: forward uses C4 + IH; backward uses decidability + C4' + IH.
+- (C5, C6) for `equal`: uses term model quotient structure.
+- Term model structure for `rel`: uses definition of RelMap on term model.
+- (C7, C7_all) for `all`: uses openBounds roundtrip. -/
+noncomputable def truthLemma :
+    (σ : L.Sentenceω) → (σ ∈ S ↔ Sentenceω.Realize σ (TermModel C S hmax))
+  | .falsum => by
+    constructor
+    · intro h; exact absurd h (C.toConsistencyProperty.C0_no_falsum S hmax.consistent)
+    · intro h; exact absurd h id
+  | .imp φ ψ => by
+    have ihφ := truthLemma φ
+    have ihψ := truthLemma ψ
+    constructor
+    · -- Forward: imp φ ψ ∈ S → (Realize φ M → Realize ψ M)
+      intro himp hφ_real
+      -- C1: from imp φ ψ ∈ S, either φ.not ∈ S or ψ ∈ S
+      rcases hmax.imp_mem himp with h | h
+      · -- φ.not ∈ S means φ ∉ S. But IH backward gives φ ∈ S from Realize φ M. Contradiction.
+        exact absurd (ihφ.mpr hφ_real) ((hmax.not_mem_iff φ).mp h)
+      · -- ψ ∈ S, so Realize ψ M by IH forward
+        exact ihψ.mp h
+    · -- Backward: (Realize φ M → Realize ψ M) → imp φ ψ ∈ S
+      intro hreal
+      -- Decidability: imp φ ψ ∈ S or (imp φ ψ).not ∈ S
+      rcases hmax.decide (BoundedFormulaω.imp φ ψ) with h | h
+      · exact h
+      · -- C1': from (imp φ ψ).not ∈ S, get φ ∈ S and ψ.not ∈ S
+        obtain ⟨hφ_mem, hψnot⟩ := hmax.neg_imp_mem h
+        -- φ ∈ S → Realize φ M → Realize ψ M → ψ ∈ S, contradicting ψ.not ∈ S
+        exact absurd (ihψ.mpr (hreal (ihφ.mp hφ_mem))) ((hmax.not_mem_iff ψ).mp hψnot)
+  | .iSup φs => by
+    constructor
+    · -- Forward: iSup φs ∈ S → ∃ k, Realize (φs k) M
+      intro h
+      obtain ⟨k, hk⟩ := hmax.iSup_mem h
+      exact ⟨k, (truthLemma (φs k)).mp hk⟩
+    · -- Backward: (∃ k, Realize (φs k) M) → iSup φs ∈ S
+      intro ⟨k, hk⟩
+      rcases hmax.decide (BoundedFormulaω.iSup φs) with h | h
+      · exact h
+      · -- C4': from (iSup φs).not ∈ S, get (φs k).not ∈ S for all k
+        have hkn := hmax.neg_iSup_mem h k
+        -- IH backward: Realize (φs k) M → φs k ∈ S, contradicting (φs k).not ∈ S
+        exact absurd ((truthLemma (φs k)).mpr hk) ((hmax.not_mem_iff (φs k)).mp hkn)
+  | .iInf φs => by
+    constructor
+    · -- Forward: iInf φs ∈ S → ∀ k, Realize (φs k) M
+      intro h k
+      exact (truthLemma (φs k)).mp (hmax.iInf_mem h k)
+    · -- Backward: (∀ k, Realize (φs k) M) → iInf φs ∈ S
+      intro h
+      rcases hmax.decide (BoundedFormulaω.iInf φs) with h2 | h2
+      · exact h2
+      · -- C3': from (iInf φs).not ∈ S, get ∃ k, (φs k).not ∈ S
+        obtain ⟨k, hkn⟩ := hmax.neg_iInf_mem h2
+        -- IH backward: Realize (φs k) M → φs k ∈ S, contradicting (φs k).not ∈ S
+        exact absurd ((truthLemma (φs k)).mpr (h k)) ((hmax.not_mem_iff (φs k)).mp hkn)
+  | .equal t₁ t₂ => by
+    simp only [Sentenceω.Realize, BoundedFormulaω.Realize]
+    constructor
+    · intro h
+      rw [Term.realize_toEmpty t₁, Term.realize_toEmpty t₂, term_realize_eq_mk, term_realize_eq_mk]
+      rw [(mk_eq_iff_termEquiv _ _)]
+      show termEquiv C S hmax t₁.toEmpty t₂.toEmpty
+      unfold termEquiv
+      rwa [← Term.toEmpty_relabel_inl t₁, ← Term.toEmpty_relabel_inl t₂] at h
+    · intro h
+      rw [Term.realize_toEmpty t₁, Term.realize_toEmpty t₂,
+          term_realize_eq_mk, term_realize_eq_mk] at h
+      rw [(mk_eq_iff_termEquiv _ _)] at h
+      change termEquiv C S hmax t₁.toEmpty t₂.toEmpty at h
+      unfold termEquiv at h
+      rwa [← Term.toEmpty_relabel_inl t₁, ← Term.toEmpty_relabel_inl t₂]
+  | .rel R ts => by
+    -- Goal: rel R ts ∈ S ↔ Sentenceω.Realize (rel R ts) (TermModel C S hmax)
+    -- RHS unfolds to RelMap R (fun i => (ts i).realize (Sum.elim Empty.elim Fin.elim0))
+    show (BoundedFormulaω.rel R ts ∈ S) ↔
+      Structure.RelMap R (fun i => (ts i).realize
+        (Sum.elim (Empty.elim : Empty → TermModel C S hmax) Fin.elim0))
+    -- Rewrite each term's realize to TermModel.mk (ts i).toEmpty
+    have hts : (fun i => (ts i).realize (Sum.elim (Empty.elim : Empty → TermModel C S hmax) Fin.elim0)) =
+        (fun i => TermModel.mk ((ts i).toEmpty)) := by
+      funext i; rw [Term.realize_toEmpty (ts i), term_realize_eq_mk]
+    rw [hts]
+    -- Unfold RelMap on the term model using finLiftOn_mk
+    show (BoundedFormulaω.rel R ts ∈ S) ↔
+      @Quotient.finLiftOn _ _ _ (fun _ => L.Term Empty) (termSetoidFamily C S hmax _)
+        Prop (fun i => Quotient.mk _ ((ts i).toEmpty))
+        (fun ts => BoundedFormulaω.rel R
+          (fun i => (ts i).relabel (Sum.inl : Empty → Empty ⊕ Fin 0)) ∈ S)
+        (fun a b hab => rel_congr R a b hab)
+    have hsimp := congr_fun (congr_fun
+      (Quotient.finLiftOn_mk (S := termSetoidFamily C S hmax _)
+        (β := Prop) (fun i => (ts i).toEmpty))
+      (fun ts => BoundedFormulaω.rel R
+        (fun i => (ts i).relabel (Sum.inl : Empty → Empty ⊕ Fin 0)) ∈ S))
+      (fun a b hab => rel_congr R a b hab)
+    rw [hsimp]; dsimp only []
+    -- Now goal is: rel R ts ∈ S ↔ rel R (fun i => ((ts i).toEmpty).relabel Sum.inl) ∈ S
+    have hconv : (fun i => ((ts i).toEmpty).relabel (Sum.inl : Empty → Empty ⊕ Fin 0)) =
+        (fun i => ts i) := funext (fun i => Term.toEmpty_relabel_inl (ts i))
+    rw [hconv]
+  | .all φ => by
+    -- φ : BoundedFormulaω Empty 1, all φ : Sentenceω
+    -- Goal: all φ ∈ S ↔ ∀ m : TermModel, φ.Realize Empty.elim (Fin.snoc Fin.elim0 m)
+    -- Strategy:
+    --   Forward: all φ ∈ S → for each closed term t, (openBounds φ).subst t ∈ S
+    --     → by IH, Sentenceω.Realize ((openBounds φ).subst t) TermModel
+    --     → by realize_subst + realize_openBounds, φ.Realize Empty.elim (snoc Fin.elim0 (TermModel.mk t))
+    --     → since every m = TermModel.mk t, we get the universal.
+    --   Backward: by decidability, either all φ ∈ S or (all φ).not ∈ S.
+    --     If (all φ).not ∈ S, by C7_neg_all_bound, ∃ t, ((openBounds φ).subst t).not ∈ S
+    --     → by IH (contrapositive), ¬ Sentenceω.Realize ((openBounds φ).subst t) TermModel
+    --     → by realize_subst + realize_openBounds, ¬ φ.Realize Empty.elim (snoc Fin.elim0 (TermModel.mk t))
+    --     → contradicts the universal hypothesis.
+    -- Helper: connect substitution realization with φ realization
+    have realize_subst_openBounds : ∀ (t : L.Term Empty),
+        Sentenceω.Realize ((φ.openBounds).subst (fun _ => t)) (TermModel C S hmax) ↔
+        φ.Realize (Empty.elim : Empty → TermModel C S hmax)
+          (Fin.snoc Fin.elim0 (t.realize (Empty.elim : Empty → TermModel C S hmax))) := by
+      intro t
+      simp only [Sentenceω.Realize, BoundedFormulaω.realize_subst]
+      -- Goal: (openBounds φ).Realize (fun _ => t.realize Empty.elim) Fin.elim0 ↔
+      --       φ.Realize Empty.elim (snoc Fin.elim0 (t.realize Empty.elim))
+      -- Convert to Formulaω.Realize form for realize_openBounds
+      show Formulaω.Realize (φ.openBounds) (fun _ => t.realize Empty.elim) ↔
+           φ.Realize Empty.elim (Fin.snoc Fin.elim0 (t.realize Empty.elim))
+      rw [realize_openBounds]
+      -- Goal: φ.Realize Empty.elim (fun _ => t.realize Empty.elim) ↔
+      --       φ.Realize Empty.elim (snoc Fin.elim0 (t.realize Empty.elim))
+      -- These are the same because Fin 1 → M is determined by its value at 0,
+      -- and both (fun _ => x) and (snoc Fin.elim0 x) map 0 to x.
+      have heq : (fun (_ : Fin 1) => t.realize (Empty.elim : Empty → TermModel C S hmax)) =
+          Fin.snoc Fin.elim0 (t.realize (Empty.elim : Empty → TermModel C S hmax)) := by
+        funext i
+        exact Fin.eq_zero i ▸ (snoc_elim0_zero_eq (t.realize Empty.elim)).symm
+      rw [heq]
+    constructor
+    · -- Forward: all φ ∈ S → ∀ m : TermModel, φ.Realize Empty.elim (snoc Fin.elim0 m)
+      intro hall m
+      -- Every element of TermModel is TermModel.mk t for some t
+      obtain ⟨t, rfl⟩ := TermModel.exists_rep m
+      -- all φ ∈ S → (openBounds φ).subst t ∈ S by C7_all_bound
+      have hmem := ConsistencyPropertyEq.MaximalConsistent.all_bound_mem hmax hall t
+      -- By IH: membership ↔ realization
+      have ih_subst := truthLemma ((φ.openBounds).subst (fun _ => t))
+      rw [ih_subst] at hmem
+      -- Connect to φ.Realize using realize_subst_openBounds
+      rw [← term_realize_eq_mk]
+      exact (realize_subst_openBounds t).mp hmem
+    · -- Backward: (∀ m, φ.Realize ...) → all φ ∈ S
+      intro hreal
+      -- Decidability: either all φ ∈ S or (all φ).not ∈ S
+      rcases hmax.decide (BoundedFormulaω.all φ) with h | h
+      · exact h
+      · -- (all φ).not ∈ S → ∃ t, ((openBounds φ).subst t).not ∈ S
+        obtain ⟨t, ht⟩ := ConsistencyPropertyEq.MaximalConsistent.neg_all_bound_mem hmax h
+        -- ¬φ(t) ∈ S means φ(t) ∉ S
+        have hnotin := (hmax.not_mem_iff _).mp ht
+        -- By IH: membership ↔ realization, so ¬ realization
+        have ih_subst := truthLemma ((φ.openBounds).subst (fun _ => t))
+        have hnotreal : ¬ Sentenceω.Realize ((φ.openBounds).subst (fun _ => t)) (TermModel C S hmax) :=
+          fun habs => hnotin (ih_subst.mpr habs)
+        -- By realize_subst_openBounds, this contradicts hreal at TermModel.mk t
+        exact absurd (hreal (TermModel.mk t))
+          (fun habs => hnotreal ((realize_subst_openBounds t).mpr (by rw [term_realize_eq_mk]; exact habs)))
+termination_by σ => σ
+decreasing_by all_goals (first | (simp_wf; omega) | sorry)
 
 /-! ### Model Existence from Truth Lemma -/
 

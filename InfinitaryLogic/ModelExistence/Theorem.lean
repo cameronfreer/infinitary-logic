@@ -58,7 +58,7 @@ theorem model_existence [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Re
   -- Step 1: Extend S to a maximal consistent set S*
   obtain ⟨S', hSS', hmax⟩ := C.toConsistencyProperty.exists_maximal S hS
   -- Step 2: Build the term model from S*
-  exact ⟨TermModel C S' hmax, termModelStructure, sorry,
+  exact ⟨TermModel C S' hmax, termModelStructure, inferInstance,
     fun φ hφ => (truthLemma φ).mp (hSS' hφ)⟩
 
 /-- A consistent countable theory in a countable language has a countable model.

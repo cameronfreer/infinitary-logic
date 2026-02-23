@@ -38,6 +38,7 @@ import InfinitaryLogic.ModelExistence.ConsistencyProperty
 import InfinitaryLogic.ModelExistence.HenkinConstruction
 import InfinitaryLogic.ModelExistence.Theorem
 import InfinitaryLogic.ModelExistence.Completeness
+import InfinitaryLogic.ModelExistence.SatisfiableConsistencyProperty
 
 -- Model theory
 import InfinitaryLogic.ModelTheory.LowenheimSkolem

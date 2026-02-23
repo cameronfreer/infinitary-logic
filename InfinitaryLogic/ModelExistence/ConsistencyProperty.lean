@@ -52,6 +52,13 @@ structure ConsistencyProperty (L : Language.{u, v}) where
   C1_imp : ∀ S ∈ sets, ∀ φ ψ : L.Sentenceω,
     BoundedFormulaω.imp φ ψ ∈ S →
     S ∪ {φ.not} ∈ sets ∨ S ∪ {ψ} ∈ sets
+  /-- (C1') Negated implication decomposition: if ¬(φ → ψ) ∈ S, then both
+      S ∪ {φ} and S ∪ {¬ψ} are in the family. This is the dual of C1, needed
+      for the backward direction of the truth lemma. In model-theoretic terms:
+      if φ → ψ is false in every model of S, then φ must be true and ψ false. -/
+  C1_neg_imp : ∀ S ∈ sets, ∀ φ ψ : L.Sentenceω,
+    (BoundedFormulaω.imp φ ψ).not ∈ S →
+    S ∪ {φ} ∈ sets ∧ S ∪ {ψ.not} ∈ sets
   /-- (C2) Double negation elimination: if ¬¬φ ∈ S, then S ∪ {φ} is consistent. -/
   C2_not_not : ∀ S ∈ sets, ∀ φ : L.Sentenceω,
     φ.not.not ∈ S → S ∪ {φ} ∈ sets
@@ -59,10 +66,18 @@ structure ConsistencyProperty (L : Language.{u, v}) where
       consistent for all k. -/
   C3_iInf : ∀ S ∈ sets, ∀ φs : ℕ → L.Sentenceω,
     BoundedFormulaω.iInf φs ∈ S → ∀ k, S ∪ {φs k} ∈ sets
+  /-- (C3') Negated conjunction decomposition: if ¬(⋀ᵢ φᵢ) ∈ S, then there exists k
+      such that S ∪ {¬φₖ} is consistent. This is the dual of C3. -/
+  C3_neg_iInf : ∀ S ∈ sets, ∀ φs : ℕ → L.Sentenceω,
+    (BoundedFormulaω.iInf φs).not ∈ S → ∃ k, S ∪ {(φs k).not} ∈ sets
   /-- (C4) Witness for countable disjunction: if ⋁ᵢ φᵢ ∈ S, then there exists k
       such that S ∪ {φₖ} is consistent. -/
   C4_iSup : ∀ S ∈ sets, ∀ φs : ℕ → L.Sentenceω,
     BoundedFormulaω.iSup φs ∈ S → ∃ k, S ∪ {φs k} ∈ sets
+  /-- (C4') Negated disjunction decomposition: if ¬(⋁ᵢ φᵢ) ∈ S, then S ∪ {¬φₖ} is
+      consistent for all k. This is the dual of C4. -/
+  C4_neg_iSup : ∀ S ∈ sets, ∀ φs : ℕ → L.Sentenceω,
+    (BoundedFormulaω.iSup φs).not ∈ S → ∀ k, S ∪ {(φs k).not} ∈ sets
   /-- (Extension) For any consistent S and sentence φ, either S ∪ {φ} or
       S ∪ {¬φ} is consistent. This ensures maximal consistent extensions decide
       every sentence. In the standard consistency property for satisfiable sets,
@@ -128,6 +143,37 @@ structure ConsistencyPropertyEq (L : Language.{u, v}) extends ConsistencyPropert
       (φ.relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).all ∈ S →
       ∀ (t : L.Term Empty),
         S ∪ {φ.subst (fun _ => t)} ∈ toConsistencyProperty.sets
+  /-- (C7'') Negated universal decomposition: if ¬(∀x.φ(x)) ∈ S, then there exists a closed
+      term t such that S ∪ {¬φ(t)} is consistent. This is the dual of C7_all, needed for the
+      backward direction of the truth lemma's universal quantifier case. -/
+  C7_neg_all : ∀ S ∈ toConsistencyProperty.sets,
+    ∀ (φ : L.Formulaω (Fin 1)),
+      ((φ.relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).all).not ∈ S →
+      ∃ (t : L.Term Empty),
+        S ∪ {(φ.subst (fun _ => t)).not} ∈ toConsistencyProperty.sets
+  /-- (C7''') Negated existential decomposition: if ¬(∃x.φ(x)) ∈ S, then S ∪ {¬φ(t)} is
+      consistent for every closed term t. This is the dual of C7_quantifier. -/
+  C7_neg_ex : ∀ S ∈ toConsistencyProperty.sets,
+    ∀ (φ : L.Formulaω (Fin 1)),
+      ((φ.relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).ex).not ∈ S →
+      ∀ (t : L.Term Empty),
+        S ∪ {(φ.subst (fun _ => t)).not} ∈ toConsistencyProperty.sets
+  /-- Direct universal instantiation for `BoundedFormulaω.all`: if `∀x.φ(x) ∈ S`,
+      then S ∪ {φ(t)} is consistent for every closed term t. Here φ has one bound
+      variable (type `BoundedFormulaω Empty 1`), and `φ.openBounds : Formulaω (Fin 1)`
+      converts it to a formula with one free variable for substitution. -/
+  C7_all_bound : ∀ S ∈ toConsistencyProperty.sets,
+    ∀ (φ : L.BoundedFormulaω Empty 1),
+      φ.all ∈ S →
+      ∀ (t : L.Term Empty),
+        S ∪ {(φ.openBounds).subst (fun _ => t)} ∈ toConsistencyProperty.sets
+  /-- Direct negated universal for `BoundedFormulaω.all`: if ¬(∀x.φ(x)) ∈ S,
+      then there exists a term t with S ∪ {¬φ(t)} consistent. -/
+  C7_neg_all_bound : ∀ S ∈ toConsistencyProperty.sets,
+    ∀ (φ : L.BoundedFormulaω Empty 1),
+      φ.all.not ∈ S →
+      ∃ (t : L.Term Empty),
+        S ∪ {((φ.openBounds).subst (fun _ => t)).not} ∈ toConsistencyProperty.sets
 
 end Language
 
