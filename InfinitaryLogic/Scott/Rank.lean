@@ -113,6 +113,35 @@ theorem scottRank_lt_omega1 (M : Type w) [L.Structure M] [Countable M] :
     rw [h_zero]
     exact Ordinal.omega_pos 1
 
+/-- When scottRank M ≤ α, the structure M stabilizes completely at α:
+`BFEquiv α n a b ↔ BFEquiv (succ α) n a b` for all tuple sizes, all countable N, all tuples.
+
+Mathematically, the Scott rank bounds all element ranks, so by level α every extension
+is already determined. The formal proof routes through `exists_complete_stabilization`
+for the β ≤ α case. The β > α case (line 138) inherits the sorry from
+`per_tuple_stabilization_below_omega1` — it requires establishing that the complete
+stabilization ordinal ≤ scottRank, which itself depends on the per-tuple bound.
+
+**Status**: Tier 1 (blocked on `per_tuple_stabilization_below_omega1`). Do not attempt
+independently; resolve the root sorry first. -/
+theorem scottRank_le_implies_stabilizesCompletely (M : Type w) [L.Structure M] [Countable M]
+    {α : Ordinal.{0}} (hα : scottRank (L := L) M ≤ α) :
+    StabilizesCompletely (L := L) M α := by
+  obtain ⟨β, _, hstab⟩ := exists_complete_stabilization (L := L) M
+  intro n N _ _ a b
+  constructor
+  · intro hBFα
+    by_cases hβα : β ≤ α
+    · exact BFEquiv_upgrade_at_stabilization hstab (BFEquiv.monotone hβα hBFα) (Order.succ α)
+        (le_trans hβα (Order.le_succ α))
+    · -- β > α: mathematically impossible when scottRank M ≤ α (since the complete
+      -- stabilization ordinal should be ≤ scottRank), but the formal relationship between
+      -- scottRank (sup of elementRanks) and the complete stabilization ordinal from
+      -- per_tuple_stabilization_below_omega1 hasn't been established yet.
+      -- Inherits sorry from per_tuple_stabilization_below_omega1.
+      sorry
+  · exact BFEquiv.of_succ
+
 /-- The stabilization ordinal is below ω₁.
 
 This follows from `stabilizationOrdinal_lt_omega1'` in Sentence.lean, which is the

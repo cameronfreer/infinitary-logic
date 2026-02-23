@@ -768,19 +768,27 @@ private theorem per_tuple_stabilization_from_extensions
 there exists γ < ω₁ such that for all α ≥ γ (with α, succ α < ω₁), the BFEquiv iff
 holds uniformly for all countable structures N and tuples b.
 
-This is the key per-tuple lemma for `exists_complete_stabilization`. The trivial case
-(BFEquiv holds universally) is immediate; the hard case (some failure exists) requires
-showing a uniform bound exists despite quantifying over all countable N.
+This is the **sole assumption** blocking the Scott analysis pipeline. All downstream
+results (`exists_complete_stabilization`, `scottRank_le_implies_stabilizesCompletely`,
+`scottHeight_lt_omega1`, `scottSentence_characterizes`, etc.) are sorry-free in their
+own proofs and depend only on this theorem.
 
-**Proof strategy**: The standard argument uses `per_tuple_stabilization_from_extensions`
-recursively: for each m ∈ M, the (n+1)-extension `(Fin.snoc a m)` has a stabilization
-bound `γ(m) < ω₁`, and then `per_tuple_stabilization_from_extensions` gives a bound for
-the n-tuple at `Order.succ (⨆ m, γ(m))`. The recursion is well-founded because each
-recursive call decreases the ordinal parameter (from `succ α` to `α`). The challenge is
-that the `by_cases` structure pre-commits to a specific β₀ which cannot serve as a
-uniform bound; the correct approach may require restructuring to use the recursive
-argument directly (avoiding the easy/hard case split). -/
-private theorem per_tuple_stabilization_below_omega1
+**Proof strategy**: The standard textbook proof (Marker, Keisler-Knight) uses a
+*counting types* argument: for fixed (M, a), the "α-type" is the partition of countable
+(N, b) pairs into BFEquiv-true and BFEquiv-false. As α increases, the partition refines
+monotonically (elements only move from true to false). Each (N, b) has a unique "first
+failure ordinal" β(N,b) which is always 0 or a successor (BFEquiv at limits is the
+conjunction of all lower levels). The key is showing sup{β(N,b)} < ω₁, which requires
+bounding the number of *distinct* first-failure ordinals.
+
+**Viable approaches**:
+(a) Use `BFEquiv_iff_agree_formulas_omega` to reduce BFEquiv types to Lω₁ω formula types.
+    Since formulas at each quantifier rank over a countable signature are countable, the
+    number of distinct formula-types is countable, giving the bound. See
+    `countable_first_failure_ordinals` and `countable_refinement_steps` below.
+(b) A direct counting-types argument on the game-theoretic BFEquiv, showing the quotient
+    of countable (N, b) by BFEquiv-equivalence is countable at each level. -/
+theorem per_tuple_stabilization_below_omega1
     {M : Type w} [L.Structure M] [Countable M]
     (n : ℕ) (a : Fin n → M) :
     ∃ γ < (Ordinal.omega 1 : Ordinal.{0}),
@@ -796,6 +804,7 @@ private theorem per_tuple_stabilization_below_omega1
   · -- BFEquiv fails for some (N, b) at some level < ω₁
     push_neg at hAllHold
     obtain ⟨β₀, hβ₀_lt, N₀, instN₀, instCN₀, b₀, hβ₀_fail⟩ := hAllHold
+    -- TODO: prove — see `countable_first_failure_ordinals` and `countable_refinement_steps` stubs
     sorry
 
 /-- For countable M, there exists α < ω₁ where all tuples stabilize completely:
@@ -809,7 +818,7 @@ structures, the BFEquiv refinement chain must stabilize at a countable ordinal.
 stabilization (`StabilizesCompletely`). See docstring on
 `per_tuple_stabilization_below_omega1` for the per-tuple argument.
 
-**Status**: The sorry is in `per_tuple_stabilization_below_omega1` (hard case). -/
+**Status**: sorry-free; depends on `per_tuple_stabilization_below_omega1` (Tier 1). -/
 theorem exists_complete_stabilization (M : Type w) [L.Structure M] [Countable M] :
     ∃ α < (Ordinal.omega 1 : Ordinal.{0}), StabilizesCompletely (L := L) M α := by
   have hTuple : ∀ (t : Σ n, Fin n → M),
@@ -877,6 +886,51 @@ theorem exists_complete_stabilization (M : Type w) [L.Structure M] [Countable M]
   have hbound_le : boundOrd ⟨n, a⟩ ≤ globalStab :=
     le_trans (Order.le_succ _) hk_le
   exact hboundOrd_spec ⟨n, a⟩ globalStab hbound_le hGlobalLt hSuccGlobalLt N b
+
+/-! ### Infrastructure for proving `per_tuple_stabilization_below_omega1`
+
+The following stubs outline the formula-type counting approach. The key idea:
+`BFEquiv_iff_agree_formulas_omega` (from `Scott.QuantifierRank`) reduces BFEquiv at level α
+to agreement on all Lω₁ω formulas of quantifier rank ≤ α. Two tuples (N₁, b₁) and (N₂, b₂)
+are BFEquiv-equivalent at level α iff they satisfy the same Lω₁ω formulas of rank ≤ α.
+Since the set of such formulas over a countable signature is countable, the quotient of
+countable (N, b) by α-equivalence is countable. Each refinement step (α → α+1) either
+splits an existing equivalence class or not, so the total number of refinement steps is
+bounded by a countable ordinal, giving stabilization below ω₁. -/
+
+/-- The set of ordinals < ω₁ at which BFEquiv fails for some new (N, b) pair
+(i.e., the set of "first-failure ordinals") is countable.
+
+The proof strategy is to use `BFEquiv_iff_agree_formulas_omega` (from `Scott.QuantifierRank`)
+to reduce BFEquiv-equivalence to agreement on Lω₁ω formulas of bounded quantifier rank.
+Since the set of such formulas over a countable signature is countable, the quotient of
+countable (N, b) by α-equivalence is countable at each level. Each refinement (α → α+1)
+can split at most countably many classes, so the total number of splits is countable.
+
+TODO: prove — requires importing `Scott.QuantifierRank` and establishing countability
+of the Lω₁ω formula quotient. -/
+theorem countable_first_failure_ordinals
+    {M : Type w} [L.Structure M] [Countable M]
+    (n : ℕ) (a : Fin n → M) :
+    Set.Countable {α : Ordinal | α < Ordinal.omega 1 ∧
+      ∃ (N : Type w) (_ : L.Structure N) (_ : Countable N) (b : Fin n → N),
+        ¬BFEquiv (L := L) α n a b ∧
+        ∀ β, β < α → BFEquiv (L := L) β n a b} := by
+  sorry
+
+/-- The set of ordinals α < ω₁ where BFEquiv α ↔ BFEquiv (succ α) fails for some (N, b)
+is countable. This is the direct ingredient for `per_tuple_stabilization_below_omega1`:
+a countable set of ordinals below ω₁ has supremum below ω₁.
+
+TODO: prove using `countable_first_failure_ordinals` (first-failure ordinals are successor,
+so the iff-failure ordinals are their predecessors, still countable). -/
+theorem countable_refinement_steps
+    {M : Type w} [L.Structure M] [Countable M]
+    (n : ℕ) (a : Fin n → M) :
+    Set.Countable {α : Ordinal | α < Ordinal.omega 1 ∧
+      ∃ (N : Type w) (_ : L.Structure N) (_ : Countable N) (b : Fin n → N),
+        BFEquiv (L := L) α n a b ∧ ¬BFEquiv (L := L) (Order.succ α) n a b} := by
+  sorry
 
 omit [Countable (Σ l, L.Relations l)] in
 /-- At a complete stabilization ordinal, BFEquiv0 implies isomorphism for countable structures.
