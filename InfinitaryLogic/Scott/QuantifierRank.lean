@@ -141,6 +141,7 @@ private theorem toLinf_qrank {α : Type*} {n : ℕ} (φ : L.BoundedFormulaω α 
     simp only [BoundedFormulaω.toLinf, BoundedFormulaInf.qrank_iInf, BoundedFormulaω.qrank_iInf]
     congr 1; funext i; exact ih i
 
+omit [Countable (Σ l, L.Relations l)] in
 /-- BF-equivalence at level α implies agreement on Lω₁ω formulas of quantifier rank ≤ α.
 
 This is derived from the sorry-free forward direction of the Karp lemma

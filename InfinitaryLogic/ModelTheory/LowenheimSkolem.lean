@@ -13,12 +13,15 @@ import Mathlib.ModelTheory.LanguageMap
 # Downward Löwenheim-Skolem for Lω₁ω
 
 This file proves the downward Löwenheim-Skolem theorem for Lω₁ω:
-any satisfiable sentence in a countable language has a countable model.
+any Lω₁ω sentence satisfied by a countable model in a countable language
+has a countable model (in any target universe).
 
 ## Main Results
 
-- `downward_LS`: For a countable language, any satisfiable Lω₁ω sentence
-  has a countable model.
+- `downward_LS_with_naming`: Any satisfiable Lω₁ω sentence has a countable model,
+  given a naming function (no countability assumption on the original model).
+- `downward_LS`: Any Lω₁ω sentence satisfied by a countable model (`[Countable M]`)
+  has a countable model. Uses language extension `L[[M]]`, requiring M countable.
 
 ## Implementation Notes
 
@@ -157,8 +160,8 @@ theorem downward_LS [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relati
     simp only [φ', Sentenceω.Realize] at this
     rwa [BoundedFormulaω.realize_mapLanguage] at this⟩
 
-/-- Downward LS for theories: any satisfiable Lω₁ω theory in a countable language
-with a countable model has a countable model. -/
+/-- Downward LS for theories: any Lω₁ω theory in a countable language
+satisfied by a countable model (`[Countable M]`) has a countable model. -/
 theorem downward_LS_theory [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relations l)]
     (T : L.Theoryω) (M : Type u) [L.Structure M] [Countable M]
     (hM : T.Model M) (hT_countable : T.Countable) :

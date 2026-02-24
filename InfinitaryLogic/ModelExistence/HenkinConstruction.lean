@@ -229,7 +229,7 @@ the equation `t₁ = t₂`. The quotient model satisfies all sentences in S. -/
 
 /-- Equivalence relation on closed terms induced by a maximal consistent set. -/
 def termEquiv (C : ConsistencyPropertyEq L) (S : Set L.Sentenceω)
-    (hmax : C.toConsistencyProperty.MaximalConsistent S) :
+    (_hmax : C.toConsistencyProperty.MaximalConsistent S) :
     L.Term Empty → L.Term Empty → Prop :=
   fun t₁ t₂ => BoundedFormulaω.equal
     (t₁.relabel (Sum.inl : Empty → Empty ⊕ Fin 0))

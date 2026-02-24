@@ -52,7 +52,7 @@ This is the fundamental model-building tool for infinitary logic. -/
 theorem model_existence [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relations l)]
     (C : ConsistencyPropertyEq L)
     (S : Set L.Sentenceω) (hS : S ∈ C.toConsistencyProperty.sets)
-    (hS_countable : S.Countable) :
+    (_hS_countable : S.Countable) :
     ∃ (M : Type u) (_ : L.Structure M) (_ : Countable M),
       Theoryω.Model S M := by
   -- Step 1: Extend S to a maximal consistent set S*

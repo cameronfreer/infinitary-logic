@@ -16,7 +16,7 @@ A Lean 4 formalization of infinitary logic and Scott sentences, building on Math
 
 ## Current Status
 
-The project compiles with Mathlib v4.27.0. Core definitions and main theorem statements are complete, but **34 sorry placeholders** remain across multiple modules (see breakdown below). Results that depend on sorries should be considered provisional.
+The project compiles with Mathlib v4.27.0. Core definitions and main theorem statements are complete, with **7 sorry placeholders** remaining across 5 modules (see breakdown below). Most major results are fully proved.
 
 ### Implemented Results
 
@@ -37,49 +37,42 @@ The project compiles with Mathlib v4.27.0. Core definitions and main theorem sta
 - Conversion from countable L∞ω to Lω₁ω (`BoundedFormulaInf.ofCountable`)
 - Quantifier rank definitions and monotonicity lemmas
 
-**Scott sentences** (provisional — depends on sorries in Scott/Sentence.lean, Scott/Rank.lean):
+**Scott sentences** (sorry-free except for `per_tuple_stabilization_below_omega1`):
 - Atomic diagrams for relational languages
 - Back-and-forth equivalence (`BFEquiv`) indexed by ordinals
 - Scott formula and Scott sentence definitions
 - Scott rank definition
 - `realize_scottFormula_iff_BFEquiv` (Scott formula captures BF-equivalence)
-- `scottSentence_characterizes` — depends on chain-construction sorries
-- `scottRank_lt_omega1` — depends on stabilization sorries
+- `scottSentence_characterizes` — depends on `per_tuple_stabilization_below_omega1`
+- `scottRank_lt_omega1` — depends on `per_tuple_stabilization_below_omega1`
 
-**Karp's theorem** (provisional — depends on sorries in Karp/Theorem.lean, Karp/PotentialIso.lean):
-- `karp_theorem` (BFEquiv at all ordinals ↔ agree on all Lω₁ω sentences)
-- `BFEquiv_iff_agree_formulas_omega` — depends on sorry in Scott/QuantifierRank.lean
+**Karp's theorem** (fully proved, sorry-free):
+- `karp_theorem_w` (BFEquiv at all ordinals ↔ agree on all `LinfEquivW` sentences)
+- `BFEquiv_iff_agree_formulas_omega` (sorry-free)
 
-**Model existence** (provisional — depends on sorries in ModelExistence/):
-- Consistency properties and model construction
-- Completeness for Lω₁ω
+**Model existence** (fully proved, sorry-free):
+- Consistency properties, Henkin construction, truth lemma
+- `model_existence` theorem with term model construction
+- Omitting types theorem (sorry)
 
-**Model theory** (provisional — depends on sorries in ModelTheory/):
-- Downward Löwenheim–Skolem for Lω₁ω
-- Hanf number bounds
-- Counting models results
+**Model theory:**
+- Downward Löwenheim–Skolem for Lω₁ω (sorry-free)
+- Hanf number bounds (sorry)
+- Counting models results (inherits sorry from `per_tuple_stabilization_below_omega1`)
 
-**Admissible fragments** (provisional — depends on sorries in Admissible/):
-- Barwise compactness
-- Nadel bound
+**Admissible fragments:**
+- Barwise compactness (sorry)
+- Nadel bound (sorry-free)
 
-### Remaining Sorries (34)
+### Remaining Sorries (7)
 
 | File | Count |
 |------|------:|
-| Scott/Sentence.lean | 15 |
-| Scott/Height.lean | 5 |
-| Scott/Rank.lean | 2 |
-| Scott/QuantifierRank.lean | 1 |
-| Karp/Theorem.lean | 1 |
-| Karp/PotentialIso.lean | 1 |
-| ModelExistence/Theorem.lean | 1 |
+| Scott/Sentence.lean | 3 |
+| Scott/Rank.lean | 1 |
 | ModelExistence/Completeness.lean | 1 |
-| ModelTheory/LowenheimSkolem.lean | 2 |
-| ModelTheory/Hanf.lean | 2 |
-| ModelTheory/CountingModels.lean | 1 |
 | Admissible/Compactness.lean | 1 |
-| Admissible/NadelBound.lean | 1 |
+| ModelTheory/Hanf.lean | 1 |
 
 ## File Structure
 
@@ -110,7 +103,7 @@ InfinitaryLogic/
 │   ├── Height.lean                      # Scott height and related bounds
 │   └── QuantifierRank.lean              # Quantifier rank lemmas for Scott constructs
 ├── Karp/                                # Karp's theorem
-│   ├── Theorem.lean                     # karp_theorem main statement
+│   ├── Theorem.lean                     # karp_theorem_w (sorry-free)
 │   ├── PotentialIso.lean                # Potential isomorphisms and BFEquiv
 │   └── CountableCorollary.lean          # Corollaries for countable structures
 ├── ModelExistence/                      # Model existence for Lω₁ω
