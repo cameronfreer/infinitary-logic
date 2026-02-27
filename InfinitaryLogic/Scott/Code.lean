@@ -221,9 +221,17 @@ theorem BFEquiv_implies_agree_codes
 
 /-- Agreement on all formula codes implies BFEquiv.
 
-This is the key bridge lemma. The proof uses the fact that the Scott formula
-`scottFormula a α` is determined by codes: its truth value on any tuple `b` can
-be computed from the codes that `b` satisfies. -/
+**KNOWN GAP**: This sorry is genuine. `FormulaCode` uses finite lists (`FormulaCodeList`)
+for iSup/iInf, making the type countable. However, BFEquiv at successor ordinals requires
+agreement on formulas with *countably infinite* conjunctions/disjunctions (the Scott formula
+uses `einf`/`esup` over all elements of M). Agreement on all finite-list codes does NOT
+imply agreement on countable-conjunction formulas. The structural induction fails at the
+`all` case (n-variable to (n+1)-variable codes) and the game induction at the succ case
+needs witnesses from forth/back requiring infinite conjunction of codes.
+
+**Do not attempt to fix within the current FormulaCode framework.** The downstream pipeline
+(`exists_separating_code`, `countable_refinement_steps`, `per_tuple_stabilization_below_omega1`)
+should be rewritten to bypass codes entirely. -/
 theorem agree_codes_implies_BFEquiv
     {M : Type w} [L.Structure M] [Countable M]
     {N : Type w} [L.Structure N] [Countable N]
@@ -250,7 +258,9 @@ theorem BFEquiv_iff_agree_codes
    fun h => agree_codes_implies_BFEquiv a b α hα h⟩
 
 /-- If BFEquiv α but ¬BFEquiv (succ α), there exists a separating code:
-a code c with qrank ≤ succ α that a and b disagree on. -/
+a code c with qrank ≤ succ α that a and b disagree on.
+
+**Trust boundary**: depends on `agree_codes_implies_BFEquiv` (sorry). -/
 theorem exists_separating_code
     {M : Type w} [L.Structure M] [Countable M]
     {N : Type w} [L.Structure N] [Countable N]

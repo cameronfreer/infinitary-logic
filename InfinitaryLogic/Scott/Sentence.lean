@@ -765,7 +765,41 @@ private theorem per_tuple_stabilization_from_extensions
         (le_trans (hS m₀) (Order.le_succ S |>.trans hα_ge)) hα_lt⟩
   · exact BFEquiv.of_succ
 
-/-! ### Infrastructure for proving `per_tuple_stabilization_below_omega1`
+/-! ### Refinement Descent Lemmas
+
+These lemmas decompose refinement failures at n-tuples into refinement failures at
+(n+1)-tuples at strictly smaller ordinals. They are the key infrastructure for proving
+`per_tuple_stabilization_below_omega1` without relying on the `FormulaCode` bridge. -/
+
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
+/-- At a successor refinement ordinal `succ δ`, the failure of `BFEquiv (succ(succ δ))`
+(while `BFEquiv (succ δ)` holds) produces a refinement at the (n+1)-tuple level at ordinal δ.
+
+The proof is by contradiction: if every (n+1)-extension with `BFEquiv δ` also satisfies
+`BFEquiv (succ δ)`, then we can rebuild `BFEquiv (succ(succ δ))` from the forth/back
+witnesses at level δ (which come from `BFEquiv (succ δ)`), contradicting the hypothesis. -/
+theorem refinement_descent_succ
+    {M : Type w} [L.Structure M] {N : Type w'} [L.Structure N]
+    {n : ℕ} {a : Fin n → M} {b : Fin n → N}
+    {δ : Ordinal}
+    (hBF : BFEquiv (L := L) (Order.succ δ) n a b)
+    (hNotBF : ¬BFEquiv (L := L) (Order.succ (Order.succ δ)) n a b) :
+    ∃ m : M, ∃ n' : N,
+      BFEquiv (L := L) δ (n + 1) (Fin.snoc a m) (Fin.snoc b n') ∧
+      ¬BFEquiv (L := L) (Order.succ δ) (n + 1) (Fin.snoc a m) (Fin.snoc b n') := by
+  by_contra h
+  push_neg at h
+  apply hNotBF
+  rw [BFEquiv.succ]
+  refine ⟨hBF, ?_, ?_⟩
+  · intro m
+    obtain ⟨n', hn'⟩ := BFEquiv.forth hBF m
+    exact ⟨n', h m n' hn'⟩
+  · intro n'
+    obtain ⟨m, hm⟩ := BFEquiv.back hBF n'
+    exact ⟨m, h m n' hm⟩
+
+/-! ### Infrastructure for proving `per_tuple_stabilization_below_omega1` (Code-based approach)
 
 The formula-type counting approach: `BFEquiv_iff_agree_formulas_omega` reduces BFEquiv
 at level α to agreement on all Lω₁ω formulas of quantifier rank ≤ α. The `FormulaCode`
@@ -779,7 +813,9 @@ a countable set of ordinals below ω₁ has supremum below ω₁.
 
 Each refinement step α has a separating code c ∈ FormulaCode L n with qrank(c) = succ α.
 The map α ↦ c is injective (different α give different qranks), giving an injection
-into a countable type. -/
+into a countable type.
+
+**Trust boundary**: transits through `agree_codes_implies_BFEquiv` (sorry in Code.lean). -/
 theorem countable_refinement_steps
     {M : Type w} [L.Structure M] [Countable M]
     (n : ℕ) (a : Fin n → M) :
@@ -817,6 +853,8 @@ This is the **sole assumption** blocking the Scott analysis pipeline. All downst
 results (`exists_complete_stabilization`, `scottRank_le_implies_stabilizesCompletely`,
 `scottHeight_lt_omega1`, `scottSentence_characterizes`, etc.) are sorry-free in their
 own proofs and depend only on this theorem.
+
+**Trust boundary**: depends on `agree_codes_implies_BFEquiv` via `countable_refinement_steps`.
 
 **Proof strategy**: The standard textbook proof (Marker, Keisler-Knight) uses a
 *counting types* argument: for fixed (M, a), the "α-type" is the partition of countable
