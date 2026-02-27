@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Scott.Formula
+import InfinitaryLogic.Scott.Code
 import InfinitaryLogic.Karp.PotentialIso
 import Mathlib.ModelTheory.PartialEquiv
 
@@ -764,6 +765,50 @@ private theorem per_tuple_stabilization_from_extensions
         (le_trans (hS m₀) (Order.le_succ S |>.trans hα_ge)) hα_lt⟩
   · exact BFEquiv.of_succ
 
+/-! ### Infrastructure for proving `per_tuple_stabilization_below_omega1`
+
+The formula-type counting approach: `BFEquiv_iff_agree_formulas_omega` reduces BFEquiv
+at level α to agreement on all Lω₁ω formulas of quantifier rank ≤ α. The `FormulaCode`
+type (from `Scott.Code`) provides a countable proxy for these formulas. Each refinement
+step (α → α+1) is witnessed by a separating code, and since codes are countable, the
+total number of refinement steps is countable, giving stabilization below ω₁. -/
+
+/-- The set of ordinals α < ω₁ where BFEquiv α ↔ BFEquiv (succ α) fails for some (N, b)
+is countable. This is the direct ingredient for `per_tuple_stabilization_below_omega1`:
+a countable set of ordinals below ω₁ has supremum below ω₁.
+
+Each refinement step α has a separating code c ∈ FormulaCode L n with qrank(c) = succ α.
+The map α ↦ c is injective (different α give different qranks), giving an injection
+into a countable type. -/
+theorem countable_refinement_steps
+    {M : Type w} [L.Structure M] [Countable M]
+    (n : ℕ) (a : Fin n → M) :
+    Set.Countable {α : Ordinal.{0} | α < Ordinal.omega 1 ∧
+      ∃ (N : Type w) (_ : L.Structure N) (_ : Countable N) (b : Fin n → N),
+        BFEquiv (L := L) α n a b ∧ ¬BFEquiv (L := L) (Order.succ α) n a b} := by
+  have hSep : ∀ α : Ordinal.{0}, α ∈ ({α : Ordinal.{0} | α < Ordinal.omega 1 ∧
+      ∃ (N : Type w) (_ : L.Structure N) (_ : Countable N) (b : Fin n → N),
+        BFEquiv (L := L) α n a b ∧ ¬BFEquiv (L := L) (Order.succ α) n a b}) →
+      ∃ c : FormulaCode L n, (c.toFormulaω).qrank = Order.succ α := by
+    intro α ⟨hα_lt, N, instN, instCN, b, hBF, hNotBF⟩
+    have hsucc_lt : Order.succ α < Ordinal.omega 1 :=
+      Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) hα_lt
+    letI := instN; letI := instCN
+    obtain ⟨c, hc_qrank, hc_sep⟩ := exists_separating_code a b α hα_lt hsucc_lt hBF hNotBF
+    refine ⟨c, le_antisymm hc_qrank (Order.succ_le_of_lt ?_)⟩
+    by_contra h; push_neg at h
+    exact hc_sep (BFEquiv_implies_agree_formulas_omega a b α hα_lt hBF c.toFormulaω h)
+  choose f hf using hSep
+  apply Countable.to_set
+  exact Function.Injective.countable
+    (f := fun (x : {α : Ordinal.{0} | _}) => f x.1 x.2)
+    (fun ⟨α₁, hα₁⟩ ⟨α₂, hα₂⟩ heq => by
+      simp only at heq
+      have h1 := hf α₁ hα₁
+      have h2 := hf α₂ hα₂
+      rw [heq] at h1; rw [h1] at h2
+      exact Subtype.ext (Order.succ_injective h2))
+
 /-- Per-tuple stabilization: for any tuple (n, a) from a countable structure M,
 there exists γ < ω₁ such that for all α ≥ γ (with α, succ α < ω₁), the BFEquiv iff
 holds uniformly for all countable structures N and tuples b.
@@ -804,8 +849,66 @@ theorem per_tuple_stabilization_below_omega1
   · -- BFEquiv fails for some (N, b) at some level < ω₁
     push_neg at hAllHold
     obtain ⟨β₀, hβ₀_lt, N₀, instN₀, instCN₀, b₀, hβ₀_fail⟩ := hAllHold
-    -- TODO: prove — see `countable_first_failure_ordinals` and `countable_refinement_steps` stubs
-    sorry
+    -- The refinement set R is countable by `countable_refinement_steps`
+    have hR := countable_refinement_steps (L := L) n a
+    -- R is a countable set of ordinals below ω₁
+    -- If R is empty, BFEquiv never refines, so it's already stable at 0
+    by_cases hRne : ({α : Ordinal.{0} | α < Ordinal.omega 1 ∧
+        ∃ (N : Type w) (_ : L.Structure N) (_ : Countable N) (b : Fin n → N),
+          BFEquiv (L := L) α n a b ∧ ¬BFEquiv (L := L) (Order.succ α) n a b}).Nonempty
+    · -- R is nonempty: enumerate and take supremum
+      haveI := hR.to_subtype
+      haveI := hRne.to_subtype
+      obtain ⟨enum, henum⟩ := exists_surjective_nat
+        ({α : Ordinal.{0} | α < Ordinal.omega 1 ∧
+          ∃ (N : Type w) (_ : L.Structure N) (_ : Countable N) (b : Fin n → N),
+            BFEquiv (L := L) α n a b ∧ ¬BFEquiv (L := L) (Order.succ α) n a b})
+      -- Define the sequence of ordinals
+      let seq : ℕ → Ordinal.{0} := fun k => (enum k).1
+      -- Each element is < ω₁
+      have hseq_lt : ∀ k, seq k < Ordinal.omega 1 := fun k => (enum k).2.1
+      -- The supremum is < ω₁ (by regularity)
+      have hseq_lt' : ∀ k, seq k < (Cardinal.aleph 1).ord := by
+        intro k; rw [Cardinal.ord_aleph]; exact hseq_lt k
+      have hsup_lt := Ordinal.iSup_sequence_lt_omega_one seq hseq_lt'
+      rw [Cardinal.ord_aleph] at hsup_lt
+      -- Take γ = Order.succ (iSup seq)
+      have hSuccSupLt : Order.succ (⨆ k, seq k) < Ordinal.omega 1 :=
+        Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) hsup_lt
+      refine ⟨Order.succ (⨆ k, seq k), hSuccSupLt, fun α hα hα_lt hsucc_lt N instN instCN b => ?_⟩
+      constructor
+      · intro hBF
+        -- Show ¬(BFEquiv α ∧ ¬BFEquiv (succ α)): α is NOT a refinement step
+        -- because α ≥ γ = succ(sup R), so α > every element of R
+        by_contra hNot
+        -- If BFEquiv α but ¬BFEquiv (succ α), then α ∈ R
+        have hαR : α ∈ ({α : Ordinal.{0} | α < Ordinal.omega 1 ∧
+            ∃ (N : Type w) (_ : L.Structure N) (_ : Countable N) (b : Fin n → N),
+              BFEquiv (L := L) α n a b ∧ ¬BFEquiv (L := L) (Order.succ α) n a b}) :=
+          ⟨hα_lt, N, instN, instCN, b, hBF, hNot⟩
+        -- So α ≤ sup(seq)
+        obtain ⟨k, hk⟩ := henum ⟨α, hαR⟩
+        have hα_eq : seq k = α := congr_arg Subtype.val hk
+        have hBdd : BddAbove (Set.range seq) :=
+          ⟨Ordinal.omega 1, fun x ⟨k, hk⟩ => hk ▸ le_of_lt (hseq_lt k)⟩
+        have hα_le_sup : α ≤ ⨆ k, seq k := hα_eq ▸ le_ciSup hBdd k
+        -- But α ≥ succ(sup R) > sup R — contradiction
+        exact absurd (lt_of_lt_of_le (Order.lt_succ (⨆ k, seq k)) (le_trans hα hα_le_sup))
+          (lt_irrefl _)
+      · exact BFEquiv.of_succ
+    · -- R is empty: for all α < ω₁, BFEquiv α → BFEquiv (succ α)
+      rw [Set.not_nonempty_iff_eq_empty] at hRne
+      refine ⟨0, Ordinal.omega_pos 1, fun α _ hα_lt hsucc_lt N instN instCN b => ?_⟩
+      constructor
+      · intro hBF
+        by_contra hNot
+        have hmem : α ∈ ({α : Ordinal.{0} | α < Ordinal.omega 1 ∧
+            ∃ (N : Type w) (_ : L.Structure N) (_ : Countable N) (b : Fin n → N),
+              BFEquiv (L := L) α n a b ∧ ¬BFEquiv (L := L) (Order.succ α) n a b}) :=
+          ⟨hα_lt, N, instN, instCN, b, hBF, hNot⟩
+        rw [hRne] at hmem
+        exact hmem.elim
+      · exact BFEquiv.of_succ
 
 /-- For countable M, there exists α < ω₁ where all tuples stabilize completely:
 `BFEquiv α n a b ↔ BFEquiv (succ α) n a b` for ALL countable N and tuples b.
@@ -886,51 +989,6 @@ theorem exists_complete_stabilization (M : Type w) [L.Structure M] [Countable M]
   have hbound_le : boundOrd ⟨n, a⟩ ≤ globalStab :=
     le_trans (Order.le_succ _) hk_le
   exact hboundOrd_spec ⟨n, a⟩ globalStab hbound_le hGlobalLt hSuccGlobalLt N b
-
-/-! ### Infrastructure for proving `per_tuple_stabilization_below_omega1`
-
-The following stubs outline the formula-type counting approach. The key idea:
-`BFEquiv_iff_agree_formulas_omega` (from `Scott.QuantifierRank`) reduces BFEquiv at level α
-to agreement on all Lω₁ω formulas of quantifier rank ≤ α. Two tuples (N₁, b₁) and (N₂, b₂)
-are BFEquiv-equivalent at level α iff they satisfy the same Lω₁ω formulas of rank ≤ α.
-Since the set of such formulas over a countable signature is countable, the quotient of
-countable (N, b) by α-equivalence is countable. Each refinement step (α → α+1) either
-splits an existing equivalence class or not, so the total number of refinement steps is
-bounded by a countable ordinal, giving stabilization below ω₁. -/
-
-/-- The set of ordinals < ω₁ at which BFEquiv fails for some new (N, b) pair
-(i.e., the set of "first-failure ordinals") is countable.
-
-The proof strategy is to use `BFEquiv_iff_agree_formulas_omega` (from `Scott.QuantifierRank`)
-to reduce BFEquiv-equivalence to agreement on Lω₁ω formulas of bounded quantifier rank.
-Since the set of such formulas over a countable signature is countable, the quotient of
-countable (N, b) by α-equivalence is countable at each level. Each refinement (α → α+1)
-can split at most countably many classes, so the total number of splits is countable.
-
-TODO: prove — requires importing `Scott.QuantifierRank` and establishing countability
-of the Lω₁ω formula quotient. -/
-theorem countable_first_failure_ordinals
-    {M : Type w} [L.Structure M] [Countable M]
-    (n : ℕ) (a : Fin n → M) :
-    Set.Countable {α : Ordinal | α < Ordinal.omega 1 ∧
-      ∃ (N : Type w) (_ : L.Structure N) (_ : Countable N) (b : Fin n → N),
-        ¬BFEquiv (L := L) α n a b ∧
-        ∀ β, β < α → BFEquiv (L := L) β n a b} := by
-  sorry
-
-/-- The set of ordinals α < ω₁ where BFEquiv α ↔ BFEquiv (succ α) fails for some (N, b)
-is countable. This is the direct ingredient for `per_tuple_stabilization_below_omega1`:
-a countable set of ordinals below ω₁ has supremum below ω₁.
-
-TODO: prove using `countable_first_failure_ordinals` (first-failure ordinals are successor,
-so the iff-failure ordinals are their predecessors, still countable). -/
-theorem countable_refinement_steps
-    {M : Type w} [L.Structure M] [Countable M]
-    (n : ℕ) (a : Fin n → M) :
-    Set.Countable {α : Ordinal | α < Ordinal.omega 1 ∧
-      ∃ (N : Type w) (_ : L.Structure N) (_ : Countable N) (b : Fin n → N),
-        BFEquiv (L := L) α n a b ∧ ¬BFEquiv (L := L) (Order.succ α) n a b} := by
-  sorry
 
 omit [Countable (Σ l, L.Relations l)] in
 /-- At a complete stabilization ordinal, BFEquiv0 implies isomorphism for countable structures.
