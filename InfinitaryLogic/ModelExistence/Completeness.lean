@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.ModelExistence.Theorem
+import InfinitaryLogic.ModelExistence.SatisfiableConsistencyProperty
 import InfinitaryLogic.Lomega1omega.Operations
 
 /-!
@@ -70,7 +71,84 @@ theorem omitting_types [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Rel
         ∈ C.toConsistencyProperty.sets) :
     ∃ (M : Type u) (_ : L.Structure M) (_ : Countable M),
       Theoryω.Model T M ∧ ∀ p ∈ Γ, OmitsType (L := L) M p := by
-  sorry
+  obtain ⟨C, hC⟩ := hT
+  -- Extend T to a maximal consistent set and build the term model
+  obtain ⟨S', hTS', hmax⟩ := C.toConsistencyProperty.exists_maximal T hC
+  refine ⟨TermModel C S' hmax, termModelStructure, inferInstance,
+    fun φ hφ => (truthLemma φ).mp (hTS' hφ), ?_⟩
+  -- Show each type in Γ is omitted by the term model
+  intro p hp m
+  by_contra h_all
+  push_neg at h_all
+  -- h_all : ∀ φ ∈ p, Formulaω.Realize φ (fun _ => m)
+  -- Build a NamingFunction for the term model
+  have hNF : NamingFunction L (TermModel C S' hmax) :=
+    ⟨Quotient.out, fun m => by rw [term_realize_eq_mk]; exact Quotient.out_eq m⟩
+  -- Build the "true in model" consistency property
+  let C' := trueInModelConsistencyPropertyEq (TermModel C S' hmax) hNF
+  -- T is true in the term model, so T ∈ C'.sets
+  have hT' : T ∈ C'.toConsistencyProperty.sets :=
+    fun σ hσ => (truthLemma σ).mp (hTS' hσ)
+  -- Construct φ_eq(x) := "x = name(m)" (a formula with one free variable)
+  let t_m := hNF.name m
+  let φ_eq : L.Formulaω (Fin 1) :=
+    BoundedFormulaω.equal
+      (Term.var (Sum.inl (0 : Fin 1)))
+      (t_m.relabel (Sum.inl ∘ (Empty.elim : Empty → Fin 1)))
+  -- Key semantic property: φ_eq at v says "v 0 = m"
+  have hφ_sem : ∀ m' : TermModel C S' hmax,
+      Formulaω.Realize φ_eq (fun _ : Fin 1 => m') ↔ m' = m := by
+    intro m'
+    simp only [φ_eq, Formulaω.Realize, BoundedFormulaω.realize_equal]
+    simp only [Term.realize_var, Term.realize_relabel]
+    constructor
+    · intro h
+      have key : (Sum.elim (fun _ : Fin 1 => m') Fin.elim0 ∘ Sum.inl ∘
+          (Empty.elim : Empty → Fin 1) : Empty → _) =
+          (Empty.elim : Empty → TermModel C S' hmax) :=
+        funext (fun e => Empty.elim e)
+      rw [key] at h; rwa [hNF.sound] at h
+    · intro h; rw [h]
+      have key : (Sum.elim (fun _ : Fin 1 => m) Fin.elim0 ∘ Sum.inl ∘
+          (Empty.elim : Empty → Fin 1) : Empty → _) =
+          (Empty.elim : Empty → TermModel C S' hmax) :=
+        funext (fun e => Empty.elim e)
+      rw [key]; exact (hNF.sound m).symm
+  -- Helper: Fin.snoc Fin.elim0 m' = fun _ => m'
+  have snoc_eq : ∀ m' : TermModel C S' hmax,
+      (Fin.snoc (Fin.elim0 : Fin 0 → TermModel C S' hmax) m' : Fin 1 → _) =
+      fun _ => m' :=
+    fun m' => funext (fun ⟨i, hi⟩ => by
+      have : i = 0 := Nat.lt_one_iff.mp hi; subst this; rfl)
+  -- ∃x(φ_eq(x)) is true in the term model (witnessed by m itself)
+  have h_ex_true : Sentenceω.Realize
+      ((φ_eq.relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).ex)
+      (TermModel C S' hmax) := by
+    simp only [Sentenceω.Realize, BoundedFormulaω.realize_ex]
+    exact ⟨m, by rw [snoc_eq, BoundedFormulaω.realize_relabel_sumInr_zero]; exact (hφ_sem m).mpr rfl⟩
+  -- T ∪ {∃x(φ_eq)} ∈ C'.sets
+  have hT_ex : T ∪ {(φ_eq.relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).ex}
+      ∈ C'.toConsistencyProperty.sets := by
+    intro σ hσ
+    rcases hσ with hσT | hσeq
+    · exact hT' hσT
+    · rw [Set.mem_singleton_iff.mp hσeq]; exact h_ex_true
+  -- Apply non-isolation to get ψ₀ ∈ p with ∃x(φ_eq ∧ ¬ψ₀) true in M
+  obtain ⟨ψ₀, hψ₀_mem, hψ₀⟩ := h_not_isolated p hp C' φ_eq hT_ex
+  -- Extract that ∃x(φ_eq ∧ ¬ψ₀) is true in the model
+  have h_and_true : Sentenceω.Realize
+      (((φ_eq.and ψ₀.not).relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).ex)
+      (TermModel C S' hmax) :=
+    hψ₀ (Set.mem_union_right T rfl)
+  -- Unpack: ∃ m', m' = m ∧ ¬ψ₀(m'), giving ¬ψ₀(m)
+  simp only [Sentenceω.Realize, BoundedFormulaω.realize_ex] at h_and_true
+  obtain ⟨m', hm'⟩ := h_and_true
+  rw [snoc_eq, BoundedFormulaω.realize_relabel_sumInr_zero] at hm'
+  simp only [Formulaω.Realize, BoundedFormulaω.realize_and, BoundedFormulaω.realize_not] at hm'
+  obtain ⟨hm'_eq, hm'_neg⟩ := hm'
+  have hm'_is_m : m' = m := (hφ_sem m').mp hm'_eq
+  rw [hm'_is_m] at hm'_neg
+  exact hm'_neg (h_all ψ₀ hψ₀_mem)
 
 end Language
 
