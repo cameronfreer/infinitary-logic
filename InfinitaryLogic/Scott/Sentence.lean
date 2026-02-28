@@ -799,6 +799,93 @@ theorem refinement_descent_succ
     obtain ⟨m, hm⟩ := BFEquiv.back hBF n'
     exact ⟨m, h m n' hm⟩
 
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
+/-- If BFEquiv holds at δ but fails at α (with δ < α), there exists a refinement
+ordinal ε ∈ [δ, α) where BFEquiv ε holds but BFEquiv (succ ε) fails.
+
+This follows from well-foundedness of ordinals: the first failure ordinal above δ
+must be a successor (limits can't be first failures, since BFEquiv at a limit is the
+conjunction of all lower levels). -/
+theorem exists_refinement_between
+    {M : Type w} [L.Structure M] {N : Type w'} [L.Structure N]
+    {n : ℕ} {a : Fin n → M} {b : Fin n → N}
+    {δ α : Ordinal}
+    (hδα : δ < α)
+    (hBFδ : BFEquiv (L := L) δ n a b)
+    (hNotBFα : ¬BFEquiv (L := L) α n a b) :
+    ∃ ε, δ ≤ ε ∧ ε < α ∧
+      BFEquiv (L := L) ε n a b ∧
+      ¬BFEquiv (L := L) (Order.succ ε) n a b := by
+  set S := Set.Ioi δ ∩ {γ | ¬BFEquiv (L := L) γ n a b}
+  have hne : S.Nonempty := ⟨α, hδα, hNotBFα⟩
+  set β := sInf S with hβ_def
+  have hβ_mem : β ∈ S := csInf_mem hne
+  have hβ_gt_δ : δ < β := hβ_mem.1
+  have hβ_fail : ¬BFEquiv (L := L) β n a b := hβ_mem.2
+  have hβ_le_α : β ≤ α :=
+    csInf_le (OrderBot.bddBelow S) (Set.mem_inter hδα hNotBFα)
+  have hβ_min : ∀ γ, δ < γ → γ < β → BFEquiv (L := L) γ n a b := by
+    intro γ hγδ hγβ
+    by_contra h
+    exact not_lt.mpr (csInf_le (OrderBot.bddBelow S) (Set.mem_inter hγδ h)) hγβ
+  by_cases hβ_sl : Order.IsSuccLimit β
+  · exact absurd ((BFEquiv.limit β hβ_sl a b).mpr fun γ hγ =>
+      (le_or_gt γ δ).elim (fun h => BFEquiv.monotone h hBFδ) (fun h => hβ_min γ h hγ)) hβ_fail
+  · have hβ_notMin : ¬IsMin β := not_isMin_of_lt (lt_of_le_of_lt bot_le hβ_gt_δ)
+    have : ¬Order.IsSuccPrelimit β := fun h => hβ_sl ⟨hβ_notMin, h⟩
+    rw [Order.not_isSuccPrelimit_iff] at this
+    obtain ⟨ε, _, hεβ⟩ := this
+    have hBFε : BFEquiv (L := L) ε n a b :=
+      (le_or_gt ε δ).elim (fun h => BFEquiv.monotone h hBFδ)
+        (fun h => hβ_min ε h (hεβ ▸ Order.lt_succ ε))
+    refine ⟨ε, ?_, ?_, hBFε, ?_⟩
+    · exact Order.lt_succ_iff.mp (hεβ ▸ hβ_gt_δ)
+    · calc ε < Order.succ ε := Order.lt_succ ε
+        _ = β := hεβ
+        _ ≤ α := hβ_le_α
+    · rw [show (Order.succ ε) = β from hεβ]; exact hβ_fail
+
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
+/-- At a limit refinement ordinal α (BFEquiv α holds but BFEquiv (succ α) fails),
+the forth/back failure at level α generates refinement ordinals below α for extensions.
+
+The proof decomposes ¬BFEquiv (succ α) into forth or back failure at level α, then uses
+`exists_refinement_between` to find a successor refinement ordinal for the extension. -/
+theorem refinement_descent_limit
+    {M : Type w} [L.Structure M] {N : Type w'} [L.Structure N]
+    {n : ℕ} {a : Fin n → M} {b : Fin n → N}
+    {α : Ordinal} (hα_limit : Order.IsSuccLimit α)
+    (hBF : BFEquiv (L := L) α n a b)
+    (hNotBF : ¬BFEquiv (L := L) (Order.succ α) n a b) :
+    ∃ m : M, ∃ n' : N, ∃ ε < α,
+      BFEquiv (L := L) ε (n + 1) (Fin.snoc a m) (Fin.snoc b n') ∧
+      ¬BFEquiv (L := L) (Order.succ ε) (n + 1) (Fin.snoc a m) (Fin.snoc b n') := by
+  rw [BFEquiv.succ] at hNotBF
+  have hFB : ¬((∀ m : M, ∃ n' : N,
+      BFEquiv (L := L) α (n + 1) (Fin.snoc a m) (Fin.snoc b n')) ∧
+      (∀ n' : N, ∃ m : M,
+      BFEquiv (L := L) α (n + 1) (Fin.snoc a m) (Fin.snoc b n'))) := by
+    intro ⟨hf, hb⟩; exact hNotBF ⟨hBF, hf, hb⟩
+  rw [not_and_or] at hFB
+  have hα_pos : (0 : Ordinal) < α := hα_limit.bot_lt
+  have hBFsucc0 : BFEquiv (L := L) (Order.succ 0) n a b :=
+    BFEquiv.monotone (Order.succ_le_of_lt hα_pos) hBF
+  rcases hFB with hNotForth | hNotBack
+  · -- Forth fails: ∃ m₀, ∀ n', ¬BFEquiv α (n+1) (snoc a m₀) (snoc b n')
+    push_neg at hNotForth
+    obtain ⟨m₀, hm₀⟩ := hNotForth
+    obtain ⟨n'₀, hn'₀⟩ := BFEquiv.forth hBFsucc0 m₀
+    obtain ⟨ε, _, hε_lt, hBFε, hNotBFε⟩ :=
+      exists_refinement_between hα_pos hn'₀ (hm₀ n'₀)
+    exact ⟨m₀, n'₀, ε, hε_lt, hBFε, hNotBFε⟩
+  · -- Back fails: ∃ n'₀, ∀ m, ¬BFEquiv α (n+1) (snoc a m) (snoc b n'₀)
+    push_neg at hNotBack
+    obtain ⟨n'₀, hn'₀⟩ := hNotBack
+    obtain ⟨m₀, hm₀⟩ := BFEquiv.back hBFsucc0 n'₀
+    obtain ⟨ε, _, hε_lt, hBFε, hNotBFε⟩ :=
+      exists_refinement_between hα_pos hm₀ (hn'₀ m₀)
+    exact ⟨m₀, n'₀, ε, hε_lt, hBFε, hNotBFε⟩
+
 /-! ### Infrastructure for proving `per_tuple_stabilization_below_omega1` (Code-based approach)
 
 The formula-type counting approach: `BFEquiv_iff_agree_formulas_omega` reduces BFEquiv
