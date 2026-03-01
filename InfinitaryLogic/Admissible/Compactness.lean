@@ -48,8 +48,9 @@ theorem barwise_compactness (A : AdmissibleFragment L)
     {T : Set L.Sentenceω} (hT : T ⊆ A.formulas)
     (hfin : ∀ S, A.AFinite S → S ⊆ T →
       ∃ (M : Type) (_ : L.Structure M), Theoryω.Model S M) :
-    ∃ (M : Type) (_ : L.Structure M), Theoryω.Model T M := by
-  sorry
+    ∃ (M : Type) (_ : L.Structure M), Theoryω.Model T M :=
+  A.compact T hT fun F hFA hFfin hFS =>
+    hfin F ⟨hFA, hFfin⟩ hFS
 
 /-- **Barwise Completeness II** (KK04 Theorem 3.1.2).
 

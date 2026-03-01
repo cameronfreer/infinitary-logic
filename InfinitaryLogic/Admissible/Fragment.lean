@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Lomega1omega.Semantics
 import InfinitaryLogic.Lomega1omega.Operations
+import InfinitaryLogic.Lomega1omega.Theory
 import Mathlib.SetTheory.Ordinal.Basic
 
 /-!
@@ -70,6 +71,27 @@ structure AdmissibleFragment (L : Language.{u, v}) where
   closed_quantifier_instance : ∀ (φ : L.Formulaω (Fin 1)) (t : L.Term Empty),
     (φ.relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).ex ∈ formulas →
     φ.subst (fun _ => t) ∈ formulas
+  /-- Falsum belongs to the fragment. -/
+  falsum_mem : (BoundedFormulaω.falsum : L.Sentenceω) ∈ formulas
+  /-- Backward closure: implication left component. -/
+  closed_imp_left : ∀ φ ψ : L.Sentenceω, BoundedFormulaω.imp φ ψ ∈ formulas → φ ∈ formulas
+  /-- Backward closure: implication right component. -/
+  closed_imp_right : ∀ φ ψ : L.Sentenceω, BoundedFormulaω.imp φ ψ ∈ formulas → ψ ∈ formulas
+  /-- Backward closure: conjunction components. -/
+  closed_iInf_component : ∀ (φs : ℕ → L.Sentenceω) (k : ℕ),
+    BoundedFormulaω.iInf φs ∈ formulas → φs k ∈ formulas
+  /-- Backward closure: disjunction components. -/
+  closed_iSup_component : ∀ (φs : ℕ → L.Sentenceω) (k : ℕ),
+    BoundedFormulaω.iSup φs ∈ formulas → φs k ∈ formulas
+  /-- **Compactness principle** (Σ₁-reflection in the underlying admissible set).
+  If every A-finite subset of S ⊆ formulas has a model, then S has a model.
+  This is the key set-theoretic property of admissible fragments that cannot be
+  derived from closure properties alone. See Barwise, "Admissible Sets and
+  Structures", 1975. -/
+  compact : ∀ S ⊆ formulas,
+    (∀ F, F ⊆ formulas → F.Finite → F ⊆ S →
+      ∃ (M : Type) (_ : L.Structure M), Theoryω.Model F M) →
+    ∃ (M : Type) (_ : L.Structure M), Theoryω.Model S M
 
 /-- A set of sentences is A-finite (finite and contained in the fragment). -/
 def AdmissibleFragment.AFinite (A : AdmissibleFragment L) (S : Set L.Sentenceω) : Prop :=

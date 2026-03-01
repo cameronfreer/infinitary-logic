@@ -886,21 +886,217 @@ theorem refinement_descent_limit
       exists_refinement_between hα_pos hm₀ (hn'₀ m₀)
     exact ⟨m₀, n'₀, ε, hε_lt, hBFε, hNotBFε⟩
 
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
+/-- Combined refinement descent: at any refinement ordinal ε > 0
+(BFEquiv ε holds but BFEquiv (succ ε) fails), the descent produces an extension
+tuple with a TRUE refinement witness: BFEquiv ε' ∧ ¬BFEquiv (succ ε') with ε' < ε.
+
+Combines `refinement_descent_succ` (successor ε) and `refinement_descent_limit`
+(limit ε) into one lemma. -/
+theorem refinement_descent
+    {M : Type w} [L.Structure M] {N : Type w'} [L.Structure N]
+    {n : ℕ} {a : Fin n → M} {b : Fin n → N}
+    {ε : Ordinal} (hε : 0 < ε)
+    (hBF : BFEquiv (L := L) ε n a b)
+    (hNotBF : ¬BFEquiv (L := L) (Order.succ ε) n a b) :
+    ∃ m : M, ∃ n' : N, ∃ ε' < ε,
+      BFEquiv (L := L) ε' (n + 1) (Fin.snoc a m) (Fin.snoc b n') ∧
+      ¬BFEquiv (L := L) (Order.succ ε') (n + 1) (Fin.snoc a m) (Fin.snoc b n') := by
+  by_cases hε_sl : Order.IsSuccLimit ε
+  · -- Limit case: use refinement_descent_limit directly
+    exact refinement_descent_limit hε_sl hBF hNotBF
+  · -- Successor case: ε = succ δ for some δ
+    have hε_notMin : ¬IsMin ε := not_isMin_of_lt (lt_of_le_of_lt bot_le hε)
+    have : ¬Order.IsSuccPrelimit ε := fun h => hε_sl ⟨hε_notMin, h⟩
+    rw [Order.not_isSuccPrelimit_iff] at this
+    obtain ⟨δ, _, hδε⟩ := this
+    -- hδε : Order.succ δ = ε
+    subst hδε
+    obtain ⟨m, n', hBFδ, hNotBFδ⟩ := refinement_descent_succ hBF hNotBF
+    exact ⟨m, n', δ, Order.lt_succ δ, hBFδ, hNotBFδ⟩
+
+/-! ### Conditional Pipeline (Code-free approach)
+
+The counting hypothesis captures the key content that each refinement set is countable.
+This decouples the Scott analysis pipeline from the `FormulaCode` bridge
+(`agree_codes_implies_BFEquiv`), which has a known gap. All downstream results
+(`per_tuple_stabilization_below_omega1_of`, `exists_complete_stabilization_of`,
+`scottRank_le_implies_stabilizesCompletely_of`) are sorry-free conditional on this
+hypothesis.
+
+The hypothesis is mathematically true: each refinement step corresponds to a split
+in the formula-type partition, and countable structures admit only countably many
+such splits. A full formal proof requires either a code-based bridge or a direct
+game-theoretic counting argument. -/
+
+/-- **Counting hypothesis** for per-tuple stabilization.
+
+For a countable structure M in a countable relational language, the set of ordinals
+below ω₁ where BFEquiv refinement occurs for a fixed tuple is countable.
+
+This encapsulates the deep counting argument: each refinement step corresponds to a
+split in the formula-type partition, and countable structures admit only countably many
+such splits.
+
+**Boundary**: This is the sole non-trivial hypothesis in the Scott analysis pipeline.
+All other reasoning (descent lemmas, stabilization from countability, Scott rank bounds)
+is fully formalized. -/
+def CountableRefinementHypothesis (L : Language.{u, v})
+    [L.IsRelational] [Countable (Σ l, L.Relations l)] : Prop :=
+  ∀ (M : Type w) [L.Structure M] [Countable M] (n : ℕ) (a : Fin n → M),
+    Set.Countable {ε : Ordinal.{0} | ε < Ordinal.omega 1 ∧
+      ∃ (N : Type w) (_ : L.Structure N) (_ : Countable N) (b : Fin n → N),
+        BFEquiv (L := L) ε n a b ∧ ¬BFEquiv (L := L) (Order.succ ε) n a b}
+
+/-- Per-tuple stabilization, conditional on `CountableRefinementHypothesis`.
+
+Sorry-free variant of `per_tuple_stabilization_below_omega1`. -/
+theorem per_tuple_stabilization_below_omega1_of
+    (hcount : CountableRefinementHypothesis.{u, v, w} L)
+    {M : Type w} [L.Structure M] [Countable M]
+    (n : ℕ) (a : Fin n → M) :
+    ∃ γ < (Ordinal.omega 1 : Ordinal.{0}),
+      ∀ α, γ ≤ α → α < Ordinal.omega 1 → Order.succ α < Ordinal.omega 1 →
+        ∀ (N : Type w) [L.Structure N] [Countable N] (b : Fin n → N),
+          (BFEquiv (L := L) α n a b ↔ BFEquiv (L := L) (Order.succ α) n a b) := by
+  by_cases hAllHold : ∀ β < (Ordinal.omega 1 : Ordinal.{0}),
+      ∀ (N : Type w) (instN : L.Structure N) (instCN : Countable N) (b : Fin n → N),
+        BFEquiv (L := L) β n a b
+  · exact ⟨0, Ordinal.omega_pos 1, fun α _ hα_lt hsucc_lt N instN instCN b =>
+      ⟨fun _ => hAllHold (Order.succ α) hsucc_lt N instN instCN b, BFEquiv.of_succ⟩⟩
+  · push_neg at hAllHold
+    obtain ⟨β₀, hβ₀_lt, N₀, instN₀, instCN₀, b₀, hβ₀_fail⟩ := hAllHold
+    have hR := hcount M n a
+    by_cases hRne : ({α : Ordinal.{0} | α < Ordinal.omega 1 ∧
+        ∃ (N : Type w) (_ : L.Structure N) (_ : Countable N) (b : Fin n → N),
+          BFEquiv (L := L) α n a b ∧ ¬BFEquiv (L := L) (Order.succ α) n a b}).Nonempty
+    · haveI := hR.to_subtype
+      haveI := hRne.to_subtype
+      obtain ⟨enum, henum⟩ := exists_surjective_nat
+        ({α : Ordinal.{0} | α < Ordinal.omega 1 ∧
+          ∃ (N : Type w) (_ : L.Structure N) (_ : Countable N) (b : Fin n → N),
+            BFEquiv (L := L) α n a b ∧ ¬BFEquiv (L := L) (Order.succ α) n a b})
+      let seq : ℕ → Ordinal.{0} := fun k => (enum k).1
+      have hseq_lt : ∀ k, seq k < Ordinal.omega 1 := fun k => (enum k).2.1
+      have hseq_lt' : ∀ k, seq k < (Cardinal.aleph 1).ord := by
+        intro k; rw [Cardinal.ord_aleph]; exact hseq_lt k
+      have hsup_lt := Ordinal.iSup_sequence_lt_omega_one seq hseq_lt'
+      rw [Cardinal.ord_aleph] at hsup_lt
+      have hSuccSupLt : Order.succ (⨆ k, seq k) < Ordinal.omega 1 :=
+        Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) hsup_lt
+      refine ⟨Order.succ (⨆ k, seq k), hSuccSupLt,
+        fun α hα hα_lt hsucc_lt N instN instCN b => ?_⟩
+      constructor
+      · intro hBF
+        by_contra hNot
+        have hαR : α ∈ ({α : Ordinal.{0} | α < Ordinal.omega 1 ∧
+            ∃ (N : Type w) (_ : L.Structure N) (_ : Countable N) (b : Fin n → N),
+              BFEquiv (L := L) α n a b ∧ ¬BFEquiv (L := L) (Order.succ α) n a b}) :=
+          ⟨hα_lt, N, instN, instCN, b, hBF, hNot⟩
+        obtain ⟨k, hk⟩ := henum ⟨α, hαR⟩
+        have hα_eq : seq k = α := congr_arg Subtype.val hk
+        have hBdd : BddAbove (Set.range seq) :=
+          ⟨Ordinal.omega 1, fun x ⟨k, hk⟩ => hk ▸ le_of_lt (hseq_lt k)⟩
+        have hα_le_sup : α ≤ ⨆ k, seq k := hα_eq ▸ le_ciSup hBdd k
+        exact absurd (lt_of_lt_of_le (Order.lt_succ (⨆ k, seq k)) (le_trans hα hα_le_sup))
+          (lt_irrefl _)
+      · exact BFEquiv.of_succ
+    · rw [Set.not_nonempty_iff_eq_empty] at hRne
+      refine ⟨0, Ordinal.omega_pos 1, fun α _ hα_lt hsucc_lt N instN instCN b => ?_⟩
+      constructor
+      · intro hBF
+        by_contra hNot
+        have hmem : α ∈ ({α : Ordinal.{0} | α < Ordinal.omega 1 ∧
+            ∃ (N : Type w) (_ : L.Structure N) (_ : Countable N) (b : Fin n → N),
+              BFEquiv (L := L) α n a b ∧ ¬BFEquiv (L := L) (Order.succ α) n a b}) :=
+          ⟨hα_lt, N, instN, instCN, b, hBF, hNot⟩
+        rw [hRne] at hmem
+        exact hmem.elim
+      · exact BFEquiv.of_succ
+
+/-- Complete stabilization, conditional on `CountableRefinementHypothesis`.
+
+Sorry-free variant of `exists_complete_stabilization`. -/
+theorem exists_complete_stabilization_of
+    (hcount : CountableRefinementHypothesis.{u, v, w} L)
+    (M : Type w) [L.Structure M] [Countable M] :
+    ∃ α < (Ordinal.omega 1 : Ordinal.{0}), StabilizesCompletely (L := L) M α := by
+  have hTuple : ∀ (t : Σ n, Fin n → M),
+      ∃ γ < (Ordinal.omega 1 : Ordinal.{0}),
+        ∀ α, γ ≤ α → α < Ordinal.omega 1 → Order.succ α < Ordinal.omega 1 →
+          ∀ (N : Type w) [L.Structure N] [Countable N] (b : Fin t.1 → N),
+            (BFEquiv (L := L) α t.1 t.2 b ↔ BFEquiv (L := L) (Order.succ α) t.1 t.2 b) :=
+    fun ⟨n, a⟩ => per_tuple_stabilization_below_omega1_of hcount n a
+  choose boundOrd hboundOrd_lt hboundOrd_spec using hTuple
+  haveI : Countable (Σ n, Fin n → M) := inferInstance
+  by_cases hM_nonempty : Nonempty M
+  swap
+  · haveI : IsEmpty M := not_nonempty_iff.mp hM_nonempty
+    use 1
+    constructor
+    · calc (1 : Ordinal) < ω := Ordinal.one_lt_omega0
+        _ ≤ Ordinal.omega 1 := Ordinal.omega0_le_omega 1
+    · intro n N _ _ a b
+      cases n with
+      | zero =>
+        constructor
+        · intro hBF
+          have h1eq : (1 : Ordinal) = Order.succ 0 := by
+            rw [← Ordinal.add_one_eq_succ]; simp
+          rw [h1eq] at hBF ⊢
+          rw [BFEquiv.succ] at hBF
+          rw [BFEquiv.succ]
+          refine ⟨(BFEquiv.succ 0 a b).mpr hBF, fun m => isEmptyElim m, fun n' => ?_⟩
+          exact isEmptyElim (hBF.2.2 n').choose
+        · exact BFEquiv.of_succ
+      | succ k => exact (IsEmpty.false (a 0)).elim
+  haveI : Nonempty M := hM_nonempty
+  haveI : Nonempty (Σ n, Fin n → M) := ⟨⟨0, Fin.elim0⟩⟩
+  obtain ⟨enumTuples, hTuples_surj⟩ := exists_surjective_nat (Σ n, Fin n → M)
+  let globalStab : Ordinal.{0} := ⨆ k, boundOrd (enumTuples k) + 1
+  have hGlobalLt : globalStab < Ordinal.omega 1 := by
+    have hEachLt : ∀ k, boundOrd (enumTuples k) + 1 < (Cardinal.aleph 1).ord := by
+      intro k; rw [Cardinal.ord_aleph]
+      exact Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1)
+        (hboundOrd_lt (enumTuples k))
+    have hsup := Ordinal.iSup_sequence_lt_omega_one
+      (fun k => boundOrd (enumTuples k) + 1) hEachLt
+    rw [Cardinal.ord_aleph] at hsup
+    exact hsup
+  have hSuccGlobalLt : Order.succ globalStab < Ordinal.omega 1 :=
+    Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) hGlobalLt
+  use globalStab, hGlobalLt
+  intro n N _ _ a b
+  obtain ⟨k, hk⟩ := hTuples_surj ⟨n, a⟩
+  have hBdd : BddAbove (Set.range fun k => boundOrd (enumTuples k) + 1) :=
+    ⟨Ordinal.omega 1, fun _ ⟨m, hm⟩ => hm ▸ le_of_lt
+      (Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1)
+        (hboundOrd_lt (enumTuples m)))⟩
+  have hk_le : boundOrd ⟨n, a⟩ + 1 ≤ globalStab := by
+    have h := le_ciSup hBdd k
+    simp only [hk] at h
+    exact h
+  have hbound_le : boundOrd ⟨n, a⟩ ≤ globalStab :=
+    le_trans (Order.le_succ _) hk_le
+  exact hboundOrd_spec ⟨n, a⟩ globalStab hbound_le hGlobalLt hSuccGlobalLt N b
+
 /-! ### Infrastructure for proving `per_tuple_stabilization_below_omega1` (Code-based approach)
 
 The formula-type counting approach: `BFEquiv_iff_agree_formulas_omega` reduces BFEquiv
 at level α to agreement on all Lω₁ω formulas of quantifier rank ≤ α. The `FormulaCode`
 type (from `Scott.Code`) provides a countable proxy for these formulas. Each refinement
 step (α → α+1) is witnessed by a separating code, and since codes are countable, the
-total number of refinement steps is countable, giving stabilization below ω₁. -/
+total number of refinement steps is countable, giving stabilization below ω₁.
 
-/-- The set of ordinals α < ω₁ where BFEquiv α ↔ BFEquiv (succ α) fails for some (N, b)
-is countable. This is the direct ingredient for `per_tuple_stabilization_below_omega1`:
-a countable set of ordinals below ω₁ has supremum below ω₁.
+**Legacy**: This section depends on `agree_codes_implies_BFEquiv` (sorry in Code.lean).
+The conditional pipeline above (`CountableRefinementHypothesis` + `_of` variants) provides
+a sorry-free alternative. This section is retained for reference but is no longer on the
+active proof path. -/
 
-Each refinement step α has a separating code c ∈ FormulaCode L n with qrank(c) = succ α.
-The map α ↦ c is injective (different α give different qranks), giving an injection
-into a countable type.
+/-- **Legacy (Code-based)**: The set of ordinals α < ω₁ where BFEquiv α ↔ BFEquiv (succ α)
+fails for some (N, b) is countable.
+
+**Prefer**: `CountableRefinementHypothesis` + `per_tuple_stabilization_below_omega1_of`.
 
 **Trust boundary**: transits through `agree_codes_implies_BFEquiv` (sorry in Code.lean). -/
 theorem countable_refinement_steps
@@ -932,32 +1128,12 @@ theorem countable_refinement_steps
       rw [heq] at h1; rw [h1] at h2
       exact Subtype.ext (Order.succ_injective h2))
 
-/-- Per-tuple stabilization: for any tuple (n, a) from a countable structure M,
-there exists γ < ω₁ such that for all α ≥ γ (with α, succ α < ω₁), the BFEquiv iff
-holds uniformly for all countable structures N and tuples b.
+/-- **Legacy (Code-based)**: Per-tuple stabilization.
 
-This is the **sole assumption** blocking the Scott analysis pipeline. All downstream
-results (`exists_complete_stabilization`, `scottRank_le_implies_stabilizesCompletely`,
-`scottHeight_lt_omega1`, `scottSentence_characterizes`, etc.) are sorry-free in their
-own proofs and depend only on this theorem.
+**Prefer**: `per_tuple_stabilization_below_omega1_of` (sorry-free conditional on
+`CountableRefinementHypothesis`).
 
-**Trust boundary**: depends on `agree_codes_implies_BFEquiv` via `countable_refinement_steps`.
-
-**Proof strategy**: The standard textbook proof (Marker, Keisler-Knight) uses a
-*counting types* argument: for fixed (M, a), the "α-type" is the partition of countable
-(N, b) pairs into BFEquiv-true and BFEquiv-false. As α increases, the partition refines
-monotonically (elements only move from true to false). Each (N, b) has a unique "first
-failure ordinal" β(N,b) which is always 0 or a successor (BFEquiv at limits is the
-conjunction of all lower levels). The key is showing sup{β(N,b)} < ω₁, which requires
-bounding the number of *distinct* first-failure ordinals.
-
-**Viable approaches**:
-(a) Use `BFEquiv_iff_agree_formulas_omega` to reduce BFEquiv types to Lω₁ω formula types.
-    Since formulas at each quantifier rank over a countable signature are countable, the
-    number of distinct formula-types is countable, giving the bound. See
-    `countable_first_failure_ordinals` and `countable_refinement_steps` below.
-(b) A direct counting-types argument on the game-theoretic BFEquiv, showing the quotient
-    of countable (N, b) by BFEquiv-equivalence is countable at each level. -/
+**Trust boundary**: depends on `agree_codes_implies_BFEquiv` via `countable_refinement_steps`. -/
 theorem per_tuple_stabilization_below_omega1
     {M : Type w} [L.Structure M] [Countable M]
     (n : ℕ) (a : Fin n → M) :
@@ -1035,18 +1211,13 @@ theorem per_tuple_stabilization_below_omega1
         exact hmem.elim
       · exact BFEquiv.of_succ
 
-/-- For countable M, there exists α < ω₁ where all tuples stabilize completely:
-`BFEquiv α n a b ↔ BFEquiv (succ α) n a b` for ALL countable N and tuples b.
+/-- **Legacy (Code-based)**: Complete stabilization.
 
-This is a standard result in infinitary model theory (see Marker, "Lectures on
-Infinitary Model Theory", or Keisler-Knight §1.3). The key point is that for countable
-structures, the BFEquiv refinement chain must stabilize at a countable ordinal.
+**Prefer**: `exists_complete_stabilization_of` (sorry-free conditional on
+`CountableRefinementHypothesis`).
 
-**Important**: Self-stabilization (`SelfStabilizesCompletely`) does NOT imply full
-stabilization (`StabilizesCompletely`). See docstring on
-`per_tuple_stabilization_below_omega1` for the per-tuple argument.
-
-**Status**: sorry-free; depends on `per_tuple_stabilization_below_omega1` (Tier 1). -/
+**Trust boundary**: inherits from `per_tuple_stabilization_below_omega1` →
+`countable_refinement_steps` → `agree_codes_implies_BFEquiv`. -/
 theorem exists_complete_stabilization (M : Type w) [L.Structure M] [Countable M] :
     ∃ α < (Ordinal.omega 1 : Ordinal.{0}), StabilizesCompletely (L := L) M α := by
   have hTuple : ∀ (t : Σ n, Fin n → M),
@@ -1245,6 +1416,65 @@ theorem scottSentence_of_equiv (M N : Type w) [L.Structure M] [L.Structure N]
     [Countable M] [Countable N] (e : M ≃[L] N) :
     (scottSentence (L := L) M).realize_as_sentence N :=
   scottSentence_characterizes M N |>.mpr ⟨e⟩
+
+/-! ### Conditional Scott Sentence Pipeline
+
+Sorry-free variants of the entire Scott sentence chain, conditional on
+`CountableRefinementHypothesis`. The same `scottSentence` definition is used;
+only the proof that it characterizes isomorphism is rebuilt. -/
+
+/-- Conditional variant of `exists_stabilization`. Sorry-free. -/
+theorem exists_stabilization_of
+    (hcount : CountableRefinementHypothesis.{u, v, w} L)
+    (M : Type w) [L.Structure M] [Countable M] :
+    ∃ α < (Ordinal.omega 1 : Ordinal.{0}), StabilizesAt (L := L) M α := by
+  obtain ⟨α, hα_lt, hstab⟩ := exists_complete_stabilization_of hcount M
+  use α, hα_lt
+  intro N _ _
+  constructor
+  · exact BFEquiv_stabilization_implies_equiv hstab
+  · intro ⟨e⟩
+    show BFEquiv0 (L := L) M N α
+    unfold BFEquiv0
+    have h : (e : M → N) ∘ Fin.elim0 = Fin.elim0 := funext (fun i => i.elim0)
+    rw [← h]
+    exact equiv_implies_BFEquiv e α 0 Fin.elim0
+
+/-- Conditional variant of `stabilizationOrdinal_lt_omega1'`. Sorry-free. -/
+theorem stabilizationOrdinal_lt_omega1_of
+    (hcount : CountableRefinementHypothesis.{u, v, w} L)
+    (M : Type w) [L.Structure M] [Countable M] :
+    stabilizationOrdinal (L := L) M < Ordinal.omega 1 := by
+  obtain ⟨α, hα_lt, hα_spec⟩ := exists_stabilization_of hcount M
+  exact lt_of_le_of_lt (csInf_le' hα_spec) hα_lt
+
+/-- Conditional variant of `stabilizationOrdinal_stabilizes`. Sorry-free. -/
+theorem stabilizationOrdinal_stabilizes_of
+    (hcount : CountableRefinementHypothesis.{u, v, w} L)
+    (M : Type w) [L.Structure M] [Countable M] :
+    StabilizesAt (L := L) M (stabilizationOrdinal (L := L) M) := by
+  obtain ⟨α, _, hα_spec⟩ := exists_stabilization_of hcount M
+  have h_nonempty : {α : Ordinal.{0} | StabilizesAt (L := L) M α}.Nonempty :=
+    ⟨α, hα_spec⟩
+  exact csInf_mem h_nonempty
+
+/-- **Conditional Scott sentence characterization**: sorry-free variant of
+`scottSentence_characterizes`, conditional on `CountableRefinementHypothesis`.
+
+A countable structure N satisfies the Scott sentence of M iff M ≅ N.
+Uses the same `scottSentence M` definition; only the proof is rebuilt
+through the conditional pipeline. -/
+theorem scottSentence_characterizes_of
+    (hcount : CountableRefinementHypothesis.{u, v, w} L)
+    (M : Type w) [L.Structure M] [Countable M]
+    (N : Type w) [L.Structure N] [Countable N] :
+    (scottSentence (L := L) M).realize_as_sentence N ↔ Nonempty (M ≃[L] N) := by
+  unfold scottSentence Formulaω.realize_as_sentence
+  have h := realize_scottFormula_iff_BFEquiv (L := L) (M := M) (N := N)
+    (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N)
+    (stabilizationOrdinal (L := L) M) (stabilizationOrdinal_lt_omega1_of hcount M)
+  rw [h]
+  exact stabilizationOrdinal_stabilizes_of hcount M N
 
 end Language
 

@@ -113,17 +113,14 @@ theorem scottRank_lt_omega1 (M : Type w) [L.Structure M] [Countable M] :
     rw [h_zero]
     exact Ordinal.omega_pos 1
 
-/-- When scottRank M ≤ α, the structure M stabilizes completely at α:
-`BFEquiv α n a b ↔ BFEquiv (succ α) n a b` for all tuple sizes, all countable N, all tuples.
+/-- **Legacy (Code-based)**: When scottRank M ≤ α, the structure M stabilizes completely at α.
 
-Mathematically, the Scott rank bounds all element ranks, so by level α every extension
-is already determined. The formal proof routes through `exists_complete_stabilization`
-for the β ≤ α case. The β > α case (line 138) inherits the sorry from
-`per_tuple_stabilization_below_omega1` — it requires establishing that the complete
-stabilization ordinal ≤ scottRank, which itself depends on the per-tuple bound.
+**Prefer**: `scottRank_le_implies_stabilizesCompletely_of` (conditional on
+`CountableRefinementHypothesis`, decoupled from Code.lean sorry).
 
-**Status**: Tier 1 (blocked on `per_tuple_stabilization_below_omega1`). Do not attempt
-independently; resolve the root sorry first. -/
+**Remaining gap** (in both versions): the β > α case requires showing that the complete
+stabilization ordinal ≤ scottRank M. This is independent of the Code.lean sorry
+(`agree_codes_implies_BFEquiv`). -/
 theorem scottRank_le_implies_stabilizesCompletely (M : Type w) [L.Structure M] [Countable M]
     {α : Ordinal.{0}} (hα : scottRank (L := L) M ≤ α) :
     StabilizesCompletely (L := L) M α := by
@@ -139,6 +136,37 @@ theorem scottRank_le_implies_stabilizesCompletely (M : Type w) [L.Structure M] [
       -- scottRank (sup of elementRanks) and the complete stabilization ordinal from
       -- per_tuple_stabilization_below_omega1 hasn't been established yet.
       -- Inherits sorry from per_tuple_stabilization_below_omega1.
+      sorry
+  · exact BFEquiv.of_succ
+
+/-- Conditional variant of `scottRank_le_implies_stabilizesCompletely`.
+
+Uses `exists_complete_stabilization_of` (sorry-free conditional on
+`CountableRefinementHypothesis`) instead of `exists_complete_stabilization`.
+The β ≤ α case is identical to the original. The β > α case remains as a
+separate mathematical gap (connecting per-tuple stabilization bounds with
+elementRank-based scottRank), independent of the Code.lean sorry.
+
+**Axiom status**: Depends on `CountableRefinementHypothesis` + the β ≤ scottRank M gap.
+Neither dependency involves `agree_codes_implies_BFEquiv`. -/
+theorem scottRank_le_implies_stabilizesCompletely_of
+    (hcount : CountableRefinementHypothesis.{u, v, w} L)
+    (M : Type w) [L.Structure M] [Countable M]
+    {α : Ordinal.{0}} (hα : scottRank (L := L) M ≤ α) :
+    StabilizesCompletely (L := L) M α := by
+  obtain ⟨β, _, hstab⟩ := exists_complete_stabilization_of hcount M
+  intro n N _ _ a b
+  constructor
+  · intro hBFα
+    by_cases hβα : β ≤ α
+    · exact BFEquiv_upgrade_at_stabilization hstab (BFEquiv.monotone hβα hBFα) (Order.succ α)
+        (le_trans hβα (Order.le_succ α))
+    · -- β > α: mathematically impossible when scottRank M ≤ α (since the complete
+      -- stabilization ordinal should be ≤ scottRank), but connecting per-tuple
+      -- stabilization bounds with the elementRank-based scottRank definition
+      -- requires additional infrastructure (e.g., showing all refinement ordinals
+      -- for n-tuples are bounded by element ranks).
+      -- This gap is independent of `agree_codes_implies_BFEquiv`.
       sorry
   · exact BFEquiv.of_succ
 
