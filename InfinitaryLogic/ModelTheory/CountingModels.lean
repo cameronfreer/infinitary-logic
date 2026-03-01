@@ -50,6 +50,7 @@ which is key for descriptive set-theoretic analyses of the isomorphism relation.
 
 **Status**: Inherits sorry from `per_tuple_stabilization_below_omega1` (via
 `scottRank_le_implies_stabilizesCompletely`). -/
+@[deprecated "Use `bounded_scottHeight_iso_eq_BFEquiv_of` instead" (since := "2026-03-01")]
 theorem bounded_scottRank_iso_eq_BFEquiv
     {φ : L.Sentenceω} {α : Ordinal} (_hα : α < Ordinal.omega 1)
     (hbound : ∀ (M : Type w) [L.Structure M] [Countable M],

@@ -306,6 +306,39 @@ theorem sr_le_scottRank (M : Type w) [L.Structure M] [Countable M] :
       ≤ elementRank (L := L) m + 1 := le_self_add
     _ ≤ ⨆ m, elementRank (L := L) m + 1 := Ordinal.le_iSup _ m
 
+/-- The element-rank supremum `sr` is bounded by `scottHeight`.
+
+Since `scottHeight M` is a complete stabilization ordinal (conditional on
+`CountableRefinementHypothesis`), every `elementRank m ≤ scottHeight M`, so
+the supremum `sr M = ⨆ m, elementRank m ≤ scottHeight M`. Sorry-free. -/
+theorem sr_le_scottHeight_of
+    (hcount : CountableRefinementHypothesis.{u, v, w} L)
+    (M : Type w) [L.Structure M] [Countable M] :
+    sr (L := L) M ≤ scottHeight (L := L) M := by
+  unfold sr
+  haveI : Small.{0} M := Countable.toSmall M
+  apply Ordinal.iSup_le
+  intro m
+  exact elementRank_le_completeStab (scottHeight_stabilizesCompletely_of hcount M) m
+
+/-- `scottRank M ≤ scottHeight M + 1`.
+
+Since `scottRank M = ⨆ m, elementRank m + 1` and each `elementRank m ≤ scottHeight M`
+(via `elementRank_le_completeStab` at the complete stabilization ordinal `scottHeight M`),
+we get `scottRank M ≤ scottHeight M + 1`. Sorry-free, conditional on
+`CountableRefinementHypothesis`. -/
+theorem scottRank_le_scottHeight_succ_of
+    (hcount : CountableRefinementHypothesis.{u, v, w} L)
+    (M : Type w) [L.Structure M] [Countable M] :
+    scottRank (L := L) M ≤ scottHeight (L := L) M + 1 := by
+  unfold scottRank
+  haveI : Small.{0} M := Countable.toSmall M
+  apply Ordinal.iSup_le
+  intro m
+  have h_bound := elementRank_le_completeStab (scottHeight_stabilizesCompletely_of hcount M) m
+  have h := (Ordinal.add_le_add_iff_right 1).mpr h_bound
+  convert h using 2 <;> simp [Nat.cast_one]
+
 /-! ### Attained Scott Rank -/
 
 /-- A structure has attained Scott rank if some element achieves the supremum `sr`.

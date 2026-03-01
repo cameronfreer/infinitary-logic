@@ -74,7 +74,7 @@ private theorem completeStab_mem_elementRank_set {M : Type w} [L.Structure M] [C
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- The elementRank of any element is bounded by any complete stabilization ordinal. -/
-private theorem elementRank_le_completeStab {M : Type w} [L.Structure M] [Countable M]
+theorem elementRank_le_completeStab {M : Type w} [L.Structure M] [Countable M]
     {α : Ordinal.{0}} (hstab : StabilizesCompletely (L := L) M α) (m : M) :
     elementRank (L := L) m ≤ α :=
   csInf_le' (completeStab_mem_elementRank_set hstab m)
@@ -149,12 +149,14 @@ theorem scottRank_lt_omega1_of
 
 /-- **Legacy (Code-based)**: When scottRank M ≤ α, the structure M stabilizes completely at α.
 
-**Prefer**: `scottRank_le_implies_stabilizesCompletely_of` (conditional on
-`CountableRefinementHypothesis`, decoupled from Code.lean sorry).
+**Prefer**: `scottHeight_le_implies_stabilizesCompletely_of` in Height.lean
+(sorry-free conditional on `CountableRefinementHypothesis`).
 
 **Remaining gap** (in both versions): the β > α case requires showing that the complete
 stabilization ordinal ≤ scottRank M. This is independent of the Code.lean sorry
 (`agree_codes_implies_BFEquiv`). -/
+@[deprecated "Use `scottHeight_le_implies_stabilizesCompletely_of` from Height.lean instead"
+    (since := "2026-03-01")]
 theorem scottRank_le_implies_stabilizesCompletely (M : Type w) [L.Structure M] [Countable M]
     {α : Ordinal.{0}} (hα : scottRank (L := L) M ≤ α) :
     StabilizesCompletely (L := L) M α := by
@@ -183,6 +185,8 @@ elementRank-based scottRank), independent of the Code.lean sorry.
 
 **Axiom status**: Depends on `CountableRefinementHypothesis` + the β ≤ scottRank M gap.
 Neither dependency involves `agree_codes_implies_BFEquiv`. -/
+@[deprecated "Use `scottHeight_le_implies_stabilizesCompletely_of` from Height.lean instead"
+    (since := "2026-03-01")]
 theorem scottRank_le_implies_stabilizesCompletely_of
     (hcount : CountableRefinementHypothesis.{u, v, w} L)
     (M : Type w) [L.Structure M] [Countable M]
