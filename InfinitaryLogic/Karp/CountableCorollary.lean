@@ -60,6 +60,24 @@ theorem countable_LomegaEquiv_implies_iso
   -- Scott sentence characterizes isomorphism for countable structures
   exact (scottSentence_characterizes M N).mp hN
 
+/-- Conditional variant of `countable_LomegaEquiv_implies_iso`. Sorry-free. -/
+theorem countable_LomegaEquiv_implies_iso_of
+    (hcount : CountableRefinementHypothesis.{u, v, w} L)
+    {M : Type w} [L.Structure M] [Countable M]
+    {N : Type w} [L.Structure N] [Countable N] :
+    LomegaEquiv L M N → Nonempty (M ≃[L] N) := by
+  intro hEquiv
+  -- M satisfies its own Scott sentence (via _of variant)
+  have hM := (scottSentence_characterizes_of hcount M M).mpr ⟨Equiv.refl L M⟩
+  -- Convert from Formulaω (Fin 0) to Sentenceω so LomegaEquiv applies
+  have hMω := (Formulaω.realize_toSentenceω (scottSentence (L := L) M) (M := M)).mpr hM
+  -- Transfer from M to N via LomegaEquiv
+  have hNω := (hEquiv _).mp hMω
+  -- Convert back to Formulaω (Fin 0) realization
+  have hN := (Formulaω.realize_toSentenceω (scottSentence (L := L) M) (M := N)).mp hNω
+  -- Scott sentence characterizes isomorphism for countable structures
+  exact (scottSentence_characterizes_of hcount M N).mp hN
+
 /-- For countable structures in a countable relational language, L∞ω-elementary
 equivalence implies isomorphism.
 
@@ -72,6 +90,19 @@ theorem countable_LinfEquiv_implies_iso
   intro hLinf
   apply countable_LomegaEquiv_implies_iso
   -- L∞ω-equivalence implies Lω₁ω-equivalence via the embedding
+  intro φ
+  have h := hLinf (Sentenceω.toLinf φ)
+  simp only [Sentenceω.realize_toLinf] at h
+  exact h
+
+/-- Conditional variant of `countable_LinfEquiv_implies_iso`. Sorry-free. -/
+theorem countable_LinfEquiv_implies_iso_of
+    (hcount : CountableRefinementHypothesis.{u, v, w} L)
+    {M : Type w} [L.Structure M] [Countable M]
+    {N : Type w} [L.Structure N] [Countable N] :
+    LinfEquiv L M N → Nonempty (M ≃[L] N) := by
+  intro hLinf
+  apply countable_LomegaEquiv_implies_iso_of hcount
   intro φ
   have h := hLinf (Sentenceω.toLinf φ)
   simp only [Sentenceω.realize_toLinf] at h

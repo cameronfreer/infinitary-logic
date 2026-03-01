@@ -219,6 +219,13 @@ theorem BFEquiv_implies_agree_codes
     (c.Realize a ↔ c.Realize b) :=
   BFEquiv_implies_agree_formulas_omega a b α hα hBF c.toFormulaω hc
 
+/-! ### Legacy Code-Based Bridge (DEAD CODE)
+
+The following declarations depend on `agree_codes_implies_BFEquiv` (genuine sorry).
+They are NOT used by the active conditional pipeline (`_of` variants in Sentence.lean,
+Height.lean, Rank.lean, CountingModels.lean, CountableCorollary.lean).
+Retained for historical reference and potential future resolution only. -/
+
 /-- Agreement on all formula codes implies BFEquiv.
 
 **DEAD CODE**: No longer on the active Scott pipeline. The conditional pipeline

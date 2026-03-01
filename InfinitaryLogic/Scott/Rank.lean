@@ -84,6 +84,14 @@ theorem elementRank_lt_omega1 {M : Type w} [L.Structure M] [Countable M] (m : M)
   obtain ⟨α, hα_lt, hstab⟩ := exists_complete_stabilization (L := L) M
   exact lt_of_le_of_lt (elementRank_le_completeStab hstab m) hα_lt
 
+/-- Conditional variant of `elementRank_lt_omega1`. Sorry-free. -/
+theorem elementRank_lt_omega1_of
+    (hcount : CountableRefinementHypothesis.{u, v, w} L)
+    {M : Type w} [L.Structure M] [Countable M] (m : M) :
+    elementRank (L := L) m < (Ordinal.omega 1 : Ordinal.{0}) := by
+  obtain ⟨α, hα_lt, hstab⟩ := exists_complete_stabilization_of hcount M
+  exact lt_of_le_of_lt (elementRank_le_completeStab hstab m) hα_lt
+
 /-- Scott rank of a countable structure is a countable ordinal.
 
 The proof uses that:
@@ -93,6 +101,32 @@ The proof uses that:
 theorem scottRank_lt_omega1 (M : Type w) [L.Structure M] [Countable M] :
     scottRank (L := L) M < (Ordinal.omega 1 : Ordinal.{0}) := by
   obtain ⟨α, hα_lt, hstab⟩ := exists_complete_stabilization (L := L) M
+  unfold scottRank
+  have h_limit : Order.IsSuccLimit (Ordinal.omega (1 : Ordinal.{0})) :=
+    Cardinal.isSuccLimit_omega 1
+  have h_bound : ∀ m : M, elementRank (L := L) m ≤ α :=
+    fun m => elementRank_le_completeStab hstab m
+  have h_bound' : ∀ m : M, elementRank (L := L) m + 1 ≤ α + 1 := by
+    intro m
+    have h := (Ordinal.add_le_add_iff_right 1).mpr (h_bound m)
+    convert h using 2 <;> simp [Nat.cast_one]
+  by_cases h_nonempty : Nonempty M
+  · calc ⨆ m, elementRank (L := L) m + 1 ≤ α + 1 := ciSup_le h_bound'
+      _ < Ordinal.omega 1 := h_limit.succ_lt hα_lt
+  · haveI : IsEmpty M := not_nonempty_iff.mp h_nonempty
+    have h_zero : (⨆ (m : M), elementRank (L := L) m + 1) = 0 := by
+      rw [Ordinal.iSup_eq_zero_iff]
+      intro m
+      exact isEmptyElim m
+    rw [h_zero]
+    exact Ordinal.omega_pos 1
+
+/-- Conditional variant of `scottRank_lt_omega1`. Sorry-free. -/
+theorem scottRank_lt_omega1_of
+    (hcount : CountableRefinementHypothesis.{u, v, w} L)
+    (M : Type w) [L.Structure M] [Countable M] :
+    scottRank (L := L) M < (Ordinal.omega 1 : Ordinal.{0}) := by
+  obtain ⟨α, hα_lt, hstab⟩ := exists_complete_stabilization_of hcount M
   unfold scottRank
   have h_limit : Order.IsSuccLimit (Ordinal.omega (1 : Ordinal.{0})) :=
     Cardinal.isSuccLimit_omega 1

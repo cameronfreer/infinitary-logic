@@ -74,6 +74,19 @@ theorem scottHeight_lt_omega1 (M : Type w) [L.Structure M] [Countable M] :
     exact (hstab n N a b).mp hBF
   exact lt_of_le_of_lt (csInf_le ⟨0, fun _ _ => zero_le _⟩ h_mem) hα_lt
 
+/-- Conditional variant of `scottHeight_lt_omega1`. Sorry-free. -/
+theorem scottHeight_lt_omega1_of
+    (hcount : CountableRefinementHypothesis.{u, v, w} L)
+    (M : Type w) [L.Structure M] [Countable M] :
+    scottHeight (L := L) M < Ordinal.omega 1 := by
+  obtain ⟨α, hα_lt, hstab⟩ := exists_complete_stabilization_of hcount M
+  have h_mem : α ∈ {α : Ordinal.{0} | ∀ {n : ℕ} (a : Fin n → M)
+      (N : Type w) [L.Structure N] [Countable N] (b : Fin n → N),
+      BFEquiv (L := L) α n a b → BFEquiv (L := L) (Order.succ α) n a b} := by
+    intro n a N _ _ b hBF
+    exact (hstab n N a b).mp hBF
+  exact lt_of_le_of_lt (csInf_le ⟨0, fun _ _ => zero_le _⟩ h_mem) hα_lt
+
 /-- At Scott height, all tuple sizes have stabilized (BFEquiv α ↔ BFEquiv (succ α)). -/
 private theorem scottHeight_stabilizesCompletely (M : Type w) [L.Structure M] [Countable M] :
     StabilizesCompletely (L := L) M (scottHeight (L := L) M) := by
@@ -92,6 +105,48 @@ private theorem scottHeight_stabilizesCompletely (M : Type w) [L.Structure M] [C
         BFEquiv (L := L) α n a b → BFEquiv (L := L) (Order.succ α) n a b}
     apply csInf_mem
     exact ⟨α, fun {k} a' N' _ _ b' hBF' => (hstab k N' a' b').mp hBF'⟩
+  · exact BFEquiv.of_succ
+
+/-- Conditional variant of `scottHeight_stabilizesCompletely`. Sorry-free.
+Public so that downstream consumers (e.g., CountingModels.lean) can use it. -/
+theorem scottHeight_stabilizesCompletely_of
+    (hcount : CountableRefinementHypothesis.{u, v, w} L)
+    (M : Type w) [L.Structure M] [Countable M] :
+    StabilizesCompletely (L := L) M (scottHeight (L := L) M) := by
+  obtain ⟨α, _, hstab⟩ := exists_complete_stabilization_of hcount M
+  intro n N _ _ a b
+  constructor
+  · intro hBF
+    suffices h : ∀ {k : ℕ} (a' : Fin k → M) (N' : Type w) [L.Structure N']
+        [Countable N'] (b' : Fin k → N'),
+        BFEquiv (L := L) (scottHeight (L := L) M) k a' b' →
+        BFEquiv (L := L) (Order.succ (scottHeight (L := L) M)) k a' b' from h a N b hBF
+    show scottHeight (L := L) M ∈ {α : Ordinal.{0} | ∀ {n : ℕ} (a : Fin n → M)
+        (N : Type w) [L.Structure N] [Countable N] (b : Fin n → N),
+        BFEquiv (L := L) α n a b → BFEquiv (L := L) (Order.succ α) n a b}
+    apply csInf_mem
+    exact ⟨α, fun {k} a' N' _ _ b' hBF' => (hstab k N' a' b').mp hBF'⟩
+  · exact BFEquiv.of_succ
+
+/-- At any ordinal ≥ scottHeight, the structure stabilizes completely.
+Conditional on `CountableRefinementHypothesis`. Sorry-free.
+
+This replaces the sorry-bearing `scottRank_le_implies_stabilizesCompletely` for downstream
+consumers that need `StabilizesCompletely` from a bound. -/
+theorem scottHeight_le_implies_stabilizesCompletely_of
+    (hcount : CountableRefinementHypothesis.{u, v, w} L)
+    (M : Type w) [L.Structure M] [Countable M]
+    {α : Ordinal.{0}} (hα : scottHeight (L := L) M ≤ α) :
+    StabilizesCompletely (L := L) M α := by
+  have hstab := scottHeight_stabilizesCompletely_of hcount M
+  intro n N _ _ a b
+  constructor
+  · intro hBF
+    -- BFEquiv α → BFEquiv (scottHeight M) by monotonicity
+    have hBF_sh := BFEquiv.monotone hα hBF
+    -- Upgrade from scottHeight to succ α (succ α ≥ scottHeight M)
+    exact BFEquiv_upgrade_at_stabilization hstab hBF_sh (Order.succ α)
+      (le_trans hα (Order.le_succ α))
   · exact BFEquiv.of_succ
 
 /-! ### Canonical Scott Sentence -/
@@ -172,6 +227,64 @@ theorem canonicalScottSentence_equiv_scottSentence
     (scottSentence (L := L) M).realize_as_sentence N := by
   rw [canonicalScottSentence_characterizes, scottSentence_characterizes]
 
+/-! ### Conditional Canonical Scott Sentence Pipeline -/
+
+/-- Conditional variant of `canonicalScottSentence_iff_potentialIso`. Sorry-free. -/
+theorem canonicalScottSentence_iff_potentialIso_of
+    (hcount : CountableRefinementHypothesis.{u, v, w} L)
+    {M : Type w} [L.Structure M] [Countable M]
+    {N : Type w} [L.Structure N] [Countable N] :
+    (canonicalScottSentence (L := L) M).realize_as_sentence N ↔
+    Nonempty (PotentialIso L M N) := by
+  constructor
+  · intro h
+    unfold canonicalScottSentence Formulaω.realize_as_sentence at h
+    rw [realize_scottFormula_iff_BFEquiv _ _ _ (scottHeight_lt_omega1_of hcount M)] at h
+    have hstab := scottHeight_stabilizesCompletely_of hcount M
+    exact ⟨{
+      family := { p | BFEquiv (L := L) (scottHeight (L := L) M) p.1 p.2.1 p.2.2 }
+      empty_mem := h
+      compatible := fun p hp =>
+        (BFEquiv.zero p.2.1 p.2.2).mp (BFEquiv.monotone (zero_le _) hp)
+      forth := fun ⟨k, a, b⟩ hp m => by
+        simp only [Set.mem_setOf_eq] at hp ⊢
+        obtain ⟨n', hn'⟩ := BFEquiv.forth ((hstab k N a b).mp hp) m
+        exact ⟨n', hn'⟩
+      back := fun ⟨k, a, b⟩ hp n' => by
+        simp only [Set.mem_setOf_eq] at hp ⊢
+        obtain ⟨m, hm⟩ := BFEquiv.back ((hstab k N a b).mp hp) n'
+        exact ⟨m, hm⟩
+    }⟩
+  · intro ⟨P⟩
+    unfold canonicalScottSentence Formulaω.realize_as_sentence
+    rw [realize_scottFormula_iff_BFEquiv _ _ _ (scottHeight_lt_omega1_of hcount M)]
+    exact P.implies_BFEquiv_all (scottHeight (L := L) M)
+
+/-- Conditional variant of `canonicalScottSentence_characterizes`. Sorry-free. -/
+theorem canonicalScottSentence_characterizes_of
+    (hcount : CountableRefinementHypothesis.{u, v, w} L)
+    {M : Type w} [L.Structure M] [Countable M]
+    {N : Type w} [L.Structure N] [Countable N] :
+    (canonicalScottSentence (L := L) M).realize_as_sentence N ↔
+    Nonempty (M ≃[L] N) := by
+  unfold canonicalScottSentence Formulaω.realize_as_sentence
+  rw [realize_scottFormula_iff_BFEquiv _ _ _ (scottHeight_lt_omega1_of hcount M)]
+  constructor
+  · exact BFEquiv_stabilization_implies_equiv (scottHeight_stabilizesCompletely_of hcount M)
+  · intro ⟨e⟩
+    have h : (e : M → N) ∘ Fin.elim0 = Fin.elim0 := funext (fun i => i.elim0)
+    rw [← h]
+    exact equiv_implies_BFEquiv e _ 0 Fin.elim0
+
+/-- Conditional variant of `canonicalScottSentence_equiv_scottSentence`. Sorry-free. -/
+theorem canonicalScottSentence_equiv_scottSentence_of
+    (hcount : CountableRefinementHypothesis.{u, v, w} L)
+    {M : Type w} [L.Structure M] [Countable M]
+    {N : Type w} [L.Structure N] [Countable N] :
+    (canonicalScottSentence (L := L) M).realize_as_sentence N ↔
+    (scottSentence (L := L) M).realize_as_sentence N := by
+  rw [canonicalScottSentence_characterizes_of hcount, scottSentence_characterizes_of hcount]
+
 /-! ### sr and SR -/
 
 /-- The supremum of element ranks without the +1 adjustment.
@@ -215,6 +328,16 @@ theorem canonicalScottSentence_qrank
   -- scottHeight M ≤ scottHeight M + omega0
   exact le_trans
     (scottFormula_qrank_le Fin.elim0 _ (scottHeight_lt_omega1 M))
+    le_self_add
+
+/-- Conditional variant of `canonicalScottSentence_qrank`. Sorry-free. -/
+theorem canonicalScottSentence_qrank_of
+    (hcount : CountableRefinementHypothesis.{u, v, w} L)
+    (M : Type w) [L.Structure M] [Countable M] :
+    (canonicalScottSentence (L := L) M).qrank ≤
+    scottHeight (L := L) M + Ordinal.omega0 :=
+  le_trans
+    (scottFormula_qrank_le Fin.elim0 _ (scottHeight_lt_omega1_of hcount M))
     le_self_add
 
 end Language
