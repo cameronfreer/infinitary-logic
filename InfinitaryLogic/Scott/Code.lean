@@ -219,68 +219,6 @@ theorem BFEquiv_implies_agree_codes
     (c.Realize a ↔ c.Realize b) :=
   BFEquiv_implies_agree_formulas_omega a b α hα hBF c.toFormulaω hc
 
-/-! ### Legacy Code-Based Bridge (DEAD CODE)
-
-The following declarations depend on `agree_codes_implies_BFEquiv` (genuine sorry).
-They are NOT used by the active conditional pipeline (`_of` variants in Sentence.lean,
-Height.lean, Rank.lean, CountingModels.lean, CountableCorollary.lean).
-Retained for historical reference and potential future resolution only. -/
-
-/-- Agreement on all formula codes implies BFEquiv.
-
-**DEAD CODE**: No longer on the active Scott pipeline. The conditional pipeline
-(`CountableRefinementHypothesis` + `_of` variants in Sentence.lean) bypasses this entirely.
-
-**KNOWN GAP**: This sorry is genuine. `FormulaCode` uses finite lists (`FormulaCodeList`)
-for iSup/iInf, making the type countable. However, BFEquiv at successor ordinals requires
-agreement on formulas with *countably infinite* conjunctions/disjunctions (the Scott formula
-uses `einf`/`esup` over all elements of M). Agreement on all finite-list codes does NOT
-imply agreement on countable-conjunction formulas. -/
-theorem agree_codes_implies_BFEquiv
-    {M : Type w} [L.Structure M] [Countable M]
-    {N : Type w} [L.Structure N] [Countable N]
-    {n : ℕ} (a : Fin n → M) (b : Fin n → N)
-    (α : Ordinal.{0}) (hα : α < Ordinal.omega 1)
-    (hAgree : ∀ c : FormulaCode L n, (c.toFormulaω).qrank ≤ α →
-      (c.Realize a ↔ c.Realize b)) :
-    BFEquiv (L := L) α n a b := by
-  apply (realize_scottFormula_iff_BFEquiv a b α hα).mp
-  have hSelf : (scottFormula (L := L) a α).Realize a :=
-    (realize_scottFormula_iff_BFEquiv a a α hα).mpr (BFEquiv.refl α a)
-  sorry
-
-/-- BFEquiv at α is equivalent to agreement on all codes of qrank ≤ α. -/
-theorem BFEquiv_iff_agree_codes
-    {M : Type w} [L.Structure M] [Countable M]
-    {N : Type w} [L.Structure N] [Countable N]
-    {n : ℕ} (a : Fin n → M) (b : Fin n → N)
-    (α : Ordinal.{0}) (hα : α < Ordinal.omega 1) :
-    BFEquiv (L := L) α n a b ↔
-    ∀ c : FormulaCode L n, (c.toFormulaω).qrank ≤ α →
-      (c.Realize a ↔ c.Realize b) :=
-  ⟨fun h c hc => BFEquiv_implies_agree_codes a b α hα h c hc,
-   fun h => agree_codes_implies_BFEquiv a b α hα h⟩
-
-/-- **DEAD CODE**: If BFEquiv α but ¬BFEquiv (succ α), there exists a separating code.
-
-No longer on the active Scott pipeline. See `CountableRefinementHypothesis` in Sentence.lean.
-
-**Trust boundary**: depends on `agree_codes_implies_BFEquiv` (sorry). -/
-theorem exists_separating_code
-    {M : Type w} [L.Structure M] [Countable M]
-    {N : Type w} [L.Structure N] [Countable N]
-    {n : ℕ} (a : Fin n → M) (b : Fin n → N)
-    (α : Ordinal.{0}) (_hα : α < Ordinal.omega 1)
-    (hsucc_lt : Order.succ α < Ordinal.omega 1)
-    (_hBF : BFEquiv (L := L) α n a b)
-    (hNotBF : ¬BFEquiv (L := L) (Order.succ α) n a b) :
-    ∃ c : FormulaCode L n, (c.toFormulaω).qrank ≤ Order.succ α ∧
-      ¬(c.Realize a ↔ c.Realize b) := by
-  by_contra hall
-  push_neg at hall
-  exact hNotBF (agree_codes_implies_BFEquiv a b (Order.succ α) hsucc_lt
-    fun c hc => hall c hc)
-
 end Bridge
 
 end Language

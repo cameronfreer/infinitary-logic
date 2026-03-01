@@ -61,9 +61,12 @@ This library formalizes infinitary logic, including:
 ## Main Results
 
 - Every countable structure in a relational countable language has a Scott sentence
-  that characterizes it up to isomorphism.
+  that characterizes it up to isomorphism (conditional on `CountableRefinementHypothesis`).
 - The Scott rank of a countable structure is a countable ordinal (< ω₁).
 - L∞ω is the union of all Lκω for cardinals κ; Lω₁ω = L(ℵ₁)ω.
+
+The primary API uses `_of` variants conditional on `CountableRefinementHypothesis`.
+The unconditional (sorry-tainted) pipeline lives in `Scott/Legacy.lean` (not imported here).
 
 ## Organization
 
@@ -83,10 +86,12 @@ This library formalizes infinitary logic, including:
 - `Scott/AtomicDiagram.lean`: Atomic types for relational languages
 - `Scott/BackAndForth.lean`: Back-and-forth equivalence
 - `Scott/Formula.lean`: Scott formula construction
-- `Scott/Sentence.lean`: Scott sentence and characterization theorem
-- `Scott/Rank.lean`: Scott rank definition and bounds
+- `Scott/Code.lean`: Countable formula codes (FormulaCode, encoding, BFEquiv bridge)
+- `Scott/Sentence.lean`: Scott sentence and characterization theorem (`_of` variants)
+- `Scott/Rank.lean`: Scott rank definition and bounds (`_of` variants)
 - `Scott/QuantifierRank.lean`: Quantifier rank bounds on Scott formulas
-- `Scott/Height.lean`: Scott height, canonical Scott sentence, sr/SR
+- `Scott/Height.lean`: Scott height, canonical Scott sentence, sr/SR (`_of` variants)
+- `Scott/Legacy.lean`: Unconditional sorry-tainted pipeline (not imported by Basic)
 
 ### Karp's theorem (Karp/)
 - `Karp/PotentialIso.lean`: Potential isomorphism definition

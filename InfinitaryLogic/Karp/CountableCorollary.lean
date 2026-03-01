@@ -36,29 +36,7 @@ variable [Countable (Σ l, L.Relations l)]
 
 open FirstOrder Structure Fin Ordinal
 
-/-- For countable structures in a countable relational language, Lω₁ω-elementary
-equivalence implies isomorphism.
-
-This is a fundamental result in infinitary model theory: for countable structures,
-satisfying the same countable infinitary sentences is as strong as being isomorphic.
-The proof uses Scott sentences: since each countable structure has a Scott sentence
-that characterizes it up to isomorphism, and Lω₁ω-equivalent structures satisfy the
-same Scott sentences, they must be isomorphic. -/
-theorem countable_LomegaEquiv_implies_iso
-    {M : Type w} [L.Structure M] [Countable M]
-    {N : Type w} [L.Structure N] [Countable N] :
-    LomegaEquiv L M N → Nonempty (M ≃[L] N) := by
-  intro hEquiv
-  -- M satisfies its own Scott sentence
-  have hM := scottSentence_self (L := L) M
-  -- Convert from Formulaω (Fin 0) to Sentenceω so LomegaEquiv applies
-  have hMω := (Formulaω.realize_toSentenceω (scottSentence (L := L) M) (M := M)).mpr hM
-  -- Transfer from M to N via LomegaEquiv
-  have hNω := (hEquiv _).mp hMω
-  -- Convert back to Formulaω (Fin 0) realization
-  have hN := (Formulaω.realize_toSentenceω (scottSentence (L := L) M) (M := N)).mp hNω
-  -- Scott sentence characterizes isomorphism for countable structures
-  exact (scottSentence_characterizes M N).mp hN
+-- countable_LomegaEquiv_implies_iso moved to Scott/Legacy.lean
 
 /-- Conditional variant of `countable_LomegaEquiv_implies_iso`. Sorry-free. -/
 theorem countable_LomegaEquiv_implies_iso_of
@@ -78,22 +56,7 @@ theorem countable_LomegaEquiv_implies_iso_of
   -- Scott sentence characterizes isomorphism for countable structures
   exact (scottSentence_characterizes_of hcount M N).mp hN
 
-/-- For countable structures in a countable relational language, L∞ω-elementary
-equivalence implies isomorphism.
-
-This follows from the Lω₁ω version since L∞ω-equivalence is stronger than
-Lω₁ω-equivalence. -/
-theorem countable_LinfEquiv_implies_iso
-    {M : Type w} [L.Structure M] [Countable M]
-    {N : Type w} [L.Structure N] [Countable N] :
-    LinfEquiv L M N → Nonempty (M ≃[L] N) := by
-  intro hLinf
-  apply countable_LomegaEquiv_implies_iso
-  -- L∞ω-equivalence implies Lω₁ω-equivalence via the embedding
-  intro φ
-  have h := hLinf (Sentenceω.toLinf φ)
-  simp only [Sentenceω.realize_toLinf] at h
-  exact h
+-- countable_LinfEquiv_implies_iso moved to Scott/Legacy.lean
 
 /-- Conditional variant of `countable_LinfEquiv_implies_iso`. Sorry-free. -/
 theorem countable_LinfEquiv_implies_iso_of
