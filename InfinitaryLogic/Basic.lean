@@ -24,6 +24,7 @@ import InfinitaryLogic.Scott.AtomicDiagram
 import InfinitaryLogic.Scott.BackAndForth
 import InfinitaryLogic.Scott.Formula
 import InfinitaryLogic.Scott.Sentence
+import InfinitaryLogic.Scott.RefinementCount
 import InfinitaryLogic.Scott.Rank
 import InfinitaryLogic.Scott.QuantifierRank
 import InfinitaryLogic.Scott.Height
@@ -61,12 +62,13 @@ This library formalizes infinitary logic, including:
 ## Main Results
 
 - Every countable structure in a relational countable language has a Scott sentence
-  that characterizes it up to isomorphism (conditional on `CountableRefinementHypothesis`).
+  that characterizes it up to isomorphism.
 - The Scott rank of a countable structure is a countable ordinal (< ω₁).
 - L∞ω is the union of all Lκω for cardinals κ; Lω₁ω = L(ℵ₁)ω.
 
-The primary API uses `_of` variants conditional on `CountableRefinementHypothesis`.
-The unconditional (sorry-tainted) pipeline lives in `Scott/Legacy.lean` (not imported here).
+The unconditional API is recovered via `countableRefinementHypothesis` (proved with
+`sorry` for the counting argument) in `Scott/RefinementCount.lean`.
+Sorry-free `_of` variants conditional on `CountableRefinementHypothesis` are also available.
 
 ## Organization
 
@@ -88,10 +90,10 @@ The unconditional (sorry-tainted) pipeline lives in `Scott/Legacy.lean` (not imp
 - `Scott/Formula.lean`: Scott formula construction
 - `Scott/Code.lean`: Countable formula codes (FormulaCode, encoding, BFEquiv bridge)
 - `Scott/Sentence.lean`: Scott sentence and characterization theorem (`_of` variants)
-- `Scott/Rank.lean`: Scott rank definition and bounds (`_of` variants)
+- `Scott/RefinementCount.lean`: CRH theorem + unconditional Sentence-level wrappers
+- `Scott/Rank.lean`: Scott rank definition and bounds
 - `Scott/QuantifierRank.lean`: Quantifier rank bounds on Scott formulas
-- `Scott/Height.lean`: Scott height, canonical Scott sentence, sr/SR (`_of` variants)
-- `Scott/Legacy.lean`: Unconditional sorry-tainted pipeline (not imported by Basic)
+- `Scott/Height.lean`: Scott height, canonical Scott sentence, sr/SR
 
 ### Karp's theorem (Karp/)
 - `Karp/PotentialIso.lean`: Potential isomorphism definition

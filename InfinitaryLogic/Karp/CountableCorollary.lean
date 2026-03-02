@@ -7,6 +7,7 @@ import InfinitaryLogic.Karp.Theorem
 import InfinitaryLogic.Lomega1omega.Theory
 import InfinitaryLogic.Lomega1omega.Embedding
 import InfinitaryLogic.Scott.Sentence
+import InfinitaryLogic.Scott.RefinementCount
 
 /-!
 # Countable Corollary to Karp's Theorem
@@ -36,8 +37,6 @@ variable [Countable (Σ l, L.Relations l)]
 
 open FirstOrder Structure Fin Ordinal
 
--- countable_LomegaEquiv_implies_iso moved to Scott/Legacy.lean
-
 /-- Conditional variant of `countable_LomegaEquiv_implies_iso`. Sorry-free. -/
 theorem countable_LomegaEquiv_implies_iso_of
     (hcount : CountableRefinementHypothesis.{u, v, w} L)
@@ -55,8 +54,6 @@ theorem countable_LomegaEquiv_implies_iso_of
   have hN := (Formulaω.realize_toSentenceω (scottSentence (L := L) M) (M := N)).mp hNω
   -- Scott sentence characterizes isomorphism for countable structures
   exact (scottSentence_characterizes_of hcount M N).mp hN
-
--- countable_LinfEquiv_implies_iso moved to Scott/Legacy.lean
 
 /-- Conditional variant of `countable_LinfEquiv_implies_iso`. Sorry-free. -/
 theorem countable_LinfEquiv_implies_iso_of
@@ -91,6 +88,24 @@ theorem countable_BFEquiv_all_implies_iso
     Nonempty (M ≃[L] N) := by
   apply countable_PotentialIso_implies_iso
   exact potentialIso_iff_BFEquiv_all.mpr h
+
+/-! ### Unconditional Wrappers (via CRH) -/
+
+/-- For countable structures in a countable relational language, Lω₁ω-elementary
+equivalence implies isomorphism. -/
+theorem countable_LomegaEquiv_implies_iso
+    {M : Type w} [L.Structure M] [Countable M]
+    {N : Type w} [L.Structure N] [Countable N] :
+    LomegaEquiv L M N → Nonempty (M ≃[L] N) :=
+  countable_LomegaEquiv_implies_iso_of countableRefinementHypothesis
+
+/-- For countable structures in a countable relational language, L∞ω-elementary
+equivalence implies isomorphism. -/
+theorem countable_LinfEquiv_implies_iso
+    {M : Type w} [L.Structure M] [Countable M]
+    {N : Type w} [L.Structure N] [Countable N] :
+    LinfEquiv L M N → Nonempty (M ≃[L] N) :=
+  countable_LinfEquiv_implies_iso_of countableRefinementHypothesis
 
 end Language
 

@@ -1079,8 +1079,6 @@ theorem exists_complete_stabilization_of
     le_trans (Order.le_succ _) hk_le
   exact hboundOrd_spec ⟨n, a⟩ globalStab hbound_le hGlobalLt hSuccGlobalLt N b
 
--- Legacy code-based section moved to Scott/Legacy.lean
-
 omit [Countable (Σ l, L.Relations l)] in
 /-- At a complete stabilization ordinal, BFEquiv0 implies isomorphism for countable structures.
 This is the corrected version of BFEquiv_omega_implies_equiv. -/
@@ -1103,8 +1101,6 @@ theorem BFEquiv_stabilization_implies_equiv {M N : Type w} [L.Structure M] [L.St
       exact BFEquiv.back ((hstab k N a b).mp hp) n')
   ).countable_toEquiv
 
--- exists_stabilization moved to Scott/Legacy.lean
-
 /-- The stabilization ordinal for a structure M: the least ordinal where the Scott analysis
 stabilizes. We fix the ordinal universe to 0 for consistency with our BFEquiv definitions. -/
 noncomputable def stabilizationOrdinal (M : Type w) [L.Structure M] [Countable M] :
@@ -1122,10 +1118,6 @@ noncomputable def scottSentence (M : Type w) [L.Structure M] [Countable M] : L.F
 /-- Realize a formula with no free variables as a sentence in a structure. -/
 def Formulaω.realize_as_sentence (φ : L.Formulaω (Fin 0)) (N : Type w) [L.Structure N] : Prop :=
   φ.Realize (Fin.elim0 : Fin 0 → N)
-
--- stabilizationOrdinal_lt_omega1', stabilizationOrdinal_stabilizes, stabilizationOrdinal_spec,
--- scottSentence_characterizes, scottSentence_realizes_implies_equiv, scottSentence_self,
--- scottSentence_of_equiv moved to Scott/Legacy.lean
 
 /-! ### Conditional Scott Sentence Pipeline
 

@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Scott.QuantifierRank
 import InfinitaryLogic.Scott.Rank
+import InfinitaryLogic.Scott.RefinementCount
 import InfinitaryLogic.Karp.PotentialIso
 
 /-!
@@ -63,8 +64,6 @@ noncomputable def scottHeight (M : Type w) [L.Structure M] [Countable M] : Ordin
     (N : Type w) [L.Structure N] [Countable N] (b : Fin n → N),
     BFEquiv (L := L) α n a b → BFEquiv (L := L) (Order.succ α) n a b}
 
--- scottHeight_lt_omega1 moved to Scott/Legacy.lean
-
 /-- Conditional variant of `scottHeight_lt_omega1`. Sorry-free. -/
 theorem scottHeight_lt_omega1_of
     (hcount : CountableRefinementHypothesis.{u, v, w} L)
@@ -77,8 +76,6 @@ theorem scottHeight_lt_omega1_of
     intro n a N _ _ b hBF
     exact (hstab n N a b).mp hBF
   exact lt_of_le_of_lt (csInf_le ⟨0, fun _ _ => zero_le _⟩ h_mem) hα_lt
-
--- scottHeight_stabilizesCompletely moved to Scott/Legacy.lean
 
 /-- Conditional variant of `scottHeight_stabilizesCompletely`. Sorry-free.
 Public so that downstream consumers (e.g., CountingModels.lean) can use it. -/
@@ -133,9 +130,6 @@ and for countable structures, up to isomorphism. -/
 noncomputable def canonicalScottSentence (M : Type w) [L.Structure M] [Countable M] :
     L.Formulaω (Fin 0) :=
   scottFormula (L := L) (M := M) Fin.elim0 (scottHeight (L := L) M)
-
--- canonicalScottSentence_iff_potentialIso, canonicalScottSentence_characterizes,
--- canonicalScottSentence_equiv_scottSentence moved to Scott/Legacy.lean
 
 /-! ### Conditional Canonical Scott Sentence Pipeline -/
 
@@ -258,8 +252,6 @@ attained, the structure has a "witness" element of maximal complexity. -/
 def AttainedScottRank (M : Type w) [L.Structure M] [Countable M] : Prop :=
   ∃ (m : M), elementRank (L := L) m = sr (L := L) M
 
--- canonicalScottSentence_qrank moved to Scott/Legacy.lean
-
 /-- Conditional variant of `canonicalScottSentence_qrank`. Sorry-free. -/
 theorem canonicalScottSentence_qrank_of
     (hcount : CountableRefinementHypothesis.{u, v, w} L)
@@ -269,6 +261,49 @@ theorem canonicalScottSentence_qrank_of
   le_trans
     (scottFormula_qrank_le Fin.elim0 _ (scottHeight_lt_omega1_of hcount M))
     le_self_add
+
+/-! ### Unconditional Wrappers (via CRH) -/
+
+/-- Scott height is less than ω₁ for countable structures. -/
+theorem scottHeight_lt_omega1 (M : Type w) [L.Structure M] [Countable M] :
+    scottHeight (L := L) M < Ordinal.omega 1 :=
+  scottHeight_lt_omega1_of countableRefinementHypothesis M
+
+/-- At Scott height, all tuple sizes have stabilized (BFEquiv α ↔ BFEquiv (succ α)). -/
+theorem scottHeight_stabilizesCompletely (M : Type w) [L.Structure M] [Countable M] :
+    StabilizesCompletely (L := L) M (scottHeight (L := L) M) :=
+  scottHeight_stabilizesCompletely_of countableRefinementHypothesis M
+
+/-- The canonical Scott sentence characterizes potential isomorphism. -/
+theorem canonicalScottSentence_iff_potentialIso
+    {M : Type w} [L.Structure M] [Countable M]
+    {N : Type w} [L.Structure N] [Countable N] :
+    (canonicalScottSentence (L := L) M).realize_as_sentence N ↔
+    Nonempty (PotentialIso L M N) :=
+  canonicalScottSentence_iff_potentialIso_of countableRefinementHypothesis
+
+/-- For countable structures, the canonical Scott sentence characterizes isomorphism. -/
+theorem canonicalScottSentence_characterizes
+    {M : Type w} [L.Structure M] [Countable M]
+    {N : Type w} [L.Structure N] [Countable N] :
+    (canonicalScottSentence (L := L) M).realize_as_sentence N ↔
+    Nonempty (M ≃[L] N) :=
+  canonicalScottSentence_characterizes_of countableRefinementHypothesis
+
+/-- The canonical Scott sentence is semantically equivalent to the standard Scott sentence. -/
+theorem canonicalScottSentence_equiv_scottSentence
+    {M : Type w} [L.Structure M] [Countable M]
+    {N : Type w} [L.Structure N] [Countable N] :
+    (canonicalScottSentence (L := L) M).realize_as_sentence N ↔
+    (scottSentence (L := L) M).realize_as_sentence N :=
+  canonicalScottSentence_equiv_scottSentence_of countableRefinementHypothesis
+
+/-- The quantifier rank of the canonical Scott sentence is bounded. -/
+theorem canonicalScottSentence_qrank
+    (M : Type w) [L.Structure M] [Countable M] :
+    (canonicalScottSentence (L := L) M).qrank ≤
+    scottHeight (L := L) M + Ordinal.omega0 :=
+  canonicalScottSentence_qrank_of countableRefinementHypothesis M
 
 end Language
 

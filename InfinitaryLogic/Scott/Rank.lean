@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Scott.Sentence
+import InfinitaryLogic.Scott.RefinementCount
 import Mathlib.SetTheory.Cardinal.Regular
 
 /-!
@@ -79,8 +80,6 @@ theorem elementRank_le_completeStab {M : Type w} [L.Structure M] [Countable M]
     elementRank (L := L) m ≤ α :=
   csInf_le' (completeStab_mem_elementRank_set hstab m)
 
--- elementRank_lt_omega1 moved to Scott/Legacy.lean
-
 /-- Conditional variant of `elementRank_lt_omega1`. Sorry-free. -/
 theorem elementRank_lt_omega1_of
     (hcount : CountableRefinementHypothesis.{u, v, w} L)
@@ -88,8 +87,6 @@ theorem elementRank_lt_omega1_of
     elementRank (L := L) m < (Ordinal.omega 1 : Ordinal.{0}) := by
   obtain ⟨α, hα_lt, hstab⟩ := exists_complete_stabilization_of hcount M
   exact lt_of_le_of_lt (elementRank_le_completeStab hstab m) hα_lt
-
--- scottRank_lt_omega1 moved to Scott/Legacy.lean
 
 /-- Conditional variant of `scottRank_lt_omega1`. Sorry-free. -/
 theorem scottRank_lt_omega1_of
@@ -117,8 +114,17 @@ theorem scottRank_lt_omega1_of
     rw [h_zero]
     exact Ordinal.omega_pos 1
 
--- scottRank_le_implies_stabilizesCompletely, scottRank_le_implies_stabilizesCompletely_of,
--- stabilizationOrdinal_lt_omega1 moved to Scott/Legacy.lean
+/-! ### Unconditional Wrappers (via CRH) -/
+
+/-- Element rank is below ω₁ for countable structures. -/
+theorem elementRank_lt_omega1 {M : Type w} [L.Structure M] [Countable M] (m : M) :
+    elementRank (L := L) m < (Ordinal.omega 1 : Ordinal.{0}) :=
+  elementRank_lt_omega1_of countableRefinementHypothesis m
+
+/-- Scott rank of a countable structure is a countable ordinal. -/
+theorem scottRank_lt_omega1 (M : Type w) [L.Structure M] [Countable M] :
+    scottRank (L := L) M < (Ordinal.omega 1 : Ordinal.{0}) :=
+  scottRank_lt_omega1_of countableRefinementHypothesis M
 
 end Language
 
