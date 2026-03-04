@@ -41,10 +41,10 @@ variable [Countable (Σ l, L.Relations l)]
 
 open FirstOrder Structure Fin Ordinal BoundedFormulaω
 
-/-! ### Main theorem: Set.Iio of countable ordinal is countable -/
+/-! ### Countability of initial segments below ω₁ -/
 
 /-- For any ordinal β < ω₁, the set of ordinals below β is countable. -/
-theorem Set.countable_Iio_of_lt_omega1 (β : Ordinal.{0}) (hβ : β < Ordinal.omega 1) :
+private theorem countable_Iio_of_lt_omega1 (β : Ordinal.{0}) (hβ : β < Ordinal.omega 1) :
     Set.Countable (Set.Iio β) := by
   -- β < ω₁ means β.card < ℵ₁
   have h_card : β.card < Cardinal.aleph 1 := Cardinal.lt_omega_iff_card_lt.mp hβ
@@ -63,134 +63,6 @@ theorem Set.countable_Iio_of_lt_omega1 (β : Ordinal.{0}) (hβ : β < Ordinal.om
     (Ordinal.ToType.mk.toEquiv).symm
   -- Therefore Set.Iio β is countable
   exact Countable.of_equiv β.ToType h_equiv
-
-/-! ### Helper: countable set of ordinals below ω₁ is bounded -/
-
-/-- A countable set of ordinals below ω₁ has supremum below ω₁. -/
-private theorem countable_ordinals_below_omega1_bounded
-    (S : Set Ordinal.{0}) (hS : S.Countable) (hlt : ∀ x ∈ S, x < Ordinal.omega 1) :
-    ∃ β < Ordinal.omega 1, ∀ x ∈ S, x < β := by
-  by_cases hne : S.Nonempty
-  · haveI := hS.to_subtype
-    haveI := hne.to_subtype
-    obtain ⟨enum, henum⟩ := exists_surjective_nat S
-    let seq : ℕ → Ordinal.{0} := fun k => (enum k).1
-    have hseq_lt : ∀ k, seq k < (Cardinal.aleph 1).ord := by
-      intro k; rw [Cardinal.ord_aleph]; exact hlt _ (enum k).2
-    have hsup_lt := Ordinal.iSup_sequence_lt_omega_one seq hseq_lt
-    rw [Cardinal.ord_aleph] at hsup_lt
-    have hSuccSupLt : Order.succ (⨆ k, seq k) < Ordinal.omega 1 :=
-      Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) hsup_lt
-    refine ⟨Order.succ (⨆ k, seq k), hSuccSupLt, fun x hx => ?_⟩
-    obtain ⟨k, hk⟩ := henum ⟨x, hx⟩
-    have hBdd : BddAbove (Set.range seq) :=
-      ⟨Ordinal.omega 1, fun _ ⟨j, hj⟩ => hj ▸ le_of_lt (hlt _ (enum j).2)⟩
-    calc x = seq k := (congr_arg Subtype.val hk).symm
-      _ ≤ ⨆ k, seq k := le_ciSup hBdd k
-      _ < Order.succ (⨆ k, seq k) := Order.lt_succ _
-  · exact ⟨1, by calc (1 : Ordinal) < ω := Ordinal.one_lt_omega0
-        _ ≤ Ordinal.omega 1 := Ordinal.omega0_le_omega 1,
-      fun x hx => absurd ⟨x, hx⟩ hne⟩
-
-
-/-! ### Key Lemma: extensions countable implies base countable -/
-
-omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-/-- If the refinement set R(n+1, snoc a m) is countable for every m ∈ M,
-then R(n, a) is countable. The proof uses `per_tuple_stabilization_from_extensions`:
-countable → bounded by γ(m) < ω₁ for each m, sup_m γ(m) < ω₁ by regularity,
-and then stabilization above succ(sup) bounds R(n, a). -/
-private theorem extensions_countable_implies_countable
-    {M : Type w} [L.Structure M] [Countable M]
-    {n : ℕ} {a : Fin n → M}
-    (hext : ∀ m : M, Set.Countable {ε : Ordinal.{0} | ε < Ordinal.omega 1 ∧
-      ∃ (N : Type w) (_ : L.Structure N) (_ : Countable N) (b : Fin (n + 1) → N),
-        BFEquiv (L := L) ε (n + 1) (Fin.snoc a m) b ∧
-        ¬BFEquiv (L := L) (Order.succ ε) (n + 1) (Fin.snoc a m) b}) :
-    Set.Countable {ε : Ordinal.{0} | ε < Ordinal.omega 1 ∧
-      ∃ (N : Type w) (_ : L.Structure N) (_ : Countable N) (b : Fin n → N),
-        BFEquiv (L := L) ε n a b ∧ ¬BFEquiv (L := L) (Order.succ ε) n a b} := by
-  -- Step 1: Each extension's refinement set is bounded by some γ(m) < ω₁
-  have hbounded : ∀ m : M, ∃ γ < Ordinal.omega 1,
-      ∀ ε, ε < Ordinal.omega 1 → γ ≤ ε →
-        ∀ (N : Type w) [L.Structure N] [Countable N] (b : Fin (n + 1) → N),
-          BFEquiv (L := L) ε (n + 1) (Fin.snoc a m) b →
-          BFEquiv (L := L) (Order.succ ε) (n + 1) (Fin.snoc a m) b := by
-    intro m
-    obtain ⟨β, hβ_lt, hβ_bound⟩ := countable_ordinals_below_omega1_bounded _ (hext m)
-      (fun x hx => hx.1)
-    refine ⟨β, hβ_lt, fun ε hε_lt hβε N instN instCN b hBF => ?_⟩
-    by_contra hNot
-    exact absurd (hβ_bound ε ⟨hε_lt, N, instN, instCN, b, hBF, hNot⟩) (not_lt.mpr hβε)
-  -- Step 2: Extract γ and the stabilization iff
-  choose γ hγ_lt hγ_spec using hbounded
-  have hγ_iff : ∀ m, ∀ α, γ m ≤ α → α < Ordinal.omega 1 → Order.succ α < Ordinal.omega 1 →
-      ∀ (N : Type w) [L.Structure N] [Countable N] (b : Fin (n + 1) → N),
-        (BFEquiv (L := L) α (n + 1) (Fin.snoc a m) b ↔
-         BFEquiv (L := L) (Order.succ α) (n + 1) (Fin.snoc a m) b) := by
-    intro m α hα hα_lt _
-    exact fun N instN instCN b => ⟨hγ_spec m α hα_lt hα N b, BFEquiv.of_succ⟩
-  -- Step 3: Take S = sup_m γ(m) < ω₁
-  by_cases hM : IsEmpty M
-  · -- If M is empty and n > 0, `a` can't exist; if n = 0, R ⊆ {0}
-    cases n with
-    | succ k => exact (hM.false (a 0)).elim
-    | zero =>
-      -- R(0, Fin.elim0) ⊆ {0}: any ε > 0 with BFEquiv ε requires BFEquiv 1,
-      -- which needs back (∀ n' : N, ∃ m : M, ...), impossible with empty M unless N empty,
-      -- but then ¬BFEquiv (succ ε) also fails.
-      apply Set.Countable.mono (s₂ := {(0 : Ordinal.{0})}) _ (Set.countable_singleton _)
-      intro ε ⟨hε_lt, N, instN, instCN, b, hBF, hNot⟩
-      simp only [Set.mem_singleton_iff]
-      by_contra hε_ne
-      push_neg at hε_ne
-      have hε_pos : (0 : Ordinal) < ε := pos_of_ne_zero hε_ne
-      -- ε > 0, so BFEquiv ε implies BFEquiv 1 = BFEquiv (succ 0)
-      have hBF1 := BFEquiv.monotone (Order.succ_le_of_lt hε_pos) hBF
-      -- BFEquiv (succ 0) requires back: ∀ n' : N, ∃ m : M, ...
-      have hback := ((BFEquiv.succ 0 a b).mp hBF1).2.2
-      -- But M is empty, so ∃ m : M is impossible if N is nonempty
-      -- If N is empty, BFEquiv (succ ε) also holds, contradicting hNot
-      by_cases hN : IsEmpty N
-      · apply hNot; rw [BFEquiv.succ]
-        exact ⟨hBF, fun m => hM.elim m, fun n' => hN.elim n'⟩
-      · rw [not_isEmpty_iff] at hN
-        exact hM.false (hback hN.some).choose
-  · rw [not_isEmpty_iff] at hM; haveI := hM
-    obtain ⟨enum, henum⟩ := exists_surjective_nat M
-    let γ_seq : ℕ → Ordinal.{0} := γ ∘ enum
-    have hγ_seq_lt : ∀ k, γ_seq k < (Cardinal.aleph 1).ord := by
-      intro k; rw [Cardinal.ord_aleph]; exact hγ_lt (enum k)
-    have hS_lt : (⨆ k, γ_seq k) < Ordinal.omega 1 := by
-      rw [← Cardinal.ord_aleph]
-      exact Ordinal.iSup_sequence_lt_omega_one γ_seq hγ_seq_lt
-    set S := ⨆ k, γ_seq k with hS_def
-    have hBdd : BddAbove (Set.range γ_seq) :=
-      ⟨Ordinal.omega 1, fun _ ⟨k, hk⟩ => hk ▸ le_of_lt (hγ_lt (enum k))⟩
-    have hγ_le_S : ∀ m, γ m ≤ S := by
-      intro m
-      obtain ⟨k, hk⟩ := henum m
-      calc γ m = γ (enum k) := by rw [hk]
-        _ = γ_seq k := rfl
-        _ ≤ S := le_ciSup hBdd k
-    have hSuccS_lt : Order.succ S < Ordinal.omega 1 :=
-      Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) hS_lt
-    -- Step 4: Apply per_tuple_stabilization_from_extensions
-    have hstab := per_tuple_stabilization_from_extensions γ hγ_iff hγ_lt S hγ_le_S hS_lt
-    -- Step 5: R(n, a) ⊆ [0, succ S), hence countable
-    have hR_bounded : ∀ ε, ε ∈ {ε : Ordinal.{0} | ε < Ordinal.omega 1 ∧
-        ∃ (N : Type w) (_ : L.Structure N) (_ : Countable N) (b : Fin n → N),
-          BFEquiv (L := L) ε n a b ∧ ¬BFEquiv (L := L) (Order.succ ε) n a b} →
-        ε < Order.succ S := by
-      intro ε ⟨hε_lt, N, instN, instCN, b, hBF, hNot⟩
-      by_contra hge
-      push_neg at hge
-      have hsucc_ε_lt : Order.succ ε < Ordinal.omega 1 :=
-        Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) hε_lt
-      exact hNot ((hstab ε hge hε_lt hsucc_ε_lt N b).mp hBF)
-    apply Set.Countable.mono (s₂ := Set.Iio (Order.succ S))
-    · exact fun ε hε => hR_bounded ε hε
-    · exact Set.countable_Iio_of_lt_omega1 (Order.succ S) hSuccS_lt
 
 /-! ### Self-stabilization to full stabilization
 
@@ -340,7 +212,7 @@ theorem countableRefinementHypothesis : CountableRefinementHypothesis.{u, v, w} 
   have hγ_lt : γ < Ordinal.omega 1 := by
     have := Ordinal.iSup_sequence_lt_omega_one _ hα_k_lt
     rwa [Cardinal.ord_aleph] at this
-  apply Set.Countable.mono (s₂ := Set.Iio γ) _ (Set.countable_Iio_of_lt_omega1 γ hγ_lt)
+  apply Set.Countable.mono (s₂ := Set.Iio γ) _ (countable_Iio_of_lt_omega1 γ hγ_lt)
   intro ε ⟨_, N, instN, instCN, b, hBF, hNot⟩
   simp only [Set.mem_Iio]
   by_contra hge; push_neg at hge
