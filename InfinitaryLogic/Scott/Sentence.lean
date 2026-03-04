@@ -712,7 +712,7 @@ The key insight: at the (n+1)-level, the extension iff gives strong stabilizatio
 (BFEquiv constant past `γ m`). So the forth/back witness sets stabilize: for `β ≥ γ m`,
 the set of valid witnesses is the same as at `γ m`. This handles both successor `α`
 (witnesses from forth/back at `δ ≥ S`) and limit `α` (intersection of stabilized sets). -/
-private theorem per_tuple_stabilization_from_extensions
+theorem per_tuple_stabilization_from_extensions
     {M : Type w} [L.Structure M]
     {n : ℕ} {a : Fin n → M}
     (γ : M → Ordinal.{0})
