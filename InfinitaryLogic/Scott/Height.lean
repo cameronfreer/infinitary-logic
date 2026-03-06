@@ -7,6 +7,7 @@ import InfinitaryLogic.Scott.QuantifierRank
 import InfinitaryLogic.Scott.Rank
 import InfinitaryLogic.Scott.RefinementCount
 import InfinitaryLogic.Karp.PotentialIso
+import Architect
 
 /-!
 # Scott Height and Canonical Scott Sentence
@@ -265,6 +266,7 @@ theorem canonicalScottSentence_qrank_of
 /-! ### Unconditional Wrappers (via CRH) -/
 
 /-- Scott height is less than ω₁ for countable structures. -/
+@[blueprint "thm:scottHeight-lt-omega1"]
 theorem scottHeight_lt_omega1 (M : Type w) [L.Structure M] [Countable M] :
     scottHeight (L := L) M < Ordinal.omega 1 :=
   scottHeight_lt_omega1_of countableRefinementHypothesis M

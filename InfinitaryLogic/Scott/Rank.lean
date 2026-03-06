@@ -6,6 +6,7 @@ Authors: Cameron Freer
 import InfinitaryLogic.Scott.Sentence
 import InfinitaryLogic.Scott.RefinementCount
 import Mathlib.SetTheory.Cardinal.Regular
+import Architect
 
 /-!
 # Scott Rank
@@ -55,6 +56,7 @@ noncomputable def elementRank {M : Type w} [L.Structure M] (m : M) : Ordinal.{0}
 
 /-- The Scott rank of a structure M is the supremum of element ranks + 1.
 We use Ordinal.{0} for consistency with elementRank and stabilizationOrdinal. -/
+@[blueprint "def:scottRank"]
 noncomputable def scottRank (M : Type w) [L.Structure M] [Countable M] : Ordinal.{0} :=
   ⨆ (m : M), elementRank (L := L) m + 1
 
@@ -122,6 +124,7 @@ theorem elementRank_lt_omega1 {M : Type w} [L.Structure M] [Countable M] (m : M)
   elementRank_lt_omega1_of countableRefinementHypothesis m
 
 /-- Scott rank of a countable structure is a countable ordinal. -/
+@[blueprint "thm:scottRank-lt-omega1"]
 theorem scottRank_lt_omega1 (M : Type w) [L.Structure M] [Countable M] :
     scottRank (L := L) M < (Ordinal.omega 1 : Ordinal.{0}) :=
   scottRank_lt_omega1_of countableRefinementHypothesis M

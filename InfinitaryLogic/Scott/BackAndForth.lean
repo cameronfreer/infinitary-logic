@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Scott.AtomicDiagram
+import Architect
 
 /-!
 # Back-and-Forth Equivalence
@@ -113,6 +114,7 @@ At successor α + 1: same atomic type, plus:
   - (back) for every n in N, there exists m in M with BFEquiv α (snoc a m) (snoc b n)
 At limit λ: BFEquiv β for all β < λ.
 -/
+@[blueprint "def:BFEquiv"]
 noncomputable def BFEquiv (α : Ordinal) (n : ℕ) (a : Fin n → M) (b : Fin n → N) : Prop :=
   Ordinal.limitRecOn α
     -- Zero case: same atomic type

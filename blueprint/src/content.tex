@@ -1,0 +1,105 @@
+% Blueprint content for the infinitary logic formalization
+
+\chapter{Infinitary Logic}
+
+This project formalizes the theory of infinitary logic ($\Lomegaone$), Scott sentences,
+back-and-forth equivalence, and Karp's theorem in Lean~4 using Mathlib.
+
+\section{Back-and-Forth Equivalence}
+
+\begin{definition}[Back-and-forth equivalence]\label{def:BFEquiv}\lean{BFEquiv}\leanok
+  For structures $M$ and $N$ over a language $L$, ordinal $\alpha$, and tuples
+  $a \in M^n$, $b \in N^n$, we define $\BFEquiv_\alpha(a,b)$ by transfinite recursion:
+  \begin{itemize}
+    \item $\alpha = 0$: $a$ and $b$ satisfy the same atomic formulas.
+    \item $\alpha = \beta + 1$: for every $m \in M$ there exists $n' \in N$ with
+      $\BFEquiv_\beta(a \cdot m, b \cdot n')$, and symmetrically.
+    \item $\alpha$ limit: $\BFEquiv_\beta(a,b)$ for all $\beta < \alpha$.
+  \end{itemize}
+\end{definition}
+
+\section{Scott Formulas and Sentences}
+
+\begin{definition}[Scott formula]\label{def:scottFormula}\lean{scottFormula}\leanok
+  \uses{def:BFEquiv}
+  For a tuple $a \in M^n$ and ordinal $\alpha < \omegaone$, the Scott formula
+  $\sigma_\alpha(a)$ is an $\Lomegaone$-formula capturing back-and-forth equivalence
+  at level $\alpha$.
+\end{definition}
+
+\begin{theorem}[Scott formula characterization]\label{thm:scottFormula-iff}
+  \lean{realize_scottFormula_iff_BFEquiv}\leanok
+  \uses{def:scottFormula, def:BFEquiv}
+  For countable $M$, $\sigma_\alpha(a)$ is realized by $b$ in $N$ if and only if
+  $\BFEquiv_\alpha(a,b)$.
+\end{theorem}
+
+\section{Self-Stabilization}
+
+\begin{theorem}[Self-stabilization]\label{thm:self-stabilization}
+  \lean{exists_complete_self_stabilization}\leanok
+  \uses{def:BFEquiv}
+  For any countable $L$-structure $M$, there exists an ordinal $\alpha < \omegaone$
+  such that $M$ self-stabilizes completely at level $\alpha$: for every tuple $a$,
+  $\BFEquiv_\alpha(a,a')$ implies $\BFEquiv_{\alpha+1}(a,a')$ within $M$.
+\end{theorem}
+
+\section{Scott Sentence}
+
+\begin{theorem}[Scott sentence characterization (conditional)]\label{thm:scott-characterizes-of}
+  \lean{scottSentence_characterizes_of}\leanok
+  \uses{thm:self-stabilization, thm:scottFormula-iff}
+  Assuming the countable refinement hypothesis, the Scott sentence of a countable
+  structure $M$ characterizes $M$ up to isomorphism among countable structures.
+\end{theorem}
+
+\chapter{Countable Refinement}
+
+\section{Countable Refinement Hypothesis}
+
+\begin{theorem}[Countable Refinement Hypothesis]\label{thm:CRH}
+  \lean{countableRefinementHypothesis}\leanok
+  \uses{thm:self-stabilization}
+  For any countable language $L$, the back-and-forth equivalence hierarchy on
+  countable $L$-structures stabilizes below $\omegaone$: for every tuple $a$ in $M$
+  and $b$ in $N$, if $\BFEquiv_\alpha(a,b)$ for all $\alpha < \omegaone$ then
+  $\BFEquiv_\alpha(a,b)$ for all ordinals $\alpha$.
+\end{theorem}
+
+\begin{theorem}[Scott sentence characterization]\label{thm:scott-characterizes}
+  \lean{scottSentence_characterizes}\leanok
+  \uses{thm:CRH, thm:scott-characterizes-of}
+  The Scott sentence of a countable structure $M$ characterizes $M$ up to isomorphism
+  among countable structures. (Unconditional corollary of the CRH.)
+\end{theorem}
+
+\section{Scott Rank and Height}
+
+\begin{definition}[Scott rank]\label{def:scottRank}\lean{scottRank}\leanok
+  \uses{def:BFEquiv}
+  The Scott rank of a countable structure $M$ is
+  $\scottRank(M) = \sup_{m \in M}(\mathrm{er}(m) + 1)$, where $\mathrm{er}(m)$
+  is the element rank.
+\end{definition}
+
+\begin{theorem}[Scott rank below $\omegaone$]\label{thm:scottRank-lt-omega1}
+  \lean{scottRank_lt_omega1}\leanok
+  \uses{def:scottRank, thm:CRH}
+  For any countable $L$-structure $M$, $\scottRank(M) < \omegaone$.
+\end{theorem}
+
+\begin{theorem}[Scott height below $\omegaone$]\label{thm:scottHeight-lt-omega1}
+  \lean{scottHeight_lt_omega1}\leanok
+  \uses{thm:CRH}
+  For any countable $L$-structure $M$, $\scottHeight(M) < \omegaone$.
+\end{theorem}
+
+\chapter{Karp's Theorem}
+
+\begin{theorem}[Karp's theorem]\label{thm:karp-theorem}
+  \lean{karp_theorem_w}\leanok
+  \uses{def:BFEquiv}
+  Two structures $M$ and $N$ are back-and-forth equivalent (there exists a potential
+  isomorphism) if and only if they are $\Linf$-equivalent (satisfy the same
+  sentences of $\Linf$).
+\end{theorem}

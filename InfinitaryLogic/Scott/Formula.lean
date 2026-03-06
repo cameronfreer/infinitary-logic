@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Scott.BackAndForth
+import Architect
 
 /-!
 # Scott Formulas
@@ -213,6 +214,7 @@ The definition uses `Ordinal.limitRecOn` with a motive that is constant in the o
 (always `(n : ℕ) → (Fin n → M) → L.Formulaω (Fin n)`), allowing uniform treatment of
 tuples of different lengths in the recursion.
 -/
+@[blueprint "def:scottFormula"]
 noncomputable def scottFormula {n : ℕ} (a : Fin n → M) (α : Ordinal) : L.Formulaω (Fin n) :=
   haveI : Encodable M := Encodable.ofCountable M
   Ordinal.limitRecOn (motive := fun _ => (k : ℕ) → (Fin k → M) → L.Formulaω (Fin k)) α
@@ -275,6 +277,7 @@ The proof proceeds by ordinal induction using `limitRecOn`:
 - Successor case: uses `realize_existsLastVar` and `realize_forallLastVar`
 - Limit case: uses `realize_einf`
 -/
+@[blueprint "thm:scottFormula-iff"]
 theorem realize_scottFormula_iff_BFEquiv
     {N : Type w'} [L.Structure N] {n : ℕ}
     (a : Fin n → M) (b : Fin n → N) (α : Ordinal) (hα : α < Ordinal.omega 1) :

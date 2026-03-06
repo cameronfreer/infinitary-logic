@@ -7,6 +7,7 @@ import InfinitaryLogic.Karp.PotentialIso
 import InfinitaryLogic.Linf.Operations
 import InfinitaryLogic.Linf.QuantifierRank
 import InfinitaryLogic.Linf.Theory
+import Architect
 
 /-!
 # Karp's Theorem
@@ -448,6 +449,7 @@ Both directions are fully proved:
 - Forward: structural induction on formulas, using PotentialIso.forth/back for `all`.
 - Backward: direct construction of PotentialIso family from formula agreement, using
   `iInf` indexed by `N : Type w` to build separating formulas (requires `uι = w`). -/
+@[blueprint "thm:karp-theorem"]
 theorem karp_theorem_w :
     Nonempty (PotentialIso L M N) ↔ LinfEquivW L M N :=
   ⟨fun ⟨P⟩ => PotentialIso_implies_LinfEquivW P,

@@ -8,5 +8,10 @@ name = "mathlib"
 git = "https://github.com/leanprover-community/mathlib4"
 rev = "v4.27.0"
 
+[[require]]
+name = "LeanArchitect"
+git = "https://github.com/hanwenzhu/LeanArchitect.git"
+rev = "4373fe8"
+
 [[lean_lib]]
 name = "InfinitaryLogic"
