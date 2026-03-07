@@ -46,9 +46,23 @@ back-and-forth equivalence, and Karp's theorem in Lean~4 using Mathlib.
 
 \section{Scott Sentence}
 
+\begin{definition}[Stabilization ordinal]\label{def:stabilization-ordinal}
+  \lean{stabilizationOrdinal}\leanok
+  \uses{def:BFEquiv}
+  The stabilization ordinal of a countable structure $M$ is the least ordinal $\alpha$
+  such that the Scott analysis stabilizes at level $\alpha$.
+\end{definition}
+
+\begin{definition}[Scott sentence]\label{def:scott-sentence}
+  \lean{scottSentence}\leanok
+  \uses{def:scottFormula, def:stabilization-ordinal}
+  The Scott sentence of a countable structure $M$ is the Scott formula for the empty
+  tuple at the stabilization ordinal: $\sigma_{\alpha_0}(\langle\rangle)$.
+\end{definition}
+
 \begin{theorem}[Scott sentence characterization (conditional)]\label{thm:scott-characterizes-of}
   \lean{scottSentence_characterizes_of}\leanok
-  \uses{thm:self-stabilization, thm:scottFormula-iff}
+  \uses{def:scott-sentence, thm:self-stabilization, thm:scottFormula-iff}
   Assuming the countable refinement hypothesis, the Scott sentence of a countable
   structure $M$ characterizes $M$ up to isomorphism among countable structures.
 \end{theorem}
@@ -88,17 +102,37 @@ back-and-forth equivalence, and Karp's theorem in Lean~4 using Mathlib.
   For any countable $L$-structure $M$, $\scottRank(M) < \omegaone$.
 \end{theorem}
 
+\begin{definition}[Scott height]\label{def:scottHeight}\lean{scottHeight}\leanok
+  \uses{def:BFEquiv}
+  The Scott height of a countable structure $M$ is the least ordinal $\alpha$ such
+  that $\BFEquiv_\alpha(a,b)$ implies $\BFEquiv_{\alpha+1}(a,b)$ for all tuples $a,b$
+  in any countable structures.
+\end{definition}
+
 \begin{theorem}[Scott height below $\omegaone$]\label{thm:scottHeight-lt-omega1}
   \lean{scottHeight_lt_omega1}\leanok
-  \uses{thm:CRH}
+  \uses{def:scottHeight, thm:CRH}
   For any countable $L$-structure $M$, $\scottHeight(M) < \omegaone$.
 \end{theorem}
 
 \chapter{Karp's Theorem}
 
+\begin{definition}[Potential isomorphism]\label{def:potential-iso}
+  \lean{PotentialIso}\leanok
+  \uses{def:BFEquiv}
+  A potential isomorphism between structures $M$ and $N$ is a family of finite partial
+  maps containing the empty map and closed under extension in both directions.
+\end{definition}
+
+\begin{definition}[$L_{\infty\omega}$-equivalence]\label{def:linf-equiv}
+  \lean{LinfEquivW}\leanok
+  $L_{\infty\omega}$-equivalence between structures $M$ and $N$: they satisfy the same
+  sentences of $L_{\infty\omega}$.
+\end{definition}
+
 \begin{theorem}[Karp's theorem]\label{thm:karp-theorem}
   \lean{karp_theorem_w}\leanok
-  \uses{def:BFEquiv}
+  \uses{def:potential-iso, def:linf-equiv, def:BFEquiv}
   Two structures $M$ and $N$ are back-and-forth equivalent (there exists a potential
   isomorphism) if and only if they are $\Linf$-equivalent (satisfy the same
   sentences of $\Linf$).

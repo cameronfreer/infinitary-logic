@@ -197,7 +197,8 @@ the monotonicity of BFEquiv gives BFEquiv (α₀+k) for all k. The "constant cha
 (`witness_at_all_levels`) shows that forth/back witnesses at level α₀ work at all higher
 levels (via self-stabilization + transitivity), so `BFEquiv_of_all_finite_levels` upgrades
 BFEquiv to the successor. Hence no refinement ordinals exist above γ < ω₁. -/
-@[blueprint "thm:CRH"]
+@[blueprint "thm:CRH"
+  (title := /-- Countable refinement hypothesis --/)]
 theorem countableRefinementHypothesis : CountableRefinementHypothesis.{u, v, w} L := by
   intro M inst_struct inst_count n a
   obtain ⟨α₀, hα₀_lt, hstab⟩ := exists_complete_self_stabilization (L := L) M
@@ -273,7 +274,8 @@ theorem stabilizationOrdinal_spec (M : Type w) [L.Structure M] [Countable M]
   stabilizationOrdinal_stabilizes M N
 
 /-- The Scott sentence of M characterizes M up to isomorphism among countable structures. -/
-@[blueprint "thm:scott-characterizes"]
+@[blueprint "thm:scott-characterizes"
+  (title := /-- Scott characterization --/)]
 theorem scottSentence_characterizes (M : Type w) [L.Structure M] [Countable M]
     (N : Type w) [L.Structure N] [Countable N] :
     (scottSentence (L := L) M).realize_as_sentence N ↔ Nonempty (M ≃[L] N) :=

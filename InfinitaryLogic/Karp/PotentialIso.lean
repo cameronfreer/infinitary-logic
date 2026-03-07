@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Linf.Theory
 import InfinitaryLogic.Scott.BackAndForth
+import Architect
 
 /-!
 # Potential Isomorphism
@@ -43,6 +44,8 @@ under extension in both directions.
 
 This is the model-theoretic notion corresponding to "back-and-forth system" or
 "winning strategy in the infinite EF game." -/
+@[blueprint "def:potential-iso"
+  (title := /-- Potential isomorphism --/)]
 structure PotentialIso (L : Language.{u, v}) [L.IsRelational]
     (M : Type w) (N : Type w') [L.Structure M] [L.Structure N] where
   /-- The family of partial maps, represented as pairs of tuples of equal length. -/

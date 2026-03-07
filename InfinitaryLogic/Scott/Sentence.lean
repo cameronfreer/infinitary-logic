@@ -286,7 +286,8 @@ Take globalStab = sup of all change ordinals that are < ω₁ (one per triple).
 By countability of the sigma type and regularity of ω₁, globalStab < ω₁.
 At globalStab, for each triple, either the change ordinal is ≤ globalStab (both sides
 False) or > globalStab (both sides True since succ globalStab < ω₁). -/
-@[blueprint "thm:self-stabilization"]
+@[blueprint "thm:self-stabilization"
+  (title := /-- Self-stabilization --/)]
 theorem exists_complete_self_stabilization (M : Type w) [L.Structure M] [Countable M] :
     ∃ α < (Ordinal.omega 1 : Ordinal.{0}), SelfStabilizesCompletely (L := L) M α := by
   -- For each triple (n, a, a'), define the "change ordinal":
@@ -1105,6 +1106,8 @@ theorem BFEquiv_stabilization_implies_equiv {M N : Type w} [L.Structure M] [L.St
 
 /-- The stabilization ordinal for a structure M: the least ordinal where the Scott analysis
 stabilizes. We fix the ordinal universe to 0 for consistency with our BFEquiv definitions. -/
+@[blueprint "def:stabilization-ordinal"
+  (title := /-- Stabilization ordinal --/)]
 noncomputable def stabilizationOrdinal (M : Type w) [L.Structure M] [Countable M] :
     Ordinal.{0} :=
   sInf {α : Ordinal.{0} | StabilizesAt (L := L) M α}
@@ -1113,6 +1116,8 @@ noncomputable def stabilizationOrdinal (M : Type w) [L.Structure M] [Countable M
 
 A sentence is a formula with no free variables, which corresponds to `Formulaω (Fin 0)`
 since `Fin 0` is empty. -/
+@[blueprint "def:scott-sentence"
+  (title := /-- Scott sentence --/)]
 noncomputable def scottSentence (M : Type w) [L.Structure M] [Countable M] : L.Formulaω (Fin 0) :=
   scottFormula (L := L) (M := M) (n := 0) Fin.elim0
     (stabilizationOrdinal (L := L) M)
@@ -1168,7 +1173,8 @@ theorem stabilizationOrdinal_stabilizes_of
 A countable structure N satisfies the Scott sentence of M iff M ≅ N.
 Uses the same `scottSentence M` definition; only the proof is rebuilt
 through the conditional pipeline. -/
-@[blueprint "thm:scott-characterizes-of"]
+@[blueprint "thm:scott-characterizes-of"
+  (title := /-- Scott characterization (conditional) --/)]
 theorem scottSentence_characterizes_of
     (hcount : CountableRefinementHypothesis.{u, v, w} L)
     (M : Type w) [L.Structure M] [Countable M]

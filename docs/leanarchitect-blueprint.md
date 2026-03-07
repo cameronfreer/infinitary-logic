@@ -10,7 +10,9 @@ Generate blueprint artifacts directly from Lean declarations in `InfinitaryLogic
 
 - Current project toolchain: Lean `v4.27.0` (`lean-toolchain`).
 - Use a LeanArchitect revision compatible with Lean `v4.27.0`.
-- Reservoir metadata indicates commit `4373fe8` supports `v4.27.0`.
+- We use a fork (`cameronfreer/LeanArchitect`) that comments out the explicit `batteries`
+  dependency, which conflicts with Mathlib's batteries version and causes hours of recompilation.
+  See [batteries version conflict](#batteries-version-conflict) below.
 
 ## 1. Install Prerequisites
 
@@ -26,13 +28,13 @@ sudo apt install graphviz libgraphviz-dev
 
 ## 2. Add LeanArchitect Dependency
 
-Edit `lakefile.toml`:
+The dependency is already configured in `lakefile.toml`, pointing to the patched fork:
 
 ```toml
 [[require]]
 name = "LeanArchitect"
-git = "https://github.com/hanwenzhu/LeanArchitect.git"
-rev = "4373fe8"
+git = "https://github.com/cameronfreer/LeanArchitect.git"
+rev = "<commit-sha>"
 ```
 
 Then update/build deps:
@@ -51,21 +53,33 @@ Example (`InfinitaryLogic/Scott/RefinementCount.lean`):
 ```lean
 import Architect
 
-@[blueprint "thm:countable-refinement-hypothesis"
-  (statement := /-- For countable `M`, refinement ordinals for a fixed tuple are countable. -/)
-  (title := /-- Countable Refinement Hypothesis -/)]
+@[blueprint "thm:CRH"
+  (title := /-- Countable refinement hypothesis --/)]
 theorem countableRefinementHypothesis : CountableRefinementHypothesis.{u, v, w} L := by
   ...
 ```
 
-Suggested first wave of nodes:
+### Current annotated nodes (16 total)
 
-- `thm:countable-refinement-hypothesis`
-- `thm:per-tuple-stabilization-below-omega1`
-- `thm:exists-complete-stabilization`
-- `thm:scott-sentence-characterizes`
-- `thm:scott-height-lt-omega1`
-- `thm:countable-lomega-equiv-implies-iso`
+**Definitions (8):**
+- `def:BFEquiv` — Back-and-forth equivalence
+- `def:scottFormula` — Scott formula
+- `def:stabilization-ordinal` — Stabilization ordinal
+- `def:scott-sentence` — Scott sentence
+- `def:scottRank` — Scott rank
+- `def:scottHeight` — Scott height
+- `def:potential-iso` — Potential isomorphism
+- `def:linf-equiv` — $L_{\infty\omega}$-equivalence
+
+**Theorems (8):**
+- `thm:scottFormula-iff` — Scott formula characterization
+- `thm:self-stabilization` — Self-stabilization
+- `thm:scott-characterizes-of` — Scott characterization (conditional)
+- `thm:CRH` — Countable refinement hypothesis
+- `thm:scott-characterizes` — Scott characterization
+- `thm:scottRank-lt-omega1` — Scott rank below $\omega_1$
+- `thm:scottHeight-lt-omega1` — Scott height below $\omega_1$
+- `thm:karp-theorem` — Karp's theorem
 
 ## 4. Create/Use Blueprint LaTeX Skeleton
 
@@ -77,18 +91,14 @@ leanblueprint new
 
 This creates `blueprint/src/*` and blueprint workflows/layout.
 
-In `blueprint/src/content.tex`, include extracted LeanArchitect output and selected nodes:
+In `blueprint/src/content.tex`, the narrative references LeanArchitect labels:
 
 ```tex
-% Expose \inputleanmodule and \inputleannode.
-\input{../../.lake/build/blueprint/library/InfinitaryLogic}
-
-% Pull individual nodes:
-\inputleannode{thm:countable-refinement-hypothesis}
-\inputleannode{thm:scott-sentence-characterizes}
-
-% Or pull all tagged nodes from a module:
-% \inputleanmodule{InfinitaryLogic.Scott.RefinementCount}
+\begin{definition}[Scott sentence]\label{def:scott-sentence}
+  \lean{scottSentence}\leanok
+  \uses{def:scottFormula, def:stabilization-ordinal}
+  The Scott sentence of a countable structure $M$ is ...
+\end{definition}
 ```
 
 ## 5. Extract and Render
@@ -131,6 +141,16 @@ If using a blueprint GitHub Action, ensure extraction runs before rendering:
 
 ## 8. Troubleshooting
 
-- If `leanblueprint checkdecls` fails, run `lake build` first.
+### Batteries version conflict
+
+LeanArchitect upstream (`hanwenzhu/LeanArchitect`) pins `batteries` at a version that conflicts
+with Mathlib's batteries, causing Lake to rebuild Mathlib from source (~hours). The workaround
+is to use a fork that comments out the explicit `require batteries` line, since Mathlib already
+provides batteries transitively.
+
+If the upstream merges the fix, the fork can be replaced with the upstream URL.
+
+### Other issues
+
 - If web render fails on bibliography, run `leanblueprint pdf` before `leanblueprint web`.
 - If extracted dependency edges are noisy, override with `uses := [...]` or `proofUses := [...]` in `@[blueprint]`.

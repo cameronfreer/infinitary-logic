@@ -114,7 +114,8 @@ At successor α + 1: same atomic type, plus:
   - (back) for every n in N, there exists m in M with BFEquiv α (snoc a m) (snoc b n)
 At limit λ: BFEquiv β for all β < λ.
 -/
-@[blueprint "def:BFEquiv"]
+@[blueprint "def:BFEquiv"
+  (title := /-- Back-and-forth equivalence --/)]
 noncomputable def BFEquiv (α : Ordinal) (n : ℕ) (a : Fin n → M) (b : Fin n → N) : Prop :=
   Ordinal.limitRecOn α
     -- Zero case: same atomic type

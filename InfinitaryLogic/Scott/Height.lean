@@ -60,6 +60,8 @@ for all tuples.
 
 Scott height is related to but may differ from Scott rank. We always have
 scottHeight ≤ scottRank. -/
+@[blueprint "def:scottHeight"
+  (title := /-- Scott height --/)]
 noncomputable def scottHeight (M : Type w) [L.Structure M] [Countable M] : Ordinal.{0} :=
   sInf {α : Ordinal.{0} | ∀ {n : ℕ} (a : Fin n → M)
     (N : Type w) [L.Structure N] [Countable N] (b : Fin n → N),
@@ -266,7 +268,8 @@ theorem canonicalScottSentence_qrank_of
 /-! ### Unconditional Wrappers (via CRH) -/
 
 /-- Scott height is less than ω₁ for countable structures. -/
-@[blueprint "thm:scottHeight-lt-omega1"]
+@[blueprint "thm:scottHeight-lt-omega1"
+  (title := /-- Scott height below ω₁ --/)]
 theorem scottHeight_lt_omega1 (M : Type w) [L.Structure M] [Countable M] :
     scottHeight (L := L) M < Ordinal.omega 1 :=
   scottHeight_lt_omega1_of countableRefinementHypothesis M

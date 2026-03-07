@@ -214,7 +214,8 @@ The definition uses `Ordinal.limitRecOn` with a motive that is constant in the o
 (always `(n : ℕ) → (Fin n → M) → L.Formulaω (Fin n)`), allowing uniform treatment of
 tuples of different lengths in the recursion.
 -/
-@[blueprint "def:scottFormula"]
+@[blueprint "def:scottFormula"
+  (title := /-- Scott formula --/)]
 noncomputable def scottFormula {n : ℕ} (a : Fin n → M) (α : Ordinal) : L.Formulaω (Fin n) :=
   haveI : Encodable M := Encodable.ofCountable M
   Ordinal.limitRecOn (motive := fun _ => (k : ℕ) → (Fin k → M) → L.Formulaω (Fin k)) α
@@ -277,7 +278,8 @@ The proof proceeds by ordinal induction using `limitRecOn`:
 - Successor case: uses `realize_existsLastVar` and `realize_forallLastVar`
 - Limit case: uses `realize_einf`
 -/
-@[blueprint "thm:scottFormula-iff"]
+@[blueprint "thm:scottFormula-iff"
+  (title := /-- Scott formula characterization --/)]
 theorem realize_scottFormula_iff_BFEquiv
     {N : Type w'} [L.Structure N] {n : ℕ}
     (a : Fin n → M) (b : Fin n → N) (α : Ordinal) (hα : α < Ordinal.omega 1) :
