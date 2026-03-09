@@ -198,7 +198,16 @@ the monotonicity of BFEquiv gives BFEquiv (α₀+k) for all k. The "constant cha
 levels (via self-stabilization + transitivity), so `BFEquiv_of_all_finite_levels` upgrades
 BFEquiv to the successor. Hence no refinement ordinals exist above γ < ω₁. -/
 @[blueprint "thm:CRH"
-  (title := /-- Countable refinement hypothesis --/)]
+  (title := /-- Countable refinement hypothesis -/)
+  (statement := /-- For any countable relational language $L$, countable $L$-structure
+    $M$, tuple size $n$, and tuple $a \in M^n$, the set of refinement ordinals
+    $\{\varepsilon < \omegaone \mid \exists (N, b)\, \BFEquiv_\varepsilon(a,b)
+    \wedge \neg\BFEquiv_{\varepsilon+1}(a,b)\}$ is countable. -/)
+  (proof := /-- From self-stabilization: witnesses at $\alpha_0$ persist at all
+    $\alpha_0 + k$. The chain $\alpha_0, \alpha_0+1, \ldots$ has limit
+    $\gamma < \omegaone$ which is itself a limit ordinal, giving BFEquiv at $\gamma$
+    and hence at all ordinals. -/)
+  (proofUses := [exists_complete_self_stabilization])]
 theorem countableRefinementHypothesis : CountableRefinementHypothesis.{u, v, w} L := by
   intro M inst_struct inst_count n a
   obtain ⟨α₀, hα₀_lt, hstab⟩ := exists_complete_self_stabilization (L := L) M
@@ -275,7 +284,9 @@ theorem stabilizationOrdinal_spec (M : Type w) [L.Structure M] [Countable M]
 
 /-- The Scott sentence of M characterizes M up to isomorphism among countable structures. -/
 @[blueprint "thm:scott-characterizes"
-  (title := /-- Scott characterization --/)]
+  (title := /-- Scott characterization -/)
+  (statement := /-- The Scott sentence of a countable structure $M$ characterizes $M$
+    up to isomorphism among countable structures (unconditional corollary of CRH). -/)]
 theorem scottSentence_characterizes (M : Type w) [L.Structure M] [Countable M]
     (N : Type w) [L.Structure N] [Countable N] :
     (scottSentence (L := L) M).realize_as_sentence N ↔ Nonempty (M ≃[L] N) :=

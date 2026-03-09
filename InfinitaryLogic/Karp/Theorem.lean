@@ -450,7 +450,14 @@ Both directions are fully proved:
 - Backward: direct construction of PotentialIso family from formula agreement, using
   `iInf` indexed by `N : Type w` to build separating formulas (requires `uι = w`). -/
 @[blueprint "thm:karp-theorem"
-  (title := /-- Karp's theorem --/)]
+  (title := /-- Karp's theorem -/)
+  (statement := /-- $M$ and $N$ admit a potential isomorphism if and only if they are
+    $L_{\infty\omega}^w$-equivalent (satisfy the same $L_{\infty\omega}$ sentences
+    with index types in universe $w$). -/)
+  (proof := /-- Forward: a potential isomorphism witnesses agreement on all
+    $L_{\infty\omega}$ sentences by induction on formula complexity. Backward: BFEquiv
+    at all ordinals gives a potential isomorphism via the game-tree family. -/)
+  (proofUses := [PotentialIso_implies_LinfEquivW, LinfEquivW_implies_potentialIso])]
 theorem karp_theorem_w :
     Nonempty (PotentialIso L M N) ↔ LinfEquivW L M N :=
   ⟨fun ⟨P⟩ => PotentialIso_implies_LinfEquivW P,

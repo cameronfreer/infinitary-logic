@@ -57,7 +57,10 @@ noncomputable def elementRank {M : Type w} [L.Structure M] (m : M) : Ordinal.{0}
 /-- The Scott rank of a structure M is the supremum of element ranks + 1.
 We use Ordinal.{0} for consistency with elementRank and stabilizationOrdinal. -/
 @[blueprint "def:scottRank"
-  (title := /-- Scott rank --/)]
+  (title := /-- Scott rank -/)
+  (statement := /-- The Scott rank of a countable structure $M$:
+    $\scottRank(M) = \sup_{m \in M}(\mathrm{er}(m) + 1)$, where $\mathrm{er}(m)$
+    is the element rank. -/)]
 noncomputable def scottRank (M : Type w) [L.Structure M] [Countable M] : Ordinal.{0} :=
   ⨆ (m : M), elementRank (L := L) m + 1
 
@@ -126,7 +129,9 @@ theorem elementRank_lt_omega1 {M : Type w} [L.Structure M] [Countable M] (m : M)
 
 /-- Scott rank of a countable structure is a countable ordinal. -/
 @[blueprint "thm:scottRank-lt-omega1"
-  (title := /-- Scott rank below ω₁ --/)]
+  (title := /-- Scott rank below ω₁ -/)
+  (statement := /-- For any countable $L$-structure $M$,
+    $\scottRank(M) < \omegaone$. -/)]
 theorem scottRank_lt_omega1 (M : Type w) [L.Structure M] [Countable M] :
     scottRank (L := L) M < (Ordinal.omega 1 : Ordinal.{0}) :=
   scottRank_lt_omega1_of countableRefinementHypothesis M

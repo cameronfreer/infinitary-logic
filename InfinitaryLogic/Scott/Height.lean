@@ -61,7 +61,10 @@ for all tuples.
 Scott height is related to but may differ from Scott rank. We always have
 scottHeight ≤ scottRank. -/
 @[blueprint "def:scottHeight"
-  (title := /-- Scott height --/)]
+  (title := /-- Scott height -/)
+  (statement := /-- The Scott height of a countable structure $M$: the least ordinal
+    $\alpha$ such that $\BFEquiv_\alpha(a,b) \Rightarrow \BFEquiv_{\alpha+1}(a,b)$ for
+    all tuples $a,b$ in any countable structures. -/)]
 noncomputable def scottHeight (M : Type w) [L.Structure M] [Countable M] : Ordinal.{0} :=
   sInf {α : Ordinal.{0} | ∀ {n : ℕ} (a : Fin n → M)
     (N : Type w) [L.Structure N] [Countable N] (b : Fin n → N),
@@ -269,7 +272,9 @@ theorem canonicalScottSentence_qrank_of
 
 /-- Scott height is less than ω₁ for countable structures. -/
 @[blueprint "thm:scottHeight-lt-omega1"
-  (title := /-- Scott height below ω₁ --/)]
+  (title := /-- Scott height below ω₁ -/)
+  (statement := /-- For any countable $L$-structure $M$,
+    $\scottHeight(M) < \omegaone$. -/)]
 theorem scottHeight_lt_omega1 (M : Type w) [L.Structure M] [Countable M] :
     scottHeight (L := L) M < Ordinal.omega 1 :=
   scottHeight_lt_omega1_of countableRefinementHypothesis M

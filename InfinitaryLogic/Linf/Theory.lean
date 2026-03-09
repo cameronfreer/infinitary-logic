@@ -170,7 +170,9 @@ so that index types for `iSup`/`iInf` may be any `Type w`. This is the "universe
 version needed for the sorry-free Karp theorem at higher universes: the backward direction
 requires constructing formulas with `iInf` indexed by `N : Type w`, which needs `uι = w`. -/
 @[blueprint "def:linf-equiv"
-  (title := /-- $L_{\infty\omega}$-equivalence --/)]
+  (title := /-- $L_{\infty\omega}$-equivalence -/)
+  (statement := /-- $L_{\infty\omega}$-equivalence: $M$ and $N$ satisfy the same
+    $L_{\infty\omega}^w$ sentences, where $w$ is the universe of the index types. -/)]
 def LinfEquivW (L : Language.{u, v}) (M N : Type w) [L.Structure M] [L.Structure N] : Prop :=
   ∀ φ : BoundedFormulaInf.{u, v, 0, w} L Empty 0,
     SentenceInf.Realize φ M ↔ SentenceInf.Realize φ N

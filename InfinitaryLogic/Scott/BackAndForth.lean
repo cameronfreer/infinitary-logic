@@ -115,7 +115,10 @@ At successor α + 1: same atomic type, plus:
 At limit λ: BFEquiv β for all β < λ.
 -/
 @[blueprint "def:BFEquiv"
-  (title := /-- Back-and-forth equivalence --/)]
+  (title := /-- Back-and-forth equivalence -/)
+  (statement := /-- Back-and-forth equivalence $\BFEquiv_\alpha(a,b)$ for tuples
+    $a \in M^n$, $b \in N^n$ at ordinal $\alpha$, defined by transfinite recursion:
+    atomic agreement at $0$, forth-and-back extension at successor, conjunction at limit. -/)]
 noncomputable def BFEquiv (α : Ordinal) (n : ℕ) (a : Fin n → M) (b : Fin n → N) : Prop :=
   Ordinal.limitRecOn α
     -- Zero case: same atomic type
