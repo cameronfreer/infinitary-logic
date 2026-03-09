@@ -8,7 +8,7 @@ A Lean 4 formalization of infinitary logic and Scott sentences, building on Math
 
 2. **Scott Rank < ω₁** - The Scott rank of any countable structure is a countable ordinal.
 
-3. **Karp's Theorem** - Back-and-forth equivalence at all ordinals characterizes Lω₁ω elementary equivalence.
+3. **Karp's Theorem** - Back-and-forth equivalence at all ordinals characterizes infinitary elementary equivalence.
 
 4. **Model Existence / Completeness** - Consistency properties yield models for Lω₁ω theories.
 
@@ -16,7 +16,33 @@ A Lean 4 formalization of infinitary logic and Scott sentences, building on Math
 
 ## Current Status
 
-The project compiles with Mathlib v4.27.0. Core definitions and main theorem statements are complete, with **7 sorry placeholders** remaining across 5 modules (see breakdown below). Most major results are fully proved.
+The project targets Lean 4 / Mathlib `v4.27.0`. There are currently **no `sorry` placeholders**
+in `InfinitaryLogic/*.lean`.
+
+The main remaining boundaries are mathematical scope rather than proof holes:
+
+- some results are formalized **conditionally** on explicit hypotheses such as
+  `CountableRefinementHypothesis` or `MorleyHanfTransfer`
+- some high-level theorems are present only in **schematic** form, where the intended
+  statement is explained in the docstring but the Lean theorem is intentionally weaker
+  pending more infrastructure
+
+## Blueprint
+
+A rendered blueprint is available directly in the repository:
+
+- [Blueprint PDF](docs/infinitary-logic-blueprint.pdf)
+- [Blueprint authoring notes](docs/leanarchitect-blueprint.md)
+
+The PDF is generated from the LeanArchitect-annotated nodes together with the narrative
+in `blueprint/src/content.tex`. To regenerate it locally:
+
+```bash
+lake build :blueprint
+lake build :blueprintJson
+leanblueprint pdf
+leanblueprint web
+```
 
 ### Implemented Results
 
@@ -37,42 +63,47 @@ The project compiles with Mathlib v4.27.0. Core definitions and main theorem sta
 - Conversion from countable L∞ω to Lω₁ω (`BoundedFormulaInf.ofCountable`)
 - Quantifier rank definitions and monotonicity lemmas
 
-**Scott sentences** (sorry-free except for `per_tuple_stabilization_below_omega1`):
+**Scott sentences and Scott analysis** (proved):
 - Atomic diagrams for relational languages
 - Back-and-forth equivalence (`BFEquiv`) indexed by ordinals
 - Scott formula and Scott sentence definitions
-- Scott rank definition
+- Scott height and Scott rank definitions
+- `countableRefinementHypothesis` (countability of refinement ordinals)
 - `realize_scottFormula_iff_BFEquiv` (Scott formula captures BF-equivalence)
-- `scottSentence_characterizes` — depends on `per_tuple_stabilization_below_omega1`
-- `scottRank_lt_omega1` — depends on `per_tuple_stabilization_below_omega1`
+- `scottSentence_characterizes`
+- `scottRank_lt_omega1`
+- `scottHeight_lt_omega1`
 
 **Karp's theorem** (fully proved, sorry-free):
-- `karp_theorem_w` (BFEquiv at all ordinals ↔ agree on all `LinfEquivW` sentences)
-- `BFEquiv_iff_agree_formulas_omega` (sorry-free)
+- `karp_theorem_w` (potential isomorphism ↔ `LinfEquivW`)
+- countable corollaries: `LomegaEquiv` / `LinfEquiv` imply isomorphism for countable structures
 
 **Model existence** (fully proved, sorry-free):
 - Consistency properties, Henkin construction, truth lemma
 - `model_existence` theorem with term model construction
-- Omitting types theorem (sorry)
+- `karp_completeness`
+- `omitting_types`
 
 **Model theory:**
 - Downward Löwenheim–Skolem for Lω₁ω (sorry-free)
-- Hanf number bounds (sorry)
-- Counting models results (inherits sorry from `per_tuple_stabilization_below_omega1`)
+- Hanf number existence (`hanf_existence`)
+- conditional Morley-Hanf bound (`morley_hanf_of_transfer`)
+- Scott-height-based counting-models infrastructure
+- schematic Morley counting dichotomy
 
 **Admissible fragments:**
-- Barwise compactness (sorry)
+- Barwise compactness
+- Barwise completeness II
 - Nadel bound (sorry-free)
 
-### Remaining Sorries (7)
+### Current Boundaries
 
-| File | Count |
-|------|------:|
-| Scott/Sentence.lean | 3 |
-| Scott/Rank.lean | 1 |
-| ModelExistence/Completeness.lean | 1 |
-| Admissible/Compactness.lean | 1 |
-| ModelTheory/Hanf.lean | 1 |
+- `CountableRefinementHypothesis` is now proved internally, but it remains a genuine
+  mathematical boundary in the Scott-analysis architecture and is highlighted as such in the code.
+- `morley_hanf_of_transfer` is conditional on the explicit hypothesis
+  `MorleyHanfTransfer`, which packages deep Erdős-Rado / Ehrenfeucht-Mostowski machinery.
+- `morley_counting_dichotomy` is currently schematic (`True` in Lean) pending descriptive
+  set theory infrastructure for coding countable structures and applying Silver-Burgess style results.
 
 ## File Structure
 
@@ -98,25 +129,27 @@ InfinitaryLogic/
 │   ├── AtomicDiagram.lean               # AtomicIdx, atomicFormula, SameAtomicType
 │   ├── BackAndForth.lean                # BFEquiv, BFStrategy, BFStrategyOmega
 │   ├── Formula.lean                     # scottFormula construction
-│   ├── Sentence.lean                    # scottSentence and main theorem
+│   ├── Sentence.lean                    # stabilization, conditional Scott pipeline
+│   ├── RefinementCount.lean             # CRH proof and unconditional Scott wrappers
 │   ├── Rank.lean                        # elementRank, scottRank, bounds
-│   ├── Height.lean                      # Scott height and related bounds
+│   ├── Height.lean                      # Scott height and canonical Scott sentence
 │   └── QuantifierRank.lean              # Quantifier rank lemmas for Scott constructs
 ├── Karp/                                # Karp's theorem
-│   ├── Theorem.lean                     # karp_theorem_w (sorry-free)
+│   ├── Theorem.lean                     # karp_theorem_w and related equivalence results
 │   ├── PotentialIso.lean                # Potential isomorphisms and BFEquiv
 │   └── CountableCorollary.lean          # Corollaries for countable structures
 ├── ModelExistence/                      # Model existence for Lω₁ω
 │   ├── ConsistencyProperty.lean         # Consistency property definition
 │   ├── Theorem.lean                     # Model existence theorem
-│   └── Completeness.lean                # Completeness for Lω₁ω
+│   ├── SatisfiableConsistencyProperty.lean # Model-theoretic consistency properties
+│   └── Completeness.lean                # Karp completeness and omitting types
 ├── ModelTheory/                         # Classical model-theoretic results
 │   ├── LowenheimSkolem.lean             # Downward Löwenheim–Skolem for Lω₁ω
-│   ├── Hanf.lean                        # Hanf number bounds
-│   └── CountingModels.lean              # Counting models results
+│   ├── Hanf.lean                        # Hanf numbers and conditional Morley-Hanf bound
+│   └── CountingModels.lean              # Scott-height bounds and counting-models skeleton
 └── Admissible/                          # Admissible fragments
     ├── Fragment.lean                     # Admissible fragment definitions
-    ├── Compactness.lean                  # Barwise compactness
+    ├── Compactness.lean                  # Barwise compactness and completeness II
     └── NadelBound.lean                   # Nadel bound
 ```
 
@@ -185,7 +218,17 @@ The Scott sentence of M characterizes M up to isomorphism among countable struct
 lake build
 ```
 
-Requires Lean 4 with Mathlib. See `lakefile.toml` for exact versions.
+For blueprint extraction/rendering:
+
+```bash
+lake build :blueprint
+lake build :blueprintJson
+leanblueprint pdf
+leanblueprint web
+```
+
+See `lakefile.toml` for pinned dependencies and `docs/leanarchitect-blueprint.md`
+for the blueprint workflow.
 
 ## References
 
