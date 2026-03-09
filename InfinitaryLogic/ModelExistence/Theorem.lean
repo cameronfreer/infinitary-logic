@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.ModelExistence.ConsistencyProperty
 import InfinitaryLogic.ModelExistence.HenkinConstruction
+import Architect
 
 /-!
 # Model Existence Theorem
@@ -49,6 +50,13 @@ a consistent set like {c_i ≠ c_j | i ≠ j} for uncountably many constants can
 force any model to be uncountable.
 
 This is the fundamental model-building tool for infinitary logic. -/
+@[blueprint "thm:model-existence"
+  (title := /-- Model existence -/)
+  (statement := /-- If a countable set $S$ of $\Lomegaone$ sentences in a countable
+    language belongs to a consistency property with equality axioms, then $S$ has a
+    countable model. -/)
+  (proof := /-- Henkin construction: extend the language with constants, extend $S$ to
+    a maximal consistent set, build a term model, verify via truth lemma. -/)]
 theorem model_existence [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relations l)]
     (C : ConsistencyPropertyEq L)
     (S : Set L.Sentenceω) (hS : S ∈ C.toConsistencyProperty.sets)

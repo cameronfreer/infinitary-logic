@@ -6,6 +6,7 @@ Authors: Cameron Freer
 import InfinitaryLogic.ModelExistence.Theorem
 import InfinitaryLogic.ModelExistence.SatisfiableConsistencyProperty
 import InfinitaryLogic.Lomega1omega.Operations
+import Architect
 
 /-!
 # Karp Completeness
@@ -38,6 +39,10 @@ open FirstOrder Structure
 consistency property with equality axioms has a countable model.
 
 This is a sentence-level consequence of the model existence theorem. -/
+@[blueprint "thm:karp-completeness"
+  (title := /-- Karp completeness -/)
+  (statement := /-- A sentence in a countable language that belongs to some consistency
+    property with equality axioms has a countable model. -/)]
 theorem karp_completeness [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relations l)]
     (φ : L.Sentenceω)
     (h : ∃ C : ConsistencyPropertyEq L, {φ} ∈ C.toConsistencyProperty.sets) :
@@ -48,6 +53,10 @@ theorem karp_completeness [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.
 
 /-- A type (set of formulas in one free variable) is omitted by a structure M
 if no element of M realizes all formulas in the type simultaneously. -/
+@[blueprint "def:omits-type"
+  (title := /-- Omits type -/)
+  (statement := /-- A structure $M$ omits a type $p$ (a set of formulas in one free
+    variable) if no element of $M$ realizes all formulas in $p$ simultaneously. -/)]
 def OmitsType (M : Type*) [L.Structure M] (p : Set (L.Formulaω (Fin 1))) : Prop :=
   ∀ m : M, ∃ φ ∈ p, ¬ Formulaω.Realize φ (fun _ => m)
 
@@ -59,6 +68,13 @@ there exists a countable model of T that omits all the given types.
 
 This is a powerful generalization of the standard omitting types theorem from
 first-order logic to the countable infinitary setting. -/
+@[blueprint "thm:omitting-types"
+  (title := /-- Omitting types -/)
+  (statement := /-- Given a countable consistent theory $T$ in a countable language and
+    a countable collection of non-isolated types, there exists a countable model of $T$
+    that omits all the given types. -/)
+  (proof := /-- Build a term model via the model existence theorem, then derive a
+    contradiction for any element that would realize all formulas in an omitted type. -/)]
 theorem omitting_types [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relations l)]
     (T : L.Theoryω) (hT_countable : T.Countable)
     (Γ : Set (Set (L.Formulaω (Fin 1))))

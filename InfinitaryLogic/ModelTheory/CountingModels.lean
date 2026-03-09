@@ -6,6 +6,7 @@ Authors: Cameron Freer
 import InfinitaryLogic.Lomega1omega.Theory
 import InfinitaryLogic.Scott.Height
 import InfinitaryLogic.Scott.RefinementCount
+import Architect
 
 /-!
 # Counting Models
@@ -43,6 +44,10 @@ the structures are isomorphic. Unconditional (no `CountableRefinementHypothesis`
 
 This decouples the isomorphism conclusion from scottRank entirely, taking
 `StabilizesCompletely` as a direct hypothesis. -/
+@[blueprint "thm:stabilization-bound-iso"
+  (title := /-- Stabilization bound determines isomorphism -/)
+  (statement := /-- If $M$ stabilizes completely at $\alpha < \omegaone$ and
+    $\BFEquiv_\alpha(\bar{a},\bar{b})$ holds, then $M \cong N$. -/)]
 theorem stabilization_bound_iso_eq_BFEquiv
     {M N : Type w} [L.Structure M] [L.Structure N] [Countable M] [Countable N]
     {α : Ordinal.{0}} (_hα : α < Ordinal.omega 1)
@@ -86,6 +91,10 @@ theorem bounded_scottHeight_iso_eq_BFEquiv_of
 
 /-- When all countable models of a sentence have Scott height bounded by α (with α < ω₁),
 isomorphism between countable models is equivalent to BF-equivalence at level α. -/
+@[blueprint "thm:bounded-scott-height-iso"
+  (title := /-- Bounded Scott height determines isomorphism -/)
+  (statement := /-- If all countable models of $\varphi$ have Scott height $\leq \alpha
+    < \omegaone$, then isomorphism is equivalent to $\BFEquiv_\alpha$. -/)]
 theorem bounded_scottHeight_iso_eq_BFEquiv
     {φ : L.Sentenceω} {α : Ordinal.{0}} (hα : α < Ordinal.omega 1)
     (hbound : ∀ (M : Type w) [L.Structure M] [Countable M],

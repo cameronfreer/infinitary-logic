@@ -7,6 +7,7 @@ import InfinitaryLogic.Lomega1omega.Semantics
 import InfinitaryLogic.Lomega1omega.Operations
 import InfinitaryLogic.Lomega1omega.Theory
 import Mathlib.SetTheory.Ordinal.Basic
+import Architect
 
 /-!
 # Admissible Fragments
@@ -46,6 +47,11 @@ or admissible sets.
 
 The `height` ordinal represents the ordinal height of the admissible set (o(A)),
 which bounds the complexity of formulas in the fragment. -/
+@[blueprint "def:admissible-fragment"
+  (title := /-- Admissible fragment -/)
+  (statement := /-- An admissible fragment of $\Lomegaone$: a collection of sentences
+    closed under subformulas, negation, quantification, and countable conjunction/disjunction,
+    with a compactness axiom for finite subsets. -/)]
 structure AdmissibleFragment (L : Language.{u, v}) where
   /-- The set of sentences belonging to this fragment. -/
   formulas : Set L.Sentenceω

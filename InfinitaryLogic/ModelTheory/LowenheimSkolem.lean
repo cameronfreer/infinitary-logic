@@ -8,6 +8,7 @@ import InfinitaryLogic.ModelExistence.Theorem
 import InfinitaryLogic.ModelExistence.SatisfiableConsistencyProperty
 import InfinitaryLogic.Lomega1omega.Operations
 import Mathlib.ModelTheory.LanguageMap
+import Architect
 
 /-!
 # Downward Löwenheim-Skolem for Lω₁ω
@@ -54,6 +55,10 @@ open FirstOrder Structure
 /-- The naming function for the extended language `L[[M]]`: each element `m : M`
 is named by the constant symbol `L.con m`, which evaluates to `m` in the
 canonical `L[[M]]`-structure on `M`. -/
+@[blueprint "def:naming-function-with-constants"
+  (title := /-- Naming function with constants -/)
+  (statement := /-- The naming function for the extended language $L[[M]]$: each
+    element $m \in M$ is named by the constant symbol $\operatorname{con}(m)$. -/)]
 noncomputable def namingFunctionWithConstants (L : Language.{u, v}) (M : Type u) [L.Structure M] :
     NamingFunction L[[M]] M where
   name m := Term.func (Sum.inr m : L[[M]].Functions 0) Fin.elim0
@@ -131,6 +136,12 @@ condition on M is needed so that `L[[M]]` remains countable.
 
 For the version without the `[Countable M]` assumption (but with a naming function
 already available), see `downward_LS_with_naming`. -/
+@[blueprint "thm:downward-ls"
+  (title := /-- Downward Löwenheim-Skolem -/)
+  (statement := /-- Any satisfiable $\Lomegaone$ sentence in a countable language
+    with a countable model has a countable model (in any universe). -/)
+  (proof := /-- Extend $L$ with constants for each element of $M$ to form $L[[M]]$,
+    construct a naming function, apply model existence, then restrict back. -/)]
 theorem downward_LS [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relations l)]
     (φ : L.Sentenceω) (M : Type u) [L.Structure M] [Countable M]
     (hM : Sentenceω.Realize φ M) :
@@ -162,6 +173,10 @@ theorem downward_LS [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relati
 
 /-- Downward LS for theories: any Lω₁ω theory in a countable language
 satisfied by a countable model (`[Countable M]`) has a countable model. -/
+@[blueprint "thm:downward-ls-theory"
+  (title := /-- Downward Löwenheim-Skolem for theories -/)
+  (statement := /-- Any countable $\Lomegaone$ theory in a countable language satisfied
+    by a countable model has a countable model. -/)]
 theorem downward_LS_theory [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relations l)]
     (T : L.Theoryω) (M : Type u) [L.Structure M] [Countable M]
     (hM : T.Model M) (hT_countable : T.Countable) :

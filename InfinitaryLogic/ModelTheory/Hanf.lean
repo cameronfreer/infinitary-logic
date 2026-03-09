@@ -6,6 +6,7 @@ Authors: Cameron Freer
 import InfinitaryLogic.Lomega1omega.Theory
 import Mathlib.SetTheory.Cardinal.Ordinal
 import Mathlib.SetTheory.Cardinal.Aleph
+import Architect
 
 /-!
 # Hanf Numbers
@@ -49,24 +50,40 @@ open FirstOrder Structure Cardinal Ordinal
 
 /-- A sentence has arbitrarily large models if for every cardinal κ, there
 exists a model of size ≥ κ. -/
+@[blueprint "def:arb-large-models"
+  (title := /-- Arbitrarily large models -/)
+  (statement := /-- A sentence $\varphi$ has arbitrarily large models if for every
+    cardinal $\kappa$ there is a model of $\varphi$ of cardinality $\geq \kappa$. -/)]
 def HasArbLargeModels (φ : L.Sentenceω) : Prop :=
   ∀ κ : Cardinal, ∃ (M : Type) (_ : L.Structure M),
     Sentenceω.Realize φ M ∧ Cardinal.mk M ≥ κ
 
 /-- A cardinal κ is a Hanf bound for a sentence φ if the existence of a model
 of size ≥ κ implies that φ has arbitrarily large models. -/
+@[blueprint "def:hanf-bound"
+  (title := /-- Hanf bound -/)
+  (statement := /-- $\kappa$ is a Hanf bound for $\varphi$ if having a model of
+    cardinality $\geq \kappa$ implies having arbitrarily large models. -/)]
 def IsHanfBound (φ : L.Sentenceω) (κ : Cardinal) : Prop :=
   (∃ (M : Type) (_ : L.Structure M),
     Sentenceω.Realize φ M ∧ Cardinal.mk M ≥ κ) →
   HasArbLargeModels φ
 
 /-- The Hanf number of a sentence is the least cardinal that is a Hanf bound. -/
+@[blueprint "def:hanf-number"
+  (title := /-- Hanf number -/)
+  (statement := /-- The Hanf number of a sentence $\varphi$: the least cardinal that
+    is a Hanf bound. -/)]
 noncomputable def HanfNumber (φ : L.Sentenceω) : Cardinal :=
   sInf {κ : Cardinal | IsHanfBound φ κ}
 
 /-- Every Lω₁ω sentence has a Hanf number (i.e., a Hanf bound exists).
 
 This is a fundamental structural result about Lω₁ω. -/
+@[blueprint "thm:hanf-existence"
+  (title := /-- Hanf number existence -/)
+  (statement := /-- Every $\Lomegaone$ sentence has a Hanf bound (and therefore a
+    Hanf number). -/)]
 theorem hanf_existence (φ : L.Sentenceω) : ∃ κ, IsHanfBound φ κ := by
   by_cases h : HasArbLargeModels φ
   · -- Any κ works: the conclusion `HasArbLargeModels φ` is always true
@@ -107,6 +124,10 @@ in Lean or Mathlib.
 
 **Boundary**: The hypothesis `htransfer` captures exactly the deep
 set-theoretic/model-theoretic transfer step. All other reasoning is formalized. -/
+@[blueprint "thm:morley-hanf"
+  (title := /-- Morley-Hanf bound -/)
+  (statement := /-- Conditional on the Morley-Hanf transfer hypothesis,
+    $\beth_{\omegaone}$ is a Hanf bound for every $\Lomegaone$ sentence. -/)]
 theorem morley_hanf_of_transfer [Countable (Σ l, L.Relations l)]
     (htransfer : MorleyHanfTransfer L) (φ : L.Sentenceω) :
     IsHanfBound φ (Cardinal.beth (Ordinal.omega 1)) := by
