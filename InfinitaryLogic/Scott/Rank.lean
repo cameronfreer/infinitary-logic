@@ -129,7 +129,7 @@ theorem elementRank_lt_omega1 {M : Type w} [L.Structure M] [Countable M] (m : M)
 
 /-- Scott rank of a countable structure is a countable ordinal. -/
 @[blueprint "thm:scottRank-lt-omega1"
-  (title := /-- Scott rank below ω₁ -/)
+  (title := /-- Scott rank below $\omegaone$ -/)
   (statement := /-- For any countable $L$-structure $M$,
     $\scottRank(M) < \omegaone$. -/)]
 theorem scottRank_lt_omega1 (M : Type w) [L.Structure M] [Countable M] :
