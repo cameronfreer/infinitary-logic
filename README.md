@@ -29,19 +29,18 @@ The main remaining boundaries are mathematical scope rather than proof holes:
 
 ## Blueprint
 
-A rendered blueprint is available directly in the repository:
+The interactive blueprint with dependency graph is deployed at:
 
-- [Blueprint PDF](docs/infinitary-logic-blueprint.pdf)
-- [Blueprint authoring notes](docs/leanarchitect-blueprint.md)
+- **[Live Blueprint](https://cameronfreer.github.io/infinitary-logic/blueprint/)**
+  (web, with dependency graph)
+- **[Blueprint PDF](https://cameronfreer.github.io/infinitary-logic/blueprint.pdf)**
 
-The PDF is generated from the LeanArchitect-annotated nodes together with the narrative
-in `blueprint/src/content.tex`. To regenerate it locally:
+To regenerate locally:
 
 ```bash
 lake build :blueprint
-lake build :blueprintJson
-leanblueprint pdf
-leanblueprint web
+leanblueprint web   # → blueprint/web/
+leanblueprint pdf   # → blueprint/print/print.pdf
 ```
 
 ### Implemented Results
@@ -216,15 +215,6 @@ The Scott sentence of M characterizes M up to isomorphism among countable struct
 
 ```bash
 lake build
-```
-
-For blueprint extraction/rendering:
-
-```bash
-lake build :blueprint
-lake build :blueprintJson
-leanblueprint pdf
-leanblueprint web
 ```
 
 See `lakefile.toml` for pinned dependencies and `docs/leanarchitect-blueprint.md`

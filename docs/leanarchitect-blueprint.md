@@ -1,34 +1,24 @@
 # LeanArchitect Blueprint Workflow
 
-This document describes a concrete way to use LeanArchitect in this repository and render a project blueprint.
+This document describes how the project blueprint is generated from Lean annotations
+and rendered via `leanblueprint`.
 
-## Goal
-
-Generate blueprint artifacts directly from Lean declarations in `InfinitaryLogic/*`, then render PDF/web blueprint pages with `leanblueprint`.
-
-## Toolchain Notes
-
-- Current project toolchain: Lean `v4.27.0` (`lean-toolchain`).
-- Use a LeanArchitect revision compatible with Lean `v4.27.0`.
-- We use a fork (`cameronfreer/LeanArchitect`) that comments out the explicit `batteries`
-  dependency, which conflicts with Mathlib's batteries version and causes hours of recompilation.
-  See [batteries version conflict](#batteries-version-conflict) below.
-
-## 1. Install Prerequisites
+## 1. Prerequisites
 
 ```bash
 pip install leanblueprint invoke
 ```
 
-Optional system deps (if needed by your environment):
+Optional system deps:
 
 ```bash
 sudo apt install graphviz libgraphviz-dev
 ```
 
-## 2. Add LeanArchitect Dependency
+## 2. LeanArchitect Dependency
 
-The dependency is already configured in `lakefile.toml`, pointing to the patched fork:
+The dependency is configured in `lakefile.toml`, pointing to a patched fork that avoids
+batteries version conflicts with Mathlib:
 
 ```toml
 [[require]]
@@ -37,18 +27,9 @@ git = "https://github.com/cameronfreer/LeanArchitect.git"
 rev = "<commit-sha>"
 ```
 
-Then update/build deps:
+## 3. Blueprint Annotations
 
-```bash
-lake update LeanArchitect
-lake build
-```
-
-## 3. Add Blueprint Annotations in Lean
-
-In files you want rendered, import Architect and annotate key declarations.
-
-Example (`InfinitaryLogic/Scott/RefinementCount.lean`):
+Import Architect and annotate key declarations with `@[blueprint]`:
 
 ```lean
 import Architect
@@ -58,6 +39,9 @@ import Architect
 theorem countableRefinementHypothesis : CountableRefinementHypothesis.{u, v, w} L := by
   ...
 ```
+
+The narrative in `blueprint/src/content.tex` uses `\inputleannode{<label>}` to pull in
+the statement text and dependency metadata from each annotated declaration.
 
 ### Current annotated nodes (16 total)
 
@@ -81,76 +65,27 @@ theorem countableRefinementHypothesis : CountableRefinementHypothesis.{u, v, w} 
 - `thm:scottHeight-lt-omega1` — Scott height below $\omega_1$
 - `thm:karp-theorem` — Karp's theorem
 
-## 4. Create/Use Blueprint LaTeX Skeleton
-
-If you do not already have a blueprint skeleton:
+## 4. Extract and Render
 
 ```bash
-leanblueprint new
-```
-
-This creates `blueprint/src/*` and blueprint workflows/layout.
-
-In `blueprint/src/content.tex`, the narrative references LeanArchitect labels:
-
-```tex
-\begin{definition}[Scott sentence]\label{def:scott-sentence}
-  \lean{scottSentence}\leanok
-  \uses{def:scottFormula, def:stabilization-ordinal}
-  The Scott sentence of a countable structure $M$ is ...
-\end{definition}
-```
-
-## 5. Extract and Render
-
-From repo root:
-
-```bash
-# Extract LeanArchitect blueprint artifacts
+# Extract LeanArchitect blueprint artifacts + build project
 lake build :blueprint
 
-# Optional machine-readable output
-lake build :blueprintJson
-
 # Render
-leanblueprint pdf
-leanblueprint web
-leanblueprint serve
+leanblueprint pdf   # → blueprint/print/print.pdf
+leanblueprint web   # → blueprint/web/
+leanblueprint serve # local preview
 ```
 
-Generated extraction output is under:
+## 5. CI
 
-- `.lake/build/blueprint/library/*`
-- `.lake/build/blueprint/*.json` (if `:blueprintJson` was built)
+The workflow at `.github/workflows/build.yml` runs `lake build :blueprint` then
+deploys the rendered blueprint to GitHub Pages on every push to `master`.
 
-## 6. CI Integration
+To enable deployment, set the repository's Pages source to **GitHub Actions** in
+Settings > Pages.
 
-If using a blueprint GitHub Action, ensure extraction runs before rendering:
-
-```yaml
-- name: Extract blueprint
-  run: lake build :blueprint
-```
-
-## 7. Suggested Adoption Plan for This Repo
-
-1. Annotate only theorems on the main Scott pipeline first.
-2. Render and fix any LaTeX statement text issues.
-3. Add model existence and Karp milestones as second wave.
-4. Keep labels stable (`thm:*`, `def:*`) to avoid link churn.
-
-## 8. Troubleshooting
-
-### Batteries version conflict
-
-LeanArchitect upstream (`hanwenzhu/LeanArchitect`) pins `batteries` at a version that conflicts
-with Mathlib's batteries, causing Lake to rebuild Mathlib from source (~hours). The workaround
-is to use a fork that comments out the explicit `require batteries` line, since Mathlib already
-provides batteries transitively.
-
-If the upstream merges the fix, the fork can be replaced with the upstream URL.
-
-### Other issues
+## 6. Troubleshooting
 
 - If web render fails on bibliography, run `leanblueprint pdf` before `leanblueprint web`.
 - If extracted dependency edges are noisy, override with `uses := [...]` or `proofUses := [...]` in `@[blueprint]`.
