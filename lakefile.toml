@@ -13,5 +13,9 @@ name = "LeanArchitect"
 git = "https://github.com/cameronfreer/LeanArchitect.git"
 rev = "e14a867"
 
+[[require]]
+name = "checkdecls"
+git = "https://github.com/PatrickMassot/checkdecls.git"
+
 [[lean_lib]]
 name = "InfinitaryLogic"

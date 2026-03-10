@@ -43,9 +43,9 @@ theorem countableRefinementHypothesis : CountableRefinementHypothesis.{u, v, w} 
 The narrative in `blueprint/src/content.tex` uses `\inputleannode{<label>}` to pull in
 the statement text and dependency metadata from each annotated declaration.
 
-### Current annotated nodes (16 total)
+### Current annotated nodes (33 total)
 
-**Definitions (8):**
+**Definitions (14):**
 - `def:BFEquiv` — Back-and-forth equivalence
 - `def:scottFormula` — Scott formula
 - `def:stabilization-ordinal` — Stabilization ordinal
@@ -54,8 +54,14 @@ the statement text and dependency metadata from each annotated declaration.
 - `def:scottHeight` — Scott height
 - `def:potential-iso` — Potential isomorphism
 - `def:linf-equiv` — $L_{\infty\omega}$-equivalence
+- `def:omits-type` — Omits type
+- `def:arb-large-models` — Arbitrarily large models
+- `def:hanf-bound` — Hanf bound
+- `def:hanf-number` — Hanf number
+- `def:naming-function-with-constants` — Naming function with constants
+- `def:admissible-fragment` — Admissible fragment
 
-**Theorems (8):**
+**Theorems (19):**
 - `thm:scottFormula-iff` — Scott formula characterization
 - `thm:self-stabilization` — Self-stabilization
 - `thm:scott-characterizes-of` — Scott characterization (conditional)
@@ -64,6 +70,17 @@ the statement text and dependency metadata from each annotated declaration.
 - `thm:scottRank-lt-omega1` — Scott rank below $\omega_1$
 - `thm:scottHeight-lt-omega1` — Scott height below $\omega_1$
 - `thm:karp-theorem` — Karp's theorem
+- `thm:model-existence` — Model existence
+- `thm:karp-completeness` — Karp completeness
+- `thm:omitting-types` — Omitting types
+- `thm:stabilization-bound-iso` — Stabilization bound determines isomorphism
+- `thm:bounded-scott-height-iso` — Bounded Scott height determines isomorphism
+- `thm:hanf-existence` — Hanf number existence
+- `thm:morley-hanf` — Morley-Hanf bound
+- `thm:downward-ls` — Downward Löwenheim-Skolem
+- `thm:downward-ls-theory` — Downward Löwenheim-Skolem for theories
+- `thm:barwise-compactness` — Barwise compactness
+- `thm:barwise-completeness-ii` — Barwise completeness II
 
 ## 4. Extract and Render
 
@@ -89,3 +106,24 @@ Settings > Pages.
 
 - If web render fails on bibliography, run `leanblueprint pdf` before `leanblueprint web`.
 - If extracted dependency edges are noisy, override with `uses := [...]` or `proofUses := [...]` in `@[blueprint]`.
+
+## 7. Gotchas
+
+- **Annotation ordering**: The docstring must come first, then `@[blueprint]`, then the declaration.
+  Placing `@[blueprint]` before a `/-- ... -/` docstring causes
+  `unexpected token '/--'; expected 'lemma'`.
+
+  ```lean
+  -- ✅ Correct
+  /-- My docstring. -/
+  @[blueprint "thm:foo" (title := /-- Foo -/)]
+  theorem foo : ... := by ...
+
+  -- ❌ Wrong — causes parse error
+  @[blueprint "thm:foo" (title := /-- Foo -/)]
+  /-- My docstring. -/
+  theorem foo : ... := by ...
+  ```
+
+- **CI `checkdecls`**: The `docgen-action` runs `lake exe checkdecls blueprint/lean_decls`.
+  The `checkdecls` package must be listed as a dependency in `lakefile.toml`.
