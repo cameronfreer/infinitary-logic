@@ -48,7 +48,8 @@ for theories within admissible fragments. -/
 @[blueprint "thm:barwise-compactness"
   (title := /-- Barwise compactness -/)
   (statement := /-- If every $A$-finite subset of a theory $T \subseteq A$ has a model,
-    then $T$ has a model. -/)]
+    then $T$ has a model. -/)
+  (uses := ["def:admissible-fragment"])]
 theorem barwise_compactness (A : AdmissibleFragment L)
     {T : Set L.Sentenceω} (hT : T ⊆ A.formulas)
     (hfin : ∀ S, A.AFinite S → S ⊆ T →
@@ -68,7 +69,9 @@ for the admissible fragment, which we do not formalize. -/
 @[blueprint "thm:barwise-completeness-ii"
   (title := /-- Barwise completeness II -/)
   (statement := /-- A countable theory in an admissible fragment that belongs to a
-    consistency property has a countable model. -/)]
+    consistency property has a countable model. -/)
+  (uses := ["def:admissible-fragment"])
+  (proofUses := ["thm:model-existence"])]
 theorem barwise_completeness_II [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relations l)]
     (A : AdmissibleFragment L)
     {T : Set L.Sentenceω} (_hT : T ⊆ A.formulas) (hT_countable : T.Countable)

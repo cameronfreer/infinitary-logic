@@ -218,7 +218,8 @@ tuples of different lengths in the recursion.
   (title := /-- Scott formula -/)
   (statement := /-- The Scott formula $\sigma_\alpha(a)$ for a tuple $a \in M^n$ and
     ordinal $\alpha < \omegaone$: an $\Lomegaone$-formula mirroring the recursive
-    definition of $\BFEquiv_\alpha$. -/)]
+    definition of $\BFEquiv_\alpha$. -/)
+  (uses := ["def:BFEquiv"])]
 noncomputable def scottFormula {n : ℕ} (a : Fin n → M) (α : Ordinal) : L.Formulaω (Fin n) :=
   haveI : Encodable M := Encodable.ofCountable M
   Ordinal.limitRecOn (motive := fun _ => (k : ℕ) → (Fin k → M) → L.Formulaω (Fin k)) α
@@ -284,7 +285,8 @@ The proof proceeds by ordinal induction using `limitRecOn`:
 @[blueprint "thm:scottFormula-iff"
   (title := /-- Scott formula characterization -/)
   (statement := /-- For countable $M$ and $\alpha < \omegaone$: $\sigma_\alpha(a)$ is
-    realized by $b$ in $N$ if and only if $\BFEquiv_\alpha(a,b)$. -/)]
+    realized by $b$ in $N$ if and only if $\BFEquiv_\alpha(a,b)$. -/)
+  (uses := ["def:scottFormula", "def:BFEquiv"])]
 theorem realize_scottFormula_iff_BFEquiv
     {N : Type w'} [L.Structure N] {n : ℕ}
     (a : Fin n → M) (b : Fin n → N) (α : Ordinal) (hα : α < Ordinal.omega 1) :

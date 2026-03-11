@@ -42,7 +42,8 @@ This is a sentence-level consequence of the model existence theorem. -/
 @[blueprint "thm:karp-completeness"
   (title := /-- Karp completeness -/)
   (statement := /-- A sentence in a countable language that belongs to some consistency
-    property with equality axioms has a countable model. -/)]
+    property with equality axioms has a countable model. -/)
+  (proofUses := ["thm:model-existence"])]
 theorem karp_completeness [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relations l)]
     (φ : L.Sentenceω)
     (h : ∃ C : ConsistencyPropertyEq L, {φ} ∈ C.toConsistencyProperty.sets) :
@@ -74,7 +75,9 @@ first-order logic to the countable infinitary setting. -/
     a countable collection of non-isolated types, there exists a countable model of $T$
     that omits all the given types. -/)
   (proof := /-- Build a term model via the model existence theorem, then derive a
-    contradiction for any element that would realize all formulas in an omitted type. -/)]
+    contradiction for any element that would realize all formulas in an omitted type. -/)
+  (uses := ["def:omits-type"])
+  (proofUses := ["thm:model-existence"])]
 theorem omitting_types [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relations l)]
     (T : L.Theoryω) (hT_countable : T.Countable)
     (Γ : Set (Set (L.Formulaω (Fin 1))))

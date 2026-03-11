@@ -207,7 +207,7 @@ BFEquiv to the successor. Hence no refinement ordinals exist above γ < ω₁. -
     $\alpha_0 + k$. The chain $\alpha_0, \alpha_0+1, \ldots$ has limit
     $\gamma < \omegaone$ which is itself a limit ordinal, giving BFEquiv at $\gamma$
     and hence at all ordinals. -/)
-  (proofUses := [exists_complete_self_stabilization])]
+  (proofUses := ["thm:self-stabilization"])]
 theorem countableRefinementHypothesis : CountableRefinementHypothesis.{u, v, w} L := by
   intro M inst_struct inst_count n a
   obtain ⟨α₀, hα₀_lt, hstab⟩ := exists_complete_self_stabilization (L := L) M
@@ -286,7 +286,8 @@ theorem stabilizationOrdinal_spec (M : Type w) [L.Structure M] [Countable M]
 @[blueprint "thm:scott-characterizes"
   (title := /-- Scott characterization -/)
   (statement := /-- The Scott sentence of a countable structure $M$ characterizes $M$
-    up to isomorphism among countable structures (unconditional corollary of CRH). -/)]
+    up to isomorphism among countable structures (unconditional corollary of CRH). -/)
+  (proofUses := ["thm:CRH", "thm:scott-characterizes-of"])]
 theorem scottSentence_characterizes (M : Type w) [L.Structure M] [Countable M]
     (N : Type w) [L.Structure N] [Countable N] :
     (scottSentence (L := L) M).realize_as_sentence N ↔ Nonempty (M ≃[L] N) :=

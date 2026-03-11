@@ -274,7 +274,9 @@ theorem canonicalScottSentence_qrank_of
 @[blueprint "thm:scottHeight-lt-omega1"
   (title := /-- Scott height below $\omegaone$ -/)
   (statement := /-- For any countable $L$-structure $M$,
-    $\scottHeight(M) < \omegaone$. -/)]
+    $\scottHeight(M) < \omegaone$. -/)
+  (uses := ["def:scottHeight"])
+  (proofUses := ["thm:CRH"])]
 theorem scottHeight_lt_omega1 (M : Type w) [L.Structure M] [Countable M] :
     scottHeight (L := L) M < Ordinal.omega 1 :=
   scottHeight_lt_omega1_of countableRefinementHypothesis M

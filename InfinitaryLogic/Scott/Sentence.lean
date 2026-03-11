@@ -294,7 +294,7 @@ False) or > globalStab (both sides True since succ globalStab < ω₁). -/
   (proof := /-- For each triple $(n, a, a')$, the first failure ordinal is $0$ or a
     successor. Take the supremum over countably many triples;
     $\sup + 1 < \omegaone$. -/)
-  (proofUses := [exists_complete_self_stabilization])]
+  (uses := ["def:BFEquiv"])]
 theorem exists_complete_self_stabilization (M : Type w) [L.Structure M] [Countable M] :
     ∃ α < (Ordinal.omega 1 : Ordinal.{0}), SelfStabilizesCompletely (L := L) M α := by
   -- For each triple (n, a, a'), define the "change ordinal":
@@ -1129,7 +1129,8 @@ since `Fin 0` is empty. -/
 @[blueprint "def:scott-sentence"
   (title := /-- Scott sentence -/)
   (statement := /-- The Scott sentence of $M$: the Scott formula for the empty tuple at
-    the stabilization ordinal, $\sigma_{\alpha_0}(\langle\rangle)$. -/)]
+    the stabilization ordinal, $\sigma_{\alpha_0}(\langle\rangle)$. -/)
+  (uses := ["def:scottFormula", "def:stabilization-ordinal"])]
 noncomputable def scottSentence (M : Type w) [L.Structure M] [Countable M] : L.Formulaω (Fin 0) :=
   scottFormula (L := L) (M := M) (n := 0) Fin.elim0
     (stabilizationOrdinal (L := L) M)
@@ -1193,7 +1194,7 @@ through the conditional pipeline. -/
   (proof := /-- By the Scott formula characterization at the stabilization ordinal, plus
     the CRH-conditional stabilization result. -/)
   (proofUses := ["thm:scottFormula-iff", "def:scott-sentence",
-    stabilizationOrdinal_stabilizes_of])]
+    "def:stabilization-ordinal"])]
 theorem scottSentence_characterizes_of
     (hcount : CountableRefinementHypothesis.{u, v, w} L)
     (M : Type w) [L.Structure M] [Countable M]

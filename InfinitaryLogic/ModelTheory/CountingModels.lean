@@ -47,7 +47,8 @@ This decouples the isomorphism conclusion from scottRank entirely, taking
 @[blueprint "thm:stabilization-bound-iso"
   (title := /-- Stabilization bound determines isomorphism -/)
   (statement := /-- If $M$ stabilizes completely at $\alpha < \omegaone$ and
-    $\BFEquiv_\alpha(\bar{a},\bar{b})$ holds, then $M \cong N$. -/)]
+    $\BFEquiv_\alpha(\bar{a},\bar{b})$ holds, then $M \cong N$. -/)
+  (uses := ["def:BFEquiv"])]
 theorem stabilization_bound_iso_eq_BFEquiv
     {M N : Type w} [L.Structure M] [L.Structure N] [Countable M] [Countable N]
     {α : Ordinal.{0}} (_hα : α < Ordinal.omega 1)
@@ -94,7 +95,9 @@ isomorphism between countable models is equivalent to BF-equivalence at level α
 @[blueprint "thm:bounded-scott-height-iso"
   (title := /-- Bounded Scott height determines isomorphism -/)
   (statement := /-- If all countable models of $\varphi$ have Scott height $\leq \alpha
-    < \omegaone$, then isomorphism is equivalent to $\BFEquiv_\alpha$. -/)]
+    < \omegaone$, then isomorphism is equivalent to $\BFEquiv_\alpha$. -/)
+  (uses := ["def:scottHeight", "def:BFEquiv"])
+  (proofUses := ["thm:CRH", "thm:stabilization-bound-iso"])]
 theorem bounded_scottHeight_iso_eq_BFEquiv
     {φ : L.Sentenceω} {α : Ordinal.{0}} (hα : α < Ordinal.omega 1)
     (hbound : ∀ (M : Type w) [L.Structure M] [Countable M],

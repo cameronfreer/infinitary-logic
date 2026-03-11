@@ -141,7 +141,8 @@ already available), see `downward_LS_with_naming`. -/
   (statement := /-- Any satisfiable $\Lomegaone$ sentence in a countable language
     with a countable model has a countable model (in any universe). -/)
   (proof := /-- Extend $L$ with constants for each element of $M$ to form $L[[M]]$,
-    construct a naming function, apply model existence, then restrict back. -/)]
+    construct a naming function, apply model existence, then restrict back. -/)
+  (proofUses := ["def:naming-function-with-constants", "thm:model-existence"])]
 theorem downward_LS [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relations l)]
     (φ : L.Sentenceω) (M : Type u) [L.Structure M] [Countable M]
     (hM : Sentenceω.Realize φ M) :
@@ -176,7 +177,8 @@ satisfied by a countable model (`[Countable M]`) has a countable model. -/
 @[blueprint "thm:downward-ls-theory"
   (title := /-- Downward Löwenheim-Skolem for theories -/)
   (statement := /-- Any countable $\Lomegaone$ theory in a countable language satisfied
-    by a countable model has a countable model. -/)]
+    by a countable model has a countable model. -/)
+  (proofUses := ["def:naming-function-with-constants", "thm:model-existence"])]
 theorem downward_LS_theory [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relations l)]
     (T : L.Theoryω) (M : Type u) [L.Structure M] [Countable M]
     (hM : T.Model M) (hT_countable : T.Countable) :

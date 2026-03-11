@@ -131,7 +131,9 @@ theorem elementRank_lt_omega1 {M : Type w} [L.Structure M] [Countable M] (m : M)
 @[blueprint "thm:scottRank-lt-omega1"
   (title := /-- Scott rank below $\omegaone$ -/)
   (statement := /-- For any countable $L$-structure $M$,
-    $\scottRank(M) < \omegaone$. -/)]
+    $\scottRank(M) < \omegaone$. -/)
+  (uses := ["def:scottRank"])
+  (proofUses := ["thm:CRH"])]
 theorem scottRank_lt_omega1 (M : Type w) [L.Structure M] [Countable M] :
     scottRank (L := L) M < (Ordinal.omega 1 : Ordinal.{0}) :=
   scottRank_lt_omega1_of countableRefinementHypothesis M

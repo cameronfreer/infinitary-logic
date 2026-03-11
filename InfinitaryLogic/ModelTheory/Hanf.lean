@@ -83,7 +83,8 @@ This is a fundamental structural result about Lω₁ω. -/
 @[blueprint "thm:hanf-existence"
   (title := /-- Hanf number existence -/)
   (statement := /-- Every $\Lomegaone$ sentence has a Hanf bound (and therefore a
-    Hanf number). -/)]
+    Hanf number). -/)
+  (uses := ["def:hanf-bound", "def:arb-large-models"])]
 theorem hanf_existence (φ : L.Sentenceω) : ∃ κ, IsHanfBound φ κ := by
   by_cases h : HasArbLargeModels φ
   · -- Any κ works: the conclusion `HasArbLargeModels φ` is always true
@@ -127,7 +128,8 @@ set-theoretic/model-theoretic transfer step. All other reasoning is formalized. 
 @[blueprint "thm:morley-hanf"
   (title := /-- Morley-Hanf bound -/)
   (statement := /-- Conditional on the Morley-Hanf transfer hypothesis,
-    $\beth_{\omegaone}$ is a Hanf bound for every $\Lomegaone$ sentence. -/)]
+    $\beth_{\omegaone}$ is a Hanf bound for every $\Lomegaone$ sentence. -/)
+  (uses := ["def:hanf-bound", "def:arb-large-models"])]
 theorem morley_hanf_of_transfer [Countable (Σ l, L.Relations l)]
     (htransfer : MorleyHanfTransfer L) (φ : L.Sentenceω) :
     IsHanfBound φ (Cardinal.beth (Ordinal.omega 1)) := by
