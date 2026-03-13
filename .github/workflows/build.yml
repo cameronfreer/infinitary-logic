@@ -41,7 +41,7 @@ jobs:
         uses: leanprover/lean-action@c544e89643240c6b398f14a431bcdc6309e36b3e
         with:
           build: true
-          build-args: ":blueprint" ":blueprintJson"
+          build-args: ":blueprint :blueprintJson"
           use-github-cache: true
           use-mathlib-cache: true
 
