@@ -178,6 +178,9 @@ satisfied by a countable model (`[Countable M]`) has a countable model. -/
   (title := /-- Downward Löwenheim-Skolem for theories -/)
   (statement := /-- Any countable $\Lomegaone$ theory in a countable language satisfied
     by a countable model has a countable model. -/)
+  (proof := /-- Lift the theory to the expanded language $L[[M]]$ with constants for
+    elements of $M$, apply the model existence theorem to get a countable term model,
+    then restrict back to $L$. -/)
   (proofUses := ["def:naming-function-with-constants", "thm:model-existence"])]
 theorem downward_LS_theory [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relations l)]
     (T : L.Theoryω) (M : Type u) [L.Structure M] [Countable M]

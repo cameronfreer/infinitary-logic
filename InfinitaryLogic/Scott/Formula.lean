@@ -286,6 +286,9 @@ The proof proceeds by ordinal induction using `limitRecOn`:
   (title := /-- Scott formula characterization -/)
   (statement := /-- For countable $M$ and $\alpha < \omegaone$: $\sigma_\alpha(a)$ is
     realized by $b$ in $N$ if and only if $\BFEquiv_\alpha(a,b)$. -/)
+  (proof := /-- By ordinal induction using \texttt{limitRecOn}: the zero case reduces to
+    atomic diagrams, the successor case uses the forth/back quantifier structure of
+    the Scott formula, and the limit case uses countable infimum. -/)
   (uses := ["def:scottFormula", "def:BFEquiv"])]
 theorem realize_scottFormula_iff_BFEquiv
     {N : Type w'} [L.Structure N] {n : ℕ}

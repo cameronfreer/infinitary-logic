@@ -43,6 +43,8 @@ This is a sentence-level consequence of the model existence theorem. -/
   (title := /-- Karp completeness -/)
   (statement := /-- A sentence in a countable language that belongs to some consistency
     property with equality axioms has a countable model. -/)
+  (proof := /-- Specialize the model existence theorem to the singleton theory
+    $\{\varphi\}$ and extract the sentence from the resulting model. -/)
   (proofUses := ["thm:model-existence"])]
 theorem karp_completeness [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relations l)]
     (φ : L.Sentenceω)

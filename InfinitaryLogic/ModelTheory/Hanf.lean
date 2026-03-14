@@ -84,6 +84,9 @@ This is a fundamental structural result about Lω₁ω. -/
   (title := /-- Hanf number existence -/)
   (statement := /-- Every $\Lomegaone$ sentence has a Hanf bound (and therefore a
     Hanf number). -/)
+  (proof := /-- Case split: if $\varphi$ has arbitrarily large models then any
+    cardinal is a bound; otherwise there is a maximal model size and the
+    premise is vacuously false above it. -/)
   (uses := ["def:hanf-bound", "def:arb-large-models"])]
 theorem hanf_existence (φ : L.Sentenceω) : ∃ κ, IsHanfBound φ κ := by
   by_cases h : HasArbLargeModels φ
@@ -129,6 +132,8 @@ set-theoretic/model-theoretic transfer step. All other reasoning is formalized. 
   (title := /-- Morley-Hanf bound -/)
   (statement := /-- Conditional on the Morley-Hanf transfer hypothesis,
     $\beth_{\omegaone}$ is a Hanf bound for every $\Lomegaone$ sentence. -/)
+  (proof := /-- Given a model of size $\geq \beth_{\omegaone}$, the transfer
+    hypothesis directly yields arbitrarily large models. -/)
   (uses := ["def:hanf-bound", "def:arb-large-models"])]
 theorem morley_hanf_of_transfer [Countable (Σ l, L.Relations l)]
     (htransfer : MorleyHanfTransfer L) (φ : L.Sentenceω) :

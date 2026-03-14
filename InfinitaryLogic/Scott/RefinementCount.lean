@@ -287,6 +287,8 @@ theorem stabilizationOrdinal_spec (M : Type w) [L.Structure M] [Countable M]
   (title := /-- Scott characterization -/)
   (statement := /-- The Scott sentence of a countable structure $M$ characterizes $M$
     up to isomorphism among countable structures (unconditional corollary of CRH). -/)
+  (proof := /-- Instantiate the conditional characterization theorem with the
+    proved Countable Refinement Hypothesis. -/)
   (proofUses := ["thm:CRH", "thm:scott-characterizes-of"])]
 theorem scottSentence_characterizes (M : Type w) [L.Structure M] [Countable M]
     (N : Type w) [L.Structure N] [Countable N] :
