@@ -35,12 +35,16 @@ The interactive blueprint with dependency graph is deployed at:
   (web, with dependency graph)
 - **[Blueprint PDF](https://cameronfreer.github.io/infinitary-logic/blueprint.pdf)**
 
+A cached copy of the PDF is also committed at `blueprint/print/print.pdf`.
+
 To regenerate locally:
 
 ```bash
-lake build :blueprint
-leanblueprint web   # → blueprint/web/
-leanblueprint pdf   # → blueprint/print/print.pdf
+lake build :blueprint          # extract .tex from Lean sources
+lake build :blueprintJson      # extract .json for declaration linking
+lake exe checkdecls blueprint/lean_decls  # verify all blueprint nodes
+leanblueprint web              # → blueprint/web/
+leanblueprint pdf              # → blueprint/print/print.pdf
 ```
 
 ### Implemented Results
@@ -97,8 +101,9 @@ leanblueprint pdf   # → blueprint/print/print.pdf
 
 ### Current Boundaries
 
-- `CountableRefinementHypothesis` is now proved internally, but it remains a genuine
-  mathematical boundary in the Scott-analysis architecture and is highlighted as such in the code.
+- `CountableRefinementHypothesis` is now proved internally and serves as an architectural
+  hinge in the Scott-analysis pipeline — downstream results depend on it but the proof
+  itself is complete.
 - `morley_hanf_of_transfer` is conditional on the explicit hypothesis
   `MorleyHanfTransfer`, which packages deep Erdős-Rado / Ehrenfeucht-Mostowski machinery.
 - `morley_counting_dichotomy` is currently schematic (`True` in Lean) pending descriptive

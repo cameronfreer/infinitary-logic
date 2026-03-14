@@ -79,10 +79,10 @@ first-order logic to the countable infinitary setting. -/
   (uses := ["def:omits-type"])
   (proofUses := ["thm:model-existence"])]
 theorem omitting_types [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relations l)]
-    (T : L.Theoryω) (hT_countable : T.Countable)
+    (T : L.Theoryω) (_hT_countable : T.Countable)
     (Γ : Set (Set (L.Formulaω (Fin 1))))
     (hT : ∃ C : ConsistencyPropertyEq L, T ∈ C.toConsistencyProperty.sets)
-    (hΓ : Γ.Countable)
+    (_hΓ : Γ.Countable)
     (h_not_isolated : ∀ p ∈ Γ, ∀ (C : ConsistencyPropertyEq L)
       (φ : L.Formulaω (Fin 1)),
       T ∪ {(φ.relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).ex} ∈ C.toConsistencyProperty.sets →

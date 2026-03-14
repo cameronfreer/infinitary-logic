@@ -48,6 +48,8 @@ This decouples the isomorphism conclusion from scottRank entirely, taking
   (title := /-- Stabilization bound determines isomorphism -/)
   (statement := /-- If $M$ stabilizes completely at $\alpha < \omegaone$ and
     $\BFEquiv_\alpha(\bar{a},\bar{b})$ holds, then $M \cong N$. -/)
+  (proof := /-- Complete stabilization at $\alpha$ lets us upgrade $\BFEquiv_\alpha$
+    to $\BFEquiv_\gamma$ for all $\gamma < \omegaone$, then apply Karp's theorem. -/)
   (uses := ["def:BFEquiv"])]
 theorem stabilization_bound_iso_eq_BFEquiv
     {M N : Type w} [L.Structure M] [L.Structure N] [Countable M] [Countable N]
@@ -96,6 +98,9 @@ isomorphism between countable models is equivalent to BF-equivalence at level α
   (title := /-- Bounded Scott height determines isomorphism -/)
   (statement := /-- If all countable models of $\varphi$ have Scott height $\leq \alpha
     < \omegaone$, then isomorphism is equivalent to $\BFEquiv_\alpha$. -/)
+  (proof := /-- The forward direction follows from $\BFEquiv$ being an invariant of
+    isomorphism. For the reverse, the Scott height bound gives complete stabilization
+    at $\alpha$ for both models, so we apply the stabilization-bound theorem. -/)
   (uses := ["def:scottHeight", "def:BFEquiv"])
   (proofUses := ["thm:CRH", "thm:stabilization-bound-iso"])]
 theorem bounded_scottHeight_iso_eq_BFEquiv

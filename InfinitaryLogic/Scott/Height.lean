@@ -275,6 +275,9 @@ theorem canonicalScottSentence_qrank_of
   (title := /-- Scott height below $\omegaone$ -/)
   (statement := /-- For any countable $L$-structure $M$,
     $\scottHeight(M) < \omegaone$. -/)
+  (proof := /-- By the Countable Refinement Hypothesis, the BF-equivalence hierarchy
+    stabilizes at a countable ordinal for each tuple size, and the Scott height is
+    their supremum. -/)
   (uses := ["def:scottHeight"])
   (proofUses := ["thm:CRH"])]
 theorem scottHeight_lt_omega1 (M : Type w) [L.Structure M] [Countable M] :

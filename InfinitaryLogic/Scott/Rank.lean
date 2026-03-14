@@ -132,6 +132,8 @@ theorem elementRank_lt_omega1 {M : Type w} [L.Structure M] [Countable M] (m : M)
   (title := /-- Scott rank below $\omegaone$ -/)
   (statement := /-- For any countable $L$-structure $M$,
     $\scottRank(M) < \omegaone$. -/)
+  (proof := /-- By the Countable Refinement Hypothesis, each element rank is
+    countable, and the Scott rank is their supremum. -/)
   (uses := ["def:scottRank"])
   (proofUses := ["thm:CRH"])]
 theorem scottRank_lt_omega1 (M : Type w) [L.Structure M] [Countable M] :
