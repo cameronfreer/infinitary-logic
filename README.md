@@ -239,6 +239,17 @@ for the blueprint workflow.
 - Hodges, W. (1993). *Model Theory*, Chapter 3
 - Marker, D. (2002). *Model Theory: An Introduction*, Chapter 2.6
 
-## License
+## License & Citation
 
-Apache 2.0
+Apache 2.0 licensed. See [LICENSE](LICENSE) for more information.
+
+Citing this repository is highly appreciated but not required by the license. See also [CITATION.cff](CITATION.cff).
+
+```bibtex
+@software{freer2026infinitary,
+  author = {Cameron Freer},
+  title = {Infinitary Logic in {Lean} 4},
+  url = {https://github.com/cameronfreer/infinitary-logic},
+  year = {2026}
+}
+```
