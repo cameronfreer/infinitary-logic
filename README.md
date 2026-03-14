@@ -34,6 +34,8 @@ The interactive blueprint with dependency graph is deployed at:
 - **[Live Blueprint](https://cameronfreer.github.io/infinitary-logic/blueprint/)**
   (web, with dependency graph)
 - **[Blueprint PDF](https://cameronfreer.github.io/infinitary-logic/blueprint/blueprint.pdf)**
+- **[API Docs](https://cameronfreer.github.io/infinitary-logic/docs/)**
+  (rebuilt weekly or on manual trigger)
 
 A cached copy of the PDF is also committed at `blueprint/print/print.pdf`.
 

@@ -1,0 +1,81 @@
+name: Build API Docs
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 0'  # weekly, Sunday 6am UTC
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    name: Build and deploy API docs + blueprint
+    steps:
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: false
+          docker-images: false
+          swap-storage: false
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Lean project and blueprint
+        uses: leanprover/lean-action@c544e89643240c6b398f14a431bcdc6309e36b3e
+        with:
+          build: true
+          build-args: ":blueprint :blueprintJson"
+          use-github-cache: true
+          use-mathlib-cache: true
+
+      - name: Build API docs
+        run: lake build :docs
+
+      - name: Install leanblueprint
+        run: pip install leanblueprint
+
+      - name: Build blueprint website
+        run: leanblueprint web
+
+      - name: Build blueprint PDF
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra latexmk
+          leanblueprint pdf
+
+      - name: Assemble site
+        run: |
+          mkdir -p _site/blueprint
+          cp -r blueprint/web/* _site/blueprint/
+          cp blueprint/print/print.pdf _site/blueprint/blueprint.pdf
+          cp -r .lake/build/doc _site/docs
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: docs
+    runs-on: ubuntu-latest
+    name: Deploy to GitHub Pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
