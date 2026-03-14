@@ -62,6 +62,11 @@ jobs:
           cp -r blueprint/web/* _site/blueprint/
           cp blueprint/print/print.pdf _site/blueprint/blueprint.pdf
           cp -r .lake/build/doc _site/docs
+          cat > _site/index.html <<'REDIRECT'
+          <!DOCTYPE html><html><head>
+          <meta http-equiv="refresh" content="0; url=blueprint/">
+          </head><body><a href="blueprint/">Blueprint</a></body></html>
+          REDIRECT
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

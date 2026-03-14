@@ -9,7 +9,7 @@ A Lean 4 formalization of infinitary logic and Scott sentences, building on Math
 ```bash
 git clone https://github.com/cameronfreer/infinitary-logic.git && cd infinitary-logic
 lake build
-leanblueprint web && open blueprint/web/index.html
+pip install leanblueprint && leanblueprint web  # then open blueprint/web/index.html
 ```
 
 ## Main Results
@@ -39,9 +39,9 @@ in `InfinitaryLogic/*.lean`.
 >   hinge — downstream results depend on it but the proof itself is complete.
 > - `morley_hanf_of_transfer` is conditional on the explicit hypothesis
 >   `MorleyHanfTransfer`, which packages deep Erdős-Rado / Ehrenfeucht-Mostowski machinery.
-> - `morley_counting_dichotomy` and `barwise_compactness` are currently **schematic**
->   (`True` in Lean) pending additional infrastructure; the intended statements are
->   explained in their docstrings.
+> - `morley_counting_dichotomy` is currently **schematic** (`True` in Lean) pending
+>   descriptive set theory infrastructure; the intended statement is explained in
+>   its docstring.
 
 ## Blueprint
 
@@ -60,9 +60,9 @@ To regenerate locally:
 ```bash
 lake build :blueprint          # extract .tex from Lean sources
 lake build :blueprintJson      # extract .json for declaration linking
-lake exe checkdecls blueprint/lean_decls  # verify all blueprint nodes
-leanblueprint web              # → blueprint/web/
+leanblueprint web              # → blueprint/web/ (generates lean_decls)
 leanblueprint pdf              # → blueprint/print/print.pdf
+lake exe checkdecls blueprint/lean_decls  # verify all blueprint nodes
 ```
 
 ### Implemented Results
