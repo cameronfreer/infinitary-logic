@@ -140,8 +140,11 @@ already available), see `downward_LS_with_naming`. -/
   (title := /-- Downward Löwenheim-Skolem -/)
   (statement := /-- Any satisfiable $\Lomegaone$ sentence in a countable language
     with a countable model has a countable model (in any universe). -/)
-  (proof := /-- Extend $L$ with constants for each element of $M$ to form $L[[M]]$,
-    construct a naming function, apply model existence, then restrict back. -/)
+  (proof := /-- The key step is the language expansion: extend $L$ with a constant
+    for each element of $M$ to form $L[[M]]$, which remains countable. A naming
+    function witnessing the constants lets us build a consistency property in
+    $L[[M]]$; the model existence theorem then produces a fresh countable term
+    model $N$, which we restrict back to $L$. -/)
   (proofUses := ["def:naming-function-with-constants", "thm:model-existence"])]
 theorem downward_LS [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relations l)]
     (φ : L.Sentenceω) (M : Type u) [L.Structure M] [Countable M]
@@ -178,9 +181,10 @@ satisfied by a countable model (`[Countable M]`) has a countable model. -/
   (title := /-- Downward Löwenheim-Skolem for theories -/)
   (statement := /-- Any countable $\Lomegaone$ theory in a countable language satisfied
     by a countable model has a countable model. -/)
-  (proof := /-- Lift the theory to the expanded language $L[[M]]$ with constants for
-    elements of $M$, apply the model existence theorem to get a countable term model,
-    then restrict back to $L$. -/)
+  (proof := /-- Same language-expansion strategy as the sentence version: lift the
+    entire theory to $L[[M]]$, use the naming function to build a consistency
+    property witnessing all sentences, apply model existence for the countable
+    term model, then restrict the $L[[M]]$-structure back to $L$. -/)
   (proofUses := ["def:naming-function-with-constants", "thm:model-existence"])]
 theorem downward_LS_theory [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relations l)]
     (T : L.Theoryω) (M : Type u) [L.Structure M] [Countable M]

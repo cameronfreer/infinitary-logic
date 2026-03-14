@@ -85,8 +85,8 @@ This is a fundamental structural result about Lω₁ω. -/
   (statement := /-- Every $\Lomegaone$ sentence has a Hanf bound (and therefore a
     Hanf number). -/)
   (proof := /-- Case split: if $\varphi$ has arbitrarily large models then any
-    cardinal is a bound; otherwise there is a maximal model size and the
-    premise is vacuously false above it. -/)
+    cardinal is a bound; otherwise there is a cutoff cardinal above which
+    no models exist, so the premise is vacuously false. -/)
   (uses := ["def:hanf-bound", "def:arb-large-models"])]
 theorem hanf_existence (φ : L.Sentenceω) : ∃ κ, IsHanfBound φ κ := by
   by_cases h : HasArbLargeModels φ
