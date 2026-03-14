@@ -47,7 +47,7 @@ jobs:
       - name: Install blueprint dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y graphviz libgraphviz-dev texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra latexmk
+          sudo apt-get install -y graphviz libgraphviz-dev texlive-latex-extra texlive-xetex texlive-fonts-recommended texlive-fonts-extra latexmk
           pip install leanblueprint
 
       - name: Build blueprint website
