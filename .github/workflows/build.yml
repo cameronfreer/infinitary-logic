@@ -43,8 +43,11 @@ jobs:
           use-github-cache: true
           use-mathlib-cache: true
 
-      - name: Install leanblueprint
-        run: pip install leanblueprint
+      - name: Install blueprint dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y graphviz libgraphviz-dev texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra latexmk
+          pip install leanblueprint
 
       - name: Build blueprint website
         run: leanblueprint web
@@ -53,10 +56,7 @@ jobs:
         run: lake exe checkdecls blueprint/lean_decls
 
       - name: Build blueprint PDF
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra latexmk
-          leanblueprint pdf
+        run: leanblueprint pdf
 
       - name: Copy PDF to web output
         run: cp blueprint/print/print.pdf blueprint/web/blueprint.pdf

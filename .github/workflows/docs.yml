@@ -44,17 +44,17 @@ jobs:
       - name: Build API docs
         run: lake build :docs
 
-      - name: Install leanblueprint
-        run: pip install leanblueprint
+      - name: Install blueprint dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y graphviz libgraphviz-dev texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra latexmk
+          pip install leanblueprint
 
       - name: Build blueprint website
         run: leanblueprint web
 
       - name: Build blueprint PDF
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra latexmk
-          leanblueprint pdf
+        run: leanblueprint pdf
 
       - name: Assemble site
         run: |
