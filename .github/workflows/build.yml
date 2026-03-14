@@ -58,14 +58,23 @@ jobs:
       - name: Build blueprint PDF
         run: leanblueprint pdf
 
-      - name: Copy PDF to web output
-        run: cp blueprint/print/print.pdf blueprint/web/blueprint.pdf
+      - name: Assemble site
+        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+        run: |
+          mkdir -p _site/blueprint
+          cp -r blueprint/web/* _site/blueprint/
+          cp blueprint/print/print.pdf _site/blueprint/blueprint.pdf
+          cat > _site/index.html <<'REDIRECT'
+          <!DOCTYPE html><html><head>
+          <meta http-equiv="refresh" content="0; url=blueprint/">
+          </head><body><a href="blueprint/">Blueprint</a></body></html>
+          REDIRECT
 
       - name: Upload Pages artifact
         if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3
         with:
-          path: blueprint/web
+          path: _site
 
   deploy:
     if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'

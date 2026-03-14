@@ -1,31 +1,47 @@
 # Infinitary Logic in Lean 4
 
+![CI](https://github.com/cameronfreer/infinitary-logic/actions/workflows/build.yml/badge.svg)
+
 A Lean 4 formalization of infinitary logic and Scott sentences, building on Mathlib. This project is under active development.
 
-## Goals
+### Getting Started
 
-1. **Scott Sentences** - Every countable structure in a relational countable language has a Scott sentence that characterizes it up to isomorphism.
+```bash
+git clone https://github.com/cameronfreer/infinitary-logic.git && cd infinitary-logic
+lake build
+leanblueprint web && open blueprint/web/index.html
+```
 
-2. **Scott Rank < ω₁** - The Scott rank of any countable structure is a countable ordinal.
+## Main Results
 
-3. **Karp's Theorem** - Back-and-forth equivalence at all ordinals characterizes infinitary elementary equivalence.
+1. **Scott Sentences** — Every countable structure in a relational countable language has a Scott sentence that characterizes it up to isomorphism.
 
-4. **Model Existence / Completeness** - Consistency properties yield models for Lω₁ω theories.
+2. **Scott Rank < ω₁** — The Scott rank of any countable structure is a countable ordinal.
 
-5. **López-Escobar Theorem** (future) - Borel isomorphism-invariant sets of structures are Lω₁ω-definable.
+3. **Karp's Theorem** — Back-and-forth equivalence at all ordinals characterizes infinitary elementary equivalence.
+
+4. **Model Existence / Completeness** — Consistency properties yield models for Lω₁ω theories.
+
+### Open Directions
+
+- **López-Escobar Theorem** — Borel isomorphism-invariant sets of structures are Lω₁ω-definable.
+- **Unconditional Morley-Hanf** — Remove the `MorleyHanfTransfer` hypothesis by formalizing Erdős-Rado / Ehrenfeucht-Mostowski machinery.
+- **Admissible fragment completeness** — Full Barwise completeness beyond the schematic statement.
 
 ## Current Status
 
 The project targets Lean 4 / Mathlib `v4.27.0`. There are currently **no `sorry` placeholders**
 in `InfinitaryLogic/*.lean`.
 
-The main remaining boundaries are mathematical scope rather than proof holes:
-
-- some results are formalized **conditionally** on explicit hypotheses such as
-  `CountableRefinementHypothesis` or `MorleyHanfTransfer`
-- some high-level theorems are present only in **schematic** form, where the intended
-  statement is explained in the docstring but the Lean theorem is intentionally weaker
-  pending more infrastructure
+> **Current Boundaries.** The remaining boundaries are mathematical scope rather than proof holes:
+>
+> - `CountableRefinementHypothesis` is proved internally and serves as an architectural
+>   hinge — downstream results depend on it but the proof itself is complete.
+> - `morley_hanf_of_transfer` is conditional on the explicit hypothesis
+>   `MorleyHanfTransfer`, which packages deep Erdős-Rado / Ehrenfeucht-Mostowski machinery.
+> - `morley_counting_dichotomy` and `barwise_compactness` are currently **schematic**
+>   (`True` in Lean) pending additional infrastructure; the intended statements are
+>   explained in their docstrings.
 
 ## Blueprint
 
@@ -100,16 +116,6 @@ leanblueprint pdf              # → blueprint/print/print.pdf
 - Barwise compactness
 - Barwise completeness II
 - Nadel bound (sorry-free)
-
-### Current Boundaries
-
-- `CountableRefinementHypothesis` is now proved internally and serves as an architectural
-  hinge in the Scott-analysis pipeline — downstream results depend on it but the proof
-  itself is complete.
-- `morley_hanf_of_transfer` is conditional on the explicit hypothesis
-  `MorleyHanfTransfer`, which packages deep Erdős-Rado / Ehrenfeucht-Mostowski machinery.
-- `morley_counting_dichotomy` is currently schematic (`True` in Lean) pending descriptive
-  set theory infrastructure for coding countable structures and applying Silver-Burgess style results.
 
 ## File Structure
 
