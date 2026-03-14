@@ -139,8 +139,8 @@ already available), see `downward_LS_with_naming`. -/
 @[blueprint "thm:downward-ls"
   (title := /-- Downward Löwenheim-Skolem -/)
   (statement := /-- Given a countable model $M$ of an $\Lomegaone$ sentence $\varphi$
-    in a countable language, one can construct a countable model in any target
-    universe via language expansion $L[[M]]$ and the model existence theorem. -/)
+    in a countable language, one can construct a countable model in the same
+    universe as $M$ via language expansion $L[[M]]$ and the model existence theorem. -/)
   (proof := /-- The key step is the language expansion: extend $L$ with a constant
     for each element of $M$ to form $L[[M]]$, which remains countable. A naming
     function witnessing the constants lets us build a consistency property in
@@ -181,8 +181,8 @@ satisfied by a countable model (`[Countable M]`) has a countable model. -/
 @[blueprint "thm:downward-ls-theory"
   (title := /-- Downward Löwenheim-Skolem for theories -/)
   (statement := /-- Given a countable model $M$ of a countable $\Lomegaone$ theory $T$
-    in a countable language, one can reconstruct a countable model in any target
-    universe via language expansion $L[[M]]$ and the model existence theorem. -/)
+    in a countable language, one can reconstruct a countable model in the same
+    universe as $M$ via language expansion $L[[M]]$ and the model existence theorem. -/)
   (proof := /-- Same language-expansion strategy as the sentence version: lift the
     entire theory to $L[[M]]$, use the naming function to build a consistency
     property witnessing all sentences, apply model existence for the countable
