@@ -17,7 +17,7 @@ permissions:
   id-token: write
 
 jobs:
-  build_project:
+  build:
     runs-on: ubuntu-latest
     name: Build project and blueprint
     steps:
@@ -34,10 +34,8 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Build Lean project
+      - name: Build Lean project and blueprint
         uses: leanprover/lean-action@c544e89643240c6b398f14a431bcdc6309e36b3e
         with:
           build: true
@@ -45,10 +43,39 @@ jobs:
           use-github-cache: true
           use-mathlib-cache: true
 
-      - name: Build and deploy blueprint
-        uses: leanprover-community/docgen-action@7836f3de2f10facc0fed09c1309e6402e4cd5fd0
+      - name: Check blueprint declarations
+        run: lake exe checkdecls blueprint/lean_decls
+
+      - name: Install leanblueprint
+        run: pip install leanblueprint
+
+      - name: Build blueprint website
+        run: leanblueprint web
+
+      - name: Build blueprint PDF
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra latexmk
+          leanblueprint pdf
+
+      - name: Copy PDF to web output
+        run: cp blueprint/print/print.pdf blueprint/web/blueprint.pdf
+
+      - name: Upload Pages artifact
+        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
         with:
-          api-docs: false
-          blueprint: true
-          build-page: false
-          deploy: true
+          path: blueprint/web
+
+  deploy:
+    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    name: Deploy to GitHub Pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
