@@ -38,8 +38,8 @@ in L without extension using `NamingFunction`.
 
 ## References
 
-- [Marker, "Lectures on Infinitary Model Theory", 2016]
-- [Keisler-Knight, "Barwise: Infinitary Logic and Admissible Sets", 2004]
+- [Mar16]
+- [KK04]
 -/
 
 universe u u' v v' w

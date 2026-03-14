@@ -20,8 +20,8 @@ of sentences satisfying closure conditions that guarantee model existence.
 
 ## References
 
-- [Marker, "Lectures on Infinitary Model Theory", 2016], §4.1
-- [Keisler, "Model Theory for Infinitary Logic", 1971]
+- [Mar16], §4.1
+- [Kei71]
 -/
 
 universe u v

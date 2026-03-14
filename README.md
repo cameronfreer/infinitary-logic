@@ -235,9 +235,15 @@ for the blueprint workflow.
 
 ## References
 
-- Barwise, J. (1975). *Admissible Sets and Structures*
-- Hodges, W. (1993). *Model Theory*, Chapter 3
-- Marker, D. (2002). *Model Theory: An Introduction*, Chapter 2.6
+- Barwise, J. (1975). *Admissible Sets and Structures*. Springer-Verlag.
+- Karp, C. R. (1964). *Languages with Expressions of Infinite Length*. North-Holland.
+- Karp, C. R. (1965). Finite-Quantifier Equivalence. In *The Theory of Models*, 407–412.
+- Keisler, H. J. (1971). *Model Theory for Infinitary Logic*. North-Holland.
+- Keisler, H. J. & Knight, J. F. (2004). Barwise: Infinitary Logic and Admissible Sets.
+  *Bulletin of Symbolic Logic*, 10(1), 4–36.
+- Marker, D. (2016). *Lectures on Infinitary Model Theory*. Cambridge University Press.
+- Nadel, M. E. (1974). Scott sentences and admissible sets.
+  *Annals of Mathematical Logic*, 7(2–3), 267–294.
 
 ## License & Citation
 

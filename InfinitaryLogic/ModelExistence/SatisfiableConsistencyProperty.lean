@@ -30,7 +30,7 @@ then apply model existence to get a countable model of φ.
 
 ## References
 
-- [Marker, "Lectures on Infinitary Model Theory", 2016], §4.1
+- [Mar16], §4.1
 -/
 
 universe u v w

@@ -30,8 +30,8 @@ existence theorem for Lω₁ω. The construction proceeds in several stages:
 
 ## References
 
-- [Marker, "Lectures on Infinitary Model Theory", 2016], §4.1
-- [Keisler, "Model Theory for Infinitary Logic", 1971]
+- [Mar16], §4.1
+- [Kei71]
 -/
 
 universe u v

@@ -26,8 +26,8 @@ in L∞ω (infinitary logic with arbitrary conjunctions/disjunctions).
 
 ## References
 
-- [Karp, "Finite-Quantifier Equivalence", 1965]
-- [Keisler-Knight, "Barwise: Infinitary Logic and Admissible Sets", 2004]
+- [Karp65]
+- [KK04]
 -/
 
 universe u v w

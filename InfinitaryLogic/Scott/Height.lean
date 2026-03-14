@@ -31,8 +31,8 @@ analysis stabilizes) and the canonical Scott sentence (the Scott formula at Scot
 
 ## References
 
-- [Keisler-Knight, "Barwise: Infinitary Logic and Admissible Sets", 2004], §1.3
-- [Marker, "Lectures on Infinitary Model Theory", 2016]
+- [KK04], §1.3
+- [Mar16]
 -/
 
 universe u v w

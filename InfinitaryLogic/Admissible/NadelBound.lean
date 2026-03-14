@@ -19,8 +19,8 @@ admissible set A, the Scott height is bounded by o(A) (the height of A).
 
 ## References
 
-- [Keisler-Knight, "Barwise: Infinitary Logic and Admissible Sets", 2004], Theorem 4.3.2
-- [Nadel, "Scott sentences and admissible sets", 1974]
+- [KK04], Theorem 4.3.2
+- [Nad74]
 -/
 
 universe u v w

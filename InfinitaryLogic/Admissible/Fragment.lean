@@ -25,8 +25,8 @@ the full theory of admissible sets or KP set theory.
 
 ## References
 
-- [Keisler-Knight, "Barwise: Infinitary Logic and Admissible Sets", 2004], §3
-- [Barwise, "Admissible Sets and Structures", 1975]
+- [KK04], §3
+- [Bar75]
 -/
 
 universe u v
@@ -92,8 +92,7 @@ structure AdmissibleFragment (L : Language.{u, v}) where
   /-- **Compactness principle** (Σ₁-reflection in the underlying admissible set).
   If every A-finite subset of S ⊆ formulas has a model, then S has a model.
   This is the key set-theoretic property of admissible fragments that cannot be
-  derived from closure properties alone. See Barwise, "Admissible Sets and
-  Structures", 1975. -/
+  derived from closure properties alone. See [Bar75]. -/
   compact : ∀ S ⊆ formulas,
     (∀ F, F ⊆ formulas → F.Finite → F ⊆ S →
       ∃ (M : Type) (_ : L.Structure M), Theoryω.Model F M) →

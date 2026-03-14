@@ -20,8 +20,8 @@ that belongs to a consistency property has a countable model.
 
 ## References
 
-- [Marker, "Lectures on Infinitary Model Theory", 2016], Theorem 4.1.2
-- [Keisler, "Model Theory for Infinitary Logic", 1971]
+- [Mar16], Theorem 4.1.2
+- [Kei71]
 -/
 
 universe u v w

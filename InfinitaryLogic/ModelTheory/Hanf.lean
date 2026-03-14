@@ -34,8 +34,8 @@ existence theorem and the Morley-Hanf bound.
 
 ## References
 
-- [Keisler-Knight, "Barwise: Infinitary Logic and Admissible Sets", 2004], §1.6
-- [Marker, "Lectures on Infinitary Model Theory"], §5
+- [KK04], §1.6
+- [Mar16], §5
 -/
 
 universe u v
@@ -109,8 +109,7 @@ This encapsulates the combined content of:
 These deep combinatorial arguments (Ramsey/partition calculus + EM functors)
 require infrastructure not currently formalized in Lean or Mathlib.
 
-See Marker, "Lectures on Infinitary Model Theory", §5;
-Keisler-Knight, "Barwise: Infinitary Logic and Admissible Sets", §1.6. -/
+See [Mar16], §5; [KK04], §1.6. -/
 def MorleyHanfTransfer (L : Language.{u, v}) [Countable (Σ l, L.Relations l)] : Prop :=
   ∀ (φ : L.Sentenceω) (M : Type) [L.Structure M],
     Sentenceω.Realize φ M → Cardinal.mk M ≥ Cardinal.beth (Ordinal.omega 1) →

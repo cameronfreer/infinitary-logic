@@ -23,8 +23,8 @@ for admissible fragments of Lω₁ω.
 
 ## References
 
-- [Keisler-Knight, "Barwise: Infinitary Logic and Admissible Sets", 2004], §3.1
-- [Barwise, "Admissible Sets and Structures", 1975]
+- [KK04], §3.1
+- [Bar75]
 -/
 
 universe u v

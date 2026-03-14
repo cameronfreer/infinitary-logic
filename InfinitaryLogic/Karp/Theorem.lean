@@ -37,7 +37,7 @@ redundant. It was removed to eliminate 3 sorry tokens.
 
 ## References
 
-- [Keisler-Knight, "Barwise: Infinitary Logic and Admissible Sets", 2004]
+- [KK04]
 -/
 
 universe u v w

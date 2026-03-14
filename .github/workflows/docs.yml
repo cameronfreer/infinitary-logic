@@ -42,7 +42,9 @@ jobs:
           use-mathlib-cache: true
 
       - name: Build API docs
-        run: lake build :docs
+        run: |
+          cd docbuild
+          lake build InfinitaryLogic:docs
 
       - name: Install blueprint dependencies
         run: |
@@ -61,7 +63,7 @@ jobs:
           mkdir -p _site/blueprint
           cp -r blueprint/web/* _site/blueprint/
           cp blueprint/print/print.pdf _site/blueprint/blueprint.pdf
-          cp -r .lake/build/doc _site/docs
+          cp -r docbuild/.lake/build/doc _site/docs
           cat > _site/index.html <<'REDIRECT'
           <!DOCTYPE html><html><head>
           <meta http-equiv="refresh" content="0; url=blueprint/">

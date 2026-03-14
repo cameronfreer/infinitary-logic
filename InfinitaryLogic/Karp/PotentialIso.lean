@@ -25,7 +25,7 @@ back-and-forth equivalence at all ordinal levels.
 
 ## References
 
-- [Keisler-Knight, "Barwise: Infinitary Logic and Admissible Sets", 2004], Theorem 1.2.1
+- [KK04], Theorem 1.2.1
 -/
 
 universe u v w w'

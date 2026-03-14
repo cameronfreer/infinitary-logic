@@ -25,7 +25,7 @@ relation between structures.
 
 ## References
 
-- [Keisler-Knight, "Barwise: Infinitary Logic and Admissible Sets", 2004]
+- [KK04]
 -/
 
 universe u v w w'

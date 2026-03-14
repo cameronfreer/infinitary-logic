@@ -23,7 +23,7 @@ L∞ω-elementary equivalence) implies isomorphism.
 
 ## References
 
-- [Keisler-Knight, "Barwise: Infinitary Logic and Admissible Sets", 2004], Corollary 1.2.2
+- [KK04], Corollary 1.2.2
 -/
 
 universe u v w
