@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Lomega1omega.Semantics
+import InfinitaryLogic.Util
 
 /-!
 # Operations on Lω₁ω Formulas
@@ -536,9 +537,7 @@ theorem realize_toSentenceω {M : Type*} [L.Structure M]
     Sentenceω.Realize φ.toSentenceω M ↔ Formulaω.Realize φ (Fin.elim0 : Fin 0 → M) := by
   unfold toSentenceω Sentenceω.Realize Formulaω.Realize
   rw [BoundedFormulaω.realize_mapFreeVars]
-  have h : (Empty.elim : Empty → M) ∘ (Fin.elim0 : Fin 0 → Empty) = (Fin.elim0 : Fin 0 → M) :=
-    funext (fun x => Fin.elim0 x)
-  simp only [h]
+  simp only [comp_fin_elim0]
 
 end Formulaω
 

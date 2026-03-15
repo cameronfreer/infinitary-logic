@@ -44,16 +44,10 @@ theorem countable_LomegaEquiv_implies_iso_of
     {N : Type w} [L.Structure N] [Countable N] :
     LomegaEquiv L M N → Nonempty (M ≃[L] N) := by
   intro hEquiv
-  -- M satisfies its own Scott sentence (via _of variant)
-  have hM := (scottSentence_characterizes_of hcount M M).mpr ⟨Equiv.refl L M⟩
-  -- Convert from Formulaω (Fin 0) to Sentenceω so LomegaEquiv applies
-  have hMω := (Formulaω.realize_toSentenceω (scottSentence (L := L) M) (M := M)).mpr hM
-  -- Transfer from M to N via LomegaEquiv
-  have hNω := (hEquiv _).mp hMω
-  -- Convert back to Formulaω (Fin 0) realization
-  have hN := (Formulaω.realize_toSentenceω (scottSentence (L := L) M) (M := N)).mp hNω
-  -- Scott sentence characterizes isomorphism for countable structures
-  exact (scottSentence_characterizes_of hcount M N).mp hN
+  apply scottSentence_realizes_implies_equiv_of hcount
+  rw [Formulaω.realize_as_sentence_iff_toSentenceω]
+  exact (hEquiv _).mp ((Formulaω.realize_as_sentence_iff_toSentenceω _ _).mp
+    (scottSentence_self_of hcount M))
 
 /-- Conditional variant of `countable_LinfEquiv_implies_iso`. Sorry-free. -/
 theorem countable_LinfEquiv_implies_iso_of

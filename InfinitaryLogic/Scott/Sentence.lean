@@ -1026,6 +1026,12 @@ noncomputable def scottSentence (M : Type w) [L.Structure M] [Countable M] : L.F
 def Formulaω.realize_as_sentence (φ : L.Formulaω (Fin 0)) (N : Type w) [L.Structure N] : Prop :=
   φ.Realize (Fin.elim0 : Fin 0 → N)
 
+/-- Bridge between `realize_as_sentence` and `Sentenceω.Realize` via `toSentenceω`. -/
+theorem Formulaω.realize_as_sentence_iff_toSentenceω
+    (φ : L.Formulaω (Fin 0)) (N : Type w) [L.Structure N] :
+    φ.realize_as_sentence N ↔ Sentenceω.Realize φ.toSentenceω N := by
+  simpa [Formulaω.realize_as_sentence] using (Formulaω.realize_toSentenceω (M := N) φ).symm
+
 /-! ### Conditional Scott Sentence Pipeline
 
 Sorry-free variants of the entire Scott sentence chain, conditional on
@@ -1092,6 +1098,29 @@ theorem scottSentence_characterizes_of
     (stabilizationOrdinal (L := L) M) (stabilizationOrdinal_lt_omega1_of hcount M)
   rw [h]
   exact stabilizationOrdinal_stabilizes_of hcount M N
+
+/-- A countable structure satisfies its own Scott sentence. -/
+theorem scottSentence_self_of
+    (hcount : CountableRefinementHypothesis.{u, v, w} L)
+    (M : Type w) [L.Structure M] [Countable M] :
+    (scottSentence (L := L) M).realize_as_sentence M :=
+  (scottSentence_characterizes_of hcount M M).mpr ⟨Equiv.refl L M⟩
+
+/-- If N realizes the Scott sentence of M, then M ≅ N. -/
+theorem scottSentence_realizes_implies_equiv_of
+    (hcount : CountableRefinementHypothesis.{u, v, w} L)
+    (M : Type w) [L.Structure M] [Countable M]
+    (N : Type w) [L.Structure N] [Countable N] :
+    (scottSentence (L := L) M).realize_as_sentence N → Nonempty (M ≃[L] N) :=
+  (scottSentence_characterizes_of hcount M N).mp
+
+/-- Isomorphic countable structures satisfy each other's Scott sentences. -/
+theorem scottSentence_of_equiv_of
+    (hcount : CountableRefinementHypothesis.{u, v, w} L)
+    {M : Type w} [L.Structure M] [Countable M]
+    {N : Type w} [L.Structure N] [Countable N] :
+    Nonempty (M ≃[L] N) → (scottSentence (L := L) M).realize_as_sentence N :=
+  (scottSentence_characterizes_of hcount M N).mpr
 
 end Language
 
