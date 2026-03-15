@@ -58,17 +58,24 @@ jobs:
       - name: Build blueprint PDF
         run: leanblueprint pdf
 
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          working-directory: home_page
+
+      - name: Build homepage
+        run: |
+          cd home_page
+          bundle exec jekyll build --baseurl "/infinitary-logic" --destination ../_site
+
       - name: Assemble site
         run: |
           mkdir -p _site/blueprint
           cp -r blueprint/web/* _site/blueprint/
           cp blueprint/print/print.pdf _site/blueprint/blueprint.pdf
           cp -r docbuild/.lake/build/doc _site/docs
-          cat > _site/index.html <<'REDIRECT'
-          <!DOCTYPE html><html><head>
-          <meta http-equiv="refresh" content="0; url=blueprint/">
-          </head><body><a href="blueprint/">Blueprint</a></body></html>
-          REDIRECT
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
