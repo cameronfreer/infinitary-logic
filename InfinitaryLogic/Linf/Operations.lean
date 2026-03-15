@@ -368,9 +368,7 @@ private theorem realize_relabel_insertLastBoundInf_zero {n : ℕ}
   have h := realize_relabel_insertLastBoundInf (k := 0) φ v xs
   rw [h]
   simp only [FormulaInf.Realize]
-  have heq : (xs ∘ Fin.succShiftInf : Fin 0 → M) = Fin.elim0 := by
-    ext i; exact i.elim0
-  rw [heq]
+  rw [show (xs ∘ Fin.succShiftInf : Fin 0 → M) = Fin.elim0 from Fin.eq_elim0 _]
 
 /-- Helper: `Fin.snoc Fin.elim0 x` evaluated at 0 gives x. -/
 private theorem snoc_elim0_zero_inf (x : M) :
@@ -439,8 +437,7 @@ def toLinf (φ : L.Sentence) : L.SentenceInf := Formula.toLinf φ
 @[simp]
 theorem realize_toLinf {M : Type*} [L.Structure M] [Nonempty M] (φ : L.Sentence) :
     SentenceInf.Realize φ.toLinf M ↔ M ⊨ φ := by
-  have h : (default : Empty → M) = (fun e : Empty => e.elim) := by
-    funext e; exact e.elim
+  have h : (default : Empty → M) = (fun e : Empty => e.elim) := Empty.eq_elim default
   simp only [SentenceInf.Realize, Sentence.Realize, Formula.Realize, toLinf, Formula.toLinf, h]
   exact BoundedFormula.realize_toLinf φ
 

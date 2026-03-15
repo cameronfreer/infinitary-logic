@@ -126,12 +126,12 @@ theorem omitting_types [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Rel
     · intro h
       rw [show (Sum.elim (fun _ : Fin 1 => m') Fin.elim0 ∘ Sum.inl ∘
           (Empty.elim : Empty → Fin 1) : Empty → _) =
-          Empty.elim from funext (fun e => Empty.elim e)] at h
+          Empty.elim from Empty.eq_elim _] at h
       rwa [hNF.sound] at h
     · intro h; rw [h]
       rw [show (Sum.elim (fun _ : Fin 1 => m) Fin.elim0 ∘ Sum.inl ∘
           (Empty.elim : Empty → Fin 1) : Empty → _) =
-          Empty.elim from funext (fun e => Empty.elim e)]
+          Empty.elim from Empty.eq_elim _]
       exact (hNF.sound m).symm
   -- Helper: Fin.snoc Fin.elim0 m' = fun _ => m'
   have snoc_eq : ∀ m' : TermModel C S' hmax,

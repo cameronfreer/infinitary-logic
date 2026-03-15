@@ -262,7 +262,7 @@ theorem realize_relabel_sumInr_zero {n : ℕ} (φ : L.Formulaω (Fin n)) (xs : F
   simp only [Formulaω.Realize] at h ⊢
   rw [h]
   have h1 : xs ∘ Fin.castAdd 0 = xs := by funext i; simp [Fin.castAdd]
-  have h2 : (xs ∘ Fin.natAdd n : Fin 0 → M) = Fin.elim0 := by ext i; exact i.elim0
+  have h2 : (xs ∘ Fin.natAdd n : Fin 0 → M) = Fin.elim0 := Fin.eq_elim0 _
   rw [h1, h2]
 
 /-- Substitutes the free variables in a bounded formula with terms. -/
@@ -589,8 +589,7 @@ theorem realize_toLω {M : Type*} [L.Structure M] [Nonempty M] (φ : L.Sentence)
     Sentenceω.Realize φ.toLω M ↔ M ⊨ φ := by
   -- M ⊨ φ uses `default : Empty → M`, while Sentenceω.Realize uses `Empty.elim`
   -- These are propositionally equal
-  have h : (default : Empty → M) = (fun e : Empty => e.elim) := by
-    funext e; exact e.elim
+  have h : (default : Empty → M) = (fun e : Empty => e.elim) := Empty.eq_elim default
   simp only [Sentenceω.Realize, Sentence.Realize, Formula.Realize, toLω, Formula.toLω, h]
   exact BoundedFormula.realize_toLω φ
 

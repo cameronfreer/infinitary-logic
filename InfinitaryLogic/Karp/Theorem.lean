@@ -187,10 +187,8 @@ theorem BFEquiv_implies_agreeQR {M N : Type w} [L.Structure M] [L.Structure N]
     (h : BFEquiv (L := L) α n a b)
     (φ : BoundedFormulaInf.{u, v, 0, 0} L (Fin n) 0) (hφ : φ.qrank ≤ α) :
     (FormulaInf.Realize φ a ↔ FormulaInf.Realize φ b) := by
-  have ha : Fin.append a (Fin.elim0 : Fin 0 → M) = a :=
-    funext fun ⟨i, hi⟩ => by simp [Fin.append, Fin.addCases, show i < n from hi]
-  have hb : Fin.append b (Fin.elim0 : Fin 0 → N) = b :=
-    funext fun ⟨i, hi⟩ => by simp [Fin.append, Fin.addCases, show i < n from hi]
+  have ha : Fin.append a (Fin.elim0 : Fin 0 → M) = a := by simp [Fin.append_elim0]
+  have hb : Fin.append b (Fin.elim0 : Fin 0 → N) = b := by simp [Fin.append_elim0]
   exact BFEquiv_implies_agree_aux α φ hφ a b Fin.elim0 Fin.elim0 (by rwa [ha, hb])
 
 /-! ### Karp's Theorem at universe w (sorry-free)
@@ -322,11 +320,7 @@ theorem PotentialIso_implies_LinfEquivW (P : PotentialIso L M N) : LinfEquivW L 
   -- Apply the generalized agree lemma with the empty tuple
   have hext : ⟨0 + 0, Fin.append (Fin.elim0 : Fin 0 → M) Fin.elim0,
       Fin.append (Fin.elim0 : Fin 0 → N) Fin.elim0⟩ ∈ P.family := by
-    have ha : Fin.append (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → M) = Fin.elim0 :=
-      funext fun x => Fin.elim0 x
-    have hb : Fin.append (Fin.elim0 : Fin 0 → N) (Fin.elim0 : Fin 0 → N) = Fin.elim0 :=
-      funext fun x => Fin.elim0 x
-    simp only [ha, hb]; exact P.empty_mem
+    simp only [Fin.append_elim0, Fin.eq_elim0]; exact P.empty_mem
   exact PotentialIso_implies_agree_aux P P.empty_mem _ _ _ hext
 
 /-! #### Backward: LinfEquivW → PotentialIso -/

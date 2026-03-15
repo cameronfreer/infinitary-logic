@@ -155,7 +155,7 @@ theorem realize_relabel_insertLastBound_zero {n : ℕ} (φ : L.Formulaω (Fin (n
     (v : Fin n → N) (xs : Fin 1 → N) :
     (φ.relabel insertLastBound).Realize v xs ↔ φ.Realize (snoc v (xs 0)) := by
   have h := realize_relabel_insertLastBound (k := 0) φ v xs
-  rwa [show (xs ∘ Fin.succShift : Fin 0 → N) = Fin.elim0 from funext fun i => i.elim0] at h
+  rwa [show (xs ∘ Fin.succShift : Fin 0 → N) = Fin.elim0 from Fin.eq_elim0 _] at h
 
 /-- Helper: snoc Fin.elim0 x evaluated at 0 gives x. -/
 private theorem snoc_elim0_zero {α : Type*} (x : α) :
