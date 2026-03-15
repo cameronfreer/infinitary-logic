@@ -57,16 +57,6 @@ def castLE : ∀ {m n : ℕ} (_h : m ≤ n), L.BoundedFormulaω α m → L.Bound
   | _, _, h, iSup φs => iSup fun i => (φs i).castLE h
   | _, _, h, iInf φs => iInf fun i => (φs i).castLE h
 
-/-- Relabeling a term by the identity function returns the same term. -/
-theorem Term.relabel_id' {α : Type*} (t : L.Term α) : t.relabel id = t := by
-  induction t with
-  | var => rfl
-  | func f ts ih =>
-    simp only [Term.relabel]
-    congr 1
-    funext i
-    exact ih i
-
 /-- `castLE (le_refl n)` is the identity on formulas. -/
 theorem castLE_refl : (φ : L.BoundedFormulaω α n) → φ.castLE (le_refl n) = φ := by
   intro φ
@@ -77,7 +67,7 @@ theorem castLE_refl : (φ : L.BoundedFormulaω α n) → φ.castLE (le_refl n) =
     congr 1 <;> {
       have h : Sum.map id (Fin.castLE (le_refl m)) = (id : α ⊕ Fin m → α ⊕ Fin m) := by
         funext x; cases x <;> rfl
-      rw [h, Term.relabel_id']
+      rw [h, Term.relabel_id]
     }
   | @rel m l R ts =>
     simp only [castLE]
@@ -85,7 +75,7 @@ theorem castLE_refl : (φ : L.BoundedFormulaω α n) → φ.castLE (le_refl n) =
     funext i
     have h : Sum.map id (Fin.castLE (le_refl m)) = (id : α ⊕ Fin m → α ⊕ Fin m) := by
       funext x; cases x <;> rfl
-    rw [h, Term.relabel_id']
+    rw [h, Term.relabel_id]
   | imp φ ψ ih_φ ih_ψ =>
     simp only [castLE, ih_φ, ih_ψ]
   | all φ ih =>
@@ -291,10 +281,6 @@ def mapFreeVars (f : α → β) : ∀ {n}, L.BoundedFormulaω α n → L.Bounded
   | _, .iSup φs => .iSup (fun k => (φs k).mapFreeVars f)
   | _, .iInf φs => .iInf (fun k => (φs k).mapFreeVars f)
 
-private theorem sum_elim_comp_sum_map (f : α → β) (v : β → M) (xs : Fin n → M) :
-    Sum.elim v xs ∘ Sum.map f id = Sum.elim (v ∘ f) xs := by
-  funext x; cases x <;> rfl
-
 /-- Realization commutes with free variable renaming. -/
 theorem realize_mapFreeVars {M : Type*} [L.Structure M]
     (f : α → β) (φ : L.BoundedFormulaω α n) (v : β → M) (xs : Fin n → M) :
@@ -302,11 +288,12 @@ theorem realize_mapFreeVars {M : Type*} [L.Structure M]
   induction φ with
   | falsum => simp [mapFreeVars, Realize]
   | equal t₁ t₂ =>
-    simp only [mapFreeVars, realize_equal, Term.realize_relabel, sum_elim_comp_sum_map]
+    simp only [mapFreeVars, realize_equal, Term.realize_relabel, Sum.elim_comp_map,
+      Function.comp_id]
   | rel R ts =>
     simp only [mapFreeVars, realize_rel]
     constructor <;> intro h <;> convert h using 1 <;> ext i <;>
-      simp [Term.realize_relabel, sum_elim_comp_sum_map]
+      simp [Term.realize_relabel, Sum.elim_comp_map]
   | imp φ ψ ihφ ihψ =>
     simp only [mapFreeVars, realize_imp, ihφ xs, ihψ xs]
   | all φ ih =>

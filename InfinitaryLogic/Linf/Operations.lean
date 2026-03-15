@@ -53,16 +53,6 @@ def castLE : ∀ {m n : ℕ} (_h : m ≤ n), L.BoundedFormulaInf α m → L.Boun
   | _, _, h, iSup φs => iSup fun i => (φs i).castLE h
   | _, _, h, iInf φs => iInf fun i => (φs i).castLE h
 
-/-- Relabeling a term by the identity function returns the same term. -/
-private theorem Term.relabel_id' {α : Type*} (t : L.Term α) : t.relabel id = t := by
-  induction t with
-  | var => rfl
-  | func f ts ih =>
-    simp only [Term.relabel]
-    congr 1
-    funext i
-    exact ih i
-
 /-- `castLE (le_refl n)` is the identity on formulas. -/
 theorem castLE_refl : (φ : L.BoundedFormulaInf α n) → φ.castLE (le_refl n) = φ := by
   intro φ
@@ -73,7 +63,7 @@ theorem castLE_refl : (φ : L.BoundedFormulaInf α n) → φ.castLE (le_refl n) 
     congr 1 <;> {
       have h : Sum.map id (Fin.castLE (le_refl m)) = (id : α ⊕ Fin m → α ⊕ Fin m) := by
         funext x; cases x <;> rfl
-      rw [h, Term.relabel_id']
+      rw [h, Term.relabel_id]
     }
   | @rel m l R ts =>
     simp only [castLE]
@@ -81,7 +71,7 @@ theorem castLE_refl : (φ : L.BoundedFormulaInf α n) → φ.castLE (le_refl n) 
     funext i
     have h : Sum.map id (Fin.castLE (le_refl m)) = (id : α ⊕ Fin m → α ⊕ Fin m) := by
       funext x; cases x <;> rfl
-    rw [h, Term.relabel_id']
+    rw [h, Term.relabel_id]
   | imp φ ψ ih_φ ih_ψ =>
     simp only [castLE, ih_φ, ih_ψ]
   | all φ ih =>
@@ -150,10 +140,6 @@ def mapFreeVars (f : α → β) : ∀ {n}, L.BoundedFormulaInf α n → L.Bounde
   | _, .iSup φs => .iSup (fun i => (φs i).mapFreeVars f)
   | _, .iInf φs => .iInf (fun i => (φs i).mapFreeVars f)
 
-private theorem sum_elim_comp_sum_map (f : α → β) (v : β → M) (xs : Fin n → M) :
-    Sum.elim v xs ∘ Sum.map f id = Sum.elim (v ∘ f) xs := by
-  funext x; cases x <;> rfl
-
 /-- Realization commutes with free variable renaming. -/
 theorem realize_mapFreeVars {M : Type*} [L.Structure M]
     (f : α → β) (φ : L.BoundedFormulaInf α n) (v : β → M) (xs : Fin n → M) :
@@ -161,11 +147,12 @@ theorem realize_mapFreeVars {M : Type*} [L.Structure M]
   induction φ with
   | falsum => simp [mapFreeVars, Realize]
   | equal t₁ t₂ =>
-    simp only [mapFreeVars, realize_equal, Term.realize_relabel, sum_elim_comp_sum_map]
+    simp only [mapFreeVars, realize_equal, Term.realize_relabel, Sum.elim_comp_map,
+      Function.comp_id]
   | rel R ts =>
     simp only [mapFreeVars, realize_rel]
     constructor <;> intro h <;> convert h using 1 <;>
-      ext i <;> simp [Term.realize_relabel, sum_elim_comp_sum_map]
+      ext i <;> simp [Term.realize_relabel, Sum.elim_comp_map]
   | imp φ ψ ihφ ihψ =>
     simp only [mapFreeVars, realize_imp, ihφ xs, ihψ xs]
   | all φ ih =>
@@ -390,6 +377,26 @@ theorem realize_forallLastVarInf {n : ℕ} (φ : L.FormulaInf (Fin (n + 1))) (v 
 end LastVar
 
 end BoundedFormulaInf
+
+namespace FormulaInf
+
+/-- Converts a formula with `Fin 0` free variables to a sentence (with `Empty` free variables).
+
+Since both `Fin 0` and `Empty` are empty types, this is a purely type-theoretic conversion
+that does not change the semantics of the formula. -/
+def toSentenceInf (φ : L.FormulaInf (Fin 0)) : L.SentenceInf :=
+  φ.mapFreeVars Fin.elim0
+
+/-- `toSentenceInf` preserves semantics: the sentence realizes in M iff the original
+formula realizes with the `Fin.elim0` assignment. -/
+theorem realize_toSentenceInf {M : Type*} [L.Structure M]
+    (φ : L.FormulaInf (Fin 0)) :
+    SentenceInf.Realize φ.toSentenceInf M ↔ FormulaInf.Realize φ (Fin.elim0 : Fin 0 → M) := by
+  unfold toSentenceInf SentenceInf.Realize FormulaInf.Realize
+  rw [BoundedFormulaInf.realize_mapFreeVars]
+  simp only [comp_fin_elim0]
+
+end FormulaInf
 
 namespace BoundedFormula
 
