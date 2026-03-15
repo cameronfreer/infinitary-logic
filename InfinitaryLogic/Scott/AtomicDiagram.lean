@@ -54,20 +54,10 @@ instance [Countable (Σ l, L.Relations l)] : Countable (L.AtomicIdx n) := by
   haveI : Countable (Σ l, L.Relations l × (Fin l → Fin n)) := inferInstance
   apply Countable.of_equiv (Fin n × Fin n ⊕ (Σ l, L.Relations l × (Fin l → Fin n)))
   exact {
-    toFun := fun x => match x with
-      | Sum.inl ⟨i, j⟩ => AtomicIdx.eq i j
-      | Sum.inr ⟨l, R, f⟩ => AtomicIdx.rel R f
-    invFun := fun x => match x with
-      | AtomicIdx.eq i j => Sum.inl ⟨i, j⟩
-      | AtomicIdx.rel R f => Sum.inr ⟨_, R, f⟩
-    left_inv := fun x => by
-      cases x with
-      | inl p => obtain ⟨i, j⟩ := p; rfl
-      | inr p => obtain ⟨l, R, f⟩ := p; rfl
-    right_inv := fun x => by
-      cases x with
-      | eq i j => rfl
-      | rel R f => rfl
+    toFun := fun | .inl ⟨i, j⟩ => .eq i j | .inr ⟨_, R, f⟩ => .rel R f
+    invFun := fun | .eq i j => .inl ⟨i, j⟩ | .rel R f => .inr ⟨_, R, f⟩
+    left_inv := fun | .inl ⟨_, _⟩ => rfl | .inr ⟨_, _, _⟩ => rfl
+    right_inv := fun | .eq _ _ => rfl | .rel _ _ => rfl
   }
 
 omit [L.IsRelational] in
@@ -165,15 +155,11 @@ theorem sameAtomicType_iff_realize_atomicDiagram [Countable (Σ l, L.Relations l
   · intro h idx
     constructor
     · intro ha
-      have := h idx
-      simp only [ha, ↓reduceIte, realize_atomicFormulaω] at this
-      exact this
+      simpa [ha, realize_atomicFormulaω] using h idx
     · intro hb
-      have := h idx
       by_cases ha : idx.holds a
       · exact ha
-      · simp only [ha, ↓reduceIte, BoundedFormulaω.realize_not, realize_atomicFormulaω] at this
-        exact (this hb).elim
+      · exact absurd hb (by simpa [ha, realize_atomicFormulaω] using h idx)
 
 omit [L.IsRelational] in
 /-- Same atomic type is reflexive. -/

@@ -96,33 +96,21 @@ theorem equiv_implies_BFEquiv {M N : Type w} [L.Structure M] [L.Structure N]
     cases idx with
     | eq i j =>
       simp only [AtomicIdx.holds, Function.comp_apply]
-      constructor
-      · intro h; exact congrArg e h
-      · intro h; exact e.injective h
+      exact ⟨congrArg e, fun h => e.injective h⟩
     | rel R f =>
-      simp only [AtomicIdx.holds]
-      have hassoc : (e ∘ a) ∘ f = e ∘ (a ∘ f) := Function.comp_assoc e a f
-      rw [hassoc]
+      simp only [AtomicIdx.holds, Function.comp_assoc]
       exact (e.map_rel R (a ∘ f)).symm
   | succ β ih =>
     rw [BFEquiv.succ]
     refine ⟨ih n a, ?_, ?_⟩
     · intro m
       use e m
-      have : Fin.snoc (e ∘ a) (e m) = e ∘ Fin.snoc a m := by
-        ext i; simp only [Fin.snoc, Function.comp_apply]
-        split_ifs <;> rfl
-      rw [this]
+      rw [← Fin.comp_snoc]
       exact ih (n + 1) (Fin.snoc a m)
     · intro n'
       use e.symm n'
-      have h1 : Fin.snoc (e ∘ a) n' = e ∘ Fin.snoc a (e.symm n') := by
-        ext i; simp only [Fin.snoc, Function.comp_apply]
-        split_ifs with h
-        · rfl
-        · simp [Equiv.apply_symm_apply]
-      rw [h1]
-      exact ih (n + 1) (Fin.snoc a (e.symm n'))
+      have h1 := ih (n + 1) (Fin.snoc a (e.symm n'))
+      rwa [Fin.comp_snoc, e.apply_symm_apply] at h1
   | limit β hβ ih =>
     rw [BFEquiv.limit β hβ]
     intro γ hγ

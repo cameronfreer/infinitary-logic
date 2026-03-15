@@ -94,27 +94,20 @@ theorem BoundedFormulaInf.realize_equiv {M N : Type w} [L.Structure M] [L.Struct
     exact Iff.imp (ihφ xs) (ihψ xs)
   | all φ ih =>
     simp only [BoundedFormulaInf.Realize]
-    have snoc_comp : ∀ {m : ℕ} (xs' : Fin m → M) (x : M),
-        ⇑e ∘ Fin.snoc xs' x = Fin.snoc (⇑e ∘ xs') (e x) := by
-      intro m xs' x; funext i; refine Fin.lastCases ?_ ?_ i
-      · simp [Fin.snoc]
-      · intro j; simp [Fin.snoc]
     constructor
     · intro h y
       have h1 := (ih (Fin.snoc xs (e.symm y))).mp (h (e.symm y))
-      rwa [snoc_comp, e.apply_symm_apply] at h1
+      rwa [Fin.comp_snoc, e.apply_symm_apply] at h1
     · intro h x
       have h1 := h (e x)
-      rw [← snoc_comp] at h1
+      rw [← Fin.comp_snoc] at h1
       exact (ih (Fin.snoc xs x)).mpr h1
   | iSup φs ih =>
     simp only [BoundedFormulaInf.Realize]
-    exact ⟨fun ⟨i, hi⟩ => ⟨i, (ih i xs).mp hi⟩,
-           fun ⟨i, hi⟩ => ⟨i, (ih i xs).mpr hi⟩⟩
+    exact exists_congr fun i => ih i xs
   | iInf φs ih =>
     simp only [BoundedFormulaInf.Realize]
-    exact ⟨fun h i => (ih i xs).mp (h i),
-           fun h i => (ih i xs).mpr (h i)⟩
+    exact forall_congr' fun i => ih i xs
 
 /-! ### L∞ω Elementary Equivalence -/
 
@@ -153,11 +146,8 @@ and `e ∘ Fin.elim0 = Fin.elim0` since both domains are empty. -/
 theorem of_equiv (e : M ≃[L] N) : LinfEquiv L M N := by
   intro φ
   have h := BoundedFormulaInf.realize_equiv e φ (Empty.elim : Empty → M) (Fin.elim0 : Fin 0 → M)
-  have hv : ⇑e ∘ (Empty.elim : Empty → M) = (Empty.elim : Empty → N) :=
-    funext (fun x => x.elim)
-  have hxs : ⇑e ∘ (Fin.elim0 : Fin 0 → M) = (Fin.elim0 : Fin 0 → N) :=
-    funext (fun x => x.elim0)
-  rw [hv, hxs] at h; exact h
+  rwa [show (⇑e ∘ Empty.elim : Empty → N) = Empty.elim from funext fun x => x.elim,
+       show (⇑e ∘ Fin.elim0 : Fin 0 → N) = Fin.elim0 from funext fun x => x.elim0] at h
 
 end LinfEquiv
 
@@ -194,11 +184,8 @@ theorem trans (h₁ : LinfEquivW L M N) (h₂ : LinfEquivW L N P) : LinfEquivW L
 theorem of_equiv (e : M ≃[L] N) : LinfEquivW L M N := by
   intro φ
   have h := BoundedFormulaInf.realize_equiv e φ (Empty.elim : Empty → M) (Fin.elim0 : Fin 0 → M)
-  have hv : ⇑e ∘ (Empty.elim : Empty → M) = (Empty.elim : Empty → N) :=
-    funext (fun x => x.elim)
-  have hxs : ⇑e ∘ (Fin.elim0 : Fin 0 → M) = (Fin.elim0 : Fin 0 → N) :=
-    funext (fun x => x.elim0)
-  rw [hv, hxs] at h; exact h
+  rwa [show (⇑e ∘ Empty.elim : Empty → N) = Empty.elim from funext fun x => x.elim,
+       show (⇑e ∘ Fin.elim0 : Fin 0 → N) = Fin.elim0 from funext fun x => x.elim0] at h
 
 end LinfEquivW
 

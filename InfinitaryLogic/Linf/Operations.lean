@@ -163,9 +163,8 @@ theorem realize_mapFreeVars {M : Type*} [L.Structure M]
     simp only [mapFreeVars, realize_equal, Term.realize_relabel, sum_elim_comp_sum_map]
   | rel R ts =>
     simp only [mapFreeVars, realize_rel]
-    constructor <;> intro h
-    · convert h using 1; ext i; simp [Term.realize_relabel, sum_elim_comp_sum_map]
-    · convert h using 1; ext i; simp [Term.realize_relabel, sum_elim_comp_sum_map]
+    constructor <;> intro h <;> convert h using 1 <;>
+      ext i <;> simp [Term.realize_relabel, sum_elim_comp_sum_map]
   | imp φ ψ ihφ ihψ =>
     simp only [mapFreeVars, realize_imp, ihφ xs, ihψ xs]
   | all φ ih =>

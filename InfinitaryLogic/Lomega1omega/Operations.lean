@@ -229,9 +229,8 @@ theorem realize_relabel_sumInr {n : ℕ} :
   | rel R ts =>
     intro xs
     simp only [relabel, realize_rel]
-    constructor <;> intro h
-    · convert h using 1; ext i; simp [Term.realize_relabel, sum_elim_relabelAux_sumInr]
-    · convert h using 1; ext i; simp [Term.realize_relabel, sum_elim_relabelAux_sumInr]
+    constructor <;> intro h <;> convert h using 1 <;> ext i <;>
+      simp [Term.realize_relabel, sum_elim_relabelAux_sumInr]
   | imp φ ψ ih_φ ih_ψ =>
     intro xs; simp only [relabel, realize_imp]; exact Iff.imp (ih_φ xs) (ih_ψ xs)
   | all φ ih =>
@@ -305,9 +304,8 @@ theorem realize_mapFreeVars {M : Type*} [L.Structure M]
     simp only [mapFreeVars, realize_equal, Term.realize_relabel, sum_elim_comp_sum_map]
   | rel R ts =>
     simp only [mapFreeVars, realize_rel]
-    constructor <;> intro h
-    · convert h using 1; ext i; simp [Term.realize_relabel, sum_elim_comp_sum_map]
-    · convert h using 1; ext i; simp [Term.realize_relabel, sum_elim_comp_sum_map]
+    constructor <;> intro h <;> convert h using 1 <;> ext i <;>
+      simp [Term.realize_relabel, sum_elim_comp_sum_map]
   | imp φ ψ ihφ ihψ =>
     simp only [mapFreeVars, realize_imp, ihφ xs, ihψ xs]
   | all φ ih =>

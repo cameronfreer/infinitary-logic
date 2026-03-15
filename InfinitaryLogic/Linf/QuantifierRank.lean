@@ -187,9 +187,7 @@ theorem monotone {α β : Ordinal} (hαβ : α ≤ β) (h : EquivQRInf L β M N)
 theorem zero_iff_agree_atomic : EquivQRInf L 0 M N ↔
     ∀ φ : BoundedFormulaInf.{u, v, 0, 0} L Empty 0, φ.qrank = 0 →
       (SentenceInf.Realize φ M ↔ SentenceInf.Realize φ N) := by
-  constructor
-  · intro h φ hφ; exact h φ (le_of_eq hφ)
-  · intro h φ hφ; exact h φ (nonpos_iff_eq_zero.mp hφ)
+  exact ⟨fun h φ hφ => h φ (le_of_eq hφ), fun h φ hφ => h φ (nonpos_iff_eq_zero.mp hφ)⟩
 
 end EquivQRInf
 
