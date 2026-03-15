@@ -275,22 +275,12 @@ theorem exists_complete_self_stabilization (M : Type w) [L.Structure M] [Countab
     intro ⟨n, a, a'⟩
     simp only
     by_cases hFail : ∃ β < (Ordinal.omega 1 : Ordinal.{0}), ¬BFEquiv (L := L) β n a a'
-    · -- BFEquiv fails at some level < ω₁
-      obtain ⟨β, hβ_lt, hβ_fail⟩ := hFail
-      -- The change point: first ordinal where BFEquiv fails
-      set S := {δ : Ordinal.{0} | ¬BFEquiv (L := L) δ n a a'} with hS_def
-      have hS_nonempty : S.Nonempty := ⟨β, hβ_fail⟩
-      have hCP_mem : ¬BFEquiv (L := L) (sInf S) n a a' := csInf_mem hS_nonempty
-      have hCP_le_β : sInf S ≤ β := csInf_le' hβ_fail
-      use sInf S
-      refine ⟨lt_of_le_of_lt hCP_le_β hβ_lt, ?_⟩
-      intro α hα _ _
-      -- At α ≥ changePoint, BFEquiv α is False
-      have hFalse_α : ¬BFEquiv (L := L) α n a a' :=
-        fun hBF => hCP_mem (BFEquiv.monotone hα hBF)
-      have hFalse_succ : ¬BFEquiv (L := L) (Order.succ α) n a a' :=
-        fun hBF => hFalse_α (BFEquiv.of_succ hBF)
-      exact ⟨fun h => absurd h hFalse_α, fun h => absurd h hFalse_succ⟩
+    · obtain ⟨β, hβ_lt, hβ_fail⟩ := hFail
+      set S := {δ : Ordinal.{0} | ¬BFEquiv (L := L) δ n a a'}
+      have hCP := csInf_mem (show S.Nonempty from ⟨β, hβ_fail⟩)
+      refine ⟨sInf S, lt_of_le_of_lt (csInf_le' hβ_fail) hβ_lt, fun α hα _ _ => ?_⟩
+      exact ⟨fun h => absurd h (fun hBF => hCP (BFEquiv.monotone hα hBF)),
+             fun h => absurd h (fun hBF => hCP (BFEquiv.monotone hα (BFEquiv.of_succ hBF)))⟩
     · -- BFEquiv holds at all levels < ω₁
       push_neg at hFail
       use 0
@@ -304,19 +294,11 @@ theorem exists_complete_self_stabilization (M : Type w) [L.Structure M] [Countab
   -- Handle empty M
   by_cases hM_nonempty : Nonempty M
   swap
-  · -- M is empty: self-stabilization is trivial
-    haveI : IsEmpty M := not_nonempty_iff.mp hM_nonempty
-    use 0
-    refine ⟨Ordinal.omega_pos 1, ?_⟩
-    intro n a a'
-    cases n with
-    | zero =>
-      constructor
-      · intro h0
-        rw [BFEquiv.succ]
-        exact ⟨h0, fun m => isEmptyElim m, fun m' => isEmptyElim m'⟩
-      · exact BFEquiv.of_succ
-    | succ k => exact (IsEmpty.false (a 0)).elim
+  · haveI : IsEmpty M := not_nonempty_iff.mp hM_nonempty
+    exact ⟨0, Ordinal.omega_pos 1, fun n a a' => match n with
+      | 0 => ⟨fun h0 => (BFEquiv.succ 0 a a').mpr
+          ⟨h0, fun m => isEmptyElim m, fun m' => isEmptyElim m'⟩, BFEquiv.of_succ⟩
+      | _ + 1 => (IsEmpty.false (a 0)).elim⟩
   haveI : Nonempty M := hM_nonempty
   haveI : Nonempty (Σ n, (Fin n → M) × (Fin n → M)) :=
     ⟨⟨0, Fin.elim0, Fin.elim0⟩⟩
@@ -326,33 +308,22 @@ theorem exists_complete_self_stabilization (M : Type w) [L.Structure M] [Countab
   let globalStab : Ordinal.{0} := ⨆ k, boundOrd (enumTriples k) + 1
   -- Step 5: Show globalStab < ω₁
   have hGlobalLt : globalStab < Ordinal.omega 1 := by
-    have hEachLt : ∀ k, boundOrd (enumTriples k) + 1 < (Cardinal.aleph 1).ord := by
-      intro k; rw [Cardinal.ord_aleph]
-      exact Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1)
-        (hboundOrd_lt (enumTriples k))
-    have hsup := Ordinal.iSup_sequence_lt_omega_one
-      (fun k => boundOrd (enumTriples k) + 1) hEachLt
-    rw [Cardinal.ord_aleph] at hsup
-    exact hsup
+    rw [← Cardinal.ord_aleph]
+    exact Ordinal.iSup_sequence_lt_omega_one _ fun k => by
+      rw [Cardinal.ord_aleph]
+      exact Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) (hboundOrd_lt _)
   -- Step 6: succ globalStab < ω₁ (since ω₁ is a limit ordinal)
   have hSuccGlobalLt : Order.succ globalStab < Ordinal.omega 1 :=
     Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) hGlobalLt
   -- Step 7: Show globalStab satisfies SelfStabilizesCompletely
   use globalStab, hGlobalLt
   intro n a a'
-  -- Get the triple's index
   obtain ⟨k, hk⟩ := hTriples_surj ⟨n, a, a'⟩
-  -- boundOrd for this triple
   have hBdd : BddAbove (Set.range fun k => boundOrd (enumTriples k) + 1) :=
     ⟨Ordinal.omega 1, fun _ ⟨m, hm⟩ => hm ▸ le_of_lt
-      (Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1)
-        (hboundOrd_lt (enumTriples m)))⟩
-  have hk_le : boundOrd ⟨n, a, a'⟩ + 1 ≤ globalStab := by
-    have h := le_ciSup hBdd k
-    simp only [hk] at h
-    exact h
+      (Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) (hboundOrd_lt _))⟩
   have hbound_le : boundOrd ⟨n, a, a'⟩ ≤ globalStab :=
-    le_trans (Order.le_succ _) hk_le
+    le_trans (Order.le_succ _) (hk ▸ le_ciSup hBdd k)
   exact hboundOrd_spec ⟨n, a, a'⟩ globalStab hbound_le hGlobalLt hSuccGlobalLt
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in

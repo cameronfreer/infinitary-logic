@@ -245,21 +245,12 @@ theorem BFEquiv.trans {P : Type*} [L.Structure P]
   induction α using Ordinal.limitRecOn generalizing n a b c with
   | zero =>
     rw [BFEquiv.zero] at hab hbc ⊢
-    intro idx
-    exact (hab idx).trans (hbc idx)
+    exact fun idx => (hab idx).trans (hbc idx)
   | succ β ih =>
     rw [BFEquiv.succ] at hab hbc ⊢
-    refine ⟨ih hab.1 hbc.1, ?_, ?_⟩
-    · -- Forth: ∀ m : M, ∃ p : P, BFEquiv β (n+1) (snoc a m) (snoc c p)
-      intro m
-      obtain ⟨nb, hnb⟩ := hab.2.1 m
-      obtain ⟨p, hp⟩ := hbc.2.1 nb
-      exact ⟨p, ih hnb hp⟩
-    · -- Back: ∀ p : P, ∃ m : M, BFEquiv β (n+1) (snoc a m) (snoc c p)
-      intro p
-      obtain ⟨nb, hnb⟩ := hbc.2.2 p
-      obtain ⟨m, hm⟩ := hab.2.2 nb
-      exact ⟨m, ih hm hnb⟩
+    refine ⟨ih hab.1 hbc.1, fun m => ?_, fun p => ?_⟩
+    · let ⟨nb, hnb⟩ := hab.2.1 m; let ⟨p, hp⟩ := hbc.2.1 nb; exact ⟨p, ih hnb hp⟩
+    · let ⟨nb, hnb⟩ := hbc.2.2 p; let ⟨m, hm⟩ := hab.2.2 nb; exact ⟨m, ih hm hnb⟩
   | limit β hβ ih =>
     rw [BFEquiv.limit β hβ] at hab hbc ⊢
     exact fun γ hγ => ih γ hγ (hab γ hγ) (hbc γ hγ)
