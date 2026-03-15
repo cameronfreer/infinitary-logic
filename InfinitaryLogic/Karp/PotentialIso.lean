@@ -93,20 +93,13 @@ noncomputable def refl (M : Type w) [L.Structure M] : PotentialIso L M M where
 /-- Potential isomorphism is symmetric. -/
 noncomputable def symm (p : PotentialIso L M N) : PotentialIso L N M where
   family := { q | ⟨q.1, q.2.2, q.2.1⟩ ∈ p.family }
-  empty_mem := by
-    simp only [Set.mem_setOf_eq]
-    exact p.empty_mem
+  empty_mem := by simpa [Set.mem_setOf_eq] using p.empty_mem
   compatible := fun q hq => by
-    simp only [Set.mem_setOf_eq] at hq
-    exact (p.compatible ⟨q.1, q.2.2, q.2.1⟩ hq).symm
+    simpa [Set.mem_setOf_eq] using (p.compatible ⟨q.1, q.2.2, q.2.1⟩ hq).symm
   forth := fun ⟨n, b, a⟩ hq n' => by
-    simp only [Set.mem_setOf_eq] at hq ⊢
-    obtain ⟨m, hm⟩ := p.back ⟨n, a, b⟩ hq n'
-    exact ⟨m, hm⟩
+    simpa [Set.mem_setOf_eq] using p.back ⟨n, a, b⟩ (by simpa [Set.mem_setOf_eq] using hq) n'
   back := fun ⟨n, b, a⟩ hq m => by
-    simp only [Set.mem_setOf_eq] at hq ⊢
-    obtain ⟨n', hn'⟩ := p.forth ⟨n, a, b⟩ hq m
-    exact ⟨n', hn'⟩
+    simpa [Set.mem_setOf_eq] using p.forth ⟨n, a, b⟩ (by simpa [Set.mem_setOf_eq] using hq) m
 
 end PotentialIso
 

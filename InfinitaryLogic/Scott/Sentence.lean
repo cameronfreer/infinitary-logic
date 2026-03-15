@@ -172,52 +172,26 @@ theorem BFEquiv_upgrade_at_stabilization {M N : Type w} [L.Structure M] [L.Struc
     {n : ℕ} {a : Fin n → M} {b : Fin n → N}
     (h : BFEquiv (L := L) α n a b) (β : Ordinal) (hβ : α ≤ β) :
     BFEquiv (L := L) β n a b := by
-  -- We prove by strong induction on β
   induction β using Ordinal.limitRecOn generalizing n a b with
-  | zero =>
-    -- β = 0: Since α ≤ 0, we have α = 0, so h : BFEquiv 0 n a b is exactly what we need
-    have hα0 : α = 0 := le_antisymm hβ (zero_le α)
-    rwa [hα0] at h
+  | zero => rwa [le_antisymm hβ (zero_le α)] at h
   | succ γ ih =>
-    -- β = succ γ: Need to show BFEquiv (succ γ) n a b
     rw [BFEquiv.succ]
-    -- Case split on whether α ≤ γ or α = succ γ
     rcases hβ.lt_or_eq with hlt | heq
-    · -- α < succ γ means α ≤ γ
-      rw [Order.lt_succ_iff] at hlt
-      -- By IH, BFEquiv γ n a b
-      have hγ : BFEquiv (L := L) γ n a b := @ih n a b h hlt
-      refine ⟨hγ, ?_, ?_⟩
-      · -- Forth: for each m : M, find n' : N with BFEquiv γ (n+1) (snoc a m) (snoc b n')
-        intro m
-        -- Use stabilization to get BFEquiv (succ α) from h
-        have h_succ := (hstab n N a b).mp h
-        -- From BFEquiv (succ α), get witness n' with BFEquiv α (n+1) (snoc a m) (snoc b n')
-        obtain ⟨n', hn'⟩ := BFEquiv.forth h_succ m
-        -- By IH (since α ≤ γ), upgrade to BFEquiv γ
-        use n'
-        exact @ih (n + 1) (Fin.snoc a m) (Fin.snoc b n') hn' hlt
-      · -- Back: for each n' : N, find m : M with BFEquiv γ (n+1) (snoc a m) (snoc b n')
-        intro n'
-        have h_succ := (hstab n N a b).mp h
-        obtain ⟨m, hm⟩ := BFEquiv.back h_succ n'
-        use m
-        exact @ih (n + 1) (Fin.snoc a m) (Fin.snoc b n') hm hlt
-    · -- α = succ γ: Need to show this case works
-      -- heq : α = Order.succ γ, and we've already unfolded to BFEquiv.succ goal
-      -- The goal is BFEquiv γ n a b ∧ forth ∧ back
-      -- From heq, h : BFEquiv (succ γ) n a b, so just use BFEquiv.succ
-      subst heq
-      exact (BFEquiv.succ γ a b).mp h
+    · rw [Order.lt_succ_iff] at hlt
+      have hγ := @ih n a b h hlt
+      have h_succ := (hstab n N a b).mp h
+      refine ⟨hγ, fun m => ?_, fun n' => ?_⟩
+      · obtain ⟨n', hn'⟩ := BFEquiv.forth h_succ m
+        exact ⟨n', @ih (n + 1) (Fin.snoc a m) (Fin.snoc b n') hn' hlt⟩
+      · obtain ⟨m, hm⟩ := BFEquiv.back h_succ n'
+        exact ⟨m, @ih (n + 1) (Fin.snoc a m) (Fin.snoc b n') hm hlt⟩
+    · subst heq; exact (BFEquiv.succ γ a b).mp h
   | limit β hβlimit ih =>
-    -- β is a limit: BFEquiv β ↔ ∀ γ < β, BFEquiv γ
     rw [BFEquiv.limit β hβlimit]
     intro γ hγ
-    -- Either γ < α (use monotonicity) or α ≤ γ (use IH)
     by_cases hαγ : α ≤ γ
     · exact @ih γ hγ n a b h hαγ
-    · push_neg at hαγ
-      exact BFEquiv.monotone (le_of_lt hαγ) h
+    · exact BFEquiv.monotone (le_of_lt (not_le.mp hαγ)) h
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- `StabilizesCompletely` implies `StrongStabilizesForTuples` for all tuple sizes.
@@ -248,27 +222,14 @@ theorem StabilizesForTuples.downward_propagation
     StabilizesForTuples (L := L) M (Order.succ α) n := by
   intro N _ _ a b
   constructor
-  · -- Forward: BFEquiv (succ α) n a b → BFEquiv (succ(succ α)) n a b
-    intro hBF
+  · intro hBF
     rw [BFEquiv.succ]
-    -- BFEquiv (succ(succ α)) = BFEquiv (succ α) ∧ forth(succ α) ∧ back(succ α)
-    refine ⟨hBF, ?_, ?_⟩
-    · -- Forth at level succ α: for each m, ∃n', BFEquiv (succ α) (n+1) (snoc a m) (snoc b n')
-      intro m
-      -- From hBF : BFEquiv (succ α) n a b, the succ structure gives forth at α:
-      -- ∃n', BFEquiv α (n+1) (snoc a m) (snoc b n')
-      obtain ⟨n', hn'⟩ := BFEquiv.forth hBF m
-      use n'
-      -- hn' : BFEquiv α (n+1) (snoc a m) (snoc b n')
-      -- By (n+1)-stabilization: BFEquiv α (n+1) ↔ BFEquiv (succ α) (n+1)
-      exact (hstab N (Fin.snoc a m) (Fin.snoc b n')).mp hn'
-    · -- Back at level succ α: for each n', ∃m, BFEquiv (succ α) (n+1) (snoc a m) (snoc b n')
-      intro n'
-      obtain ⟨m, hm⟩ := BFEquiv.back hBF n'
-      use m
-      exact (hstab N (Fin.snoc a m) (Fin.snoc b n')).mp hm
-  · -- Backward: BFEquiv (succ(succ α)) n a b → BFEquiv (succ α) n a b
-    exact BFEquiv.of_succ
+    refine ⟨hBF, fun m => ?_, fun n' => ?_⟩
+    · obtain ⟨n', hn'⟩ := BFEquiv.forth hBF m
+      exact ⟨n', (hstab N (Fin.snoc a m) (Fin.snoc b n')).mp hn'⟩
+    · obtain ⟨m, hm⟩ := BFEquiv.back hBF n'
+      exact ⟨m, (hstab N (Fin.snoc a m) (Fin.snoc b n')).mp hm⟩
+  · exact BFEquiv.of_succ
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- For countable M, there exists α < ω₁ where all tuple sizes self-stabilize

@@ -380,29 +380,14 @@ private theorem snoc_elim0_zero_inf (x : M) :
 /-- Semantics of `existsLastVarInf`: existentially quantifies over the last variable. -/
 theorem realize_existsLastVarInf {n : ℕ} (φ : L.FormulaInf (Fin (n + 1))) (v : Fin n → M) :
     FormulaInf.Realize (existsLastVarInf φ) v ↔ ∃ x : M, FormulaInf.Realize φ (Fin.snoc v x) := by
-  simp only [existsLastVarInf, FormulaInf.Realize, realize_ex]
-  constructor
-  · rintro ⟨x, hx⟩
-    refine ⟨x, ?_⟩
-    rw [realize_relabel_insertLastBoundInf_zero, snoc_elim0_zero_inf] at hx
-    exact hx
-  · rintro ⟨x, hx⟩
-    refine ⟨x, ?_⟩
-    rw [realize_relabel_insertLastBoundInf_zero, snoc_elim0_zero_inf]
-    exact hx
+  simp only [existsLastVarInf, FormulaInf.Realize, realize_ex,
+    realize_relabel_insertLastBoundInf_zero, snoc_elim0_zero_inf]
 
 /-- Semantics of `forallLastVarInf`: universally quantifies over the last variable. -/
 theorem realize_forallLastVarInf {n : ℕ} (φ : L.FormulaInf (Fin (n + 1))) (v : Fin n → M) :
     FormulaInf.Realize (forallLastVarInf φ) v ↔ ∀ x : M, FormulaInf.Realize φ (Fin.snoc v x) := by
-  simp only [forallLastVarInf, FormulaInf.Realize, realize_all]
-  constructor
-  · intro h x
-    specialize h x
-    rw [realize_relabel_insertLastBoundInf_zero, snoc_elim0_zero_inf] at h
-    exact h
-  · intro h x
-    rw [realize_relabel_insertLastBoundInf_zero, snoc_elim0_zero_inf]
-    exact h x
+  simp only [forallLastVarInf, FormulaInf.Realize, realize_all,
+    realize_relabel_insertLastBoundInf_zero, snoc_elim0_zero_inf]
 
 end LastVar
 
