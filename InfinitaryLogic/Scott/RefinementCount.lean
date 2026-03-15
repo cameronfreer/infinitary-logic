@@ -82,27 +82,18 @@ private theorem BFEquiv_self_upgrade
     (h : BFEquiv (L := L) α₀ n a a') (β : Ordinal.{0}) (hβ : α₀ ≤ β) :
     BFEquiv (L := L) β n a a' := by
   induction β using Ordinal.limitRecOn generalizing n a a' with
-  | zero =>
-    rwa [le_antisymm hβ (zero_le α₀)] at h
+  | zero => rwa [le_antisymm hβ (zero_le α₀)] at h
   | succ γ ih =>
     rcases hβ.lt_or_eq with hlt | heq
     · rw [Order.lt_succ_iff] at hlt
-      have hγ := @ih n a a' h hlt
-      rw [BFEquiv.succ]
-      refine ⟨hγ, ?_, ?_⟩
-      · intro m
-        obtain ⟨m', hm'⟩ := BFEquiv.forth ((hstab n a a').mp h) m
-        exact ⟨m', @ih (n + 1) (Fin.snoc a m) (Fin.snoc a' m') hm' hlt⟩
-      · intro m'
-        obtain ⟨m, hm⟩ := BFEquiv.back ((hstab n a a').mp h) m'
-        exact ⟨m, @ih (n + 1) (Fin.snoc a m) (Fin.snoc a' m') hm hlt⟩
+      have h_succ := (hstab n a a').mp h
+      rw [BFEquiv.succ]; refine ⟨@ih n a a' h hlt, fun m => ?_, fun m' => ?_⟩
+      · let ⟨m', hm'⟩ := BFEquiv.forth h_succ m; exact ⟨m', @ih _ _ _ hm' hlt⟩
+      · let ⟨m, hm⟩ := BFEquiv.back h_succ m'; exact ⟨m, @ih _ _ _ hm hlt⟩
     · exact heq ▸ h
   | limit β _ ih =>
-    rw [BFEquiv.limit β ‹_›]
-    intro γ hγ
-    rcases le_or_gt α₀ γ with hαγ | hαγ
-    · exact @ih γ hγ n a a' h hαγ
-    · exact BFEquiv.monotone (le_of_lt hαγ) h
+    rw [BFEquiv.limit β ‹_›]; intro γ hγ
+    exact (le_or_gt α₀ γ).elim (@ih γ hγ n a a' h) (fun hαγ => BFEquiv.monotone hαγ.le h)
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- Chain-constant step: under self-stabilization at α₀, if BFEquiv ε holds at (n+1)-tuples
@@ -163,25 +154,16 @@ private theorem BFEquiv_of_all_finite_levels
     (ε : Ordinal.{0}) :
     BFEquiv (L := L) ε n a b := by
   induction ε using Ordinal.limitRecOn generalizing n a b with
-  | zero =>
-    exact BFEquiv.monotone (zero_le α₀) (by simpa using h 0)
+  | zero => exact BFEquiv.monotone (zero_le α₀) (by simpa using h 0)
   | succ ε ih =>
-    have hε := @ih n a b h
     have hsucc_α₀ : BFEquiv (L := L) (Order.succ α₀) n a b := by
       have := h 1; rwa [Nat.cast_one, ← Order.succ_eq_add_one] at this
-    rw [BFEquiv.succ]; refine ⟨hε, ?_, ?_⟩
-    · intro m
-      obtain ⟨m'₀, hm'₀⟩ := BFEquiv.forth hsucc_α₀ m
-      exact ⟨m'₀, @ih (n + 1) (Fin.snoc a m) (Fin.snoc b m'₀)
-        (witness_at_all_levels hstab h hm'₀)⟩
-    · intro m'
-      obtain ⟨m₀, hm₀⟩ := BFEquiv.back hsucc_α₀ m'
-      exact ⟨m₀, @ih (n + 1) (Fin.snoc a m₀) (Fin.snoc b m')
-        (witness_at_all_levels hstab h hm₀)⟩
-  | limit ε hε ih =>
-    rw [BFEquiv.limit ε hε]
-    intro δ hδ
-    exact @ih δ hδ n a b h
+    rw [BFEquiv.succ]; refine ⟨@ih n a b h, fun m => ?_, fun m' => ?_⟩
+    · let ⟨m'₀, hm'₀⟩ := BFEquiv.forth hsucc_α₀ m
+      exact ⟨m'₀, @ih _ _ _ (witness_at_all_levels hstab h hm'₀)⟩
+    · let ⟨m₀, hm₀⟩ := BFEquiv.back hsucc_α₀ m'
+      exact ⟨m₀, @ih _ _ _ (witness_at_all_levels hstab h hm₀)⟩
+  | limit ε hε ih => rw [BFEquiv.limit ε hε]; exact fun δ hδ => @ih δ hδ n a b h
 
 /-! ### The Counting Lemma -/
 

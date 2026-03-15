@@ -359,75 +359,42 @@ private theorem BFEquiv_all_countable_ordinals_implies_all
       · have hsucc0_lt : Order.succ 0 < Ordinal.omega 1 :=
           Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) (Ordinal.omega_pos 1)
         exact hN.false (BFEquiv.forth (h _ hsucc0_lt) m).choose
-      · -- N nonempty: use enumeration
-        rw [not_isEmpty_iff] at hN; haveI := hN
-        have hnfail : ∀ n' : N, ∃ γ < (Ordinal.omega 1 : Ordinal.{0}),
-            ¬BFEquiv (L := L) γ (n + 1) (Fin.snoc a m) (Fin.snoc b n') := by
-          intro n'
-          by_contra hall
-          push_neg at hall
-          exact h_no n' (ih (fun γ hγ => hall γ hγ))
-        choose αbad hαbad_lt hαbad_fail using hnfail
+      · rw [not_isEmpty_iff] at hN; haveI := hN
+        choose αbad hαbad_lt hαbad_fail using show ∀ n' : N, ∃ γ < (Ordinal.omega 1 : Ordinal.{0}),
+            ¬BFEquiv (L := L) γ (n + 1) (Fin.snoc a m) (Fin.snoc b n') from
+          fun n' => by_contra fun hall => h_no n' (ih (fun γ hγ => by push_neg at hall; exact hall γ hγ))
         obtain ⟨enum, henum⟩ := exists_surjective_nat N
-        let αbad_seq : ℕ → Ordinal.{0} := αbad ∘ enum
-        have hαbad_seq_lt : ∀ k, αbad_seq k < (Cardinal.aleph 1).ord := by
-          intro k; rw [Cardinal.ord_aleph]; exact hαbad_lt (enum k)
+        let αbad_seq := αbad ∘ enum
+        have hbdd : BddAbove (Set.range αbad_seq) :=
+          ⟨Ordinal.omega 1, fun _ ⟨k, hk⟩ => hk ▸ le_of_lt (hαbad_lt _)⟩
         have hS_lt : (⨆ k, αbad_seq k) < Ordinal.omega 1 := by
-          rw [← Cardinal.ord_aleph]
-          exact Ordinal.iSup_sequence_lt_omega_one αbad_seq hαbad_seq_lt
-        have hbdd_seq : BddAbove (Set.range αbad_seq) :=
-          ⟨Ordinal.omega 1, fun _ ⟨k, hk⟩ => hk ▸ le_of_lt (hαbad_lt (enum k))⟩
-        have hle_sup : ∀ n' : N, αbad n' ≤ ⨆ k, αbad_seq k := by
-          intro n'
-          obtain ⟨k, hk⟩ := henum n'
-          calc αbad n' = αbad (enum k) := by rw [hk]
-            _ = αbad_seq k := rfl
-            _ ≤ ⨆ k, αbad_seq k := le_ciSup hbdd_seq k
-        set S := ⨆ k, αbad_seq k
-        have hsucc_lt : Order.succ S < Ordinal.omega 1 :=
-          Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) hS_lt
-        have hBF_succ : BFEquiv (L := L) (Order.succ S) n a b := h _ hsucc_lt
-        obtain ⟨n'₀, hn'₀⟩ := BFEquiv.forth hBF_succ m
-        exact hαbad_fail n'₀ (BFEquiv.monotone (hle_sup n'₀) hn'₀)
-    · -- Back: for each n' : N, ∃ m : M, BFEquiv β (n+1) (snoc a m) (snoc b n')
-      intro n'
+          rw [← Cardinal.ord_aleph]; exact Ordinal.iSup_sequence_lt_omega_one _ fun k => by
+            rw [Cardinal.ord_aleph]; exact hαbad_lt _
+        obtain ⟨n'₀, hn'₀⟩ := BFEquiv.forth
+          (h _ (Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) hS_lt)) m
+        exact hαbad_fail n'₀ (BFEquiv.monotone
+          (let ⟨k, hk⟩ := henum n'₀; hk ▸ le_ciSup hbdd k) hn'₀)
+    · intro n'
       by_contra h_no
       push_neg at h_no
-      -- If M is empty, back at succ level gives m : M, contradicting emptiness
       by_cases hM : IsEmpty M
-      · have hsucc0_lt : Order.succ 0 < Ordinal.omega 1 :=
-          Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) (Ordinal.omega_pos 1)
-        exact hM.false (BFEquiv.back (h _ hsucc0_lt) n').choose
-      · -- M nonempty: use enumeration
-        rw [not_isEmpty_iff] at hM; haveI := hM
-        have hmfail : ∀ m : M, ∃ γ < (Ordinal.omega 1 : Ordinal.{0}),
-            ¬BFEquiv (L := L) γ (n + 1) (Fin.snoc a m) (Fin.snoc b n') := by
-          intro m
-          by_contra hall
-          push_neg at hall
-          exact h_no m (ih (fun γ hγ => hall γ hγ))
-        choose αbad hαbad_lt hαbad_fail using hmfail
+      · exact hM.false (BFEquiv.back (h _ (Order.IsSuccLimit.succ_lt
+          (Cardinal.isSuccLimit_omega 1) (Ordinal.omega_pos 1))) n').choose
+      · rw [not_isEmpty_iff] at hM; haveI := hM
+        choose αbad hαbad_lt hαbad_fail using show ∀ m : M, ∃ γ < (Ordinal.omega 1 : Ordinal.{0}),
+            ¬BFEquiv (L := L) γ (n + 1) (Fin.snoc a m) (Fin.snoc b n') from
+          fun m => by_contra fun hall => h_no m (ih (fun γ hγ => by push_neg at hall; exact hall γ hγ))
         obtain ⟨enum, henum⟩ := exists_surjective_nat M
-        let αbad_seq : ℕ → Ordinal.{0} := αbad ∘ enum
-        have hαbad_seq_lt : ∀ k, αbad_seq k < (Cardinal.aleph 1).ord := by
-          intro k; rw [Cardinal.ord_aleph]; exact hαbad_lt (enum k)
+        let αbad_seq := αbad ∘ enum
+        have hbdd : BddAbove (Set.range αbad_seq) :=
+          ⟨Ordinal.omega 1, fun _ ⟨k, hk⟩ => hk ▸ le_of_lt (hαbad_lt _)⟩
         have hS_lt : (⨆ k, αbad_seq k) < Ordinal.omega 1 := by
-          rw [← Cardinal.ord_aleph]
-          exact Ordinal.iSup_sequence_lt_omega_one αbad_seq hαbad_seq_lt
-        have hbdd_seq : BddAbove (Set.range αbad_seq) :=
-          ⟨Ordinal.omega 1, fun _ ⟨k, hk⟩ => hk ▸ le_of_lt (hαbad_lt (enum k))⟩
-        have hle_sup : ∀ m : M, αbad m ≤ ⨆ k, αbad_seq k := by
-          intro m
-          obtain ⟨k, hk⟩ := henum m
-          calc αbad m = αbad (enum k) := by rw [hk]
-            _ = αbad_seq k := rfl
-            _ ≤ ⨆ k, αbad_seq k := le_ciSup hbdd_seq k
-        set S := ⨆ k, αbad_seq k
-        have hsucc_lt : Order.succ S < Ordinal.omega 1 :=
-          Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) hS_lt
-        have hBF_succ : BFEquiv (L := L) (Order.succ S) n a b := h _ hsucc_lt
-        obtain ⟨m₀, hm₀⟩ := BFEquiv.back hBF_succ n'
-        exact hαbad_fail m₀ (BFEquiv.monotone (hle_sup m₀) hm₀)
+          rw [← Cardinal.ord_aleph]; exact Ordinal.iSup_sequence_lt_omega_one _ fun k => by
+            rw [Cardinal.ord_aleph]; exact hαbad_lt _
+        obtain ⟨m₀, hm₀⟩ := BFEquiv.back
+          (h _ (Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) hS_lt)) n'
+        exact hαbad_fail m₀ (BFEquiv.monotone
+          (let ⟨k, hk⟩ := henum m₀; hk ▸ le_ciSup hbdd k) hm₀)
   | limit β hβlimit ih =>
     rw [BFEquiv.limit β hβlimit]
     intro γ hγ
