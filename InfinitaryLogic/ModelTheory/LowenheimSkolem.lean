@@ -98,6 +98,18 @@ instance countable_constantsOn_relations (α : Type*) :
     ⟨fun ⟨_, e⟩ => (e : Empty).elim⟩
   inferInstance
 
+/-- L[[M]] has countable function symbols when L does and M is countable. -/
+private instance withConstants_countable_functions (M : Type u) [Countable M]
+    [Countable (Σ l, L.Functions l)] :
+    Countable (Σ l, L[[M]].Functions l) :=
+  countable_sum_functions L (constantsOn M)
+
+/-- L[[M]] has countable relation symbols when L does. -/
+private instance withConstants_countable_relations (M : Type u)
+    [Countable (Σ l, L.Relations l)] :
+    Countable (Σ l, L[[M]].Relations l) :=
+  countable_sum_relations L (constantsOn M)
+
 /-- **Downward Löwenheim-Skolem with naming function**: If a countable language has
 a naming function (every element is named by a closed term), then any satisfiable
 sentence has a countable model.
@@ -116,15 +128,16 @@ theorem downward_LS_with_naming
       (singleton_in_trueInModelSets ι φ hM) (Set.countable_singleton φ)
   exact ⟨N, hStr, hCount, hModel φ (Set.mem_singleton φ)⟩
 
-/-- **Downward Löwenheim-Skolem for theories with naming function**. -/
+/-- **Downward Löwenheim-Skolem for theories with naming function**.
+A corollary of `consistent_theory_has_model`. -/
 theorem downward_LS_theory_with_naming
     [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relations l)]
     (T : L.Theoryω) (M : Type*) [L.Structure M]
     (ι : NamingFunction L M)
     (hM : T.Model M) (hT_countable : T.Countable) :
     ∃ (N : Type u) (_ : L.Structure N) (_ : Countable N),
-      T.Model N := by
-  exact model_existence (trueInModelConsistencyPropertyEq M ι) T
+      T.Model N :=
+  consistent_theory_has_model (trueInModelConsistencyPropertyEq M ι) T
     (subset_trueInModel_in_sets ι T hM) hT_countable
 
 /-- **Downward Löwenheim-Skolem for Lω₁ω**: Any satisfiable sentence in a countable
@@ -162,10 +175,6 @@ theorem downward_LS [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relati
     rw [BoundedFormulaω.realize_mapLanguage]
     exact hM
   -- Step 4: Apply downward_LS_with_naming in L[[M]]
-  haveI : Countable (Σ l, L[[M]].Functions l) :=
-    countable_sum_functions L (constantsOn M)
-  haveI : Countable (Σ l, L[[M]].Relations l) :=
-    countable_sum_relations L (constantsOn M)
   obtain ⟨N, hStrN, hCountN, hNφ'⟩ :=
     downward_LS_with_naming φ' M (namingFunctionWithConstants L M) hM'
   -- Step 5: Restrict N from L[[M]] back to L
@@ -195,10 +204,6 @@ theorem downward_LS_theory [Countable (Σ l, L.Functions l)] [Countable (Σ l, L
       T.Model N := by
   -- Lift T to L[[M]], apply model_existence, restrict back
   letI := Language.withConstantsSelfStructure (L := L) (M := M)
-  haveI : Countable (Σ l, L[[M]].Functions l) :=
-    countable_sum_functions L (constantsOn M)
-  haveI : Countable (Σ l, L[[M]].Relations l) :=
-    countable_sum_relations L (constantsOn M)
   let ι := namingFunctionWithConstants L M
   -- The lifted theory
   let T' : Set L[[M]].Sentenceω := BoundedFormulaω.mapLanguage (L.lhomWithConstants M) '' T
