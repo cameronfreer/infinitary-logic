@@ -154,10 +154,7 @@ theorem realize_relabel_insertLastBound_zero {n : ℕ} (φ : L.Formulaω (Fin (n
     (v : Fin n → N) (xs : Fin 1 → N) :
     (φ.relabel insertLastBound).Realize v xs ↔ φ.Realize (snoc v (xs 0)) := by
   have h := realize_relabel_insertLastBound (k := 0) φ v xs
-  rw [h]
-  simp only [Formulaω.Realize]
-  have heq : (xs ∘ Fin.succShift : Fin 0 → N) = Fin.elim0 := by ext i; exact i.elim0
-  rw [heq]
+  rwa [show (xs ∘ Fin.succShift : Fin 0 → N) = Fin.elim0 from funext fun i => i.elim0] at h
 
 /-- Helper: snoc Fin.elim0 x evaluated at 0 gives x.
     Note: We need the explicit type annotation `(α := fun _ => α)` because `snoc` is dependently typed. -/
@@ -175,29 +172,16 @@ Uses `realize_relabel_insertLastBound_zero` to show that:
 theorem realize_existsLastVar {n : ℕ} (φ : L.Formulaω (Fin (n + 1))) (v : Fin n → N) :
     (existsLastVar φ).Realize v ↔ ∃ x : N, φ.Realize (snoc v x) := by
   simp only [existsLastVar, Formulaω.Realize, realize_ex]
-  constructor
-  · rintro ⟨x, hx⟩
-    refine ⟨x, ?_⟩
-    rw [realize_relabel_insertLastBound_zero, snoc_elim0_zero] at hx
-    exact hx
-  · rintro ⟨x, hx⟩
-    refine ⟨x, ?_⟩
-    rw [realize_relabel_insertLastBound_zero, snoc_elim0_zero]
-    exact hx
+  constructor <;> rintro ⟨x, hx⟩ <;>
+    exact ⟨x, by rwa [realize_relabel_insertLastBound_zero, snoc_elim0_zero] at *⟩
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- Semantics of forallLastVar: universally quantifies over the last variable. -/
 theorem realize_forallLastVar {n : ℕ} (φ : L.Formulaω (Fin (n + 1))) (v : Fin n → N) :
     (forallLastVar φ).Realize v ↔ ∀ x : N, φ.Realize (snoc v x) := by
   simp only [forallLastVar, Formulaω.Realize, realize_all]
-  constructor
-  · intro h x
-    specialize h x
-    rw [realize_relabel_insertLastBound_zero, snoc_elim0_zero] at h
-    exact h
-  · intro h x
-    rw [realize_relabel_insertLastBound_zero, snoc_elim0_zero]
-    exact h x
+  constructor <;> intro h x <;>
+    have := h x <;> rwa [realize_relabel_insertLastBound_zero, snoc_elim0_zero] at *
 
 end Semantics
 
