@@ -36,6 +36,11 @@ back-and-forth equivalence, and Karp's theorem in Lean~4 using Mathlib.
 
 \inputleannode{thm:CRH}
 
+\emph{Note:} Despite its name, the ``Countable Refinement Hypothesis'' is fully
+proved in this formalization.  The name is historical: it was originally an
+open conjecture about the countability of refinement ordinals.  The proof here
+proceeds via self-stabilization and transfinite induction.
+
 This countability result drives the downstream stabilization argument: since
 only countably many ordinals can witness a strict refinement, the hierarchy
 must stabilize below~$\omegaone$.
@@ -99,6 +104,10 @@ must stabilize below~$\omegaone$.
 \inputleannode{thm:hanf-existence}
 
 \section{Morley-Hanf Bound}
+
+\emph{Status: conditional.}  This result depends on \texttt{MorleyHanfTransfer},
+an explicit hypothesis packaging Erd\H{o}s--Rado partition calculus and
+Ehrenfeucht--Mostowski functor machinery not yet formalized in Lean or Mathlib.
 
 \inputleannode{thm:morley-hanf}
 
