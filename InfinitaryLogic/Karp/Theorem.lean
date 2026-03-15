@@ -214,9 +214,7 @@ private theorem sentenceInf_realize_iff_mapFreeVarsW
   show φ.Realize (Empty.elim : Empty → M) Fin.elim0 ↔
        (φ.mapFreeVars Empty.elim).Realize (Fin.elim0 : Fin 0 → M) Fin.elim0
   rw [BoundedFormulaInf.realize_mapFreeVars]
-  have h : (Fin.elim0 : Fin 0 → M) ∘ (Empty.elim : Empty → Fin 0) = (Empty.elim : Empty → M) :=
-    funext fun x => x.elim
-  rw [h]
+  rw [comp_empty_elim Fin.elim0]
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- Bridge between `FormulaInf.Realize (Fin 0)` and `SentenceInf.Realize`
@@ -228,9 +226,7 @@ private theorem formulaInf_realize_iff_mapFreeVarsW
   show φ.Realize (Fin.elim0 : Fin 0 → M) Fin.elim0 ↔
        (φ.mapFreeVars Fin.elim0).Realize (Empty.elim : Empty → M) Fin.elim0
   rw [BoundedFormulaInf.realize_mapFreeVars]
-  have h : (Empty.elim : Empty → M) ∘ (Fin.elim0 : Fin 0 → Empty) = (Fin.elim0 : Fin 0 → M) :=
-    funext fun x => Fin.elim0 x
-  rw [h]
+  rw [comp_fin_elim0 Empty.elim]
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- Builds an atomic formula from an `AtomicIdx` at universe `w`. -/

@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Linf.Semantics
+import InfinitaryLogic.Util
 import Mathlib.Data.Set.Basic
 import Architect
 
@@ -146,8 +147,7 @@ and `e ∘ Fin.elim0 = Fin.elim0` since both domains are empty. -/
 theorem of_equiv (e : M ≃[L] N) : LinfEquiv L M N := by
   intro φ
   have h := BoundedFormulaInf.realize_equiv e φ (Empty.elim : Empty → M) (Fin.elim0 : Fin 0 → M)
-  rwa [show (⇑e ∘ Empty.elim : Empty → N) = Empty.elim from funext fun x => x.elim,
-       show (⇑e ∘ Fin.elim0 : Fin 0 → N) = Fin.elim0 from funext fun x => x.elim0] at h
+  rwa [comp_empty_elim e, comp_fin_elim0 e] at h
 
 end LinfEquiv
 
@@ -184,8 +184,7 @@ theorem trans (h₁ : LinfEquivW L M N) (h₂ : LinfEquivW L N P) : LinfEquivW L
 theorem of_equiv (e : M ≃[L] N) : LinfEquivW L M N := by
   intro φ
   have h := BoundedFormulaInf.realize_equiv e φ (Empty.elim : Empty → M) (Fin.elim0 : Fin 0 → M)
-  rwa [show (⇑e ∘ Empty.elim : Empty → N) = Empty.elim from funext fun x => x.elim,
-       show (⇑e ∘ Fin.elim0 : Fin 0 → N) = Fin.elim0 from funext fun x => x.elim0] at h
+  rwa [comp_empty_elim e, comp_fin_elim0 e] at h
 
 end LinfEquivW
 
@@ -196,11 +195,7 @@ theorem TheoryInf.Model.of_equiv {T : L.TheoryInf} {M N : Type w} [L.Structure M
     [L.Structure N] (hM : T.Model M) (e : M ≃[L] N) : T.Model N := by
   intro φ hφ
   have h := BoundedFormulaInf.realize_equiv e φ (Empty.elim : Empty → M) (Fin.elim0 : Fin 0 → M)
-  have hv : ⇑e ∘ (Empty.elim : Empty → M) = (Empty.elim : Empty → N) :=
-    funext (fun x => x.elim)
-  have hxs : ⇑e ∘ (Fin.elim0 : Fin 0 → M) = (Fin.elim0 : Fin 0 → N) :=
-    funext (fun x => x.elim0)
-  rw [hv, hxs] at h
+  rw [comp_empty_elim e, comp_fin_elim0 e] at h
   exact h.mp (hM φ hφ)
 
 end Language

@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Linf.Semantics
+import InfinitaryLogic.Util
 
 /-!
 # Operations on L∞ω Formulas
@@ -373,8 +374,8 @@ private theorem realize_relabel_insertLastBoundInf_zero {n : ℕ}
 
 /-- Helper: `Fin.snoc Fin.elim0 x` evaluated at 0 gives x. -/
 private theorem snoc_elim0_zero_inf (x : M) :
-    (Fin.snoc (α := fun _ => M) Fin.elim0 x) 0 = x := by
-  simp [Fin.snoc, Fin.last]
+    (Fin.snoc (α := fun _ => M) Fin.elim0 x) 0 = x :=
+  congrFun (Fin.snoc_elim0_eq x) 0
 
 /-- Semantics of `existsLastVarInf`: existentially quantifies over the last variable. -/
 theorem realize_existsLastVarInf {n : ℕ} (φ : L.FormulaInf (Fin (n + 1))) (v : Fin n → M) :

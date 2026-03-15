@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Scott.BackAndForth
+import InfinitaryLogic.Util
 import Architect
 
 /-!
@@ -156,11 +157,10 @@ theorem realize_relabel_insertLastBound_zero {n : ℕ} (φ : L.Formulaω (Fin (n
   have h := realize_relabel_insertLastBound (k := 0) φ v xs
   rwa [show (xs ∘ Fin.succShift : Fin 0 → N) = Fin.elim0 from funext fun i => i.elim0] at h
 
-/-- Helper: snoc Fin.elim0 x evaluated at 0 gives x.
-    Note: We need the explicit type annotation `(α := fun _ => α)` because `snoc` is dependently typed. -/
+/-- Helper: snoc Fin.elim0 x evaluated at 0 gives x. -/
 private theorem snoc_elim0_zero {α : Type*} (x : α) :
-    (snoc (α := fun _ => α) Fin.elim0 x) 0 = x := by
-  simp [Fin.snoc, Fin.last]
+    (snoc (α := fun _ => α) Fin.elim0 x) 0 = x :=
+  congrFun (Fin.snoc_elim0_eq x) 0
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- Semantics of existsLastVar: existentially quantifies over the last variable.

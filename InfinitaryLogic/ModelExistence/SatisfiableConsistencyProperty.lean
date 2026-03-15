@@ -162,11 +162,8 @@ private theorem realize_openBounds_subst_name (ι : NamingFunction L M)
 
 /-- For `Fin 1`, `Fin.snoc Fin.elim0 m = fun _ => m`. -/
 private theorem snoc_elim0_eq_const (m : M) :
-    (Fin.snoc (Fin.elim0 : Fin 0 → M) m : Fin 1 → M) = (fun _ => m) := by
-  funext ⟨i, hi⟩
-  have : i = 0 := Nat.lt_one_iff.mp hi
-  subst this
-  rfl
+    (Fin.snoc (Fin.elim0 : Fin 0 → M) m : Fin 1 → M) = (fun _ => m) :=
+  Fin.snoc_elim0_eq m
 
 /-- Given a model M with a naming function, the true-in-M family forms a `ConsistencyPropertyEq`.
 

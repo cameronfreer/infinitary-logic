@@ -188,8 +188,7 @@ theorem canonicalScottSentence_characterizes_of
   constructor
   · exact BFEquiv_stabilization_implies_equiv (scottHeight_stabilizesCompletely_of hcount M)
   · intro ⟨e⟩
-    have h : (e : M → N) ∘ Fin.elim0 = Fin.elim0 := funext (fun i => i.elim0)
-    rw [← h]
+    rw [← comp_fin_elim0 e]
     exact equiv_implies_BFEquiv e _ 0 Fin.elim0
 
 /-- Conditional variant of `canonicalScottSentence_equiv_scottSentence`. Sorry-free. -/

@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Lomega1omega.Semantics
+import InfinitaryLogic.Util
 import Mathlib.Data.Set.Basic
 
 /-!
@@ -150,8 +151,7 @@ theorem of_equiv {M N : Type w} [L.Structure M] [L.Structure N] (e : M ≃[L] N)
     LomegaEquiv L M N := by
   intro φ
   have h := BoundedFormulaω.realize_equiv e φ (Empty.elim : Empty → M) (Fin.elim0 : Fin 0 → M)
-  rwa [show (⇑e ∘ Empty.elim : Empty → N) = Empty.elim from funext fun x => x.elim,
-       show (⇑e ∘ Fin.elim0 : Fin 0 → N) = Fin.elim0 from funext fun x => x.elim0] at h
+  rwa [comp_empty_elim e, comp_fin_elim0 e] at h
 
 end LomegaEquiv
 

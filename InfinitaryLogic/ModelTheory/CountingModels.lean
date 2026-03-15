@@ -83,8 +83,7 @@ theorem bounded_scottHeight_iso_eq_BFEquiv_of
     BFEquiv (L := L) α 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) := by
   constructor
   · intro ⟨e⟩
-    have h : (e : M → N) ∘ Fin.elim0 = Fin.elim0 := funext fun i => i.elim0
-    rw [← h]
+    rw [← comp_fin_elim0 e]
     exact equiv_implies_BFEquiv e α 0 Fin.elim0
   · intro hBF
     have hstabM := scottHeight_le_implies_stabilizesCompletely_of hcount M (hbound M hM)

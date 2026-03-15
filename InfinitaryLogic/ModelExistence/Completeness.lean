@@ -124,23 +124,20 @@ theorem omitting_types [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Rel
     simp only [Term.realize_var, Term.realize_relabel]
     constructor
     · intro h
-      have key : (Sum.elim (fun _ : Fin 1 => m') Fin.elim0 ∘ Sum.inl ∘
+      rw [show (Sum.elim (fun _ : Fin 1 => m') Fin.elim0 ∘ Sum.inl ∘
           (Empty.elim : Empty → Fin 1) : Empty → _) =
-          (Empty.elim : Empty → TermModel C S' hmax) :=
-        funext (fun e => Empty.elim e)
-      rw [key] at h; rwa [hNF.sound] at h
+          Empty.elim from funext (fun e => Empty.elim e)] at h
+      rwa [hNF.sound] at h
     · intro h; rw [h]
-      have key : (Sum.elim (fun _ : Fin 1 => m) Fin.elim0 ∘ Sum.inl ∘
+      rw [show (Sum.elim (fun _ : Fin 1 => m) Fin.elim0 ∘ Sum.inl ∘
           (Empty.elim : Empty → Fin 1) : Empty → _) =
-          (Empty.elim : Empty → TermModel C S' hmax) :=
-        funext (fun e => Empty.elim e)
-      rw [key]; exact (hNF.sound m).symm
+          Empty.elim from funext (fun e => Empty.elim e)]
+      exact (hNF.sound m).symm
   -- Helper: Fin.snoc Fin.elim0 m' = fun _ => m'
   have snoc_eq : ∀ m' : TermModel C S' hmax,
       (Fin.snoc (Fin.elim0 : Fin 0 → TermModel C S' hmax) m' : Fin 1 → _) =
       fun _ => m' :=
-    fun m' => funext (fun ⟨i, hi⟩ => by
-      have : i = 0 := Nat.lt_one_iff.mp hi; subst this; rfl)
+    fun m' => Fin.snoc_elim0_eq m'
   -- ∃x(φ_eq(x)) is true in the term model (witnessed by m itself)
   have h_ex_true : Sentenceω.Realize
       ((φ_eq.relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).ex)

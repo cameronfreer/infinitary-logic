@@ -1045,8 +1045,7 @@ theorem exists_stabilization_of
   · intro ⟨e⟩
     show BFEquiv0 (L := L) M N α
     unfold BFEquiv0
-    have h : (e : M → N) ∘ Fin.elim0 = Fin.elim0 := funext (fun i => i.elim0)
-    rw [← h]
+    rw [← comp_fin_elim0 e]
     exact equiv_implies_BFEquiv e α 0 Fin.elim0
 
 /-- Conditional variant of `stabilizationOrdinal_lt_omega1'`. Sorry-free. -/

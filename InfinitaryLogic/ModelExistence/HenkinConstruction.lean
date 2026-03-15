@@ -733,8 +733,8 @@ private theorem term_realize_openBounds {M : Type*} [L.Structure M]
 
 /-- Helper: `snoc Fin.elim0 x` evaluated at `0 : Fin 1` gives `x`. -/
 private lemma snoc_elim0_zero_eq {M : Type*} (x : M) :
-    (Fin.snoc (α := fun _ => M) Fin.elim0 x) (0 : Fin 1) = x := by
-  simp [Fin.snoc, Fin.last]
+    (Fin.snoc (α := fun _ => M) Fin.elim0 x) (0 : Fin 1) = x :=
+  congrFun (Fin.snoc_elim0_eq x) 0
 
 /-- Semantic roundtrip: `openBounds` preserves semantics.
 For `φ : BoundedFormulaω Empty n`, evaluating `openBounds φ` with free variable assignment
