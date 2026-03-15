@@ -82,8 +82,8 @@ theorem barwise_completeness_II [Countable (Σ l, L.Functions l)] [Countable (Σ
     (hcons : ∃ C : ConsistencyPropertyEq L, T ∈ C.toConsistencyProperty.sets) :
     ∃ (M : Type u) (_ : L.Structure M) (_ : Countable M),
       Theoryω.Model T M := by
-  obtain ⟨C, hC⟩ := hcons
-  exact model_existence C T hC hT_countable
+  rcases hcons with ⟨C, hC⟩
+  exact consistent_theory_has_model C T hC hT_countable
 
 end Language
 

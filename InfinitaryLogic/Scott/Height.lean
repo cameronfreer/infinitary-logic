@@ -139,6 +139,17 @@ noncomputable def canonicalScottSentence (M : Type w) [L.Structure M] [Countable
 
 /-! ### Conditional Canonical Scott Sentence Pipeline -/
 
+/-- The canonical Scott sentence realizes in N iff BFEquiv at scottHeight. -/
+private theorem canonicalScottSentence_iff_BFEquiv0
+    (hcount : CountableRefinementHypothesis.{u, v, w} L)
+    {M : Type w} [L.Structure M] [Countable M]
+    {N : Type w'} [L.Structure N] :
+    (canonicalScottSentence (L := L) M).realize_as_sentence N ↔
+    BFEquiv (L := L) (scottHeight (L := L) M) 0
+      (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) := by
+  unfold canonicalScottSentence Formulaω.realize_as_sentence
+  exact realize_scottFormula_iff_BFEquiv _ _ _ (scottHeight_lt_omega1_of hcount M)
+
 /-- Conditional variant of `canonicalScottSentence_iff_potentialIso`. Sorry-free. -/
 theorem canonicalScottSentence_iff_potentialIso_of
     (hcount : CountableRefinementHypothesis.{u, v, w} L)
@@ -148,8 +159,7 @@ theorem canonicalScottSentence_iff_potentialIso_of
     Nonempty (PotentialIso L M N) := by
   constructor
   · intro h
-    unfold canonicalScottSentence Formulaω.realize_as_sentence at h
-    rw [realize_scottFormula_iff_BFEquiv _ _ _ (scottHeight_lt_omega1_of hcount M)] at h
+    rw [canonicalScottSentence_iff_BFEquiv0 hcount] at h
     have hstab := scottHeight_stabilizesCompletely_of hcount M
     exact ⟨{
       family := { p | BFEquiv (L := L) (scottHeight (L := L) M) p.1 p.2.1 p.2.2 }
@@ -164,8 +174,7 @@ theorem canonicalScottSentence_iff_potentialIso_of
         exact BFEquiv.back ((hstab k N a b).mp hp) n'
     }⟩
   · intro ⟨P⟩
-    unfold canonicalScottSentence Formulaω.realize_as_sentence
-    rw [realize_scottFormula_iff_BFEquiv _ _ _ (scottHeight_lt_omega1_of hcount M)]
+    rw [canonicalScottSentence_iff_BFEquiv0 hcount]
     exact P.implies_BFEquiv_all (scottHeight (L := L) M)
 
 /-- Conditional variant of `canonicalScottSentence_characterizes`. Sorry-free. -/
@@ -175,8 +184,7 @@ theorem canonicalScottSentence_characterizes_of
     {N : Type w} [L.Structure N] [Countable N] :
     (canonicalScottSentence (L := L) M).realize_as_sentence N ↔
     Nonempty (M ≃[L] N) := by
-  unfold canonicalScottSentence Formulaω.realize_as_sentence
-  rw [realize_scottFormula_iff_BFEquiv _ _ _ (scottHeight_lt_omega1_of hcount M)]
+  rw [canonicalScottSentence_iff_BFEquiv0 hcount]
   constructor
   · exact BFEquiv_stabilization_implies_equiv (scottHeight_stabilizesCompletely_of hcount M)
   · intro ⟨e⟩
