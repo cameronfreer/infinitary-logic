@@ -304,46 +304,32 @@ theorem realize_scottFormula_iff_BFEquiv
     simp only [Formulaω.realize_inf]
     constructor
     · intro ⟨⟨hbase, hforth⟩, hback⟩
-      refine ⟨(ih a b hβ).mp hbase, ?_, ?_⟩
-      · intro m
-        rw [Formulaω.realize_einf] at hforth
-        specialize hforth m
-        rw [realize_existsLastVar] at hforth
-        obtain ⟨n', hn'⟩ := hforth
+      simp only [Formulaω.realize_einf, realize_existsLastVar] at hforth
+      simp only [realize_forallLastVar, Formulaω.realize_esup] at hback
+      refine ⟨(ih a b hβ).mp hbase, fun m => ?_, fun n' => ?_⟩
+      · let ⟨n', hn'⟩ := hforth m
         exact ⟨n', (ih (snoc a m) (snoc b n') hβ).mp hn'⟩
-      · intro n'
-        rw [realize_forallLastVar] at hback
-        specialize hback n'
-        rw [Formulaω.realize_esup] at hback
-        obtain ⟨m, hm⟩ := hback
+      · let ⟨m, hm⟩ := hback n'
         exact ⟨m, (ih (snoc a m) (snoc b n') hβ).mp hm⟩
     · intro ⟨hbase, hforth, hback⟩
       refine ⟨⟨(ih a b hβ).mpr hbase, ?_⟩, ?_⟩
       · rw [Formulaω.realize_einf]
         intro m
-        obtain ⟨n', hn'⟩ := hforth m
         rw [realize_existsLastVar]
+        let ⟨n', hn'⟩ := hforth m
         exact ⟨n', (ih (snoc a m) (snoc b n') hβ).mpr hn'⟩
       · rw [realize_forallLastVar]
         intro n'
         rw [Formulaω.realize_esup]
-        obtain ⟨m, hm⟩ := hback n'
+        let ⟨m, hm⟩ := hback n'
         exact ⟨m, (ih (snoc a m) (snoc b n') hβ).mpr hm⟩
   | limit β hβlimit ih =>
     rw [BFEquiv.limit β hβlimit]
     unfold scottFormula
     rw [Ordinal.limitRecOn_limit _ _ _ _ hβlimit]
-    simp only [hα, dite_true]
-    simp only [Formulaω.Realize, realize_einf]
-    constructor
-    · intro h γ hγ
-      specialize h ⟨γ, hγ⟩
-      have hγ' : γ < Ordinal.omega 1 := lt_trans hγ hα
-      have := ih γ hγ a b hγ'
-      exact this.mp h
-    · intro h ⟨γ, hγ⟩
-      have hγ' : γ < Ordinal.omega 1 := lt_trans hγ hα
-      exact (ih γ hγ a b hγ').mpr (h γ hγ)
+    simp only [hα, dite_true, Formulaω.Realize, realize_einf]
+    exact ⟨fun h γ hγ => (ih γ hγ a b (lt_trans hγ hα)).mp (h ⟨γ, hγ⟩),
+           fun h ⟨γ, hγ⟩ => (ih γ hγ a b (lt_trans hγ hα)).mpr (h γ hγ)⟩
 
 end Language
 

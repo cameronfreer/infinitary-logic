@@ -158,12 +158,10 @@ theorem canonicalScottSentence_iff_potentialIso_of
         (BFEquiv.zero p.2.1 p.2.2).mp (BFEquiv.monotone (zero_le _) hp)
       forth := fun ⟨k, a, b⟩ hp m => by
         simp only [Set.mem_setOf_eq] at hp ⊢
-        obtain ⟨n', hn'⟩ := BFEquiv.forth ((hstab k N a b).mp hp) m
-        exact ⟨n', hn'⟩
+        exact BFEquiv.forth ((hstab k N a b).mp hp) m
       back := fun ⟨k, a, b⟩ hp n' => by
         simp only [Set.mem_setOf_eq] at hp ⊢
-        obtain ⟨m, hm⟩ := BFEquiv.back ((hstab k N a b).mp hp) n'
-        exact ⟨m, hm⟩
+        exact BFEquiv.back ((hstab k N a b).mp hp) n'
     }⟩
   · intro ⟨P⟩
     unfold canonicalScottSentence Formulaω.realize_as_sentence

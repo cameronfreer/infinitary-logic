@@ -311,13 +311,9 @@ private theorem PotentialIso_implies_agree_aux (P : PotentialIso L M N)
       rw [snoc_append_eq_append_snoc, snoc_append_eq_append_snoc] at hy
       exact (ih hab (Fin.snoc xs x) (Fin.snoc ys y) hy).mpr (hAll y)
   | iSup φs ih =>
-    constructor
-    · rintro ⟨i, hi⟩; exact ⟨i, (ih i hab xs ys hext).mp hi⟩
-    · rintro ⟨i, hi⟩; exact ⟨i, (ih i hab xs ys hext).mpr hi⟩
+    exact exists_congr fun i => ih i hab xs ys hext
   | iInf φs ih =>
-    constructor
-    · intro h i; exact (ih i hab xs ys hext).mp (h i)
-    · intro h i; exact (ih i hab xs ys hext).mpr (h i)
+    exact forall_congr' fun i => ih i hab xs ys hext
 
 omit [Countable (Σ l, L.Relations l)] in
 /-- Forward direction: PotentialIso implies LinfEquivW (sorry-free). -/
@@ -394,16 +390,11 @@ theorem LinfEquivW_implies_potentialIso (h : LinfEquivW L M N) :
     -- χ is true for a: witness m satisfies all ψ n'
     have hM : FormulaInf.Realize χ a := by
       rw [BoundedFormulaInf.realize_existsLastVarInf]
-      refine ⟨m, ?_⟩
-      show ∀ n', FormulaInf.Realize (ψ n') (Fin.snoc a m)
-      exact fun n' => (hψ n').1
-    -- χ is false for b: for any x, ψ (x) fails at n' = x
+      exact ⟨m, fun n' => (hψ n').1⟩
     have hN : ¬ FormulaInf.Realize χ b := by
       rw [BoundedFormulaInf.realize_existsLastVarInf]
       rintro ⟨x, hx⟩
-      have hx' : ∀ n', FormulaInf.Realize (ψ n') (Fin.snoc b x) := hx
-      exact (hψ x).2 (hx' x)
-    -- Contradiction: a and b should agree on χ
+      exact (hψ x).2 (hx x)
     exact hN ((hfamily χ).mp hM)
   · -- back: symmetric argument
     intro ⟨n, a, b⟩ hfamily n'
@@ -430,14 +421,11 @@ theorem LinfEquivW_implies_potentialIso (h : LinfEquivW L M N) :
       BoundedFormulaInf.existsLastVarInf conj
     have hN : FormulaInf.Realize χ b := by
       rw [BoundedFormulaInf.realize_existsLastVarInf]
-      refine ⟨n', ?_⟩
-      show ∀ m, FormulaInf.Realize (ψ m) (Fin.snoc b n')
-      exact fun m => (hψ m).1
+      exact ⟨n', fun m => (hψ m).1⟩
     have hM : ¬ FormulaInf.Realize χ a := by
       rw [BoundedFormulaInf.realize_existsLastVarInf]
       rintro ⟨x, hx⟩
-      have hx' : ∀ m, FormulaInf.Realize (ψ m) (Fin.snoc a x) := hx
-      exact (hψ x).2 (hx' x)
+      exact (hψ x).2 (hx x)
     exact hM ((hfamily χ).mpr hN)
 
 omit [Countable (Σ l, L.Relations l)] in
