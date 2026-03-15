@@ -4,4 +4,5 @@ build/
 .cache/
 *.olean
 .claude/
+.worktrees/
 .DS_Store
