@@ -17,12 +17,12 @@ in Lω₁ω (countable infinitary logic with countable conjunctions/disjunctions
 
 - `Theoryω`: A theory in Lω₁ω is a set of sentences.
 - `Theoryω.Model`: A structure M is a model of theory T if it satisfies all sentences in T.
-- `Theoryω.SemEntails`: Semantic entailment: T ⊨ φ if every model of T satisfies φ.
 - `LomegaEquiv`: Lω₁ω-elementary equivalence between structures.
 
 ## Main Results
 
-- `Theoryω.SemEntails.monotone`: Semantic entailment is monotone in the theory.
+- `Theoryω.Model.empty`: The empty theory has every structure as a model.
+- `Theoryω.Model.mono`: Models are monotone: if T ⊆ T' and M ⊨ T', then M ⊨ T.
 - `LomegaEquiv.refl`, `LomegaEquiv.symm`, `LomegaEquiv.trans`: LomegaEquiv is an equivalence relation.
 - `LomegaEquiv.of_equiv`: Isomorphic structures are Lω₁ω-equivalent.
 
@@ -63,18 +63,6 @@ theorem Model.empty (M : Type w) [L.Structure M] : Model (∅ : L.Theoryω) M :=
 /-- If T ⊆ T' and M ⊨ T', then M ⊨ T. -/
 theorem Model.mono (h : T ⊆ T') {M : Type w} [L.Structure M] (hM : T'.Model M) : T.Model M :=
   fun φ hφ => hM φ (h hφ)
-
-/-- Semantic entailment: T ⊨ φ means every model of T (at universe w) satisfies φ. -/
-def SemEntails' (T : L.Theoryω) (φ : L.Sentenceω) (M : Type*) [L.Structure M] : Prop :=
-  T.Model M → Sentenceω.Realize φ M
-
-/-- A sentence in T is entailed by T (for a specific model). -/
-theorem SemEntails'.mem {M : Type w} [L.Structure M] (hφ : φ ∈ T) : T.SemEntails' φ M := by
-  intro hM
-  exact hM φ hφ
-
-/-- Semantic entailment from the empty theory: valid sentences. -/
-def Valid (φ : L.Sentenceω) : Prop := ∀ (M : Type) [L.Structure M], Sentenceω.Realize φ M
 
 end Theoryω
 
