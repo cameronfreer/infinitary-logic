@@ -6,6 +6,7 @@ Authors: Cameron Freer
 import InfinitaryLogic.Linf.Theory
 import InfinitaryLogic.Scott.BackAndForth
 import Architect
+import Mathlib.SetTheory.Ordinal.Family
 
 /-!
 # Potential Isomorphism

@@ -6,6 +6,7 @@ Authors: Cameron Freer
 import InfinitaryLogic.Scott.BackAndForth
 import InfinitaryLogic.Util
 import Architect
+import Mathlib.SetTheory.Cardinal.Aleph
 
 /-!
 # Scott Formulas
@@ -87,7 +88,7 @@ private lemma sum_elim_relabelAux_insertLastBound {k : ℕ} (v : Fin n → N) (x
   | inr j =>
     simp only [Function.comp_apply, BoundedFormulaω.relabelAux, Sum.map_inr, Sum.elim_inr]
     simp only [Equiv.sumAssoc_apply_inr, Sum.map_inr, Sum.elim_inr, finSumFinEquiv_apply_right, Fin.succShift]
-    congr 1; ext; simp only [Fin.natAdd, id_eq]; ring
+    congr 1; ext; simp only [Fin.natAdd, id_eq]; omega
 
 /-- Helper: composition of snoc with succShift. -/
 private lemma snoc_comp_succShift_eq {k : ℕ} (xs : Fin (1 + k) → N) (y : N) :
@@ -97,7 +98,7 @@ private lemma snoc_comp_succShift_eq {k : ℕ} (xs : Fin (1 + k) → N) (y : N) 
   cases j using lastCases with
   | last =>
     simp only [snoc_last]
-    have hsuc : Fin.succShift (last k) = last (1 + k) := by ext; simp only [Fin.succShift, last]; ring
+    have hsuc : Fin.succShift (last k) = last (1 + k) := by ext; simp only [Fin.succShift, last]; omega
     simp only [hsuc, snoc_last]
   | cast j' =>
     simp only [snoc_castSucc]; unfold snoc

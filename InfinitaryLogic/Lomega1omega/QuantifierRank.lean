@@ -5,7 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Lomega1omega.Semantics
 import InfinitaryLogic.Lomega1omega.Operations
-import Mathlib.SetTheory.Ordinal.Basic
+import Mathlib.SetTheory.Ordinal.Family
 
 /-!
 # Lω₁ω Quantifier Rank

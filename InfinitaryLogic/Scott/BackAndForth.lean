@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Scott.AtomicDiagram
 import Architect
+import Mathlib.SetTheory.Ordinal.Arithmetic
 
 /-!
 # Back-and-Forth Equivalence

@@ -6,6 +6,7 @@ Authors: Cameron Freer
 import InfinitaryLogic.Scott.Formula
 import InfinitaryLogic.Karp.PotentialIso
 import Mathlib.ModelTheory.PartialEquiv
+import Mathlib.SetTheory.Cardinal.Regular
 import Architect
 
 /-!

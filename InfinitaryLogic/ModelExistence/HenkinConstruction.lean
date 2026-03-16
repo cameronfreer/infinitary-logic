@@ -7,6 +7,7 @@ import InfinitaryLogic.ModelExistence.ConsistencyProperty
 import InfinitaryLogic.Scott.Formula
 import Mathlib.Order.Zorn
 import Mathlib.Data.Fintype.Quotient
+import Mathlib.ModelTheory.Encoding
 
 /-!
 # Henkin Construction
