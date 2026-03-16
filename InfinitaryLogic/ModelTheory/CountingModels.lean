@@ -67,11 +67,10 @@ theorem stabilization_bound_iso_eq_BFEquiv
 
 /-- When all countable models of a sentence have Scott height bounded by α (with α < ω₁),
 isomorphism between countable models is equivalent to BF-equivalence at level α.
-Conditional on `CountableRefinementHypothesis`. Sorry-free.
+Conditional on `CountableRefinementHypothesis`.
 
-This replaces `bounded_scottRank_iso_eq_BFEquiv` by using `scottHeight` (which has a
-sorry-free conditional relationship to `StabilizesCompletely`) instead of `scottRank`
-(which has the β > α gap). -/
+This uses `scottHeight` (which has a clean conditional relationship to
+`StabilizesCompletely`) rather than `scottRank`. -/
 theorem bounded_scottHeight_iso_eq_BFEquiv_of
     (hcount : CountableRefinementHypothesis.{u, v, w} L)
     {φ : L.Sentenceω} {α : Ordinal.{0}} (hα : α < Ordinal.omega 1)

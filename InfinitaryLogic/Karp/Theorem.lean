@@ -17,23 +17,19 @@ if they are L∞ω-elementarily equivalent.
 
 ## Main Results
 
-- `karp_theorem_w`: The canonical Karp theorem (sorry-free). For relational languages,
-  potential isomorphism is equivalent to `LinfEquivW` (L∞ω-elementary equivalence with
-  index types at universe `w` matching the structure universe).
+- `karp_theorem_w`: Karp's theorem for relational languages: potential isomorphism is
+  equivalent to `LinfEquivW` (L∞ω-elementary equivalence with index types at universe
+  `w` matching the structure universe).
 - `karp_theorem_universe0`: Specialization of `karp_theorem_w` to `Type 0`, where
   `LinfEquivW` and `LinfEquiv` coincide.
-- `BFEquiv_implies_agreeQR`: Forward direction of the Karp lemma (sorry-free):
-  BF-equivalence at level α implies agreement on all formulas of quantifier rank ≤ α.
+- `BFEquiv_implies_agreeQR`: Forward direction of the Karp lemma: BF-equivalence at
+  level α implies agreement on all formulas of quantifier rank ≤ α.
 
 ## Design Notes
 
-An earlier version of this file included a backward direction `agree_implies_BFEquiv`
-and an iff form `BFEquiv_iff_agreeQR` for formulas with `Type 0` index types. The
-backward direction had `sorry`s due to a genuine universe obstruction: the forth/back
-witnesses require `iInf` indexed by `N : Type w`, but `BoundedFormulaInf.{u,v,0,0}`
-only allows `Type 0` index types. The `karp_theorem_w` pipeline (using `LinfEquivW`
-with universe-`w` index types) avoids this obstruction entirely, making the old path
-redundant. It was removed to eliminate 3 sorry tokens.
+The theorem is stated with `LinfEquivW` (universe-`w` index types) rather than
+`LinfEquiv` (universe-0 index types) because the backward direction constructs
+formulas with `iInf` indexed by `N : Type w`, which requires `uι = w`.
 
 ## References
 
@@ -177,7 +173,7 @@ private theorem BFEquiv_implies_agree_aux {M N : Type w} [L.Structure M] [L.Stru
       ih i α (le_trans (Ordinal.le_iSup (fun i => (φs i).qrank) i) hφ) xs ys hBF
 
 omit [Countable (Σ l, L.Relations l)] in
-/-- **Karp Lemma, forward direction** (sorry-free): BF-equivalence at level α implies
+/-- **Karp Lemma, forward direction**: BF-equivalence at level α implies
 agreement on all formulas of quantifier rank ≤ α.
 
 This is a direct corollary of `BFEquiv_implies_agree_aux` with `k = 0` and
@@ -191,10 +187,10 @@ theorem BFEquiv_implies_agreeQR {M N : Type w} [L.Structure M] [L.Structure N]
   have hb : Fin.append b (Fin.elim0 : Fin 0 → N) = b := by simp [Fin.append_elim0]
   exact BFEquiv_implies_agree_aux α φ hφ a b Fin.elim0 Fin.elim0 (by rwa [ha, hb])
 
-/-! ### Karp's Theorem at universe w (sorry-free)
+/-! ### Karp's Theorem at universe w
 
 This section proves Karp's theorem with `LinfEquivW` (index universe `w` matching
-the structure universe). Both directions are fully proved (no sorry). -/
+the structure universe). -/
 
 section KarpW
 
@@ -310,7 +306,7 @@ private theorem PotentialIso_implies_agree_aux (P : PotentialIso L M N)
     exact forall_congr' fun i => ih i hab xs ys hext
 
 omit [Countable (Σ l, L.Relations l)] in
-/-- Forward direction: PotentialIso implies LinfEquivW (sorry-free). -/
+/-- Forward direction: PotentialIso implies LinfEquivW. -/
 theorem PotentialIso_implies_LinfEquivW (P : PotentialIso L M N) : LinfEquivW L M N := by
   intro φ
   -- Bridge from Empty to Fin 0
@@ -320,13 +316,13 @@ theorem PotentialIso_implies_LinfEquivW (P : PotentialIso L M N) : LinfEquivW L 
   -- Apply the generalized agree lemma with the empty tuple
   have hext : ⟨0 + 0, Fin.append (Fin.elim0 : Fin 0 → M) Fin.elim0,
       Fin.append (Fin.elim0 : Fin 0 → N) Fin.elim0⟩ ∈ P.family := by
-    simp only [Fin.append_elim0, Fin.eq_elim0]; exact P.empty_mem
+    simp only [Fin.eq_elim0]; exact P.empty_mem
   exact PotentialIso_implies_agree_aux P P.empty_mem _ _ _ hext
 
 /-! #### Backward: LinfEquivW → PotentialIso -/
 
 omit [Countable (Σ l, L.Relations l)] in
-/-- Backward direction: LinfEquivW implies PotentialIso (sorry-free).
+/-- Backward direction: LinfEquivW implies PotentialIso.
 
 The family consists of tuples `(n, a, b)` such that `a` and `b` agree on all
 `BoundedFormulaInf.{u,v,0,w}` formulas with `Fin n` free variables. The forth/back
@@ -419,7 +415,7 @@ theorem LinfEquivW_implies_potentialIso (h : LinfEquivW L M N) :
     exact hM ((hfamily χ).mpr hN)
 
 omit [Countable (Σ l, L.Relations l)] in
-/-- **Karp's Theorem** (sorry-free, KK04 Theorem 1.2.1): For relational languages, two
+/-- **Karp's Theorem** (KK04 Theorem 1.2.1): For relational languages, two
 structures are potentially isomorphic if and only if they are L∞ω-elementarily equivalent
 (with index types at universe `w` matching the structure universe).
 
@@ -461,7 +457,7 @@ theorem LinfEquivW_implies_LinfEquiv (h : LinfEquivW L M N) : LinfEquiv L M N :=
   exact hM.symm.trans ((h lφ).trans hN)
 
 omit [Countable (Σ l, L.Relations l)] in
-/-- **Forward direction of Karp's theorem** (sorry-free): PotentialIso → LinfEquiv.
+/-- **Forward direction of Karp's theorem**: PotentialIso → LinfEquiv.
 
 This composes `PotentialIso_implies_LinfEquivW` with `LinfEquivW_implies_LinfEquiv`
 to get the standard `LinfEquiv` (with `Ordinal.{0}` index types) from a PotentialIso. -/
@@ -469,7 +465,7 @@ theorem PotentialIso_implies_LinfEquiv (P : PotentialIso L M N) : LinfEquiv L M 
   LinfEquivW_implies_LinfEquiv (PotentialIso_implies_LinfEquivW P)
 
 omit [Countable (Σ l, L.Relations l)] in
-/-- **Forward direction of Karp's theorem at all universes** (sorry-free):
+/-- **Forward direction of Karp's theorem at all universes**:
 Potential isomorphism implies L∞ω-elementary equivalence. -/
 theorem karp_theorem_forward :
     Nonempty (PotentialIso L M N) → LinfEquivW L M N :=
@@ -478,7 +474,7 @@ theorem karp_theorem_forward :
 end KarpW
 
 omit [Countable (Σ l, L.Relations l)] in
-/-- **Karp's Theorem at universe 0** (sorry-free).
+/-- **Karp's Theorem at universe 0**.
 
 This is `karp_theorem_w` specialized to `M N : Type` (i.e., `Type 0`). At universe 0,
 `LinfEquivW` and `LinfEquiv` coincide (both use `BoundedFormulaInf.{u,v,0,0}`). -/

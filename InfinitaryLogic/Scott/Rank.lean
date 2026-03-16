@@ -86,7 +86,7 @@ theorem elementRank_le_completeStab {M : Type w} [L.Structure M] [Countable M]
     elementRank (L := L) m ≤ α :=
   csInf_le' (completeStab_mem_elementRank_set hstab m)
 
-/-- Conditional variant of `elementRank_lt_omega1`. Sorry-free. -/
+/-- Conditional variant of `elementRank_lt_omega1`. -/
 theorem elementRank_lt_omega1_of
     (hcount : CountableRefinementHypothesis.{u, v, w} L)
     {M : Type w} [L.Structure M] [Countable M] (m : M) :
@@ -94,7 +94,7 @@ theorem elementRank_lt_omega1_of
   obtain ⟨α, hα_lt, hstab⟩ := exists_complete_stabilization_of hcount M
   exact lt_of_le_of_lt (elementRank_le_completeStab hstab m) hα_lt
 
-/-- Conditional variant of `scottRank_lt_omega1`. Sorry-free. -/
+/-- Conditional variant of `scottRank_lt_omega1`. -/
 theorem scottRank_lt_omega1_of
     (hcount : CountableRefinementHypothesis.{u, v, w} L)
     (M : Type w) [L.Structure M] [Countable M] :

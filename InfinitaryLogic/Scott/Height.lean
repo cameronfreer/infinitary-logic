@@ -70,7 +70,7 @@ noncomputable def scottHeight (M : Type w) [L.Structure M] [Countable M] : Ordin
     (N : Type w) [L.Structure N] [Countable N] (b : Fin n → N),
     BFEquiv (L := L) α n a b → BFEquiv (L := L) (Order.succ α) n a b}
 
-/-- Conditional variant of `scottHeight_lt_omega1`. Sorry-free. -/
+/-- Conditional variant of `scottHeight_lt_omega1`. -/
 theorem scottHeight_lt_omega1_of
     (hcount : CountableRefinementHypothesis.{u, v, w} L)
     (M : Type w) [L.Structure M] [Countable M] :
@@ -83,8 +83,7 @@ theorem scottHeight_lt_omega1_of
     exact (hstab n N a b).mp hBF
   exact lt_of_le_of_lt (csInf_le ⟨0, fun _ _ => zero_le _⟩ h_mem) hα_lt
 
-/-- Conditional variant of `scottHeight_stabilizesCompletely`. Sorry-free.
-Public so that downstream consumers (e.g., CountingModels.lean) can use it. -/
+/-- Conditional variant of `scottHeight_stabilizesCompletely`. -/
 theorem scottHeight_stabilizesCompletely_of
     (hcount : CountableRefinementHypothesis.{u, v, w} L)
     (M : Type w) [L.Structure M] [Countable M] :
@@ -105,10 +104,7 @@ theorem scottHeight_stabilizesCompletely_of
   · exact BFEquiv.of_succ
 
 /-- At any ordinal ≥ scottHeight, the structure stabilizes completely.
-Conditional on `CountableRefinementHypothesis`. Sorry-free.
-
-This replaces the sorry-bearing `scottRank_le_implies_stabilizesCompletely` for downstream
-consumers that need `StabilizesCompletely` from a bound. -/
+Conditional on `CountableRefinementHypothesis`. -/
 theorem scottHeight_le_implies_stabilizesCompletely_of
     (hcount : CountableRefinementHypothesis.{u, v, w} L)
     (M : Type w) [L.Structure M] [Countable M]
@@ -150,7 +146,7 @@ private theorem canonicalScottSentence_iff_BFEquiv0
   unfold canonicalScottSentence Formulaω.realize_as_sentence
   exact realize_scottFormula_iff_BFEquiv _ _ _ (scottHeight_lt_omega1_of hcount M)
 
-/-- Conditional variant of `canonicalScottSentence_iff_potentialIso`. Sorry-free. -/
+/-- Conditional variant of `canonicalScottSentence_iff_potentialIso`. -/
 theorem canonicalScottSentence_iff_potentialIso_of
     (hcount : CountableRefinementHypothesis.{u, v, w} L)
     {M : Type w} [L.Structure M] [Countable M]
@@ -177,7 +173,7 @@ theorem canonicalScottSentence_iff_potentialIso_of
     rw [canonicalScottSentence_iff_BFEquiv0 hcount]
     exact P.implies_BFEquiv_all (scottHeight (L := L) M)
 
-/-- Conditional variant of `canonicalScottSentence_characterizes`. Sorry-free. -/
+/-- Conditional variant of `canonicalScottSentence_characterizes`. -/
 theorem canonicalScottSentence_characterizes_of
     (hcount : CountableRefinementHypothesis.{u, v, w} L)
     {M : Type w} [L.Structure M] [Countable M]
@@ -191,7 +187,7 @@ theorem canonicalScottSentence_characterizes_of
     rw [← comp_fin_elim0 e]
     exact equiv_implies_BFEquiv e _ 0 Fin.elim0
 
-/-- Conditional variant of `canonicalScottSentence_equiv_scottSentence`. Sorry-free. -/
+/-- Conditional variant of `canonicalScottSentence_equiv_scottSentence`. -/
 theorem canonicalScottSentence_equiv_scottSentence_of
     (hcount : CountableRefinementHypothesis.{u, v, w} L)
     {M : Type w} [L.Structure M] [Countable M]
@@ -225,7 +221,7 @@ theorem sr_le_scottRank (M : Type w) [L.Structure M] [Countable M] :
 
 Since `scottHeight M` is a complete stabilization ordinal (conditional on
 `CountableRefinementHypothesis`), every `elementRank m ≤ scottHeight M`, so
-the supremum `sr M = ⨆ m, elementRank m ≤ scottHeight M`. Sorry-free. -/
+the supremum `sr M = ⨆ m, elementRank m ≤ scottHeight M`. -/
 theorem sr_le_scottHeight_of
     (hcount : CountableRefinementHypothesis.{u, v, w} L)
     (M : Type w) [L.Structure M] [Countable M] :
@@ -240,7 +236,7 @@ theorem sr_le_scottHeight_of
 
 Since `scottRank M = ⨆ m, elementRank m + 1` and each `elementRank m ≤ scottHeight M`
 (via `elementRank_le_completeStab` at the complete stabilization ordinal `scottHeight M`),
-we get `scottRank M ≤ scottHeight M + 1`. Sorry-free, conditional on
+we get `scottRank M ≤ scottHeight M + 1`. Conditional on
 `CountableRefinementHypothesis`. -/
 theorem scottRank_le_scottHeight_succ_of
     (hcount : CountableRefinementHypothesis.{u, v, w} L)
@@ -263,7 +259,7 @@ attained, the structure has a "witness" element of maximal complexity. -/
 def AttainedScottRank (M : Type w) [L.Structure M] [Countable M] : Prop :=
   ∃ (m : M), elementRank (L := L) m = sr (L := L) M
 
-/-- Conditional variant of `canonicalScottSentence_qrank`. Sorry-free. -/
+/-- Conditional variant of `canonicalScottSentence_qrank`. -/
 theorem canonicalScottSentence_qrank_of
     (hcount : CountableRefinementHypothesis.{u, v, w} L)
     (M : Type w) [L.Structure M] [Countable M] :

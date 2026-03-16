@@ -66,9 +66,9 @@ This library formalizes infinitary logic, including:
 - The Scott rank of a countable structure is a countable ordinal (< ω₁).
 - L∞ω is the union of all Lκω for cardinals κ; Lω₁ω = L(ℵ₁)ω.
 
-The unconditional API is recovered via `countableRefinementHypothesis` (fully proved)
-in `Scott/RefinementCount.lean`. Sorry-free `_of` variants conditional on
-`CountableRefinementHypothesis` are also available.
+The unconditional API is recovered via `countableRefinementHypothesis` (proved in
+`Scott/RefinementCount.lean`). Conditional `_of` variants taking
+`CountableRefinementHypothesis` as a hypothesis are also available.
 
 ## Organization
 

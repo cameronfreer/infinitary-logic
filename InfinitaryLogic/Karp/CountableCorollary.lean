@@ -37,7 +37,7 @@ variable [Countable (Σ l, L.Relations l)]
 
 open FirstOrder Structure Fin Ordinal
 
-/-- Conditional variant of `countable_LomegaEquiv_implies_iso`. Sorry-free. -/
+/-- Conditional variant of `countable_LomegaEquiv_implies_iso`. -/
 theorem countable_LomegaEquiv_implies_iso_of
     (hcount : CountableRefinementHypothesis.{u, v, w} L)
     {M : Type w} [L.Structure M] [Countable M]
@@ -49,7 +49,7 @@ theorem countable_LomegaEquiv_implies_iso_of
   exact (hEquiv _).mp ((Formulaω.realize_as_sentence_iff_toSentenceω _ _).mp
     (scottSentence_self_of hcount M))
 
-/-- Conditional variant of `countable_LinfEquiv_implies_iso`. Sorry-free. -/
+/-- Conditional variant of `countable_LinfEquiv_implies_iso`. -/
 theorem countable_LinfEquiv_implies_iso_of
     (hcount : CountableRefinementHypothesis.{u, v, w} L)
     {M : Type w} [L.Structure M] [Countable M]

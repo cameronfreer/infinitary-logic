@@ -818,8 +818,7 @@ The counting hypothesis captures the key content that each refinement set is cou
 This decouples the Scott analysis pipeline from the `FormulaCode` bridge
 (`agree_codes_implies_BFEquiv`), which has a known gap. All downstream results
 (`per_tuple_stabilization_below_omega1_of`, `exists_complete_stabilization_of`,
-`scottRank_le_implies_stabilizesCompletely_of`) are sorry-free conditional on this
-hypothesis.
+`scottRank_le_implies_stabilizesCompletely_of`) hold conditional on this hypothesis.
 
 The hypothesis is mathematically true: each refinement step corresponds to a split
 in the formula-type partition, and countable structures admit only countably many
@@ -845,9 +844,7 @@ def CountableRefinementHypothesis (L : Language.{u, v})
       ∃ (N : Type w) (_ : L.Structure N) (_ : Countable N) (b : Fin n → N),
         BFEquiv (L := L) ε n a b ∧ ¬BFEquiv (L := L) (Order.succ ε) n a b}
 
-/-- Per-tuple stabilization, conditional on `CountableRefinementHypothesis`.
-
-Sorry-free variant of `per_tuple_stabilization_below_omega1`. -/
+/-- Per-tuple stabilization, conditional on `CountableRefinementHypothesis`. -/
 theorem per_tuple_stabilization_below_omega1_of
     (hcount : CountableRefinementHypothesis.{u, v, w} L)
     {M : Type w} [L.Structure M] [Countable M]
@@ -911,9 +908,7 @@ theorem per_tuple_stabilization_below_omega1_of
         exact hmem.elim
       · exact BFEquiv.of_succ
 
-/-- Complete stabilization, conditional on `CountableRefinementHypothesis`.
-
-Sorry-free variant of `exists_complete_stabilization`. -/
+/-- Complete stabilization, conditional on `CountableRefinementHypothesis`. -/
 theorem exists_complete_stabilization_of
     (hcount : CountableRefinementHypothesis.{u, v, w} L)
     (M : Type w) [L.Structure M] [Countable M] :
@@ -1027,6 +1022,7 @@ noncomputable def scottSentence (M : Type w) [L.Structure M] [Countable M] : L.F
 def Formulaω.realize_as_sentence (φ : L.Formulaω (Fin 0)) (N : Type w) [L.Structure N] : Prop :=
   φ.Realize (Fin.elim0 : Fin 0 → N)
 
+omit [L.IsRelational] [Countable ((l : ℕ) × L.Relations l)] in
 /-- Bridge between `realize_as_sentence` and `Sentenceω.Realize` via `toSentenceω`. -/
 theorem Formulaω.realize_as_sentence_iff_toSentenceω
     (φ : L.Formulaω (Fin 0)) (N : Type w) [L.Structure N] :
@@ -1035,11 +1031,11 @@ theorem Formulaω.realize_as_sentence_iff_toSentenceω
 
 /-! ### Conditional Scott Sentence Pipeline
 
-Sorry-free variants of the entire Scott sentence chain, conditional on
+Variants of the entire Scott sentence chain, conditional on
 `CountableRefinementHypothesis`. The same `scottSentence` definition is used;
 only the proof that it characterizes isomorphism is rebuilt. -/
 
-/-- Conditional variant of `exists_stabilization`. Sorry-free. -/
+/-- Conditional variant of `exists_stabilization`. -/
 theorem exists_stabilization_of
     (hcount : CountableRefinementHypothesis.{u, v, w} L)
     (M : Type w) [L.Structure M] [Countable M] :
@@ -1055,7 +1051,7 @@ theorem exists_stabilization_of
     rw [← comp_fin_elim0 e]
     exact equiv_implies_BFEquiv e α 0 Fin.elim0
 
-/-- Conditional variant of `stabilizationOrdinal_lt_omega1'`. Sorry-free. -/
+/-- Conditional variant of `stabilizationOrdinal_lt_omega1'`. -/
 theorem stabilizationOrdinal_lt_omega1_of
     (hcount : CountableRefinementHypothesis.{u, v, w} L)
     (M : Type w) [L.Structure M] [Countable M] :
@@ -1063,7 +1059,7 @@ theorem stabilizationOrdinal_lt_omega1_of
   obtain ⟨α, hα_lt, hα_spec⟩ := exists_stabilization_of hcount M
   exact lt_of_le_of_lt (csInf_le' hα_spec) hα_lt
 
-/-- Conditional variant of `stabilizationOrdinal_stabilizes`. Sorry-free. -/
+/-- Conditional variant of `stabilizationOrdinal_stabilizes`. -/
 theorem stabilizationOrdinal_stabilizes_of
     (hcount : CountableRefinementHypothesis.{u, v, w} L)
     (M : Type w) [L.Structure M] [Countable M] :
@@ -1073,7 +1069,7 @@ theorem stabilizationOrdinal_stabilizes_of
     ⟨α, hα_spec⟩
   exact csInf_mem h_nonempty
 
-/-- **Conditional Scott sentence characterization**: sorry-free variant of
+/-- **Conditional Scott sentence characterization**: variant of
 `scottSentence_characterizes`, conditional on `CountableRefinementHypothesis`.
 
 A countable structure N satisfies the Scott sentence of M iff M ≅ N.

@@ -156,9 +156,9 @@ end LinfEquiv
 /-- L∞ω-elementary equivalence with index types matching the structure universe.
 
 Unlike `LinfEquiv` which pins `uι = 0`, this version uses `BoundedFormulaInf.{u, v, 0, w}`
-so that index types for `iSup`/`iInf` may be any `Type w`. This is the "universe-correct"
-version needed for the sorry-free Karp theorem at higher universes: the backward direction
-requires constructing formulas with `iInf` indexed by `N : Type w`, which needs `uι = w`. -/
+so that index types for `iSup`/`iInf` may be any `Type w`. The backward direction of
+Karp's theorem constructs formulas with `iInf` indexed by `N : Type w`, which needs
+`uι = w`. -/
 @[blueprint "def:linf-equiv"
   (title := /-- $L_{\infty\omega}$-equivalence -/)
   (statement := /-- $L_{\infty\omega}$-equivalence: $M$ and $N$ satisfy the same
