@@ -5,14 +5,43 @@
 
 \chapter{Infinitary Logic}
 
-This project formalizes the theory of infinitary logic ($\Lomegaone$), Scott sentences,
-back-and-forth equivalence, and Karp's theorem in Lean~4 using Mathlib.
+This project formalizes results in infinitary logic in Lean~4 using Mathlib.
+The primary focus is the logic $\Lomegaone$, which extends first-order logic
+with countable conjunctions and disjunctions, though the formalization
+treats the more general $\Linf$ (allowing arbitrary conjunctions and
+disjunctions) where possible.
+
+\section{Main Results}
+
+The formalization establishes five headline theorems:
+\begin{itemize}
+  \item \textbf{Scott characterization.}
+    Every countable structure is characterized up to isomorphism by
+    a sentence of $\Lomegaone$ (Theorem~\ref{thm:scott-characterizes}).
+  \item \textbf{Scott rank below $\omegaone$.}
+    The Scott rank of any countable structure is a countable ordinal
+    (Theorem~\ref{thm:scottRank-lt-omega1}).
+  \item \textbf{Karp's theorem.}
+    Two structures are $\Linf$-equivalent if and only if there exists
+    a back-and-forth system between them (Theorem~\ref{thm:karp-theorem}).
+  \item \textbf{Model existence.}
+    Every consistent set of sentences of $\Lomegaone$ has a model
+    (Theorem~\ref{thm:model-existence}).
+  \item \textbf{Countable refinement hypothesis.}
+    The back-and-forth hierarchy on any countable structure stabilizes
+    in countably many steps (Theorem~\ref{thm:CRH}).
+\end{itemize}
 
 \section{Back-and-Forth Equivalence}
+
+Back-and-forth equivalence at ordinal levels, following Karp (1965).
 
 \inputleannode{def:BFEquiv}
 
 \section{Scott Formulas and Sentences}
+
+Scott formulas and their characteristic property, following
+Marker (2016, Ch.~2).
 
 \inputleannode{def:scottFormula}
 
@@ -31,6 +60,8 @@ back-and-forth equivalence, and Karp's theorem in Lean~4 using Mathlib.
 \inputleannode{thm:scott-characterizes-of}
 
 \chapter{Countable Refinement}
+
+The countable refinement hypothesis and its consequences for Scott rank.
 
 \section{Countable Refinement Hypothesis}
 
@@ -59,6 +90,9 @@ must stabilize below~$\omegaone$.
 
 \chapter{Karp's Theorem}
 
+Karp's theorem characterizes $\Linf$-equivalence via back-and-forth
+systems, following Karp (1965).
+
 \inputleannode{def:potential-iso}
 
 \inputleannode{def:linf-equiv}
@@ -66,6 +100,9 @@ must stabilize below~$\omegaone$.
 \inputleannode{thm:karp-theorem}
 
 \chapter{Model Existence}
+
+Model existence and completeness for $\Lomegaone$, following
+Keisler (1971).
 
 \inputleannode{thm:model-existence}
 
@@ -77,7 +114,9 @@ must stabilize below~$\omegaone$.
 
 \inputleannode{thm:omitting-types}
 
-\chapter{Löwenheim-Skolem}
+\chapter{L\"owenheim--Skolem}
+
+The downward L\"owenheim--Skolem theorem for $\Lomegaone$.
 
 \inputleannode{def:naming-function-with-constants}
 
@@ -87,6 +126,10 @@ must stabilize below~$\omegaone$.
 
 \chapter{Admissible Fragments}
 
+Compactness and completeness for countable admissible fragments of
+$\Lomegaone$, following Barwise (1975).  Background on the Nadel bound
+for admissible fragments can be found in Nadel (1974).
+
 \inputleannode{def:admissible-fragment}
 
 \inputleannode{thm:barwise-compactness}
@@ -94,6 +137,9 @@ must stabilize below~$\omegaone$.
 \inputleannode{thm:barwise-completeness-ii}
 
 \chapter{Hanf Numbers}
+
+Hanf numbers measure how large a model a sentence must have before
+it has arbitrarily large models.
 
 \inputleannode{def:arb-large-models}
 
@@ -103,7 +149,7 @@ must stabilize below~$\omegaone$.
 
 \inputleannode{thm:hanf-existence}
 
-\section{Morley-Hanf Bound}
+\section{Morley--Hanf Bound}
 
 \emph{Status: conditional.}  This result depends on \texttt{MorleyHanfTransfer},
 an explicit hypothesis packaging Erd\H{o}s--Rado partition calculus and
@@ -112,6 +158,15 @@ Ehrenfeucht--Mostowski functor machinery not yet formalized in Lean or Mathlib.
 \inputleannode{thm:morley-hanf}
 
 \chapter{Counting Models}
+
+Counting the number of models of a Scott sentence up to isomorphism.
+The theorem \texttt{morley\_counting\_dichotomy} (a counting-models
+dichotomy in the style of Morley) is formalized in Lean but is not
+included as a blueprint node; it serves as a schematic boundary result.
+
+\emph{Status: schematic.}  The dichotomy statement quantifies over
+cardinals and does not correspond to a single blueprint-trackable proof
+obligation.
 
 \inputleannode{thm:stabilization-bound-iso}
 

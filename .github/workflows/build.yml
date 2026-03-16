@@ -58,6 +58,12 @@ jobs:
       - name: Build blueprint PDF
         run: leanblueprint pdf
 
+      - name: Build API docs
+        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+        run: |
+          cd docbuild
+          lake build InfinitaryLogic:docs
+
       - name: Set up Ruby
         if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
         uses: ruby/setup-ruby@v1
@@ -78,6 +84,7 @@ jobs:
           mkdir -p _site/blueprint
           cp -r blueprint/web/* _site/blueprint/
           cp blueprint/print/print.pdf _site/blueprint/blueprint.pdf
+          cp -r docbuild/.lake/build/doc _site/docs
 
       - name: Upload Pages artifact
         if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
