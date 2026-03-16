@@ -6,14 +6,14 @@ A Lean 4 formalization of infinitary logic (L∞ω and Lω₁ω), Scott sentence
 
 - **[Project page](https://cameronfreer.github.io/infinitary-logic/)**
 - **[Blueprint (web)](https://cameronfreer.github.io/infinitary-logic/blueprint/)** · **[Blueprint (pdf)](https://cameronfreer.github.io/infinitary-logic/blueprint/blueprint.pdf)**
-- **[API docs](https://cameronfreer.github.io/infinitary-logic/docs/)**
+- **[API docs](https://cameronfreer.github.io/infinitary-logic/docs/)** · **[Dependency graph](https://cameronfreer.github.io/infinitary-logic/blueprint/dep_graph_document.html)**
 
 ## Main Results
 
 - **Scott sentences** — Every countable structure in a countable relational language has a Scott sentence characterizing it up to isomorphism among countable structures.
 - **Scott rank < ω₁** — The Scott rank of any countable structure is a countable ordinal.
 - **Karp's theorem** — Back-and-forth equivalence at all ordinals characterizes L∞ω elementary equivalence.
-- **Model existence** — Consistency properties for Lω₁ω yield countable models (Henkin-style construction, omitting types, Karp completeness).
+- **Model existence** — Every countable consistent set of Lω₁ω sentences in a countable language has a countable model (Henkin-style construction, omitting types, Karp completeness).
 
 ## Scope and Boundaries
 
@@ -37,6 +37,21 @@ Some results carry explicit hypotheses packaging external content not yet formal
 git clone https://github.com/cameronfreer/infinitary-logic.git && cd infinitary-logic
 lake build
 ```
+
+To use in your own project, add the dependency to your `lakefile` and then:
+
+```lean
+import InfinitaryLogic
+```
+
+### Key Declarations
+
+- `BFEquiv` — Back-and-forth equivalence between tuples, indexed by ordinals
+- `scottSentence` — The Scott sentence of a countable structure
+- `scottRank` — The Scott rank (ordinal measuring complexity of a structure)
+- `karp_theorem_w` — Karp's theorem (potential isomorphism ↔ L∞ω-equivalence)
+- `model_existence` — Model existence for Lω₁ω consistency properties
+- `countableRefinementHypothesis` — The countable refinement hypothesis (proved)
 
 ## References
 

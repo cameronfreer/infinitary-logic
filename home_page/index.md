@@ -8,7 +8,7 @@ A Lean 4 formalization of **infinitary logic** (L<sub>&infin;&omega;</sub> and L
 - **Scott sentences** &mdash; Every countable structure in a countable relational language has a Scott sentence characterizing it up to isomorphism among countable structures.
 - **Scott rank < &omega;<sub>1</sub>** &mdash; The Scott rank of any countable structure is a countable ordinal.
 - **Karp's theorem** &mdash; Back-and-forth equivalence at all ordinals characterizes L<sub>&infin;&omega;</sub> elementary equivalence.
-- **Model existence** &mdash; Consistency properties for L<sub>&omega;<sub>1</sub>&omega;</sub> yield countable models (Henkin-style construction, omitting types, Karp completeness).
+- **Model existence** &mdash; Every countable consistent set of L<sub>&omega;<sub>1</sub>&omega;</sub> sentences in a countable language has a countable model (Henkin-style construction, omitting types, Karp completeness).
 
 ## Scope
 
@@ -34,6 +34,12 @@ Some results carry explicit hypotheses that package external mathematical conten
 | `InfinitaryLogic/ModelExistence/` | Consistency properties, model existence, completeness, omitting types |
 | `InfinitaryLogic/ModelTheory/` | L&ouml;wenheim&ndash;Skolem, Hanf numbers, counting models |
 | `InfinitaryLogic/Admissible/` | Admissible fragments, Barwise compactness, Nadel bound |
+
+## Resources
+
+- [Blueprint (web)](https://cameronfreer.github.io/infinitary-logic/blueprint/) &middot; [Blueprint (pdf)](https://cameronfreer.github.io/infinitary-logic/blueprint/blueprint.pdf)
+- [API docs](https://cameronfreer.github.io/infinitary-logic/docs/)
+- [Dependency graph](https://cameronfreer.github.io/infinitary-logic/blueprint/dep_graph_document.html)
 
 ## References
 
