@@ -49,14 +49,14 @@ jobs:
           sudo apt-get install -y graphviz libgraphviz-dev texlive-latex-extra texlive-xetex texlive-fonts-recommended texlive-fonts-extra latexmk
           pip install leanblueprint
 
+      - name: Build blueprint website
+        run: leanblueprint web
+
       - name: Check blueprint declarations
         run: lake exe checkdecls blueprint/lean_decls
 
       - name: Build blueprint PDF
         run: leanblueprint pdf
-
-      - name: Build blueprint website
-        run: leanblueprint web
 
       - name: Build API docs
         if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
