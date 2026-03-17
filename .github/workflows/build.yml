@@ -49,6 +49,13 @@ jobs:
           sudo apt-get install -y graphviz libgraphviz-dev texlive-latex-extra texlive-xetex texlive-fonts-recommended texlive-fonts-extra latexmk
           pip install leanblueprint
 
+      - name: Generate bibliography for web
+        run: |
+          cd blueprint/src
+          pdflatex -interaction=nonstopmode print.tex || true
+          bibtex print
+          cp print.bbl web.bbl
+
       - name: Build blueprint website
         run: leanblueprint web
 
