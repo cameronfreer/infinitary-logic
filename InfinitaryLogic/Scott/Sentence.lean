@@ -191,9 +191,7 @@ theorem StabilizesCompletely.toStrongStabilizesForTuples {M : Type w} [L.Structu
     {α : Ordinal} (hstab : StabilizesCompletely (L := L) M α) (n : ℕ) :
     StrongStabilizesForTuples (L := L) M α n := by
   intro N _ _ a b β hαβ
-  constructor
-  · exact fun h => BFEquiv_upgrade_at_stabilization hstab h β hαβ
-  · exact BFEquiv.monotone hαβ
+  exact ⟨fun h => BFEquiv_upgrade_at_stabilization hstab h β hαβ, BFEquiv.monotone hαβ⟩
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- **Downward propagation**: If (n+1)-tuples have full stabilization at α, then n-tuples
@@ -966,8 +964,7 @@ theorem exists_complete_stabilization_of
         (hboundOrd_lt (enumTuples m)))⟩
   have hk_le : boundOrd ⟨n, a⟩ + 1 ≤ globalStab := by
     have h := le_ciSup hBdd k
-    simp only [hk] at h
-    exact h
+    simpa only [hk] using h
   have hbound_le : boundOrd ⟨n, a⟩ ≤ globalStab :=
     le_trans (Order.le_succ _) hk_le
   exact hboundOrd_spec ⟨n, a⟩ globalStab hbound_le hGlobalLt hSuccGlobalLt N b

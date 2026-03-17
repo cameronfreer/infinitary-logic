@@ -35,8 +35,4 @@ theorem Fin.eq_elim0 {α : Type u} (f : Fin 0 → α) : f = Fin.elim0 :=
 /-- `Fin.snoc Fin.elim0 x` is the constant function `fun _ => x` on `Fin 1`. -/
 theorem Fin.snoc_elim0_eq {α : Type u} (x : α) :
     (Fin.snoc (α := fun _ => α) Fin.elim0 x : Fin 1 → α) = fun _ => x :=
-  funext fun v => by
-    obtain ⟨i, hi⟩ := v
-    have : i = 0 := Nat.lt_one_iff.mp hi
-    subst this
-    rfl
+  funext fun v => Fin.lastCases rfl (fun i => i.elim0) v

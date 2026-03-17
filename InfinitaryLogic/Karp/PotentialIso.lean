@@ -375,7 +375,7 @@ theorem BFEquiv_all_implies_potentialIso [Countable (Σ l, L.Relations l)]
     back := ?_
   }⟩
   · -- empty_mem: the hypothesis gives BFEquiv at all ordinals for the empty tuple
-    exact fun α => hBF α
+    exact hBF
   · -- compatible: BFEquiv at level 0 gives SameAtomicType
     intro p hp
     exact (BFEquiv.zero p.2.1 p.2.2).mp (BFEquiv.monotone (zero_le _) (hp 0))

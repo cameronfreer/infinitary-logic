@@ -58,9 +58,7 @@ theorem countable_LinfEquiv_implies_iso_of
   intro hLinf
   apply countable_LomegaEquiv_implies_iso_of hcount
   intro φ
-  have h := hLinf (Sentenceω.toLinf φ)
-  simp only [Sentenceω.realize_toLinf] at h
-  exact h
+  simpa only [Sentenceω.realize_toLinf] using hLinf (Sentenceω.toLinf φ)
 
 omit [Countable (Σ l, L.Relations l)] in
 /-- For countable structures, potential isomorphism implies actual isomorphism.

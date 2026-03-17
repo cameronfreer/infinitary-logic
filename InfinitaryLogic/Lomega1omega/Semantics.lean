@@ -130,9 +130,7 @@ theorem realize_einf {ι : Type*} [Encodable ι] (φs : ι → L.BoundedFormula�
   simp only [einf, realize_iInf]
   constructor
   · intro h i
-    have := h (Encodable.encode i)
-    simp only [Encodable.encodek] at this
-    exact this
+    simpa only [Encodable.encodek] using h (Encodable.encode i)
   · intro h k
     cases hd : Encodable.decode (α := ι) k with
     | none => simp only [realize_top]
@@ -147,9 +145,7 @@ theorem realize_esup {ι : Type*} [Encodable ι] (φs : ι → L.BoundedFormula�
     cases hd : Encodable.decode (α := ι) k with
     | none => simp only [hd, realize_bot] at hk
     | some i =>
-      use i
-      simp only [hd] at hk
-      exact hk
+      exact ⟨i, by simpa only [hd] using hk⟩
   · rintro ⟨i, hi⟩
     use Encodable.encode i
     simp only [Encodable.encodek, hi]
