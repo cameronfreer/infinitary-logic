@@ -50,6 +50,10 @@ import InfinitaryLogic.ModelTheory.CountingModels
 import InfinitaryLogic.Admissible.Fragment
 import InfinitaryLogic.Admissible.Compactness
 import InfinitaryLogic.Admissible.NadelBound
+import InfinitaryLogic.Admissible.ProofSystem
+import InfinitaryLogic.Admissible.Soundness
+import InfinitaryLogic.Admissible.ConsistencyBridge
+
 -- Descriptive set theory
 import InfinitaryLogic.Descriptive.StructureSpace
 import InfinitaryLogic.Descriptive.Measurable
