@@ -2,7 +2,7 @@
 
 ![CI](https://github.com/cameronfreer/infinitary-logic/actions/workflows/build.yml/badge.svg)
 
-A Lean 4 formalization of infinitary logic (L∞ω and Lω₁ω), Scott sentences, and classical results in infinitary model theory, building on [Mathlib](https://leanprover-community.github.io/mathlib4/).
+A Lean 4 formalization of infinitary logic (L∞ω and Lω₁ω), Scott sentences, and classical results in infinitary model theory, building on [Mathlib](https://leanprover-community.github.io/mathlib4_docs/).
 
 - **[Project page](https://cameronfreer.github.io/infinitary-logic/)**
 - **[Blueprint (web)](https://cameronfreer.github.io/infinitary-logic/blueprint/)** · **[Blueprint (pdf)](https://cameronfreer.github.io/infinitary-logic/blueprint/blueprint.pdf)**
