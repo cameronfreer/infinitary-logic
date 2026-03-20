@@ -50,5 +50,10 @@ import InfinitaryLogic.ModelTheory.CountingModels
 import InfinitaryLogic.Admissible.Fragment
 import InfinitaryLogic.Admissible.Compactness
 import InfinitaryLogic.Admissible.NadelBound
+-- Descriptive set theory
+import InfinitaryLogic.Descriptive.StructureSpace
+import InfinitaryLogic.Descriptive.Measurable
+import InfinitaryLogic.Descriptive.SatisfactionBorel
+import InfinitaryLogic.Descriptive.BFEquivBorel
 
 /-! See the top-level `InfinitaryLogic` module for the full project overview. -/
