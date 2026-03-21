@@ -15,16 +15,21 @@ fragments.
 
 ## Main Results
 
-- `consistencyPropertyOfFragment`: Constructs a `ConsistencyPropertyEq` from the
-  family `{S | S ⊆ A.formulas ∧ AConsistent A S}`.
-- `barwise_completeness_II_syntactic`: A countable A-consistent theory in an
-  admissible fragment has a countable model.
+- `consistencyPropertyOfFullFragment`: Constructs a `ConsistencyPropertyEq` from
+  A-consistent sets in a `FullBarwiseFragment` (all sentences in the fragment).
+- `barwise_completeness_II_syntactic_full`: A countable A-consistent theory in a
+  full Barwise fragment of a countable language has a countable model.
 
 ## Design Notes
 
 The chain closure axiom for `AConsistent` does not follow from the proof-theoretic
 definition alone (infinitary derivations can draw premises from scattered chain
 elements). It is taken as an explicit hypothesis, factored via `BarwiseFragment`.
+
+The `FullBarwiseFragment` wrapper isolates the strong hypothesis that ALL Lω₁ω
+sentences belong to the fragment. This matches the global Henkin/maximal-consistent
+API (e.g., `extension` requires deciding arbitrary sentences) without modifying
+the existing `ConsistencyProperty` infrastructure.
 
 The verification of each consistency property axiom follows a uniform pattern:
 assume the relevant extension is inconsistent, use proof rules to derive ⊥ from
@@ -50,6 +55,13 @@ structure BarwiseFragment (L : Language.{u, v}) extends AdmissibleFragment L whe
       IsChain (· ⊆ ·) chain → chain.Nonempty →
       AConsistent toAdmissibleFragment (⋃₀ chain)
 
+/-- A full Barwise fragment: an admissible fragment containing ALL Lω₁ω sentences.
+This is a strong wrapper introduced to match the global Henkin/maximal-consistent
+API (ConsistencyProperty.extension requires deciding arbitrary sentences). We
+isolate this hypothesis here rather than modifying the global API. -/
+structure FullBarwiseFragment (L : Language.{u, v}) extends BarwiseFragment L where
+  complete : ∀ φ : L.Sentenceω, φ ∈ formulas
+
 /-- The family of A-consistent subsets of the fragment's formulas. -/
 def consistentSets (A : AdmissibleFragment L) : Set (Set L.Sentenceω) :=
   {S | S ⊆ A.formulas ∧ AConsistent A S}
@@ -64,15 +76,20 @@ private theorem not_AConsistent_of_not_mem_consistentSets {A : AdmissibleFragmen
     ¬AConsistent A S := by
   intro hc; exact h ⟨hSA, hc⟩
 
-/-- Construct a `ConsistencyPropertyEq` from A-consistent sets in a Barwise fragment.
+/-- Any extension of a set by a formula in the full fragment stays within the fragment. -/
+private theorem union_singleton_subset_of_complete (B : FullBarwiseFragment L)
+    {S : Set L.Sentenceω} (hS : S ⊆ B.formulas) (φ : L.Sentenceω) :
+    S ∪ {φ} ⊆ B.formulas := by
+  intro τ hτ; rcases hτ with hτ_S | hτ_eq
+  · exact hS hτ_S
+  · rw [Set.mem_singleton_iff.mp hτ_eq]; exact B.complete φ
+
+/-- Construct a `ConsistencyPropertyEq` from A-consistent sets in a full Barwise fragment.
 
 Each C0-C7 axiom is verified by assuming the extension is inconsistent and deriving
-a contradiction with the original set's consistency. The proofs use the rules of
-`Derivable` to construct derivations of `⊥`.
-
-Several axioms (C1', C5-C7, extension) are left as `sorry` pending detailed
-proof-theoretic arguments involving negated implications, equality, and quantifiers. -/
-noncomputable def consistencyPropertyOfFragment (B : BarwiseFragment L) :
+a contradiction with the original set's consistency via rules of `Derivable`. The
+`complete` hypothesis ensures all formula membership checks are trivial. -/
+noncomputable def consistencyPropertyOfFullFragment (B : FullBarwiseFragment L) :
     ConsistencyPropertyEq L where
   toConsistencyProperty := {
     sets := consistentSets B.toAdmissibleFragment
@@ -84,115 +101,88 @@ noncomputable def consistencyPropertyOfFragment (B : BarwiseFragment L) :
       exact hc (.neg_elim (.assumption hφ (hS hφ)) (.assumption hφn (hS hφn)))
     C1_imp := by
       intro S ⟨hS, hc⟩ φ ψ himp
-      -- Either S ∪ {¬φ} or S ∪ {ψ} is consistent
       by_contra h; push_neg at h
-      have h₁ := h.1; have h₂ := h.2
-      -- S ∪ {¬φ} ⊆ A.formulas
-      have hSA₁ : S ∪ {φ.not} ⊆ B.formulas := by
-        intro τ hτ; rcases hτ with hτ_S | hτ_eq
-        · exact hS hτ_S
-        · rw [Set.mem_singleton_iff.mp hτ_eq]
-          exact B.closed_neg φ (B.closed_imp_left φ ψ (hS himp))
-      have hSA₂ : S ∪ {ψ} ⊆ B.formulas := by
-        intro τ hτ; rcases hτ with hτ_S | hτ_eq
-        · exact hS hτ_S
-        · rw [Set.mem_singleton_iff.mp hτ_eq]
-          exact B.closed_imp_right φ ψ (hS himp)
-      have hinc₁ := not_AConsistent_of_not_mem_consistentSets hSA₁ h₁
-      have hinc₂ := not_AConsistent_of_not_mem_consistentSets hSA₂ h₂
-      -- S ∪ {¬φ} derives ⊥, so S derives ¬¬φ = φ.not.not
+      have hSA₁ := union_singleton_subset_of_complete B hS φ.not
+      have hSA₂ := union_singleton_subset_of_complete B hS ψ
+      have hinc₁ := not_AConsistent_of_not_mem_consistentSets hSA₁ h.1
+      have hinc₂ := not_AConsistent_of_not_mem_consistentSets hSA₂ h.2
       unfold AConsistent at hinc₁ hinc₂; push_neg at hinc₁ hinc₂
-      have hφ_deriv := Derivable.not_not_elim
-        (.neg_intro (B.closed_neg φ (B.closed_imp_left φ ψ (hS himp))) hinc₁)
-      -- S ∪ {ψ} derives ⊥, so S derives ¬ψ
-      have hψn := Derivable.neg_intro (B.closed_imp_right φ ψ (hS himp)) hinc₂
-      -- φ → ψ ∈ S, so S derives ψ from φ
-      have hψ := Derivable.imp_elim (.assumption himp (hS himp)) hφ_deriv
-      exact hc (.neg_elim hψ hψn)
+      have hφ_deriv := Derivable.not_not_elim (.neg_intro (B.complete _) hinc₁)
+      have hψn := Derivable.neg_intro (B.complete _) hinc₂
+      exact hc (.neg_elim (.imp_elim (.assumption himp (hS himp)) hφ_deriv) hψn)
     C1_neg_imp := by
       -- ¬(φ → ψ) ∈ S → S ∪ {φ} ∈ sets ∧ S ∪ {¬ψ} ∈ sets
-      sorry
+      intro S ⟨hS, hc⟩ φ ψ hnimp
+      have hφA := B.complete φ
+      have hψA := B.complete ψ
+      constructor
+      · -- S ∪ {φ} is consistent
+        refine ⟨union_singleton_subset_of_complete B hS φ, ?_⟩
+        intro hd
+        -- S ∪ {φ} ⊢ ⊥, so S ⊢ ¬φ
+        have hnφ := Derivable.neg_intro hφA hd
+        -- From ¬φ, derive φ → ψ (ex falso)
+        have himp := Derivable.imp_intro_from_neg hnφ hφA hψA
+        -- But ¬(φ → ψ) ∈ S
+        exact hc (.neg_elim himp (.assumption hnimp (hS hnimp)))
+      · -- S ∪ {¬ψ} is consistent
+        refine ⟨union_singleton_subset_of_complete B hS ψ.not, ?_⟩
+        intro hd
+        -- S ∪ {¬ψ} ⊢ ⊥, so S ⊢ ¬¬ψ, so S ⊢ ψ
+        have hψ := Derivable.not_not_elim (.neg_intro (B.complete _) hd)
+        -- From ψ, derive φ → ψ
+        have himp := Derivable.imp_intro hφA (.weaken Set.subset_union_left hψ)
+        exact hc (.neg_elim himp (.assumption hnimp (hS hnimp)))
     C2_not_not := by
       intro S ⟨hS, hc⟩ φ hnn
-      refine ⟨?_, ?_⟩
-      · intro τ hτ; rcases hτ with hτ_S | hτ_eq
-        · exact hS hτ_S
-        · rw [Set.mem_singleton_iff.mp hτ_eq]
-          exact B.closed_imp_left _ _ (B.closed_imp_left _ _ (hS hnn))
-      · intro hd
-        unfold AConsistent at hc; apply hc
-        have h_neg := Derivable.neg_intro
-          (B.closed_imp_left _ _ (B.closed_imp_left _ _ (hS hnn))) hd
-        exact .neg_elim (.not_not_elim (.assumption hnn (hS hnn))) h_neg
+      refine ⟨union_singleton_subset_of_complete B hS φ, ?_⟩
+      intro hd
+      have h_neg := Derivable.neg_intro (B.complete _) hd
+      exact hc (.neg_elim (.not_not_elim (.assumption hnn (hS hnn))) h_neg)
     C3_iInf := by
       intro S ⟨hS, hc⟩ φs hinf k
-      refine ⟨?_, ?_⟩
-      · intro τ hτ; rcases hτ with hτ_S | hτ_eq
-        · exact hS hτ_S
-        · rw [Set.mem_singleton_iff.mp hτ_eq]
-          exact B.closed_iInf_component φs k (hS hinf)
-      · intro hd
-        apply hc
-        have h_neg := Derivable.neg_intro (B.closed_iInf_component φs k (hS hinf)) hd
-        exact .neg_elim (.iInf_elim k (.assumption hinf (hS hinf))) h_neg
+      refine ⟨union_singleton_subset_of_complete B hS (φs k), ?_⟩
+      intro hd
+      have h_neg := Derivable.neg_intro (B.complete _) hd
+      exact hc (.neg_elim (.iInf_elim k (.assumption hinf (hS hinf))) h_neg)
     C3_neg_iInf := by
-      -- ¬(⋀ φs) ∈ S → ∃ k, S ∪ {¬φₖ} consistent
       intro S ⟨hS, hc⟩ φs hninf
       by_contra h; push_neg at h
       have hall : ∀ k, Derivable B.toAdmissibleFragment S (φs k) := by
         intro k
-        have hk_mem := B.closed_iInf_component φs k
-          (B.closed_imp_left _ _ (hS hninf))
-        have hSAk : S ∪ {(φs k).not} ⊆ B.formulas := by
-          intro τ hτ; rcases hτ with hτ_S | hτ_eq
-          · exact hS hτ_S
-          · rw [Set.mem_singleton_iff.mp hτ_eq]; exact B.closed_neg _ hk_mem
+        have hSAk := union_singleton_subset_of_complete B hS (φs k).not
         have := not_AConsistent_of_not_mem_consistentSets hSAk (h k)
         unfold AConsistent at this; push_neg at this
-        exact .not_not_elim (.neg_intro (B.closed_neg _ hk_mem) this)
-      have hinf_deriv := Derivable.iInf_intro hall (B.closed_imp_left _ _ (hS hninf))
+        exact .not_not_elim (.neg_intro (B.complete _) this)
+      have hinf_deriv := Derivable.iInf_intro hall (B.complete _)
       exact hc (.neg_elim hinf_deriv (.assumption hninf (hS hninf)))
     C4_iSup := by
-      -- ⋁ φs ∈ S → ∃ k, S ∪ {φₖ} consistent
       intro S ⟨hS, hc⟩ φs hsup
       by_contra h; push_neg at h
       have hnegs : ∀ k, Derivable B.toAdmissibleFragment S (φs k).not := by
         intro k
-        have hk_mem := B.closed_iSup_component φs k (hS hsup)
-        have hSAk : S ∪ {φs k} ⊆ B.formulas := by
-          intro τ hτ; rcases hτ with hτ_S | hτ_eq
-          · exact hS hτ_S
-          · rw [Set.mem_singleton_iff.mp hτ_eq]; exact hk_mem
+        have hSAk := union_singleton_subset_of_complete B hS (φs k)
         have := not_AConsistent_of_not_mem_consistentSets hSAk (h k)
         unfold AConsistent at this; push_neg at this
-        exact .neg_intro hk_mem this
-      -- Use iSup_elim: from ⋁φs and ∀k, S∪{φₖ} ⊢ ⊥
+        exact .neg_intro (B.complete _) this
       apply hc
       apply Derivable.iSup_elim (.assumption hsup (hS hsup))
       intro k
-      -- Need: S ∪ {φₖ} ⊢ ⊥
       exact .neg_elim
-        (.assumption (Set.mem_union_right S rfl) (B.closed_iSup_component φs k (hS hsup)))
+        (.assumption (Set.mem_union_right S rfl) (B.complete _))
         (.weaken Set.subset_union_left (hnegs k))
     C4_neg_iSup := by
       intro S ⟨hS, hc⟩ φs hnsup k
-      refine ⟨?_, ?_⟩
-      · intro τ hτ; rcases hτ with hτ_S | hτ_eq
-        · exact hS hτ_S
-        · rw [Set.mem_singleton_iff.mp hτ_eq]
-          exact B.closed_neg _ (B.closed_iSup_component φs k
-            (B.closed_imp_left _ _ (hS hnsup)))
-      · intro hd
-        apply hc
-        have hφk := Derivable.not_not_elim (Derivable.neg_intro
-          (B.closed_neg _ (B.closed_iSup_component φs k
-            (B.closed_imp_left _ _ (hS hnsup)))) hd)
-        have hsup_d := Derivable.iSup_intro (k := k) hφk
-          (B.closed_imp_left _ _ (hS hnsup))
-        exact .neg_elim hsup_d (.assumption hnsup (hS hnsup))
+      refine ⟨union_singleton_subset_of_complete B hS (φs k).not, ?_⟩
+      intro hd
+      have hφk := Derivable.not_not_elim (.neg_intro (B.complete _) hd)
+      have hsup_d := Derivable.iSup_intro (k := k) hφk (B.complete _)
+      exact hc (.neg_elim hsup_d (.assumption hnsup (hS hnsup)))
     extension := by
-      -- For any S and φ, either S ∪ {φ} or S ∪ {¬φ} is A-consistent
-      sorry
+      intro S ⟨hS, hc⟩ φ
+      rcases AConsistent.extension_of_mem_formulas hS hc (B.complete φ) with h | h
+      · exact Or.inl ⟨union_singleton_subset_of_complete B hS φ, h⟩
+      · exact Or.inr ⟨union_singleton_subset_of_complete B hS φ.not, h⟩
     chain_closure := by
       intro chain hchain hischain hne
       refine ⟨?_, ?_⟩
@@ -201,35 +191,130 @@ noncomputable def consistencyPropertyOfFragment (B : BarwiseFragment L) :
         exact (hchain hS_chain).1 hτ_S
       · exact B.chain_closure_consistent chain hchain hischain hne
   }
-  -- Equality and quantifier axioms (C5-C7)
-  -- These require detailed proof-theoretic arguments using eq_refl, eq_subst,
-  -- all_intro, all_elim rules of Derivable.
-  C5_eq_refl := by sorry
-  C6_eq_subst := by sorry
-  C7_quantifier := by sorry
-  C7_all := by sorry
-  C7_neg_all := by sorry
-  C7_neg_ex := by sorry
-  C7_all_bound := by sorry
-  C7_neg_all_bound := by sorry
+  C5_eq_refl := by
+    intro S ⟨hS, hc⟩ t
+    refine ⟨union_singleton_subset_of_complete B hS _, ?_⟩
+    intro hd
+    exact hc (Derivable.derivable_collapses_extension (.eq_refl t (B.complete _))
+      (B.complete _) hd)
+  C6_eq_subst := by
+    intro S ⟨hS, hc⟩ t₁ t₂ φ heq hφ
+    refine ⟨union_singleton_subset_of_complete B hS _, ?_⟩
+    intro hd
+    exact hc (Derivable.derivable_collapses_extension
+      (.eq_subst t₁ t₂ φ (.assumption heq (hS heq)) (.assumption hφ (hS hφ)) (B.complete _))
+      (B.complete _) hd)
+  C7_all := by
+    -- (φ.relabel Sum.inr).all ∈ S → S ∪ {φ.subst t} consistent
+    intro S ⟨hS, hc⟩ φ hall t
+    refine ⟨union_singleton_subset_of_complete B hS _, ?_⟩
+    intro hd
+    -- S ∪ {φ.subst t} ⊢ ⊥, so S ⊢ ¬(φ.subst t)
+    -- By all_elim on (φ.relabel Sum.inr): S ⊢ ((φ.relabel Sum.inr).openBounds).subst t
+    -- By bridge lemma: (φ.relabel Sum.inr).openBounds = φ
+    -- So S ⊢ φ.subst t, contradiction
+    have hd_all := Derivable.all_elim (φ.relabel Sum.inr) t
+      (.assumption hall (hS hall))
+    rw [openBounds_relabel_sumInr] at hd_all
+    exact hc (Derivable.derivable_collapses_extension hd_all (B.complete _) hd)
+  C7_neg_all := by
+    -- ¬(φ.relabel Sum.inr).all ∈ S → ∃ t, S ∪ {¬(φ.subst t)} consistent
+    intro S ⟨hS, hc⟩ φ hnall
+    by_contra h; push_neg at h
+    -- For all t, S ∪ {(φ.subst t).not} is not in sets
+    have hderiv : ∀ t, Derivable B.toAdmissibleFragment S (φ.subst (fun _ => t)) := by
+      intro t
+      have hSAt := union_singleton_subset_of_complete B hS (φ.subst (fun _ => t)).not
+      have := not_AConsistent_of_not_mem_consistentSets hSAt (h t)
+      unfold AConsistent at this; push_neg at this
+      exact .not_not_elim (.neg_intro (B.complete _) this)
+    -- For all t, S ⊢ φ.subst t. By bridge: φ.subst t = (φ.relabel Sum.inr).openBounds.subst t
+    -- So for all t, S ⊢ (φ.relabel Sum.inr).openBounds.subst t
+    -- By all_intro: S ⊢ (φ.relabel Sum.inr).all
+    have hall_intro : Derivable B.toAdmissibleFragment S (φ.relabel Sum.inr).all := by
+      apply Derivable.all_intro
+      · intro t
+        have := hderiv t
+        rw [show (φ.relabel Sum.inr).openBounds = φ from openBounds_relabel_sumInr φ]
+        exact this
+      · exact B.complete _
+    exact hc (.neg_elim hall_intro (.assumption hnall (hS hnall)))
+  C7_neg_ex := by
+    -- ¬∃x.φ(x) ∈ S → ∀t, S ∪ {¬(φ.subst t)} consistent
+    -- Since ex = not.all.not, hnex is ¬¬(∀x.¬φ(x)) ∈ S
+    intro S ⟨hS, hc⟩ φ hnex t
+    refine ⟨union_singleton_subset_of_complete B hS _, ?_⟩
+    intro hd
+    have hφt := Derivable.not_not_elim (.neg_intro (B.complete _) hd)
+    have hall := Derivable.not_not_elim (.assumption hnex (hS hnex))
+    have hnφt := Derivable.all_elim (φ.relabel Sum.inr).not t hall
+    -- Bridge: ((φ.relabel Sum.inr).not.openBounds).subst t = (φ.subst t).not
+    have key : ((φ.relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).not.openBounds).subst (fun _ => t) =
+        (φ.subst (fun _ => t)).not := by
+      change (((φ.imp .falsum).relabel Sum.inr).openBounds).subst (fun _ => t) =
+        (φ.subst (fun _ => t)).imp .falsum
+      simp only [openBounds_relabel_sumInr, subst]
+    rw [key] at hnφt
+    exact hc (.neg_elim hφt hnφt)
+  C7_quantifier := by
+    -- ∃x.φ(x) ∈ S → ∃ t, S ∪ {φ.subst t} consistent
+    -- Since ex = not.all.not, hex is ¬(∀x.¬φ(x)) ∈ S
+    intro S ⟨hS, hc⟩ φ hex
+    by_contra h; push_neg at h
+    have hnegs : ∀ t, Derivable B.toAdmissibleFragment S (φ.subst (fun _ => t)).not := by
+      intro t
+      have hSAt := union_singleton_subset_of_complete B hS (φ.subst (fun _ => t))
+      have := not_AConsistent_of_not_mem_consistentSets hSAt (h t)
+      unfold AConsistent at this; push_neg at this
+      exact .neg_intro (B.complete _) this
+    -- By bridge + all_intro on (φ.relabel Sum.inr).not: S ⊢ (φ.relabel Sum.inr).not.all
+    have hall_intro : Derivable B.toAdmissibleFragment S (φ.relabel Sum.inr).not.all := by
+      apply Derivable.all_intro
+      · intro t
+        have key : ((φ.relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).not.openBounds).subst (fun _ => t) =
+            (φ.subst (fun _ => t)).not := by
+          change (((φ.imp .falsum).relabel Sum.inr).openBounds).subst (fun _ => t) =
+            (φ.subst (fun _ => t)).imp .falsum
+          simp only [openBounds_relabel_sumInr, subst]
+        rw [key]; exact hnegs t
+      · exact B.complete _
+    -- hex says (φ.relabel Sum.inr).not.all.not ∈ S; neg_elim gives ⊥
+    exact hc (.neg_elim hall_intro (.assumption hex (hS hex)))
+  C7_all_bound := by
+    -- ψ.all ∈ S → S ∪ {ψ.openBounds.subst t} consistent
+    intro S ⟨hS, hc⟩ ψ hall t
+    refine ⟨union_singleton_subset_of_complete B hS _, ?_⟩
+    intro hd
+    exact hc (Derivable.derivable_collapses_extension
+      (.all_elim ψ t (.assumption hall (hS hall))) (B.complete _) hd)
+  C7_neg_all_bound := by
+    -- ¬(ψ.all) ∈ S → ∃ t, S ∪ {(ψ.openBounds.subst t).not} consistent
+    intro S ⟨hS, hc⟩ ψ hnall
+    by_contra h; push_neg at h
+    -- For all t, S ∪ {(ψ.openBounds.subst t).not} is not in sets
+    -- So for all t, S ⊢ ψ.openBounds.subst t
+    have hderiv : ∀ t, Derivable B.toAdmissibleFragment S (ψ.openBounds.subst (fun _ => t)) := by
+      intro t
+      have hSAt := union_singleton_subset_of_complete B hS (ψ.openBounds.subst (fun _ => t)).not
+      have := not_AConsistent_of_not_mem_consistentSets hSAt (h t)
+      unfold AConsistent at this; push_neg at this
+      exact .not_not_elim (.neg_intro (B.complete _) this)
+    -- By all_intro: S ⊢ ψ.all
+    have hall_intro := Derivable.all_intro ψ hderiv (B.complete _)
+    -- But ¬(ψ.all) ∈ S, so S ⊢ ¬(ψ.all)
+    exact hc (.neg_elim hall_intro (.assumption hnall (hS hnall)))
 
-/-- **Barwise Completeness II (syntactic)**: A countable A-consistent theory
-in a Barwise fragment of a countable language has a countable model.
-
-This upgrades `barwise_completeness_II` from semantic consistency (membership in
-an externally-provided `ConsistencyPropertyEq`) to proof-theoretic consistency
-(`AConsistent`). -/
-theorem barwise_completeness_II_syntactic
+/-- **Barwise Completeness II (syntactic, full fragment)**: A countable A-consistent theory
+in a full Barwise fragment of a countable language has a countable model. -/
+theorem barwise_completeness_II_syntactic_full
     [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relations l)]
-    (B : BarwiseFragment L)
+    (B : FullBarwiseFragment L)
     {T : Set L.Sentenceω} (hT : T ⊆ B.formulas) (hT_countable : T.Countable)
     (hcons : AConsistent B.toAdmissibleFragment T) :
     ∃ (M : Type u) (_ : L.Structure M) (_ : Countable M),
       Theoryω.Model T M := by
-  let hC := consistencyPropertyOfFragment B
-  have hT_in : T ∈ hC.toConsistencyProperty.sets := by
-    change T ⊆ B.formulas ∧ AConsistent B.toAdmissibleFragment T
-    exact ⟨hT, hcons⟩
+  let hC := consistencyPropertyOfFullFragment B
+  have hT_in : T ∈ hC.toConsistencyProperty.sets := ⟨hT, hcons⟩
   exact consistent_theory_has_model hC T hT_in hT_countable
 
 end Language

@@ -123,6 +123,42 @@ theorem Derivable.neg_elim {A : AdmissibleFragment L}
     Derivable A T .falsum :=
   .imp_elim h₂ h₁
 
+/-- If `S ⊢ χ` and `S ∪ {χ} ⊢ ⊥`, then `S ⊢ ⊥`. -/
+theorem Derivable.derivable_collapses_extension {A : AdmissibleFragment L}
+    (hd : Derivable A T χ) (hχ : χ ∈ A.formulas)
+    (hbot : Derivable A (T ∪ {χ}) .falsum) :
+    Derivable A T .falsum :=
+  hd.neg_elim (.neg_intro hχ hbot)
+
+/-- If `S ∪ {φ} ⊢ ⊥` and `S ∪ {¬φ} ⊢ ⊥`, then `S ⊢ ⊥`. -/
+theorem Derivable.inconsistent_of_both_extensions {A : AdmissibleFragment L}
+    (hφA : φ ∈ A.formulas)
+    (h₁ : Derivable A (T ∪ {φ}) .falsum) (h₂ : Derivable A (T ∪ {φ.not}) .falsum) :
+    Derivable A T .falsum :=
+  -- From h₁: T ⊢ ¬φ. From h₂: T ⊢ ¬¬φ. Then not_not_elim gives T ⊢ φ. neg_elim gives T ⊢ ⊥.
+  (Derivable.not_not_elim (.neg_intro (A.closed_neg φ hφA) h₂)).neg_elim (.neg_intro hφA h₁)
+
+/-- If `S ⊢ ¬φ` and `φ, ψ ∈ A.formulas`, then `S ⊢ φ → ψ`. -/
+theorem Derivable.imp_intro_from_neg {A : AdmissibleFragment L}
+    (hd : Derivable A T φ.not) (hφA : φ ∈ A.formulas) (hψA : ψ ∈ A.formulas) :
+    Derivable A T (φ.imp ψ) := by
+  apply Derivable.imp_intro hφA
+  apply Derivable.falsum_elim _ hψA
+  exact Derivable.neg_elim
+    (.assumption (Set.mem_union_right T rfl) hφA)
+    (.weaken Set.subset_union_left hd)
+
+/-- If `S ⊆ A.formulas`, `AConsistent A S`, and `φ ∈ A.formulas`, then
+`AConsistent A (S ∪ {φ}) ∨ AConsistent A (S ∪ {¬φ})`. -/
+theorem AConsistent.extension_of_mem_formulas {A : AdmissibleFragment L}
+    {S : Set L.Sentenceω} (hSA : S ⊆ A.formulas) (hc : AConsistent A S)
+    (hφA : φ ∈ A.formulas) :
+    AConsistent A (S ∪ {φ}) ∨ AConsistent A (S ∪ {φ.not}) := by
+  by_contra h; push_neg at h
+  obtain ⟨h₁, h₂⟩ := h
+  unfold AConsistent at h₁ h₂; push_neg at h₁ h₂
+  exact hc (.inconsistent_of_both_extensions hφA h₁ h₂)
+
 end Language
 
 end FirstOrder
