@@ -59,5 +59,6 @@ import InfinitaryLogic.Descriptive.StructureSpace
 import InfinitaryLogic.Descriptive.Measurable
 import InfinitaryLogic.Descriptive.SatisfactionBorel
 import InfinitaryLogic.Descriptive.BFEquivBorel
+import InfinitaryLogic.Descriptive.IsomorphismBorel
 
 /-! See the top-level `InfinitaryLogic` module for the full project overview. -/
