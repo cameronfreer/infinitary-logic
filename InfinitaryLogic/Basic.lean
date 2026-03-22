@@ -60,5 +60,9 @@ import InfinitaryLogic.Descriptive.Measurable
 import InfinitaryLogic.Descriptive.SatisfactionBorel
 import InfinitaryLogic.Descriptive.BFEquivBorel
 import InfinitaryLogic.Descriptive.IsomorphismBorel
+import InfinitaryLogic.Descriptive.Topology
+import InfinitaryLogic.Descriptive.Polish
+import InfinitaryLogic.Descriptive.ModelClassStandardBorel
+import InfinitaryLogic.Descriptive.CountingDichotomy
 
 /-! See the top-level `InfinitaryLogic` module for the full project overview. -/
