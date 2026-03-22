@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Admissible.ProofSystem
 import InfinitaryLogic.ModelExistence.SatisfiableConsistencyProperty
+import Architect
 
 /-!
 # Soundness of the Proof System
@@ -43,6 +44,12 @@ open FirstOrder Structure BoundedFormulaω
 
 /-- **Soundness**: If `φ` is derivable from `T` in fragment `A`, then `φ` is true
 in any model of `T` equipped with a naming function. -/
+@[blueprint "thm:proof-system-soundness"
+  (title := /-- Soundness of the proof system -/)
+  (statement := /-- If $\varphi$ is derivable from $T$ in fragment $A$, then $\varphi$ is true in any model of $T$ equipped with a naming function. -/)
+  (proof := /-- By induction on the derivation. The quantifier cases use the semantic roundtrip for \texttt{openBounds} and the naming function. -/)
+  (uses := ["def:derivable"])
+  (proofUses := ["def:derivable"])]
 theorem Derivable.sound {A : AdmissibleFragment L}
     {T : Set L.Sentenceω} {φ : L.Sentenceω}
     (hd : Derivable A T φ)

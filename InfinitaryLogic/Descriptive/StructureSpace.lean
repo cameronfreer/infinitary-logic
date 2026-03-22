@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Lomega1omega.Semantics
 import Mathlib.ModelTheory.Basic
+import Architect
 
 /-!
 # Coding Space for Countable Structures
@@ -50,6 +51,9 @@ instance [Countable (Σ l, L.Relations l)] : Countable (RelQuery L) := by
 
 /-- The coding space for countable L-structures on ℕ: for each relation query,
 does the relation hold on that tuple? -/
+@[blueprint "def:structure-space"
+  (title := /-- Structure space -/)
+  (statement := /-- The coding space for countable $L$-structures on $\mathbb{N}$: for each relation query, whether the relation holds on that tuple. -/)]
 def StructureSpace (L : Language.{u, v}) := RelQuery L → Bool
 
 namespace StructureSpace

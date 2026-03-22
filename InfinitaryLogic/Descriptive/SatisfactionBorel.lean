@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Descriptive.Measurable
 import InfinitaryLogic.Lomega1omega.Semantics
+import Architect
 
 /-!
 # Satisfaction of Lω₁ω Formulas is Borel
@@ -163,6 +164,12 @@ theorem modelsOfBounded_measurableSet
 omit [Countable (Σ l, L.Relations l)] in
 /-- Satisfaction of any Lω₁ω sentence in a countable relational language
 is measurable on the structure space. -/
+@[blueprint "thm:satisfaction-borel"
+  (title := /-- Satisfaction of $\Lomegaone$ sentences is Borel -/)
+  (statement := /-- For a countable relational language, the set of codes in the structure space satisfying a given $\Lomegaone$ sentence is measurable (Borel). -/)
+  (proof := /-- By structural induction on the sentence, using that atomic formulas are clopen and the Borel $\sigma$-algebra is closed under countable unions and intersections. -/)
+  (uses := ["def:structure-space"])
+  (proofUses := ["def:structure-space"])]
 theorem modelsOf_measurableSet (φ : L.Sentenceω) :
     MeasurableSet (ModelsOf φ) :=
   modelsOfBounded_measurableSet φ Empty.elim Fin.elim0

@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Admissible.Soundness
 import InfinitaryLogic.ModelExistence.Theorem
+import Architect
 
 /-!
 # Consistency Bridge: From AConsistent to ConsistencyPropertyEq
@@ -59,6 +60,10 @@ structure BarwiseFragment (L : Language.{u, v}) extends AdmissibleFragment L whe
 This is a strong wrapper introduced to match the global Henkin/maximal-consistent
 API (ConsistencyProperty.extension requires deciding arbitrary sentences). We
 isolate this hypothesis here rather than modifying the global API. -/
+@[blueprint "def:full-barwise-fragment"
+  (title := /-- Full Barwise fragment -/)
+  (statement := /-- A full Barwise fragment: an admissible fragment containing all $\Lomegaone$ sentences, equipped with the chain closure property for consistency. -/)
+  (uses := ["def:admissible-fragment"])]
 structure FullBarwiseFragment (L : Language.{u, v}) extends BarwiseFragment L where
   complete : ∀ φ : L.Sentenceω, φ ∈ formulas
 
@@ -89,6 +94,12 @@ private theorem union_singleton_subset_of_complete (B : FullBarwiseFragment L)
 Each C0-C7 axiom is verified by assuming the extension is inconsistent and deriving
 a contradiction with the original set's consistency via rules of `Derivable`. The
 `complete` hypothesis ensures all formula membership checks are trivial. -/
+@[blueprint "thm:consistency-property-full-fragment"
+  (title := /-- Consistency property from a full Barwise fragment -/)
+  (statement := /-- The family of $A$-consistent subsets of a full Barwise fragment forms a \texttt{ConsistencyPropertyEq}. -/)
+  (proof := /-- Each consistency property axiom (C0--C7) is verified by assuming the extension is inconsistent and deriving a contradiction via the proof system rules. -/)
+  (uses := ["def:full-barwise-fragment"])
+  (proofUses := ["def:derivable", "def:a-consistent"])]
 noncomputable def consistencyPropertyOfFullFragment (B : FullBarwiseFragment L) :
     ConsistencyPropertyEq L where
   toConsistencyProperty := {
@@ -306,6 +317,12 @@ noncomputable def consistencyPropertyOfFullFragment (B : FullBarwiseFragment L) 
 
 /-- **Barwise Completeness II (syntactic, full fragment)**: A countable A-consistent theory
 in a full Barwise fragment of a countable language has a countable model. -/
+@[blueprint "thm:barwise-completeness-ii-syntactic"
+  (title := /-- Barwise completeness II (syntactic, full fragment) -/)
+  (statement := /-- A countable $A$-consistent theory in a full Barwise fragment of a countable language has a countable model. -/)
+  (proof := /-- Construct a \texttt{ConsistencyPropertyEq} from the full Barwise fragment, then apply the model existence theorem. -/)
+  (uses := ["thm:consistency-property-full-fragment", "thm:model-existence"])
+  (proofUses := ["thm:consistency-property-full-fragment", "thm:model-existence"])]
 theorem barwise_completeness_II_syntactic_full
     [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relations l)]
     (B : FullBarwiseFragment L)

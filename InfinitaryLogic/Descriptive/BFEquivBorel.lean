@@ -6,6 +6,7 @@ Authors: Cameron Freer
 import InfinitaryLogic.Descriptive.SatisfactionBorel
 import InfinitaryLogic.Scott.BackAndForth
 import Mathlib.SetTheory.Cardinal.Aleph
+import Architect
 
 /-!
 # BFEquiv is Borel on the Pair Space
@@ -121,6 +122,12 @@ private theorem sameAtomicType_measurableSet
            (measurable_snd (measurableSet_relHolds q₂)).compl)
 
 /-- The main theorem: `BFEquivSet α n a b` is measurable for `α < ω₁`. -/
+@[blueprint "thm:bfequiv-borel"
+  (title := /-- BFEquiv classes are Borel -/)
+  (statement := /-- The set of code pairs where $\BFEquiv_\alpha$ holds is measurable for $\alpha < \omegaone$. -/)
+  (proof := /-- By transfinite induction on $\alpha$, matching the definition of $\BFEquiv$: the zero case uses countable intersection over atomic indices, the successor case uses the induction hypothesis with countable quantifier alternation, and the limit case uses a countable intersection since $\alpha < \omegaone$. -/)
+  (uses := ["def:structure-space", "def:BFEquiv"])
+  (proofUses := ["def:structure-space", "def:BFEquiv"])]
 theorem bfEquivSet_measurableSet
     [Countable (Σ l, L.Relations l)]
     (α : Ordinal.{0}) (hα : α < Ordinal.omega 1)
