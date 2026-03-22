@@ -428,7 +428,7 @@ private theorem term_roundtrip_full (n k : ℕ) (t : L.Term (Fin n ⊕ Fin k)) :
       rw [h2]
       simp only [relabelAux, Function.comp_apply, Sum.map_inl, finSumFinEquiv,
         Equiv.coe_fn_mk, Equiv.coe_fn_symm_mk, Sum.elim_inl, Fin.castAdd,
-        Equiv.sumAssoc_apply_inl_inl, Fin.addCases]
+        Fin.addCases]
       split
       · rfl
       · rename_i h_false; exfalso; exact h_false (by assumption)
@@ -478,15 +478,13 @@ private theorem relabelAux_insertLastBound_finSumFinEquiv (n k l : ℕ) (x : Fin
   rcases x with ⟨i, hi⟩ | ⟨j, hj⟩
   · -- Free variable i : Fin (n+k+1)
     -- Unfold relabelAux, finSumFinEquiv, and addCases; use Fin.val_castLT to resolve hypotheses
-    simp only [relabelAux, Function.comp_apply, Sum.map_inl, Sum.map_inr, Sum.map_id_id, id_eq,
+    simp only [relabelAux, Function.comp_apply, Sum.map_inl,
       finSumFinEquiv, Equiv.coe_fn_mk, Equiv.coe_fn_symm_mk,
-      Equiv.sumAssoc_apply_inl_inl, Equiv.sumAssoc_apply_inl_inr,
-      Sum.elim_inl, Sum.elim_inr, Fin.addCases, Fin.castAdd, Fin.natAdd, Fin.castLE]
+      Fin.addCases, Fin.castAdd, Fin.natAdd]
     -- Split on the insertLastBound/finSumFinEquiv.symm dite: i < n+k or i ≥ n+k
     split <;> rename_i h1
     · -- i < n+k
-      simp only [Equiv.sumAssoc_apply_inl_inl, Sum.map_inl, Sum.elim_inl,
-        Fin.addCases, Fin.castAdd, Fin.natAdd, Fin.castLE, id_eq]
+      simp only [Equiv.sumAssoc_apply_inl_inl, Sum.map_inl, id_eq]
       -- Split on finSumFinEquiv.symm at (n, k): i < n or n ≤ i
       split <;> rename_i h2
       · -- Inner: i maps to inl. Now split on finSumFinEquiv.symm at (n, k+1) on RHS
@@ -502,30 +500,22 @@ private theorem relabelAux_insertLastBound_finSumFinEquiv (n k l : ℕ) (x : Fin
           exfalso; rw [Fin.val_castLT] at h2; exact h2 (by omega)
         · -- Both sides are inr. Use dsimp to definitionally reduce, then simp + omega.
           rw [Fin.val_castLT] at h2
-          simp only [Fin.subNat, Equiv.sumAssoc_apply_inl_inl,
-            Equiv.sumAssoc_apply_inl_inr, Equiv.sumAssoc_apply_inr,
-            Sum.map_inl, Sum.map_inr, Sum.elim_inl, Sum.elim_inr,
-            Fin.castLE, Fin.castAdd, Fin.natAdd, Sum.map_id_id, id_eq]
-          simp [finSumFinEquiv, Fin.addCases, Sum.elim, Fin.castLT, Fin.subNat,
-            Fin.val_castLT, Fin.val_natAdd, Fin.val_castAdd, Fin.val_castLE]
+          simp only [Fin.subNat]
+          simp [Sum.elim, Fin.castLT]
     · -- i ≥ n+k (i.e., i = n+k)
       push_neg at h1
       have h_eq : i = n + k := Nat.le_antisymm (by omega) h1
       subst h_eq
       split <;> rename_i h2
       · exfalso; omega
-      · simp only [Fin.subNat, Equiv.sumAssoc_apply_inl_inl,
-          Equiv.sumAssoc_apply_inl_inr, Equiv.sumAssoc_apply_inr,
-          Sum.map_inl, Sum.map_inr, Sum.elim_inl, Sum.elim_inr,
-          Fin.castLE, Fin.castAdd, Fin.natAdd, Sum.map_id_id, id_eq]
-        simp [finSumFinEquiv, Fin.addCases, Sum.elim, Fin.castLT, Fin.subNat,
-          Fin.val_castLT, Fin.val_natAdd, Fin.val_castAdd, Fin.val_castLE]
+      · simp only [Fin.subNat]
+        simp [Sum.elim, Fin.castLT]
         ext; simp [Fin.val_natAdd, Fin.val_castLE]
   · -- Bound variable j
     simp only [relabelAux, Function.comp_apply, Sum.map_inr,
-      Equiv.sumAssoc_apply_inr, Sum.elim_inr, Sum.map_id_id, id_eq, Fin.castLE, Fin.natAdd,
+      Equiv.sumAssoc_apply_inr, Sum.elim_inr, id_eq, Fin.castLE, Fin.natAdd,
       finSumFinEquiv, Equiv.coe_fn_mk]
-    congr 1; exact Fin.ext (by simp [Fin.val_natAdd, Fin.val_castLE]; omega)
+    congr 1; exact Fin.ext (by simp; omega)
 
 /-- Composing `relabel insertLastBound` and `relabel finSumFinEquiv.symm` at the formula level. -/
 private theorem relabel_insertLastBound_comp_finSumFinEquiv (n k : ℕ) :
@@ -573,7 +563,7 @@ private theorem roundtrip_general :
   | imp _ _ ih₁ ih₂ => simp only [relabel, openBounds, ih₁, ih₂]
   | @all m ψ ih =>
     -- Goal: (openBounds ((all ψ).relabel Sum.inr)).relabel fsfe = all ψ
-    simp only [relabel, openBounds, castLE]
+    simp only [relabel, openBounds]
     congr 1
     -- After congr 1, we have inner formulas to match.
     -- Use castLE_self, then the composition lemma, then IH.
@@ -603,23 +593,21 @@ private theorem relabel_finSumFinEquiv_symm_zero (φ : L.Formulaω (Fin n)) :
   induction φ with
   | falsum => rfl
   | @equal m t₁ t₂ =>
-    simp only [relabel, castLE, Term.relabel_relabel]
+    simp only [relabel, castLE]
     congr 1 <;> (congr 1; funext x; rcases x with ⟨i, hi⟩ | ⟨j, hj⟩ <;>
     simp only [Function.comp_apply, relabelAux, Sum.map_inl, Sum.map_inr,
       finSumFinEquiv, Equiv.coe_fn_mk, Equiv.coe_fn_symm_mk,
-      Equiv.sumAssoc_apply_inl_inl, Equiv.sumAssoc_apply_inl_inr, Equiv.sumAssoc_apply_inr,
-      Sum.elim_inl, Sum.elim_inr, Fin.addCases, Fin.castAdd, Fin.natAdd, Fin.castLE,
-      Fin.ext_iff] <;>
-    (try split) <;> simp_all <;> omega)
+      Equiv.sumAssoc_apply_inr,
+      Sum.elim_inr, Fin.addCases, Fin.castAdd, Fin.natAdd, Fin.castLE] <;>
+    (try split) <;> simp_all; omega)
   | @rel m rl R ts =>
-    simp only [relabel, castLE, Term.relabel_relabel]
+    simp only [relabel, castLE]
     congr 1; funext i; congr 1; funext x; rcases x with ⟨i, hi⟩ | ⟨j, hj⟩ <;>
     simp only [Function.comp_apply, relabelAux, Sum.map_inl, Sum.map_inr,
       finSumFinEquiv, Equiv.coe_fn_mk, Equiv.coe_fn_symm_mk,
-      Equiv.sumAssoc_apply_inl_inl, Equiv.sumAssoc_apply_inl_inr, Equiv.sumAssoc_apply_inr,
-      Sum.elim_inl, Sum.elim_inr, Fin.addCases, Fin.castAdd, Fin.natAdd, Fin.castLE,
-      Fin.ext_iff] <;>
-    (try split) <;> simp_all <;> omega
+      Equiv.sumAssoc_apply_inr,
+      Sum.elim_inr, Fin.addCases, Fin.castAdd, Fin.natAdd, Fin.castLE] <;>
+    (try split) <;> simp_all; omega
   | imp _ _ ih₁ ih₂ => simp only [relabel, castLE, ih₁, ih₂]
   | all _ ih => simp only [relabel, castLE, ih]; congr 1; exact castLE_self _ _
   | iSup _ ih => simp only [relabel, castLE]; congr 1; funext i; exact ih i

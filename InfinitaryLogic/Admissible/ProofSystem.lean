@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Admissible.Fragment
 import InfinitaryLogic.Lomega1omega.Operations
+import Architect
 
 /-!
 # Proof System for Admissible Fragments
@@ -44,6 +45,9 @@ open FirstOrder Structure BoundedFormulaω
 
 The system includes structural rules, propositional rules, infinitary connective
 rules, quantifier rules (omega-rule), equality rules, and classical logic (LEM). -/
+@[blueprint "def:derivable"
+  (title := /-- Derivability in admissible fragments -/)
+  (statement := /-- A sentence $\varphi$ is derivable from theory $T$ in admissible fragment $A$. The proof system includes structural, propositional, infinitary, quantifier (omega-rule), equality, and classical rules. -/)]
 inductive Derivable (A : AdmissibleFragment L) :
     Set L.Sentenceω → L.Sentenceω → Prop where
   -- Structural
@@ -83,6 +87,9 @@ inductive Derivable (A : AdmissibleFragment L) :
   | em (φ : L.Sentenceω) : φ ∈ A.formulas → Derivable A T (φ.or φ.not)
 
 /-- A theory is A-consistent if ⊥ is not derivable from it. -/
+@[blueprint "def:a-consistent"
+  (title := /-- A-consistency -/)
+  (statement := /-- A theory $T$ is $A$-consistent if $\bot$ is not derivable from $T$ in fragment $A$. -/)]
 def AConsistent (A : AdmissibleFragment L) (T : Set L.Sentenceω) : Prop :=
   ¬ Derivable A T .falsum
 
@@ -151,7 +158,7 @@ theorem Derivable.imp_intro_from_neg {A : AdmissibleFragment L}
 /-- If `S ⊆ A.formulas`, `AConsistent A S`, and `φ ∈ A.formulas`, then
 `AConsistent A (S ∪ {φ}) ∨ AConsistent A (S ∪ {¬φ})`. -/
 theorem AConsistent.extension_of_mem_formulas {A : AdmissibleFragment L}
-    {S : Set L.Sentenceω} (hSA : S ⊆ A.formulas) (hc : AConsistent A S)
+    {S : Set L.Sentenceω} (_hSA : S ⊆ A.formulas) (hc : AConsistent A S)
     (hφA : φ ∈ A.formulas) :
     AConsistent A (S ∪ {φ}) ∨ AConsistent A (S ∪ {φ.not}) := by
   by_contra h; push_neg at h
