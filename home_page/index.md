@@ -1,7 +1,7 @@
 ---
 ---
 
-A Lean 4 formalization of **infinitary logic** (L<sub>&infin;&omega;</sub> and L<sub>&omega;<sub>1</sub>&omega;</sub>), **Scott sentences**, and classical results in infinitary model theory, building on [Mathlib](https://leanprover-community.github.io/mathlib4/).
+A Lean 4 formalization of **infinitary logic** (L<sub>&infin;&omega;</sub> and L<sub>&omega;<sub>1</sub>&omega;</sub>), **Scott sentences**, and classical results in infinitary model theory, building on [Mathlib](https://leanprover-community.github.io/mathlib4_docs/).
 
 ## Main Results
 
