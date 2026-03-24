@@ -3,8 +3,7 @@ Copyright (c) 2026 Cameron Freer. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
-import InfinitaryLogic.Descriptive.Measurable
-import InfinitaryLogic.Lomega1omega.Semantics
+import InfinitaryLogic.Descriptive.SatisfactionBorelOn
 import Architect
 
 /-!
@@ -33,13 +32,6 @@ namespace Language
 open Structure MeasureTheory
 
 variable {L : Language.{u, v}}
-
-/-- In a relational language, every term is a variable. -/
-theorem Term.eq_var_of_isRelational [L.IsRelational] {α : Type*} (t : L.Term α) :
-    ∃ x, t = Term.var x := by
-  cases t with
-  | var x => exact ⟨x, rfl⟩
-  | func f => exact (IsEmpty.false f).elim
 
 section Measurability
 
