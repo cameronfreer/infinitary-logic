@@ -27,6 +27,17 @@ namespace Language
 
 variable {L : Language.{u, v}}
 
+-- Generic instance: StructureSpaceOn is abbrev, so TC sees through it.
+instance {α : Type*} : TopologicalSpace (StructureSpaceOn L α) := Pi.topologicalSpace
+
+/-- The set of codes where a given relation query returns `true` is clopen (generic). -/
+theorem isClopen_relHoldsOn {α : Type*} (q : RelQueryOn L α) :
+    IsClopen {c : StructureSpaceOn L α | c q = true} := by
+  have : {c : StructureSpaceOn L α | c q = true} = (fun c => c q) ⁻¹' {true} := by
+    ext c; simp
+  rw [this]
+  exact (isClopen_discrete {true}).preimage (continuous_apply q)
+
 /-- `StructureSpace L` inherits the product topology from `RelQuery L → Bool`.
 Since `Bool` has the discrete topology, this is the product of discrete spaces. -/
 instance : TopologicalSpace (StructureSpace L) := Pi.topologicalSpace

@@ -45,6 +45,30 @@ namespace Language
 
 variable (L : Language.{u, v}) [Countable (Σ l, L.Relations l)]
 
+-- Generic instances for StructureSpaceOn L α with [Encodable α].
+section Generic
+
+variable (α : Type*) [Encodable α]
+
+noncomputable instance : Encodable (RelQueryOn L α) := Encodable.ofCountable _
+
+-- StructureSpaceOn is abbrev, so TC sees through it. These named instances
+-- ensure the results are available by name when needed.
+instance : CompactSpace (StructureSpaceOn L α) := inferInstance
+instance : TopologicalSpace.MetrizableSpace (StructureSpaceOn L α) := inferInstance
+instance : SecondCountableTopology (StructureSpaceOn L α) := inferInstance
+instance : TopologicalSpace.IsCompletelyMetrizableSpace (StructureSpaceOn L α) := inferInstance
+instance : PolishSpace (StructureSpaceOn L α) := PolishSpace.mk
+instance : BorelSpace (StructureSpaceOn L α) := inferInstance
+instance : StandardBorelSpace (StructureSpaceOn L α) := inferInstance
+
+-- Pair space instances
+instance : PolishSpace (StructurePairSpaceOn L α) := inferInstance
+instance : BorelSpace (StructurePairSpaceOn L α) := inferInstance
+instance : StandardBorelSpace (StructurePairSpaceOn L α) := inferInstance
+
+end Generic
+
 /-- `RelQuery L` is encodable when the language has countably many relation symbols.
 This is the key ingredient for all topological instances. -/
 noncomputable instance : Encodable (RelQuery L) :=
