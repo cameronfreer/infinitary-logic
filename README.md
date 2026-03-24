@@ -17,9 +17,9 @@ A Lean 4 formalization of infinitary logic (L∞ω and Lω₁ω), Scott sentence
 
 ## Scope and Boundaries
 
-The formalization currently covers L∞ω and Lω₁ω syntax and semantics, Scott analysis (atomic diagrams, back-and-forth equivalence, Scott formulas/sentences, height and rank), Karp's theorem and corollaries, model existence via consistency properties, downward Löwenheim–Skolem for Lω₁ω, Hanf numbers, and admissible-fragment results (Barwise compactness, Nadel bound).
+The formalization currently covers L∞ω and Lω₁ω syntax and semantics, Scott analysis (atomic diagrams, back-and-forth equivalence, Scott formulas/sentences, height and rank), Karp's theorem and corollaries, model existence via consistency properties, downward Löwenheim–Skolem for Lω₁ω, Hanf numbers, admissible-fragment results (Barwise compactness, Nadel bound), and descriptive set theory of the space of countable structures (Borel complexity of satisfaction, BF-equivalence, and isomorphism; conditional counting dichotomy).
 
-Some results carry explicit hypotheses packaging external content not yet formalized: `morley_hanf_of_transfer` is conditional on `MorleyHanfTransfer` (Erdős–Rado / Ehrenfeucht–Mostowski machinery), and `morley_counting_dichotomy` is a schematic placeholder awaiting descriptive set theory infrastructure.
+Some results carry explicit hypotheses packaging external content not yet formalized: `morley_hanf_of_transfer` is conditional on `MorleyHanfTransfer` (Erdős–Rado / Ehrenfeucht–Mostowski machinery), and `counting_coded_models_dichotomy` is conditional on `SilverBurgessDichotomy` (Silver–Burgess dichotomy for Borel equivalence relations).
 
 ## Repository Guide
 
@@ -30,6 +30,7 @@ Some results carry explicit hypotheses packaging external content not yet formal
 - `InfinitaryLogic/ModelExistence/` — Consistency properties, model existence, completeness, omitting types
 - `InfinitaryLogic/ModelTheory/` — Löwenheim–Skolem, Hanf numbers, counting models
 - `InfinitaryLogic/Admissible/` — Admissible fragments, Barwise compactness, Nadel bound
+- `InfinitaryLogic/Descriptive/` — Borel complexity of the structure space, satisfaction, isomorphism; conditional counting dichotomy
 
 ## Getting Started
 
@@ -51,7 +52,8 @@ import InfinitaryLogic
 - `scottRank` — The Scott rank (ordinal measuring complexity of a structure)
 - `karp_theorem_w` — Karp's theorem (potential isomorphism ↔ L∞ω-equivalence)
 - `model_existence` — Model existence for Lω₁ω consistency properties
-- `countableRefinementHypothesis` — The countable refinement hypothesis (proved)
+- `counting_coded_models_dichotomy` — Counting dichotomy for coded ℕ-models (conditional on `SilverBurgessDichotomy`)
+- `iso_borel_of_bounded_scottHeight` — Isomorphism is Borel under bounded Scott height
 
 ## References
 

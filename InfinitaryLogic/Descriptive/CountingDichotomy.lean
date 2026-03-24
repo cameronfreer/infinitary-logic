@@ -40,6 +40,10 @@ open Cardinal Ordinal
 /-- The Silver–Burgess dichotomy for Borel equivalence relations:
 on a standard Borel space, a Borel equivalence relation has either
 at most countably many classes or exactly continuum-many. -/
+@[blueprint "def:silver-burgess-dichotomy"
+  (title := /-- Silver–Burgess dichotomy (hypothesis) -/)
+  (statement := /-- On any standard Borel space, a Borel equivalence relation has either
+    at most countably many equivalence classes or exactly $2^{\aleph_0}$. -/)]
 def SilverBurgessDichotomy : Prop :=
   ∀ {X : Type w} [MeasurableSpace X] [StandardBorelSpace X]
     (r : Setoid X),
@@ -50,6 +54,10 @@ variable {L : Language.{u, v}} [L.IsRelational] [Countable (Σ l, L.Relations l)
 
 /-- The isomorphism equivalence relation on coded ℕ-models of φ.
 Two codes are related iff the decoded structures on ℕ are L-isomorphic. -/
+@[blueprint "def:iso-setoid"
+  (title := /-- Isomorphism setoid on coded models -/)
+  (statement := /-- The equivalence relation on coded $\mathbb{N}$-models of $\varphi$
+    where two codes are related iff their decoded structures are $L$-isomorphic. -/)]
 def isoSetoid (φ : L.Sentenceω) : Setoid ↥(ModelsOf φ) where
   r c₁ c₂ := Nonempty (@Language.Equiv L ℕ ℕ c₁.1.toStructure c₂.1.toStructure)
   iseqv := {
@@ -60,20 +68,6 @@ def isoSetoid (φ : L.Sentenceω) : Setoid ↥(ModelsOf φ) where
       ⟨@Language.Equiv.comp L ℕ ℕ c₁.1.toStructure c₂.1.toStructure ℕ
         c₃.1.toStructure e₂ e₁⟩
   }
-
-/-- The set of isomorphic code pairs (local copy, since `IsoSet` in
-`IsomorphismBorel.lean` is private). -/
-private def IsoSet' (L : Language.{u, v}) [L.IsRelational] : Set (StructurePairSpace L) :=
-  {p | Nonempty (@Language.Equiv L ℕ ℕ p.1.toStructure p.2.toStructure)}
-
-/-- `iso_borel_of_bounded_scottHeight` applies to our local `IsoSet'`, which is
-definitionally equal to the private `IsoSet`. -/
-private theorem isoSet'_borel
-    {φ : L.Sentenceω} {α : Ordinal.{0}} (hα : α < Ordinal.omega 1)
-    (hbound : ∀ (M : Type) [L.Structure M] [Countable M],
-      Sentenceω.Realize φ M → scottHeight (L := L) M ≤ α) :
-    MeasurableSet (IsoSet' L ∩ (ModelsOf φ ×ˢ ModelsOf φ)) :=
-  iso_borel_of_bounded_scottHeight hα hbound
 
 omit [Countable (Σ l, L.Relations l)] in
 /-- The subtype inclusion `↥(ModelsOf φ) × ↥(ModelsOf φ) → StructureSpace L × StructureSpace L`
@@ -90,13 +84,13 @@ private theorem isoSetoid_measurableSet
     (hbound : ∀ (M : Type) [L.Structure M] [Countable M],
       Sentenceω.Realize φ M → scottHeight (L := L) M ≤ α) :
     MeasurableSet {p : ↥(ModelsOf φ) × ↥(ModelsOf φ) | (isoSetoid φ).r p.1 p.2} := by
-  have hborel := isoSet'_borel hα hbound
+  have hborel := iso_borel_of_bounded_scottHeight hα hbound
   have hset : {p : ↥(ModelsOf φ) × ↥(ModelsOf φ) | (isoSetoid φ).r p.1 p.2} =
       (fun p : ↥(ModelsOf φ) × ↥(ModelsOf φ) => (p.1.1, p.2.1)) ⁻¹'
-        (IsoSet' L ∩ (ModelsOf φ ×ˢ ModelsOf φ)) := by
+        (IsoSet L ∩ (ModelsOf φ ×ˢ ModelsOf φ)) := by
     ext ⟨⟨c₁, hc₁⟩, ⟨c₂, hc₂⟩⟩
     simp only [Set.mem_setOf_eq, isoSetoid, Set.mem_preimage, Set.mem_inter_iff,
-      Set.mem_prod, IsoSet']
+      Set.mem_prod, IsoSet]
     exact ⟨fun h => ⟨h, hc₁, hc₂⟩, fun ⟨h, _, _⟩ => h⟩
   rw [hset]
   exact (measurable_subtypeVal_prod φ) hborel
@@ -113,7 +107,7 @@ among ℕ-models of φ is either ≤ ℵ₀ or exactly 2^ℵ₀. -/
     $2^{\aleph_0}$. -/)
   (proof := /-- The model class is standard Borel and the isomorphism relation is Borel
     (by bounded Scott height), so Silver--Burgess applies directly. -/)
-  (uses := ["thm:iso-borel", "thm:models-standard-borel"])]
+  (uses := ["def:silver-burgess-dichotomy", "def:iso-setoid", "thm:iso-borel", "thm:models-standard-borel"])]
 theorem counting_coded_models_dichotomy
     (silver : SilverBurgessDichotomy.{v})
     {φ : L.Sentenceω} {α : Ordinal.{0}} (hα : α < Ordinal.omega 1)

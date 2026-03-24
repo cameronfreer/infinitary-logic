@@ -16,10 +16,11 @@ to the structure of the isomorphism relation.
 
 ## Main Results
 
-- `bounded_scottRank_iso_eq_BFEquiv`: When all models of a sentence have Scott rank
+- `bounded_scottHeight_iso_eq_BFEquiv`: When all models of a sentence have Scott height
   bounded by α, isomorphism equals BF-equivalence at level α.
-- The Morley counting theorem (schematic): for a sentence of Lω₁ω, the number of
-  countable models is either ≤ ℵ₁ or exactly 2^ℵ₀.
+- `morley_counting_dichotomy`: Placeholder for the full Morley counting theorem.
+  The conditional bounded-height version is in `Descriptive/CountingDichotomy.lean`
+  as `counting_coded_models_dichotomy`.
 
 ## References
 
@@ -112,14 +113,12 @@ theorem bounded_scottHeight_iso_eq_BFEquiv
   bounded_scottHeight_iso_eq_BFEquiv_of countableRefinementHypothesis hα hbound hM hN
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-/-- The number of isomorphism classes of countable models of an Lω₁ω sentence
-is either at most ℵ₁ or exactly 2^ℵ₀ (Morley's counting theorem).
+/-- Placeholder for the full Morley counting theorem (the number of isomorphism
+classes of countable models of an Lω₁ω sentence is either at most ℵ₁ or exactly 2^ℵ₀).
 
-This is stated schematically as the dichotomy property, since the full statement
-requires coding structures as elements of a Polish space, which needs
-significant descriptive set theory infrastructure.
-
-The result uses the Silver-Burgess theorem from descriptive set theory. -/
+The conditional bounded-Scott-height version for coded ℕ-models is proved in
+`FirstOrder.Language.counting_coded_models_dichotomy`
+(in `Descriptive/CountingDichotomy.lean`). -/
 theorem morley_counting_dichotomy
     (_φ : L.Sentenceω) :
     True := by  -- Schematic: see docstring for the actual mathematical content

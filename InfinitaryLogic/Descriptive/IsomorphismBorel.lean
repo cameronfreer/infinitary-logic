@@ -31,7 +31,7 @@ open Structure MeasureTheory Ordinal
 variable {L : Language.{u, v}} [L.IsRelational]
 
 /-- The set of code pairs whose decoded structures are isomorphic. -/
-private def IsoSet (L : Language.{u, v}) [L.IsRelational] : Set (StructurePairSpace L) :=
+def IsoSet (L : Language.{u, v}) [L.IsRelational] : Set (StructurePairSpace L) :=
   {p | Nonempty (@Language.Equiv L ℕ ℕ p.1.toStructure p.2.toStructure)}
 
 /-- Isomorphism on coded structures is Borel when Scott height is bounded.

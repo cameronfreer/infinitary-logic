@@ -64,4 +64,15 @@ The unconditional API is recovered via `countableRefinementHypothesis` (proved i
 - `Admissible/Fragment.lean`: Abstract admissible fragments
 - `Admissible/Compactness.lean`: Barwise compactness and completeness
 - `Admissible/NadelBound.lean`: Nadel bound on Scott height
+
+### Descriptive set theory (Descriptive/)
+- `Descriptive/StructureSpace.lean`: Coding space for countable structures on ℕ
+- `Descriptive/Measurable.lean`: Measurable space structure on the coding space
+- `Descriptive/Topology.lean`: Topological structure on the coding space
+- `Descriptive/Polish.lean`: Polish space and standard Borel space instances
+- `Descriptive/SatisfactionBorel.lean`: Borel complexity of Lω₁ω satisfaction
+- `Descriptive/BFEquivBorel.lean`: Borel complexity of BF-equivalence
+- `Descriptive/IsomorphismBorel.lean`: Isomorphism is Borel under bounded Scott height
+- `Descriptive/ModelClassStandardBorel.lean`: Model classes are standard Borel
+- `Descriptive/CountingDichotomy.lean`: Conditional counting dichotomy (Silver–Burgess)
 -/

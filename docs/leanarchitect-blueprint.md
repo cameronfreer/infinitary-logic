@@ -43,9 +43,9 @@ theorem countableRefinementHypothesis : CountableRefinementHypothesis.{u, v, w} 
 The narrative in `blueprint/src/content.tex` uses `\inputleannode{<label>}` to pull in
 the statement text and dependency metadata from each annotated declaration.
 
-### Current annotated nodes (33 total)
+### Current annotated nodes (49 total)
 
-**Definitions (14):**
+**Definitions (20):**
 - `def:BFEquiv` — Back-and-forth equivalence
 - `def:scottFormula` — Scott formula
 - `def:stabilization-ordinal` — Stabilization ordinal
@@ -60,8 +60,14 @@ the statement text and dependency metadata from each annotated declaration.
 - `def:hanf-number` — Hanf number
 - `def:naming-function-with-constants` — Naming function with constants
 - `def:admissible-fragment` — Admissible fragment
+- `def:derivable` — Derivability in admissible-fragment proof system
+- `def:a-consistent` — A-consistency
+- `def:full-barwise-fragment` — Full Barwise fragment
+- `def:structure-space` — Coding space for countable structures
+- `def:silver-burgess-dichotomy` — Silver–Burgess dichotomy (hypothesis)
+- `def:iso-setoid` — Isomorphism setoid on coded models
 
-**Theorems (19):**
+**Theorems (29):**
 - `thm:scottFormula-iff` — Scott formula characterization
 - `thm:self-stabilization` — Self-stabilization
 - `thm:scott-characterizes-of` — Scott characterization (conditional)
@@ -81,6 +87,16 @@ the statement text and dependency metadata from each annotated declaration.
 - `thm:downward-ls-theory` — Downward Löwenheim-Skolem for theories
 - `thm:barwise-compactness` — Barwise compactness
 - `thm:barwise-completeness-ii` — Barwise completeness II
+- `thm:proof-system-soundness` — Proof system soundness
+- `thm:consistency-property-full-fragment` — Consistency property for full fragment
+- `thm:barwise-completeness-ii-syntactic` — Barwise completeness II (syntactic)
+- `thm:satisfaction-borel` — Satisfaction is Borel
+- `thm:bfequiv-borel` — BF-equivalence is Borel
+- `thm:iso-borel` — Isomorphism is Borel under bounded Scott height
+- `thm:structure-space-polish` — Structure space is Polish
+- `thm:models-clopenable` — Model class is clopenable
+- `thm:models-standard-borel` — Model class is standard Borel
+- `thm:counting-dichotomy` — Conditional counting dichotomy
 
 ## 4. Extract and Render
 
@@ -105,8 +121,11 @@ Run `leanblueprint web` before `lake exe checkdecls`.
 
 ## 5. CI
 
-The workflow at `.github/workflows/build.yml` runs `lake build :blueprint` then
-deploys the rendered blueprint to GitHub Pages on every push to `master`.
+The workflow at `.github/workflows/build.yml` triggers on pushes to master, PRs to master,
+and manual dispatch.  It runs `lake build` (project + `:blueprint` + `:blueprintJson`),
+then `leanblueprint web`, `lake exe checkdecls`, and `leanblueprint pdf`.  On master
+(non-PR) pushes it additionally builds API docs, the Jekyll homepage, and deploys the
+assembled site to GitHub Pages.
 
 To enable deployment, set the repository's Pages source to **GitHub Actions** in
 Settings > Pages.
