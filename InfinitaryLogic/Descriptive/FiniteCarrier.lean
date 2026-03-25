@@ -78,7 +78,7 @@ theorem iso_iff_orbit (n : ℕ) (c₁ c₂ : StructureSpaceOn L (Fin n)) :
         StructureSpaceOn.relMap_toStructure c₁] at hrel
     simp only [Equiv.toFun_as_coe] at hrel
     have hsimp : (⇑σ) ∘ ⇑σ.symm ∘ v = v := by
-      funext i; simp [Function.comp, Equiv.apply_symm_apply]
+      funext i; simp [Function.comp]
     rw [hsimp] at hrel
     cases h₁ : c₁ ⟨⟨l, R⟩, ⇑σ.symm ∘ v⟩ <;>
     cases h₂ : c₂ ⟨⟨l, R⟩, v⟩ <;> simp_all
@@ -93,7 +93,7 @@ theorem iso_iff_orbit (n : ℕ) (c₁ c₂ : StructureSpaceOn L (Fin n)) :
     have := congr_fun hσ ⟨⟨l, R⟩, σ ∘ v⟩
     simp only [perm_smul_apply] at this
     have hsimp : σ.symm ∘ (σ : Fin n → Fin n) ∘ v = v := by
-      funext i; simp [Function.comp, Equiv.symm_apply_apply]
+      funext i; simp [Function.comp]
     rw [show (⇑σ.symm ∘ ⇑σ ∘ v) = v from hsimp] at this
     simp only [Equiv.toFun_as_coe] at *
     exact ⟨fun h => by rwa [this], fun h => by rwa [← this]⟩
@@ -154,7 +154,7 @@ theorem isoSetoidOn_measurableSet (φ : L.Sentenceω) (n : ℕ) :
     (fun p : ↥(ModelsOfOn (α := Fin n) φ) × ↥(ModelsOfOn (α := Fin n) φ) =>
       (σ • p.1.1, p.2.1)) ⁻¹' {q : StructureSpaceOn L (Fin n) × StructureSpaceOn L (Fin n) |
         q.1 = q.2} := by
-    ext p; simp [Set.mem_preimage, Set.mem_setOf_eq, Prod.ext_iff]
+    ext p; simp [Set.mem_setOf_eq]
   rw [hgraph]
   -- Step 4: The diagonal is closed, hence measurable
   exact isClosed_diagonal.measurableSet.preimage
@@ -202,7 +202,74 @@ theorem allCodedIsoClasses_dichotomy
       Sentenceω.Realize φ M → scottHeight (L := L) M ≤ α) :
     (#(AllCodedIsoClasses φ) ≤ ℵ₀) ∨
     (#(AllCodedIsoClasses φ) = Cardinal.continuum) := by
-  sorry
+  -- Per-tier dichotomies
+  have hN := counting_coded_models_dichotomy silver hα hbound
+  have hFin := fun n => counting_fin_models_dichotomy silver φ n
+  -- Sigma embedding: Quotient (isoSetoidOn φ n₀) ↪ Σ n, Quotient (isoSetoidOn φ n)
+  have hEmbed : ∀ n₀, #(Quotient (isoSetoidOn φ n₀)) ≤
+      #(Σ n, Quotient (isoSetoidOn φ n)) := fun n₀ =>
+    ⟨⟨fun x => ⟨n₀, x⟩, fun a b h => eq_of_heq (Sigma.mk.inj h).2⟩⟩
+  -- Sigma bound via sum
+  have hSigma_bound : ∀ (bound : Cardinal),
+      (∀ n, #(Quotient (isoSetoidOn φ n)) ≤ bound) → ℵ₀ ≤ bound →
+      #(Σ n, Quotient (isoSetoidOn φ n)) ≤ ℵ₀ * bound := by
+    intro bound hle hge
+    calc #(Σ n, Quotient (isoSetoidOn φ n))
+      = Cardinal.sum (fun n => #(Quotient (isoSetoidOn φ n))) := mk_sigma _
+      _ ≤ Cardinal.lift.{v, 0} #ℕ * ⨆ i, Cardinal.lift.{0, v} (#(Quotient (isoSetoidOn φ i))) :=
+        sum_le_lift_mk_mul_iSup_lift _
+      _ = ℵ₀ * ⨆ i, #(Quotient (isoSetoidOn φ i)) := by
+        rw [Cardinal.mk_nat, Cardinal.lift_aleph0]
+        congr 1; apply iSup_congr; intro i; exact Cardinal.lift_uzero _
+      _ ≤ ℵ₀ * bound := by
+        apply mul_le_mul_right
+        exact ciSup_le fun n => hle n
+  -- Case split on whether any tier has continuum-many classes
+  by_cases hc : (#(Quotient (isoSetoid φ)) = Cardinal.continuum) ∨
+    ∃ n, #(Quotient (isoSetoidOn φ n)) = Cardinal.continuum
+  · -- Some tier = continuum → total = continuum
+    right
+    have hA_le : #(Quotient (isoSetoid φ)) ≤ Cardinal.continuum :=
+      hN.elim (·.trans aleph0_le_continuum) le_of_eq
+    have hFin_le : ∀ n, #(Quotient (isoSetoidOn φ n)) ≤ Cardinal.continuum :=
+      fun n => (hFin n).elim (·.trans aleph0_le_continuum) le_of_eq
+    show #(AllCodedIsoClasses φ) = Cardinal.continuum
+    apply le_antisymm
+    · -- Upper bound
+      show #(Quotient (isoSetoid φ) ⊕ Σ n, Quotient (isoSetoidOn φ n)) ≤ Cardinal.continuum
+      rw [mk_sum, Cardinal.lift_id, Cardinal.lift_id]
+      apply add_le_of_le aleph0_le_continuum hA_le
+      calc #(Σ n, Quotient (isoSetoidOn φ n))
+        ≤ ℵ₀ * Cardinal.continuum := hSigma_bound _ hFin_le aleph0_le_continuum
+        _ = Cardinal.continuum := by
+          rw [Cardinal.aleph0_mul_eq aleph0_le_continuum]
+    · -- Lower bound
+      rcases hc with hcA | ⟨n₀, hn₀⟩
+      · show Cardinal.continuum ≤ #(AllCodedIsoClasses φ)
+        show Cardinal.continuum ≤ #(Quotient (isoSetoid φ) ⊕ Σ n, Quotient (isoSetoidOn φ n))
+        rw [mk_sum, Cardinal.lift_id, Cardinal.lift_id]
+        calc Cardinal.continuum = #(Quotient (isoSetoid φ)) := hcA.symm
+          _ ≤ _ := le_self_add
+      · show Cardinal.continuum ≤ #(AllCodedIsoClasses φ)
+        show Cardinal.continuum ≤ #(Quotient (isoSetoid φ) ⊕ Σ n, Quotient (isoSetoidOn φ n))
+        rw [mk_sum, Cardinal.lift_id, Cardinal.lift_id]
+        calc Cardinal.continuum = #(Quotient (isoSetoidOn φ n₀)) := hn₀.symm
+          _ ≤ #(Σ n, Quotient (isoSetoidOn φ n)) := hEmbed n₀
+          _ ≤ #(Quotient (isoSetoid φ)) + #(Σ n, Quotient (isoSetoidOn φ n)) :=
+            self_le_add_left _ _
+  · -- No tier = continuum → all ≤ ℵ₀ → total ≤ ℵ₀
+    left
+    push_neg at hc
+    obtain ⟨hcA, hcFin⟩ := hc
+    have hA_le : #(Quotient (isoSetoid φ)) ≤ ℵ₀ := hN.resolve_right hcA
+    have hFin_le : ∀ n, #(Quotient (isoSetoidOn φ n)) ≤ ℵ₀ :=
+      fun n => (hFin n).resolve_right (hcFin n)
+    show #(Quotient (isoSetoid φ) ⊕ Σ n, Quotient (isoSetoidOn φ n)) ≤ ℵ₀
+    rw [mk_sum, Cardinal.lift_id, Cardinal.lift_id]
+    apply add_le_of_le le_rfl hA_le
+    calc #(Σ n, Quotient (isoSetoidOn φ n))
+      ≤ ℵ₀ * ℵ₀ := hSigma_bound _ hFin_le le_rfl
+      _ = ℵ₀ := Cardinal.aleph0_mul_aleph0
 
 end Language
 
