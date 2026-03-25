@@ -64,5 +64,7 @@ import InfinitaryLogic.Descriptive.Topology
 import InfinitaryLogic.Descriptive.Polish
 import InfinitaryLogic.Descriptive.ModelClassStandardBorel
 import InfinitaryLogic.Descriptive.CountingDichotomy
+import InfinitaryLogic.Descriptive.SatisfactionBorelOn
+import InfinitaryLogic.Descriptive.FiniteCarrier
 
 /-! See the top-level `InfinitaryLogic` module for the full project overview. -/
