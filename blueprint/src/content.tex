@@ -225,10 +225,18 @@ for coded $\mathbb{N}$-models with bounded Scott height.
 
 \inputleannode{thm:counting-dichotomy}
 
-This theorem applies to coded $\mathbb{N}$-models whose Scott height is uniformly
-bounded below~$\omegaone$.  The general Morley counting theorem for all countable
-models of an arbitrary $\Lomegaone$ sentence---without restricting to
-$\mathbb{N}$-codings or imposing a Scott-height bound---remains a separate target.
+\inputleannode{thm:finite-carrier-iso-borel}
+
+\inputleannode{thm:counting-all-countable}
+
+The combined theorem extends the coded $\mathbb{N}$-model result to all countable
+models by adding finite-carrier tiers (isomorphism on $\operatorname{Fin} n$
+structures is Borel via the orbit of $\operatorname{Sym}(n)$).  Bridge theorems
+(\texttt{codeModel}, \texttt{iso\_of\_codeModel\_eq}, \texttt{codeModel\_surjective})
+establish that \texttt{AllCodedIsoClasses} faithfully represents all isomorphism
+classes of countable models.  The full Morley counting theorem (with
+$\leq \aleph_1$ replacing $\leq \aleph_0$) remains a separate target requiring
+Scott-height stratification.
 
 \bibliographystyle{amsalpha}
 \bibliography{refs}

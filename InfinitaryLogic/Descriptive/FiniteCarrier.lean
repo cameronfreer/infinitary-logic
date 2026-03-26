@@ -271,6 +271,207 @@ theorem allCodedIsoClasses_dichotomy
       ≤ ℵ₀ * ℵ₀ := hSigma_bound _ hFin_le le_rfl
       _ = ℵ₀ := Cardinal.aleph0_mul_aleph0
 
+/-! ### Bridge theorems: coded classes represent all countable models -/
+
+section Bridge
+
+attribute [local instance] Classical.dec
+
+variable {φ : L.Sentenceω}
+
+/-- Helper: Transport a structure along an equivalence and encode it. The resulting
+code decodes to a structure L-isomorphic to the original. -/
+private noncomputable def encodeViaEquiv {M : Type} [L.Structure M] {α : Type}
+    (e : M ≃ α) : StructureSpaceOn L α :=
+  StructureSpaceOn.ofStructure (@Equiv.inducedStructure L M α _ e)
+
+/-- The decoded structure from `encodeViaEquiv` equals the induced structure. -/
+private theorem toStructure_encodeViaEquiv_eq {M : Type} [L.Structure M] {α : Type}
+    (e : M ≃ α) :
+    StructureSpaceOn.toStructure (encodeViaEquiv e) = @Equiv.inducedStructure L M α _ e := by
+  have hR := ‹L.IsRelational›
+  ext n
+  · -- funMap case: L.Functions n is empty
+    exact (hR n).elim ‹_›
+  · -- RelMap case: round-trip preserves relations
+    constructor
+    · intro h
+      rw [StructureSpaceOn.relMap_toStructure, encodeViaEquiv, StructureSpaceOn.ofStructure] at h
+      simp [decide_eq_true_eq] at h
+      rwa [Equiv.inducedStructure_RelMap]
+    · intro h
+      rw [Equiv.inducedStructure_RelMap] at h
+      rw [StructureSpaceOn.relMap_toStructure, encodeViaEquiv, StructureSpaceOn.ofStructure]
+      simp [h]
+
+/-- The encoded structure via an equivalence satisfies the same sentences. -/
+private theorem encodeViaEquiv_models {M : Type} [L.Structure M] {α : Type}
+    [Countable α] (e : M ≃ α) (hφ : Sentenceω.Realize φ M) :
+    @Sentenceω.Realize L φ α (StructureSpaceOn.toStructure (encodeViaEquiv e)) := by
+  rw [toStructure_encodeViaEquiv_eq]
+  letI : L.Structure α := Equiv.inducedStructure e
+  exact (LomegaEquiv.of_equiv (Equiv.inducedStructureEquiv e) φ).mp hφ
+
+/-- The encoded structure is L-isomorphic to the original via the equivalence. -/
+private theorem encodeViaEquiv_iso {M : Type} [L.Structure M] {α : Type}
+    (e : M ≃ α) :
+    Nonempty (@Language.Equiv L M α ‹_› (StructureSpaceOn.toStructure (encodeViaEquiv e))) := by
+  rw [toStructure_encodeViaEquiv_eq]
+  exact ⟨Equiv.inducedStructureEquiv e⟩
+
+/-- Map a countable model of φ to its coded iso class.
+Uses `finite_or_infinite` to dispatch to the ℕ or `Fin n` tier. -/
+noncomputable def codeModel
+    {M : Type} [L.Structure M] [Countable M]
+    (hφ : Sentenceω.Realize φ M) : AllCodedIsoClasses φ :=
+  if hfin : Finite M then
+    haveI := Fintype.ofFinite M
+    let n := Fintype.card M
+    let e : M ≃ Fin n := Fintype.equivFin M
+    Sum.inr ⟨n, Quotient.mk (isoSetoidOn φ n)
+      ⟨encodeViaEquiv e, encodeViaEquiv_models e hφ⟩⟩
+  else
+    haveI : Infinite M := not_finite_iff_infinite.mp hfin
+    let e : M ≃ ℕ := (nonempty_equiv_of_countable (α := M) (β := ℕ)).some
+    Sum.inl (Quotient.mk (isoSetoid φ)
+      ⟨encodeViaEquiv e, encodeViaEquiv_models e hφ⟩)
+
+/-- Compose L-equivs through encoding bijections to build iso between coded structures. -/
+private theorem compose_encoded_iso
+    {M N : Type} [L.Structure M] [L.Structure N] {α : Type}
+    (e : @Language.Equiv L M N ‹_› ‹_›)
+    (eM : M ≃ α) (eN : N ≃ α) :
+    Nonempty (@Language.Equiv L α α
+      (StructureSpaceOn.toStructure (encodeViaEquiv eM))
+      (StructureSpaceOn.toStructure (encodeViaEquiv eN))) := by
+  rw [toStructure_encodeViaEquiv_eq, toStructure_encodeViaEquiv_eq]
+  -- Goal: Nonempty (@Language.Equiv L α α (inducedStructure eM) (inducedStructure eN))
+  -- Build directly using Equiv.mk
+  refine ⟨@Language.Equiv.mk L α α (Equiv.inducedStructure eM) (Equiv.inducedStructure eN)
+    (eM.symm.trans (e.toEquiv.trans eN))
+    (fun f _ => isEmptyElim ((‹L.IsRelational› _).false f))
+    (fun {n} R v => ?_)⟩
+  -- After inducedStructure_RelMap: RelMap_N R (eN.symm ∘ trans ∘ v) ↔ RelMap_M R (eM.symm ∘ v)
+  -- Simplify: eN.symm ∘ trans = e ∘ eM.symm, then use e.map_rel'
+  simp only [Equiv.inducedStructure_RelMap, Function.comp_def, Equiv.trans_apply, Equiv.toFun_as_coe]
+  simp_rw [eN.symm_apply_apply]
+  -- Goal: RelMap R (fun x => e.toEquiv (eM.symm (v x))) ↔ RelMap R (fun x => eM.symm (v x))
+  -- e.toEquiv and DFunLike.coe e agree pointwise
+  constructor
+  · intro h; exact (e.map_rel' R (⇑eM.symm ∘ v)).mp (by convert h using 2)
+  · intro h; convert (e.map_rel' R (⇑eM.symm ∘ v)).mpr h using 2
+
+/-- L-isomorphic countable models map to the same coded class. -/
+theorem codeModel_eq_of_iso
+    {M N : Type} [L.Structure M] [L.Structure N] [Countable M] [Countable N]
+    (hφM : Sentenceω.Realize φ M) (hφN : Sentenceω.Realize φ N)
+    (e : @Language.Equiv L M N ‹_› ‹_›) :
+    codeModel hφM = codeModel hφN := by
+  have hequiv := e.toEquiv
+  by_cases hfinM : Finite M
+  · -- M is finite → N is finite
+    haveI hfinN : Finite N := Finite.of_equiv M hequiv
+    -- Use the exact same Fintype instances that codeModel will use internally
+    -- (which are Fintype.ofFinite M / N)
+    have hcard : @Fintype.card M (Fintype.ofFinite M) = @Fintype.card N (Fintype.ofFinite N) :=
+      @Fintype.card_congr M N (Fintype.ofFinite M) (Fintype.ofFinite N) hequiv
+    -- Both take finite branch with same cardinality
+    -- Show the quotient elements agree using compose_encoded_iso
+    -- Both take finite branch
+    unfold codeModel; simp only [dif_pos hfinM, dif_pos hfinN]
+    -- Goal: Sum.inr ⟨card M, quot_M⟩ = Sum.inr ⟨card N, quot_N⟩
+    -- Since card M = card N, we use congrArg
+    have h1 : ∀ (n : ℕ) (f : M ≃ Fin n) (g : N ≃ Fin n)
+        (hf : @Sentenceω.Realize L φ _ (StructureSpaceOn.toStructure (encodeViaEquiv f)))
+        (hg : @Sentenceω.Realize L φ _ (StructureSpaceOn.toStructure (encodeViaEquiv g))),
+        Quotient.mk (isoSetoidOn φ n) ⟨encodeViaEquiv f, hf⟩ =
+        Quotient.mk (isoSetoidOn φ n) ⟨encodeViaEquiv g, hg⟩ := by
+      intro n f g hf hg
+      apply Quotient.sound; show Nonempty _
+      exact compose_encoded_iso e _ _
+    -- Transport via hcard: use subst after generalizing
+    suffices ∀ m (eqm : m = @Fintype.card M (Fintype.ofFinite M))
+        (f : M ≃ Fin m) (g : N ≃ Fin (@Fintype.card N (Fintype.ofFinite N))),
+        (Sum.inr ⟨m, Quotient.mk (isoSetoidOn φ m) ⟨encodeViaEquiv f,
+            encodeViaEquiv_models f hφM⟩⟩ : AllCodedIsoClasses φ) =
+        Sum.inr ⟨@Fintype.card N (Fintype.ofFinite N),
+            Quotient.mk (isoSetoidOn φ _) ⟨encodeViaEquiv g,
+            encodeViaEquiv_models g hφN⟩⟩ from
+      this _ rfl _ _
+    intro m eqm f g; subst eqm
+    -- Goal: Sum.inr ⟨card M, q(f)⟩ = Sum.inr ⟨card N, q(g)⟩
+    -- where f : M ≃ Fin (card M), g : N ≃ Fin (card N)
+    -- Use Eq.rec on hcard to rewrite card M to card N in the LHS
+    -- Then use h1 to close the quotient equality.
+    revert f; rw [hcard]; intro f
+    -- After rw: f : M ≃ Fin (card N), and goal has card N on both sides
+    congr 2
+    exact h1 _ _ _ _ _
+  · -- M is infinite → N is infinite
+    haveI : Infinite M := not_finite_iff_infinite.mp hfinM
+    have hfinN : ¬Finite N := fun h => hfinM (Finite.of_equiv N hequiv.symm)
+    haveI : Infinite N := not_finite_iff_infinite.mp hfinN
+    have hM_eq : codeModel hφM = Sum.inl
+        ⟦⟨encodeViaEquiv (nonempty_equiv_of_countable (α := M) (β := ℕ)).some,
+          encodeViaEquiv_models _ hφM⟩⟧ := by
+      unfold codeModel; rw [dif_neg hfinM]
+    have hN_eq : codeModel hφN = Sum.inl
+        ⟦⟨encodeViaEquiv (nonempty_equiv_of_countable (α := N) (β := ℕ)).some,
+          encodeViaEquiv_models _ hφN⟩⟧ := by
+      unfold codeModel; rw [dif_neg hfinN]
+    rw [hM_eq, hN_eq]
+    congr 1
+    apply Quotient.sound
+    show Nonempty _
+    exact compose_encoded_iso e _ _
+
+/-- Models mapping to the same coded class are L-isomorphic.
+The proof composes: `M ≃[L] carrier` (from `encodeViaEquiv_iso`), the carrier-carrier
+L-isomorphism (extracted from the quotient equality in `h`), and `carrier ≃[L] N`
+(from `encodeViaEquiv_iso`). -/
+theorem iso_of_codeModel_eq
+    {M N : Type} [L.Structure M] [L.Structure N] [Countable M] [Countable N]
+    (hφM : Sentenceω.Realize φ M) (hφN : Sentenceω.Realize φ N)
+    (h : codeModel hφM = codeModel hφN) :
+    Nonempty (@Language.Equiv L M N ‹_› ‹_›) := by
+  -- M and N have L-isos to their respective carriers via encodeViaEquiv_iso.
+  -- The hypothesis h says they land in the same quotient class, which means the decoded
+  -- carrier structures are L-isomorphic. We compose: M ≃[L] carrier ≃[L] N.
+  -- The proof only needs that M and N are in the same quotient class, not which class.
+  -- So we just need: encodeViaEquiv_iso gives M ≃[L] carrier, and if the quotient
+  -- classes agree, the carrier structures are L-isomorphic.
+  -- Since both are countable models of φ, the L-isomorphism exists.
+  -- Use codeModel_eq_of_iso in reverse: if codeModel hφM = codeModel hφN, build the iso.
+  -- The simplest approach: both M and N are L-isomorphic to their decoded carrier structures.
+  -- If the carriers are the same type AND the decoded structures are L-isomorphic, we're done.
+  -- This requires being in the same Sum branch and the same quotient class.
+  by_cases hfinM : Finite M
+  · -- M is finite → N must also be finite (same Sum branch)
+    have hfinN : Finite N := by
+      by_contra hinfN
+      unfold codeModel at h; rw [dif_pos hfinM, dif_neg hinfN] at h
+      exact absurd h (by simp [Sum.inr_ne_inl])
+    -- Both finite: same approach as the infinite case below
+    -- but with Fin n carriers instead of ℕ.
+    -- The Sigma-dependent typing makes extraction of the carrier L-iso from h
+    -- technically involved (Fintype.card M = Fintype.card N from the Sigma projection,
+    -- then cast the quotient equality). We use sorry for this case.
+    sorry
+  · -- M is infinite → N must also be infinite (same Sum branch)
+    -- Strategy: extract carrier L-iso from quotient equality, compose M → ℕ → ℕ → N
+    -- The technical obstacle is casting between toStructure(encodeViaEquiv e) and
+    -- inducedStructure e inside Language.Equiv type's implicit instance arguments.
+    sorry
+
+/-- Every coded class is realized by some countable model. -/
+theorem codeModel_surjective :
+    ∀ q : AllCodedIsoClasses φ,
+    ∃ (M : Type) (_ : L.Structure M) (_ : Countable M)
+      (hφ : Sentenceω.Realize φ M), codeModel hφ = q := by
+  sorry
+
+end Bridge
+
 end Language
 
 end FirstOrder

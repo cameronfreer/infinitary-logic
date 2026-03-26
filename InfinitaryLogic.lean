@@ -59,6 +59,7 @@ The unconditional API is recovered via `countableRefinementHypothesis` (proved i
 - `ModelTheory/LowenheimSkolem.lean`: Downward Löwenheim-Skolem for Lω₁ω
 - `ModelTheory/Hanf.lean`: Hanf numbers and Morley-Hanf bound
 - `ModelTheory/CountingModels.lean`: Scott rank and model counting
+- `ModelTheory/CountingCountable.lean`: Counting theorem for all countable models
 
 ### Admissible sets (Admissible/)
 - `Admissible/Fragment.lean`: Abstract admissible fragments
@@ -75,4 +76,6 @@ The unconditional API is recovered via `countableRefinementHypothesis` (proved i
 - `Descriptive/IsomorphismBorel.lean`: Isomorphism is Borel under bounded Scott height
 - `Descriptive/ModelClassStandardBorel.lean`: Model classes are standard Borel
 - `Descriptive/CountingDichotomy.lean`: Conditional counting dichotomy (Silver–Burgess)
+- `Descriptive/SatisfactionBorelOn.lean`: Generic satisfaction measurability for carrier-parametric spaces
+- `Descriptive/FiniteCarrier.lean`: Finite-carrier counting via permutation orbits; combined dichotomy
 -/

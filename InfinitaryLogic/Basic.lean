@@ -66,5 +66,6 @@ import InfinitaryLogic.Descriptive.ModelClassStandardBorel
 import InfinitaryLogic.Descriptive.CountingDichotomy
 import InfinitaryLogic.Descriptive.SatisfactionBorelOn
 import InfinitaryLogic.Descriptive.FiniteCarrier
+import InfinitaryLogic.ModelTheory.CountingCountable
 
 /-! See the top-level `InfinitaryLogic` module for the full project overview. -/

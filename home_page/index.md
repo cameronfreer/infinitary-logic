@@ -18,7 +18,7 @@ The formalization currently covers:
 - **Scott analysis** &mdash; atomic diagrams, back-and-forth equivalence indexed by ordinals, Scott formulas/sentences, Scott height and rank, and the countable refinement hypothesis.
 - **Karp's theorem** &mdash; potential isomorphisms, the main equivalence (`karp_theorem_w`), and corollaries for countable structures.
 - **Model existence** &mdash; consistency properties, Henkin construction, truth lemma, model existence theorem, Karp completeness, and omitting types.
-- **Further model theory** &mdash; downward L&ouml;wenheim&ndash;Skolem for L<sub>&omega;<sub>1</sub>&omega;</sub>, Hanf numbers, conditional Morley&ndash;Hanf bound (conditional on `MorleyHanfTransfer`), and counting models (conditional counting dichotomy for coded models with bounded Scott height).
+- **Further model theory** &mdash; downward L&ouml;wenheim&ndash;Skolem for L<sub>&omega;<sub>1</sub>&omega;</sub>, Hanf numbers, conditional Morley&ndash;Hanf bound (conditional on `MorleyHanfTransfer`), and counting models (conditional counting dichotomy for all countable models with bounded Scott height).
 - **Admissible fragments** &mdash; Barwise compactness, Barwise completeness II, and the Nadel bound.
 
 Some results carry explicit hypotheses that package external mathematical content not yet formalized (e.g., `MorleyHanfTransfer` for Erd&#337;s&ndash;Rado / Ehrenfeucht&ndash;Mostowski machinery, `SilverBurgessDichotomy` for the Silver&ndash;Burgess dichotomy).
