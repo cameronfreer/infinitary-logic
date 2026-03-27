@@ -445,30 +445,62 @@ theorem iso_of_codeModel_eq
   -- The simplest approach: both M and N are L-isomorphic to their decoded carrier structures.
   -- If the carriers are the same type AND the decoded structures are L-isomorphic, we're done.
   -- This requires being in the same Sum branch and the same quotient class.
+  -- Helper: compose M ≃[L] α ≃[L] α ≃[L] N
+  have compose {α : Type} {instα₁ instα₂ : L.Structure α}
+      (iM : @Language.Equiv L M α ‹L.Structure M› instα₁)
+      (q : @Language.Equiv L α α instα₁ instα₂)
+      (iN : @Language.Equiv L N α ‹L.Structure N› instα₂) :
+      Nonempty (@Language.Equiv L M N ‹_› ‹_›) :=
+    -- inner : M ≃[L] α (instα₂)
+    let inner := @Language.Equiv.comp L M α ‹L.Structure M› instα₁ α instα₂ q iM
+    -- outer : M ≃[L] N
+    ⟨@Language.Equiv.comp L M α ‹L.Structure M› instα₂ N ‹L.Structure N›
+      (@Language.Equiv.symm L N α ‹L.Structure N› instα₂ iN) inner⟩
   by_cases hfinM : Finite M
-  · -- M is finite → N must also be finite (same Sum branch)
+  · -- Finite M → finite N
     have hfinN : Finite N := by
       by_contra hinfN
       unfold codeModel at h; rw [dif_pos hfinM, dif_neg hinfN] at h
       exact absurd h (by simp [Sum.inr_ne_inl])
-    -- Both finite: same approach as the infinite case below
-    -- but with Fin n carriers instead of ℕ.
-    -- The Sigma-dependent typing makes extraction of the carrier L-iso from h
-    -- technically involved (Fintype.card M = Fintype.card N from the Sigma projection,
-    -- then cast the quotient equality). We use sorry for this case.
+    haveI := Fintype.ofFinite M; haveI := Fintype.ofFinite N
+    set eM := Fintype.equivFin M
+    set eN := Fintype.equivFin N
+    unfold codeModel at h; rw [dif_pos hfinM, dif_pos hfinN] at h
+    -- h : Sum.inr ⟨card M, ⟦⟨encodeViaEquiv eM, _⟩⟧⟩ = Sum.inr ⟨card N, ⟦⟨encodeViaEquiv eN, _⟩⟧⟩
+    -- Same pattern as infinite branch but with Sigma-dependent Fin n.
+    -- Technical: dependent sigma typing makes extraction fiddly.
     sorry
-  · -- M is infinite → N must also be infinite (same Sum branch)
-    -- Strategy: extract carrier L-iso from quotient equality, compose M → ℕ → ℕ → N
-    -- The technical obstacle is casting between toStructure(encodeViaEquiv e) and
-    -- inducedStructure e inside Language.Equiv type's implicit instance arguments.
-    sorry
+  · -- Infinite M → infinite N
+    haveI : Infinite M := not_finite_iff_infinite.mp hfinM
+    have hfinN : ¬Finite N := by
+      intro hfN
+      unfold codeModel at h; rw [dif_neg hfinM, dif_pos hfN] at h
+      exact absurd h (by simp [Sum.inl_ne_inr])
+    haveI : Infinite N := not_finite_iff_infinite.mp hfinN
+    set eM : M ≃ ℕ := (nonempty_equiv_of_countable (α := M) (β := ℕ)).some
+    set eN : N ≃ ℕ := (nonempty_equiv_of_countable (α := N) (β := ℕ)).some
+    unfold codeModel at h; rw [dif_neg hfinM, dif_neg hfinN] at h
+    obtain ⟨qIso⟩ := Quotient.exact (Sum.inl.inj h)
+    obtain ⟨iM⟩ := encodeViaEquiv_iso (L := L) (M := M) eM
+    obtain ⟨iN⟩ := encodeViaEquiv_iso (L := L) (M := N) eN
+    exact compose iM qIso iN
 
 /-- Every coded class is realized by some countable model. -/
 theorem codeModel_surjective :
     ∀ q : AllCodedIsoClasses φ,
     ∃ (M : Type) (_ : L.Structure M) (_ : Countable M)
       (hφ : Sentenceω.Realize φ M), codeModel hφ = q := by
-  sorry
+  -- Helper: given a code c on carrier α, decode it and show codeModel maps back
+  -- to the same quotient class (up to the encoding isomorphism).
+  intro q
+  rcases q with ⟨qN⟩ | ⟨n, qFin⟩
+  · -- ℕ branch: decode representative, ℕ with its toStructure is the model.
+    -- The quotient equality follows from compose_encoded_iso with refl.
+    -- Technical: let-bindings from `unfold codeModel` block `rw`/`simp`.
+    sorry
+  · -- Fin n branch: decode representative, Fin n with its toStructure is the model.
+    -- Same pattern as ℕ branch but with Fintype.card (Fin n) = n.
+    sorry
 
 end Bridge
 
