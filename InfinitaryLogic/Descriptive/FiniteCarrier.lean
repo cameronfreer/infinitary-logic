@@ -87,9 +87,6 @@ theorem iso_iff_orbit (n : ℕ) (c₁ c₂ : StructureSpaceOn L (Fin n)) :
       (fun f => isEmptyElim f) (fun {l} R v => ?_)⟩
     rw [StructureSpaceOn.relMap_toStructure c₂,
         StructureSpaceOn.relMap_toStructure c₁]
-    -- Goal: c₂ ⟨⟨l, R⟩, σ ∘ v⟩ = true ↔ c₁ ⟨⟨l, R⟩, v⟩ = true
-    -- From hσ: (σ • c₁) = c₂, i.e. c₁ ⟨_, σ.symm ∘ w⟩ = c₂ ⟨_, w⟩ for all w
-    -- Set w = σ ∘ v: c₁ ⟨_, σ.symm ∘ σ ∘ v⟩ = c₂ ⟨_, σ ∘ v⟩, i.e. c₁ ⟨_, v⟩ = c₂ ⟨_, σ ∘ v⟩
     have := congr_fun hσ ⟨⟨l, R⟩, σ ∘ v⟩
     simp only [perm_smul_apply] at this
     have hsimp : σ.symm ∘ (σ : Fin n → Fin n) ∘ v = v := by
@@ -351,12 +348,8 @@ private theorem compose_encoded_iso
     (eM.symm.trans (e.toEquiv.trans eN))
     (fun f _ => isEmptyElim ((‹L.IsRelational› _).false f))
     (fun {n} R v => ?_)⟩
-  -- After inducedStructure_RelMap: RelMap_N R (eN.symm ∘ trans ∘ v) ↔ RelMap_M R (eM.symm ∘ v)
-  -- Simplify: eN.symm ∘ trans = e ∘ eM.symm, then use e.map_rel'
   simp only [Equiv.inducedStructure_RelMap, Function.comp_def, Equiv.trans_apply, Equiv.toFun_as_coe]
   simp_rw [eN.symm_apply_apply]
-  -- Goal: RelMap R (fun x => e.toEquiv (eM.symm (v x))) ↔ RelMap R (fun x => eM.symm (v x))
-  -- e.toEquiv and DFunLike.coe e agree pointwise
   constructor
   · intro h; exact (e.map_rel' R (⇑eM.symm ∘ v)).mp (by convert h using 2)
   · intro h; convert (e.map_rel' R (⇑eM.symm ∘ v)).mpr h using 2
@@ -371,16 +364,9 @@ theorem codeModel_eq_of_iso
   by_cases hfinM : Finite M
   · -- M is finite → N is finite
     haveI hfinN : Finite N := Finite.of_equiv M hequiv
-    -- Use the exact same Fintype instances that codeModel will use internally
-    -- (which are Fintype.ofFinite M / N)
     have hcard : @Fintype.card M (Fintype.ofFinite M) = @Fintype.card N (Fintype.ofFinite N) :=
       @Fintype.card_congr M N (Fintype.ofFinite M) (Fintype.ofFinite N) hequiv
-    -- Both take finite branch with same cardinality
-    -- Show the quotient elements agree using compose_encoded_iso
-    -- Both take finite branch
     unfold codeModel; simp only [dif_pos hfinM, dif_pos hfinN]
-    -- Goal: Sum.inr ⟨card M, quot_M⟩ = Sum.inr ⟨card N, quot_N⟩
-    -- Since card M = card N, we use congrArg
     have h1 : ∀ (n : ℕ) (f : M ≃ Fin n) (g : N ≃ Fin n)
         (hf : @Sentenceω.Realize L φ _ (StructureSpaceOn.toStructure (encodeViaEquiv f)))
         (hg : @Sentenceω.Realize L φ _ (StructureSpaceOn.toStructure (encodeViaEquiv g))),
@@ -389,7 +375,6 @@ theorem codeModel_eq_of_iso
       intro n f g hf hg
       apply Quotient.sound; show Nonempty _
       exact compose_encoded_iso e _ _
-    -- Transport via hcard: use subst after generalizing
     suffices ∀ m (eqm : m = @Fintype.card M (Fintype.ofFinite M))
         (f : M ≃ Fin m) (g : N ≃ Fin (@Fintype.card N (Fintype.ofFinite N))),
         (Sum.inr ⟨m, Quotient.mk (isoSetoidOn φ m) ⟨encodeViaEquiv f,
@@ -399,12 +384,7 @@ theorem codeModel_eq_of_iso
             encodeViaEquiv_models g hφN⟩⟩ from
       this _ rfl _ _
     intro m eqm f g; subst eqm
-    -- Goal: Sum.inr ⟨card M, q(f)⟩ = Sum.inr ⟨card N, q(g)⟩
-    -- where f : M ≃ Fin (card M), g : N ≃ Fin (card N)
-    -- Use Eq.rec on hcard to rewrite card M to card N in the LHS
-    -- Then use h1 to close the quotient equality.
     revert f; rw [hcard]; intro f
-    -- After rw: f : M ≃ Fin (card N), and goal has card N on both sides
     congr 2
     exact h1 _ _ _ _ _
   · -- M is infinite → N is infinite
@@ -434,18 +414,7 @@ theorem iso_of_codeModel_eq
     (hφM : Sentenceω.Realize φ M) (hφN : Sentenceω.Realize φ N)
     (h : codeModel hφM = codeModel hφN) :
     Nonempty (@Language.Equiv L M N ‹_› ‹_›) := by
-  -- M and N have L-isos to their respective carriers via encodeViaEquiv_iso.
-  -- The hypothesis h says they land in the same quotient class, which means the decoded
-  -- carrier structures are L-isomorphic. We compose: M ≃[L] carrier ≃[L] N.
-  -- The proof only needs that M and N are in the same quotient class, not which class.
-  -- So we just need: encodeViaEquiv_iso gives M ≃[L] carrier, and if the quotient
-  -- classes agree, the carrier structures are L-isomorphic.
-  -- Since both are countable models of φ, the L-isomorphism exists.
-  -- Use codeModel_eq_of_iso in reverse: if codeModel hφM = codeModel hφN, build the iso.
-  -- The simplest approach: both M and N are L-isomorphic to their decoded carrier structures.
-  -- If the carriers are the same type AND the decoded structures are L-isomorphic, we're done.
-  -- This requires being in the same Sum branch and the same quotient class.
-  -- Helper: compose M ≃[L] α ≃[L] α ≃[L] N
+  -- Compose M ≃[L] carrier ≃[L] carrier ≃[L] N via encodeViaEquiv_iso + quotient extraction.
   have compose {α : Type} {instα₁ instα₂ : L.Structure α}
       (iM : @Language.Equiv L M α ‹L.Structure M› instα₁)
       (q : @Language.Equiv L α α instα₁ instα₂)
