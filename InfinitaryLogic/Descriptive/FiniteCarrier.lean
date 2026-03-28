@@ -457,19 +457,36 @@ theorem iso_of_codeModel_eq
     ⟨@Language.Equiv.comp L M α ‹L.Structure M› instα₂ N ‹L.Structure N›
       (@Language.Equiv.symm L N α ‹L.Structure N› instα₂ iN) inner⟩
   by_cases hfinM : Finite M
-  · -- Finite M → finite N
-    have hfinN : Finite N := by
-      by_contra hinfN
-      unfold codeModel at h; rw [dif_pos hfinM, dif_neg hinfN] at h
+  · -- Finite M → finite N: same compose pattern, Sigma-dependent extraction.
+    haveI hfinN : Finite N := by
+      by_contra hfN
+      unfold codeModel at h; rw [dif_pos hfinM, dif_neg hfN] at h
       exact absurd h (by simp [Sum.inr_ne_inl])
-    haveI := Fintype.ofFinite M; haveI := Fintype.ofFinite N
-    set eM := Fintype.equivFin M
-    set eN := Fintype.equivFin N
-    unfold codeModel at h; rw [dif_pos hfinM, dif_pos hfinN] at h
-    -- h : Sum.inr ⟨card M, ⟦⟨encodeViaEquiv eM, _⟩⟧⟩ = Sum.inr ⟨card N, ⟦⟨encodeViaEquiv eN, _⟩⟧⟩
-    -- Same pattern as infinite branch but with Sigma-dependent Fin n.
-    -- Technical: dependent sigma typing makes extraction fiddly.
-    sorry
+    -- Use the same pattern as codeModel_eq_of_iso finite branch:
+    -- generalize over the cardinality and subst to unify Fin types.
+    unfold codeModel at h; simp only [dif_pos hfinM, dif_pos hfinN] at h
+    have hSigma := Sum.inr.inj h
+    have hcard : @Fintype.card M (Fintype.ofFinite M) =
+        @Fintype.card N (Fintype.ofFinite N) := congrArg Sigma.fst hSigma
+    suffices ∀ (m : ℕ) (eqm : m = @Fintype.card M (Fintype.ofFinite M))
+        (f : M ≃ Fin m) (g : N ≃ Fin (@Fintype.card N (Fintype.ofFinite N)))
+        (hq : (⟨m, Quotient.mk (isoSetoidOn φ m)
+          ⟨encodeViaEquiv f, encodeViaEquiv_models f hφM⟩⟩ : Σ n, Quotient (isoSetoidOn φ n)) =
+          ⟨@Fintype.card N (Fintype.ofFinite N), Quotient.mk (isoSetoidOn φ _)
+          ⟨encodeViaEquiv g, encodeViaEquiv_models g hφN⟩⟩),
+        Nonempty (@Language.Equiv L M N ‹_› ‹_›) by
+      exact this _ rfl _ _ hSigma
+    intro m eqm f g hq; subst eqm
+    revert f hq; rw [hcard]; intro f hq
+    have hq' : Quotient.mk (isoSetoidOn φ (@Fintype.card N (Fintype.ofFinite N)))
+        ⟨encodeViaEquiv f, encodeViaEquiv_models f hφM⟩ =
+        Quotient.mk (isoSetoidOn φ (@Fintype.card N (Fintype.ofFinite N)))
+        ⟨encodeViaEquiv g, encodeViaEquiv_models g hφN⟩ :=
+      eq_of_heq (Sigma.mk.inj hq).2
+    obtain ⟨qIso⟩ := Quotient.exact hq'
+    obtain ⟨iM⟩ := encodeViaEquiv_iso (L := L) (M := M) f
+    obtain ⟨iN⟩ := encodeViaEquiv_iso (L := L) (M := N) g
+    exact compose iM qIso iN
   · -- Infinite M → infinite N
     haveI : Infinite M := not_finite_iff_infinite.mp hfinM
     have hfinN : ¬Finite N := by
@@ -495,12 +512,69 @@ theorem codeModel_surjective :
   intro q
   rcases q with ⟨qN⟩ | ⟨n, qFin⟩
   · -- ℕ branch: decode representative, ℕ with its toStructure is the model.
-    -- The quotient equality follows from compose_encoded_iso with refl.
-    -- Technical: let-bindings from `unfold codeModel` block `rw`/`simp`.
-    sorry
+    refine Quotient.inductionOn qN fun ⟨c, hc⟩ => ?_
+    -- Establish c.toStructure as the L.Structure instance on ℕ
+    letI instN : L.Structure ℕ := c.toStructure
+    refine ⟨ℕ, instN, inferInstance, hc, ?_⟩
+    -- Goal: codeModel hc = Sum.inl ⟦⟨c, hc⟩⟧
+    -- codeModel hc takes dif_neg (Infinite ℕ) branch:
+    --   Sum.inl ⟦⟨encodeViaEquiv e, _⟩⟧  where  e := (nonempty_equiv_of_countable).some
+    -- We need: ⟦⟨encodeViaEquiv e, _⟩⟧ = ⟦⟨c, hc⟩⟧
+    -- Strategy: show codeModel evaluates correctly, then use Quotient.sound
+    have hInfN : ¬Finite ℕ := not_finite_iff_infinite.mpr inferInstance
+    -- Prove the quotient iso in a standalone have (before unfold)
+    set e := (nonempty_equiv_of_countable (α := ℕ) (β := ℕ)).some
+    have hiso : @Quotient.mk _ (isoSetoid φ)
+        ⟨encodeViaEquiv e, encodeViaEquiv_models e hc⟩ =
+        @Quotient.mk _ (isoSetoid φ) ⟨c, hc⟩ := by
+      apply Quotient.sound
+      -- Need: Nonempty ((encodeViaEquiv e).toStructure ≃[L] c.toStructure)
+      -- encodeViaEquiv_iso gives: Nonempty (ℕ_{instN} ≃[L] ℕ_{(encodeViaEquiv e).toStructure})
+      -- .symm gives: Nonempty (ℕ_{(encodeViaEquiv e).toStructure} ≃[L] ℕ_{instN})
+      -- instN = c.toStructure, so this is what we need
+      obtain ⟨iso⟩ := encodeViaEquiv_iso (L := L) (M := ℕ) e
+      exact ⟨@Language.Equiv.symm L ℕ ℕ instN
+        (StructureSpaceOn.toStructure (encodeViaEquiv e)) iso⟩
+    -- Now unfold codeModel and match
+    unfold codeModel; rw [dif_neg hInfN]
+    exact congrArg Sum.inl hiso
   · -- Fin n branch: decode representative, Fin n with its toStructure is the model.
-    -- Same pattern as ℕ branch but with Fintype.card (Fin n) = n.
-    sorry
+    refine Quotient.inductionOn qFin fun ⟨c, hc⟩ => ?_
+    letI instFin : L.Structure (Fin n) := c.toStructure
+    refine ⟨Fin n, instFin, inferInstance, hc, ?_⟩
+    -- Goal: codeModel hc = Sum.inr ⟨n, ⟦⟨c, hc⟩⟧⟩
+    -- Fin n is finite, so codeModel takes the dif_pos branch
+    -- After unfold: Sum.inr ⟨Fintype.card (Fin n), ⟦⟨encodeViaEquiv (equivFin (Fin n)), _⟩⟧⟩
+    -- Need: card (Fin n) = n and quotient equality
+    haveI : Finite (Fin n) := inferInstance
+    unfold codeModel; rw [dif_pos (inferInstance : Finite (Fin n))]
+    -- The unfolded codeModel uses Fintype.ofFinite (Fin n) internally.
+    -- We need to match Fintype.card with n, handling the diamond.
+    -- Use suffices to abstract over the cardinality and subst.
+    set ftype := Fintype.ofFinite (Fin n)
+    have hcard : @Fintype.card (Fin n) ftype = n :=
+      (Subsingleton.elim ftype (Fin.fintype n)) ▸ Fintype.card_fin n
+    -- Handle the Sigma dependency: need to transport from card(Fin n) to n
+    suffices ∀ (m : ℕ) (eqm : m = @Fintype.card (Fin n) ftype)
+        (f : Fin n ≃ Fin m),
+        (Sum.inr ⟨m, @Quotient.mk _ (isoSetoidOn φ m)
+          ⟨encodeViaEquiv f, encodeViaEquiv_models f hc⟩⟩ : AllCodedIsoClasses φ) =
+        Sum.inr ⟨n, @Quotient.mk _ (isoSetoidOn φ n) ⟨c, hc⟩⟩ by
+      exact this _ rfl _
+    intro m eqm f; subst eqm
+    revert f; rw [hcard]; intro f
+    -- After revert/rw/intro: f : Fin n ≃ Fin n
+    -- Need: Sum.inr ⟨n, ⟦⟨encodeViaEquiv f, _⟩⟧⟩ = Sum.inr ⟨n, ⟦⟨c, hc⟩⟧⟩
+    -- Build the quotient iso
+    have hqiso : @Quotient.mk _ (isoSetoidOn φ n)
+        ⟨encodeViaEquiv f, encodeViaEquiv_models f hc⟩ =
+        @Quotient.mk _ (isoSetoidOn φ n) ⟨c, hc⟩ := by
+      apply Quotient.sound
+      show Nonempty _
+      obtain ⟨iso⟩ := encodeViaEquiv_iso (L := L) (M := Fin n) f
+      exact ⟨@Language.Equiv.symm L (Fin n) (Fin n) instFin
+        (StructureSpaceOn.toStructure (encodeViaEquiv f)) iso⟩
+    exact congrArg (fun q => Sum.inr (Sigma.mk n q) : _ → AllCodedIsoClasses φ) hqiso
 
 end Bridge
 
