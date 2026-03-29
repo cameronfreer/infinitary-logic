@@ -290,6 +290,14 @@ theorem scottHeight_stabilizesCompletely (M : Type w) [L.Structure M] [Countable
     StabilizesCompletely (L := L) M (scottHeight (L := L) M) :=
   scottHeight_stabilizesCompletely_of countableRefinementHypothesis M
 
+/-- Scott height is invariant under L-isomorphism. -/
+theorem scottHeight_eq_of_equiv
+    {M : Type w} [L.Structure M] [Countable M]
+    {N : Type w} [L.Structure N] [Countable N]
+    (e : M ≃[L] N) :
+    scottHeight (L := L) M = scottHeight (L := L) N := by
+  sorry
+
 /-- The canonical Scott sentence characterizes potential isomorphism. -/
 theorem canonicalScottSentence_iff_potentialIso
     {M : Type w} [L.Structure M] [Countable M]
