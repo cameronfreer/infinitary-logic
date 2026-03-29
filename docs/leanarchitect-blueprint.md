@@ -43,7 +43,7 @@ theorem countableRefinementHypothesis : CountableRefinementHypothesis.{u, v, w} 
 The narrative in `blueprint/src/content.tex` uses `\inputleannode{<label>}` to pull in
 the statement text and dependency metadata from each annotated declaration.
 
-### Current annotated nodes (51 total)
+### Current annotated nodes (52 total)
 
 **Definitions (20):**
 - `def:BFEquiv` — Back-and-forth equivalence
@@ -99,6 +99,7 @@ the statement text and dependency metadata from each annotated declaration.
 - `thm:counting-dichotomy` — Conditional counting dichotomy
 - `thm:finite-carrier-iso-borel` — Isomorphism is Borel on finite carriers
 - `thm:counting-all-countable` — Counting dichotomy for all countable models
+- `thm:morley-counting` — Morley's counting theorem
 
 ## 4. Extract and Render
 

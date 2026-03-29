@@ -60,6 +60,7 @@ The unconditional API is recovered via `countableRefinementHypothesis` (proved i
 - `ModelTheory/Hanf.lean`: Hanf numbers and Morley-Hanf bound
 - `ModelTheory/CountingModels.lean`: Scott rank and model counting
 - `ModelTheory/CountingCountable.lean`: Counting theorem for all countable models
+- `ModelTheory/MorleyCounting.lean`: Morley's counting theorem (≤ ℵ₁ or 2^ℵ₀)
 
 ### Admissible sets (Admissible/)
 - `Admissible/Fragment.lean`: Abstract admissible fragments

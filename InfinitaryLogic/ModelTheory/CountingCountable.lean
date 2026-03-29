@@ -25,6 +25,9 @@ of countable models of φ, as established by the bridge theorems:
 
 - `counting_countable_models_bounded_scottHeight`: The number of isomorphism
   classes of countable models (with bounded Scott height) is ≤ ℵ₀ or = 2^ℵ₀.
+
+The stronger unconditional-height version (≤ ℵ₁ or 2^ℵ₀) is
+`FirstOrder.Language.morley_counting` in `ModelTheory/MorleyCounting.lean`.
 -/
 
 universe u v
