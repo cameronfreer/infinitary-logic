@@ -296,7 +296,40 @@ theorem scottHeight_eq_of_equiv
     {N : Type w} [L.Structure N] [Countable N]
     (e : M ≃[L] N) :
     scottHeight (L := L) M = scottHeight (L := L) N := by
-  sorry
+  unfold scottHeight
+  apply le_antisymm
+  · -- scottHeight M ≤ scottHeight N: show S_N ⊆ S_M
+    apply csInf_le_csInf
+    · -- S_M is BddBelow
+      exact ⟨0, fun _ _ => zero_le _⟩
+    · -- S_N is nonempty: exists_complete_stabilization N gives a member
+      obtain ⟨α, _, hstab⟩ := exists_complete_stabilization (L := L) N
+      exact ⟨α, fun {n} a P _ _ b hBF => (hstab n P a b).mp hBF⟩
+    · -- S_N ⊆ S_M
+      intro α hα_N
+      simp only [Set.mem_setOf_eq] at hα_N ⊢
+      intro n a P _ _ b hBF
+      -- Translate a to N via e: BFEquiv α (e ∘ a) b
+      have h1 : BFEquiv (L := L) α n (e ∘ a) b :=
+        (equiv_implies_BFEquiv e α n a).symm.trans hBF
+      -- Use α ∈ S_N to upgrade: BFEquiv (succ α) (e ∘ a) b
+      have h2 : BFEquiv (L := L) (Order.succ α) n (e ∘ a) b :=
+        hα_N (e ∘ a) P b h1
+      -- Translate back: BFEquiv (succ α) a b
+      exact (equiv_implies_BFEquiv e (Order.succ α) n a).trans h2
+  · -- scottHeight N ≤ scottHeight M: show S_M ⊆ S_N
+    apply csInf_le_csInf
+    · exact ⟨0, fun _ _ => zero_le _⟩
+    · obtain ⟨α, _, hstab⟩ := exists_complete_stabilization (L := L) M
+      exact ⟨α, fun {n} a P _ _ b hBF => (hstab n P a b).mp hBF⟩
+    · intro α hα_M
+      simp only [Set.mem_setOf_eq] at hα_M ⊢
+      intro n a P _ _ b hBF
+      have h1 : BFEquiv (L := L) α n (e.symm ∘ a) b :=
+        (equiv_implies_BFEquiv e.symm α n a).symm.trans hBF
+      have h2 : BFEquiv (L := L) (Order.succ α) n (e.symm ∘ a) b :=
+        hα_M (e.symm ∘ a) P b h1
+      exact (equiv_implies_BFEquiv e.symm (Order.succ α) n a).trans h2
 
 /-- The canonical Scott sentence characterizes potential isomorphism. -/
 theorem canonicalScottSentence_iff_potentialIso
