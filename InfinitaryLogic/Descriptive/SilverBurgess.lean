@@ -23,9 +23,9 @@ dichotomy for Borel equivalence relations on standard Borel spaces.
   perfect set of pairwise inequivalent elements, it has continuum classes.
 -/
 
-open Cardinal Set
+open Cardinal Set MeasureTheory
 
-universe u
+universe u v
 
 /-! ### Perfect set cardinality -/
 
@@ -83,3 +83,49 @@ theorem eq_continuum_classes_of_perfect_transversal {α : Type u}
   · calc #(Quotient r) ≤ #α := Cardinal.mk_le_of_surjective (Quotient.mk_surjective)
       _ ≤ Cardinal.continuum := hle
   · exact continuum_classes_of_perfect_transversal r hperf hne hinequiv
+
+/-! ### Polish space cardinality upper bound -/
+
+/-- A Polish space has cardinality ≤ continuum. -/
+theorem mk_le_continuum_of_polish {α : Type u} [MetricSpace α] [CompleteSpace α]
+    [SecondCountableTopology α] [Nonempty α] :
+    #α ≤ Cardinal.continuum := by
+  obtain ⟨f, _, hf_surj⟩ := PolishSpace.exists_nat_nat_continuous_surjective α
+  have h1 := lift_mk_le_lift_mk_of_surjective hf_surj
+  simp only [lift_uzero] at h1
+  exact h1.trans (by simp [aleph0_power_aleph0])
+
+/-- The quotient of a Polish space has cardinality ≤ continuum. -/
+theorem mk_quotient_le_continuum_of_polish {α : Type u} [MetricSpace α] [CompleteSpace α]
+    [SecondCountableTopology α] [Nonempty α] (r : Setoid α) :
+    #(Quotient r) ≤ Cardinal.continuum :=
+  (Cardinal.mk_le_of_surjective Quotient.mk_surjective).trans mk_le_continuum_of_polish
+
+/-! ### Core Silver theorem -/
+
+/-- **Silver's theorem** (core Polish space version): A Borel equivalence relation
+on a Polish space has countably many equivalence classes, or admits a continuous
+injection from Cantor space whose images are pairwise inequivalent.
+
+The splitting lemma (the heart of the proof) is sorry'd — it requires
+the Gandy-Harrington topology or Lusin-Novikov uniformization. -/
+theorem silver_core_polish {α : Type u}
+    [MetricSpace α] [CompleteSpace α] [SecondCountableTopology α]
+    [MeasurableSpace α] [BorelSpace α]
+    (r : Setoid α) (hr : MeasurableSet {p : α × α | r.r p.1 p.2}) :
+    Countable (Quotient r) ∨
+      ∃ f : (ℕ → Bool) → α,
+        Continuous f ∧ Function.Injective f ∧
+        ∀ a b, a ≠ b → ¬ r.r (f a) (f b) := by
+  sorry
+
+/-! ### Silver-Burgess dichotomy -/
+
+namespace FirstOrder.Language
+
+/-- The Silver-Burgess dichotomy for Borel equivalence relations on standard Borel
+spaces follows from `silver_core_polish`. -/
+theorem silverBurgessDichotomy : SilverBurgessDichotomy.{v} := by
+  intro X _ _ r hr
+  -- Upgrade to Polish topology
+  sorry
