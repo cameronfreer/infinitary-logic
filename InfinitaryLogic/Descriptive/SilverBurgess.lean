@@ -320,7 +320,15 @@ theorem silver_core_closed {α : Type u}
       ∃ f : (ℕ → Bool) → α,
         Continuous f ∧ Function.Injective f ∧
         ∀ a b, a ≠ b → ¬ r.r (f a) (f b) := by
-  sorry
+  -- Case split: countable or uncountable quotient
+  by_cases hcount : Set.Countable {q : Quotient r | ∃ y ∈ Set.univ, ⟦y⟧ = q}
+  · left
+    have : Set.Countable (Set.univ : Set (Quotient r)) := by
+      convert hcount using 1; ext q; simp [Quotient.exists_rep]
+    exact Set.countable_univ_iff.mp this
+  · right
+    -- Build the Cantor antichain via iterated splitting
+    sorry
 
 /-- **Silver's theorem** (core Polish space version, for Borel equivalence
 relations): Uses the Gandy-Harrington topology to reduce to the closed case.
