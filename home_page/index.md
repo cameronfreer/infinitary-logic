@@ -18,7 +18,7 @@ The formalization currently covers:
 - **Scott analysis** &mdash; atomic diagrams, back-and-forth equivalence indexed by ordinals, Scott formulas/sentences, Scott height and rank, and the countable refinement hypothesis.
 - **Karp's theorem** &mdash; potential isomorphisms, the main equivalence (`karp_theorem_w`), and corollaries for countable structures.
 - **Model existence** &mdash; consistency properties, Henkin construction, truth lemma, model existence theorem, Karp completeness, and omitting types.
-- **Further model theory** &mdash; downward L&ouml;wenheim&ndash;Skolem for L<sub>&omega;<sub>1</sub>&omega;</sub>, Hanf numbers, conditional Morley&ndash;Hanf bound (conditional on `MorleyHanfTransfer`), and counting models (conditional Morley counting theorem: ≤ ℵ₁ or 2^ℵ₀ iso classes).
+- **Further model theory** &mdash; downward L&ouml;wenheim&ndash;Skolem for L<sub>&omega;<sub>1</sub>&omega;</sub>, Hanf numbers, conditional Morley&ndash;Hanf bound (conditional on `MorleyHanfTransfer`), and counting models (Morley counting theorem: &le; &alefsym;<sub>1</sub> or 2<sup>&alefsym;<sub>0</sub></sup> iso classes, conditional on 1 sorry in Borel&rarr;closed reduction).
 - **Admissible fragments** &mdash; Barwise compactness, Barwise completeness II, and the Nadel bound.
 
 Some results carry explicit hypotheses that package external mathematical content not yet formalized (e.g., `MorleyHanfTransfer` for Erd&#337;s&ndash;Rado / Ehrenfeucht&ndash;Mostowski machinery, `SilverBurgessDichotomy` for the Silver&ndash;Burgess dichotomy).
@@ -34,7 +34,7 @@ Some results carry explicit hypotheses that package external mathematical conten
 | `InfinitaryLogic/ModelExistence/` | Consistency properties, model existence, completeness, omitting types |
 | `InfinitaryLogic/ModelTheory/` | L&ouml;wenheim&ndash;Skolem, Hanf numbers, counting models |
 | `InfinitaryLogic/Admissible/` | Admissible fragments, Barwise compactness, Nadel bound |
-| `InfinitaryLogic/Descriptive/` | Borel complexity of structure space, satisfaction, isomorphism; conditional counting dichotomy |
+| `InfinitaryLogic/Descriptive/` | Borel complexity of structure space, satisfaction, isomorphism; Silver-Burgess dichotomy (splitting lemma, Cantor scheme, `silverBurgessDichotomy`; 1 sorry: Borel&rarr;closed reduction) |
 
 ## Resources
 

@@ -10,17 +10,22 @@ import Mathlib.MeasureTheory.Constructions.Polish.Basic
 import Architect
 
 /-!
-# Silver-Burgess Dichotomy: Foundations
+# Silver-Burgess Dichotomy for Borel Equivalence Relations
 
-This file establishes the foundational lemmas needed for the Silver-Burgess
-dichotomy for Borel equivalence relations on standard Borel spaces.
+This file proves the Silver-Burgess dichotomy for closed equivalence relations
+on Polish spaces and derives `SilverBurgessDichotomy` for standard Borel spaces,
+modulo one sorry in the Borel-to-closed reduction (`silver_core_polish`).
 
-## Main Results (Stage 1)
+## Main Results
 
-- `Perfect.mk_eq_continuum`: A nonempty perfect subset of a Polish space has
-  cardinality exactly 2^ℵ₀.
-- `continuum_classes_of_perfect_transversal`: If an equivalence relation has a
-  perfect set of pairwise inequivalent elements, it has continuum classes.
+- `Perfect.mk_eq_continuum`: Nonempty perfect subset of Polish space has cardinality 2^ℵ₀.
+- `continuum_classes_of_perfect_transversal`: Perfect antichain → continuum classes.
+- `splitting_lemma_closed`: Closed equiv relation with uncountably many classes splits
+  into disjoint closed pieces, each uncountable, cross-inequivalent.
+- `silver_core_closed`: Silver's theorem for closed equivalence relations on Polish spaces.
+- `silver_core_polish`: Silver's theorem for Borel equivalence relations (sorry: Borel→closed
+  reduction via Gandy-Harrington topology, not available in Mathlib).
+- `silverBurgessDichotomy`: The Silver-Burgess dichotomy (depends on `silver_core_polish`).
 -/
 
 open Cardinal Set MeasureTheory

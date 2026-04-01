@@ -79,4 +79,5 @@ The unconditional API is recovered via `countableRefinementHypothesis` (proved i
 - `Descriptive/CountingDichotomy.lean`: Conditional counting dichotomy (Silver–Burgess)
 - `Descriptive/SatisfactionBorelOn.lean`: Generic satisfaction measurability for carrier-parametric spaces
 - `Descriptive/FiniteCarrier.lean`: Finite-carrier counting via permutation orbits; combined dichotomy
+- `Descriptive/SilverBurgess.lean`: Silver-Burgess dichotomy (1 sorry: Borel→closed reduction)
 -/

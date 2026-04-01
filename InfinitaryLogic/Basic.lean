@@ -66,6 +66,7 @@ import InfinitaryLogic.Descriptive.ModelClassStandardBorel
 import InfinitaryLogic.Descriptive.CountingDichotomy
 import InfinitaryLogic.Descriptive.SatisfactionBorelOn
 import InfinitaryLogic.Descriptive.FiniteCarrier
+import InfinitaryLogic.Descriptive.SilverBurgess
 import InfinitaryLogic.ModelTheory.CountingCountable
 import InfinitaryLogic.ModelTheory.MorleyCounting
 

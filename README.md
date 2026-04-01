@@ -30,7 +30,7 @@ Some results carry explicit hypotheses packaging external content not yet formal
 - `InfinitaryLogic/ModelExistence/` — Consistency properties, model existence, completeness, omitting types
 - `InfinitaryLogic/ModelTheory/` — Löwenheim–Skolem, Hanf numbers, counting models
 - `InfinitaryLogic/Admissible/` — Admissible fragments, Barwise compactness, Nadel bound
-- `InfinitaryLogic/Descriptive/` — Borel complexity of the structure space, satisfaction, isomorphism; conditional counting dichotomy
+- `InfinitaryLogic/Descriptive/` — Borel complexity of the structure space, satisfaction, isomorphism; Silver-Burgess dichotomy skeleton (splitting lemma, Cantor scheme, `silverBurgessDichotomy`); conditional counting dichotomy (1 sorry: Borel→closed reduction in `silver_core_polish`)
 
 ## Getting Started
 

@@ -236,9 +236,12 @@ models by adding finite-carrier tiers (isomorphism on $\operatorname{Fin} n$
 structures is Borel via the orbit of $\operatorname{Sym}(n)$).  Bridge theorems
 (\texttt{codeModel}, \texttt{iso\_of\_codeModel\_eq}, \texttt{codeModel\_surjective})
 establish that \texttt{AllCodedIsoClasses} faithfully represents all isomorphism
-classes of countable models.  The full Morley counting theorem (with
-$\leq \aleph_1$ replacing $\leq \aleph_0$) remains a separate target requiring
-Scott-height stratification.
+classes of countable models.  The Silver--Burgess dichotomy
+(\texttt{silverBurgessDichotomy}) is proved modulo one sorry in the
+Borel-to-closed reduction (\texttt{silver\_core\_polish}), which requires the
+Gandy--Harrington topology or equivalent descriptive-set-theoretic infrastructure
+not yet available in Mathlib.  Once this is filled, \texttt{morley\_counting}
+becomes fully unconditional.
 
 \bibliographystyle{amsalpha}
 \bibliography{refs}
