@@ -506,55 +506,7 @@ theorem silver_core_closed {α : Type u}
         ((inducedMap D).2 ⟨s, hdom⟩) hfs
         ((inducedMap D).2 ⟨t, hdom⟩) hft
 
-/-- **Silver's theorem** (core Polish space version, for Borel equivalence
-relations): Uses the Gandy-Harrington topology to reduce to the closed case.
-This is the version needed for `SilverBurgessDichotomy`. -/
-theorem silver_core_polish {α : Type u}
-    [MetricSpace α] [CompleteSpace α] [SecondCountableTopology α]
-    [MeasurableSpace α] [BorelSpace α]
-    (r : Setoid α) (hr : MeasurableSet {p : α × α | r.r p.1 p.2}) :
-    Countable (Quotient r) ∨
-      ∃ f : (ℕ → Bool) → α,
-        Continuous f ∧ Function.Injective f ∧
-        ∀ a b, a ≠ b → ¬ r.r (f a) (f b) := by
-  sorry
+-- silver_core_polish and silverBurgessDichotomy are in GandyHarrington.lean
+-- (which imports this file and provides the Borel→closed reduction).
 
-/-! ### Silver-Burgess dichotomy -/
-
-namespace FirstOrder.Language
-
-/-- The Silver-Burgess dichotomy for Borel equivalence relations on standard Borel
-spaces follows from `silver_core_polish`. -/
-theorem silverBurgessDichotomy : SilverBurgessDichotomy.{v} := by
-  intro X _ _ r hr
-  -- Upgrade the standard Borel space to a Polish topology
-  letI := upgradeStandardBorel X
-  -- Further upgrade to a compatible complete metric
-  letI := TopologicalSpace.upgradeIsCompletelyMetrizable X
-  -- Apply the core theorem (the MeasurableSet hypothesis carries over since
-  -- upgradeStandardBorel reuses the original MeasurableSpace)
-  rcases silver_core_polish r hr with h_count | ⟨f, hf_cont, hf_inj, hf_ineq⟩
-  · -- Countable case: #(Quotient r) ≤ ℵ₀
-    left; exact mk_le_aleph0
-  · -- Uncountable case: # = continuum
-    right
-    apply le_antisymm
-    · -- Upper bound: #(Quotient r) ≤ #X ≤ continuum
-      haveI : Nonempty X := ⟨f (fun _ => false)⟩
-      exact mk_quotient_le_continuum_of_polish r
-    · -- Lower bound: continuum ≤ #(Quotient r)
-      -- Quotient.mk ∘ f is injective (inequivalent images → distinct classes)
-      have hinj : Function.Injective (fun x : ULift.{v} (ℕ → Bool) =>
-          Quotient.mk r (f x.down)) := by
-        intro ⟨a⟩ ⟨b⟩ h
-        apply ULift.ext
-        by_contra hab
-        exact hf_ineq a b hab (Quotient.exact h)
-      calc Cardinal.continuum
-          = lift.{v} #(ℕ → Bool) := by
-            rw [show #(ℕ → Bool) = Cardinal.continuum from
-              (Cardinal.power_def Bool ℕ).symm.trans (by rw [Cardinal.mk_bool, Cardinal.mk_nat,
-                Cardinal.two_power_aleph0])
-            , Cardinal.lift_continuum]
-        _ = #(ULift.{v} (ℕ → Bool)) := (Cardinal.mk_uLift _).symm
-        _ ≤ #(Quotient r) := mk_le_of_injective hinj
+-- silverBurgessDichotomy is in GandyHarrington.lean
