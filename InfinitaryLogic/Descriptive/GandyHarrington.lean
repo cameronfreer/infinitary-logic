@@ -12,8 +12,8 @@ import Mathlib.Topology.Defs.Induced
 This file provides:
 1. The Borel-to-closed reduction (`borel_to_closed_reduction`): if a Borel
    equivalence relation on a Polish space has uncountably many classes, there
-   exists a closed Polish subspace on which the pulled-back relation is closed
-   and still has uncountably many classes.
+   exists a Polish space Y with a continuous injective map to α on which the
+   pulled-back relation is closed and still has uncountably many classes.
 2. `silver_core_polish`: Silver's theorem for Borel equivalence relations,
    derived from the reduction + `silver_core_closed`.
 3. `silverBurgessDichotomy`: the full dichotomy for standard Borel spaces.
@@ -31,8 +31,12 @@ universe u v
 open Set Cardinal Topology
 
 /-- **Gandy-Harrington reduction**: A Borel equivalence relation on a Polish
-space with uncountably many classes admits a closed Polish subspace on which
-the pulled-back relation is closed and still has uncountably many classes. -/
+space with uncountably many classes admits a Polish space Y with a continuous
+injective map to α on which the pulled-back relation is closed and still has
+uncountably many classes.
+
+The proof requires the Gandy-Harrington topology construction (refining
+the topology on α so that analytic sets become open in a Polish core). -/
 theorem borel_to_closed_reduction {α : Type u}
     [MetricSpace α] [CompleteSpace α] [SecondCountableTopology α]
     [MeasurableSpace α] [BorelSpace α]
@@ -40,7 +44,7 @@ theorem borel_to_closed_reduction {α : Type u}
     (hunc : ¬ Countable (Quotient r)) :
     ∃ (Y : Type u) (_ : MetricSpace Y) (_ : CompleteSpace Y)
       (_ : SecondCountableTopology Y) (i : Y → α),
-      IsClosedEmbedding i ∧
+      Continuous i ∧ Function.Injective i ∧
       IsClosed {p : Y × Y | r.r (i p.1) (i p.2)} ∧
       ¬ Countable (Quotient (Setoid.comap i r)) := by
   sorry
@@ -60,16 +64,16 @@ theorem silver_core_polish {α : Type u}
   · exact Or.inl hcount
   · right
     -- Apply the Borel-to-closed reduction
-    obtain ⟨Y, instM, instC, instS, i, hi_embed, hi_closed, hi_unc⟩ :=
+    obtain ⟨Y, instM, instC, instS, i, hi_cont, hi_inj, hi_closed, hi_unc⟩ :=
       borel_to_closed_reduction r hr hcount
-    -- Apply silver_core_closed on the closed subspace Y
+    -- Apply silver_core_closed on Y
     have hY := @silver_core_closed Y instM instC instS (Setoid.comap i r) hi_closed
     rcases hY with hY_count | ⟨f, hf_cont, hf_inj, hf_ineq⟩
     · exact absurd hY_count hi_unc
-    · -- Compose f with the embedding i
+    · -- Compose f with i
       exact ⟨i ∘ f,
-        hi_embed.continuous.comp hf_cont,
-        hi_embed.injective.comp hf_inj,
+        hi_cont.comp hf_cont,
+        hi_inj.comp hf_inj,
         fun a b hab h => hf_ineq a b hab (by rwa [Setoid.comap_rel])⟩
 
 /-! ### Silver-Burgess dichotomy -/
