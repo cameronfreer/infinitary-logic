@@ -28,15 +28,72 @@ fully unconditional.
 
 universe u v
 
-open Set Cardinal Topology
+open Set Cardinal Topology MeasureTheory
+
+/-! ### Helper lemmas -/
+
+/-- Each equivalence class of a Borel relation is measurable (Borel section). -/
+private theorem class_measurableSet {α : Type u}
+    [TopologicalSpace α] [MeasurableSpace α] [BorelSpace α]
+    (r : Setoid α) (hr : MeasurableSet {p : α × α | r.r p.1 p.2}) (x : α) :
+    MeasurableSet {y : α | r.r x y} := by
+  have : {y : α | r.r x y} = (fun y => (x, y)) ⁻¹' {p : α × α | r.r p.1 p.2} := by
+    ext y; simp
+  rw [this]
+  exact hr.preimage (measurable_const.prodMk measurable_id)
+
+/-- Each equivalence class of a Borel relation is analytic. -/
+private theorem class_analyticSet {α : Type u}
+    [TopologicalSpace α] [PolishSpace α] [MeasurableSpace α] [BorelSpace α]
+    (r : Setoid α) (hr : MeasurableSet {p : α × α | r.r p.1 p.2}) (x : α) :
+    AnalyticSet {y : α | r.r x y} :=
+  (class_measurableSet r hr x).analyticSet
+
+/-- If every r-class on α is hit by the image of i, the comap quotient
+surjects onto the original quotient — so uncountability transfers. -/
+private theorem not_countable_comap_of_hits_all_classes {α : Type u} {Y : Type u}
+    (r : Setoid α) (i : Y → α)
+    (hhit : ∀ x : α, ∃ y : Y, r.r (i y) x)
+    (hunc : ¬ Countable (Quotient r)) :
+    ¬ Countable (Quotient (Setoid.comap i r)) := by
+  intro hcount
+  apply hunc
+  -- Build surjection: Quotient (comap i r) → Quotient r
+  -- The natural map Quotient(comap i r) → Quotient r
+  let φ : Quotient (Setoid.comap i r) → Quotient r :=
+    Quotient.lift (fun y => ⟦i y⟧) (fun a b h => Quotient.sound h)
+  have hsurj : Function.Surjective φ := by
+    intro q
+    refine Quotient.inductionOn q fun x => ?_
+    obtain ⟨y, hy⟩ := hhit x
+    exact ⟨Quotient.mk _ y, Quotient.sound hy⟩
+  exact hsurj.countable
+
+/-! ### GH core existence -/
+
+/-- The honest Gandy-Harrington core: a Polish Y with continuous injective
+map to α, closed pulled-back relation, AND every class of r meets the image.
+The sorry isolates the genuine GH topology construction. -/
+private theorem gh_exists_core {α : Type u}
+    [MetricSpace α] [CompleteSpace α] [SecondCountableTopology α]
+    [MeasurableSpace α] [BorelSpace α]
+    (r : Setoid α) (hr : MeasurableSet {p : α × α | r.r p.1 p.2})
+    (hunc : ¬ Countable (Quotient r)) :
+    ∃ (Y : Type u) (_ : MetricSpace Y) (_ : CompleteSpace Y)
+      (_ : SecondCountableTopology Y) (i : Y → α),
+      Continuous i ∧ Function.Injective i ∧
+      IsClosed {p : Y × Y | r.r (i p.1) (i p.2)} ∧
+      (∀ x : α, ∃ y : Y, r.r (i y) x) := by
+  sorry
+
+/-! ### Borel-to-closed reduction -/
 
 /-- **Gandy-Harrington reduction**: A Borel equivalence relation on a Polish
 space with uncountably many classes admits a Polish space Y with a continuous
 injective map to α on which the pulled-back relation is closed and still has
 uncountably many classes.
 
-The proof requires the Gandy-Harrington topology construction (refining
-the topology on α so that analytic sets become open in a Polish core). -/
+Derived from `gh_exists_core` + `not_countable_comap_of_hits_all_classes`. -/
 theorem borel_to_closed_reduction {α : Type u}
     [MetricSpace α] [CompleteSpace α] [SecondCountableTopology α]
     [MeasurableSpace α] [BorelSpace α]
@@ -47,7 +104,10 @@ theorem borel_to_closed_reduction {α : Type u}
       Continuous i ∧ Function.Injective i ∧
       IsClosed {p : Y × Y | r.r (i p.1) (i p.2)} ∧
       ¬ Countable (Quotient (Setoid.comap i r)) := by
-  sorry
+  obtain ⟨Y, instM, instC, instS, i, hi_cont, hi_inj, hi_closed, hi_hit⟩ :=
+    gh_exists_core r hr hunc
+  exact ⟨Y, instM, instC, instS, i, hi_cont, hi_inj, hi_closed,
+    not_countable_comap_of_hits_all_classes r i hi_hit hunc⟩
 
 /-- **Silver's theorem** for Borel equivalence relations on Polish spaces.
 Reduces to the closed case via `borel_to_closed_reduction`, then applies
