@@ -69,18 +69,63 @@ private theorem not_countable_comap_of_hits_all_classes {α : Type u} {Y : Type 
     exact ⟨Quotient.mk _ y, Quotient.sound hy⟩
   exact hsurj.countable
 
+/-! ### GH core: analytic class-condensation points -/
+
+/-- A point x is a GH core point for r if every analytic set containing x
+meets uncountably many r-classes. -/
+def IsGHCorePt {α : Type*} [TopologicalSpace α] [MeasurableSpace α]
+    (r : Setoid α) (x : α) : Prop :=
+  ∀ {s : Set α}, AnalyticSet s → x ∈ s →
+    ¬Set.Countable {q : Quotient r | ∃ y ∈ s, ⟦y⟧ = q}
+
+/-- The GH core: the set of all GH core points. -/
+def ghCore {α : Type*} [TopologicalSpace α] [MeasurableSpace α]
+    (r : Setoid α) : Set α :=
+  {x | IsGHCorePt r x}
+
+/-! ### Step 2: Every class meets the GH core -/
+
+/-- Every r-class of a Borel relation with uncountably many classes meets
+the GH core. Uses the analytic condensation argument: the non-core classes
+form a countable set (covered by countably many "small" analytic sets). -/
+private theorem class_hits_ghCore {α : Type u}
+    [MetricSpace α] [CompleteSpace α] [SecondCountableTopology α]
+    [MeasurableSpace α] [BorelSpace α]
+    (r : Setoid α) (hr : MeasurableSet {p : α × α | r.r p.1 p.2})
+    (hunc : ¬ Countable (Quotient r)) :
+    ∀ x : α, ∃ y ∈ ghCore r, r.r y x := by
+  sorry
+
+/-! ### Step 3: Analytic rectangle separation on the core -/
+
+/-- On the GH core, non-related points can be separated by analytic rectangles
+with no cross-equivalence. Uses `AnalyticSet.measurablySeparable` on the
+r-saturations of analytic neighborhoods. -/
+private theorem core_separates_not_related {α : Type u}
+    [MetricSpace α] [CompleteSpace α] [SecondCountableTopology α]
+    [MeasurableSpace α] [BorelSpace α]
+    (r : Setoid α) (hr : MeasurableSet {p : α × α | r.r p.1 p.2})
+    {x y : α} (hx : x ∈ ghCore r) (hy : y ∈ ghCore r) (hxy : ¬ r.r x y) :
+    ∃ U V : Set α,
+      AnalyticSet U ∧ AnalyticSet V ∧
+      x ∈ U ∧ y ∈ V ∧
+      ∀ u ∈ U, ∀ v ∈ V, ¬ r.r u v := by
+  sorry
+
 /-! ### Gandy-Harrington for a specific relation -/
 
 /-- **Gandy-Harrington for a Borel relation**: Given a Borel equivalence
 relation r on a Polish space with uncountably many classes, there exists a
 Polish Ω with a continuous injective map to α such that:
 1. Every r-class meets the range of i.
-2. The pullback of the complement of the relation graph is open in Ω × Ω
-   (equivalently, the pullback of the relation graph is closed).
+2. The pullback of Eᶜ is open in Ω × Ω.
 
-This is the relation-specific GH construction. The proof requires building
-a refined topology where the specific relation E and Eᶜ have the right
-openness properties on a Polish core. -/
+The proof combines all GH ingredients:
+- `class_hits_ghCore`: every class meets the GH core
+- `core_separates_not_related`: analytic rectangle separation on the core
+- The GH topology on the core + Polish subcore extraction
+
+The sorry encompasses the full GH topology construction. -/
 theorem gandy_harrington_for_relation {α : Type u}
     [MetricSpace α] [CompleteSpace α] [SecondCountableTopology α]
     [MeasurableSpace α] [BorelSpace α]
