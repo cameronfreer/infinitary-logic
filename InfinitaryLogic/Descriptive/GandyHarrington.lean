@@ -83,11 +83,59 @@ def ghCore {α : Type*} [TopologicalSpace α] [MeasurableSpace α]
     (r : Setoid α) : Set α :=
   {x | IsGHCorePt r x}
 
-/-! ### Step 2: Every class meets the GH core -/
+/-! ### GH topologies -/
+
+/-- The Gandy-Harrington topology on the GH core: basic opens are
+preimages of analytic subsets of α under the subtype map. -/
+private def ghTopology {α : Type*} [TopologicalSpace α] [MeasurableSpace α]
+    (r : Setoid α) : TopologicalSpace (ghCore r) :=
+  TopologicalSpace.generateFrom
+    {s : Set (ghCore r) | ∃ A : Set α, AnalyticSet A ∧ s = Subtype.val ⁻¹' A}
+
+/-- The GH product topology on ghCore r × ghCore r: basic opens are preimages
+of analytic subsets of α × α. NOT the product of ghTopology with itself
+(analytic subsets of α × α are not generally products of analytic subsets). -/
+private def ghProductTopology {α : Type*} [TopologicalSpace α] [MeasurableSpace α]
+    (r : Setoid α) : TopologicalSpace (ghCore r × ghCore r) :=
+  TopologicalSpace.generateFrom
+    {s | ∃ A : Set (α × α), AnalyticSet A ∧
+      s = (fun p : ghCore r × ghCore r => ((p.1 : α), (p.2 : α))) ⁻¹' A}
+
+/-! ### Bookkeeping lemmas -/
+
+/-- Each equivalence class restricted to the GH core is GH-open. -/
+private theorem isOpen_class_ghTopology {α : Type u}
+    [TopologicalSpace α] [PolishSpace α] [MeasurableSpace α] [BorelSpace α]
+    (r : Setoid α) (hr : MeasurableSet {p : α × α | r.r p.1 p.2}) (x : α) :
+    @IsOpen (ghCore r) (ghTopology r) (Subtype.val ⁻¹' {y | r.r x y}) :=
+  TopologicalSpace.isOpen_generateFrom_of_mem
+    ⟨{y | r.r x y}, class_analyticSet r hr x, rfl⟩
+
+/-- The subtype map from (ghCore r, ghTopology r) to (α, original) is continuous.
+Opens in α are Borel hence analytic, so their preimages are GH-open. -/
+private theorem continuous_ghTopology_val {α : Type u}
+    [TopologicalSpace α] [PolishSpace α] [MeasurableSpace α] [BorelSpace α]
+    (r : Setoid α) :
+    @Continuous (ghCore r) α (ghTopology r) _ Subtype.val := by
+  rw [continuous_def]
+  intro U hU
+  exact TopologicalSpace.isOpen_generateFrom_of_mem
+    ⟨U, (hU.measurableSet).analyticSet, rfl⟩
+
+/-- Eᶜ is open in the GH product topology. Immediate from definition:
+{p : α × α | ¬ r.r p.1 p.2} is Borel (complement of Borel) hence analytic. -/
+private theorem isOpen_nonrel_ghProduct {α : Type u}
+    [TopologicalSpace α] [PolishSpace α] [MeasurableSpace α] [BorelSpace α]
+    (r : Setoid α) (hr : MeasurableSet {p : α × α | r.r p.1 p.2}) :
+    @IsOpen (ghCore r × ghCore r) (ghProductTopology r)
+      {p | ¬ r.r (p.1 : α) (p.2 : α)} :=
+  TopologicalSpace.isOpen_generateFrom_of_mem
+    ⟨{p : α × α | ¬ r.r p.1 p.2}, hr.compl.analyticSet, rfl⟩
+
+/-! ### Every class meets the GH core -/
 
 /-- Every r-class of a Borel relation with uncountably many classes meets
-the GH core. Uses the analytic condensation argument: the non-core classes
-form a countable set (covered by countably many "small" analytic sets). -/
+the GH core. Uses the analytic condensation argument. -/
 private theorem class_hits_ghCore {α : Type u}
     [MetricSpace α] [CompleteSpace α] [SecondCountableTopology α]
     [MeasurableSpace α] [BorelSpace α]
@@ -96,36 +144,37 @@ private theorem class_hits_ghCore {α : Type u}
     ∀ x : α, ∃ y ∈ ghCore r, r.r y x := by
   sorry
 
-/-! ### Step 3: Analytic rectangle separation on the core -/
+/-! ### GH core package theorem -/
 
-/-- On the GH core, non-related points can be separated by analytic rectangles
-with no cross-equivalence. Uses `AnalyticSet.measurablySeparable` on the
-r-saturations of analytic neighborhoods. -/
-private theorem core_separates_not_related {α : Type u}
+/-- The GH core package: there exists a Polish subspace Ω of the GH core
+(with the GH topology) that is dense and from which the product map to
+(ghCore × ghCore, ghProductTopology) is continuous.
+
+This is the genuine GH content — find a Polish subspace of the
+GH-topologized core that is dense and compatible with the product topology. -/
+private theorem ghCore_package {α : Type u}
     [MetricSpace α] [CompleteSpace α] [SecondCountableTopology α]
     [MeasurableSpace α] [BorelSpace α]
     (r : Setoid α) (hr : MeasurableSet {p : α × α | r.r p.1 p.2})
-    {x y : α} (hx : x ∈ ghCore r) (hy : y ∈ ghCore r) (hxy : ¬ r.r x y) :
-    ∃ U V : Set α,
-      AnalyticSet U ∧ AnalyticSet V ∧
-      x ∈ U ∧ y ∈ V ∧
-      ∀ u ∈ U, ∀ v ∈ V, ¬ r.r u v := by
+    (hunc : ¬ Countable (Quotient r)) :
+    ∃ (Ω : Type u) (_ : MetricSpace Ω) (_ : CompleteSpace Ω)
+      (_ : SecondCountableTopology Ω) (j : Ω → ghCore r),
+      @Continuous _ _ _ (ghTopology r) j ∧
+      Function.Injective j ∧
+      @Dense _ (ghTopology r) (Set.range j) ∧
+      @Continuous (Ω × Ω) (ghCore r × ghCore r)
+        (@instTopologicalSpaceProd Ω Ω _ _)
+        (ghProductTopology r)
+        (fun p : Ω × Ω => (j p.1, j p.2)) := by
   sorry
 
 /-! ### Gandy-Harrington for a specific relation -/
 
-/-- **Gandy-Harrington for a Borel relation**: Given a Borel equivalence
-relation r on a Polish space with uncountably many classes, there exists a
-Polish Ω with a continuous injective map to α such that:
-1. Every r-class meets the range of i.
-2. The pullback of Eᶜ is open in Ω × Ω.
+/-- **Gandy-Harrington for a Borel relation**: Derived from `class_hits_ghCore`
+(every class meets core) and `ghCore_package` (Polish subcore + product continuity).
 
-The proof combines all GH ingredients:
-- `class_hits_ghCore`: every class meets the GH core
-- `core_separates_not_related`: analytic rectangle separation on the core
-- The GH topology on the core + Polish subcore extraction
-
-The sorry encompasses the full GH topology construction. -/
+Class-hitting uses density of Ω in the GH topology + class GH-openness.
+Openness of Eᶜ pullback uses `isOpen_nonrel_ghProduct` + product continuity. -/
 theorem gandy_harrington_for_relation {α : Type u}
     [MetricSpace α] [CompleteSpace α] [SecondCountableTopology α]
     [MeasurableSpace α] [BorelSpace α]
@@ -137,7 +186,19 @@ theorem gandy_harrington_for_relation {α : Type u}
       (∀ x : α, ∃ y : Ω, r.r (i y) x) ∧
       IsOpen ((fun p : Ω × Ω => ((i p.1), (i p.2))) ⁻¹'
         {p : α × α | ¬ r.r p.1 p.2}) := by
-  sorry
+  obtain ⟨Ω, instM, instC, instS, j, hj_cont, hj_inj, hj_dense, hj_prod⟩ :=
+    ghCore_package r hr hunc
+  let i : Ω → α := fun z => (j z : α)
+  refine ⟨Ω, instM, instC, instS, i, ?_, ?_, ?_, ?_⟩
+  · -- Continuity: j is GH-continuous, Subtype.val is GH→original continuous
+    exact @Continuous.comp Ω (ghCore r) α _ (ghTopology r) _
+      _ _ (continuous_ghTopology_val r) hj_cont
+  · -- Injectivity: j is injective, Subtype.val is injective
+    exact Subtype.val_injective.comp hj_inj
+  · -- Class-hitting
+    sorry
+  · -- Openness of Eᶜ pullback
+    sorry
 
 /-! ### GH core existence (derived from relation-specific GH) -/
 
