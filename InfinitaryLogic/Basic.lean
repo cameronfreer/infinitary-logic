@@ -46,6 +46,7 @@ import InfinitaryLogic.ModelTheory.LowenheimSkolem
 import InfinitaryLogic.ModelTheory.Hanf
 import InfinitaryLogic.ModelTheory.Indiscernible
 import InfinitaryLogic.ModelTheory.EMTemplate
+import InfinitaryLogic.ModelTheory.EMRealization
 import InfinitaryLogic.ModelTheory.CountingModels
 
 -- Admissible sets and Barwise

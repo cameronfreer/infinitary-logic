@@ -1,0 +1,226 @@
+/-
+Copyright (c) 2026 Cameron Freer. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Cameron Freer
+-/
+import InfinitaryLogic.ModelTheory.EMTemplate
+import InfinitaryLogic.ModelExistence.HenkinConstruction
+import Mathlib.Data.Finset.Sort
+
+/-!
+# Template-to-`L[[J]]`-theory bridge for Lω₁ω
+
+For each Lω₁ω template `T : Lomega1omegaTemplate L` and each linearly ordered
+index type `J`, this file builds the set of `L[[J]]`-sentences whose models are
+exactly the `L[[J]]`-structures whose constants realize `T`. The bridge
+consists of:
+
+- `templateSentence φ t`: the `L[[J]]`-sentence "`φ` holds on the constants
+  indexed by the increasing tuple `t : Fin n ↪o J`".
+- `realize_templateSentence`: the semantic bridge — realizing
+  `templateSentence φ t` in an `L[[J]]`-expansion of an `L`-structure `M`
+  (built from a function `σ : J → M`) is equivalent to realizing the
+  underlying Lω₁ω formula `φ` on the tuple `σ ∘ t`.
+- `templateTheory T J`: the set of `L[[J]]`-sentences obtained by including,
+  for each `(n, φ, t)`, either `templateSentence φ t` (if `T.truth φ`) or its
+  negation (if `¬ T.truth φ`).
+- `IsLomega1omegaIndiscernible.templateTheory_finitelySatisfiable`: when the
+  template comes from an indiscernible sequence indexed by an infinite linear
+  order, every finite subset of the resulting template theory is satisfiable
+  in the source model.
+
+This file does **not** turn the template into a single model — that step is
+blocked both by uncountable `J` (the language `L[[J]]` has uncountably many
+constant symbols) and, even for countable `J`, by the fact that `templateTheory T J`
+inherits the continuum size of the Lω₁ω formula syntax. Any future
+model-realizing tranche will need to restrict to a countable sub-theory.
+-/
+
+universe u v w
+
+namespace FirstOrder.Language
+
+variable {L : Language.{u, v}}
+
+/-! ### Section 1: a `Fin n` order-embedding into any infinite linear order -/
+
+/-- Any infinite linear order admits a strictly-increasing tuple of every
+finite length. Constructed by sorting `n` distinct elements obtained from
+`Infinite.natEmbedding`. -/
+theorem Fin.exists_orderEmbedding_of_infinite
+    {I : Type*} [LinearOrder I] [Infinite I] (n : ℕ) :
+    Nonempty (Fin n ↪o I) := by
+  classical
+  let f : ℕ ↪ I := Infinite.natEmbedding I
+  let s : Finset I := (Finset.range n).image f
+  have hcard : s.card = n := by
+    rw [Finset.card_image_of_injective _ f.injective, Finset.card_range]
+  exact ⟨s.orderEmbOfFin hcard⟩
+
+/-! ### Section 2: `templateSentence` — the L[[J]]-sentence "φ on the constants of `t`" -/
+
+namespace Lomega1omegaTemplate
+
+variable {J : Type u} [LinearOrder J]
+
+/-- The `L[[J]]`-sentence expressing "`φ` holds when its `n` bound variables are
+interpreted as the constants `c_{t 0}, …, c_{t (n-1)}`". Built by lifting `φ`
+to `L[[J]]`, opening its bound variables, and substituting them with the
+closed terms for the constants `t 0, …, t (n-1)`. -/
+def templateSentence
+    {n : ℕ} (φ : L.BoundedFormulaω Empty n) (t : Fin n ↪o J) :
+    L[[J]].Sentenceω :=
+  let φ' : L[[J]].BoundedFormulaω Empty n := φ.mapLanguage (L.lhomWithConstants J)
+  let φ'' : L[[J]].Formulaω (Fin n) := φ'.openBounds
+  let tf : Fin n → L[[J]].Term Empty :=
+    fun i => Term.func (Sum.inr (t i) : L[[J]].Functions 0) Fin.elim0
+  φ''.subst tf
+
+end Lomega1omegaTemplate
+
+/-! ### Section 3: `realize_templateSentence` — semantic bridge to `φ.Realize` -/
+
+/-- Realizing `templateSentence φ t` in an `L[[J]]`-expansion of `M` (built from
+a function `σ : J → M` via `constantsOn.structure σ`) is equivalent to realizing
+`φ` itself on the tuple `σ ∘ t : Fin n → M`. The proof composes
+`realize_subst`, `realize_openBounds`, and `realize_mapLanguage`. -/
+theorem realize_templateSentence
+    {M : Type*} [L.Structure M]
+    {J : Type u} [LinearOrder J] (σ : J → M)
+    {n : ℕ} (φ : L.BoundedFormulaω Empty n) (t : Fin n ↪o J) :
+    letI : (constantsOn J).Structure M := constantsOn.structure σ
+    Sentenceω.Realize (Lomega1omegaTemplate.templateSentence φ t) M ↔
+      φ.Realize (Empty.elim : Empty → M) (σ ∘ t) := by
+  letI : (constantsOn J).Structure M := constantsOn.structure σ
+  -- Unfold templateSentence and Sentenceω.Realize
+  show BoundedFormulaω.Realize _ Empty.elim Fin.elim0 ↔ _
+  rw [Lomega1omegaTemplate.templateSentence, BoundedFormulaω.realize_subst]
+  -- The substituted function is definitionally `σ ∘ t` because each constant
+  -- term `Sum.inr (t i)` evaluates to `σ (t i)` via `constantsOn.structure σ`.
+  -- Now we need to dispose of the `openBounds` and `mapLanguage` layers.
+  -- After realize_subst, the goal is:
+  --   BoundedFormulaω.Realize ((φ.mapLanguage _).openBounds) (σ ∘ t) Fin.elim0 ↔
+  --     φ.Realize Empty.elim (σ ∘ t)
+  -- which equals (definitionally) Formulaω.Realize ((φ.mapLanguage _).openBounds) (σ ∘ t).
+  exact (realize_openBounds _ _).trans
+        (BoundedFormulaω.realize_mapLanguage _ _ _ _)
+
+/-! ### Section 4: `templateTheory` — the L[[J]]-theory pinning down the template -/
+
+namespace Lomega1omegaTemplate
+
+variable {J : Type u} [LinearOrder J]
+
+/-- The `L[[J]]`-theory whose models are exactly the `L[[J]]`-structures whose
+constants realize the template `T`. For each formula `φ` and each increasing
+tuple `t : Fin n ↪o J`, the theory contains either `templateSentence φ t` (if
+`T.truth φ`) or its negation (if `¬ T.truth φ`). Both directions are needed:
+without the negative sentences, a model could realize formulas the template
+declares false. -/
+def templateTheory (T : Lomega1omegaTemplate L) (J : Type u) [LinearOrder J] :
+    Set L[[J]].Sentenceω :=
+  { σ : L[[J]].Sentenceω |
+      ∃ (n : ℕ) (φ : L.BoundedFormulaω Empty n) (t : Fin n ↪o J),
+        (T.truth φ ∧ σ = templateSentence φ t) ∨
+        (¬ T.truth φ ∧ σ = (templateSentence φ t).not) }
+
+end Lomega1omegaTemplate
+
+/-! ### Section 5: finite satisfiability of `templateTheory` in the source model -/
+
+/-- If `h : IsLomega1omegaIndiscernible a` for `a : I → M` over an infinite linear
+order `I`, then every finite subset of `templateTheory h.template J` is
+satisfiable in the source model `M`, expanded to an `L[[J]]`-structure via an
+appropriate interpretation `σ : J → M`. The interpretation is built by sorting
+the finitely many J-indices appearing in the finite fragment, embedding them
+into `I` via `[Infinite I]`, and pulling them through `a`. -/
+theorem IsLomega1omegaIndiscernible.templateTheory_finitelySatisfiable
+    {I : Type w} [LinearOrder I] [Infinite I]
+    {M : Type*} [L.Structure M] {a : I → M}
+    (h : IsLomega1omegaIndiscernible (L := L) a)
+    {J : Type u} [LinearOrder J]
+    {F : Set L[[J]].Sentenceω}
+    (hFin : F.Finite) (hSub : F ⊆ h.template.templateTheory J) :
+    ∃ σ : J → M,
+      letI : (constantsOn J).Structure M := constantsOn.structure σ
+      ∀ τ ∈ F, Sentenceω.Realize τ M := by
+  classical
+  -- Step 1: pick a base point i₀ ∈ I, m₀ := a i₀ ∈ M
+  haveI : Nonempty I := inferInstance
+  let i₀ : I := Classical.arbitrary I
+  let m₀ : M := a i₀
+  -- Step 2: extract witnesses for each τ ∈ F
+  -- Each τ ∈ F is in templateTheory, giving (n_τ, φ_τ, t_τ) and a sign disjunction.
+  have witness : ∀ τ : F, ∃ (n : ℕ) (φ : L.BoundedFormulaω Empty n) (t : Fin n ↪o J),
+      (h.template.truth φ ∧ (τ : L[[J]].Sentenceω) = Lomega1omegaTemplate.templateSentence φ t) ∨
+      (¬ h.template.truth φ ∧
+        (τ : L[[J]].Sentenceω) = (Lomega1omegaTemplate.templateSentence φ t).not) :=
+    fun τ => hSub τ.property
+  choose nOf phiOf tOf hOf using witness
+  -- Step 3: collect mentioned J-indices into a finset and sort
+  haveI : Fintype ↥F := hFin.fintype
+  let S : Finset J := (Finset.univ : Finset ↥F).biUnion
+    (fun τ => (Finset.univ : Finset (Fin (nOf τ))).image (fun i => tOf τ i))
+  let k : ℕ := S.card
+  let orderIso : Fin k ≃o ↥S := S.orderIsoOfFin rfl
+  obtain ⟨f⟩ := Fin.exists_orderEmbedding_of_infinite (I := I) k
+  -- Step 4: define σ : J → M, piecewise on membership in S
+  let σ : J → M := fun j =>
+    if hj : j ∈ S then a (f (orderIso.symm ⟨j, hj⟩)) else m₀
+  refine ⟨σ, ?_⟩
+  letI : (constantsOn J).Structure M := constantsOn.structure σ
+  -- Step 5: verify each τ ∈ F realizes
+  -- Helper: every value of every t_τ lies in S
+  have htS : ∀ (τ : ↥F) (i : Fin (nOf τ)), tOf τ i ∈ S := by
+    intro τ i
+    exact Finset.mem_biUnion.mpr ⟨τ, Finset.mem_univ _,
+      Finset.mem_image.mpr ⟨i, Finset.mem_univ _, rfl⟩⟩
+  -- Helper: for each τ, the factorization t'_τ : Fin (nOf τ) → Fin k
+  let t'Of : ∀ (τ : ↥F), Fin (nOf τ) → Fin k :=
+    fun τ i => orderIso.symm ⟨tOf τ i, htS τ i⟩
+  -- t'Of τ is strictly monotone
+  have t'Of_strictMono : ∀ (τ : ↥F), StrictMono (t'Of τ) := by
+    intro τ i j hij
+    have h1 : (tOf τ i : J) < tOf τ j := (tOf τ).strictMono hij
+    show orderIso.symm ⟨tOf τ i, htS τ i⟩ < orderIso.symm ⟨tOf τ j, htS τ j⟩
+    rw [orderIso.symm.lt_iff_lt]
+    exact h1
+  -- f ∘ t'Of τ : Fin (nOf τ) → I is strictly monotone
+  have ft'_strictMono : ∀ (τ : ↥F), StrictMono (fun i => f (t'Of τ i)) :=
+    fun τ => f.strictMono.comp (t'Of_strictMono τ)
+  -- σ ∘ tOf τ = a ∘ (f ∘ t'Of τ) as functions Fin (nOf τ) → M
+  have sigma_eq : ∀ (τ : ↥F),
+      (σ ∘ (fun i => tOf τ i) : Fin (nOf τ) → M) =
+      (fun i => a (f (t'Of τ i))) := by
+    intro τ
+    funext i
+    show σ (tOf τ i) = a (f (t'Of τ i))
+    show (if hj : tOf τ i ∈ S then a (f (orderIso.symm ⟨tOf τ i, hj⟩)) else m₀) =
+         a (f (orderIso.symm ⟨tOf τ i, htS τ i⟩))
+    rw [dif_pos (htS τ i)]
+  -- Now verify each τ ∈ F
+  intro τ hτ
+  let τ' : ↥F := ⟨τ, hτ⟩
+  show Sentenceω.Realize (↑τ' : L[[J]].Sentenceω) M
+  rcases hOf τ' with ⟨hpos, heq⟩ | ⟨hneg, heq⟩
+  · -- positive case: τ = templateSentence (phiOf τ') (tOf τ')
+    rw [heq, realize_templateSentence σ (phiOf τ') (tOf τ')]
+    -- Goal: (phiOf τ').Realize Empty.elim (σ ∘ tOf τ')
+    rw [show (σ ∘ ⇑(tOf τ') : Fin (nOf τ') → M) = (fun i => a (f (t'Of τ' i))) from
+        sigma_eq τ']
+    -- Goal: (phiOf τ').Realize Empty.elim (fun i => a (f (t'Of τ' i)))
+    -- which equals (a ∘ (f ∘ t'Of τ'))
+    show (phiOf τ').Realize (Empty.elim : Empty → M) (a ∘ (fun i => f (t'Of τ' i)))
+    exact (h.template_truth_iff (phiOf τ') (ft'_strictMono τ')).mp hpos
+  · -- negative case: τ = (templateSentence (phiOf τ') (tOf τ')).not
+    rw [heq]
+    show ¬ Sentenceω.Realize (Lomega1omegaTemplate.templateSentence (phiOf τ') (tOf τ')) M
+    rw [realize_templateSentence σ (phiOf τ') (tOf τ')]
+    rw [show (σ ∘ ⇑(tOf τ') : Fin (nOf τ') → M) = (fun i => a (f (t'Of τ' i))) from
+        sigma_eq τ']
+    show ¬ (phiOf τ').Realize (Empty.elim : Empty → M) (a ∘ (fun i => f (t'Of τ' i)))
+    intro hrealize
+    apply hneg
+    exact (h.template_truth_iff (phiOf τ') (ft'_strictMono τ')).mpr hrealize
+
+end FirstOrder.Language

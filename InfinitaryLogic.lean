@@ -60,6 +60,7 @@ The unconditional API is recovered via `countableRefinementHypothesis` (proved i
 - `ModelTheory/Hanf.lean`: Hanf numbers and Morley-Hanf bound
 - `ModelTheory/Indiscernible.lean`: Lω₁ω-indiscernible sequences API (restrict, reindex, pair/unary invariance)
 - `ModelTheory/EMTemplate.lean`: Ehrenfeucht–Mostowski templates — bridge between indiscernible sequences and EM stretching
+- `ModelTheory/EMRealization.lean`: template → L[[J]]-theory bridge; finite satisfiability of `templateTheory h.template J` in the source indiscernible
 - `ModelTheory/CountingModels.lean`: Scott rank and model counting
 - `ModelTheory/CountingCountable.lean`: Counting theorem for all countable models
 - `ModelTheory/MorleyCounting.lean`: Morley's counting theorem (≤ ℵ₁ or 2^ℵ₀)
