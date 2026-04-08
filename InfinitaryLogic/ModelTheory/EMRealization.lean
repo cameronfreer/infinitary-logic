@@ -124,6 +124,59 @@ def templateTheory (T : Lomega1omegaTemplate L) (J : Type u) [LinearOrder J] :
         (T.truth φ ∧ σ = templateSentence φ t) ∨
         (¬ T.truth φ ∧ σ = (templateSentence φ t).not) }
 
+/-- The restricted template theory: like `templateTheory`, but only includes
+sentences for formulas whose `(arity, φ)`-pair lies in the family `Γ`. When
+`Γ` and `J` are both countable, the resulting theory is countable (see
+`templateTheoryOn_countable`), making it a candidate input to
+`model_existence` — which the full `templateTheory` can never be. -/
+def templateTheoryOn
+    (T : Lomega1omegaTemplate L)
+    (Γ : Set (Σ n, L.BoundedFormulaω Empty n))
+    (J : Type u) [LinearOrder J] :
+    Set L[[J]].Sentenceω :=
+  { σ : L[[J]].Sentenceω |
+      ∃ (n : ℕ) (φ : L.BoundedFormulaω Empty n) (t : Fin n ↪o J),
+        ⟨n, φ⟩ ∈ Γ ∧
+        ((T.truth φ ∧ σ = templateSentence φ t) ∨
+         (¬ T.truth φ ∧ σ = (templateSentence φ t).not)) }
+
+/-- Monotonicity: the restricted template theory is a subset of the full
+template theory. -/
+theorem templateTheoryOn_subset_templateTheory
+    (T : Lomega1omegaTemplate L)
+    (Γ : Set (Σ n, L.BoundedFormulaω Empty n))
+    (J : Type u) [LinearOrder J] :
+    T.templateTheoryOn Γ J ⊆ T.templateTheory J := by
+  rintro σ ⟨n, φ, t, _hΓ, hcase⟩
+  exact ⟨n, φ, t, hcase⟩
+
+/-- When the family `Γ` and the index type `J` are both countable, the
+restricted template theory is countable. This is the point of `templateTheoryOn`:
+the full `templateTheory T J` is always continuum-sized (Lω₁ω formulas form a
+continuum), but the restricted theory can be countable and thus a candidate
+input to `model_existence`. -/
+theorem templateTheoryOn_countable
+    {T : Lomega1omegaTemplate L}
+    {Γ : Set (Σ n, L.BoundedFormulaω Empty n)} (hΓ : Γ.Countable)
+    {J : Type u} [LinearOrder J] [Countable J] :
+    (T.templateTheoryOn Γ J).Countable := by
+  classical
+  haveI : Countable ↥Γ := hΓ.to_subtype
+  haveI : ∀ n : ℕ, Countable (Fin n ↪o J) := fun n =>
+    Function.Injective.countable (f := fun e : Fin n ↪o J => (⇑e : Fin n → J))
+      (fun _ _ h => DFunLike.coe_injective h)
+  haveI : Countable (Σ x : ↥Γ, Fin x.val.1 ↪o J) := inferInstance
+  refine (Set.countable_range (fun p : Σ x : ↥Γ, Fin x.val.1 ↪o J =>
+    if T.truth p.1.val.2 then templateSentence p.1.val.2 p.2
+    else (templateSentence p.1.val.2 p.2).not)).mono ?_
+  rintro σ ⟨n, φ, t, hΓφ, hcase⟩
+  refine ⟨⟨⟨⟨n, φ⟩, hΓφ⟩, t⟩, ?_⟩
+  rcases hcase with ⟨hpos, heq⟩ | ⟨hneg, heq⟩
+  · simp only [if_pos hpos]
+    exact heq.symm
+  · simp only [if_neg hneg]
+    exact heq.symm
+
 end Lomega1omegaTemplate
 
 /-! ### Section 5: finite satisfiability of `templateTheory` in the source model -/
@@ -222,5 +275,25 @@ theorem IsLomega1omegaIndiscernible.templateTheory_finitelySatisfiable
     intro hrealize
     apply hneg
     exact (h.template_truth_iff (phiOf τ') (ft'_strictMono τ')).mpr hrealize
+
+/-- Restricted version of `templateTheory_finitelySatisfiable`: every finite
+subset of `h.template.templateTheoryOn Γ J` is satisfiable in the source model.
+This is a direct corollary via `templateTheoryOn_subset_templateTheory`; the
+point of stating it separately is that this is the form a downstream
+model-existence call will actually invoke (since only the restricted theory
+can ever be countable). -/
+theorem IsLomega1omegaIndiscernible.templateTheoryOn_finitelySatisfiable
+    {I : Type w} [LinearOrder I] [Infinite I]
+    {M : Type*} [L.Structure M] {a : I → M}
+    (h : IsLomega1omegaIndiscernible (L := L) a)
+    {J : Type u} [LinearOrder J]
+    (Γ : Set (Σ n, L.BoundedFormulaω Empty n))
+    {F : Set L[[J]].Sentenceω}
+    (hFin : F.Finite) (hSub : F ⊆ h.template.templateTheoryOn Γ J) :
+    ∃ σ : J → M,
+      letI : (constantsOn J).Structure M := constantsOn.structure σ
+      ∀ τ ∈ F, Sentenceω.Realize τ M :=
+  h.templateTheory_finitelySatisfiable hFin
+    (hSub.trans (Lomega1omegaTemplate.templateTheoryOn_subset_templateTheory _ Γ J))
 
 end FirstOrder.Language
