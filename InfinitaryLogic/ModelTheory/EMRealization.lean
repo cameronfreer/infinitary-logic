@@ -58,6 +58,16 @@ theorem Fin.exists_orderEmbedding_of_infinite
     rw [Finset.card_image_of_injective _ f.injective, Finset.card_range]
   exact ⟨s.orderEmbOfFin hcard⟩
 
+/-- `Fin n ↪o J` is countable whenever `J` is countable. The injection from
+`Fin n ↪o J` to `Fin n → J` via `DFunLike.coe` is injective (by
+`DFunLike.coe_injective`), and `Fin n → J` is countable when `J` is countable
+because `Fin n` is finite. -/
+theorem Fin.countable_orderEmbedding (n : ℕ) {J : Type*} [LinearOrder J]
+    [Countable J] : Countable (Fin n ↪o J) :=
+  Function.Injective.countable
+    (f := fun e : Fin n ↪o J => (⇑e : Fin n → J))
+    (fun _ _ h => DFunLike.coe_injective h)
+
 /-! ### Section 2: `templateSentence` — the L[[J]]-sentence "φ on the constants of `t`" -/
 
 namespace Lomega1omegaTemplate
@@ -151,6 +161,16 @@ theorem templateTheoryOn_subset_templateTheory
   rintro σ ⟨n, φ, t, _hΓ, hcase⟩
   exact ⟨n, φ, t, hcase⟩
 
+/-- Monotonicity of `templateTheoryOn` in the formula family `Γ`: enlarging
+`Γ` can only enlarge the restricted template theory. -/
+theorem templateTheoryOn_mono
+    (T : Lomega1omegaTemplate L)
+    {Γ Γ' : Set (Σ n, L.BoundedFormulaω Empty n)} (hΓ : Γ ⊆ Γ')
+    (J : Type u) [LinearOrder J] :
+    T.templateTheoryOn Γ J ⊆ T.templateTheoryOn Γ' J := by
+  rintro σ ⟨n, φ, t, hΓφ, hcase⟩
+  exact ⟨n, φ, t, hΓ hΓφ, hcase⟩
+
 /-- When the family `Γ` and the index type `J` are both countable, the
 restricted template theory is countable. This is the point of `templateTheoryOn`:
 the full `templateTheory T J` is always continuum-sized (Lω₁ω formulas form a
@@ -163,9 +183,7 @@ theorem templateTheoryOn_countable
     (T.templateTheoryOn Γ J).Countable := by
   classical
   haveI : Countable ↥Γ := hΓ.to_subtype
-  haveI : ∀ n : ℕ, Countable (Fin n ↪o J) := fun n =>
-    Function.Injective.countable (f := fun e : Fin n ↪o J => (⇑e : Fin n → J))
-      (fun _ _ h => DFunLike.coe_injective h)
+  haveI : ∀ n : ℕ, Countable (Fin n ↪o J) := fun n => Fin.countable_orderEmbedding n
   haveI : Countable (Σ x : ↥Γ, Fin x.val.1 ↪o J) := inferInstance
   refine (Set.countable_range (fun p : Σ x : ↥Γ, Fin x.val.1 ↪o J =>
     if T.truth p.1.val.2 then templateSentence p.1.val.2 p.2
