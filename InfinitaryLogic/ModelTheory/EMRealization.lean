@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.ModelTheory.EMTemplate
 import InfinitaryLogic.ModelExistence.HenkinConstruction
+import InfinitaryLogic.Admissible.Compactness
 import Mathlib.Data.Finset.Sort
 
 /-!
@@ -295,5 +296,63 @@ theorem IsLomega1omegaIndiscernible.templateTheoryOn_finitelySatisfiable
       ∀ τ ∈ F, Sentenceω.Realize τ M :=
   h.templateTheory_finitelySatisfiable hFin
     (hSub.trans (Lomega1omegaTemplate.templateTheoryOn_subset_templateTheory _ Γ J))
+
+/-! ### Section 6: model of `templateTheoryOn` via Barwise compactness -/
+
+/-- Abstract Barwise wrapper for the restricted template theory. Given an
+admissible fragment `A` of `L[[J]]` containing `templateTheoryOn T Γ J`, and a
+finite-satisfiability hypothesis on the theory, `barwise_compactness` produces
+a single model of the whole restricted theory.
+
+This theorem leaves both the construction of `A` and the proof of the
+finite-satisfiability hypothesis to the caller. The intended use is to combine
+it with `IsLomega1omegaIndiscernible.templateTheoryOn_finitelySatisfiable` (for
+the second hypothesis) and a separate admissible-fragment construction (for the
+first); the indiscernible-source specialization
+`IsLomega1omegaIndiscernible.templateTheoryOn_model_of_fragment` below packages
+this combination.
+
+**Universe note**: `barwise_compactness` produces a model in `Type` (= `Type 0`),
+so the resulting model lives in `Type 0` regardless of where the caller's data
+lives. -/
+theorem Lomega1omegaTemplate.templateTheoryOn_model_of_fragment
+    (T : Lomega1omegaTemplate L)
+    (Γ : Set (Σ n, L.BoundedFormulaω Empty n))
+    {J : Type u} [LinearOrder J]
+    (A : AdmissibleFragment L[[J]])
+    (hSub : T.templateTheoryOn Γ J ⊆ A.formulas)
+    (hfin : ∀ F : Set L[[J]].Sentenceω, F.Finite → F ⊆ T.templateTheoryOn Γ J →
+      ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model F N) :
+    ∃ (N : Type) (_ : L[[J]].Structure N),
+      Theoryω.Model (T.templateTheoryOn Γ J) N := by
+  apply barwise_compactness A hSub
+  rintro F ⟨_, hFfinite⟩ hFsub
+  exact hfin F hFfinite hFsub
+
+/-- Specialization of `templateTheoryOn_model_of_fragment` to a template
+arising from an indiscernible sequence. Combines the abstract Barwise wrapper
+with `templateTheoryOn_finitelySatisfiable` to produce a model of
+`h.template.templateTheoryOn Γ J` from just an admissible fragment containing
+the restricted theory.
+
+**Universe constraint**: the source model `M` must live in `Type` (= `Type 0`)
+because `barwise_compactness` produces a `Type 0` model and we use the source
+`M` as the witness for each finite-sat call. The same Type-0 constraint applies
+to the conclusion. -/
+theorem IsLomega1omegaIndiscernible.templateTheoryOn_model_of_fragment
+    {I : Type w} [LinearOrder I] [Infinite I]
+    {M : Type} [L.Structure M] {a : I → M}
+    (h : IsLomega1omegaIndiscernible (L := L) a)
+    {J : Type u} [LinearOrder J]
+    (Γ : Set (Σ n, L.BoundedFormulaω Empty n))
+    (A : AdmissibleFragment L[[J]])
+    (hSub : h.template.templateTheoryOn Γ J ⊆ A.formulas) :
+    ∃ (N : Type) (_ : L[[J]].Structure N),
+      Theoryω.Model (h.template.templateTheoryOn Γ J) N := by
+  apply h.template.templateTheoryOn_model_of_fragment Γ A hSub
+  intro F hFfinite hFsub
+  obtain ⟨σ, hσ⟩ := h.templateTheoryOn_finitelySatisfiable Γ hFfinite hFsub
+  letI : (constantsOn J).Structure M := constantsOn.structure σ
+  exact ⟨M, inferInstance, hσ⟩
 
 end FirstOrder.Language
