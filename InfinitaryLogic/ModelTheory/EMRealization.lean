@@ -6,6 +6,7 @@ Authors: Cameron Freer
 import InfinitaryLogic.ModelTheory.EMTemplate
 import InfinitaryLogic.ModelExistence.HenkinConstruction
 import InfinitaryLogic.Admissible.Compactness
+import InfinitaryLogic.Admissible.ConsistencyBridge
 import Mathlib.Data.Finset.Sort
 
 /-!
@@ -418,6 +419,21 @@ theorem templateTheoryOfSeq_model_of_fragment
       Theoryω.Model (T.templateTheoryOfSeq s J) N :=
   T.templateTheoryOn_model_of_fragment (Set.range s) A hSub hfin
 
+/-- Full-Barwise-fragment specialization of `templateTheoryOfSeq_model_of_fragment`:
+when the caller supplies a `FullBarwiseFragment L[[J]]` (which contains every
+`L[[J]]`-sentence by `complete`), the containment hypothesis disappears entirely.
+Only the finite-satisfiability hypothesis remains. -/
+theorem templateTheoryOfSeq_model_of_fullFragment
+    (T : Lomega1omegaTemplate L)
+    (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
+    (B : FullBarwiseFragment L[[J]])
+    (hfin : ∀ F : Set L[[J]].Sentenceω, F.Finite → F ⊆ T.templateTheoryOfSeq s J →
+      ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model F N) :
+    ∃ (N : Type) (_ : L[[J]].Structure N),
+      Theoryω.Model (T.templateTheoryOfSeq s J) N :=
+  T.templateTheoryOfSeq_model_of_fragment s B.toAdmissibleFragment
+    (fun σ _ => B.complete σ) hfin
+
 end Lomega1omegaTemplate
 
 /-- Sequence-indexed finite satisfiability in the source indiscernible model.
@@ -450,5 +466,34 @@ theorem IsLomega1omegaIndiscernible.templateTheoryOfSeq_model_of_fragment
     ∃ (N : Type) (_ : L[[J]].Structure N),
       Theoryω.Model (h.template.templateTheoryOfSeq s J) N :=
   h.templateTheoryOn_model_of_fragment (Set.range s) A hSub
+
+/-- The **first caller-ready EM-realization theorem**. Given an indiscernible
+sequence `a : I → M` over an infinite linear order `I` with source model
+`M : Type` (Type 0), a linear order `J`, a sequence `s` of formulas, and a
+full Barwise fragment of `L[[J]]`, produces a model of the sequence-indexed
+restricted template theory. Both the containment hypothesis (absorbed by
+`B.complete`) and the finite-satisfiability hypothesis (derived from the
+indiscernible source via `templateTheoryOfSeq_finitelySatisfiable`) are
+eliminated, leaving only `B` as caller input.
+
+This is the practical endpoint of the EM-template → L[[J]]-theory chain
+under currently-available repo infrastructure: a single-argument "plug in a
+full Barwise fragment, get a realizing model" theorem. The next substantial
+step — actually *constructing* a `FullBarwiseFragment L[[J]]` for a given
+countable `J` — is deferred to a separate admissible-fragment project. -/
+theorem IsLomega1omegaIndiscernible.templateTheoryOfSeq_model_of_fullFragment
+    {I : Type w} [LinearOrder I] [Infinite I]
+    {M : Type} [L.Structure M] {a : I → M}
+    (h : IsLomega1omegaIndiscernible (L := L) a)
+    {J : Type u} [LinearOrder J]
+    (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
+    (B : FullBarwiseFragment L[[J]]) :
+    ∃ (N : Type) (_ : L[[J]].Structure N),
+      Theoryω.Model (h.template.templateTheoryOfSeq s J) N := by
+  apply h.template.templateTheoryOfSeq_model_of_fullFragment s B
+  intro F hFfinite hFsub
+  obtain ⟨σ, hσ⟩ := h.templateTheoryOfSeq_finitelySatisfiable s hFfinite hFsub
+  letI : (constantsOn J).Structure M := constantsOn.structure σ
+  exact ⟨M, inferInstance, hσ⟩
 
 end FirstOrder.Language
