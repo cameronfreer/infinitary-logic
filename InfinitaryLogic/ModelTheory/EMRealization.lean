@@ -373,4 +373,82 @@ theorem IsLomega1omegaIndiscernible.templateTheoryOn_model_of_fragment
   letI : (constantsOn J).Structure M := constantsOn.structure σ
   exact ⟨M, inferInstance, hσ⟩
 
+/-! ### Section 7: sequence-indexed wrappers
+
+Convenience wrappers over `templateTheoryOn` specialized to a family given as a
+sequence `s : ℕ → Σ n, L.BoundedFormulaω Empty n`. The payoff is ergonomic: the
+countability of `Set.range s` is automatic, so `templateTheoryOfSeq_countable`
+drops the `Γ.Countable` hypothesis that `templateTheoryOn_countable` requires. -/
+
+namespace Lomega1omegaTemplate
+
+variable {J : Type u} [LinearOrder J]
+
+/-- Sequence-based restricted template theory: same content as
+`templateTheoryOn T (Set.range s) J`, with a dedicated name for callers that
+want to hand a sequence rather than a set. -/
+def templateTheoryOfSeq
+    (T : Lomega1omegaTemplate L)
+    (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
+    (J : Type u) [LinearOrder J] :
+    Set L[[J]].Sentenceω :=
+  T.templateTheoryOn (Set.range s) J
+
+/-- `templateTheoryOfSeq` is countable whenever `J` is countable. Follows from
+`templateTheoryOn_countable` via `Set.countable_range`; the countability of the
+family comes for free from the sequence structure. -/
+theorem templateTheoryOfSeq_countable
+    {T : Lomega1omegaTemplate L}
+    (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
+    [Countable J] :
+    (T.templateTheoryOfSeq s J).Countable :=
+  templateTheoryOn_countable (Set.countable_range s)
+
+/-- Abstract Barwise wrapper for `templateTheoryOfSeq`. Direct delegation to
+`templateTheoryOn_model_of_fragment`; callers that have a sequence can avoid
+the `Set.range` boilerplate. -/
+theorem templateTheoryOfSeq_model_of_fragment
+    (T : Lomega1omegaTemplate L)
+    (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
+    (A : AdmissibleFragment L[[J]])
+    (hSub : T.templateTheoryOfSeq s J ⊆ A.formulas)
+    (hfin : ∀ F : Set L[[J]].Sentenceω, F.Finite → F ⊆ T.templateTheoryOfSeq s J →
+      ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model F N) :
+    ∃ (N : Type) (_ : L[[J]].Structure N),
+      Theoryω.Model (T.templateTheoryOfSeq s J) N :=
+  T.templateTheoryOn_model_of_fragment (Set.range s) A hSub hfin
+
+end Lomega1omegaTemplate
+
+/-- Sequence-indexed finite satisfiability in the source indiscernible model.
+Direct delegation to `templateTheoryOn_finitelySatisfiable`. -/
+theorem IsLomega1omegaIndiscernible.templateTheoryOfSeq_finitelySatisfiable
+    {I : Type w} [LinearOrder I] [Infinite I]
+    {M : Type*} [L.Structure M] {a : I → M}
+    (h : IsLomega1omegaIndiscernible (L := L) a)
+    {J : Type u} [LinearOrder J]
+    (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
+    {F : Set L[[J]].Sentenceω}
+    (hFin : F.Finite) (hSub : F ⊆ h.template.templateTheoryOfSeq s J) :
+    ∃ σ : J → M,
+      letI : (constantsOn J).Structure M := constantsOn.structure σ
+      ∀ τ ∈ F, Sentenceω.Realize τ M :=
+  h.templateTheoryOn_finitelySatisfiable (Set.range s) hFin hSub
+
+/-- Sequence-indexed specialization of `templateTheoryOn_model_of_fragment` to a
+template arising from an indiscernible sequence. Combines the abstract Barwise
+wrapper with `templateTheoryOfSeq_finitelySatisfiable`. Same Type-0 universe
+constraint on the source model `M` as the set-based specialization. -/
+theorem IsLomega1omegaIndiscernible.templateTheoryOfSeq_model_of_fragment
+    {I : Type w} [LinearOrder I] [Infinite I]
+    {M : Type} [L.Structure M] {a : I → M}
+    (h : IsLomega1omegaIndiscernible (L := L) a)
+    {J : Type u} [LinearOrder J]
+    (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
+    (A : AdmissibleFragment L[[J]])
+    (hSub : h.template.templateTheoryOfSeq s J ⊆ A.formulas) :
+    ∃ (N : Type) (_ : L[[J]].Structure N),
+      Theoryω.Model (h.template.templateTheoryOfSeq s J) N :=
+  h.templateTheoryOn_model_of_fragment (Set.range s) A hSub
+
 end FirstOrder.Language
