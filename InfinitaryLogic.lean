@@ -1,4 +1,4 @@
-import InfinitaryLogic.Basic
+import InfinitaryLogic.All
 
 /-!
 # Infinitary Logic
@@ -18,6 +18,15 @@ This library formalizes infinitary logic, including:
 The unconditional API is recovered via `countableRefinementHypothesis` (proved in
 `Scott/RefinementCount.lean`). Conditional `_of` variants taking
 `CountableRefinementHypothesis` as a hypothesis are also available.
+
+## Import Bundles
+
+For targeted imports, use one of these entry points instead of importing
+this file directly:
+- `InfinitaryLogic.Core`: syntax, semantics, Scott analysis, Karp's theorem
+- `InfinitaryLogic.Countable`: model existence, Löwenheim-Skolem, Hanf, counting, EM chain
+- `InfinitaryLogic.Admissible`: admissible fragments, Barwise compactness, proof system
+- `InfinitaryLogic.Descriptive`: descriptive set theory of model classes
 
 ## Organization
 
