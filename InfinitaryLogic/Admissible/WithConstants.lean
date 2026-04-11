@@ -10,13 +10,15 @@ import InfinitaryLogic.Admissible.Fragment
 
 `admissibleFragmentOfUniv` constructs an `AdmissibleFragment L` with
 `formulas := Set.univ` from a bare compactness hypothesis. All closure fields
-are trivial because `Set.univ` is trivially closed under everything.
+(from `AdmissibleFragmentCore`) are trivial because `Set.univ` is trivially
+closed under everything; the `compact` field is forwarded from the input.
 
 This is a **packaging** constructor, not a substantive theorem: the hard
-content (the compactness property) is assumed, not derived. The intended
-downstream use is to provide an `AdmissibleFragment L[[J]]` for
-Ehrenfeucht–Mostowski realization, where `L[[J]]`-compactness is packaged
-as a hypothesis that a future project may eventually prove.
+content (the finite-subset compactness property) is assumed, not derived.
+Note that the resulting `AdmissibleFragment.compact` is the HF-style
+finite-subset compactness, which is stronger than the standard Barwise
+compactness theorem. See `BarwiseCompactnessData` for the literature-faithful
+version.
 -/
 
 universe u v

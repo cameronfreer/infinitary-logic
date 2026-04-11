@@ -9,22 +9,31 @@ import InfinitaryLogic.Lomega1omega.Theory
 import Architect
 
 /-!
-# Barwise Compactness and Completeness
+# Compactness and Completeness for Admissible Fragments
 
-This file states the Barwise compactness theorem and Barwise completeness II
-for admissible fragments of Lω₁ω.
+This file provides compactness and completeness theorems for
+`AdmissibleFragment`, which uses finite-subset compactness (the HF-style
+axiom baked into the `compact` field).
+
+**Important**: `barwise_compactness` here is a direct wrapper around
+`AdmissibleFragment.compact`, which assumes compactness for ALL theories with
+ordinary finite satisfiability. This is stronger than the standard Barwise
+compactness theorem (Theorem 3.1.3 of [KK04]), which restricts to Σ₁-on-A
+theories with A-finite subsets. See `BarwiseCompactnessData` (in
+`BarwiseData.lean`) for the literature-faithful version.
 
 ## Main Results
 
-- `barwise_compactness`: If every A-finite subset of a theory T (within an admissible
-  fragment A) has a model, then T itself has a model.
-- `barwise_completeness_II`: A theory in an admissible fragment that is consistent
-  (in the proof-theoretic sense) has a model.
+- `barwise_compactness`: If every finite subset of a theory T (within an
+  admissible fragment A) has a model, then T itself has a model. (Wrapper
+  around `A.compact`; stronger than the standard Barwise theorem.)
+- `barwise_completeness_II`: A theory in an admissible fragment that is
+  consistent (in the proof-theoretic sense) has a model.
 
 ## References
 
 - [KK04], §3.1
-- [Bar75]
+- [Bar75], Ch. III
 -/
 
 universe u v
@@ -37,14 +46,16 @@ variable {L : Language.{u, v}}
 
 open FirstOrder Structure
 
-/-- **Barwise Compactness Theorem** (KK04 Theorem 3.1.3).
+/-- **Finite-subset compactness** (wrapper around `AdmissibleFragment.compact`).
 
-If every A-finite subset of a theory T (contained in an admissible fragment A)
-has a model, then T itself has a model.
+If every finite subset of a theory T (contained in an admissible fragment A)
+has a model, then T itself has a model. This is a direct application of the
+`compact` field, which assumes unrestricted finite-subset compactness.
 
-This is a far-reaching generalization of the classical compactness theorem.
-While full first-order compactness fails for Lω₁ω, this restricted form holds
-for theories within admissible fragments. -/
+**Naming note**: despite its name, this theorem is strictly stronger than the
+standard Barwise Compactness Theorem (KK04 Theorem 3.1.3), which restricts
+to Σ₁-on-A theories and A-finite subsets (where "A-finite" = ∈ A, not ordinary
+finiteness). The standard theorem is available via `BarwiseCompactnessData`. -/
 @[blueprint "thm:barwise-compactness"
   (title := /-- Barwise compactness -/)
   (statement := /-- If every $A$-finite subset of a theory $T \subseteq A$ has a model,
