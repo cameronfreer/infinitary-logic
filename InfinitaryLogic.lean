@@ -67,6 +67,7 @@ The unconditional API is recovered via `countableRefinementHypothesis` (proved i
 
 ### Admissible sets (Admissible/)
 - `Admissible/Fragment.lean`: Abstract admissible fragments
+- `Admissible/WithConstants.lean`: `admissibleFragmentOfUniv` — admissible fragment from a bare compactness hypothesis
 - `Admissible/Compactness.lean`: Barwise compactness and completeness
 - `Admissible/NadelBound.lean`: Nadel bound on Scott height
 

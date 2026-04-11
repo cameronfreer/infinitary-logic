@@ -7,6 +7,7 @@ import InfinitaryLogic.ModelTheory.EMTemplate
 import InfinitaryLogic.ModelExistence.HenkinConstruction
 import InfinitaryLogic.Admissible.Compactness
 import InfinitaryLogic.Admissible.ConsistencyBridge
+import InfinitaryLogic.Admissible.WithConstants
 import Mathlib.Data.Finset.Sort
 
 /-!
@@ -491,6 +492,39 @@ theorem IsLomega1omegaIndiscernible.templateTheoryOfSeq_model_of_fullFragment
     ∃ (N : Type) (_ : L[[J]].Structure N),
       Theoryω.Model (h.template.templateTheoryOfSeq s J) N := by
   apply h.template.templateTheoryOfSeq_model_of_fullFragment s B
+  intro F hFfinite hFsub
+  obtain ⟨σ, hσ⟩ := h.templateTheoryOfSeq_finitelySatisfiable s hFfinite hFsub
+  letI : (constantsOn J).Structure M := constantsOn.structure σ
+  exact ⟨M, inferInstance, hσ⟩
+
+/-- EM realization from a bare compactness hypothesis on `L[[J]]`. Given an
+indiscernible sequence, a formula sequence, an ordinal height `> ω`, and a
+compactness hypothesis for `L[[J]]`-theories, produces a model of the
+restricted template theory. Chains `admissibleFragmentOfUniv` (which builds
+an `AdmissibleFragment L[[J]]` with `formulas := Set.univ` from the compact
+hypothesis) with `templateTheoryOfSeq_model_of_fragment` (where the
+containment `T ⊆ Set.univ` is trivial).
+
+This is a **packaging** theorem: the compactness hypothesis is assumed, not
+derived. No source fragment `B : FullBarwiseFragment L` is needed. Callers
+that have one can supply `B.height` and `B.height_gt_omega` for the ordinal
+parameters; callers that don't can use any ordinal `> ω`. -/
+theorem IsLomega1omegaIndiscernible.templateTheoryOfSeq_model_of_compact
+    {I : Type w} [LinearOrder I] [Infinite I]
+    {M : Type} [L.Structure M] {a : I → M}
+    (h : IsLomega1omegaIndiscernible (L := L) a)
+    {J : Type u} [LinearOrder J]
+    (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
+    (height : Ordinal) (h_height : Ordinal.omega0 < height)
+    (hCompact : ∀ S : Set L[[J]].Sentenceω,
+      (∀ F : Set L[[J]].Sentenceω, F.Finite → F ⊆ S →
+        ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model F N) →
+      ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model S N) :
+    ∃ (N : Type) (_ : L[[J]].Structure N),
+      Theoryω.Model (h.template.templateTheoryOfSeq s J) N := by
+  apply h.template.templateTheoryOfSeq_model_of_fragment s
+    (admissibleFragmentOfUniv height h_height hCompact)
+    (Set.subset_univ _)
   intro F hFfinite hFsub
   obtain ⟨σ, hσ⟩ := h.templateTheoryOfSeq_finitelySatisfiable s hFfinite hFsub
   letI : (constantsOn J).Structure M := constantsOn.structure σ

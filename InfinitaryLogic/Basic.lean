@@ -51,6 +51,7 @@ import InfinitaryLogic.ModelTheory.CountingModels
 
 -- Admissible sets and Barwise
 import InfinitaryLogic.Admissible.Fragment
+import InfinitaryLogic.Admissible.WithConstants
 import InfinitaryLogic.Admissible.Compactness
 import InfinitaryLogic.Admissible.NadelBound
 import InfinitaryLogic.Admissible.ProofSystem
