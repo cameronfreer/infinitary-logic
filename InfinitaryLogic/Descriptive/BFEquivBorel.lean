@@ -101,7 +101,7 @@ private theorem sameAtomicType_measurableSet
         @Structure.RelMap L ℕ p.1.toStructure _ R (a ∘ f) ↔
         @Structure.RelMap L ℕ p.2.toStructure _ R (b ∘ f)} =
       {p | p.1 ⟨⟨_, R⟩, a ∘ f⟩ = true ↔ p.2 ⟨⟨_, R⟩, b ∘ f⟩ = true} := by
-      ext p; simp [StructureSpace.relMap_toStructure]
+      ext p; simp
     rw [hset]
     -- The iff-set decomposes as (both true) ∪ (both false)
     have hdecomp : {p : StructurePairSpace L |

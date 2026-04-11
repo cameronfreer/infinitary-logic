@@ -62,6 +62,7 @@ instance permMulAction (n : ℕ) :
 
 /-! ### Isomorphism = orbit equivalence -/
 
+omit [Countable ((l : ℕ) × L.Relations l)] in
 /-- Two `Fin n`-structures are L-isomorphic iff they lie in the same `Sym(Fin n)` orbit. -/
 theorem iso_iff_orbit (n : ℕ) (c₁ c₂ : StructureSpaceOn L (Fin n)) :
     Nonempty (@Language.Equiv L (Fin n) (Fin n) c₁.toStructure c₂.toStructure) ↔
@@ -113,6 +114,7 @@ def isoSetoidOn (φ : L.Sentenceω) (n : ℕ) :
 
 /-! ### Isomorphism relation is Borel on finite carriers -/
 
+omit [L.IsRelational] [Countable ((l : ℕ) × L.Relations l)] in
 /-- Each orbit map `c ↦ σ • c` is continuous on `StructureSpaceOn L (Fin n)`. -/
 theorem continuous_perm_smul (n : ℕ) (σ : Equiv.Perm (Fin n)) :
     Continuous (fun c : StructureSpaceOn L (Fin n) => σ • c) := by
@@ -283,6 +285,7 @@ private noncomputable def encodeViaEquiv {M : Type} [L.Structure M] {α : Type}
   StructureSpaceOn.ofStructure (@Equiv.inducedStructure L M α _ e)
 
 /-- The decoded structure from `encodeViaEquiv` equals the induced structure. -/
+omit [Countable ((l : ℕ) × L.Relations l)] in
 private theorem toStructure_encodeViaEquiv_eq {M : Type} [L.Structure M] {α : Type}
     (e : M ≃ α) :
     StructureSpaceOn.toStructure (encodeViaEquiv e) = @Equiv.inducedStructure L M α _ e := by
@@ -301,6 +304,7 @@ private theorem toStructure_encodeViaEquiv_eq {M : Type} [L.Structure M] {α : T
       rw [StructureSpaceOn.relMap_toStructure, encodeViaEquiv, StructureSpaceOn.ofStructure]
       simp [h]
 
+omit [Countable ((l : ℕ) × L.Relations l)] in
 /-- The encoded structure via an equivalence satisfies the same sentences. -/
 private theorem encodeViaEquiv_models {M : Type} [L.Structure M] {α : Type}
     [Countable α] (e : M ≃ α) (hφ : Sentenceω.Realize φ M) :
@@ -309,6 +313,7 @@ private theorem encodeViaEquiv_models {M : Type} [L.Structure M] {α : Type}
   letI : L.Structure α := Equiv.inducedStructure e
   exact (LomegaEquiv.of_equiv (Equiv.inducedStructureEquiv e) φ).mp hφ
 
+omit [Countable ((l : ℕ) × L.Relations l)] in
 /-- The encoded structure is L-isomorphic to the original via the equivalence. -/
 private theorem encodeViaEquiv_iso {M : Type} [L.Structure M] {α : Type}
     (e : M ≃ α) :
@@ -333,6 +338,7 @@ noncomputable def codeModel
     Sum.inl (Quotient.mk (isoSetoid φ)
       ⟨encodeViaEquiv e, encodeViaEquiv_models e hφ⟩)
 
+omit [Countable ((l : ℕ) × L.Relations l)] in
 /-- Compose L-equivs through encoding bijections to build iso between coded structures. -/
 private theorem compose_encoded_iso
     {M N : Type} [L.Structure M] [L.Structure N] {α : Type}
@@ -354,6 +360,7 @@ private theorem compose_encoded_iso
   · intro h; exact (e.map_rel' R (⇑eM.symm ∘ v)).mp (by convert h using 2)
   · intro h; convert (e.map_rel' R (⇑eM.symm ∘ v)).mpr h using 2
 
+omit [Countable ((l : ℕ) × L.Relations l)] in
 /-- L-isomorphic countable models map to the same coded class. -/
 theorem codeModel_eq_of_iso
     {M N : Type} [L.Structure M] [L.Structure N] [Countable M] [Countable N]
@@ -409,6 +416,7 @@ theorem codeModel_eq_of_iso
 The proof composes: `M ≃[L] carrier` (from `encodeViaEquiv_iso`), the carrier-carrier
 L-isomorphism (extracted from the quotient equality in `h`), and `carrier ≃[L] N`
 (from `encodeViaEquiv_iso`). -/
+omit [Countable ((l : ℕ) × L.Relations l)] in
 theorem iso_of_codeModel_eq
     {M N : Type} [L.Structure M] [L.Structure N] [Countable M] [Countable N]
     (hφM : Sentenceω.Realize φ M) (hφN : Sentenceω.Realize φ N)
@@ -430,7 +438,7 @@ theorem iso_of_codeModel_eq
     haveI hfinN : Finite N := by
       by_contra hfN
       unfold codeModel at h; rw [dif_pos hfinM, dif_neg hfN] at h
-      exact absurd h (by simp [Sum.inr_ne_inl])
+      exact absurd h (by simp)
     -- Use the same pattern as codeModel_eq_of_iso finite branch:
     -- generalize over the cardinality and subst to unify Fin types.
     unfold codeModel at h; simp only [dif_pos hfinM, dif_pos hfinN] at h
@@ -461,7 +469,7 @@ theorem iso_of_codeModel_eq
     have hfinN : ¬Finite N := by
       intro hfN
       unfold codeModel at h; rw [dif_neg hfinM, dif_pos hfN] at h
-      exact absurd h (by simp [Sum.inl_ne_inr])
+      exact absurd h (by simp)
     haveI : Infinite N := not_finite_iff_infinite.mp hfinN
     set eM : M ≃ ℕ := (nonempty_equiv_of_countable (α := M) (β := ℕ)).some
     set eN : N ≃ ℕ := (nonempty_equiv_of_countable (α := N) (β := ℕ)).some
@@ -471,6 +479,7 @@ theorem iso_of_codeModel_eq
     obtain ⟨iN⟩ := encodeViaEquiv_iso (L := L) (M := N) eN
     exact compose iM qIso iN
 
+omit [Countable ((l : ℕ) × L.Relations l)] in
 /-- Every coded class is realized by some countable model. -/
 theorem codeModel_surjective :
     ∀ q : AllCodedIsoClasses φ,
