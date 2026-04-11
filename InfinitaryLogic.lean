@@ -66,7 +66,8 @@ The unconditional API is recovered via `countableRefinementHypothesis` (proved i
 - `ModelTheory/MorleyCounting.lean`: Morley's counting theorem (≤ ℵ₁ or 2^ℵ₀)
 
 ### Admissible sets (Admissible/)
-- `Admissible/Fragment.lean`: Abstract admissible fragments
+- `Admissible/Fragment.lean`: `AdmissibleFragmentCore` (closure properties) + `AdmissibleFragment` (core + finite-subset compactness)
+- `Admissible/BarwiseData.lean`: `BarwiseCompactnessData` — literature-faithful Barwise compactness interface with A-coded subtheories
 - `Admissible/WithConstants.lean`: `admissibleFragmentOfUniv` — admissible fragment from a bare compactness hypothesis
 - `Admissible/Compactness.lean`: Barwise compactness and completeness
 - `Admissible/NadelBound.lean`: Nadel bound on Scott height
