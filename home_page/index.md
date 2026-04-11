@@ -24,6 +24,18 @@ The formalization currently covers:
 
 Some results carry explicit hypotheses that package external mathematical content not yet formalized (e.g., `MorleyHanfTransfer` for Erd&#337;s&ndash;Rado / Ehrenfeucht&ndash;Mostowski machinery, `SilverBurgessDichotomy` for the Silver&ndash;Burgess dichotomy).
 
+## Import Bundles
+
+| Bundle | Contents |
+|--------|----------|
+| `InfinitaryLogic.Core` | Syntax, semantics, Scott analysis, Karp&rsquo;s theorem |
+| `InfinitaryLogic.Countable` | Model existence, L&ouml;wenheim&ndash;Skolem, Hanf, counting, EM chain |
+| `InfinitaryLogic.Admissible` | Admissible fragments, Barwise compactness, proof system |
+| `InfinitaryLogic.Descriptive` | Descriptive set theory of model classes |
+| `InfinitaryLogic.All` | Everything (also available via `import InfinitaryLogic`) |
+
+`InfinitaryLogic/Basic.lean` is a deprecated redirect to `All`.
+
 ## Components
 
 | Directory | Contents |
@@ -33,7 +45,7 @@ Some results carry explicit hypotheses that package external mathematical conten
 | `InfinitaryLogic/Scott/` | Atomic diagrams, back-and-forth equivalence, Scott formulas/sentences, rank, height |
 | `InfinitaryLogic/Karp/` | Karp's theorem and corollaries for countable structures |
 | `InfinitaryLogic/ModelExistence/` | Consistency properties, model existence, completeness, omitting types |
-| `InfinitaryLogic/ModelTheory/` | L&ouml;wenheim&ndash;Skolem, Hanf numbers, counting models |
+| `InfinitaryLogic/ModelTheory/` | L&ouml;wenheim&ndash;Skolem, Hanf numbers, counting models, EM chain |
 | `InfinitaryLogic/Admissible/` | Admissible fragments, Barwise compactness, Nadel bound |
 | `InfinitaryLogic/Descriptive/` | Borel complexity of structure space, satisfaction, isomorphism; Silver-Burgess dichotomy (splitting lemma, Cantor scheme, `silverBurgessDichotomy`; 1 sorry: `borel_to_closed_reduction` in `GandyHarrington.lean`) |
 

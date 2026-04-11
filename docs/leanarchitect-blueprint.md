@@ -67,7 +67,7 @@ the statement text and dependency metadata from each annotated declaration.
 - `def:silver-burgess-dichotomy` — Silver–Burgess dichotomy (hypothesis)
 - `def:iso-setoid` — Isomorphism setoid on coded models
 
-**Theorems (29):**
+**Theorems (32):**
 - `thm:scottFormula-iff` — Scott formula characterization
 - `thm:self-stabilization` — Self-stabilization
 - `thm:scott-characterizes-of` — Scott characterization (conditional)

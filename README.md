@@ -39,11 +39,17 @@ git clone https://github.com/cameronfreer/infinitary-logic.git && cd infinitary-
 lake build
 ```
 
-To use in your own project, add the dependency to your `lakefile` and then:
+To use in your own project, add the dependency to your `lakefile` and import a bundle:
 
 ```lean
-import InfinitaryLogic
+import InfinitaryLogic.Core        -- syntax, semantics, Scott, Karp
+import InfinitaryLogic.Countable   -- model existence, LS, Hanf, EM chain
+import InfinitaryLogic.Admissible  -- admissible fragments, Barwise compactness
+import InfinitaryLogic.Descriptive -- descriptive set theory of model classes
+import InfinitaryLogic.All         -- everything
 ```
+
+`import InfinitaryLogic` also loads everything. `InfinitaryLogic/Basic.lean` is a deprecated redirect to `All`.
 
 ### Key Declarations
 
