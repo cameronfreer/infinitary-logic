@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Admissible.Fragment
-import InfinitaryLogic.ModelExistence.Theorem
+import InfinitaryLogic.Methods.Henkin.ModelExistence
 import InfinitaryLogic.Lomega1omega.Theory
 import Architect
 

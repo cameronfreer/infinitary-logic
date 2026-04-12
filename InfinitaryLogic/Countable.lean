@@ -1,9 +1,9 @@
 -- Model existence (Henkin construction)
-import InfinitaryLogic.ModelExistence.ConsistencyProperty
-import InfinitaryLogic.ModelExistence.HenkinConstruction
-import InfinitaryLogic.ModelExistence.Theorem
-import InfinitaryLogic.ModelExistence.Completeness
-import InfinitaryLogic.ModelExistence.SatisfiableConsistencyProperty
+import InfinitaryLogic.Methods.Henkin.ConsistencyProperty
+import InfinitaryLogic.Methods.Henkin.Construction
+import InfinitaryLogic.Methods.Henkin.ModelExistence
+import InfinitaryLogic.Methods.Henkin.Completeness
+import InfinitaryLogic.Methods.Henkin.SatisfiableConsistencyProperty
 
 -- Model theory
 import InfinitaryLogic.ModelTheory.LowenheimSkolem
@@ -11,9 +11,9 @@ import InfinitaryLogic.ModelTheory.Hanf
 import InfinitaryLogic.ModelTheory.CountingModels
 
 -- Ehrenfeucht–Mostowski chain
-import InfinitaryLogic.ModelTheory.EM.Indiscernible
-import InfinitaryLogic.ModelTheory.EM.Template
-import InfinitaryLogic.ModelTheory.EM.Realization
+import InfinitaryLogic.Methods.EM.Indiscernible
+import InfinitaryLogic.Methods.EM.Template
+import InfinitaryLogic.Methods.EM.Realization
 
 /-!
 # Countable: model existence + model theory for countable structures

@@ -3,8 +3,8 @@ Copyright (c) 2026 Cameron Freer. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
-import InfinitaryLogic.ModelExistence.ConsistencyProperty
-import InfinitaryLogic.ModelExistence.HenkinConstruction
+import InfinitaryLogic.Methods.Henkin.ConsistencyProperty
+import InfinitaryLogic.Methods.Henkin.Construction
 import Architect
 
 /-!

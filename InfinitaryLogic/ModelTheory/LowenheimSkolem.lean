@@ -4,8 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Lomega1omega.Theory
-import InfinitaryLogic.ModelExistence.Theorem
-import InfinitaryLogic.ModelExistence.SatisfiableConsistencyProperty
+import InfinitaryLogic.Methods.Henkin.ModelExistence
+import InfinitaryLogic.Methods.Henkin.SatisfiableConsistencyProperty
 import InfinitaryLogic.Lomega1omega.Operations
 import Mathlib.ModelTheory.LanguageMap
 import Architect

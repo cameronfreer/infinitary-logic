@@ -58,18 +58,19 @@ this file directly:
 - `Karp/Theorem.lean`: Karp's theorem (potential iso ↔ L∞ω-equivalence)
 - `Karp/CountableCorollary.lean`: Countable structures corollary
 
-### Model existence (ModelExistence/)
-- `ModelExistence/ConsistencyProperty.lean`: Consistency property axioms (C0)-(C7)
-- `ModelExistence/HenkinConstruction.lean`: Henkin construction infrastructure (maximal consistent sets)
-- `ModelExistence/Theorem.lean`: Model existence theorem
-- `ModelExistence/Completeness.lean`: Karp completeness and omitting types
+### Methods (Methods/)
+- `Methods/Henkin/ConsistencyProperty.lean`: Consistency property axioms (C0)-(C7)
+- `Methods/Henkin/Construction.lean`: Henkin construction infrastructure (maximal consistent sets)
+- `Methods/Henkin/ModelExistence.lean`: Model existence theorem
+- `Methods/Henkin/Completeness.lean`: Karp completeness and omitting types
+- `Methods/Henkin/SatisfiableConsistencyProperty.lean`: ConsistencyPropertyEq from model + naming function
+- `Methods/EM/Indiscernible.lean`: Lω₁ω-indiscernible sequences API (restrict, reindex, pair/unary invariance)
+- `Methods/EM/Template.lean`: Ehrenfeucht–Mostowski templates — bridge between indiscernible sequences and EM stretching
+- `Methods/EM/Realization.lean`: template → L[[J]]-theory bridge; finite satisfiability of `templateTheory h.template J` in the source indiscernible
 
 ### Model theory (ModelTheory/)
 - `ModelTheory/LowenheimSkolem.lean`: Downward Löwenheim-Skolem for Lω₁ω
 - `ModelTheory/Hanf.lean`: Hanf numbers and Morley-Hanf bound
-- `ModelTheory/EM/Indiscernible.lean`: Lω₁ω-indiscernible sequences API (restrict, reindex, pair/unary invariance)
-- `ModelTheory/EM/Template.lean`: Ehrenfeucht–Mostowski templates — bridge between indiscernible sequences and EM stretching
-- `ModelTheory/EM/Realization.lean`: template → L[[J]]-theory bridge; finite satisfiability of `templateTheory h.template J` in the source indiscernible
 - `ModelTheory/CountingModels.lean`: Scott rank and model counting
 - `ModelTheory/CountingCountable.lean`: Counting theorem for all countable models
 - `ModelTheory/MorleyCounting.lean`: Morley's counting theorem (≤ ℵ₁ or 2^ℵ₀)
