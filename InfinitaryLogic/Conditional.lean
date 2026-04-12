@@ -16,5 +16,6 @@ the external dependency visible at the directory level.
 - `SilverBurgess.lean`: Silver-Burgess dichotomy (sorry-free splitting lemmas,
   but the endpoint `silverBurgessDichotomy` chains through the GH sorry).
 - `GandyHarrington.lean`: Gandy-Harrington topology and `gandy_harrington_for_relation`
-  (1 sorry: `silver_core_polish`, requiring lightface/effective DST).
+  (1 sorry at line 84 inside `gandy_harrington_for_relation`, requiring
+  lightface/effective DST for the Gandy-Harrington core construction).
 -/

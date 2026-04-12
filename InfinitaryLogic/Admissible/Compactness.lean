@@ -20,7 +20,7 @@ axiom baked into the `compact` field).
 ordinary finite satisfiability. This is stronger than the standard Barwise
 compactness theorem (Theorem 3.1.3 of [KK04]), which restricts to Σ₁-on-A
 theories with A-finite subsets. See `BarwiseCompactnessData` (in
-`BarwiseData.lean`) for the literature-faithful version.
+`Barwise/Data.lean`) for the literature-faithful version.
 
 ## Main Results
 

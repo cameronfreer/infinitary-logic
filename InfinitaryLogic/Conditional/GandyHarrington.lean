@@ -20,10 +20,10 @@ This file provides:
 
 ## Status
 
-`borel_to_closed_reduction` requires the Gandy-Harrington topology
-construction (sorry). Once filled, `silver_core_polish` and
-`silverBurgessDichotomy` become sorry-free, making `morley_counting`
-fully unconditional.
+The sorry is at line 84 inside `gandy_harrington_for_relation`. It requires
+a lightface/effective Gandy-Harrington core construction. Once filled,
+`silver_core_polish` and `silverBurgessDichotomy` become sorry-free,
+making `morley_counting` fully unconditional.
 -/
 
 universe u v

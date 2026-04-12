@@ -27,6 +27,7 @@ this file directly:
 - `InfinitaryLogic.Countable`: model existence, Löwenheim-Skolem, Hanf, counting, EM chain
 - `InfinitaryLogic.Admissible`: admissible fragments, Barwise compactness, proof system
 - `InfinitaryLogic.Descriptive`: descriptive set theory of model classes
+- `InfinitaryLogic.Conditional`: results with external hypotheses or sorries
 
 ## Organization
 
@@ -97,5 +98,8 @@ this file directly:
 - `Descriptive/CountingDichotomy.lean`: Conditional counting dichotomy (Silver–Burgess)
 - `Descriptive/SatisfactionBorelOn.lean`: Generic satisfaction measurability for carrier-parametric spaces
 - `Descriptive/FiniteCarrier.lean`: Finite-carrier counting via permutation orbits; combined dichotomy
-- `Descriptive/SilverBurgess.lean`: Silver-Burgess dichotomy (1 sorry: Borel→closed reduction)
+### Conditional (Conditional/)
+- `Conditional/MorleyHanfTransfer.lean`: `MorleyHanfTransfer` hypothesis + `morley_hanf_of_transfer`
+- `Conditional/SilverBurgess.lean`: Silver-Burgess dichotomy (chains through GH sorry)
+- `Conditional/GandyHarrington.lean`: Gandy-Harrington topology (1 sorry in `gandy_harrington_for_relation`)
 -/

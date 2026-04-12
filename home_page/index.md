@@ -32,6 +32,7 @@ Some results carry explicit hypotheses that package external mathematical conten
 | `InfinitaryLogic.Countable` | Model existence, L&ouml;wenheim&ndash;Skolem, Hanf, counting, EM chain |
 | `InfinitaryLogic.Admissible` | Admissible fragments, Barwise compactness, proof system |
 | `InfinitaryLogic.Descriptive` | Descriptive set theory of model classes |
+| `InfinitaryLogic.Conditional` | Results with external hypotheses or sorries |
 | `InfinitaryLogic.All` | Everything (also available via `import InfinitaryLogic`) |
 
 `InfinitaryLogic/Basic.lean` is a deprecated redirect to `All`.
@@ -43,11 +44,13 @@ Some results carry explicit hypotheses that package external mathematical conten
 | `InfinitaryLogic/Linf/` | L<sub>&infin;&omega;</sub> syntax, semantics, operations, countability predicates, quantifier rank |
 | `InfinitaryLogic/Lomega1omega/` | L<sub>&omega;<sub>1</sub>&omega;</sub> syntax, semantics, operations, embedding, quantifier rank |
 | `InfinitaryLogic/Scott/` | Atomic diagrams, back-and-forth equivalence, Scott formulas/sentences, rank, height |
-| `InfinitaryLogic/Karp/` | Karp's theorem and corollaries for countable structures |
-| `InfinitaryLogic/ModelExistence/` | Consistency properties, model existence, completeness, omitting types |
-| `InfinitaryLogic/ModelTheory/` | L&ouml;wenheim&ndash;Skolem, Hanf numbers, counting models, EM chain |
-| `InfinitaryLogic/Admissible/` | Admissible fragments, Barwise compactness, Nadel bound |
-| `InfinitaryLogic/Descriptive/` | Borel complexity of structure space, satisfaction, isomorphism; Silver-Burgess dichotomy (splitting lemma, Cantor scheme, `silverBurgessDichotomy`; 1 sorry: `borel_to_closed_reduction` in `GandyHarrington.lean`) |
+| `InfinitaryLogic/Karp/` | Karp&rsquo;s theorem and corollaries for countable structures |
+| `InfinitaryLogic/Methods/Henkin/` | Consistency properties, Henkin construction, model existence, completeness |
+| `InfinitaryLogic/Methods/EM/` | Indiscernible sequences, EM templates, EM realization |
+| `InfinitaryLogic/ModelTheory/` | L&ouml;wenheim&ndash;Skolem, Hanf numbers, counting models |
+| `InfinitaryLogic/Admissible/` | Admissible fragments (Fragment/Core, Fragment/Compact), Barwise compactness, proof system, Nadel bound |
+| `InfinitaryLogic/Descriptive/` | Borel complexity of structure space, satisfaction, isomorphism; counting dichotomy, finite-carrier analysis |
+| `InfinitaryLogic/Conditional/` | MorleyHanfTransfer, SilverBurgess, GandyHarrington (1 sorry in `gandy_harrington_for_relation`) |
 
 ## Resources
 

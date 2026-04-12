@@ -25,12 +25,14 @@ Some results carry explicit hypotheses packaging external content not yet formal
 
 - `InfinitaryLogic/Linf/` — L∞ω syntax, semantics, operations, countability predicates, quantifier rank
 - `InfinitaryLogic/Lomega1omega/` — Lω₁ω syntax, semantics, operations, embedding into L∞ω, quantifier rank
-- `InfinitaryLogic/Scott/` — Atomic diagrams, back-and-forth equivalence, Scott formulas/sentences, rank, height
+- `InfinitaryLogic/Scott/` — Atomic diagrams, back-and-forth equivalence, Scott formulas/sentences, rank, height (`Height/Defs`, `Height/CanonicalSentence`, `Height/RankBounds`)
 - `InfinitaryLogic/Karp/` — Karp's theorem and corollaries for countable structures
-- `InfinitaryLogic/ModelExistence/` — Consistency properties, model existence, completeness, omitting types
+- `InfinitaryLogic/Methods/Henkin/` — Consistency properties, Henkin construction, model existence, completeness, omitting types
+- `InfinitaryLogic/Methods/EM/` — Indiscernible sequences, EM templates, EM realization
 - `InfinitaryLogic/ModelTheory/` — Löwenheim–Skolem, Hanf numbers, counting models
-- `InfinitaryLogic/Admissible/` — Admissible fragments, Barwise compactness, Nadel bound
-- `InfinitaryLogic/Descriptive/` — Borel complexity of the structure space, satisfaction, isomorphism; Silver-Burgess dichotomy skeleton (splitting lemma, Cantor scheme, `silverBurgessDichotomy`); conditional counting dichotomy (1 sorry: Borel→closed reduction in `borel_to_closed_reduction`)
+- `InfinitaryLogic/Admissible/` — Admissible fragments (`Fragment/Core`, `Fragment/Compact`), Barwise compactness, literature-faithful interface (`Barwise/Data`), proof system, Nadel bound
+- `InfinitaryLogic/Descriptive/` — Borel complexity of the structure space, satisfaction, isomorphism; counting dichotomy, finite-carrier analysis
+- `InfinitaryLogic/Conditional/` — Results depending on external hypotheses or sorries: `MorleyHanfTransfer` (Erdős–Rado + EM), `SilverBurgess`, `GandyHarrington` (1 sorry in `gandy_harrington_for_relation`)
 
 ## Getting Started
 
@@ -42,11 +44,12 @@ lake build
 To use in your own project, add the dependency to your `lakefile` and import a bundle:
 
 ```lean
-import InfinitaryLogic.Core        -- syntax, semantics, Scott, Karp
-import InfinitaryLogic.Countable   -- model existence, LS, Hanf, EM chain
-import InfinitaryLogic.Admissible  -- admissible fragments, Barwise compactness
-import InfinitaryLogic.Descriptive -- descriptive set theory of model classes
-import InfinitaryLogic.All         -- everything
+import InfinitaryLogic.Core         -- syntax, semantics, Scott, Karp
+import InfinitaryLogic.Countable    -- model existence, LS, Hanf, EM chain
+import InfinitaryLogic.Admissible   -- admissible fragments, Barwise compactness
+import InfinitaryLogic.Descriptive  -- descriptive set theory of model classes
+import InfinitaryLogic.Conditional  -- results with external hypotheses or sorries
+import InfinitaryLogic.All          -- everything
 ```
 
 `import InfinitaryLogic` also loads everything. `InfinitaryLogic/Basic.lean` is a deprecated redirect to `All`.
