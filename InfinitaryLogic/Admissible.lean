@@ -1,11 +1,11 @@
 import InfinitaryLogic.Admissible.Fragment
-import InfinitaryLogic.Admissible.BarwiseData
+import InfinitaryLogic.Admissible.Barwise.Data
 import InfinitaryLogic.Admissible.WithConstants
 import InfinitaryLogic.Admissible.Compactness
-import InfinitaryLogic.Admissible.NadelBound
-import InfinitaryLogic.Admissible.ProofSystem
-import InfinitaryLogic.Admissible.Soundness
-import InfinitaryLogic.Admissible.ConsistencyBridge
+import InfinitaryLogic.Admissible.Nadel
+import InfinitaryLogic.Admissible.Barwise.ProofSystem
+import InfinitaryLogic.Admissible.Barwise.Soundness
+import InfinitaryLogic.Admissible.Barwise.ConsistencyBridge
 
 /-!
 # Admissible: admissible fragments, Barwise compactness, proof system

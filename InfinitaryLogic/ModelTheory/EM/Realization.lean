@@ -3,10 +3,10 @@ Copyright (c) 2026 Cameron Freer. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
-import InfinitaryLogic.ModelTheory.EMTemplate
+import InfinitaryLogic.ModelTheory.EM.Template
 import InfinitaryLogic.ModelExistence.HenkinConstruction
 import InfinitaryLogic.Admissible.Compactness
-import InfinitaryLogic.Admissible.ConsistencyBridge
+import InfinitaryLogic.Admissible.Barwise.ConsistencyBridge
 import InfinitaryLogic.Admissible.WithConstants
 import Mathlib.Data.Finset.Sort
 

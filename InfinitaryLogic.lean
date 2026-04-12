@@ -67,19 +67,22 @@ this file directly:
 ### Model theory (ModelTheory/)
 - `ModelTheory/LowenheimSkolem.lean`: Downward Löwenheim-Skolem for Lω₁ω
 - `ModelTheory/Hanf.lean`: Hanf numbers and Morley-Hanf bound
-- `ModelTheory/Indiscernible.lean`: Lω₁ω-indiscernible sequences API (restrict, reindex, pair/unary invariance)
-- `ModelTheory/EMTemplate.lean`: Ehrenfeucht–Mostowski templates — bridge between indiscernible sequences and EM stretching
-- `ModelTheory/EMRealization.lean`: template → L[[J]]-theory bridge; finite satisfiability of `templateTheory h.template J` in the source indiscernible
+- `ModelTheory/EM/Indiscernible.lean`: Lω₁ω-indiscernible sequences API (restrict, reindex, pair/unary invariance)
+- `ModelTheory/EM/Template.lean`: Ehrenfeucht–Mostowski templates — bridge between indiscernible sequences and EM stretching
+- `ModelTheory/EM/Realization.lean`: template → L[[J]]-theory bridge; finite satisfiability of `templateTheory h.template J` in the source indiscernible
 - `ModelTheory/CountingModels.lean`: Scott rank and model counting
 - `ModelTheory/CountingCountable.lean`: Counting theorem for all countable models
 - `ModelTheory/MorleyCounting.lean`: Morley's counting theorem (≤ ℵ₁ or 2^ℵ₀)
 
 ### Admissible sets (Admissible/)
 - `Admissible/Fragment.lean`: `AdmissibleFragmentCore` (closure properties) + `AdmissibleFragment` (core + finite-subset compactness)
-- `Admissible/BarwiseData.lean`: `BarwiseCompactnessData` — literature-faithful Barwise compactness interface with A-coded subtheories
+- `Admissible/Barwise/Data.lean`: `BarwiseCompactnessData` — literature-faithful Barwise compactness interface with A-coded subtheories
+- `Admissible/Barwise/ProofSystem.lean`: Derivability in admissible-fragment proof system
+- `Admissible/Barwise/Soundness.lean`: Soundness of the proof system
+- `Admissible/Barwise/ConsistencyBridge.lean`: Bridge from AConsistent to ConsistencyPropertyEq
 - `Admissible/WithConstants.lean`: `admissibleFragmentOfUniv` — admissible fragment from a bare compactness hypothesis
 - `Admissible/Compactness.lean`: Barwise compactness and completeness
-- `Admissible/NadelBound.lean`: Nadel bound on Scott height
+- `Admissible/Nadel.lean`: Nadel bound on Scott height
 
 ### Descriptive set theory (Descriptive/)
 - `Descriptive/StructureSpace.lean`: Coding space for countable structures on ℕ

@@ -11,9 +11,9 @@ import InfinitaryLogic.ModelTheory.Hanf
 import InfinitaryLogic.ModelTheory.CountingModels
 
 -- Ehrenfeucht–Mostowski chain
-import InfinitaryLogic.ModelTheory.Indiscernible
-import InfinitaryLogic.ModelTheory.EMTemplate
-import InfinitaryLogic.ModelTheory.EMRealization
+import InfinitaryLogic.ModelTheory.EM.Indiscernible
+import InfinitaryLogic.ModelTheory.EM.Template
+import InfinitaryLogic.ModelTheory.EM.Realization
 
 /-!
 # Countable: model existence + model theory for countable structures

@@ -284,8 +284,8 @@ private noncomputable def encodeViaEquiv {M : Type} [L.Structure M] {α : Type}
     (e : M ≃ α) : StructureSpaceOn L α :=
   StructureSpaceOn.ofStructure (@Equiv.inducedStructure L M α _ e)
 
-/-- The decoded structure from `encodeViaEquiv` equals the induced structure. -/
 omit [Countable ((l : ℕ) × L.Relations l)] in
+/-- The decoded structure from `encodeViaEquiv` equals the induced structure. -/
 private theorem toStructure_encodeViaEquiv_eq {M : Type} [L.Structure M] {α : Type}
     (e : M ≃ α) :
     StructureSpaceOn.toStructure (encodeViaEquiv e) = @Equiv.inducedStructure L M α _ e := by
@@ -412,11 +412,11 @@ theorem codeModel_eq_of_iso
     show Nonempty _
     exact compose_encoded_iso e _ _
 
+omit [Countable ((l : ℕ) × L.Relations l)] in
 /-- Models mapping to the same coded class are L-isomorphic.
 The proof composes: `M ≃[L] carrier` (from `encodeViaEquiv_iso`), the carrier-carrier
 L-isomorphism (extracted from the quotient equality in `h`), and `carrier ≃[L] N`
 (from `encodeViaEquiv_iso`). -/
-omit [Countable ((l : ℕ) × L.Relations l)] in
 theorem iso_of_codeModel_eq
     {M N : Type} [L.Structure M] [L.Structure N] [Countable M] [Countable N]
     (hφM : Sentenceω.Realize φ M) (hφN : Sentenceω.Realize φ N)
