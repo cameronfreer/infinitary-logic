@@ -36,4 +36,21 @@ import InfinitaryLogic.Karp.CountableCorollary
 
 Import this bundle for the foundational objects of infinitary logic without
 model-existence machinery, admissible-set theory, or descriptive set theory.
+
+## Linf / Lomega1omega parallel structure
+
+`Linf/` and `Lomega1omega/` have a deliberately parallel file structure
+(Syntax, Semantics, Operations, Theory, QuantifierRank) with consistent
+theorem names (`realize_imp`, `realize_iSup`, `realize_iInf`, etc.). The
+fundamental difference is the connective index type:
+
+- **Linf**: `iSup {ι : Type uι} (φs : ι → ...)` — arbitrary index types
+- **Lomega1omega**: `iSup (φs : ℕ → ...)` — ℕ-indexed only
+
+This difference is baked into the inductive type constructors
+(`BoundedFormulaInf` vs `BoundedFormulaω`), so a shared abstract kernel
+would require type-level parametrization over the index type — feasible
+but non-trivial. The current parallel structure trades ~1000 lines of
+duplication for clarity and type safety. The embedding
+(`Lomega1omega/Embedding.lean`) maps between the two logics.
 -/
