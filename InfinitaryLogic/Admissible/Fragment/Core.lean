@@ -45,10 +45,11 @@ The `height` ordinal represents the ordinal height of the admissible set
 structure AdmissibleFragmentCore (L : Language.{u, v}) where
   /-- The set of sentences belonging to this fragment. -/
   formulas : Set L.Sentenceω
-  /-- The ordinal height of the admissible set. -/
+  /-- The ordinal height of the admissible set. No lower bound is imposed
+  at this layer: the HF case (o(A) = ω) is structurally important and
+  should not be excluded. See `AdmissibleFragment.height_gt_omega` for
+  the stronger constraint used by the legacy compact wrapper. -/
   height : Ordinal
-  /-- The height is > ω. -/
-  height_gt_omega : Ordinal.omega0 < height
   /-- Closure under negation. -/
   closed_neg : ∀ φ ∈ formulas, φ.not ∈ formulas
   /-- Closure under implication. -/
@@ -79,6 +80,24 @@ structure AdmissibleFragmentCore (L : Language.{u, v}) where
   /-- Backward closure: disjunction components. -/
   closed_iSup_component : ∀ (φs : ℕ → L.Sentenceω) (k : ℕ),
     BoundedFormulaω.iSup φs ∈ formulas → φs k ∈ formulas
+
+/-- The HF (hereditarily finite sets) admissible fragment: `formulas = Set.univ`,
+`height = ω`. This is the structurally important base case where A-finite = finite
+and L_A = first-order logic. Serves as a smoke test that `AdmissibleFragmentCore`
+admits the HF case (which it should, since `height_gt_omega` was removed from Core). -/
+def AdmissibleFragmentCore.hf : AdmissibleFragmentCore L where
+  formulas := Set.univ
+  height := Ordinal.omega0
+  closed_neg := fun _ _ => trivial
+  closed_imp := fun _ _ _ _ => trivial
+  closed_iInf := fun _ _ => trivial
+  closed_iSup := fun _ _ => trivial
+  closed_quantifier_instance := fun _ _ _ => trivial
+  falsum_mem := trivial
+  closed_imp_left := fun _ _ _ => trivial
+  closed_imp_right := fun _ _ _ => trivial
+  closed_iInf_component := fun _ _ _ => trivial
+  closed_iSup_component := fun _ _ _ => trivial
 
 end Language
 

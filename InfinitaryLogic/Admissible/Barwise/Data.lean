@@ -3,7 +3,7 @@ Copyright (c) 2026 Cameron Freer. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
-import InfinitaryLogic.Admissible.Fragment
+import InfinitaryLogic.Admissible.Fragment.Core
 
 /-!
 # Barwise Compactness Data
@@ -32,11 +32,11 @@ what lets the proof use Σ-reflection and Δ₀-separation inside A. A bare
 `isAFinite : Set Sentenceω → Prop` predicate would lose that structure; hence
 we use a `Code` type with `decode`.
 
-The `height` field represents o(A), the ordinal of the admissible set. Unlike
-`AdmissibleFragmentCore.height_gt_omega`, we do NOT require height > ω: the
-case o(A) = ω (A = HF, hereditarily finite sets) is the structurally important
-case where A-coded = finite and L_A = first-order logic (classical compactness
-as a special case of Barwise compactness).
+The `barwiseHeight` field represents o(A), the ordinal of the admissible set.
+No lower bound is imposed: the case o(A) = ω (A = HF, hereditarily finite sets)
+is the structurally important case where A-coded = finite and L_A = first-order
+logic (classical compactness as a special case of Barwise compactness).
+(`AdmissibleFragmentCore.height` likewise carries no lower bound.)
 
 The `isSigma1` predicate is currently abstract (Prop-valued). A future
 refinement could carry witness data (the Σ formula defining the theory in
@@ -75,10 +75,9 @@ structure BarwiseCompactnessData (L : Language.{u, v})
   decode : Code → Set L.Sentenceω
   /-- Every decoded set is contained in the fragment. -/
   decode_sub_formulas : ∀ c, decode c ⊆ formulas
-  /-- The ordinal height o(A) of the admissible set. Unlike
-  `AdmissibleFragmentCore.height_gt_omega`, no lower bound is imposed:
-  o(A) = ω (the HF case) is the structurally important special case where
-  A-coded = finite and L_A = first-order logic. -/
+  /-- The ordinal height o(A) of the admissible set. No lower bound is
+  imposed: o(A) = ω (the HF case) is the structurally important special
+  case where A-coded = finite and L_A = first-order logic. -/
   barwiseHeight : Ordinal
   /-- Every finite subset of the fragment has an A-code. This holds for all
   admissible sets A ⊇ ω (including HF, L(ω₁^CK), etc.). -/

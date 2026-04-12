@@ -45,6 +45,10 @@ This structure is retained for backward compatibility with existing consumers
     closed under subformulas, negation, quantification, and countable conjunction/disjunction,
     with a compactness axiom for finite subsets. -/)]
 structure AdmissibleFragment (L : Language.{u, v}) extends AdmissibleFragmentCore L where
+  /-- The height is > ω. This constraint is specific to the legacy compact
+  wrapper (not imposed by `AdmissibleFragmentCore`). It excludes the HF case
+  but is needed by some downstream consumers (e.g., `admissibleFragmentOfUniv`). -/
+  height_gt_omega : Ordinal.omega0 < height
   /-- **Finite-subset compactness** (stronger than the standard Barwise theorem).
   If every finite subset of S ⊆ formulas has a model, then S has a model.
   This is the HF-style compactness principle; the standard Barwise compactness
