@@ -10,7 +10,7 @@ import InfinitaryLogic.Admissible.Fragment.Core
 
 This file defines `BarwiseCompactnessData`, the literature-faithful interface
 for the Barwise compactness theorem (Theorem 3.1.3 of [KK04], Theorem 5.6
-of [Bar75]). Unlike the project's existing `AdmissibleFragment.compact` field
+of [Bar75]). Unlike the project's existing `FiniteCompactFragment.compact` field
 (which demands unrestricted finite-subset compactness on arbitrary theories),
 this structure uses:
 

@@ -1,4 +1,4 @@
-import InfinitaryLogic.All
+import InfinitaryLogic.Everything
 
 /-!
 # Infinitary Logic

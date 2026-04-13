@@ -8,14 +8,14 @@ import InfinitaryLogic.Admissible.Fragment
 /-!
 # Admissible fragment from a bare compactness hypothesis
 
-`admissibleFragmentOfUniv` constructs an `AdmissibleFragment L` with
+`admissibleFragmentOfUniv` constructs an `FiniteCompactFragment L` with
 `formulas := Set.univ` from a bare compactness hypothesis. All closure fields
 (from `AdmissibleFragmentCore`) are trivial because `Set.univ` is trivially
 closed under everything; the `compact` field is forwarded from the input.
 
 This is a **packaging** constructor, not a substantive theorem: the hard
 content (the finite-subset compactness property) is assumed, not derived.
-Note that the resulting `AdmissibleFragment.compact` is the HF-style
+Note that the resulting `FiniteCompactFragment.compact` is the HF-style
 finite-subset compactness, which is stronger than the standard Barwise
 compactness theorem. See `BarwiseCompactnessData` for the literature-faithful
 version.
@@ -43,7 +43,7 @@ noncomputable def admissibleFragmentOfUniv
       (∀ F : Set L.Sentenceω, F.Finite → F ⊆ S →
         ∃ (M : Type) (_ : L.Structure M), Theoryω.Model F M) →
       ∃ (M : Type) (_ : L.Structure M), Theoryω.Model S M) :
-    AdmissibleFragment L where
+    FiniteCompactFragment L where
   formulas := Set.univ
   height := height
   height_gt_omega := h_height

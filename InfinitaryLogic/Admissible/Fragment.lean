@@ -10,7 +10,7 @@ Re-exports the two layers of the admissible fragment interface:
   (formulas, height, closure under connectives, sub-formula backward closures).
   The stable interface layer for proof system, soundness, Nadel bound.
 
-- `Fragment.Compact`: `AdmissibleFragment` — extends Core with a finite-subset
+- `Fragment.Compact`: `FiniteCompactFragment` — extends Core with a finite-subset
   compactness axiom (HF-style, stronger than the standard Barwise theorem).
   Includes `AFinite`. Retained for backward compatibility.
 

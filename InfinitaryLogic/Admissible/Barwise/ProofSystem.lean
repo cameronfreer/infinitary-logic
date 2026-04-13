@@ -48,7 +48,7 @@ rules, quantifier rules (omega-rule), equality rules, and classical logic (LEM).
 @[blueprint "def:derivable"
   (title := /-- Derivability in admissible fragments -/)
   (statement := /-- A sentence $\varphi$ is derivable from theory $T$ in admissible fragment $A$. The proof system includes structural, propositional, infinitary, quantifier (omega-rule), equality, and classical rules. -/)]
-inductive Derivable (A : AdmissibleFragment L) :
+inductive Derivable (A : FiniteCompactFragment L) :
     Set L.Sentenceω → L.Sentenceω → Prop where
   -- Structural
   | assumption : φ ∈ T → φ ∈ A.formulas → Derivable A T φ
@@ -90,28 +90,28 @@ inductive Derivable (A : AdmissibleFragment L) :
 @[blueprint "def:a-consistent"
   (title := /-- A-consistency -/)
   (statement := /-- A theory $T$ is $A$-consistent if $\bot$ is not derivable from $T$ in fragment $A$. -/)]
-def AConsistent (A : AdmissibleFragment L) (T : Set L.Sentenceω) : Prop :=
+def AConsistent (A : FiniteCompactFragment L) (T : Set L.Sentenceω) : Prop :=
   ¬ Derivable A T .falsum
 
 /-! ### Basic lemmas -/
 
 /-- Derivability is monotone in the theory. -/
-theorem Derivable.mono {A : AdmissibleFragment L} {T T' : Set L.Sentenceω}
+theorem Derivable.mono {A : FiniteCompactFragment L} {T T' : Set L.Sentenceω}
     (h : T ⊆ T') (hd : Derivable A T φ) : Derivable A T' φ :=
   Derivable.weaken h hd
 
 /-- Consistency is antitone: subsets of consistent sets are consistent. -/
-theorem AConsistent.mono {A : AdmissibleFragment L} {T T' : Set L.Sentenceω}
+theorem AConsistent.mono {A : FiniteCompactFragment L} {T T' : Set L.Sentenceω}
     (h : T' ⊆ T) (hc : AConsistent A T) : AConsistent A T' :=
   fun hd => hc (hd.mono h)
 
 /-- A consistent theory does not contain ⊥. -/
-theorem AConsistent.no_falsum {A : AdmissibleFragment L} {T : Set L.Sentenceω}
+theorem AConsistent.no_falsum {A : FiniteCompactFragment L} {T : Set L.Sentenceω}
     (hc : AConsistent A T) (hT : T ⊆ A.formulas) : (BoundedFormulaω.falsum : L.Sentenceω) ∉ T :=
   fun h => hc (.assumption h (hT h))
 
 /-- A consistent theory does not contain both φ and ¬φ. -/
-theorem AConsistent.no_contradiction {A : AdmissibleFragment L} {T : Set L.Sentenceω}
+theorem AConsistent.no_contradiction {A : FiniteCompactFragment L} {T : Set L.Sentenceω}
     (hc : AConsistent A T) (hφ : φ ∈ T) (hφA : φ ∈ A.formulas) :
     φ.not ∉ T := by
   intro hφn
@@ -119,26 +119,26 @@ theorem AConsistent.no_contradiction {A : AdmissibleFragment L} {T : Set L.Sente
   exact .imp_elim (.assumption hφn (A.closed_neg φ hφA)) (.assumption hφ hφA)
 
 /-- Negation introduction: if T ∪ {φ} ⊢ ⊥, then T ⊢ ¬φ. -/
-theorem Derivable.neg_intro {A : AdmissibleFragment L}
+theorem Derivable.neg_intro {A : FiniteCompactFragment L}
     (hφ : φ ∈ A.formulas) (h : Derivable A (T ∪ {φ}) .falsum) :
     Derivable A T φ.not :=
   .imp_intro hφ h
 
 /-- Negation elimination: if T ⊢ φ and T ⊢ ¬φ, then T ⊢ ⊥. -/
-theorem Derivable.neg_elim {A : AdmissibleFragment L}
+theorem Derivable.neg_elim {A : FiniteCompactFragment L}
     (h₁ : Derivable A T φ) (h₂ : Derivable A T φ.not) :
     Derivable A T .falsum :=
   .imp_elim h₂ h₁
 
 /-- If `S ⊢ χ` and `S ∪ {χ} ⊢ ⊥`, then `S ⊢ ⊥`. -/
-theorem Derivable.derivable_collapses_extension {A : AdmissibleFragment L}
+theorem Derivable.derivable_collapses_extension {A : FiniteCompactFragment L}
     (hd : Derivable A T χ) (hχ : χ ∈ A.formulas)
     (hbot : Derivable A (T ∪ {χ}) .falsum) :
     Derivable A T .falsum :=
   hd.neg_elim (.neg_intro hχ hbot)
 
 /-- If `S ∪ {φ} ⊢ ⊥` and `S ∪ {¬φ} ⊢ ⊥`, then `S ⊢ ⊥`. -/
-theorem Derivable.inconsistent_of_both_extensions {A : AdmissibleFragment L}
+theorem Derivable.inconsistent_of_both_extensions {A : FiniteCompactFragment L}
     (hφA : φ ∈ A.formulas)
     (h₁ : Derivable A (T ∪ {φ}) .falsum) (h₂ : Derivable A (T ∪ {φ.not}) .falsum) :
     Derivable A T .falsum :=
@@ -146,7 +146,7 @@ theorem Derivable.inconsistent_of_both_extensions {A : AdmissibleFragment L}
   (Derivable.not_not_elim (.neg_intro (A.closed_neg φ hφA) h₂)).neg_elim (.neg_intro hφA h₁)
 
 /-- If `S ⊢ ¬φ` and `φ, ψ ∈ A.formulas`, then `S ⊢ φ → ψ`. -/
-theorem Derivable.imp_intro_from_neg {A : AdmissibleFragment L}
+theorem Derivable.imp_intro_from_neg {A : FiniteCompactFragment L}
     (hd : Derivable A T φ.not) (hφA : φ ∈ A.formulas) (hψA : ψ ∈ A.formulas) :
     Derivable A T (φ.imp ψ) := by
   apply Derivable.imp_intro hφA
@@ -157,7 +157,7 @@ theorem Derivable.imp_intro_from_neg {A : AdmissibleFragment L}
 
 /-- If `S ⊆ A.formulas`, `AConsistent A S`, and `φ ∈ A.formulas`, then
 `AConsistent A (S ∪ {φ}) ∨ AConsistent A (S ∪ {¬φ})`. -/
-theorem AConsistent.extension_of_mem_formulas {A : AdmissibleFragment L}
+theorem AConsistent.extension_of_mem_formulas {A : FiniteCompactFragment L}
     {S : Set L.Sentenceω} (_hSA : S ⊆ A.formulas) (hc : AConsistent A S)
     (hφA : φ ∈ A.formulas) :
     AConsistent A (S ∪ {φ}) ∨ AConsistent A (S ∪ {φ.not}) := by

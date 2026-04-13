@@ -44,7 +44,7 @@ This structure is retained for backward compatibility with existing consumers
   (statement := /-- An admissible fragment of $\Lomegaone$: a collection of sentences
     closed under subformulas, negation, quantification, and countable conjunction/disjunction,
     with a compactness axiom for finite subsets. -/)]
-structure AdmissibleFragment (L : Language.{u, v}) extends AdmissibleFragmentCore L where
+structure FiniteCompactFragment (L : Language.{u, v}) extends AdmissibleFragmentCore L where
   /-- The height is > ω. This constraint is specific to the legacy compact
   wrapper (not imposed by `AdmissibleFragmentCore`). It excludes the HF case
   but is needed by some downstream consumers (e.g., `admissibleFragmentOfUniv`). -/
@@ -63,7 +63,7 @@ structure AdmissibleFragment (L : Language.{u, v}) extends AdmissibleFragmentCor
 **Note**: this uses ordinary finiteness, matching the HF case. For the standard
 Barwise notion "T₀ ∈ A" (which includes hyperarithmetical sets for
 A = L(ω₁^CK)), see `BarwiseCompactnessData.isAFinite`. -/
-def AdmissibleFragment.AFinite (A : AdmissibleFragment L) (S : Set L.Sentenceω) : Prop :=
+def FiniteCompactFragment.AFinite (A : FiniteCompactFragment L) (S : Set L.Sentenceω) : Prop :=
   S ⊆ A.formulas ∧ S.Finite
 
 end Language

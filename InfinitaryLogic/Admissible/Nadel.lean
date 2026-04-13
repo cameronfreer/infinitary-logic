@@ -44,7 +44,7 @@ This is a typeclass so that instances can be provided for specific admissible se
 (e.g., `HYP(M)` for countable structures). The real mathematical content lives in
 constructing instances; the `scottHeight_lt_height` field captures the conclusion
 of Nadel's theorem as the interface. -/
-class AdmissibleFragment.CodedIn (A : AdmissibleFragment L)
+class FiniteCompactFragment.CodedIn (A : FiniteCompactFragment L)
     (M : Type w) [L.Structure M] [Countable M] : Prop where
   scottHeight_lt_height : scottHeight (L := L) M < A.height
 
@@ -55,7 +55,7 @@ coded in an admissible fragment A is bounded by o(A), the ordinal height of A.
 The coding hypothesis `CodedIn` is a typeclass whose instances encode the
 set-theoretic relationship between M and A. The real proof work is in constructing
 such instances (requiring KP set theory, HYP(M), etc.). -/
-theorem nadel_bound (A : AdmissibleFragment L)
+theorem nadel_bound (A : FiniteCompactFragment L)
     (M : Type w) [L.Structure M] [Countable M]
     [hM : A.CodedIn M] :
     scottHeight (L := L) M < A.height :=

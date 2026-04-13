@@ -48,8 +48,9 @@ import InfinitaryLogic.Core         -- syntax, semantics, Scott, Karp
 import InfinitaryLogic.Countable    -- model existence, LS, Hanf, EM chain
 import InfinitaryLogic.Admissible   -- admissible fragments, Barwise compactness
 import InfinitaryLogic.Descriptive  -- descriptive set theory of model classes
+import InfinitaryLogic.All          -- all of the above (sorry-free)
 import InfinitaryLogic.Conditional  -- results with external hypotheses or sorries
-import InfinitaryLogic.All          -- everything
+import InfinitaryLogic.Everything   -- everything including Conditional
 ```
 
 `import InfinitaryLogic` also loads everything. `InfinitaryLogic/Basic.lean` is a deprecated redirect to `All`.

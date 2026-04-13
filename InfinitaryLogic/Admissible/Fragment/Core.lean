@@ -47,7 +47,7 @@ structure AdmissibleFragmentCore (L : Language.{u, v}) where
   formulas : Set L.Sentenceω
   /-- The ordinal height of the admissible set. No lower bound is imposed
   at this layer: the HF case (o(A) = ω) is structurally important and
-  should not be excluded. See `AdmissibleFragment.height_gt_omega` for
+  should not be excluded. See `FiniteCompactFragment.height_gt_omega` for
   the stronger constraint used by the legacy compact wrapper. -/
   height : Ordinal
   /-- Closure under negation. -/

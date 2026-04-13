@@ -50,7 +50,7 @@ in any model of `T` equipped with a naming function. -/
   (proof := /-- By induction on the derivation. The quantifier cases use the semantic roundtrip for \texttt{openBounds} and the naming function. -/)
   (uses := ["def:derivable"])
   (proofUses := ["def:derivable"])]
-theorem Derivable.sound {A : AdmissibleFragment L}
+theorem Derivable.sound {A : FiniteCompactFragment L}
     {T : Set L.Sentenceω} {φ : L.Sentenceω}
     (hd : Derivable A T φ)
     {M : Type w} [L.Structure M]
@@ -145,7 +145,7 @@ theorem Derivable.sound {A : AdmissibleFragment L}
     exact Classical.em _
 
 /-- A theory with a model (equipped with a naming function) is consistent. -/
-theorem AConsistent.of_has_model {A : AdmissibleFragment L}
+theorem AConsistent.of_has_model {A : FiniteCompactFragment L}
     {T : Set L.Sentenceω}
     {M : Type w} [L.Structure M]
     (hNF : NamingFunction L M)

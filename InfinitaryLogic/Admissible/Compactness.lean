@@ -12,11 +12,11 @@ import Architect
 # Compactness and Completeness for Admissible Fragments
 
 This file provides compactness and completeness theorems for
-`AdmissibleFragment`, which uses finite-subset compactness (the HF-style
+`FiniteCompactFragment`, which uses finite-subset compactness (the HF-style
 axiom baked into the `compact` field).
 
 **Important**: `barwise_compactness` here is a direct wrapper around
-`AdmissibleFragment.compact`, which assumes compactness for ALL theories with
+`FiniteCompactFragment.compact`, which assumes compactness for ALL theories with
 ordinary finite satisfiability. This is stronger than the standard Barwise
 compactness theorem (Theorem 3.1.3 of [KK04]), which restricts to Σ₁-on-A
 theories with A-finite subsets. See `BarwiseCompactnessData` (in
@@ -46,7 +46,7 @@ variable {L : Language.{u, v}}
 
 open FirstOrder Structure
 
-/-- **Finite-subset compactness** (wrapper around `AdmissibleFragment.compact`).
+/-- **Finite-subset compactness** (wrapper around `FiniteCompactFragment.compact`).
 
 If every finite subset of a theory T (contained in an admissible fragment A)
 has a model, then T itself has a model. This is a direct application of the
@@ -63,7 +63,7 @@ finiteness). The standard theorem is available via `BarwiseCompactnessData`. -/
   (proof := /-- Direct application of the compactness property of the admissible
     fragment to the finite-satisfiability hypothesis. -/)
   (uses := ["def:admissible-fragment"])]
-theorem barwise_compactness (A : AdmissibleFragment L)
+theorem barwise_compactness (A : FiniteCompactFragment L)
     {T : Set L.Sentenceω} (hT : T ⊆ A.formulas)
     (hfin : ∀ S, A.AFinite S → S ⊆ T →
       ∃ (M : Type) (_ : L.Structure M), Theoryω.Model S M) :
@@ -88,7 +88,7 @@ for the admissible fragment, which we do not formalize. -/
   (uses := ["def:admissible-fragment"])
   (proofUses := ["thm:model-existence"])]
 theorem barwise_completeness_II [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relations l)]
-    (A : AdmissibleFragment L)
+    (A : FiniteCompactFragment L)
     {T : Set L.Sentenceω} (_hT : T ⊆ A.formulas) (hT_countable : T.Countable)
     (hcons : ∃ C : ConsistencyPropertyEq L, T ∈ C.toConsistencyProperty.sets) :
     ∃ (M : Type u) (_ : L.Structure M) (_ : Countable M),
