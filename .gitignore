@@ -5,5 +5,15 @@ build/
 *.olean
 .claude/
 .codex
+.mcp.json
 .worktrees/
 .DS_Store
+blueprint/src/*.aux
+blueprint/src/*.bbl
+blueprint/src/*.blg
+blueprint/src/*.fdb_latexmk
+blueprint/src/*.fls
+blueprint/src/*.log
+blueprint/src/*.out
+blueprint/src/*.pdf
+blueprint/src/*.toc
