@@ -77,7 +77,7 @@ this file directly:
 - `ModelTheory/MorleyCounting.lean`: Morley's counting theorem (≤ ℵ₁ or 2^ℵ₀)
 
 ### Admissible sets (Admissible/)
-- `Admissible/Fragment.lean`: `AdmissibleFragmentCore` (closure properties) + `AdmissibleFragment` (core + finite-subset compactness)
+- `Admissible/Fragment.lean`: `AdmissibleFragmentCore` (closure properties) + `FiniteCompactFragment` (core + finite-subset compactness)
 - `Admissible/Barwise/Data.lean`: `BarwiseCompactnessData` — literature-faithful Barwise compactness interface with A-coded subtheories
 - `Admissible/Barwise/ProofSystem.lean`: Derivability in admissible-fragment proof system
 - `Admissible/Barwise/Soundness.lean`: Soundness of the proof system

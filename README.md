@@ -19,7 +19,7 @@ A Lean 4 formalization of infinitary logic (L∞ω and Lω₁ω), Scott sentence
 
 The formalization currently covers L∞ω and Lω₁ω syntax and semantics, Scott analysis (atomic diagrams, back-and-forth equivalence, Scott formulas/sentences, height and rank), Karp's theorem and corollaries, model existence via consistency properties, downward Löwenheim–Skolem for Lω₁ω, Hanf numbers, admissible-fragment results (Barwise compactness, Nadel bound), descriptive set theory of the space of countable structures (Borel complexity of satisfaction, BF-equivalence, and isomorphism; counting dichotomy), and the Silver–Burgess dichotomy for equivalence relations (splitting lemma, Cantor scheme, Silver's theorem for closed relations).
 
-Some results carry explicit hypotheses packaging external content not yet formalized: `morley_hanf_of_transfer` is conditional on `MorleyHanfTransfer` (Erdős–Rado / Ehrenfeucht–Mostowski machinery). The Silver–Burgess dichotomy (`silverBurgessDichotomy`) is proved modulo 1 sorry in `borel_to_closed_reduction` (in `GandyHarrington.lean`), which requires Gandy–Harrington topology not yet in Mathlib; `morley_counting` chains through this.
+Some results carry explicit hypotheses packaging external content not yet formalized: `morley_hanf_of_transfer` is conditional on `MorleyHanfTransfer` (Erdős–Rado / Ehrenfeucht–Mostowski machinery). The Silver–Burgess dichotomy (`silverBurgessDichotomy`) is proved modulo 1 sorry in `gandy_harrington_for_relation` (in `Conditional/GandyHarrington.lean`), which requires lightface/effective Gandy–Harrington topology not yet in Mathlib; `morley_counting` chains through this.
 
 ## Repository Guide
 

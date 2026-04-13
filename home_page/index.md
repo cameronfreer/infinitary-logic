@@ -19,7 +19,7 @@ The formalization currently covers:
 - **Karp's theorem** &mdash; potential isomorphisms, the main equivalence (`karp_theorem_w`), and corollaries for countable structures.
 - **Model existence** &mdash; consistency properties, Henkin construction, truth lemma, model existence theorem, Karp completeness, and omitting types.
 - **Further model theory** &mdash; downward L&ouml;wenheim&ndash;Skolem for L<sub>&omega;<sub>1</sub>&omega;</sub>, Hanf numbers, conditional Morley&ndash;Hanf bound (conditional on `MorleyHanfTransfer`), and counting models (Morley counting theorem: &le; &alefsym;<sub>1</sub> or 2<sup>&alefsym;<sub>0</sub></sup> iso classes).
-- **Silver&ndash;Burgess dichotomy** &mdash; splitting lemma, Cantor scheme, Silver&rsquo;s theorem for closed equivalence relations on Polish spaces, and `silverBurgessDichotomy` (1 sorry: `borel_to_closed_reduction` in `GandyHarrington.lean`, Gandy&ndash;Harrington topology).
+- **Silver&ndash;Burgess dichotomy** &mdash; splitting lemma, Cantor scheme, Silver&rsquo;s theorem for closed equivalence relations on Polish spaces, and `silverBurgessDichotomy` (1 sorry: `gandy_harrington_for_relation` in `Conditional/GandyHarrington.lean`).
 - **Admissible fragments** &mdash; Barwise compactness, Barwise completeness II, and the Nadel bound.
 
 Some results carry explicit hypotheses that package external mathematical content not yet formalized (e.g., `MorleyHanfTransfer` for Erd&#337;s&ndash;Rado / Ehrenfeucht&ndash;Mostowski machinery, `SilverBurgessDichotomy` for the Silver&ndash;Burgess dichotomy).
