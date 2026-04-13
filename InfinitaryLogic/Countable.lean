@@ -22,7 +22,8 @@ Import this bundle for the Henkin construction, model existence theorem,
 Löwenheim-Skolem, Hanf numbers, counting models, and the EM-stretching chain
 (indiscernibles → templates → realization).
 
-Note: the EM-realization file transitively imports some admissible-fragment
-machinery (for the Barwise-wrapper endpoints); importing this bundle gives you
-that material as well.
+The admissible-fragment adapter theorems (`_of_fragment`, `_of_fullFragment`,
+`_of_compact`) are in `Methods/EM/FragmentAdapter.lean`, imported by the
+`Admissible` bundle — NOT by this bundle. So `import InfinitaryLogic.Countable`
+is genuinely countable-side only.
 -/

@@ -5,9 +5,6 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.EM.Template
 import InfinitaryLogic.Methods.Henkin.Construction
-import InfinitaryLogic.Admissible.Compactness
-import InfinitaryLogic.Admissible.Barwise.ConsistencyBridge
-import InfinitaryLogic.Admissible.WithConstants
 import Mathlib.Data.Finset.Sort
 
 /-!
@@ -317,63 +314,9 @@ theorem IsLomega1omegaIndiscernible.templateTheoryOn_finitelySatisfiable
   h.templateTheory_finitelySatisfiable hFin
     (hSub.trans (Lomega1omegaTemplate.templateTheoryOn_subset_templateTheory _ Γ J))
 
-/-! ### Section 6: model of `templateTheoryOn` via Barwise compactness -/
-
-/-- Abstract Barwise wrapper for the restricted template theory. Given an
-admissible fragment `A` of `L[[J]]` containing `templateTheoryOn T Γ J`, and a
-finite-satisfiability hypothesis on the theory, `barwise_compactness` produces
-a single model of the whole restricted theory.
-
-This theorem leaves both the construction of `A` and the proof of the
-finite-satisfiability hypothesis to the caller. The intended use is to combine
-it with `IsLomega1omegaIndiscernible.templateTheoryOn_finitelySatisfiable` (for
-the second hypothesis) and a separate admissible-fragment construction (for the
-first); the indiscernible-source specialization
-`IsLomega1omegaIndiscernible.templateTheoryOn_model_of_fragment` below packages
-this combination.
-
-**Universe note**: `barwise_compactness` produces a model in `Type` (= `Type 0`),
-so the resulting model lives in `Type 0` regardless of where the caller's data
-lives. -/
-theorem Lomega1omegaTemplate.templateTheoryOn_model_of_fragment
-    (T : Lomega1omegaTemplate L)
-    (Γ : Set (Σ n, L.BoundedFormulaω Empty n))
-    {J : Type u} [LinearOrder J]
-    (A : AdmissibleFragment L[[J]])
-    (hSub : T.templateTheoryOn Γ J ⊆ A.formulas)
-    (hfin : ∀ F : Set L[[J]].Sentenceω, F.Finite → F ⊆ T.templateTheoryOn Γ J →
-      ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model F N) :
-    ∃ (N : Type) (_ : L[[J]].Structure N),
-      Theoryω.Model (T.templateTheoryOn Γ J) N := by
-  apply barwise_compactness A hSub
-  rintro F ⟨_, hFfinite⟩ hFsub
-  exact hfin F hFfinite hFsub
-
-/-- Specialization of `templateTheoryOn_model_of_fragment` to a template
-arising from an indiscernible sequence. Combines the abstract Barwise wrapper
-with `templateTheoryOn_finitelySatisfiable` to produce a model of
-`h.template.templateTheoryOn Γ J` from just an admissible fragment containing
-the restricted theory.
-
-**Universe constraint**: the source model `M` must live in `Type` (= `Type 0`)
-because `barwise_compactness` produces a `Type 0` model and we use the source
-`M` as the witness for each finite-sat call. The same Type-0 constraint applies
-to the conclusion. -/
-theorem IsLomega1omegaIndiscernible.templateTheoryOn_model_of_fragment
-    {I : Type w} [LinearOrder I] [Infinite I]
-    {M : Type} [L.Structure M] {a : I → M}
-    (h : IsLomega1omegaIndiscernible (L := L) a)
-    {J : Type u} [LinearOrder J]
-    (Γ : Set (Σ n, L.BoundedFormulaω Empty n))
-    (A : AdmissibleFragment L[[J]])
-    (hSub : h.template.templateTheoryOn Γ J ⊆ A.formulas) :
-    ∃ (N : Type) (_ : L[[J]].Structure N),
-      Theoryω.Model (h.template.templateTheoryOn Γ J) N := by
-  apply h.template.templateTheoryOn_model_of_fragment Γ A hSub
-  intro F hFfinite hFsub
-  obtain ⟨σ, hσ⟩ := h.templateTheoryOn_finitelySatisfiable Γ hFfinite hFsub
-  letI : (constantsOn J).Structure M := constantsOn.structure σ
-  exact ⟨M, inferInstance, hσ⟩
+-- Admissible/Barwise adapter theorems (_of_fragment, _of_fullFragment,
+-- _of_compact) have been moved to Methods/EM/FragmentAdapter.lean to keep
+-- the Countable bundle free of admissible-fragment imports.
 
 /-! ### Section 7: sequence-indexed wrappers
 
@@ -406,35 +349,6 @@ theorem templateTheoryOfSeq_countable
     (T.templateTheoryOfSeq s J).Countable :=
   templateTheoryOn_countable (Set.countable_range s)
 
-/-- Abstract Barwise wrapper for `templateTheoryOfSeq`. Direct delegation to
-`templateTheoryOn_model_of_fragment`; callers that have a sequence can avoid
-the `Set.range` boilerplate. -/
-theorem templateTheoryOfSeq_model_of_fragment
-    (T : Lomega1omegaTemplate L)
-    (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
-    (A : AdmissibleFragment L[[J]])
-    (hSub : T.templateTheoryOfSeq s J ⊆ A.formulas)
-    (hfin : ∀ F : Set L[[J]].Sentenceω, F.Finite → F ⊆ T.templateTheoryOfSeq s J →
-      ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model F N) :
-    ∃ (N : Type) (_ : L[[J]].Structure N),
-      Theoryω.Model (T.templateTheoryOfSeq s J) N :=
-  T.templateTheoryOn_model_of_fragment (Set.range s) A hSub hfin
-
-/-- Full-Barwise-fragment specialization of `templateTheoryOfSeq_model_of_fragment`:
-when the caller supplies a `FullBarwiseFragment L[[J]]` (which contains every
-`L[[J]]`-sentence by `complete`), the containment hypothesis disappears entirely.
-Only the finite-satisfiability hypothesis remains. -/
-theorem templateTheoryOfSeq_model_of_fullFragment
-    (T : Lomega1omegaTemplate L)
-    (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
-    (B : FullBarwiseFragment L[[J]])
-    (hfin : ∀ F : Set L[[J]].Sentenceω, F.Finite → F ⊆ T.templateTheoryOfSeq s J →
-      ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model F N) :
-    ∃ (N : Type) (_ : L[[J]].Structure N),
-      Theoryω.Model (T.templateTheoryOfSeq s J) N :=
-  T.templateTheoryOfSeq_model_of_fragment s B.toAdmissibleFragment
-    (fun σ _ => B.complete σ) hfin
-
 end Lomega1omegaTemplate
 
 /-- Sequence-indexed finite satisfiability in the source indiscernible model.
@@ -452,82 +366,7 @@ theorem IsLomega1omegaIndiscernible.templateTheoryOfSeq_finitelySatisfiable
       ∀ τ ∈ F, Sentenceω.Realize τ M :=
   h.templateTheoryOn_finitelySatisfiable (Set.range s) hFin hSub
 
-/-- Sequence-indexed specialization of `templateTheoryOn_model_of_fragment` to a
-template arising from an indiscernible sequence. Combines the abstract Barwise
-wrapper with `templateTheoryOfSeq_finitelySatisfiable`. Same Type-0 universe
-constraint on the source model `M` as the set-based specialization. -/
-theorem IsLomega1omegaIndiscernible.templateTheoryOfSeq_model_of_fragment
-    {I : Type w} [LinearOrder I] [Infinite I]
-    {M : Type} [L.Structure M] {a : I → M}
-    (h : IsLomega1omegaIndiscernible (L := L) a)
-    {J : Type u} [LinearOrder J]
-    (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
-    (A : AdmissibleFragment L[[J]])
-    (hSub : h.template.templateTheoryOfSeq s J ⊆ A.formulas) :
-    ∃ (N : Type) (_ : L[[J]].Structure N),
-      Theoryω.Model (h.template.templateTheoryOfSeq s J) N :=
-  h.templateTheoryOn_model_of_fragment (Set.range s) A hSub
-
-/-- The **first caller-ready EM-realization theorem**. Given an indiscernible
-sequence `a : I → M` over an infinite linear order `I` with source model
-`M : Type` (Type 0), a linear order `J`, a sequence `s` of formulas, and a
-full Barwise fragment of `L[[J]]`, produces a model of the sequence-indexed
-restricted template theory. Both the containment hypothesis (absorbed by
-`B.complete`) and the finite-satisfiability hypothesis (derived from the
-indiscernible source via `templateTheoryOfSeq_finitelySatisfiable`) are
-eliminated, leaving only `B` as caller input.
-
-This is the practical endpoint of the EM-template → L[[J]]-theory chain
-under currently-available repo infrastructure: a single-argument "plug in a
-full Barwise fragment, get a realizing model" theorem. The next substantial
-step — actually *constructing* a `FullBarwiseFragment L[[J]]` for a given
-countable `J` — is deferred to a separate admissible-fragment project. -/
-theorem IsLomega1omegaIndiscernible.templateTheoryOfSeq_model_of_fullFragment
-    {I : Type w} [LinearOrder I] [Infinite I]
-    {M : Type} [L.Structure M] {a : I → M}
-    (h : IsLomega1omegaIndiscernible (L := L) a)
-    {J : Type u} [LinearOrder J]
-    (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
-    (B : FullBarwiseFragment L[[J]]) :
-    ∃ (N : Type) (_ : L[[J]].Structure N),
-      Theoryω.Model (h.template.templateTheoryOfSeq s J) N := by
-  apply h.template.templateTheoryOfSeq_model_of_fullFragment s B
-  intro F hFfinite hFsub
-  obtain ⟨σ, hσ⟩ := h.templateTheoryOfSeq_finitelySatisfiable s hFfinite hFsub
-  letI : (constantsOn J).Structure M := constantsOn.structure σ
-  exact ⟨M, inferInstance, hσ⟩
-
-/-- EM realization from a bare compactness hypothesis on `L[[J]]`. Given an
-indiscernible sequence, a formula sequence, an ordinal height `> ω`, and a
-compactness hypothesis for `L[[J]]`-theories, produces a model of the
-restricted template theory. Chains `admissibleFragmentOfUniv` (which builds
-an `AdmissibleFragment L[[J]]` with `formulas := Set.univ` from the compact
-hypothesis) with `templateTheoryOfSeq_model_of_fragment` (where the
-containment `T ⊆ Set.univ` is trivial).
-
-This is a **packaging** theorem: the compactness hypothesis is assumed, not
-derived. No source fragment `B : FullBarwiseFragment L` is needed. Callers
-that have one can supply `B.height` and `B.height_gt_omega` for the ordinal
-parameters; callers that don't can use any ordinal `> ω`. -/
-theorem IsLomega1omegaIndiscernible.templateTheoryOfSeq_model_of_compact
-    {I : Type w} [LinearOrder I] [Infinite I]
-    {M : Type} [L.Structure M] {a : I → M}
-    (h : IsLomega1omegaIndiscernible (L := L) a)
-    {J : Type u} [LinearOrder J]
-    (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
-    (height : Ordinal) (h_height : Ordinal.omega0 < height)
-    (hCompact : ∀ S : Set L[[J]].Sentenceω,
-      (∀ F : Set L[[J]].Sentenceω, F.Finite → F ⊆ S →
-        ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model F N) →
-      ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model S N) :
-    ∃ (N : Type) (_ : L[[J]].Structure N),
-      Theoryω.Model (h.template.templateTheoryOfSeq s J) N := by
-  apply h.template.templateTheoryOfSeq_model_of_fragment s
-    (admissibleFragmentOfUniv height h_height hCompact)
-    (Set.subset_univ _)
-  intro F hFfinite hFsub
-  obtain ⟨σ, hσ⟩ := h.templateTheoryOfSeq_finitelySatisfiable s hFfinite hFsub
-  letI : (constantsOn J).Structure M := constantsOn.structure σ
-  exact ⟨M, inferInstance, hσ⟩
+-- Admissible/Barwise adapter theorems for the seq API (_of_fragment,
+-- _of_fullFragment, _of_compact) are in Methods/EM/FragmentAdapter.lean.
 
 end FirstOrder.Language

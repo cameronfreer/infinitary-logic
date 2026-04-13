@@ -6,6 +6,7 @@ import InfinitaryLogic.Admissible.Nadel
 import InfinitaryLogic.Admissible.Barwise.ProofSystem
 import InfinitaryLogic.Admissible.Barwise.Soundness
 import InfinitaryLogic.Admissible.Barwise.ConsistencyBridge
+import InfinitaryLogic.Methods.EM.FragmentAdapter
 
 /-!
 # Admissible: admissible fragments, Barwise compactness, proof system
