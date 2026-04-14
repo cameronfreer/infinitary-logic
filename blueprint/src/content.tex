@@ -237,11 +237,12 @@ structures is Borel via the orbit of $\operatorname{Sym}(n)$).  Bridge theorems
 (\texttt{codeModel}, \texttt{iso\_of\_codeModel\_eq}, \texttt{codeModel\_surjective})
 establish that \texttt{AllCodedIsoClasses} faithfully represents all isomorphism
 classes of countable models.  The Silver--Burgess dichotomy
-(\texttt{silverBurgessDichotomy}) is proved modulo one sorry in the
-Borel-to-closed reduction (\texttt{silver\_core\_polish}), which requires the
-Gandy--Harrington topology or equivalent descriptive-set-theoretic infrastructure
-not yet available in Mathlib.  Once this is filled, \texttt{morley\_counting}
-becomes fully unconditional.
+(\texttt{silverBurgessDichotomy}) is proved modulo one sorry in
+\texttt{gandy\_harrington\_for\_relation} --- Silver's theorem for Borel
+equivalence relations on Polish spaces (a classical ZFC result, Silver 1980),
+whose proof requires descriptive-set-theory infrastructure not yet in Mathlib
+(Kuratowski--Ulam + Banach--Mazur games, or lightface Gandy--Harrington).  Once
+this is filled, \texttt{morley\_counting} becomes fully unconditional.
 
 \bibliographystyle{amsalpha}
 \bibliography{refs}
