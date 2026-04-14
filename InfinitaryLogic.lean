@@ -101,5 +101,5 @@ this file directly:
 ### Conditional (Conditional/)
 - `Conditional/MorleyHanfTransfer.lean`: `MorleyHanfTransfer` hypothesis + `morley_hanf_of_transfer`
 - `Conditional/SilverBurgess.lean`: Silver-Burgess dichotomy (chains through GH sorry)
-- `Conditional/GandyHarrington.lean`: Gandy-Harrington topology (1 sorry in `gandy_harrington_for_relation`)
+- `Conditional/GandyHarrington.lean`: Silver-for-Borel (1 sorry in `gandy_harrington_for_relation`; boldface Silver-for-Borel DST not yet in mathlib)
 -/

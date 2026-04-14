@@ -15,7 +15,8 @@ the external dependency visible at the directory level.
   EM stretching) and `morley_hanf_of_transfer` conditional theorem.
 - `SilverBurgess.lean`: Silver-Burgess dichotomy (sorry-free splitting lemmas,
   but the endpoint `silverBurgessDichotomy` chains through the GH sorry).
-- `GandyHarrington.lean`: Gandy-Harrington topology and `gandy_harrington_for_relation`
-  (1 sorry at line 84 inside `gandy_harrington_for_relation`, requiring
-  lightface/effective DST for the Gandy-Harrington core construction).
+- `GandyHarrington.lean`: Silver-for-Borel via `gandy_harrington_for_relation`
+  (1 remaining sorry: boldface Silver-for-Borel DST — Kuratowski–Ulam + Banach–Mazur
+  games, or lightface Gandy–Harrington — not yet in mathlib). Downstream
+  `silver_core_polish` and `silverBurgessDichotomy` chain through this sorry.
 -/

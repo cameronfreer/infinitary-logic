@@ -4,144 +4,52 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Conditional.SilverBurgess
-import Mathlib.Topology.Defs.Induced
 
 /-!
-# Gandy-Harrington Reduction and Silver's Theorem for Borel Relations
+# Silver's Theorem for Borel Equivalence Relations
 
 This file provides:
-1. The Borel-to-closed reduction (`borel_to_closed_reduction`): if a Borel
-   equivalence relation on a Polish space has uncountably many classes, there
-   exists a Polish space Y with a continuous injective map to α on which the
-   pulled-back relation is closed and still has uncountably many classes.
-2. `silver_core_polish`: Silver's theorem for Borel equivalence relations,
-   derived from the reduction + `silver_core_closed`.
+1. `gandy_harrington_for_relation`: Silver's theorem for Borel equivalence
+   relations on Polish spaces — a Borel equivalence relation with uncountably
+   many classes contains a perfect set of pairwise-inequivalent points.
+2. `silver_core_polish`: the dichotomy form (countable quotient or perfect
+   set of inequivalent points), derived as a thin wrapper.
 3. `silverBurgessDichotomy`: the full dichotomy for standard Borel spaces.
 
 ## Status
 
-The sorry is at line 84 inside `gandy_harrington_for_relation`. It requires
-a lightface/effective Gandy-Harrington core construction. Once filled,
-`silver_core_polish` and `silverBurgessDichotomy` become sorry-free,
-making `morley_counting` fully unconditional.
+`gandy_harrington_for_relation` currently carries a sorry. The statement is
+a classical ZFC theorem (Silver, 1980), but its proof requires
+descriptive-set-theory infrastructure not yet in mathlib: either
+Kuratowski–Ulam + Banach–Mazur games (Kechris, CDST Ch 21) or lightface
+Gandy–Harrington (Harrington 1985). Once filled, `silver_core_polish`,
+`silverBurgessDichotomy`, and `morley_counting` become unconditional.
 -/
 
 universe u v
 
 open Set Cardinal Topology MeasureTheory
 
-/-! ### Helper lemmas -/
+/-- **Silver's theorem for Borel equivalence relations.** A Borel equivalence
+relation on a Polish space with uncountably many classes contains a perfect set
+of pairwise-inequivalent points: there is a continuous injection
+`f : (ℕ → Bool) → α` such that distinct inputs produce r-inequivalent outputs.
 
-/-- Each equivalence class of a Borel relation is measurable (Borel section). -/
-private theorem class_measurableSet {α : Type u}
-    [TopologicalSpace α] [MeasurableSpace α] [BorelSpace α]
-    (r : Setoid α) (hr : MeasurableSet {p : α × α | r.r p.1 p.2}) (x : α) :
-    MeasurableSet {y : α | r.r x y} := by
-  have : {y : α | r.r x y} = (fun y => (x, y)) ⁻¹' {p : α × α | r.r p.1 p.2} := by
-    ext y; simp
-  rw [this]
-  exact hr.preimage (measurable_const.prodMk measurable_id)
-
-/-- Each equivalence class of a Borel relation is analytic. -/
-private theorem class_analyticSet {α : Type u}
-    [TopologicalSpace α] [PolishSpace α] [MeasurableSpace α] [BorelSpace α]
-    (r : Setoid α) (hr : MeasurableSet {p : α × α | r.r p.1 p.2}) (x : α) :
-    AnalyticSet {y : α | r.r x y} :=
-  (class_measurableSet r hr x).analyticSet
-
-/-- If every r-class on α is hit by the image of i, the comap quotient
-surjects onto the original quotient — so uncountability transfers. -/
-private theorem not_countable_comap_of_hits_all_classes {α : Type u} {Y : Type u}
-    (r : Setoid α) (i : Y → α)
-    (hhit : ∀ x : α, ∃ y : Y, r.r (i y) x)
-    (hunc : ¬ Countable (Quotient r)) :
-    ¬ Countable (Quotient (Setoid.comap i r)) := by
-  intro hcount
-  apply hunc
-  -- Build surjection: Quotient (comap i r) → Quotient r
-  -- The natural map Quotient(comap i r) → Quotient r
-  let φ : Quotient (Setoid.comap i r) → Quotient r :=
-    Quotient.lift (fun y => ⟦i y⟧) (fun a b h => Quotient.sound h)
-  have hsurj : Function.Surjective φ := by
-    intro q
-    refine Quotient.inductionOn q fun x => ?_
-    obtain ⟨y, hy⟩ := hhit x
-    exact ⟨Quotient.mk _ y, Quotient.sound hy⟩
-  exact hsurj.countable
-
-/-! ### Gandy-Harrington for a specific relation -/
-
-/-- **Gandy-Harrington for a Borel relation**: Given a Borel equivalence
-relation r on a Polish space with uncountably many classes, there exists a
-Polish Ω with a continuous injective map to α such that:
-1. Every r-class meets the range of i.
-2. The pullback of Eᶜ is open in Ω × Ω.
-
-The proof requires the Gandy-Harrington topology construction using
-effective/lightface descriptive set theory (recursively presented Polish
-spaces, lightface Σ¹₁ sets, countability of codes). This is a genuine
-DST infrastructure gap not currently available in Mathlib. -/
+Provable via Kuratowski–Ulam + Banach–Mazur games (Kechris CDST Ch 21) or via
+lightface Gandy–Harrington; neither DST infrastructure is currently in mathlib. -/
 theorem gandy_harrington_for_relation {α : Type u}
     [MetricSpace α] [CompleteSpace α] [SecondCountableTopology α]
     [MeasurableSpace α] [BorelSpace α]
     (r : Setoid α) (hr : MeasurableSet {p : α × α | r.r p.1 p.2})
     (hunc : ¬ Countable (Quotient r)) :
-    ∃ (Ω : Type u) (_ : MetricSpace Ω) (_ : CompleteSpace Ω)
-      (_ : SecondCountableTopology Ω) (i : Ω → α),
-      Continuous i ∧ Function.Injective i ∧
-      (∀ x : α, ∃ y : Ω, r.r (i y) x) ∧
-      IsOpen ((fun p : Ω × Ω => ((i p.1), (i p.2))) ⁻¹'
-        {p : α × α | ¬ r.r p.1 p.2}) := by
+    ∃ f : (ℕ → Bool) → α,
+      Continuous f ∧ Function.Injective f ∧
+      ∀ a b, a ≠ b → ¬ r.r (f a) (f b) := by
   sorry
 
-/-! ### GH core existence (derived from relation-specific GH) -/
-
-/-- The GH core for a specific Borel equivalence relation. Derived from
-`gandy_harrington_for_relation`: closedness comes from `isOpen_compl_iff`,
-class-hitting is directly one of the fields. -/
-private theorem gh_exists_core {α : Type u}
-    [MetricSpace α] [CompleteSpace α] [SecondCountableTopology α]
-    [MeasurableSpace α] [BorelSpace α]
-    (r : Setoid α) (hr : MeasurableSet {p : α × α | r.r p.1 p.2})
-    (hunc : ¬ Countable (Quotient r)) :
-    ∃ (Y : Type u) (_ : MetricSpace Y) (_ : CompleteSpace Y)
-      (_ : SecondCountableTopology Y) (i : Y → α),
-      Continuous i ∧ Function.Injective i ∧
-      IsClosed {p : Y × Y | r.r (i p.1) (i p.2)} ∧
-      (∀ x : α, ∃ y : Y, r.r (i y) x) := by
-  obtain ⟨Ω, instM, instC, instS, i, hi_cont, hi_inj, hi_hit, hi_open⟩ :=
-    gandy_harrington_for_relation r hr hunc
-  refine ⟨Ω, instM, instC, instS, i, hi_cont, hi_inj, ?_, hi_hit⟩
-  -- Closedness: the complement of E's pullback is open
-  rw [← isOpen_compl_iff]
-  convert hi_open using 1
-
-/-! ### Borel-to-closed reduction -/
-
-/-- **Gandy-Harrington reduction**: A Borel equivalence relation on a Polish
-space with uncountably many classes admits a Polish space Y with a continuous
-injective map to α on which the pulled-back relation is closed and still has
-uncountably many classes.
-
-Derived from `gh_exists_core` + `not_countable_comap_of_hits_all_classes`. -/
-theorem borel_to_closed_reduction {α : Type u}
-    [MetricSpace α] [CompleteSpace α] [SecondCountableTopology α]
-    [MeasurableSpace α] [BorelSpace α]
-    (r : Setoid α) (hr : MeasurableSet {p : α × α | r.r p.1 p.2})
-    (hunc : ¬ Countable (Quotient r)) :
-    ∃ (Y : Type u) (_ : MetricSpace Y) (_ : CompleteSpace Y)
-      (_ : SecondCountableTopology Y) (i : Y → α),
-      Continuous i ∧ Function.Injective i ∧
-      IsClosed {p : Y × Y | r.r (i p.1) (i p.2)} ∧
-      ¬ Countable (Quotient (Setoid.comap i r)) := by
-  obtain ⟨Y, instM, instC, instS, i, hi_cont, hi_inj, hi_closed, hi_hit⟩ :=
-    gh_exists_core r hr hunc
-  exact ⟨Y, instM, instC, instS, i, hi_cont, hi_inj, hi_closed,
-    not_countable_comap_of_hits_all_classes r i hi_hit hunc⟩
-
-/-- **Silver's theorem** for Borel equivalence relations on Polish spaces.
-Reduces to the closed case via `borel_to_closed_reduction`, then applies
-`silver_core_closed` on the subspace and composes with the embedding. -/
+/-- **Silver's theorem** (dichotomy form) for Borel equivalence relations on
+Polish spaces. Either the quotient is countable, or there exists a perfect set
+of pairwise-inequivalent points. -/
 theorem silver_core_polish {α : Type u}
     [MetricSpace α] [CompleteSpace α] [SecondCountableTopology α]
     [MeasurableSpace α] [BorelSpace α]
@@ -152,19 +60,7 @@ theorem silver_core_polish {α : Type u}
         ∀ a b, a ≠ b → ¬ r.r (f a) (f b) := by
   by_cases hcount : Countable (Quotient r)
   · exact Or.inl hcount
-  · right
-    -- Apply the Borel-to-closed reduction
-    obtain ⟨Y, instM, instC, instS, i, hi_cont, hi_inj, hi_closed, hi_unc⟩ :=
-      borel_to_closed_reduction r hr hcount
-    -- Apply silver_core_closed on Y
-    have hY := @silver_core_closed Y instM instC instS (Setoid.comap i r) hi_closed
-    rcases hY with hY_count | ⟨f, hf_cont, hf_inj, hf_ineq⟩
-    · exact absurd hY_count hi_unc
-    · -- Compose f with i
-      exact ⟨i ∘ f,
-        hi_cont.comp hf_cont,
-        hi_inj.comp hf_inj,
-        fun a b hab h => hf_ineq a b hab (by rwa [Setoid.comap_rel])⟩
+  · exact Or.inr (gandy_harrington_for_relation r hr hcount)
 
 /-! ### Silver-Burgess dichotomy -/
 

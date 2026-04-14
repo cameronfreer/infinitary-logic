@@ -14,7 +14,7 @@ import Architect
 
 This file proves the Silver-Burgess dichotomy for closed equivalence relations
 on Polish spaces and derives `SilverBurgessDichotomy` for standard Borel spaces,
-modulo one sorry in `gandy_harrington_for_relation` (at `GandyHarrington.lean:84`).
+modulo one sorry in `gandy_harrington_for_relation` (see `GandyHarrington.lean`).
 
 ## Main Results
 
@@ -24,8 +24,8 @@ modulo one sorry in `gandy_harrington_for_relation` (at `GandyHarrington.lean:84
   into disjoint closed pieces, each uncountable, cross-inequivalent.
 - `silver_core_closed`: Silver's theorem for closed equivalence relations on Polish spaces.
 - `silver_core_polish`: Silver's theorem for Borel equivalence relations (depends on
-  `borel_to_closed_reduction` in `GandyHarrington.lean`, sorry: Gandy-Harrington topology
-  not available in Mathlib).
+  `gandy_harrington_for_relation` in `GandyHarrington.lean`; remaining sorry — boldface
+  Silver-for-Borel DST not yet in mathlib).
 - `silverBurgessDichotomy`: The Silver-Burgess dichotomy (depends on `silver_core_polish`).
 -/
 
