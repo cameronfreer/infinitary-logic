@@ -1,4 +1,4 @@
-import InfinitaryLogic.Everything
+import InfinitaryLogic.All
 
 /-!
 # Infinitary Logic
@@ -21,13 +21,14 @@ The unconditional API is recovered via `countableRefinementHypothesis` (proved i
 
 ## Import Bundles
 
-For targeted imports, use one of these entry points instead of importing
-this file directly:
+`import InfinitaryLogic` loads the sorry-free surface (`InfinitaryLogic.All`).
+For narrower entry points:
 - `InfinitaryLogic.Core`: syntax, semantics, Scott analysis, Karp's theorem
 - `InfinitaryLogic.Countable`: model existence, Löwenheim-Skolem, Hanf, counting, EM chain
 - `InfinitaryLogic.Admissible`: admissible fragments, Barwise compactness, proof system
 - `InfinitaryLogic.Descriptive`: descriptive set theory of model classes
 - `InfinitaryLogic.Conditional`: results with external hypotheses or sorries
+- `InfinitaryLogic.Everything`: everything including `Conditional/` (not sorry-free)
 
 ## Organization
 

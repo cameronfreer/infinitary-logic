@@ -53,7 +53,7 @@ import InfinitaryLogic.Conditional  -- results with external hypotheses or sorri
 import InfinitaryLogic.Everything   -- everything including Conditional
 ```
 
-`import InfinitaryLogic` also loads everything. `InfinitaryLogic/Basic.lean` is a deprecated redirect to `All`.
+`import InfinitaryLogic` now loads the sorry-free surface (`InfinitaryLogic.All`); use `import InfinitaryLogic.Everything` if you want `Conditional/` included. `InfinitaryLogic/Basic.lean` is a deprecated redirect to `All`.
 
 ### Key Declarations
 
