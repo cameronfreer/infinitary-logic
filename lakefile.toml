@@ -31,3 +31,8 @@ rev = "3d425859e73fcfbef85b9638c2a91708ef4a22d4"
 
 [[lean_lib]]
 name = "InfinitaryLogic"
+
+[[lean_lib]]
+name = "InfinitaryLogicConditional"
+roots = ["InfinitaryLogic.Conditional"]
+globs = ["InfinitaryLogic.Conditional.*"]
