@@ -25,8 +25,11 @@ existence theorem and the Morley-Hanf bound.
 
 - `hanf_existence`: Every Lω₁ω sentence has a Hanf number.
 
-The conditional Morley-Hanf bound (`morley_hanf_of_transfer` + `MorleyHanfTransfer`
-hypothesis) has been moved to `Conditional/MorleyHanfTransfer.lean`.
+The conditional Morley-Hanf bound is in `Conditional/MorleyHanfTransfer.lean`:
+the original `morley_hanf_of_transfer` taking the bundled `MorleyHanfTransfer`
+hypothesis, plus the Phase-2 refactor `hasArbLargeModels_of_restricted_extraction`
+— a **proved** bridge taking a smaller residual `MorleyHanfExtraction` (source-side
+only) plus a per-target compactness oracle.
 
 ## References
 
