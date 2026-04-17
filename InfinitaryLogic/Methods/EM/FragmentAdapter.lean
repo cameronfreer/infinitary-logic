@@ -122,6 +122,23 @@ theorem IsLomega1omegaIndiscernible.templateTheoryOfSeq_model_of_fullFragment
   letI : (constantsOn J).Structure M := constantsOn.structure σ
   exact ⟨M, inferInstance, hσ⟩
 
+/-- Caller-ready EM-realization from a full Barwise fragment, under
+restricted indiscernibility. -/
+theorem IsLomega1omegaIndiscernibleOn.templateTheoryOfSeq_model_of_fullFragment
+    {I : Type w} [LinearOrder I] [Infinite I]
+    {M : Type} [L.Structure M] {a : I → M}
+    (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
+    (h : IsLomega1omegaIndiscernibleOn a (Set.range s))
+    {J : Type u} [LinearOrder J]
+    (B : FullBarwiseFragment L[[J]]) :
+    ∃ (N : Type) (_ : L[[J]].Structure N),
+      Theoryω.Model ((templateOfSeq a : Lomega1omegaTemplate L).templateTheoryOfSeq s J) N := by
+  apply (templateOfSeq a : Lomega1omegaTemplate L).templateTheoryOfSeq_model_of_fullFragment s B
+  intro F hFfinite hFsub
+  obtain ⟨σ, hσ⟩ := h.templateTheoryOfSeq_finitelySatisfiable s hFfinite hFsub
+  letI : (constantsOn J).Structure M := constantsOn.structure σ
+  exact ⟨M, inferInstance, hσ⟩
+
 /-! ### Stretching along an arbitrary target order
 
 These theorems package the existing `templateTheoryOfSeq` pipeline into
@@ -461,5 +478,136 @@ theorem IsLomega1omegaIndiscernible.stretch_injective_of_fullFragment
   rcases lt_or_gt_of_ne hjj' with hlt | hlt
   · exact helper hlt hbjj'
   · exact helper hlt hbjj'.symm
+
+/-! ### Restricted-indiscernibility variants
+
+These `_on` theorems take `IsLomega1omegaIndiscernibleOn a (Set.range s)`
+instead of the full `IsLomega1omegaIndiscernible a`, and state their
+conclusions against `(templateOfSeq a).truth` rather than `h.template.truth`.
+Tranche 2b of the Phase 2 refactor. -/
+
+/-- Compact-oracle adapter under restricted indiscernibility. -/
+theorem IsLomega1omegaIndiscernibleOn.templateTheoryOfSeq_model_of_compact
+    {I : Type w} [LinearOrder I] [Infinite I]
+    {M : Type} [L.Structure M] {a : I → M}
+    (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
+    (h : IsLomega1omegaIndiscernibleOn a (Set.range s))
+    {J : Type u} [LinearOrder J]
+    (height : Ordinal) (h_height : Ordinal.omega0 < height)
+    (hCompact : ∀ S : Set L[[J]].Sentenceω,
+      (∀ F : Set L[[J]].Sentenceω, F.Finite → F ⊆ S →
+        ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model F N) →
+      ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model S N) :
+    ∃ (N : Type) (_ : L[[J]].Structure N),
+      Theoryω.Model ((templateOfSeq a : Lomega1omegaTemplate L).templateTheoryOfSeq s J) N := by
+  apply (templateOfSeq a : Lomega1omegaTemplate L).templateTheoryOfSeq_model_of_fragment s
+    (admissibleFragmentOfUniv height h_height hCompact)
+    (Set.subset_univ _)
+  intro F hFfinite hFsub
+  obtain ⟨σ, hσ⟩ := h.templateTheoryOfSeq_finitelySatisfiable s hFfinite hFsub
+  letI : (constantsOn J).Structure M := constantsOn.structure σ
+  exact ⟨M, inferInstance, hσ⟩
+
+/-- **EM stretching (sentence form, fullFragment, restricted source).** -/
+theorem IsLomega1omegaIndiscernibleOn.stretch_restricted_of_fullFragment
+    {I : Type w} [LinearOrder I] [Infinite I]
+    {M : Type} [L.Structure M] {a : I → M}
+    (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
+    (h : IsLomega1omegaIndiscernibleOn a (Set.range s))
+    {J : Type u} [LinearOrder J] (B : FullBarwiseFragment L[[J]]) :
+    ∃ (N : Type) (_ : L[[J]].Structure N),
+      ∀ (i : ℕ) (t : Fin (s i).1 ↪o J),
+        Sentenceω.Realize (Lomega1omegaTemplate.templateSentence (s i).2 t) N ↔
+          (templateOfSeq a : Lomega1omegaTemplate L).truth (s i).2 := by
+  obtain ⟨N, _, hModel⟩ := h.templateTheoryOfSeq_model_of_fullFragment s B
+  refine ⟨N, inferInstance, ?_⟩
+  intro i t
+  have hmem : ⟨(s i).1, (s i).2⟩ ∈ Set.range s := ⟨i, rfl⟩
+  by_cases htruth : (templateOfSeq a : Lomega1omegaTemplate L).truth (s i).2
+  · refine ⟨fun _ => htruth, fun _ => ?_⟩
+    exact hModel _ ⟨(s i).1, (s i).2, t, hmem, Or.inl ⟨htruth, rfl⟩⟩
+  · refine ⟨fun hreal => ?_, fun hT => absurd hT htruth⟩
+    exact absurd hreal
+      (hModel _ ⟨(s i).1, (s i).2, t, hmem, Or.inr ⟨htruth, rfl⟩⟩)
+
+/-- **EM stretching (sentence form, compact oracle, restricted source).** -/
+theorem IsLomega1omegaIndiscernibleOn.stretch_restricted_of_compact
+    {I : Type w} [LinearOrder I] [Infinite I]
+    {M : Type} [L.Structure M] {a : I → M}
+    (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
+    (h : IsLomega1omegaIndiscernibleOn a (Set.range s))
+    {J : Type u} [LinearOrder J]
+    (height : Ordinal) (h_height : Ordinal.omega0 < height)
+    (hCompact : ∀ S : Set L[[J]].Sentenceω,
+      (∀ F : Set L[[J]].Sentenceω, F.Finite → F ⊆ S →
+        ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model F N) →
+      ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model S N) :
+    ∃ (N : Type) (_ : L[[J]].Structure N),
+      ∀ (i : ℕ) (t : Fin (s i).1 ↪o J),
+        Sentenceω.Realize (Lomega1omegaTemplate.templateSentence (s i).2 t) N ↔
+          (templateOfSeq a : Lomega1omegaTemplate L).truth (s i).2 := by
+  obtain ⟨N, _, hModel⟩ :=
+    h.templateTheoryOfSeq_model_of_compact s height h_height hCompact
+  refine ⟨N, inferInstance, ?_⟩
+  intro i t
+  have hmem : ⟨(s i).1, (s i).2⟩ ∈ Set.range s := ⟨i, rfl⟩
+  by_cases htruth : (templateOfSeq a : Lomega1omegaTemplate L).truth (s i).2
+  · refine ⟨fun _ => htruth, fun _ => ?_⟩
+    exact hModel _ ⟨(s i).1, (s i).2, t, hmem, Or.inl ⟨htruth, rfl⟩⟩
+  · refine ⟨fun hreal => ?_, fun hT => absurd hT htruth⟩
+    exact absurd hreal
+      (hModel _ ⟨(s i).1, (s i).2, t, hmem, Or.inr ⟨htruth, rfl⟩⟩)
+
+/-- **EM stretching (sequence form, fullFragment, restricted source).** -/
+theorem IsLomega1omegaIndiscernibleOn.stretch_restricted_sequence_of_fullFragment
+    {I : Type w} [LinearOrder I] [Infinite I]
+    {M : Type} [L.Structure M] {a : I → M}
+    (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
+    (h : IsLomega1omegaIndiscernibleOn a (Set.range s))
+    {J : Type u} [LinearOrder J] (B : FullBarwiseFragment L[[J]]) :
+    ∃ (N : Type) (_ : L[[J]].Structure N) (b : J → N),
+      letI : L.Structure N := (L.lhomWithConstants J).reduct N
+      ∀ (i : ℕ) (t : Fin (s i).1 ↪o J),
+        ((s i).2).Realize (Empty.elim : Empty → N) (b ∘ t) ↔
+          (templateOfSeq a : Lomega1omegaTemplate L).truth (s i).2 := by
+  obtain ⟨N, _inst, hBase⟩ := h.stretch_restricted_of_fullFragment s B
+  let b : J → N := fun j =>
+    (Term.func (Sum.inr j : L[[J]].Functions 0) Fin.elim0 : L[[J]].Term Empty).realize
+      (Empty.elim : Empty → N)
+  refine ⟨N, inferInstance, b, ?_⟩
+  letI : L.Structure N := (L.lhomWithConstants J).reduct N
+  intro i t
+  have hBridge :=
+    realize_templateSentence_of_structure (L := L) (J := J) (N := N) (s i).2 t
+  exact hBridge.symm.trans (hBase i t)
+
+/-- **EM stretching (sequence form, compact oracle, restricted source).** -/
+theorem IsLomega1omegaIndiscernibleOn.stretch_restricted_sequence_of_compact
+    {I : Type w} [LinearOrder I] [Infinite I]
+    {M : Type} [L.Structure M] {a : I → M}
+    (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
+    (h : IsLomega1omegaIndiscernibleOn a (Set.range s))
+    {J : Type u} [LinearOrder J]
+    (height : Ordinal) (h_height : Ordinal.omega0 < height)
+    (hCompact : ∀ S : Set L[[J]].Sentenceω,
+      (∀ F : Set L[[J]].Sentenceω, F.Finite → F ⊆ S →
+        ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model F N) →
+      ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model S N) :
+    ∃ (N : Type) (_ : L[[J]].Structure N) (b : J → N),
+      letI : L.Structure N := (L.lhomWithConstants J).reduct N
+      ∀ (i : ℕ) (t : Fin (s i).1 ↪o J),
+        ((s i).2).Realize (Empty.elim : Empty → N) (b ∘ t) ↔
+          (templateOfSeq a : Lomega1omegaTemplate L).truth (s i).2 := by
+  obtain ⟨N, _inst, hBase⟩ :=
+    h.stretch_restricted_of_compact s height h_height hCompact
+  let b : J → N := fun j =>
+    (Term.func (Sum.inr j : L[[J]].Functions 0) Fin.elim0 : L[[J]].Term Empty).realize
+      (Empty.elim : Empty → N)
+  refine ⟨N, inferInstance, b, ?_⟩
+  letI : L.Structure N := (L.lhomWithConstants J).reduct N
+  intro i t
+  have hBridge :=
+    realize_templateSentence_of_structure (L := L) (J := J) (N := N) (s i).2 t
+  exact hBridge.symm.trans (hBase i t)
 
 end FirstOrder.Language

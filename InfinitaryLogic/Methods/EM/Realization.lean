@@ -294,6 +294,95 @@ theorem IsLomega1omegaIndiscernible.templateTheory_finitelySatisfiable
     apply hneg
     exact (h.template_truth_iff (phiOf τ') (ft'_strictMono τ')).mpr hrealize
 
+/-- Restricted-indiscernibility variant of `templateTheory_finitelySatisfiable`:
+every finite subset of `(templateOfSeq a).templateTheoryOn Γ J` is
+satisfiable in the source model, provided `a` is restricted-indiscernible
+on `Γ` (not on all formulas).
+
+This is a **fresh specialized proof**, not a delegation through the
+full-indiscernibility version: the witness extraction explicitly carries
+`⟨n, φ⟩ ∈ Γ` so that the weaker `templateOfSeq_truth_iff` applies at
+the final step. The `σ`/Finset plumbing is identical to the full version
+at lines 208-295; only the witness-extraction step (Step 2) and the
+final `template_truth_iff` calls (Step 5) differ. -/
+theorem IsLomega1omegaIndiscernibleOn.templateTheoryOn_finitelySatisfiable
+    {I : Type w} [LinearOrder I] [Infinite I]
+    {M : Type*} [L.Structure M] {a : I → M}
+    {Γ : Set (Σ n, L.BoundedFormulaω Empty n)}
+    (h : IsLomega1omegaIndiscernibleOn (L := L) a Γ)
+    {J : Type u} [LinearOrder J]
+    {F : Set L[[J]].Sentenceω}
+    (hFin : F.Finite) (hSub : F ⊆ (templateOfSeq (L := L) a).templateTheoryOn Γ J) :
+    ∃ σ : J → M,
+      letI : (constantsOn J).Structure M := constantsOn.structure σ
+      ∀ τ ∈ F, Sentenceω.Realize τ M := by
+  classical
+  haveI : Nonempty I := inferInstance
+  let i₀ : I := Classical.arbitrary I
+  let m₀ : M := a i₀
+  -- Step 2 (modified): extract witnesses carrying membership in Γ.
+  have witness : ∀ τ : F, ∃ (n : ℕ) (φ : L.BoundedFormulaω Empty n)
+      (t : Fin n ↪o J), ⟨n, φ⟩ ∈ Γ ∧
+      (((templateOfSeq (L := L) a).truth φ ∧
+        (τ : L[[J]].Sentenceω) = Lomega1omegaTemplate.templateSentence φ t) ∨
+       (¬ (templateOfSeq (L := L) a).truth φ ∧
+        (τ : L[[J]].Sentenceω) = (Lomega1omegaTemplate.templateSentence φ t).not)) := by
+    intro τ
+    obtain ⟨n, φ, t, hΓmem, hcase⟩ := hSub τ.property
+    exact ⟨n, φ, t, hΓmem, hcase⟩
+  choose nOf phiOf tOf hΓOf hOf using witness
+  haveI : Fintype ↥F := hFin.fintype
+  let S : Finset J := (Finset.univ : Finset ↥F).biUnion
+    (fun τ => (Finset.univ : Finset (Fin (nOf τ))).image (fun i => tOf τ i))
+  let k : ℕ := S.card
+  let orderIso : Fin k ≃o ↥S := S.orderIsoOfFin rfl
+  obtain ⟨f⟩ := Fin.exists_orderEmbedding_of_infinite (I := I) k
+  let σ : J → M := fun j =>
+    if hj : j ∈ S then a (f (orderIso.symm ⟨j, hj⟩)) else m₀
+  refine ⟨σ, ?_⟩
+  letI : (constantsOn J).Structure M := constantsOn.structure σ
+  have htS : ∀ (τ : ↥F) (i : Fin (nOf τ)), tOf τ i ∈ S := by
+    intro τ i
+    exact Finset.mem_biUnion.mpr ⟨τ, Finset.mem_univ _,
+      Finset.mem_image.mpr ⟨i, Finset.mem_univ _, rfl⟩⟩
+  let t'Of : ∀ (τ : ↥F), Fin (nOf τ) → Fin k :=
+    fun τ i => orderIso.symm ⟨tOf τ i, htS τ i⟩
+  have t'Of_strictMono : ∀ (τ : ↥F), StrictMono (t'Of τ) := by
+    intro τ i j hij
+    have h1 : (tOf τ i : J) < tOf τ j := (tOf τ).strictMono hij
+    show orderIso.symm ⟨tOf τ i, htS τ i⟩ < orderIso.symm ⟨tOf τ j, htS τ j⟩
+    rw [orderIso.symm.lt_iff_lt]
+    exact h1
+  have ft'_strictMono : ∀ (τ : ↥F), StrictMono (fun i => f (t'Of τ i)) :=
+    fun τ => f.strictMono.comp (t'Of_strictMono τ)
+  have sigma_eq : ∀ (τ : ↥F),
+      (σ ∘ (fun i => tOf τ i) : Fin (nOf τ) → M) =
+      (fun i => a (f (t'Of τ i))) := by
+    intro τ
+    funext i
+    show σ (tOf τ i) = a (f (t'Of τ i))
+    show (if hj : tOf τ i ∈ S then a (f (orderIso.symm ⟨tOf τ i, hj⟩)) else m₀) =
+         a (f (orderIso.symm ⟨tOf τ i, htS τ i⟩))
+    rw [dif_pos (htS τ i)]
+  intro τ hτ
+  let τ' : ↥F := ⟨τ, hτ⟩
+  show Sentenceω.Realize (↑τ' : L[[J]].Sentenceω) M
+  rcases hOf τ' with ⟨hpos, heq⟩ | ⟨hneg, heq⟩
+  · rw [heq, realize_templateSentence σ (phiOf τ') (tOf τ')]
+    rw [show (σ ∘ ⇑(tOf τ') : Fin (nOf τ') → M) = (fun i => a (f (t'Of τ' i))) from
+        sigma_eq τ']
+    show (phiOf τ').Realize (Empty.elim : Empty → M) (a ∘ (fun i => f (t'Of τ' i)))
+    exact (h.templateOfSeq_truth_iff (hΓOf τ') (ft'_strictMono τ')).mp hpos
+  · rw [heq]
+    show ¬ Sentenceω.Realize (Lomega1omegaTemplate.templateSentence (phiOf τ') (tOf τ')) M
+    rw [realize_templateSentence σ (phiOf τ') (tOf τ')]
+    rw [show (σ ∘ ⇑(tOf τ') : Fin (nOf τ') → M) = (fun i => a (f (t'Of τ' i))) from
+        sigma_eq τ']
+    show ¬ (phiOf τ').Realize (Empty.elim : Empty → M) (a ∘ (fun i => f (t'Of τ' i)))
+    intro hrealize
+    apply hneg
+    exact (h.templateOfSeq_truth_iff (hΓOf τ') (ft'_strictMono τ')).mpr hrealize
+
 /-- Restricted version of `templateTheory_finitelySatisfiable`: every finite
 subset of `h.template.templateTheoryOn Γ J` is satisfiable in the source model.
 This is a direct corollary via `templateTheoryOn_subset_templateTheory`; the
@@ -368,5 +457,21 @@ theorem IsLomega1omegaIndiscernible.templateTheoryOfSeq_finitelySatisfiable
 
 -- Admissible/Barwise adapter theorems for the seq API (_of_fragment,
 -- _of_fullFragment, _of_compact) are in Methods/EM/FragmentAdapter.lean.
+
+/-- Sequence-indexed wrapper for `templateTheoryOn_finitelySatisfiable`
+under restricted indiscernibility. -/
+theorem IsLomega1omegaIndiscernibleOn.templateTheoryOfSeq_finitelySatisfiable
+    {I : Type w} [LinearOrder I] [Infinite I]
+    {M : Type*} [L.Structure M] {a : I → M}
+    (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
+    (h : IsLomega1omegaIndiscernibleOn (L := L) a (Set.range s))
+    {J : Type u} [LinearOrder J]
+    {F : Set L[[J]].Sentenceω}
+    (hFin : F.Finite)
+    (hSub : F ⊆ (templateOfSeq (L := L) a).templateTheoryOfSeq s J) :
+    ∃ σ : J → M,
+      letI : (constantsOn J).Structure M := constantsOn.structure σ
+      ∀ τ ∈ F, Sentenceω.Realize τ M :=
+  h.templateTheoryOn_finitelySatisfiable hFin hSub
 
 end FirstOrder.Language
