@@ -100,7 +100,7 @@ For narrower entry points:
 - `Descriptive/SatisfactionBorelOn.lean`: Generic satisfaction measurability for carrier-parametric spaces
 - `Descriptive/FiniteCarrier.lean`: Finite-carrier counting via permutation orbits; combined dichotomy
 ### Conditional (Conditional/)
-- `Conditional/MorleyHanfTransfer.lean`: `MorleyHanfTransfer` hypothesis + `morley_hanf_of_transfer`
+- `Conditional/MorleyHanfTransfer.lean`: original `MorleyHanfTransfer` + `morley_hanf_of_transfer`, plus split residual `MorleyHanfExtraction` with proved `hasArbLargeModels_of_restricted_extraction` bridge
 - `Conditional/SilverBurgess.lean`: Silver-Burgess dichotomy (chains through GH sorry)
 - `Conditional/GandyHarrington.lean`: Silver-for-Borel (1 sorry in `gandy_harrington_for_relation`; boldface Silver-for-Borel DST not yet in mathlib)
 -/

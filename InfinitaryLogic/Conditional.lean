@@ -11,8 +11,16 @@ the external dependency visible at the directory level.
 
 ## Contents
 
-- `MorleyHanfTransfer.lean`: `MorleyHanfTransfer` hypothesis (Erdős-Rado +
-  EM stretching) and `morley_hanf_of_transfer` conditional theorem.
+- `MorleyHanfTransfer.lean`: two forms of the Morley–Hanf bound.
+  - Original bundled form: `MorleyHanfTransfer` hypothesis (Erdős-Rado +
+    EM stretching, opaque) consumed by `morley_hanf_of_transfer`.
+  - Split form (Phase 2 refactor): `MorleyHanfExtraction` (source-side
+    residual — pairwise-distinct ℕ-indexed sequence restricted-indiscernible
+    on a countable formula family) plus a per-target compactness oracle,
+    joined by the **proved** bridge `hasArbLargeModels_of_restricted_extraction`.
+    The EM stretching side is now fully formalized in
+    `Methods/EM/FragmentAdapter.lean`, so only the extraction residual
+    remains conditional.
 - `SilverBurgess.lean`: Silver-Burgess dichotomy (sorry-free splitting lemmas,
   but the endpoint `silverBurgessDichotomy` chains through the GH sorry).
 - `GandyHarrington.lean`: Silver-for-Borel via `gandy_harrington_for_relation`

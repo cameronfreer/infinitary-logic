@@ -152,11 +152,26 @@ it has arbitrarily large models.
 
 \section{Morley--Hanf Bound}
 
-\emph{Status: conditional.}  This result depends on \texttt{MorleyHanfTransfer},
-an explicit hypothesis packaging Erd\H{o}s--Rado partition calculus and
-Ehrenfeucht--Mostowski functor machinery not yet formalized in Lean or Mathlib.
+\emph{Status: conditional, in two forms.}  The original
+\texttt{morley\_hanf\_of\_transfer} (\ref{thm:morley-hanf}) depends on the
+bundled \texttt{MorleyHanfTransfer} hypothesis, packaging Erd\H{o}s--Rado
+partition calculus and Ehrenfeucht--Mostowski functor machinery together.
+
+A refined split is now available: the Ehrenfeucht--Mostowski stretching side
+is fully formalized as the family of \texttt{stretch\_restricted\_*\_on}
+theorems in \texttt{Methods/EM/FragmentAdapter.lean}, taking a
+restricted-indiscernible source sequence and producing a stretched model over
+any linear order.  The bridge theorem
+\texttt{hasArbLargeModels\_of\_restricted\_extraction}
+(\ref{thm:morley-hanf-restricted}) is a \emph{proved} theorem consuming only:
+(a) the source-side residual \texttt{MorleyHanfExtraction} (a pairwise-distinct
+$\mathbb{N}$-indexed sequence restricted-indiscernible on any chosen countable
+formula family --- the genuine Erd\H{o}s--Rado-style content), and
+(b) a per-target compactness oracle for each $L[[J]]$.
 
 \inputleannode{thm:morley-hanf}
+
+\inputleannode{thm:morley-hanf-restricted}
 
 \chapter{Counting Models}
 

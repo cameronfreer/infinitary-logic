@@ -18,11 +18,11 @@ The formalization currently covers:
 - **Scott analysis** &mdash; atomic diagrams, back-and-forth equivalence indexed by ordinals, Scott formulas/sentences, Scott height and rank, and the countable refinement hypothesis.
 - **Karp's theorem** &mdash; potential isomorphisms, the main equivalence (`karp_theorem_w`), and corollaries for countable structures.
 - **Model existence** &mdash; consistency properties, Henkin construction, truth lemma, model existence theorem, Karp completeness, and omitting types.
-- **Further model theory** &mdash; downward L&ouml;wenheim&ndash;Skolem for L<sub>&omega;<sub>1</sub>&omega;</sub>, Hanf numbers, conditional Morley&ndash;Hanf bound (conditional on `MorleyHanfTransfer`), and counting models (Morley counting theorem: &le; &alefsym;<sub>1</sub> or 2<sup>&alefsym;<sub>0</sub></sup> iso classes).
+- **Further model theory** &mdash; downward L&ouml;wenheim&ndash;Skolem for L<sub>&omega;<sub>1</sub>&omega;</sub>, Hanf numbers, Morley&ndash;Hanf bound (two forms: original `morley_hanf_of_transfer` conditional on the bundled `MorleyHanfTransfer`, plus the proved bridge `hasArbLargeModels_of_restricted_extraction` conditional only on the smaller residual `MorleyHanfExtraction` and a per-target compactness oracle, with EM stretching fully formalized), and counting models (Morley counting theorem: &le; &alefsym;<sub>1</sub> or 2<sup>&alefsym;<sub>0</sub></sup> iso classes).
 - **Silver&ndash;Burgess dichotomy** &mdash; splitting lemma, Cantor scheme, Silver&rsquo;s theorem for closed equivalence relations on Polish spaces, and `silverBurgessDichotomy` (1 sorry: `gandy_harrington_for_relation` in `Conditional/GandyHarrington.lean`).
 - **Admissible fragments** &mdash; Barwise compactness, Barwise completeness II, and the Nadel bound.
 
-Some results carry explicit hypotheses that package external mathematical content not yet formalized (e.g., `MorleyHanfTransfer` for Erd&#337;s&ndash;Rado / Ehrenfeucht&ndash;Mostowski machinery, `SilverBurgessDichotomy` for the Silver&ndash;Burgess dichotomy).
+Some results carry explicit hypotheses that package external mathematical content not yet formalized (`MorleyHanfExtraction` — a source-side residual isolated from the EM stretching machinery, which is now fully formalized — and `SilverBurgessDichotomy` for the Silver&ndash;Burgess dichotomy; the older bundled `MorleyHanfTransfer` is also retained).
 
 ## Import Bundles
 

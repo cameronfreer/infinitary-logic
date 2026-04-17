@@ -19,7 +19,7 @@ A Lean 4 formalization of infinitary logic (L∞ω and Lω₁ω), Scott sentence
 
 The formalization currently covers L∞ω and Lω₁ω syntax and semantics, Scott analysis (atomic diagrams, back-and-forth equivalence, Scott formulas/sentences, height and rank), Karp's theorem and corollaries, model existence via consistency properties, downward Löwenheim–Skolem for Lω₁ω, Hanf numbers, admissible-fragment results (Barwise compactness, Nadel bound), descriptive set theory of the space of countable structures (Borel complexity of satisfaction, BF-equivalence, and isomorphism; counting dichotomy), and the Silver–Burgess dichotomy for equivalence relations (splitting lemma, Cantor scheme, Silver's theorem for closed relations).
 
-Some results carry explicit hypotheses packaging external content not yet formalized: `morley_hanf_of_transfer` is conditional on `MorleyHanfTransfer` (Erdős–Rado / Ehrenfeucht–Mostowski machinery). The Silver–Burgess dichotomy (`silverBurgessDichotomy`) is proved modulo 1 sorry in `gandy_harrington_for_relation` (in `Conditional/GandyHarrington.lean`) — Silver's theorem for Borel equivalence relations on Polish spaces, whose proof requires descriptive-set-theory infrastructure not yet in Mathlib (Kuratowski–Ulam + Banach–Mazur games or lightface Gandy–Harrington); `morley_counting` chains through this.
+Some results carry explicit hypotheses packaging external content not yet formalized. For Morley–Hanf, two forms coexist: the original `morley_hanf_of_transfer` is conditional on the single opaque `MorleyHanfTransfer` hypothesis (bundling Erdős–Rado extraction and EM stretching), while the proved bridge `hasArbLargeModels_of_restricted_extraction` takes a smaller residual `MorleyHanfExtraction` (source-side only: pairwise-distinct ℕ-indexed sequence restricted-indiscernible on a countable formula family) plus a per-target compactness oracle — the EM stretching side is now fully formalized in `Methods/EM/FragmentAdapter.lean`. The Silver–Burgess dichotomy (`silverBurgessDichotomy`) is proved modulo 1 sorry in `gandy_harrington_for_relation` (in `Conditional/GandyHarrington.lean`) — Silver's theorem for Borel equivalence relations on Polish spaces, whose proof requires descriptive-set-theory infrastructure not yet in Mathlib (Kuratowski–Ulam + Banach–Mazur games or lightface Gandy–Harrington); `morley_counting` chains through this.
 
 ## Repository Guide
 
@@ -32,7 +32,7 @@ Some results carry explicit hypotheses packaging external content not yet formal
 - `InfinitaryLogic/ModelTheory/` — Löwenheim–Skolem, Hanf numbers, counting models
 - `InfinitaryLogic/Admissible/` — Admissible fragments (`Fragment/Core`, `Fragment/Compact`), Barwise compactness, literature-faithful interface (`Barwise/Data`), proof system, Nadel bound
 - `InfinitaryLogic/Descriptive/` — Borel complexity of the structure space, satisfaction, isomorphism; counting dichotomy, finite-carrier analysis
-- `InfinitaryLogic/Conditional/` — Results depending on external hypotheses or sorries: `MorleyHanfTransfer` (Erdős–Rado + EM), `SilverBurgess`, `GandyHarrington` (1 sorry in `gandy_harrington_for_relation`)
+- `InfinitaryLogic/Conditional/` — Results depending on external hypotheses or sorries: `MorleyHanfTransfer` (original bundled `MorleyHanfTransfer` hypothesis + split residual `MorleyHanfExtraction` with proved `hasArbLargeModels_of_restricted_extraction` bridge), `SilverBurgess`, `GandyHarrington` (1 sorry in `gandy_harrington_for_relation`)
 
 ## Getting Started
 
@@ -65,6 +65,7 @@ import InfinitaryLogic.Everything   -- everything including Conditional
 - `counting_coded_models_dichotomy` — Counting dichotomy for coded ℕ-models (conditional on `SilverBurgessDichotomy`)
 - `morley_counting` — Morley's counting theorem: ≤ ℵ₁ or 2^ℵ₀ iso classes of countable models (conditional on `SilverBurgessDichotomy`)
 - `iso_borel_of_bounded_scottHeight` — Isomorphism is Borel under bounded Scott height
+- `hasArbLargeModels_of_restricted_extraction` — Proved Morley–Hanf bridge: restricted source-side extraction + per-target compactness ⇒ arbitrarily large models
 
 ## References
 
