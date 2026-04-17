@@ -70,6 +70,16 @@ def RealizesOn (T : Lomega1omegaTemplate L) (b : J → N) : Prop :=
 
 end Lomega1omegaTemplate
 
+/-- Template associated with a bare sequence `a : I → M` — same body as
+`IsLomega1omegaIndiscernible.template` but without the indiscernibility
+hypothesis (the existing definition discards that hypothesis in its data
+anyway). Used by the restricted-indiscernibility API (`_on` variants). -/
+def templateOfSeq {I : Type w} [LinearOrder I] {M : Type*} [L.Structure M]
+    (a : I → M) : Lomega1omegaTemplate L where
+  truth {n} φ :=
+    letI := ‹L.Structure M›
+    ∃ s : Fin n → I, StrictMono s ∧ φ.Realize (Empty.elim : Empty → M) (a ∘ s)
+
 namespace IsLomega1omegaIndiscernible
 
 variable {I : Type w} [LinearOrder I] {M : Type*} [L.Structure M]
@@ -85,6 +95,13 @@ def template {a : I → M}
   truth {n} φ :=
     letI := ‹L.Structure M›
     ∃ s : Fin n → I, StrictMono s ∧ φ.Realize (Empty.elim : Empty → M) (a ∘ s)
+
+/-- The hypothesis-bearing `template` equals the bare `templateOfSeq`. Proof
+is `rfl` because the existing `template` discards its indiscernibility
+argument in its data. -/
+theorem template_eq_templateOfSeq {a : I → M}
+    (h : IsLomega1omegaIndiscernible (L := L) a) :
+    h.template = templateOfSeq (L := L) a := rfl
 
 /-- Well-definedness of `template`: the template's value at `φ` equals the
 truth value of `φ` on any specific strictly increasing tuple. This is the
@@ -148,5 +165,31 @@ theorem template_reindex {a : I → M}
     simpa [hcomp] using hφ
 
 end IsLomega1omegaIndiscernible
+
+/-! ### Restricted-indiscernibility API for `templateOfSeq` -/
+
+namespace IsLomega1omegaIndiscernibleOn
+
+variable {I : Type w} [LinearOrder I] {M : Type*} [L.Structure M]
+
+/-- Restricted `template_truth_iff`: the `templateOfSeq`'s value at a
+formula `φ ∈ Γ` equals the truth value of `φ` on any strictly-increasing
+tuple, provided the source sequence is restricted-indiscernible on `Γ`.
+
+This mirrors `IsLomega1omegaIndiscernible.template_truth_iff` but uses the
+weaker `IsLomega1omegaIndiscernibleOn` hypothesis and compares against
+`templateOfSeq a` (the hypothesis-free template). -/
+theorem templateOfSeq_truth_iff {a : I → M}
+    {Γ : Set (Σ n, L.BoundedFormulaω Empty n)}
+    (h : IsLomega1omegaIndiscernibleOn (L := L) a Γ)
+    {n : ℕ} {φ : L.BoundedFormulaω Empty n} (hφ : ⟨n, φ⟩ ∈ Γ)
+    {s : Fin n → I} (hs : StrictMono s) :
+    (templateOfSeq (L := L) a).truth φ ↔
+      φ.Realize (Empty.elim : Empty → M) (a ∘ s) := by
+  refine ⟨?_, fun hR => ⟨s, hs, hR⟩⟩
+  rintro ⟨t, ht, hR⟩
+  exact (h.iff_realize φ hφ ht hs).mp hR
+
+end IsLomega1omegaIndiscernibleOn
 
 end FirstOrder.Language
