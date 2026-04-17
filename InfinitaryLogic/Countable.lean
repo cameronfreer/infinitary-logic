@@ -14,6 +14,7 @@ import InfinitaryLogic.ModelTheory.CountingModels
 import InfinitaryLogic.Methods.EM.Indiscernible
 import InfinitaryLogic.Methods.EM.Template
 import InfinitaryLogic.Methods.EM.Realization
+import InfinitaryLogic.Methods.EM.Extraction
 
 /-!
 # Countable: model existence + model theory for countable structures
