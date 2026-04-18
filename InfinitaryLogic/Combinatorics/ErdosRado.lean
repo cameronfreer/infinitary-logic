@@ -130,4 +130,66 @@ theorem pureColoring_of_omega1HomogeneousSuborder
     rw [htLift, ht'Lift] at this
     exact this
 
+/-! ### Architecture of the main Erdős–Rado theorem (Phase 2d2)
+
+The remaining unproved theorem:
+
+```lean
+theorem erdos_rado_omega1_of_countable_bool_family
+    {I : Type} [LinearOrder I]
+    (hI : Cardinal.mk I ≥ Cardinal.beth (Ordinal.omega 1))
+    (c : ℕ → Σ n, (Fin n ↪o I) → Bool) :
+    ∃ e : (Ordinal.omega 1).ToType ↪o I,
+      HomogeneousSuborder c e
+```
+
+**Why it is hard.** The naive approach — iterated infinite Ramsey with
+diagonalization — fails. If `I_m ⊂ I_{m-1} ⊂ ... ⊂ I_0` is a nested
+sequence of infinite sets with `I_m` monochromatic for the first `m`
+colorings, and we pick `f(k) ∈ I_k` with `f(k) > f(k-1)`, then a tuple
+`(f(u_0), …, f(u_{n_i-1}))` with `u_0 < i` has its first point in
+`I_{u_0}`, which is not guaranteed to be homogeneous for `c_i`. So
+diagonalization only yields "tail homogeneity" (homogeneity on tuples
+with minimum index `≥ i` for each `c_i`), not the full homogeneity
+`PureColoringHypothesis` requires.
+
+**Standard resolution.** Use `|I| ≥ ℶ_ω₁` to find an ω₁-sized
+homogeneous subset via a tree construction (canonical types /
+"Π¹-partition-ranks"). This is the Erdős–Rado theorem proper. Once
+an ω₁-suborder `e : (Ordinal.omega 1).ToType ↪o I` is produced,
+`pureColoring_of_omega1HomogeneousSuborder` (above) packages it into
+the `PureColoringHypothesis` shape.
+
+**Rough proof sketch for future work.**
+  1. **Single coloring of fixed arity `n`**: by induction on `n`,
+     extract a homogeneous subset of cardinality `ω₁` from a source
+     of cardinality `ℶ_{n-1}^+`. The base case (`n = 2`) is "pair
+     Erdős–Rado": `ℶ_1^+ → (ω₁)^2_ω`, proved by the canonical type
+     tree. Induction step goes via the Erdős-Rado partition
+     relation composition.
+  2. **Countably many colorings**: given colorings `c_0, c_1, …` of
+     arities `n_0, n_1, …`, iterate step (1) on nested subsets.
+     Cumulative cardinality loss is at most `ℶ_ω₁`, which is still
+     matched by the source size `ℶ_ω₁`. The intersection of the
+     ω₁-homogeneous subsets at each stage remains ω₁-sized.
+  3. **Extract the ω₁-embedding**: use `Ordinal.enumOrd` to
+     transform the resulting homogeneous subset into an
+     order-embedding `(Ordinal.omega 1).ToType ↪o I`.
+
+**Expected infrastructure to be built/imported**:
+  - Cardinal arithmetic helpers around `ℶ_ω₁` (mathlib has `Cardinal.beth`,
+    `beth_succ`, `beth_strictMono`; may need `beth_le_beth_of_le` etc.).
+  - A "canonical types tree" structure for building the ω₁-homogeneous
+    subset — likely an ad-hoc structure defined here.
+  - Iteration over countably many colorings via `Nat.rec` +
+    classical choice.
+
+**Why defer**. The full proof is a multi-week project in its own
+right. Placeholder committed: the public interface
+(`HomogeneousSuborder`, `natOrderEmbedding_omega1`,
+`pureColoring_of_omega1HomogeneousSuborder`) is ready. When the main
+theorem is proved, `pureColoringHypothesis_holds` in
+`InfinitaryLogic/Conditional/MorleyHanfTransfer.lean` follows in
+three lines. -/
+
 end FirstOrder.Combinatorics
