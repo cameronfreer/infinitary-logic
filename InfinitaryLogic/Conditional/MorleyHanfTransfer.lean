@@ -380,6 +380,63 @@ theorem indiscernibleSequence_of_pureColoring
   rw [eq_of_heq h_snd] at hbool
   exact decide_eq_decide.mp hbool
 
+/-! ### Compact-only Morley–Hanf headlines
+
+These wrappers collapse the proved reduction chain
+(`hasArbLargeModels_of_restricted_extraction` ∘
+`morleyHanfExtraction_of_indiscernibleSequence` ∘
+`indiscernibleSequence_of_pureColoring`) into a single theorem parameterized
+by the pure combinatorial hypothesis and a compactness oracle.
+
+When Phase 2d2 discharges `PureColoringHypothesis` via the Erdős–Rado
+theorem in `InfinitaryLogic/Combinatorics/ErdosRado.lean`, the
+`hPure` argument becomes a theorem rather than a hypothesis, and the
+wrappers below lose it — producing an unconditional
+`hasArbLargeModels_of_compact` and `morley_hanf_of_compact`. -/
+
+/-- **Morley–Hanf reduction**: assuming the pure combinatorial hypothesis
+`PureColoringHypothesis` and a per-target compactness oracle for every
+`L'[[J]]`, any sentence satisfied in a model of size ≥ ℶ_ω₁ has
+arbitrarily large models.
+
+Composes the proved chain:
+  `hPure → IndiscernibleSequenceHypothesis → MorleyHanfExtraction →
+   HasArbLargeModels φ`. -/
+theorem hasArbLargeModels_of_pureColoring_and_compact
+    {L' : Language.{0, 0}} [Countable (Σ l, L'.Relations l)]
+    (hPure : PureColoringHypothesis)
+    (hCompact : ∀ (J : Type) [LinearOrder J] (S : Set L'[[J]].Sentenceω),
+      (∀ F : Set L'[[J]].Sentenceω, F.Finite → F ⊆ S →
+        ∃ (N : Type) (_ : L'[[J]].Structure N), Theoryω.Model F N) →
+      ∃ (N : Type) (_ : L'[[J]].Structure N), Theoryω.Model S N)
+    (φ : L'.Sentenceω)
+    (hφ : ∃ (M : Type) (_ : L'.Structure M), Sentenceω.Realize φ M ∧
+      Cardinal.mk M ≥ Cardinal.beth (Ordinal.omega 1)) :
+    HasArbLargeModels φ :=
+  hasArbLargeModels_of_restricted_extraction
+    (morleyHanfExtraction_of_indiscernibleSequence
+      (indiscernibleSequence_of_pureColoring hPure))
+    hCompact φ hφ
+
+/-- **Morley–Hanf bound (compact + pure-coloring form)**: `ℶ_ω₁` is a
+Hanf bound for every Lω₁ω sentence, assuming the pure partition-calculus
+hypothesis and a compactness oracle.
+
+Specializes `hasArbLargeModels_of_pureColoring_and_compact` to the
+`IsHanfBound` shape used as the canonical Morley–Hanf endpoint. -/
+theorem morley_hanf_of_pureColoring_and_compact
+    {L' : Language.{0, 0}} [Countable (Σ l, L'.Relations l)]
+    (hPure : PureColoringHypothesis)
+    (hCompact : ∀ (J : Type) [LinearOrder J] (S : Set L'[[J]].Sentenceω),
+      (∀ F : Set L'[[J]].Sentenceω, F.Finite → F ⊆ S →
+        ∃ (N : Type) (_ : L'[[J]].Structure N), Theoryω.Model F N) →
+      ∃ (N : Type) (_ : L'[[J]].Structure N), Theoryω.Model S N)
+    (φ : L'.Sentenceω) :
+    IsHanfBound φ (Cardinal.beth (Ordinal.omega 1)) := by
+  intro ⟨M, hStr, hRealize, hSize⟩
+  exact hasArbLargeModels_of_pureColoring_and_compact hPure hCompact φ
+    ⟨M, hStr, hRealize, hSize⟩
+
 end Language
 
 end FirstOrder
