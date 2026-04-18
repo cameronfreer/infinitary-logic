@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.ModelTheory.Hanf
 import InfinitaryLogic.Methods.EM.FragmentAdapter
+import InfinitaryLogic.Methods.EM.Extraction
 
 /-!
 # Morley-Hanf Transfer Hypothesis (Conditional)
@@ -245,6 +246,61 @@ theorem hasArbLargeModels_of_restricted_extraction
     -- #N ≥ #J = κ via injection.
     calc Cardinal.mk N ≥ Cardinal.mk J := Cardinal.mk_le_of_injective hbInj
       _ = κ := hJ_card
+
+/-! ### Combinatorial residual via `IsIndiscernibleOnSet` -/
+
+/-- **Pure(-ish) combinatorial residual**: from a model of size ≥ ℶ_ω₁
+under some chosen linear order on its carrier, produce an infinite
+strictly-monotone `ℕ → M` sequence whose range is
+`IsIndiscernibleOnSet` for the countable formula family `s`.
+
+This is the Erdős–Rado content of `MorleyHanfExtraction` isolated from
+the model-theoretic plumbing: no reference to `IsLomega1omegaIndiscernibleOn`,
+no pairwise-distinct clause — only the combinatorial statement
+"large model + countable formula family ⇒ infinite homogeneous ω-sequence."
+
+The hypothesis still mentions L and formulas in `s`; a truly pure
+pure-coloring-on-tuples form is Phase 2d0.5 follow-up. -/
+def IndiscernibleSequenceHypothesis : Prop :=
+  ∀ (s : ℕ → Σ n, L'.BoundedFormulaω Empty n)
+    (M : Type) [L'.Structure M] (_ : LinearOrder M),
+    Cardinal.mk M ≥ Cardinal.beth (Ordinal.omega 1) →
+    ∃ (f : ℕ → M), StrictMono f ∧
+      IsIndiscernibleOnSet (id : M → M) (Set.range s) (Set.range f)
+
+omit [Countable (Σ l, L'.Relations l)] in
+/-- **Reduction**: the combinatorial residual
+`IndiscernibleSequenceHypothesis` implies `MorleyHanfExtraction`.
+
+Given the hypothesis plus `|M| ≥ ℶ_ω₁`, equip `M` with a classical
+linear order (via `WellOrderingRel` / `Classical.choice`), apply the
+hypothesis to obtain a strict-monotone `f : ℕ → M` whose range is
+`IsIndiscernibleOnSet` for `Set.range s`. Strict-monotonicity gives
+pairwise distinctness (injectivity), and the sequence-level reduction
+`IsIndiscernibleOnSet.toLomega1omegaIndiscernibleOn` (Phase 2d0a) gives
+the restricted indiscernibility. -/
+theorem morleyHanfExtraction_of_indiscernibleSequence
+    (hSeq : IndiscernibleSequenceHypothesis (L' := L')) :
+    MorleyHanfExtraction (L' := L') := by
+  intro s M _ hSize
+  -- Equip `M` with a classical linear order via its `LinearOrder` instance
+  -- given by the classical well-ordering of its cardinality.
+  letI : LinearOrder M := Classical.choice (by
+    have : Nonempty (LinearOrder M) := ⟨IsWellOrder.linearOrder WellOrderingRel⟩
+    exact this)
+  obtain ⟨f, hfMono, hfInd⟩ := hSeq s M ‹LinearOrder M› hSize
+  refine ⟨f, ?_, ?_⟩
+  · -- Pairwise distinct: strict-mono → injective.
+    intro i j hij
+    exact hfMono.injective.ne hij
+  · -- Restricted indiscernibility: apply the 2d0a reduction.
+    intro n φ hmem u v hu hv
+    -- From 2d0a: range f is indiscernible, so truth agrees on `f ∘ u` and `f ∘ v`.
+    have hfu : StrictMono (f ∘ u) := hfMono.comp hu
+    have hfv : StrictMono (f ∘ v) := hfMono.comp hv
+    have huR : ∀ k, (f ∘ u) k ∈ Set.range f := fun k => ⟨u k, rfl⟩
+    have hvR : ∀ k, (f ∘ v) k ∈ Set.range f := fun k => ⟨v k, rfl⟩
+    exact hfInd hmem (f ∘ u) (f ∘ v) hfu hfv huR hvR
 
 end RestrictedBridge
 
