@@ -16,6 +16,9 @@ import InfinitaryLogic.Methods.EM.Template
 import InfinitaryLogic.Methods.EM.Realization
 import InfinitaryLogic.Methods.EM.Extraction
 
+-- Pure combinatorics (Erdős–Rado scaffolding)
+import InfinitaryLogic.Combinatorics.ErdosRado
+
 /-!
 # Countable: model existence + model theory for countable structures
 
