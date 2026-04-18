@@ -249,9 +249,9 @@ theorem hasArbLargeModels_of_restricted_extraction
 
 /-! ### Combinatorial residual via `IsIndiscernibleOnSet` -/
 
-/-- **Pure(-ish) combinatorial residual**: from a model of size ≥ ℶ_ω₁
-under some chosen linear order on its carrier, produce an infinite
-strictly-monotone `ℕ → M` sequence whose range is
+/-- **Combinatorial residual** (model-theoretic form): from a model of
+size ≥ ℶ_ω₁ under some chosen linear order on its carrier, produce an
+infinite strictly-monotone `ℕ → M` sequence whose range is
 `IsIndiscernibleOnSet` for the countable formula family `s`.
 
 This is the Erdős–Rado content of `MorleyHanfExtraction` isolated from
@@ -259,8 +259,9 @@ the model-theoretic plumbing: no reference to `IsLomega1omegaIndiscernibleOn`,
 no pairwise-distinct clause — only the combinatorial statement
 "large model + countable formula family ⇒ infinite homogeneous ω-sequence."
 
-The hypothesis still mentions L and formulas in `s`; a truly pure
-pure-coloring-on-tuples form is Phase 2d0.5 follow-up. -/
+The hypothesis still quantifies over `L`, `M`, and formulas. The truly
+pure partition-calculus form is `PureColoringHypothesis` (below), which
+implies this via `indiscernibleSequence_of_pureColoring`. -/
 def IndiscernibleSequenceHypothesis : Prop :=
   ∀ (s : ℕ → Σ n, L'.BoundedFormulaω Empty n)
     (M : Type) [L'.Structure M] (_ : LinearOrder M),
@@ -303,6 +304,81 @@ theorem morleyHanfExtraction_of_indiscernibleSequence
     exact hfInd hmem (f ∘ u) (f ∘ v) hfu hfv huR hvR
 
 end RestrictedBridge
+
+/-! ### Pure partition-calculus residual -/
+
+/-- **Pure partition-calculus residual**: for every linearly-ordered type
+`I` with `|I| ≥ ℶ_ω₁` and every countable family of Bool-valued colorings
+on finite-arity increasing tuples (order-embeddings) from `I`, there
+exists an infinite strictly-monotone `ℕ → I` sequence whose range is
+monochromatic for every coloring in the family.
+
+The body mentions no language, no structure, no formula — only a linear
+order, cardinalities, `ℕ`-indexed arities, and `Bool` colorings on
+`Fin n ↪o I`. This is the Erdős–Rado statement proper; Phase 2d targets
+it directly. `indiscernibleSequence_of_pureColoring` below proves that
+this implies the larger `IndiscernibleSequenceHypothesis`. -/
+def PureColoringHypothesis : Prop :=
+  ∀ (I : Type) [LinearOrder I],
+    Cardinal.mk I ≥ Cardinal.beth (Ordinal.omega 1) →
+    ∀ (c : ℕ → Σ n, (Fin n ↪o I) → Bool),
+    ∃ (f : ℕ → I), StrictMono f ∧
+      ∀ (i : ℕ) (t t' : Fin (c i).1 ↪o I),
+        (∀ k, t k ∈ Set.range f) → (∀ k, t' k ∈ Set.range f) →
+        (c i).2 t = (c i).2 t'
+
+/-- **Reduction**: the pure partition-calculus hypothesis implies the
+model-theoretic `IndiscernibleSequenceHypothesis`. The colorings are
+instantiated as "truth of the `i`-th formula in `s` on the tuple's
+underlying function". -/
+theorem indiscernibleSequence_of_pureColoring
+    {L' : Language.{0, 0}}
+    (hPure : PureColoringHypothesis) :
+    IndiscernibleSequenceHypothesis (L' := L') := by
+  classical
+  intro s M _ instLinOrd hSize
+  -- Each coloring: a tuple `t : Fin (s i).1 ↪o M` is colored by the
+  -- `Bool` cast of the truth of `(s i).2` on the underlying function `⇑t`.
+  let c : ℕ → Σ n, (Fin n ↪o M) → Bool := fun i =>
+    ⟨(s i).1, fun t => decide (((s i).2).Realize (Empty.elim : Empty → M) (⇑t))⟩
+  obtain ⟨f, hfMono, hfConst⟩ := hPure M hSize c
+  refine ⟨f, hfMono, ?_⟩
+  intro n φ ⟨i, hi⟩ t t' ht ht' htR ht'R
+  -- Goal (after unfolding `id ∘ _ = _`):
+  --   φ.Realize Empty.elim t ↔ φ.Realize Empty.elim t'
+  show φ.Realize (Empty.elim : Empty → M) (id ∘ t) ↔
+       φ.Realize (Empty.elim : Empty → M) (id ∘ t')
+  have hidt : (id ∘ t : Fin n → M) = t := rfl
+  have hidt' : (id ∘ t' : Fin n → M) = t' := rfl
+  rw [hidt, hidt']
+  -- Apply the pure hypothesis at the coloring for `i`.
+  -- `hi : s i = ⟨n, φ⟩` determines `(c i).1 = n` and `(c i).2` in terms of `φ`.
+  have hnEq : (c i).1 = n := by simp [c, hi]
+  -- Bundle `t` and `t'` as order-embeddings of type `Fin (c i).1 ↪o M`.
+  let tC : Fin (c i).1 ↪o M :=
+    hnEq ▸ OrderEmbedding.ofStrictMono t ht
+  let t'C : Fin (c i).1 ↪o M :=
+    hnEq ▸ OrderEmbedding.ofStrictMono t' ht'
+  -- Membership in `Set.range f` transports through `hnEq`.
+  have htCR : ∀ k, tC k ∈ Set.range f := by
+    intro k; simp only [tC]; cases hnEq; exact htR k
+  have ht'CR : ∀ k, t'C k ∈ Set.range f := by
+    intro k; simp only [t'C]; cases hnEq; exact ht'R k
+  -- The pure-coloring conclusion.
+  have hbool : (c i).2 tC = (c i).2 t'C := hfConst i tC t'C htCR ht'CR
+  -- Decode: after `cases hnEq`, (c i).1 identifies with n. Unfold `c` and
+  -- reduce the embedding coercions; extract `(s i).snd = φ` via
+  -- Sigma-injection on `hi` (the fst-transport is `rfl` by definition).
+  cases hnEq
+  simp only [c, tC, t'C, OrderEmbedding.coe_ofStrictMono] at hbool
+  -- `(s i).snd = φ` via Sigma-injection on `hi`. The first-component
+  -- equality is definitional ((s i).fst = (c i).fst by c's def), so the
+  -- `HEq` on the second component reduces to regular `Eq`.
+  have hi_eta : (⟨(s i).fst, (s i).snd⟩ : Σ n, L'.BoundedFormulaω Empty n) =
+      ⟨(c i).fst, φ⟩ := hi
+  obtain ⟨_, h_snd⟩ := Sigma.mk.inj_iff.mp hi_eta
+  rw [eq_of_heq h_snd] at hbool
+  exact decide_eq_decide.mp hbool
 
 end Language
 
