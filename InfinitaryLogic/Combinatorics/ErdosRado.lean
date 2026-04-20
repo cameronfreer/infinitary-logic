@@ -1477,6 +1477,65 @@ noncomputable def PairERCoherentFamily.extendAtSucc
       · exact F.coherent hδ_lt_β (Order.lt_succ β)
       · subst hδ_eq_β; rfl
 
+/-- **Coherent bundle at level `α`.** Packages the current stage at
+`α`, the coherent family covering `β < α`, and the coherence between
+the stage's commits and the family's committed values. This is the
+motive carried by the transfinite assembly recursion for the main
+Erdős–Rado theorem. -/
+structure CoherentBundle (cR : (Fin 2 ↪o PairERSource) → Bool)
+    (α : Ordinal.{0}) where
+  stage : PairERChain cR α
+  family : PairERCoherentFamily cR α
+  coh : ∀ δ (hδ : δ < α), stage.commitAt δ hδ = family.commitVal δ hδ
+
+/-- **Zero coherent bundle.** At `α = 0`, bundle up `PairERChain.zero`
+and the empty family. -/
+noncomputable def CoherentBundle.zero
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    CoherentBundle cR 0 where
+  stage := PairERChain.zero cR
+  family := PairERCoherentFamily.empty cR
+  coh := fun δ hδ => absurd hδ (not_lt.mpr (zero_le δ))
+
+/-- **Successor extension of a coherent bundle.** From a bundle at `α`,
+produce the bundle at `α + 1`: the new stage is `b.stage.succ`; the new
+family extends `b.family` by inserting `b.stage.succ` at position `α`;
+coherence is proved by `PairERChain.succ_commitAt` and `b.coh`. -/
+noncomputable def CoherentBundle.extend
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (b : CoherentBundle cR α) : CoherentBundle cR (Order.succ α) where
+  stage := b.stage.succ
+  family :=
+    { stage := fun γ hγ =>
+        if h : γ < α then b.family.stage γ h
+        else
+          have hγ_eq : γ = α :=
+            le_antisymm (Order.lt_succ_iff.mp hγ) (not_lt.mp h)
+          hγ_eq ▸ b.stage.succ
+      coherent := by
+        intro δ γ hδγ hγ_succ
+        rcases lt_or_eq_of_le (Order.lt_succ_iff.mp hγ_succ) with hγ_lt | hγ_eq
+        · have hδ_lt : δ < α := hδγ.trans hγ_lt
+          simp only [dif_pos hγ_lt, dif_pos hδ_lt]
+          exact b.family.coherent hδγ hγ_lt
+        · subst hγ_eq
+          simp only [dif_pos hδγ, dif_neg (lt_irrefl _)]
+          -- Goal: `b.stage.succ.commitAt δ _ = (b.family.stage δ _).commitAt δ _`
+          rw [PairERChain.succ_commitAt _ δ hδγ]
+          exact b.coh δ hδγ }
+  coh := by
+    intro δ hδ_succ
+    rcases lt_or_eq_of_le (Order.lt_succ_iff.mp hδ_succ) with hδ_lt | hδ_eq
+    · -- δ < α: use `succ_commitAt` + `b.coh`.
+      unfold PairERCoherentFamily.commitVal
+      rw [PairERChain.succ_commitAt _ δ hδ_lt]
+      simp only [dif_pos hδ_lt]
+      exact b.coh δ hδ_lt
+    · -- δ = α: the new family's stage at α is `b.stage.succ`; trivial.
+      subst hδ_eq
+      unfold PairERCoherentFamily.commitVal
+      simp only [dif_neg (lt_irrefl _)]
+
 /-! ### Existence of stages at every level `< ω_1`
 
 The transfinite-assembly existence lemma `exists_PairERChain`: for
