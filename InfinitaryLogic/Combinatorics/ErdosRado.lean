@@ -4,6 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import Mathlib.SetTheory.Cardinal.Aleph
+import Mathlib.SetTheory.Cardinal.Continuum
+import Mathlib.SetTheory.Cardinal.Pigeonhole
+import Mathlib.SetTheory.Cardinal.Regular
 import Mathlib.Order.InitialSeg
 import Mathlib.Data.Nat.Nth
 import Mathlib.Data.Fin.VecNotation
@@ -499,6 +502,167 @@ theorem infinite_ramsey_pair_nat (c : (Fin 2 ↪o ℕ) → Bool) :
       exact hi₁.symm
   rw [ht_eq_pair, hcolor_eq_at_gi₀]
   exact hg_color i₀
+
+/-! ### Toolbox lemmas for uncountable Erdős–Rado (Phase 2d2-pair)
+
+Five general-purpose cardinal/ordinal helpers used by the pair
+Erdős–Rado construction below:
+
+- **H1** `exists_ordToType_embedding_of_card_ge`: a well-ordered
+  source of cardinality ≥ κ admits an order-embedding
+  `κ.ord.ToType ↪o I`. Specialised twice in the main proof:
+  `κ := succ (ℶ_1)` (to reduce to a regular source) and
+  `κ := ℵ_1` (to shape the final output).
+- **H2** `mk_countable_bool_functions_le_beth_one`:
+  `#(α → Bool) ≤ ℶ_1` for any countable `α`.
+- **H3** `exists_large_fiber_of_small_codomain`: Cardinal pigeonhole
+  on `succ κ`-sized sources mapping into codomains of size `≤ κ`
+  yields a fiber of size `≥ succ κ`.
+- **H4** `countable_toType_of_lt_omega1`: ordinals below `ω_1` have
+  countable `ToType`.
+- **H5** `ordIso_omega1_of_aleph1_subset`: any `ℵ_1`-sized subset of
+  `ω_1.ToType` is order-isomorphic to `ω_1.ToType`.
+-/
+
+section ToolboxH1
+
+/-- **H1** — a well-ordered source of cardinality at least `κ` admits
+an order-embedding from the initial-ordinal well-order of cardinality
+`κ`. Used twice in the main Erdős–Rado argument: once with
+`κ = succ (ℶ_1)` (to reduce to a regular initial ordinal), and once
+with `κ = ℵ_1` (to shape the final `ω_1 ↪o I` output). -/
+theorem exists_ordToType_embedding_of_card_ge
+    {I : Type} [LinearOrder I] [WellFoundedLT I]
+    {κ : Cardinal} (hI : Cardinal.mk I ≥ κ) :
+    Nonempty (κ.ord.ToType ↪o I) := by
+  -- `β := type (<_I) : Ordinal`.  `β.card = #I ≥ κ`, hence `κ.ord ≤ β`.
+  set β : Ordinal := Ordinal.type (· < · : I → I → Prop) with hβ
+  have hβ_card : β.card = Cardinal.mk I := Ordinal.card_type (· < ·)
+  have hord_le : κ.ord ≤ β := by
+    rw [Cardinal.ord_le, hβ_card]; exact hI
+  -- Initial-segment embedding `κ.ord.ToType ≤i β.ToType`.
+  have seg : κ.ord.ToType ≤i β.ToType := Ordinal.initialSegToType hord_le
+  -- `β.ToType` ≃o `I` via `type_toType β = β = type (<_I)`.
+  have htype : @Ordinal.type β.ToType (· < ·) _ =
+      @Ordinal.type I (· < ·) _ := by
+    rw [Ordinal.type_toType]
+  have hiso : Nonempty
+      ((· < · : β.ToType → β.ToType → Prop) ≃r (· < · : I → I → Prop)) :=
+    Ordinal.type_eq.mp htype
+  obtain ⟨r⟩ := hiso
+  exact ⟨seg.toOrderEmbedding.trans (OrderIso.ofRelIsoLT r).toOrderEmbedding⟩
+
+end ToolboxH1
+
+section ToolboxH2
+
+/-- **H2** — countable domain and Bool codomain yield continuum-many
+functions at most. Uses `2 ^ ℵ_0 = ℶ_1`. -/
+theorem mk_countable_bool_functions_le_beth_one
+    {α : Type} [Countable α] :
+    Cardinal.mk (α → Bool) ≤ Cardinal.beth 1 := by
+  rw [Cardinal.beth_one, ← Cardinal.two_power_aleph0]
+  have hαBool : Cardinal.mk (α → Bool) = 2 ^ Cardinal.mk α := by
+    rw [← Cardinal.mk_bool, Cardinal.power_def]
+  rw [hαBool]
+  exact Cardinal.power_le_power_left two_ne_zero Cardinal.mk_le_aleph0
+
+end ToolboxH2
+
+section ToolboxH3
+
+/-- **H3** — path-counting pigeonhole. A function out of a set of
+cardinality `≥ succ κ` into a codomain of cardinality `≤ κ`
+(with `κ ≥ ℵ_0`) has some fiber of cardinality `≥ succ κ`.
+
+Routes through `Cardinal.infinite_pigeonhole_card` with parameter
+`θ := succ κ`. The regularity of `succ κ` (successor cardinals are
+regular) supplies the cofinality hypothesis. -/
+theorem exists_large_fiber_of_small_codomain
+    {α β : Type u} {κ : Cardinal.{u}}
+    (hκ : Cardinal.aleph0 ≤ κ)
+    (hα : Cardinal.mk α ≥ Order.succ κ)
+    (hβ : Cardinal.mk β ≤ κ)
+    (f : α → β) :
+    ∃ b : β, Order.succ κ ≤ Cardinal.mk (f ⁻¹' {b}) := by
+  have hReg : (Order.succ κ).IsRegular := Cardinal.isRegular_succ hκ
+  have hθ_le_α : Order.succ κ ≤ Cardinal.mk α := hα
+  have hθ_ge_aleph0 : Cardinal.aleph0 ≤ Order.succ κ :=
+    hκ.trans (Order.le_succ κ)
+  -- `#β ≤ κ < succ κ = (succ κ).ord.cof`.
+  have hcof : Cardinal.mk β < (Order.succ κ).ord.cof := by
+    rw [hReg.cof_eq]
+    exact hβ.trans_lt (Order.lt_succ_of_le le_rfl)
+  exact Cardinal.infinite_pigeonhole_card f (Order.succ κ)
+    hθ_le_α hθ_ge_aleph0 hcof
+
+end ToolboxH3
+
+section ToolboxH4
+
+/-- **H4** — ordinals below `ω_1` have countable `ToType`. Follows
+from `Cardinal.lt_omega_iff_card_lt` and
+`Cardinal.countable_iff_lt_aleph_one`. -/
+theorem countable_toType_of_lt_omega1 {α : Ordinal}
+    (hα : α < Ordinal.omega 1) :
+    Countable α.ToType := by
+  have hcard : α.card < Cardinal.aleph 1 :=
+    Cardinal.lt_omega_iff_card_lt.mp hα
+  have hmk : Cardinal.mk α.ToType < Cardinal.aleph 1 := by
+    rw [Cardinal.mk_toType]; exact hcard
+  have huniv : (Set.univ : Set α.ToType).Countable :=
+    (Cardinal.countable_iff_lt_aleph_one _).mpr
+      (by rw [Cardinal.mk_univ]; exact hmk)
+  exact Set.countable_univ_iff.mp huniv
+
+end ToolboxH4
+
+section ToolboxH5
+
+/-- **H5** — any subset of `ω_1.ToType` of cardinality at least `ℵ_1`
+is order-isomorphic to `ω_1.ToType`.
+
+Proof outline: `ω_1` has order type `ω_1`, so any subset with
+cardinality `ℵ_1` must have order type `ω_1`. If the order type were
+strictly less than `ω_1`, the subset would be countable
+(contradicting `ℵ_1`-cardinality). So `type (subset) = ω_1`, giving
+a `RelIso` transported to an `OrderIso`. -/
+theorem ordIso_omega1_of_aleph1_subset
+    {S : Set (Ordinal.omega.{0} 1).ToType}
+    (hS : Cardinal.mk S ≥ Cardinal.aleph.{0} 1) :
+    Nonempty (S ≃o (Ordinal.omega.{0} 1).ToType) := by
+  haveI : IsWellOrder S (· < ·) := inferInstance
+  set β : Ordinal.{0} := @Ordinal.type S (· < ·) _ with hβ
+  -- The inclusion `S ↪o ω_1.ToType`.
+  let incl : S ↪o (Ordinal.omega.{0} 1).ToType := OrderEmbedding.subtype _
+  -- `β ≤ ω_1`.
+  have hβ_le : β ≤ Ordinal.omega.{0} 1 := by
+    have : @Ordinal.type (Ordinal.omega.{0} 1).ToType (· < ·) _ =
+        Ordinal.omega.{0} 1 := Ordinal.type_toType _
+    rw [← this]
+    exact Ordinal.type_le_iff'.mpr ⟨incl.ltEmbedding⟩
+  -- `β.card = #S ≥ ℵ_1`.
+  have hβ_card : β.card = Cardinal.mk S := Ordinal.card_type (· < ·)
+  have hβ_card_ge : Cardinal.aleph.{0} 1 ≤ β.card := hβ_card ▸ hS
+  -- `β ≥ ω_1`: if `β < ω_1`, then `β.card < ℵ_1`, contradicting above.
+  have hβ_ge : Ordinal.omega.{0} 1 ≤ β := by
+    by_contra hne
+    push_neg at hne
+    have : β.card < Cardinal.aleph.{0} 1 :=
+      Cardinal.lt_omega_iff_card_lt.mp hne
+    exact absurd hβ_card_ge (not_le.mpr this)
+  have hβ_eq : β = Ordinal.omega.{0} 1 := le_antisymm hβ_le hβ_ge
+  -- So `type (<_S) = type (<_{ω_1.ToType})`, giving a `RelIso`.
+  have htype : @Ordinal.type S (· < ·) _ =
+      @Ordinal.type (Ordinal.omega.{0} 1).ToType (· < ·) _ := by
+    show β = _; rw [hβ_eq, Ordinal.type_toType]
+  obtain ⟨r⟩ := (Ordinal.type_eq.mp htype :
+    Nonempty ((· < · : S → S → Prop) ≃r
+      (· < · : (Ordinal.omega.{0} 1).ToType →
+        (Ordinal.omega.{0} 1).ToType → Prop)))
+  exact ⟨OrderIso.ofRelIsoLT r⟩
+
+end ToolboxH5
 
 /-! ### Architecture of the main Erdős–Rado theorem (Phase 2d2)
 
