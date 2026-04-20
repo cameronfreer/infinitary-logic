@@ -1179,38 +1179,45 @@ every `α < ω_1`, there exists a `PairERChain cR α`. Proved by
 This existence is a stepping stone toward the main theorem, which
 requires coherent stages (built in a later commit). -/
 
-/-- **Existence of a `PairERChain` at every countable level.** Proved
-by transfinite induction on `α`. At limits, uses a canonical initial
-segment of `PairERSource` (via `Ordinal.initialSegToType`) as the
-prefix — no coherence with lower stages is tracked here. -/
+/-- **Stage at every level `< ω_1`**, as a `noncomputable def`. Built
+by `Ordinal.limitRecOn`; at limits, uses a canonical
+initial-segment prefix (`Ordinal.initialSegToType`).
+
+Does NOT maintain head-coherence with earlier stages: at each limit,
+the prefix is the canonical `initialSegToType` embedding rather than
+a gluing of heads committed at earlier successor stages. Full
+coherence is needed for the main theorem's chain extraction; it will
+be addressed in the next tranche (likely by strengthening the motive
+to carry an explicit coherence invariant). -/
+noncomputable def stageAt (cR : (Fin 2 ↪o PairERSource) → Bool)
+    (α : Ordinal.{0}) :
+    α < Ordinal.omega.{0} 1 → PairERChain cR α :=
+  Ordinal.limitRecOn α
+    (motive := fun α => α < Ordinal.omega.{0} 1 → PairERChain cR α)
+    (fun _ => PairERChain.zero cR)
+    (fun β IH hβ1 =>
+      (IH (lt_of_lt_of_le (Order.lt_succ β) hβ1.le)).succ)
+    (fun β _ _ hβ => by
+      haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+      have hβ_le : β ≤ (Order.succ (Cardinal.beth.{0} 1)).ord := by
+        have h1 : β < (Cardinal.aleph.{0} 1).ord := by rwa [Cardinal.ord_aleph]
+        have h2 : (Cardinal.aleph.{0} 1).ord ≤
+            (Order.succ (Cardinal.beth.{0} 1)).ord :=
+          Cardinal.ord_le_ord.mpr
+            ((Cardinal.aleph_le_beth 1).trans (Order.le_succ _))
+        exact (h1.trans_le h2).le
+      let seg : β.ToType ≤i
+          (Order.succ (Cardinal.beth.{0} 1)).ord.ToType :=
+        Ordinal.initialSegToType hβ_le
+      let p : β.ToType ↪o PairERSource := seg.toOrderEmbedding
+      exact PairERChain.limit hβ p)
+
+/-- **Existence of a `PairERChain` at every countable level.** Immediate
+from `stageAt`. -/
 theorem exists_PairERChain (cR : (Fin 2 ↪o PairERSource) → Bool) :
     ∀ α : Ordinal.{0}, α < Ordinal.omega.{0} 1 →
-      Nonempty (PairERChain cR α) := by
-  intro α
-  induction α using Ordinal.limitRecOn with
-  | zero => intro _; exact ⟨PairERChain.zero cR⟩
-  | succ β IH =>
-    intro hα
-    have hβ : β < Ordinal.omega.{0} 1 :=
-      lt_of_lt_of_le (Order.lt_succ β) hα.le
-    obtain ⟨s⟩ := IH hβ
-    exact ⟨s.succ⟩
-  | limit β hβ_lim IH =>
-    intro hβ
-    -- Canonical prefix from `β.ToType ≤i (succ ℶ_1).ord.ToType`.
-    have hβ_le : β ≤ (Order.succ (Cardinal.beth.{0} 1)).ord := by
-      -- `β < ω_1 ≤ ℵ_1.ord = ω_1 ≤ (succ ℶ_1).ord` (since ℵ_1 ≤ succ ℶ_1).
-      have h1 : β < (Cardinal.aleph.{0} 1).ord := by
-        rwa [Cardinal.ord_aleph]
-      have h2 : (Cardinal.aleph.{0} 1).ord ≤
-          (Order.succ (Cardinal.beth.{0} 1)).ord :=
-        Cardinal.ord_le_ord.mpr
-          ((Cardinal.aleph_le_beth 1).trans (Order.le_succ _))
-      exact (h1.trans_le h2).le
-    let seg : β.ToType ≤i (Order.succ (Cardinal.beth.{0} 1)).ord.ToType :=
-      Ordinal.initialSegToType hβ_le
-    let p : β.ToType ↪o PairERSource := seg.toOrderEmbedding
-    exact ⟨PairERChain.limit hβ p⟩
+      Nonempty (PairERChain cR α) :=
+  fun α hα => ⟨stageAt cR α hα⟩
 
 end PairERLocalAPI
 
