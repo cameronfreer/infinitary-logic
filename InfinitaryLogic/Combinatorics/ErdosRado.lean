@@ -1431,6 +1431,52 @@ noncomputable def PairERCoherentFamily.extendAtLimit
       rw [PairERCoherentFamily.limit_commitAt F hα δ hδβ]
       rfl
 
+/-- **Empty coherent family.** At level `α = 0`, there are no earlier
+successor stages; all fields are vacuous. Provides the base case for
+the transfinite recursion. -/
+def PairERCoherentFamily.empty (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    PairERCoherentFamily cR 0 where
+  stage := fun β h => absurd h (not_lt.mpr (zero_le β))
+  coherent := fun _ hβα => absurd hβα (not_lt.mpr (zero_le _))
+
+/-- **Successor-case extension of the coherent family.** Given a
+coherent family `F : PairERCoherentFamily cR (Order.succ β)` (i.e.,
+including a stage at position `β`), produce the coherent family below
+level `Order.succ (Order.succ β) = β + 2` by appending
+`(F.stage β (Order.lt_succ β)).succ` as the new top stage.
+
+Analogue of `extendAtLimit` for successor levels. The coherence proof
+for the new top position uses `PairERChain.succ_commitAt` directly
+(no `PairERChain.limit` involved). -/
+noncomputable def PairERCoherentFamily.extendAtSucc
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {β : Ordinal.{0}}
+    (F : PairERCoherentFamily cR (Order.succ β)) :
+    PairERCoherentFamily cR (Order.succ (Order.succ β)) where
+  stage γ hγ :=
+    if h : γ < Order.succ β then F.stage γ h
+    else
+      have hγ_eq : γ = Order.succ β :=
+        le_antisymm (Order.lt_succ_iff.mp hγ) (not_lt.mp h)
+      hγ_eq ▸ (F.stage β (Order.lt_succ β)).succ
+  coherent := by
+    intro δ γ hδγ hγ_succ
+    rcases lt_or_eq_of_le (Order.lt_succ_iff.mp hγ_succ) with hγ_lt | hγ_eq
+    · -- Case γ < succ β: delegate to F.coherent.
+      have hδ_lt : δ < Order.succ β := hδγ.trans hγ_lt
+      simp only [dif_pos hγ_lt, dif_pos hδ_lt]
+      exact F.coherent hδγ hγ_lt
+    · -- Case γ = succ β: new top stage is `(F.stage β _).succ`.
+      subst hγ_eq
+      simp only [dif_pos hδγ, dif_neg (lt_irrefl _)]
+      -- Goal: `(F.stage β _).succ.commitAt δ _ = (F.stage δ hδγ).commitAt δ _`.
+      rw [PairERChain.succ_commitAt _ δ hδγ]
+      -- Goal: `(F.stage β _).commitAt δ _ = (F.stage δ hδγ).commitAt δ _`.
+      -- This is F.coherent at position δ < β in stage β (when δ < β),
+      -- OR trivial by reflexivity (when δ = β).
+      rcases lt_or_eq_of_le (Order.lt_succ_iff.mp hδγ) with hδ_lt_β | hδ_eq_β
+      · exact F.coherent hδ_lt_β (Order.lt_succ β)
+      · subst hδ_eq_β; rfl
+
 /-! ### Existence of stages at every level `< ω_1`
 
 The transfinite-assembly existence lemma `exists_PairERChain`: for
