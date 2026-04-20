@@ -1214,6 +1214,62 @@ theorem exists_PairERChain (cR : (Fin 2 ↪o PairERSource) → Bool) :
 
 end PairERLocalAPI
 
+/-! ### Progress map — remaining work for `erdos_rado_pair_omega1`
+
+**Shipped so far (axiom-clean, no `sorry`):**
+- Toolbox H1–H5 (cardinal/ordinal helpers).
+- `PairERSource`, `validFiber`, `validFiberExtend`, `pairColorPullback`.
+- `large_above_prefix` — cofinality bound on the above-prefix set.
+- `exists_large_limit_fiber` — limit-step kernel (H3 + H4 + large_above_prefix).
+- `exists_successor_refinement` — successor-step kernel (min + Bool majority).
+- `PairERChain` stage record + `zero` / `extendHead` / `extendType`
+  / `succ` / `limit` constructors.
+- `exists_PairERChain` — non-coherent per-level existence via
+  `Ordinal.limitRecOn`.
+
+**Remaining for the main theorem** (blocks `erdos_rado_pair_omega1`):
+
+1. **Coherent `stageAt`**: a `noncomputable def stageAt` built by
+   `Ordinal.limitRecOn` whose successor case threads through
+   `PairERChain.succ` and whose limit case glues the IH into a
+   concrete `α.ToType ↪o PairERSource` prefix defined position-by-
+   position via `Ordinal.typein` and the IH at `(typein γ + 1)`.
+   Strict monotonicity of this glue requires a side lemma — the
+   "head-coherence invariant" — which is the subtle core:
+   `(stageAt (γ+1)).head ⊤` must be strictly increasing in `γ`.
+
+2. **Global chain**: from `stageAt`, extract
+   `chain : (Ordinal.omega 1).ToType → PairERSource` together with
+   `committed : (Ordinal.omega 1).ToType → Bool` (the Bool chosen at
+   each successor step).
+
+3. **Homogeneity from chain**: for `β < γ` in `(Ordinal.omega 1).ToType`,
+   `cR (pair (chain β) (chain γ)) = committed β`. This follows from
+   the successor kernel's guarantee (fiber at `β+1` forces the color
+   of subsequent heads against `chain β`) — but only if the prefix
+   used by `PairERChain.limit` at limit stages genuinely reproduces
+   the earlier successor heads. The coherent `stageAt` is what makes
+   this work.
+
+4. **Second pigeonhole** on `committed`: `(Ordinal.omega 1).ToType →
+   Bool` has `ℵ_1` domain and `2` codomain, so some Bool `b` has
+   preimage `S` of cardinality `ℵ_1`.
+
+5. **H5 transport**: `S` (of cardinality `ℵ_1`) is order-isomorphic
+   to `(Ordinal.omega 1).ToType` via `ordIso_omega1_of_aleph1_subset`.
+
+6. **H1 composition**: `chain ∘ (S-iso) : (Ordinal.omega 1).ToType
+   ↪o PairERSource`; compose with the initial H1 embedding
+   `PairERSource ↪o I` to produce the final
+   `(Ordinal.omega 1).ToType ↪o I`. Homogeneity follows because all
+   pair colors are `b`.
+
+The critical step is (1)'s coherence proof. Successor composition
+preserves lower-position heads by `extendHead`'s definition, so the
+invariant is provable by induction on `α` in `limitRecOn`. Execution
+is nontrivial (100–200 LOC) but mechanical once set up.
+-/
+
 /-! ### Architecture of the main Erdős–Rado theorem (Phase 2d2)
 
 The remaining unproved theorem:
