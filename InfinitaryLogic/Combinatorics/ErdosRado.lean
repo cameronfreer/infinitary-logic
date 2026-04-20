@@ -215,6 +215,291 @@ private lemma exists_infinite_mono_branch
     intro x hxF hxv
     exact hxF.2 hxv
 
+/-! ### Infinite Ramsey for Bool-colored pairs on ℕ -/
+
+/-- Intermediate state of the pair-Ramsey extraction: a "current head"
+`head : ℕ` and an infinite reservoir `tail : Set ℕ` above the head. -/
+private structure RamseyState where
+  head : ℕ
+  tail : Set ℕ
+  infinite : tail.Infinite
+  above : ∀ x ∈ tail, head < x
+
+/-- One step of the pair-Ramsey extraction: from a state at head `h`
+with tail `T`, pick a new head `h'` from `T` and narrow the tail to
+`T' ⊂ T` with `h' < T'` and a committed color `b` such that
+`c⟨h, x⟩ = b` for all `x ∈ T'`. -/
+private noncomputable def ramseyStep
+    (c : (Fin 2 ↪o ℕ) → Bool) (s : RamseyState) :
+    Bool × RamseyState := by
+  classical
+  -- Branch on the color of `c(s.head, ·)` over `s.tail` to get infinite S₁.
+  have hBr := exists_infinite_mono_branch c s.head s.tail s.infinite s.above
+  let b : Bool := Classical.choose hBr
+  have hBr2 := Classical.choose_spec hBr
+  let S₁ : Set ℕ := Classical.choose hBr2
+  have hS₁ := Classical.choose_spec hBr2
+  -- hS₁ : S₁ ⊆ s.tail ∧ S₁.Infinite ∧ ∀ x ∈ S₁, ∀ hxv : s.head < x, c (pairEmbed hxv) = b
+  -- Pick new head h' ∈ S₁ (using infinite ⇒ nonempty).
+  let h' : ℕ := hS₁.2.1.nonempty.some
+  have hh'_mem : h' ∈ S₁ := hS₁.2.1.nonempty.some_mem
+  -- Narrow tail: S₂ = {x ∈ S₁ | h' < x}. Still infinite (S₁ infinite, finitely many ≤ h').
+  let S₂ : Set ℕ := {x ∈ S₁ | h' < x}
+  have hS₂_inf : S₂.Infinite := by
+    -- `S₁ = S₂ ∪ {x ∈ S₁ | x ≤ h'}`. RHS is a finite set (subset of {0, ..., h'}).
+    -- LHS infinite ⇒ S₂ infinite.
+    have hCover : {x ∈ S₁ | h' < x} ∪ {x ∈ S₁ | x ≤ h'} = S₁ := by
+      ext x
+      refine ⟨?_, ?_⟩
+      · rintro (⟨hx, _⟩ | ⟨hx, _⟩) <;> exact hx
+      · intro hx
+        rcases lt_or_ge h' x with hlt | hge
+        · exact Or.inl ⟨hx, hlt⟩
+        · exact Or.inr ⟨hx, hge⟩
+    have hFin : {x ∈ S₁ | x ≤ h'}.Finite :=
+      Set.Finite.subset (Set.finite_Iic h') (fun x hx => hx.2)
+    have : (S₂ ∪ {x ∈ S₁ | x ≤ h'}).Infinite := by rw [hCover]; exact hS₁.2.1
+    exact (Set.infinite_union.mp this).resolve_right hFin.not_infinite
+  have hS₂_above : ∀ x ∈ S₂, h' < x := fun x hx => hx.2
+  exact ⟨b, { head := h', tail := S₂, infinite := hS₂_inf, above := hS₂_above }⟩
+
+/-- The invariant: after `ramseyStep`, every element `x` of the new tail
+satisfies `c⟨old_head, x⟩ = committed_color`. Additionally, the new head
+is itself an element of the old tail (so in particular, it satisfies
+`c⟨old_head, new_head⟩ = committed_color`). -/
+private theorem ramseyStep_spec
+    (c : (Fin 2 ↪o ℕ) → Bool) (s : RamseyState) :
+    let out := ramseyStep c s
+    (∀ x, x ∈ out.2.tail → ∀ (hxv : s.head < x),
+        c (pairEmbed hxv) = out.1) ∧
+      ∀ (hxv : s.head < out.2.head), c (pairEmbed hxv) = out.1 := by
+  classical
+  -- Unfold ramseyStep and its internal Classical.choose'ings.
+  simp only [ramseyStep]
+  set hBr := exists_infinite_mono_branch c s.head s.tail s.infinite s.above
+  have hBr2 := Classical.choose_spec hBr
+  set S₁ := Classical.choose hBr2
+  have hS₁ := Classical.choose_spec hBr2
+  refine ⟨?_, ?_⟩
+  · -- For all x in the new tail (⊆ S₁), c(head, x) = b.
+    intro x hx hxv
+    -- hx : x ∈ {y ∈ S₁ | h' < y}, so x ∈ S₁.
+    have hxS₁ : x ∈ S₁ := hx.1
+    exact hS₁.2.2 x hxS₁ hxv
+  · -- For the new head h' ∈ S₁, c(head, h') = b.
+    intro hxv
+    have hh'_mem : hS₁.2.1.nonempty.some ∈ S₁ := hS₁.2.1.nonempty.some_mem
+    exact hS₁.2.2 _ hh'_mem hxv
+
+/-- The ω-iterate of `ramseyStep` starting from state `s₀`. Returns
+`(head_n, tail_n, color_(n-1))`. -/
+private noncomputable def ramseyIter
+    (c : (Fin 2 ↪o ℕ) → Bool) (s₀ : RamseyState) :
+    ℕ → Bool × RamseyState
+  | 0 => ⟨false, s₀⟩  -- color at index 0 is a placeholder (never read)
+  | n + 1 => ramseyStep c (ramseyIter c s₀ n).2
+
+/-- Extracted head sequence. -/
+private noncomputable def ramseyHead
+    (c : (Fin 2 ↪o ℕ) → Bool) (s₀ : RamseyState) (n : ℕ) : ℕ :=
+  (ramseyIter c s₀ n).2.head
+
+/-- Extracted color sequence. `ramseyColor c s₀ n` records the
+committed color at step `n + 1`, i.e., the color `b_n` such that
+`c(a_n, a_j) = b_n` for all `j > n`. -/
+private noncomputable def ramseyColor
+    (c : (Fin 2 ↪o ℕ) → Bool) (s₀ : RamseyState) (n : ℕ) : Bool :=
+  (ramseyIter c s₀ (n + 1)).1
+
+/-- The new head produced by `ramseyStep` is in the old tail (hence
+strictly greater than the old head). -/
+private theorem ramseyStep_head_gt
+    (c : (Fin 2 ↪o ℕ) → Bool) (s : RamseyState) :
+    s.head < (ramseyStep c s).2.head := by
+  classical
+  simp only [ramseyStep]
+  set hBr := exists_infinite_mono_branch c s.head s.tail s.infinite s.above
+  have hBr2 := Classical.choose_spec hBr
+  have hS₁ := Classical.choose_spec hBr2
+  -- The new head is hS₁.2.1.nonempty.some, which is in S₁ ⊆ s.tail.
+  have hh'_mem : hS₁.2.1.nonempty.some ∈ Classical.choose hBr2 :=
+    hS₁.2.1.nonempty.some_mem
+  exact s.above _ (hS₁.1 hh'_mem)
+
+/-- Strict monotonicity of the extracted head sequence at successor. -/
+private theorem ramseyHead_succ_gt
+    (c : (Fin 2 ↪o ℕ) → Bool) (s₀ : RamseyState) (n : ℕ) :
+    ramseyHead c s₀ n < ramseyHead c s₀ (n + 1) := by
+  -- ramseyHead (n+1) = (ramseyStep c (ramseyIter c s₀ n).2).2.head
+  -- ramseyHead n     = (ramseyIter c s₀ n).2.head
+  show (ramseyIter c s₀ n).2.head < _
+  exact ramseyStep_head_gt c _
+
+/-- Strict monotonicity of the extracted head sequence. -/
+private theorem ramseyHead_strictMono
+    (c : (Fin 2 ↪o ℕ) → Bool) (s₀ : RamseyState) :
+    StrictMono (ramseyHead c s₀) :=
+  strictMono_nat_of_lt_succ (ramseyHead_succ_gt c s₀)
+
+/-- `ramseyStep` shrinks the tail. -/
+private theorem ramseyStep_tail_subset
+    (c : (Fin 2 ↪o ℕ) → Bool) (s : RamseyState) :
+    (ramseyStep c s).2.tail ⊆ s.tail := by
+  classical
+  simp only [ramseyStep]
+  set hBr := exists_infinite_mono_branch c s.head s.tail s.infinite s.above
+  have hBr2 := Classical.choose_spec hBr
+  have hS₁ := Classical.choose_spec hBr2
+  -- The new tail is `{x ∈ S₁ | h' < x} ⊆ S₁ ⊆ s.tail`.
+  intro x hx
+  exact hS₁.1 hx.1
+
+/-- Iterated tail containment: for `k ≥ 0`, the tail at step `i + k`
+is a subset of the tail at step `i`. -/
+private theorem ramseyIter_tail_subset
+    (c : (Fin 2 ↪o ℕ) → Bool) (s₀ : RamseyState) (i : ℕ) :
+    ∀ k, (ramseyIter c s₀ (i + k)).2.tail ⊆ (ramseyIter c s₀ i).2.tail
+  | 0 => by simp
+  | k + 1 => by
+      have ih := ramseyIter_tail_subset c s₀ i k
+      -- (ramseyIter c s₀ (i + (k+1))).2.tail = (ramseyStep c (ramseyIter c s₀ (i+k)).2).2.tail
+      -- ⊆ (ramseyIter c s₀ (i+k)).2.tail ⊆ ... ⊆ (ramseyIter c s₀ i).2.tail
+      show (ramseyStep c (ramseyIter c s₀ (i + k)).2).2.tail ⊆ _
+      exact (ramseyStep_tail_subset c _).trans ih
+
+/-- The `(j+1)`-th head is in the `i`-th tail, for `j ≥ i`. -/
+private theorem ramseyHead_succ_mem_tail
+    (c : (Fin 2 ↪o ℕ) → Bool) (s₀ : RamseyState) {i j : ℕ} (hij : i ≤ j) :
+    ramseyHead c s₀ (j + 1) ∈ (ramseyIter c s₀ i).2.tail := by
+  -- ramseyHead (j+1) = (ramseyStep c (ramseyIter c s₀ j).2).2.head
+  -- This head is in (ramseyIter c s₀ j).2.tail (by the step's construction).
+  -- And (ramseyIter c s₀ j).2.tail ⊆ (ramseyIter c s₀ i).2.tail since j ≥ i.
+  have hhead_in_j_tail : ramseyHead c s₀ (j + 1) ∈ (ramseyIter c s₀ j).2.tail := by
+    classical
+    show (ramseyStep c (ramseyIter c s₀ j).2).2.head ∈ (ramseyIter c s₀ j).2.tail
+    -- Unfold ramseyStep: the new head is `.some` of the nonempty of S₁, and S₁ ⊆ s.tail,
+    -- but we also need the narrowing — actually the new head is in S₁, and we choose
+    -- the new tail as {x ∈ S₁ | h' < x}, so the new head is NOT directly in the new tail.
+    -- However, S₁ ⊆ (ramseyIter j).2.tail, so the new head is in the old tail.
+    simp only [ramseyStep]
+    set hBr := exists_infinite_mono_branch c (ramseyIter c s₀ j).2.head
+      (ramseyIter c s₀ j).2.tail (ramseyIter c s₀ j).2.infinite
+      (ramseyIter c s₀ j).2.above
+    have hBr2 := Classical.choose_spec hBr
+    have hS₁ := Classical.choose_spec hBr2
+    exact hS₁.1 hS₁.2.1.nonempty.some_mem
+  -- Transport from the j-th tail to the i-th tail using nesting.
+  obtain ⟨k, rfl⟩ := Nat.exists_eq_add_of_le hij
+  exact ramseyIter_tail_subset c s₀ i k hhead_in_j_tail
+
+/-- The key color invariant: for `j > i`, `c⟨head_i, head_j⟩ = color_i`. -/
+private theorem ramseyPair_color
+    (c : (Fin 2 ↪o ℕ) → Bool) (s₀ : RamseyState) {i j : ℕ} (hij : i < j) :
+    ∀ (hhead : ramseyHead c s₀ i < ramseyHead c s₀ j),
+      c (pairEmbed hhead) = ramseyColor c s₀ i := by
+  intro hhead
+  -- Split on j = i+1 vs j > i+1.
+  rcases Nat.lt_or_ge j (i + 2) with hle | hge
+  · -- j = i+1 (since i < j < i+2 forces j = i+1).
+    have hjEq : j = i + 1 := by omega
+    subst hjEq
+    -- Apply ramseyStep_spec.2 at state (ramseyIter c s₀ i).2.
+    -- The new head (at step i+1) is (ramseyStep c _).2.head, and the spec says
+    -- `c⟨(ramseyIter i).2.head, (ramseyStep _).2.head⟩ = color`.
+    exact (ramseyStep_spec c (ramseyIter c s₀ i).2).2 hhead
+  · -- j ≥ i + 2. Then ramseyHead j is in (ramseyStep c (ramseyIter c s₀ i).2).2.tail
+    -- (the new tail at step i+1). Apply ramseyStep_spec.1.
+    have hj_newTail : ramseyHead c s₀ j ∈
+        (ramseyStep c (ramseyIter c s₀ i).2).2.tail := by
+      -- (ramseyStep c (ramseyIter i).2).2.tail = (ramseyIter (i+1)).2.tail.
+      -- Use ramseyHead_succ_mem_tail with starting point (i+1) and j-1 ≥ i+1.
+      obtain ⟨k, hk⟩ := Nat.exists_eq_add_of_le hge
+      -- hk : j = i + 2 + k. So j = (i+1) + (k+1).
+      have : j = (i + 1) + (k + 1) := by omega
+      rw [this]
+      exact ramseyHead_succ_mem_tail c s₀ (Nat.le_add_right (i + 1) k)
+    exact (ramseyStep_spec c (ramseyIter c s₀ i).2).1 _ hj_newTail hhead
+
+/-- A default initial state for the pair-Ramsey extraction on `ℕ`:
+head = 0, tail = `{x : ℕ | 0 < x}`. -/
+private noncomputable def initRamseyState : RamseyState where
+  head := 0
+  tail := {x : ℕ | 0 < x}
+  infinite :=
+    Set.infinite_of_injective_forall_mem (f := Nat.succ)
+      Nat.succ_injective (fun n => Nat.succ_pos n)
+  above := fun _ hx => hx
+
+/-- **Infinite Ramsey for Bool-colored pairs on `ℕ`**: for every
+`c : (Fin 2 ↪o ℕ) → Bool`, there exists a strict-monotone `f : ℕ → ℕ`
+and a Bool `b` such that every strictly-increasing pair from `Set.range f`
+has color `b`.
+
+Proof: (1) iterate `ramseyStep` on `initRamseyState` to get a sequence
+of heads `ramseyHead` (strict-mono by `ramseyHead_strictMono`) and
+committed colors `ramseyColor` satisfying the invariant
+`c(head_i, head_j) = color_i` for `i < j` (by `ramseyPair_color`).
+(2) Apply `infinite_ramsey_unary_nat` on `ramseyColor` to extract a
+strict-mono subsequence `g : ℕ → ℕ` on which `ramseyColor` is constant
+equal to some `b`. (3) The composed sequence `ramseyHead ∘ g` is the
+required strict-mono monochromatic sequence: for any pair
+`i < j`, `c(head_{g i}, head_{g j}) = color_{g i} = b`. -/
+theorem infinite_ramsey_pair_nat (c : (Fin 2 ↪o ℕ) → Bool) :
+    ∃ (f : ℕ → ℕ) (b : Bool), StrictMono f ∧
+      ∀ (t : Fin 2 ↪o ℕ), (∀ k, t k ∈ Set.range f) → c t = b := by
+  classical
+  -- (1) Extract heads and colors via the iteration.
+  set a := ramseyHead c initRamseyState with ha_def
+  set b₀ := ramseyColor c initRamseyState with hb_def
+  have ha_mono : StrictMono a := ramseyHead_strictMono c initRamseyState
+  -- (2) Pigeonhole on the color sequence.
+  obtain ⟨g, b, hg_mono, hg_color⟩ := infinite_ramsey_unary_nat b₀
+  -- (3) Final sequence: a ∘ g, with monochromatic color b.
+  refine ⟨a ∘ g, b, ha_mono.comp hg_mono, ?_⟩
+  intro t ht
+  -- t : Fin 2 ↪o ℕ with t 0, t 1 ∈ range (a ∘ g).
+  -- Get i₀ < i₁ such that t 0 = a (g i₀) and t 1 = a (g i₁).
+  have h0 := ht 0
+  have h1 := ht 1
+  obtain ⟨i₀, hi₀⟩ := h0
+  obtain ⟨i₁, hi₁⟩ := h1
+  -- t 0 < t 1 (since t is strictly monotone).
+  have ht01 : t 0 < t 1 := by
+    apply t.strictMono
+    show (0 : Fin 2) < 1
+    decide
+  -- ⇒ a (g i₀) < a (g i₁). Since a is strict-mono and a ∘ g is strict-mono,
+  -- i₀ < i₁ iff g i₀ < g i₁ iff a (g i₀) < a (g i₁).
+  rw [← hi₀, ← hi₁] at ht01
+  have hi₀lt_i₁ : i₀ < i₁ := by
+    by_contra hnot
+    push_neg at hnot
+    -- i₁ ≤ i₀ ⇒ a (g i₁) ≤ a (g i₀), contradicting ht01.
+    have : a (g i₁) ≤ a (g i₀) := (ha_mono.comp hg_mono).monotone hnot
+    exact absurd ht01 (not_lt.mpr this)
+  -- Now g i₀ < g i₁ too.
+  have hg_lt : g i₀ < g i₁ := hg_mono hi₀lt_i₁
+  -- Apply ramseyPair_color with i = g i₀, j = g i₁.
+  have hhead : a (g i₀) < a (g i₁) := ha_mono hg_lt
+  have hcolor_eq_at_gi₀ := ramseyPair_color c initRamseyState hg_lt hhead
+  -- Now t and pairEmbed hhead are the same pair embedding.
+  have ht_eq_pair : t = pairEmbed hhead := by
+    apply DFunLike.ext
+    intro k
+    match k with
+    | ⟨0, _⟩ =>
+      show t 0 = (pairEmbed hhead) 0
+      simp only [pairEmbed, OrderEmbedding.coe_ofStrictMono,
+        Matrix.cons_val_zero]
+      exact hi₀.symm
+    | ⟨1, _⟩ =>
+      show t 1 = (pairEmbed hhead) 1
+      simp only [pairEmbed, OrderEmbedding.coe_ofStrictMono,
+        Matrix.cons_val_one]
+      exact hi₁.symm
+  rw [ht_eq_pair, hcolor_eq_at_gi₀]
+  exact hg_color i₀
+
 /-! ### Architecture of the main Erdős–Rado theorem (Phase 2d2)
 
 The remaining unproved theorem:
