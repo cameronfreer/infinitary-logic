@@ -264,7 +264,7 @@ pure partition-calculus form is `PureColoringHypothesis` (below), which
 implies this via `indiscernibleSequence_of_pureColoring`. -/
 def IndiscernibleSequenceHypothesis : Prop :=
   ∀ (s : ℕ → Σ n, L'.BoundedFormulaω Empty n)
-    (M : Type) [L'.Structure M] (_ : LinearOrder M),
+    (M : Type) [L'.Structure M] (_ : LinearOrder M) (_ : WellFoundedLT M),
     Cardinal.mk M ≥ Cardinal.beth (Ordinal.omega 1) →
     ∃ (f : ℕ → M), StrictMono f ∧
       IsIndiscernibleOnSet (id : M → M) (Set.range s) (Set.range f)
@@ -284,12 +284,11 @@ theorem morleyHanfExtraction_of_indiscernibleSequence
     (hSeq : IndiscernibleSequenceHypothesis (L' := L')) :
     MorleyHanfExtraction (L' := L') := by
   intro s M _ hSize
-  -- Equip `M` with a classical linear order via its `LinearOrder` instance
-  -- given by the classical well-ordering of its cardinality.
-  letI : LinearOrder M := Classical.choice (by
-    have : Nonempty (LinearOrder M) := ⟨IsWellOrder.linearOrder WellOrderingRel⟩
-    exact this)
-  obtain ⟨f, hfMono, hfInd⟩ := hSeq s M ‹LinearOrder M› hSize
+  -- Equip `M` with a canonical well-ordering via `exists_wellOrder`,
+  -- which provides both a `LinearOrder` and `WellFoundedLT` on `M`.
+  obtain ⟨instLO, instWF⟩ := exists_wellOrder M
+  letI : LinearOrder M := instLO
+  obtain ⟨f, hfMono, hfInd⟩ := hSeq s M instLO instWF hSize
   refine ⟨f, ?_, ?_⟩
   · -- Pairwise distinct: strict-mono → injective.
     intro i j hij
@@ -307,19 +306,26 @@ end RestrictedBridge
 
 /-! ### Pure partition-calculus residual -/
 
-/-- **Pure partition-calculus residual**: for every linearly-ordered type
-`I` with `|I| ≥ ℶ_ω₁` and every countable family of Bool-valued colorings
-on finite-arity increasing tuples (order-embeddings) from `I`, there
-exists an infinite strictly-monotone `ℕ → I` sequence whose range is
-monochromatic for every coloring in the family.
+/-- **Pure partition-calculus residual**: for every well-ordered type
+`I` with `|I| ≥ ℶ_ω₁` and every countable family of Bool-valued
+colorings on finite-arity increasing tuples (order-embeddings) from
+`I`, there exists an infinite strictly-monotone `ℕ → I` sequence whose
+range is monochromatic for every coloring in the family.
 
-The body mentions no language, no structure, no formula — only a linear
-order, cardinalities, `ℕ`-indexed arities, and `Bool` colorings on
-`Fin n ↪o I`. This is the Erdős–Rado statement proper; Phase 2d targets
-it directly. `indiscernibleSequence_of_pureColoring` below proves that
-this implies the larger `IndiscernibleSequenceHypothesis`. -/
+The body mentions no language, no structure, no formula — only a
+well-ordered source (`LinearOrder I` + `WellFoundedLT I`), cardinalities,
+`ℕ`-indexed arities, and `Bool` colorings on `Fin n ↪o I`. This is the
+Erdős–Rado statement proper; Phase 2d targets it directly.
+`indiscernibleSequence_of_pureColoring` below proves that this implies
+the larger `IndiscernibleSequenceHypothesis`.
+
+Note on the well-ordering assumption: arbitrary `LinearOrder I` does not
+admit strict-monotone `ℕ → I` in general (counterexample: `I = ℕ` with
+opposite order). The consumer chain always provides `I` as a canonical
+well-ordering of a model's carrier (via `WellOrderingRel`), so
+`WellFoundedLT I` is the right strengthening. -/
 def PureColoringHypothesis : Prop :=
-  ∀ (I : Type) [LinearOrder I],
+  ∀ (I : Type) [LinearOrder I] [WellFoundedLT I],
     Cardinal.mk I ≥ Cardinal.beth (Ordinal.omega 1) →
     ∀ (c : ℕ → Σ n, (Fin n ↪o I) → Bool),
     ∃ (f : ℕ → I), StrictMono f ∧
@@ -336,7 +342,7 @@ theorem indiscernibleSequence_of_pureColoring
     (hPure : PureColoringHypothesis) :
     IndiscernibleSequenceHypothesis (L' := L') := by
   classical
-  intro s M _ instLinOrd hSize
+  intro s M _ instLinOrd instWF hSize
   -- Each coloring: a tuple `t : Fin (s i).1 ↪o M` is colored by the
   -- `Bool` cast of the truth of `(s i).2` on the underlying function `⇑t`.
   let c : ℕ → Σ n, (Fin n ↪o M) → Bool := fun i =>

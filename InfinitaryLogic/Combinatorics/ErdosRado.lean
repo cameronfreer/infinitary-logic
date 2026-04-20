@@ -506,12 +506,19 @@ The remaining unproved theorem:
 
 ```lean
 theorem erdos_rado_omega1_of_countable_bool_family
-    {I : Type} [LinearOrder I]
+    {I : Type} [LinearOrder I] [WellFoundedLT I]
     (hI : Cardinal.mk I ≥ Cardinal.beth (Ordinal.omega 1))
     (c : ℕ → Σ n, (Fin n ↪o I) → Bool) :
     ∃ e : (Ordinal.omega 1).ToType ↪o I,
       HomogeneousSuborder c e
 ```
+
+Note: the `[WellFoundedLT I]` constraint is essential — arbitrary linear
+orders do not admit ω-ascending sequences in general (counterexample:
+opposite-`ℕ`). The consumer
+`indiscernibleSequence_of_pureColoring` always supplies `I` as a model
+carrier equipped with a canonical well-order (via `exists_wellOrder`),
+so this assumption costs nothing downstream.
 
 **Why it is hard.** The naive approach — iterated infinite Ramsey with
 diagonalization — fails. If `I_m ⊂ I_{m-1} ⊂ ... ⊂ I_0` is a nested
