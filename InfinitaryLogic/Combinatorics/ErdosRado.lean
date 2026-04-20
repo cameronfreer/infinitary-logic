@@ -5,6 +5,8 @@ Authors: Cameron Freer
 -/
 import Mathlib.SetTheory.Cardinal.Aleph
 import Mathlib.Order.InitialSeg
+import Mathlib.Data.Nat.Nth
+import Mathlib.Data.Fin.VecNotation
 
 /-!
 # Erdős–Rado Partition Calculus for ω₁
@@ -129,6 +131,89 @@ theorem pureColoring_of_omega1HomogeneousSuborder
     have := hHom i tLift t'Lift
     rw [htLift, ht'Lift] at this
     exact this
+
+/-! ### Building block: infinite Ramsey for unary Bool colorings on ℕ -/
+
+/-- **Infinite pigeonhole for Bool colorings on `ℕ`**: from any
+`c : ℕ → Bool`, extract a strict-monotone subsequence `f : ℕ → ℕ` on
+which `c` is constant. This is the simplest nontrivial case of Ramsey's
+theorem (arity 1) and serves as a building block for higher-arity
+versions. -/
+theorem infinite_ramsey_unary_nat (c : ℕ → Bool) :
+    ∃ (f : ℕ → ℕ) (b : Bool), StrictMono f ∧ ∀ n, c (f n) = b := by
+  classical
+  -- Either the true-preimage or the false-preimage of `c` is infinite.
+  by_cases hTrue : {n | c n = true}.Infinite
+  · -- The `true`-preimage is infinite; enumerate it via `Nat.nth`.
+    refine ⟨Nat.nth (fun n => c n = true), true,
+            Nat.nth_strictMono hTrue, ?_⟩
+    intro n
+    exact Nat.nth_mem_of_infinite hTrue n
+  · -- Otherwise the `false`-preimage is infinite (complement of finite in ℕ).
+    have hFalse : {n | c n = false}.Infinite := by
+      have hCover : {n | c n = true} ∪ {n | c n = false} = Set.univ := by
+        ext n; cases c n <;> simp
+      have hUnivInf : (Set.univ : Set ℕ).Infinite := Set.infinite_univ
+      have hUnion : ({n | c n = true} ∪ {n | c n = false}).Infinite := by
+        rw [hCover]; exact hUnivInf
+      exact (Set.infinite_union.mp hUnion).resolve_left hTrue
+    refine ⟨Nat.nth (fun n => c n = false), false,
+            Nat.nth_strictMono hFalse, ?_⟩
+    intro n
+    exact Nat.nth_mem_of_infinite hFalse n
+
+/-! ### Building block: infinite Ramsey for Bool-colored pairs on ℕ -/
+
+/-- Pair embedding: from an ordered pair `a < b` in a linearly-ordered
+type, produce the canonical `Fin 2 ↪o α`. -/
+noncomputable def pairEmbed {α : Type*} [LinearOrder α]
+    {a b : α} (h : a < b) : Fin 2 ↪o α :=
+  OrderEmbedding.ofStrictMono ![a, b] (by
+    intro p q hpq
+    match p, q, hpq with
+    | ⟨0, _⟩, ⟨1, _⟩, _ => simpa using h
+    | ⟨0, _⟩, ⟨0, _⟩, hp => exact absurd hp (lt_irrefl _)
+    | ⟨1, _⟩, ⟨1, _⟩, hp => exact absurd hp (lt_irrefl _)
+    | ⟨1, _⟩, ⟨0, _⟩, hp =>
+      have hval : (1 : ℕ) < 0 := hp
+      exact absurd hval (by omega))
+
+/-- Pair-splitting pigeonhole: given a Bool coloring of pairs on `ℕ`
+and a vertex `v`, for any infinite set `S ⊂ ℕ` with all elements above
+`v`, one of the two color-preimages
+`{x ∈ S | c⟨v,x⟩ = b}` (for `b ∈ Bool`) is infinite. -/
+private lemma exists_infinite_mono_branch
+    (c : (Fin 2 ↪o ℕ) → Bool) (v : ℕ)
+    (S : Set ℕ) (hS : S.Infinite) (hSv : ∀ x ∈ S, v < x) :
+    ∃ (b : Bool) (S' : Set ℕ), S' ⊆ S ∧ S'.Infinite ∧
+      ∀ x, x ∈ S' → ∀ (hxv : v < x),
+        c (pairEmbed hxv) = b := by
+  classical
+  -- Partition S by the color of (v, x).
+  let Strue : Set ℕ := {x ∈ S | ∀ (h : v < x), c (pairEmbed h) = true}
+  let Sfalse : Set ℕ := {x ∈ S | ∀ (h : v < x), c (pairEmbed h) = false}
+  -- Every element of S lies in exactly one part (since hSv gives v < x).
+  have hCover : Strue ∪ Sfalse = S := by
+    ext x
+    refine ⟨?_, ?_⟩
+    · rintro (⟨hx, _⟩ | ⟨hx, _⟩) <;> exact hx
+    · intro hx
+      have hvx : v < x := hSv x hx
+      -- Bool tertium non datur: c (pairEmbed hvx) is either true or false.
+      cases hcol : c (pairEmbed hvx)
+      · exact Or.inr ⟨hx, fun h => by
+          -- Proof-irrelevance: the hypothesis h and hvx give the same embedding.
+          convert hcol⟩
+      · exact Or.inl ⟨hx, fun h => by convert hcol⟩
+  -- One of the two parts is infinite.
+  have hUnionInf : (Strue ∪ Sfalse).Infinite := by rw [hCover]; exact hS
+  rcases Set.infinite_union.mp hUnionInf with hT | hF
+  · refine ⟨true, Strue, fun x hx => hx.1, hT, ?_⟩
+    intro x hxT hxv
+    exact hxT.2 hxv
+  · refine ⟨false, Sfalse, fun x hx => hx.1, hF, ?_⟩
+    intro x hxF hxv
+    exact hxF.2 hxv
 
 /-! ### Architecture of the main Erdős–Rado theorem (Phase 2d2)
 
