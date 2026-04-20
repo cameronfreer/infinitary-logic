@@ -664,6 +664,204 @@ theorem ordIso_omega1_of_aleph1_subset
 
 end ToolboxH5
 
+/-! ### Local API for pair Erdős–Rado (Phase 2d2-pair)
+
+Three low-level definitions and one standalone cofinality lemma that the
+upcoming successor/limit-step kernels (and the main recursion after them)
+build on. All recursion will live inside `PairERSource`, the regular
+initial ordinal of `succ (ℶ_1)`; the final composition with
+`I`-embedding happens at the end via `exists_ordToType_embedding_of_card_ge`.
+-/
+
+section PairERLocalAPI
+
+/-- **Pair-ER source.** The initial ordinal of the regular successor
+cardinal `succ (ℶ_1)`, viewed as a linearly-ordered `Type`.
+
+All pair-Erdős–Rado recursion happens inside `PairERSource`, because
+`succ (ℶ_1)` is regular (it is a successor cardinal, hence regular by
+`Cardinal.isRegular_succ` applied to `ℵ_0 ≤ ℶ_1`), so countable
+subsets of `PairERSource` are bounded strictly below — a property the
+limit-stage pigeonhole relies on. After the recursion, the resulting
+`ω_1`-chain is transported to `I` via an order embedding. -/
+abbrev PairERSource : Type :=
+  (Order.succ (Cardinal.beth.{0} 1)).ord.ToType
+
+/-- **Regularity of `succ (ℶ_1)`.** Direct consequence of
+`Cardinal.isRegular_succ` applied to `ℵ_0 ≤ ℶ_1`. -/
+lemma isRegular_succ_beth_one :
+    (Order.succ (Cardinal.beth.{0} 1)).IsRegular :=
+  Cardinal.isRegular_succ (Cardinal.aleph0_le_beth _)
+
+/-- **Cofinality of the pair-ER source's order type.** From regularity of
+`succ (ℶ_1)`: `cof ((succ ℶ_1).ord) = succ (ℶ_1)`. -/
+lemma cof_ord_succ_beth_one :
+    (Order.succ (Cardinal.beth.{0} 1)).ord.cof =
+      Order.succ (Cardinal.beth.{0} 1) :=
+  isRegular_succ_beth_one.cof_eq
+
+/-- **Cardinality of the pair-ER source.** `#PairERSource = succ (ℶ_1)`. -/
+lemma mk_pairERSource :
+    Cardinal.mk PairERSource = Order.succ (Cardinal.beth.{0} 1) := by
+  show Cardinal.mk (Order.succ (Cardinal.beth.{0} 1)).ord.ToType =
+      Order.succ (Cardinal.beth.{0} 1)
+  rw [Cardinal.mk_toType, Cardinal.card_ord]
+
+/-- **ℵ_0 ≤ succ (ℶ_1).** Trivial from `ℵ_0 ≤ ℶ_1 ≤ succ ℶ_1`. -/
+lemma aleph0_le_succ_beth_one :
+    Cardinal.aleph0 ≤ Order.succ (Cardinal.beth.{0} 1) :=
+  (Cardinal.aleph0_le_beth 1).trans (Order.le_succ _)
+
+/-- **Pair-coloring pullback.** Pull a pair coloring on `I` back along
+an order embedding `PairERSource ↪o I`, producing a pair coloring on
+`PairERSource`. Used once, at the very start of the main proof: pull
+the user-supplied coloring `c : (Fin 2 ↪o I) → Bool` back to `cR` on
+`PairERSource`, run the recursion inside `PairERSource`, then
+transport the resulting `ω_1`-chain back to `I`. -/
+def pairColorPullback
+    {I : Type} [LinearOrder I]
+    (ι : PairERSource ↪o I) (c : (Fin 2 ↪o I) → Bool) :
+    (Fin 2 ↪o PairERSource) → Bool :=
+  fun t => c (t.trans ι)
+
+/-- **Valid fiber (quantifier form).** The set of elements
+`y ∈ PairERSource` strictly above every `p β`, whose pair color with
+each `p β` matches `τ β`. Kept in quantifier form (not as a
+`Set.sInter`) so that successor rewriting and restriction lemmas do
+not have to commute big intersections through the recursion. -/
+def validFiber
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    {α : Ordinal.{0}} (p : α.ToType ↪o PairERSource)
+    (τ : α.ToType → Bool) : Set PairERSource :=
+  { y | ∀ β : α.ToType, ∃ h : p β < y, cR (pairEmbed h) = τ β }
+
+/-- Shrinking `succ` and `aleph0` together: if `a + b = c` where `c` is
+infinite and `a < c`, then `c ≤ b`. Used in `large_above_prefix` to
+pass from `#(Iio m) + #(Ici m) = succ ℶ_1` (with `#(Iio m) < succ ℶ_1`)
+to `succ ℶ_1 ≤ #(Ici m)`. -/
+private lemma le_of_add_eq_of_lt_of_aleph0_le
+    {a b c : Cardinal} (habc : a + b = c)
+    (hc : Cardinal.aleph0 ≤ c) (hac : a < c) :
+    c ≤ b := by
+  by_contra hbc
+  push_neg at hbc
+  have hmax : max a b < c := max_lt hac hbc
+  have hsum_inf : Cardinal.aleph0 ≤ a + b := habc ▸ hc
+  have hsum_lt : a + b < c := by
+    rcases Cardinal.aleph0_le_add_iff.mp hsum_inf with ha | hb
+    · rw [Cardinal.add_eq_max ha]; exact hmax
+    · rw [Cardinal.add_eq_max' hb]; exact hmax
+  exact absurd habc (ne_of_lt hsum_lt)
+
+/-- **Above-prefix set has size `succ (ℶ_1)`.** For any countable
+prefix embedding `p : α.ToType ↪o PairERSource` with `α < ω_1`, the
+set of elements strictly above every `p β` has cardinality at least
+`succ (ℶ_1)`.
+
+This isolates the cofinality argument cleanly from the pigeonhole
+downstream: regularity of `succ (ℶ_1)` bounds the countable prefix
+strictly below some `m ∈ PairERSource`, and the tail `{y | m ≤ y}`
+has cardinality `succ (ℶ_1)` by complement of the `< m` initial
+segment (whose cardinality is `< succ (ℶ_1)` since any initial
+segment of `(succ ℶ_1).ord.ToType` has cardinality strictly less
+than `succ (ℶ_1)`). -/
+theorem large_above_prefix
+    {α : Ordinal.{0}} (hα : α < Ordinal.omega.{0} 1)
+    (p : α.ToType ↪o PairERSource) :
+    Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk { y : PairERSource | ∀ x : α.ToType, p x < y } := by
+  haveI : Countable α.ToType := countable_toType_of_lt_omega1 hα
+  -- Step 1: the prefix range is bounded in `PairERSource`.
+  have hBounded : Set.Bounded (· < · : PairERSource → PairERSource → Prop)
+      (Set.range p) := by
+    have hcof : Ordinal.cof
+        (@Ordinal.type PairERSource (· < ·) _) =
+        Order.succ (Cardinal.beth.{0} 1) := by
+      rw [Ordinal.type_toType]; exact cof_ord_succ_beth_one
+    apply Ordinal.lt_cof_type
+    rw [hcof]
+    calc Cardinal.mk (Set.range p)
+        ≤ Cardinal.mk α.ToType := Cardinal.mk_range_le
+      _ ≤ Cardinal.aleph0 := Cardinal.mk_le_aleph0
+      _ < Order.succ (Cardinal.beth.{0} 1) :=
+          lt_of_le_of_lt (Cardinal.aleph0_le_beth 1) (Order.lt_succ _)
+  -- Step 2: extract a strict upper bound `m` for the prefix.
+  obtain ⟨m, hm⟩ := hBounded
+  -- Step 3: `{y | m ≤ y} ⊆ {y | ∀ x, p x < y}`.
+  have hSubset : (Set.Ici m : Set PairERSource) ⊆
+      { y : PairERSource | ∀ x : α.ToType, p x < y } := by
+    intro y hy x
+    exact lt_of_lt_of_le (hm (p x) (Set.mem_range_self _)) hy
+  -- Step 4: `#(Ici m) ≥ succ (ℶ_1)` via complement of `Iio m`.
+  have hCard : Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (Set.Ici m : Set PairERSource) := by
+    let Im : Set PairERSource := Set.Iio m
+    have hIci_eq : (Set.Ici m : Set PairERSource) = Imᶜ := by
+      ext x; simp [Set.mem_Ici, Im]
+    rw [hIci_eq]
+    have hIio : Cardinal.mk Im <
+        Order.succ (Cardinal.beth.{0} 1) :=
+      Cardinal.mk_Iio_ord_toType m
+    have hSum : Cardinal.mk Im + Cardinal.mk (Imᶜ : Set PairERSource) =
+        Order.succ (Cardinal.beth.{0} 1) := by
+      rw [Cardinal.mk_sum_compl]; exact mk_pairERSource
+    exact le_of_add_eq_of_lt_of_aleph0_le hSum
+      aleph0_le_succ_beth_one hIio
+  -- Step 5: combine.
+  exact hCard.trans (Cardinal.mk_le_mk_of_subset hSubset)
+
+/-- **Limit-step kernel.** For any countable prefix `p : α.ToType ↪o
+PairERSource` (with `α < ω_1`), some type function `τ : α.ToType → Bool`
+admits a valid fiber of cardinality `≥ succ (ℶ_1)`.
+
+Composition of:
+- `large_above_prefix` (the above-prefix set has size `succ ℶ_1`);
+- `mk_countable_bool_functions_le_beth_one` (the codomain
+  `α.ToType → Bool` has size `≤ ℶ_1`);
+- `exists_large_fiber_of_small_codomain` at `κ := ℶ_1` (cardinal
+  pigeonhole).
+
+Once this lemma lands, the limit stage of the main recursion becomes a
+direct invocation. -/
+theorem exists_large_limit_fiber
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    {α : Ordinal.{0}} (hα : α < Ordinal.omega.{0} 1)
+    (p : α.ToType ↪o PairERSource) :
+    ∃ τ : α.ToType → Bool,
+      Order.succ (Cardinal.beth.{0} 1) ≤
+        Cardinal.mk (validFiber cR p τ) := by
+  haveI : Countable α.ToType := countable_toType_of_lt_omega1 hα
+  -- `A` = above-prefix set; `#A ≥ succ ℶ_1`.
+  set A : Set PairERSource := { y | ∀ x : α.ToType, p x < y } with hA_def
+  have hA_card : Order.succ (Cardinal.beth.{0} 1) ≤ Cardinal.mk A :=
+    large_above_prefix hα p
+  -- `typeMap : A → (α.ToType → Bool)`, `y ↦ (β ↦ cR (pairEmbed (y.property β)))`.
+  let typeMap : A → (α.ToType → Bool) :=
+    fun y β => cR (pairEmbed (y.property β))
+  -- H3 pigeonhole with `κ := ℶ_1`.
+  have hBethInf : Cardinal.aleph0 ≤ Cardinal.beth.{0} 1 :=
+    Cardinal.aleph0_le_beth _
+  have hCodom : Cardinal.mk (α.ToType → Bool) ≤ Cardinal.beth.{0} 1 :=
+    mk_countable_bool_functions_le_beth_one
+  obtain ⟨τ, hτ⟩ :=
+    exists_large_fiber_of_small_codomain hBethInf hA_card hCodom typeMap
+  -- The fiber `typeMap⁻¹ {τ}` injects into `validFiber cR p τ` via `Subtype.val`.
+  refine ⟨τ, hτ.trans ?_⟩
+  refine Cardinal.mk_le_of_injective (f := fun z : typeMap ⁻¹' {τ} => ⟨z.1.1, ?_⟩) ?_
+  · -- `z.1.val ∈ validFiber cR p τ`.
+    intro β
+    refine ⟨z.1.property β, ?_⟩
+    -- `cR (pairEmbed (z.1.property β)) = τ β` follows from `typeMap z.1 = τ`.
+    have := z.2
+    simp only [Set.mem_preimage, Set.mem_singleton_iff] at this
+    exact congrFun this β
+  · -- Injectivity.
+    intro z₁ z₂ h
+    have hval : z₁.1.1 = z₂.1.1 := (Subtype.mk.injEq _ _ _ _).mp h
+    exact Subtype.ext (Subtype.ext hval)
+
+end PairERLocalAPI
+
 /-! ### Architecture of the main Erdős–Rado theorem (Phase 2d2)
 
 The remaining unproved theorem:
