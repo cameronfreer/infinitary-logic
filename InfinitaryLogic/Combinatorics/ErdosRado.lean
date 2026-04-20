@@ -1261,6 +1261,135 @@ lemma PairERChain.succ_commitAt
   -- The two enum'd elements are equal via hsub (after rewriting the subtype witness).
   exact congrArg (Ordinal.enum (α := α.ToType) (· < ·)) hsub
 
+/-- **Coherent family of successor stages below `α`.** For each
+`β < α`, we have a stage at level `β + 1`, and later stages preserve
+the committed value at every earlier position. This is the exact data
+needed to glue a genuine limit-stage prefix. -/
+structure PairERCoherentFamily
+    (cR : (Fin 2 ↪o PairERSource) → Bool) (α : Ordinal.{0}) where
+  stage : ∀ β : Ordinal.{0}, β < α → PairERChain cR (Order.succ β)
+  coherent :
+    ∀ {δ β : Ordinal.{0}} (hδβ : δ < β) (hβα : β < α),
+      (stage β hβα).commitAt δ (hδβ.trans (Order.lt_succ β)) =
+        (stage δ (hδβ.trans hβα)).commitAt δ (Order.lt_succ δ)
+
+/-- **Committed value at ordinal position `δ`.** In a coherent family,
+look at the stage `δ + 1` and read off the value committed at the new
+top position `δ`. -/
+noncomputable def PairERCoherentFamily.commitVal
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (F : PairERCoherentFamily cR α) (δ : Ordinal.{0}) (hδ : δ < α) :
+    PairERSource :=
+  (F.stage δ hδ).commitAt δ (Order.lt_succ δ)
+
+/-- **Earlier committed values reappear in later stages.** This is just
+the coherence axiom rewritten in terms of `commitVal`. -/
+lemma PairERCoherentFamily.commitVal_eq_commitAt
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (F : PairERCoherentFamily cR α) {δ β : Ordinal.{0}}
+    (hδβ : δ < β) (hβα : β < α) :
+    F.commitVal δ (hδβ.trans hβα) =
+      (F.stage β hβα).commitAt δ (hδβ.trans (Order.lt_succ β)) := by
+  unfold PairERCoherentFamily.commitVal
+  symm
+  exact F.coherent hδβ hβα
+
+/-- **Committed values are strictly increasing with the ordinal index.**
+Use coherence to compare both values inside the later stage, then apply
+`PairERChain.commitAt_strictMono`. -/
+lemma PairERCoherentFamily.commitVal_strictMono
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (F : PairERCoherentFamily cR α) {δ₁ δ₂ : Ordinal.{0}}
+    (hδ₁ : δ₁ < α) (hδ₂ : δ₂ < α) (h : δ₁ < δ₂) :
+    F.commitVal δ₁ hδ₁ < F.commitVal δ₂ hδ₂ := by
+  calc
+    F.commitVal δ₁ hδ₁ =
+        (F.stage δ₂ hδ₂).commitAt δ₁ (h.trans (Order.lt_succ δ₂)) :=
+      F.commitVal_eq_commitAt h hδ₂
+    _ < (F.stage δ₂ hδ₂).commitAt δ₂ (Order.lt_succ δ₂) := by
+      exact PairERChain.commitAt_strictMono (s := F.stage δ₂ hδ₂)
+        (hδ₁ := h.trans (Order.lt_succ δ₂))
+        (hδ₂ := Order.lt_succ δ₂) h
+    _ = F.commitVal δ₂ hδ₂ := rfl
+
+/-- **Glued prefix from a coherent family.** At `x : α.ToType`, read the
+committed value at ordinal position `typein x`. Strict monotonicity is
+exactly `commitVal_strictMono`. -/
+noncomputable def PairERCoherentFamily.prefix
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (F : PairERCoherentFamily cR α) : α.ToType ↪o PairERSource := by
+  classical
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  refine OrderEmbedding.ofStrictMono
+    (fun x =>
+      F.commitVal (Ordinal.typein (· < ·) x) (by
+        simpa [Ordinal.type_toType α] using
+          Ordinal.typein_lt_type (· < · : α.ToType → α.ToType → Prop) x))
+    ?_
+  intro x y hxy
+  let δx : Ordinal.{0} := Ordinal.typein (· < ·) x
+  let δy : Ordinal.{0} := Ordinal.typein (· < ·) y
+  have hδx : δx < α := by
+    simpa [δx, Ordinal.type_toType α] using
+      Ordinal.typein_lt_type (· < · : α.ToType → α.ToType → Prop) x
+  have hδy : δy < α := by
+    simpa [δy, Ordinal.type_toType α] using
+      Ordinal.typein_lt_type (· < · : α.ToType → α.ToType → Prop) y
+  have hδ : δx < δy := by
+    simpa [δx, δy] using
+      ((Ordinal.typein_lt_typein (· < ·)).mpr hxy)
+  exact F.commitVal_strictMono hδx hδy hδ
+
+/-- **The glued prefix hits the expected committed value.** Evaluating
+`prefix` at the `δ`-th point of `α.ToType` returns the value committed
+at stage `δ + 1`. -/
+lemma PairERCoherentFamily.prefix_enum
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (F : PairERCoherentFamily cR α) (δ : Ordinal.{0}) (hδ : δ < α) :
+    F.prefix
+      (Ordinal.enum (α := α.ToType) (· < ·)
+        ⟨δ, (Ordinal.type_toType α).symm ▸ hδ⟩) =
+      F.commitVal δ hδ := by
+  classical
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  -- Name the enum point.
+  set e : α.ToType := Ordinal.enum (α := α.ToType) (· < ·)
+    ⟨δ, (Ordinal.type_toType α).symm ▸ hδ⟩ with he_def
+  -- `typein e = δ` via `typein_enum`.
+  have htypein : Ordinal.typein (· < ·) e = δ := by
+    rw [he_def, Ordinal.typein_enum]
+  -- Unfold `prefix`.
+  unfold PairERCoherentFamily.prefix
+  simp only [OrderEmbedding.coe_ofStrictMono]
+  -- Now both sides are `F.commitVal _ _` with differing ordinal / proof arguments.
+  -- Rewrite the ordinal argument via `htypein`.
+  have goal_eq :
+      F.commitVal (Ordinal.typein (· < ·) e) (by
+        simpa [Ordinal.type_toType α] using
+          Ordinal.typein_lt_type (· < · : α.ToType → α.ToType → Prop) e) =
+      F.commitVal δ hδ := by
+    congr 1
+  exact goal_eq
+
+/-- **Limit stage built from a coherent family.** Feed the glued prefix
+into `PairERChain.limit`. -/
+noncomputable def PairERCoherentFamily.limit
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (F : PairERCoherentFamily cR α) (hα : α < Ordinal.omega.{0} 1) :
+    PairERChain cR α :=
+  PairERChain.limit hα F.prefix
+
+/-- **Limit-stage commit reproduces the coherent family.** This is the
+main payoff of the glue API: the limit stage's commit at `δ < α` is
+exactly the value already committed by stage `δ + 1`. -/
+lemma PairERCoherentFamily.limit_commitAt
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (F : PairERCoherentFamily cR α) (hα : α < Ordinal.omega.{0} 1)
+    (δ : Ordinal.{0}) (hδ : δ < α) :
+    (F.limit hα).commitAt δ hδ = F.commitVal δ hδ := by
+  rw [PairERCoherentFamily.limit, PairERChain.limit_commitAt]
+  exact F.prefix_enum δ hδ
+
 /-! ### Existence of stages at every level `< ω_1`
 
 The transfinite-assembly existence lemma `exists_PairERChain`: for
