@@ -1171,13 +1171,42 @@ lemma PairERChain.limit_head {cR : (Fin 2 ↪o PairERSource) → Bool}
     (p : α.ToType ↪o PairERSource) :
     (PairERChain.limit (cR := cR) hα p).head = p := rfl
 
--- (Coherence lemma deferred — requires dependent-type wrangling with
---  `Ordinal.typein`/`enum` proof-subterms that the `simp` unfolder
---  generates during `extendHead`'s `dif_neg` branch. The statement is:
---  at a non-top position `γ : (Order.succ α).ToType`,
---  `s.succ.head γ = s.head (enum ⟨typein γ, _⟩)`. Deferred to the
---  assembly tranche, where it will be stated inside the recursion's
---  context and proved alongside `stageAt`'s head-consistency.)
+/-- **Committed-head function.** For a `PairERChain cR α` and an
+ordinal `δ < α`, the head at the `δ`-th position of the chain,
+packaged as a raw `PairERSource` value. Strictly monotone in `δ`
+(by the `OrderEmbedding` nature of `s.head`). -/
+noncomputable def PairERChain.commitAt
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (s : PairERChain cR α) (δ : Ordinal.{0}) (hδ : δ < α) :
+    PairERSource :=
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  s.head (Ordinal.enum (α := α.ToType) (· < ·)
+    ⟨δ, (Ordinal.type_toType α).symm ▸ hδ⟩)
+
+/-- **Commit-at is strictly monotone.** Direct from `s.head` being an
+`OrderEmbedding` and `Ordinal.enum` being strict-monotone in its
+ordinal argument. -/
+lemma PairERChain.commitAt_strictMono
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (s : PairERChain cR α) {δ₁ δ₂ : Ordinal.{0}}
+    (hδ₁ : δ₁ < α) (hδ₂ : δ₂ < α) (h : δ₁ < δ₂) :
+    s.commitAt δ₁ hδ₁ < s.commitAt δ₂ hδ₂ := by
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  simp only [PairERChain.commitAt]
+  apply s.head.lt_iff_lt.mpr
+  exact (Ordinal.enum_lt_enum (α := α.ToType) (r := (· < ·))).mpr h
+
+/-- **Limit-stage commit equals input prefix.** When the limit prefix
+`p : α.ToType ↪o PairERSource` is supplied, the resulting stage's
+commit at position `δ < α` is just `p`'s value at the corresponding
+position. Direct `rfl` since `PairERChain.limit.head = p`. -/
+lemma PairERChain.limit_commitAt {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {α : Ordinal.{0}} (hα : α < Ordinal.omega.{0} 1)
+    (p : α.ToType ↪o PairERSource) (δ : Ordinal.{0}) (hδ : δ < α) :
+    (PairERChain.limit (cR := cR) hα p).commitAt δ hδ =
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      p (Ordinal.enum (α := α.ToType) (· < ·)
+        ⟨δ, (Ordinal.type_toType α).symm ▸ hδ⟩) := rfl
 
 /-! ### Existence of stages at every level `< ω_1`
 
