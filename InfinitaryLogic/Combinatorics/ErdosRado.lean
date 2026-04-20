@@ -1390,6 +1390,47 @@ lemma PairERCoherentFamily.limit_commitAt
   rw [PairERCoherentFamily.limit, PairERChain.limit_commitAt]
   exact F.prefix_enum δ hδ
 
+/-- **Limit-case extension of the coherent family.** Given a coherent
+family `F` below level `α` and a proof `hα : α < ω_1`, produce the
+coherent family below `α + 1` that appends the new stage at level
+`α + 1`, which is `(F.limit hα).succ`.
+
+This packages the limit step of the outer transfinite recursion:
+glue the lower prefix via `F.prefix`, take `F.limit hα` as the
+stage at level `α`, then its `succ` as the new top-level stage.
+Coherence is proved by combining `F.coherent` (for earlier `β < α`
+positions), `PairERChain.succ_commitAt` (the new top collapses to
+the limit stage), and `PairERCoherentFamily.limit_commitAt` (the
+limit stage's commits match the family). -/
+noncomputable def PairERCoherentFamily.extendAtLimit
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (F : PairERCoherentFamily cR α)
+    (hα : α < Ordinal.omega.{0} 1) :
+    PairERCoherentFamily cR (Order.succ α) where
+  stage β hβ :=
+    if h : β < α then F.stage β h
+    else
+      -- `β < α + 1` with `¬ β < α` ⇒ `β = α`. We then have `succ β = succ α`,
+      -- and the new stage at position `β = α` is `(F.limit hα).succ`.
+      have hβ_eq : β = α :=
+        le_antisymm (Order.lt_succ_iff.mp hβ) (not_lt.mp h)
+      hβ_eq ▸ (F.limit hα).succ
+  coherent := by
+    intro δ β hδβ hβ_succ
+    rcases lt_or_eq_of_le (Order.lt_succ_iff.mp hβ_succ) with hβ_lt_α | hβ_eq_α
+    · -- Case `β < α`: stage at β is `F.stage β hβ_lt_α`.
+      have hδ_lt_α : δ < α := hδβ.trans hβ_lt_α
+      simp only [dif_pos hβ_lt_α, dif_pos hδ_lt_α]
+      exact F.coherent hδβ hβ_lt_α
+    · -- Case `β = α`: stage at β is `(F.limit hα).succ`.
+      subst hβ_eq_α
+      -- `δ < β = α`, so stage at δ is `F.stage δ hδβ`.
+      simp only [dif_pos hδβ, dif_neg (lt_irrefl _)]
+      -- Goal: `(F.limit hα).succ.commitAt δ _ = (F.stage δ hδβ).commitAt δ _`.
+      rw [PairERChain.succ_commitAt _ δ hδβ]
+      rw [PairERCoherentFamily.limit_commitAt F hα δ hδβ]
+      rfl
+
 /-! ### Existence of stages at every level `< ω_1`
 
 The transfinite-assembly existence lemma `exists_PairERChain`: for
