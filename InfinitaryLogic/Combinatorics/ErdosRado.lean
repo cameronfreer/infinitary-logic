@@ -1163,6 +1163,55 @@ noncomputable def PairERChain.limit {cR : (Fin 2 ↪o PairERSource) → Bool}
       type := Classical.choose hE
       large := Classical.choose_spec hE }
 
+/-! ### Existence of stages at every level `< ω_1`
+
+The transfinite-assembly existence lemma `exists_PairERChain`: for
+every `α < ω_1`, there exists a `PairERChain cR α`. Proved by
+`Ordinal.limitRecOn`:
+
+- zero: `PairERChain.zero cR`.
+- successor `α = β + 1`: apply `PairERChain.succ` to the
+  induction-hypothesis stage at `β`.
+- limit `α`: obtain a prefix `p : α.ToType ↪o PairERSource` from
+  `exists_ordToType_embedding_of_card_ge` + `Ordinal.initialSegToType`
+  (since `α ≤ (succ ℶ_1).ord`), then apply `PairERChain.limit`.
+
+This existence is a stepping stone toward the main theorem, which
+requires coherent stages (built in a later commit). -/
+
+/-- **Existence of a `PairERChain` at every countable level.** Proved
+by transfinite induction on `α`. At limits, uses a canonical initial
+segment of `PairERSource` (via `Ordinal.initialSegToType`) as the
+prefix — no coherence with lower stages is tracked here. -/
+theorem exists_PairERChain (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    ∀ α : Ordinal.{0}, α < Ordinal.omega.{0} 1 →
+      Nonempty (PairERChain cR α) := by
+  intro α
+  induction α using Ordinal.limitRecOn with
+  | zero => intro _; exact ⟨PairERChain.zero cR⟩
+  | succ β IH =>
+    intro hα
+    have hβ : β < Ordinal.omega.{0} 1 :=
+      lt_of_lt_of_le (Order.lt_succ β) hα.le
+    obtain ⟨s⟩ := IH hβ
+    exact ⟨s.succ⟩
+  | limit β hβ_lim IH =>
+    intro hβ
+    -- Canonical prefix from `β.ToType ≤i (succ ℶ_1).ord.ToType`.
+    have hβ_le : β ≤ (Order.succ (Cardinal.beth.{0} 1)).ord := by
+      -- `β < ω_1 ≤ ℵ_1.ord = ω_1 ≤ (succ ℶ_1).ord` (since ℵ_1 ≤ succ ℶ_1).
+      have h1 : β < (Cardinal.aleph.{0} 1).ord := by
+        rwa [Cardinal.ord_aleph]
+      have h2 : (Cardinal.aleph.{0} 1).ord ≤
+          (Order.succ (Cardinal.beth.{0} 1)).ord :=
+        Cardinal.ord_le_ord.mpr
+          ((Cardinal.aleph_le_beth 1).trans (Order.le_succ _))
+      exact (h1.trans_le h2).le
+    let seg : β.ToType ≤i (Order.succ (Cardinal.beth.{0} 1)).ord.ToType :=
+      Ordinal.initialSegToType hβ_le
+    let p : β.ToType ↪o PairERSource := seg.toOrderEmbedding
+    exact ⟨PairERChain.limit hβ p⟩
+
 end PairERLocalAPI
 
 /-! ### Architecture of the main Erdős–Rado theorem (Phase 2d2)
