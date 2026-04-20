@@ -1163,6 +1163,22 @@ noncomputable def PairERChain.limit {cR : (Fin 2 ↪o PairERSource) → Bool}
       type := Classical.choose hE
       large := Classical.choose_spec hE }
 
+/-- **Limit-stage head = input prefix.** By definition, `PairERChain.limit`
+keeps the input prefix as the stage's head. -/
+@[simp]
+lemma PairERChain.limit_head {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {α : Ordinal.{0}} (hα : α < Ordinal.omega.{0} 1)
+    (p : α.ToType ↪o PairERSource) :
+    (PairERChain.limit (cR := cR) hα p).head = p := rfl
+
+-- (Coherence lemma deferred — requires dependent-type wrangling with
+--  `Ordinal.typein`/`enum` proof-subterms that the `simp` unfolder
+--  generates during `extendHead`'s `dif_neg` branch. The statement is:
+--  at a non-top position `γ : (Order.succ α).ToType`,
+--  `s.succ.head γ = s.head (enum ⟨typein γ, _⟩)`. Deferred to the
+--  assembly tranche, where it will be stated inside the recursion's
+--  context and proved alongside `stageAt`'s head-consistency.)
+
 /-! ### Existence of stages at every level `< ω_1`
 
 The transfinite-assembly existence lemma `exists_PairERChain`: for
