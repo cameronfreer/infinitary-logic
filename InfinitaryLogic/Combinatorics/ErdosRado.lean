@@ -860,6 +860,94 @@ theorem exists_large_limit_fiber
     have hval : z₁.1.1 = z₂.1.1 := (Subtype.mk.injEq _ _ _ _).mp h
     exact Subtype.ext (Subtype.ext hval)
 
+/-- **One-element fiber refinement.** Given a prefix `p`, type `τ`, a
+new candidate head `y ∈ PairERSource`, and a new committed color
+`b : Bool`, the set of elements strictly above `y` whose pair color
+with `y` is `b`, and which still lie in the original valid fiber. -/
+def validFiberExtend
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    {α : Ordinal.{0}} (p : α.ToType ↪o PairERSource) (τ : α.ToType → Bool)
+    (y : PairERSource) (b : Bool) : Set PairERSource :=
+  { z | z ∈ validFiber cR p τ ∧ ∃ h : y < z, cR (pairEmbed h) = b }
+
+/-- **Successor-step kernel.** Given a valid fiber of cardinality
+`≥ succ (ℶ_1)`, pick the well-ordered minimum `y` as the new prefix
+head and split the remainder by Bool color. One of the two
+color-branches inherits cardinality `≥ succ (ℶ_1)` (by the regularity
+of `succ (ℶ_1)` and `#Bool ≤ ℶ_1`), so the corresponding one-element
+fiber refinement is still large.
+
+Once this lemma lands, the successor stage of the main recursion is a
+direct invocation. -/
+theorem exists_successor_refinement
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    {α : Ordinal.{0}} (p : α.ToType ↪o PairERSource) (τ : α.ToType → Bool)
+    (hF : Order.succ (Cardinal.beth.{0} 1) ≤
+        Cardinal.mk (validFiber cR p τ)) :
+    ∃ (y : PairERSource) (b : Bool),
+      y ∈ validFiber cR p τ ∧
+      Order.succ (Cardinal.beth.{0} 1) ≤
+        Cardinal.mk (validFiberExtend cR p τ y b) := by
+  set F : Set PairERSource := validFiber cR p τ with hF_def
+  -- `F` is nonempty (it has cardinality `≥ succ ℶ_1`, which is positive).
+  have hFne : F.Nonempty := by
+    rw [Set.nonempty_iff_ne_empty]
+    intro hempty
+    rw [hempty, Cardinal.mk_emptyCollection] at hF
+    exact absurd hF (not_le.mpr
+      (lt_of_lt_of_le Cardinal.aleph0_pos aleph0_le_succ_beth_one))
+  -- `y := min F` via well-foundedness of `<` on `PairERSource`.
+  let y : PairERSource :=
+    (IsWellFounded.wf : WellFounded
+      (· < · : PairERSource → PairERSource → Prop)).min F hFne
+  have hy_mem : y ∈ F := WellFounded.min_mem _ _ _
+  have hy_min : ∀ z ∈ F, ¬ z < y := fun z hz =>
+    WellFounded.not_lt_min _ F hFne hz
+  -- For `z ∈ F \ {y}`, `y < z`.
+  have hlt_of_mem : ∀ z ∈ F \ {y}, y < z := fun z hz =>
+    lt_of_le_of_ne (not_lt.mp (hy_min z hz.1))
+      (fun heq => hz.2 heq.symm)
+  -- `#(F \ {y}) ≥ succ ℶ_1` (remove one point from infinite set).
+  have hFminus_card : Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (F \ {y} : Set PairERSource) := by
+    have hsum : Cardinal.mk ({y} : Set PairERSource) +
+        Cardinal.mk (F \ {y} : Set PairERSource) = Cardinal.mk F := by
+      rw [add_comm]; exact Cardinal.mk_diff_add_mk (by
+        intro z hz; rcases hz with rfl; exact hy_mem)
+    have hsingleton : Cardinal.mk ({y} : Set PairERSource) = 1 :=
+      Cardinal.mk_singleton _
+    have h1_lt : Cardinal.mk ({y} : Set PairERSource) <
+        Cardinal.mk F := by
+      rw [hsingleton]
+      calc (1 : Cardinal) < Cardinal.aleph0 := Cardinal.one_lt_aleph0
+        _ ≤ Order.succ (Cardinal.beth.{0} 1) := aleph0_le_succ_beth_one
+        _ ≤ Cardinal.mk F := hF
+    have hF_inf : Cardinal.aleph0 ≤ Cardinal.mk F :=
+      aleph0_le_succ_beth_one.trans hF
+    exact hF.trans (le_of_add_eq_of_lt_of_aleph0_le hsum hF_inf h1_lt)
+  -- Color map on `F \ {y}`: `z ↦ cR (pairEmbed (y < z))`.
+  let colorMap : (F \ {y} : Set PairERSource) → Bool :=
+    fun z => cR (pairEmbed (hlt_of_mem z.1 z.2))
+  -- `#Bool = 2 ≤ ℶ_1`.
+  have hBool_card : Cardinal.mk Bool ≤ Cardinal.beth.{0} 1 :=
+    (Cardinal.lt_aleph0_of_finite Bool).le.trans (Cardinal.aleph0_le_beth _)
+  -- Apply H3 pigeonhole: some Bool `b` has preimage of size `≥ succ ℶ_1`.
+  obtain ⟨b, hb_card⟩ := exists_large_fiber_of_small_codomain
+    (Cardinal.aleph0_le_beth 1) hFminus_card hBool_card colorMap
+  refine ⟨y, b, hy_mem, hb_card.trans ?_⟩
+  -- Inject `colorMap⁻¹ {b}` into `validFiberExtend cR p τ y b` via value.
+  refine Cardinal.mk_le_of_injective
+    (f := fun w : colorMap ⁻¹' {b} => ⟨w.1.1, ?_⟩) ?_
+  · -- `w.1.val ∈ validFiberExtend cR p τ y b`.
+    refine ⟨w.1.2.1, hlt_of_mem w.1 w.1.2, ?_⟩
+    -- `cR (pairEmbed (y < w.1.val)) = b`.
+    have := w.2
+    simp only [Set.mem_preimage, Set.mem_singleton_iff] at this
+    exact this
+  · intro w₁ w₂ h
+    have hval : w₁.1.1 = w₂.1.1 := (Subtype.mk.injEq _ _ _ _).mp h
+    exact Subtype.ext (Subtype.ext hval)
+
 end PairERLocalAPI
 
 /-! ### Architecture of the main Erdős–Rado theorem (Phase 2d2)
