@@ -1208,6 +1208,59 @@ lemma PairERChain.limit_commitAt {cR : (Fin 2 ↪o PairERSource) → Bool}
       p (Ordinal.enum (α := α.ToType) (· < ·)
         ⟨δ, (Ordinal.type_toType α).symm ▸ hδ⟩) := rfl
 
+/-- **Successor-stage commit preserves lower positions.** The key
+coherence fact: if we extend `s` to `s.succ`, the commit at any
+earlier position `δ < α` is unchanged. -/
+lemma PairERChain.succ_commitAt
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (s : PairERChain cR α) (δ : Ordinal.{0}) (hδα : δ < α) :
+    s.succ.commitAt δ (hδα.trans (Order.lt_succ α)) =
+      s.commitAt δ hδα := by
+  haveI : IsWellOrder (Order.succ α).ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  -- Abbreviate the enum'd element in (Order.succ α).ToType.
+  set e : (Order.succ α).ToType :=
+    Ordinal.enum (α := (Order.succ α).ToType) (· < ·)
+      ⟨δ, (Ordinal.type_toType (Order.succ α)).symm ▸
+        hδα.trans (Order.lt_succ α)⟩ with he_def
+  -- `e ≠ ⊤`.
+  have he_ne_top : e ≠ (⊤ : (Order.succ α).ToType) := by
+    intro h
+    -- From `e = ⊤`, applying `typein` gives `δ = α`, contradiction.
+    have h1 : Ordinal.typein (· < ·) e = δ := by
+      rw [he_def, Ordinal.typein_enum]
+    have h2 : Ordinal.typein (· < ·)
+        (⊤ : (Order.succ α).ToType) = α := by
+      rw [show (⊤ : (Order.succ α).ToType) =
+          Ordinal.enum (α := (Order.succ α).ToType) (· < ·)
+            ⟨α, (Ordinal.type_toType _).symm ▸ Order.lt_succ α⟩
+        from Ordinal.enum_succ_eq_top.symm, Ordinal.typein_enum]
+    have : δ = α := h1.symm.trans (h ▸ h2)
+    exact absurd this (ne_of_lt hδα)
+  -- Unfold both sides and walk through `extendHead`'s `dif_neg` branch.
+  show s.succ.head e = s.head _
+  unfold PairERChain.succ
+  simp only [extendHead, OrderEmbedding.coe_ofStrictMono]
+  rw [dif_neg he_ne_top]
+  -- LHS now has `s.head (enum ⟨typein e, _⟩)`, RHS has `s.head (enum ⟨δ, _⟩)`.
+  -- Reduce via `typein e = δ`.
+  have hte : Ordinal.typein (· < ·) e = δ := by
+    rw [he_def, Ordinal.typein_enum]
+  -- Both sides are `s.head (enum ...)`; reduce enum arguments via `Subtype.mk`.
+  have hsub : (⟨Ordinal.typein (· < ·) e,
+      (Ordinal.type_toType α).symm ▸ show
+        Ordinal.typein (· < ·) e < α from hte ▸ hδα⟩ :
+      {o : Ordinal.{0} //
+        o < Ordinal.type (α := α.ToType) (· < ·)}) =
+      ⟨δ, (Ordinal.type_toType α).symm ▸ hδα⟩ := by
+    apply Subtype.ext; exact hte
+  -- Use congr on the enum arg's subtype.
+  show s.head (Ordinal.enum (α := α.ToType) (· < ·) _) =
+      s.head (Ordinal.enum (α := α.ToType) (· < ·) _)
+  congr 1
+  -- The two enum'd elements are equal via hsub (after rewriting the subtype witness).
+  exact congrArg (Ordinal.enum (α := α.ToType) (· < ·)) hsub
+
 /-! ### Existence of stages at every level `< ω_1`
 
 The transfinite-assembly existence lemma `exists_PairERChain`: for
