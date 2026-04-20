@@ -948,6 +948,200 @@ theorem exists_successor_refinement
     have hval : w₁.1.1 = w₂.1.1 := (Subtype.mk.injEq _ _ _ _).mp h
     exact Subtype.ext (Subtype.ext hval)
 
+/-! ### Stage record and base/successor extensions
+
+`PairERChain cR α` bundles a prefix `α.ToType ↪o PairERSource`, a type
+function `α.ToType → Bool`, and the proof that the resulting valid
+fiber has cardinality `≥ succ (ℶ_1)`. The transfinite recursion of the
+main theorem threads this structure through `α < ω_1`: the base case
+is built via `PairERChain.zero`, successor stages via
+`PairERChain.succ` (which calls `exists_successor_refinement`), and
+limit stages (later commit) via `exists_large_limit_fiber`.
+-/
+
+/-- **Stage record.** A `PairERChain cR α` carries a prefix
+`α.ToType ↪o PairERSource`, a type function `α.ToType → Bool`, and the
+proof that the valid fiber at that level has cardinality
+`≥ succ (ℶ_1)`. -/
+structure PairERChain (cR : (Fin 2 ↪o PairERSource) → Bool)
+    (α : Ordinal.{0}) where
+  head : α.ToType ↪o PairERSource
+  type : α.ToType → Bool
+  large : Order.succ (Cardinal.beth.{0} 1) ≤
+    Cardinal.mk (validFiber cR head type)
+
+/-- **Base stage at level 0.** `(0 : Ordinal).ToType` is empty
+(`Ordinal.isEmpty_toType_zero`), so the prefix is vacuous and the valid
+fiber is all of `PairERSource`, which has cardinality `succ (ℶ_1)` by
+`mk_pairERSource`. -/
+noncomputable def PairERChain.zero
+    (cR : (Fin 2 ↪o PairERSource) → Bool) : PairERChain cR 0 :=
+  haveI : IsEmpty (Ordinal.ToType 0) := Ordinal.isEmpty_toType_zero
+  { head := OrderEmbedding.ofIsEmpty
+    type := isEmptyElim
+    large := by
+      have hfiber_eq :
+          (validFiber cR (OrderEmbedding.ofIsEmpty
+              (α := (0 : Ordinal.{0}).ToType) (β := PairERSource))
+            (isEmptyElim : (0 : Ordinal.{0}).ToType → Bool) : Set PairERSource)
+            = Set.univ := by
+        ext y
+        simp [validFiber, IsEmpty.forall_iff]
+      rw [hfiber_eq, Cardinal.mk_univ]
+      exact mk_pairERSource.ge }
+
+/-- **Helper: extend a prefix by one element above.** Given a prefix
+embedding `p : α.ToType ↪o PairERSource` and a strictly larger
+element `y ∈ PairERSource`, construct the extended prefix embedding
+`(Order.succ α).ToType ↪o PairERSource`. -/
+noncomputable def extendHead {α : Ordinal.{0}}
+    (p : α.ToType ↪o PairERSource) (y : PairERSource)
+    (hy : ∀ z : α.ToType, p z < y) :
+    (Order.succ α).ToType ↪o PairERSource := by
+  classical
+  haveI : IsWellOrder (Order.succ α).ToType (· < ·) := isWellOrder_lt
+  -- For `x : (Order.succ α).ToType` with `x ≠ ⊤`, `typein x < α`.
+  have typein_lt : ∀ x : (Order.succ α).ToType, x ≠ ⊤ →
+      Ordinal.typein (· < ·) x <
+        Ordinal.type (α := α.ToType) (· < ·) := by
+    intro x hx
+    have hlt : x < (⊤ : (Order.succ α).ToType) := lt_of_le_of_ne le_top hx
+    have htop : (⊤ : (Order.succ α).ToType) =
+        Ordinal.enum (α := (Order.succ α).ToType) (· < ·)
+          ⟨α, (Ordinal.type_toType _).symm ▸ Order.lt_succ α⟩ :=
+      Ordinal.enum_succ_eq_top.symm
+    have hte : Ordinal.typein (· < ·)
+        (⊤ : (Order.succ α).ToType) = α := by
+      rw [htop, Ordinal.typein_enum]
+    rw [Ordinal.type_toType]
+    calc Ordinal.typein (· < ·) x
+        < Ordinal.typein (· < ·) (⊤ : (Order.succ α).ToType) :=
+          (Ordinal.typein_lt_typein (· < ·)).mpr hlt
+      _ = α := hte
+  refine OrderEmbedding.ofStrictMono
+    (fun x : (Order.succ α).ToType =>
+      if hx : x = (⊤ : (Order.succ α).ToType) then y
+      else p (Ordinal.enum (α := α.ToType) (· < ·)
+        ⟨Ordinal.typein (· < ·) x, typein_lt x hx⟩))
+    ?_
+  intro a b hab
+  by_cases ha : a = (⊤ : (Order.succ α).ToType)
+  · exact absurd hab (by rw [ha]; exact not_lt_of_ge le_top)
+  by_cases hb : b = (⊤ : (Order.succ α).ToType)
+  · simp only [dif_neg ha, dif_pos hb]
+    exact hy _
+  · simp only [dif_neg ha, dif_neg hb]
+    apply p.lt_iff_lt.mpr
+    apply (Ordinal.enum_lt_enum (α := α.ToType) (r := (· < ·))).mpr
+    exact (Ordinal.typein_lt_typein (· < ·)).mpr hab
+
+/-- **Helper: extend a type function.** Add a new Bool value at the
+top of `(Order.succ α).ToType`. -/
+noncomputable def extendType {α : Ordinal.{0}}
+    (τ : α.ToType → Bool) (b : Bool) :
+    (Order.succ α).ToType → Bool := by
+  classical
+  haveI : IsWellOrder (Order.succ α).ToType (· < ·) := isWellOrder_lt
+  -- The same `typein_lt` as in `extendHead`; inlined locally.
+  have typein_lt : ∀ x : (Order.succ α).ToType, x ≠ ⊤ →
+      Ordinal.typein (· < ·) x <
+        Ordinal.type (α := α.ToType) (· < ·) := by
+    intro x hx
+    have hlt : x < (⊤ : (Order.succ α).ToType) := lt_of_le_of_ne le_top hx
+    have htop : (⊤ : (Order.succ α).ToType) =
+        Ordinal.enum (α := (Order.succ α).ToType) (· < ·)
+          ⟨α, (Ordinal.type_toType _).symm ▸ Order.lt_succ α⟩ :=
+      Ordinal.enum_succ_eq_top.symm
+    have hte : Ordinal.typein (· < ·)
+        (⊤ : (Order.succ α).ToType) = α := by
+      rw [htop, Ordinal.typein_enum]
+    rw [Ordinal.type_toType]
+    calc Ordinal.typein (· < ·) x
+        < Ordinal.typein (· < ·) (⊤ : (Order.succ α).ToType) :=
+          (Ordinal.typein_lt_typein (· < ·)).mpr hlt
+      _ = α := hte
+  exact fun x => if hx : x = (⊤ : (Order.succ α).ToType) then b
+    else τ (Ordinal.enum (α := α.ToType) (· < ·)
+      ⟨Ordinal.typein (· < ·) x, typein_lt x hx⟩)
+
+/-- **Successor extension of a stage.** Use `exists_successor_refinement`
+to produce `(y, b)`, then package via `extendHead` / `extendType` to
+get a stage at `Order.succ α`.
+
+Does NOT need `Order.succ α < ω_1` here: the `α < ω_1` constraint
+is carried by `s` (implicitly, via the fact that the kernel is valid).
+Callers must supply `Order.succ α < ω_1` when wiring into the main
+transfinite recursion. -/
+noncomputable def PairERChain.succ {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {α : Ordinal.{0}} (s : PairERChain cR α) :
+    PairERChain cR (Order.succ α) := by
+  classical
+  haveI : IsWellOrder (Order.succ α).ToType (· < ·) := isWellOrder_lt
+  let hE := exists_successor_refinement cR s.head s.type s.large
+  let y : PairERSource := Classical.choose hE
+  let hE' := Classical.choose_spec hE
+  let b : Bool := Classical.choose hE'
+  have hy_mem : y ∈ validFiber cR s.head s.type := (Classical.choose_spec hE').1
+  have hlarge : Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (validFiberExtend cR s.head s.type y b) :=
+    (Classical.choose_spec hE').2
+  -- The hypothesis for `extendHead`: `y` is above every `s.head z`.
+  have hy_above : ∀ z : α.ToType, s.head z < y := fun z =>
+    (hy_mem z).1
+  refine
+    { head := extendHead s.head y hy_above
+      type := extendType s.type b
+      large := ?_ }
+  -- Fiber at level `Order.succ α` contains `validFiberExtend` by construction.
+  apply hlarge.trans
+  apply Cardinal.mk_le_mk_of_subset
+  intro z hz β
+  -- `hz : z ∈ validFiberExtend cR s.head s.type y b`.
+  -- Goal: `z ∈ validFiber cR (extendHead s.head y hy_above) (extendType s.type b)`.
+  by_cases hβ : β = (⊤ : (Order.succ α).ToType)
+  · -- Case: β = ⊤. `extendHead β = y`, `extendType β = b`.
+    subst hβ
+    obtain ⟨_, hylt, hycol⟩ := hz
+    refine ⟨?_, ?_⟩
+    · show (extendHead s.head y hy_above) _ < z
+      simp only [extendHead, OrderEmbedding.coe_ofStrictMono]
+      exact hylt
+    · show cR (pairEmbed _) = extendType s.type b _
+      simp only [extendType]
+      convert hycol using 2
+      simp [extendHead]
+  · -- Case: β ≠ ⊤. Let `z_β := enum ⟨typein β, _⟩ : α.ToType`.
+    -- Then `extendHead β = s.head z_β`, `extendType β = s.type z_β`.
+    obtain ⟨hzval, _, _⟩ := hz
+    -- `hzval : z ∈ validFiber cR s.head s.type`.
+    -- Extract the condition at `z_β`.
+    set z_β : α.ToType := Ordinal.enum (α := α.ToType) (· < ·)
+      ⟨Ordinal.typein (· < ·) β, by
+        -- `typein β < α` since `β ≠ ⊤`.
+        have hlt : β < (⊤ : (Order.succ α).ToType) :=
+          lt_of_le_of_ne le_top hβ
+        have htop : (⊤ : (Order.succ α).ToType) =
+            Ordinal.enum (α := (Order.succ α).ToType) (· < ·)
+              ⟨α, (Ordinal.type_toType _).symm ▸ Order.lt_succ α⟩ :=
+          Ordinal.enum_succ_eq_top.symm
+        have hte : Ordinal.typein (· < ·)
+            (⊤ : (Order.succ α).ToType) = α := by
+          rw [htop, Ordinal.typein_enum]
+        rw [Ordinal.type_toType]
+        calc Ordinal.typein (· < ·) β
+            < Ordinal.typein (· < ·) (⊤ : (Order.succ α).ToType) :=
+              (Ordinal.typein_lt_typein (· < ·)).mpr hlt
+          _ = α := hte⟩ with hz_β_def
+    obtain ⟨h_zβ_lt, h_zβ_col⟩ := hzval z_β
+    refine ⟨?_, ?_⟩
+    · show (extendHead s.head y hy_above) β < z
+      simp only [extendHead, OrderEmbedding.coe_ofStrictMono, dif_neg hβ]
+      exact h_zβ_lt
+    · show cR (pairEmbed _) = extendType s.type b β
+      simp only [extendType, dif_neg hβ]
+      convert h_zβ_col using 2
+      simp [extendHead, dif_neg hβ]
+
 end PairERLocalAPI
 
 /-! ### Architecture of the main Erdős–Rado theorem (Phase 2d2)
