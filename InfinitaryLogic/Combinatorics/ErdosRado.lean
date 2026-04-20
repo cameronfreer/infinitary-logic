@@ -1142,6 +1142,27 @@ noncomputable def PairERChain.succ {cR : (Fin 2 ↪o PairERSource) → Bool}
       convert h_zβ_col using 2
       simp [extendHead, dif_neg hβ]
 
+/-- **Limit extension of a stage.** At a limit `α < ω_1`, the prefix
+`p : α.ToType ↪o PairERSource` must come from the coherent gluing of
+prior stages (handled by the main-theorem recursion). This helper then
+uses `exists_large_limit_fiber` to pick a type function `τ` with a
+valid fiber of cardinality `≥ succ (ℶ_1)`, packaging the result as a
+`PairERChain cR α`.
+
+Unlike `PairERChain.succ`, this does NOT maintain the previously-chosen
+type values at earlier positions — the `τ` returned is fresh from the
+pigeonhole. Final chain consistency is handled downstream (by the
+second pigeonhole on `β ↦ τ_{β+1}(β)` committed at successor stages). -/
+noncomputable def PairERChain.limit {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {α : Ordinal.{0}} (hα : α < Ordinal.omega.{0} 1)
+    (p : α.ToType ↪o PairERSource) : PairERChain cR α := by
+  classical
+  let hE := exists_large_limit_fiber cR hα p
+  exact
+    { head := p
+      type := Classical.choose hE
+      large := Classical.choose_spec hE }
+
 end PairERLocalAPI
 
 /-! ### Architecture of the main Erdős–Rado theorem (Phase 2d2)
