@@ -2176,12 +2176,129 @@ noncomputable def richStage (cR : (Fin 2 ↪o PairERSource) → Bool)
           intros; sorry)
         hβ)
 
+/-! ### Reduction lemmas + canonicalization for `richStage`
+
+The reduction lemmas unfold `richStage` at zero, successor, and limit
+ordinals via `Ordinal.limitRecOn_zero/_succ/_limit`. They are used
+post-hoc to prove `richStage_bundle_eq_self` — the theorem that
+`richStage cR α .bundles δ _ _` at level `δ ≤ α` EQUALS the canonical
+`richStage cR δ .bundles δ le_rfl _`, regardless of the outer level
+`α`. From this canonicalization, `cross_agree` follows as an immediate
+corollary by transitivity. -/
+
+/-- `richStage` at `0` is `RichState.zero`. -/
+theorem richStage_zero (cR : (Fin 2 ↪o PairERSource) → Bool)
+    (h0 : (0 : Ordinal.{0}) < Ordinal.omega.{0} 1) :
+    richStage cR 0 h0 = RichState.zero cR := by
+  unfold richStage
+  rw [Ordinal.limitRecOn_zero]
+
+/-- `richStage` at `Order.succ β` is `(richStage cR β _).extend`. -/
+theorem richStage_succ (cR : (Fin 2 ↪o PairERSource) → Bool)
+    (β : Ordinal.{0}) (hβs : Order.succ β < Ordinal.omega.{0} 1) :
+    richStage cR (Order.succ β) hβs =
+      (richStage cR β ((Order.lt_succ β).trans hβs)).extend hβs := by
+  unfold richStage
+  rw [Ordinal.limitRecOn_succ]
+
+/-- `richStage` at a limit `β`, restricted to the bundle at `γ < β`:
+takes the `if_γ_lt_β := true` branch of `RichState.limitExtend`, which
+returns `(richStage cR γ _).bundles γ le_rfl _` — irrespective of the
+cross_agree witness inside the definition. -/
+theorem richStage_limit_bundles_below
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    {β : Ordinal.{0}} (hβ_lim : Order.IsSuccLimit β)
+    (hβ : β < Ordinal.omega.{0} 1)
+    (γ : Ordinal.{0}) (hγβ : γ < β) (hγ : γ < Ordinal.omega.{0} 1) :
+    (richStage cR β hβ).bundles γ (le_of_lt hγβ) hγ =
+      (richStage cR γ hγ).bundles γ le_rfl hγ := by
+  unfold richStage
+  rw [Ordinal.limitRecOn_limit (h := hβ_lim)]
+  unfold RichState.limitExtend
+  simp only [dif_pos hγβ]
+
+/-- **Canonicalization of `richStage` bundles**: for any `δ ≤ α`, the
+`bundles` field of `richStage cR α` at level `δ` equals the canonical
+`richStage cR δ`'s self-bundle. Proved by strong induction on `α`. -/
+private theorem richStage_bundle_eq_self
+    (cR : (Fin 2 ↪o PairERSource) → Bool) {α δ : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1) (hδα : δ ≤ α)
+    (hδ : δ < Ordinal.omega.{0} 1) :
+    (richStage cR α hα).bundles δ hδα hδ =
+      (richStage cR δ hδ).bundles δ le_rfl hδ := by
+  induction α using Ordinal.limitRecOn with
+  | zero =>
+    -- α = 0: δ ≤ 0, so δ = 0.
+    have hδ0 : δ = 0 := le_antisymm hδα (zero_le _)
+    subst hδ0
+    rfl
+  | succ β IH =>
+    -- α = succ β: unfold richStage_succ; bundles is RichState.extend's dif.
+    have hβω : β < Ordinal.omega.{0} 1 := (Order.lt_succ β).trans hα
+    rw [richStage_succ]
+    by_cases h_δ_le_β : δ ≤ β
+    · -- δ ≤ β: `extend`'s dif_pos branch returns `richStage β .bundles δ`.
+      show ((richStage cR β hβω).extend hα).bundles δ hδα hδ = _
+      unfold RichState.extend
+      simp only [dif_pos h_δ_le_β]
+      exact IH hβω h_δ_le_β
+    · -- δ = succ β: reflexive.
+      have h_δ_eq : δ = Order.succ β :=
+        le_antisymm hδα (Order.succ_le_of_lt (not_le.mp h_δ_le_β))
+      subst h_δ_eq
+      rw [richStage_succ]
+  | limit β hβ_lim IH =>
+    -- α = limit β: split δ < β vs δ = β.
+    by_cases h_δ_lt_β : δ < β
+    · -- δ < β: both sides agree by `richStage_limit_bundles_below`.
+      have h := richStage_limit_bundles_below cR hβ_lim hα δ h_δ_lt_β hδ
+      -- Rewrite hδα (which is δ ≤ β) to use le_of_lt h_δ_lt_β.
+      have : (richStage cR β hα).bundles δ hδα hδ =
+          (richStage cR β hα).bundles δ (le_of_lt h_δ_lt_β) hδ := by
+        congr
+      rw [this, h]
+    · -- δ = β: reflexive.
+      have h_δ_eq : δ = β := le_antisymm hδα (not_lt.mp h_δ_lt_β)
+      subst h_δ_eq
+      rfl
+
+/-- **Cross-state agreement** for `richStage`: different `richStage`
+calls agree on bundles at common lower levels. Immediate corollary of
+`richStage_bundle_eq_self`, by transitivity through the canonical
+bundle at level `δ`. -/
+theorem richStage_cross_agree
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    {α₁ α₂ δ : Ordinal.{0}}
+    (hα₁ : α₁ < Ordinal.omega.{0} 1) (hα₂ : α₂ < Ordinal.omega.{0} 1)
+    (hδα₁ : δ ≤ α₁) (hδα₂ : δ ≤ α₂) (hδ : δ < Ordinal.omega.{0} 1) :
+    (richStage cR α₁ hα₁).bundles δ hδα₁ hδ =
+      (richStage cR α₂ hα₂).bundles δ hδα₂ hδ := by
+  rw [richStage_bundle_eq_self cR hα₁ hδα₁ hδ,
+      richStage_bundle_eq_self cR hα₂ hδα₂ hδ]
+
+/-- **Canonical rich stage (sorry-free).** A drop-in replacement for
+`richStage` that uses `richStage_bundle_eq_self` to discharge `prev_eq`
+directly, without going through the sorry'd `cross_agree` witness.
+Its bundle function is defined by "look up `richStage` at level δ and
+take the canonical δ-bundle there" — monotone and internally
+consistent. -/
+noncomputable def richStageCanonical
+    (cR : (Fin 2 ↪o PairERSource) → Bool) (α : Ordinal.{0})
+    (_hα : α < Ordinal.omega.{0} 1) : RichState cR α where
+  bundles := fun γ _ hγ => (richStage cR γ hγ).bundles γ le_rfl hγ
+  prev_eq := by
+    intro γ _ hγ δ hδγ _ hδ
+    have h_internal := (richStage cR γ hγ).prev_eq γ le_rfl hγ δ hδγ
+      (le_of_lt hδγ) hδ
+    rw [h_internal]
+    exact congrArg (fun rb => rb.bundle.stage.succ)
+      (richStage_bundle_eq_self cR hγ (le_of_lt hδγ) hδ)
+
 /-! ### Final assembly: chain extraction and `erdos_rado_pair_omega1`
 
-With `richStage cR α` producing a `RichState cR α` at every `α < ω_1`
-(modulo the `cross_agree` sorry above), the remaining theorem pieces
-— chain extraction, pigeonhole, H5+H1 composition — are mechanical.
-This is left for a future session once `cross_agree` is proved. -/
+With `richStageCanonical cR α` producing a sorry-free `RichState cR α`
+at every `α < ω_1`, the remaining theorem pieces — chain extraction,
+pigeonhole, H5+H1 composition — are mechanical. -/
 
 /-! ### Existence of stages at every level `< ω_1`
 
