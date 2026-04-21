@@ -1999,6 +1999,30 @@ noncomputable def RichBundle.limitExtend
       rw [show (CoherentBundle.limitExtend bundle_ih ih_coh hα).family.stage δ hδα =
             (IH δ hδα).bundle.stage.succ from rfl] }
 
+/-- **Rich recursive state**: bundles up to and including level α,
+plus a cross-level family-vs-stage consistency invariant. The Σ-motive
+for the outer transfinite recursion. -/
+structure RichState (cR : (Fin 2 ↪o PairERSource) → Bool)
+    (α : Ordinal.{0}) where
+  bundles : ∀ γ : Ordinal.{0}, γ ≤ α → γ < Ordinal.omega.{0} 1 →
+    RichBundle cR γ
+  prev_eq : ∀ (γ : Ordinal.{0}) (hγα : γ ≤ α) (hγ : γ < Ordinal.omega.{0} 1)
+    (δ : Ordinal.{0}) (hδγ : δ < γ) (hδα : δ ≤ α)
+    (hδ : δ < Ordinal.omega.{0} 1),
+    (bundles γ hγα hγ).bundle.family.stage δ hδγ =
+      (bundles δ hδα hδ).bundle.stage.succ
+
+/-- **Zero rich state** at level 0. -/
+noncomputable def RichState.zero (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    RichState cR 0 where
+  bundles := fun γ hγ0 _ =>
+    have h_eq : γ = 0 := le_antisymm hγ0 (zero_le γ)
+    h_eq ▸ RichBundle.zero cR
+  prev_eq := fun γ _ _ _ hδγ _ _ =>
+    -- δ < γ ≤ 0, so δ < 0 — vacuous.
+    absurd (hδγ.trans_le (le_of_eq (le_antisymm ‹γ ≤ 0› (zero_le γ))))
+      (not_lt.mpr (zero_le _))
+
 /-! ### Next-session handoff: final wiring of `richStage`
 
 **RichBundle Σ-motive fully built**:
