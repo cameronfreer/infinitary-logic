@@ -1744,6 +1744,36 @@ private theorem rawStage_commitAt_of_succ
       (rawStage cR β ((Order.lt_succ β).trans hs)).commitAt δ hδβ := by
   rw [rawStage_succ, PairERChain.succ_commitAt]
 
+/-- **Cross-stage coherence across successor intervals**. If `β` is a
+successor ordinal `succ δ` or reachable via a chain of successors from
+`δ+1`, commits align. Proved by strong induction on `β`. -/
+private theorem rawStage_commitAt_stable
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    ∀ (β : Ordinal.{0}) (hβ : β < Ordinal.omega.{0} 1)
+      (δ : Ordinal.{0}) (hδβ : δ < β)
+      (hsδ : Order.succ δ < Ordinal.omega.{0} 1)
+      (_ : ∀ γ, δ < γ → γ ≤ β → γ ∈ Set.range Order.succ),
+      (rawStage cR β hβ).commitAt δ hδβ =
+        (rawStage cR (Order.succ δ) hsδ).commitAt δ (Order.lt_succ δ) := by
+  intro β
+  induction β using WellFoundedLT.induction with
+  | ind β IHβ =>
+    intro hβ δ hδβ hsδ is_succ_chain
+    rcases Ordinal.zero_or_succ_or_isSuccLimit β with hz | ⟨β', hβ'⟩ | hβ_lim
+    · exact absurd hδβ (hz ▸ not_lt.mpr (zero_le _))
+    · subst hβ'
+      rcases lt_or_eq_of_le (Order.lt_succ_iff.mp hδβ) with hδ_lt | hδ_eq
+      · rw [rawStage_commitAt_of_succ _ _ _ _ hδ_lt]
+        have hβ'_lt : β' < Ordinal.omega.{0} 1 :=
+          (Order.lt_succ β').trans hβ
+        apply IHβ β' (Order.lt_succ β') hβ'_lt δ hδ_lt hsδ
+        intro γ hδγ hγβ'
+        exact is_succ_chain γ hδγ (hγβ'.trans (Order.le_succ β'))
+      · subst hδ_eq; rfl
+    · have hβ_mem : β ∈ Set.range Order.succ := is_succ_chain β hδβ le_rfl
+      obtain ⟨b, hb⟩ := hβ_mem
+      exact absurd hβ_lim (hb ▸ Order.not_isSuccLimit_succ b)
+
 /-! ### Next-session handoff: outer recursion blocker (revised)
 
 **Shipped this session**:
