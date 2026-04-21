@@ -1821,6 +1821,81 @@ private noncomputable def chainToEmbedding
     α ↪o PairERSource :=
   OrderEmbedding.ofStrictMono f mono
 
+/-- **Rich bundle**: carries a `CoherentBundle` plus a GLOBAL commit
+function indexed by ordinals `< α`, together with equations linking
+the bundle's stage and family to this commit function.
+
+This is the Σ-motive for the transfinite recursion. The key
+invariants `stage_eq` and `family_eq` ensure that commits at shared
+positions across different IH levels agree, which discharges the
+cross-IH witness for `CoherentBundle.limitExtend` at limit stages. -/
+structure RichBundle (cR : (Fin 2 ↪o PairERSource) → Bool)
+    (α : Ordinal.{0}) where
+  bundle : CoherentBundle cR α
+  commit : ∀ δ : Ordinal.{0}, δ < α → PairERSource
+  stage_eq : ∀ (δ : Ordinal.{0}) (hδα : δ < α),
+    bundle.stage.commitAt δ hδα = commit δ hδα
+  family_eq : ∀ (γ : Ordinal.{0}) (hγα : γ < α) (δ : Ordinal.{0})
+    (hδγ : δ < γ),
+    (bundle.family.stage γ hγα).commitAt δ
+        (hδγ.trans (Order.lt_succ γ)) =
+      commit δ (hδγ.trans hγα)
+
+/-- **Zero rich bundle** at level 0: trivially vacuous. -/
+noncomputable def RichBundle.zero (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    RichBundle cR 0 where
+  bundle := CoherentBundle.zero cR
+  commit := fun δ h => absurd h (not_lt.mpr (zero_le δ))
+  stage_eq := fun δ h => absurd h (not_lt.mpr (zero_le δ))
+  family_eq := fun γ h _ _ => absurd h (not_lt.mpr (zero_le γ))
+
+/-- **Successor extension of a rich bundle.** -/
+noncomputable def RichBundle.extend
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (rb : RichBundle cR α) : RichBundle cR (Order.succ α) where
+  bundle := rb.bundle.extend
+  commit := fun δ _ =>
+    if h_lt_α : δ < α then rb.commit δ h_lt_α
+    else rb.bundle.extend.stage.commitAt α (Order.lt_succ α)
+  stage_eq := by
+    intro δ hδ_succ
+    by_cases h_lt_α : δ < α
+    · simp only [dif_pos h_lt_α]
+      show rb.bundle.extend.stage.commitAt δ hδ_succ = rb.commit δ h_lt_α
+      rw [CoherentBundle.extend_stage, PairERChain.succ_commitAt _ δ h_lt_α]
+      exact rb.stage_eq δ h_lt_α
+    · have h_eq : δ = α :=
+        le_antisymm (Order.lt_succ_iff.mp hδ_succ) (not_lt.mp h_lt_α)
+      subst h_eq
+      simp only [dif_neg h_lt_α]
+  family_eq := by
+    intro γ hγ_succ δ hδγ
+    by_cases h_γ_lt_α : γ < α
+    · have hδα : δ < α := hδγ.trans h_γ_lt_α
+      simp only [dif_pos hδα]
+      show (rb.bundle.extend.family.stage γ hγ_succ).commitAt δ _ =
+        rb.commit δ hδα
+      unfold CoherentBundle.extend
+      simp only [dif_pos h_γ_lt_α]
+      exact rb.family_eq γ h_γ_lt_α δ hδγ
+    · have h_γ_eq : γ = α :=
+        le_antisymm (Order.lt_succ_iff.mp hγ_succ) (not_lt.mp h_γ_lt_α)
+      -- γ = α, so we know δ < α.
+      have hδα : δ < α := h_γ_eq ▸ hδγ
+      simp only [dif_pos hδα]
+      -- Goal: (extend.family.stage γ _).commitAt δ _ = rb.commit δ hδα.
+      -- With γ = α, extend.family uses dif_neg branch: rb.bundle.stage.succ.
+      -- After cast/eq, this is rb.bundle.stage.succ.commitAt δ _.
+      subst h_γ_eq
+      show (rb.bundle.extend.family.stage γ hγ_succ).commitAt δ _ =
+        rb.commit δ hδα
+      have hfam : rb.bundle.extend.family.stage γ hγ_succ =
+          rb.bundle.stage.succ := by
+        unfold CoherentBundle.extend
+        simp only [dif_neg (lt_irrefl γ)]
+      rw [hfam, PairERChain.succ_commitAt _ δ hδα]
+      exact rb.stage_eq δ hδα
+
 /-! ### Next-session handoff: outer recursion blocker (revised)
 
 **Shipped this session**:
