@@ -1792,6 +1792,28 @@ private theorem rawStage_succ_commitAt
     (rawStage cR (Order.succ δ) hsδ).commitAt δ (Order.lt_succ δ) =
       chainAtSucc cR δ hsδ := rfl
 
+/-- **Strict monotonicity of chainAtSucc along pure successor chains**.
+For δ₁ < δ₂ where the interval (δ₁, succ δ₂] contains only successor
+ordinals, `chainAtSucc cR δ₁ _ < chainAtSucc cR δ₂ _`. -/
+private theorem chainAtSucc_strictMono_of_succ_chain
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    (δ₁ δ₂ : Ordinal.{0}) (h : δ₁ < δ₂)
+    (hsδ₂ : Order.succ δ₂ < Ordinal.omega.{0} 1)
+    (hsδ₁ : Order.succ δ₁ < Ordinal.omega.{0} 1)
+    (is_succ : ∀ γ, δ₁ < γ → γ ≤ Order.succ δ₂ → γ ∈ Set.range Order.succ) :
+    chainAtSucc cR δ₁ hsδ₁ < chainAtSucc cR δ₂ hsδ₂ := by
+  -- Use rawStage_commitAt_stable to bring δ₁'s commit into the stage at (succ δ₂).
+  have h_lt_s2 : δ₁ < Order.succ δ₂ := h.trans (Order.lt_succ δ₂)
+  have equ : (rawStage cR (Order.succ δ₂) hsδ₂).commitAt δ₁ h_lt_s2 =
+      chainAtSucc cR δ₁ hsδ₁ := by
+    unfold chainAtSucc
+    exact rawStage_commitAt_stable cR (Order.succ δ₂) hsδ₂ δ₁ h_lt_s2 hsδ₁ is_succ
+  -- Now use PairERChain.commitAt_strictMono within the same stage.
+  rw [← equ]
+  show (rawStage cR (Order.succ δ₂) hsδ₂).commitAt δ₁ h_lt_s2 <
+    (rawStage cR (Order.succ δ₂) hsδ₂).commitAt δ₂ (Order.lt_succ δ₂)
+  exact PairERChain.commitAt_strictMono _ h_lt_s2 (Order.lt_succ δ₂) h
+
 /-! ### Next-session handoff: outer recursion blocker (revised)
 
 **Shipped this session**:
