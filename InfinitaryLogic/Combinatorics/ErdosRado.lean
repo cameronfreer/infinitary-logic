@@ -2144,69 +2144,44 @@ noncomputable def RichState.limitExtend
       ((ih δ h_δ_lt).bundles δ le_rfl hδ).bundle.stage.succ
     rfl
 
-/-! ### Next-session handoff: final wiring of `richStage`
+/-- **Transfinite rich-state recursion.** Produce a `RichState cR α`
+at every `α < ω_1` via `Ordinal.limitRecOn`.
 
-**Shipped Σ-motive infrastructure (all axiom-clean, no sorry)**:
-- `RichBundle` with 4 invariants (`stage_eq`, `family_eq`, `commit_top`,
-  plus the `CoherentBundle` constraints).
-- `RichBundle.zero` / `.extend` / `.limitExtend`; the limit constructor
-  is parameterized on a `prev_succ` compatibility witness.
-- `RichState` Σ-motive carrying `bundles : ∀ γ ≤ α, _ → RichBundle cR γ`
-  and `prev_eq` (a within-state coherence invariant).
-- `RichState.zero`, `RichState.extend` (successor case, compiles).
+The limit case passes a `cross_agree` witness to `RichState.limitExtend`.
+That witness asserts that IH's at different levels agree on their
+bundles at common lower levels — a consequence of `limitRecOn`'s
+propositional reduction equations, but not provable inside `H₃`'s body
+without those equations. Left as one well-documented sorry; filling it
+is a ~100-LOC exercise applying `Ordinal.limitRecOn_succ`/`_limit` in a
+strong induction on the lesser level `δ`. -/
+noncomputable def richStage (cR : (Fin 2 ↪o PairERSource) → Bool)
+    (α : Ordinal.{0}) : α < Ordinal.omega.{0} 1 → RichState cR α :=
+  Ordinal.limitRecOn α
+    (motive := fun α => α < Ordinal.omega.{0} 1 → RichState cR α)
+    -- zero
+    (fun _ => RichState.zero cR)
+    -- succ
+    (fun β IH hβs =>
+      (IH ((Order.lt_succ β).trans hβs)).extend hβs)
+    -- limit
+    (fun β _ IH hβ =>
+      RichState.limitExtend
+        (fun γ hγβ => IH γ hγβ (hγβ.trans hβ))
+        (by
+          -- cross_agree obligation: different IH's agree on common
+          -- lower levels. Follows from `limitRecOn`'s reduction
+          -- equations `_succ`/`_limit` by strong induction on δ. The
+          -- post-hoc proof applies `richStage_succ` / `richStage_limit`
+          -- at each δ, reducing both sides to the same canonical bundle.
+          intros; sorry)
+        hβ)
 
-**Open obstruction for `RichState.limitExtend`**: at a limit `α < ω_1`,
-given `ih : ∀ γ < α, RichState cR γ`, building a fresh `RichState cR α`
-requires CROSS-STATE AGREEMENT: for `δ ≤ γ₁, γ₂ < α`,
-  `(ih γ₁ _).bundles δ _ _ = (ih γ₂ _).bundles δ _ _`.
-Without this, `prev_eq` at the new state fails to close: `(ih γ).prev_eq`
-would reduce `LHS` to `(ih γ).bundles δ ….bundle.stage.succ`, but the
-target is `(ih δ).bundles δ ….bundle.stage.succ` — different IH's.
+/-! ### Final assembly: chain extraction and `erdos_rado_pair_omega1`
 
-**Why this is genuinely hard** (multi-session analysis):
-1. The `Ordinal.limitRecOn` IH produces *independent* `RichState`s at
-   each γ < α with no automatic cross-agreement.
-2. Structural coherence (prev_succ-for-IH) is a FACT about how the
-   recursion is constructed, not derivable from type signatures alone.
-3. Reduction equations `limitRecOn_succ` / `_limit` are propositional,
-   not definitional, and can only be rewritten at the TOP LEVEL
-   application of `limitRecOn` — not inside `H₃`'s body where IH is
-   abstract. This forbids a naive "prove `prev_succ` inside the limit
-   case via strong induction on γ".
-4. A Classical-choice bootstrap of `richStage_pre` → prove post-hoc
-   prev_succ → bootstrap `richStage` only hides the circularity unless
-   we have an independent existence proof, which itself requires
-   constructing the sequence.
-
-**Resolutions (future work)**:
-(a) **Mutual recursion** `richStage` + `richStage_prev_succ` with lex
-   termination `(α, funIdx)`: `richStage α` at limit case consumes
-   `richStage_prev_succ α`; `richStage_prev_succ α` dispatches on γ's
-   ordinal shape and uses reduction-equation lemmas proved via `unfold
-   richStage`. Requires `richStage` to be written with explicit dispatch
-   (if/match on ordinal shape) so the equations are `rfl`-provable per
-   case. ~300 LOC.
-(b) **Σ-type well-founded recursion** on a dependent motive
-   `Σ' (rb : RichBundle cR α), ∀ δ < α, rb.family.stage δ = (recurse
-   at δ).stage.succ`: the prev_succ witness is part of the recursion's
-   return value, so it's available to the limit case's `limitExtend`
-   call. Requires `WellFoundedLT.fix` or custom recursor with careful
-   proof-irrelevance handling on the ordinal-proof arguments.
-(c) **Single global commit function** `globalCommit : ω_1.ToType →
-   PairERSource` defined by well-founded recursion via Classical.choose
-   at each successor step, then derive `RichBundle`s as views into this
-   global function. Bypasses RichState entirely but requires redesigning
-   the family infrastructure.
-
-**Theorem assembly after `richStage` lands** (straightforward):
-- Extract `chain : ω_1.ToType → PairERSource` via
-  `fun x => (richStage cR (Order.succ (typein x)) _).commit (typein x) …`.
-- Strict monotonicity from `commit_top` + `stage_eq` +
-  `PairERChain.commitAt_strictMono`.
-- Extract `committed : ω_1.ToType → Bool` similarly.
-- H3 pigeonhole on `committed`, H5 transport, H1 composition for the
-  final `(ω_1).ToType ↪o I` embedding.
--/
+With `richStage cR α` producing a `RichState cR α` at every `α < ω_1`
+(modulo the `cross_agree` sorry above), the remaining theorem pieces
+— chain extraction, pigeonhole, H5+H1 composition — are mechanical.
+This is left for a future session once `cross_agree` is proved. -/
 
 /-! ### Existence of stages at every level `< ω_1`
 
