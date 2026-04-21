@@ -1619,56 +1619,38 @@ private theorem crossCoh (cR : (Fin 2 ↪o PairERSource) → Bool)
 
 /-! ### Next-session handoff: outer recursion blocker
 
-Multiple attempts (including `revert hα; induction α using Ordinal.limitRecOn`,
-direct `Ordinal.limitRecOn` term-mode, and `WellFoundedLT.induction`) hit the
-same reduction issue: within the limit case, the IH variable (a function
-`∀ γ < β, γ < ω_1 → CoherentBundle cR γ`) does NOT definitionally reduce via
-`Ordinal.limitRecOn_succ` inside `show` / `rw [... from rfl]` / `change`.
+Status: `crossCoh` (the parameterized cross-IH coherence lemma) is
+shipped and axiom-clean. It requires the caller to supply two
+recursion-reduction witnesses `rec_succ` and `rec_limit`.
 
-Concretely, the goal after `intro δ γ hδγ hγβ; dsimp only` shows
-`(IH γ hγβ _).stage.commitAt δ hδγ = ...`, but Lean refuses to accept
-`show (IH (Order.succ γ') hγβ _) = (IH γ' h1 h1').extend from rfl`.
+The outstanding work: define `recBundle : ∀ α < ω_1, CoherentBundle cR α`
+and prove that it satisfies `rec_succ` / `rec_limit`.
 
-**Possible paths for next session**:
+**Key blocker**: `Ordinal.limitRecOn`'s IH is abstracted inside tactic
+proofs and does NOT reduce definitionally via `Ordinal.limitRecOn_succ`.
+So `rec_succ : rec (Order.succ β) _ = (rec β _).extend` cannot be closed
+by `rfl` when `rec` is defined via `Ordinal.limitRecOn`.
 
-1. **Use `Ordinal.limitRecOn_succ` as a `rw` lemma** rather than `rfl`. The
-   tricky bit is that `IH` inside `induction ... with` is abstracted and
-   doesn't unfold to `limitRecOn` directly. Using `Ordinal.limitRecOn` as a
-   term (not via tactic) and tagging IH more carefully may help.
+**Paths to close the gap**:
 
-2. **Define recursion via a recursive `structure`** (inductive type) whose
-   constructor takes `∀ δ < α, RichBundle cR δ` as a field. This forces
-   the recursion's coherence to be structural.
+1. Prove `rec_succ` / `rec_limit` using `Ordinal.limitRecOn_succ` /
+   `Ordinal.limitRecOn_limit` as explicit `rw` rules AFTER defining
+   `recBundle`. The lemmas might unfold enough to close the equality
+   when the goal side is the canonical `limitRecOn` form.
 
-3. **Skip the coherent family entirely at limits**: use `stageAt`'s
-   non-coherent limit construction, then PROVE cross-level coherence as a
-   separate theorem using `typein`/`enum` structural reasoning on the
-   chosen `initialSegToType` prefix. This changes the semantics but may
-   give a provable weaker homogeneity from which we can still extract
-   an ω₁-monochromatic subset via second pigeonhole.
+2. Use `WellFoundedLT.fix` on ordinals with an explicit
+   `Ordinal.zero_or_succ_or_isSuccLimit` dispatch inside the step
+   function. `WellFoundedLT.fix`'s IH reduces definitionally, but the
+   dispatch via `Or.elim` may introduce non-reducing forms.
 
-4. **Use `SuccOrder.limitRecOn` directly** (bypassing `Ordinal.limitRecOn`'s
-   wrapper), which may allow cleaner `rfl` reductions since its
-   reduction lemmas are more primitive.
+3. Define `recBundle` with an `inductive` family (dependent constructor
+   taking `∀ δ < α, RichBundle cR δ`) so the cross-IH invariant is
+   structural.
 
-Once `recBundle` is wired, the remaining work is mechanical:
-
-- Extract `chain : (Ordinal.omega 1).ToType → PairERSource` via
-  `(recBundle cR _ _).stage.commitAt _ _` (needs `typein` bookkeeping).
-- Extract the committed `color : (Ordinal.omega 1).ToType → Bool` from
-  each stage's `type` field at the newly-committed position.
-- Apply second pigeonhole on `color` (via `Cardinal.infinite_pigeonhole_card`
-  with `β = Bool`, `α = (Ordinal.omega 1).ToType` of size `ℵ₁`) to get
-  a ℵ₁-subset `S` with constant `color`.
-- Apply `ordIso_omega1_of_aleph1_subset` (H5) to get
-  `S ≃o (Ordinal.omega 1).ToType`.
-- Compose `S-iso ∘ chain ∘ ι` (where `ι : PairERSource ↪o I` from H1) to
-  get the final `(Ordinal.omega 1).ToType ↪o I` embedding.
-- Prove homogeneity: every pair's color is `b` (constant).
-
-The pieces exist (H1, H5, chain extraction API); the glue is just
-reduction-free bookkeeping once `recBundle` lands. Estimated ~100-150 LOC
-of straightforward work after the recursion blocker is resolved. -/
+Once `recBundle` + reduction witnesses land, `crossCoh` composes them
+to give the cross-IH needed by `CoherentBundle.limitExtend`, completing
+the recursion. Final assembly (chain extraction, second pigeonhole,
+H5 + H1 composition) is ~100–150 LOC of bookkeeping. -/
 
 /-! ### Existence of stages at every level `< ω_1`
 
