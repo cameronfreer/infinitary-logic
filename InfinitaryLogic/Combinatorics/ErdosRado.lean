@@ -1659,6 +1659,39 @@ private theorem crossCohLocal
         rfl
     · exact ih_limit γ hγ_lim hγβ hγ δ hδγ
 
+/-- The succ-case step function of the outer recursion. -/
+private noncomputable def recStepSucc
+    {cR : (Fin 2 ↪o PairERSource) → Bool} (β : Ordinal.{0})
+    (IH : β < Ordinal.omega.{0} 1 → CoherentBundle cR β)
+    (hs : Order.succ β < Ordinal.omega.{0} 1) :
+    CoherentBundle cR (Order.succ β) :=
+  (IH (lt_of_lt_of_le (Order.lt_succ β) hs.le)).extend
+
+/-- The limit-case step function of the outer recursion. Uses
+`crossCohLocal` to supply cross-IH via `ih_succ`/`ih_limit` reduction
+witnesses, both provable by rewriting with `Ordinal.limitRecOn_succ`
+and `Ordinal.limitRecOn_limit`. -/
+private noncomputable def recStepLimit
+    {cR : (Fin 2 ↪o PairERSource) → Bool} (β : Ordinal.{0})
+    (IH : (γ : Ordinal.{0}) → γ < β → γ < Ordinal.omega.{0} 1 →
+      CoherentBundle cR γ)
+    (ih_succ : ∀ γ (hγsβ : Order.succ γ < β)
+      (h1 : Order.succ γ < Ordinal.omega.{0} 1),
+      IH (Order.succ γ) hγsβ h1 =
+        (IH γ ((Order.lt_succ γ).trans hγsβ)
+              ((Order.lt_succ γ).trans h1)).extend)
+    (ih_limit : ∀ γ (_ : Order.IsSuccLimit γ) (hγβ : γ < β)
+      (hγ : γ < Ordinal.omega.{0} 1) (δ : Ordinal.{0}) (hδγ : δ < γ),
+      (IH γ hγβ hγ).stage.commitAt δ hδγ =
+        (IH δ (hδγ.trans hγβ) (hδγ.trans hγ)).stage.succ.commitAt δ
+          (Order.lt_succ δ))
+    (hβ : β < Ordinal.omega.{0} 1) : CoherentBundle cR β :=
+  CoherentBundle.limitExtend
+    (fun γ hγβ => IH γ hγβ (hγβ.trans hβ))
+    (fun {δ γ} hδγ hγβ =>
+      crossCohLocal cR IH ih_succ ih_limit γ hγβ (hγβ.trans hβ) δ hδγ)
+    hβ
+
 /-! ### Next-session handoff: outer recursion blocker
 
 Status: `crossCoh` (the parameterized cross-IH coherence lemma) is
