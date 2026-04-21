@@ -1580,6 +1580,43 @@ lemma CoherentBundle.extend_stage
     {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
     (b : CoherentBundle cR α) : b.extend.stage = b.stage.succ := rfl
 
+/-- **Cross-IH coherence (parameterized on succ and limit reduction
+hypotheses)**. Given `rec_succ` and `rec_limit` hypotheses describing
+how the recursion unfolds at successor and limit levels, derive the
+cross-IH coherence by strong induction on γ. Once the outer recursion
+is wired with the right reduction semantics, both hypotheses follow
+definitionally. -/
+private theorem crossCoh (cR : (Fin 2 ↪o PairERSource) → Bool)
+    (rec : ∀ α : Ordinal.{0}, α < Ordinal.omega.{0} 1 → CoherentBundle cR α)
+    (rec_succ : ∀ (β : Ordinal.{0}) (hs : Order.succ β < Ordinal.omega.{0} 1),
+      rec (Order.succ β) hs =
+        (rec β ((Order.lt_succ β).trans hs)).extend)
+    (rec_limit : ∀ (γ : Ordinal.{0}) (_ : Order.IsSuccLimit γ)
+      (hγ : γ < Ordinal.omega.{0} 1) (δ : Ordinal.{0}) (hδγ : δ < γ),
+      (rec γ hγ).stage.commitAt δ hδγ =
+        (rec δ (hδγ.trans hγ)).stage.succ.commitAt δ (Order.lt_succ δ)) :
+    ∀ (γ : Ordinal.{0}) (hγ : γ < Ordinal.omega.{0} 1) (δ : Ordinal.{0})
+      (hδγ : δ < γ),
+      (rec γ hγ).stage.commitAt δ hδγ =
+        (rec δ (hδγ.trans hγ)).stage.succ.commitAt δ (Order.lt_succ δ) := by
+  intro γ hγ
+  induction γ using WellFoundedLT.induction with
+  | ind γ IHγ =>
+    intro δ hδγ
+    rcases Ordinal.zero_or_succ_or_isSuccLimit γ with hz | ⟨γ', hγ'⟩ | hγ_lim
+    · exact absurd hδγ (hz ▸ not_lt.mpr (zero_le _))
+    · subst hγ'
+      have hγ'_lt : γ' < Ordinal.omega.{0} 1 :=
+        (Order.lt_succ γ').trans hγ
+      rw [rec_succ γ' hγ]
+      rw [CoherentBundle.extend_stage]
+      rcases lt_or_eq_of_le (Order.lt_succ_iff.mp hδγ) with hδ_lt_γ' | hδ_eq_γ'
+      · rw [PairERChain.succ_commitAt _ δ hδ_lt_γ']
+        exact IHγ γ' (Order.lt_succ γ') hγ'_lt δ hδ_lt_γ'
+      · subst hδ_eq_γ'
+        rfl
+    · exact rec_limit γ hγ_lim hγ δ hδγ
+
 /-! ### Next-session handoff: outer recursion blocker
 
 Multiple attempts (including `revert hα; induction α using Ordinal.limitRecOn`,
