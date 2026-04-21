@@ -1814,6 +1814,13 @@ private theorem chainAtSucc_strictMono_of_succ_chain
     (rawStage cR (Order.succ δ₂) hsδ₂).commitAt δ₂ (Order.lt_succ δ₂)
   exact PairERChain.commitAt_strictMono _ h_lt_s2 (Order.lt_succ δ₂) h
 
+/-- **Chain extraction helper**: given a chain function `f` and a strict
+mono proof, convert to an `OrderEmbedding`. -/
+private noncomputable def chainToEmbedding
+    {α : Type*} [LinearOrder α] (f : α → PairERSource) (mono : StrictMono f) :
+    α ↪o PairERSource :=
+  OrderEmbedding.ofStrictMono f mono
+
 /-! ### Next-session handoff: outer recursion blocker (revised)
 
 **Shipped this session**:
