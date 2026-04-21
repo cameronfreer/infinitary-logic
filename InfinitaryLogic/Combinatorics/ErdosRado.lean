@@ -1724,6 +1724,13 @@ private theorem rawStage_succ (cR : (Fin 2 ↪o PairERSource) → Bool)
   unfold rawStage
   rw [Ordinal.limitRecOn_succ]
 
+/-- **Top-level zero reduction for rawStage**. -/
+private theorem rawStage_zero (cR : (Fin 2 ↪o PairERSource) → Bool)
+    (hz : (0 : Ordinal.{0}) < Ordinal.omega.{0} 1) :
+    rawStage cR 0 hz = PairERChain.zero cR := by
+  unfold rawStage
+  rw [Ordinal.limitRecOn_zero]
+
 /-! ### Next-session handoff: outer recursion blocker (revised)
 
 Status after extensive exploration:
