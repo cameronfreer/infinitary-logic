@@ -1580,6 +1580,59 @@ lemma CoherentBundle.extend_stage
     {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
     (b : CoherentBundle cR α) : b.extend.stage = b.stage.succ := rfl
 
+/-! ### Next-session handoff: outer recursion blocker
+
+Multiple attempts (including `revert hα; induction α using Ordinal.limitRecOn`,
+direct `Ordinal.limitRecOn` term-mode, and `WellFoundedLT.induction`) hit the
+same reduction issue: within the limit case, the IH variable (a function
+`∀ γ < β, γ < ω_1 → CoherentBundle cR γ`) does NOT definitionally reduce via
+`Ordinal.limitRecOn_succ` inside `show` / `rw [... from rfl]` / `change`.
+
+Concretely, the goal after `intro δ γ hδγ hγβ; dsimp only` shows
+`(IH γ hγβ _).stage.commitAt δ hδγ = ...`, but Lean refuses to accept
+`show (IH (Order.succ γ') hγβ _) = (IH γ' h1 h1').extend from rfl`.
+
+**Possible paths for next session**:
+
+1. **Use `Ordinal.limitRecOn_succ` as a `rw` lemma** rather than `rfl`. The
+   tricky bit is that `IH` inside `induction ... with` is abstracted and
+   doesn't unfold to `limitRecOn` directly. Using `Ordinal.limitRecOn` as a
+   term (not via tactic) and tagging IH more carefully may help.
+
+2. **Define recursion via a recursive `structure`** (inductive type) whose
+   constructor takes `∀ δ < α, RichBundle cR δ` as a field. This forces
+   the recursion's coherence to be structural.
+
+3. **Skip the coherent family entirely at limits**: use `stageAt`'s
+   non-coherent limit construction, then PROVE cross-level coherence as a
+   separate theorem using `typein`/`enum` structural reasoning on the
+   chosen `initialSegToType` prefix. This changes the semantics but may
+   give a provable weaker homogeneity from which we can still extract
+   an ω₁-monochromatic subset via second pigeonhole.
+
+4. **Use `SuccOrder.limitRecOn` directly** (bypassing `Ordinal.limitRecOn`'s
+   wrapper), which may allow cleaner `rfl` reductions since its
+   reduction lemmas are more primitive.
+
+Once `recBundle` is wired, the remaining work is mechanical:
+
+- Extract `chain : (Ordinal.omega 1).ToType → PairERSource` via
+  `(recBundle cR _ _).stage.commitAt _ _` (needs `typein` bookkeeping).
+- Extract the committed `color : (Ordinal.omega 1).ToType → Bool` from
+  each stage's `type` field at the newly-committed position.
+- Apply second pigeonhole on `color` (via `Cardinal.infinite_pigeonhole_card`
+  with `β = Bool`, `α = (Ordinal.omega 1).ToType` of size `ℵ₁`) to get
+  a ℵ₁-subset `S` with constant `color`.
+- Apply `ordIso_omega1_of_aleph1_subset` (H5) to get
+  `S ≃o (Ordinal.omega 1).ToType`.
+- Compose `S-iso ∘ chain ∘ ι` (where `ι : PairERSource ↪o I` from H1) to
+  get the final `(Ordinal.omega 1).ToType ↪o I` embedding.
+- Prove homogeneity: every pair's color is `b` (constant).
+
+The pieces exist (H1, H5, chain extraction API); the glue is just
+reduction-free bookkeeping once `recBundle` lands. Estimated ~100-150 LOC
+of straightforward work after the recursion blocker is resolved. -/
+
 /-! ### Existence of stages at every level `< ω_1`
 
 The transfinite-assembly existence lemma `exists_PairERChain`: for
