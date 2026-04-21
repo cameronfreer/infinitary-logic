@@ -1840,6 +1840,13 @@ structure RichBundle (cR : (Fin 2 ↪o PairERSource) → Bool)
     (bundle.family.stage γ hγα).commitAt δ
         (hδγ.trans (Order.lt_succ γ)) =
       commit δ (hδγ.trans hγα)
+  /-- **Commit equals the top of the family's stage at the same position.**
+  This extra invariant links `commit δ` to the *top* of
+  `bundle.family.stage δ` (at position `δ` in that stage's own type),
+  which is essential for the cross-IH witness in `limitExtend`. -/
+  commit_top : ∀ (δ : Ordinal.{0}) (hδα : δ < α),
+    commit δ hδα =
+      (bundle.family.stage δ hδα).commitAt δ (Order.lt_succ δ)
 
 /-- **Zero rich bundle** at level 0: trivially vacuous. -/
 noncomputable def RichBundle.zero (cR : (Fin 2 ↪o PairERSource) → Bool) :
@@ -1848,6 +1855,7 @@ noncomputable def RichBundle.zero (cR : (Fin 2 ↪o PairERSource) → Bool) :
   commit := fun δ h => absurd h (not_lt.mpr (zero_le δ))
   stage_eq := fun δ h => absurd h (not_lt.mpr (zero_le δ))
   family_eq := fun γ h _ _ => absurd h (not_lt.mpr (zero_le γ))
+  commit_top := fun δ h => absurd h (not_lt.mpr (zero_le δ))
 
 /-- **Successor extension of a rich bundle.** -/
 noncomputable def RichBundle.extend
@@ -1895,6 +1903,32 @@ noncomputable def RichBundle.extend
         simp only [dif_neg (lt_irrefl γ)]
       rw [hfam, PairERChain.succ_commitAt _ δ hδα]
       exact rb.stage_eq δ hδα
+  commit_top := by
+    intro δ hδ_succ
+    by_cases h_lt_α : δ < α
+    · -- δ < α: new commit δ = rb.commit δ.
+      -- new bundle.family.stage δ = rb.bundle.family.stage δ (dif_pos).
+      simp only [dif_pos h_lt_α]
+      show rb.commit δ h_lt_α =
+        (rb.bundle.extend.family.stage δ hδ_succ).commitAt δ (Order.lt_succ δ)
+      have hfam : rb.bundle.extend.family.stage δ hδ_succ =
+          rb.bundle.family.stage δ h_lt_α := by
+        unfold CoherentBundle.extend
+        simp only [dif_pos h_lt_α]
+      rw [hfam]
+      exact rb.commit_top δ h_lt_α
+    · have h_eq : δ = α :=
+        le_antisymm (Order.lt_succ_iff.mp hδ_succ) (not_lt.mp h_lt_α)
+      subst h_eq
+      simp only [dif_neg h_lt_α]
+      show rb.bundle.extend.stage.commitAt δ (Order.lt_succ δ) =
+        (rb.bundle.extend.family.stage δ hδ_succ).commitAt δ (Order.lt_succ δ)
+      have hfam : rb.bundle.extend.family.stage δ hδ_succ =
+          rb.bundle.stage.succ := by
+        unfold CoherentBundle.extend
+        simp only [dif_neg h_lt_α]
+      rw [hfam, CoherentBundle.extend_stage]
+
 
 /-! ### Next-session handoff: outer recursion blocker (revised)
 
