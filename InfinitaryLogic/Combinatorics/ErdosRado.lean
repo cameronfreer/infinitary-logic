@@ -2019,9 +2019,62 @@ noncomputable def RichState.zero (cR : (Fin 2 ↪o PairERSource) → Bool) :
     have h_eq : γ = 0 := le_antisymm hγ0 (zero_le γ)
     h_eq ▸ RichBundle.zero cR
   prev_eq := fun γ _ _ _ hδγ _ _ =>
-    -- δ < γ ≤ 0, so δ < 0 — vacuous.
     absurd (hδγ.trans_le (le_of_eq (le_antisymm ‹γ ≤ 0› (zero_le γ))))
       (not_lt.mpr (zero_le _))
+
+/-- **Successor rich state**: extend to level `α+1` using
+`RichBundle.extend` on the level-α bundle. -/
+noncomputable def RichState.extend
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (rs : RichState cR α) (hs : Order.succ α < Ordinal.omega.{0} 1) :
+    RichState cR (Order.succ α) where
+  bundles := fun γ hγ_succ hγ =>
+    if h_lt_α : γ ≤ α then rs.bundles γ h_lt_α hγ
+    else
+      have h_eq : γ = Order.succ α :=
+        le_antisymm hγ_succ (Order.succ_le_of_lt (not_le.mp h_lt_α))
+      h_eq ▸ (rs.bundles α le_rfl
+        ((Order.lt_succ α).trans hs)).extend
+  prev_eq := by
+    intro γ hγ_succ hγ δ hδγ hδ_succ hδ
+    by_cases h_γ_lt_α : γ ≤ α
+    · -- γ ≤ α: delegate to rs.prev_eq.
+      have h_δ_lt_α : δ ≤ α := (le_of_lt hδγ).trans h_γ_lt_α
+      simp only [dif_pos h_γ_lt_α, dif_pos h_δ_lt_α]
+      exact rs.prev_eq γ h_γ_lt_α hγ δ hδγ h_δ_lt_α hδ
+    · -- γ = α+1.
+      have h_γ_eq : γ = Order.succ α :=
+        le_antisymm hγ_succ (Order.succ_le_of_lt (not_le.mp h_γ_lt_α))
+      subst h_γ_eq
+      -- δ < α+1, so δ ≤ α.
+      have h_δ_le_α : δ ≤ α := Order.lt_succ_iff.mp hδγ
+      have h_α_lt : α < Ordinal.omega.{0} 1 := (Order.lt_succ α).trans hs
+      by_cases h_δ_lt_α : δ < α
+      · -- δ < α: new bundles α = (rs.bundles α _).extend. By extend, family.stage δ = rs.bundles α .family.stage δ.
+        simp only [dif_neg h_γ_lt_α, dif_pos (le_of_lt h_δ_lt_α)]
+        show ((rs.bundles α le_rfl h_α_lt).extend).bundle.family.stage δ hδγ =
+          (rs.bundles δ (le_of_lt h_δ_lt_α) hδ).bundle.stage.succ
+        have hfam : ((rs.bundles α le_rfl h_α_lt).extend).bundle.family.stage δ hδγ =
+            (rs.bundles α le_rfl h_α_lt).bundle.family.stage δ h_δ_lt_α := by
+          show (rs.bundles α le_rfl h_α_lt).bundle.extend.family.stage δ hδγ =
+            (rs.bundles α le_rfl h_α_lt).bundle.family.stage δ h_δ_lt_α
+          unfold CoherentBundle.extend
+          simp only [dif_pos h_δ_lt_α]
+        rw [hfam]
+        exact rs.prev_eq α le_rfl h_α_lt δ h_δ_lt_α (le_of_lt h_δ_lt_α) hδ
+      · -- δ = α: new bundles α+1 .family.stage α = rs.bundles α .stage.succ.
+        have h_δ_eq : δ = α := le_antisymm h_δ_le_α (not_lt.mp h_δ_lt_α)
+        subst h_δ_eq
+        simp only [dif_neg h_γ_lt_α, dif_pos le_rfl]
+        show ((rs.bundles δ le_rfl h_α_lt).extend).bundle.family.stage δ hδγ =
+          (rs.bundles δ le_rfl hδ).bundle.stage.succ
+        have hfam : ((rs.bundles δ le_rfl h_α_lt).extend).bundle.family.stage δ hδγ =
+            (rs.bundles δ le_rfl h_α_lt).bundle.stage.succ := by
+          show (rs.bundles δ le_rfl h_α_lt).bundle.extend.family.stage δ hδγ =
+            (rs.bundles δ le_rfl h_α_lt).bundle.stage.succ
+          unfold CoherentBundle.extend
+          simp only [dif_neg (lt_irrefl δ)]
+        rw [hfam]
 
 /-! ### Next-session handoff: final wiring of `richStage`
 
