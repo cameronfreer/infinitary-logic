@@ -1929,6 +1929,75 @@ noncomputable def RichBundle.extend
         simp only [dif_neg h_lt_α]
       rw [hfam, CoherentBundle.extend_stage]
 
+/-- **Limit extension of a rich bundle, parameterized by `prev_succ`.**
+Given `IH : ∀ γ < α, RichBundle cR γ` at a limit `α < ω_1` and a
+`prev_succ` compatibility witness linking each IH's family at δ to the
+lower IH's stage.succ, produce a `RichBundle cR α`.
+
+The `prev_succ` hypothesis is the specific cross-level fact that must
+be proved post-hoc about the top-level recursion: it is not a property
+of individual `RichBundle`s but of the recursion's family of bundles.
+
+With `prev_succ` in hand, all four `RichBundle` invariants at the
+limit — `stage_eq`, `family_eq`, `commit_top`, and the underlying
+CoherentBundle cross-IH — follow cleanly from the existing per-bundle
+invariants `stage_eq` and `commit_top`. -/
+noncomputable def RichBundle.limitExtend
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (IH : (γ : Ordinal.{0}) → γ < α → RichBundle cR γ)
+    (prev_succ : ∀ (γ : Ordinal.{0}) (hγα : γ < α)
+      (δ : Ordinal.{0}) (hδγ : δ < γ),
+      (IH γ hγα).bundle.family.stage δ hδγ =
+        (IH δ (hδγ.trans hγα)).bundle.stage.succ)
+    (hα : α < Ordinal.omega.{0} 1) : RichBundle cR α :=
+  let bundle_ih : (γ : Ordinal.{0}) → γ < α → CoherentBundle cR γ :=
+    fun γ hγα => (IH γ hγα).bundle
+  let ih_coh : ∀ {δ γ : Ordinal.{0}} (hδγ : δ < γ) (hγα : γ < α),
+      (bundle_ih γ hγα).stage.commitAt δ hδγ =
+        (bundle_ih δ (hδγ.trans hγα)).stage.succ.commitAt δ
+          (Order.lt_succ δ) := by
+    intro δ γ hδγ hγα
+    -- LHS = (IH γ).bundle.stage.commitAt δ = (IH γ).commit δ (stage_eq).
+    rw [(IH γ hγα).stage_eq δ hδγ]
+    -- = (IH γ).bundle.family.stage δ _ .commitAt δ (Order.lt_succ δ) (commit_top).
+    rw [(IH γ hγα).commit_top δ hδγ]
+    -- = (IH δ).bundle.stage.succ.commitAt δ (Order.lt_succ δ) (prev_succ).
+    rw [prev_succ γ hγα δ hδγ]
+  { bundle := CoherentBundle.limitExtend bundle_ih ih_coh hα
+    commit := fun δ hδα =>
+      (IH δ hδα).bundle.stage.succ.commitAt δ (Order.lt_succ δ)
+    stage_eq := by
+      intro δ hδα
+      -- new bundle.stage = family.limit hα. Via `PairERCoherentFamily.limit_commitAt`,
+      -- its commitAt δ = family.commitVal δ = family.stage δ .commitAt δ
+      -- = (IH δ).bundle.stage.succ.commitAt δ (by construction of CoherentBundle.limitExtend).
+      show (CoherentBundle.limitExtend bundle_ih ih_coh hα).stage.commitAt δ hδα =
+        (IH δ hδα).bundle.stage.succ.commitAt δ (Order.lt_succ δ)
+      exact PairERCoherentFamily.limit_commitAt
+        (CoherentBundle.limitExtend bundle_ih ih_coh hα).family hα δ hδα
+    family_eq := by
+      intro γ hγα δ hδγ
+      -- new bundle.family.stage γ = (IH γ).bundle.stage.succ (def of CoherentBundle.limitExtend's family).
+      -- commitAt δ = (IH γ).bundle.stage.succ.commitAt δ
+      --           = (IH γ).bundle.stage.commitAt δ (succ_commitAt, δ < γ)
+      --           = (IH γ).commit δ (stage_eq)
+      --           = (IH γ).bundle.family.stage δ .commitAt δ _ (commit_top)
+      --           = (IH δ).bundle.stage.succ.commitAt δ _ (prev_succ).
+      show ((CoherentBundle.limitExtend bundle_ih ih_coh hα).family.stage γ hγα).commitAt δ _ = _
+      rw [show (CoherentBundle.limitExtend bundle_ih ih_coh hα).family.stage γ hγα =
+            (IH γ hγα).bundle.stage.succ from rfl]
+      rw [PairERChain.succ_commitAt _ δ hδγ]
+      rw [(IH γ hγα).stage_eq δ hδγ]
+      rw [(IH γ hγα).commit_top δ hδγ]
+      rw [prev_succ γ hγα δ hδγ]
+    commit_top := by
+      intro δ hδα
+      -- new commit δ = (IH δ).bundle.stage.succ.commitAt δ (Order.lt_succ δ).
+      -- new bundle.family.stage δ = (IH δ).bundle.stage.succ (by construction).
+      show (IH δ hδα).bundle.stage.succ.commitAt δ (Order.lt_succ δ) =
+        ((CoherentBundle.limitExtend bundle_ih ih_coh hα).family.stage δ hδα).commitAt δ (Order.lt_succ δ)
+      rw [show (CoherentBundle.limitExtend bundle_ih ih_coh hα).family.stage δ hδα =
+            (IH δ hδα).bundle.stage.succ from rfl] }
 
 /-! ### Next-session handoff: outer recursion blocker (revised)
 
