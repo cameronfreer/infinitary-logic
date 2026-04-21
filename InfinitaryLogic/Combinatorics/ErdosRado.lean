@@ -1999,45 +1999,56 @@ noncomputable def RichBundle.limitExtend
       rw [show (CoherentBundle.limitExtend bundle_ih ih_coh hα).family.stage δ hδα =
             (IH δ hδα).bundle.stage.succ from rfl] }
 
-/-! ### Next-session handoff: outer recursion blocker (revised)
+/-! ### Next-session handoff: final wiring of `richStage`
 
-**Shipped this session**:
-- `crossCoh`, `crossCohLocal` (parameterized cross-IH lemmas)
-- `recStepSucc`, `recStepLimit` (step functions for outer recursion)
-- `rawStage`, `rawStage_succ`, `rawStage_zero` (Path 1 pattern — Lean's
-  `rw [Ordinal.limitRecOn_succ]` DOES work at top level)
-- `rawStage_commitAt_of_succ` (bridge reduction for successor intervals)
+**RichBundle Σ-motive fully built**:
+- Structure with 4 invariants: `stage_eq`, `family_eq`, `commit_top`,
+  plus the underlying `CoherentBundle` constraints.
+- `RichBundle.zero`, `RichBundle.extend`, `RichBundle.limitExtend` —
+  all axiom-clean. `limitExtend` is parameterized on a `prev_succ`
+  witness (per user guidance: a bundle-family compatibility fact that
+  belongs to the top-level recursion, not to individual bundles).
 
-**The remaining obstacle**: `rawStage` at limits uses `initialSegToType`
-(canonical but NON-coherent with the recursion's successor stages), so
-cross-stage coherence at limits FAILS for `rawStage`. Making
-`rawStage`'s limit case coherent requires IH-derived prefix, which
-requires cross-stage strict monotonicity at lower levels — circular.
+**The concrete remaining step**: define
+`richStage : ∀ α < ω_1, RichBundle cR α` via `WellFoundedLT.induction`
+or `Ordinal.limitRecOn`, supplying `prev_succ` to `limitExtend` at the
+limit case.
 
-**Concrete path forward** (paths 1'+2 combined):
+**The proof obligation**: at the outer limit case's body, given
+`ih : ∀ γ < α, γ < ω_1 → RichBundle cR γ`, show for all `δ < γ < α`:
+  `(ih γ hγα _).bundle.family.stage δ hδγ =
+     (ih δ (hδγ.trans hγα) _).bundle.stage.succ`
 
-1. Define `rawStage` with limit case using IH-derived prefix. To
-   construct the `OrderEmbedding`, use `Classical.choice` on
-   `Nonempty (β.ToType ↪o PairERSource)` (which is provable from
-   `H1` without strict-mono for specific elements — we lose the
-   IH-correspondence but preserve type).
+Proof sketch (by strong induction on γ):
+- γ = succ γ': ih (succ γ') reduces to (ih γ').extend. Then
+  `(.extend).bundle.family.stage δ` = case on `δ < γ'` or `δ = γ'`:
+  * `δ < γ'`: = `(ih γ').bundle.family.stage δ`; by IH on γ',
+    = `(ih δ).bundle.stage.succ`. ✓
+  * `δ = γ'`: = `(ih γ').bundle.stage.succ` (extend's dif_neg),
+    = `(ih δ).bundle.stage.succ` (since δ = γ'). ✓
+- γ limit: ih γ reduces to `RichBundle.limitExtend (subIH) _ _`.
+  `(.limitExtend _).bundle.family.stage δ` = (subIH δ).bundle.stage.succ
+  = (ih δ).bundle.stage.succ (by recursion coherence). ✓
 
-2. Prove cross-stage coherence at SUCCESSOR levels (should work with
-   `rawStage_commitAt_of_succ` + induction; the successor chain is
-   closed under `rawStage_succ`).
+**The blocker**: within the outer limit case's tactic body, `ih` is
+abstract. Reducing `ih (succ γ')` to `(ih γ').extend` requires
+unfolding `Ordinal.limitRecOn_succ` or `WellFoundedLT.fix`'s reduction,
+but these reductions happen at the TOP LEVEL application, not
+inside the step function.
 
-3. At LIMITS, take a different tack: use `Ordinal.isSuccLimit`
-   structure + transfinite induction on β for the cross-IH at specific
-   limit γ. Since the coherence only needs to hold at the TOP LEVEL
-   recursion (after all reductions), we can potentially prove it
-   post-hoc.
+**Resolution** (requires careful Lean engineering): either
+(a) define `richStage` term-mode and prove `richStage_succ`/`richStage_limit`
+at top level with `unfold richStage; rw [Ordinal.limitRecOn_succ]`, then
+use those theorems to prove `prev_succ` and define the "real" richStage
+via a wrapper; or (b) use `WellFoundedLT.fix`'s definitional reduction
+inside the body with explicit `if`/`match` dispatch on ordinal shape
+(zero/succ/limit), avoiding `rcases` which uses classical `Or.elim`.
 
-4. Alternative — define `recBundle` using a MUTUAL `inductive`
-   W-type with a recursive `prev` field (path 3 from prior notes);
-   structural coherence is then by-construction.
-
-Final assembly after recursion: chain extraction, second pigeonhole,
-H5 + H1 composition. All downstream infrastructure shipped. -/
+After `richStage` lands + `prev_succ` theorem:
+- Extract chain `δ ↦ (richStage cR (δ+1) _).commit δ (Order.lt_succ δ)`.
+- By `commit_top` + `stage_eq`, this is strictly monotone.
+- Second pigeonhole on committed Bool; H5 + H1 composition.
+- Total: ~150-200 LOC for `erdos_rado_pair_omega1`. -/
 
 /-! ### Existence of stages at every level `< ω_1`
 
