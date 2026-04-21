@@ -1731,6 +1731,19 @@ private theorem rawStage_zero (cR : (Fin 2 ↪o PairERSource) → Bool)
   unfold rawStage
   rw [Ordinal.limitRecOn_zero]
 
+/-- **Reduction chain for rawStage across successor intervals**. For
+`δ < γ` where both `γ+1 < ω_1` and the interval from `δ+1` to `γ+1` is
+a "pure successor chain" (i.e., doesn't pass through a limit), commits
+align. -/
+private theorem rawStage_commitAt_of_succ
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    (β : Ordinal.{0}) (hs : Order.succ β < Ordinal.omega.{0} 1)
+    (δ : Ordinal.{0}) (hδβ : δ < β) :
+    (rawStage cR (Order.succ β) hs).commitAt δ
+        (hδβ.trans (Order.lt_succ β)) =
+      (rawStage cR β ((Order.lt_succ β).trans hs)).commitAt δ hδβ := by
+  rw [rawStage_succ, PairERChain.succ_commitAt]
+
 /-! ### Next-session handoff: outer recursion blocker (revised)
 
 Status after extensive exploration:
