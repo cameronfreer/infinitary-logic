@@ -1692,6 +1692,38 @@ private noncomputable def recStepLimit
       crossCohLocal cR IH ih_succ ih_limit γ hγβ (hγβ.trans hβ) δ hδγ)
     hβ
 
+/-- **Raw stage recursion**. Produces just the `PairERChain cR α`
+(without bundling a family), via `Ordinal.limitRecOn`. Uses
+`stageAt`-style dummy at limits (canonical `initialSegToType` prefix);
+successor stages are concretely `(rawStage β).succ`. -/
+private noncomputable def rawStage (cR : (Fin 2 ↪o PairERSource) → Bool)
+    (α : Ordinal.{0}) : α < Ordinal.omega.{0} 1 → PairERChain cR α :=
+  Ordinal.limitRecOn α
+    (motive := fun α => α < Ordinal.omega.{0} 1 → PairERChain cR α)
+    (fun _ => PairERChain.zero cR)
+    (fun β IH hs =>
+      (IH (lt_of_lt_of_le (Order.lt_succ β) hs.le)).succ)
+    (fun β _ _ hβ => by
+      haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+      have hβ_le : β ≤ (Order.succ (Cardinal.beth.{0} 1)).ord := by
+        have h1 : β < (Cardinal.aleph.{0} 1).ord := by rwa [Cardinal.ord_aleph]
+        have h2 : (Cardinal.aleph.{0} 1).ord ≤
+            (Order.succ (Cardinal.beth.{0} 1)).ord :=
+          Cardinal.ord_le_ord.mpr
+            ((Cardinal.aleph_le_beth 1).trans (Order.le_succ _))
+        exact (h1.trans_le h2).le
+      exact PairERChain.limit hβ
+        (Ordinal.initialSegToType hβ_le).toOrderEmbedding)
+
+/-- **Top-level succ reduction for rawStage**. Direct application of
+`Ordinal.limitRecOn_succ`. -/
+private theorem rawStage_succ (cR : (Fin 2 ↪o PairERSource) → Bool)
+    (β : Ordinal.{0}) (hs : Order.succ β < Ordinal.omega.{0} 1) :
+    rawStage cR (Order.succ β) hs =
+      (rawStage cR β ((Order.lt_succ β).trans hs)).succ := by
+  unfold rawStage
+  rw [Ordinal.limitRecOn_succ]
+
 /-! ### Next-session handoff: outer recursion blocker (revised)
 
 Status after extensive exploration:
