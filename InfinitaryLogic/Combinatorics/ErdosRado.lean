@@ -1746,47 +1746,43 @@ private theorem rawStage_commitAt_of_succ
 
 /-! ### Next-session handoff: outer recursion blocker (revised)
 
-Status after extensive exploration:
+**Shipped this session**:
+- `crossCoh`, `crossCohLocal` (parameterized cross-IH lemmas)
+- `recStepSucc`, `recStepLimit` (step functions for outer recursion)
+- `rawStage`, `rawStage_succ`, `rawStage_zero` (Path 1 pattern — Lean's
+  `rw [Ordinal.limitRecOn_succ]` DOES work at top level)
+- `rawStage_commitAt_of_succ` (bridge reduction for successor intervals)
 
-**Shipped this round**: `crossCoh`, `crossCohLocal`, `recStepSucc`,
-`recStepLimit`. These collectively reduce the outer recursion to the
-problem of proving `ih_succ : IH (succ γ) _ = (IH γ _).extend` and
-`ih_limit : (IH γ _).stage.commitAt δ _ = (IH δ _).stage.succ.commitAt δ _`
-for the IH parameter of `Ordinal.limitRecOn`'s (or `WellFoundedLT.fix`'s)
-limit case.
+**The remaining obstacle**: `rawStage` at limits uses `initialSegToType`
+(canonical but NON-coherent with the recursion's successor stages), so
+cross-stage coherence at limits FAILS for `rawStage`. Making
+`rawStage`'s limit case coherent requires IH-derived prefix, which
+requires cross-stage strict monotonicity at lower levels — circular.
 
-**The specific obstacle**: inside the step function's body, the IH
-variable has type `(γ : Ordinal) → γ < β → γ < ω_1 → CoherentBundle cR γ`
-but its IDENTITY as `fun γ h => Ordinal.limitRecOn γ H₁ H₂ H₃` (the form
-that would allow `limitRecOn_succ` rewrites) is not exposed: Lean treats
-IH as opaque. `rfl` fails; `rw [Ordinal.limitRecOn_succ]` finds no match
-because the target shows the abstract IH-application.
+**Concrete path forward** (paths 1'+2 combined):
 
-**The clean resolution requires one of**:
+1. Define `rawStage` with limit case using IH-derived prefix. To
+   construct the `OrderEmbedding`, use `Classical.choice` on
+   `Nonempty (β.ToType ↪o PairERSource)` (which is provable from
+   `H1` without strict-mono for specific elements — we lose the
+   IH-correspondence but preserve type).
 
-1. **Post-hoc reduction theorems**: define `recBundle` with a placeholder
-   (e.g. zero bundle) at limits, prove `recBundle_succ` and
-   `recBundle_limit` AFTER definition using `rw [limitRecOn_succ]` on
-   the TOP-LEVEL `recBundle` call (where the limitRecOn IS visible),
-   then feed these theorems into `crossCoh` to build the REAL limit
-   bundle via a secondary definition.
+2. Prove cross-stage coherence at SUCCESSOR levels (should work with
+   `rawStage_commitAt_of_succ` + induction; the successor chain is
+   closed under `rawStage_succ`).
 
-2. **Sigma-type motive**: make the motive `(α < ω_1) →  ⟨b, coh⟩`
-   bundle bundle + coherence witness. Hard to state without circularity.
+3. At LIMITS, take a different tack: use `Ordinal.isSuccLimit`
+   structure + transfinite induction on β for the cross-IH at specific
+   limit γ. Since the coherence only needs to hold at the TOP LEVEL
+   recursion (after all reductions), we can potentially prove it
+   post-hoc.
 
-3. **Fully inductive recursive type**: define `RichBundle` with a
-   recursive `prev : ∀ δ < α, RichBundle cR δ` field using Lean's
-   W-type machinery. The constructor's fields include structural
-   consistency, so cross-IH is by-construction. Requires careful
-   termination argument but is feasible.
+4. Alternative — define `recBundle` using a MUTUAL `inductive`
+   W-type with a recursive `prev` field (path 3 from prior notes);
+   structural coherence is then by-construction.
 
-Final assembly after recursion completes: chain extraction (~30 LOC),
-second pigeonhole (Cardinal.infinite_pigeonhole_card on ℵ_1 → Bool ~20
-LOC), H5 transport (`ordIso_omega1_of_aleph1_subset` — shipped!, ~10
-LOC), H1 composition (shipped!, ~10 LOC), homogeneity proof (~20 LOC).
-
-Total remaining: ~200-400 LOC. Blocker is the recursion wiring;
-everything else follows mechanically. -/
+Final assembly after recursion: chain extraction, second pigeonhole,
+H5 + H1 composition. All downstream infrastructure shipped. -/
 
 /-! ### Existence of stages at every level `< ω_1`
 
