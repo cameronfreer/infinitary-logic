@@ -2076,6 +2076,74 @@ noncomputable def RichState.extend
           simp only [dif_neg (lt_irrefl δ)]
         rw [hfam]
 
+/-- **Limit rich state**, parameterized on cross-state agreement.
+
+Given `ih : ∀ γ < α, RichState cR γ` at a limit `α < ω_1`, and a
+cross-state agreement witness that different IH's agree on common
+lower levels, produce `RichState cR α`.
+
+The cross-state agreement witness is the non-trivial part that must
+be supplied by the outer recursion — it's a consequence of how the
+recursion is structured (propositional equality derived via
+`Ordinal.limitRecOn`'s reduction equations), rather than a property
+of individual RichStates. -/
+noncomputable def RichState.limitExtend
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (ih : (γ : Ordinal.{0}) → γ < α → RichState cR γ)
+    (cross_agree : ∀ (γ₁ γ₂ : Ordinal.{0}) (hγ₁α : γ₁ < α) (hγ₂α : γ₂ < α)
+      (δ : Ordinal.{0}) (hδγ₁ : δ ≤ γ₁) (hδγ₂ : δ ≤ γ₂)
+      (hδ : δ < Ordinal.omega.{0} 1),
+      (ih γ₁ hγ₁α).bundles δ hδγ₁ hδ = (ih γ₂ hγ₂α).bundles δ hδγ₂ hδ)
+    (hα : α < Ordinal.omega.{0} 1) : RichState cR α := by
+  -- Shorthand for "the canonical bundle at level γ < α".
+  let ih_bundle : (γ : Ordinal.{0}) → (hγα : γ < α) →
+      RichBundle cR γ :=
+    fun γ hγα => (ih γ hγα).bundles γ le_rfl (hγα.trans hα)
+  -- The `prev_succ` witness for `RichBundle.limitExtend`, derived
+  -- from within-state `prev_eq` plus `cross_agree`.
+  have prev_succ_ih : ∀ (γ : Ordinal.{0}) (hγα : γ < α)
+      (δ : Ordinal.{0}) (hδγ : δ < γ),
+      (ih_bundle γ hγα).bundle.family.stage δ hδγ =
+        (ih_bundle δ (hδγ.trans hγα)).bundle.stage.succ := by
+    intro γ hγα δ hδγ
+    have h_delta_lt_alpha : δ < α := hδγ.trans hγα
+    have hIH_γ := (ih γ hγα).prev_eq γ le_rfl (hγα.trans hα) δ hδγ
+      (le_of_lt hδγ) (h_delta_lt_alpha.trans hα)
+    simp only [ih_bundle]
+    rw [hIH_γ]
+    exact congrArg (fun rb => rb.bundle.stage.succ)
+      (cross_agree γ δ hγα h_delta_lt_alpha δ (le_of_lt hδγ) le_rfl
+        (h_delta_lt_alpha.trans hα))
+  -- Build the level-α rich bundle via `RichBundle.limitExtend`.
+  let top_bundle : RichBundle cR α :=
+    RichBundle.limitExtend ih_bundle prev_succ_ih hα
+  refine
+    { bundles := fun γ hγα hγ =>
+        if h_γ_lt : γ < α then (ih γ h_γ_lt).bundles γ le_rfl hγ
+        else
+          have h_γ_eq : γ = α := le_antisymm hγα (not_lt.mp h_γ_lt)
+          h_γ_eq ▸ top_bundle
+      prev_eq := ?_ }
+  intro γ hγα hγ δ hδγ hδα hδ
+  by_cases h_γ_lt : γ < α
+  · -- γ < α: via within-state prev_eq plus cross_agree.
+    have h_δ_lt : δ < α := hδγ.trans h_γ_lt
+    simp only [dif_pos h_γ_lt, dif_pos h_δ_lt]
+    have hIH_γ := (ih γ h_γ_lt).prev_eq γ le_rfl hγ δ hδγ
+      (le_of_lt hδγ) hδ
+    rw [hIH_γ]
+    exact congrArg (fun rb => rb.bundle.stage.succ)
+      (cross_agree γ δ h_γ_lt h_δ_lt δ (le_of_lt hδγ) le_rfl hδ)
+  · -- γ = α: top_bundle's family at δ is `(ih δ).bundles δ _ _.bundle.stage.succ`
+    -- by construction of `RichBundle.limitExtend`.
+    have h_γ_eq : γ = α := le_antisymm hγα (not_lt.mp h_γ_lt)
+    subst h_γ_eq
+    have h_δ_lt : δ < γ := hδγ
+    simp only [dif_neg h_γ_lt, dif_pos h_δ_lt]
+    show top_bundle.bundle.family.stage δ hδγ =
+      ((ih δ h_δ_lt).bundles δ le_rfl hδ).bundle.stage.succ
+    rfl
+
 /-! ### Next-session handoff: final wiring of `richStage`
 
 **Shipped Σ-motive infrastructure (all axiom-clean, no sorry)**:
