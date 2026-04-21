@@ -1536,6 +1536,33 @@ noncomputable def CoherentBundle.extend
       unfold PairERCoherentFamily.commitVal
       simp only [dif_neg (lt_irrefl _)]
 
+/-- **Limit extension of the coherent bundle** (assuming cross-IH
+coherence). Given an IH-like family of bundles at each `γ < α` (α a
+limit) PLUS a cross-consistency witness that `(ih γ _).family.stage δ _
+`'s commitAt agrees with `(ih δ _).stage.succ`'s, build the bundle at
+`α`. The cross-consistency witness is what must be threaded through the
+outer `Ordinal.limitRecOn` — ship this parameterized version so the
+recursion caller supplies it. -/
+noncomputable def CoherentBundle.limitExtend
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (ih : (γ : Ordinal.{0}) → γ < α → CoherentBundle cR γ)
+    (ih_coh : ∀ {δ γ : Ordinal.{0}} (hδγ : δ < γ) (hγα : γ < α),
+      (ih γ hγα).stage.commitAt δ hδγ =
+        (ih δ (hδγ.trans hγα)).stage.succ.commitAt δ (Order.lt_succ δ))
+    (hα : α < Ordinal.omega.{0} 1) :
+    CoherentBundle cR α :=
+  let family : PairERCoherentFamily cR α :=
+    { stage := fun γ hγα => (ih γ hγα).stage.succ
+      coherent := by
+        intro δ γ hδγ hγα
+        -- Goal: (ih γ _).stage.succ.commitAt δ _ = (ih δ _).stage.succ.commitAt δ _.
+        rw [PairERChain.succ_commitAt _ δ hδγ]
+        -- Goal: (ih γ _).stage.commitAt δ _ = (ih δ _).stage.succ.commitAt δ _.
+        exact ih_coh hδγ hγα }
+  { stage := family.limit hα
+    family := family
+    coh := fun δ hδ => family.limit_commitAt hα δ hδ }
+
 /-! ### Existence of stages at every level `< ω_1`
 
 The transfinite-assembly existence lemma `exists_PairERChain`: for
