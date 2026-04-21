@@ -1563,6 +1563,23 @@ noncomputable def CoherentBundle.limitExtend
     family := family
     coh := fun δ hδ => family.limit_commitAt hα δ hδ }
 
+/-- **Cross-IH coherence for the zero-stage-appended recursion.** For
+any candidate recursion function `f : ∀ α, α < ω_1 → CoherentBundle cR
+α` that matches the zero/succ cases, cross-IH at successor levels
+reduces to `PairERChain.succ_commitAt`. -/
+private lemma cross_ih_succ
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {γ' δ : Ordinal.{0}} (hδγ' : δ < γ') (bγ' : CoherentBundle cR γ') :
+    bγ'.extend.stage.commitAt δ (hδγ'.trans (Order.lt_succ _)) =
+      bγ'.stage.commitAt δ hδγ' :=
+  PairERChain.succ_commitAt _ δ hδγ'
+
+/-- The `.extend` stage is the original's `.succ`. -/
+@[simp]
+lemma CoherentBundle.extend_stage
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (b : CoherentBundle cR α) : b.extend.stage = b.stage.succ := rfl
+
 /-! ### Existence of stages at every level `< ω_1`
 
 The transfinite-assembly existence lemma `exists_PairERChain`: for
