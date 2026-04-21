@@ -1617,6 +1617,48 @@ private theorem crossCoh (cR : (Fin 2 ↪o PairERSource) → Bool)
         rfl
     · exact rec_limit γ hγ_lim hγ δ hδγ
 
+/-- **Cross-IH coherence for a local IH-function**, using induction on
+the inner γ parameter and the reduction witnesses `ih_succ` and
+`ih_limit` (both expressible via `Ordinal.limitRecOn_succ` and
+`Ordinal.limitRecOn_limit` on the outer recursion). -/
+private theorem crossCohLocal
+    (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ordinal.{0}}
+    (IH : (γ : Ordinal.{0}) → γ < β → γ < Ordinal.omega.{0} 1 →
+      CoherentBundle cR γ)
+    (ih_succ : ∀ γ (hγsβ : Order.succ γ < β)
+      (h1 : Order.succ γ < Ordinal.omega.{0} 1),
+      IH (Order.succ γ) hγsβ h1 =
+        (IH γ ((Order.lt_succ γ).trans hγsβ)
+              ((Order.lt_succ γ).trans h1)).extend)
+    (ih_limit : ∀ γ (_ : Order.IsSuccLimit γ) (hγβ : γ < β)
+      (hγ : γ < Ordinal.omega.{0} 1) (δ : Ordinal.{0}) (hδγ : δ < γ),
+      (IH γ hγβ hγ).stage.commitAt δ hδγ =
+        (IH δ (hδγ.trans hγβ) (hδγ.trans hγ)).stage.succ.commitAt δ
+          (Order.lt_succ δ))
+    (γ : Ordinal.{0}) (hγβ : γ < β) (hγ : γ < Ordinal.omega.{0} 1)
+    (δ : Ordinal.{0}) (hδγ : δ < γ) :
+    (IH γ hγβ hγ).stage.commitAt δ hδγ =
+      (IH δ (hδγ.trans hγβ) (hδγ.trans hγ)).stage.succ.commitAt δ
+        (Order.lt_succ δ) := by
+  -- Generalize γ, hγβ, hγ, hδγ for induction.
+  revert hδγ hγ hγβ
+  induction γ using WellFoundedLT.induction with
+  | ind γ IHγ =>
+    intro hγβ hγ hδγ
+    rcases Ordinal.zero_or_succ_or_isSuccLimit γ with hz | ⟨γ', hγ'⟩ | hγ_lim
+    · exact absurd hδγ (hz ▸ not_lt.mpr (zero_le _))
+    · subst hγ'
+      have hγ'sβ : γ' < β := (Order.lt_succ γ').trans hγβ
+      have hγ'_lt : γ' < Ordinal.omega.{0} 1 := (Order.lt_succ γ').trans hγ
+      rw [ih_succ γ' hγβ hγ]
+      rw [CoherentBundle.extend_stage]
+      rcases lt_or_eq_of_le (Order.lt_succ_iff.mp hδγ) with hδ_lt_γ' | hδ_eq_γ'
+      · rw [PairERChain.succ_commitAt _ δ hδ_lt_γ']
+        exact IHγ γ' (Order.lt_succ γ') hγ'sβ hγ'_lt hδ_lt_γ'
+      · subst hδ_eq_γ'
+        rfl
+    · exact ih_limit γ hγ_lim hγβ hγ δ hδγ
+
 /-! ### Next-session handoff: outer recursion blocker
 
 Status: `crossCoh` (the parameterized cross-IH coherence lemma) is
