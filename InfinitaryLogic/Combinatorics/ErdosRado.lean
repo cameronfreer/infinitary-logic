@@ -1774,6 +1774,24 @@ private theorem rawStage_commitAt_stable
       obtain ⟨b, hb⟩ := hβ_mem
       exact absurd hβ_lim (hb ▸ Order.not_isSuccLimit_succ b)
 
+/-- **Commit at each successor ordinal**. For each ordinal `δ` with
+`succ δ < ω_1`, the committed PairERSource element at position `δ` in
+the raw stage at level `succ δ`. This is the "head" committed when
+extending from level `δ` to level `succ δ`. -/
+private noncomputable def chainAtSucc
+    (cR : (Fin 2 ↪o PairERSource) → Bool) (δ : Ordinal.{0})
+    (hsδ : Order.succ δ < Ordinal.omega.{0} 1) : PairERSource :=
+  (rawStage cR (Order.succ δ) hsδ).commitAt δ (Order.lt_succ δ)
+
+/-- **Commit at level `succ δ` equals chainAtSucc**. The "raw commit"
+at position `δ` in `rawStage` at level `succ δ` is exactly the
+`chainAtSucc` value — by definition. -/
+private theorem rawStage_succ_commitAt
+    (cR : (Fin 2 ↪o PairERSource) → Bool) (δ : Ordinal.{0})
+    (hsδ : Order.succ δ < Ordinal.omega.{0} 1) :
+    (rawStage cR (Order.succ δ) hsδ).commitAt δ (Order.lt_succ δ) =
+      chainAtSucc cR δ hsδ := rfl
+
 /-! ### Next-session handoff: outer recursion blocker (revised)
 
 **Shipped this session**:
