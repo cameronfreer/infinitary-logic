@@ -1692,40 +1692,49 @@ private noncomputable def recStepLimit
       crossCohLocal cR IH ih_succ ih_limit γ hγβ (hγβ.trans hβ) δ hδγ)
     hβ
 
-/-! ### Next-session handoff: outer recursion blocker
+/-! ### Next-session handoff: outer recursion blocker (revised)
 
-Status: `crossCoh` (the parameterized cross-IH coherence lemma) is
-shipped and axiom-clean. It requires the caller to supply two
-recursion-reduction witnesses `rec_succ` and `rec_limit`.
+Status after extensive exploration:
 
-The outstanding work: define `recBundle : ∀ α < ω_1, CoherentBundle cR α`
-and prove that it satisfies `rec_succ` / `rec_limit`.
+**Shipped this round**: `crossCoh`, `crossCohLocal`, `recStepSucc`,
+`recStepLimit`. These collectively reduce the outer recursion to the
+problem of proving `ih_succ : IH (succ γ) _ = (IH γ _).extend` and
+`ih_limit : (IH γ _).stage.commitAt δ _ = (IH δ _).stage.succ.commitAt δ _`
+for the IH parameter of `Ordinal.limitRecOn`'s (or `WellFoundedLT.fix`'s)
+limit case.
 
-**Key blocker**: `Ordinal.limitRecOn`'s IH is abstracted inside tactic
-proofs and does NOT reduce definitionally via `Ordinal.limitRecOn_succ`.
-So `rec_succ : rec (Order.succ β) _ = (rec β _).extend` cannot be closed
-by `rfl` when `rec` is defined via `Ordinal.limitRecOn`.
+**The specific obstacle**: inside the step function's body, the IH
+variable has type `(γ : Ordinal) → γ < β → γ < ω_1 → CoherentBundle cR γ`
+but its IDENTITY as `fun γ h => Ordinal.limitRecOn γ H₁ H₂ H₃` (the form
+that would allow `limitRecOn_succ` rewrites) is not exposed: Lean treats
+IH as opaque. `rfl` fails; `rw [Ordinal.limitRecOn_succ]` finds no match
+because the target shows the abstract IH-application.
 
-**Paths to close the gap**:
+**The clean resolution requires one of**:
 
-1. Prove `rec_succ` / `rec_limit` using `Ordinal.limitRecOn_succ` /
-   `Ordinal.limitRecOn_limit` as explicit `rw` rules AFTER defining
-   `recBundle`. The lemmas might unfold enough to close the equality
-   when the goal side is the canonical `limitRecOn` form.
+1. **Post-hoc reduction theorems**: define `recBundle` with a placeholder
+   (e.g. zero bundle) at limits, prove `recBundle_succ` and
+   `recBundle_limit` AFTER definition using `rw [limitRecOn_succ]` on
+   the TOP-LEVEL `recBundle` call (where the limitRecOn IS visible),
+   then feed these theorems into `crossCoh` to build the REAL limit
+   bundle via a secondary definition.
 
-2. Use `WellFoundedLT.fix` on ordinals with an explicit
-   `Ordinal.zero_or_succ_or_isSuccLimit` dispatch inside the step
-   function. `WellFoundedLT.fix`'s IH reduces definitionally, but the
-   dispatch via `Or.elim` may introduce non-reducing forms.
+2. **Sigma-type motive**: make the motive `(α < ω_1) →  ⟨b, coh⟩`
+   bundle bundle + coherence witness. Hard to state without circularity.
 
-3. Define `recBundle` with an `inductive` family (dependent constructor
-   taking `∀ δ < α, RichBundle cR δ`) so the cross-IH invariant is
-   structural.
+3. **Fully inductive recursive type**: define `RichBundle` with a
+   recursive `prev : ∀ δ < α, RichBundle cR δ` field using Lean's
+   W-type machinery. The constructor's fields include structural
+   consistency, so cross-IH is by-construction. Requires careful
+   termination argument but is feasible.
 
-Once `recBundle` + reduction witnesses land, `crossCoh` composes them
-to give the cross-IH needed by `CoherentBundle.limitExtend`, completing
-the recursion. Final assembly (chain extraction, second pigeonhole,
-H5 + H1 composition) is ~100–150 LOC of bookkeeping. -/
+Final assembly after recursion completes: chain extraction (~30 LOC),
+second pigeonhole (Cardinal.infinite_pigeonhole_card on ℵ_1 → Bool ~20
+LOC), H5 transport (`ordIso_omega1_of_aleph1_subset` — shipped!, ~10
+LOC), H1 composition (shipped!, ~10 LOC), homogeneity proof (~20 LOC).
+
+Total remaining: ~200-400 LOC. Blocker is the recursion wiring;
+everything else follows mechanically. -/
 
 /-! ### Existence of stages at every level `< ω_1`
 
