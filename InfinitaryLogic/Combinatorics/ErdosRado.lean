@@ -1858,6 +1858,58 @@ theorem iInter_stage_fibers_eq_iInter_nat_of_cofinal
     · -- β < (e n).1: use validFiber_mono.
       exact F.validFiber_mono hF_type hβ_lt (e n).2 (hy n)
 
+/-- **Cofinality helper**: any subset `S ⊆ PairERSource` with
+`|S| ≥ succ ℶ_1` is unbounded. Proof: if `S ⊆ Iic m` for some `m`, then
+`|S| ≤ |Iic m|`; but `Iic m ⊆ Iio m'` for any `m' > m` (which exists
+by `PairERSource`'s unboundedness in itself via regularity), and
+`|Iio m'| < succ ℶ_1` by `Ordinal.mk_Iio_ord_toType`. Contradiction. -/
+lemma large_set_exists_above
+    {S : Set PairERSource}
+    (hS : Order.succ (Cardinal.beth.{0} 1) ≤ Cardinal.mk S)
+    (m : PairERSource) : ∃ y ∈ S, m < y := by
+  by_contra h
+  push_neg at h
+  -- `S ⊆ Iic m`. To bound |Iic m|, find `m'` with `m < m'` in `PairERSource`,
+  -- then `Iic m ⊆ Iio m'`, and `|Iio m'| < succ ℶ_1`.
+  -- For `m'`, we need `PairERSource` to have something above `m`.
+  -- `PairERSource = (succ ℶ_1).ord.ToType`, and `(succ ℶ_1).ord > typein m`
+  -- since typein m < (succ ℶ_1).ord. So there's an enum-point above.
+  haveI : IsWellOrder PairERSource (· < ·) := isWellOrder_lt
+  -- Use `exists_gt`: every ordinal type without max has something above m.
+  -- `(succ ℶ_1).ord` is a limit since succ ℶ_1 is infinite.
+  have h_noMax : ∃ m', m < m' := by
+    -- typein m + 1 < succ ℶ_1.ord (since succ ℶ_1.ord has cof > 1).
+    have h_typein : Ordinal.typein (· < ·) m < Ordinal.type
+        (· < · : PairERSource → PairERSource → Prop) :=
+      Ordinal.typein_lt_type _ m
+    have h_typein_lt : Ordinal.typein (· < ·) m < (Order.succ (Cardinal.beth.{0} 1)).ord := by
+      simpa [Ordinal.type_toType] using h_typein
+    have h_next : Order.succ (Ordinal.typein (· < ·) m) <
+        (Order.succ (Cardinal.beth.{0} 1)).ord := by
+      have h_lim : Order.IsSuccLimit (Order.succ (Cardinal.beth.{0} 1)).ord :=
+        Cardinal.isSuccLimit_ord isRegular_succ_beth_one.aleph0_le
+      exact h_lim.succ_lt h_typein_lt
+    set m' : PairERSource := Ordinal.enum (α := PairERSource) (· < ·)
+      ⟨Order.succ (Ordinal.typein (· < ·) m),
+        (Ordinal.type_toType _).symm ▸ h_next⟩ with hm'_def
+    refine ⟨m', ?_⟩
+    -- Show m < m' via typein comparison.
+    have h_typein_m' : Ordinal.typein (· < ·) m' =
+        Order.succ (Ordinal.typein (· < ·) m) := by
+      rw [hm'_def, Ordinal.typein_enum]
+    apply (Ordinal.typein_lt_typein (· < · : PairERSource → PairERSource → Prop)).mp
+    rw [h_typein_m']
+    exact Order.lt_succ _
+  obtain ⟨m', hmm'⟩ := h_noMax
+  have hS_sub_Iio : S ⊆ Set.Iio m' := by
+    intro s hs
+    exact lt_of_le_of_lt (h s hs) hmm'
+  have h_iio_card : Cardinal.mk (Set.Iio m') < Order.succ (Cardinal.beth.{0} 1) :=
+    Cardinal.mk_Iio_ord_toType (c := Order.succ (Cardinal.beth.{0} 1)) m'
+  have hS_card_le : Cardinal.mk S ≤ Cardinal.mk (Set.Iio m') :=
+    Cardinal.mk_le_mk_of_subset hS_sub_Iio
+  exact absurd (hS.trans hS_card_le) (not_le.mpr h_iio_card)
+
 /-- **[FRONTIER, nat-reindexed preparatory]** The nonempty frontier on
 a cofinal ℕ-reindex. This is the form that exposes the fusion/tree
 combinatorics cleanly — the real target for the next session. -/
