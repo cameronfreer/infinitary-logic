@@ -2097,8 +2097,7 @@ lemma PairERCoherentFamily.IsCanonicalTypeCoherent.toIsTypeCoherent
 
 /-- **Nonempty frontier via `IsCanonicalTypeCoherent`**: under the
 strengthened invariant, the nat-reindexed fusion question has a
-positive answer — by construction, since the invariant asserts
-exactly this. -/
+positive answer — by definition of the invariant. -/
 theorem exists_nonempty_iInter_stage_fibers_nat_reindex_of_canonical
     {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
     (F : PairERCoherentFamily cR α) (hF : F.IsCanonicalTypeCoherent)
@@ -2465,6 +2464,16 @@ lemma PairERCoherentFamily.extendAtSucc_isTypeCoherent
     rcases lt_or_eq_of_le (Order.lt_succ_iff.mp hδγ) with hδ_lt_β | hδ_eq_β
     · exact hF hδ_lt_β (Order.lt_succ β)
     · subst hδ_eq_β; rfl
+
+/-- The empty family is vacuously `IsCanonicalTypeCoherent`: the
+nat-reindex nonemptiness is vacuously true because no valid `e` exists
+(any `e 0` would give `(e 0).1 < 0`). -/
+lemma PairERCoherentFamily.empty_isCanonicalTypeCoherent
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    (PairERCoherentFamily.empty cR).IsCanonicalTypeCoherent := by
+  refine ⟨PairERCoherentFamily.empty_isTypeCoherent cR, ?_⟩
+  intro e _ _
+  exact absurd (e 0).2 (not_lt.mpr (zero_le _))
 
 /-- **Coherent bundle at level `α`.** Packages the current stage at
 `α`, the coherent family covering `β < α`, and the coherence between
