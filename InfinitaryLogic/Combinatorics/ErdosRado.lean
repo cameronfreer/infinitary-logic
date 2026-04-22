@@ -1834,15 +1834,29 @@ subfamily has the same intersection.
   ⊆ validFiber(F.stage β)`. -/
 theorem iInter_stage_fibers_eq_iInter_nat_of_cofinal
     {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
-    (F : PairERCoherentFamily cR α) (_hF_type : F.IsTypeCoherent)
-    (_e : ℕ → {β : Ordinal.{0} // β < α})
-    (_e_mono : ∀ {n m : ℕ}, n ≤ m → (_e n).1 ≤ (_e m).1)
-    (_e_cofinal : ∀ β : Ordinal.{0}, β < α → ∃ n : ℕ, β ≤ (_e n).1) :
+    (F : PairERCoherentFamily cR α) (hF_type : F.IsTypeCoherent)
+    (e : ℕ → {β : Ordinal.{0} // β < α})
+    (_e_mono : ∀ {n m : ℕ}, n ≤ m → (e n).1 ≤ (e m).1)
+    (e_cofinal : ∀ β : Ordinal.{0}, β < α → ∃ n : ℕ, β ≤ (e n).1) :
     (⋂ (β : Ordinal.{0}) (hβα : β < α),
         validFiber cR (F.stage β hβα).head (F.stage β hβα).type) =
       ⋂ n : ℕ, validFiber cR
-        (F.stage (_e n).1 (_e n).2).head (F.stage (_e n).1 (_e n).2).type := by
-  sorry
+        (F.stage (e n).1 (e n).2).head (F.stage (e n).1 (e n).2).type := by
+  ext y
+  simp only [Set.mem_iInter]
+  refine ⟨?_, ?_⟩
+  · -- α-form → ℕ-form: directly instantiate with β = (e n).1.
+    intro hy n
+    exact hy (e n).1 (e n).2
+  · -- ℕ-form → α-form: for each β < α, pick n with β ≤ (e n).1, use descending.
+    intro hy β hβα
+    obtain ⟨n, hβ_le⟩ := e_cofinal β hβα
+    rcases eq_or_lt_of_le hβ_le with hβ_eq | hβ_lt
+    · -- β = (e n).1: direct via subst.
+      subst hβ_eq
+      exact hy n
+    · -- β < (e n).1: use validFiber_mono.
+      exact F.validFiber_mono hF_type hβ_lt (e n).2 (hy n)
 
 /-- **[FRONTIER, preparatory]** *Nonempty intersection of stage fibers*
 (α-indexed). Logically weaker than the large-cardinality version.
@@ -1874,16 +1888,48 @@ theorem exists_nonempty_iInter_stage_fibers_nat_reindex
 single stage fiber (the largest one) by descending nestedness, and
 thus has cardinality `≥ succ ℶ_1`. A trivial consequence of
 `validFiber_mono`; included to make the "finite case is easy"
-observation explicit. -/
+observation explicit.
+
+For `n = 0`, the intersection is `Set.univ = PairERSource`, which has
+cardinality `succ ℶ_1` by `mk_pairERSource`. For `n ≥ 1`, the
+intersection equals `validFiber(F.stage (e (n-1)))`, which has
+cardinality `≥ succ ℶ_1` by `(F.stage _).large`. -/
 theorem iInter_finite_stage_fibers_large
     {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
-    (F : PairERCoherentFamily cR α) (_hF_type : F.IsTypeCoherent)
-    (_e : ℕ → {β : Ordinal.{0} // β < α})
-    (_e_mono : ∀ {n m : ℕ}, n ≤ m → (_e n).1 ≤ (_e m).1) (_n : ℕ) :
+    (F : PairERCoherentFamily cR α) (hF_type : F.IsTypeCoherent)
+    (e : ℕ → {β : Ordinal.{0} // β < α})
+    (e_mono : ∀ {n m : ℕ}, n ≤ m → (e n).1 ≤ (e m).1) (n : ℕ) :
     Order.succ (Cardinal.beth.{0} 1) ≤
-      Cardinal.mk (⋂ k : Fin _n, validFiber cR
-        (F.stage (_e k).1 (_e k).2).head (F.stage (_e k).1 (_e k).2).type) := by
-  sorry
+      Cardinal.mk (⋂ k : Fin n, validFiber cR
+        (F.stage (e k).1 (e k).2).head (F.stage (e k).1 (e k).2).type) := by
+  rcases Nat.eq_zero_or_pos n with hn | hn
+  · -- n = 0: intersection = Set.univ.
+    subst hn
+    simp only [Set.iInter_of_empty, Cardinal.mk_univ]
+    rw [mk_pairERSource]
+  · -- n ≥ 1: intersection = validFiber at (e ⟨n-1, _⟩).
+    let k_top : Fin n := ⟨n - 1, Nat.sub_lt hn Nat.one_pos⟩
+    -- Show the intersection equals the fiber at k_top.
+    have h_subset :
+        validFiber cR (F.stage (e k_top).1 (e k_top).2).head
+            (F.stage (e k_top).1 (e k_top).2).type ⊆
+          ⋂ k : Fin n, validFiber cR
+            (F.stage (e k).1 (e k).2).head (F.stage (e k).1 (e k).2).type := by
+      intro y hy
+      simp only [Set.mem_iInter]
+      intro k
+      -- (e k).1 ≤ (e k_top).1 by monotone; use validFiber_mono.
+      have h_le : (e k).1 ≤ (e k_top).1 :=
+        e_mono (Nat.le_sub_one_of_lt k.isLt)
+      rcases eq_or_lt_of_le h_le with h_eq | h_lt
+      · have : e k = e k_top := Subtype.ext h_eq
+        rw [this]; exact hy
+      · exact F.validFiber_mono hF_type h_lt (e k_top).2 hy
+    calc Order.succ (Cardinal.beth.{0} 1)
+        ≤ Cardinal.mk (validFiber cR (F.stage (e k_top).1 (e k_top).2).head
+            (F.stage (e k_top).1 (e k_top).2).type) :=
+          (F.stage (e k_top).1 (e k_top).2).large
+      _ ≤ _ := Cardinal.mk_le_mk_of_subset h_subset
 
 /-- **[FRONTIER, combinatorial core]** *Large intersection of stage
 fibers*. This is the mathematically meaningful statement, stripped of
