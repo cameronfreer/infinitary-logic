@@ -2475,6 +2475,26 @@ lemma PairERCoherentFamily.empty_isCanonicalTypeCoherent
   intro e _ _
   exact absurd (e 0).2 (not_lt.mpr (zero_le _))
 
+/-- **Any successor-level family with `IsTypeCoherent` is
+`IsCanonicalTypeCoherent`**. Key observation: for `α = succ β`, any
+cofinal ℕ-sequence `e : ℕ → {γ // γ < succ β}` eventually reaches
+`(e n).1 = β`. Hence the ℕ-intersection collapses to
+`validFiber (F.stage β _)` (by descending nestedness), which is
+nonempty since it has size ≥ succ ℶ_1. Thus `IsCanonicalTypeCoherent`
+holds trivially at successor levels — the mathematical difficulty is
+purely at LIMIT levels.
+
+**Implementation note**: the proof follows the sketch above but the
+`(e n).1 = β` case-split hits a dependent-type wall — rewriting
+`e n = ⟨β, _⟩` in the goal through the `(e n).1` / `(e n).2` projections
+requires subtype-projection simp lemmas. Mechanical but fiddly;
+deferred as the only remaining sorry in the successor chain. -/
+lemma PairERCoherentFamily.isCanonicalTypeCoherent_of_succ
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {β : Ordinal.{0}}
+    (F : PairERCoherentFamily cR (Order.succ β))
+    (_hF_type : F.IsTypeCoherent) : F.IsCanonicalTypeCoherent := by
+  sorry
+
 /-- **Coherent bundle at level `α`.** Packages the current stage at
 `α`, the coherent family covering `β < α`, and the coherence between
 the stage's commits and the family's committed values. This is the
