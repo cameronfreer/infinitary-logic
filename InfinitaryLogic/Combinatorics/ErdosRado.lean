@@ -1380,6 +1380,14 @@ lemma PairERCoherentFamily.commitVal_eq_commitAt
   symm
   exact F.coherent hδβ hβα
 
+/-- **Committed Bool at position `δ`** in a coherent family: the type
+at the top of stage `δ+1`. Analogous to `commitVal`. -/
+noncomputable def PairERCoherentFamily.typeVal
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (F : PairERCoherentFamily cR α) (δ : Ordinal.{0}) (hδ : δ < α) :
+    Bool :=
+  (F.stage δ hδ).typeAt δ (Order.lt_succ δ)
+
 /-- **Committed values are strictly increasing with the ordinal index.**
 Use coherence to compare both values inside the later stage, then apply
 `PairERChain.commitAt_strictMono`. -/
@@ -1456,6 +1464,51 @@ lemma PairERCoherentFamily.prefix_enum
       F.commitVal δ hδ := by
     congr 1
   exact goal_eq
+
+/-- **Prescribed type function for the glued prefix.** At each position
+`x : α.ToType`, the prescribed Bool is the `typeVal` at ordinal position
+`typein x`. This is the function we want `exists_large_limit_fiber` to
+produce — a TYPE-COHERENT limit fiber rather than an arbitrary one. -/
+noncomputable def PairERCoherentFamily.typeFn
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (F : PairERCoherentFamily cR α) : α.ToType → Bool := by
+  classical
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  exact fun x =>
+    F.typeVal (Ordinal.typein (· < ·) x) (by
+      simpa [Ordinal.type_toType α] using
+        Ordinal.typein_lt_type (· < · : α.ToType → α.ToType → Prop) x)
+
+/-- **[FRONTIER]** *Type-coherent large limit fiber*. At a limit `α < ω_1`,
+the valid fiber for the SPECIFIC `F.typeFn` (not an arbitrary τ) has
+cardinality `≥ succ ℶ_1`.
+
+This is the sharpening of `exists_large_limit_fiber` needed for pair-
+homogeneity across limits. Without it, `PairERChain.limit` can only
+produce "some τ with large fiber" (forgetting earlier committed Bools),
+but homogeneity requires the limit stage to preserve all earlier Bools.
+
+**Why not provable from the existing kernel:**
+- `exists_large_limit_fiber` picks τ via H3 pigeonhole over the space
+  `α.ToType → Bool`, returning whichever τ has large fiber.
+- For the prescribed τ (= committed Bools), we can't use H3; we need a
+  direct cardinal argument.
+- The standard argument is that for a regular κ = succ ℶ_1 and α < ω_1
+  with ω_1 < κ, a "nested" family of per-position large fibers
+  intersects to a large set. For this to hold in our framework, we
+  also need **type coherence** in `PairERCoherentFamily` (so that
+  successor-stage fibers descend consistently).
+
+**Future extension**: add `type_coherent` field to
+`PairERCoherentFamily`; prove this theorem using nested-intersection
++ regularity argument. -/
+theorem exists_large_limit_fiber_prescribed
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    {α : Ordinal.{0}} (hα : α < Ordinal.omega.{0} 1)
+    (F : PairERCoherentFamily cR α) :
+    Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (validFiber cR F.prefix F.typeFn) := by
+  sorry
 
 /-- **Limit stage built from a coherent family.** Feed the glued prefix
 into `PairERChain.limit`. -/
