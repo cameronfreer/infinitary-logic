@@ -1683,6 +1683,26 @@ lemma PairERCoherentFamily.validFiber_of_prefix_typeFn
       convert h_col using 3
       rw [h_prefix_eq, ← h_head_eq]
 
+/-- **Prescribed fiber equals intersection of stage fibers** (under
+`IsTypeCoherent`). Isolates the prefix/typeFn bookkeeping from the
+cardinality question: the frontier theorem reduces to "the intersection
+has size ≥ succ ℶ_1". -/
+lemma PairERCoherentFamily.validFiber_prefix_typeFn_eq_iInter
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (F : PairERCoherentFamily cR α) (hF_type : F.IsTypeCoherent) :
+    validFiber cR F.prefix F.typeFn =
+      ⋂ (β : Ordinal.{0}) (hβα : β < α),
+        validFiber cR (F.stage β hβα).head (F.stage β hβα).type := by
+  ext y
+  refine ⟨?_, ?_⟩
+  · intro hy
+    simp only [Set.mem_iInter]
+    intro β hβα
+    exact F.validFiber_of_prefix_typeFn hF_type hβα hy
+  · intro hy
+    simp only [Set.mem_iInter] at hy
+    exact F.validFiber_of_stages y hy
+
 /-- **Descending nesting of stage validFibers** (under `IsTypeCoherent`):
 if `δ < β < α` and `F` is type-coherent, any `y` in the validFiber at
 stage `β` is also in the validFiber at stage `δ`. This is the key
@@ -1794,38 +1814,42 @@ lemma PairERCoherentFamily.validFiber_mono
     convert h_col using 3
     exact h_head_eq.symm
 
-/-- **[FRONTIER]** *Type-coherent large limit fiber*. At a limit `α < ω_1`,
-assuming `F` is type-coherent, the valid fiber for the SPECIFIC
-`F.typeFn` (not an arbitrary τ) has cardinality `≥ succ ℶ_1`.
+/-- **[FRONTIER, combinatorial core]** *Large intersection of stage
+fibers*. This is the mathematically meaningful statement, stripped of
+the prefix/typeFn bookkeeping: at a limit `α < ω_1` with `F` type-
+coherent, the α-indexed intersection of stage fibers has cardinality
+`≥ succ ℶ_1`.
 
-This is the sharpening of `exists_large_limit_fiber` needed for pair-
-homogeneity across limits. `exists_large_limit_fiber` returns an
-ARBITRARY τ with large fiber; we need specifically the τ matching
-earlier committed Bools (`F.typeFn`), which requires a direct cardinal
-argument.
+**Status**: the correct statement is now isolated. The proof requires
+identifying what STRUCTURAL property of these stage fibers makes the
+intersection large — *regularity of `succ ℶ_1` alone is NOT sufficient*
+(a descending nested family of size-κ subsets of a size-κ set can have
+small intersection even for regular κ). Candidates:
+- A stronger invariant recording that each fiber is "cofinal in the
+  sense of type-tree branching" (c.f. canonical types in Erdős-Rado).
+- A genuine tree/fusion argument replacing the linear-chain
+  descending-family approach. -/
+theorem exists_large_iInter_stage_fibers
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    {α : Ordinal.{0}} (_hα : α < Ordinal.omega.{0} 1)
+    (F : PairERCoherentFamily cR α) (_hF_type : F.IsTypeCoherent) :
+    Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (⋂ (β : Ordinal.{0}) (hβα : β < α),
+        validFiber cR (F.stage β hβα).head (F.stage β hβα).type) := by
+  sorry
 
-**Proof sketch** (nested-intersection + regularity):
-1. `validFiber cR F.prefix F.typeFn ⊇ ⋂_{β < α} validFiber cR (F.stage β).head (F.stage β).type`.
-   This inclusion uses `coherent` (heads agree) + `IsTypeCoherent`
-   (types agree).
-2. Each `validFiber (F.stage β)` has size `≥ succ ℶ_1` by
-   `(F.stage β).large`.
-3. With `IsTypeCoherent`, the family is *descending nested*:
-   `validFiber (F.stage (β+1)) ⊆ validFiber (F.stage β)` restricted
-   to earlier positions.
-4. Apply nested-intersection + regularity of `succ ℶ_1`.
-
-Step (4) is the subtle cardinal argument — for a regular `κ`, an
-`α`-indexed (α < κ) descending nested family of size-`κ` subsets of a
-size-`κ` universe has intersection of size `≥ κ` under additional
-"large complement" assumptions. -/
+/-- **Type-coherent large limit fiber**. Direct corollary of
+`exists_large_iInter_stage_fibers` via
+`validFiber_prefix_typeFn_eq_iInter`. The combinatorial core is now
+isolated in `exists_large_iInter_stage_fibers`. -/
 theorem exists_large_limit_fiber_prescribed
     (cR : (Fin 2 ↪o PairERSource) → Bool)
     {α : Ordinal.{0}} (hα : α < Ordinal.omega.{0} 1)
     (F : PairERCoherentFamily cR α) (hF_type : F.IsTypeCoherent) :
     Order.succ (Cardinal.beth.{0} 1) ≤
       Cardinal.mk (validFiber cR F.prefix F.typeFn) := by
-  sorry
+  rw [F.validFiber_prefix_typeFn_eq_iInter hF_type]
+  exact exists_large_iInter_stage_fibers cR hα F hF_type
 
 /-- **Limit stage built from a coherent family.** Feed the glued prefix
 into `PairERChain.limit`. -/
