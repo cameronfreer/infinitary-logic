@@ -2389,6 +2389,34 @@ lemma pairERCommit_strictMono
   rw [← h_δ₁_eq, ← h_δ₂_eq]
   exact h_mono
 
+/-- **The ω_1-indexed chain embedding** into `PairERSource`. Wraps
+`pairERCommit` as an `OrderEmbedding` via strict monotonicity. -/
+noncomputable def pairERChainEmbedding
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    (Ordinal.omega.{0} 1).ToType ↪o PairERSource := by
+  haveI : IsWellOrder (Ordinal.omega.{0} 1).ToType (· < ·) := isWellOrder_lt
+  refine OrderEmbedding.ofStrictMono
+    (fun x =>
+      pairERCommit cR (Ordinal.typein (· < ·) x) (by
+        simpa [Ordinal.type_toType] using
+          Ordinal.typein_lt_type
+            (· < · : (Ordinal.omega.{0} 1).ToType →
+              (Ordinal.omega.{0} 1).ToType → Prop) x))
+    ?_
+  intro x y hxy
+  have hx : Ordinal.typein (· < ·) x < Ordinal.omega.{0} 1 := by
+    simpa [Ordinal.type_toType] using
+      Ordinal.typein_lt_type
+        (· < · : (Ordinal.omega.{0} 1).ToType →
+          (Ordinal.omega.{0} 1).ToType → Prop) x
+  have hy : Ordinal.typein (· < ·) y < Ordinal.omega.{0} 1 := by
+    simpa [Ordinal.type_toType] using
+      Ordinal.typein_lt_type
+        (· < · : (Ordinal.omega.{0} 1).ToType →
+          (Ordinal.omega.{0} 1).ToType → Prop) y
+  exact pairERCommit_strictMono cR hx hy
+    ((Ordinal.typein_lt_typein (· < ·)).mpr hxy)
+
 /-! ### Existence of stages at every level `< ω_1`
 
 The transfinite-assembly existence lemma `exists_PairERChain`: for
