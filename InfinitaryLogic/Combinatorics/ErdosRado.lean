@@ -2104,6 +2104,38 @@ lemma CoherentBundle.extend_isTypeCoh
       rw [PairERChain.succ_typeAt_old _ δ hδγ]
       exact hb.stage_type δ hδγ
 
+/-- **Type-coherent limit extension of the coherent bundle.** Same as
+`CoherentBundle.limitExtend` but uses `PairERCoherentFamily.
+limitTypeCoherent` for the new top stage, preserving earlier committed
+Bools. Requires the family to be type-coherent and a `type_ih_coh`
+witness parallel to `ih_coh`. -/
+noncomputable def CoherentBundle.limitExtendTypeCoherent
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (ih : (γ : Ordinal.{0}) → γ < α → CoherentBundle cR γ)
+    (ih_coh : ∀ {δ γ : Ordinal.{0}} (hδγ : δ < γ) (hγα : γ < α),
+      (ih γ hγα).stage.commitAt δ hδγ =
+        (ih δ (hδγ.trans hγα)).stage.succ.commitAt δ (Order.lt_succ δ))
+    (ih_type_coh : ∀ {δ γ : Ordinal.{0}} (hδγ : δ < γ) (hγα : γ < α),
+      (ih γ hγα).stage.typeAt δ hδγ =
+        (ih δ (hδγ.trans hγα)).stage.succ.typeAt δ (Order.lt_succ δ))
+    (hα : α < Ordinal.omega.{0} 1) :
+    CoherentBundle cR α :=
+  let family : PairERCoherentFamily cR α :=
+    { stage := fun γ hγα => (ih γ hγα).stage.succ
+      coherent := by
+        intro δ γ hδγ hγα
+        rw [PairERChain.succ_commitAt _ δ hδγ]
+        exact ih_coh hδγ hγα }
+  have hfam_type : family.IsTypeCoherent := by
+    intro δ γ hδγ hγα
+    show (family.stage γ hγα).typeAt δ _ = (family.stage δ _).typeAt δ _
+    change ((ih γ hγα).stage.succ).typeAt δ _ = ((ih δ _).stage.succ).typeAt δ _
+    rw [PairERChain.succ_typeAt_old _ δ hδγ]
+    exact ih_type_coh hδγ hγα
+  { stage := family.limitTypeCoherent hfam_type hα
+    family := family
+    coh := fun δ hδ => family.limitTypeCoherent_commitAt hfam_type hα δ hδ }
+
 /-- **Cross-IH coherence for the zero-stage-appended recursion.** For
 any candidate recursion function `f : ∀ α, α < ω_1 → CoherentBundle cR
 α` that matches the zero/succ cases, cross-IH at successor levels
