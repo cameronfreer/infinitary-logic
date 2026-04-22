@@ -2459,6 +2459,19 @@ noncomputable def pairERChainEmbedding
   exact pairERCommit_strictMono cR hx hy
     ((Ordinal.typein_lt_typein (· < ·)).mpr hxy)
 
+/-- **Pre-theorem**: from any pair-coloring `cR` on `PairERSource`, we
+obtain an ω_1-indexed order-embedding (into `PairERSource`). Composing
+with H1 transports this into any well-ordered `I` of cardinality
+`≥ succ ℶ_1`. -/
+theorem exists_omega1_embedding_pair
+    {I : Type} [LinearOrder I] [WellFoundedLT I]
+    (hI : Cardinal.mk I ≥ Order.succ (Cardinal.beth.{0} 1))
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    Nonempty ((Ordinal.omega.{0} 1).ToType ↪o I) := by
+  obtain ⟨emb⟩ : Nonempty (PairERSource ↪o I) :=
+    exists_ordToType_embedding_of_card_ge hI
+  exact ⟨(pairERChainEmbedding cR).trans emb⟩
+
 /-! ### Existence of stages at every level `< ω_1`
 
 The transfinite-assembly existence lemma `exists_PairERChain`: for
