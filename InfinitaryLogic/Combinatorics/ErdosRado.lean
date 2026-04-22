@@ -2059,6 +2059,86 @@ theorem exists_strict_mono_fusion_sequence
       show step m (y_seq m) ∈ A (m + 1)
       exact (h_step_spec m _).1
 
+/-- **Strengthened invariant**: `IsCanonicalTypeCoherent` enriches
+`IsTypeCoherent` with a *fusion witness* for ω-intersections. This
+is the structural ingredient missing from `IsTypeCoherent` alone.
+
+The idea: for every monotone cofinal ℕ-sequence `e : ℕ → α`, there
+exists a specific witness `z : PairERSource` that lies in all stage
+fibers `validFiber cR (F.stage (e n).1 _).head (F.stage (e n).1 _).type`
+simultaneously. This is exactly what the naive ω-sup construction
+fails to produce.
+
+**Mathematical interpretation**: in the Erdős–Rado type-tree argument,
+this corresponds to a branch of the type tree having a concrete
+realizer. The classical pigeonhole on `2^ℕ = ℶ_1 < succ ℶ_1` types
+guarantees such a branch exists and has ≥ succ ℶ_1 realizers — but
+the invariant just needs ONE.
+
+**Status**: at this stage we define the predicate and its consequences;
+establishing it at the coherent-family constructors (via the tree
+argument) is the remaining proof-shape task. -/
+def PairERCoherentFamily.IsCanonicalTypeCoherent
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (F : PairERCoherentFamily cR α) : Prop :=
+  F.IsTypeCoherent ∧
+  ∀ (e : ℕ → {β : Ordinal.{0} // β < α}),
+    (∀ {n m : ℕ}, n ≤ m → (e n).1 ≤ (e m).1) →
+    (∀ β : Ordinal.{0}, β < α → ∃ n : ℕ, β ≤ (e n).1) →
+    Set.Nonempty (⋂ n : ℕ, validFiber cR
+      (F.stage (e n).1 (e n).2).head (F.stage (e n).1 (e n).2).type)
+
+/-- `IsCanonicalTypeCoherent` implies `IsTypeCoherent` (the first
+component). -/
+lemma PairERCoherentFamily.IsCanonicalTypeCoherent.toIsTypeCoherent
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    {F : PairERCoherentFamily cR α}
+    (h : F.IsCanonicalTypeCoherent) : F.IsTypeCoherent := h.1
+
+/-- **Nonempty frontier via `IsCanonicalTypeCoherent`**: under the
+strengthened invariant, the nat-reindexed fusion question has a
+positive answer — by construction, since the invariant asserts
+exactly this. -/
+theorem exists_nonempty_iInter_stage_fibers_nat_reindex_of_canonical
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (F : PairERCoherentFamily cR α) (hF : F.IsCanonicalTypeCoherent)
+    (e : ℕ → {β : Ordinal.{0} // β < α})
+    (e_mono : ∀ {n m : ℕ}, n ≤ m → (e n).1 ≤ (e m).1)
+    (e_cofinal : ∀ β : Ordinal.{0}, β < α → ∃ n : ℕ, β ≤ (e n).1) :
+    Set.Nonempty (⋂ n : ℕ, validFiber cR
+      (F.stage (e n).1 (e n).2).head (F.stage (e n).1 (e n).2).type) :=
+  hF.2 e e_mono e_cofinal
+
+/-- **α-form nonempty under `IsCanonicalTypeCoherent`**: via the
+cofinal reindex equality, the α-indexed intersection inherits the
+ℕ-form nonemptiness. -/
+theorem exists_nonempty_iInter_stage_fibers_of_canonical
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (F : PairERCoherentFamily cR α) (hF : F.IsCanonicalTypeCoherent)
+    (e : ℕ → {β : Ordinal.{0} // β < α})
+    (e_mono : ∀ {n m : ℕ}, n ≤ m → (e n).1 ≤ (e m).1)
+    (e_cofinal : ∀ β : Ordinal.{0}, β < α → ∃ n : ℕ, β ≤ (e n).1) :
+    Set.Nonempty (⋂ (β : Ordinal.{0}) (hβα : β < α),
+      validFiber cR (F.stage β hβα).head (F.stage β hβα).type) := by
+  rw [iInter_stage_fibers_eq_iInter_nat_of_cofinal F
+    hF.toIsTypeCoherent e e_mono e_cofinal]
+  exact exists_nonempty_iInter_stage_fibers_nat_reindex_of_canonical
+    F hF e e_mono e_cofinal
+
+/-- **Prescribed-typeFn fiber nonempty under `IsCanonicalTypeCoherent`**:
+chains through `validFiber_prefix_typeFn_eq_iInter` — given
+`IsCanonicalTypeCoherent`, the intersection is nonempty, hence
+`validFiber cR F.prefix F.typeFn` is nonempty. -/
+theorem exists_nonempty_validFiber_prefix_typeFn_of_canonical
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (F : PairERCoherentFamily cR α) (hF : F.IsCanonicalTypeCoherent)
+    (e : ℕ → {β : Ordinal.{0} // β < α})
+    (e_mono : ∀ {n m : ℕ}, n ≤ m → (e n).1 ≤ (e m).1)
+    (e_cofinal : ∀ β : Ordinal.{0}, β < α → ∃ n : ℕ, β ≤ (e n).1) :
+    Set.Nonempty (validFiber cR F.prefix F.typeFn) := by
+  rw [F.validFiber_prefix_typeFn_eq_iInter hF.toIsTypeCoherent]
+  exact exists_nonempty_iInter_stage_fibers_of_canonical F hF e e_mono e_cofinal
+
 /-- **[FRONTIER, failure analysis]** Attempted extraction from the
 fusion sequence. Given `y : ℕ → PairERSource` strict mono with
 `y n ∈ ⋂ k ≤ n, A k`, extract a single `z ∈ ⋂ n, A n`.
