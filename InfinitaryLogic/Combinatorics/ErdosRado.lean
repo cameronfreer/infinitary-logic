@@ -1601,12 +1601,100 @@ the δ-side.
 the next incremental step after `IsTypeCoherent` is established. -/
 lemma PairERCoherentFamily.validFiber_mono
     {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
-    (F : PairERCoherentFamily cR α) (_hF_type : F.IsTypeCoherent)
-    {δ β : Ordinal.{0}} (_hδβ : δ < β) (_hβα : β < α) {_y : PairERSource}
-    (_hy : _y ∈ validFiber cR (F.stage β _hβα).head (F.stage β _hβα).type) :
-    _y ∈ validFiber cR (F.stage δ (_hδβ.trans _hβα)).head
-      (F.stage δ (_hδβ.trans _hβα)).type := by
-  sorry
+    (F : PairERCoherentFamily cR α) (hF_type : F.IsTypeCoherent)
+    {δ β : Ordinal.{0}} (hδβ : δ < β) (hβα : β < α) {y : PairERSource}
+    (hy : y ∈ validFiber cR (F.stage β hβα).head (F.stage β hβα).type) :
+    y ∈ validFiber cR (F.stage δ (hδβ.trans hβα)).head
+      (F.stage δ (hδβ.trans hβα)).type := by
+  classical
+  haveI : IsWellOrder (Order.succ δ).ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder (Order.succ β).ToType (· < ·) := isWellOrder_lt
+  intro z_δ
+  set γ : Ordinal.{0} := Ordinal.typein (· < ·) z_δ with hγ_def
+  have hγ_lt_sδ : γ < Order.succ δ := by
+    simpa [γ, Ordinal.type_toType _] using
+      Ordinal.typein_lt_type
+        (· < · : (Order.succ δ).ToType → (Order.succ δ).ToType → Prop) z_δ
+  have hγ_le_δ : γ ≤ δ := Order.lt_succ_iff.mp hγ_lt_sδ
+  have hγ_lt_sβ : γ < Order.succ β :=
+    hγ_lt_sδ.trans_le (Order.succ_le_succ (le_of_lt hδβ))
+  set z_β : (Order.succ β).ToType :=
+    Ordinal.enum (α := (Order.succ β).ToType) (· < ·)
+      ⟨γ, (Ordinal.type_toType _).symm ▸ hγ_lt_sβ⟩ with hzβ_def
+  obtain ⟨h_lt, h_col⟩ := hy z_β
+  -- Need to transport h_lt and h_col from β-side to δ-side.
+  -- Use commitAt / typeAt as the bridge.
+  have h_head_β :
+      (F.stage β hβα).head z_β =
+      (F.stage β hβα).commitAt γ hγ_lt_sβ := by
+    show (F.stage β hβα).head z_β =
+      (F.stage β hβα).head
+        (Ordinal.enum (α := (Order.succ β).ToType) (· < ·)
+          ⟨γ, (Ordinal.type_toType (Order.succ β)).symm ▸ hγ_lt_sβ⟩)
+    rfl
+  have h_type_β :
+      (F.stage β hβα).type z_β =
+      (F.stage β hβα).typeAt γ hγ_lt_sβ := by
+    show (F.stage β hβα).type z_β =
+      (F.stage β hβα).type
+        (Ordinal.enum (α := (Order.succ β).ToType) (· < ·)
+          ⟨γ, (Ordinal.type_toType (Order.succ β)).symm ▸ hγ_lt_sβ⟩)
+    rfl
+  have h_enum_typein :
+      Ordinal.enum (α := (Order.succ δ).ToType) (· < ·)
+        ⟨γ, (Ordinal.type_toType (Order.succ δ)).symm ▸ hγ_lt_sδ⟩ = z_δ := by
+    have := Ordinal.enum_typein (α := (Order.succ δ).ToType) (· < ·) z_δ
+    convert this using 2
+  have h_head_δ :
+      (F.stage δ (hδβ.trans hβα)).head z_δ =
+      (F.stage δ (hδβ.trans hβα)).commitAt γ hγ_lt_sδ := by
+    show (F.stage δ (hδβ.trans hβα)).head z_δ =
+      (F.stage δ (hδβ.trans hβα)).head _
+    rw [h_enum_typein]
+  have h_type_δ :
+      (F.stage δ (hδβ.trans hβα)).type z_δ =
+      (F.stage δ (hδβ.trans hβα)).typeAt γ hγ_lt_sδ := by
+    show (F.stage δ (hδβ.trans hβα)).type z_δ =
+      (F.stage δ (hδβ.trans hβα)).type _
+    rw [h_enum_typein]
+  -- Now h_lt : (stage β).head z_β < y and we want (stage δ).head z_δ < y.
+  -- By h_head_β and h_head_δ, it suffices that (stage β).commitAt γ = (stage δ).commitAt γ.
+  have h_commits_agree :
+      (F.stage β hβα).commitAt γ hγ_lt_sβ =
+      (F.stage δ (hδβ.trans hβα)).commitAt γ hγ_lt_sδ := by
+    rcases lt_or_eq_of_le hγ_le_δ with hγ_lt_δ | hγ_eq_δ
+    · rw [F.coherent (hγ_lt_δ.trans hδβ) hβα, F.coherent hγ_lt_δ (hδβ.trans hβα)]
+    · -- γ = δ: use F.coherent (δ < β) directly, rewriting γ-arguments to δ.
+      have h_cong :
+          (F.stage β hβα).commitAt γ hγ_lt_sβ =
+            (F.stage β hβα).commitAt δ (hδβ.trans (Order.lt_succ β)) := by
+        congr 1
+      rw [h_cong, F.coherent hδβ hβα]
+      congr 1
+      exact hγ_eq_δ.symm
+  have h_types_agree :
+      (F.stage β hβα).typeAt γ hγ_lt_sβ =
+      (F.stage δ (hδβ.trans hβα)).typeAt γ hγ_lt_sδ := by
+    rcases lt_or_eq_of_le hγ_le_δ with hγ_lt_δ | hγ_eq_δ
+    · rw [hF_type (hγ_lt_δ.trans hδβ) hβα, hF_type hγ_lt_δ (hδβ.trans hβα)]
+    · have h_cong :
+          (F.stage β hβα).typeAt γ hγ_lt_sβ =
+            (F.stage β hβα).typeAt δ (hδβ.trans (Order.lt_succ β)) := by
+        congr 1
+      rw [h_cong, hF_type hδβ hβα]
+      congr 1
+      exact hγ_eq_δ.symm
+  have h_head_eq :
+      (F.stage β hβα).head z_β = (F.stage δ (hδβ.trans hβα)).head z_δ := by
+    rw [h_head_β, h_head_δ]; exact h_commits_agree
+  have h_type_eq :
+      (F.stage β hβα).type z_β = (F.stage δ (hδβ.trans hβα)).type z_δ := by
+    rw [h_type_β, h_type_δ]; exact h_types_agree
+  refine ⟨?_, ?_⟩
+  · rw [← h_head_eq]; exact h_lt
+  · rw [← h_type_eq]
+    convert h_col using 3
+    exact h_head_eq.symm
 
 /-- **[FRONTIER]** *Type-coherent large limit fiber*. At a limit `α < ω_1`,
 assuming `F` is type-coherent, the valid fiber for the SPECIFIC
