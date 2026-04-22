@@ -1814,12 +1814,39 @@ lemma PairERCoherentFamily.validFiber_mono
     convert h_col using 3
     exact h_head_eq.symm
 
-/-- **[FRONTIER, preparatory]** *Nonempty intersection of stage fibers*.
-Logically weaker than the large-cardinality version — targets just
-nonemptiness of the intersection. If even this fails, then
-`IsTypeCoherent` is not the right frontier invariant. If it goes
-through, then the large-cardinality version is probably salvageable by
-refinement. -/
+/-- **Cofinal-sequence reindex of stage-fiber intersection**: if
+`e : ℕ → α` is monotone and cofinal in `α`, and the stage-fiber family
+is descending nested (under `IsTypeCoherent`), the α-intersection
+equals the ℕ-intersection along `e`. This is the lemma that makes the
+ordinal bookkeeping go away: for a descending family, a cofinal
+subfamily has the same intersection.
+
+**Hypotheses**:
+- `e` is monotone (weak): `n ≤ m → (e n).1 ≤ (e m).1`.
+- `e` is cofinal: `∀ β < α, ∃ n, β ≤ (e n).1`.
+- `F.IsTypeCoherent` (so `validFiber_mono` applies).
+
+**Proof sketch**:
+- ⊇: every term of the ℕ-intersection is an element of the α-intersection
+  (since `e n < α` picks an α-indexed term).
+- ⊆: given `y` in the ℕ-intersection and `β < α`, pick `n` with
+  `β ≤ (e n).1`; by `validFiber_mono`, `y ∈ validFiber(F.stage (e n).1)
+  ⊆ validFiber(F.stage β)`. -/
+theorem iInter_stage_fibers_eq_iInter_nat_of_cofinal
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (F : PairERCoherentFamily cR α) (_hF_type : F.IsTypeCoherent)
+    (_e : ℕ → {β : Ordinal.{0} // β < α})
+    (_e_mono : ∀ {n m : ℕ}, n ≤ m → (_e n).1 ≤ (_e m).1)
+    (_e_cofinal : ∀ β : Ordinal.{0}, β < α → ∃ n : ℕ, β ≤ (_e n).1) :
+    (⋂ (β : Ordinal.{0}) (hβα : β < α),
+        validFiber cR (F.stage β hβα).head (F.stage β hβα).type) =
+      ⋂ n : ℕ, validFiber cR
+        (F.stage (_e n).1 (_e n).2).head (F.stage (_e n).1 (_e n).2).type := by
+  sorry
+
+/-- **[FRONTIER, preparatory]** *Nonempty intersection of stage fibers*
+(α-indexed). Logically weaker than the large-cardinality version.
+If this fails under `IsTypeCoherent`, the invariant is wrong. -/
 theorem exists_nonempty_iInter_stage_fibers
     (cR : (Fin 2 ↪o PairERSource) → Bool)
     {α : Ordinal.{0}} (_hα : α < Ordinal.omega.{0} 1)
@@ -1828,28 +1855,34 @@ theorem exists_nonempty_iInter_stage_fibers
       validFiber cR (F.stage β hβα).head (F.stage β hβα).type) := by
   sorry
 
-/-- **[FRONTIER, nat-indexed reformulation]** Since `α < ω_1` is
-countable, the α-indexed intersection can be re-presented as a ℕ-
-indexed intersection. This strips the ordinal bookkeeping and exposes
-the actual combinatorics as a fusion/tree question.
-
-**Proof sketch**: use `countable_toType_of_lt_omega1` to get
-`Countable α.ToType`; pick an injection `ℕ ↪ α.ToType` (via `Nonempty
-(α.ToType ↪ ℕ)` inversion when α is infinite, trivial otherwise); the
-intersection is preserved. -/
-theorem exists_large_iInter_stage_fibers_nat_reindex
+/-- **[FRONTIER, nat-reindexed preparatory]** The nonempty frontier on
+a cofinal ℕ-reindex. This is the form that exposes the fusion/tree
+combinatorics cleanly. -/
+theorem exists_nonempty_iInter_stage_fibers_nat_reindex
     (cR : (Fin 2 ↪o PairERSource) → Bool)
     {α : Ordinal.{0}} (_hα : α < Ordinal.omega.{0} 1)
-    (F : PairERCoherentFamily cR α) (_hF_type : F.IsTypeCoherent) :
+    (F : PairERCoherentFamily cR α) (_hF_type : F.IsTypeCoherent)
+    (_e : ℕ → {β : Ordinal.{0} // β < α})
+    (_e_mono : ∀ {n m : ℕ}, n ≤ m → (_e n).1 ≤ (_e m).1)
+    (_e_cofinal : ∀ β : Ordinal.{0}, β < α → ∃ n : ℕ, β ≤ (_e n).1) :
+    Set.Nonempty (⋂ n : ℕ, validFiber cR
+      (F.stage (_e n).1 (_e n).2).head (F.stage (_e n).1 (_e n).2).type) := by
+  sorry
+
+/-- **Finite-prefix collapse**: every finite-prefix intersection
+`⋂ k<n, validFiber(F.stage (e k))` along a monotone `e` collapses to a
+single stage fiber (the largest one) by descending nestedness, and
+thus has cardinality `≥ succ ℶ_1`. A trivial consequence of
+`validFiber_mono`; included to make the "finite case is easy"
+observation explicit. -/
+theorem iInter_finite_stage_fibers_large
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (F : PairERCoherentFamily cR α) (_hF_type : F.IsTypeCoherent)
+    (_e : ℕ → {β : Ordinal.{0} // β < α})
+    (_e_mono : ∀ {n m : ℕ}, n ≤ m → (_e n).1 ≤ (_e m).1) (_n : ℕ) :
     Order.succ (Cardinal.beth.{0} 1) ≤
-      Cardinal.mk (⋂ (β : Ordinal.{0}) (hβα : β < α),
-        validFiber cR (F.stage β hβα).head (F.stage β hβα).type) ↔
-    -- ℕ-indexed equivalent: a countable descending sequence of stage
-    -- fibers has intersection of size ≥ succ ℶ_1.
-    ∀ (e : ℕ → {β : Ordinal.{0} // β < α}),
-    Order.succ (Cardinal.beth.{0} 1) ≤
-      Cardinal.mk (⋂ n : ℕ, validFiber cR
-        (F.stage (e n).1 (e n).2).head (F.stage (e n).1 (e n).2).type) := by
+      Cardinal.mk (⋂ k : Fin _n, validFiber cR
+        (F.stage (_e k).1 (_e k).2).head (F.stage (_e k).1 (_e k).2).type) := by
   sorry
 
 /-- **[FRONTIER, combinatorial core]** *Large intersection of stage
