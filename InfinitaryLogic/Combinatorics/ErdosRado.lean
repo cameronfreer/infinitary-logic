@@ -2181,6 +2181,46 @@ theorem exists_nonempty_validFiber_prefix_typeFn_of_canonical
   rw [F.validFiber_prefix_typeFn_eq_iInter hF.toIsTypeCoherent]
   exact exists_nonempty_iInter_stage_fibers_of_canonical F hF e e_mono e_cofinal
 
+/-- **[FRONTIER, combinatorial core]** Limit-level fusion theorem:
+given a limit `α`, a coherent family `F` at level `α`, and the
+hypothesis that EVERY proper restriction `F.restrict hβα` (for
+`β < α`) is `IsCanonicalTypeCoherent`, the ℕ-indexed intersection
+along any cofinal `e` in `α` is nonempty.
+
+This is the mathematical core: the Erdős–Rado-style tree/fusion
+argument using the structure of restricted-level IsCanonicalTypeCoherent.
+
+**Status**: the cleaned statement. Proof requires a genuine tree
+argument (canonical types on ω-length branches, `2^ℵ_0 = ℶ_1`
+pigeonhole) and is the remaining research task. -/
+theorem limit_fusion_of_canonical_restrictions
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (_hα_lim : Order.IsSuccLimit α)
+    (F : PairERCoherentFamily cR α) (_hF_type : F.IsTypeCoherent)
+    (_h_restrict_canonical : ∀ (β : Ordinal.{0}) (hβα : β < α),
+      (F.restrict (le_of_lt hβα)).IsCanonicalTypeCoherent)
+    (e : ℕ → {β : Ordinal.{0} // β < α})
+    (_e_mono : ∀ {n m : ℕ}, n ≤ m → (e n).1 ≤ (e m).1)
+    (_e_cofinal : ∀ β : Ordinal.{0}, β < α → ∃ n : ℕ, β ≤ (e n).1) :
+    Set.Nonempty (⋂ n : ℕ, validFiber cR
+      (F.stage (e n).1 (e n).2).head (F.stage (e n).1 (e n).2).type) := by
+  sorry
+
+/-- **`isCanonicalTypeCoherent_of_limit`**: at a limit `α`, if every
+proper restriction is `IsCanonicalTypeCoherent`, then so is `F`.
+Immediate corollary of `limit_fusion_of_canonical_restrictions`. -/
+theorem PairERCoherentFamily.isCanonicalTypeCoherent_of_limit
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα_lim : Order.IsSuccLimit α)
+    (F : PairERCoherentFamily cR α) (hF_type : F.IsTypeCoherent)
+    (h_restrict_canonical : ∀ (β : Ordinal.{0}) (hβα : β < α),
+      (F.restrict (le_of_lt hβα)).IsCanonicalTypeCoherent) :
+    F.IsCanonicalTypeCoherent := by
+  refine ⟨hF_type, ?_⟩
+  intro e e_mono e_cofinal
+  exact limit_fusion_of_canonical_restrictions hα_lim F hF_type
+    h_restrict_canonical e e_mono e_cofinal
+
 /-- **[FRONTIER, failure analysis]** Attempted extraction from the
 fusion sequence. Given `y : ℕ → PairERSource` strict mono with
 `y n ∈ ⋂ k ≤ n, A k`, extract a single `z ∈ ⋂ n, A n`.
