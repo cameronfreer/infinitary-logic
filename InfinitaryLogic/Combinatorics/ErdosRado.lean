@@ -1163,6 +1163,35 @@ noncomputable def PairERChain.limit {cR : (Fin 2 ↪o PairERSource) → Bool}
       type := Classical.choose hE
       large := Classical.choose_spec hE }
 
+/-- **Limit extension with a prescribed `τ`.** Bypasses the
+`exists_large_limit_fiber` choose by taking both `τ` and its fiber-
+largeness proof as input. This is the constructor needed for *type-
+coherent* limit chains — feed it the prescribed Bool function matching
+earlier committed Bools plus the `exists_large_limit_fiber_prescribed`
+witness (once available). -/
+noncomputable def PairERChain.limitWithType
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {α : Ordinal.{0}} (p : α.ToType ↪o PairERSource)
+    (τ : α.ToType → Bool)
+    (hlarge : Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (validFiber cR p τ)) :
+    PairERChain cR α :=
+  { head := p, type := τ, large := hlarge }
+
+/-- `limitWithType`'s `type` field is exactly the supplied `τ`. -/
+@[simp]
+lemma PairERChain.limitWithType_type
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (p : α.ToType ↪o PairERSource) (τ : α.ToType → Bool) (hlarge) :
+    (PairERChain.limitWithType (cR := cR) p τ hlarge).type = τ := rfl
+
+/-- `limitWithType`'s `head` field is exactly the supplied prefix `p`. -/
+@[simp]
+lemma PairERChain.limitWithType_head
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (p : α.ToType ↪o PairERSource) (τ : α.ToType → Bool) (hlarge) :
+    (PairERChain.limitWithType (cR := cR) p τ hlarge).head = p := rfl
+
 /-- **Limit-stage head = input prefix.** By definition, `PairERChain.limit`
 keeps the input prefix as the stage's head. -/
 @[simp]
@@ -1340,6 +1369,29 @@ lemma PairERChain.succ_typeAt_top
   unfold PairERChain.succ PairERChain.succNewBool
   simp only [extendType]
   rw [dif_pos he_top]
+
+/-- **`limitWithType_commitAt`**: commit at position `δ` is the prefix's
+value at the enumerated position — parallel to `PairERChain.limit_commitAt`. -/
+lemma PairERChain.limitWithType_commitAt
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (p : α.ToType ↪o PairERSource) (τ : α.ToType → Bool) (hlarge)
+    (δ : Ordinal.{0}) (hδ : δ < α) :
+    (PairERChain.limitWithType (cR := cR) p τ hlarge).commitAt δ hδ =
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      p (Ordinal.enum (α := α.ToType) (· < ·)
+        ⟨δ, (Ordinal.type_toType α).symm ▸ hδ⟩) := rfl
+
+/-- **`limitWithType_typeAt`**: Bool at position `δ` is `τ` at the
+enumerated position — the key property justifying "type-coherent
+limit chain". -/
+lemma PairERChain.limitWithType_typeAt
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (p : α.ToType ↪o PairERSource) (τ : α.ToType → Bool) (hlarge)
+    (δ : Ordinal.{0}) (hδ : δ < α) :
+    (PairERChain.limitWithType (cR := cR) p τ hlarge).typeAt δ hδ =
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      τ (Ordinal.enum (α := α.ToType) (· < ·)
+        ⟨δ, (Ordinal.type_toType α).symm ▸ hδ⟩) := rfl
 
 /-- **Coherent family of successor stages below `α`.** For each
 `β < α`, we have a stage at level `β + 1`, and later stages preserve
