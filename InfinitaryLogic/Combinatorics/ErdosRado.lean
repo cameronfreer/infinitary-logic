@@ -1877,6 +1877,38 @@ noncomputable def PairERCoherentFamily.extendAtSucc
       · exact F.coherent hδ_lt_β (Order.lt_succ β)
       · subst hδ_eq_β; rfl
 
+/-- The empty family is vacuously type-coherent. -/
+lemma PairERCoherentFamily.empty_isTypeCoherent
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    (PairERCoherentFamily.empty cR).IsTypeCoherent :=
+  fun _ hβα => absurd hβα (not_lt.mpr (zero_le _))
+
+/-- `extendAtSucc` preserves `IsTypeCoherent`: if the input family is
+type-coherent, so is the extension. Uses `succ_typeAt_old` to reduce
+the new top stage's types to the input's, then the input's own
+`IsTypeCoherent`. -/
+lemma PairERCoherentFamily.extendAtSucc_isTypeCoherent
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {β : Ordinal.{0}}
+    {F : PairERCoherentFamily cR (Order.succ β)}
+    (hF : F.IsTypeCoherent) :
+    F.extendAtSucc.IsTypeCoherent := by
+  intro δ γ hδγ hγ_succ
+  rcases lt_or_eq_of_le (Order.lt_succ_iff.mp hγ_succ) with hγ_lt | hγ_eq
+  · have hδ_lt : δ < Order.succ β := hδγ.trans hγ_lt
+    show (F.extendAtSucc.stage γ _).typeAt δ _ = (F.extendAtSucc.stage δ _).typeAt δ _
+    unfold PairERCoherentFamily.extendAtSucc
+    simp only [dif_pos hγ_lt, dif_pos hδ_lt]
+    exact hF hδγ hγ_lt
+  · subst hγ_eq
+    show (F.extendAtSucc.stage (Order.succ β) _).typeAt δ _ =
+      (F.extendAtSucc.stage δ _).typeAt δ _
+    unfold PairERCoherentFamily.extendAtSucc
+    simp only [dif_pos hδγ, dif_neg (lt_irrefl _)]
+    rw [PairERChain.succ_typeAt_old _ δ hδγ]
+    rcases lt_or_eq_of_le (Order.lt_succ_iff.mp hδγ) with hδ_lt_β | hδ_eq_β
+    · exact hF hδ_lt_β (Order.lt_succ β)
+    · subst hδ_eq_β; rfl
+
 /-- **Coherent bundle at level `α`.** Packages the current stage at
 `α`, the coherent family covering `β < α`, and the coherence between
 the stage's commits and the family's committed values. This is the
