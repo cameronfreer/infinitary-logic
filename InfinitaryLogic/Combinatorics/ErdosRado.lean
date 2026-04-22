@@ -1831,6 +1831,55 @@ noncomputable def PairERCoherentFamily.extendAtLimit
       rw [PairERCoherentFamily.limit_commitAt F hα δ hδβ]
       rfl
 
+/-- **Type-coherent variant of `extendAtLimit`**: uses
+`limitTypeCoherent` instead of `limit`, so the new top stage at level
+`α+1` preserves all earlier committed Bools. Requires `IsTypeCoherent`
+on the input family. -/
+noncomputable def PairERCoherentFamily.extendAtLimitTypeCoherent
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (F : PairERCoherentFamily cR α) (hF_type : F.IsTypeCoherent)
+    (hα : α < Ordinal.omega.{0} 1) :
+    PairERCoherentFamily cR (Order.succ α) where
+  stage β hβ :=
+    if h : β < α then F.stage β h
+    else
+      have hβ_eq : β = α :=
+        le_antisymm (Order.lt_succ_iff.mp hβ) (not_lt.mp h)
+      hβ_eq ▸ (F.limitTypeCoherent hF_type hα).succ
+  coherent := by
+    intro δ β hδβ hβ_succ
+    rcases lt_or_eq_of_le (Order.lt_succ_iff.mp hβ_succ) with hβ_lt_α | hβ_eq_α
+    · have hδ_lt_α : δ < α := hδβ.trans hβ_lt_α
+      simp only [dif_pos hβ_lt_α, dif_pos hδ_lt_α]
+      exact F.coherent hδβ hβ_lt_α
+    · subst hβ_eq_α
+      simp only [dif_pos hδβ, dif_neg (lt_irrefl _)]
+      rw [PairERChain.succ_commitAt _ δ hδβ]
+      rw [PairERCoherentFamily.limitTypeCoherent_commitAt F hF_type hα δ hδβ]
+      rfl
+
+/-- `extendAtLimitTypeCoherent` preserves `IsTypeCoherent`. The new top
+stage at level `α+1` has types matching `F.typeVal δ` at every earlier
+position δ < α, by `limitTypeCoherent_typeAt` + `succ_typeAt_old`. -/
+lemma PairERCoherentFamily.extendAtLimitTypeCoherent_isTypeCoherent
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    {F : PairERCoherentFamily cR α} (hF_type : F.IsTypeCoherent)
+    (hα : α < Ordinal.omega.{0} 1) :
+    (F.extendAtLimitTypeCoherent hF_type hα).IsTypeCoherent := by
+  unfold PairERCoherentFamily.IsTypeCoherent
+  intro δ β hδβ hβ_succ
+  rcases lt_or_eq_of_le (Order.lt_succ_iff.mp hβ_succ) with hβ_lt_α | hβ_eq_α
+  · have hδ_lt_α : δ < α := hδβ.trans hβ_lt_α
+    unfold PairERCoherentFamily.extendAtLimitTypeCoherent
+    simp only [dif_pos hβ_lt_α, dif_pos hδ_lt_α]
+    exact hF_type hδβ hβ_lt_α
+  · subst hβ_eq_α
+    unfold PairERCoherentFamily.extendAtLimitTypeCoherent
+    simp only [dif_pos hδβ, dif_neg (lt_irrefl _)]
+    rw [PairERChain.succ_typeAt_old _ δ hδβ]
+    rw [PairERCoherentFamily.limitTypeCoherent_typeAt F hF_type hα δ hδβ]
+    rfl
+
 /-- **Empty coherent family.** At level `α = 0`, there are no earlier
 successor stages; all fields are vacuous. Provides the base case for
 the transfinite recursion. -/
