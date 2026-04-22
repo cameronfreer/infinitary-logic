@@ -2059,6 +2059,58 @@ theorem exists_strict_mono_fusion_sequence
       show step m (y_seq m) ∈ A (m + 1)
       exact (h_step_spec m _).1
 
+/-- **[FRONTIER, failure analysis]** Attempted extraction from the
+fusion sequence. Given `y : ℕ → PairERSource` strict mono with
+`y n ∈ ⋂ k ≤ n, A k`, extract a single `z ∈ ⋂ n, A n`.
+
+**Why this fails from `IsTypeCoherent` alone**:
+
+The natural candidate for `z` is `sup y_n` (the ordinal sup, which
+lives in `PairERSource` since `cof (succ ℶ_1).ord = succ ℶ_1 > ω`).
+Properties we'd need:
+1. `z > commit_k` for each `k`: ✓, since `y_n > commit_k` for n ≥ k.
+2. `cR (pair (commit_k, z)) = typeVal k` for each `k`: ✗, NOT automatic.
+
+The second constraint is discrete. Even though `y_n ∈ validFiber
+(F.stage (e n))` (so `cR (pair (commit_k, y_n)) = typeVal k` for k in
+the prefix), the pair color at the sup `z` is not determined by the
+pair colors along the sequence. `cR` is an arbitrary 2-coloring; its
+value at `(commit_k, sup y_n)` can differ from `typeVal k`.
+
+**What's actually needed**: the classical Erdős–Rado proof tracks
+canonical types — for each point, record the Bool-valued function
+`λ k, cR (pair (commit_k, ·))` restricted to the prefix. By pigeonhole
+on `2^ℵ_0 = ℶ_1 < succ ℶ_1` many types, a type class of size `succ ℶ_1`
+exists, giving homogeneity.
+
+**Concrete diagnosis for this formalization**: `IsTypeCoherent`
+guarantees type-agreement at the *family* level (across
+`F.stage β`'s), but not at the *subset-fiber* level (across elements
+of validFiber). The fusion sequence `y_n` has types
+`cR (pair (commit_k, y_n)) = typeVal k` for `k ≤ n`, but
+`cR (pair (commit_k, y_m)) =?= typeVal k` for `m ≠ n, k` are
+un-constrained — they're implicit in `y_n ∈ validFiber`.
+
+**Proposed strengthening of `IsTypeCoherent` (next-session research
+direction)**: add a CANONICAL-TYPE invariant: each validFiber point
+carries a "type class" coded as a Bool-valued map, with ≥ succ ℶ_1
+points sharing the same type class. Then pigeonhole extraction works.
+
+This theorem is `sorry` not because the ω-sequence is wrong, but
+because the limit operation `sup` doesn't preserve the fiber structure.
+The failure is diagnostic: we know exactly what extra invariant the
+full proof needs. -/
+theorem exists_point_in_iInter_of_fusion_sequence
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (_F : PairERCoherentFamily cR α) (_hF_type : _F.IsTypeCoherent)
+    (_e : ℕ → {β : Ordinal.{0} // β < α})
+    (_e_mono : ∀ {n m : ℕ}, n ≤ m → (_e n).1 ≤ (_e m).1) :
+    Set.Nonempty (⋂ n : ℕ, validFiber cR
+      (_F.stage (_e n).1 (_e n).2).head (_F.stage (_e n).1 (_e n).2).type) := by
+  -- Step (producing the sequence): works, this is `exists_strict_mono_fusion_sequence`.
+  -- Step (extracting a point from the sequence): fails — see docstring above.
+  sorry
+
 /-- **[FRONTIER, combinatorial core]** *Large intersection of stage
 fibers*. This is the mathematically meaningful statement, stripped of
 the prefix/typeFn bookkeeping: at a limit `α < ω_1` with `F` type-
