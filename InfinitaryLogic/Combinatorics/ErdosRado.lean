@@ -2300,6 +2300,76 @@ With `richStageCanonical cR α` producing a sorry-free `RichState cR α`
 at every `α < ω_1`, the remaining theorem pieces — chain extraction,
 pigeonhole, H5+H1 composition — are mechanical. -/
 
+/-- **Canonical commit value at position `δ < ω_1`**: take the
+`RichBundle` at level `Order.succ δ` and read off its `commit δ`. -/
+noncomputable def pairERCommit
+    (cR : (Fin 2 ↪o PairERSource) → Bool) (δ : Ordinal.{0})
+    (hδ : δ < Ordinal.omega.{0} 1) : PairERSource :=
+  have hsδ : Order.succ δ < Ordinal.omega.{0} 1 :=
+    (Cardinal.isSuccLimit_omega 1).succ_lt hδ
+  ((richStage cR (Order.succ δ) hsδ).bundles (Order.succ δ) le_rfl
+      hsδ).commit δ (Order.lt_succ δ)
+
+/-- **`pairERCommit` equals the canonical bundle's stage commit.** Via
+`RichBundle.commit_top` + `RichBundle.stage_eq`, the commit agrees with
+the underlying chain's `commitAt`. -/
+lemma pairERCommit_eq_stage_commitAt
+    (cR : (Fin 2 ↪o PairERSource) → Bool) (δ : Ordinal.{0})
+    (hδ : δ < Ordinal.omega.{0} 1) :
+    pairERCommit cR δ hδ =
+      have hsδ : Order.succ δ < Ordinal.omega.{0} 1 :=
+        (Cardinal.isSuccLimit_omega 1).succ_lt hδ
+      ((richStage cR (Order.succ δ) hsδ).bundles (Order.succ δ) le_rfl
+          hsδ).bundle.stage.commitAt δ (Order.lt_succ δ) := by
+  unfold pairERCommit
+  rw [((richStage cR (Order.succ δ) _).bundles (Order.succ δ) le_rfl _).stage_eq
+    δ (Order.lt_succ δ)]
+
+/-- **`pairERCommit` is strictly monotone** in `δ`. Proof strategy:
+realize both commits inside the single chain at level `succ δ₂` via
+the cross-level identity between `rb₁`'s stage and `rb₂`'s family
+(using `RichState.prev_eq` + `PairERChain.succ_commitAt`), then apply
+`PairERChain.commitAt_strictMono`. -/
+lemma pairERCommit_strictMono
+    (cR : (Fin 2 ↪o PairERSource) → Bool) {δ₁ δ₂ : Ordinal.{0}}
+    (hδ₁ : δ₁ < Ordinal.omega.{0} 1) (hδ₂ : δ₂ < Ordinal.omega.{0} 1)
+    (h : δ₁ < δ₂) :
+    pairERCommit cR δ₁ hδ₁ < pairERCommit cR δ₂ hδ₂ := by
+  have hsδ₁ : Order.succ δ₁ < Ordinal.omega.{0} 1 :=
+    (Cardinal.isSuccLimit_omega 1).succ_lt hδ₁
+  have hsδ₂ : Order.succ δ₂ < Ordinal.omega.{0} 1 :=
+    (Cardinal.isSuccLimit_omega 1).succ_lt hδ₂
+  have h_sδ₁_lt_sδ₂ : Order.succ δ₁ < Order.succ δ₂ := Order.succ_lt_succ h
+  set state : RichState cR (Order.succ δ₂) :=
+    richStage cR (Order.succ δ₂) hsδ₂ with hstate
+  set rb₂ : RichBundle cR (Order.succ δ₂) :=
+    state.bundles (Order.succ δ₂) le_rfl hsδ₂ with hrb₂
+  -- rb₂'s own stage is strict-monotone in position.
+  have h_mono : rb₂.bundle.stage.commitAt δ₁ (h.trans (Order.lt_succ δ₂)) <
+      rb₂.bundle.stage.commitAt δ₂ (Order.lt_succ δ₂) :=
+    PairERChain.commitAt_strictMono (s := rb₂.bundle.stage)
+      (hδ₁ := h.trans (Order.lt_succ δ₂))
+      (hδ₂ := Order.lt_succ δ₂) h
+  -- Identify both commits with rb₂'s stage commits.
+  have h_δ₂_eq : rb₂.bundle.stage.commitAt δ₂ (Order.lt_succ δ₂) =
+      pairERCommit cR δ₂ hδ₂ := by
+    rw [pairERCommit_eq_stage_commitAt]
+  have h_δ₁_eq : rb₂.bundle.stage.commitAt δ₁ (h.trans (Order.lt_succ δ₂)) =
+      pairERCommit cR δ₁ hδ₁ := by
+    -- Chain of equalities through stage_eq, family_eq, prev_eq, and succ_commitAt.
+    rw [rb₂.stage_eq δ₁ (h.trans (Order.lt_succ δ₂))]
+    rw [← rb₂.family_eq (Order.succ δ₁) h_sδ₁_lt_sδ₂ δ₁ (Order.lt_succ δ₁)]
+    rw [state.prev_eq (Order.succ δ₂) le_rfl hsδ₂ (Order.succ δ₁)
+      h_sδ₁_lt_sδ₂ (le_of_lt h_sδ₁_lt_sδ₂) hsδ₁]
+    rw [show state.bundles (Order.succ δ₁) (le_of_lt h_sδ₁_lt_sδ₂) hsδ₁ =
+          (richStage cR (Order.succ δ₁) hsδ₁).bundles (Order.succ δ₁) le_rfl
+            hsδ₁ from
+        richStage_bundle_eq_self cR hsδ₂ (le_of_lt h_sδ₁_lt_sδ₂) hsδ₁]
+    rw [PairERChain.succ_commitAt _ δ₁ (Order.lt_succ δ₁)]
+    rw [← pairERCommit_eq_stage_commitAt]
+  rw [← h_δ₁_eq, ← h_δ₂_eq]
+  exact h_mono
+
 /-! ### Existence of stages at every level `< ω_1`
 
 The transfinite-assembly existence lemma `exists_PairERChain`: for
