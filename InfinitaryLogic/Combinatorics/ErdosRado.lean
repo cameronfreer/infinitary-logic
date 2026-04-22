@@ -2044,6 +2044,66 @@ noncomputable def CoherentBundle.limitExtend
     family := family
     coh := fun δ hδ => family.limit_commitAt hα δ hδ }
 
+/-- **Type-coherence invariants for a `CoherentBundle`**: the stage's
+Bool at each earlier position matches the family's committed Bool at
+that position, AND the family itself is type-coherent. Parallel to
+how `coh` encodes the head invariant. Tracked externally. -/
+structure CoherentBundle.IsTypeCoh
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (b : CoherentBundle cR α) : Prop where
+  /-- The stage's `typeAt δ` agrees with the family's `typeVal δ`. -/
+  stage_type : ∀ δ (hδ : δ < α),
+    b.stage.typeAt δ hδ = b.family.typeVal δ hδ
+  /-- The family itself is type-coherent. -/
+  family_type : b.family.IsTypeCoherent
+
+/-- The zero coherent bundle is vacuously type-coherent. -/
+lemma CoherentBundle.zero_isTypeCoh
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    (CoherentBundle.zero cR).IsTypeCoh where
+  stage_type := fun _ hδ => absurd hδ (not_lt.mpr (zero_le _))
+  family_type := PairERCoherentFamily.empty_isTypeCoherent cR
+
+/-- `CoherentBundle.extend` preserves `IsTypeCoh`. -/
+lemma CoherentBundle.extend_isTypeCoh
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    {b : CoherentBundle cR α} (hb : b.IsTypeCoh) : b.extend.IsTypeCoh where
+  stage_type := by
+    intro δ hδ_succ
+    show b.extend.stage.typeAt δ hδ_succ = b.extend.family.typeVal δ hδ_succ
+    rcases lt_or_eq_of_le (Order.lt_succ_iff.mp hδ_succ) with hδ_lt | hδ_eq
+    · -- δ < α: stage = b.stage.succ; typeAt δ via succ_typeAt_old = b.stage.typeAt δ.
+      show b.stage.succ.typeAt δ hδ_succ = b.extend.family.typeVal δ hδ_succ
+      rw [PairERChain.succ_typeAt_old _ δ hδ_lt]
+      show b.stage.typeAt δ hδ_lt =
+        (b.extend.family.stage δ hδ_succ).typeAt δ (Order.lt_succ δ)
+      unfold CoherentBundle.extend
+      simp only [dif_pos hδ_lt]
+      exact hb.stage_type δ hδ_lt
+    · subst hδ_eq
+      show b.stage.succ.typeAt δ hδ_succ = b.extend.family.typeVal δ hδ_succ
+      show b.stage.succ.typeAt δ hδ_succ =
+        (b.extend.family.stage δ hδ_succ).typeAt δ (Order.lt_succ δ)
+      unfold CoherentBundle.extend
+      simp only [dif_neg (lt_irrefl _)]
+  family_type := by
+    -- extend's family is type-coherent: reduces to hb's invariants.
+    intro δ γ hδγ hγα
+    rcases lt_or_eq_of_le (Order.lt_succ_iff.mp hγα) with hγ_lt | hγ_eq
+    · have hδ_lt : δ < α := hδγ.trans hγ_lt
+      show (b.extend.family.stage γ hγα).typeAt δ _ =
+        (b.extend.family.stage δ _).typeAt δ _
+      unfold CoherentBundle.extend
+      simp only [dif_pos hγ_lt, dif_pos hδ_lt]
+      exact hb.family_type hδγ hγ_lt
+    · subst hγ_eq
+      show (b.extend.family.stage γ hγα).typeAt δ _ =
+        (b.extend.family.stage δ _).typeAt δ _
+      unfold CoherentBundle.extend
+      simp only [dif_pos hδγ, dif_neg (lt_irrefl _)]
+      rw [PairERChain.succ_typeAt_old _ δ hδγ]
+      exact hb.stage_type δ hδγ
+
 /-- **Cross-IH coherence for the zero-stage-appended recursion.** For
 any candidate recursion function `f : ∀ α, α < ω_1 → CoherentBundle cR
 α` that matches the zero/succ cases, cross-IH at successor levels
