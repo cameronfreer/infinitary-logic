@@ -1395,14 +1395,15 @@ lemma PairERChain.limitWithType_typeAt
 
 /-- **Coherent family of successor stages below `α`.** For each
 `β < α`, we have a stage at level `β + 1`, and later stages preserve
-the committed value at every earlier position. This is the exact data
+the committed head at every earlier position. This is the exact data
 needed to glue a genuine limit-stage prefix.
 
-**NOTE**: currently only enforces HEAD coherence (`coherent` field).
-The `type_coherent` field (parallel statement for `typeAt`) is the
-next architectural extension, blocked on a sharper limit-kernel giving
-a large fiber for the specific prescribed τ matching earlier committed
-Bools. See `typeAt` API above and limit-kernel TODO below. -/
+**Type coherence** — the parallel statement for `typeAt` — is tracked
+EXTERNALLY via `IsTypeCoherent` rather than as a structural field,
+because not all existing constructors (notably `CoherentBundle.limit
+Extend`) establish it yet. The limit-case type coherence is the
+frontier: it requires the sharper limit-kernel
+`exists_large_limit_fiber_prescribed`. -/
 structure PairERCoherentFamily
     (cR : (Fin 2 ↪o PairERSource) → Bool) (α : Ordinal.{0}) where
   stage : ∀ β : Ordinal.{0}, β < α → PairERChain cR (Order.succ β)
@@ -1410,6 +1411,16 @@ structure PairERCoherentFamily
     ∀ {δ β : Ordinal.{0}} (hδβ : δ < β) (hβα : β < α),
       (stage β hβα).commitAt δ (hδβ.trans (Order.lt_succ β)) =
         (stage δ (hδβ.trans hβα)).commitAt δ (Order.lt_succ δ)
+
+/-- **Type coherence invariant for a `PairERCoherentFamily`**: later
+stages preserve the Bool committed at earlier positions. Tracked
+externally (see `PairERCoherentFamily`'s docstring). -/
+def PairERCoherentFamily.IsTypeCoherent
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (F : PairERCoherentFamily cR α) : Prop :=
+  ∀ {δ β : Ordinal.{0}} (hδβ : δ < β) (hβα : β < α),
+    (F.stage β hβα).typeAt δ (hδβ.trans (Order.lt_succ β)) =
+      (F.stage δ (hδβ.trans hβα)).typeAt δ (Order.lt_succ δ)
 
 /-- **Committed value at ordinal position `δ`.** In a coherent family,
 look at the stage `δ + 1` and read off the value committed at the new
@@ -1532,32 +1543,34 @@ noncomputable def PairERCoherentFamily.typeFn
         Ordinal.typein_lt_type (· < · : α.ToType → α.ToType → Prop) x)
 
 /-- **[FRONTIER]** *Type-coherent large limit fiber*. At a limit `α < ω_1`,
-the valid fiber for the SPECIFIC `F.typeFn` (not an arbitrary τ) has
-cardinality `≥ succ ℶ_1`.
+assuming `F` is type-coherent, the valid fiber for the SPECIFIC
+`F.typeFn` (not an arbitrary τ) has cardinality `≥ succ ℶ_1`.
 
 This is the sharpening of `exists_large_limit_fiber` needed for pair-
-homogeneity across limits. Without it, `PairERChain.limit` can only
-produce "some τ with large fiber" (forgetting earlier committed Bools),
-but homogeneity requires the limit stage to preserve all earlier Bools.
+homogeneity across limits. `exists_large_limit_fiber` returns an
+ARBITRARY τ with large fiber; we need specifically the τ matching
+earlier committed Bools (`F.typeFn`), which requires a direct cardinal
+argument.
 
-**Why not provable from the existing kernel:**
-- `exists_large_limit_fiber` picks τ via H3 pigeonhole over the space
-  `α.ToType → Bool`, returning whichever τ has large fiber.
-- For the prescribed τ (= committed Bools), we can't use H3; we need a
-  direct cardinal argument.
-- The standard argument is that for a regular κ = succ ℶ_1 and α < ω_1
-  with ω_1 < κ, a "nested" family of per-position large fibers
-  intersects to a large set. For this to hold in our framework, we
-  also need **type coherence** in `PairERCoherentFamily` (so that
-  successor-stage fibers descend consistently).
+**Proof sketch** (nested-intersection + regularity):
+1. `validFiber cR F.prefix F.typeFn ⊇ ⋂_{β < α} validFiber cR (F.stage β).head (F.stage β).type`.
+   This inclusion uses `coherent` (heads agree) + `IsTypeCoherent`
+   (types agree).
+2. Each `validFiber (F.stage β)` has size `≥ succ ℶ_1` by
+   `(F.stage β).large`.
+3. With `IsTypeCoherent`, the family is *descending nested*:
+   `validFiber (F.stage (β+1)) ⊆ validFiber (F.stage β)` restricted
+   to earlier positions.
+4. Apply nested-intersection + regularity of `succ ℶ_1`.
 
-**Future extension**: add `type_coherent` field to
-`PairERCoherentFamily`; prove this theorem using nested-intersection
-+ regularity argument. -/
+Step (4) is the subtle cardinal argument — for a regular `κ`, an
+`α`-indexed (α < κ) descending nested family of size-`κ` subsets of a
+size-`κ` universe has intersection of size `≥ κ` under additional
+"large complement" assumptions. -/
 theorem exists_large_limit_fiber_prescribed
     (cR : (Fin 2 ↪o PairERSource) → Bool)
     {α : Ordinal.{0}} (hα : α < Ordinal.omega.{0} 1)
-    (F : PairERCoherentFamily cR α) :
+    (F : PairERCoherentFamily cR α) (hF_type : F.IsTypeCoherent) :
     Order.succ (Cardinal.beth.{0} 1) ≤
       Cardinal.mk (validFiber cR F.prefix F.typeFn) := by
   sorry
