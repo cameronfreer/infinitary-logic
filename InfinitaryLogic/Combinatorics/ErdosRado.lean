@@ -1585,6 +1585,104 @@ lemma PairERCoherentFamily.validFiber_of_stages
   · rw [← h_head]; exact h_lt
   · rw [← h_type]; convert h_col using 2
 
+/-- **Reverse inclusion of `validFiber_of_stages`** (under
+`IsTypeCoherent`): if `y` lies in `validFiber cR F.prefix F.typeFn`,
+then `y` lies in every stage's validFiber. Combined with
+`validFiber_of_stages`, this gives
+`validFiber cR F.prefix F.typeFn = ⋂_β validFiber cR (F.stage β).head
+(F.stage β).type` — isolating the cardinality question from the
+prefix/typeFn bookkeeping. -/
+lemma PairERCoherentFamily.validFiber_of_prefix_typeFn
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (F : PairERCoherentFamily cR α) (hF_type : F.IsTypeCoherent)
+    {β : Ordinal.{0}} (hβα : β < α) {y : PairERSource}
+    (hy : y ∈ validFiber cR F.prefix F.typeFn) :
+    y ∈ validFiber cR (F.stage β hβα).head (F.stage β hβα).type := by
+  classical
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder (Order.succ β).ToType (· < ·) := isWellOrder_lt
+  intro z_β
+  -- Case on z_β = top vs z_β < top.
+  by_cases h_top : z_β = (⊤ : (Order.succ β).ToType)
+  · -- z_β = top: the position corresponds to ordinal β itself.
+    subst h_top
+    -- Use the position of β in α.ToType (which exists since β < α).
+    set x_α : α.ToType := Ordinal.enum (α := α.ToType) (· < ·)
+      ⟨β, (Ordinal.type_toType α).symm ▸ hβα⟩ with hxα_def
+    obtain ⟨h_lt, h_col⟩ := hy x_α
+    have h_prefix_eq : F.prefix x_α = F.commitVal β hβα :=
+      F.prefix_enum β hβα
+    have h_typeFn_eq : F.typeFn x_α = F.typeVal β hβα := by
+      show F.typeVal (Ordinal.typein (· < ·) x_α) _ = F.typeVal β hβα
+      congr 1
+      rw [hxα_def, Ordinal.typein_enum]
+    -- (F.stage β hβα).head ⊤ = (F.stage β hβα).commitAt β (Order.lt_succ β) = F.commitVal β hβα.
+    have h_top_enum : (⊤ : (Order.succ β).ToType) =
+        Ordinal.enum (α := (Order.succ β).ToType) (· < ·)
+          ⟨β, (Ordinal.type_toType _).symm ▸ Order.lt_succ β⟩ :=
+      Ordinal.enum_succ_eq_top.symm
+    have h_head_eq : (F.stage β hβα).head (⊤ : (Order.succ β).ToType) =
+        F.commitVal β hβα := congrArg (F.stage β hβα).head h_top_enum
+    have h_type_eq : (F.stage β hβα).type (⊤ : (Order.succ β).ToType) =
+        F.typeVal β hβα := congrArg (F.stage β hβα).type h_top_enum
+    refine ⟨?_, ?_⟩
+    · rw [h_head_eq, ← h_prefix_eq]; exact h_lt
+    · rw [h_type_eq, ← h_typeFn_eq]
+      convert h_col using 3
+      rw [h_prefix_eq, ← h_head_eq]
+  · -- z_β < top: the position corresponds to some ordinal γ < β.
+    -- Extract γ = typein z_β, which is < β (strict).
+    have hγ_lt_sβ : Ordinal.typein (· < ·) z_β < Order.succ β := by
+      simpa [Ordinal.type_toType _] using
+        Ordinal.typein_lt_type
+          (· < · : (Order.succ β).ToType → (Order.succ β).ToType → Prop) z_β
+    have hγ_lt_top : z_β < (⊤ : (Order.succ β).ToType) :=
+      lt_of_le_of_ne le_top h_top
+    have hγ_lt_β : Ordinal.typein (· < ·) z_β < β := by
+      have htop_typein : Ordinal.typein (· < ·)
+          (⊤ : (Order.succ β).ToType) = β := by
+        rw [show (⊤ : (Order.succ β).ToType) =
+          Ordinal.enum (α := (Order.succ β).ToType) (· < ·)
+            ⟨β, (Ordinal.type_toType _).symm ▸ Order.lt_succ β⟩
+          from Ordinal.enum_succ_eq_top.symm, Ordinal.typein_enum]
+      calc Ordinal.typein (· < ·) z_β
+          < Ordinal.typein (· < ·) (⊤ : (Order.succ β).ToType) :=
+            (Ordinal.typein_lt_typein (· < ·)).mpr hγ_lt_top
+        _ = β := htop_typein
+    have hγ_lt_α : Ordinal.typein (· < ·) z_β < α := hγ_lt_β.trans hβα
+    set γ : Ordinal.{0} := Ordinal.typein (· < ·) z_β with hγ_def
+    set x_α : α.ToType := Ordinal.enum (α := α.ToType) (· < ·)
+      ⟨γ, (Ordinal.type_toType α).symm ▸ hγ_lt_α⟩ with hxα_def
+    obtain ⟨h_lt, h_col⟩ := hy x_α
+    have h_prefix_eq : F.prefix x_α = F.commitVal γ hγ_lt_α :=
+      F.prefix_enum γ hγ_lt_α
+    have h_typeFn_eq : F.typeFn x_α = F.typeVal γ hγ_lt_α := by
+      show F.typeVal (Ordinal.typein (· < ·) x_α) _ = F.typeVal γ hγ_lt_α
+      congr 1
+      rw [hxα_def, Ordinal.typein_enum]
+    have h_ze : z_β =
+        Ordinal.enum (α := (Order.succ β).ToType) (· < ·)
+          ⟨γ, (Ordinal.type_toType _).symm ▸ hγ_lt_sβ⟩ := by
+      show z_β = Ordinal.enum (α := (Order.succ β).ToType) (· < ·)
+        ⟨Ordinal.typein (· < ·) z_β, _⟩
+      exact (Ordinal.enum_typein (α := (Order.succ β).ToType) (· < ·) z_β).symm
+    have h_head_commit :
+        (F.stage β hβα).head z_β = (F.stage β hβα).commitAt γ hγ_lt_sβ :=
+      congrArg (F.stage β hβα).head h_ze
+    have h_type_at :
+        (F.stage β hβα).type z_β = (F.stage β hβα).typeAt γ hγ_lt_sβ :=
+      congrArg (F.stage β hβα).type h_ze
+    -- Now γ < β strictly, so F.coherent and hF_type apply directly.
+    have h_head_eq : (F.stage β hβα).head z_β = F.commitVal γ hγ_lt_α := by
+      rw [h_head_commit]; exact F.coherent hγ_lt_β hβα
+    have h_type_eq : (F.stage β hβα).type z_β = F.typeVal γ hγ_lt_α := by
+      rw [h_type_at]; exact hF_type hγ_lt_β hβα
+    refine ⟨?_, ?_⟩
+    · rw [h_head_eq, ← h_prefix_eq]; exact h_lt
+    · rw [h_type_eq, ← h_typeFn_eq]
+      convert h_col using 3
+      rw [h_prefix_eq, ← h_head_eq]
+
 /-- **Descending nesting of stage validFibers** (under `IsTypeCoherent`):
 if `δ < β < α` and `F` is type-coherent, any `y` in the validFiber at
 stage `β` is also in the validFiber at stage `δ`. This is the key
