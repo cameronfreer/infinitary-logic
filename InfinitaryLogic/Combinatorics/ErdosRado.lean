@@ -1737,6 +1737,18 @@ noncomputable def PairERCoherentFamily.limit
     PairERChain cR α :=
   PairERChain.limit hα F.prefix
 
+/-- **Type-coherent limit stage**: built via `limitWithType` with the
+prescribed `F.typeFn` and the frontier theorem. The resulting chain's
+`type` function is exactly `F.typeFn`, preserving earlier committed
+Bools — in contrast to `PairERCoherentFamily.limit` which picks a
+fresh τ via `exists_large_limit_fiber`. -/
+noncomputable def PairERCoherentFamily.limitTypeCoherent
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (F : PairERCoherentFamily cR α) (hF_type : F.IsTypeCoherent)
+    (hα : α < Ordinal.omega.{0} 1) : PairERChain cR α :=
+  PairERChain.limitWithType F.prefix F.typeFn
+    (exists_large_limit_fiber_prescribed cR hα F hF_type)
+
 /-- **Limit-stage commit reproduces the coherent family.** This is the
 main payoff of the glue API: the limit stage's commit at `δ < α` is
 exactly the value already committed by stage `δ + 1`. -/
@@ -1747,6 +1759,36 @@ lemma PairERCoherentFamily.limit_commitAt
     (F.limit hα).commitAt δ hδ = F.commitVal δ hδ := by
   rw [PairERCoherentFamily.limit, PairERChain.limit_commitAt]
   exact F.prefix_enum δ hδ
+
+/-- **Type-coherent limit's commitAt** equals `F.commitVal`. Same as
+`limit_commitAt` since the head function is `F.prefix` in both. -/
+lemma PairERCoherentFamily.limitTypeCoherent_commitAt
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (F : PairERCoherentFamily cR α) (hF_type : F.IsTypeCoherent)
+    (hα : α < Ordinal.omega.{0} 1) (δ : Ordinal.{0}) (hδ : δ < α) :
+    (F.limitTypeCoherent hF_type hα).commitAt δ hδ = F.commitVal δ hδ := by
+  rw [PairERCoherentFamily.limitTypeCoherent,
+    PairERChain.limitWithType_commitAt]
+  exact F.prefix_enum δ hδ
+
+/-- **Type-coherent limit's typeAt** equals `F.typeVal`. THIS is the
+payoff for type-coherent limits — unlike `F.limit` (via fresh τ),
+this limit preserves earlier committed Bools. -/
+lemma PairERCoherentFamily.limitTypeCoherent_typeAt
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (F : PairERCoherentFamily cR α) (hF_type : F.IsTypeCoherent)
+    (hα : α < Ordinal.omega.{0} 1) (δ : Ordinal.{0}) (hδ : δ < α) :
+    (F.limitTypeCoherent hF_type hα).typeAt δ hδ = F.typeVal δ hδ := by
+  classical
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  rw [PairERCoherentFamily.limitTypeCoherent,
+    PairERChain.limitWithType_typeAt]
+  -- Goal: `F.typeFn (enum ⟨δ, _⟩) = F.typeVal δ hδ`.
+  show F.typeVal (Ordinal.typein (· < ·)
+      (Ordinal.enum (α := α.ToType) (· < ·)
+        ⟨δ, (Ordinal.type_toType α).symm ▸ hδ⟩)) _ = F.typeVal δ hδ
+  congr 1
+  exact Ordinal.typein_enum _ _
 
 /-- **Limit-case extension of the coherent family.** Given a coherent
 family `F` below level `α` and a proof `hα : α < ω_1`, produce the
