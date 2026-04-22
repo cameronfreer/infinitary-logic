@@ -1585,6 +1585,29 @@ lemma PairERCoherentFamily.validFiber_of_stages
   · rw [← h_head]; exact h_lt
   · rw [← h_type]; convert h_col using 2
 
+/-- **Descending nesting of stage validFibers** (under `IsTypeCoherent`):
+if `δ < β < α` and `F` is type-coherent, any `y` in the validFiber at
+stage `β` is also in the validFiber at stage `δ`. This is the key
+cardinality-argument precondition for the frontier theorem: the
+`{validFiber(F.stage β)}` family is descending nested.
+
+**Proof sketch**: for each `z_δ : (succ δ).ToType` with ordinal position
+`γ ≤ δ`, pull back to `z_β : (succ β).ToType` at the same ordinal γ.
+Use `coherent` to identify heads at γ across β and δ; use `IsTypeCoherent`
+to identify types. The constraints at γ transfer from the β-side to
+the δ-side.
+
+**TODO**: the proof requires careful position-enum bookkeeping; left as
+the next incremental step after `IsTypeCoherent` is established. -/
+lemma PairERCoherentFamily.validFiber_mono
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (F : PairERCoherentFamily cR α) (_hF_type : F.IsTypeCoherent)
+    {δ β : Ordinal.{0}} (_hδβ : δ < β) (_hβα : β < α) {_y : PairERSource}
+    (_hy : _y ∈ validFiber cR (F.stage β _hβα).head (F.stage β _hβα).type) :
+    _y ∈ validFiber cR (F.stage δ (_hδβ.trans _hβα)).head
+      (F.stage δ (_hδβ.trans _hβα)).type := by
+  sorry
+
 /-- **[FRONTIER]** *Type-coherent large limit fiber*. At a limit `α < ω_1`,
 assuming `F` is type-coherent, the valid fiber for the SPECIFIC
 `F.typeFn` (not an arbitrary τ) has cardinality `≥ succ ℶ_1`.
