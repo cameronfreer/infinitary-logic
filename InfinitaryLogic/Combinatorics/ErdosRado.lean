@@ -2492,8 +2492,33 @@ deferred as the only remaining sorry in the successor chain. -/
 lemma PairERCoherentFamily.isCanonicalTypeCoherent_of_succ
     {cR : (Fin 2 ↪o PairERSource) → Bool} {β : Ordinal.{0}}
     (F : PairERCoherentFamily cR (Order.succ β))
-    (_hF_type : F.IsTypeCoherent) : F.IsCanonicalTypeCoherent := by
-  sorry
+    (hF_type : F.IsTypeCoherent) : F.IsCanonicalTypeCoherent := by
+  refine ⟨hF_type, ?_⟩
+  intro e _e_mono _e_cofinal
+  -- validFiber (F.stage β _) is nonempty (cardinality ≥ succ ℶ_1 > 0).
+  have h_large : Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (validFiber cR (F.stage β (Order.lt_succ β)).head
+        (F.stage β (Order.lt_succ β)).type) :=
+    (F.stage β (Order.lt_succ β)).large
+  have h_ne_zero : Cardinal.mk (validFiber cR
+      (F.stage β (Order.lt_succ β)).head (F.stage β (Order.lt_succ β)).type) ≠ 0 := by
+    have h_pos : (0 : Cardinal) < Cardinal.mk (validFiber cR
+        (F.stage β (Order.lt_succ β)).head (F.stage β (Order.lt_succ β)).type) :=
+      (Cardinal.aleph0_pos.trans_le isRegular_succ_beth_one.aleph0_le).trans_le h_large
+    exact h_pos.ne'
+  obtain ⟨⟨y, hy⟩⟩ := Cardinal.mk_ne_zero_iff.mp h_ne_zero
+  refine ⟨y, ?_⟩
+  simp only [Set.mem_iInter]
+  intro n
+  -- Abstract over (e n).1 and (e n).2 in the goal.
+  suffices h : ∀ (γ : Ordinal.{0}) (hγ : γ < Order.succ β),
+      y ∈ validFiber cR (F.stage γ hγ).head (F.stage γ hγ).type by
+    exact h (e n).1 (e n).2
+  intro γ hγ
+  have h_le : γ ≤ β := Order.lt_succ_iff.mp hγ
+  rcases eq_or_lt_of_le h_le with h_eq | h_lt
+  · subst h_eq; exact hy
+  · exact F.validFiber_mono hF_type h_lt (Order.lt_succ β) hy
 
 /-- **Coherent bundle at level `α`.** Packages the current stage at
 `α`, the coherent family covering `β < α`, and the coherence between
