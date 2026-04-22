@@ -2389,6 +2389,48 @@ lemma pairERCommit_strictMono
   rw [← h_δ₁_eq, ← h_δ₂_eq]
   exact h_mono
 
+/-- **Committed Bool at position `δ`**: the `type` value at the top
+position of the chain at level `succ δ`. -/
+noncomputable def pairERCommitBool
+    (cR : (Fin 2 ↪o PairERSource) → Bool) (δ : Ordinal.{0})
+    (hδ : δ < Ordinal.omega.{0} 1) : Bool :=
+  have hsδ : Order.succ δ < Ordinal.omega.{0} 1 :=
+    (Cardinal.isSuccLimit_omega 1).succ_lt hδ
+  ((richStage cR (Order.succ δ) hsδ).bundles (Order.succ δ) le_rfl
+      hsδ).bundle.stage.type (⊤ : (Order.succ δ).ToType)
+
+/-- **Indexed committed Bool function** on `(ω_1).ToType`. -/
+noncomputable def pairERCommitBoolFn
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    (Ordinal.omega.{0} 1).ToType → Bool := fun x =>
+  haveI : IsWellOrder (Ordinal.omega.{0} 1).ToType (· < ·) := isWellOrder_lt
+  pairERCommitBool cR (Ordinal.typein (· < ·) x) (by
+    simpa [Ordinal.type_toType] using
+      Ordinal.typein_lt_type
+        (· < · : (Ordinal.omega.{0} 1).ToType →
+          (Ordinal.omega.{0} 1).ToType → Prop) x)
+
+/-- **Bool pigeonhole on the committed Bool function**: some Bool `b`
+has preimage of cardinality `≥ ℵ_1`. Uses H3 with `κ := ℵ_0`. -/
+theorem exists_large_pairERCommit_fiber
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    ∃ b : Bool,
+      Cardinal.aleph.{0} 1 ≤
+        Cardinal.mk ((pairERCommitBoolFn cR) ⁻¹' {b}) := by
+  -- `(ω_1).ToType` has cardinality `aleph 1 = succ aleph_0`.
+  have haleph1 : Cardinal.aleph.{0} 1 = Order.succ Cardinal.aleph0.{0} := by
+    rw [show (1 : Ordinal.{0}) = Order.succ 0 from Ordinal.succ_zero.symm,
+      Cardinal.aleph_succ, Cardinal.aleph_zero]
+  have hα_card :
+      Order.succ Cardinal.aleph0.{0} ≤
+        Cardinal.mk (Ordinal.omega.{0} 1).ToType := by
+    rw [Cardinal.mk_toType, Ordinal.card_omega, ← haleph1]
+  have hβ_card : Cardinal.mk Bool ≤ Cardinal.aleph0.{0} := Cardinal.mk_le_aleph0
+  obtain ⟨b, hb⟩ := exists_large_fiber_of_small_codomain
+    (κ := Cardinal.aleph0.{0}) le_rfl hα_card hβ_card
+    (pairERCommitBoolFn cR)
+  exact ⟨b, haleph1 ▸ hb⟩
+
 /-- **The ω_1-indexed chain embedding** into `PairERSource`. Wraps
 `pairERCommit` as an `OrderEmbedding` via strict monotonicity. -/
 noncomputable def pairERChainEmbedding
