@@ -2320,29 +2320,30 @@ extension with `type_coherent` invariant). It's documented here as the
 final architectural step before the pigeonhole/H5/H1 assembly. -/
 
 /-- **Canonical commit value at position `δ < ω_1`**: take the
-`RichBundle` at level `Order.succ δ` and read off its `commit δ`. -/
+`RichBundle` at level `Order.succ δ` (via `richStageCanonical`) and
+read off its `commit δ`. -/
 noncomputable def pairERCommit
     (cR : (Fin 2 ↪o PairERSource) → Bool) (δ : Ordinal.{0})
     (hδ : δ < Ordinal.omega.{0} 1) : PairERSource :=
   have hsδ : Order.succ δ < Ordinal.omega.{0} 1 :=
     (Cardinal.isSuccLimit_omega 1).succ_lt hδ
-  ((richStage cR (Order.succ δ) hsδ).bundles (Order.succ δ) le_rfl
+  ((richStageCanonical cR (Order.succ δ) hsδ).bundles (Order.succ δ) le_rfl
       hsδ).commit δ (Order.lt_succ δ)
 
 /-- **`pairERCommit` equals the canonical bundle's stage commit.** Via
-`RichBundle.commit_top` + `RichBundle.stage_eq`, the commit agrees with
-the underlying chain's `commitAt`. -/
+`RichBundle.stage_eq`, the commit agrees with the underlying chain's
+`commitAt`. -/
 lemma pairERCommit_eq_stage_commitAt
     (cR : (Fin 2 ↪o PairERSource) → Bool) (δ : Ordinal.{0})
     (hδ : δ < Ordinal.omega.{0} 1) :
     pairERCommit cR δ hδ =
       have hsδ : Order.succ δ < Ordinal.omega.{0} 1 :=
         (Cardinal.isSuccLimit_omega 1).succ_lt hδ
-      ((richStage cR (Order.succ δ) hsδ).bundles (Order.succ δ) le_rfl
-          hsδ).bundle.stage.commitAt δ (Order.lt_succ δ) := by
+      ((richStageCanonical cR (Order.succ δ) hsδ).bundles (Order.succ δ)
+          le_rfl hsδ).bundle.stage.commitAt δ (Order.lt_succ δ) := by
   unfold pairERCommit
-  rw [((richStage cR (Order.succ δ) _).bundles (Order.succ δ) le_rfl _).stage_eq
-    δ (Order.lt_succ δ)]
+  rw [((richStageCanonical cR (Order.succ δ) _).bundles (Order.succ δ)
+      le_rfl _).stage_eq δ (Order.lt_succ δ)]
 
 /-- **`pairERCommit` is strictly monotone** in `δ`. Proof strategy:
 realize both commits inside the single chain at level `succ δ₂` via
@@ -2360,7 +2361,7 @@ lemma pairERCommit_strictMono
     (Cardinal.isSuccLimit_omega 1).succ_lt hδ₂
   have h_sδ₁_lt_sδ₂ : Order.succ δ₁ < Order.succ δ₂ := Order.succ_lt_succ h
   set state : RichState cR (Order.succ δ₂) :=
-    richStage cR (Order.succ δ₂) hsδ₂ with hstate
+    richStageCanonical cR (Order.succ δ₂) hsδ₂ with hstate
   set rb₂ : RichBundle cR (Order.succ δ₂) :=
     state.bundles (Order.succ δ₂) le_rfl hsδ₂ with hrb₂
   -- rb₂'s own stage is strict-monotone in position.
@@ -2376,27 +2377,30 @@ lemma pairERCommit_strictMono
   have h_δ₁_eq : rb₂.bundle.stage.commitAt δ₁ (h.trans (Order.lt_succ δ₂)) =
       pairERCommit cR δ₁ hδ₁ := by
     -- Chain of equalities through stage_eq, family_eq, prev_eq, and succ_commitAt.
+    -- Note: with richStageCanonical, state.bundles at any γ IS already the
+    -- canonical bundle `(richStage cR γ _).bundles γ le_rfl _`, so no extra
+    -- `richStage_bundle_eq_self` rewrite is needed.
     rw [rb₂.stage_eq δ₁ (h.trans (Order.lt_succ δ₂))]
     rw [← rb₂.family_eq (Order.succ δ₁) h_sδ₁_lt_sδ₂ δ₁ (Order.lt_succ δ₁)]
     rw [state.prev_eq (Order.succ δ₂) le_rfl hsδ₂ (Order.succ δ₁)
       h_sδ₁_lt_sδ₂ (le_of_lt h_sδ₁_lt_sδ₂) hsδ₁]
-    rw [show state.bundles (Order.succ δ₁) (le_of_lt h_sδ₁_lt_sδ₂) hsδ₁ =
-          (richStage cR (Order.succ δ₁) hsδ₁).bundles (Order.succ δ₁) le_rfl
-            hsδ₁ from
-        richStage_bundle_eq_self cR hsδ₂ (le_of_lt h_sδ₁_lt_sδ₂) hsδ₁]
     rw [PairERChain.succ_commitAt _ δ₁ (Order.lt_succ δ₁)]
+    -- `state.bundles (succ δ₁) _ _` β-reduces to the same canonical bundle
+    -- as `(richStageCanonical cR (succ δ₁) _).bundles (succ δ₁) le_rfl _`.
+    show ((richStageCanonical cR (Order.succ δ₁) hsδ₁).bundles (Order.succ δ₁)
+      le_rfl hsδ₁).bundle.stage.commitAt δ₁ _ = pairERCommit cR δ₁ hδ₁
     rw [← pairERCommit_eq_stage_commitAt]
   rw [← h_δ₁_eq, ← h_δ₂_eq]
   exact h_mono
 
 /-- **Committed Bool at position `δ`**: the `type` value at the top
-position of the chain at level `succ δ`. -/
+position of the chain at level `succ δ` (via `richStageCanonical`). -/
 noncomputable def pairERCommitBool
     (cR : (Fin 2 ↪o PairERSource) → Bool) (δ : Ordinal.{0})
     (hδ : δ < Ordinal.omega.{0} 1) : Bool :=
   have hsδ : Order.succ δ < Ordinal.omega.{0} 1 :=
     (Cardinal.isSuccLimit_omega 1).succ_lt hδ
-  ((richStage cR (Order.succ δ) hsδ).bundles (Order.succ δ) le_rfl
+  ((richStageCanonical cR (Order.succ δ) hsδ).bundles (Order.succ δ) le_rfl
       hsδ).bundle.stage.type (⊤ : (Order.succ δ).ToType)
 
 /-- **Indexed committed Bool function** on `(ω_1).ToType`. -/
