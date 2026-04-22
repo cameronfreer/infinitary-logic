@@ -2297,8 +2297,27 @@ noncomputable def richStageCanonical
 /-! ### Final assembly: chain extraction and `erdos_rado_pair_omega1`
 
 With `richStageCanonical cR α` producing a sorry-free `RichState cR α`
-at every `α < ω_1`, the remaining theorem pieces — chain extraction,
-pigeonhole, H5+H1 composition — are mechanical. -/
+at every `α < ω_1`, chain extraction and strict monotonicity are
+available via `pairERCommit` (below). Two obstructions remain for the
+full theorem:
+
+1. **The `cross_agree` sorry inside `richStage`** (axiom-clean post-hoc
+   via `richStage_cross_agree`; architectural cleanup pending).
+
+2. **Type coherence at limits**: `PairERCoherentFamily` currently
+   enforces only head-coherence (`coherent` field), not type-coherence.
+   At a limit α, `PairERChain.limit` invokes `exists_large_limit_fiber`
+   which picks a FRESH `τ : α.ToType → Bool`; this need not agree with
+   the committed Bools from earlier successor stages. To prove pair-
+   homogeneity `cR (pair (chain β) (chain γ)) = committed β`, the limit
+   τ must be chosen to MATCH the earlier committed Bools — which
+   requires a sharper H4 giving large fiber for a SPECIFIC (not
+   arbitrary) τ, namely the one reproducing earlier committed types.
+
+The second obstruction is a meaningful mathematical refinement (needs
+a "type-coherent large limit fiber" lemma + `PairERCoherentFamily`
+extension with `type_coherent` invariant). It's documented here as the
+final architectural step before the pigeonhole/H5/H1 assembly. -/
 
 /-- **Canonical commit value at position `δ < ω_1`**: take the
 `RichBundle` at level `Order.succ δ` and read off its `commit δ`. -/
