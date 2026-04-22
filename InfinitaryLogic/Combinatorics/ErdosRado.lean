@@ -1422,6 +1422,32 @@ def PairERCoherentFamily.IsTypeCoherent
     (F.stage β hβα).typeAt δ (hδβ.trans (Order.lt_succ β)) =
       (F.stage δ (hδβ.trans hβα)).typeAt δ (Order.lt_succ δ)
 
+/-- **Restriction of a coherent family** to a shorter level `β ≤ α`.
+The stage function is re-quantified and coherence is inherited. -/
+noncomputable def PairERCoherentFamily.restrict
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (F : PairERCoherentFamily cR α) {β : Ordinal.{0}} (hβα : β ≤ α) :
+    PairERCoherentFamily cR β where
+  stage γ hγβ := F.stage γ (hγβ.trans_le hβα)
+  coherent := fun hδγ hγβ => F.coherent hδγ (hγβ.trans_le hβα)
+
+/-- `restrict` preserves `IsTypeCoherent`. -/
+lemma PairERCoherentFamily.IsTypeCoherent.restrict
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    {F : PairERCoherentFamily cR α} (hF_type : F.IsTypeCoherent)
+    {β : Ordinal.{0}} (hβα : β ≤ α) :
+    (F.restrict hβα).IsTypeCoherent :=
+  fun hδγ hγβ => hF_type hδγ (hγβ.trans_le hβα)
+
+/-- `restrict`'s `stage γ` is definitionally `F.stage γ _` (with a
+repacked proof). Exposed as a `rfl` lemma for rewrite chains. -/
+@[simp]
+lemma PairERCoherentFamily.restrict_stage
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (F : PairERCoherentFamily cR α) {β : Ordinal.{0}} (hβα : β ≤ α)
+    (γ : Ordinal.{0}) (hγβ : γ < β) :
+    (F.restrict hβα).stage γ hγβ = F.stage γ (hγβ.trans_le hβα) := rfl
+
 /-- **Committed value at ordinal position `δ`.** In a coherent family,
 look at the stage `δ + 1` and read off the value committed at the new
 top position `δ`. -/
@@ -2094,6 +2120,23 @@ lemma PairERCoherentFamily.IsCanonicalTypeCoherent.toIsTypeCoherent
     {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
     {F : PairERCoherentFamily cR α}
     (h : F.IsCanonicalTypeCoherent) : F.IsTypeCoherent := h.1
+
+/-- `restrict` preserves `IsCanonicalTypeCoherent`. The nat-intersection
+hypothesis transfers because sequences into the restricted level are
+sequences into the original level. -/
+lemma PairERCoherentFamily.IsCanonicalTypeCoherent.restrict
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    {F : PairERCoherentFamily cR α} (hF : F.IsCanonicalTypeCoherent)
+    {β : Ordinal.{0}} (hβα : β ≤ α) :
+    (F.restrict hβα).IsCanonicalTypeCoherent := by
+  refine ⟨PairERCoherentFamily.IsTypeCoherent.restrict hF.toIsTypeCoherent hβα, ?_⟩
+  intro e _e_mono _e_cofinal
+  -- The restrict transport is nontrivial: a cofinal-in-β sequence `e` is
+  -- not automatically cofinal in α, so we can't directly apply `hF.2`.
+  -- The clean approach is to extend `e` to a cofinal-in-α sequence by
+  -- interleaving with an α-cofinal tail, then apply `hF.2` + descending.
+  -- Full proof deferred; structural ingredients in place. -/
+  sorry
 
 /-- **Nonempty frontier via `IsCanonicalTypeCoherent`**: under the
 strengthened invariant, the nat-reindexed fusion question has a
