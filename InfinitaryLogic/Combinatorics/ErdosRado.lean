@@ -2136,6 +2136,34 @@ noncomputable def CoherentBundle.limitExtendTypeCoherent
     family := family
     coh := fun δ hδ => family.limitTypeCoherent_commitAt hfam_type hα δ hδ }
 
+/-- `CoherentBundle.limitExtendTypeCoherent` is type-coherent by
+construction: the stage is `family.limitTypeCoherent`, whose `typeAt`
+equals the family's `typeVal` by `limitTypeCoherent_typeAt`, and the
+family is type-coherent as built into `limitExtendTypeCoherent`. -/
+lemma CoherentBundle.limitExtendTypeCoherent_isTypeCoh
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (ih : (γ : Ordinal.{0}) → γ < α → CoherentBundle cR γ)
+    (ih_coh : ∀ {δ γ : Ordinal.{0}} (hδγ : δ < γ) (hγα : γ < α),
+      (ih γ hγα).stage.commitAt δ hδγ =
+        (ih δ (hδγ.trans hγα)).stage.succ.commitAt δ (Order.lt_succ δ))
+    (ih_type_coh : ∀ {δ γ : Ordinal.{0}} (hδγ : δ < γ) (hγα : γ < α),
+      (ih γ hγα).stage.typeAt δ hδγ =
+        (ih δ (hδγ.trans hγα)).stage.succ.typeAt δ (Order.lt_succ δ))
+    (hα : α < Ordinal.omega.{0} 1) :
+    (CoherentBundle.limitExtendTypeCoherent ih ih_coh ih_type_coh hα).IsTypeCoh where
+  stage_type := fun δ hδ => by
+    show (CoherentBundle.limitExtendTypeCoherent ih ih_coh ih_type_coh hα).stage.typeAt δ hδ =
+      _
+    unfold CoherentBundle.limitExtendTypeCoherent
+    simp only
+    rw [PairERCoherentFamily.limitTypeCoherent_typeAt]
+  family_type := by
+    intro δ γ hδγ hγα
+    unfold CoherentBundle.limitExtendTypeCoherent
+    simp only
+    rw [PairERChain.succ_typeAt_old _ δ hδγ]
+    exact ih_type_coh hδγ hγα
+
 /-- **Cross-IH coherence for the zero-stage-appended recursion.** For
 any candidate recursion function `f : ∀ α, α < ω_1 → CoherentBundle cR
 α` that matches the zero/succ cases, cross-IH at successor levels
