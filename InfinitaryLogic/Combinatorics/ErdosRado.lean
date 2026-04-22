@@ -1261,10 +1261,96 @@ lemma PairERChain.succ_commitAt
   -- The two enum'd elements are equal via hsub (after rewriting the subtype witness).
   exact congrArg (Ordinal.enum (α := α.ToType) (· < ·)) hsub
 
+/-- **Committed Bool at ordinal position `δ < α`** in a chain. Parallel
+to `commitAt` but reading the `type` function. -/
+noncomputable def PairERChain.typeAt
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (s : PairERChain cR α) (δ : Ordinal.{0}) (hδ : δ < α) : Bool :=
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  s.type (Ordinal.enum (α := α.ToType) (· < ·)
+    ⟨δ, (Ordinal.type_toType α).symm ▸ hδ⟩)
+
+/-- **`succ_typeAt_old`**: the committed Bool at a lower position
+`δ < α` is preserved when extending via `.succ`. Parallel to
+`succ_commitAt`; the proof walks through `extendType`'s `dif_neg`
+branch. -/
+lemma PairERChain.succ_typeAt_old
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (s : PairERChain cR α) (δ : Ordinal.{0}) (hδα : δ < α) :
+    s.succ.typeAt δ (hδα.trans (Order.lt_succ α)) = s.typeAt δ hδα := by
+  haveI : IsWellOrder (Order.succ α).ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  set e : (Order.succ α).ToType :=
+    Ordinal.enum (α := (Order.succ α).ToType) (· < ·)
+      ⟨δ, (Ordinal.type_toType (Order.succ α)).symm ▸
+        hδα.trans (Order.lt_succ α)⟩ with he_def
+  have he_ne_top : e ≠ (⊤ : (Order.succ α).ToType) := by
+    intro h
+    have h1 : Ordinal.typein (· < ·) e = δ := by
+      rw [he_def, Ordinal.typein_enum]
+    have h2 : Ordinal.typein (· < ·)
+        (⊤ : (Order.succ α).ToType) = α := by
+      rw [show (⊤ : (Order.succ α).ToType) =
+          Ordinal.enum (α := (Order.succ α).ToType) (· < ·)
+            ⟨α, (Ordinal.type_toType _).symm ▸ Order.lt_succ α⟩
+        from Ordinal.enum_succ_eq_top.symm, Ordinal.typein_enum]
+    have : δ = α := h1.symm.trans (h ▸ h2)
+    exact absurd this (ne_of_lt hδα)
+  show s.succ.type e = s.type _
+  unfold PairERChain.succ
+  simp only [extendType]
+  rw [dif_neg he_ne_top]
+  have hte : Ordinal.typein (· < ·) e = δ := by
+    rw [he_def, Ordinal.typein_enum]
+  have hsub : (⟨Ordinal.typein (· < ·) e,
+      (Ordinal.type_toType α).symm ▸ show
+        Ordinal.typein (· < ·) e < α from hte ▸ hδα⟩ :
+      {o : Ordinal.{0} //
+        o < Ordinal.type (α := α.ToType) (· < ·)}) =
+      ⟨δ, (Ordinal.type_toType α).symm ▸ hδα⟩ := by
+    apply Subtype.ext; exact hte
+  show s.type (Ordinal.enum (α := α.ToType) (· < ·) _) =
+      s.type (Ordinal.enum (α := α.ToType) (· < ·) _)
+  congr 1
+  exact congrArg (Ordinal.enum (α := α.ToType) (· < ·)) hsub
+
+/-- **The Bool committed at the top of `s.succ`**: a named handle for
+the Bool extracted by `PairERChain.succ`'s use of
+`exists_successor_refinement`. -/
+noncomputable def PairERChain.succNewBool
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (s : PairERChain cR α) : Bool :=
+  Classical.choose (Classical.choose_spec
+    (exists_successor_refinement cR s.head s.type s.large))
+
+/-- **`succ_typeAt_top`**: the Bool at the new top position `α` in
+`s.succ` equals `s.succNewBool`. -/
+lemma PairERChain.succ_typeAt_top
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (s : PairERChain cR α) :
+    s.succ.typeAt α (Order.lt_succ α) = s.succNewBool := by
+  haveI : IsWellOrder (Order.succ α).ToType (· < ·) := isWellOrder_lt
+  set e : (Order.succ α).ToType :=
+    Ordinal.enum (α := (Order.succ α).ToType) (· < ·)
+      ⟨α, (Ordinal.type_toType (Order.succ α)).symm ▸ Order.lt_succ α⟩
+    with he_def
+  have he_top : e = (⊤ : (Order.succ α).ToType) := by
+    rw [he_def]; exact Ordinal.enum_succ_eq_top
+  show s.succ.type e = s.succNewBool
+  unfold PairERChain.succ PairERChain.succNewBool
+  simp only [extendType]
+  rw [dif_pos he_top]
+
 /-- **Coherent family of successor stages below `α`.** For each
 `β < α`, we have a stage at level `β + 1`, and later stages preserve
 the committed value at every earlier position. This is the exact data
-needed to glue a genuine limit-stage prefix. -/
+needed to glue a genuine limit-stage prefix.
+
+**NOTE**: currently only enforces HEAD coherence (`coherent` field).
+The `type_coherent` field (parallel statement for `typeAt`) is the
+next architectural extension, blocked on a sharper limit-kernel giving
+a large fiber for the specific prescribed τ matching earlier committed
+Bools. See `typeAt` API above and limit-kernel TODO below. -/
 structure PairERCoherentFamily
     (cR : (Fin 2 ↪o PairERSource) → Bool) (α : Ordinal.{0}) where
   stage : ∀ β : Ordinal.{0}, β < α → PairERChain cR (Order.succ β)
