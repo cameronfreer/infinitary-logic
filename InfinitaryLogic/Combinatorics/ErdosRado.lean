@@ -1858,20 +1858,9 @@ theorem iInter_stage_fibers_eq_iInter_nat_of_cofinal
     · -- β < (e n).1: use validFiber_mono.
       exact F.validFiber_mono hF_type hβ_lt (e n).2 (hy n)
 
-/-- **[FRONTIER, preparatory]** *Nonempty intersection of stage fibers*
-(α-indexed). Logically weaker than the large-cardinality version.
-If this fails under `IsTypeCoherent`, the invariant is wrong. -/
-theorem exists_nonempty_iInter_stage_fibers
-    (cR : (Fin 2 ↪o PairERSource) → Bool)
-    {α : Ordinal.{0}} (_hα : α < Ordinal.omega.{0} 1)
-    (F : PairERCoherentFamily cR α) (_hF_type : F.IsTypeCoherent) :
-    Set.Nonempty (⋂ (β : Ordinal.{0}) (hβα : β < α),
-      validFiber cR (F.stage β hβα).head (F.stage β hβα).type) := by
-  sorry
-
 /-- **[FRONTIER, nat-reindexed preparatory]** The nonempty frontier on
 a cofinal ℕ-reindex. This is the form that exposes the fusion/tree
-combinatorics cleanly. -/
+combinatorics cleanly — the real target for the next session. -/
 theorem exists_nonempty_iInter_stage_fibers_nat_reindex
     (cR : (Fin 2 ↪o PairERSource) → Bool)
     {α : Ordinal.{0}} (_hα : α < Ordinal.omega.{0} 1)
@@ -1882,6 +1871,24 @@ theorem exists_nonempty_iInter_stage_fibers_nat_reindex
     Set.Nonempty (⋂ n : ℕ, validFiber cR
       (F.stage (_e n).1 (_e n).2).head (F.stage (_e n).1 (_e n).2).type) := by
   sorry
+
+/-- **[FRONTIER, preparatory]** *Nonempty intersection of stage fibers*
+(α-indexed). Reduces to `exists_nonempty_iInter_stage_fibers_nat_reindex`
+via `iInter_stage_fibers_eq_iInter_nat_of_cofinal`. So once the nat-
+reindex version is proved, the α-version follows for free (given a
+cofinal ℕ-sequence, which exists for any α < ω_1). -/
+theorem exists_nonempty_iInter_stage_fibers
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    {α : Ordinal.{0}} (hα : α < Ordinal.omega.{0} 1)
+    (F : PairERCoherentFamily cR α) (hF_type : F.IsTypeCoherent)
+    (e : ℕ → {β : Ordinal.{0} // β < α})
+    (e_mono : ∀ {n m : ℕ}, n ≤ m → (e n).1 ≤ (e m).1)
+    (e_cofinal : ∀ β : Ordinal.{0}, β < α → ∃ n : ℕ, β ≤ (e n).1) :
+    Set.Nonempty (⋂ (β : Ordinal.{0}) (hβα : β < α),
+      validFiber cR (F.stage β hβα).head (F.stage β hβα).type) := by
+  rw [iInter_stage_fibers_eq_iInter_nat_of_cofinal F hF_type e e_mono e_cofinal]
+  exact exists_nonempty_iInter_stage_fibers_nat_reindex cR hα F hF_type e
+    e_mono e_cofinal
 
 /-- **Finite-prefix collapse**: every finite-prefix intersection
 `⋂ k<n, validFiber(F.stage (e k))` along a monotone `e` collapses to a
