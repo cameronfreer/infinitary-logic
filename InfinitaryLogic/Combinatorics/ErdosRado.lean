@@ -1814,6 +1814,44 @@ lemma PairERCoherentFamily.validFiber_mono
     convert h_col using 3
     exact h_head_eq.symm
 
+/-- **[FRONTIER, preparatory]** *Nonempty intersection of stage fibers*.
+Logically weaker than the large-cardinality version — targets just
+nonemptiness of the intersection. If even this fails, then
+`IsTypeCoherent` is not the right frontier invariant. If it goes
+through, then the large-cardinality version is probably salvageable by
+refinement. -/
+theorem exists_nonempty_iInter_stage_fibers
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    {α : Ordinal.{0}} (_hα : α < Ordinal.omega.{0} 1)
+    (F : PairERCoherentFamily cR α) (_hF_type : F.IsTypeCoherent) :
+    Set.Nonempty (⋂ (β : Ordinal.{0}) (hβα : β < α),
+      validFiber cR (F.stage β hβα).head (F.stage β hβα).type) := by
+  sorry
+
+/-- **[FRONTIER, nat-indexed reformulation]** Since `α < ω_1` is
+countable, the α-indexed intersection can be re-presented as a ℕ-
+indexed intersection. This strips the ordinal bookkeeping and exposes
+the actual combinatorics as a fusion/tree question.
+
+**Proof sketch**: use `countable_toType_of_lt_omega1` to get
+`Countable α.ToType`; pick an injection `ℕ ↪ α.ToType` (via `Nonempty
+(α.ToType ↪ ℕ)` inversion when α is infinite, trivial otherwise); the
+intersection is preserved. -/
+theorem exists_large_iInter_stage_fibers_nat_reindex
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    {α : Ordinal.{0}} (_hα : α < Ordinal.omega.{0} 1)
+    (F : PairERCoherentFamily cR α) (_hF_type : F.IsTypeCoherent) :
+    Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (⋂ (β : Ordinal.{0}) (hβα : β < α),
+        validFiber cR (F.stage β hβα).head (F.stage β hβα).type) ↔
+    -- ℕ-indexed equivalent: a countable descending sequence of stage
+    -- fibers has intersection of size ≥ succ ℶ_1.
+    ∀ (e : ℕ → {β : Ordinal.{0} // β < α}),
+    Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (⋂ n : ℕ, validFiber cR
+        (F.stage (e n).1 (e n).2).head (F.stage (e n).1 (e n).2).type) := by
+  sorry
+
 /-- **[FRONTIER, combinatorial core]** *Large intersection of stage
 fibers*. This is the mathematically meaningful statement, stripped of
 the prefix/typeFn bookkeeping: at a limit `α < ω_1` with `F` type-
@@ -1828,7 +1866,16 @@ small intersection even for regular κ). Candidates:
 - A stronger invariant recording that each fiber is "cofinal in the
   sense of type-tree branching" (c.f. canonical types in Erdős-Rado).
 - A genuine tree/fusion argument replacing the linear-chain
-  descending-family approach. -/
+  descending-family approach.
+
+**Strategy**: first prove `exists_nonempty_iInter_stage_fibers` — if
+nonempty fails, the statement is too strong and the invariant is
+wrong. If nonempty succeeds, refine to the large-cardinality version
+via fusion/tree arguments.
+
+**Nat-reindexing**: via `exists_large_iInter_stage_fibers_nat_reindex`,
+this reduces to a countable-indexed fusion statement, removing
+ordinal bookkeeping. -/
 theorem exists_large_iInter_stage_fibers
     (cR : (Fin 2 ↪o PairERSource) → Bool)
     {α : Ordinal.{0}} (_hα : α < Ordinal.omega.{0} 1)
