@@ -1542,6 +1542,49 @@ noncomputable def PairERCoherentFamily.typeFn
       simpa [Ordinal.type_toType α] using
         Ordinal.typein_lt_type (· < · : α.ToType → α.ToType → Prop) x)
 
+/-- **Per-stage fibers refine the prescribed prefix/τ fiber**: if `y`
+lies in the validFiber of *every* stage `F.stage β`, then `y` lies in
+`validFiber cR F.prefix F.typeFn`. This is the half of the limit-fiber
+identity that does NOT need `IsTypeCoherent` — each stage's top-
+position constraint hands us the needed pair-color equation at the
+corresponding `α.ToType` position. -/
+lemma PairERCoherentFamily.validFiber_of_stages
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (F : PairERCoherentFamily cR α) (y : PairERSource)
+    (hy : ∀ (β : Ordinal.{0}) (hβα : β < α),
+      y ∈ validFiber cR (F.stage β hβα).head (F.stage β hβα).type) :
+    y ∈ validFiber cR F.prefix F.typeFn := by
+  classical
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  intro x
+  set δ : Ordinal.{0} := Ordinal.typein (· < ·) x with hδ_def
+  have hδα : δ < α := by
+    simpa [δ, Ordinal.type_toType α] using
+      Ordinal.typein_lt_type (· < · : α.ToType → α.ToType → Prop) x
+  -- Use the validFiber at stage δ, at the top position of (succ δ).ToType.
+  have hy_δ := hy δ hδα
+  -- The top of (succ δ).ToType.
+  set top_δ : (Order.succ δ).ToType :=
+    Ordinal.enum (α := (Order.succ δ).ToType) (· < ·)
+      ⟨δ, (Ordinal.type_toType _).symm ▸ Order.lt_succ δ⟩ with htop_def
+  obtain ⟨h_lt, h_col⟩ := hy_δ top_δ
+  -- Translate `(F.stage δ).head top_δ = F.prefix x` and same for type.
+  have h_head : (F.stage δ hδα).head top_δ = F.prefix x := by
+    show (F.stage δ hδα).head top_δ = _
+    have h2 : (F.stage δ hδα).head top_δ =
+        (F.stage δ hδα).commitAt δ (Order.lt_succ δ) := by
+      show (F.stage δ hδα).head top_δ = (F.stage δ hδα).head _
+      congr 1
+    rw [h2]; rfl
+  have h_type : (F.stage δ hδα).type top_δ = F.typeFn x := by
+    show (F.stage δ hδα).type top_δ = F.typeVal δ hδα
+    show (F.stage δ hδα).type top_δ =
+      (F.stage δ hδα).typeAt δ (Order.lt_succ δ)
+    rfl
+  refine ⟨?_, ?_⟩
+  · rw [← h_head]; exact h_lt
+  · rw [← h_type]; convert h_col using 2
+
 /-- **[FRONTIER]** *Type-coherent large limit fiber*. At a limit `α < ω_1`,
 assuming `F` is type-coherent, the valid fiber for the SPECIFIC
 `F.typeFn` (not an arbitrary τ) has cardinality `≥ succ ℶ_1`.
