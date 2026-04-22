@@ -1990,6 +1990,75 @@ theorem iInter_finite_stage_fibers_large
           (F.stage (e k_top).1 (e k_top).2).large
       _ ≤ _ := Cardinal.mk_le_mk_of_subset h_subset
 
+/-- **Recursive fusion sequence**: given a monotone cofinal ℕ-sequence
+and `IsTypeCoherent`, we can build a strictly monotone sequence
+`y : ℕ → PairERSource` with `y n ∈ ⋂ k ≤ n, A k` for each `n`. Uses
+the cofinality helper `large_set_exists_above` + the finite-prefix
+largeness `iInter_finite_stage_fibers_large` at each step.
+
+**Note**: this produces the ω-sequence of witnesses; the remaining
+step is extraction of a single point in `⋂ n, A n`. That extraction
+is the content of the main nonempty frontier — it is NOT automatic
+from the strictly monotone sequence, because `PairERSource`'s sup of
+an ω-sequence need not satisfy the per-fiber color constraints. -/
+theorem exists_strict_mono_fusion_sequence
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (F : PairERCoherentFamily cR α) (hF_type : F.IsTypeCoherent)
+    (e : ℕ → {β : Ordinal.{0} // β < α})
+    (e_mono : ∀ {n m : ℕ}, n ≤ m → (e n).1 ≤ (e m).1) :
+    ∃ y : ℕ → PairERSource, StrictMono y ∧
+      ∀ n : ℕ, y n ∈ ⋂ k : Fin (n + 1), validFiber cR
+        (F.stage (e k).1 (e k).2).head (F.stage (e k).1 (e k).2).type := by
+  classical
+  -- Define the sets A n := ⋂ k : Fin (n+1), validFiber(stage (e k)).
+  set A : ℕ → Set PairERSource := fun n =>
+    ⋂ k : Fin (n + 1), validFiber cR
+      (F.stage (e k).1 (e k).2).head (F.stage (e k).1 (e k).2).type with hA_def
+  -- Each A n has cardinality ≥ succ ℶ_1.
+  have hA_large : ∀ n : ℕ,
+      Order.succ (Cardinal.beth.{0} 1) ≤ Cardinal.mk (A n) := fun n =>
+    iInter_finite_stage_fibers_large F hF_type e e_mono (n + 1)
+  -- Pick a base point in A 0 (nonempty since large).
+  have h_A0_nonempty : (A 0).Nonempty := by
+    rw [Set.nonempty_iff_ne_empty]
+    intro h_empty
+    have h_mk : Cardinal.mk (A 0) = 0 := by
+      rw [h_empty]; exact Cardinal.mk_emptyCollection _
+    have h_pos : 0 < Cardinal.mk (A 0) := by
+      have h_card_pos : (0 : Cardinal) < Order.succ (Cardinal.beth.{0} 1) := by
+        have h_aleph0_le : Cardinal.aleph0 ≤ Order.succ (Cardinal.beth.{0} 1) :=
+          isRegular_succ_beth_one.aleph0_le
+        exact (Cardinal.aleph0_pos).trans_le h_aleph0_le
+      exact h_card_pos.trans_le (hA_large 0)
+    rw [h_mk] at h_pos
+    exact absurd h_pos (lt_irrefl 0)
+  -- Build the sequence via Nat.rec carrying (current y value, proof y ∈ A n).
+  -- We use recursion on the pair ⟨y_n, proof y_n ∈ A n⟩ to get both properties.
+  let step : (n : ℕ) → PairERSource → PairERSource := fun n y_prev =>
+    Classical.choose (large_set_exists_above (hA_large (n + 1)) y_prev)
+  let y_seq : ℕ → PairERSource := fun n =>
+    Nat.rec (motive := fun _ => PairERSource)
+      (Classical.choose h_A0_nonempty)
+      (fun m y_m => step m y_m) n
+  -- Step's spec.
+  have h_step_spec : ∀ (n : ℕ) (y_prev : PairERSource),
+      step n y_prev ∈ A (n + 1) ∧ y_prev < step n y_prev := fun n y_prev =>
+    Classical.choose_spec (large_set_exists_above (hA_large (n + 1)) y_prev)
+  refine ⟨y_seq, ?_, ?_⟩
+  · intro n m hnm
+    induction hnm with
+    | refl =>
+      show y_seq n < step n (y_seq n)
+      exact (h_step_spec n (y_seq n)).2
+    | step _ ih =>
+      exact ih.trans (h_step_spec _ _).2
+  · intro n
+    induction n with
+    | zero => exact Classical.choose_spec h_A0_nonempty
+    | succ m _ =>
+      show step m (y_seq m) ∈ A (m + 1)
+      exact (h_step_spec m _).1
+
 /-- **[FRONTIER, combinatorial core]** *Large intersection of stage
 fibers*. This is the mathematically meaningful statement, stripped of
 the prefix/typeFn bookkeeping: at a limit `α < ω_1` with `F` type-
