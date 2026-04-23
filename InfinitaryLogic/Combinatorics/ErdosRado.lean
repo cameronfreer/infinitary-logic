@@ -2187,12 +2187,50 @@ hypothesis that EVERY proper restriction `F.restrict hβα` (for
 `β < α`) is `IsCanonicalTypeCoherent`, the ℕ-indexed intersection
 along any cofinal `e` in `α` is nonempty.
 
-This is the mathematical core: the Erdős–Rado-style tree/fusion
-argument using the structure of restricted-level IsCanonicalTypeCoherent.
+**[α = ω SANITY ANALYSIS — FALSE]**: after careful paper analysis, this
+theorem is **NOT TRUE** as stated under `IsCanonicalTypeCoherent` alone.
+The failure mode is concrete:
 
-**Status**: the cleaned statement. Proof requires a genuine tree
-argument (canonical types on ω-length branches, `2^ℵ_0 = ℶ_1`
-pigeonhole) and is the remaining research task. -/
+At `α = ω`, the restriction hypothesis is *vacuous in content*:
+- For `β = 0`: `F.restrict _` is the empty family, canonical trivially.
+- For `β = n+1` (all positive `β < ω` are ordinal successors):
+  canonical automatically by `isCanonicalTypeCoherent_of_succ` from
+  `IsTypeCoherent.restrict hF_type _`.
+
+So the hypothesis reduces to just `F.IsTypeCoherent` — which we
+already established (`exists_point_in_iInter_of_fusion_sequence`'s
+failure analysis) is **too weak** to force nonempty ω-intersection.
+
+**Adversarial counterexample sketch**: pick an arbitrary 2-coloring `cR`
+and a cofinal sequence `c_n` in `PairERSource`. For each `y ∈
+PairERSource`, let its "profile" be `λ n, cR (pair c_n y)`. Distribute
+the `succ ℶ_1` elements across `2^ω = ℶ_1` profiles such that:
+- Each finite prefix of `F.typeFn` is realized by `ℶ_1⁺` elements (so
+  each `validFiber(F.stage n)` is large, preserving the `.large` field).
+- The specific ω-profile matching all of `F.typeFn` has `0` realizers.
+
+This is consistent with `IsTypeCoherent` (types preserve through
+successor extensions by construction). At each succ step, the
+"large-child-pigeonhole" choice of `type_n` fixes a bit, but the
+ω-intersection of the resulting uniform-choice branch can be empty.
+
+**Mathematical conclusion**: `IsCanonicalTypeCoherent` as currently
+defined (adding a nonempty-iInter witness to `IsTypeCoherent`) is
+still too weak as the "provable invariant". The single-chain uniform-
+choice architecture cannot see around the ω-pattern adversary.
+
+**What's actually needed**: a genuine **tree** structure at each
+coherent-family level — recording enough information about sibling
+branches that an ω-limit witness is forced to exist. This is the
+classical Erdős–Rado type-tree construction: track the full
+2^β-branching type tree, apply global pigeonhole on branches rather
+than uniform local choice.
+
+**Status**: this theorem is PROVABLY FALSE under the current
+invariants. To make progress, the invariant must be strengthened OR
+the proof must use the full tree (not a single chain) at limit levels.
+The next research task is to decide which architectural change to
+make; the current statement serves as a documented negative result. -/
 theorem limit_fusion_of_canonical_restrictions
     {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
     (_hα_lim : Order.IsSuccLimit α)
