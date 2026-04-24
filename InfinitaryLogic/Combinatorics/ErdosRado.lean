@@ -2255,9 +2255,9 @@ theorem. -/
 /-- **`PairERTypeTree` (tied to a coherent family `F`)**: branching
 type data recording, at each level α, multiple candidate "type
 branches" (α.ToType → Bool) together with their realizer sets in
-`PairERSource`. The aggregate of realizer sets has cardinality
-`≥ succ ℶ_1`, matching the `.large` invariant in
-`PairERCoherentFamily`.
+`PairERSource`. The aggregate disjoint union of realizer sets has
+cardinality `≥ succ ℶ_1` (the `large_sigma` invariant), enabling H3
+pigeonhole over branches.
 
 This is the architectural object that replaces the single-chain
 `F.typeFn` with a full branching structure, enabling classical
@@ -2275,8 +2275,17 @@ structure PairERTypeTree
   realizers_sub_validFiber :
     ∀ b : α.ToType → Bool, realizers b ⊆ validFiber cR F.prefix b
   /-- Every branch in `branches` is realized (has at least one
-  realizer). This is the key liveness invariant. -/
+  realizer). Liveness invariant. -/
   branches_realized : ∀ b ∈ branches, (realizers b).Nonempty
+  /-- **Size invariant** (Sigma form): the total disjoint union of
+  branch×realizer pairs has cardinality `≥ succ ℶ_1`. This is what
+  makes H3 pigeonhole work: for `α < ω_1` the codomain
+  `(α.ToType → Bool)` has size `≤ ℶ_1`, so some branch inherits
+  `succ ℶ_1`-many realizers. -/
+  large_sigma :
+    Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk { p : (α.ToType → Bool) × PairERSource |
+        p.1 ∈ branches ∧ p.2 ∈ realizers p.1 }
 
 /-- **Projection theorem**: tree data + a realized branch `b ∈
 T.branches` with `b = F.typeFn` gives a nonempty `validFiber cR
@@ -2322,6 +2331,84 @@ theorem PairERTypeTree.toNonemptyIntersectionNat
       (F.stage (e n).1 (e n).2).head (F.stage (e n).1 (e n).2).type) := by
   rw [← iInter_stage_fibers_eq_iInter_nat_of_cofinal F hF_type e e_mono e_cofinal]
   exact T.toNonemptyIntersection hF_type hb
+
+/-- **Pigeonhole on tree branches** (H3 application): for `α < ω_1`,
+the Bool-function codomain has cardinality `≤ ℶ_1`; combined with
+`large_sigma`'s source size `≥ succ ℶ_1`, H3 gives a branch
+`b ∈ T.branches` whose realizer set itself has cardinality `≥ succ ℶ_1`.
+
+This is the key "selection" lemma: even without knowing which branch
+the limit construction will pick as `F.typeFn`, we know SOME branch
+has `succ ℶ_1` realizers. -/
+theorem PairERTypeTree.exists_large_realized_branch
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    {F : PairERCoherentFamily cR α} (T : PairERTypeTree F) :
+    ∃ b ∈ T.branches,
+      Order.succ (Cardinal.beth.{0} 1) ≤ Cardinal.mk (T.realizers b) := by
+  classical
+  haveI : Countable α.ToType := countable_toType_of_lt_omega1 hα
+  -- Source: the Sigma-set from `large_sigma`.
+  set S : Set ((α.ToType → Bool) × PairERSource) :=
+    { p | p.1 ∈ T.branches ∧ p.2 ∈ T.realizers p.1 } with hS_def
+  have hS_card : Order.succ (Cardinal.beth.{0} 1) ≤ Cardinal.mk S := T.large_sigma
+  -- Codomain: α.ToType → Bool has size ≤ ℶ_1.
+  have hCodom : Cardinal.mk (α.ToType → Bool) ≤ Cardinal.beth.{0} 1 :=
+    mk_countable_bool_functions_le_beth_one
+  -- Projection f : S → (α.ToType → Bool).
+  let f : S → (α.ToType → Bool) := fun p => p.1.1
+  have h_aleph0_le_beth : Cardinal.aleph0 ≤ Cardinal.beth.{0} 1 :=
+    Cardinal.aleph0_le_beth 1
+  obtain ⟨b, hb_large⟩ :=
+    exists_large_fiber_of_small_codomain h_aleph0_le_beth hS_card hCodom f
+  -- `hb_large : succ ℶ_1 ≤ #(f ⁻¹' {b})`. If `(f⁻¹' {b})` is nonempty,
+  -- `b ∈ T.branches` (any element witnesses it).
+  have hb_in : b ∈ T.branches := by
+    have h_ne_zero : Cardinal.mk (f ⁻¹' {b}) ≠ 0 := by
+      have h_pos : (0 : Cardinal) < Cardinal.mk (f ⁻¹' {b}) :=
+        (Cardinal.aleph0_pos.trans_le h_aleph0_le_beth).trans_le
+          (hb_large.trans' (Order.le_succ _))
+      exact h_pos.ne'
+    obtain ⟨⟨p, hp⟩⟩ := Cardinal.mk_ne_zero_iff.mp h_ne_zero
+    -- hp : p ∈ f ⁻¹' {b}, i.e., f p = b, i.e., p.1.1 = b.
+    -- p ∈ S, so p.1.1 ∈ T.branches and p.1.2 ∈ T.realizers p.1.1.
+    have : p.1.1 ∈ T.branches := p.2.1
+    rw [show p.1.1 = b from hp] at this
+    exact this
+  refine ⟨b, hb_in, ?_⟩
+  -- Injection from f ⁻¹' {b} into T.realizers b.
+  have h_inj :
+      Function.Injective (fun p : f ⁻¹' {b} => (⟨p.1.1.2, by
+        have hp1 : p.1.1.1 = b := p.2
+        have hp2 : p.1.1.2 ∈ T.realizers p.1.1.1 := p.1.2.2
+        rw [hp1] at hp2
+        exact hp2⟩ : T.realizers b)) := by
+    intro p q hpq
+    -- hpq gives same realizer value (p.1.1.2 = q.1.1.2).
+    -- p.1.1.1 = q.1.1.1 = b (both p, q : f ⁻¹' {b}).
+    -- Then p.1.1 = q.1.1 as pairs, and p.1 = q.1 in S, and p = q in subtype.
+    have h_real : p.1.1.2 = q.1.1.2 := Subtype.mk_eq_mk.mp hpq
+    have h_branch : p.1.1.1 = q.1.1.1 := p.2.trans q.2.symm
+    have h_pair : p.1.1 = q.1.1 := Prod.ext h_branch h_real
+    have h_S : p.1 = q.1 := Subtype.ext h_pair
+    exact Subtype.ext h_S
+  calc Order.succ (Cardinal.beth.{0} 1)
+      ≤ Cardinal.mk (f ⁻¹' {b}) := hb_large
+    _ ≤ Cardinal.mk (T.realizers b) := Cardinal.mk_le_of_injective h_inj
+
+/-- **`toLargeValidFiber`**: once the tree has a branch `b` with
+`succ ℶ_1`-many realizers, and `b = F.typeFn`, project to
+`succ ℶ_1 ≤ |validFiber cR F.prefix F.typeFn|`. Via
+`realizers_sub_validFiber`. -/
+theorem PairERTypeTree.toLargeValidFiber
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    {F : PairERCoherentFamily cR α} (T : PairERTypeTree F)
+    (h_selected : Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (T.realizers F.typeFn)) :
+    Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (validFiber cR F.prefix F.typeFn) :=
+  h_selected.trans
+    (Cardinal.mk_le_mk_of_subset (T.realizers_sub_validFiber F.typeFn))
 
 /-! ### Other frontier theorems (sorry'd, known unprovable from
 current invariants after α = ω sanity analysis)
