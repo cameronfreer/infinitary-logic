@@ -2259,9 +2259,13 @@ branches" (α.ToType → Bool) together with their realizer sets in
 cardinality `≥ succ ℶ_1` (the `large_sigma` invariant), enabling H3
 pigeonhole over branches.
 
-This is the architectural object that replaces the single-chain
-`F.typeFn` with a full branching structure, enabling classical
-Erdős–Rado tree pigeonhole at limits. -/
+**Design note**: we intentionally do NOT include a per-branch
+`branches_realized` field. Preservation at successor stages requires
+keeping BOTH Boolean halves of each split, so one half CAN have empty
+realizers. `large_sigma` provides all the liveness information we
+need (it implies at least one branch has nonempty realizers via H3).
+Per-branch nonemptiness would be hostile to branching preservation,
+forcing single-chain pruning — the exact failure mode we escaped. -/
 structure PairERTypeTree
     {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
     (F : PairERCoherentFamily cR α) where
@@ -2274,63 +2278,79 @@ structure PairERTypeTree
   `x : α.ToType`, `F.prefix x < y` and `cR (pair (F.prefix x, y)) = b x`. -/
   realizers_sub_validFiber :
     ∀ b : α.ToType → Bool, realizers b ⊆ validFiber cR F.prefix b
-  /-- Every branch in `branches` is realized (has at least one
-  realizer). Liveness invariant. -/
-  branches_realized : ∀ b ∈ branches, (realizers b).Nonempty
   /-- **Size invariant** (Sigma form): the total disjoint union of
   branch×realizer pairs has cardinality `≥ succ ℶ_1`. This is what
   makes H3 pigeonhole work: for `α < ω_1` the codomain
   `(α.ToType → Bool)` has size `≤ ℶ_1`, so some branch inherits
-  `succ ℶ_1`-many realizers. -/
+  `succ ℶ_1`-many realizers. Also implies at least one branch has
+  some realizers (derivation in `exists_realized_branch`). -/
   large_sigma :
     Order.succ (Cardinal.beth.{0} 1) ≤
       Cardinal.mk { p : (α.ToType → Bool) × PairERSource |
         p.1 ∈ branches ∧ p.2 ∈ realizers p.1 }
 
-/-- **Projection theorem**: tree data + a realized branch `b ∈
-T.branches` with `b = F.typeFn` gives a nonempty `validFiber cR
-F.prefix F.typeFn` — the existing `exists_nonempty_validFiber_prefix_
-typeFn`-style conclusion.
+/-- **Derived liveness**: `large_sigma` implies some branch has
+nonempty realizers. This is the only liveness we need; per-branch
+liveness is intentionally omitted from the structure (see docstring). -/
+theorem PairERTypeTree.exists_realized_branch
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    {F : PairERCoherentFamily cR α} (T : PairERTypeTree F) :
+    ∃ b ∈ T.branches, (T.realizers b).Nonempty := by
+  classical
+  have h_pos : (0 : Cardinal) <
+      Cardinal.mk { p : (α.ToType → Bool) × PairERSource |
+        p.1 ∈ T.branches ∧ p.2 ∈ T.realizers p.1 } := by
+    have h_aleph0_le : Cardinal.aleph0 ≤ Order.succ (Cardinal.beth.{0} 1) :=
+      isRegular_succ_beth_one.aleph0_le
+    exact (Cardinal.aleph0_pos.trans_le h_aleph0_le).trans_le T.large_sigma
+  have h_ne : Cardinal.mk { p : (α.ToType → Bool) × PairERSource |
+      p.1 ∈ T.branches ∧ p.2 ∈ T.realizers p.1 } ≠ 0 := h_pos.ne'
+  obtain ⟨⟨⟨b, y⟩, hby⟩⟩ := Cardinal.mk_ne_zero_iff.mp h_ne
+  exact ⟨b, hby.1, ⟨y, hby.2⟩⟩
 
-This is the "easy projection": once the tree identifies `F.typeFn`
-as a realized branch, a witness extracts trivially. The HARD work
-(global pigeonhole at limits selecting such a branch) is elsewhere. -/
+/-- **Projection theorem**: tree data + `F.typeFn` having nonempty
+realizers gives a nonempty `validFiber cR F.prefix F.typeFn`.
+
+Hypothesis changed from `F.typeFn ∈ T.branches` to the stronger
+`(T.realizers F.typeFn).Nonempty` — this is the direct extraction
+condition and accommodates the branching-preservation refactor
+(where some tracked branches can have empty realizers). -/
 theorem PairERTypeTree.toNonemptyValidFiber
     {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
     {F : PairERCoherentFamily cR α} (T : PairERTypeTree F)
-    (hb : F.typeFn ∈ T.branches) :
+    (h_realized : (T.realizers F.typeFn).Nonempty) :
     Set.Nonempty (validFiber cR F.prefix F.typeFn) := by
-  obtain ⟨y, hy⟩ := T.branches_realized F.typeFn hb
+  obtain ⟨y, hy⟩ := h_realized
   exact ⟨y, T.realizers_sub_validFiber F.typeFn hy⟩
 
 /-- **Projection to intersection form**: under `F.IsTypeCoherent`, the
-nonempty `validFiber` from a realized `F.typeFn` branch transfers to
-the α-indexed intersection of per-stage fibers. Via
-`validFiber_prefix_typeFn_eq_iInter`. -/
+nonempty `validFiber` from nonempty realizers of `F.typeFn` transfers
+to the α-indexed intersection of per-stage fibers. -/
 theorem PairERTypeTree.toNonemptyIntersection
     {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
     {F : PairERCoherentFamily cR α} (T : PairERTypeTree F)
-    (hF_type : F.IsTypeCoherent) (hb : F.typeFn ∈ T.branches) :
+    (hF_type : F.IsTypeCoherent)
+    (h_realized : (T.realizers F.typeFn).Nonempty) :
     Set.Nonempty (⋂ (β : Ordinal.{0}) (hβα : β < α),
       validFiber cR (F.stage β hβα).head (F.stage β hβα).type) := by
   rw [← F.validFiber_prefix_typeFn_eq_iInter hF_type]
-  exact T.toNonemptyValidFiber hb
+  exact T.toNonemptyValidFiber h_realized
 
-/-- **Projection to canonical form**: `PairERTypeTree` + realized
-`F.typeFn` + a cofinal ℕ-sequence gives `IsCanonicalTypeCoherent` at
-that sequence. Combines `toNonemptyIntersection` with the cofinal
-reindex. -/
+/-- **Projection to canonical form**: `PairERTypeTree` + nonempty
+`F.typeFn` realizers + a cofinal ℕ-sequence gives
+`IsCanonicalTypeCoherent`-style nonempty intersection at that sequence. -/
 theorem PairERTypeTree.toNonemptyIntersectionNat
     {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
     {F : PairERCoherentFamily cR α} (T : PairERTypeTree F)
-    (hF_type : F.IsTypeCoherent) (hb : F.typeFn ∈ T.branches)
+    (hF_type : F.IsTypeCoherent)
+    (h_realized : (T.realizers F.typeFn).Nonempty)
     (e : ℕ → {β : Ordinal.{0} // β < α})
     (e_mono : ∀ {n m : ℕ}, n ≤ m → (e n).1 ≤ (e m).1)
     (e_cofinal : ∀ β : Ordinal.{0}, β < α → ∃ n : ℕ, β ≤ (e n).1) :
     Set.Nonempty (⋂ n : ℕ, validFiber cR
       (F.stage (e n).1 (e n).2).head (F.stage (e n).1 (e n).2).type) := by
   rw [← iInter_stage_fibers_eq_iInter_nat_of_cofinal F hF_type e e_mono e_cofinal]
-  exact T.toNonemptyIntersection hF_type hb
+  exact T.toNonemptyIntersection hF_type h_realized
 
 /-- **Pigeonhole on tree branches** (H3 application): for `α < ω_1`,
 the Bool-function codomain has cardinality `≤ ℶ_1`; combined with
@@ -2796,17 +2816,9 @@ noncomputable def PairERTypeTree.empty
     { branches := Set.univ
       realizers := fun _ => Set.univ
       realizers_sub_validFiber := ?_
-      branches_realized := ?_
       large_sigma := ?_ }
   · intro _ _ _ x
     exact (h_empty.false x).elim
-  · intro _ _
-    -- (realizers _) = Set.univ is nonempty if PairERSource is nonempty.
-    have : Nonempty PairERSource := by
-      rw [← Cardinal.mk_ne_zero_iff, mk_pairERSource]
-      exact (isRegular_succ_beth_one.pos).ne'
-    obtain ⟨y⟩ := this
-    exact ⟨y, trivial⟩
   · -- Sigma set ≃ PairERSource via y ↦ ⟨(emptyFn, y), trivial, trivial⟩.
     set S : Set (((0 : Ordinal.{0}).ToType → Bool) × PairERSource) :=
       { p | p.1 ∈ (Set.univ : Set _) ∧ p.2 ∈ (Set.univ : Set _) } with hS
@@ -2814,7 +2826,6 @@ noncomputable def PairERTypeTree.empty
       refine Cardinal.mk_le_of_injective (f := fun y : PairERSource =>
         (⟨(emptyFn, y), ⟨trivial, trivial⟩⟩ : S)) ?_
       intro y₁ y₂ h
-      -- h : the two subtype elements are equal; extract y₁ = y₂.
       have h1 : ((emptyFn, y₁) : ((0 : Ordinal.{0}).ToType → Bool) × PairERSource) =
           (emptyFn, y₂) := by
         exact Subtype.mk.inj h
