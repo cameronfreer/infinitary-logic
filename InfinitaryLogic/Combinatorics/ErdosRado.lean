@@ -2181,125 +2181,68 @@ theorem exists_nonempty_validFiber_prefix_typeFn_of_canonical
   rw [F.validFiber_prefix_typeFn_eq_iInter hF.toIsTypeCoherent]
   exact exists_nonempty_iInter_stage_fibers_of_canonical F hF e e_mono e_cofinal
 
-/-- **[FRONTIER, combinatorial core]** Limit-level fusion theorem:
-given a limit `α`, a coherent family `F` at level `α`, and the
-hypothesis that EVERY proper restriction `F.restrict hβα` (for
-`β < α`) is `IsCanonicalTypeCoherent`, the ℕ-indexed intersection
-along any cofinal `e` in `α` is nonempty.
+/-! ### Documented negative result: the limit fusion under
+`IsCanonicalTypeCoherent` is FALSE
 
-**[α = ω SANITY ANALYSIS — FALSE]**: after careful paper analysis, this
-theorem is **NOT TRUE** as stated under `IsCanonicalTypeCoherent` alone.
-The failure mode is concrete:
+The hoped-for limit theorem
 
-At `α = ω`, the restriction hypothesis is *vacuous in content*:
-- For `β = 0`: `F.restrict _` is the empty family, canonical trivially.
-- For `β = n+1` (all positive `β < ω` are ordinal successors):
-  canonical automatically by `isCanonicalTypeCoherent_of_succ` from
-  `IsTypeCoherent.restrict hF_type _`.
-
-So the hypothesis reduces to just `F.IsTypeCoherent` — which we
-already established (`exists_point_in_iInter_of_fusion_sequence`'s
-failure analysis) is **too weak** to force nonempty ω-intersection.
-
-**Adversarial counterexample sketch**: pick an arbitrary 2-coloring `cR`
-and a cofinal sequence `c_n` in `PairERSource`. For each `y ∈
-PairERSource`, let its "profile" be `λ n, cR (pair c_n y)`. Distribute
-the `succ ℶ_1` elements across `2^ω = ℶ_1` profiles such that:
-- Each finite prefix of `F.typeFn` is realized by `ℶ_1⁺` elements (so
-  each `validFiber(F.stage n)` is large, preserving the `.large` field).
-- The specific ω-profile matching all of `F.typeFn` has `0` realizers.
-
-This is consistent with `IsTypeCoherent` (types preserve through
-successor extensions by construction). At each succ step, the
-"large-child-pigeonhole" choice of `type_n` fixes a bit, but the
-ω-intersection of the resulting uniform-choice branch can be empty.
-
-**Mathematical conclusion**: `IsCanonicalTypeCoherent` as currently
-defined (adding a nonempty-iInter witness to `IsTypeCoherent`) is
-still too weak as the "provable invariant". The single-chain uniform-
-choice architecture cannot see around the ω-pattern adversary.
-
-**What's actually needed**: a genuine **tree** structure at each
-coherent-family level — recording enough information about sibling
-branches that an ω-limit witness is forced to exist. This is the
-classical Erdős–Rado type-tree construction: track the full
-2^β-branching type tree, apply global pigeonhole on branches rather
-than uniform local choice.
-
-**Status**: this theorem is PROVABLY FALSE under the current
-invariants. To make progress, the invariant must be strengthened OR
-the proof must use the full tree (not a single chain) at limit levels.
-The next research task is to decide which architectural change to
-make; the current statement serves as a documented negative result. -/
+```
 theorem limit_fusion_of_canonical_restrictions
-    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
-    (_hα_lim : Order.IsSuccLimit α)
-    (F : PairERCoherentFamily cR α) (_hF_type : F.IsTypeCoherent)
-    (_h_restrict_canonical : ∀ (β : Ordinal.{0}) (hβα : β < α),
-      (F.restrict (le_of_lt hβα)).IsCanonicalTypeCoherent)
-    (e : ℕ → {β : Ordinal.{0} // β < α})
-    (_e_mono : ∀ {n m : ℕ}, n ≤ m → (e n).1 ≤ (e m).1)
-    (_e_cofinal : ∀ β : Ordinal.{0}, β < α → ∃ n : ℕ, β ≤ (e n).1) :
-    Set.Nonempty (⋂ n : ℕ, validFiber cR
-      (F.stage (e n).1 (e n).2).head (F.stage (e n).1 (e n).2).type) := by
-  sorry
-
-/-- **`isCanonicalTypeCoherent_of_limit`**: at a limit `α`, if every
-proper restriction is `IsCanonicalTypeCoherent`, then so is `F`.
-Immediate corollary of `limit_fusion_of_canonical_restrictions`. -/
-theorem PairERCoherentFamily.isCanonicalTypeCoherent_of_limit
-    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
     (hα_lim : Order.IsSuccLimit α)
     (F : PairERCoherentFamily cR α) (hF_type : F.IsTypeCoherent)
-    (h_restrict_canonical : ∀ (β : Ordinal.{0}) (hβα : β < α),
-      (F.restrict (le_of_lt hβα)).IsCanonicalTypeCoherent) :
-    F.IsCanonicalTypeCoherent := by
-  refine ⟨hF_type, ?_⟩
-  intro e e_mono e_cofinal
-  exact limit_fusion_of_canonical_restrictions hα_lim F hF_type
-    h_restrict_canonical e e_mono e_cofinal
+    (h_restrict_canonical :
+      ∀ β (hβα : β < α), (F.restrict (le_of_lt hβα)).IsCanonicalTypeCoherent)
+    (e : ℕ → {β : Ordinal.{0} // β < α}) (e_mono) (e_cofinal) :
+    Set.Nonempty (⋂ n, validFiber cR
+      (F.stage (e n).1 (e n).2).head (F.stage (e n).1 (e n).2).type)
+```
 
-/-- **[FRONTIER, failure analysis]** Attempted extraction from the
-fusion sequence. Given `y : ℕ → PairERSource` strict mono with
-`y n ∈ ⋂ k ≤ n, A k`, extract a single `z ∈ ⋂ n, A n`.
+is **NOT TRUE** under `IsCanonicalTypeCoherent` alone (α = ω sanity
+analysis).
 
-**Why this fails from `IsTypeCoherent` alone**:
+**Failure at `α = ω`**: every proper restriction `β < ω` is either
+empty (`β = 0`) or successor (`β = n+1`), so the restriction
+hypothesis reduces by `isCanonicalTypeCoherent_of_succ` +
+`IsTypeCoherent.restrict` to just `F.IsTypeCoherent`. But then
+`exists_point_in_iInter_of_fusion_sequence`'s earlier failure analysis
+(the ω-sup not preserving color constraints) gives a direct
+counterexample: distribute `succ ℶ_1` elements across `2^ω = ℶ_1`
+profiles so every finite prefix of `F.typeFn` is realized by `ℶ_1⁺`
+elements but the specific ω-profile has `0` realizers.
 
-The natural candidate for `z` is `sup y_n` (the ordinal sup, which
-lives in `PairERSource` since `cof (succ ℶ_1).ord = succ ℶ_1 > ω`).
-Properties we'd need:
-1. `z > commit_k` for each `k`: ✓, since `y_n > commit_k` for n ≥ k.
-2. `cR (pair (commit_k, z)) = typeVal k` for each `k`: ✗, NOT automatic.
+**Architectural consequence**: the single-chain uniform-choice
+architecture cannot see around the ω-pattern adversary. The
+`IsCanonicalTypeCoherent` invariant is still too weak as the
+"provable invariant" at limit levels.
 
-The second constraint is discrete. Even though `y_n ∈ validFiber
-(F.stage (e n))` (so `cR (pair (commit_k, y_n)) = typeVal k` for k in
-the prefix), the pair color at the sup `z` is not determined by the
-pair colors along the sequence. `cR` is an arbitrary 2-coloring; its
-value at `(commit_k, sup y_n)` can differ from `typeVal k`.
+**What's actually needed**: a genuine **tree** structure at each
+coherent-family level — a `PairERTypeTree` / branching data object
+tracking the full `2^β`-branching type tree, with global pigeonhole
+over branches rather than local uniform choice. The theorem would
+then hold under the strengthened invariant, not the current one.
 
-**What's actually needed**: the classical Erdős–Rado proof tracks
-canonical types — for each point, record the Bool-valued function
-`λ k, cR (pair (commit_k, ·))` restricted to the prefix. By pigeonhole
-on `2^ℵ_0 = ℶ_1 < succ ℶ_1` many types, a type class of size `succ ℶ_1`
-exists, giving homogeneity.
+**API honesty**: the theorem is NOT stated as a `sorry`-theorem
+(which would advertise a false claim). The next tranche introduces
+`PairERTypeTree`; after that, a corrected limit theorem will be
+restated with the stronger input. Until then, `isCanonicalTypeCoherent`
+at limits remains OPEN in the codebase — a downstream consumer
+requiring it must take it as an explicit hypothesis. -/
 
-**Concrete diagnosis for this formalization**: `IsTypeCoherent`
-guarantees type-agreement at the *family* level (across
-`F.stage β`'s), but not at the *subset-fiber* level (across elements
-of validFiber). The fusion sequence `y_n` has types
-`cR (pair (commit_k, y_n)) = typeVal k` for `k ≤ n`, but
-`cR (pair (commit_k, y_m)) =?= typeVal k` for `m ≠ n, k` are
-un-constrained — they're implicit in `y_n ∈ validFiber`.
+/-! ### Other frontier theorems (sorry'd, known unprovable from
+current invariants after α = ω sanity analysis)
 
-**Proposed strengthening of `IsTypeCoherent` (next-session research
-direction)**: add a CANONICAL-TYPE invariant: each validFiber point
-carries a "type class" coded as a Bool-valued map, with ≥ succ ℶ_1
-points sharing the same type class. Then pigeonhole extraction works.
+The following statements are sorry'd. The α = ω sanity analysis
+establishes they cannot be proved from `IsTypeCoherent` +
+`IsCanonicalTypeCoherent` alone — they require the `PairERTypeTree`
+architectural tranche. Kept here because downstream definitions
+(`PairERCoherentFamily.limitTypeCoherent`) chain through them; the
+sorry-to-hypothesis refactor will come with the `PairERTypeTree`
+introduction. -/
 
-This theorem is `sorry` not because the ω-sequence is wrong, but
-because the limit operation `sup` doesn't preserve the fiber structure.
-The failure is diagnostic: we know exactly what extra invariant the
-full proof needs. -/
+/-- **[FRONTIER, sorry — known unprovable from current invariants]**
+Extract a single witness from a strict-mono fusion ω-sequence.
+Known false under current invariants (ω-sup doesn't preserve
+per-fiber color constraints); documented in the α = ω sanity block. -/
 theorem exists_point_in_iInter_of_fusion_sequence
     {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
     (_F : PairERCoherentFamily cR α) (_hF_type : _F.IsTypeCoherent)
@@ -2307,34 +2250,11 @@ theorem exists_point_in_iInter_of_fusion_sequence
     (_e_mono : ∀ {n m : ℕ}, n ≤ m → (_e n).1 ≤ (_e m).1) :
     Set.Nonempty (⋂ n : ℕ, validFiber cR
       (_F.stage (_e n).1 (_e n).2).head (_F.stage (_e n).1 (_e n).2).type) := by
-  -- Step (producing the sequence): works, this is `exists_strict_mono_fusion_sequence`.
-  -- Step (extracting a point from the sequence): fails — see docstring above.
   sorry
 
-/-- **[FRONTIER, combinatorial core]** *Large intersection of stage
-fibers*. This is the mathematically meaningful statement, stripped of
-the prefix/typeFn bookkeeping: at a limit `α < ω_1` with `F` type-
-coherent, the α-indexed intersection of stage fibers has cardinality
-`≥ succ ℶ_1`.
-
-**Status**: the correct statement is now isolated. The proof requires
-identifying what STRUCTURAL property of these stage fibers makes the
-intersection large — *regularity of `succ ℶ_1` alone is NOT sufficient*
-(a descending nested family of size-κ subsets of a size-κ set can have
-small intersection even for regular κ). Candidates:
-- A stronger invariant recording that each fiber is "cofinal in the
-  sense of type-tree branching" (c.f. canonical types in Erdős-Rado).
-- A genuine tree/fusion argument replacing the linear-chain
-  descending-family approach.
-
-**Strategy**: first prove `exists_nonempty_iInter_stage_fibers` — if
-nonempty fails, the statement is too strong and the invariant is
-wrong. If nonempty succeeds, refine to the large-cardinality version
-via fusion/tree arguments.
-
-**Nat-reindexing**: via `exists_large_iInter_stage_fibers_nat_reindex`,
-this reduces to a countable-indexed fusion statement, removing
-ordinal bookkeeping. -/
+/-- **[FRONTIER, sorry — known unprovable from current invariants]**
+Large-cardinality α-indexed intersection. Same diagnostic as
+`exists_point_in_iInter_of_fusion_sequence`. -/
 theorem exists_large_iInter_stage_fibers
     (cR : (Fin 2 ↪o PairERSource) → Bool)
     {α : Ordinal.{0}} (_hα : α < Ordinal.omega.{0} 1)
@@ -2346,8 +2266,7 @@ theorem exists_large_iInter_stage_fibers
 
 /-- **Type-coherent large limit fiber**. Direct corollary of
 `exists_large_iInter_stage_fibers` via
-`validFiber_prefix_typeFn_eq_iInter`. The combinatorial core is now
-isolated in `exists_large_iInter_stage_fibers`. -/
+`validFiber_prefix_typeFn_eq_iInter`. -/
 theorem exists_large_limit_fiber_prescribed
     (cR : (Fin 2 ↪o PairERSource) → Bool)
     {α : Ordinal.{0}} (hα : α < Ordinal.omega.{0} 1)
