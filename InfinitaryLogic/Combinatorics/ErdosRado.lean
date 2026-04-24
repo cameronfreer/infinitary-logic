@@ -2759,6 +2759,22 @@ lemma PairERCoherentFamily.empty_isCanonicalTypeCoherent
   intro e _ _
   exact absurd (e 0).2 (not_lt.mpr (zero_le _))
 
+/-! ### Base + extension constructors for `PairERTypeTree`
+
+Following the tranche plan, the constructors need to be established in
+this order:
+1. `empty` — verifies `large_sigma` at α = 0 (DONE, axiom-clean).
+2. `extendSucc` — splits each old branch into two (one per Bool at the
+   new top position) and partitions realizers by
+   `cR(pair(new_commit, y))`. Preserves `large_sigma` by pigeonhole
+   on the two halves (at least one has `≥ succ ℶ_1` realizers).
+3. `extendLimit` — uses `T.limitChain` to produce the limit stage,
+   then build a tree for the resulting extendAtLimit family. Here
+   `selectedBranch` becomes the new top type.
+4. Thread `PairERTypeTree` through `CoherentBundle` / `RichBundle`.
+
+Step 1 is complete below. Steps 2–4 are the remaining tranche. -/
+
 /-- **Base-level `PairERTypeTree`** at `α = 0`. The type function is
 the unique empty function `(0 : Ordinal).ToType → Bool`. The single
 branch has ALL of `PairERSource` as its realizer set (since the
