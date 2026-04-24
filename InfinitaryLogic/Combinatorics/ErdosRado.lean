@@ -2767,7 +2767,10 @@ validFiber at level 0 is vacuous-constrained and equals `Set.univ`).
 **`large_sigma` verification**: the Sigma set bijects with
 `PairERSource` (via `y ↦ (emptyFn, y)`), so has cardinality
 `succ ℶ_1 = |PairERSource|` by `mk_pairERSource`. This confirms the
-tree IS a valid base-case invariant. -/
+tree IS a valid base-case invariant — `PairERTypeTree` can serve as
+a global recursion invariant (not just attached to limit-construction
+subproblems), since `large_sigma` is satisfied non-vacuously at the
+base by choosing the full universe as the single branch's realizers. -/
 noncomputable def PairERTypeTree.empty
     (cR : (Fin 2 ↪o PairERSource) → Bool) :
     PairERTypeTree (PairERCoherentFamily.empty cR) := by
