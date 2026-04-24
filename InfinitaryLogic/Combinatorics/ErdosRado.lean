@@ -2228,6 +2228,59 @@ restated with the stronger input. Until then, `isCanonicalTypeCoherent`
 at limits remains OPEN in the codebase — a downstream consumer
 requiring it must take it as an explicit hypothesis. -/
 
+/-! ### `PairERTypeTree` scaffold (branching data beside coherent families)
+
+This is the architectural tranche replacing the single-chain uniform-
+choice approach with genuine branching type data. The goal is to track,
+at each level α, not just `F.typeFn : α.ToType → Bool` but a richer
+object recording:
+- Multiple candidate "type branches" (α-length Bool sequences) and
+- Realizer sets for each branch in `PairERSource`
+- The invariant that sum of realizer-set cardinalities is `≥ succ ℶ_1`
+
+The classical Erdős–Rado tree argument then picks, at each limit level,
+a realized branch by global pigeonhole on `2^α ≤ ℶ_1` branches
+(countable since `α < ω_1`).
+
+**Scaffold contents below**:
+- `PairERTypeTree`: placeholder structure (to be filled in)
+- `projection theorem`: how tree data implies the current nonempty
+  intersection statement (to be proved)
+
+This is intentionally minimal — a placeholder that documents the
+target architecture without committing to specific fields yet. The
+next working session should flesh out the fields and the projection
+theorem. -/
+
+/-- **[SCAFFOLD]** `PairERTypeTree`: branching type data at level α.
+To be filled in with fields tracking multiple candidate branches, their
+realizer sets, and the pigeonhole-preservation invariant. -/
+structure PairERTypeTree
+    (cR : (Fin 2 ↪o PairERSource) → Bool) (α : Ordinal.{0}) where
+  /-- Placeholder field. The real contents will include:
+  - `branches : Set (α.ToType → Bool)` (candidate types)
+  - `realizers : (α.ToType → Bool) → Set PairERSource` (per-branch
+    witness sets)
+  - `realizers_large : Cardinal.mk (⋃ b ∈ branches, realizers b) ≥
+    succ ℶ_1` (global largeness)
+  - Consistency with `coherent` / `type_coherent` structures
+  For now, a trivial marker so the scaffold compiles. -/
+  placeholder : Unit
+
+/-! **[SCAFFOLD, projection theorem — TODO]** Tree data + a "selected
+realized branch" should give an `IsCanonicalTypeCoherent`-style
+nonempty witness:
+
+```
+theorem PairERTypeTree.toNonemptyIntersection
+    (T : PairERTypeTree cR α) ... :
+    Set.Nonempty (⋂ β < α, validFiber cR ... ) := ...
+```
+
+Statement to be filled in once `PairERTypeTree` has fields; the proof
+is the pigeonhole + realizer-extraction that makes tree-based fusion
+work. -/
+
 /-! ### Other frontier theorems (sorry'd, known unprovable from
 current invariants after α = ω sanity analysis)
 
