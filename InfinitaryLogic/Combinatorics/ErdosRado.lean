@@ -2759,6 +2759,51 @@ lemma PairERCoherentFamily.empty_isCanonicalTypeCoherent
   intro e _ _
   exact absurd (e 0).2 (not_lt.mpr (zero_le _))
 
+/-- **Base-level `PairERTypeTree`** at `α = 0`. The type function is
+the unique empty function `(0 : Ordinal).ToType → Bool`. The single
+branch has ALL of `PairERSource` as its realizer set (since the
+validFiber at level 0 is vacuous-constrained and equals `Set.univ`).
+
+**`large_sigma` verification**: the Sigma set bijects with
+`PairERSource` (via `y ↦ (emptyFn, y)`), so has cardinality
+`succ ℶ_1 = |PairERSource|` by `mk_pairERSource`. This confirms the
+tree IS a valid base-case invariant. -/
+noncomputable def PairERTypeTree.empty
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    PairERTypeTree (PairERCoherentFamily.empty cR) := by
+  haveI h_empty : IsEmpty (Ordinal.ToType 0) := Ordinal.isEmpty_toType_zero
+  let emptyFn : (0 : Ordinal.{0}).ToType → Bool := isEmptyElim
+  refine
+    { branches := Set.univ
+      realizers := fun _ => Set.univ
+      realizers_sub_validFiber := ?_
+      branches_realized := ?_
+      large_sigma := ?_ }
+  · intro _ _ _ x
+    exact (h_empty.false x).elim
+  · intro _ _
+    -- (realizers _) = Set.univ is nonempty if PairERSource is nonempty.
+    have : Nonempty PairERSource := by
+      rw [← Cardinal.mk_ne_zero_iff, mk_pairERSource]
+      exact (isRegular_succ_beth_one.pos).ne'
+    obtain ⟨y⟩ := this
+    exact ⟨y, trivial⟩
+  · -- Sigma set ≃ PairERSource via y ↦ ⟨(emptyFn, y), trivial, trivial⟩.
+    set S : Set (((0 : Ordinal.{0}).ToType → Bool) × PairERSource) :=
+      { p | p.1 ∈ (Set.univ : Set _) ∧ p.2 ∈ (Set.univ : Set _) } with hS
+    have h_mk_le : Cardinal.mk PairERSource ≤ Cardinal.mk S := by
+      refine Cardinal.mk_le_of_injective (f := fun y : PairERSource =>
+        (⟨(emptyFn, y), ⟨trivial, trivial⟩⟩ : S)) ?_
+      intro y₁ y₂ h
+      -- h : the two subtype elements are equal; extract y₁ = y₂.
+      have h1 : ((emptyFn, y₁) : ((0 : Ordinal.{0}).ToType → Bool) × PairERSource) =
+          (emptyFn, y₂) := by
+        exact Subtype.mk.inj h
+      exact (Prod.mk.inj h1).2
+    calc Order.succ (Cardinal.beth.{0} 1)
+        = Cardinal.mk PairERSource := mk_pairERSource.symm
+      _ ≤ Cardinal.mk S := h_mk_le
+
 /-- **Any successor-level family with `IsTypeCoherent` is
 `IsCanonicalTypeCoherent`**. Key observation: for `α = succ β`, any
 cofinal ℕ-sequence `e : ℕ → {γ // γ < succ β}` eventually reaches
