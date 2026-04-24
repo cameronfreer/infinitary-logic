@@ -2410,6 +2410,68 @@ theorem PairERTypeTree.toLargeValidFiber
   h_selected.trans
     (Cardinal.mk_le_mk_of_subset (T.realizers_sub_validFiber F.typeFn))
 
+/-- **Selected branch** (via `Classical.choose` on the large realized
+branch): `α < ω_1` + `PairERTypeTree F` gives a canonical branch
+`b : α.ToType → Bool` with `succ ℶ_1`-many realizers. -/
+noncomputable def PairERTypeTree.selectedBranch
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    {F : PairERCoherentFamily cR α} (T : PairERTypeTree F) :
+    α.ToType → Bool :=
+  Classical.choose (T.exists_large_realized_branch hα)
+
+/-- `selectedBranch` is in `T.branches`. -/
+lemma PairERTypeTree.selectedBranch_mem
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    {F : PairERCoherentFamily cR α} (T : PairERTypeTree F) :
+    T.selectedBranch hα ∈ T.branches :=
+  (Classical.choose_spec (T.exists_large_realized_branch hα)).1
+
+/-- `selectedBranch` has `≥ succ ℶ_1` realizers. -/
+lemma PairERTypeTree.selectedBranch_large
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    {F : PairERCoherentFamily cR α} (T : PairERTypeTree F) :
+    Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (T.realizers (T.selectedBranch hα)) :=
+  (Classical.choose_spec (T.exists_large_realized_branch hα)).2
+
+/-- **Limit constructor via pigeonhole**: given a `PairERTypeTree F`,
+produce a `PairERChain cR α` by picking the selected large realized
+branch as the type function and feeding it to `PairERChain.limitWithType`.
+
+This is the architectural payoff: rather than requiring `F.typeFn` to
+be pre-specified (which fails under `IsTypeCoherent` alone, per the
+α = ω sanity analysis), the tree + pigeonhole SELECTS the type
+function so the resulting limit chain automatically has large fiber. -/
+noncomputable def PairERTypeTree.limitChain
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    {F : PairERCoherentFamily cR α} (T : PairERTypeTree F) :
+    PairERChain cR α :=
+  PairERChain.limitWithType F.prefix (T.selectedBranch hα)
+    ((T.selectedBranch_large hα).trans
+      (Cardinal.mk_le_mk_of_subset (T.realizers_sub_validFiber _)))
+
+/-- The limit chain's `type` function is exactly the selected branch
+(head projection is `F.prefix`, type projection is the tree-selected
+`b`). -/
+@[simp]
+lemma PairERTypeTree.limitChain_type
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    {F : PairERCoherentFamily cR α} (T : PairERTypeTree F) :
+    (T.limitChain hα).type = T.selectedBranch hα := rfl
+
+/-- The limit chain's head is `F.prefix`. -/
+@[simp]
+lemma PairERTypeTree.limitChain_head
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    {F : PairERCoherentFamily cR α} (T : PairERTypeTree F) :
+    (T.limitChain hα).head = F.prefix := rfl
+
 /-! ### Other frontier theorems (sorry'd, known unprovable from
 current invariants after α = ω sanity analysis)
 
