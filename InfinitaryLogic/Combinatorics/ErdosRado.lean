@@ -2252,34 +2252,76 @@ target architecture without committing to specific fields yet. The
 next working session should flesh out the fields and the projection
 theorem. -/
 
-/-- **[SCAFFOLD]** `PairERTypeTree`: branching type data at level α.
-To be filled in with fields tracking multiple candidate branches, their
-realizer sets, and the pigeonhole-preservation invariant. -/
+/-- **`PairERTypeTree` (tied to a coherent family `F`)**: branching
+type data recording, at each level α, multiple candidate "type
+branches" (α.ToType → Bool) together with their realizer sets in
+`PairERSource`. The aggregate of realizer sets has cardinality
+`≥ succ ℶ_1`, matching the `.large` invariant in
+`PairERCoherentFamily`.
+
+This is the architectural object that replaces the single-chain
+`F.typeFn` with a full branching structure, enabling classical
+Erdős–Rado tree pigeonhole at limits. -/
 structure PairERTypeTree
-    (cR : (Fin 2 ↪o PairERSource) → Bool) (α : Ordinal.{0}) where
-  /-- Placeholder field. The real contents will include:
-  - `branches : Set (α.ToType → Bool)` (candidate types)
-  - `realizers : (α.ToType → Bool) → Set PairERSource` (per-branch
-    witness sets)
-  - `realizers_large : Cardinal.mk (⋃ b ∈ branches, realizers b) ≥
-    succ ℶ_1` (global largeness)
-  - Consistency with `coherent` / `type_coherent` structures
-  For now, a trivial marker so the scaffold compiles. -/
-  placeholder : Unit
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (F : PairERCoherentFamily cR α) where
+  /-- Candidate "type branches": α-length Bool sequences. -/
+  branches : Set (α.ToType → Bool)
+  /-- Per-branch realizer set in `PairERSource`. -/
+  realizers : (α.ToType → Bool) → Set PairERSource
+  /-- Each realizer of branch `b` lies in `validFiber cR F.prefix b`.
+  This says: if `y ∈ realizers b`, then for every position
+  `x : α.ToType`, `F.prefix x < y` and `cR (pair (F.prefix x, y)) = b x`. -/
+  realizers_sub_validFiber :
+    ∀ b : α.ToType → Bool, realizers b ⊆ validFiber cR F.prefix b
+  /-- Every branch in `branches` is realized (has at least one
+  realizer). This is the key liveness invariant. -/
+  branches_realized : ∀ b ∈ branches, (realizers b).Nonempty
 
-/-! **[SCAFFOLD, projection theorem — TODO]** Tree data + a "selected
-realized branch" should give an `IsCanonicalTypeCoherent`-style
-nonempty witness:
+/-- **Projection theorem**: tree data + a realized branch `b ∈
+T.branches` with `b = F.typeFn` gives a nonempty `validFiber cR
+F.prefix F.typeFn` — the existing `exists_nonempty_validFiber_prefix_
+typeFn`-style conclusion.
 
-```
+This is the "easy projection": once the tree identifies `F.typeFn`
+as a realized branch, a witness extracts trivially. The HARD work
+(global pigeonhole at limits selecting such a branch) is elsewhere. -/
+theorem PairERTypeTree.toNonemptyValidFiber
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    {F : PairERCoherentFamily cR α} (T : PairERTypeTree F)
+    (hb : F.typeFn ∈ T.branches) :
+    Set.Nonempty (validFiber cR F.prefix F.typeFn) := by
+  obtain ⟨y, hy⟩ := T.branches_realized F.typeFn hb
+  exact ⟨y, T.realizers_sub_validFiber F.typeFn hy⟩
+
+/-- **Projection to intersection form**: under `F.IsTypeCoherent`, the
+nonempty `validFiber` from a realized `F.typeFn` branch transfers to
+the α-indexed intersection of per-stage fibers. Via
+`validFiber_prefix_typeFn_eq_iInter`. -/
 theorem PairERTypeTree.toNonemptyIntersection
-    (T : PairERTypeTree cR α) ... :
-    Set.Nonempty (⋂ β < α, validFiber cR ... ) := ...
-```
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    {F : PairERCoherentFamily cR α} (T : PairERTypeTree F)
+    (hF_type : F.IsTypeCoherent) (hb : F.typeFn ∈ T.branches) :
+    Set.Nonempty (⋂ (β : Ordinal.{0}) (hβα : β < α),
+      validFiber cR (F.stage β hβα).head (F.stage β hβα).type) := by
+  rw [← F.validFiber_prefix_typeFn_eq_iInter hF_type]
+  exact T.toNonemptyValidFiber hb
 
-Statement to be filled in once `PairERTypeTree` has fields; the proof
-is the pigeonhole + realizer-extraction that makes tree-based fusion
-work. -/
+/-- **Projection to canonical form**: `PairERTypeTree` + realized
+`F.typeFn` + a cofinal ℕ-sequence gives `IsCanonicalTypeCoherent` at
+that sequence. Combines `toNonemptyIntersection` with the cofinal
+reindex. -/
+theorem PairERTypeTree.toNonemptyIntersectionNat
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    {F : PairERCoherentFamily cR α} (T : PairERTypeTree F)
+    (hF_type : F.IsTypeCoherent) (hb : F.typeFn ∈ T.branches)
+    (e : ℕ → {β : Ordinal.{0} // β < α})
+    (e_mono : ∀ {n m : ℕ}, n ≤ m → (e n).1 ≤ (e m).1)
+    (e_cofinal : ∀ β : Ordinal.{0}, β < α → ∃ n : ℕ, β ≤ (e n).1) :
+    Set.Nonempty (⋂ n : ℕ, validFiber cR
+      (F.stage (e n).1 (e n).2).head (F.stage (e n).1 (e n).2).type) := by
+  rw [← iInter_stage_fibers_eq_iInter_nat_of_cofinal F hF_type e e_mono e_cofinal]
+  exact T.toNonemptyIntersection hF_type hb
 
 /-! ### Other frontier theorems (sorry'd, known unprovable from
 current invariants after α = ω sanity analysis)
