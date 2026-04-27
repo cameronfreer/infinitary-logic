@@ -2352,6 +2352,23 @@ theorem PairERTypeTree.toNonemptyIntersectionNat
   rw [← iInter_stage_fibers_eq_iInter_nat_of_cofinal F hF_type e e_mono e_cofinal]
   exact T.toNonemptyIntersection hF_type h_realized
 
+/-- **Bridge to `IsCanonicalTypeCoherent`**: the tree provides exactly
+the missing data. Given a `PairERTypeTree F`, `F.IsTypeCoherent`, and
+that `F.typeFn` is a realized branch in the tree, we get
+`F.IsCanonicalTypeCoherent`. This is the "tree → canonical invariant"
+projection that's missing from the original
+`IsCanonicalTypeCoherent`-only architecture (where canonical at limits
+was unprovable). -/
+theorem PairERTypeTree.toIsCanonicalTypeCoherent
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    {F : PairERCoherentFamily cR α} (T : PairERTypeTree F)
+    (hF_type : F.IsTypeCoherent)
+    (h_realized : (T.realizers F.typeFn).Nonempty) :
+    F.IsCanonicalTypeCoherent := by
+  refine ⟨hF_type, ?_⟩
+  intro e e_mono e_cofinal
+  exact T.toNonemptyIntersectionNat hF_type h_realized e e_mono e_cofinal
+
 /-- **Pigeonhole on tree branches** (H3 application): for `α < ω_1`,
 the Bool-function codomain has cardinality `≤ ℶ_1`; combined with
 `large_sigma`'s source size `≥ succ ℶ_1`, H3 gives a branch
