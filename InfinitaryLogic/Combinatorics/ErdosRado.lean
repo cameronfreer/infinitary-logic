@@ -2887,6 +2887,48 @@ noncomputable def PairERTypeTree.extendSucc
         exact Subtype.ext h2
     exact h_above_large.trans h_inj
 
+/-- **Limit-stage `PairERTypeTree` constructor** at level `succ α`,
+preserving the universal-tree shape. Same construction as `extendSucc`
+but at a level whose predecessor was reached via `F.extendAtLimit`.
+
+The proof reuses `large_above_prefix` over `F.extendAtLimit`'s prefix.
+The `T : PairERTypeTree F` input argument is currently unused
+(consumed by the universal-tree formulation); a future refinement may
+USE `T.limitChain` to make the limit stage tree-driven (currently
+`F.extendAtLimit` uses `F.limit` which picks τ via Classical.choose). -/
+noncomputable def PairERTypeTree.extendLimit
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    (h_succα : Order.succ α < Ordinal.omega.{0} 1)
+    {F : PairERCoherentFamily cR α}
+    (_T : PairERTypeTree F) :
+    PairERTypeTree (F.extendAtLimit hα) := by
+  refine
+    { branches := Set.univ
+      realizers := fun b => validFiber cR (F.extendAtLimit hα).prefix b
+      realizers_sub_validFiber := ?_
+      large_sigma := ?_ }
+  · intro _ _ hy; exact hy
+  · set p : (Order.succ α).ToType ↪o PairERSource :=
+      (F.extendAtLimit hα).prefix with hp_def
+    set above_prefix : Set PairERSource :=
+      { y : PairERSource | ∀ x : (Order.succ α).ToType, p x < y }
+      with hap_def
+    have h_above_large : Order.succ (Cardinal.beth.{0} 1) ≤
+        Cardinal.mk above_prefix := large_above_prefix h_succα p
+    set Sigma : Set (((Order.succ α).ToType → Bool) × PairERSource) :=
+      { q | q.1 ∈ (Set.univ : Set _) ∧
+        q.2 ∈ validFiber cR (F.extendAtLimit hα).prefix q.1 } with hS
+    have h_inj : Cardinal.mk above_prefix ≤ Cardinal.mk Sigma := by
+      refine Cardinal.mk_le_of_injective (f := fun y : above_prefix =>
+        (⟨(fun x => cR (pairEmbed (y.2 x)), y.1), trivial, ?_⟩ : Sigma)) ?_
+      · intro x; exact ⟨y.2 x, rfl⟩
+      · intro y₁ y₂ h
+        have h1 := Subtype.mk.inj h
+        have h2 := (Prod.mk.inj h1).2
+        exact Subtype.ext h2
+    exact h_above_large.trans h_inj
+
 /-- **Any successor-level family with `IsTypeCoherent` is
 `IsCanonicalTypeCoherent`**. Key observation: for `α = succ β`, any
 cofinal ℕ-sequence `e : ℕ → {γ // γ < succ β}` eventually reaches
