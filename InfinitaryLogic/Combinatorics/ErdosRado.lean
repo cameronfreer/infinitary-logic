@@ -2474,6 +2474,22 @@ lemma PairERTypeTree.selectedBranch_large
       Cardinal.mk (T.realizers (T.selectedBranch hα)) :=
   (Classical.choose_spec (T.exists_large_realized_branch hα)).2
 
+/-- `selectedBranch`'s realizers are nonempty. Direct from the size
+bound `selectedBranch_large` (`succ ℶ_1 > 0`). -/
+lemma PairERTypeTree.selectedBranch_realized
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    {F : PairERCoherentFamily cR α} (T : PairERTypeTree F) :
+    (T.realizers (T.selectedBranch hα)).Nonempty := by
+  have h_large := T.selectedBranch_large hα
+  have h_pos : (0 : Cardinal) <
+      Cardinal.mk (T.realizers (T.selectedBranch hα)) := by
+    have h_aleph0_le : Cardinal.aleph0 ≤ Order.succ (Cardinal.beth.{0} 1) :=
+      isRegular_succ_beth_one.aleph0_le
+    exact (Cardinal.aleph0_pos.trans_le h_aleph0_le).trans_le h_large
+  obtain ⟨⟨y, hy⟩⟩ := Cardinal.mk_ne_zero_iff.mp h_pos.ne'
+  exact ⟨y, hy⟩
+
 /-- **Limit constructor via pigeonhole**: given a `PairERTypeTree F`,
 produce a `PairERChain cR α` by picking the selected large realized
 branch as the type function and feeding it to `PairERChain.limitWithType`.
