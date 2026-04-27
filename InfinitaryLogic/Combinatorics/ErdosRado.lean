@@ -2834,6 +2834,59 @@ noncomputable def PairERTypeTree.empty
         = Cardinal.mk PairERSource := mk_pairERSource.symm
       _ ≤ Cardinal.mk S := h_mk_le
 
+/-- **Successor-stage `PairERTypeTree` constructor** at level
+`succ (succ β)`, preserving both Boolean halves of every existing
+branch.
+
+**Construction (universal-tree formulation)**: take `branches` to be
+all of `(succ (succ β)).ToType → Bool` and `realizers b :=
+validFiber cR F.extendAtSucc.prefix b`. Each `y` above the new prefix
+falls into exactly one fiber (its profile under `cR(pair(F.extendAtSucc.
+prefix _, y)) = b _`), so the disjoint union of all realizer sets
+bijects with `{y : y above F.extendAtSucc.prefix}`. The latter has
+cardinality `≥ succ ℶ_1` by `large_above_prefix` (countable prefix
+in `PairERSource`).
+
+**Why this is the right "keep both halves"**: every Boolean choice
+at every position is represented as a separate branch, with realizers
+partitioned cleanly. No pruning. The classical canonical-type tree
+is implicit in this representation; explicit branch tracking is
+recovered by selecting the realized branches via `pigeonhole` /
+`exists_large_realized_branch`. -/
+noncomputable def PairERTypeTree.extendSucc
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {β : Ordinal.{0}}
+    (hβ : Order.succ (Order.succ β) < Ordinal.omega.{0} 1)
+    {F : PairERCoherentFamily cR (Order.succ β)}
+    (_T : PairERTypeTree F) :
+    PairERTypeTree F.extendAtSucc := by
+  refine
+    { branches := Set.univ
+      realizers := fun b => validFiber cR F.extendAtSucc.prefix b
+      realizers_sub_validFiber := ?_
+      large_sigma := ?_ }
+  · intro _ _ hy; exact hy
+  · -- Sigma ≃ {y above F.extendAtSucc.prefix}, size ≥ succ ℶ_1 by large_above_prefix.
+    set p : (Order.succ (Order.succ β)).ToType ↪o PairERSource :=
+      F.extendAtSucc.prefix with hp_def
+    set above_prefix : Set PairERSource :=
+      { y : PairERSource | ∀ x : (Order.succ (Order.succ β)).ToType, p x < y }
+      with hap_def
+    have h_above_large : Order.succ (Cardinal.beth.{0} 1) ≤
+        Cardinal.mk above_prefix := large_above_prefix hβ p
+    -- Define injection above_prefix → Sigma via y ↦ (profileOf y, y).
+    set Sigma : Set (((Order.succ (Order.succ β)).ToType → Bool) × PairERSource) :=
+      { q | q.1 ∈ (Set.univ : Set _) ∧
+        q.2 ∈ validFiber cR F.extendAtSucc.prefix q.1 } with hS
+    have h_inj : Cardinal.mk above_prefix ≤ Cardinal.mk Sigma := by
+      refine Cardinal.mk_le_of_injective (f := fun y : above_prefix =>
+        (⟨(fun x => cR (pairEmbed (y.2 x)), y.1), trivial, ?_⟩ : Sigma)) ?_
+      · intro x; exact ⟨y.2 x, rfl⟩
+      · intro y₁ y₂ h
+        have h1 := Subtype.mk.inj h
+        have h2 := (Prod.mk.inj h1).2
+        exact Subtype.ext h2
+    exact h_above_large.trans h_inj
+
 /-- **Any successor-level family with `IsTypeCoherent` is
 `IsCanonicalTypeCoherent`**. Key observation: for `α = succ β`, any
 cofinal ℕ-sequence `e : ℕ → {γ // γ < succ β}` eventually reaches
