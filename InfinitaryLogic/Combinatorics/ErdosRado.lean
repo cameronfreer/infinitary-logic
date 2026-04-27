@@ -2525,6 +2525,69 @@ lemma PairERTypeTree.limitChain_head
     {F : PairERCoherentFamily cR α} (T : PairERTypeTree F) :
     (T.limitChain hα).head = F.prefix := rfl
 
+/-! ### Architectural tension surfaced: single-branch family vs multi-branch tree
+
+`PairERCoherentFamily` commits to a single `F.typeFn` at construction
+(determined by the prior recursion's stage choices). `PairERTypeTree`
+records many branches, and `selectedBranch hα` is chosen by H3
+pigeonhole. **There is no reason** `T.selectedBranch hα = F.typeFn`,
+and the α = ω sanity analysis shows they may *deliberately differ*.
+
+The lemmas below make this explicit: type-coherence-style identities
+between `T.limitChain hα` and `F`'s data hold ONLY UNDER the equality
+hypothesis. Hiding this inside a "tree-aware extendAtLimit" would be
+wrong; it would commit the bug the original architecture had.
+
+The architectural decision (next tranche): either
+- (a) the recursion must rebuild earlier `F.typeVal δ` choices to
+  align with the eventual `T.selectedBranch hα` (= type-rebuilding
+  recursion), or
+- (b) `PairERCoherentFamily` must defer committing to a single
+  `F.typeFn` until limit-time, replacing `F.typeVal` with branch-set
+  data (= type-deferred recursion).
+-/
+
+/-- **`limitChain` typeAt** at position `δ`: the type at the
+enumerated position is `T.selectedBranch hα` evaluated at that
+position. Direct from `limitWithType_typeAt`. -/
+lemma PairERTypeTree.limitChain_typeAt
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    {F : PairERCoherentFamily cR α} (T : PairERTypeTree F)
+    (δ : Ordinal.{0}) (hδ : δ < α) :
+    (T.limitChain hα).typeAt δ hδ =
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      T.selectedBranch hα (Ordinal.enum (α := α.ToType) (· < ·)
+        ⟨δ, (Ordinal.type_toType α).symm ▸ hδ⟩) := by
+  unfold PairERTypeTree.limitChain
+  rw [PairERChain.limitWithType_typeAt]
+
+/-- **Conditional type-coherence**: `T.limitChain` and `F.typeVal`
+agree at every position EXACTLY when the tree's selected branch
+equals `F.typeFn`. Without this hypothesis, the equation is generally
+false — single-branch family state and multi-branch tree state are
+genuinely distinct.
+
+This lemma surfaces the architectural conflict explicitly: any
+"tree-aware extendAtLimit" must take this equality as an input, not
+hide it. -/
+lemma PairERTypeTree.limitChain_typeAt_eq_typeVal
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    {F : PairERCoherentFamily cR α} (T : PairERTypeTree F)
+    (h_eq : T.selectedBranch hα = F.typeFn)
+    (δ : Ordinal.{0}) (hδ : δ < α) :
+    (T.limitChain hα).typeAt δ hδ = F.typeVal δ hδ := by
+  classical
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  rw [T.limitChain_typeAt hα δ hδ, h_eq]
+  -- Goal: F.typeFn (enum ⟨δ, _⟩) = F.typeVal δ hδ.
+  show F.typeVal (Ordinal.typein (· < ·)
+    (Ordinal.enum (α := α.ToType) (· < ·)
+      ⟨δ, (Ordinal.type_toType α).symm ▸ hδ⟩)) _ = F.typeVal δ hδ
+  congr 1
+  exact Ordinal.typein_enum _ _
+
 /-! ### Other frontier theorems (sorry'd, known unprovable from
 current invariants after α = ω sanity analysis)
 
