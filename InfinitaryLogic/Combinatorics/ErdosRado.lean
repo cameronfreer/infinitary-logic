@@ -3191,6 +3191,48 @@ noncomputable def TreeBundle.limitFromTree
     rw [PairERChain.limitWithType_commitAt]
     exact TF.family.prefix_enum δ hδ
 
+/-- **`TreeBundle.extendSucc`**: successor extension of a `TreeBundle`
+at level `succ β`, producing one at level `succ (succ β)`.
+
+**Stage choice**: the new stage is `(TB.family.family.stage β _).succ`,
+*drawn from the family's β-stage*, NOT `TB.stage.succ`. This is the
+"type-rebuilding" aspect: the type at the new top is determined by
+the family's choice (via `PairERChain.succ`'s `Classical.choose`),
+not by `TB.stage`'s own type at top.
+
+**`coh` proof**: the new family at γ < succ β inherits from
+`TB.family.family.stage`, so commitAt agrees by `family.coherent` +
+`succ_commitAt`. At γ = succ β (top), it's `rfl` since both sides
+reduce to the same `succ`-chain's top commit.
+
+Status: structural definition complete; `coh` proof has sorry stub
+(reduces to standard `succ_commitAt` + `family.coherent` chase). -/
+noncomputable def TreeBundle.extendSucc
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {β : Ordinal.{0}}
+    (hβ : Order.succ (Order.succ β) < Ordinal.omega.{0} 1)
+    (TB : TreeBundle cR (Order.succ β)) :
+    TreeBundle cR (Order.succ (Order.succ β)) where
+  family :=
+    { family := TB.family.family.extendAtSucc
+      tree := PairERTypeTree.extendSucc hβ TB.family.tree }
+  stage := (TB.family.family.stage β (Order.lt_succ β)).succ
+  coh := by
+    intro δ hδ_succ
+    rcases lt_or_eq_of_le (Order.lt_succ_iff.mp hδ_succ) with hδ_lt | hδ_eq
+    · -- δ < succ β: LHS uses succ_commitAt; RHS unfolds extendAtSucc at γ < succ β.
+      rw [PairERChain.succ_commitAt _ δ hδ_lt]
+      unfold PairERCoherentFamily.commitVal PairERCoherentFamily.extendAtSucc
+      simp only [dif_pos hδ_lt]
+      -- Goal: (TB.family.family.stage β _).commitAt δ hδ_lt =
+      --   (TB.family.family.stage δ hδ_lt).commitAt δ (Order.lt_succ δ).
+      rcases lt_or_eq_of_le (Order.lt_succ_iff.mp hδ_lt) with hδ_lt_β | hδ_eq_β
+      · exact TB.family.family.coherent hδ_lt_β (Order.lt_succ β)
+      · subst hδ_eq_β; rfl
+    · -- δ = succ β: both sides are top of `(stage β _).succ`.
+      subst hδ_eq
+      unfold PairERCoherentFamily.commitVal PairERCoherentFamily.extendAtSucc
+      simp only [dif_neg (lt_irrefl _)]
+
 /-- **Any successor-level family with `IsTypeCoherent` is
 `IsCanonicalTypeCoherent`**. Key observation: for `α = succ β`, any
 cofinal ℕ-sequence `e : ℕ → {γ // γ < succ β}` eventually reaches
