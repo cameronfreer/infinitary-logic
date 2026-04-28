@@ -2588,6 +2588,75 @@ lemma PairERTypeTree.limitChain_typeAt_eq_typeVal
   congr 1
   exact Ordinal.typein_enum _ _
 
+/-! ### Type-deferred recursion: `PairERTreeFamily`
+
+The new layer that resolves the single-branch / multi-branch tension.
+Carries head/stage coherence (via the wrapped `PairERCoherentFamily`)
+and tree data (via `PairERTypeTree`), but lemmas work through the
+tree's branches rather than the family's `typeFn`. The wrapped family's
+`typeFn` is still defined (it's a field of the underlying family)
+but is NOT a load-bearing object for the new layer's projections.
+
+**Design contract**:
+- `PairERTreeFamily` is for the main-theorem path that uses tree-aware
+  limits.
+- `PairERCoherentFamily` is the old single-branch API, kept for
+  backwards compatibility and downstream code that doesn't need the
+  tree-driven approach.
+- The conditional equality lemma above (`limitChain_typeAt_eq_typeVal`)
+  is the boundary: it shows why tree-aware limits cannot be hidden
+  inside `PairERCoherentFamily` without taking the equality as input.
+
+**Status**: minimal implementation — structure + one projection from
+selected branch to concrete `PairERChain.limitWithType`. Successor /
+limit constructors and recursion threading deferred to next tranches. -/
+
+/-- **`PairERTreeFamily`**: type-deferred recursion layer. Pairs a
+coherent family (for head data) with a `PairERTypeTree` (for branch
+data). Lemmas work via the tree, not via the family's typeFn. -/
+structure PairERTreeFamily
+    (cR : (Fin 2 ↪o PairERSource) → Bool) (α : Ordinal.{0}) where
+  /-- The underlying coherent family (provides prefix/head structure). -/
+  family : PairERCoherentFamily cR α
+  /-- The tree of branches and realizers above this family's prefix. -/
+  tree : PairERTypeTree family
+
+/-- **Projection theorem**: given a `PairERTreeFamily TF`, a selected
+branch `b ∈ TF.tree.branches` with `succ ℶ_1`-many realizers, produce
+a concrete `PairERChain cR α` whose head is `TF.family.prefix` and
+whose type is `b`. Uses `PairERChain.limitWithType` directly.
+
+This is the type-deferred analog of `PairERCoherentFamily.
+limitTypeCoherent`: the resulting chain's type is the SELECTED branch,
+not the family's `typeFn`. The selection is explicit (passed as the
+branch + size hypothesis), so no hidden architectural conflict. -/
+noncomputable def PairERTreeFamily.toLimitChainAtBranch
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (TF : PairERTreeFamily cR α)
+    (b : α.ToType → Bool)
+    (hb_large : Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (TF.tree.realizers b)) :
+    PairERChain cR α :=
+  PairERChain.limitWithType TF.family.prefix b
+    (hb_large.trans
+      (Cardinal.mk_le_mk_of_subset (TF.tree.realizers_sub_validFiber b)))
+
+/-- The projected chain's `head` is `TF.family.prefix`. -/
+@[simp]
+lemma PairERTreeFamily.toLimitChainAtBranch_head
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (TF : PairERTreeFamily cR α)
+    (b : α.ToType → Bool) (hb_large) :
+    (TF.toLimitChainAtBranch b hb_large).head = TF.family.prefix := rfl
+
+/-- The projected chain's `type` is the selected branch `b`. -/
+@[simp]
+lemma PairERTreeFamily.toLimitChainAtBranch_type
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (TF : PairERTreeFamily cR α)
+    (b : α.ToType → Bool) (hb_large) :
+    (TF.toLimitChainAtBranch b hb_large).type = b := rfl
+
 /-! ### Other frontier theorems (sorry'd, known unprovable from
 current invariants after α = ω sanity analysis)
 
