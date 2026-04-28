@@ -3223,22 +3223,17 @@ noncomputable def TreeBundle.limitFromTree
     rw [PairERChain.limitWithType_commitAt]
     exact TF.family.prefix_enum δ hδ
 
-/-- **`TreeBundle.extendSucc`**: successor extension of a `TreeBundle`
-at level `succ β`, producing one at level `succ (succ β)`.
+/-- **[LEGACY] `TreeBundle.extendSucc`** — uses
+`(TB.family.family.stage β _).succ` (family-stored) instead of
+`TB.stage.succ`. **Do NOT use in the main tree-driven path**: if `TB`
+came from `limitFromTree`, `TB.stage` is the tree-selected limit
+chain, but `TB.family.family.stage β _` is the OLD family's stage —
+discarding the selected branch. Use `TreeBundle.extend` (above)
+instead, which preserves the selected branch via `TB.stage.succ`.
 
-**Stage choice**: the new stage is `(TB.family.family.stage β _).succ`,
-*drawn from the family's β-stage*, NOT `TB.stage.succ`. This is the
-"type-rebuilding" aspect: the type at the new top is determined by
-the family's choice (via `PairERChain.succ`'s `Classical.choose`),
-not by `TB.stage`'s own type at top.
-
-**`coh` proof**: the new family at γ < succ β inherits from
-`TB.family.family.stage`, so commitAt agrees by `family.coherent` +
-`succ_commitAt`. At γ = succ β (top), it's `rfl` since both sides
-reduce to the same `succ`-chain's top commit.
-
-Status: structural definition complete; `coh` proof has sorry stub
-(reduces to standard `succ_commitAt` + `family.coherent` chase). -/
+Kept for reference / experimentation; the type-rebuilding semantics
+may be useful when `TB` is constructed from non-tree sources where
+the family's stage is canonical. -/
 noncomputable def TreeBundle.extendSucc
     {cR : (Fin 2 ↪o PairERSource) → Bool} {β : Ordinal.{0}}
     (hβ : Order.succ (Order.succ β) < Ordinal.omega.{0} 1)
