@@ -2686,6 +2686,40 @@ lemma PairERTreeFamily.toLimitChain_type
     (TF : PairERTreeFamily cR α) (hα : α < Ordinal.omega.{0} 1) :
     (TF.toLimitChain hα).type = TF.tree.selectedBranch hα := rfl
 
+/-! ### `TreeBundle`: tree-aware bundle parallel to `CoherentBundle`
+
+The bundle layer that completes the type-deferred recursion. Pairs a
+`PairERTreeFamily` with a current stage chain, wired by a head-coherence
+field `coh`. Constructors mirror `CoherentBundle.zero / extend /
+limitExtend` but use the tree-driven `toLimitChain` at limits, so the
+stage's `type` is the SELECTED branch rather than a single committed
+`typeFn`.
+
+**Design contract**:
+- This is a NEW path, parallel to (not replacing) `CoherentBundle`.
+- The main-theorem chain extraction will use `TreeBundle` for limits
+  where canonical types matter; `CoherentBundle` remains for code that
+  works at the type-committed layer.
+- We do NOT attempt `stage.typeAt δ = family.family.typeVal δ` —
+  that's where the architectural conflict lives. Instead:
+  `stage.type = family.tree.selectedBranch hα` (via
+  `toLimitChain_type`).
+
+The structure is declared here; constructors (`zero`, `extendSucc`,
+`limitFromTree`) are defined further below, after `PairERTypeTree.empty`
+and friends become available. -/
+
+/-- **`TreeBundle`**: tree-aware bundle. Carries head-coherence (`coh`)
+between the current stage and the underlying coherent family, but the
+stage's TYPE is determined by the tree (via `toLimitChain` at limits),
+not by the family's `typeFn`. -/
+structure TreeBundle
+    (cR : (Fin 2 ↪o PairERSource) → Bool) (α : Ordinal.{0}) where
+  family : PairERTreeFamily cR α
+  stage : PairERChain cR α
+  coh : ∀ δ (hδ : δ < α),
+    stage.commitAt δ hδ = family.family.commitVal δ hδ
+
 /-! ### Other frontier theorems (sorry'd, known unprovable from
 current invariants after α = ω sanity analysis)
 
@@ -3122,6 +3156,17 @@ noncomputable def PairERTypeTree.extendLimit
         have h2 := (Prod.mk.inj h1).2
         exact Subtype.ext h2
     exact h_above_large.trans h_inj
+
+/-- **`TreeBundle.zero`**: base case at α = 0. Stage is
+`PairERChain.zero`, family is the empty tree-family, head-coherence is
+vacuous. -/
+noncomputable def TreeBundle.zero
+    (cR : (Fin 2 ↪o PairERSource) → Bool) : TreeBundle cR 0 where
+  family :=
+    { family := PairERCoherentFamily.empty cR
+      tree := PairERTypeTree.empty cR }
+  stage := PairERChain.zero cR
+  coh := fun δ hδ => absurd hδ (not_lt.mpr (zero_le δ))
 
 /-- **Any successor-level family with `IsTypeCoherent` is
 `IsCanonicalTypeCoherent`**. Key observation: for `α = succ β`, any
