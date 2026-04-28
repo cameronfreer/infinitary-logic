@@ -2870,6 +2870,38 @@ noncomputable def PairERCoherentFamily.extendAtLimit
       rw [PairERCoherentFamily.limit_commitAt F hα δ hδβ]
       rfl
 
+/-- **`extendWithStage`**: extend a coherent family at level α by
+appending an arbitrary stage `s : PairERChain cR α` at the new top
+position α, producing a family at level (succ α). Requires
+head-coherence of `s` with the existing family.
+
+Generalizes `extendAtLimit` (which uses `F.limit hα` as the
+appended stage) — here ANY suitable `s` works. The intended use is
+to feed a tree-driven limit chain (`TF.toLimitChain hα`) instead of
+the Classical.choose-based `F.limit`. -/
+noncomputable def PairERCoherentFamily.extendWithStage
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (F : PairERCoherentFamily cR α)
+    (s : PairERChain cR α)
+    (h_coh : ∀ δ (hδ : δ < α), s.commitAt δ hδ = F.commitVal δ hδ) :
+    PairERCoherentFamily cR (Order.succ α) where
+  stage β hβ :=
+    if h : β < α then F.stage β h
+    else
+      have hβ_eq : β = α :=
+        le_antisymm (Order.lt_succ_iff.mp hβ) (not_lt.mp h)
+      hβ_eq ▸ s.succ
+  coherent := by
+    intro δ β hδβ hβ_succ
+    rcases lt_or_eq_of_le (Order.lt_succ_iff.mp hβ_succ) with hβ_lt_α | hβ_eq_α
+    · have hδ_lt_α : δ < α := hδβ.trans hβ_lt_α
+      simp only [dif_pos hβ_lt_α, dif_pos hδ_lt_α]
+      exact F.coherent hδβ hβ_lt_α
+    · subst hβ_eq_α
+      simp only [dif_pos hδβ, dif_neg (lt_irrefl _)]
+      rw [PairERChain.succ_commitAt _ δ hδβ]
+      exact h_coh δ hδβ
+
 /-- **Type-coherent variant of `extendAtLimit`**: uses
 `limitTypeCoherent` instead of `limit`, so the new top stage at level
 `α+1` preserves all earlier committed Bools. Requires `IsTypeCoherent`
@@ -3231,6 +3263,86 @@ noncomputable def TreeBundle.extendSucc
     · -- δ = succ β: both sides are top of `(stage β _).succ`.
       subst hδ_eq
       unfold PairERCoherentFamily.commitVal PairERCoherentFamily.extendAtSucc
+      simp only [dif_neg (lt_irrefl _)]
+
+/-- **`PairERTreeFamily.extendWithStage`**: extend a tree family by
+appending an arbitrary stage `s` at level α with head-coherence.
+Produces a tree family at level (succ α).
+
+The new family is `TF.family.extendWithStage s h_coh`. The new tree
+uses the universal-tree formulation (`branches = Set.univ`,
+`realizers b = validFiber cR new_prefix b`), with `large_sigma`
+proved via `large_above_prefix` over the new prefix. -/
+noncomputable def PairERTreeFamily.extendWithStage
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (h_succα : Order.succ α < Ordinal.omega.{0} 1)
+    (TF : PairERTreeFamily cR α)
+    (s : PairERChain cR α)
+    (h_coh : ∀ δ (hδ : δ < α), s.commitAt δ hδ = TF.family.commitVal δ hδ) :
+    PairERTreeFamily cR (Order.succ α) where
+  family := TF.family.extendWithStage s h_coh
+  tree := by
+    refine
+      { branches := Set.univ
+        realizers := fun b => validFiber cR (TF.family.extendWithStage s h_coh).prefix b
+        realizers_sub_validFiber := ?_
+        large_sigma := ?_ }
+    · intro _ _ hy; exact hy
+    · set p : (Order.succ α).ToType ↪o PairERSource :=
+        (TF.family.extendWithStage s h_coh).prefix with hp_def
+      set above_prefix : Set PairERSource :=
+        { y : PairERSource | ∀ x : (Order.succ α).ToType, p x < y }
+        with hap_def
+      have h_above_large : Order.succ (Cardinal.beth.{0} 1) ≤
+          Cardinal.mk above_prefix := large_above_prefix h_succα p
+      set Sigma : Set (((Order.succ α).ToType → Bool) × PairERSource) :=
+        { q | q.1 ∈ (Set.univ : Set _) ∧
+          q.2 ∈ validFiber cR (TF.family.extendWithStage s h_coh).prefix q.1 }
+        with hS
+      have h_inj : Cardinal.mk above_prefix ≤ Cardinal.mk Sigma := by
+        refine Cardinal.mk_le_of_injective (f := fun y : above_prefix =>
+          (⟨(fun x => cR (pairEmbed (y.2 x)), y.1), trivial, ?_⟩ : Sigma)) ?_
+        · intro x; exact ⟨y.2 x, rfl⟩
+        · intro y₁ y₂ h
+          have h1 := Subtype.mk.inj h
+          have h2 := (Prod.mk.inj h1).2
+          exact Subtype.ext h2
+      exact h_above_large.trans h_inj
+
+/-- **`TreeBundle.extend`** (the corrected successor extension):
+extends a `TreeBundle` at level α to one at level (succ α) using
+`TB.stage.succ` as the new stage.
+
+This is the type-deferred-correct successor: if `TB` came from
+`limitFromTree`, the tree-selected branch is preserved into the next
+successor step (rather than being discarded by re-fetching from the
+old family's stages, which is what the legacy `extendSucc` did).
+
+The new family is built via `PairERTreeFamily.extendWithStage` using
+`TB.stage` and `TB.coh`. -/
+noncomputable def TreeBundle.extend
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (h_succα : Order.succ α < Ordinal.omega.{0} 1)
+    (TB : TreeBundle cR α) :
+    TreeBundle cR (Order.succ α) where
+  family := TB.family.extendWithStage h_succα TB.stage TB.coh
+  stage := TB.stage.succ
+  coh := by
+    intro δ hδ_succ
+    rcases lt_or_eq_of_le (Order.lt_succ_iff.mp hδ_succ) with hδ_lt | hδ_eq
+    · -- δ < α: succ_commitAt + TB.coh + extendWithStage at γ < α inherits.
+      rw [PairERChain.succ_commitAt _ δ hδ_lt]
+      show TB.stage.commitAt δ hδ_lt =
+        (TB.family.extendWithStage h_succα TB.stage TB.coh).family.commitVal δ hδ_succ
+      rw [TB.coh δ hδ_lt]
+      unfold PairERCoherentFamily.commitVal
+        PairERTreeFamily.extendWithStage PairERCoherentFamily.extendWithStage
+      simp only [dif_pos hδ_lt]
+    · -- δ = α: top, both sides are TB.stage.succ.commitAt α _.
+      subst hδ_eq
+      show TB.stage.succ.commitAt δ (Order.lt_succ δ) = _
+      unfold PairERCoherentFamily.commitVal
+        PairERTreeFamily.extendWithStage PairERCoherentFamily.extendWithStage
       simp only [dif_neg (lt_irrefl _)]
 
 /-- **Any successor-level family with `IsTypeCoherent` is
