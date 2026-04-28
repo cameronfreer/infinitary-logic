@@ -3340,6 +3340,56 @@ noncomputable def TreeBundle.extend
         PairERTreeFamily.extendWithStage PairERCoherentFamily.extendWithStage
       simp only [dif_neg (lt_irrefl _)]
 
+/-! ### Architectural test: `extend ∘ limitFromTree` preserves the
+selected branch.
+
+The point of `TreeBundle.extend` (vs. legacy `extendSucc`) is that it
+threads `TB.stage.succ` rather than the family-stored stage. When `TB`
+came from `TreeBundle.limitFromTree hα TF`, the limit chain
+`TF.toLimitChain hα` carries the pigeonhole-selected branch as its
+`type` field. The lemma below confirms that, after one successor
+extension, the typeAt readings at lower positions `δ < α` literally
+read off `TF.tree.selectedBranch hα` at the enumerated point — i.e.,
+the tree-selected branch survives the successor step. This is the
+"next meaningful test" of the type-deferred design. -/
+
+/-- **`TreeBundle.extend` after `limitFromTree` reads `selectedBranch`
+at lower positions.** The new stage at `succ α` reports, at every
+position `δ < α`, the Bool value of the tree's selected branch. This
+is direct from `succ_typeAt_old` + `limitWithType_typeAt`. -/
+lemma TreeBundle.extend_after_limitFromTree_typeAt
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    (h_succα : Order.succ α < Ordinal.omega.{0} 1)
+    (TF : PairERTreeFamily cR α)
+    (δ : Ordinal.{0}) (hδ : δ < α) :
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    ((TreeBundle.limitFromTree hα TF).extend h_succα).stage.typeAt δ
+        (hδ.trans (Order.lt_succ α)) =
+      TF.tree.selectedBranch hα
+        (Ordinal.enum (α := α.ToType) (· < ·)
+          ⟨δ, (Ordinal.type_toType α).symm ▸ hδ⟩) := by
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  show (TF.toLimitChain hα).succ.typeAt δ _ = _
+  rw [PairERChain.succ_typeAt_old _ δ hδ]
+  unfold PairERTreeFamily.toLimitChain PairERTreeFamily.toLimitChainAtBranch
+  rw [PairERChain.limitWithType_typeAt]
+
+/-- **Stage identity** for `extend ∘ limitFromTree`: the new stage is
+*exactly* the successor of the tree-driven limit chain. By definition
+of `TreeBundle.extend` (which sets `stage := TB.stage.succ`) and
+`TreeBundle.limitFromTree` (which sets `stage := TF.toLimitChain hα`).
+Reflexivity makes the architectural choice visible: the
+`selectedBranch`-typed limit chain is the input to the next
+successor. -/
+lemma TreeBundle.extend_after_limitFromTree_stage
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    (h_succα : Order.succ α < Ordinal.omega.{0} 1)
+    (TF : PairERTreeFamily cR α) :
+    ((TreeBundle.limitFromTree hα TF).extend h_succα).stage =
+      (TF.toLimitChain hα).succ := rfl
+
 /-- **Any successor-level family with `IsTypeCoherent` is
 `IsCanonicalTypeCoherent`**. Key observation: for `α = succ β`, any
 cofinal ℕ-sequence `e : ℕ → {γ // γ < succ β}` eventually reaches
