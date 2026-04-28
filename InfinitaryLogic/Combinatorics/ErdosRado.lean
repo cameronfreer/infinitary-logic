@@ -3168,6 +3168,29 @@ noncomputable def TreeBundle.zero
   stage := PairERChain.zero cR
   coh := fun δ hδ => absurd hδ (not_lt.mpr (zero_le δ))
 
+/-- **`TreeBundle.limitFromTree`**: build a `TreeBundle` at limit level
+α directly from a `PairERTreeFamily TF`. Stage is `TF.toLimitChain hα`,
+i.e., the tree-driven limit chain whose type is the pigeonhole-selected
+branch. Head-coherence (`coh`) follows from `limitWithType_commitAt` +
+`PairERCoherentFamily.prefix_enum`.
+
+This is the constructor that distinguishes `TreeBundle` from
+`CoherentBundle`: at limits, we use the SELECTED branch as the type
+function, not a fresh `Classical.choose τ`. -/
+noncomputable def TreeBundle.limitFromTree
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    (TF : PairERTreeFamily cR α) :
+    TreeBundle cR α where
+  family := TF
+  stage := TF.toLimitChain hα
+  coh := by
+    intro δ hδ
+    show (TF.toLimitChain hα).commitAt δ hδ = TF.family.commitVal δ hδ
+    unfold PairERTreeFamily.toLimitChain PairERTreeFamily.toLimitChainAtBranch
+    rw [PairERChain.limitWithType_commitAt]
+    exact TF.family.prefix_enum δ hδ
+
 /-- **Any successor-level family with `IsTypeCoherent` is
 `IsCanonicalTypeCoherent`**. Key observation: for `α = succ β`, any
 cofinal ℕ-sequence `e : ℕ → {γ // γ < succ β}` eventually reaches
