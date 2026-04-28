@@ -2657,6 +2657,35 @@ lemma PairERTreeFamily.toLimitChainAtBranch_type
     (b : α.ToType → Bool) (hb_large) :
     (TF.toLimitChainAtBranch b hb_large).type = b := rfl
 
+/-- **Pigeonhole-driven limit chain**: combines `exists_large_realized_
+branch` with `toLimitChainAtBranch`. The caller doesn't pick a branch;
+the H3 pigeonhole on the tree's branches picks one with `succ ℶ_1`-many
+realizers, and the chain is built from it.
+
+This is the type-deferred analog of `T.limitChain` from earlier: same
+construction (uses pigeonhole), but exposed at the `PairERTreeFamily`
+level so downstream code doesn't need to peek into the tree. -/
+noncomputable def PairERTreeFamily.toLimitChain
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (TF : PairERTreeFamily cR α) (hα : α < Ordinal.omega.{0} 1) :
+    PairERChain cR α :=
+  TF.toLimitChainAtBranch (TF.tree.selectedBranch hα)
+    (TF.tree.selectedBranch_large hα)
+
+/-- The pigeonhole-driven chain's `head` is the family's prefix. -/
+@[simp]
+lemma PairERTreeFamily.toLimitChain_head
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (TF : PairERTreeFamily cR α) (hα : α < Ordinal.omega.{0} 1) :
+    (TF.toLimitChain hα).head = TF.family.prefix := rfl
+
+/-- The pigeonhole-driven chain's `type` is the tree's selectedBranch. -/
+@[simp]
+lemma PairERTreeFamily.toLimitChain_type
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (TF : PairERTreeFamily cR α) (hα : α < Ordinal.omega.{0} 1) :
+    (TF.toLimitChain hα).type = TF.tree.selectedBranch hα := rfl
+
 /-! ### Other frontier theorems (sorry'd, known unprovable from
 current invariants after α = ω sanity analysis)
 
