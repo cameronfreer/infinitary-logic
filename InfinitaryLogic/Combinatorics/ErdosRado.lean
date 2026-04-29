@@ -4541,6 +4541,91 @@ theorem treeStage_succ (cR : (Fin 2 ↪o PairERSource) → Bool)
   unfold treeStage
   rw [Ordinal.limitRecOn_succ]
 
+/-- **Canonical commit value at `treeStage`'s succ-(δ+1) level.**
+The new top commit of the chain `(treeStage cR δ hδ).stage.succ`,
+i.e., the witness chosen by `PairERChain.succ`'s pigeonhole step
+at level `δ`. By `treeStage_succ`, this equals the corresponding
+commit inside `treeStage cR (Order.succ δ) _`. -/
+noncomputable def treeStageCanonicalCommit
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    (δ : Ordinal.{0}) (hδ : δ < Ordinal.omega.{0} 1) : PairERSource :=
+  (treeStage cR δ hδ).stage.succ.commitAt δ (Order.lt_succ δ)
+
+/-- **Limit-case commit equation for `treeStage`.** At a limit `β` with
+`δ < β`, the commit at position `δ` in the limit-stage equals the new
+top commit of the `(treeStage cR δ _).stage.succ` chain. This is the
+limit-case engine for `treeStage_canonical`: `treeStage`'s commits at
+limits factor through the canonical `(treeStage cR δ _).extend` step. -/
+theorem treeStage_limit_stage_commitAt
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    {β : Ordinal.{0}} (hβ_lim : Order.IsSuccLimit β)
+    (hβ : β < Ordinal.omega.{0} 1)
+    (δ : Ordinal.{0}) (hδβ : δ < β) :
+    (treeStage cR β hβ).stage.commitAt δ hδβ =
+      (treeStage cR δ (hδβ.trans hβ)).stage.succ.commitAt δ
+        (Order.lt_succ δ) := by
+  unfold treeStage
+  rw [Ordinal.limitRecOn_limit (h := hβ_lim)]
+  unfold TreeBundle.limitExtend TreeBundle.limitFromTree
+    PairERTreeFamily.toLimitChain PairERTreeFamily.toLimitChainAtBranch
+  rw [PairERChain.limitWithType_commitAt]
+  rw [show ∀ F : PairERCoherentFamily cR β,
+        F.prefix
+          (Ordinal.enum (α := β.ToType) (· < ·)
+            ⟨δ, (Ordinal.type_toType β).symm ▸ hδβ⟩) =
+          F.commitVal δ hδβ from
+      fun F => F.prefix_enum δ hδβ]
+  rfl
+
+/-- **Canonicalization of `treeStage` commits.** Mirrors
+`richStage_bundle_eq_self`: the commit at position `δ` in
+`treeStage cR α` is canonical, equal across all enclosing levels
+`α > δ`. Specifically, every reading equals `treeStageCanonicalCommit
+cR δ` — the new top commit at level `Order.succ δ`. Proved by induction
+on `α` using `treeStage_succ`, `TreeBundle.extend_commitAt_old`, and
+`treeStage_limit_stage_commitAt`. -/
+theorem treeStage_canonical_commit
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    {α δ : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1) (hδα : δ < α)
+    (hδ : δ < Ordinal.omega.{0} 1) :
+    (treeStage cR α hα).stage.commitAt δ hδα =
+      treeStageCanonicalCommit cR δ hδ := by
+  induction α using Ordinal.limitRecOn with
+  | zero => exact absurd hδα (not_lt.mpr (zero_le δ))
+  | succ β IH =>
+    have hβ : β < Ordinal.omega.{0} 1 := (Order.lt_succ β).trans hα
+    rw [treeStage_succ]
+    by_cases h_δ_eq_β : δ = β
+    · -- δ = β: LHS unfolds to `(treeStage cR δ _).stage.succ.commitAt δ`,
+      -- which is exactly the canonical commit's definition.
+      subst h_δ_eq_β
+      show ((treeStage cR δ hβ).extend hα).stage.commitAt δ _ =
+        treeStageCanonicalCommit cR δ hδ
+      rfl
+    · have hδβ : δ < β :=
+        lt_of_le_of_ne (Order.lt_succ_iff.mp hδα) h_δ_eq_β
+      show ((treeStage cR β hβ).extend hα).stage.commitAt δ _ =
+        treeStageCanonicalCommit cR δ hδ
+      rw [TreeBundle.extend_commitAt_old hα (treeStage cR β hβ) δ hδβ]
+      exact IH hβ hδβ
+  | limit β hβ_lim IH =>
+    rw [treeStage_limit_stage_commitAt cR hβ_lim hα δ hδα]
+    rfl
+
+/-- **Cross-level agreement** for `treeStage` commits: any two enclosing
+levels `α₁, α₂ > δ` produce the same commit at `δ`. Direct corollary
+of `treeStage_canonical_commit`. -/
+theorem treeStage_cross_agree_commit
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    {α₁ α₂ δ : Ordinal.{0}}
+    (hα₁ : α₁ < Ordinal.omega.{0} 1) (hα₂ : α₂ < Ordinal.omega.{0} 1)
+    (hδα₁ : δ < α₁) (hδα₂ : δ < α₂) (hδ : δ < Ordinal.omega.{0} 1) :
+    (treeStage cR α₁ hα₁).stage.commitAt δ hδα₁ =
+      (treeStage cR α₂ hα₂).stage.commitAt δ hδα₂ := by
+  rw [treeStage_canonical_commit cR hα₁ hδα₁ hδ,
+      treeStage_canonical_commit cR hα₂ hδα₂ hδ]
+
 /-! ### Final assembly: chain extraction and `erdos_rado_pair_omega1`
 
 With `richStageCanonical cR α` producing a sorry-free `RichState cR α`
