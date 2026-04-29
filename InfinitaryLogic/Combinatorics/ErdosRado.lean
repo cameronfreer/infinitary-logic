@@ -2749,21 +2749,35 @@ structure TreeBundle
   coh : ∀ δ (hδ : δ < α),
     stage.commitAt δ hδ = family.family.commitVal δ hδ
 
-/-! ### Other frontier theorems (sorry'd, known unprovable from
-current invariants after α = ω sanity analysis)
+/-! ### [LEGACY] Old single-branch frontier theorems
 
-The following statements are sorry'd. The α = ω sanity analysis
-establishes they cannot be proved from `IsTypeCoherent` +
-`IsCanonicalTypeCoherent` alone — they require the `PairERTypeTree`
-architectural tranche. Kept here because downstream definitions
-(`PairERCoherentFamily.limitTypeCoherent`) chain through them; the
-sorry-to-hypothesis refactor will come with the `PairERTypeTree`
-introduction. -/
+**SUPERSEDED**. The two sorry'd theorems below (`exists_point_in_iInter
+_of_fusion_sequence` and `exists_large_iInter_stage_fibers`) are the
+*old* type-coherence-at-limits frontier from the pre-tree architecture.
+They are too single-branch flavored: they describe the obstruction in
+terms of α-intersections of per-stage fibers under `IsTypeCoherent`,
+which the α = ω sanity analysis showed cannot be proved from the
+existing invariants alone.
 
-/-- **[FRONTIER, sorry — known unprovable from current invariants]**
-Extract a single witness from a strict-mono fusion ω-sequence.
-Known false under current invariants (ω-sup doesn't preserve
-per-fiber color constraints); documented in the α = ω sanity block. -/
+The **new sharper frontier** is
+`selectedBranch_agrees_with_prior_commit` (defined later, near
+`treeChain_pair_homogeneous`). The tree architecture makes the
+missing math explicit as a single equation: at every limit α, the
+universal-tree's `selectedBranch` (chosen via H3 pigeonhole) agrees
+with `treeCommitBool cR δ` at every position `δ < α`.
+
+The legacy frontiers below are kept for backward compatibility with
+the now-superseded `PairERCoherentFamily.limitTypeCoherent` path.
+The main pair-Erdős–Rado pipeline (via `treeChain_pair_homogeneous`)
+goes through the new frontier instead. -/
+
+/-- **[LEGACY FRONTIER, sorry — superseded by
+`selectedBranch_agrees_with_prior_commit`]** Extract a single witness
+from a strict-mono fusion ω-sequence. Known false under current
+invariants (ω-sup doesn't preserve per-fiber color constraints).
+The new sharper frontier on the tree path replaces this; this lemma
+is kept only for backward compatibility with the legacy
+`PairERCoherentFamily.limitTypeCoherent` path. -/
 theorem exists_point_in_iInter_of_fusion_sequence
     {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
     (_F : PairERCoherentFamily cR α) (_hF_type : _F.IsTypeCoherent)
@@ -2773,9 +2787,14 @@ theorem exists_point_in_iInter_of_fusion_sequence
       (_F.stage (_e n).1 (_e n).2).head (_F.stage (_e n).1 (_e n).2).type) := by
   sorry
 
-/-- **[FRONTIER, sorry — known unprovable from current invariants]**
-Large-cardinality α-indexed intersection. Same diagnostic as
-`exists_point_in_iInter_of_fusion_sequence`. -/
+/-- **[LEGACY FRONTIER, sorry — superseded by
+`selectedBranch_agrees_with_prior_commit`]** Large-cardinality
+α-indexed intersection of stage fibers. Same diagnostic as
+`exists_point_in_iInter_of_fusion_sequence`. The new tree-path
+frontier `selectedBranch_agrees_with_prior_commit` makes the
+obstruction more precise (a single equation rather than a
+intersection-largeness claim); this legacy lemma chains only through
+the now-superseded `limitTypeCoherent` path. -/
 theorem exists_large_iInter_stage_fibers
     (cR : (Fin 2 ↪o PairERSource) → Bool)
     {α : Ordinal.{0}} (_hα : α < Ordinal.omega.{0} 1)
