@@ -3274,6 +3274,73 @@ noncomputable def PairERTypeTree.universal
         exact Subtype.ext h2
     exact h_above_large.trans h_inj
 
+/-- **Commit-coherence predicate** on a `PairERTypeTree`: every branch
+in `T.branches` agrees with `F.typeVal` at every position
+`δ < α`. This is the structural invariant needed to make
+`selectedBranch` automatically respect prior commitments. -/
+def PairERTypeTree.IsCommitCoherent
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    {F : PairERCoherentFamily cR α} (T : PairERTypeTree F) : Prop :=
+  ∀ b ∈ T.branches, ∀ δ : Ordinal.{0}, ∀ hδα : δ < α,
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    b (Ordinal.enum (α := α.ToType) (· < ·)
+        ⟨δ, (Ordinal.type_toType α).symm ▸ hδα⟩) =
+      F.typeVal δ hδα
+
+/-- **`PairERTypeTree.commitCoherent`**: commit-coherent tree at level
+`α` with `branches = {F.typeFn}`. Pickling all branches into the
+single canonical type function makes `IsCommitCoherent` hold by
+construction. The `large_sigma` invariant requires the
+type-coherent fiber `validFiber cR F.prefix F.typeFn` to have size
+`≥ succ ℶ_1` — this is the **NEW DEEP FRONTIER**, sorry'd here.
+Classical Erdős–Rado fusion machinery is what closes it. -/
+noncomputable def PairERTypeTree.commitCoherent
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    (F : PairERCoherentFamily cR α) :
+    PairERTypeTree F := by
+  refine
+    { branches := {F.typeFn}
+      realizers := fun b => validFiber cR F.prefix b
+      realizers_sub_validFiber := ?_
+      large_sigma := ?_ }
+  · intro _ _ hy; exact hy
+  · -- |Σ| = |{(F.typeFn, y) | y ∈ validFiber cR F.prefix F.typeFn}|.
+    -- Need |validFiber cR F.prefix F.typeFn| ≥ succ ℶ_1.
+    -- This is the deep type-coherent fiber largeness frontier.
+    sorry
+
+/-- **`commitCoherent` is commit-coherent**: every branch (= the
+singleton `F.typeFn`) agrees with `F.typeVal` at every position. -/
+lemma PairERTypeTree.commitCoherent_isCommitCoherent
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    (F : PairERCoherentFamily cR α) :
+    (PairERTypeTree.commitCoherent hα F).IsCommitCoherent := by
+  intro b hb δ hδα
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  -- `branches = {F.typeFn}`, so b = F.typeFn.
+  have hb_eq : b = F.typeFn := hb
+  rw [hb_eq]
+  -- F.typeFn (enum ⟨δ, _⟩) = F.typeVal (typein (enum _)) _ = F.typeVal δ _.
+  show F.typeFn (Ordinal.enum (α := α.ToType) (· < ·)
+      ⟨δ, (Ordinal.type_toType α).symm ▸ hδα⟩) = F.typeVal δ hδα
+  unfold PairERCoherentFamily.typeFn
+  congr 1
+  exact Ordinal.typein_enum _ _
+
+/-- **`commitCoherent`'s `selectedBranch` equals `F.typeFn`.** Since
+`branches = {F.typeFn}`, the pigeonhole-selected branch must be
+`F.typeFn`. -/
+lemma PairERTypeTree.commitCoherent_selectedBranch_eq
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    (F : PairERCoherentFamily cR α) :
+    (PairERTypeTree.commitCoherent hα F).selectedBranch hα = F.typeFn := by
+  have h_mem := (PairERTypeTree.commitCoherent hα F).selectedBranch_mem hα
+  -- selectedBranch ∈ branches = {F.typeFn}, so selectedBranch = F.typeFn.
+  exact h_mem
+
 /-- **`TreeBundle.zero`**: base case at α = 0. Stage is
 `PairERChain.zero`, family is the empty tree-family, head-coherence is
 vacuous. -/
@@ -3523,7 +3590,11 @@ successor extension, build a `TreeBundle cR α` via:
 1. Assemble `F : PairERCoherentFamily cR α` with
    `F.stage β hβα := (IH β hβα).stage.succ`. The `coherent`
    field reduces to `prev_succ` after one `succ_commitAt`.
-2. Attach `PairERTypeTree.universal hα F` as the tree.
+2. Attach `PairERTypeTree.commitCoherent hα F` as the tree.
+   This is the **commit-coherent** tree (branches = `{F.typeFn}`),
+   which makes `selectedBranch_agrees_with_prior_commit` provable.
+   Its `large_sigma` invariant carries the type-coherent fiber
+   largeness frontier.
 3. Wrap with `TreeBundle.limitFromTree hα`.
 
 This is the constructor used by `treeStage`'s limit case. -/
@@ -3546,7 +3617,7 @@ noncomputable def TreeBundle.limitExtend
           (IH δ (hδβ.trans hβα)).stage.succ.commitAt δ (Order.lt_succ δ)
         rw [PairERChain.succ_commitAt _ δ hδβ]
         exact prev_succ β hβα δ hδβ }
-  let tree : PairERTypeTree F := PairERTypeTree.universal hα F
+  let tree : PairERTypeTree F := PairERTypeTree.commitCoherent hα F
   TreeBundle.limitFromTree hα ⟨F, tree⟩
 
 /-- **Any successor-level family with `IsTypeCoherent` is
@@ -4916,7 +4987,30 @@ theorem selectedBranch_agrees_with_prior_commit
     (hα_lim : Order.IsSuccLimit α) (hα : α < Ordinal.omega.{0} 1)
     (δ : Ordinal.{0}) (hδα : δ < α) (hδ : δ < Ordinal.omega.{0} 1) :
     (treeStage cR α hα).stage.typeAt δ hδα = treeCommitBool cR δ hδ := by
-  sorry
+  unfold treeStage
+  rw [Ordinal.limitRecOn_limit (h := hα_lim)]
+  unfold TreeBundle.limitExtend TreeBundle.limitFromTree
+    PairERTreeFamily.toLimitChain PairERTreeFamily.toLimitChainAtBranch
+  rw [PairERChain.limitWithType_typeAt]
+  -- LHS: selectedBranch of commitCoherent F (enum ⟨δ, ...⟩).
+  rw [show ∀ F : PairERCoherentFamily cR α,
+        (PairERTypeTree.commitCoherent hα F).selectedBranch hα
+            (Ordinal.enum (α := α.ToType) (· < ·)
+              ⟨δ, (Ordinal.type_toType α).symm ▸ hδα⟩) =
+          F.typeVal δ hδα from
+      fun F => by
+        rw [PairERTypeTree.commitCoherent_selectedBranch_eq]
+        unfold PairERCoherentFamily.typeFn
+        congr 1
+        exact Ordinal.typein_enum _ _]
+  -- Goal: F.typeVal δ hδα = treeCommitBool cR δ hδ.
+  -- F.stage δ hδα = (treeStage cR δ (hδα.trans hα)).stage.succ (by F's def in limitExtend).
+  -- So F.typeVal δ = (F.stage δ).typeAt δ = (treeStage cR δ _).stage.succ.typeAt δ
+  --              = (treeStage cR δ _).stage.succNewBool = treeCommitBool cR δ.
+  show (treeStage cR δ (hδα.trans hα)).stage.succ.typeAt δ
+    (Order.lt_succ δ) = treeCommitBool cR δ hδ
+  rw [PairERChain.succ_typeAt_top]
+  rfl
 
 /-- **Canonicalization of `treeStage` types.** For every enclosing
 level `η > δ`, the `typeAt δ` of `treeStage cR η _` equals
