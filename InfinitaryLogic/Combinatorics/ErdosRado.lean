@@ -4808,6 +4808,104 @@ theorem exists_omega1_embedding_pair
     exists_ordToType_embedding_of_card_ge hI
   exact ⟨(pairERChainEmbedding cR).trans emb⟩
 
+/-! ### Tree-driven chain extraction (parallel to `pairERCommit`)
+
+`treeCommit` and `treeCommitBool` are the tree-deferred analogs of
+`pairERCommit` and `pairERCommitBool`. They feed the same downstream
+pigeonhole/H5/H1 pipeline but read commits and Bools out of
+`treeStage`'s `TreeBundle`s, where limits use `selectedBranch` rather
+than a fresh `Classical.choose τ`. Together with the canonical-commit
+machinery (`treeStage_canonical_commit`,
+`treeStage_cross_agree_commit`), this furnishes a sorry-free
+embedding once the underlying type-coherence story is in place. -/
+
+/-- **Tree-driven canonical commit at `δ < ω_1`.** Reads `commitAt δ`
+on the chain at level `Order.succ δ` produced by `treeStage`. By
+`treeStage_canonical_commit`, this value is independent of the
+enclosing level (any α > δ gives the same answer). -/
+noncomputable def treeCommit
+    (cR : (Fin 2 ↪o PairERSource) → Bool) (δ : Ordinal.{0})
+    (hδ : δ < Ordinal.omega.{0} 1) : PairERSource :=
+  have hsδ : Order.succ δ < Ordinal.omega.{0} 1 :=
+    (Cardinal.isSuccLimit_omega 1).succ_lt hδ
+  (treeStage cR (Order.succ δ) hsδ).stage.commitAt δ (Order.lt_succ δ)
+
+/-- **Tree-driven canonical Bool at `δ < ω_1`.** Reads the top `type`
+of the chain at level `Order.succ δ` from `treeStage`. -/
+noncomputable def treeCommitBool
+    (cR : (Fin 2 ↪o PairERSource) → Bool) (δ : Ordinal.{0})
+    (hδ : δ < Ordinal.omega.{0} 1) : Bool :=
+  have hsδ : Order.succ δ < Ordinal.omega.{0} 1 :=
+    (Cardinal.isSuccLimit_omega 1).succ_lt hδ
+  (treeStage cR (Order.succ δ) hsδ).stage.type
+    (⊤ : (Order.succ δ).ToType)
+
+/-- **`treeCommit` is strictly monotone** in `δ`. Realize both commits
+inside the single chain `(treeStage cR (succ δ₂) _).stage` via
+`treeStage_cross_agree_commit`, then apply
+`PairERChain.commitAt_strictMono`. -/
+lemma treeCommit_strictMono
+    (cR : (Fin 2 ↪o PairERSource) → Bool) {δ₁ δ₂ : Ordinal.{0}}
+    (hδ₁ : δ₁ < Ordinal.omega.{0} 1) (hδ₂ : δ₂ < Ordinal.omega.{0} 1)
+    (h : δ₁ < δ₂) :
+    treeCommit cR δ₁ hδ₁ < treeCommit cR δ₂ hδ₂ := by
+  have hsδ₁ : Order.succ δ₁ < Ordinal.omega.{0} 1 :=
+    (Cardinal.isSuccLimit_omega 1).succ_lt hδ₁
+  have hsδ₂ : Order.succ δ₂ < Ordinal.omega.{0} 1 :=
+    (Cardinal.isSuccLimit_omega 1).succ_lt hδ₂
+  have h_δ₁_alt : treeCommit cR δ₁ hδ₁ =
+      (treeStage cR (Order.succ δ₂) hsδ₂).stage.commitAt δ₁
+        (h.trans (Order.lt_succ δ₂)) :=
+    treeStage_cross_agree_commit cR hsδ₁ hsδ₂ (Order.lt_succ δ₁)
+      (h.trans (Order.lt_succ δ₂)) hδ₁
+  have h_δ₂_alt : treeCommit cR δ₂ hδ₂ =
+      (treeStage cR (Order.succ δ₂) hsδ₂).stage.commitAt δ₂
+        (Order.lt_succ δ₂) := rfl
+  rw [h_δ₁_alt, h_δ₂_alt]
+  exact PairERChain.commitAt_strictMono
+    (s := (treeStage cR (Order.succ δ₂) hsδ₂).stage)
+    (hδ₁ := h.trans (Order.lt_succ δ₂))
+    (hδ₂ := Order.lt_succ δ₂) h
+
+/-- **Tree-driven ω_1-indexed Bool function** on `(ω_1).ToType`. -/
+noncomputable def treeCommitBoolFn
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    (Ordinal.omega.{0} 1).ToType → Bool := fun x =>
+  haveI : IsWellOrder (Ordinal.omega.{0} 1).ToType (· < ·) := isWellOrder_lt
+  treeCommitBool cR (Ordinal.typein (· < ·) x) (by
+    simpa [Ordinal.type_toType] using
+      Ordinal.typein_lt_type
+        (· < · : (Ordinal.omega.{0} 1).ToType →
+          (Ordinal.omega.{0} 1).ToType → Prop) x)
+
+/-- **Tree-driven ω_1-indexed chain embedding** into `PairERSource`.
+Wraps `treeCommit` as an `OrderEmbedding` via `treeCommit_strictMono`. -/
+noncomputable def treeChainEmbedding
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    (Ordinal.omega.{0} 1).ToType ↪o PairERSource := by
+  haveI : IsWellOrder (Ordinal.omega.{0} 1).ToType (· < ·) := isWellOrder_lt
+  refine OrderEmbedding.ofStrictMono
+    (fun x =>
+      treeCommit cR (Ordinal.typein (· < ·) x) (by
+        simpa [Ordinal.type_toType] using
+          Ordinal.typein_lt_type
+            (· < · : (Ordinal.omega.{0} 1).ToType →
+              (Ordinal.omega.{0} 1).ToType → Prop) x))
+    ?_
+  intro x y hxy
+  have hx : Ordinal.typein (· < ·) x < Ordinal.omega.{0} 1 := by
+    simpa [Ordinal.type_toType] using
+      Ordinal.typein_lt_type
+        (· < · : (Ordinal.omega.{0} 1).ToType →
+          (Ordinal.omega.{0} 1).ToType → Prop) x
+  have hy : Ordinal.typein (· < ·) y < Ordinal.omega.{0} 1 := by
+    simpa [Ordinal.type_toType] using
+      Ordinal.typein_lt_type
+        (· < · : (Ordinal.omega.{0} 1).ToType →
+          (Ordinal.omega.{0} 1).ToType → Prop) y
+  exact treeCommit_strictMono cR hx hy
+    ((Ordinal.typein_lt_typein (· < ·)).mpr hxy)
+
 /-! ### Existence of stages at every level `< ω_1`
 
 The transfinite-assembly existence lemma `exists_PairERChain`: for
