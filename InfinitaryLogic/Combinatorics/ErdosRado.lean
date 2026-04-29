@@ -2748,6 +2748,17 @@ structure TreeBundle
   stage : PairERChain cR α
   coh : ∀ δ (hδ : δ < α),
     stage.commitAt δ hδ = family.family.commitVal δ hδ
+  /-- **Type matching**: the stage's `typeAt` agrees with the family's
+  `typeVal` at every position. Parallel to `coh` for the `type` field
+  (which `coh` covers via `head`/`commit`). Required to maintain
+  type-coherence under successor extension. -/
+  type_match : ∀ δ (hδ : δ < α),
+    stage.typeAt δ hδ = family.family.typeVal δ hδ
+  /-- **Type-coherence**: the underlying coherent family is type-
+  coherent (cross-stage `typeAt` agreement). Together with `coh`
+  and `type_match`, this packages the canonicality the tree pipeline
+  maintains. -/
+  type_coh : family.family.IsTypeCoherent
 
 /-! ### [LEGACY] Old single-branch frontier theorems
 
@@ -3334,7 +3345,7 @@ deferred; once handled, this entire sorry becomes
 noncomputable def PairERTypeTree.commitCoherent
     {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
     (hα : α < Ordinal.omega.{0} 1)
-    (F : PairERCoherentFamily cR α) :
+    (F : PairERCoherentFamily cR α) (hF_type : F.IsTypeCoherent) :
     PairERTypeTree F := by
   refine
     { branches := {F.typeFn}
@@ -3343,7 +3354,9 @@ noncomputable def PairERTypeTree.commitCoherent
       large_sigma := ?_ }
   · intro _ _ hy; exact hy
   · -- Singleton σ-card reduction: Σ ≃ validFiber cR F.prefix F.typeFn
-    -- via y ↦ (F.typeFn, y).
+    -- via y ↦ (F.typeFn, y), then validFiber largeness via
+    -- `typeCoherentFiber_large` (which uses IsTypeCoherent + the
+    -- legacy intersection-largeness frontier).
     set S : Set ((α.ToType → Bool) × PairERSource) :=
       { p | p.1 ∈ ({F.typeFn} : Set _) ∧ p.2 ∈ validFiber cR F.prefix p.1 }
       with hS_def
@@ -3356,20 +3369,16 @@ noncomputable def PairERTypeTree.commitCoherent
       apply Subtype.ext
       have h1 := Subtype.mk.inj h
       exact (Prod.mk.inj h1).2
-    refine le_trans ?_ h_sigma_ge_validFiber
-    -- Remaining gap: succ ℶ_1 ≤ |validFiber cR F.prefix F.typeFn|.
-    -- Under F.IsTypeCoherent, this is `typeCoherentFiber_large`. The
-    -- type-coherence hypothesis isn't available here without
-    -- restructuring `commitCoherent`'s callers; deferred.
-    sorry
+    exact (typeCoherentFiber_large cR hα F hF_type).trans
+      h_sigma_ge_validFiber
 
 /-- **`commitCoherent` is commit-coherent**: every branch (= the
 singleton `F.typeFn`) agrees with `F.typeVal` at every position. -/
 lemma PairERTypeTree.commitCoherent_isCommitCoherent
     {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
     (hα : α < Ordinal.omega.{0} 1)
-    (F : PairERCoherentFamily cR α) :
-    (PairERTypeTree.commitCoherent hα F).IsCommitCoherent := by
+    (F : PairERCoherentFamily cR α) (hF_type : F.IsTypeCoherent) :
+    (PairERTypeTree.commitCoherent hα F hF_type).IsCommitCoherent := by
   intro b hb δ hδα
   haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
   -- `branches = {F.typeFn}`, so b = F.typeFn.
@@ -3388,9 +3397,11 @@ lemma PairERTypeTree.commitCoherent_isCommitCoherent
 lemma PairERTypeTree.commitCoherent_selectedBranch_eq
     {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
     (hα : α < Ordinal.omega.{0} 1)
-    (F : PairERCoherentFamily cR α) :
-    (PairERTypeTree.commitCoherent hα F).selectedBranch hα = F.typeFn := by
-  have h_mem := (PairERTypeTree.commitCoherent hα F).selectedBranch_mem hα
+    (F : PairERCoherentFamily cR α) (hF_type : F.IsTypeCoherent) :
+    (PairERTypeTree.commitCoherent hα F hF_type).selectedBranch hα =
+      F.typeFn := by
+  have h_mem :=
+    (PairERTypeTree.commitCoherent hα F hF_type).selectedBranch_mem hα
   -- selectedBranch ∈ branches = {F.typeFn}, so selectedBranch = F.typeFn.
   exact h_mem
 
@@ -3404,12 +3415,18 @@ noncomputable def TreeBundle.zero
       tree := PairERTypeTree.empty cR }
   stage := PairERChain.zero cR
   coh := fun δ hδ => absurd hδ (not_lt.mpr (zero_le δ))
+  type_match := fun δ hδ => absurd hδ (not_lt.mpr (zero_le δ))
+  type_coh := PairERCoherentFamily.empty_isTypeCoherent cR
 
 /-- **`TreeBundle.limitFromTree`**: build a `TreeBundle` at limit level
-α directly from a `PairERTreeFamily TF`. Stage is `TF.toLimitChain hα`,
-i.e., the tree-driven limit chain whose type is the pigeonhole-selected
-branch. Head-coherence (`coh`) follows from `limitWithType_commitAt` +
-`PairERCoherentFamily.prefix_enum`.
+α directly from a `PairERTreeFamily TF` plus the family's type-coherence
+plus a witness that the tree's `selectedBranch hα` agrees with
+`F.typeFn`. Stage is `TF.toLimitChain hα`, i.e., the tree-driven limit
+chain whose type is the pigeonhole-selected branch. Head-coherence
+(`coh`) follows from `limitWithType_commitAt` +
+`PairERCoherentFamily.prefix_enum`. The `type_match` field uses
+`h_branch_eq_typeFn` to identify `selectedBranch` with `F.typeFn`,
+giving `stage.typeAt δ = F.typeVal δ`.
 
 This is the constructor that distinguishes `TreeBundle` from
 `CoherentBundle`: at limits, we use the SELECTED branch as the type
@@ -3417,7 +3434,10 @@ function, not a fresh `Classical.choose τ`. -/
 noncomputable def TreeBundle.limitFromTree
     {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
     (hα : α < Ordinal.omega.{0} 1)
-    (TF : PairERTreeFamily cR α) :
+    (TF : PairERTreeFamily cR α)
+    (h_type_coh : TF.family.IsTypeCoherent)
+    (h_branch_eq_typeFn :
+      TF.tree.selectedBranch hα = TF.family.typeFn) :
     TreeBundle cR α where
   family := TF
   stage := TF.toLimitChain hα
@@ -3427,6 +3447,19 @@ noncomputable def TreeBundle.limitFromTree
     unfold PairERTreeFamily.toLimitChain PairERTreeFamily.toLimitChainAtBranch
     rw [PairERChain.limitWithType_commitAt]
     exact TF.family.prefix_enum δ hδ
+  type_match := by
+    intro δ hδ
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    show (TF.toLimitChain hα).typeAt δ hδ = TF.family.typeVal δ hδ
+    unfold PairERTreeFamily.toLimitChain PairERTreeFamily.toLimitChainAtBranch
+    rw [PairERChain.limitWithType_typeAt]
+    -- Goal: selectedBranch (enum δ) = F.typeVal δ.
+    rw [h_branch_eq_typeFn]
+    -- Goal: F.typeFn (enum δ) = F.typeVal δ.
+    unfold PairERCoherentFamily.typeFn
+    congr 1
+    exact Ordinal.typein_enum _ _
+  type_coh := h_type_coh
 
 /-- **[LEGACY] `TreeBundle.extendSucc`** — uses
 `(TB.family.family.stage β _).succ` (family-stored) instead of
@@ -3464,6 +3497,11 @@ noncomputable def TreeBundle.extendSucc
       subst hδ_eq
       unfold PairERCoherentFamily.commitVal PairERCoherentFamily.extendAtSucc
       simp only [dif_neg (lt_irrefl _)]
+  -- [LEGACY] `type_match` and `type_coh` not maintained for the
+  -- legacy stage choice; sorry'd since the main tree path uses
+  -- `TreeBundle.extend` instead.
+  type_match := by intros; sorry
+  type_coh := by intros; sorry
 
 /-- **`PairERTreeFamily.extendWithStage`**: extend a tree family by
 appending an arbitrary stage `s` at level α with head-coherence.
@@ -3544,6 +3582,45 @@ noncomputable def TreeBundle.extend
       unfold PairERCoherentFamily.commitVal
         PairERTreeFamily.extendWithStage PairERCoherentFamily.extendWithStage
       simp only [dif_neg (lt_irrefl _)]
+  type_match := by
+    intro δ hδ_succ
+    rcases lt_or_eq_of_le (Order.lt_succ_iff.mp hδ_succ) with hδ_lt | hδ_eq
+    · -- δ < α: succ_typeAt_old + TB.type_match.
+      rw [PairERChain.succ_typeAt_old _ δ hδ_lt]
+      show TB.stage.typeAt δ hδ_lt =
+        (TB.family.extendWithStage h_succα TB.stage TB.coh).family.typeVal δ hδ_succ
+      rw [TB.type_match δ hδ_lt]
+      unfold PairERCoherentFamily.typeVal
+        PairERTreeFamily.extendWithStage PairERCoherentFamily.extendWithStage
+      simp only [dif_pos hδ_lt]
+    · -- δ = α: top, both sides are TB.stage.succ.typeAt α _.
+      subst hδ_eq
+      show TB.stage.succ.typeAt δ (Order.lt_succ δ) = _
+      unfold PairERCoherentFamily.typeVal
+        PairERTreeFamily.extendWithStage PairERCoherentFamily.extendWithStage
+      simp only [dif_neg (lt_irrefl _)]
+  type_coh := by
+    intro δ β hδβ hβ_succ
+    rcases lt_or_eq_of_le (Order.lt_succ_iff.mp hβ_succ) with hβ_lt | hβ_eq
+    · -- β < α, δ < β < α: from F.IsTypeCoherent (TB.type_coh).
+      have hδ_lt : δ < α := hδβ.trans hβ_lt
+      show ((TB.family.extendWithStage h_succα TB.stage TB.coh).family.stage β
+          hβ_succ).typeAt δ _ =
+        ((TB.family.extendWithStage h_succα TB.stage TB.coh).family.stage δ _).typeAt
+          δ _
+      unfold PairERTreeFamily.extendWithStage PairERCoherentFamily.extendWithStage
+      simp only [dif_pos hβ_lt, dif_pos hδ_lt]
+      exact TB.type_coh hδβ hβ_lt
+    · -- β = α (top), δ < α: top stage is TB.stage.succ; preserve via succ_typeAt_old + TB.type_match.
+      subst hβ_eq
+      show ((TB.family.extendWithStage h_succα TB.stage TB.coh).family.stage β
+          hβ_succ).typeAt δ _ =
+        ((TB.family.extendWithStage h_succα TB.stage TB.coh).family.stage δ _).typeAt
+          δ _
+      unfold PairERTreeFamily.extendWithStage PairERCoherentFamily.extendWithStage
+      simp only [dif_neg (lt_irrefl _), dif_pos hδβ]
+      rw [PairERChain.succ_typeAt_old _ δ hδβ]
+      exact TB.type_match δ hδβ
 
 /-! ### Architectural test: `extend ∘ limitFromTree` preserves the
 selected branch.
@@ -3567,10 +3644,12 @@ lemma TreeBundle.extend_after_limitFromTree_typeAt
     (hα : α < Ordinal.omega.{0} 1)
     (h_succα : Order.succ α < Ordinal.omega.{0} 1)
     (TF : PairERTreeFamily cR α)
+    (h_type_coh : TF.family.IsTypeCoherent)
+    (h_branch_eq : TF.tree.selectedBranch hα = TF.family.typeFn)
     (δ : Ordinal.{0}) (hδ : δ < α) :
     haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
-    ((TreeBundle.limitFromTree hα TF).extend h_succα).stage.typeAt δ
-        (hδ.trans (Order.lt_succ α)) =
+    ((TreeBundle.limitFromTree hα TF h_type_coh h_branch_eq).extend
+        h_succα).stage.typeAt δ (hδ.trans (Order.lt_succ α)) =
       TF.tree.selectedBranch hα
         (Ordinal.enum (α := α.ToType) (· < ·)
           ⟨δ, (Ordinal.type_toType α).symm ▸ hδ⟩) := by
@@ -3591,8 +3670,11 @@ lemma TreeBundle.extend_after_limitFromTree_stage
     {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
     (hα : α < Ordinal.omega.{0} 1)
     (h_succα : Order.succ α < Ordinal.omega.{0} 1)
-    (TF : PairERTreeFamily cR α) :
-    ((TreeBundle.limitFromTree hα TF).extend h_succα).stage =
+    (TF : PairERTreeFamily cR α)
+    (h_type_coh : TF.family.IsTypeCoherent)
+    (h_branch_eq : TF.tree.selectedBranch hα = TF.family.typeFn) :
+    ((TreeBundle.limitFromTree hα TF h_type_coh h_branch_eq).extend
+        h_succα).stage =
       (TF.toLimitChain hα).succ := rfl
 
 /-! ### General preservation lemmas for `TreeBundle.extend`
@@ -3659,7 +3741,11 @@ noncomputable def TreeBundle.limitExtend
       (hδβ : δ < β),
       (IH β hβα).stage.commitAt δ hδβ =
         (IH δ (hδβ.trans hβα)).stage.succ.commitAt δ
-          (Order.lt_succ δ)) :
+          (Order.lt_succ δ))
+    (type_succ : ∀ (β : Ordinal.{0}) (hβα : β < α) (δ : Ordinal.{0})
+      (hδβ : δ < β),
+      (IH β hβα).stage.typeAt δ hδβ =
+        (IH δ (hδβ.trans hβα)).stage.succNewBool) :
     TreeBundle cR α :=
   let F : PairERCoherentFamily cR α :=
     { stage := fun β hβα => (IH β hβα).stage.succ
@@ -3670,8 +3756,17 @@ noncomputable def TreeBundle.limitExtend
           (IH δ (hδβ.trans hβα)).stage.succ.commitAt δ (Order.lt_succ δ)
         rw [PairERChain.succ_commitAt _ δ hδβ]
         exact prev_succ β hβα δ hδβ }
-  let tree : PairERTypeTree F := PairERTypeTree.commitCoherent hα F
-  TreeBundle.limitFromTree hα ⟨F, tree⟩
+  let h_F_type_coh : F.IsTypeCoherent := by
+    intro δ β hδβ hβα
+    show (IH β hβα).stage.succ.typeAt δ (hδβ.trans (Order.lt_succ β)) =
+      (IH δ (hδβ.trans hβα)).stage.succ.typeAt δ (Order.lt_succ δ)
+    rw [PairERChain.succ_typeAt_old _ δ hδβ,
+        PairERChain.succ_typeAt_top]
+    exact type_succ β hβα δ hδβ
+  let tree : PairERTypeTree F :=
+    PairERTypeTree.commitCoherent hα F h_F_type_coh
+  TreeBundle.limitFromTree hα ⟨F, tree⟩ h_F_type_coh
+    (PairERTypeTree.commitCoherent_selectedBranch_eq hα F h_F_type_coh)
 
 /-- **Any successor-level family with `IsTypeCoherent` is
 `IsCanonicalTypeCoherent`**. Key observation: for `α = succ β`, any
@@ -4696,6 +4791,11 @@ noncomputable def treeStage (cR : (Fin 2 ↪o PairERSource) → Bool)
           -- (IH β).stage.commitAt δ to (IH δ).stage.succ.commitAt δ.
           -- Discharged post-hoc by canonicalization (analog of
           -- richStage_bundle_eq_self).
+          intros; sorry)
+        (by
+          -- type_succ obligation: cross-stage witness linking
+          -- (IH β).stage.typeAt δ to (IH δ).stage.succNewBool.
+          -- Discharged post-hoc by treeStage_typeAt_canonical.
           intros; sorry))
 
 /-- `treeStage` at `0` is `TreeBundle.zero`. -/
@@ -5046,12 +5146,12 @@ theorem selectedBranch_agrees_with_prior_commit
     PairERTreeFamily.toLimitChain PairERTreeFamily.toLimitChainAtBranch
   rw [PairERChain.limitWithType_typeAt]
   -- LHS: selectedBranch of commitCoherent F (enum ⟨δ, ...⟩).
-  rw [show ∀ F : PairERCoherentFamily cR α,
-        (PairERTypeTree.commitCoherent hα F).selectedBranch hα
+  rw [show ∀ (F : PairERCoherentFamily cR α) (hF_type : F.IsTypeCoherent),
+        (PairERTypeTree.commitCoherent hα F hF_type).selectedBranch hα
             (Ordinal.enum (α := α.ToType) (· < ·)
               ⟨δ, (Ordinal.type_toType α).symm ▸ hδα⟩) =
           F.typeVal δ hδα from
-      fun F => by
+      fun F hF_type => by
         rw [PairERTypeTree.commitCoherent_selectedBranch_eq]
         unfold PairERCoherentFamily.typeFn
         congr 1
