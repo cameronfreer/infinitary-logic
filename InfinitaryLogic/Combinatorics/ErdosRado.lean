@@ -4906,6 +4906,22 @@ noncomputable def treeChainEmbedding
   exact treeCommit_strictMono cR hx hy
     ((Ordinal.typein_lt_typein (· < ·)).mpr hxy)
 
+/-- **Tree-driven pre-theorem**: from any pair-coloring `cR` on
+`PairERSource`, obtain an ω_1-indexed order-embedding into any
+well-ordered `I` of cardinality `≥ succ ℶ_1`. Tree-path analog of
+`exists_omega1_embedding_pair`; once the second obstruction (type
+coherence at limits, now expressible via `selectedBranch`) is
+discharged, this is the embedding feeding the final pair-homogeneity
+proof. -/
+theorem exists_omega1_embedding_pair_tree
+    {I : Type} [LinearOrder I] [WellFoundedLT I]
+    (hI : Cardinal.mk I ≥ Order.succ (Cardinal.beth.{0} 1))
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    Nonempty ((Ordinal.omega.{0} 1).ToType ↪o I) := by
+  obtain ⟨emb⟩ : Nonempty (PairERSource ↪o I) :=
+    exists_ordToType_embedding_of_card_ge hI
+  exact ⟨(treeChainEmbedding cR).trans emb⟩
+
 /-! ### Existence of stages at every level `< ω_1`
 
 The transfinite-assembly existence lemma `exists_PairERChain`: for
