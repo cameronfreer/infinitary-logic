@@ -3287,13 +3287,50 @@ def PairERTypeTree.IsCommitCoherent
         ⟨δ, (Ordinal.type_toType α).symm ▸ hδα⟩) =
       F.typeVal δ hδα
 
+/-! ### The substantive frontier: type-coherent fiber largeness
+
+The deep math content of pair Erdős–Rado, after all architectural
+reductions, is the following single statement: at every limit-level
+coherent family `F`, the type-coherent fiber `validFiber cR F.prefix
+F.typeFn` has cardinality `≥ succ ℶ_1`.
+
+Under `IsTypeCoherent`, this reduces (via
+`validFiber_prefix_typeFn_eq_iInter`) to `exists_large_iInter_stage_
+fibers` — the legacy intersection-largeness frontier. The proof is
+classical Erdős–Rado fusion: countable intersection of cofinality-
+`succ ℶ_1` cofinal sets, where preserving per-fiber color through
+ω-sups requires a fusion construction. -/
+
+/-- **`typeCoherentFiber_large`**: under `F.IsTypeCoherent`, the
+type-coherent fiber has size `≥ succ ℶ_1`. This is the renamed,
+sharply-named version of `exists_large_limit_fiber_prescribed`,
+which itself reduces to the legacy `exists_large_iInter_stage_fibers`
+via `validFiber_prefix_typeFn_eq_iInter`. The proof body shows
+the chain. -/
+theorem typeCoherentFiber_large
+    (cR : (Fin 2 ↪o PairERSource) → Bool) {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    (F : PairERCoherentFamily cR α) (hF_type : F.IsTypeCoherent) :
+    Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (validFiber cR F.prefix F.typeFn) :=
+  exists_large_limit_fiber_prescribed cR hα F hF_type
+
 /-- **`PairERTypeTree.commitCoherent`**: commit-coherent tree at level
-`α` with `branches = {F.typeFn}`. Pickling all branches into the
-single canonical type function makes `IsCommitCoherent` hold by
-construction. The `large_sigma` invariant requires the
-type-coherent fiber `validFiber cR F.prefix F.typeFn` to have size
-`≥ succ ℶ_1` — this is the **NEW DEEP FRONTIER**, sorry'd here.
-Classical Erdős–Rado fusion machinery is what closes it. -/
+`α` with `branches = {F.typeFn}`. The singleton-branches structure
+makes `IsCommitCoherent` hold by construction.
+
+The `large_sigma` invariant decomposes as:
+1. Σ ≃ `validFiber cR F.prefix F.typeFn` (singleton-σ injection).
+2. `succ ℶ_1 ≤ |validFiber cR F.prefix F.typeFn|`, the substantive
+   content.
+
+Step 1 is the `singleton_sigma_le_validFiber` argument inlined below.
+Step 2 sorry'd here without `IsTypeCoherent` — under that
+hypothesis, step 2 = `typeCoherentFiber_large`. The architectural
+gap (providing `IsTypeCoherent` from `treeStage`'s recursion) is
+deferred; once handled, this entire sorry becomes
+`(typeCoherentFiber_large cR hα F hF_type).trans
+(commitCoherent_sigma_ge_validFiber F)`. -/
 noncomputable def PairERTypeTree.commitCoherent
     {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
     (hα : α < Ordinal.omega.{0} 1)
@@ -3305,9 +3342,25 @@ noncomputable def PairERTypeTree.commitCoherent
       realizers_sub_validFiber := ?_
       large_sigma := ?_ }
   · intro _ _ hy; exact hy
-  · -- |Σ| = |{(F.typeFn, y) | y ∈ validFiber cR F.prefix F.typeFn}|.
-    -- Need |validFiber cR F.prefix F.typeFn| ≥ succ ℶ_1.
-    -- This is the deep type-coherent fiber largeness frontier.
+  · -- Singleton σ-card reduction: Σ ≃ validFiber cR F.prefix F.typeFn
+    -- via y ↦ (F.typeFn, y).
+    set S : Set ((α.ToType → Bool) × PairERSource) :=
+      { p | p.1 ∈ ({F.typeFn} : Set _) ∧ p.2 ∈ validFiber cR F.prefix p.1 }
+      with hS_def
+    have h_sigma_ge_validFiber :
+        Cardinal.mk (validFiber cR F.prefix F.typeFn) ≤ Cardinal.mk S := by
+      refine Cardinal.mk_le_of_injective
+        (f := fun y : validFiber cR F.prefix F.typeFn =>
+          (⟨(F.typeFn, y.val), rfl, y.property⟩ : S)) ?_
+      intro y₁ y₂ h
+      apply Subtype.ext
+      have h1 := Subtype.mk.inj h
+      exact (Prod.mk.inj h1).2
+    refine le_trans ?_ h_sigma_ge_validFiber
+    -- Remaining gap: succ ℶ_1 ≤ |validFiber cR F.prefix F.typeFn|.
+    -- Under F.IsTypeCoherent, this is `typeCoherentFiber_large`. The
+    -- type-coherence hypothesis isn't available here without
+    -- restructuring `commitCoherent`'s callers; deferred.
     sorry
 
 /-- **`commitCoherent` is commit-coherent**: every branch (= the
