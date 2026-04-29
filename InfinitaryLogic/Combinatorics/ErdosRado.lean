@@ -3464,6 +3464,43 @@ lemma TreeBundle.extend_typeAt_old
   show TB.stage.succ.typeAt δ _ = _
   rw [PairERChain.succ_typeAt_old _ δ hδα]
 
+/-- **`TreeBundle.limitExtend`**: limit-level constructor for
+`TreeBundle`, parameterized by prior bundles below `α` plus a
+`prev_succ` cross-stage coherence witness.
+
+Given `IH γ : TreeBundle cR γ` for each `γ < α` (with `α < ω₁`) and
+a hypothesis stating that the commit at position `δ` in the
+`β`-bundle (`δ < β`) equals the new top commit of the `δ`-bundle's
+successor extension, build a `TreeBundle cR α` via:
+1. Assemble `F : PairERCoherentFamily cR α` with
+   `F.stage β hβα := (IH β hβα).stage.succ`. The `coherent`
+   field reduces to `prev_succ` after one `succ_commitAt`.
+2. Attach `PairERTypeTree.universal hα F` as the tree.
+3. Wrap with `TreeBundle.limitFromTree hα`.
+
+This is the constructor used by `treeStage`'s limit case. -/
+noncomputable def TreeBundle.limitExtend
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    (IH : ∀ γ : Ordinal.{0}, γ < α → TreeBundle cR γ)
+    (prev_succ : ∀ (β : Ordinal.{0}) (hβα : β < α) (δ : Ordinal.{0})
+      (hδβ : δ < β),
+      (IH β hβα).stage.commitAt δ hδβ =
+        (IH δ (hδβ.trans hβα)).stage.succ.commitAt δ
+          (Order.lt_succ δ)) :
+    TreeBundle cR α :=
+  let F : PairERCoherentFamily cR α :=
+    { stage := fun β hβα => (IH β hβα).stage.succ
+      coherent := by
+        intro δ β hδβ hβα
+        show (IH β hβα).stage.succ.commitAt δ
+            (hδβ.trans (Order.lt_succ β)) =
+          (IH δ (hδβ.trans hβα)).stage.succ.commitAt δ (Order.lt_succ δ)
+        rw [PairERChain.succ_commitAt _ δ hδβ]
+        exact prev_succ β hβα δ hδβ }
+  let tree : PairERTypeTree F := PairERTypeTree.universal hα F
+  TreeBundle.limitFromTree hα ⟨F, tree⟩
+
 /-- **Any successor-level family with `IsTypeCoherent` is
 `IsCanonicalTypeCoherent`**. Key observation: for `α = succ β`, any
 cofinal ℕ-sequence `e : ℕ → {γ // γ < succ β}` eventually reaches
@@ -4445,6 +4482,64 @@ noncomputable def richStageCanonical
     rw [h_internal]
     exact congrArg (fun rb => rb.bundle.stage.succ)
       (richStage_bundle_eq_self cR hγ (le_of_lt hδγ) hδ)
+
+/-! ### Tree-driven stage: `treeStage` parallel to `richStage`
+
+`treeStage cR α` produces a `TreeBundle cR α` for every `α < ω_1` via
+`Ordinal.limitRecOn`. Mirrors `richStage`'s structure but uses the
+tree-deferred path:
+
+- zero: `TreeBundle.zero`
+- succ: `TreeBundle.extend` (preserves the tree-selected branch via
+  `TB.stage.succ`)
+- limit: `TreeBundle.limitExtend` with the universal-tree
+  (`PairERTypeTree.universal`) attached at level `α`
+
+The limit case requires a `prev_succ` cross-stage witness analogous
+to `richStage`'s `cross_agree`. It is sorry'd here and will be
+discharged post-hoc by reduction lemmas + a canonicalization theorem
+(treeStage_bundle_eq_self analog), in the same pattern that resolved
+`richStage`. -/
+
+/-- **Tree-driven transfinite stage.** Produces `TreeBundle cR α` at
+every `α < ω_1`. The limit case attaches a universal tree (so
+`selectedBranch` survives across recursion levels) and discharges
+`prev_succ` from the eventual canonicalization (currently sorry'd,
+mirroring `richStage`'s `cross_agree`). -/
+noncomputable def treeStage (cR : (Fin 2 ↪o PairERSource) → Bool)
+    (α : Ordinal.{0}) : α < Ordinal.omega.{0} 1 → TreeBundle cR α :=
+  Ordinal.limitRecOn α
+    (motive := fun α => α < Ordinal.omega.{0} 1 → TreeBundle cR α)
+    -- zero
+    (fun _ => TreeBundle.zero cR)
+    -- succ
+    (fun β IH hβs =>
+      (IH ((Order.lt_succ β).trans hβs)).extend hβs)
+    -- limit
+    (fun β _ IH hβ =>
+      TreeBundle.limitExtend hβ
+        (fun γ hγβ => IH γ hγβ (hγβ.trans hβ))
+        (by
+          -- prev_succ obligation: cross-stage witness linking
+          -- (IH β).stage.commitAt δ to (IH δ).stage.succ.commitAt δ.
+          -- Discharged post-hoc by canonicalization (analog of
+          -- richStage_bundle_eq_self).
+          intros; sorry))
+
+/-- `treeStage` at `0` is `TreeBundle.zero`. -/
+theorem treeStage_zero (cR : (Fin 2 ↪o PairERSource) → Bool)
+    (h0 : (0 : Ordinal.{0}) < Ordinal.omega.{0} 1) :
+    treeStage cR 0 h0 = TreeBundle.zero cR := by
+  unfold treeStage
+  rw [Ordinal.limitRecOn_zero]
+
+/-- `treeStage` at `Order.succ β` is `(treeStage cR β _).extend`. -/
+theorem treeStage_succ (cR : (Fin 2 ↪o PairERSource) → Bool)
+    (β : Ordinal.{0}) (hβs : Order.succ β < Ordinal.omega.{0} 1) :
+    treeStage cR (Order.succ β) hβs =
+      (treeStage cR β ((Order.lt_succ β).trans hβs)).extend hβs := by
+  unfold treeStage
+  rw [Ordinal.limitRecOn_succ]
 
 /-! ### Final assembly: chain extraction and `erdos_rado_pair_omega1`
 
