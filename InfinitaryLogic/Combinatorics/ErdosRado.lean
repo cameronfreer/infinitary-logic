@@ -4855,19 +4855,85 @@ enclosing level (any α > δ gives the same answer). -/
 noncomputable def treeCommit
     (cR : (Fin 2 ↪o PairERSource) → Bool) (δ : Ordinal.{0})
     (hδ : δ < Ordinal.omega.{0} 1) : PairERSource :=
-  have hsδ : Order.succ δ < Ordinal.omega.{0} 1 :=
-    (Cardinal.isSuccLimit_omega 1).succ_lt hδ
-  (treeStage cR (Order.succ δ) hsδ).stage.commitAt δ (Order.lt_succ δ)
+  (treeStage cR (Order.succ δ)
+      ((Cardinal.isSuccLimit_omega 1).succ_lt hδ)).stage.commitAt δ
+    (Order.lt_succ δ)
 
-/-- **Tree-driven canonical Bool at `δ < ω_1`.** Reads the top `type`
-of the chain at level `Order.succ δ` from `treeStage`. -/
+/-- **Tree-driven canonical Bool at `δ < ω_1`.** Defined as the
+underlying chain's `succNewBool` at level `δ`, which equals the top
+`type` of the chain at level `Order.succ δ` (via `succ_typeAt_top`). -/
 noncomputable def treeCommitBool
     (cR : (Fin 2 ↪o PairERSource) → Bool) (δ : Ordinal.{0})
     (hδ : δ < Ordinal.omega.{0} 1) : Bool :=
-  have hsδ : Order.succ δ < Ordinal.omega.{0} 1 :=
-    (Cardinal.isSuccLimit_omega 1).succ_lt hδ
-  (treeStage cR (Order.succ δ) hsδ).stage.type
-    (⊤ : (Order.succ δ).ToType)
+  (treeStage cR δ hδ).stage.succNewBool
+
+/-! ### Frontier: the limit-stage type-coherence lemma
+
+The following lemma is the **sharpened tree-aware frontier** for
+arbitrary pair-homogeneity. It supersedes the older single-branch
+frontier `exists_large_iInter_stage_fibers` (line 2768 area), which
+described the obstruction in terms of a fresh `τ` chosen at limits.
+With the tree architecture in place, the obstruction is more
+precisely: at every limit `α`, the universal-tree's
+`PairERTypeTree.selectedBranch` (chosen via H3 pigeonhole) must
+*agree with the previously committed Bools* at every position
+`δ < α`. The chain's tree-driven `typeAt δ` is read off this branch
+via `toLimitChain_type` + `enum`/`prefix_enum`, so the equation
+below is exactly "the selected realized branch respects prior
+commitments." -/
+
+/-- **[NEW FRONTIER, sorry]** At a limit level `α`, the
+`treeStage`-driven typeAt at every position `δ < α` matches the
+previously committed Bool. This is the sharpened version of the
+type-coherence-at-limits obstruction: the selected realized branch
+of the universal tree must respect every prior commitment.
+
+This replaces the old vague single-branch frontier
+`exists_large_iInter_stage_fibers` (line 2768) — the tree
+architecture makes the missing math explicit as a single equation
+on `selectedBranch`'s value at `δ`. -/
+theorem selectedBranch_agrees_with_prior_commit
+    (cR : (Fin 2 ↪o PairERSource) → Bool) {α : Ordinal.{0}}
+    (hα_lim : Order.IsSuccLimit α) (hα : α < Ordinal.omega.{0} 1)
+    (δ : Ordinal.{0}) (hδα : δ < α) (hδ : δ < Ordinal.omega.{0} 1) :
+    (treeStage cR α hα).stage.typeAt δ hδα = treeCommitBool cR δ hδ := by
+  sorry
+
+/-- **Canonicalization of `treeStage` types.** For every enclosing
+level `η > δ`, the `typeAt δ` of `treeStage cR η _` equals
+`treeCommitBool cR δ`. Proved by induction on `η`:
+- zero: vacuous.
+- succ ζ with δ = ζ: `(extend).stage.typeAt = succNewBool` matches
+  `treeCommitBool` by definition.
+- succ ζ with δ < ζ: `extend_typeAt_old` + IH.
+- limit: `selectedBranch_agrees_with_prior_commit` (frontier). -/
+theorem treeStage_typeAt_canonical
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    {η : Ordinal.{0}} (hη : η < Ordinal.omega.{0} 1)
+    (δ : Ordinal.{0}) (hδη : δ < η) (hδ : δ < Ordinal.omega.{0} 1) :
+    (treeStage cR η hη).stage.typeAt δ hδη = treeCommitBool cR δ hδ := by
+  induction η using Ordinal.limitRecOn with
+  | zero => exact absurd hδη (not_lt.mpr (zero_le δ))
+  | succ ζ IH =>
+    have hζ : ζ < Ordinal.omega.{0} 1 := (Order.lt_succ ζ).trans hη
+    rw [treeStage_succ]
+    by_cases h_eq : δ = ζ
+    · -- δ = ζ: top of (succ ζ)-chain. typeAt = succNewBool matches treeCommitBool.
+      subst h_eq
+      show ((treeStage cR δ hζ).extend hη).stage.typeAt δ
+          (Order.lt_succ δ) = treeCommitBool cR δ hδ
+      show (treeStage cR δ hζ).stage.succ.typeAt δ
+          (Order.lt_succ δ) = treeCommitBool cR δ hδ
+      rw [PairERChain.succ_typeAt_top]
+      rfl
+    · have hδζ : δ < ζ :=
+        lt_of_le_of_ne (Order.lt_succ_iff.mp hδη) h_eq
+      show ((treeStage cR ζ hζ).extend hη).stage.typeAt δ _ =
+        treeCommitBool cR δ hδ
+      rw [TreeBundle.extend_typeAt_old hη (treeStage cR ζ hζ) δ hδζ]
+      exact IH hζ hδζ
+  | limit ζ hζ_lim IH =>
+    exact selectedBranch_agrees_with_prior_commit cR hζ_lim hη δ hδη hδ
 
 /-- **`treeCommit` is strictly monotone** in `δ`. Realize both commits
 inside the single chain `(treeStage cR (succ δ₂) _).stage` via
@@ -5002,22 +5068,8 @@ theorem treeChain_consecutive_pair_homogeneous
         (Order.succ (Order.succ β)).ToType) = (⊤ : _) from
       Ordinal.enum_succ_eq_top]
     exact PairERChain.succ_head_top v
-  -- Identify treeCommitBool cR β with u.succNewBool.
-  have h_tcb_β : treeCommitBool cR β hβ = u.succNewBool := by
-    show (treeStage cR (Order.succ β) hβs).stage.type
-        (⊤ : (Order.succ β).ToType) = u.succNewBool
-    rw [h_v_eq]
-    have h := PairERChain.succ_typeAt_top u
-    show v.type _ = u.succNewBool
-    rw [hv_def]
-    show u.succ.type ⊤ = u.succNewBool
-    have h_top_eq : (⊤ : (Order.succ β).ToType) =
-        Ordinal.enum (α := (Order.succ β).ToType) (· < ·)
-          ⟨β, (Ordinal.type_toType (Order.succ β)).symm
-            ▸ Order.lt_succ β⟩ :=
-      Ordinal.enum_succ_eq_top.symm
-    rw [h_top_eq]
-    exact h
+  -- Identify treeCommitBool cR β with u.succNewBool (now rfl by def).
+  have h_tcb_β : treeCommitBool cR β hβ = u.succNewBool := rfl
   -- Apply succNewElement_in_validFiber to v at x = ⊤.
   have h_vF := v.succNewElement_in_validFiber (⊤ : (Order.succ β).ToType)
   obtain ⟨h_lt, h_color⟩ := h_vF
@@ -5055,6 +5107,83 @@ theorem treeChain_consecutive_pair_homogeneous
   | ⟨1, _⟩ =>
     show treeCommit cR (Order.succ β) hβs = v.succNewElement
     exact h_tc_sβ
+
+/-- **Arbitrary pair-homogeneity along the tree chain.** For any
+`δ < η < ω_1`, the cR-color of the pair `(treeCommit cR δ, treeCommit
+cR η)` equals `treeCommitBool cR δ`. Proof:
+
+  Apply `succNewElement_in_validFiber` to `u = (treeStage cR η _).stage`
+  at `x = enum δ`. This gives `cR(pairEmbed (u.head x < u.succNewElement))
+  = u.type x`, where:
+  - `u.head x = u.commitAt δ hδη = treeCommit cR δ`
+    (via `treeStage_canonical_commit`).
+  - `u.type x = u.typeAt δ hδη = treeCommitBool cR δ`
+    (via `treeStage_typeAt_canonical`, which depends on the new
+    frontier `selectedBranch_agrees_with_prior_commit` at limits).
+  - `u.succNewElement = treeCommit cR η`
+    (via `succ_head_top` + `treeStage_succ`).
+
+Sorry'd transitively through the new frontier, but the proof
+*structure* is now explicit: arbitrary pair-homogeneity reduces to
+the `selectedBranch` agreement equation. -/
+theorem treeChain_pair_homogeneous
+    (cR : (Fin 2 ↪o PairERSource) → Bool) {δ η : Ordinal.{0}}
+    (hδη : δ < η) (hη : η < Ordinal.omega.{0} 1) :
+    cR (pairEmbed
+        (treeCommit_strictMono cR (hδη.trans hη) hη hδη)) =
+      treeCommitBool cR δ (hδη.trans hη) := by
+  haveI hδ : δ < Ordinal.omega.{0} 1 := hδη.trans hη
+  haveI : IsWellOrder η.ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder (Order.succ η).ToType (· < ·) := isWellOrder_lt
+  -- Setup u = (treeStage cR η _).stage.
+  set u : PairERChain cR η := (treeStage cR η hη).stage with hu_def
+  -- enum δ in η.ToType.
+  set xδ : η.ToType :=
+    Ordinal.enum (α := η.ToType) (· < ·)
+      ⟨δ, (Ordinal.type_toType η).symm ▸ hδη⟩ with hxδ_def
+  have hssη : Order.succ η < Ordinal.omega.{0} 1 :=
+    (Cardinal.isSuccLimit_omega 1).succ_lt hη
+  -- treeCommit cR η = u.succNewElement.
+  have h_tc_η : treeCommit cR η hη = u.succNewElement := by
+    show (treeStage cR (Order.succ η) hssη).stage.commitAt η
+        (Order.lt_succ η) = u.succNewElement
+    rw [treeStage_succ]
+    show ((treeStage cR η hη).extend hssη).stage.commitAt η _ =
+      u.succNewElement
+    show u.succ.commitAt η _ = u.succNewElement
+    show u.succ.head _ = u.succNewElement
+    rw [show (Ordinal.enum (α := (Order.succ η).ToType) (· < ·)
+        ⟨η, (Ordinal.type_toType (Order.succ η)).symm ▸ Order.lt_succ η⟩
+        : (Order.succ η).ToType) = (⊤ : _) from
+      Ordinal.enum_succ_eq_top]
+    exact PairERChain.succ_head_top u
+  -- u.head xδ = treeCommit cR δ hδ.
+  have h_u_head_δ : u.head xδ = treeCommit cR δ hδ := by
+    show u.commitAt δ hδη = treeCommit cR δ hδ
+    rw [hu_def]
+    rw [treeStage_canonical_commit cR hη hδη hδ]
+    show treeStageCanonicalCommit cR δ hδ = treeCommit cR δ hδ
+    unfold treeStageCanonicalCommit treeCommit
+    rw [treeStage_succ]
+    rfl
+  -- u.type xδ = treeCommitBool cR δ hδ.
+  have h_u_type_δ : u.type xδ = treeCommitBool cR δ hδ := by
+    show u.typeAt δ hδη = treeCommitBool cR δ hδ
+    rw [hu_def]
+    exact treeStage_typeAt_canonical cR hη δ hδη hδ
+  -- Apply succNewElement_in_validFiber on u at xδ.
+  obtain ⟨h_lt, h_color⟩ := u.succNewElement_in_validFiber xδ
+  rw [h_u_type_δ] at h_color
+  rw [← h_color]
+  congr 1
+  ext k
+  match k with
+  | ⟨0, _⟩ =>
+    show treeCommit cR δ hδ = u.head xδ
+    rw [h_u_head_δ]
+  | ⟨1, _⟩ =>
+    show treeCommit cR η hη = u.succNewElement
+    exact h_tc_η
 
 /-- **Tree-driven pre-theorem**: from any pair-coloring `cR` on
 `PairERSource`, obtain an ω_1-indexed order-embedding into any
