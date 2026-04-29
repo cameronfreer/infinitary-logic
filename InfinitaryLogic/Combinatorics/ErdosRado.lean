@@ -3189,6 +3189,43 @@ noncomputable def PairERTypeTree.extendLimit
         exact Subtype.ext h2
     exact h_above_large.trans h_inj
 
+/-- **`PairERTypeTree.universal`**: generic universal-tree
+constructor over any `PairERCoherentFamily cR α` at a level
+`α < ω₁`. Branches = `Set.univ`, realizers `b = validFiber cR
+F.prefix b`, `large_sigma` discharged by `large_above_prefix`.
+
+This subsumes the bespoke per-constructor universal-tree shapes in
+`empty / extendSucc / extendLimit`: any `PairERCoherentFamily cR α`
+with `α < ω₁` admits a canonical `PairERTypeTree`. -/
+noncomputable def PairERTypeTree.universal
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    (F : PairERCoherentFamily cR α) :
+    PairERTypeTree F := by
+  refine
+    { branches := Set.univ
+      realizers := fun b => validFiber cR F.prefix b
+      realizers_sub_validFiber := ?_
+      large_sigma := ?_ }
+  · intro _ _ hy; exact hy
+  · set p : α.ToType ↪o PairERSource := F.prefix with hp_def
+    set above_prefix : Set PairERSource :=
+      { y : PairERSource | ∀ x : α.ToType, p x < y } with hap_def
+    have h_above_large : Order.succ (Cardinal.beth.{0} 1) ≤
+        Cardinal.mk above_prefix := large_above_prefix hα p
+    set Sigma : Set ((α.ToType → Bool) × PairERSource) :=
+      { q | q.1 ∈ (Set.univ : Set _) ∧
+        q.2 ∈ validFiber cR F.prefix q.1 } with hS
+    have h_inj : Cardinal.mk above_prefix ≤ Cardinal.mk Sigma := by
+      refine Cardinal.mk_le_of_injective (f := fun y : above_prefix =>
+        (⟨(fun x => cR (pairEmbed (y.2 x)), y.1), trivial, ?_⟩ : Sigma)) ?_
+      · intro x; exact ⟨y.2 x, rfl⟩
+      · intro y₁ y₂ h
+        have h1 := Subtype.mk.inj h
+        have h2 := (Prod.mk.inj h1).2
+        exact Subtype.ext h2
+    exact h_above_large.trans h_inj
+
 /-- **`TreeBundle.zero`**: base case at α = 0. Stage is
 `PairERChain.zero`, family is the empty tree-family, head-coherence is
 vacuous. -/
@@ -3389,6 +3426,43 @@ lemma TreeBundle.extend_after_limitFromTree_stage
     (TF : PairERTreeFamily cR α) :
     ((TreeBundle.limitFromTree hα TF).extend h_succα).stage =
       (TF.toLimitChain hα).succ := rfl
+
+/-! ### General preservation lemmas for `TreeBundle.extend`
+
+The two test lemmas above were specific to `extend ∘ limitFromTree`.
+The general fact is simpler: `(TB.extend h).stage = TB.stage.succ` by
+definition of `extend`, so any preservation property of
+`PairERChain.succ` lifts directly. The lemmas below name the two we
+need for the recursion: `commitAt` and `typeAt` at lower positions
+agree with `TB.stage`'s readings. -/
+
+/-- **`TreeBundle.extend` preserves commits at lower positions.**
+Direct from `(TB.extend).stage = TB.stage.succ` and
+`PairERChain.succ_commitAt`. -/
+lemma TreeBundle.extend_commitAt_old
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (h_succα : Order.succ α < Ordinal.omega.{0} 1)
+    (TB : TreeBundle cR α)
+    (δ : Ordinal.{0}) (hδα : δ < α) :
+    (TB.extend h_succα).stage.commitAt δ
+        (hδα.trans (Order.lt_succ α)) =
+      TB.stage.commitAt δ hδα := by
+  show TB.stage.succ.commitAt δ _ = _
+  rw [PairERChain.succ_commitAt _ δ hδα]
+
+/-- **`TreeBundle.extend` preserves typeAt at lower positions.**
+Direct from `(TB.extend).stage = TB.stage.succ` and
+`PairERChain.succ_typeAt_old`. -/
+lemma TreeBundle.extend_typeAt_old
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (h_succα : Order.succ α < Ordinal.omega.{0} 1)
+    (TB : TreeBundle cR α)
+    (δ : Ordinal.{0}) (hδα : δ < α) :
+    (TB.extend h_succα).stage.typeAt δ
+        (hδα.trans (Order.lt_succ α)) =
+      TB.stage.typeAt δ hδα := by
+  show TB.stage.succ.typeAt δ _ = _
+  rw [PairERChain.succ_typeAt_old _ δ hδα]
 
 /-- **Any successor-level family with `IsTypeCoherent` is
 `IsCanonicalTypeCoherent`**. Key observation: for `α = succ β`, any
