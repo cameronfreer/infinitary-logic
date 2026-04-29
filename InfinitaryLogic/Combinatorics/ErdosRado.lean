@@ -1370,6 +1370,35 @@ lemma PairERChain.succ_typeAt_top
   simp only [extendType]
   rw [dif_pos he_top]
 
+/-- **The new element at the top of `s.succ`**: a named handle for
+the value extracted by `PairERChain.succ`'s use of
+`exists_successor_refinement`. -/
+noncomputable def PairERChain.succNewElement
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (s : PairERChain cR α) : PairERSource :=
+  Classical.choose (exists_successor_refinement cR s.head s.type s.large)
+
+/-- **`succ_head_top`**: the head value at position `α` (= top of
+`(succ α).ToType`) in `s.succ` equals `s.succNewElement`. -/
+lemma PairERChain.succ_head_top
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (s : PairERChain cR α) :
+    s.succ.head (⊤ : (Order.succ α).ToType) = s.succNewElement := by
+  classical
+  unfold PairERChain.succ PairERChain.succNewElement
+  simp [extendHead]
+
+/-- **`succNewElement_in_validFiber`**: the new top of `s.succ` lies in
+the valid fiber at level `α`. Direct from `exists_successor_refinement`'s
+spec. -/
+lemma PairERChain.succNewElement_in_validFiber
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (s : PairERChain cR α) :
+    s.succNewElement ∈ validFiber cR s.head s.type := by
+  unfold PairERChain.succNewElement
+  exact (Classical.choose_spec (Classical.choose_spec
+    (exists_successor_refinement cR s.head s.type s.large))).1
+
 /-- **`limitWithType_commitAt`**: commit at position `δ` is the prefix's
 value at the enumerated position — parallel to `PairERChain.limit_commitAt`. -/
 lemma PairERChain.limitWithType_commitAt
@@ -4905,6 +4934,127 @@ noncomputable def treeChainEmbedding
           (Ordinal.omega.{0} 1).ToType → Prop) y
   exact treeCommit_strictMono cR hx hy
     ((Ordinal.typein_lt_typein (· < ·)).mpr hxy)
+
+/-- **Consecutive-pair homogeneity for `treeCommit`.** For any
+`β < ω_1`, the cR-color of the pair
+`(treeCommit cR β, treeCommit cR (succ β))` equals `treeCommitBool
+cR β`. Direct from the validFiber property of `succNewElement` applied
+to `(treeStage cR (succ β) _).stage`. This is the SUCCESSOR-step
+homogeneity. The full pair Erdős–Rado homogeneity (across non-
+consecutive pairs and across limits) requires the type-coherence-at-
+limits obstruction to be discharged. -/
+theorem treeChain_consecutive_pair_homogeneous
+    (cR : (Fin 2 ↪o PairERSource) → Bool) (β : Ordinal.{0})
+    (hβs : Order.succ β < Ordinal.omega.{0} 1) :
+    cR (pairEmbed
+        (treeCommit_strictMono cR ((Order.lt_succ β).trans hβs) hβs
+          (Order.lt_succ β))) =
+      treeCommitBool cR β ((Order.lt_succ β).trans hβs) := by
+  haveI hβ : β < Ordinal.omega.{0} 1 := (Order.lt_succ β).trans hβs
+  haveI : IsWellOrder (Order.succ β).ToType (· < ·) := isWellOrder_lt
+  -- Setup the chains: u at level β, v = u.succ at level (succ β).
+  set u : PairERChain cR β := (treeStage cR β hβ).stage with hu_def
+  set v : PairERChain cR (Order.succ β) := u.succ with hv_def
+  -- (treeStage cR (succ β) hβs).stage = v.
+  have h_v_eq : (treeStage cR (Order.succ β) hβs).stage = v := by
+    rw [hv_def, hu_def]
+    show (treeStage cR (Order.succ β) hβs).stage =
+      (treeStage cR β hβ).stage.succ
+    rw [treeStage_succ]
+    rfl
+  -- Identify treeCommit cR β with u.succNewElement.
+  have h_tc_β : treeCommit cR β hβ = u.succNewElement := by
+    show (treeStage cR (Order.succ β) hβs).stage.commitAt β
+        (Order.lt_succ β) = u.succNewElement
+    rw [h_v_eq]
+    show v.head (Ordinal.enum (α := (Order.succ β).ToType) (· < ·)
+        ⟨β, _⟩) = u.succNewElement
+    rw [show (Ordinal.enum (α := (Order.succ β).ToType) (· < ·)
+        ⟨β, (Ordinal.type_toType (Order.succ β)).symm ▸
+          Order.lt_succ β⟩ : (Order.succ β).ToType) = (⊤ : _) from
+      Ordinal.enum_succ_eq_top]
+    rw [hv_def]
+    exact PairERChain.succ_head_top u
+  -- Identify treeCommit cR (succ β) with v.succNewElement.
+  have h_tc_sβ : treeCommit cR (Order.succ β) hβs = v.succNewElement := by
+    have hssβ : Order.succ (Order.succ β) < Ordinal.omega.{0} 1 :=
+      (Cardinal.isSuccLimit_omega 1).succ_lt hβs
+    haveI : IsWellOrder (Order.succ (Order.succ β)).ToType (· < ·) :=
+      isWellOrder_lt
+    show (treeStage cR (Order.succ (Order.succ β)) hssβ).stage.commitAt
+        (Order.succ β) (Order.lt_succ (Order.succ β)) = v.succNewElement
+    have h_ssβ : (treeStage cR (Order.succ (Order.succ β)) hssβ).stage =
+        v.succ := by
+      rw [treeStage_succ]
+      show ((treeStage cR (Order.succ β)
+          ((Order.lt_succ (Order.succ β)).trans hssβ)).extend hssβ).stage =
+        v.succ
+      rw [hv_def]
+      have := h_v_eq
+      show ((treeStage cR (Order.succ β) _).stage).succ = v.succ
+      rw [h_v_eq]
+    rw [h_ssβ]
+    show v.succ.head (Ordinal.enum (α := (Order.succ (Order.succ β)).ToType)
+        (· < ·) ⟨Order.succ β, _⟩) = v.succNewElement
+    rw [show (Ordinal.enum (α := (Order.succ (Order.succ β)).ToType) (· < ·)
+        ⟨Order.succ β, (Ordinal.type_toType (Order.succ (Order.succ β))).symm
+          ▸ Order.lt_succ (Order.succ β)⟩ :
+        (Order.succ (Order.succ β)).ToType) = (⊤ : _) from
+      Ordinal.enum_succ_eq_top]
+    exact PairERChain.succ_head_top v
+  -- Identify treeCommitBool cR β with u.succNewBool.
+  have h_tcb_β : treeCommitBool cR β hβ = u.succNewBool := by
+    show (treeStage cR (Order.succ β) hβs).stage.type
+        (⊤ : (Order.succ β).ToType) = u.succNewBool
+    rw [h_v_eq]
+    have h := PairERChain.succ_typeAt_top u
+    show v.type _ = u.succNewBool
+    rw [hv_def]
+    show u.succ.type ⊤ = u.succNewBool
+    have h_top_eq : (⊤ : (Order.succ β).ToType) =
+        Ordinal.enum (α := (Order.succ β).ToType) (· < ·)
+          ⟨β, (Ordinal.type_toType (Order.succ β)).symm
+            ▸ Order.lt_succ β⟩ :=
+      Ordinal.enum_succ_eq_top.symm
+    rw [h_top_eq]
+    exact h
+  -- Apply succNewElement_in_validFiber to v at x = ⊤.
+  have h_vF := v.succNewElement_in_validFiber (⊤ : (Order.succ β).ToType)
+  obtain ⟨h_lt, h_color⟩ := h_vF
+  -- v.head ⊤ = u.succNewElement, v.type ⊤ = u.succNewBool.
+  have h_v_head_top : v.head (⊤ : (Order.succ β).ToType) = u.succNewElement := by
+    rw [hv_def]; exact PairERChain.succ_head_top u
+  -- Goal: cR(pairEmbed our_witness) = treeCommitBool cR β.
+  rw [h_tcb_β]
+  -- We now have h_color : cR(pairEmbed h_lt) = v.type ⊤. Rewrite v.type ⊤ = u.succNewBool.
+  have h_v_type_top : v.type (⊤ : (Order.succ β).ToType) = u.succNewBool := by
+    have h := PairERChain.succ_typeAt_top u
+    rw [hv_def]
+    show u.succ.type ⊤ = u.succNewBool
+    have h_top_eq : (⊤ : (Order.succ β).ToType) =
+        Ordinal.enum (α := (Order.succ β).ToType) (· < ·)
+          ⟨β, (Ordinal.type_toType (Order.succ β)).symm
+            ▸ Order.lt_succ β⟩ :=
+      Ordinal.enum_succ_eq_top.symm
+    rw [h_top_eq]; exact h
+  rw [h_v_type_top] at h_color
+  -- Now h_color : cR(pairEmbed h_lt) = u.succNewBool.
+  -- Goal: cR(pairEmbed our_witness) = u.succNewBool.
+  -- pairEmbed depends only on its two values (a, b) via `![a, b]`,
+  -- not on the strict-mono proof witness. So pairEmbed our_witness =
+  -- pairEmbed h_lt once we identify the values.
+  rw [← h_color]
+  congr 1
+  -- Goal: pairEmbed our_witness = pairEmbed h_lt.
+  ext k
+  -- pairEmbed h applied at k : Fin 2 reads off ![a, b] k.
+  match k with
+  | ⟨0, _⟩ =>
+    show treeCommit cR β hβ = v.head (⊤ : (Order.succ β).ToType)
+    rw [h_tc_β, h_v_head_top]
+  | ⟨1, _⟩ =>
+    show treeCommit cR (Order.succ β) hβs = v.succNewElement
+    exact h_tc_sβ
 
 /-- **Tree-driven pre-theorem**: from any pair-coloring `cR` on
 `PairERSource`, obtain an ω_1-indexed order-embedding into any
