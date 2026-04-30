@@ -4788,14 +4788,16 @@ noncomputable def treeStage (cR : (Fin 2 ↪o PairERSource) → Bool)
         (fun γ hγβ => IH γ hγβ (hγβ.trans hβ))
         (by
           -- prev_succ obligation: cross-stage witness linking
-          -- (IH β).stage.commitAt δ to (IH δ).stage.succ.commitAt δ.
-          -- Discharged post-hoc by canonicalization (analog of
-          -- richStage_bundle_eq_self).
+          -- (IH β').stage.commitAt δ to (IH δ).stage.succ.commitAt δ.
+          -- Sorry'd here because direct replacement is cyclic (the
+          -- post-hoc theorem `treeStage_prev_succ` uses treeStage).
+          -- See `treeStage_prev_succ` for the post-hoc proof.
           intros; sorry)
         (by
           -- type_succ obligation: cross-stage witness linking
-          -- (IH β).stage.typeAt δ to (IH δ).stage.succNewBool.
-          -- Discharged post-hoc by treeStage_typeAt_canonical.
+          -- (IH β').stage.typeAt δ to (IH δ).stage.succNewBool.
+          -- Sorry'd here for the same cyclic reason as prev_succ.
+          -- See `treeStage_type_succ` for the post-hoc proof.
           intros; sorry))
 
 /-- `treeStage` at `0` is `TreeBundle.zero`. -/
@@ -4897,6 +4899,21 @@ theorem treeStage_cross_agree_commit
       (treeStage cR α₂ hα₂).stage.commitAt δ hδα₂ := by
   rw [treeStage_canonical_commit cR hα₁ hδα₁ hδ,
       treeStage_canonical_commit cR hα₂ hδα₂ hδ]
+
+/-- **`treeStage_prev_succ`**: the post-hoc cross-IH commit witness
+for the `prev_succ` argument of `TreeBundle.limitExtend`. For any
+`δ < β < ω₁`, the commit at position `δ` in the `β`-stage of
+`treeStage` equals the new top commit of the `δ`-stage's successor
+extension. Direct corollary of `treeStage_canonical_commit` +
+`treeStageCanonicalCommit`'s definition. -/
+theorem treeStage_prev_succ
+    (cR : (Fin 2 ↪o PairERSource) → Bool) {β δ : Ordinal.{0}}
+    (hβ : β < Ordinal.omega.{0} 1) (hδβ : δ < β)
+    (hδ : δ < Ordinal.omega.{0} 1) :
+    (treeStage cR β hβ).stage.commitAt δ hδβ =
+      (treeStage cR δ hδ).stage.succ.commitAt δ (Order.lt_succ δ) := by
+  rw [treeStage_canonical_commit cR hβ hδβ hδ]
+  rfl
 
 /-! ### Final assembly: chain extraction and `erdos_rado_pair_omega1`
 
@@ -5200,6 +5217,21 @@ theorem treeStage_typeAt_canonical
       exact IH hζ hδζ
   | limit ζ hζ_lim IH =>
     exact selectedBranch_agrees_with_prior_commit cR hζ_lim hη δ hδη hδ
+
+/-- **`treeStage_type_succ`**: the post-hoc cross-IH type witness
+for the `type_succ` argument of `TreeBundle.limitExtend`. For any
+`δ < β < ω₁`, the typeAt at position `δ` in the `β`-stage of
+`treeStage` equals the `succNewBool` of the `δ`-stage. Direct
+corollary of `treeStage_typeAt_canonical` + `treeCommitBool`'s
+definition. -/
+theorem treeStage_type_succ
+    (cR : (Fin 2 ↪o PairERSource) → Bool) {β δ : Ordinal.{0}}
+    (hβ : β < Ordinal.omega.{0} 1) (hδβ : δ < β)
+    (hδ : δ < Ordinal.omega.{0} 1) :
+    (treeStage cR β hβ).stage.typeAt δ hδβ =
+      (treeStage cR δ hδ).stage.succNewBool := by
+  rw [treeStage_typeAt_canonical cR hβ δ hδβ hδ]
+  rfl
 
 /-- **`treeCommit` is strictly monotone** in `δ`. Realize both commits
 inside the single chain `(treeStage cR (succ δ₂) _).stage` via
