@@ -2945,21 +2945,76 @@ noncomputable def PairERCoherentFamily.toMajorityType
           Ordinal.typein_lt_type
             (· < · : (Order.succ β).ToType → (Order.succ β).ToType → Prop) x
       exact lt_of_le_of_lt (Order.lt_succ_iff.mp h_lt_succ) hβα
-    refine PairERChain.limitWithType (cR := cR)
-      (OrderEmbedding.ofStrictMono
-        (fun x : (Order.succ β).ToType =>
-          F.commitVal (Ordinal.typein (· < ·) x) (ht_lt x))
+    -- Embed (succ β).ToType into α.ToType via typein ↦ enum at the same ordinal.
+    let xα : (Order.succ β).ToType → α.ToType := fun x =>
+      Ordinal.enum (α := α.ToType) (· < ·)
+        ⟨Ordinal.typein (· < ·) x,
+          (Ordinal.type_toType α).symm ▸ ht_lt x⟩
+    -- F.prefix (xα x) = F.commitVal (typein x) (ht_lt x) by prefix_enum.
+    have h_prefix_xα : ∀ x : (Order.succ β).ToType,
+        F.prefix (xα x) = F.commitVal (Ordinal.typein (· < ·) x) (ht_lt x) := by
+      intro x
+      exact F.prefix_enum (Ordinal.typein (· < ·) x) (ht_lt x)
+    set new_head : (Order.succ β).ToType ↪o PairERSource :=
+      OrderEmbedding.ofStrictMono
+        (fun x => F.commitVal (Ordinal.typein (· < ·) x) (ht_lt x))
         (fun x y hxy => F.commitVal_strictMono _ _
-          ((Ordinal.typein_lt_typein _).mpr hxy)))
-      (fun x => F.majorityType hα
-        (Ordinal.enum (α := α.ToType) (· < ·)
-          ⟨Ordinal.typein (· < ·) x,
-            (Ordinal.type_toType α).symm ▸ ht_lt x⟩))
-      ?_
-    -- large: by inclusion from α-level validFiber.
-    sorry
+          ((Ordinal.typein_lt_typein _).mpr hxy)) with hnh_def
+    set new_type : (Order.succ β).ToType → Bool := fun x =>
+      F.majorityType hα (xα x) with hnt_def
+    have h_new_head_eq : ∀ x, new_head x = F.prefix (xα x) := by
+      intro x
+      rw [hnh_def]
+      show F.commitVal _ _ = F.prefix (xα x)
+      exact (h_prefix_xα x).symm
+    -- large: validFiber cR F.prefix (majorityType F) injects into the new fiber.
+    have h_large : Order.succ (Cardinal.beth.{0} 1) ≤
+        Cardinal.mk (validFiber cR new_head new_type) := by
+      apply (F.majorityType_large hα).trans
+      refine Cardinal.mk_le_of_injective
+        (f := fun y : validFiber cR F.prefix (F.majorityType hα) =>
+          (⟨y.val, ?_⟩ : validFiber cR new_head new_type)) ?_
+      · -- y.val ∈ validFiber cR new_head new_type.
+        intro x
+        obtain ⟨h_lt, h_col⟩ := y.property (xα x)
+        -- h_lt : F.prefix (xα x) < y.val, h_col : cR(pair _) = majorityType F (xα x).
+        refine ⟨?_, ?_⟩
+        · -- new_head x < y.val.
+          rw [h_new_head_eq]; exact h_lt
+        · -- cR(pairEmbed _) = new_type x = majorityType F (xα x).
+          show cR _ = F.majorityType hα (xα x)
+          have h_pair_eq : (pairEmbed (show new_head x < y.val by
+              rw [h_new_head_eq]; exact h_lt)) =
+              pairEmbed h_lt := by
+            ext k
+            match k with
+            | ⟨0, _⟩ =>
+              show new_head x = F.prefix (xα x)
+              exact h_new_head_eq x
+            | ⟨1, _⟩ => rfl
+          rw [h_pair_eq]
+          exact h_col
+      · -- Injective.
+        intro y₁ y₂ heq
+        apply Subtype.ext
+        exact Subtype.mk.inj heq
+    exact PairERChain.limitWithType new_head new_type h_large
   · -- coherent: cross-stage head matching at lower positions.
-    sorry
+    intro δ β hδβ hβα
+    haveI : IsWellOrder (Order.succ β).ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder (Order.succ δ).ToType (· < ·) := isWellOrder_lt
+    -- Both LHS and RHS reduce to F.commitVal δ via the chain's head =
+    -- F.commitVal ∘ typein composed with limitWithType_commitAt.
+    show ((PairERChain.limitWithType (cR := cR) _ _ _).commitAt δ
+        (hδβ.trans (Order.lt_succ β))) =
+      ((PairERChain.limitWithType (cR := cR) _ _ _).commitAt δ
+        (Order.lt_succ δ))
+    rw [PairERChain.limitWithType_commitAt, PairERChain.limitWithType_commitAt]
+    -- Both sides: head(enum ⟨δ, ...⟩) = F.commitVal (typein (enum ⟨δ, ...⟩)) _
+    --                                = F.commitVal δ _ by typein_enum.
+    show (OrderEmbedding.ofStrictMono _ _) (Ordinal.enum (· < ·) _) =
+      (OrderEmbedding.ofStrictMono _ _) (Ordinal.enum (· < ·) _)
+    simp only [OrderEmbedding.coe_ofStrictMono, Ordinal.typein_enum]
 
 /-- **[FRONTIER]** Large-cardinality α-indexed intersection of stage
 fibers — the genuine Erdős–Rado fusion theorem.
