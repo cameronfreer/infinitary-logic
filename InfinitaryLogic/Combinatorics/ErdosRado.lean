@@ -2798,22 +2798,52 @@ theorem exists_point_in_iInter_of_fusion_sequence
       (_F.stage (_e n).1 (_e n).2).head (_F.stage (_e n).1 (_e n).2).type) := by
   sorry
 
-/-- **[LEGACY FRONTIER, sorry — superseded by
-`selectedBranch_agrees_with_prior_commit`]** Large-cardinality
-α-indexed intersection of stage fibers. Same diagnostic as
-`exists_point_in_iInter_of_fusion_sequence`. The new tree-path
-frontier `selectedBranch_agrees_with_prior_commit` makes the
-obstruction more precise (a single equation rather than a
-intersection-largeness claim); this legacy lemma chains only through
-the now-superseded `limitTypeCoherent` path. -/
+/-- **[FRONTIER]** Large-cardinality α-indexed intersection of stage
+fibers — the genuine Erdős–Rado fusion theorem.
+
+Now broken into cases on `α`:
+- `α = 0`: vacuous; intersection = `Set.univ` of size `succ ℶ_1`.
+- `α = succ β`: intersection = `validFiber` at the top stage (via
+  `validFiber_mono` under `IsTypeCoherent`); size ≥ succ ℶ_1 by
+  `(F.stage β _).large`.
+- `α` a limit: the genuine deep math; classical Erdős–Rado fusion. -/
 theorem exists_large_iInter_stage_fibers
     (cR : (Fin 2 ↪o PairERSource) → Bool)
-    {α : Ordinal.{0}} (_hα : α < Ordinal.omega.{0} 1)
-    (F : PairERCoherentFamily cR α) (_hF_type : F.IsTypeCoherent) :
+    {α : Ordinal.{0}} (hα : α < Ordinal.omega.{0} 1)
+    (F : PairERCoherentFamily cR α) (hF_type : F.IsTypeCoherent) :
     Order.succ (Cardinal.beth.{0} 1) ≤
       Cardinal.mk (⋂ (β : Ordinal.{0}) (hβα : β < α),
         validFiber cR (F.stage β hβα).head (F.stage β hβα).type) := by
-  sorry
+  induction α using Ordinal.limitRecOn with
+  | zero =>
+    -- α = 0: intersection is over an empty index, hence Set.univ.
+    have h_iInter_eq : (⋂ (β : Ordinal.{0}) (hβ0 : β < 0),
+        validFiber cR (F.stage β hβ0).head (F.stage β hβ0).type) =
+        (Set.univ : Set PairERSource) := by
+      apply Set.eq_univ_of_forall
+      intro y
+      simp only [Set.mem_iInter]
+      intro β hβ0
+      exact absurd hβ0 (not_lt.mpr (zero_le β))
+    rw [h_iInter_eq, Cardinal.mk_univ, mk_pairERSource]
+  | succ β _ =>
+    -- α = succ β: intersection collapses to validFiber at stage β.
+    have h_top_lt : β < Order.succ β := Order.lt_succ β
+    have h_subset :
+        validFiber cR (F.stage β h_top_lt).head (F.stage β h_top_lt).type ⊆
+          ⋂ (γ : Ordinal.{0}) (hγ : γ < Order.succ β),
+            validFiber cR (F.stage γ hγ).head (F.stage γ hγ).type := by
+      intro y hy
+      simp only [Set.mem_iInter]
+      intro γ hγ
+      rcases lt_or_eq_of_le (Order.lt_succ_iff.mp hγ) with hγ_lt | hγ_eq
+      · exact F.validFiber_mono hF_type hγ_lt h_top_lt hy
+      · subst hγ_eq; exact hy
+    exact (F.stage β h_top_lt).large.trans
+      (Cardinal.mk_le_mk_of_subset h_subset)
+  | limit β hβ_lim _ =>
+    -- α = limit β: the deep frontier, classical Erdős–Rado fusion.
+    sorry
 
 /-- **Type-coherent large limit fiber**. Direct corollary of
 `exists_large_iInter_stage_fibers` via
