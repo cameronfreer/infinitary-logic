@@ -2798,6 +2798,75 @@ theorem exists_point_in_iInter_of_fusion_sequence
       (_F.stage (_e n).1 (_e n).2).head (_F.stage (_e n).1 (_e n).2).type) := by
   sorry
 
+/-- **H3-pigeonhole existential at level `α`**: at any countable
+`α < ω₁`, the set above `F.prefix` partitions by type into ≤ `ℶ_1`
+classes (since `|α.ToType| ≤ ℵ₀`). By H3, *some* type τ has
+`≥ succ ℶ_1` realizers. This is the *existence* of a large-fiber
+type — F.typeFn might not be that τ, which is the obstruction to
+the full fusion theorem. -/
+theorem exists_large_validFiber_at_level
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    {α : Ordinal.{0}} (hα : α < Ordinal.omega.{0} 1)
+    (F : PairERCoherentFamily cR α) :
+    ∃ τ : α.ToType → Bool,
+      Order.succ (Cardinal.beth.{0} 1) ≤
+        Cardinal.mk (validFiber cR F.prefix τ) := by
+  classical
+  haveI : Countable α.ToType := countable_toType_of_lt_omega1 hα
+  -- The "above F.prefix" set has size ≥ succ ℶ_1.
+  set above : Set PairERSource :=
+    { y : PairERSource | ∀ x : α.ToType, F.prefix x < y } with hab_def
+  have h_above_large : Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk above := large_above_prefix hα F.prefix
+  -- Type-classification: each y above the prefix has a profile.
+  let profile : above → (α.ToType → Bool) := fun y x =>
+    cR (pairEmbed (y.property x))
+  -- Codomain `α.ToType → Bool` has size ≤ 2^ℵ₀ = ℶ_1.
+  have h_codomain_le : Cardinal.mk (α.ToType → Bool) ≤ Cardinal.beth.{0} 1 := by
+    -- |α.ToType → Bool| = #Bool ^ #α.ToType = 2 ^ #α.ToType ≤ 2 ^ ℵ₀ = ℶ_1.
+    have h_le_pow : Cardinal.mk (α.ToType → Bool) ≤
+        Cardinal.aleph0 ^ Cardinal.mk α.ToType := by
+      have h_pow_eq : Cardinal.mk (α.ToType → Bool) =
+          (Cardinal.mk Bool) ^ (Cardinal.mk α.ToType) := by
+        rw [Cardinal.mk_arrow]; simp
+      rw [h_pow_eq]
+      exact Cardinal.power_le_power_right (Cardinal.mk_le_aleph0 (α := Bool))
+    have h_pow_le : Cardinal.aleph0 ^ Cardinal.mk α.ToType ≤
+        Cardinal.aleph0 ^ Cardinal.aleph0 := by
+      exact Cardinal.power_le_power_left Cardinal.aleph0_ne_zero
+        (Cardinal.mk_le_aleph0 (α := α.ToType))
+    have h_aleph_pow : Cardinal.aleph0.{0} ^ Cardinal.aleph0.{0} =
+        Cardinal.beth.{0} 1 := by
+      rw [Cardinal.power_self_eq (le_refl Cardinal.aleph0)]
+      rw [show (1 : Ordinal.{0}) = Order.succ 0 from Ordinal.succ_zero.symm,
+          Cardinal.beth_succ, Cardinal.beth_zero]
+    calc Cardinal.mk (α.ToType → Bool)
+        ≤ Cardinal.aleph0 ^ Cardinal.mk α.ToType := h_le_pow
+      _ ≤ Cardinal.aleph0 ^ Cardinal.aleph0 := h_pow_le
+      _ = Cardinal.beth.{0} 1 := h_aleph_pow
+  -- Apply H3: some τ has ≥ succ ℶ_1 preimage.
+  obtain ⟨τ, hτ⟩ := exists_large_fiber_of_small_codomain
+    (κ := Cardinal.beth.{0} 1)
+    (Cardinal.aleph0_le_beth 1) h_above_large h_codomain_le profile
+  refine ⟨τ, hτ.trans ?_⟩
+  -- The H3-fiber injects into validFiber cR F.prefix τ via y ↦ y.
+  refine Cardinal.mk_le_of_injective
+    (f := fun y : profile ⁻¹' {τ} => ⟨y.val.val, ?_⟩) ?_
+  · -- y.val.val ∈ validFiber cR F.prefix τ.
+    intro x
+    refine ⟨y.val.property x, ?_⟩
+    have h_τ_eq : profile y.val = τ := y.property
+    show cR _ = τ x
+    have := congrFun h_τ_eq x
+    exact this
+  · intro y₁ y₂ h
+    have h1 : y₁.val.val = y₂.val.val := by
+      have h2 := Subtype.mk.inj h
+      exact h2
+    apply Subtype.ext
+    apply Subtype.ext
+    exact h1
+
 /-- **[FRONTIER]** Large-cardinality α-indexed intersection of stage
 fibers — the genuine Erdős–Rado fusion theorem.
 
@@ -2806,7 +2875,11 @@ Now broken into cases on `α`:
 - `α = succ β`: intersection = `validFiber` at the top stage (via
   `validFiber_mono` under `IsTypeCoherent`); size ≥ succ ℶ_1 by
   `(F.stage β _).large`.
-- `α` a limit: the genuine deep math; classical Erdős–Rado fusion. -/
+- `α` a limit: requires identifying `F.typeFn` with the
+  H3-pigeonhole-majority type (`exists_large_validFiber_at_level`)
+  — which doesn't follow from `IsTypeCoherent` alone. The classical
+  Erdős–Rado proof uses the canonical-types tree to ensure F.typeFn
+  is the iterated majority. -/
 theorem exists_large_iInter_stage_fibers
     (cR : (Fin 2 ↪o PairERSource) → Bool)
     {α : Ordinal.{0}} (hα : α < Ordinal.omega.{0} 1)
