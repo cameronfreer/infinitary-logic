@@ -2909,6 +2909,58 @@ theorem PairERCoherentFamily.typeCoherentFiber_large_via_majority
   rw [hF_majority]
   exact F.majorityType_large hα
 
+/-- **`toMajorityType`**: rebuild a coherent family at level `α` so that
+its `typeFn` equals `majorityType F`. The prefix/commits are
+preserved (= F.prefix as a function), but each stage's `type` is reset
+to the global majority instead of inheriting per-stage choices.
+
+Construction: for each `β < α`, build a `(succ β)`-chain via
+`PairERChain.limitWithType`:
+- head: `F.prefix` restricted to the first `(succ β)` positions
+  (via `F.commitVal` + `Ordinal.typein`).
+- type: `majorityType F` restricted similarly.
+- large: validFiber at level `(succ β)` ⊇ validFiber at level `α`,
+  hence size ≥ succ ℶ_1 by `majorityType_large`.
+
+After this rebuild, `(toMajorityType F).typeFn = F.majorityType hα`
+and the family is `IsTypeCoherent`. The proof obligations
+(coherent + validFiber inclusion + typeFn equality) are sorry'd
+here as substantial bookkeeping; the architecture is laid out. -/
+noncomputable def PairERCoherentFamily.toMajorityType
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    (F : PairERCoherentFamily cR α) :
+    PairERCoherentFamily cR α := by
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  refine
+    { stage := fun β hβα => ?_
+      coherent := ?_ }
+  · -- (succ β)-chain with prescribed head/type from F.commitVal /
+    -- F.majorityType.
+    haveI : IsWellOrder (Order.succ β).ToType (· < ·) := isWellOrder_lt
+    have ht_lt : ∀ x : (Order.succ β).ToType,
+        Ordinal.typein (· < ·) x < α := fun x => by
+      have h_lt_succ : Ordinal.typein (· < ·) x < Order.succ β := by
+        simpa [Ordinal.type_toType] using
+          Ordinal.typein_lt_type
+            (· < · : (Order.succ β).ToType → (Order.succ β).ToType → Prop) x
+      exact lt_of_le_of_lt (Order.lt_succ_iff.mp h_lt_succ) hβα
+    refine PairERChain.limitWithType (cR := cR)
+      (OrderEmbedding.ofStrictMono
+        (fun x : (Order.succ β).ToType =>
+          F.commitVal (Ordinal.typein (· < ·) x) (ht_lt x))
+        (fun x y hxy => F.commitVal_strictMono _ _
+          ((Ordinal.typein_lt_typein _).mpr hxy)))
+      (fun x => F.majorityType hα
+        (Ordinal.enum (α := α.ToType) (· < ·)
+          ⟨Ordinal.typein (· < ·) x,
+            (Ordinal.type_toType α).symm ▸ ht_lt x⟩))
+      ?_
+    -- large: by inclusion from α-level validFiber.
+    sorry
+  · -- coherent: cross-stage head matching at lower positions.
+    sorry
+
 /-- **[FRONTIER]** Large-cardinality α-indexed intersection of stage
 fibers — the genuine Erdős–Rado fusion theorem.
 
