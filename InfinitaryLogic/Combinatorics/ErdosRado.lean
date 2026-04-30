@@ -2867,6 +2867,48 @@ theorem exists_large_validFiber_at_level
     apply Subtype.ext
     exact h1
 
+/-- **`majorityType`**: the H3-pigeonhole-chosen type at level `α`,
+extracted via `Classical.choose` on `exists_large_validFiber_at_level`.
+This is the *global majority* type — the one whose `validFiber` has
+size `≥ succ ℶ_1`. -/
+noncomputable def PairERCoherentFamily.majorityType
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    (F : PairERCoherentFamily cR α) : α.ToType → Bool :=
+  Classical.choose (exists_large_validFiber_at_level cR hα F)
+
+/-- **`majorityType_large`**: the `validFiber` for `majorityType F`
+has size `≥ succ ℶ_1`, by definition. -/
+theorem PairERCoherentFamily.majorityType_large
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    (F : PairERCoherentFamily cR α) :
+    Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (validFiber cR F.prefix (F.majorityType hα)) :=
+  Classical.choose_spec (exists_large_validFiber_at_level cR hα F)
+
+/-- **`IsMajorityType`**: predicate that `F.typeFn` agrees with the
+global majority type. Together with `IsTypeCoherent`, this gives
+the structural information needed to identify `F.typeFn` with the
+H3-pigeonhole-chosen branch. -/
+def PairERCoherentFamily.IsMajorityType
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    (F : PairERCoherentFamily cR α) : Prop :=
+  F.typeFn = F.majorityType hα
+
+/-- **`typeCoherentFiber_large_via_majority`**: under
+`IsMajorityType` (i.e., F.typeFn = majorityType F), the type-coherent
+fiber has size `≥ succ ℶ_1` directly from `majorityType_large`. -/
+theorem PairERCoherentFamily.typeCoherentFiber_large_via_majority
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    (F : PairERCoherentFamily cR α) (hF_majority : F.IsMajorityType hα) :
+    Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (validFiber cR F.prefix F.typeFn) := by
+  rw [hF_majority]
+  exact F.majorityType_large hα
+
 /-- **[FRONTIER]** Large-cardinality α-indexed intersection of stage
 fibers — the genuine Erdős–Rado fusion theorem.
 
@@ -2875,11 +2917,12 @@ Now broken into cases on `α`:
 - `α = succ β`: intersection = `validFiber` at the top stage (via
   `validFiber_mono` under `IsTypeCoherent`); size ≥ succ ℶ_1 by
   `(F.stage β _).large`.
-- `α` a limit: requires identifying `F.typeFn` with the
-  H3-pigeonhole-majority type (`exists_large_validFiber_at_level`)
-  — which doesn't follow from `IsTypeCoherent` alone. The classical
-  Erdős–Rado proof uses the canonical-types tree to ensure F.typeFn
-  is the iterated majority. -/
+- `α` a limit: requires `F.IsMajorityType hα` (i.e., F.typeFn equals
+  the H3-pigeonhole-chosen type). With this strengthened invariant,
+  the limit case follows from `typeCoherentFiber_large_via_majority`
+  + `validFiber_prefix_typeFn_eq_iInter`. The remaining work is to
+  PROPAGATE `IsMajorityType` through the recursion (limit constructor
+  sets typeFn := majorityType F). -/
 theorem exists_large_iInter_stage_fibers
     (cR : (Fin 2 ↪o PairERSource) → Bool)
     {α : Ordinal.{0}} (hα : α < Ordinal.omega.{0} 1)
