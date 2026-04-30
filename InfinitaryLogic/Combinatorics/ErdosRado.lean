@@ -3551,6 +3551,55 @@ lemma PairERTypeTree.commitCoherent_selectedBranch_eq
   -- selectedBranch ∈ branches = {F.typeFn}, so selectedBranch = F.typeFn.
   exact h_mem
 
+/-- **`majorityCoherent`**: tree at level `α` with branches =
+`{majorityType F}`. The H3-pigeonhole-chosen type is the unique branch.
+This tree's `large_sigma` is **sorry-FREE** (uses `majorityType_large`
+directly, not the deep intersection-largeness frontier).
+
+Differs from `commitCoherent` in two ways:
+1. Branches are `{majorityType F}` (not `{F.typeFn}`).
+2. No `IsTypeCoherent` precondition needed.
+
+Trade-off: the resulting tree's `selectedBranch` is `majorityType F`,
+which equals `F.typeFn` only under the `IsMajorityType` invariant.
+Using this tree in `TreeBundle.limitFromTree` requires `IsMajorityType`
+to satisfy the `h_branch_eq_typeFn` field. -/
+noncomputable def PairERTypeTree.majorityCoherent
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    (F : PairERCoherentFamily cR α) :
+    PairERTypeTree F := by
+  refine
+    { branches := {F.majorityType hα}
+      realizers := fun b => validFiber cR F.prefix b
+      realizers_sub_validFiber := ?_
+      large_sigma := ?_ }
+  · intro _ _ hy; exact hy
+  · -- Σ ≃ validFiber cR F.prefix (majorityType F).
+    set S : Set ((α.ToType → Bool) × PairERSource) :=
+      { p | p.1 ∈ ({F.majorityType hα} : Set _) ∧
+        p.2 ∈ validFiber cR F.prefix p.1 } with hS_def
+    have h_sigma_ge :
+        Cardinal.mk (validFiber cR F.prefix (F.majorityType hα)) ≤
+        Cardinal.mk S := by
+      refine Cardinal.mk_le_of_injective
+        (f := fun y : validFiber cR F.prefix (F.majorityType hα) =>
+          (⟨(F.majorityType hα, y.val), rfl, y.property⟩ : S)) ?_
+      intro y₁ y₂ h
+      apply Subtype.ext
+      have h1 := Subtype.mk.inj h
+      exact (Prod.mk.inj h1).2
+    exact (F.majorityType_large hα).trans h_sigma_ge
+
+/-- **`majorityCoherent`'s `selectedBranch` equals `majorityType F`.** -/
+lemma PairERTypeTree.majorityCoherent_selectedBranch_eq
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    (F : PairERCoherentFamily cR α) :
+    (PairERTypeTree.majorityCoherent hα F).selectedBranch hα =
+      F.majorityType hα :=
+  (PairERTypeTree.majorityCoherent hα F).selectedBranch_mem hα
+
 /-- **`TreeBundle.zero`**: base case at α = 0. Stage is
 `PairERChain.zero`, family is the empty tree-family, head-coherence is
 vacuous. -/
