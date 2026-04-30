@@ -4900,6 +4900,21 @@ theorem treeStage_cross_agree_commit
   rw [treeStage_canonical_commit cR hα₁ hδα₁ hδ,
       treeStage_canonical_commit cR hα₂ hδα₂ hδ]
 
+/-! ### Bookkeeping frontier: `treeStage` recursion cross-IH certificates
+
+Mathematically follows from the post-hoc canonicality lemmas
+`treeStage_prev_succ` and `treeStage_type_succ` (proved below as
+direct corollaries of `treeStage_canonical_commit` /
+`treeStage_typeAt_canonical`). Eliminating the `sorryAx` propagation
+through these certificates requires a Σ-motive refactor of
+`treeStage` (packaging canonical certificates at construction time).
+
+This is a recursion-engineering frontier, separate from the
+mathematical frontier `exists_large_iInter_stage_fibers` (the genuine
+Erdős–Rado fusion content). Per the project's stated priorities, the
+Σ-motive refactor is deferred until a clean axiom profile becomes
+load-bearing for an API/publication. -/
+
 /-- **`treeStage_prev_succ`**: the post-hoc cross-IH commit witness
 for the `prev_succ` argument of `TreeBundle.limitExtend`. For any
 `δ < β < ω₁`, the commit at position `δ` in the `β`-stage of
@@ -5423,7 +5438,16 @@ cR η)` equals `treeCommitBool cR δ`. Proof:
 
 Sorry'd transitively through the new frontier, but the proof
 *structure* is now explicit: arbitrary pair-homogeneity reduces to
-the `selectedBranch` agreement equation. -/
+the `selectedBranch` agreement equation.
+
+**Axiom profile** (transitively):
+* mathematical frontier: `exists_large_iInter_stage_fibers` (the
+  genuine Erdős–Rado fusion theorem, the only substantive obstacle
+  remaining).
+* recursion-engineering frontier: `treeStage`'s internal
+  `prev_succ`/`type_succ` cross-IH certificates (post-hoc-fillable
+  via `treeStage_prev_succ`/`treeStage_type_succ`; eliminating their
+  sorryAx propagation requires a Σ-motive refactor of `treeStage`). -/
 theorem treeChain_pair_homogeneous
     (cR : (Fin 2 ↪o PairERSource) → Bool) {δ η : Ordinal.{0}}
     (hδη : δ < η) (hη : η < Ordinal.omega.{0} 1) :
