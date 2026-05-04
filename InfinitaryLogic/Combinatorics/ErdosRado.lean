@@ -3860,6 +3860,92 @@ noncomputable def TreeBundle.limitFromTree
     exact Ordinal.typein_enum _ _
   type_coh := h_type_coh
 
+/-- **`TreeBundle.limitFromMajority`**: alternative limit constructor
+that bypasses the legacy intersection-largeness frontier by using
+`F.toMajorityType` + `F.majorityType_large`.
+
+Build a `TreeBundle cR α` at limit α from any `F : PairERCoherentFamily
+cR α` (no `IsTypeCoherent` precondition needed):
+
+1. Rebuild F as `F_maj := F.toMajorityType hα`. This sets
+   `F_maj.typeFn := F.majorityType hα` and gives a type-coherent family.
+2. Build the singleton-branch tree at level α with branches =
+   `{F_maj.typeFn}`. The `large_sigma` invariant holds via the
+   inclusion `validFiber cR F.prefix (F.majorityType hα) ↪
+   validFiber cR F_maj.prefix F_maj.typeFn` (using
+   `toMajorityType_prefix_apply` + `toMajorityType_typeFn`) plus
+   `F.majorityType_large`.
+3. The TreeBundle's `selectedBranch = F_maj.typeFn`, so
+   `h_branch_eq_typeFn` is structural.
+
+Sorry-free; routes through `F.majorityType_large` (axiom-clean) only,
+not through the legacy fusion frontier. -/
+noncomputable def TreeBundle.limitFromMajority
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    (F : PairERCoherentFamily cR α) :
+    TreeBundle cR α := by
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  let F_maj : PairERCoherentFamily cR α := F.toMajorityType hα
+  have h_typeFn : F_maj.typeFn = F.majorityType hα := F.toMajorityType_typeFn hα
+  have h_F_maj_type_coh : F_maj.IsTypeCoherent :=
+    F.toMajorityType_isTypeCoherent hα
+  -- |validFiber cR F_maj.prefix F_maj.typeFn| ≥ succ ℶ_1.
+  have h_validFiber_large : Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (validFiber cR F_maj.prefix F_maj.typeFn) := by
+    apply (F.majorityType_large hα).trans
+    refine Cardinal.mk_le_of_injective
+      (f := fun y : validFiber cR F.prefix (F.majorityType hα) =>
+        (⟨y.val, fun x => ?_⟩ : validFiber cR F_maj.prefix F_maj.typeFn)) ?_
+    · -- y.val satisfies the F_maj-validFiber constraint at x.
+      obtain ⟨h_lt, h_col⟩ := y.property x
+      have h_pre : F_maj.prefix x = F.prefix x :=
+        F.toMajorityType_prefix_apply hα x
+      have h_tF : F_maj.typeFn x = F.majorityType hα x := by
+        rw [h_typeFn]
+      refine ⟨?_, ?_⟩
+      · rw [h_pre]; exact h_lt
+      · -- pair embedding equality: F_maj.prefix x = F.prefix x.
+        rw [h_tF]
+        have h_pair : (pairEmbed (show F_maj.prefix x < y.val by
+            rw [h_pre]; exact h_lt)) = pairEmbed h_lt := by
+          ext k
+          match k with
+          | ⟨0, _⟩ =>
+            show F_maj.prefix x = F.prefix x
+            exact h_pre
+          | ⟨1, _⟩ => rfl
+        rw [h_pair]; exact h_col
+    · intro y₁ y₂ heq
+      apply Subtype.ext
+      exact Subtype.mk.inj heq
+  -- Build the singleton-branch tree.
+  let tree : PairERTypeTree F_maj := by
+    refine
+      { branches := {F_maj.typeFn}
+        realizers := fun b => validFiber cR F_maj.prefix b
+        realizers_sub_validFiber := fun _ _ hy => hy
+        large_sigma := ?_ }
+    -- σ injection from validFiber cR F_maj.prefix F_maj.typeFn.
+    set S : Set ((α.ToType → Bool) × PairERSource) :=
+      { p | p.1 ∈ ({F_maj.typeFn} : Set _) ∧
+        p.2 ∈ validFiber cR F_maj.prefix p.1 } with hS_def
+    have h_sigma_ge :
+        Cardinal.mk (validFiber cR F_maj.prefix F_maj.typeFn) ≤
+          Cardinal.mk S := by
+      refine Cardinal.mk_le_of_injective
+        (f := fun y : validFiber cR F_maj.prefix F_maj.typeFn =>
+          (⟨(F_maj.typeFn, y.val), rfl, y.property⟩ : S)) ?_
+      intro y₁ y₂ heq
+      apply Subtype.ext
+      have h1 := Subtype.mk.inj heq
+      exact (Prod.mk.inj h1).2
+    exact h_validFiber_large.trans h_sigma_ge
+  -- selectedBranch ∈ branches = {F_maj.typeFn}, hence = F_maj.typeFn.
+  have h_branch_eq : tree.selectedBranch hα = F_maj.typeFn :=
+    tree.selectedBranch_mem hα
+  exact TreeBundle.limitFromTree hα ⟨F_maj, tree⟩ h_F_maj_type_coh h_branch_eq
+
 /-- **[LEGACY] `TreeBundle.extendSucc`** — uses
 `(TB.family.family.stage β _).succ` (family-stored) instead of
 `TB.stage.succ`. **Do NOT use in the main tree-driven path**: if `TB`
