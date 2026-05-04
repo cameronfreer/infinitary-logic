@@ -3016,6 +3016,103 @@ noncomputable def PairERCoherentFamily.toMajorityType
       (OrderEmbedding.ofStrictMono _ _) (Ordinal.enum (· < ·) _)
     simp only [OrderEmbedding.coe_ofStrictMono, Ordinal.typein_enum]
 
+/-- **`toMajorityType_commitVal`**: the rebuilt family's `commitVal`
+agrees with the original's at every position. By construction, the
+new stages' top commits reduce via `limitWithType_commitAt` +
+`Ordinal.typein_enum` to `F.commitVal δ`. -/
+lemma PairERCoherentFamily.toMajorityType_commitVal
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    (F : PairERCoherentFamily cR α)
+    (δ : Ordinal.{0}) (hδα : δ < α) :
+    (F.toMajorityType hα).commitVal δ hδα = F.commitVal δ hδα := by
+  haveI : IsWellOrder (Order.succ δ).ToType (· < ·) := isWellOrder_lt
+  show ((F.toMajorityType hα).stage δ hδα).commitAt δ (Order.lt_succ δ) =
+    F.commitVal δ hδα
+  unfold PairERCoherentFamily.toMajorityType
+  show (PairERChain.limitWithType (cR := cR) _ _ _).commitAt δ
+      (Order.lt_succ δ) = F.commitVal δ hδα
+  rw [PairERChain.limitWithType_commitAt]
+  show (OrderEmbedding.ofStrictMono _ _) (Ordinal.enum (· < ·) _) =
+    F.commitVal δ hδα
+  simp only [OrderEmbedding.coe_ofStrictMono, Ordinal.typein_enum]
+
+/-- **`toMajorityType_typeVal`**: the rebuilt family's `typeVal` at
+position `δ` is `majorityType F` evaluated at `enum δ`. -/
+lemma PairERCoherentFamily.toMajorityType_typeVal
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    (F : PairERCoherentFamily cR α)
+    (δ : Ordinal.{0}) (hδα : δ < α) :
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    (F.toMajorityType hα).typeVal δ hδα =
+      F.majorityType hα
+        (Ordinal.enum (α := α.ToType) (· < ·)
+          ⟨δ, (Ordinal.type_toType α).symm ▸ hδα⟩) := by
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder (Order.succ δ).ToType (· < ·) := isWellOrder_lt
+  show ((F.toMajorityType hα).stage δ hδα).typeAt δ (Order.lt_succ δ) = _
+  unfold PairERCoherentFamily.toMajorityType
+  show (PairERChain.limitWithType (cR := cR) _ _ _).typeAt δ
+      (Order.lt_succ δ) = _
+  rw [PairERChain.limitWithType_typeAt]
+  -- LHS: new_type (enum ⟨δ, ...⟩ in (succ δ).ToType) = majorityType F at α-enum.
+  -- typein (enum ⟨δ, ...⟩) = δ.
+  simp only [Ordinal.typein_enum]
+
+/-- **`toMajorityType_typeFn`**: the rebuilt family's `typeFn` is
+`F.majorityType hα`. By `toMajorityType_typeVal` + the typein-enum
+identity. -/
+lemma PairERCoherentFamily.toMajorityType_typeFn
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    (F : PairERCoherentFamily cR α) :
+    (F.toMajorityType hα).typeFn = F.majorityType hα := by
+  classical
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  funext x
+  show (F.toMajorityType hα).typeVal _ _ = F.majorityType hα x
+  rw [F.toMajorityType_typeVal hα]
+  congr 1
+  exact Ordinal.enum_typein _ x
+
+/-- **`toMajorityType_prefix`**: the rebuilt family's `prefix`, applied
+at any `x`, equals the original's. -/
+lemma PairERCoherentFamily.toMajorityType_prefix_apply
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    (F : PairERCoherentFamily cR α)
+    (x : α.ToType) :
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    (F.toMajorityType hα).prefix x = F.prefix x := by
+  classical
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  unfold PairERCoherentFamily.prefix
+  simp only [OrderEmbedding.coe_ofStrictMono]
+  exact F.toMajorityType_commitVal hα _ _
+
+/-- **`toMajorityType_isTypeCoherent`**: the rebuilt family is
+type-coherent. All stages have `typeAt` at lower positions equal to
+`F.majorityType` at the corresponding enum, so cross-stage agreement
+is immediate. -/
+lemma PairERCoherentFamily.toMajorityType_isTypeCoherent
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    (F : PairERCoherentFamily cR α) :
+    (F.toMajorityType hα).IsTypeCoherent := by
+  intro δ β hδβ hβα
+  haveI : IsWellOrder (Order.succ β).ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder (Order.succ δ).ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  show ((F.toMajorityType hα).stage β hβα).typeAt δ
+      (hδβ.trans (Order.lt_succ β)) =
+    ((F.toMajorityType hα).stage δ (hδβ.trans hβα)).typeAt δ (Order.lt_succ δ)
+  unfold PairERCoherentFamily.toMajorityType
+  show (PairERChain.limitWithType (cR := cR) _ _ _).typeAt δ _ =
+    (PairERChain.limitWithType (cR := cR) _ _ _).typeAt δ _
+  rw [PairERChain.limitWithType_typeAt, PairERChain.limitWithType_typeAt]
+  simp only [Ordinal.typein_enum]
+
 /-- **[FRONTIER]** Large-cardinality α-indexed intersection of stage
 fibers — the genuine Erdős–Rado fusion theorem.
 
