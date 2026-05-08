@@ -3959,6 +3959,93 @@ noncomputable def TreeBundle.limitFromMajority
     tree.selectedBranch_mem hα
   exact TreeBundle.limitFromTree hα ⟨F_maj, tree⟩ h_F_maj_type_coh h_branch_eq
 
+/-! ### `CoherentMajorityBranch`: the new explicit fusion frontier
+
+`limitFromMajority` establishes one-level largeness via H3 pigeonhole
+(`majorityType`), but `Classical.choose` is not natural across levels:
+the H3 choice at limit α₁ doesn't agree at common positions with the
+H3 choice at limit α₂. To drive the recursion coherently, the
+*compatibility across levels* must be **part of the chosen data**, not
+recovered from unrelated H3 choices.
+
+`CoherentMajorityBranch` is the structural object that packages this
+compatibility:
+
+- `prefixAt α hα`: an order embedding `α.ToType ↪o PairERSource`,
+  varying coherently with α.
+- `branch α hα`: a Bool function on each level, varying coherently.
+- `prefix_restrict`/`branch_restrict`: restrictions to lower levels
+  (via `Ordinal.initialSegToType`) AGREE with the lower-level data.
+- `large`: at every level, the validFiber size is `≥ succ ℶ_1`.
+
+The new mathematical frontier is the **existence** of a
+`CoherentMajorityBranch` for any `cR`. This is the classical
+Erdős–Rado fusion content, now phrased in tree language: not "find a
+single large branch" but "find branches compatibly across all
+levels". The sorry that drives the active path now lives here. -/
+
+/-- **`CoherentMajorityBranch cR`**: globally coherent prefix +
+branch data with per-level largeness, replacing per-level
+independent `Classical.choose` H3 pigeonholes. The existence of
+this object is the new sole mathematical frontier. -/
+structure CoherentMajorityBranch
+    (cR : (Fin 2 ↪o PairERSource) → Bool) where
+  /-- Prefix at each level α < ω₁. -/
+  prefixAt : ∀ α : Ordinal.{0},
+    α < Ordinal.omega.{0} 1 → α.ToType ↪o PairERSource
+  /-- Type function at each level α < ω₁. -/
+  branch : ∀ α : Ordinal.{0},
+    α < Ordinal.omega.{0} 1 → α.ToType → Bool
+  /-- Prefix coherence: prefix at α restricted to β-level via the
+  initial-segment inclusion equals prefix at β. -/
+  prefix_restrict : ∀ {β α : Ordinal.{0}} (hβα : β ≤ α)
+    (hβ : β < Ordinal.omega.{0} 1) (hα : α < Ordinal.omega.{0} 1)
+    (x : β.ToType),
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    prefixAt α hα ((Ordinal.initialSegToType hβα).toOrderEmbedding x) =
+      prefixAt β hβ x
+  /-- Branch coherence: branch at α restricted to β-level equals
+  branch at β. -/
+  branch_restrict : ∀ {β α : Ordinal.{0}} (hβα : β ≤ α)
+    (hβ : β < Ordinal.omega.{0} 1) (hα : α < Ordinal.omega.{0} 1)
+    (x : β.ToType),
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    branch α hα ((Ordinal.initialSegToType hβα).toOrderEmbedding x) =
+      branch β hβ x
+  /-- Largeness: the validFiber at each level has size ≥ succ ℶ_1. -/
+  large : ∀ (α : Ordinal.{0}) (hα : α < Ordinal.omega.{0} 1),
+    Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (validFiber cR (prefixAt α hα) (branch α hα))
+
+/-- **[NEW FRONTIER, sorry]** Existence of a coherent majority branch.
+This replaces the legacy `exists_large_iInter_stage_fibers` as the
+single mathematical frontier of the pair Erdős–Rado proof. Filling
+this is the classical Erdős–Rado canonical-types-tree fusion
+construction. -/
+theorem exists_coherentMajorityBranch
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    Nonempty (CoherentMajorityBranch cR) := by
+  sorry
+
+/-- **Conditional implication**: a `CoherentMajorityBranch` would
+discharge the limit-stage typeAt agreement that
+`selectedBranch_agrees_with_prior_commit` requires.
+
+The intended downstream use: replace `commitCoherent`'s deep-frontier
+dependency by routing through a chosen `CoherentMajorityBranch`. The
+branch's per-level largeness gives `commitCoherent.large_sigma`; the
+restriction laws give type-coherence across levels (the gap that
+broke the naive `limitFromMajority` integration). -/
+theorem CoherentMajorityBranch.large_at_succ
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (B : CoherentMajorityBranch cR) (δ : Ordinal.{0})
+    (hδ : δ < Ordinal.omega.{0} 1) :
+    Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (validFiber cR (B.prefixAt δ hδ) (B.branch δ hδ)) :=
+  B.large δ hδ
+
 /-- **[LEGACY] `TreeBundle.extendSucc`** — uses
 `(TB.family.family.stage β _).succ` (family-stored) instead of
 `TB.stage.succ`. **Do NOT use in the main tree-driven path**: if `TB`
