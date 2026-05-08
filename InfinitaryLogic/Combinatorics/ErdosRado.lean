@@ -3879,7 +3879,20 @@ cR α` (no `IsTypeCoherent` precondition needed):
    `h_branch_eq_typeFn` is structural.
 
 Sorry-free; routes through `F.majorityType_large` (axiom-clean) only,
-not through the legacy fusion frontier. -/
+not through the legacy fusion frontier.
+
+**Integration caveat**: directly replacing `TreeBundle.limitExtend`'s
+internals with `limitFromMajority` breaks `treeChain_pair_homogeneous`
+because the chain's `typeAt` at lower positions changes from inherited
+`treeCommitBool` (= local pigeonhole choices) to `F.majorityType`
+(= H3 pigeonhole choice at the level). The H3 choice at different
+limit levels α₁, α₂ generally does NOT agree at common positions —
+`Classical.choose` is not "natural" across different existentials —
+so type-coherence breaks across levels. To use this constructor in
+the active path, the construction needs to be augmented with a
+*coherent* global majority branch (canonical-types-tree style),
+which is itself essentially the classical Erdős–Rado fusion
+construction. -/
 noncomputable def TreeBundle.limitFromMajority
     {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
     (hα : α < Ordinal.omega.{0} 1)
