@@ -4046,6 +4046,74 @@ theorem CoherentMajorityBranch.large_at_succ
       Cardinal.mk (validFiber cR (B.prefixAt δ hδ) (B.branch δ hδ)) :=
   B.large δ hδ
 
+/-! ### Implications: what `CoherentMajorityBranch` provides
+
+These lemmas show that a `CoherentMajorityBranch B` discharges the
+key obligations of the active limit path (specifically, the
+type-coherent fiber largeness frontier and the cross-level coherence
+that broke `limitFromMajority`'s naive integration).
+
+The implications are conditional: they assume an `F` whose data
+matches `B`'s at the relevant level/positions. Constructing such an
+`F` from `B` (by modifying the recursion's successor extensions to
+prescribe the new top via `B.branch`) is the natural follow-up; the
+conditional form here states the architectural payoff. -/
+
+/-- **Validfiber largeness via `B`** (the conditional fusion result):
+if `F` matches `B` pointwise at level `α`, the type-coherent fiber
+has size `≥ succ ℶ_1`.
+
+This is the discharge of the legacy
+`exists_large_iInter_stage_fibers` frontier under the new
+`CoherentMajorityBranch` hypothesis. -/
+theorem CoherentMajorityBranch.typeCoherentFiber_large_via_branch
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (B : CoherentMajorityBranch cR) {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1)
+    (F : PairERCoherentFamily cR α)
+    (h_prefix_eq : ∀ x : α.ToType, F.prefix x = B.prefixAt α hα x)
+    (h_typeFn_eq : F.typeFn = B.branch α hα) :
+    Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (validFiber cR F.prefix F.typeFn) := by
+  apply (B.large α hα).trans
+  -- Inject validFiber cR (B.prefixAt α hα) (B.branch α hα) into validFiber cR F.prefix F.typeFn.
+  refine Cardinal.mk_le_of_injective
+    (f := fun y : validFiber cR (B.prefixAt α hα) (B.branch α hα) =>
+      (⟨y.val, fun x => ?_⟩ : validFiber cR F.prefix F.typeFn)) ?_
+  · -- y.val ∈ validFiber cR F.prefix F.typeFn at position x.
+    obtain ⟨h_lt, h_col⟩ := y.property x
+    have h_lt' : F.prefix x < y.val := by rw [h_prefix_eq]; exact h_lt
+    refine ⟨h_lt', ?_⟩
+    -- pairEmbed h_lt' = pairEmbed h_lt via OrderEmbedding ext.
+    have h_pair : pairEmbed h_lt' = pairEmbed h_lt := by
+      ext k
+      match k with
+      | ⟨0, _⟩ =>
+        show F.prefix x = B.prefixAt α hα x
+        exact h_prefix_eq x
+      | ⟨1, _⟩ => rfl
+    rw [h_pair, congr_fun h_typeFn_eq x]
+    exact h_col
+  · intro y₁ y₂ heq
+    apply Subtype.ext
+    exact Subtype.mk.inj heq
+
+/-- **Cross-level branch coherence** (re-stated): the branch at level
+`α` restricted to `β.ToType` equals the branch at level `β`. This is
+the cross-level matching that *raw* `Classical.choose` H3 majority
+branches cannot provide — it is part of `B`'s chosen data. -/
+theorem CoherentMajorityBranch.branch_at_lower
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (B : CoherentMajorityBranch cR)
+    {β α : Ordinal.{0}} (hβα : β ≤ α)
+    (hβ : β < Ordinal.omega.{0} 1) (hα : α < Ordinal.omega.{0} 1)
+    (x : β.ToType) :
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    B.branch α hα ((Ordinal.initialSegToType hβα).toOrderEmbedding x) =
+      B.branch β hβ x :=
+  B.branch_restrict hβα hβ hα x
+
 /-- **[LEGACY] `TreeBundle.extendSucc`** — uses
 `(TB.family.family.stage β _).succ` (family-stored) instead of
 `TB.stage.succ`. **Do NOT use in the main tree-driven path**: if `TB`
