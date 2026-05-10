@@ -4045,19 +4045,15 @@ plus projection lemmas. The extend step, the ω-chain, and the
 limit construction are deferred. -/
 
 /-- **`CoherentBranchApprox cR n`**: finite approximation of a
-`CoherentMajorityBranch` with `n` chosen levels < ω_1. Mirrors
-the fields of `CoherentMajorityBranch` restricted to a finite
-index set `Fin n`.
+`CoherentMajorityBranch` with `n` chosen levels < ω_1. Levels are
+constrained to be in strict-successor relation: `level (k+1) =
+succ (level k)`. This makes `(level k+1).ToType` have a `⊤` element
+(succ ordinals have top), enabling `top_in_validFiber` between
+adjacent levels.
 
-The `level` field provides the `n` ordinal positions; the other
-fields (`prefixAt`, `branchAt`, `prefix_restrict`, `branch_restrict`,
-`large`) are pointwise restrictions of `CoherentMajorityBranch`'s
-fields to these levels.
-
-This commit *omits* `top_in_validFiber` for approximations because
-expressing it cleanly requires assumptions on which levels are
-adjacent (e.g., `level (k+1) = succ (level k)`); it will be added
-when needed for the fusion proof. -/
+Mirrors the fields of `CoherentMajorityBranch` restricted to a
+finite index set `Fin n`, with the additional structural fields
+`level_succ` and `top_in_validFiber` for adjacency. -/
 structure CoherentBranchApprox
     (cR : (Fin 2 ↪o PairERSource) → Bool) (n : ℕ) where
   /-- The `n` chosen ordinal positions, in strict increasing order. -/
@@ -4066,6 +4062,11 @@ structure CoherentBranchApprox
   level_lt_omega1 : ∀ k : Fin n, level k < Ordinal.omega.{0} 1
   /-- Strict monotonicity of `level`. -/
   level_strictMono : StrictMono level
+  /-- Consecutive levels are in successor relation: `level (i+1)
+  = succ (level i)`. This makes `(level (i+1)).ToType` have a `⊤`
+  element. -/
+  level_succ : ∀ (i : ℕ) (h : i + 1 < n),
+    level ⟨i + 1, h⟩ = Order.succ (level ⟨i, Nat.lt_of_succ_lt h⟩)
   /-- Prefix at each level. -/
   prefixAt : ∀ k : Fin n, (level k).ToType ↪o PairERSource
   /-- Branch (type function) at each level. -/
@@ -4093,6 +4094,20 @@ structure CoherentBranchApprox
   large : ∀ k : Fin n,
     Order.succ (Cardinal.beth.{0} 1) ≤
       Cardinal.mk (validFiber cR (prefixAt k) (branchAt k))
+  /-- **Adjacent chain extension**: for each `i` with `i+1 < n`, the
+  value at position `level i` in level-`(i+1)`'s chain (the new "top"
+  added when extending from level `i` to level `i+1`) is in the
+  validFiber for level `i`'s chain. This is the within-chain
+  pair-color consistency between adjacent stages. -/
+  top_in_validFiber : ∀ (i : ℕ) (h : i + 1 < n),
+    haveI : IsWellOrder (level ⟨i + 1, h⟩).ToType (· < ·) := isWellOrder_lt
+    prefixAt ⟨i + 1, h⟩
+        (Ordinal.enum (α := (level ⟨i + 1, h⟩).ToType) (· < ·)
+          ⟨level ⟨i, Nat.lt_of_succ_lt h⟩, by
+            rw [Ordinal.type_toType, level_succ i h]
+            exact Order.lt_succ (level ⟨i, Nat.lt_of_succ_lt h⟩)⟩) ∈
+      validFiber cR (prefixAt ⟨i, Nat.lt_of_succ_lt h⟩)
+        (branchAt ⟨i, Nat.lt_of_succ_lt h⟩)
 
 /-! ### Projection lemmas: linking approximations to the full structure
 
@@ -4142,11 +4157,33 @@ noncomputable def CoherentBranchApprox.zero
   level_strictMono := by
     intro a _ _
     exact Fin.elim0 a
+  level_succ i h := absurd h (by omega)
   prefixAt k := Fin.elim0 k
   branchAt k := Fin.elim0 k
   prefix_restrict {k₁ _} _ _ := Fin.elim0 k₁
   branch_restrict {k₁ _} _ _ := Fin.elim0 k₁
   large k := Fin.elim0 k
+  top_in_validFiber i h := absurd h (by omega)
+
+/-- **`CoherentBranchApprox.extend`** (skeleton; structural sorries):
+extend a finite approximation by one level via `PairERChain.succ`-style
+H3-pigeonhole on the last validFiber.
+
+For `n = 0`: start fresh at ordinal `0`, using `PairERChain.zero`.
+For `n ≥ 1`: the new level is `succ (level (n-1))`. Use
+`exists_successor_refinement` on `A.prefixAt (n-1)` /
+`A.branchAt (n-1)` (large by `A.large`) to obtain a new top + Bool.
+
+Each field is sorry'd here as a structural placeholder. The
+substantive H3-pigeonhole content lives in the `succ` branch's
+prefix/branch construction; the bookkeeping fields
+(level_succ, prefix_restrict, branch_restrict, top_in_validFiber)
+follow from the construction. -/
+noncomputable def CoherentBranchApprox.extend
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (_A : CoherentBranchApprox cR n) :
+    CoherentBranchApprox cR (n + 1) := by
+  sorry
 
 /-- **[NEW FRONTIER, sorry]** Existence of a coherent majority branch.
 This replaces the legacy `exists_large_iInter_stage_fibers` as the
