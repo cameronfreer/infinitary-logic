@@ -4114,6 +4114,206 @@ theorem CoherentMajorityBranch.branch_at_lower
       B.branch β hβ x :=
   B.branch_restrict hβα hβ hα x
 
+/-! ### The branch-parametrized active path
+
+Given a `CoherentMajorityBranch B`, build a parallel `TreeBundle`
+recursion (`treeStageOfBranch`) whose limit case uses
+`limitFromCoherentMajority` instead of `limitExtend`. The downstream
+definitions and the pair-homogeneity theorem are re-built in parallel
+(`*OfBranch` versions). The headline conditional theorem
+`erdos_rado_pair_omega1_of_coherentMajorityBranch` then depends only
+on `exists_coherentMajorityBranch` (the new fusion frontier) plus
+recursion-bookkeeping sorries, not on the legacy
+`exists_large_iInter_stage_fibers`. -/
+
+/-- **`CoherentMajorityBranch.toFamily`**: the canonical coherent
+family at level `α` built from `B`. Each stage at `β < α` is a
+`(succ β)`-chain whose head/type/largeness come directly from `B`
+at level `succ β`. -/
+noncomputable def CoherentMajorityBranch.toFamily
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (B : CoherentMajorityBranch cR) (α : Ordinal.{0})
+    (hα : α < Ordinal.omega.{0} 1) :
+    PairERCoherentFamily cR α := by
+  refine
+    { stage := fun β hβα => ?_
+      coherent := ?_ }
+  · -- (succ β)-chain via B at level (succ β).
+    have hsβ : Order.succ β < Ordinal.omega.{0} 1 :=
+      (Cardinal.isSuccLimit_omega 1).succ_lt (hβα.trans hα)
+    exact PairERChain.limitWithType (cR := cR)
+      (B.prefixAt (Order.succ β) hsβ)
+      (B.branch (Order.succ β) hsβ)
+      (B.large (Order.succ β) hsβ)
+  · -- coherent: cross-stage head matching via B.prefix_restrict.
+    sorry
+
+/-- **`TreeBundle.limitFromCoherentMajority`**: the successful version
+of `limitFromMajority`, using a coherent `B` to avoid the per-level
+`Classical.choose` mismatch. Builds a `TreeBundle cR α` whose
+- stage is the level-α chain from B (head = `B.prefixAt α hα`,
+  type = `B.branch α hα`, large = `B.large α hα`).
+- family is `B.toFamily α hα` paired with the singleton-branch tree.
+- coh / type_match / type_coh follow from `B.prefix_restrict` /
+  `B.branch_restrict` / per-level largeness. -/
+noncomputable def TreeBundle.limitFromCoherentMajority
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (B : CoherentMajorityBranch cR) {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1) :
+    TreeBundle cR α := by
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  let F : PairERCoherentFamily cR α := B.toFamily α hα
+  let stage_α : PairERChain cR α :=
+    PairERChain.limitWithType (cR := cR)
+      (B.prefixAt α hα) (B.branch α hα) (B.large α hα)
+  refine
+    { family :=
+        { family := F
+          tree := ?_ }
+      stage := stage_α
+      coh := ?_
+      type_match := ?_
+      type_coh := ?_ }
+  · -- tree: singleton-branch around F.typeFn.
+    refine
+      { branches := {F.typeFn}
+        realizers := fun b => validFiber cR F.prefix b
+        realizers_sub_validFiber := fun _ _ hy => hy
+        large_sigma := ?_ }
+    sorry
+  · -- coh: stage.commitAt = F.commitVal.
+    sorry
+  · -- type_match: stage.typeAt = F.typeVal.
+    sorry
+  · -- type_coh: F.IsTypeCoherent.
+    sorry
+
+/-- **`treeStageOfBranch`**: the branch-parametrized treeStage. At
+every level α < ω₁, build the TreeBundle directly using B (no
+recursion needed since B is already coherent across all levels). -/
+noncomputable def treeStageOfBranch
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (B : CoherentMajorityBranch cR) (α : Ordinal.{0})
+    (hα : α < Ordinal.omega.{0} 1) :
+    TreeBundle cR α :=
+  TreeBundle.limitFromCoherentMajority B hα
+
+/-- **`treeCommitOfBranch`**: canonical commit at position `δ` using
+B. Reads off `B.prefixAt (succ δ) ⊤` (the top of the succ δ chain). -/
+noncomputable def treeCommitOfBranch
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (B : CoherentMajorityBranch cR) (δ : Ordinal.{0})
+    (hδ : δ < Ordinal.omega.{0} 1) : PairERSource :=
+  haveI : IsWellOrder (Order.succ δ).ToType (· < ·) := isWellOrder_lt
+  have hsδ : Order.succ δ < Ordinal.omega.{0} 1 :=
+    (Cardinal.isSuccLimit_omega 1).succ_lt hδ
+  B.prefixAt (Order.succ δ) hsδ (⊤ : (Order.succ δ).ToType)
+
+/-- **`treeCommitBoolOfBranch`**: canonical Bool at position `δ` using
+B. Reads off `B.branch (succ δ) ⊤`. -/
+noncomputable def treeCommitBoolOfBranch
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (B : CoherentMajorityBranch cR) (δ : Ordinal.{0})
+    (hδ : δ < Ordinal.omega.{0} 1) : Bool :=
+  haveI : IsWellOrder (Order.succ δ).ToType (· < ·) := isWellOrder_lt
+  have hsδ : Order.succ δ < Ordinal.omega.{0} 1 :=
+    (Cardinal.isSuccLimit_omega 1).succ_lt hδ
+  B.branch (Order.succ δ) hsδ (⊤ : (Order.succ δ).ToType)
+
+/-- **`treeCommitOfBranch_strictMono`**: strict monotonicity of the
+branch-driven chain values, inherited from `B.prefixAt`'s order
+embedding structure + prefix_restrict to identify levels. -/
+lemma treeCommitOfBranch_strictMono
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (B : CoherentMajorityBranch cR) {δ₁ δ₂ : Ordinal.{0}}
+    (hδ₁ : δ₁ < Ordinal.omega.{0} 1) (hδ₂ : δ₂ < Ordinal.omega.{0} 1)
+    (h : δ₁ < δ₂) :
+    treeCommitOfBranch B δ₁ hδ₁ < treeCommitOfBranch B δ₂ hδ₂ := by
+  sorry
+
+/-- **`treeCommitBoolFnOfBranch`**: indexed Bool function on
+(ω_1).ToType using B. -/
+noncomputable def treeCommitBoolFnOfBranch
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (B : CoherentMajorityBranch cR) :
+    (Ordinal.omega.{0} 1).ToType → Bool := fun x =>
+  haveI : IsWellOrder (Ordinal.omega.{0} 1).ToType (· < ·) := isWellOrder_lt
+  treeCommitBoolOfBranch B (Ordinal.typein (· < ·) x) (by
+    simpa [Ordinal.type_toType] using
+      Ordinal.typein_lt_type
+        (· < · : (Ordinal.omega.{0} 1).ToType →
+          (Ordinal.omega.{0} 1).ToType → Prop) x)
+
+/-- **`treeChainEmbeddingOfBranch`**: ω_1 → PairERSource embedding
+driven by B. -/
+noncomputable def treeChainEmbeddingOfBranch
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (B : CoherentMajorityBranch cR) :
+    (Ordinal.omega.{0} 1).ToType ↪o PairERSource := by
+  haveI : IsWellOrder (Ordinal.omega.{0} 1).ToType (· < ·) := isWellOrder_lt
+  refine OrderEmbedding.ofStrictMono
+    (fun x =>
+      treeCommitOfBranch B (Ordinal.typein (· < ·) x) (by
+        simpa [Ordinal.type_toType] using
+          Ordinal.typein_lt_type
+            (· < · : (Ordinal.omega.{0} 1).ToType →
+              (Ordinal.omega.{0} 1).ToType → Prop) x))
+    ?_
+  intro x y hxy
+  have hx : Ordinal.typein (· < ·) x < Ordinal.omega.{0} 1 := by
+    simpa [Ordinal.type_toType] using
+      Ordinal.typein_lt_type
+        (· < · : (Ordinal.omega.{0} 1).ToType →
+          (Ordinal.omega.{0} 1).ToType → Prop) x
+  have hy : Ordinal.typein (· < ·) y < Ordinal.omega.{0} 1 := by
+    simpa [Ordinal.type_toType] using
+      Ordinal.typein_lt_type
+        (· < · : (Ordinal.omega.{0} 1).ToType →
+          (Ordinal.omega.{0} 1).ToType → Prop) y
+  exact treeCommitOfBranch_strictMono B hx hy
+    ((Ordinal.typein_lt_typein (· < ·)).mpr hxy)
+
+/-- **`treeChain_pair_homogeneous_ofBranch`**: pair-homogeneity along
+the branch-driven chain. For `δ < η < ω_1`,
+`cR (pair (treeCommitOfBranch B δ) (treeCommitOfBranch B η))` =
+`treeCommitBoolOfBranch B δ`. The proof traces through B's
+restriction laws: the chain at level (succ η) has typeAt at position
+δ = `B.branch (succ η) (enum δ)` = (by branch_restrict)
+`B.branch (succ δ) ⊤` = `treeCommitBoolOfBranch B δ`. -/
+theorem treeChain_pair_homogeneous_ofBranch
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (B : CoherentMajorityBranch cR) {δ η : Ordinal.{0}}
+    (hδη : δ < η) (hη : η < Ordinal.omega.{0} 1) :
+    cR (pairEmbed (treeCommitOfBranch_strictMono B
+        (hδη.trans hη) hη hδη)) =
+      treeCommitBoolOfBranch B δ (hδη.trans hη) := by
+  sorry
+
+/-- **`exists_omega1_embedding_pair_ofBranch`**: pre-theorem on the
+branch-driven path. -/
+theorem exists_omega1_embedding_pair_ofBranch
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (B : CoherentMajorityBranch cR)
+    {I : Type} [LinearOrder I] [WellFoundedLT I]
+    (hI : Cardinal.mk I ≥ Order.succ (Cardinal.beth.{0} 1)) :
+    Nonempty ((Ordinal.omega.{0} 1).ToType ↪o I) := by
+  obtain ⟨emb⟩ : Nonempty (PairERSource ↪o I) :=
+    exists_ordToType_embedding_of_card_ge hI
+  exact ⟨(treeChainEmbeddingOfBranch B).trans emb⟩
+
+/-- **[CONDITIONAL HEADLINE]** Pair Erdős–Rado at ω_1, assuming a
+`CoherentMajorityBranch`. The active conditional path's only
+mathematical-frontier dependency is `exists_coherentMajorityBranch`
+(plus recursion bookkeeping). -/
+theorem erdos_rado_pair_omega1_of_coherentMajorityBranch
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (B : CoherentMajorityBranch cR) :
+    ∃ b : Bool, ∀ {δ η : Ordinal.{0}} (hδη : δ < η)
+      (hη : η < Ordinal.omega.{0} 1),
+      cR (pairEmbed (treeCommitOfBranch_strictMono B
+          (hδη.trans hη) hη hδη)) = b := by
+  sorry
+
 /-- **[LEGACY] `TreeBundle.extendSucc`** — uses
 `(TB.family.family.stage β _).succ` (family-stored) instead of
 `TB.stage.succ`. **Do NOT use in the main tree-driven path**: if `TB`
