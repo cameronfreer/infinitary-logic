@@ -4014,6 +4014,16 @@ structure CoherentMajorityBranch
     haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
     branch α hα ((Ordinal.initialSegToType hβα).toOrderEmbedding x) =
       branch β hβ x
+  /-- **Chain extension**: the value at the top of `(succ γ).ToType`
+  is in the `validFiber` for the lower-level chain at γ. This is the
+  within-chain pair-color consistency that pair-homogeneity needs;
+  it is a separate structural condition not derivable from
+  `prefix_restrict` / `branch_restrict` / `large` alone. -/
+  top_in_validFiber : ∀ (γ : Ordinal.{0}) (hγ : γ < Ordinal.omega.{0} 1)
+      (hsγ : Order.succ γ < Ordinal.omega.{0} 1),
+    haveI : IsWellOrder (Order.succ γ).ToType (· < ·) := isWellOrder_lt
+    prefixAt (Order.succ γ) hsγ (⊤ : (Order.succ γ).ToType) ∈
+      validFiber cR (prefixAt γ hγ) (branch γ hγ)
   /-- Largeness: the validFiber at each level has size ≥ succ ℶ_1. -/
   large : ∀ (α : Ordinal.{0}) (hα : α < Ordinal.omega.{0} 1),
     Order.succ (Cardinal.beth.{0} 1) ≤
@@ -4527,10 +4537,13 @@ noncomputable def treeChainEmbeddingOfBranch
 /-- **`treeChain_pair_homogeneous_ofBranch`**: pair-homogeneity along
 the branch-driven chain. For `δ < η < ω_1`,
 `cR (pair (treeCommitOfBranch B δ) (treeCommitOfBranch B η))` =
-`treeCommitBoolOfBranch B δ`. The proof traces through B's
-restriction laws: the chain at level (succ η) has typeAt at position
-δ = `B.branch (succ η) (enum δ)` = (by branch_restrict)
-`B.branch (succ δ) ⊤` = `treeCommitBoolOfBranch B δ`. -/
+`treeCommitBoolOfBranch B δ`.
+
+Proof: by `B.top_in_validFiber η`, `commit η = B.prefixAt (succ η) ⊤`
+is in `validFiber cR (B.prefixAt η hη) (B.branch η hη)`. Apply at
+position `enum δ : η.ToType`; use `B.prefix_restrict` /
+`B.branch_restrict` to identify the constraint values with
+`commit δ` and `commit bool δ`. -/
 theorem treeChain_pair_homogeneous_ofBranch
     {cR : (Fin 2 ↪o PairERSource) → Bool}
     (B : CoherentMajorityBranch cR) {δ η : Ordinal.{0}}
@@ -4538,7 +4551,77 @@ theorem treeChain_pair_homogeneous_ofBranch
     cR (pairEmbed (treeCommitOfBranch_strictMono B
         (hδη.trans hη) hη hδη)) =
       treeCommitBoolOfBranch B δ (hδη.trans hη) := by
-  sorry
+  haveI : IsWellOrder η.ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder (Order.succ δ).ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder (Order.succ η).ToType (· < ·) := isWellOrder_lt
+  have hδ : δ < Ordinal.omega.{0} 1 := hδη.trans hη
+  have hsδ : Order.succ δ < Ordinal.omega.{0} 1 :=
+    (Cardinal.isSuccLimit_omega 1).succ_lt hδ
+  have hsη : Order.succ η < Ordinal.omega.{0} 1 :=
+    (Cardinal.isSuccLimit_omega 1).succ_lt hη
+  have hsδ_le_η : Order.succ δ ≤ η := Order.succ_le_of_lt hδη
+  -- The top of (succ η)-chain is in the validFiber for level η.
+  have h_top_in :=
+    B.top_in_validFiber η hη hsη
+  set x_η : η.ToType :=
+    Ordinal.enum (α := η.ToType) (· < ·)
+      ⟨δ, (Ordinal.type_toType η).symm ▸ hδη⟩
+  obtain ⟨h_lt, h_col⟩ := h_top_in x_η
+  -- Helper: x_η = initialSegToType (⊤ : (succ δ).ToType).
+  have h_x_η_eq :
+      (Ordinal.initialSegToType hsδ_le_η).toOrderEmbedding
+          (⊤ : (Order.succ δ).ToType) = x_η := by
+    have h_typein_init :
+        Ordinal.typein (α := η.ToType) (· < ·)
+          ((Ordinal.initialSegToType hsδ_le_η).toOrderEmbedding
+            (⊤ : (Order.succ δ).ToType)) = δ := by
+      rw [show Ordinal.typein (α := η.ToType) (· < ·)
+            ((Ordinal.initialSegToType hsδ_le_η).toOrderEmbedding
+              (⊤ : (Order.succ δ).ToType)) =
+          Ordinal.typein (α := (Order.succ δ).ToType) (· < ·)
+            (⊤ : (Order.succ δ).ToType) from
+        Ordinal.typein_apply (Ordinal.initialSegToType hsδ_le_η) _]
+      rw [show (⊤ : (Order.succ δ).ToType) =
+          Ordinal.enum (α := (Order.succ δ).ToType) (· < ·)
+            ⟨δ, (Ordinal.type_toType _).symm ▸ Order.lt_succ δ⟩ from
+        Ordinal.enum_succ_eq_top.symm]
+      exact Ordinal.typein_enum _ _
+    rw [← Ordinal.enum_typein
+        (· < · : η.ToType → η.ToType → Prop)
+        ((Ordinal.initialSegToType hsδ_le_η).toOrderEmbedding
+          (⊤ : (Order.succ δ).ToType))]
+    congr 1
+    apply Subtype.ext
+    exact h_typein_init
+  -- B.prefixAt η hη x_η = B.prefixAt (succ δ) hsδ ⊤ = commit δ.
+  have h_prefix_η_x : B.prefixAt η hη x_η =
+      B.prefixAt (Order.succ δ) hsδ (⊤ : (Order.succ δ).ToType) := by
+    rw [← h_x_η_eq]
+    exact B.prefix_restrict hsδ_le_η hsδ hη
+      (⊤ : (Order.succ δ).ToType)
+  -- Similar for branch.
+  have h_branch_η_x : B.branch η hη x_η =
+      B.branch (Order.succ δ) hsδ (⊤ : (Order.succ δ).ToType) := by
+    rw [← h_x_η_eq]
+    exact B.branch_restrict hsδ_le_η hsδ hη
+      (⊤ : (Order.succ δ).ToType)
+  -- Combine. Goal: cR(pair our_witness) = commit bool δ.
+  show cR _ = B.branch (Order.succ δ) hsδ (⊤ : (Order.succ δ).ToType)
+  rw [← h_branch_η_x]
+  -- pairEmbed of our_witness equals pairEmbed h_lt (same values).
+  have h_pair_eq :
+      (pairEmbed (treeCommitOfBranch_strictMono B hδ hη hδη) :
+        Fin 2 ↪o PairERSource) = pairEmbed h_lt := by
+    ext k
+    match k with
+    | ⟨0, _⟩ =>
+      show treeCommitOfBranch B δ hδ = B.prefixAt η hη x_η
+      show B.prefixAt (Order.succ δ) hsδ (⊤ : (Order.succ δ).ToType) =
+        B.prefixAt η hη x_η
+      exact h_prefix_η_x.symm
+    | ⟨1, _⟩ => rfl
+  rw [h_pair_eq]
+  exact h_col
 
 /-- **`exists_omega1_embedding_pair_ofBranch`**: pre-theorem on the
 branch-driven path. -/
