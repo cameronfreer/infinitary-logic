@@ -4146,7 +4146,55 @@ noncomputable def CoherentMajorityBranch.toFamily
       (B.branch (Order.succ β) hsβ)
       (B.large (Order.succ β) hsβ)
   · -- coherent: cross-stage head matching via B.prefix_restrict.
-    sorry
+    intro δ β hδβ hβα
+    haveI : IsWellOrder (Order.succ β).ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder (Order.succ δ).ToType (· < ·) := isWellOrder_lt
+    have hsβ : Order.succ β < Ordinal.omega.{0} 1 :=
+      (Cardinal.isSuccLimit_omega 1).succ_lt (hβα.trans hα)
+    have hsδ : Order.succ δ < Ordinal.omega.{0} 1 :=
+      (Cardinal.isSuccLimit_omega 1).succ_lt ((hδβ.trans hβα).trans hα)
+    have hsδ_le_sβ : Order.succ δ ≤ Order.succ β :=
+      Order.succ_le_succ (le_of_lt hδβ)
+    show ((PairERChain.limitWithType (cR := cR) (B.prefixAt (Order.succ β) hsβ)
+        (B.branch (Order.succ β) hsβ) (B.large (Order.succ β) hsβ)).commitAt δ
+        (hδβ.trans (Order.lt_succ β))) =
+      ((PairERChain.limitWithType (cR := cR) (B.prefixAt (Order.succ δ) hsδ)
+        (B.branch (Order.succ δ) hsδ) (B.large (Order.succ δ) hsδ)).commitAt δ
+        (Order.lt_succ δ))
+    rw [PairERChain.limitWithType_commitAt, PairERChain.limitWithType_commitAt]
+    -- Both sides: B.prefixAt (succ _) _ applied at enum ⟨δ, ...⟩.
+    -- Strategy: rewrite both via B.prefix_restrict to a SHARED expression
+    -- (via initialSegToType from (succ δ).ToType to (succ β).ToType).
+    set x_sδ : (Order.succ δ).ToType :=
+      Ordinal.enum (α := (Order.succ δ).ToType) (· < ·)
+        ⟨δ, (Ordinal.type_toType (Order.succ δ)).symm ▸ Order.lt_succ δ⟩
+    -- B.prefix_restrict gives: B.prefixAt (succ β) (init x_sδ) = B.prefixAt (succ δ) x_sδ.
+    rw [← B.prefix_restrict hsδ_le_sβ hsδ hsβ x_sδ]
+    -- Now both sides have B.prefixAt (succ β) hsβ applied to something.
+    -- LHS: enum ⟨δ, ...⟩ in (succ β).ToType.
+    -- RHS: initialSegToType x_sδ.
+    -- Both have typein = δ; show equal by congrArg + typein injectivity.
+    congr 1
+    -- Apply Ordinal.enum_typein to rewrite both elements into enum form, then their
+    -- typein values match by Ordinal.typein_enum and Ordinal.typein_apply.
+    have h_typein_init :
+        Ordinal.typein (α := (Order.succ β).ToType) (· < ·)
+          ((Ordinal.initialSegToType hsδ_le_sβ).toOrderEmbedding x_sδ) = δ := by
+      rw [show Ordinal.typein (α := (Order.succ β).ToType) (· < ·)
+            ((Ordinal.initialSegToType hsδ_le_sβ).toOrderEmbedding x_sδ) =
+          Ordinal.typein (α := (Order.succ δ).ToType) (· < ·) x_sδ from
+        Ordinal.typein_apply (Ordinal.initialSegToType hsδ_le_sβ) x_sδ]
+      show Ordinal.typein _ (Ordinal.enum _ _) = δ
+      rw [Ordinal.typein_enum]
+    -- Use Ordinal.enum_typein on the initialSegToType side.
+    rw [← Ordinal.enum_typein
+        (· < · : (Order.succ β).ToType → (Order.succ β).ToType → Prop)
+        ((Ordinal.initialSegToType hsδ_le_sβ).toOrderEmbedding x_sδ)]
+    -- Goal: enum ⟨δ, _⟩ = enum ⟨typein (init x_sδ), _⟩.
+    -- By h_typein_init, typein (init x_sδ) = δ, so these are equal.
+    congr 1
+    apply Subtype.ext
+    exact h_typein_init.symm
 
 /-- **`TreeBundle.limitFromCoherentMajority`**: the successful version
 of `limitFromMajority`, using a coherent `B` to avoid the per-level
