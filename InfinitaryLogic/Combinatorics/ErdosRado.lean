@@ -4635,18 +4635,104 @@ theorem exists_omega1_embedding_pair_ofBranch
     exists_ordToType_embedding_of_card_ge hI
   exact ⟨(treeChainEmbeddingOfBranch B).trans emb⟩
 
+/-- **Bool pigeonhole** on `treeCommitBoolFnOfBranch B`: some Bool
+has aleph_1-sized preimage. Direct H3 application analogous to
+`exists_large_pairERCommit_fiber`. -/
+theorem exists_large_treeCommitBoolFn_fiber_ofBranch
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (B : CoherentMajorityBranch cR) :
+    ∃ b : Bool,
+      Cardinal.aleph.{0} 1 ≤
+        Cardinal.mk ((treeCommitBoolFnOfBranch B) ⁻¹' {b}) := by
+  have haleph1 : Cardinal.aleph.{0} 1 = Order.succ Cardinal.aleph0.{0} := by
+    rw [show (1 : Ordinal.{0}) = Order.succ 0 from Ordinal.succ_zero.symm,
+      Cardinal.aleph_succ, Cardinal.aleph_zero]
+  have hα_card :
+      Order.succ Cardinal.aleph0.{0} ≤
+        Cardinal.mk (Ordinal.omega.{0} 1).ToType := by
+    rw [Cardinal.mk_toType, Ordinal.card_omega, ← haleph1]
+  have hβ_card : Cardinal.mk Bool ≤ Cardinal.aleph0.{0} := Cardinal.mk_le_aleph0
+  obtain ⟨b, hb⟩ := exists_large_fiber_of_small_codomain
+    (κ := Cardinal.aleph0.{0}) le_rfl hα_card hβ_card
+    (treeCommitBoolFnOfBranch B)
+  exact ⟨b, haleph1 ▸ hb⟩
+
 /-- **[CONDITIONAL HEADLINE]** Pair Erdős–Rado at ω_1, assuming a
 `CoherentMajorityBranch`. The active conditional path's only
 mathematical-frontier dependency is `exists_coherentMajorityBranch`
-(plus recursion bookkeeping). -/
+(plus recursion bookkeeping). Statement: there exists a Bool `b` and
+an ω_1-indexed strict-mono sequence into `PairERSource` whose every
+pair has cR-color `b`.
+
+Proof: Bool pigeonhole (`exists_large_treeCommitBoolFn_fiber_ofBranch`)
+gives aleph_1-sized preimage of some `b`. H5
+(`ordIso_omega1_of_aleph1_subset`) gives an order iso preimage ≃
+ω_1.ToType. Compose with `treeChainEmbeddingOfBranch B` to get the
+embedding; pair-homogeneity comes from
+`treeChain_pair_homogeneous_ofBranch` + constancy of
+`treeCommitBoolFnOfBranch B` on the preimage. -/
 theorem erdos_rado_pair_omega1_of_coherentMajorityBranch
     {cR : (Fin 2 ↪o PairERSource) → Bool}
     (B : CoherentMajorityBranch cR) :
-    ∃ b : Bool, ∀ {δ η : Ordinal.{0}} (hδη : δ < η)
-      (hη : η < Ordinal.omega.{0} 1),
-      cR (pairEmbed (treeCommitOfBranch_strictMono B
-          (hδη.trans hη) hη hδη)) = b := by
-  sorry
+    ∃ (f : (Ordinal.omega.{0} 1).ToType ↪o PairERSource) (b : Bool),
+      ∀ {x y : (Ordinal.omega.{0} 1).ToType} (hxy : x < y),
+        cR (pairEmbed (f.strictMono hxy)) = b := by
+  haveI : IsWellOrder (Ordinal.omega.{0} 1).ToType (· < ·) := isWellOrder_lt
+  obtain ⟨b, hb⟩ := exists_large_treeCommitBoolFn_fiber_ofBranch B
+  obtain ⟨iso⟩ := ordIso_omega1_of_aleph1_subset hb
+  -- f : ω_1.ToType → PairERSource via iso.symm + value extraction +
+  -- treeChainEmbeddingOfBranch.
+  have h_strict : StrictMono
+      (fun z : (Ordinal.omega.{0} 1).ToType =>
+        treeChainEmbeddingOfBranch B (iso.symm z).val) := by
+    intro a b hab
+    apply (treeChainEmbeddingOfBranch B).strictMono
+    have h_iso_lt : iso.symm a < iso.symm b := iso.symm.lt_iff_lt.mpr hab
+    exact h_iso_lt
+  let f : (Ordinal.omega.{0} 1).ToType ↪o PairERSource :=
+    OrderEmbedding.ofStrictMono
+      (fun z => treeChainEmbeddingOfBranch B (iso.symm z).val) h_strict
+  refine ⟨f, b, ?_⟩
+  intro x y hxy
+  -- f x = treeChainEmbeddingOfBranch B (iso.symm x).val.
+  -- f y = treeChainEmbeddingOfBranch B (iso.symm y).val.
+  -- By treeChain_pair_homogeneous_ofBranch + commitBoolFn = b on preimage.
+  have h_iso_x_in : (iso.symm x).val ∈
+      (treeCommitBoolFnOfBranch B) ⁻¹' {b} := (iso.symm x).property
+  have h_iso_x_eq : treeCommitBoolFnOfBranch B (iso.symm x).val = b :=
+    h_iso_x_in
+  have h_lt_typein :
+      Ordinal.typein (· < ·) (iso.symm x).val <
+        Ordinal.typein (· < ·) (iso.symm y).val := by
+    have h_iso_lt : iso.symm x < iso.symm y := iso.symm.lt_iff_lt.mpr hxy
+    exact (Ordinal.typein_lt_typein (· < ·)).mpr h_iso_lt
+  have h_xval_lt : Ordinal.typein (· < ·) (iso.symm x).val <
+      Ordinal.omega.{0} 1 := by
+    simpa [Ordinal.type_toType] using
+      Ordinal.typein_lt_type
+        (· < · : (Ordinal.omega.{0} 1).ToType →
+          (Ordinal.omega.{0} 1).ToType → Prop) _
+  have h_yval_lt : Ordinal.typein (· < ·) (iso.symm y).val <
+      Ordinal.omega.{0} 1 := by
+    simpa [Ordinal.type_toType] using
+      Ordinal.typein_lt_type
+        (· < · : (Ordinal.omega.{0} 1).ToType →
+          (Ordinal.omega.{0} 1).ToType → Prop) _
+  have h_pair := treeChain_pair_homogeneous_ofBranch B h_lt_typein h_yval_lt
+  have h_bool_eq : treeCommitBoolOfBranch B
+      (Ordinal.typein (· < ·) (iso.symm x).val) h_xval_lt = b := by
+    show treeCommitBoolFnOfBranch B _ = b
+    exact h_iso_x_eq
+  have h_pair_eq :
+      (pairEmbed (f.strictMono hxy) : Fin 2 ↪o PairERSource) =
+      pairEmbed (treeCommitOfBranch_strictMono B h_xval_lt h_yval_lt
+        h_lt_typein) := by
+    ext k
+    match k with
+    | ⟨0, _⟩ => rfl
+    | ⟨1, _⟩ => rfl
+  rw [h_pair_eq, h_pair]
+  exact h_bool_eq
 
 /-- **[LEGACY] `TreeBundle.extendSucc`** — uses
 `(TB.family.family.stage β _).succ` (family-stored) instead of
