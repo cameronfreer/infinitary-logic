@@ -4029,11 +4029,131 @@ structure CoherentMajorityBranch
     Order.succ (Cardinal.beth.{0} 1) ≤
       Cardinal.mk (validFiber cR (prefixAt α hα) (branch α hα))
 
+/-! ### Finite approximations: `CoherentBranchApprox`
+
+Decomposing `exists_coherentMajorityBranch` per the classical
+fusion-style proof. A `CoherentBranchApprox cR n` is a finite,
+`n`-level partial version of a `CoherentMajorityBranch`. The
+mathematical content of the fusion construction (`exists_large
+ValidFiber_at_level` / H3-pigeonhole) is concentrated in the
+extend-by-one step (to be added in a follow-up commit). The
+ω-chain of approximations + its limit then produce the full
+`CoherentMajorityBranch`.
+
+This commit is **step 1 only**: the finite approximation structure
+plus projection lemmas. The extend step, the ω-chain, and the
+limit construction are deferred. -/
+
+/-- **`CoherentBranchApprox cR n`**: finite approximation of a
+`CoherentMajorityBranch` with `n` chosen levels < ω_1. Mirrors
+the fields of `CoherentMajorityBranch` restricted to a finite
+index set `Fin n`.
+
+The `level` field provides the `n` ordinal positions; the other
+fields (`prefixAt`, `branchAt`, `prefix_restrict`, `branch_restrict`,
+`large`) are pointwise restrictions of `CoherentMajorityBranch`'s
+fields to these levels.
+
+This commit *omits* `top_in_validFiber` for approximations because
+expressing it cleanly requires assumptions on which levels are
+adjacent (e.g., `level (k+1) = succ (level k)`); it will be added
+when needed for the fusion proof. -/
+structure CoherentBranchApprox
+    (cR : (Fin 2 ↪o PairERSource) → Bool) (n : ℕ) where
+  /-- The `n` chosen ordinal positions, in strict increasing order. -/
+  level : Fin n → Ordinal.{0}
+  /-- Each level is below ω_1. -/
+  level_lt_omega1 : ∀ k : Fin n, level k < Ordinal.omega.{0} 1
+  /-- Strict monotonicity of `level`. -/
+  level_strictMono : StrictMono level
+  /-- Prefix at each level. -/
+  prefixAt : ∀ k : Fin n, (level k).ToType ↪o PairERSource
+  /-- Branch (type function) at each level. -/
+  branchAt : ∀ k : Fin n, (level k).ToType → Bool
+  /-- Prefix coherence across levels: `prefixAt k₂` restricted to
+  `(level k₁).ToType` equals `prefixAt k₁`. -/
+  prefix_restrict : ∀ {k₁ k₂ : Fin n} (hk : k₁ ≤ k₂)
+    (x : (level k₁).ToType),
+    haveI : IsWellOrder (level k₁).ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder (level k₂).ToType (· < ·) := isWellOrder_lt
+    prefixAt k₂
+      ((Ordinal.initialSegToType
+        (level_strictMono.monotone hk)).toOrderEmbedding x) =
+      prefixAt k₁ x
+  /-- Branch coherence across levels (analog of `prefix_restrict`). -/
+  branch_restrict : ∀ {k₁ k₂ : Fin n} (hk : k₁ ≤ k₂)
+    (x : (level k₁).ToType),
+    haveI : IsWellOrder (level k₁).ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder (level k₂).ToType (· < ·) := isWellOrder_lt
+    branchAt k₂
+      ((Ordinal.initialSegToType
+        (level_strictMono.monotone hk)).toOrderEmbedding x) =
+      branchAt k₁ x
+  /-- Per-level largeness of the validFiber. -/
+  large : ∀ k : Fin n,
+    Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (validFiber cR (prefixAt k) (branchAt k))
+
+/-! ### Projection lemmas: linking approximations to the full structure
+
+The lemmas below characterize how a `CoherentBranchApprox` projects
+onto the fields of a `CoherentMajorityBranch` at its chosen levels. -/
+
+/-- **`approx_level_lt_succ`**: each level of the approximation is
+below ω_1 (re-statement of the field for direct use). -/
+lemma CoherentBranchApprox.level_lt
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR n) (k : Fin n) :
+    A.level k < Ordinal.omega.{0} 1 := A.level_lt_omega1 k
+
+/-- **`approx_prefix_restrict_to_apply`**: the prefix coherence at a
+single point. Direct re-statement of `prefix_restrict` (clarity). -/
+lemma CoherentBranchApprox.prefix_restrict_apply
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR n)
+    {k₁ k₂ : Fin n} (hk : k₁ ≤ k₂) (x : (A.level k₁).ToType) :
+    haveI : IsWellOrder (A.level k₁).ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder (A.level k₂).ToType (· < ·) := isWellOrder_lt
+    A.prefixAt k₂
+      ((Ordinal.initialSegToType
+        (A.level_strictMono.monotone hk)).toOrderEmbedding x) =
+      A.prefixAt k₁ x :=
+  A.prefix_restrict hk x
+
+/-- **`approx_branch_restrict_apply`**: same for branch. -/
+lemma CoherentBranchApprox.branch_restrict_apply
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR n)
+    {k₁ k₂ : Fin n} (hk : k₁ ≤ k₂) (x : (A.level k₁).ToType) :
+    haveI : IsWellOrder (A.level k₁).ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder (A.level k₂).ToType (· < ·) := isWellOrder_lt
+    A.branchAt k₂
+      ((Ordinal.initialSegToType
+        (A.level_strictMono.monotone hk)).toOrderEmbedding x) =
+      A.branchAt k₁ x :=
+  A.branch_restrict hk x
+
+/-- **`approx_zero`**: the trivial 0-level approximation (no levels). -/
+noncomputable def CoherentBranchApprox.zero
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    CoherentBranchApprox cR 0 where
+  level k := Fin.elim0 k
+  level_lt_omega1 k := Fin.elim0 k
+  level_strictMono := by
+    intro a _ _
+    exact Fin.elim0 a
+  prefixAt k := Fin.elim0 k
+  branchAt k := Fin.elim0 k
+  prefix_restrict {k₁ _} _ _ := Fin.elim0 k₁
+  branch_restrict {k₁ _} _ _ := Fin.elim0 k₁
+  large k := Fin.elim0 k
+
 /-- **[NEW FRONTIER, sorry]** Existence of a coherent majority branch.
 This replaces the legacy `exists_large_iInter_stage_fibers` as the
 single mathematical frontier of the pair Erdős–Rado proof. Filling
 this is the classical Erdős–Rado canonical-types-tree fusion
-construction. -/
+construction. The planned strategy: define `CoherentBranchApprox`
+extensions + ω-chain + limit construction. -/
 theorem exists_coherentMajorityBranch
     (cR : (Fin 2 ↪o PairERSource) → Bool) :
     Nonempty (CoherentMajorityBranch cR) := by
