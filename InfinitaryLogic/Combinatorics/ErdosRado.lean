@@ -4423,14 +4423,64 @@ noncomputable def treeCommitBoolOfBranch
 
 /-- **`treeCommitOfBranch_strictMono`**: strict monotonicity of the
 branch-driven chain values, inherited from `B.prefixAt`'s order
-embedding structure + prefix_restrict to identify levels. -/
+embedding structure + prefix_restrict to identify levels.
+
+Proof: rewrite `treeCommitOfBranch B δ₁` via `prefix_restrict` to a
+position in `(succ δ₂).ToType`. Then both treeCommit values are
+`B.prefixAt (succ δ₂) hsδ₂` at different positions; by OrderEmbedding
+strict-mono, the position order (δ₁ < δ₂) lifts to the value order. -/
 lemma treeCommitOfBranch_strictMono
     {cR : (Fin 2 ↪o PairERSource) → Bool}
     (B : CoherentMajorityBranch cR) {δ₁ δ₂ : Ordinal.{0}}
     (hδ₁ : δ₁ < Ordinal.omega.{0} 1) (hδ₂ : δ₂ < Ordinal.omega.{0} 1)
     (h : δ₁ < δ₂) :
     treeCommitOfBranch B δ₁ hδ₁ < treeCommitOfBranch B δ₂ hδ₂ := by
-  sorry
+  haveI : IsWellOrder (Order.succ δ₁).ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder (Order.succ δ₂).ToType (· < ·) := isWellOrder_lt
+  have hsδ₁ : Order.succ δ₁ < Ordinal.omega.{0} 1 :=
+    (Cardinal.isSuccLimit_omega 1).succ_lt hδ₁
+  have hsδ₂ : Order.succ δ₂ < Ordinal.omega.{0} 1 :=
+    (Cardinal.isSuccLimit_omega 1).succ_lt hδ₂
+  have hsδ₁_le_sδ₂ : Order.succ δ₁ ≤ Order.succ δ₂ :=
+    Order.succ_le_succ (le_of_lt h)
+  show B.prefixAt (Order.succ δ₁) hsδ₁ (⊤ : (Order.succ δ₁).ToType) <
+    B.prefixAt (Order.succ δ₂) hsδ₂ (⊤ : (Order.succ δ₂).ToType)
+  -- Use prefix_restrict to convert LHS to a (succ δ₂)-level expression.
+  rw [← B.prefix_restrict hsδ₁_le_sδ₂ hsδ₁ hsδ₂
+      (⊤ : (Order.succ δ₁).ToType)]
+  -- Now both sides are B.prefixAt (succ δ₂) hsδ₂ applied at two
+  -- elements of (succ δ₂).ToType; apply OrderEmbedding strict-mono.
+  apply (B.prefixAt (Order.succ δ₂) hsδ₂).strictMono
+  -- Compare typein values: initialSegToType ⊤_(succ δ₁) has typein δ₁;
+  -- ⊤_(succ δ₂) has typein δ₂. Since δ₁ < δ₂, < holds.
+  have h_typein_init :
+      Ordinal.typein (α := (Order.succ δ₂).ToType) (· < ·)
+        ((Ordinal.initialSegToType hsδ₁_le_sδ₂).toOrderEmbedding
+          (⊤ : (Order.succ δ₁).ToType)) = δ₁ := by
+    rw [show Ordinal.typein (α := (Order.succ δ₂).ToType) (· < ·)
+          ((Ordinal.initialSegToType hsδ₁_le_sδ₂).toOrderEmbedding
+            (⊤ : (Order.succ δ₁).ToType)) =
+        Ordinal.typein (α := (Order.succ δ₁).ToType) (· < ·)
+          (⊤ : (Order.succ δ₁).ToType) from
+      Ordinal.typein_apply (Ordinal.initialSegToType hsδ₁_le_sδ₂) _]
+    rw [show (⊤ : (Order.succ δ₁).ToType) =
+        Ordinal.enum (α := (Order.succ δ₁).ToType) (· < ·)
+          ⟨δ₁, (Ordinal.type_toType _).symm ▸ Order.lt_succ δ₁⟩ from
+      Ordinal.enum_succ_eq_top.symm]
+    exact Ordinal.typein_enum _ _
+  have h_typein_top :
+      Ordinal.typein (α := (Order.succ δ₂).ToType) (· < ·)
+        (⊤ : (Order.succ δ₂).ToType) = δ₂ := by
+    rw [show (⊤ : (Order.succ δ₂).ToType) =
+        Ordinal.enum (α := (Order.succ δ₂).ToType) (· < ·)
+          ⟨δ₂, (Ordinal.type_toType _).symm ▸ Order.lt_succ δ₂⟩ from
+      Ordinal.enum_succ_eq_top.symm]
+    exact Ordinal.typein_enum _ _
+  -- typein-order corresponds to <.
+  rw [← Ordinal.typein_lt_typein
+    (· < · : (Order.succ δ₂).ToType → (Order.succ δ₂).ToType → Prop)]
+  rw [h_typein_init, h_typein_top]
+  exact h
 
 /-- **`treeCommitBoolFnOfBranch`**: indexed Bool function on
 (ω_1).ToType using B. -/
