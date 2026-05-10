@@ -4214,6 +4214,93 @@ noncomputable def TreeBundle.limitFromCoherentMajority
   let stage_α : PairERChain cR α :=
     PairERChain.limitWithType (cR := cR)
       (B.prefixAt α hα) (B.branch α hα) (B.large α hα)
+  -- Helper: at any δ < α, F.commitVal δ = B.prefixAt α hα at enum δ.
+  -- Proof: F.stage δ uses B.prefixAt (succ δ) at top; transfer to α via
+  -- B.prefix_restrict at (succ δ) ≤ α + typein-init argument.
+  have h_F_commitVal : ∀ (δ : Ordinal.{0}) (hδα : δ < α),
+      F.commitVal δ hδα =
+        B.prefixAt α hα
+          (Ordinal.enum (α := α.ToType) (· < ·)
+            ⟨δ, (Ordinal.type_toType α).symm ▸ hδα⟩) := by
+    intro δ hδα
+    haveI : IsWellOrder (Order.succ δ).ToType (· < ·) := isWellOrder_lt
+    have hsδ : Order.succ δ < Ordinal.omega.{0} 1 :=
+      (Cardinal.isSuccLimit_omega 1).succ_lt (hδα.trans hα)
+    have hsδ_le_α : Order.succ δ ≤ α := Order.succ_le_of_lt hδα
+    show ((F.stage δ hδα).commitAt δ (Order.lt_succ δ)) = _
+    show (PairERChain.limitWithType (cR := cR) _ _ _).commitAt δ
+        (Order.lt_succ δ) = _
+    rw [PairERChain.limitWithType_commitAt]
+    set x_sδ : (Order.succ δ).ToType :=
+      Ordinal.enum (α := (Order.succ δ).ToType) (· < ·)
+        ⟨δ, (Ordinal.type_toType (Order.succ δ)).symm ▸ Order.lt_succ δ⟩
+    rw [← B.prefix_restrict hsδ_le_α hsδ hα x_sδ]
+    congr 1
+    have h_typein_init :
+        Ordinal.typein (α := α.ToType) (· < ·)
+          ((Ordinal.initialSegToType hsδ_le_α).toOrderEmbedding x_sδ) = δ := by
+      rw [show Ordinal.typein (α := α.ToType) (· < ·)
+            ((Ordinal.initialSegToType hsδ_le_α).toOrderEmbedding x_sδ) =
+          Ordinal.typein (α := (Order.succ δ).ToType) (· < ·) x_sδ from
+        Ordinal.typein_apply (Ordinal.initialSegToType hsδ_le_α) x_sδ]
+      show Ordinal.typein _ (Ordinal.enum _ _) = δ
+      rw [Ordinal.typein_enum]
+    rw [← Ordinal.enum_typein
+        (· < · : α.ToType → α.ToType → Prop)
+        ((Ordinal.initialSegToType hsδ_le_α).toOrderEmbedding x_sδ)]
+    congr 1
+    apply Subtype.ext
+    exact h_typein_init
+  -- Helper for typeVal: analogous via B.branch_restrict.
+  have h_F_typeVal : ∀ (δ : Ordinal.{0}) (hδα : δ < α),
+      F.typeVal δ hδα =
+        B.branch α hα
+          (Ordinal.enum (α := α.ToType) (· < ·)
+            ⟨δ, (Ordinal.type_toType α).symm ▸ hδα⟩) := by
+    intro δ hδα
+    haveI : IsWellOrder (Order.succ δ).ToType (· < ·) := isWellOrder_lt
+    have hsδ : Order.succ δ < Ordinal.omega.{0} 1 :=
+      (Cardinal.isSuccLimit_omega 1).succ_lt (hδα.trans hα)
+    have hsδ_le_α : Order.succ δ ≤ α := Order.succ_le_of_lt hδα
+    show ((F.stage δ hδα).typeAt δ (Order.lt_succ δ)) = _
+    show (PairERChain.limitWithType (cR := cR) _ _ _).typeAt δ
+        (Order.lt_succ δ) = _
+    rw [PairERChain.limitWithType_typeAt]
+    set x_sδ : (Order.succ δ).ToType :=
+      Ordinal.enum (α := (Order.succ δ).ToType) (· < ·)
+        ⟨δ, (Ordinal.type_toType (Order.succ δ)).symm ▸ Order.lt_succ δ⟩
+    rw [← B.branch_restrict hsδ_le_α hsδ hα x_sδ]
+    congr 1
+    have h_typein_init :
+        Ordinal.typein (α := α.ToType) (· < ·)
+          ((Ordinal.initialSegToType hsδ_le_α).toOrderEmbedding x_sδ) = δ := by
+      rw [show Ordinal.typein (α := α.ToType) (· < ·)
+            ((Ordinal.initialSegToType hsδ_le_α).toOrderEmbedding x_sδ) =
+          Ordinal.typein (α := (Order.succ δ).ToType) (· < ·) x_sδ from
+        Ordinal.typein_apply (Ordinal.initialSegToType hsδ_le_α) x_sδ]
+      show Ordinal.typein _ (Ordinal.enum _ _) = δ
+      rw [Ordinal.typein_enum]
+    rw [← Ordinal.enum_typein
+        (· < · : α.ToType → α.ToType → Prop)
+        ((Ordinal.initialSegToType hsδ_le_α).toOrderEmbedding x_sδ)]
+    congr 1
+    apply Subtype.ext
+    exact h_typein_init
+  -- F.prefix pointwise = B.prefixAt α hα.
+  have h_F_prefix : ∀ x : α.ToType, F.prefix x = B.prefixAt α hα x := by
+    intro x
+    unfold PairERCoherentFamily.prefix
+    simp only [OrderEmbedding.coe_ofStrictMono]
+    rw [h_F_commitVal]
+    congr 1
+    exact Ordinal.enum_typein _ x
+  -- F.typeFn = B.branch α hα.
+  have h_F_typeFn : F.typeFn = B.branch α hα := by
+    funext x
+    show F.typeVal _ _ = _
+    rw [h_F_typeVal]
+    congr 1
+    exact Ordinal.enum_typein _ x
   refine
     { family :=
         { family := F
@@ -4228,13 +4315,79 @@ noncomputable def TreeBundle.limitFromCoherentMajority
         realizers := fun b => validFiber cR F.prefix b
         realizers_sub_validFiber := fun _ _ hy => hy
         large_sigma := ?_ }
-    sorry
-  · -- coh: stage.commitAt = F.commitVal.
-    sorry
-  · -- type_match: stage.typeAt = F.typeVal.
-    sorry
-  · -- type_coh: F.IsTypeCoherent.
-    sorry
+    -- σ injects from validFiber cR (B.prefixAt α hα) (B.branch α hα) ≥ succ ℶ_1.
+    apply (B.large α hα).trans
+    refine Cardinal.mk_le_of_injective
+      (f := fun y : validFiber cR (B.prefixAt α hα) (B.branch α hα) =>
+        (⟨(F.typeFn, y.val), rfl, fun x => ?_⟩ :
+          { p : (α.ToType → Bool) × PairERSource |
+            p.1 ∈ ({F.typeFn} : Set _) ∧
+              p.2 ∈ validFiber cR F.prefix p.1 })) ?_
+    · -- y.val ∈ validFiber cR F.prefix F.typeFn at position x.
+      obtain ⟨h_lt, h_col⟩ := y.property x
+      have h_lt' : F.prefix x < y.val := by rw [h_F_prefix]; exact h_lt
+      refine ⟨h_lt', ?_⟩
+      have h_pair : pairEmbed h_lt' = pairEmbed h_lt := by
+        ext k
+        match k with
+        | ⟨0, _⟩ => exact h_F_prefix x
+        | ⟨1, _⟩ => rfl
+      show cR (pairEmbed h_lt') = F.typeFn x
+      rw [h_pair, congr_fun h_F_typeFn x]
+      exact h_col
+    · intro y₁ y₂ heq
+      apply Subtype.ext
+      have h1 := Subtype.mk.inj heq
+      exact (Prod.mk.inj h1).2
+  · -- coh: stage.commitAt δ = F.commitVal δ.
+    intro δ hδα
+    show (PairERChain.limitWithType (cR := cR) _ _ _).commitAt δ hδα = _
+    rw [PairERChain.limitWithType_commitAt]
+    -- LHS: B.prefixAt α hα (enum ⟨δ, ...⟩).
+    -- RHS: F.commitVal δ hδα = (by h_F_commitVal) B.prefixAt α hα (enum ⟨δ, ...⟩).
+    rw [h_F_commitVal δ hδα]
+  · -- type_match: stage.typeAt δ = F.typeVal δ.
+    intro δ hδα
+    show (PairERChain.limitWithType (cR := cR) _ _ _).typeAt δ hδα = _
+    rw [PairERChain.limitWithType_typeAt]
+    rw [h_F_typeVal δ hδα]
+  · -- type_coh: F.IsTypeCoherent. Cross-stage typeAt agreement.
+    intro δ β hδβ hβα
+    haveI : IsWellOrder (Order.succ β).ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder (Order.succ δ).ToType (· < ·) := isWellOrder_lt
+    have hsβ : Order.succ β < Ordinal.omega.{0} 1 :=
+      (Cardinal.isSuccLimit_omega 1).succ_lt (hβα.trans hα)
+    have hsδ : Order.succ δ < Ordinal.omega.{0} 1 :=
+      (Cardinal.isSuccLimit_omega 1).succ_lt ((hδβ.trans hβα).trans hα)
+    have hsδ_le_sβ : Order.succ δ ≤ Order.succ β :=
+      Order.succ_le_succ (le_of_lt hδβ)
+    show ((PairERChain.limitWithType (cR := cR) (B.prefixAt (Order.succ β) hsβ)
+        (B.branch (Order.succ β) hsβ) (B.large (Order.succ β) hsβ)).typeAt δ
+        (hδβ.trans (Order.lt_succ β))) =
+      ((PairERChain.limitWithType (cR := cR) (B.prefixAt (Order.succ δ) hsδ)
+        (B.branch (Order.succ δ) hsδ) (B.large (Order.succ δ) hsδ)).typeAt δ
+        (Order.lt_succ δ))
+    rw [PairERChain.limitWithType_typeAt, PairERChain.limitWithType_typeAt]
+    set x_sδ : (Order.succ δ).ToType :=
+      Ordinal.enum (α := (Order.succ δ).ToType) (· < ·)
+        ⟨δ, (Ordinal.type_toType (Order.succ δ)).symm ▸ Order.lt_succ δ⟩
+    rw [← B.branch_restrict hsδ_le_sβ hsδ hsβ x_sδ]
+    congr 1
+    have h_typein_init :
+        Ordinal.typein (α := (Order.succ β).ToType) (· < ·)
+          ((Ordinal.initialSegToType hsδ_le_sβ).toOrderEmbedding x_sδ) = δ := by
+      rw [show Ordinal.typein (α := (Order.succ β).ToType) (· < ·)
+            ((Ordinal.initialSegToType hsδ_le_sβ).toOrderEmbedding x_sδ) =
+          Ordinal.typein (α := (Order.succ δ).ToType) (· < ·) x_sδ from
+        Ordinal.typein_apply (Ordinal.initialSegToType hsδ_le_sβ) x_sδ]
+      show Ordinal.typein _ (Ordinal.enum _ _) = δ
+      rw [Ordinal.typein_enum]
+    rw [← Ordinal.enum_typein
+        (· < · : (Order.succ β).ToType → (Order.succ β).ToType → Prop)
+        ((Ordinal.initialSegToType hsδ_le_sβ).toOrderEmbedding x_sδ)]
+    congr 1
+    apply Subtype.ext
+    exact h_typein_init.symm
 
 /-- **`treeStageOfBranch`**: the branch-parametrized treeStage. At
 every level α < ω₁, build the TreeBundle directly using B (no
