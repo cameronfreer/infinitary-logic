@@ -5031,6 +5031,75 @@ theorem coherentBranchApproxSeq_branch_stable
     rw [h_cast]
     exact (coherentBranchApproxSeq_branch_castSucc_step k (Fin.castLE hnk i)).trans ih
 
+/-! ### Diagnostic: the ω-chain only covers finite-ordinal levels
+
+`CoherentBranchApprox.fromZero` starts the chain at level `0`, and
+each `extendSucc` step adds a level at `Order.succ` of the previous.
+Hence the levels at stage `n` are exactly the natural-number
+ordinals `0, 1, …, n−1`. In particular the range of all levels in
+the ω-chain is contained in `Ordinal.omega 0`, **not cofinal in
+ω₁**. Consequently, the ω-chain alone is not strong enough to
+produce a `CoherentMajorityBranch` (which requires data at every
+`α < ω₁`); a transfinite cofinal-in-ω₁ refinement is needed instead. -/
+
+/-- **`coherentBranchApproxSeq_level_eq_natCast`**: at stage `n`, the
+level at index `i : Fin n` is exactly `i.val` cast to `Ordinal`. -/
+theorem coherentBranchApproxSeq_level_eq_natCast
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    ∀ {n : ℕ} (i : Fin n),
+      (coherentBranchApproxSeq cR n).level i = ((i.val : ℕ) : Ordinal.{0})
+  | 0, i => Fin.elim0 i
+  | 1, ⟨0, _⟩ => by
+    -- Stage 1 = fromZero, level _ = 0.
+    show (CoherentBranchApprox.fromZero cR).level _ = ((0 : ℕ) : Ordinal.{0})
+    simp [CoherentBranchApprox.fromZero]
+  | (n + 2), i => by
+    -- Stage n+2 = (seq cR (n+1)).extendSucc; case on Fin (n+2).
+    induction i using Fin.lastCases with
+    | last =>
+      -- Index = Fin.last (n+1); level = succ ((seq cR (n+1)).level (Fin.last n)).
+      show (coherentBranchApproxSeq cR (n + 1)).extendLevel (Fin.last (n + 1)) =
+        (((Fin.last (n + 1)).val : ℕ) : Ordinal.{0})
+      rw [(coherentBranchApproxSeq cR (n + 1)).extendLevel_last,
+          coherentBranchApproxSeq_level_eq_natCast cR (Fin.last n)]
+      show Order.succ ((n : ℕ) : Ordinal.{0}) = ((n + 1 : ℕ) : Ordinal.{0})
+      push_cast
+      rfl
+    | cast k =>
+      show (coherentBranchApproxSeq cR (n + 1)).extendLevel k.castSucc =
+        ((k.castSucc.val : ℕ) : Ordinal.{0})
+      rw [(coherentBranchApproxSeq cR (n + 1)).extendLevel_castSucc k]
+      exact coherentBranchApproxSeq_level_eq_natCast cR k
+
+/-- **`coherentBranchApproxSeq_level_lt_omega0`**: every level in the
+ω-chain is strictly below `ω` (i.e., a finite ordinal). -/
+theorem coherentBranchApproxSeq_level_lt_omega0
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ} (i : Fin n) :
+    (coherentBranchApproxSeq cR n).level i < Ordinal.omega.{0} 0 := by
+  rw [coherentBranchApproxSeq_level_eq_natCast cR i, Ordinal.omega_zero]
+  exact Ordinal.nat_lt_omega0 i.val
+
+/-- **`coherentBranchApproxSeq_level_lt_omega0_succ`**: in particular,
+the last level at any stage is `< ω`. So `ω` itself is an upper bound
+on the ω-chain's level range. -/
+theorem coherentBranchApproxSeq_range_bounded_by_omega0
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ} (i : Fin n) :
+    (coherentBranchApproxSeq cR n).level i ≤ Ordinal.omega.{0} 0 :=
+  le_of_lt (coherentBranchApproxSeq_level_lt_omega0 i)
+
+/-- **Diagnostic conclusion: the ω-chain is not cofinal in ω₁**.
+There exists a countable ordinal (namely `ω`) which is strictly
+above every level produced by the ω-chain. Hence the ω-chain alone
+cannot index a `CoherentMajorityBranch` (which is defined for every
+`α < ω₁`); a transfinite cofinal-in-ω₁ refinement is required. -/
+theorem coherentBranchApproxSeq_not_cofinal_in_omega1
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    ∃ α : Ordinal.{0}, α < Ordinal.omega.{0} 1 ∧
+      ∀ {n : ℕ} (i : Fin n), (coherentBranchApproxSeq cR n).level i < α := by
+  refine ⟨Ordinal.omega.{0} 0, ?_, fun {n} i => ?_⟩
+  · rw [Ordinal.omega_zero]; exact Ordinal.omega0_lt_omega_one
+  · exact coherentBranchApproxSeq_level_lt_omega0 i
+
 /-- **[NEW FRONTIER, sorry]** Existence of a coherent majority branch.
 This replaces the legacy `exists_large_iInter_stage_fibers` as the
 single mathematical frontier of the pair Erdős–Rado proof. Filling
