@@ -4384,6 +4384,45 @@ theorem CoherentBranchApprox.extendPrefixAt_castSucc_heq
   rw [Fin.lastCases_castSucc]
   exact cast_heq _ _
 
+/-- **Helper**: if `α = β` as ordinals, and two OrderEmbeddings into
+`PairERSource` are HEq, then applying them to corresponding arguments
+yields equal results. -/
+private lemma orderEmbed_ordinal_apply_heq
+    {α β : Ordinal.{0}} (h_eq : α = β)
+    (f : α.ToType ↪o PairERSource) (g : β.ToType ↪o PairERSource)
+    (hf : HEq f g) (x : α.ToType) : f x = g (h_eq ▸ x) := by
+  subst h_eq
+  rw [eq_of_heq hf]
+
+/-- **Bool-valued analog of `orderEmbed_ordinal_apply_heq`**. -/
+private lemma fn_ordinal_apply_heq
+    {α β : Ordinal.{0}} (h_eq : α = β)
+    (f : α.ToType → Bool) (g : β.ToType → Bool)
+    (hf : HEq f g) (x : α.ToType) : f x = g (h_eq ▸ x) := by
+  subst h_eq
+  rw [eq_of_heq hf]
+
+/-- **Applied form of `extendPrefixAt_castSucc_heq`**. -/
+theorem CoherentBranchApprox.extendPrefixAt_castSucc_apply
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR (n + 1)) (k : Fin (n + 1))
+    (x : (A.extendLevel k.castSucc).ToType) :
+    A.extendPrefixAt k.castSucc x =
+      A.prefixAt k ((A.extendLevel_castSucc k) ▸ x) :=
+  orderEmbed_ordinal_apply_heq (A.extendLevel_castSucc k) _ _
+    (A.extendPrefixAt_castSucc_heq k) x
+
+/-- **Applied form of `extendPrefixAt_last_heq`**. -/
+theorem CoherentBranchApprox.extendPrefixAt_last_apply
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR (n + 1))
+    (x : (A.extendLevel (Fin.last (n + 1))).ToType) :
+    A.extendPrefixAt (Fin.last (n + 1)) x =
+      A.nextChain.head ((A.extendLevel_last) ▸ x) :=
+  orderEmbed_ordinal_apply_heq A.extendLevel_last _ _
+    A.extendPrefixAt_last_heq x
+
+
 /-- **`extendBranchAt`**: branch function for the one-step extension. -/
 noncomputable def CoherentBranchApprox.extendBranchAt
     {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
@@ -4411,6 +4450,26 @@ theorem CoherentBranchApprox.extendBranchAt_castSucc_heq
   unfold CoherentBranchApprox.extendBranchAt
   rw [Fin.lastCases_castSucc]
   exact cast_heq _ _
+
+/-- **Applied form of `extendBranchAt_castSucc_heq`**. -/
+theorem CoherentBranchApprox.extendBranchAt_castSucc_apply
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR (n + 1)) (k : Fin (n + 1))
+    (x : (A.extendLevel k.castSucc).ToType) :
+    A.extendBranchAt k.castSucc x =
+      A.branchAt k ((A.extendLevel_castSucc k) ▸ x) :=
+  fn_ordinal_apply_heq (A.extendLevel_castSucc k) _ _
+    (A.extendBranchAt_castSucc_heq k) x
+
+/-- **Applied form of `extendBranchAt_last_heq`**. -/
+theorem CoherentBranchApprox.extendBranchAt_last_apply
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR (n + 1))
+    (x : (A.extendLevel (Fin.last (n + 1))).ToType) :
+    A.extendBranchAt (Fin.last (n + 1)) x =
+      A.nextChain.type ((A.extendLevel_last) ▸ x) :=
+  fn_ordinal_apply_heq A.extendLevel_last _ _
+    A.extendBranchAt_last_heq x
 
 /-- **`CoherentBranchApprox.extendSucc`**: extend a non-trivial
 approximation (with at least one level) by one more level via
