@@ -4902,6 +4902,135 @@ noncomputable def CoherentBranchApprox.extend
   | 0, _ => CoherentBranchApprox.fromZero cR
   | _ + 1, A => A.extendSucc
 
+/-! ### ω-chain of finite approximations
+
+The ω-chain `coherentBranchApproxSeq cR : (n : ℕ) → CoherentBranchApprox cR n`
+is built by primitive recursion: `0 ↦ zero`, `n+1 ↦ (·).extend`. Its
+cross-stage stability lemmas (`level_stable`, `prefix_stable`,
+`branch_stable`) say that data at index `i : Fin n` is preserved
+when passing to a longer approximation `m ≥ n`. These are the
+prerequisites for assembling the full `CoherentMajorityBranch`. -/
+
+/-- **`coherentBranchApproxSeq`**: the ω-chain of finite approximations,
+defined by primitive recursion on the length. -/
+noncomputable def coherentBranchApproxSeq
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    (n : ℕ) → CoherentBranchApprox cR n
+  | 0 => CoherentBranchApprox.zero cR
+  | n + 1 => (coherentBranchApproxSeq cR n).extend
+
+@[simp] theorem coherentBranchApproxSeq_zero
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    coherentBranchApproxSeq cR 0 = CoherentBranchApprox.zero cR := rfl
+
+@[simp] theorem coherentBranchApproxSeq_succ
+    (cR : (Fin 2 ↪o PairERSource) → Bool) (n : ℕ) :
+    coherentBranchApproxSeq cR (n + 1) =
+      (coherentBranchApproxSeq cR n).extend := rfl
+
+/-! ### Single-step stability
+
+`coherentBranchApproxSeq_*_castSucc_step` lemmas say that the data of
+the approximation at level `n` matches the data of the approximation
+at level `n+1` after embedding `Fin n ↪ Fin (n+1)` via `Fin.castSucc`.
+For `level`, this is an `Eq`; for `prefixAt` / `branchAt`, an `HEq`. -/
+
+/-- **Single-step level stability**: `level` is preserved when moving
+from stage `n` to stage `n+1` via `Fin.castSucc`. -/
+theorem coherentBranchApproxSeq_level_castSucc_step
+    {cR : (Fin 2 ↪o PairERSource) → Bool} (n : ℕ) (i : Fin n) :
+    (coherentBranchApproxSeq cR (n + 1)).level i.castSucc =
+      (coherentBranchApproxSeq cR n).level i := by
+  cases n with
+  | zero => exact Fin.elim0 i
+  | succ m =>
+    -- n = m+1, so (n+1) = m+2 and extend = extendSucc.
+    show ((coherentBranchApproxSeq cR (m + 1)).extendSucc).level i.castSucc =
+        (coherentBranchApproxSeq cR (m + 1)).level i
+    exact (coherentBranchApproxSeq cR (m + 1)).extendLevel_castSucc i
+
+/-- **Single-step prefix stability**: `prefixAt` is `HEq`-preserved
+from stage `n` to stage `n+1` via `Fin.castSucc`. -/
+theorem coherentBranchApproxSeq_prefix_castSucc_step
+    {cR : (Fin 2 ↪o PairERSource) → Bool} (n : ℕ) (i : Fin n) :
+    HEq ((coherentBranchApproxSeq cR (n + 1)).prefixAt i.castSucc)
+        ((coherentBranchApproxSeq cR n).prefixAt i) := by
+  cases n with
+  | zero => exact Fin.elim0 i
+  | succ m =>
+    show HEq (((coherentBranchApproxSeq cR (m + 1)).extendSucc).prefixAt i.castSucc) _
+    exact (coherentBranchApproxSeq cR (m + 1)).extendPrefixAt_castSucc_heq i
+
+/-- **Single-step branch stability**: `branchAt` is `HEq`-preserved
+from stage `n` to stage `n+1` via `Fin.castSucc`. -/
+theorem coherentBranchApproxSeq_branch_castSucc_step
+    {cR : (Fin 2 ↪o PairERSource) → Bool} (n : ℕ) (i : Fin n) :
+    HEq ((coherentBranchApproxSeq cR (n + 1)).branchAt i.castSucc)
+        ((coherentBranchApproxSeq cR n).branchAt i) := by
+  cases n with
+  | zero => exact Fin.elim0 i
+  | succ m =>
+    show HEq (((coherentBranchApproxSeq cR (m + 1)).extendSucc).branchAt i.castSucc) _
+    exact (coherentBranchApproxSeq cR (m + 1)).extendBranchAt_castSucc_heq i
+
+/-! ### Cross-stage stability
+
+The single-step stability lemmas iterate to give cross-stage stability:
+for `n ≤ m`, the approximation at length `m` agrees with the
+approximation at length `n` on the image of `Fin.castLE` (the natural
+embedding `Fin n ↪ Fin m`). -/
+
+/-- **`coherentBranchApproxSeq_level_stable`**: cross-stage level
+stability. For `n ≤ m`, the level at index `i : Fin n` is preserved
+when re-indexed into `Fin m`. -/
+theorem coherentBranchApproxSeq_level_stable
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n m : ℕ} (hnm : n ≤ m) (i : Fin n) :
+    (coherentBranchApproxSeq cR m).level (Fin.castLE hnm i) =
+      (coherentBranchApproxSeq cR n).level i := by
+  induction m, hnm using Nat.le_induction with
+  | base => rfl
+  | succ k hnk ih =>
+    -- Goal: (seq cR (k+1)).level (castLE _ i) = (seq cR n).level i
+    -- Note: Fin.castLE (hnk.le.trans k.le_succ) i = (Fin.castLE hnk i).castSucc
+    have h_cast :
+        (Fin.castLE (Nat.le_succ_of_le hnk) i : Fin (k + 1)) =
+          (Fin.castLE hnk i : Fin k).castSucc := by
+      apply Fin.ext; rfl
+    rw [h_cast, coherentBranchApproxSeq_level_castSucc_step, ih]
+
+/-- **`coherentBranchApproxSeq_prefix_stable`**: cross-stage prefix
+stability (HEq-form, since the OrderEmbedding type depends on the
+level which would change formally though not in value). -/
+theorem coherentBranchApproxSeq_prefix_stable
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n m : ℕ} (hnm : n ≤ m) (i : Fin n) :
+    HEq ((coherentBranchApproxSeq cR m).prefixAt (Fin.castLE hnm i))
+        ((coherentBranchApproxSeq cR n).prefixAt i) := by
+  induction m, hnm using Nat.le_induction with
+  | base => exact HEq.rfl
+  | succ k hnk ih =>
+    have h_cast :
+        (Fin.castLE (Nat.le_succ_of_le hnk) i : Fin (k + 1)) =
+          (Fin.castLE hnk i : Fin k).castSucc := by
+      apply Fin.ext; rfl
+    rw [h_cast]
+    exact (coherentBranchApproxSeq_prefix_castSucc_step k (Fin.castLE hnk i)).trans ih
+
+/-- **`coherentBranchApproxSeq_branch_stable`**: cross-stage branch
+stability (HEq-form). -/
+theorem coherentBranchApproxSeq_branch_stable
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n m : ℕ} (hnm : n ≤ m) (i : Fin n) :
+    HEq ((coherentBranchApproxSeq cR m).branchAt (Fin.castLE hnm i))
+        ((coherentBranchApproxSeq cR n).branchAt i) := by
+  induction m, hnm using Nat.le_induction with
+  | base => exact HEq.rfl
+  | succ k hnk ih =>
+    have h_cast :
+        (Fin.castLE (Nat.le_succ_of_le hnk) i : Fin (k + 1)) =
+          (Fin.castLE hnk i : Fin k).castSucc := by
+      apply Fin.ext; rfl
+    rw [h_cast]
+    exact (coherentBranchApproxSeq_branch_castSucc_step k (Fin.castLE hnk i)).trans ih
+
 /-- **[NEW FRONTIER, sorry]** Existence of a coherent majority branch.
 This replaces the legacy `exists_large_iInter_stage_fibers` as the
 single mathematical frontier of the pair Erdős–Rado proof. Filling
