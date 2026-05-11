@@ -4402,6 +4402,20 @@ private lemma fn_ordinal_apply_heq
   subst h_eq
   rw [eq_of_heq hf]
 
+/-- **Transport commutes with `Ordinal.enum`**: if `α₁ = α₂` and
+`β₁ = β₂`, then transporting an `enum` at position β₁ in α₁.ToType
+yields the `enum` at position β₂ in α₂.ToType. -/
+private lemma enum_transport_eq
+    {α₁ α₂ : Ordinal.{0}} (h_α : α₁ = α₂)
+    {β₁ β₂ : Ordinal.{0}} (h_β : β₁ = β₂)
+    (h_lt₁ : β₁ < Ordinal.type (α := α₁.ToType) (· < ·))
+    (h_lt₂ : β₂ < Ordinal.type (α := α₂.ToType) (· < ·)) :
+    h_α ▸ Ordinal.enum (α := α₁.ToType) (· < ·) ⟨β₁, h_lt₁⟩ =
+      Ordinal.enum (α := α₂.ToType) (· < ·) ⟨β₂, h_lt₂⟩ := by
+  subst h_α
+  subst h_β
+  rfl
+
 /-- **Transport commutes with `initialSegToType`**. Used to rewrite the
 "crossing-the-extension-boundary" subgoals in `extendSucc`. -/
 private lemma initialSegToType_transport_eq
@@ -4818,7 +4832,65 @@ noncomputable def CoherentBranchApprox.extendSucc
       · exact A.extendBranchAt_castSucc_heq j
   · -- top_in_validFiber
     intro i h
-    sorry
+    have hi : i < n + 1 := Nat.lt_of_succ_lt_succ h
+    by_cases hi1 : i + 1 < n + 1
+    · -- Both old (castSucc + castSucc): use A.top_in_validFiber.
+      show A.extendPrefixAt ((⟨i + 1, hi1⟩ : Fin (n + 1)).castSucc)
+          ((Ordinal.enum (· < ·))
+            ⟨A.extendLevel ((⟨i, hi⟩ : Fin (n + 1)).castSucc), _⟩) ∈ _
+      convert A.top_in_validFiber i hi1 using 2
+      · exact A.extendLevel_castSucc ⟨i, hi⟩
+      · exact A.extendPrefixAt_castSucc_heq ⟨i, hi⟩
+      · exact A.extendBranchAt_castSucc_heq ⟨i, hi⟩
+      · rw [A.extendPrefixAt_castSucc_apply]
+        congr 1
+        exact enum_transport_eq (A.extendLevel_castSucc ⟨i + 1, hi1⟩)
+          (A.extendLevel_castSucc ⟨i, hi⟩) _ _
+    · -- ⟨i+1, h⟩ = Fin.last (n+1); use succNewElement_in_validFiber.
+      have hi_eq : n = i := by omega
+      subst hi_eq
+      -- After subst (n := i, so the outer n in the structure is now the i),
+      -- we have ⟨i + 1, h⟩ = Fin.last (i + 1) = Fin.last (n + 1).
+      -- And ⟨i, _⟩ = (Fin.last n).castSucc.
+      -- Build the typein bound for the enum position.
+      have h_typein_bound :
+          A.extendLevel ((Fin.last n : Fin (n + 1)).castSucc) <
+            Ordinal.type
+              (α := (A.extendLevel (Fin.last (n + 1))).ToType) (· < ·) := by
+        haveI : IsWellOrder (A.extendLevel (Fin.last (n + 1))).ToType (· < ·) :=
+          isWellOrder_lt
+        rw [Ordinal.type_toType, A.extendLevel_last, A.extendLevel_castSucc]
+        exact Order.lt_succ (A.level (Fin.last n))
+      show A.extendPrefixAt (Fin.last (n + 1))
+          ((Ordinal.enum (· < ·))
+            ⟨A.extendLevel ((Fin.last n : Fin (n + 1)).castSucc),
+              h_typein_bound⟩) ∈
+        validFiber cR (A.extendPrefixAt ((Fin.last n : Fin (n + 1)).castSucc))
+          (A.extendBranchAt ((Fin.last n : Fin (n + 1)).castSucc))
+      -- Convert via the heq simp lemmas to nextChain.head / lastChain.head /
+      -- lastChain.type.
+      convert A.lastChain.succNewElement_in_validFiber using 2
+      · exact A.extendLevel_castSucc (Fin.last n)
+      · exact A.extendPrefixAt_castSucc_heq (Fin.last n)
+      · exact A.extendBranchAt_castSucc_heq (Fin.last n)
+      · rw [A.extendPrefixAt_last_apply]
+        show A.nextChain.head _ = A.lastChain.succNewElement
+        rw [← PairERChain.succ_head_top A.lastChain]
+        change A.lastChain.succ.head _ = A.lastChain.succ.head ⊤
+        congr 1
+        -- enum at A.level (Fin.last n) in (Order.succ αn).ToType = ⊤.
+        haveI : IsWellOrder (Order.succ (A.level (Fin.last n))).ToType (· < ·) :=
+          isWellOrder_lt
+        have h_top_eq :
+            (⊤ : (Order.succ (A.level (Fin.last n))).ToType) =
+            Ordinal.enum (α := (Order.succ (A.level (Fin.last n))).ToType) (· < ·)
+              ⟨A.level (Fin.last n), by
+                rw [Ordinal.type_toType]
+                exact Order.lt_succ (A.level (Fin.last n))⟩ :=
+          Ordinal.enum_succ_eq_top.symm
+        rw [h_top_eq]
+        exact enum_transport_eq A.extendLevel_last
+          (A.extendLevel_castSucc (Fin.last n)) _ _
 
 /-- **`CoherentBranchApprox.extend`**: extend any finite approximation
 by one level. Splits into `fromZero` (for `n = 0`) and `extendSucc`
