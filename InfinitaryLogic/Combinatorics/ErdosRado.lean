@@ -4402,6 +4402,19 @@ private lemma fn_ordinal_apply_heq
   subst h_eq
   rw [eq_of_heq hf]
 
+/-- **Transport commutes with `initialSegToType`**. Used to rewrite the
+"crossing-the-extension-boundary" subgoals in `extendSucc`. -/
+private lemma initialSegToType_transport_eq
+    {α₁ β₁ α₂ β₂ : Ordinal.{0}}
+    (h_α : α₁ = α₂) (h_β : β₁ = β₂)
+    (h_le₁ : α₁ ≤ β₁) (h_le₂ : α₂ ≤ β₂)
+    (x : α₁.ToType) :
+    h_β ▸ (Ordinal.initialSegToType h_le₁).toOrderEmbedding x =
+      (Ordinal.initialSegToType h_le₂).toOrderEmbedding (h_α ▸ x) := by
+  subst h_α
+  subst h_β
+  rfl
+
 /-- **Applied form of `extendPrefixAt_castSucc_heq`**. -/
 theorem CoherentBranchApprox.extendPrefixAt_castSucc_apply
     {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
@@ -4566,9 +4579,18 @@ noncomputable def CoherentBranchApprox.extendSucc
         -- then A.prefix_restrict for j₁ ≤ Fin.last n.
         sorry
       | cast j₂ =>
-        -- Both castSucc: reduce to A.prefix_restrict.
+        -- Both castSucc: reduce to A.prefix_restrict via the apply lemmas.
         have hj : j₁ ≤ j₂ := (Fin.castSucc_le_castSucc_iff).mp hk
-        sorry
+        haveI : IsWellOrder (A.level j₁).ToType (· < ·) := isWellOrder_lt
+        haveI : IsWellOrder (A.level j₂).ToType (· < ·) := isWellOrder_lt
+        set x' : (A.level j₁).ToType := (A.extendLevel_castSucc j₁) ▸ x with hx'
+        rw [A.extendPrefixAt_castSucc_apply, A.extendPrefixAt_castSucc_apply, ← hx']
+        have hres := A.prefix_restrict hj x'
+        convert hres using 2
+        -- Goal: (extendLevel_castSucc j₂) ▸ (initialSegToType ... x)
+        --     = (initialSegToType ... x')
+        exact initialSegToType_transport_eq
+          (A.extendLevel_castSucc j₁) (A.extendLevel_castSucc j₂) _ _ x
   · -- branch_restrict (structurally parallel to prefix_restrict)
     intro k₁ k₂ hk x
     induction k₁ using Fin.lastCases with
@@ -4587,8 +4609,16 @@ noncomputable def CoherentBranchApprox.extendSucc
       | last =>
         sorry
       | cast j₂ =>
+        -- Both castSucc: reduce to A.branch_restrict via the apply lemmas.
         have hj : j₁ ≤ j₂ := (Fin.castSucc_le_castSucc_iff).mp hk
-        sorry
+        haveI : IsWellOrder (A.level j₁).ToType (· < ·) := isWellOrder_lt
+        haveI : IsWellOrder (A.level j₂).ToType (· < ·) := isWellOrder_lt
+        set x' : (A.level j₁).ToType := (A.extendLevel_castSucc j₁) ▸ x with hx'
+        rw [A.extendBranchAt_castSucc_apply, A.extendBranchAt_castSucc_apply, ← hx']
+        have hres := A.branch_restrict hj x'
+        convert hres using 2
+        exact initialSegToType_transport_eq
+          (A.extendLevel_castSucc j₁) (A.extendLevel_castSucc j₂) _ _ x
   · -- large
     intro k
     induction k using Fin.lastCases with
