@@ -4303,6 +4303,115 @@ noncomputable def CoherentBranchApprox.fromZero
   large _ := (PairERChain.zero cR).large
   top_in_validFiber i h := absurd h (by omega)
 
+/-! ### Helper definitions for `extendSucc`
+
+We define `extendLevel`, `extendPrefixAt`, `extendBranchAt` as proper
+`Fin.lastCases`-based functions (not let-bound `by_cases` tactics), so
+their evaluation at `Fin.last (n+1)` and `Fin.castSucc k` is governed by
+the standard `Fin.lastCases_last` / `Fin.lastCases_castSucc` lemmas
+(plus `eqRec_heq` for dependent transport). This replaces the prior
+`Eq.mpr`-cast-laden definitions that obstructed proof unfolding. -/
+
+/-- **`lastChain`**: the `PairERChain` at level `A.level (Fin.last n)`
+extracted from `A`'s last-position prefix/branch/large. -/
+noncomputable def CoherentBranchApprox.lastChain
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR (n + 1)) :
+    PairERChain cR (A.level (Fin.last n)) where
+  head := A.prefixAt (Fin.last n)
+  type := A.branchAt (Fin.last n)
+  large := A.large (Fin.last n)
+
+/-- **`nextChain`**: the `PairERChain` at `Order.succ (A.level (Fin.last n))`
+obtained by applying `PairERChain.succ` to `A.lastChain`. -/
+noncomputable def CoherentBranchApprox.nextChain
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR (n + 1)) :
+    PairERChain cR (Order.succ (A.level (Fin.last n))) :=
+  A.lastChain.succ
+
+/-- **`extendLevel`**: level function for the one-step extension. Old
+levels (`k.castSucc` for `k : Fin (n+1)`) get `A.level k`; the new top
+(`Fin.last (n+1)`) gets `Order.succ (A.level (Fin.last n))`. -/
+noncomputable def CoherentBranchApprox.extendLevel
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR (n + 1)) :
+    Fin (n + 2) → Ordinal.{0} :=
+  Fin.lastCases (Order.succ (A.level (Fin.last n))) (fun k => A.level k)
+
+@[simp] theorem CoherentBranchApprox.extendLevel_last
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR (n + 1)) :
+    A.extendLevel (Fin.last (n + 1)) = Order.succ (A.level (Fin.last n)) :=
+  Fin.lastCases_last
+
+@[simp] theorem CoherentBranchApprox.extendLevel_castSucc
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR (n + 1)) (k : Fin (n + 1)) :
+    A.extendLevel k.castSucc = A.level k :=
+  Fin.lastCases_castSucc k
+
+/-- **`extendPrefixAt`**: prefix function for the one-step extension,
+using `Fin.lastCases` with motive `(extendLevel k).ToType ↪o PairERSource`. -/
+noncomputable def CoherentBranchApprox.extendPrefixAt
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR (n + 1)) :
+    ∀ k : Fin (n + 2), (A.extendLevel k).ToType ↪o PairERSource := fun k => by
+  refine Fin.lastCases (motive := fun k => (A.extendLevel k).ToType ↪o PairERSource)
+    ?_ ?_ k
+  · -- Fin.last (n+1) case
+    show (A.extendLevel (Fin.last (n + 1))).ToType ↪o PairERSource
+    rw [A.extendLevel_last]; exact A.nextChain.head
+  · -- castSucc case
+    intro j
+    show (A.extendLevel j.castSucc).ToType ↪o PairERSource
+    rw [A.extendLevel_castSucc]; exact A.prefixAt j
+
+theorem CoherentBranchApprox.extendPrefixAt_last_heq
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR (n + 1)) :
+    HEq (A.extendPrefixAt (Fin.last (n + 1))) A.nextChain.head := by
+  unfold CoherentBranchApprox.extendPrefixAt
+  rw [Fin.lastCases_last]
+  -- Goal is HEq of an Eq.mpr-wrapped term with the original
+  exact cast_heq _ _
+
+theorem CoherentBranchApprox.extendPrefixAt_castSucc_heq
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR (n + 1)) (k : Fin (n + 1)) :
+    HEq (A.extendPrefixAt k.castSucc) (A.prefixAt k) := by
+  unfold CoherentBranchApprox.extendPrefixAt
+  rw [Fin.lastCases_castSucc]
+  exact cast_heq _ _
+
+/-- **`extendBranchAt`**: branch function for the one-step extension. -/
+noncomputable def CoherentBranchApprox.extendBranchAt
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR (n + 1)) :
+    ∀ k : Fin (n + 2), (A.extendLevel k).ToType → Bool := fun k => by
+  refine Fin.lastCases (motive := fun k => (A.extendLevel k).ToType → Bool) ?_ ?_ k
+  · show (A.extendLevel (Fin.last (n + 1))).ToType → Bool
+    rw [A.extendLevel_last]; exact A.nextChain.type
+  · intro j
+    show (A.extendLevel j.castSucc).ToType → Bool
+    rw [A.extendLevel_castSucc]; exact A.branchAt j
+
+theorem CoherentBranchApprox.extendBranchAt_last_heq
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR (n + 1)) :
+    HEq (A.extendBranchAt (Fin.last (n + 1))) A.nextChain.type := by
+  unfold CoherentBranchApprox.extendBranchAt
+  rw [Fin.lastCases_last]
+  exact cast_heq _ _
+
+theorem CoherentBranchApprox.extendBranchAt_castSucc_heq
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR (n + 1)) (k : Fin (n + 1)) :
+    HEq (A.extendBranchAt k.castSucc) (A.branchAt k) := by
+  unfold CoherentBranchApprox.extendBranchAt
+  rw [Fin.lastCases_castSucc]
+  exact cast_heq _ _
+
 /-- **`CoherentBranchApprox.extendSucc`**: extend a non-trivial
 approximation (with at least one level) by one more level via
 `PairERChain.succ` on the last chain. The new level is
@@ -4312,158 +4421,136 @@ noncomputable def CoherentBranchApprox.extendSucc
     (A : CoherentBranchApprox cR (n + 1)) :
     CoherentBranchApprox cR (n + 2) := by
   classical
-  set last : Fin (n + 1) := Fin.last n with hlast_def
-  set αn : Ordinal.{0} := A.level last with hαn_def
-  haveI : IsWellOrder αn.ToType (· < ·) := isWellOrder_lt
-  haveI : IsWellOrder (Order.succ αn).ToType (· < ·) := isWellOrder_lt
-  -- Last PairERChain extracted from A.
-  let lastChain : PairERChain cR αn :=
-    { head := A.prefixAt last
-      type := A.branchAt last
-      large := A.large last }
-  let nextChain : PairERChain cR (Order.succ αn) := lastChain.succ
-  have hαn_lt : αn < Ordinal.omega.{0} 1 := A.level_lt_omega1 last
-  have h_succαn_lt : Order.succ αn < Ordinal.omega.{0} 1 :=
+  haveI : IsWellOrder (A.level (Fin.last n)).ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder (Order.succ (A.level (Fin.last n))).ToType (· < ·) := isWellOrder_lt
+  have hαn_lt : A.level (Fin.last n) < Ordinal.omega.{0} 1 :=
+    A.level_lt_omega1 (Fin.last n)
+  have h_succαn_lt : Order.succ (A.level (Fin.last n)) < Ordinal.omega.{0} 1 :=
     (Cardinal.isSuccLimit_omega 1).succ_lt hαn_lt
-  -- Output level function.
-  let outLevel : Fin (n + 2) → Ordinal.{0} := fun k =>
-    if h : k.val < n + 1 then A.level ⟨k.val, h⟩ else Order.succ αn
-  -- Output prefixAt / branchAt functions.
-  let outPrefixAt : ∀ k : Fin (n + 2), (outLevel k).ToType ↪o PairERSource :=
-    fun k => by
-      by_cases hk : k.val < n + 1
-      · show (outLevel k).ToType ↪o PairERSource
-        rw [show outLevel k = A.level ⟨k.val, hk⟩ from dif_pos hk]
-        exact A.prefixAt ⟨k.val, hk⟩
-      · show (outLevel k).ToType ↪o PairERSource
-        rw [show outLevel k = Order.succ αn from dif_neg hk]
-        exact nextChain.head
-  let outBranchAt : ∀ k : Fin (n + 2), (outLevel k).ToType → Bool :=
-    fun k => by
-      by_cases hk : k.val < n + 1
-      · show (outLevel k).ToType → Bool
-        rw [show outLevel k = A.level ⟨k.val, hk⟩ from dif_pos hk]
-        exact A.branchAt ⟨k.val, hk⟩
-      · show (outLevel k).ToType → Bool
-        rw [show outLevel k = Order.succ αn from dif_neg hk]
-        exact nextChain.type
   refine
-    { level := outLevel
+    { level := A.extendLevel
       level_lt_omega1 := ?_
       level_strictMono := ?_
       level_succ := ?_
-      prefixAt := outPrefixAt
-      branchAt := outBranchAt
+      prefixAt := A.extendPrefixAt
+      branchAt := A.extendBranchAt
       prefix_restrict := ?_
       branch_restrict := ?_
       large := ?_
       top_in_validFiber := ?_ }
   · -- level_lt_omega1
     intro k
-    show outLevel k < Ordinal.omega.{0} 1
-    by_cases hk : k.val < n + 1
-    · rw [show outLevel k = A.level ⟨k.val, hk⟩ from dif_pos hk]
-      exact A.level_lt_omega1 ⟨k.val, hk⟩
-    · rw [show outLevel k = Order.succ αn from dif_neg hk]
-      exact h_succαn_lt
+    induction k using Fin.lastCases with
+    | last => rw [A.extendLevel_last]; exact h_succαn_lt
+    | cast k => rw [A.extendLevel_castSucc]; exact A.level_lt_omega1 k
   · -- level_strictMono
     intro a b hab
-    show outLevel a < outLevel b
-    by_cases ha : a.val < n + 1
-    · -- a.val < n + 1, so outLevel a = A.level ⟨a.val, ha⟩
-      rw [show outLevel a = A.level ⟨a.val, ha⟩ from dif_pos ha]
-      by_cases hb : b.val < n + 1
-      · -- both old
-        rw [show outLevel b = A.level ⟨b.val, hb⟩ from dif_pos hb]
+    induction a using Fin.lastCases with
+    | last =>
+      -- a = Fin.last (n+1), b > a impossible
+      exfalso
+      exact absurd hab (not_lt_of_ge (Fin.le_last b))
+    | cast j₁ =>
+      induction b using Fin.lastCases with
+      | last =>
+        rw [A.extendLevel_castSucc, A.extendLevel_last]
+        calc A.level j₁
+            ≤ A.level (Fin.last n) :=
+              A.level_strictMono.monotone (Fin.le_last j₁)
+          _ < Order.succ (A.level (Fin.last n)) := Order.lt_succ _
+      | cast j₂ =>
+        rw [A.extendLevel_castSucc, A.extendLevel_castSucc]
         apply A.level_strictMono
-        show (⟨a.val, ha⟩ : Fin (n + 1)).val < (⟨b.val, hb⟩ : Fin (n + 1)).val
-        exact hab
-      · -- b is new
-        rw [show outLevel b = Order.succ αn from dif_neg hb]
-        calc A.level ⟨a.val, ha⟩
-            ≤ A.level last :=
-              A.level_strictMono.monotone (by
-                show (⟨a.val, ha⟩ : Fin (n + 1)).val ≤ last.val
-                simp [last]; omega)
-          _ < Order.succ αn := Order.lt_succ _
-    · -- a.val ≥ n + 1, so a.val = n + 1 (since a.val < n + 2)
-      have ha_eq : a.val = n + 1 := by have := a.isLt; omega
-      have hb_lt : b.val < n + 2 := b.isLt
-      -- hab : a < b, so b.val > n + 1, but b.val < n + 2: contradiction
-      have hb_gt : b.val > a.val := hab
-      omega
+        exact (Fin.castSucc_lt_castSucc_iff).mp hab
   · -- level_succ
     intro i h
     -- h : i + 1 < n + 2
     have hi : i < n + 1 := Nat.lt_of_succ_lt_succ h
-    show outLevel ⟨i + 1, h⟩ = Order.succ (outLevel ⟨i, Nat.lt_of_succ_lt h⟩)
-    rw [show outLevel ⟨i, Nat.lt_of_succ_lt h⟩ = A.level ⟨i, hi⟩ from dif_pos hi]
     by_cases hi1 : i + 1 < n + 1
-    · -- i + 1 < n + 1, use A.level_succ
-      rw [show outLevel ⟨i + 1, h⟩ = A.level ⟨i + 1, hi1⟩ from dif_pos hi1]
+    · -- Both i and i+1 are castSucc.
+      have e_i : (⟨i, Nat.lt_of_succ_lt h⟩ : Fin (n + 2)) =
+          (⟨i, hi⟩ : Fin (n + 1)).castSucc := rfl
+      have e_i1 : (⟨i + 1, h⟩ : Fin (n + 2)) =
+          (⟨i + 1, hi1⟩ : Fin (n + 1)).castSucc := rfl
+      rw [e_i, e_i1, A.extendLevel_castSucc, A.extendLevel_castSucc]
       exact A.level_succ i hi1
-    · -- i + 1 = n + 1
-      rw [show outLevel ⟨i + 1, h⟩ = Order.succ αn from dif_neg hi1]
-      congr 1
-      show αn = A.level ⟨i, hi⟩
-      have : last = (⟨i, hi⟩ : Fin (n + 1)) := by
+    · -- i + 1 = n + 1, so ⟨i+1, h⟩ = Fin.last (n+1).
+      have hi1_eq : i + 1 = n + 1 := by omega
+      have e_i1 : (⟨i + 1, h⟩ : Fin (n + 2)) = Fin.last (n + 1) := by
+        apply Fin.ext; exact hi1_eq
+      have e_i : (⟨i, Nat.lt_of_succ_lt h⟩ : Fin (n + 2)) =
+          (Fin.last n).castSucc := by
         apply Fin.ext
-        show n = i
+        show i = n
         omega
-      exact congrArg A.level this
+      rw [e_i1, e_i, A.extendLevel_last, A.extendLevel_castSucc]
   · -- prefix_restrict
     intro k₁ k₂ hk x
-    -- Three cases: both old, k₁ old k₂ new, both new (k₁ new ⇒ k₂ new).
-    by_cases hk₁ : k₁.val < n + 1
-    · by_cases hk₂ : k₂.val < n + 1
-      · -- Both old: should reduce to A.prefix_restrict.
-        -- Requires bridging `outPrefixAt k_i` (= Eq.mpr-wrap of A.prefixAt) to
-        -- A.prefixAt at corresponding Fin (n+1) index. Deferred; see comment.
+    induction k₁ using Fin.lastCases with
+    | last =>
+      induction k₂ using Fin.lastCases with
+      | last =>
+        -- Both new top: same index. initialSegToType is identity.
+        congr 1
+        have h : Ordinal.initialSegToType
+            (le_refl (A.extendLevel (Fin.last (n + 1)))) =
+            InitialSeg.refl _ := Subsingleton.elim _ _
+        rw [h]; rfl
+      | cast j₂ =>
+        -- Impossible: Fin.last (n+1) > j₂.castSucc.
+        exact absurd hk (not_le_of_gt (Fin.castSucc_lt_last j₂))
+    | cast j₁ =>
+      induction k₂ using Fin.lastCases with
+      | last =>
+        -- k₁ = j₁.castSucc, k₂ = Fin.last (n+1).
+        -- Use PairERChain.succ_commitAt to bridge nextChain.head with lastChain.head,
+        -- then A.prefix_restrict for j₁ ≤ Fin.last n.
         sorry
-      · -- k₁ old, k₂ new: should chain `succ_commitAt` + A.prefix_restrict.
-        -- Bridges the new top to the previous chain via `PairERChain.succ_commitAt`.
-        -- Deferred; see comment.
+      | cast j₂ =>
+        -- Both castSucc: reduce to A.prefix_restrict.
+        have hj : j₁ ≤ j₂ := (Fin.castSucc_le_castSucc_iff).mp hk
         sorry
-    · -- k₁ new (so k₂ new too): both at top. initialSegToType is identity.
-      have hk₁_eq : k₁.val = n + 1 := by have := k₁.isLt; omega
-      have hk₂_eq : k₂.val = n + 1 := by
-        have hk' : k₁.val ≤ k₂.val := hk
-        have := k₂.isLt
-        omega
-      have hk_eq : k₁ = k₂ := Fin.ext (hk₁_eq.trans hk₂_eq.symm)
-      subst hk_eq
-      congr 1
-      have h : Ordinal.initialSegToType (le_refl (outLevel k₁)) =
-          InitialSeg.refl _ := Subsingleton.elim _ _
-      rw [h]; rfl
-  · -- branch_restrict: structurally parallel to prefix_restrict.
-    sorry
+  · -- branch_restrict (structurally parallel to prefix_restrict)
+    intro k₁ k₂ hk x
+    induction k₁ using Fin.lastCases with
+    | last =>
+      induction k₂ using Fin.lastCases with
+      | last =>
+        congr 1
+        have h : Ordinal.initialSegToType
+            (le_refl (A.extendLevel (Fin.last (n + 1)))) =
+            InitialSeg.refl _ := Subsingleton.elim _ _
+        rw [h]; rfl
+      | cast j₂ =>
+        exact absurd hk (not_le_of_gt (Fin.castSucc_lt_last j₂))
+    | cast j₁ =>
+      induction k₂ using Fin.lastCases with
+      | last =>
+        sorry
+      | cast j₂ =>
+        have hj : j₁ ≤ j₂ := (Fin.castSucc_le_castSucc_iff).mp hk
+        sorry
   · -- large
     intro k
-    by_cases hk : k.val < n + 1
-    · -- old level: outPrefixAt k = A.prefixAt ⟨k.val, hk⟩ (HEq), similar for branchAt.
+    induction k using Fin.lastCases with
+    | last =>
       show Order.succ (Cardinal.beth.{0} 1) ≤
-          Cardinal.mk (validFiber cR (outPrefixAt k) (outBranchAt k))
-      convert A.large ⟨k.val, hk⟩ using 4
-      · exact dif_pos hk
-      · show HEq (outPrefixAt k) (A.prefixAt ⟨k.val, hk⟩)
-        simp only [outPrefixAt, dif_pos hk, id]
-        exact cast_heq _ _
-      · show HEq (outBranchAt k) (A.branchAt ⟨k.val, hk⟩)
-        simp only [outBranchAt, dif_pos hk, id]
-        exact cast_heq _ _
-    · -- new top: outPrefixAt k = nextChain.head, outBranchAt k = nextChain.type (HEq).
+          Cardinal.mk (validFiber cR (A.extendPrefixAt (Fin.last (n + 1)))
+            (A.extendBranchAt (Fin.last (n + 1))))
+      convert A.nextChain.large using 4
+      · exact A.extendLevel_last
+      · exact A.extendPrefixAt_last_heq
+      · exact A.extendBranchAt_last_heq
+    | cast j =>
       show Order.succ (Cardinal.beth.{0} 1) ≤
-          Cardinal.mk (validFiber cR (outPrefixAt k) (outBranchAt k))
-      convert nextChain.large using 4
-      · exact dif_neg hk
-      · show HEq (outPrefixAt k) nextChain.head
-        simp only [outPrefixAt, dif_neg hk, id]
-        exact cast_heq _ _
-      · show HEq (outBranchAt k) nextChain.type
-        simp only [outBranchAt, dif_neg hk, id]
-        exact cast_heq _ _
+          Cardinal.mk (validFiber cR (A.extendPrefixAt j.castSucc)
+            (A.extendBranchAt j.castSucc))
+      convert A.large j using 4
+      · exact A.extendLevel_castSucc j
+      · exact A.extendPrefixAt_castSucc_heq j
+      · exact A.extendBranchAt_castSucc_heq j
   · -- top_in_validFiber
+    intro i h
     sorry
 
 /-- **`CoherentBranchApprox.extend`**: extend any finite approximation
