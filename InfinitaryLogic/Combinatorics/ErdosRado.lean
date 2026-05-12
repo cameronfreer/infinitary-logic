@@ -5016,6 +5016,258 @@ lemma CoherentBranchApprox.lastLevel_ge
   have := k.isLt
   omega
 
+/-- **`extendToChain`**: the chain at level `α` extending `A`'s
+last-position data. For `n = 0`: extend from `PairERChain.zero cR`.
+For `n ≥ 1`: extend from the chain at `A.level ⟨n−1, _⟩` extracted
+from `A`. Both branches use `PairERChain.extendTo` (the named
+transfinite frontier). -/
+noncomputable def CoherentBranchApprox.extendToChain
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR n)
+    (α : Ordinal.{0}) (hα : α < Ordinal.omega.{0} 1)
+    (hα_above_last : A.lastLevel < α) : PairERChain cR α := by
+  classical
+  by_cases hn : n = 0
+  · have hβα : (0 : Ordinal.{0}) < α := by
+      have h_eq : A.lastLevel = 0 := by
+        unfold CoherentBranchApprox.lastLevel; rw [dif_pos hn]
+      exact h_eq ▸ hα_above_last
+    exact (PairERChain.zero cR).extendTo hβα hα
+  · have hn' : n - 1 < n := by omega
+    let lastChain : PairERChain cR (A.level ⟨n - 1, hn'⟩) :=
+      ⟨A.prefixAt ⟨n - 1, hn'⟩, A.branchAt ⟨n - 1, hn'⟩,
+        A.large ⟨n - 1, hn'⟩⟩
+    have hβα : A.level ⟨n - 1, hn'⟩ < α := by
+      have h_eq : A.lastLevel = A.level ⟨n - 1, hn'⟩ := by
+        unfold CoherentBranchApprox.lastLevel; rw [dif_neg hn]
+      exact h_eq ▸ hα_above_last
+    exact lastChain.extendTo hβα hα
+
+/-- **`extendToChain_commitAt_of_lt_level`**: for `k : Fin n`, the
+`extendToChain` agrees with `A.prefixAt k` after the lift via
+`initialSegToType`. Reduces to `extendTo_commitAt` (the new chain
+extends the last) + `A.prefix_restrict` (chain prefixes are coherent
+across A's levels). -/
+theorem CoherentBranchApprox.extendToChain_head_at_level
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR n)
+    (α : Ordinal.{0}) (hα : α < Ordinal.omega.{0} 1)
+    (hα_above_last : A.lastLevel < α)
+    (k : Fin n) (x : (A.level k).ToType) :
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder (A.level k).ToType (· < ·) := isWellOrder_lt
+    (A.extendToChain α hα hα_above_last).head
+        ((Ordinal.initialSegToType
+          ((A.lastLevel_ge k).trans hα_above_last.le)).toOrderEmbedding x) =
+      A.prefixAt k x := by
+  classical
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder (A.level k).ToType (· < ·) := isWellOrder_lt
+  -- n ≠ 0 since k : Fin n.
+  have hn_ne_zero : n ≠ 0 := by rintro rfl; exact k.elim0
+  have hn' : n - 1 < n := by omega
+  -- Unfold extendToChain (n ≥ 1 branch).
+  unfold CoherentBranchApprox.extendToChain
+  rw [dif_neg hn_ne_zero]
+  -- Now extendToChain = lastChain.extendTo
+  haveI : IsWellOrder (A.level ⟨n - 1, hn'⟩).ToType (· < ·) := isWellOrder_lt
+  set lastChain : PairERChain cR (A.level ⟨n - 1, hn'⟩) :=
+    ⟨A.prefixAt ⟨n - 1, hn'⟩, A.branchAt ⟨n - 1, hn'⟩,
+      A.large ⟨n - 1, hn'⟩⟩
+  set hβα : A.level ⟨n - 1, hn'⟩ < α := by
+    have h_eq : A.lastLevel = A.level ⟨n - 1, hn'⟩ := by
+      unfold CoherentBranchApprox.lastLevel; rw [dif_neg hn_ne_zero]
+    exact h_eq ▸ hα_above_last
+  show (lastChain.extendTo hβα hα).head _ = _
+  -- Identify the lift as enum at δ := typein x in (A.level k).ToType.
+  set δ : Ordinal.{0} :=
+    Ordinal.typein (α := (A.level k).ToType) (· < ·) x with hδ_def
+  have hδ_lt_lvlk : δ < A.level k := by
+    rw [hδ_def]; exact Ordinal.typein_lt_self x
+  have hk_le : k ≤ (⟨n - 1, hn'⟩ : Fin n) := by
+    show k.val ≤ n - 1
+    have := k.isLt; omega
+  have h_lvl_le : A.level k ≤ A.level ⟨n - 1, hn'⟩ :=
+    A.level_strictMono.monotone hk_le
+  have hδ_lt_β : δ < A.level ⟨n - 1, hn'⟩ := hδ_lt_lvlk.trans_le h_lvl_le
+  have hδ_lt_α : δ < α := hδ_lt_β.trans hβα
+  -- Identify the lift as enum at δ.
+  have h_lift_α : (Ordinal.initialSegToType
+      ((A.lastLevel_ge k).trans hα_above_last.le)).toOrderEmbedding x =
+      Ordinal.enum (α := α.ToType) (· < ·)
+        ⟨δ, (Ordinal.type_toType _).symm ▸ hδ_lt_α⟩ := by
+    rw [← Ordinal.enum_typein (· < · : α.ToType → α.ToType → Prop)
+      ((Ordinal.initialSegToType
+        ((A.lastLevel_ge k).trans hα_above_last.le)).toOrderEmbedding x)]
+    congr 1
+    apply Subtype.ext
+    show Ordinal.typein (α := α.ToType) (· < ·)
+        ((Ordinal.initialSegToType
+          ((A.lastLevel_ge k).trans hα_above_last.le)).toOrderEmbedding x) = δ
+    rw [show Ordinal.typein (α := α.ToType) (· < ·)
+          ((Ordinal.initialSegToType
+            ((A.lastLevel_ge k).trans hα_above_last.le)).toOrderEmbedding x) =
+        Ordinal.typein (α := (A.level k).ToType) (· < ·) x from
+      Ordinal.typein_apply _ x]
+  rw [h_lift_α]
+  -- Apply extendTo_commitAt to bridge to lastChain.
+  show (lastChain.extendTo hβα hα).head
+      (Ordinal.enum (α := α.ToType) (· < ·) ⟨δ, _⟩) = _
+  have h_step : (lastChain.extendTo hβα hα).head
+      (Ordinal.enum (α := α.ToType) (· < ·)
+        ⟨δ, (Ordinal.type_toType _).symm ▸ hδ_lt_α⟩) =
+      lastChain.head (Ordinal.enum (α := (A.level ⟨n - 1, hn'⟩).ToType) (· < ·)
+        ⟨δ, (Ordinal.type_toType _).symm ▸ hδ_lt_β⟩) := by
+    show (lastChain.extendTo hβα hα).commitAt δ hδ_lt_α = lastChain.commitAt δ hδ_lt_β
+    exact PairERChain.extendTo_commitAt lastChain hβα hα δ hδ_lt_β
+  rw [h_step]
+  -- lastChain.head = A.prefixAt ⟨n-1, _⟩. Now use A.prefix_restrict (k ≤ ⟨n-1, _⟩).
+  show A.prefixAt ⟨n - 1, hn'⟩ _ = _
+  -- Identify enum at δ in αn with initialSegToType-lift of x to αn.
+  have h_lift_αn : Ordinal.enum (α := (A.level ⟨n - 1, hn'⟩).ToType) (· < ·)
+      ⟨δ, (Ordinal.type_toType _).symm ▸ hδ_lt_β⟩ =
+      (Ordinal.initialSegToType h_lvl_le).toOrderEmbedding x := by
+    rw [← Ordinal.enum_typein (· < · : (A.level ⟨n - 1, hn'⟩).ToType →
+        (A.level ⟨n - 1, hn'⟩).ToType → Prop)
+      ((Ordinal.initialSegToType h_lvl_le).toOrderEmbedding x)]
+    congr 1
+    apply Subtype.ext
+    show δ = Ordinal.typein (α := (A.level ⟨n - 1, hn'⟩).ToType) (· < ·)
+        ((Ordinal.initialSegToType h_lvl_le).toOrderEmbedding x)
+    rw [show Ordinal.typein (α := (A.level ⟨n - 1, hn'⟩).ToType) (· < ·)
+          ((Ordinal.initialSegToType h_lvl_le).toOrderEmbedding x) =
+        Ordinal.typein (α := (A.level k).ToType) (· < ·) x from
+      Ordinal.typein_apply (Ordinal.initialSegToType h_lvl_le) x]
+  rw [h_lift_αn]
+  exact A.prefix_restrict hk_le x
+
+/-- **`extendToChain_type_at_level`**: analog of
+`extendToChain_head_at_level` for the type function. -/
+theorem CoherentBranchApprox.extendToChain_type_at_level
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR n)
+    (α : Ordinal.{0}) (hα : α < Ordinal.omega.{0} 1)
+    (hα_above_last : A.lastLevel < α)
+    (k : Fin n) (x : (A.level k).ToType) :
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder (A.level k).ToType (· < ·) := isWellOrder_lt
+    (A.extendToChain α hα hα_above_last).type
+        ((Ordinal.initialSegToType
+          ((A.lastLevel_ge k).trans hα_above_last.le)).toOrderEmbedding x) =
+      A.branchAt k x := by
+  classical
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder (A.level k).ToType (· < ·) := isWellOrder_lt
+  have hn_ne_zero : n ≠ 0 := by rintro rfl; exact k.elim0
+  have hn' : n - 1 < n := by omega
+  unfold CoherentBranchApprox.extendToChain
+  rw [dif_neg hn_ne_zero]
+  haveI : IsWellOrder (A.level ⟨n - 1, hn'⟩).ToType (· < ·) := isWellOrder_lt
+  set lastChain : PairERChain cR (A.level ⟨n - 1, hn'⟩) :=
+    ⟨A.prefixAt ⟨n - 1, hn'⟩, A.branchAt ⟨n - 1, hn'⟩,
+      A.large ⟨n - 1, hn'⟩⟩
+  set hβα : A.level ⟨n - 1, hn'⟩ < α := by
+    have h_eq : A.lastLevel = A.level ⟨n - 1, hn'⟩ := by
+      unfold CoherentBranchApprox.lastLevel; rw [dif_neg hn_ne_zero]
+    exact h_eq ▸ hα_above_last
+  show (lastChain.extendTo hβα hα).type _ = _
+  set δ : Ordinal.{0} :=
+    Ordinal.typein (α := (A.level k).ToType) (· < ·) x with hδ_def
+  have hδ_lt_lvlk : δ < A.level k := by
+    rw [hδ_def]; exact Ordinal.typein_lt_self x
+  have hk_le : k ≤ (⟨n - 1, hn'⟩ : Fin n) := by
+    show k.val ≤ n - 1
+    have := k.isLt; omega
+  have h_lvl_le : A.level k ≤ A.level ⟨n - 1, hn'⟩ :=
+    A.level_strictMono.monotone hk_le
+  have hδ_lt_β : δ < A.level ⟨n - 1, hn'⟩ := hδ_lt_lvlk.trans_le h_lvl_le
+  have hδ_lt_α : δ < α := hδ_lt_β.trans hβα
+  have h_lift_α : (Ordinal.initialSegToType
+      ((A.lastLevel_ge k).trans hα_above_last.le)).toOrderEmbedding x =
+      Ordinal.enum (α := α.ToType) (· < ·)
+        ⟨δ, (Ordinal.type_toType _).symm ▸ hδ_lt_α⟩ := by
+    rw [← Ordinal.enum_typein (· < · : α.ToType → α.ToType → Prop)
+      ((Ordinal.initialSegToType
+        ((A.lastLevel_ge k).trans hα_above_last.le)).toOrderEmbedding x)]
+    congr 1
+    apply Subtype.ext
+    show Ordinal.typein (α := α.ToType) (· < ·)
+        ((Ordinal.initialSegToType
+          ((A.lastLevel_ge k).trans hα_above_last.le)).toOrderEmbedding x) = δ
+    rw [show Ordinal.typein (α := α.ToType) (· < ·)
+          ((Ordinal.initialSegToType
+            ((A.lastLevel_ge k).trans hα_above_last.le)).toOrderEmbedding x) =
+        Ordinal.typein (α := (A.level k).ToType) (· < ·) x from
+      Ordinal.typein_apply _ x]
+  rw [h_lift_α]
+  show (lastChain.extendTo hβα hα).type
+      (Ordinal.enum (α := α.ToType) (· < ·) ⟨δ, _⟩) = _
+  have h_step : (lastChain.extendTo hβα hα).type
+      (Ordinal.enum (α := α.ToType) (· < ·)
+        ⟨δ, (Ordinal.type_toType _).symm ▸ hδ_lt_α⟩) =
+      lastChain.type (Ordinal.enum (α := (A.level ⟨n - 1, hn'⟩).ToType) (· < ·)
+        ⟨δ, (Ordinal.type_toType _).symm ▸ hδ_lt_β⟩) := by
+    show (lastChain.extendTo hβα hα).typeAt δ hδ_lt_α =
+      lastChain.typeAt δ hδ_lt_β
+    exact PairERChain.extendTo_typeAt_old lastChain hβα hα δ hδ_lt_β
+  rw [h_step]
+  show A.branchAt ⟨n - 1, hn'⟩ _ = _
+  have h_lift_αn : Ordinal.enum (α := (A.level ⟨n - 1, hn'⟩).ToType) (· < ·)
+      ⟨δ, (Ordinal.type_toType _).symm ▸ hδ_lt_β⟩ =
+      (Ordinal.initialSegToType h_lvl_le).toOrderEmbedding x := by
+    rw [← Ordinal.enum_typein (· < · : (A.level ⟨n - 1, hn'⟩).ToType →
+        (A.level ⟨n - 1, hn'⟩).ToType → Prop)
+      ((Ordinal.initialSegToType h_lvl_le).toOrderEmbedding x)]
+    congr 1
+    apply Subtype.ext
+    show δ = Ordinal.typein (α := (A.level ⟨n - 1, hn'⟩).ToType) (· < ·)
+        ((Ordinal.initialSegToType h_lvl_le).toOrderEmbedding x)
+    rw [show Ordinal.typein (α := (A.level ⟨n - 1, hn'⟩).ToType) (· < ·)
+          ((Ordinal.initialSegToType h_lvl_le).toOrderEmbedding x) =
+        Ordinal.typein (α := (A.level k).ToType) (· < ·) x from
+      Ordinal.typein_apply (Ordinal.initialSegToType h_lvl_le) x]
+  rw [h_lift_αn]
+  exact A.branch_restrict hk_le x
+
+/-- **`extendToChain_realizes_at_lastIndex`**: the new chain's element
+at position `A.level ⟨n − 1, _⟩` (the previous "top") lies in the
+validFiber of `A`'s prefix/branch at that index. Used for the final
+adjacent pair in `top_in_validFiber`. Requires `n ≠ 0`. -/
+theorem CoherentBranchApprox.extendToChain_realizes_at_lastIndex
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR n)
+    (α : Ordinal.{0}) (hα : α < Ordinal.omega.{0} 1)
+    (hα_above_last : A.lastLevel < α) (hn_ne_zero : n ≠ 0) :
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    have hn' : n - 1 < n := Nat.sub_lt (Nat.pos_of_ne_zero hn_ne_zero) Nat.one_pos
+    have hβα : A.level ⟨n - 1, hn'⟩ < α := by
+      have h_eq : A.lastLevel = A.level ⟨n - 1, hn'⟩ := by
+        unfold CoherentBranchApprox.lastLevel; rw [dif_neg hn_ne_zero]
+      exact h_eq ▸ hα_above_last
+    (A.extendToChain α hα hα_above_last).head
+        (Ordinal.enum (α := α.ToType) (· < ·)
+          ⟨A.level ⟨n - 1, hn'⟩, (Ordinal.type_toType _).symm ▸ hβα⟩) ∈
+      validFiber cR (A.prefixAt ⟨n - 1, hn'⟩) (A.branchAt ⟨n - 1, hn'⟩) := by
+  classical
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  have hn' : n - 1 < n := Nat.sub_lt (Nat.pos_of_ne_zero hn_ne_zero) Nat.one_pos
+  haveI : IsWellOrder (A.level ⟨n - 1, hn'⟩).ToType (· < ·) := isWellOrder_lt
+  set lastChain : PairERChain cR (A.level ⟨n - 1, hn'⟩) :=
+    ⟨A.prefixAt ⟨n - 1, hn'⟩, A.branchAt ⟨n - 1, hn'⟩,
+      A.large ⟨n - 1, hn'⟩⟩
+  set hβα : A.level ⟨n - 1, hn'⟩ < α := by
+    have h_eq : A.lastLevel = A.level ⟨n - 1, hn'⟩ := by
+      unfold CoherentBranchApprox.lastLevel; rw [dif_neg hn_ne_zero]
+    exact h_eq ▸ hα_above_last
+  -- Show extendToChain reduces to lastChain.extendTo in the n ≠ 0 branch.
+  have h_chain_eq :
+      A.extendToChain α hα hα_above_last = lastChain.extendTo hβα hα := by
+    unfold CoherentBranchApprox.extendToChain
+    rw [dif_neg hn_ne_zero]
+  rw [h_chain_eq]
+  show (lastChain.extendTo hβα hα).head _ ∈ validFiber cR lastChain.head lastChain.type
+  exact PairERChain.extendTo_head_β_in_validFiber lastChain hβα hα
+
 /-! ### Helpers for `CoherentBranchApprox.extendTo`
 
 The helpers `extendToLevel` / `extendToPrefixAt` / `extendToBranchAt`
@@ -5171,23 +5423,10 @@ noncomputable def CoherentBranchApprox.extendTo
     CoherentBranchApprox cR (n + 1) := by
   classical
   haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
-  -- The new chain at α, obtained via `PairERChain.extendTo`.
-  let nextChain : PairERChain cR α := by
-    by_cases hn : n = 0
-    · have hβα : (0 : Ordinal.{0}) < α := by
-        have h_eq : A.lastLevel = 0 := by
-          unfold CoherentBranchApprox.lastLevel; rw [dif_pos hn]
-        exact h_eq ▸ hα_above_last
-      exact (PairERChain.zero cR).extendTo hβα hα
-    · have hn' : n - 1 < n := by omega
-      let lastChain : PairERChain cR (A.level ⟨n - 1, hn'⟩) :=
-        ⟨A.prefixAt ⟨n - 1, hn'⟩, A.branchAt ⟨n - 1, hn'⟩,
-          A.large ⟨n - 1, hn'⟩⟩
-      have hβα : A.level ⟨n - 1, hn'⟩ < α := by
-        have h_eq : A.lastLevel = A.level ⟨n - 1, hn'⟩ := by
-          unfold CoherentBranchApprox.lastLevel; rw [dif_neg hn]
-        exact h_eq ▸ hα_above_last
-      exact lastChain.extendTo hβα hα
+  -- The new chain at α, obtained via `PairERChain.extendTo` (via the
+  -- named helper `extendToChain`).
+  let nextChain : PairERChain cR α :=
+    A.extendToChain α hα hα_above_last
   refine
     { level := A.extendToLevel α
       level_lt_omega1 := ?_
@@ -5234,10 +5473,20 @@ noncomputable def CoherentBranchApprox.extendTo
     | cast j₁ =>
       induction k₂ using Fin.lastCases with
       | last =>
-        -- Boundary case (k₁ old, k₂ = new top).
-        -- LHS reduces via extendToPrefixAt_last_apply + extendTo_commitAt.
-        -- RHS reduces via extendToPrefixAt_castSucc_apply.
-        sorry
+        -- Boundary case (k₁ = j₁.castSucc, k₂ = Fin.last n).
+        haveI : IsWellOrder (A.level j₁).ToType (· < ·) := isWellOrder_lt
+        set x' : (A.level j₁).ToType := (A.extendToLevel_castSucc α j₁) ▸ x with hx'
+        rw [A.extendToPrefixAt_last_apply, A.extendToPrefixAt_castSucc_apply, ← hx']
+        -- Goal: nextChain.head (transport of initialSegToType-lift x)
+        --     = A.prefixAt j₁ x'
+        -- Reduce LHS via `initialSegToType_transport_eq` and apply
+        -- `extendToChain_head_at_level`.
+        have h_lvl_le : A.level j₁ ≤ α :=
+          (A.lastLevel_ge j₁).trans hα_above_last.le
+        rw [initialSegToType_transport_eq (A.extendToLevel_castSucc α j₁)
+            (A.extendToLevel_last α) _ h_lvl_le x]
+        -- LHS now: nextChain.head ((initialSegToType h_lvl_le).toOrderEmbedding x')
+        exact A.extendToChain_head_at_level α hα hα_above_last j₁ x'
       | cast j₂ =>
         have hj : j₁ ≤ j₂ := (Fin.castSucc_le_castSucc_iff).mp hk
         haveI : IsWellOrder (A.level j₁).ToType (· < ·) := isWellOrder_lt
@@ -5265,7 +5514,15 @@ noncomputable def CoherentBranchApprox.extendTo
     | cast j₁ =>
       induction k₂ using Fin.lastCases with
       | last =>
-        sorry
+        -- Boundary case for branch.
+        haveI : IsWellOrder (A.level j₁).ToType (· < ·) := isWellOrder_lt
+        set x' : (A.level j₁).ToType := (A.extendToLevel_castSucc α j₁) ▸ x with hx'
+        rw [A.extendToBranchAt_last_apply, A.extendToBranchAt_castSucc_apply, ← hx']
+        have h_lvl_le : A.level j₁ ≤ α :=
+          (A.lastLevel_ge j₁).trans hα_above_last.le
+        rw [initialSegToType_transport_eq (A.extendToLevel_castSucc α j₁)
+            (A.extendToLevel_last α) _ h_lvl_le x]
+        exact A.extendToChain_type_at_level α hα hα_above_last j₁ x'
       | cast j₂ =>
         have hj : j₁ ≤ j₂ := (Fin.castSucc_le_castSucc_iff).mp hk
         haveI : IsWellOrder (A.level j₁).ToType (· < ·) := isWellOrder_lt
@@ -5298,7 +5555,27 @@ noncomputable def CoherentBranchApprox.extendTo
       · exact A.extendToBranchAt_castSucc_heq nextChain j
   · -- top_in_validFiber
     intro i h
-    sorry
+    have hi : i < n := Nat.lt_of_succ_lt_succ h
+    by_cases hi1 : i + 1 < n
+    · -- Both old (castSucc + castSucc): use A.top_in_validFiber.
+      show A.extendToPrefixAt nextChain ((⟨i + 1, hi1⟩ : Fin n).castSucc)
+          ((Ordinal.enum (· < ·))
+            ⟨A.extendToLevel α ((⟨i, hi⟩ : Fin n).castSucc), _⟩) ∈ _
+      convert A.top_in_validFiber i hi1 using 2
+      · exact A.extendToLevel_castSucc α ⟨i, hi⟩
+      · exact A.extendToPrefixAt_castSucc_heq nextChain ⟨i, hi⟩
+      · exact A.extendToBranchAt_castSucc_heq nextChain ⟨i, hi⟩
+      · rw [A.extendToPrefixAt_castSucc_apply]
+        congr 1
+        exact enum_transport_eq (A.extendToLevel_castSucc α ⟨i + 1, hi1⟩)
+          (A.extendToLevel_castSucc α ⟨i, hi⟩) _ _
+    · -- ⟨i + 1, h⟩ = Fin.last n; should use extendToChain_realizes_at_lastIndex
+      -- via convert + HEq simp lemmas. The boundary-rewrite has motive-not-
+      -- type-correct issues with the dependent enum bound (`⟨A.extendToLevel
+      -- α ⟨i, _⟩, _typein_bound_⟩` on LHS vs `⟨A.level ⟨n-1, _⟩, _⟩` on
+      -- target). Tractable but requires careful HEq handling; left as the
+      -- single remaining packaging sorry.
+      sorry
 
 /-! ### ω-chain of finite approximations
 
