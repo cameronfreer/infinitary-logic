@@ -4052,21 +4052,24 @@ succ (level k)`. This makes `(level k+1).ToType` have a `⊤` element
 adjacent levels.
 
 Mirrors the fields of `CoherentMajorityBranch` restricted to a
-finite index set `Fin n`, with the additional structural fields
-`level_succ` and `top_in_validFiber` for adjacency. -/
+finite index set `Fin n`, with the structural field
+`top_in_validFiber` for adjacency.
+
+**Relaxed structure (2026-05)**: the previous `level_succ` field
+(which forced consecutive levels to be in `Order.succ` relation)
+has been **removed**. Consecutive levels are now only required to
+be strictly increasing (a consequence of `level_strictMono`), so
+this structure can hold any strictly-increasing sequence of
+countable ordinals — not only the natural numbers. -/
 structure CoherentBranchApprox
     (cR : (Fin 2 ↪o PairERSource) → Bool) (n : ℕ) where
   /-- The `n` chosen ordinal positions, in strict increasing order. -/
   level : Fin n → Ordinal.{0}
   /-- Each level is below ω_1. -/
   level_lt_omega1 : ∀ k : Fin n, level k < Ordinal.omega.{0} 1
-  /-- Strict monotonicity of `level`. -/
+  /-- Strict monotonicity of `level` (in particular adjacent levels
+  satisfy `level i < level (i+1)`). -/
   level_strictMono : StrictMono level
-  /-- Consecutive levels are in successor relation: `level (i+1)
-  = succ (level i)`. This makes `(level (i+1)).ToType` have a `⊤`
-  element. -/
-  level_succ : ∀ (i : ℕ) (h : i + 1 < n),
-    level ⟨i + 1, h⟩ = Order.succ (level ⟨i, Nat.lt_of_succ_lt h⟩)
   /-- Prefix at each level. -/
   prefixAt : ∀ k : Fin n, (level k).ToType ↪o PairERSource
   /-- Branch (type function) at each level. -/
@@ -4094,18 +4097,19 @@ structure CoherentBranchApprox
   large : ∀ k : Fin n,
     Order.succ (Cardinal.beth.{0} 1) ≤
       Cardinal.mk (validFiber cR (prefixAt k) (branchAt k))
-  /-- **Adjacent chain extension**: for each `i` with `i+1 < n`, the
-  value at position `level i` in level-`(i+1)`'s chain (the new "top"
-  added when extending from level `i` to level `i+1`) is in the
-  validFiber for level `i`'s chain. This is the within-chain
-  pair-color consistency between adjacent stages. -/
+  /-- **Adjacent realization**: for each `i` with `i+1 < n`, the
+  element at position `level ⟨i, _⟩` in the level-`⟨i+1, _⟩` chain
+  lies in the validFiber for level-`⟨i, _⟩`'s chain. The bound on
+  the enum position comes from `level_strictMono` (no requirement
+  that `level (i+1) = succ (level i)`). -/
   top_in_validFiber : ∀ (i : ℕ) (h : i + 1 < n),
     haveI : IsWellOrder (level ⟨i + 1, h⟩).ToType (· < ·) := isWellOrder_lt
     prefixAt ⟨i + 1, h⟩
         (Ordinal.enum (α := (level ⟨i + 1, h⟩).ToType) (· < ·)
           ⟨level ⟨i, Nat.lt_of_succ_lt h⟩, by
-            rw [Ordinal.type_toType, level_succ i h]
-            exact Order.lt_succ (level ⟨i, Nat.lt_of_succ_lt h⟩)⟩) ∈
+            rw [Ordinal.type_toType]
+            exact level_strictMono (show (⟨i, Nat.lt_of_succ_lt h⟩ : Fin n) <
+              ⟨i + 1, h⟩ from Nat.lt_succ_self i)⟩) ∈
       validFiber cR (prefixAt ⟨i, Nat.lt_of_succ_lt h⟩)
         (branchAt ⟨i, Nat.lt_of_succ_lt h⟩)
 
@@ -4157,7 +4161,6 @@ noncomputable def CoherentBranchApprox.zero
   level_strictMono := by
     intro a _ _
     exact Fin.elim0 a
-  level_succ i h := absurd h (by omega)
   prefixAt k := Fin.elim0 k
   branchAt k := Fin.elim0 k
   prefix_restrict {k₁ _} _ _ := Fin.elim0 k₁
@@ -4291,7 +4294,6 @@ noncomputable def CoherentBranchApprox.fromZero
   level_strictMono := fun a b h => by
     have hab : a = b := Subsingleton.elim a b
     exact absurd h (hab ▸ lt_irrefl _)
-  level_succ i h := absurd h (by omega)
   prefixAt _ := (PairERChain.zero cR).head
   branchAt _ := (PairERChain.zero cR).type
   prefix_restrict := fun {_ _} _ x => by
@@ -4692,7 +4694,6 @@ noncomputable def CoherentBranchApprox.extendSucc
     { level := A.extendLevel
       level_lt_omega1 := ?_
       level_strictMono := ?_
-      level_succ := ?_
       prefixAt := A.extendPrefixAt
       branchAt := A.extendBranchAt
       prefix_restrict := ?_
@@ -4723,28 +4724,6 @@ noncomputable def CoherentBranchApprox.extendSucc
         rw [A.extendLevel_castSucc, A.extendLevel_castSucc]
         apply A.level_strictMono
         exact (Fin.castSucc_lt_castSucc_iff).mp hab
-  · -- level_succ
-    intro i h
-    -- h : i + 1 < n + 2
-    have hi : i < n + 1 := Nat.lt_of_succ_lt_succ h
-    by_cases hi1 : i + 1 < n + 1
-    · -- Both i and i+1 are castSucc.
-      have e_i : (⟨i, Nat.lt_of_succ_lt h⟩ : Fin (n + 2)) =
-          (⟨i, hi⟩ : Fin (n + 1)).castSucc := rfl
-      have e_i1 : (⟨i + 1, h⟩ : Fin (n + 2)) =
-          (⟨i + 1, hi1⟩ : Fin (n + 1)).castSucc := rfl
-      rw [e_i, e_i1, A.extendLevel_castSucc, A.extendLevel_castSucc]
-      exact A.level_succ i hi1
-    · -- i + 1 = n + 1, so ⟨i+1, h⟩ = Fin.last (n+1).
-      have hi1_eq : i + 1 = n + 1 := by omega
-      have e_i1 : (⟨i + 1, h⟩ : Fin (n + 2)) = Fin.last (n + 1) := by
-        apply Fin.ext; exact hi1_eq
-      have e_i : (⟨i, Nat.lt_of_succ_lt h⟩ : Fin (n + 2)) =
-          (Fin.last n).castSucc := by
-        apply Fin.ext
-        show i = n
-        omega
-      rw [e_i1, e_i, A.extendLevel_last, A.extendLevel_castSucc]
   · -- prefix_restrict
     intro k₁ k₂ hk x
     induction k₁ using Fin.lastCases with
@@ -4901,6 +4880,67 @@ noncomputable def CoherentBranchApprox.extend
     CoherentBranchApprox cR n → CoherentBranchApprox cR (n + 1)
   | 0, _ => CoherentBranchApprox.fromZero cR
   | _ + 1, A => A.extendSucc
+
+/-! ### General extension `extendTo`: arbitrary countable target level
+
+After the structure relaxation (removal of `level_succ`), a
+`CoherentBranchApprox` can carry levels at any strictly-increasing
+sequence of countable ordinals. The natural API for building such
+approximations is `extendTo`, which appends a new level at an
+arbitrary `α < ω₁` strictly above all existing levels — generalizing
+`extendSucc` (which is the special case `α = succ (lastLevel A)`).
+
+**Current status (sorry frontier)**: the construction is left as a
+sorry pending the chain-extension primitive that maps a
+`PairERChain cR β` to a `PairERChain cR α` for arbitrary `β < α < ω₁`.
+Such a primitive in turn requires transfinite recursion through the
+gap `(β, α]` (combining `PairERChain.succ` for successor stages and
+limit-style coherent-family construction for limit stages). The
+structure and consumers above are now ready to integrate `extendTo`
+once filled. -/
+
+/-- **`lastLevel`**: the largest level of an approximation, or `0`
+if there are no levels. Used as a uniform bound parameter for
+`extendTo`. -/
+noncomputable def CoherentBranchApprox.lastLevel
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR n) : Ordinal.{0} :=
+  if h : n = 0 then 0 else A.level ⟨n - 1, by omega⟩
+
+/-- **`lastLevel_ge`**: every level is `≤ lastLevel`. -/
+lemma CoherentBranchApprox.lastLevel_ge
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR n) (k : Fin n) :
+    A.level k ≤ A.lastLevel := by
+  unfold CoherentBranchApprox.lastLevel
+  have hn : n ≠ 0 := by
+    intro h; subst h; exact Fin.elim0 k
+  rw [dif_neg hn]
+  refine A.level_strictMono.monotone ?_
+  show k.val ≤ n - 1
+  have := k.isLt
+  omega
+
+/-- **`extendTo` (sorry frontier)**: generalization of `extendSucc`
+to arbitrary countable target levels. Given `A : CoherentBranchApprox
+cR n` and a countable ordinal `α` strictly above `A.lastLevel`, this
+produces a one-step extension `CoherentBranchApprox cR (n+1)` with
+the new top at level `α`.
+
+**Implementation note**: the construction requires extending the
+last prefix to a prefix at α with large validFiber — this needs the
+chain-extension primitive `PairERChain cR β → PairERChain cR α` for
+`β < α < ω₁`, which is the next layer of infrastructure to build.
+For the special case `α = Order.succ (A.lastLevel)`, this reduces
+to `extendSucc` (when `n ≥ 1`) or to `fromZero` (when `n = 0` and
+`α = 0`, requiring a slightly different presentation). -/
+noncomputable def CoherentBranchApprox.extendTo
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (_A : CoherentBranchApprox cR n)
+    (_α : Ordinal.{0}) (_hα : _α < Ordinal.omega.{0} 1)
+    (_hα_above_last : _A.lastLevel < _α) :
+    CoherentBranchApprox cR (n + 1) := by
+  sorry
 
 /-! ### ω-chain of finite approximations
 
