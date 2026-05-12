@@ -1450,6 +1450,50 @@ lemma PairERChain.succNewElement_in_validFiber
   exact (Classical.choose_spec (Classical.choose_spec
     (exists_successor_refinement cR s.head s.type s.large))).1
 
+/-! ### Agreement frontier lemmas for `PairERChain.extendTo`
+
+Three additional sorry frontiers in the same transfinite family —
+needed to consume `extendTo` in downstream packaging without
+introducing new sorries outside this layer. These belong here
+(after `commitAt`/`typeAt` are defined). -/
+
+/-- **`PairERChain.extendTo_commitAt` (frontier, sorry)**: for `δ < β`,
+the new chain's head at position `δ` agrees with `s.head` at the
+corresponding position. -/
+theorem PairERChain.extendTo_commitAt
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {β α : Ordinal.{0}} (s : PairERChain cR β)
+    (hβα : β < α) (hα : α < Ordinal.omega.{0} 1)
+    (δ : Ordinal.{0}) (hδβ : δ < β) :
+    (s.extendTo hβα hα).commitAt δ (hδβ.trans hβα) =
+      s.commitAt δ hδβ := by
+  sorry
+
+/-- **`PairERChain.extendTo_typeAt_old` (frontier, sorry)**: analog of
+`extendTo_commitAt` for the type function. -/
+theorem PairERChain.extendTo_typeAt_old
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {β α : Ordinal.{0}} (s : PairERChain cR β)
+    (hβα : β < α) (hα : α < Ordinal.omega.{0} 1)
+    (δ : Ordinal.{0}) (hδβ : δ < β) :
+    (s.extendTo hβα hα).typeAt δ (hδβ.trans hβα) =
+      s.typeAt δ hδβ := by
+  sorry
+
+/-- **`PairERChain.extendTo_head_β_in_validFiber` (frontier, sorry)**:
+the new chain's head at position `β` lies in `s`'s validFiber. This
+is the `extendTo`-analog of `succNewElement_in_validFiber`. -/
+theorem PairERChain.extendTo_head_β_in_validFiber
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {β α : Ordinal.{0}} (s : PairERChain cR β)
+    (hβα : β < α) (hα : α < Ordinal.omega.{0} 1) :
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    (s.extendTo hβα hα).head
+        (Ordinal.enum (α := α.ToType) (· < ·)
+          ⟨β, (Ordinal.type_toType α).symm ▸ hβα⟩) ∈
+      validFiber cR s.head s.type := by
+  sorry
+
 /-- **`limitWithType_commitAt`**: commit at position `δ` is the prefix's
 value at the enumerated position — parallel to `PairERChain.limit_commitAt`. -/
 lemma PairERChain.limitWithType_commitAt
@@ -4972,20 +5016,153 @@ lemma CoherentBranchApprox.lastLevel_ge
   have := k.isLt
   omega
 
-/-- **`CoherentBranchApprox.extendTo`** (sorry, depends on
-`PairERChain.extendTo`): generalization of `extendSucc` to arbitrary
-countable target levels.
+/-! ### Helpers for `CoherentBranchApprox.extendTo`
+
+The helpers `extendToLevel` / `extendToPrefixAt` / `extendToBranchAt`
+parallel `extendLevel` / `extendPrefixAt` / `extendBranchAt` from the
+`extendSucc` machinery but are parameterized by an arbitrary target
+level `α` (and, for the prefix/branch helpers, an external chain at
+`α`). The HEq simp lemmas and applied-Eq lemmas (via the existing
+`orderEmbed_ordinal_apply_heq` / `fn_ordinal_apply_heq` helpers) are
+exact analogs of the `extendSucc` versions. -/
+
+/-- **`extendToLevel`**: level function for the one-step extension
+to an arbitrary target `α`. -/
+noncomputable def CoherentBranchApprox.extendToLevel
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR n) (α : Ordinal.{0}) :
+    Fin (n + 1) → Ordinal.{0} :=
+  Fin.lastCases α (fun k => A.level k)
+
+@[simp] theorem CoherentBranchApprox.extendToLevel_last
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR n) (α : Ordinal.{0}) :
+    A.extendToLevel α (Fin.last n) = α := Fin.lastCases_last
+
+@[simp] theorem CoherentBranchApprox.extendToLevel_castSucc
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR n) (α : Ordinal.{0}) (k : Fin n) :
+    A.extendToLevel α k.castSucc = A.level k := Fin.lastCases_castSucc k
+
+/-- **`extendToPrefixAt`**: prefix function for the one-step extension,
+using `Fin.lastCases` and the supplied chain at `α` for the new top. -/
+noncomputable def CoherentBranchApprox.extendToPrefixAt
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR n) {α : Ordinal.{0}}
+    (chain_α : PairERChain cR α) :
+    ∀ k : Fin (n + 1), (A.extendToLevel α k).ToType ↪o PairERSource :=
+  fun k => by
+    refine Fin.lastCases
+      (motive := fun k => (A.extendToLevel α k).ToType ↪o PairERSource) ?_ ?_ k
+    · show (A.extendToLevel α (Fin.last n)).ToType ↪o PairERSource
+      rw [A.extendToLevel_last]; exact chain_α.head
+    · intro j
+      show (A.extendToLevel α j.castSucc).ToType ↪o PairERSource
+      rw [A.extendToLevel_castSucc]; exact A.prefixAt j
+
+theorem CoherentBranchApprox.extendToPrefixAt_last_heq
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR n) {α : Ordinal.{0}}
+    (chain_α : PairERChain cR α) :
+    HEq (A.extendToPrefixAt chain_α (Fin.last n)) chain_α.head := by
+  unfold CoherentBranchApprox.extendToPrefixAt
+  rw [Fin.lastCases_last]
+  exact cast_heq _ _
+
+theorem CoherentBranchApprox.extendToPrefixAt_castSucc_heq
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR n) {α : Ordinal.{0}}
+    (chain_α : PairERChain cR α) (k : Fin n) :
+    HEq (A.extendToPrefixAt chain_α k.castSucc) (A.prefixAt k) := by
+  unfold CoherentBranchApprox.extendToPrefixAt
+  rw [Fin.lastCases_castSucc]
+  exact cast_heq _ _
+
+theorem CoherentBranchApprox.extendToPrefixAt_last_apply
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR n) {α : Ordinal.{0}}
+    (chain_α : PairERChain cR α) (x : (A.extendToLevel α (Fin.last n)).ToType) :
+    A.extendToPrefixAt chain_α (Fin.last n) x =
+      chain_α.head ((A.extendToLevel_last α) ▸ x) :=
+  orderEmbed_ordinal_apply_heq (A.extendToLevel_last α) _ _
+    (A.extendToPrefixAt_last_heq chain_α) x
+
+theorem CoherentBranchApprox.extendToPrefixAt_castSucc_apply
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR n) {α : Ordinal.{0}}
+    (chain_α : PairERChain cR α) (k : Fin n)
+    (x : (A.extendToLevel α k.castSucc).ToType) :
+    A.extendToPrefixAt chain_α k.castSucc x =
+      A.prefixAt k ((A.extendToLevel_castSucc α k) ▸ x) :=
+  orderEmbed_ordinal_apply_heq (A.extendToLevel_castSucc α k) _ _
+    (A.extendToPrefixAt_castSucc_heq chain_α k) x
+
+/-- **`extendToBranchAt`**: branch function for the one-step extension. -/
+noncomputable def CoherentBranchApprox.extendToBranchAt
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR n) {α : Ordinal.{0}}
+    (chain_α : PairERChain cR α) :
+    ∀ k : Fin (n + 1), (A.extendToLevel α k).ToType → Bool :=
+  fun k => by
+    refine Fin.lastCases
+      (motive := fun k => (A.extendToLevel α k).ToType → Bool) ?_ ?_ k
+    · show (A.extendToLevel α (Fin.last n)).ToType → Bool
+      rw [A.extendToLevel_last]; exact chain_α.type
+    · intro j
+      show (A.extendToLevel α j.castSucc).ToType → Bool
+      rw [A.extendToLevel_castSucc]; exact A.branchAt j
+
+theorem CoherentBranchApprox.extendToBranchAt_last_heq
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR n) {α : Ordinal.{0}}
+    (chain_α : PairERChain cR α) :
+    HEq (A.extendToBranchAt chain_α (Fin.last n)) chain_α.type := by
+  unfold CoherentBranchApprox.extendToBranchAt
+  rw [Fin.lastCases_last]
+  exact cast_heq _ _
+
+theorem CoherentBranchApprox.extendToBranchAt_castSucc_heq
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR n) {α : Ordinal.{0}}
+    (chain_α : PairERChain cR α) (k : Fin n) :
+    HEq (A.extendToBranchAt chain_α k.castSucc) (A.branchAt k) := by
+  unfold CoherentBranchApprox.extendToBranchAt
+  rw [Fin.lastCases_castSucc]
+  exact cast_heq _ _
+
+theorem CoherentBranchApprox.extendToBranchAt_last_apply
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR n) {α : Ordinal.{0}}
+    (chain_α : PairERChain cR α) (x : (A.extendToLevel α (Fin.last n)).ToType) :
+    A.extendToBranchAt chain_α (Fin.last n) x =
+      chain_α.type ((A.extendToLevel_last α) ▸ x) :=
+  fn_ordinal_apply_heq (A.extendToLevel_last α) _ _
+    (A.extendToBranchAt_last_heq chain_α) x
+
+theorem CoherentBranchApprox.extendToBranchAt_castSucc_apply
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR n) {α : Ordinal.{0}}
+    (chain_α : PairERChain cR α) (k : Fin n)
+    (x : (A.extendToLevel α k.castSucc).ToType) :
+    A.extendToBranchAt chain_α k.castSucc x =
+      A.branchAt k ((A.extendToLevel_castSucc α k) ▸ x) :=
+  fn_ordinal_apply_heq (A.extendToLevel_castSucc α k) _ _
+    (A.extendToBranchAt_castSucc_heq chain_α k) x
+
+/-- **`CoherentBranchApprox.extendTo`** (depends on
+`PairERChain.extendTo` family): generalization of `extendSucc` to
+arbitrary countable target levels.
 
 Given `A : CoherentBranchApprox cR n` and a countable ordinal `α`
-strictly above `A.lastLevel`, produce a one-step extension
+strictly above `A.lastLevel`, produces a one-step extension
 `CoherentBranchApprox cR (n+1)` with the new top at level `α`.
 
-**Body invokes `PairERChain.extendTo`** to obtain the chain at level
-`α`. The remaining packaging (analogous to `extendSucc`'s HEq-bridged
-helpers + proofs) is left as a sorry; the substantive
-transfinite-recursion content has been **moved into**
-`PairERChain.extendTo` — the named frontier — so this declaration
-no longer hides transfinite recursion. -/
+The body invokes `PairERChain.extendTo` (the named transfinite
+frontier) to obtain the chain at `α`, then packages it via the
+`extendTo{Level,PrefixAt,BranchAt}` helpers. All boundary HEq
+bookkeeping is done by `orderEmbed_ordinal_apply_heq` /
+`fn_ordinal_apply_heq` + the agreement frontier lemmas
+(`extendTo_commitAt`, `_typeAt_old`, `_head_β_in_validFiber`). -/
 noncomputable def CoherentBranchApprox.extendTo
     {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
     (A : CoherentBranchApprox cR n)
@@ -4993,18 +5170,16 @@ noncomputable def CoherentBranchApprox.extendTo
     (hα_above_last : A.lastLevel < α) :
     CoherentBranchApprox cR (n + 1) := by
   classical
-  -- The new chain at α, obtained via `PairERChain.extendTo` applied
-  -- to the last chain of `A` (or `PairERChain.zero cR` when n = 0).
-  let _nextChain : PairERChain cR α := by
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  -- The new chain at α, obtained via `PairERChain.extendTo`.
+  let nextChain : PairERChain cR α := by
     by_cases hn : n = 0
-    · -- n = 0 ⇒ A.lastLevel = 0, so we extend from PairERChain.zero.
-      have hβα : (0 : Ordinal.{0}) < α := by
+    · have hβα : (0 : Ordinal.{0}) < α := by
         have h_eq : A.lastLevel = 0 := by
           unfold CoherentBranchApprox.lastLevel; rw [dif_pos hn]
         exact h_eq ▸ hα_above_last
       exact (PairERChain.zero cR).extendTo hβα hα
-    · -- n ≥ 1 ⇒ extract the last chain of A and apply extendTo.
-      have hn' : n - 1 < n := by omega
+    · have hn' : n - 1 < n := by omega
       let lastChain : PairERChain cR (A.level ⟨n - 1, hn'⟩) :=
         ⟨A.prefixAt ⟨n - 1, hn'⟩, A.branchAt ⟨n - 1, hn'⟩,
           A.large ⟨n - 1, hn'⟩⟩
@@ -5013,11 +5188,117 @@ noncomputable def CoherentBranchApprox.extendTo
           unfold CoherentBranchApprox.lastLevel; rw [dif_neg hn]
         exact h_eq ▸ hα_above_last
       exact lastChain.extendTo hβα hα
-  -- Packaging `_nextChain` into a `CoherentBranchApprox cR (n+1)` is
-  -- analogous to `extendSucc`'s use of `extendLevel`, `extendPrefixAt`,
-  -- `extendBranchAt`, parameterized over the new top `α` instead of
-  -- `Order.succ (A.level (Fin.last n))`. Left as a follow-up.
-  sorry
+  refine
+    { level := A.extendToLevel α
+      level_lt_omega1 := ?_
+      level_strictMono := ?_
+      prefixAt := A.extendToPrefixAt nextChain
+      branchAt := A.extendToBranchAt nextChain
+      prefix_restrict := ?_
+      branch_restrict := ?_
+      large := ?_
+      top_in_validFiber := ?_ }
+  · -- level_lt_omega1
+    intro k
+    induction k using Fin.lastCases with
+    | last => rw [A.extendToLevel_last]; exact hα
+    | cast k => rw [A.extendToLevel_castSucc]; exact A.level_lt_omega1 k
+  · -- level_strictMono
+    intro a b hab
+    induction a using Fin.lastCases with
+    | last =>
+      exfalso
+      exact absurd hab (not_lt_of_ge (Fin.le_last b))
+    | cast j₁ =>
+      induction b using Fin.lastCases with
+      | last =>
+        rw [A.extendToLevel_castSucc, A.extendToLevel_last]
+        exact (A.lastLevel_ge j₁).trans_lt hα_above_last
+      | cast j₂ =>
+        rw [A.extendToLevel_castSucc, A.extendToLevel_castSucc]
+        apply A.level_strictMono
+        exact (Fin.castSucc_lt_castSucc_iff).mp hab
+  · -- prefix_restrict
+    intro k₁ k₂ hk x
+    induction k₁ using Fin.lastCases with
+    | last =>
+      induction k₂ using Fin.lastCases with
+      | last =>
+        congr 1
+        have h : Ordinal.initialSegToType
+            (le_refl (A.extendToLevel α (Fin.last n))) =
+            InitialSeg.refl _ := Subsingleton.elim _ _
+        rw [h]; rfl
+      | cast j₂ =>
+        exact absurd hk (not_le_of_gt (Fin.castSucc_lt_last j₂))
+    | cast j₁ =>
+      induction k₂ using Fin.lastCases with
+      | last =>
+        -- Boundary case (k₁ old, k₂ = new top).
+        -- LHS reduces via extendToPrefixAt_last_apply + extendTo_commitAt.
+        -- RHS reduces via extendToPrefixAt_castSucc_apply.
+        sorry
+      | cast j₂ =>
+        have hj : j₁ ≤ j₂ := (Fin.castSucc_le_castSucc_iff).mp hk
+        haveI : IsWellOrder (A.level j₁).ToType (· < ·) := isWellOrder_lt
+        haveI : IsWellOrder (A.level j₂).ToType (· < ·) := isWellOrder_lt
+        set x' : (A.level j₁).ToType := (A.extendToLevel_castSucc α j₁) ▸ x with hx'
+        rw [A.extendToPrefixAt_castSucc_apply, A.extendToPrefixAt_castSucc_apply,
+            ← hx']
+        have hres := A.prefix_restrict hj x'
+        convert hres using 2
+        exact initialSegToType_transport_eq
+          (A.extendToLevel_castSucc α j₁) (A.extendToLevel_castSucc α j₂) _ _ x
+  · -- branch_restrict (parallel to prefix_restrict)
+    intro k₁ k₂ hk x
+    induction k₁ using Fin.lastCases with
+    | last =>
+      induction k₂ using Fin.lastCases with
+      | last =>
+        congr 1
+        have h : Ordinal.initialSegToType
+            (le_refl (A.extendToLevel α (Fin.last n))) =
+            InitialSeg.refl _ := Subsingleton.elim _ _
+        rw [h]; rfl
+      | cast j₂ =>
+        exact absurd hk (not_le_of_gt (Fin.castSucc_lt_last j₂))
+    | cast j₁ =>
+      induction k₂ using Fin.lastCases with
+      | last =>
+        sorry
+      | cast j₂ =>
+        have hj : j₁ ≤ j₂ := (Fin.castSucc_le_castSucc_iff).mp hk
+        haveI : IsWellOrder (A.level j₁).ToType (· < ·) := isWellOrder_lt
+        haveI : IsWellOrder (A.level j₂).ToType (· < ·) := isWellOrder_lt
+        set x' : (A.level j₁).ToType := (A.extendToLevel_castSucc α j₁) ▸ x with hx'
+        rw [A.extendToBranchAt_castSucc_apply, A.extendToBranchAt_castSucc_apply,
+            ← hx']
+        have hres := A.branch_restrict hj x'
+        convert hres using 2
+        exact initialSegToType_transport_eq
+          (A.extendToLevel_castSucc α j₁) (A.extendToLevel_castSucc α j₂) _ _ x
+  · -- large
+    intro k
+    induction k using Fin.lastCases with
+    | last =>
+      show Order.succ (Cardinal.beth.{0} 1) ≤
+          Cardinal.mk (validFiber cR (A.extendToPrefixAt nextChain (Fin.last n))
+            (A.extendToBranchAt nextChain (Fin.last n)))
+      convert nextChain.large using 4
+      · exact A.extendToLevel_last α
+      · exact A.extendToPrefixAt_last_heq nextChain
+      · exact A.extendToBranchAt_last_heq nextChain
+    | cast j =>
+      show Order.succ (Cardinal.beth.{0} 1) ≤
+          Cardinal.mk (validFiber cR (A.extendToPrefixAt nextChain j.castSucc)
+            (A.extendToBranchAt nextChain j.castSucc))
+      convert A.large j using 4
+      · exact A.extendToLevel_castSucc α j
+      · exact A.extendToPrefixAt_castSucc_heq nextChain j
+      · exact A.extendToBranchAt_castSucc_heq nextChain j
+  · -- top_in_validFiber
+    intro i h
+    sorry
 
 /-! ### ω-chain of finite approximations
 
