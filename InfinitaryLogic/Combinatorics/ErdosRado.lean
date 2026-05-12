@@ -1597,6 +1597,50 @@ noncomputable def PairERChain.Extension.limitWithType
   typeAt_old := h_typeAt
   head_β_in_validFiber := h_realizes
 
+/-- **`Extension.trans`**: composing two extensions. Given `s : PairERChain
+cR β` and chains at intermediate levels `γ` and `α` (with `β < γ < α`),
+the composed extension `Extension s (hβγ.trans hγα)` has:
+- `chain := e₂.chain`;
+- `commitAt_old` / `typeAt_old`: chain agreement at `δ < β` follows
+  from `e₂`'s agreement at `δ < γ` chained with `e₁`'s agreement at
+  `δ < β`.
+- `head_β_in_validFiber`: the new top at position `β` in `e₂.chain`
+  agrees with `e₁.chain`'s top at position `β` (by `e₂.commitAt_old β
+  hβγ`), so the validFiber membership transfers from
+  `e₁.head_β_in_validFiber`.
+
+This lemma is the gluing primitive for the transfinite recursion
+building `extendToExt`: at successor stages compose with
+`Extension.succ`, at limit stages compose with
+`Extension.limitWithType` over a chosen cofinal `ω`-sequence. -/
+noncomputable def PairERChain.Extension.trans
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {β γ α : Ordinal.{0}} {s : PairERChain cR β}
+    {hβγ : β < γ} {hγα : γ < α}
+    (e₁ : PairERChain.Extension s hβγ)
+    (e₂ : PairERChain.Extension e₁.chain hγα) :
+    PairERChain.Extension s (hβγ.trans hγα) where
+  chain := e₂.chain
+  commitAt_old := fun δ hδβ =>
+    (e₂.commitAt_old δ (hδβ.trans hβγ)).trans (e₁.commitAt_old δ hδβ)
+  typeAt_old := fun δ hδβ =>
+    (e₂.typeAt_old δ (hδβ.trans hβγ)).trans (e₁.typeAt_old δ hδβ)
+  head_β_in_validFiber := by
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder γ.ToType (· < ·) := isWellOrder_lt
+    -- The enum at position β in α.ToType, after passing through e₂.chain.head,
+    -- agrees with e₁.chain.head's value at position β in γ.ToType
+    -- (by e₂.commitAt_old β hβγ).
+    have h_commit : e₂.chain.commitAt β (hβγ.trans hγα) =
+        e₁.chain.commitAt β hβγ := e₂.commitAt_old β hβγ
+    -- The goal is e₂.chain.head (enum at β in α.ToType) ∈ validFiber.
+    -- Unfold commitAt to head + enum; rewrite via h_commit.
+    show e₂.chain.head _ ∈ validFiber cR s.head s.type
+    show e₂.chain.commitAt β (hβγ.trans hγα) ∈ validFiber cR s.head s.type
+    rw [h_commit]
+    show e₁.chain.head _ ∈ validFiber cR s.head s.type
+    exact e₁.head_β_in_validFiber
+
 /-- **`limitWithType_commitAt`**: commit at position `δ` is the prefix's
 value at the enumerated position — parallel to `PairERChain.limit_commitAt`. -/
 lemma PairERChain.limitWithType_commitAt
