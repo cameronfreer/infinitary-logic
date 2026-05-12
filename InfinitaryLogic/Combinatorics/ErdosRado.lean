@@ -1205,29 +1205,22 @@ lemma PairERChain.limit_head {cR : (Fin 2 ↪o PairERSource) → Bool}
 The general primitive needed for `CoherentBranchApprox.extendTo`:
 given a `PairERChain cR β`, build a `PairERChain cR α` for any
 `α < ω_1` with `β < α`. The new chain agrees with the old on the
-initial segment `β.ToType ↪ α.ToType` (stated via separate `_extends`
-lemmas).
+initial segment `β.ToType ↪ α.ToType`.
 
-The **full** `extendTo` is the **named transfinite-extension frontier**
-(currently a sorry): filling it requires recursing through the gap
-`(β, α]`, threading `PairERChain.succ` for successor stages and
-`PairERChain.limit`-style construction for limit stages.
+**API**: a single bundled structure `PairERChain.Extension s α` packages
+the new chain together with all agreement data; the single named
+transfinite frontier is `PairERChain.extendToExt`, which produces an
+`Extension`. The traditional projections `extendTo`, `extendTo_commitAt`,
+`extendTo_typeAt_old`, `extendTo_head_β_in_validFiber` are recovered
+from `extendToExt` and therefore inherit a single source of `sorryAx`.
 
-Two **easy cases** are filled directly:
-- `extendTo_of_succ_eq` (`α = succ β`): just `s.succ` transported
-  along the equation.
-- `extendTo_of_limitWithType` (the prefix/branch/large at `α` are
-  pre-supplied): a wrapper around `PairERChain.limitWithType`. -/
-
-/-- **`PairERChain.extendTo` (frontier, sorry)**: extend a chain at
-level `β` to one at any countable `α > β`. The construction needs
-transfinite recursion through `(β, α]`; left as a sorry frontier. -/
-noncomputable def PairERChain.extendTo
-    {cR : (Fin 2 ↪o PairERSource) → Bool}
-    {β α : Ordinal.{0}} (_s : PairERChain cR β)
-    (_hβα : β < α) (_hα : α < Ordinal.omega.{0} 1) :
-    PairERChain cR α := by
-  sorry
+The `Extension` structure + its constructors `Extension.succ` and
+`Extension.limitWithType` are defined below (after `commitAt` /
+`typeAt`). Two **easy non-bundled chain-only constructors** are
+filled here directly for downstream API symmetry:
+- `extendTo_of_succ_eq` (`α = succ β`): just `s.succ` transported.
+- `extendTo_of_limitWithType` (prefix/branch/large pre-supplied):
+  a wrapper around `PairERChain.limitWithType`. -/
 
 /-- **Easy case (successor)**: when `α = Order.succ β`, the
 extension is `s.succ` transported along the equation. -/
@@ -1450,39 +1443,91 @@ lemma PairERChain.succNewElement_in_validFiber
   exact (Classical.choose_spec (Classical.choose_spec
     (exists_successor_refinement cR s.head s.type s.large))).1
 
-/-! ### Agreement frontier lemmas for `PairERChain.extendTo`
+/-! ### Bundled `PairERChain.Extension` and the single named frontier
 
-Three additional sorry frontiers in the same transfinite family —
-needed to consume `extendTo` in downstream packaging without
-introducing new sorries outside this layer. These belong here
-(after `commitAt`/`typeAt` are defined). -/
+The four sorries `extendTo`, `extendTo_commitAt`, `extendTo_typeAt_old`,
+`extendTo_head_β_in_validFiber` are now bundled into a single
+structure-valued frontier `extendToExt` returning a
+`PairERChain.Extension`. The four chain-level declarations are
+recovered as projections (no separate sorries). -/
 
-/-- **`PairERChain.extendTo_commitAt` (frontier, sorry)**: for `δ < β`,
-the new chain's head at position `δ` agrees with `s.head` at the
-corresponding position. -/
+/-- **`PairERChain.Extension`**: a `PairERChain cR α` together with all
+the coherence data required to extend a given chain `s : PairERChain
+cR β` (for `β < α`). Bundles:
+
+- `chain : PairERChain cR α` — the extended chain;
+- `commitAt_old` / `typeAt_old` — the head / type at any `δ < β` in
+  the new chain agrees with `s` at the corresponding position;
+- `head_β_in_validFiber` — the new chain's head at position `β`
+  (i.e., the "new top" relative to `s`) lies in `s`'s validFiber.
+
+Forming an `Extension` requires producing all four pieces of data
+simultaneously, which forces the transfinite proof (the only
+remaining frontier sorry, named `extendToExt`) to be coherent. -/
+structure PairERChain.Extension
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {β : Ordinal.{0}} (s : PairERChain cR β)
+    {α : Ordinal.{0}} (hβα : β < α) where
+  /-- The chain at level `α`. -/
+  chain : PairERChain cR α
+  /-- For `δ < β`, the new chain's head at position `δ` agrees with `s`. -/
+  commitAt_old : ∀ (δ : Ordinal.{0}) (hδβ : δ < β),
+    chain.commitAt δ (hδβ.trans hβα) = s.commitAt δ hδβ
+  /-- For `δ < β`, the new chain's type at position `δ` agrees with `s`. -/
+  typeAt_old : ∀ (δ : Ordinal.{0}) (hδβ : δ < β),
+    chain.typeAt δ (hδβ.trans hβα) = s.typeAt δ hδβ
+  /-- The new chain's head at position `β` lies in `s`'s validFiber
+  (the analog of `succNewElement_in_validFiber` for arbitrary `α`). -/
+  head_β_in_validFiber :
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    chain.head (Ordinal.enum (α := α.ToType) (· < ·)
+      ⟨β, (Ordinal.type_toType α).symm ▸ hβα⟩) ∈
+      validFiber cR s.head s.type
+
+/-- **`PairERChain.extendToExt` (the single transfinite frontier)**:
+extend a chain `s : PairERChain cR β` to a bundled `Extension` for
+any countable `α > β`. Filling this is the named transfinite-extension
+frontier; everything downstream is recovered as projections. -/
+noncomputable def PairERChain.extendToExt
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {β α : Ordinal.{0}} (_s : PairERChain cR β)
+    (_hβα : β < α) (_hα : α < Ordinal.omega.{0} 1) :
+    PairERChain.Extension _s _hβα := by
+  sorry
+
+/-- **`PairERChain.extendTo`**: chain-only projection of `extendToExt`. -/
+noncomputable def PairERChain.extendTo
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {β α : Ordinal.{0}} (s : PairERChain cR β)
+    (hβα : β < α) (hα : α < Ordinal.omega.{0} 1) :
+    PairERChain cR α :=
+  (s.extendToExt hβα hα).chain
+
+/-- **`PairERChain.extendTo_commitAt`**: agreement at `δ < β` —
+projection of `Extension.commitAt_old`. -/
 theorem PairERChain.extendTo_commitAt
     {cR : (Fin 2 ↪o PairERSource) → Bool}
     {β α : Ordinal.{0}} (s : PairERChain cR β)
     (hβα : β < α) (hα : α < Ordinal.omega.{0} 1)
     (δ : Ordinal.{0}) (hδβ : δ < β) :
     (s.extendTo hβα hα).commitAt δ (hδβ.trans hβα) =
-      s.commitAt δ hδβ := by
-  sorry
+      s.commitAt δ hδβ :=
+  (s.extendToExt hβα hα).commitAt_old δ hδβ
 
-/-- **`PairERChain.extendTo_typeAt_old` (frontier, sorry)**: analog of
-`extendTo_commitAt` for the type function. -/
+/-- **`PairERChain.extendTo_typeAt_old`**: agreement at `δ < β` for
+the type function — projection of `Extension.typeAt_old`. -/
 theorem PairERChain.extendTo_typeAt_old
     {cR : (Fin 2 ↪o PairERSource) → Bool}
     {β α : Ordinal.{0}} (s : PairERChain cR β)
     (hβα : β < α) (hα : α < Ordinal.omega.{0} 1)
     (δ : Ordinal.{0}) (hδβ : δ < β) :
     (s.extendTo hβα hα).typeAt δ (hδβ.trans hβα) =
-      s.typeAt δ hδβ := by
-  sorry
+      s.typeAt δ hδβ :=
+  (s.extendToExt hβα hα).typeAt_old δ hδβ
 
-/-- **`PairERChain.extendTo_head_β_in_validFiber` (frontier, sorry)**:
-the new chain's head at position `β` lies in `s`'s validFiber. This
-is the `extendTo`-analog of `succNewElement_in_validFiber`. -/
+/-- **`PairERChain.extendTo_head_β_in_validFiber`**: the new chain's
+head at position `β` lies in `s`'s validFiber — projection of
+`Extension.head_β_in_validFiber`. -/
 theorem PairERChain.extendTo_head_β_in_validFiber
     {cR : (Fin 2 ↪o PairERSource) → Bool}
     {β α : Ordinal.{0}} (s : PairERChain cR β)
@@ -1491,8 +1536,66 @@ theorem PairERChain.extendTo_head_β_in_validFiber
     (s.extendTo hβα hα).head
         (Ordinal.enum (α := α.ToType) (· < ·)
           ⟨β, (Ordinal.type_toType α).symm ▸ hβα⟩) ∈
-      validFiber cR s.head s.type := by
-  sorry
+      validFiber cR s.head s.type :=
+  (s.extendToExt hβα hα).head_β_in_validFiber
+
+/-! ### Clean constructors for `PairERChain.Extension`
+
+These build an `Extension` directly (no sorry), for use in the
+eventual transfinite recursion at successor stages (`Extension.succ`)
+and limit stages with a supplied coherent family
+(`Extension.limitWithType`). -/
+
+/-- **`Extension.succ`**: the successor-step extension. When `α =
+Order.succ β`, the chain is `s.succ` and the agreement data comes
+from `PairERChain.succ_commitAt` / `succ_typeAt_old` /
+`succNewElement_in_validFiber` (after identifying `enum at β in
+(Order.succ β).ToType = ⊤`). -/
+noncomputable def PairERChain.Extension.succ
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {β : Ordinal.{0}}
+    (s : PairERChain cR β) :
+    PairERChain.Extension s (Order.lt_succ β) where
+  chain := s.succ
+  commitAt_old := fun δ hδβ => PairERChain.succ_commitAt s δ hδβ
+  typeAt_old := fun δ hδβ => PairERChain.succ_typeAt_old s δ hδβ
+  head_β_in_validFiber := by
+    haveI : IsWellOrder (Order.succ β).ToType (· < ·) := isWellOrder_lt
+    -- The enum at position β in (Order.succ β).ToType is `⊤`.
+    have h_top_eq : (⊤ : (Order.succ β).ToType) =
+        Ordinal.enum (α := (Order.succ β).ToType) (· < ·)
+          ⟨β, (Ordinal.type_toType _).symm ▸ Order.lt_succ β⟩ :=
+      Ordinal.enum_succ_eq_top.symm
+    rw [← h_top_eq, PairERChain.succ_head_top]
+    exact s.succNewElement_in_validFiber
+
+/-- **`Extension.limitWithType`**: the limit-step extension with
+prescribed prefix/branch/largeness data plus explicit agreement
+witnesses. Wraps `PairERChain.limitWithType` and lifts the supplied
+agreement data into the bundled structure. -/
+noncomputable def PairERChain.Extension.limitWithType
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {β : Ordinal.{0}} (s : PairERChain cR β)
+    {α : Ordinal.{0}} (hβα : β < α)
+    (p : α.ToType ↪o PairERSource) (τ : α.ToType → Bool)
+    (hlarge : Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (validFiber cR p τ))
+    (h_commitAt : ∀ (δ : Ordinal.{0}) (hδβ : δ < β),
+      (PairERChain.limitWithType (cR := cR) p τ hlarge).commitAt δ
+          (hδβ.trans hβα) = s.commitAt δ hδβ)
+    (h_typeAt : ∀ (δ : Ordinal.{0}) (hδβ : δ < β),
+      (PairERChain.limitWithType (cR := cR) p τ hlarge).typeAt δ
+          (hδβ.trans hβα) = s.typeAt δ hδβ)
+    (h_realizes :
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      (PairERChain.limitWithType (cR := cR) p τ hlarge).head
+          (Ordinal.enum (α := α.ToType) (· < ·)
+            ⟨β, (Ordinal.type_toType α).symm ▸ hβα⟩) ∈
+        validFiber cR s.head s.type) :
+    PairERChain.Extension s hβα where
+  chain := PairERChain.limitWithType p τ hlarge
+  commitAt_old := h_commitAt
+  typeAt_old := h_typeAt
+  head_β_in_validFiber := h_realizes
 
 /-- **`limitWithType_commitAt`**: commit at position `δ` is the prefix's
 value at the enumerated position — parallel to `PairERChain.limit_commitAt`. -/
