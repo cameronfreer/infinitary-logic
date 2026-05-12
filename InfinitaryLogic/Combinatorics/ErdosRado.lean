@@ -5569,13 +5569,42 @@ noncomputable def CoherentBranchApprox.extendTo
         congr 1
         exact enum_transport_eq (A.extendToLevel_castSucc α ⟨i + 1, hi1⟩)
           (A.extendToLevel_castSucc α ⟨i, hi⟩) _ _
-    · -- ⟨i + 1, h⟩ = Fin.last n; should use extendToChain_realizes_at_lastIndex
-      -- via convert + HEq simp lemmas. The boundary-rewrite has motive-not-
-      -- type-correct issues with the dependent enum bound (`⟨A.extendToLevel
-      -- α ⟨i, _⟩, _typein_bound_⟩` on LHS vs `⟨A.level ⟨n-1, _⟩, _⟩` on
-      -- target). Tractable but requires careful HEq handling; left as the
-      -- single remaining packaging sorry.
-      sorry
+    · -- ⟨i + 1, h⟩ = Fin.last n; use extendToChain_realizes_at_lastIndex.
+      -- We subst n = i + 1 so the indices become concrete, then bridge via
+      -- the apply lemmas and `orderEmbed_ordinal_apply_heq` /
+      -- `enum_transport_eq` for the dependent enum bound.
+      have hi1_eq : i + 1 = n := by omega
+      obtain rfl : n = i + 1 := hi1_eq.symm
+      have hn_ne_zero : i + 1 ≠ 0 := by omega
+      have hn' : i + 1 - 1 < i + 1 := by omega
+      have h_idx : (⟨i, hi⟩ : Fin (i + 1)) = ⟨i + 1 - 1, hn'⟩ := by
+        apply Fin.ext; show i = i + 1 - 1; omega
+      have h_last : (⟨i + 1, h⟩ : Fin (i + 1 + 1)) = Fin.last (i + 1) :=
+        Fin.ext rfl
+      convert A.extendToChain_realizes_at_lastIndex α hα hα_above_last
+          hn_ne_zero using 2
+      · show A.extendToLevel α (⟨i, hi⟩ : Fin (i + 1)).castSucc =
+          A.level ⟨i + 1 - 1, hn'⟩
+        rw [A.extendToLevel_castSucc α ⟨i, hi⟩, h_idx]
+      · show HEq (A.extendToPrefixAt nextChain (⟨i, hi⟩ : Fin (i + 1)).castSucc)
+          (A.prefixAt ⟨i + 1 - 1, hn'⟩)
+        rw [h_idx]
+        exact A.extendToPrefixAt_castSucc_heq nextChain _
+      · show HEq (A.extendToBranchAt nextChain (⟨i, hi⟩ : Fin (i + 1)).castSucc)
+          (A.branchAt ⟨i + 1 - 1, hn'⟩)
+        rw [h_idx]
+        exact A.extendToBranchAt_castSucc_heq nextChain _
+      · haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+        have h_lvl : A.extendToLevel α ⟨i + 1, h⟩ = α := by
+          show A.extendToLevel α (Fin.last (i + 1)) = α
+          exact A.extendToLevel_last α
+        have h_fn_heq : HEq (A.extendToPrefixAt nextChain ⟨i + 1, h⟩)
+            nextChain.head := by
+          rw [h_last]; exact A.extendToPrefixAt_last_heq nextChain
+        rw [orderEmbed_ordinal_apply_heq h_lvl _ _ h_fn_heq]
+        congr 1
+        exact enum_transport_eq h_lvl
+          (A.extendToLevel_castSucc α ⟨i + 1 - 1, hn'⟩) _ _
 
 /-! ### ω-chain of finite approximations
 
