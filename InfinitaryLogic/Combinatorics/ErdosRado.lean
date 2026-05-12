@@ -1200,6 +1200,57 @@ lemma PairERChain.limit_head {cR : (Fin 2 ↪o PairERSource) → Bool}
     (p : α.ToType ↪o PairERSource) :
     (PairERChain.limit (cR := cR) hα p).head = p := rfl
 
+/-! ### `PairERChain.extendTo`: chain extension to arbitrary `α > β`
+
+The general primitive needed for `CoherentBranchApprox.extendTo`:
+given a `PairERChain cR β`, build a `PairERChain cR α` for any
+`α < ω_1` with `β < α`. The new chain agrees with the old on the
+initial segment `β.ToType ↪ α.ToType` (stated via separate `_extends`
+lemmas).
+
+The **full** `extendTo` is the **named transfinite-extension frontier**
+(currently a sorry): filling it requires recursing through the gap
+`(β, α]`, threading `PairERChain.succ` for successor stages and
+`PairERChain.limit`-style construction for limit stages.
+
+Two **easy cases** are filled directly:
+- `extendTo_of_succ_eq` (`α = succ β`): just `s.succ` transported
+  along the equation.
+- `extendTo_of_limitWithType` (the prefix/branch/large at `α` are
+  pre-supplied): a wrapper around `PairERChain.limitWithType`. -/
+
+/-- **`PairERChain.extendTo` (frontier, sorry)**: extend a chain at
+level `β` to one at any countable `α > β`. The construction needs
+transfinite recursion through `(β, α]`; left as a sorry frontier. -/
+noncomputable def PairERChain.extendTo
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {β α : Ordinal.{0}} (_s : PairERChain cR β)
+    (_hβα : β < α) (_hα : α < Ordinal.omega.{0} 1) :
+    PairERChain cR α := by
+  sorry
+
+/-- **Easy case (successor)**: when `α = Order.succ β`, the
+extension is `s.succ` transported along the equation. -/
+noncomputable def PairERChain.extendTo_of_succ_eq
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {β α : Ordinal.{0}} (s : PairERChain cR β)
+    (h_eq : α = Order.succ β) : PairERChain cR α :=
+  h_eq.symm ▸ s.succ
+
+/-- **Easy case (limit, prescribed data)**: when a prefix `p`, branch
+`τ`, and largeness witness at level `α` are pre-supplied (the
+typical use case after gluing a coherent family), the extension is
+simply `PairERChain.limitWithType`. The input `s` is retained in
+the signature for API symmetry but is not used in the body. -/
+noncomputable def PairERChain.extendTo_of_limitWithType
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {β α : Ordinal.{0}} (_s : PairERChain cR β) (_hβα : β < α)
+    (p : α.ToType ↪o PairERSource) (τ : α.ToType → Bool)
+    (hlarge : Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (validFiber cR p τ)) :
+    PairERChain cR α :=
+  PairERChain.limitWithType p τ hlarge
+
 /-- **Committed-head function.** For a `PairERChain cR α` and an
 ordinal `δ < α`, the head at the `δ`-th position of the chain,
 packaged as a raw `PairERSource` value. Strictly monotone in `δ`
@@ -4921,25 +4972,51 @@ lemma CoherentBranchApprox.lastLevel_ge
   have := k.isLt
   omega
 
-/-- **`extendTo` (sorry frontier)**: generalization of `extendSucc`
-to arbitrary countable target levels. Given `A : CoherentBranchApprox
-cR n` and a countable ordinal `α` strictly above `A.lastLevel`, this
-produces a one-step extension `CoherentBranchApprox cR (n+1)` with
-the new top at level `α`.
+/-- **`CoherentBranchApprox.extendTo`** (sorry, depends on
+`PairERChain.extendTo`): generalization of `extendSucc` to arbitrary
+countable target levels.
 
-**Implementation note**: the construction requires extending the
-last prefix to a prefix at α with large validFiber — this needs the
-chain-extension primitive `PairERChain cR β → PairERChain cR α` for
-`β < α < ω₁`, which is the next layer of infrastructure to build.
-For the special case `α = Order.succ (A.lastLevel)`, this reduces
-to `extendSucc` (when `n ≥ 1`) or to `fromZero` (when `n = 0` and
-`α = 0`, requiring a slightly different presentation). -/
+Given `A : CoherentBranchApprox cR n` and a countable ordinal `α`
+strictly above `A.lastLevel`, produce a one-step extension
+`CoherentBranchApprox cR (n+1)` with the new top at level `α`.
+
+**Body invokes `PairERChain.extendTo`** to obtain the chain at level
+`α`. The remaining packaging (analogous to `extendSucc`'s HEq-bridged
+helpers + proofs) is left as a sorry; the substantive
+transfinite-recursion content has been **moved into**
+`PairERChain.extendTo` — the named frontier — so this declaration
+no longer hides transfinite recursion. -/
 noncomputable def CoherentBranchApprox.extendTo
     {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
-    (_A : CoherentBranchApprox cR n)
-    (_α : Ordinal.{0}) (_hα : _α < Ordinal.omega.{0} 1)
-    (_hα_above_last : _A.lastLevel < _α) :
+    (A : CoherentBranchApprox cR n)
+    (α : Ordinal.{0}) (hα : α < Ordinal.omega.{0} 1)
+    (hα_above_last : A.lastLevel < α) :
     CoherentBranchApprox cR (n + 1) := by
+  classical
+  -- The new chain at α, obtained via `PairERChain.extendTo` applied
+  -- to the last chain of `A` (or `PairERChain.zero cR` when n = 0).
+  let _nextChain : PairERChain cR α := by
+    by_cases hn : n = 0
+    · -- n = 0 ⇒ A.lastLevel = 0, so we extend from PairERChain.zero.
+      have hβα : (0 : Ordinal.{0}) < α := by
+        have h_eq : A.lastLevel = 0 := by
+          unfold CoherentBranchApprox.lastLevel; rw [dif_pos hn]
+        exact h_eq ▸ hα_above_last
+      exact (PairERChain.zero cR).extendTo hβα hα
+    · -- n ≥ 1 ⇒ extract the last chain of A and apply extendTo.
+      have hn' : n - 1 < n := by omega
+      let lastChain : PairERChain cR (A.level ⟨n - 1, hn'⟩) :=
+        ⟨A.prefixAt ⟨n - 1, hn'⟩, A.branchAt ⟨n - 1, hn'⟩,
+          A.large ⟨n - 1, hn'⟩⟩
+      have hβα : A.level ⟨n - 1, hn'⟩ < α := by
+        have h_eq : A.lastLevel = A.level ⟨n - 1, hn'⟩ := by
+          unfold CoherentBranchApprox.lastLevel; rw [dif_neg hn]
+        exact h_eq ▸ hα_above_last
+      exact lastChain.extendTo hβα hα
+  -- Packaging `_nextChain` into a `CoherentBranchApprox cR (n+1)` is
+  -- analogous to `extendSucc`'s use of `extendLevel`, `extendPrefixAt`,
+  -- `extendBranchAt`, parameterized over the new top `α` instead of
+  -- `Order.succ (A.level (Fin.last n))`. Left as a follow-up.
   sorry
 
 /-! ### ω-chain of finite approximations
