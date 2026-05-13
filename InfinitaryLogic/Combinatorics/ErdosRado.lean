@@ -6354,6 +6354,128 @@ noncomputable def PairERChain.LimitData.ofCoherentMajorityBranch
     show B.branch α hα _ = (E n).chain.type _
     rw [← h_id, B.branch_restrict (he_lt n).le hen_lt_ω₁ hα, ← h_E_type n]
 
+/-! ### `extendToExtOfBranch`: branch-parametrized chain extension
+
+Given a `CoherentMajorityBranch B` and a source chain `s` that agrees
+with `B` at level `β`, produce the bundled `Extension s hβα` for any
+`β < α < ω₁` by **directly** invoking `Extension.limitWithType` with
+`B`'s data at level `α` — no transfinite recursion required.
+
+The construction works because `B` already encodes all the coherence
+data needed for an `α`-level chain:
+
+- **`chain`** uses `PairERChain.limitWithType` with `p := B.prefixAt α hα`,
+  `τ := B.branch α hα`, `large := B.large α hα`.
+- **`commitAt_old`** at `δ < β`: identify `enum α at δ` with the lift of
+  `enum β at δ` via `(initialSegToType β ≤ α).toOrderEmbedding`, apply
+  `B.prefix_restrict` to descend to `B.prefixAt β`, then convert to
+  `s.head` via `h_match_head`.
+- **`typeAt_old`** at `δ < β`: parallel via `B.branch_restrict` and
+  `h_match_type`.
+- **`head_β_in_validFiber`**: identify `enum α at β` with the lift of
+  `⊤ : (succ β).ToType` (since `enum (succ β) at β = ⊤`), apply
+  `B.prefix_restrict` to descend, then `B.top_in_validFiber β hβ hsβ`
+  gives membership in `validFiber cR (B.prefixAt β hβ) (B.branch β hβ)`,
+  which equals `validFiber cR s.head s.type` by the matching hypotheses.
+
+The unqualified `extendToExt` frontier can either remain as is or
+become a projection after obtaining `exists_coherentMajorityBranch`. -/
+
+/-- **`PairERChain.extendToExtOfBranch`**: branch-parametrized chain
+extension. Given a `CoherentMajorityBranch B` and a chain `s` that
+agrees with `B` at level `β`, produce `Extension s hβα` for any
+`β < α < ω₁`. No transfinite recursion: the construction goes directly
+through `Extension.limitWithType` with `B`'s data at level `α`. -/
+noncomputable def PairERChain.extendToExtOfBranch
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (B : CoherentMajorityBranch cR)
+    {β α : Ordinal.{0}} (s : PairERChain cR β)
+    (hβα : β < α) (hα : α < Ordinal.omega.{0} 1)
+    (h_match_head : s.head = B.prefixAt β (hβα.trans hα))
+    (h_match_type : s.type = B.branch β (hβα.trans hα)) :
+    PairERChain.Extension s hβα := by
+  classical
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  have hβ : β < Ordinal.omega.{0} 1 := hβα.trans hα
+  have hsβ : Order.succ β < Ordinal.omega.{0} 1 :=
+    (Cardinal.isSuccLimit_omega 1).succ_lt hβ
+  have hsβ_le_α : Order.succ β ≤ α := Order.succ_le_of_lt hβα
+  refine PairERChain.Extension.limitWithType s hβα
+    (B.prefixAt α hα) (B.branch α hα) (B.large α hα) ?_ ?_ ?_
+  · -- h_commitAt: ∀ δ < β, limitWithType.commitAt δ _ = s.commitAt δ.
+    intro δ hδβ
+    have hδα : δ < α := hδβ.trans hβα
+    have h_id : (Ordinal.initialSegToType hβα.le).toOrderEmbedding
+        (Ordinal.enum (α := β.ToType) (· < ·)
+          ⟨δ, (Ordinal.type_toType β).symm ▸ hδβ⟩) =
+        Ordinal.enum (α := α.ToType) (· < ·)
+          ⟨δ, (Ordinal.type_toType α).symm ▸ hδα⟩ := by
+      rw [← Ordinal.enum_typein (· < · : α.ToType → α.ToType → Prop)
+        ((Ordinal.initialSegToType hβα.le).toOrderEmbedding _)]
+      congr 1
+      apply Subtype.ext
+      show Ordinal.typein (α := α.ToType) (· < ·)
+          ((Ordinal.initialSegToType hβα.le).toOrderEmbedding _) = δ
+      rw [show Ordinal.typein (α := α.ToType) (· < ·)
+            ((Ordinal.initialSegToType hβα.le).toOrderEmbedding _) =
+          Ordinal.typein (α := β.ToType) (· < ·)
+            (Ordinal.enum (α := β.ToType) (· < ·)
+              ⟨δ, (Ordinal.type_toType β).symm ▸ hδβ⟩) from
+        Ordinal.typein_apply _ _, Ordinal.typein_enum]
+    show B.prefixAt α hα _ = s.head _
+    rw [← h_id, B.prefix_restrict hβα.le hβ hα, h_match_head]
+  · -- h_typeAt: identical pattern with B.branch_restrict + h_match_type.
+    intro δ hδβ
+    have hδα : δ < α := hδβ.trans hβα
+    have h_id : (Ordinal.initialSegToType hβα.le).toOrderEmbedding
+        (Ordinal.enum (α := β.ToType) (· < ·)
+          ⟨δ, (Ordinal.type_toType β).symm ▸ hδβ⟩) =
+        Ordinal.enum (α := α.ToType) (· < ·)
+          ⟨δ, (Ordinal.type_toType α).symm ▸ hδα⟩ := by
+      rw [← Ordinal.enum_typein (· < · : α.ToType → α.ToType → Prop)
+        ((Ordinal.initialSegToType hβα.le).toOrderEmbedding _)]
+      congr 1
+      apply Subtype.ext
+      show Ordinal.typein (α := α.ToType) (· < ·)
+          ((Ordinal.initialSegToType hβα.le).toOrderEmbedding _) = δ
+      rw [show Ordinal.typein (α := α.ToType) (· < ·)
+            ((Ordinal.initialSegToType hβα.le).toOrderEmbedding _) =
+          Ordinal.typein (α := β.ToType) (· < ·)
+            (Ordinal.enum (α := β.ToType) (· < ·)
+              ⟨δ, (Ordinal.type_toType β).symm ▸ hδβ⟩) from
+        Ordinal.typein_apply _ _, Ordinal.typein_enum]
+    show B.branch α hα _ = s.type _
+    rw [← h_id, B.branch_restrict hβα.le hβ hα, h_match_type]
+  · -- h_realizes: limitWithType.head (enum α at β) ∈ validFiber cR s.head s.type.
+    haveI : IsWellOrder (Order.succ β).ToType (· < ·) := isWellOrder_lt
+    -- ⊤ : (succ β).ToType is the enum at position β.
+    have h_top_eq : (⊤ : (Order.succ β).ToType) =
+        Ordinal.enum (α := (Order.succ β).ToType) (· < ·)
+          ⟨β, (Ordinal.type_toType _).symm ▸ Order.lt_succ β⟩ :=
+      Ordinal.enum_succ_eq_top.symm
+    -- lift_(succ β → α) ⊤ = enum α at β.
+    have h_id : (Ordinal.initialSegToType hsβ_le_α).toOrderEmbedding
+        (⊤ : (Order.succ β).ToType) =
+        Ordinal.enum (α := α.ToType) (· < ·)
+          ⟨β, (Ordinal.type_toType α).symm ▸ hβα⟩ := by
+      conv_lhs => rw [h_top_eq]
+      rw [← Ordinal.enum_typein (· < · : α.ToType → α.ToType → Prop)
+        ((Ordinal.initialSegToType hsβ_le_α).toOrderEmbedding _)]
+      congr 1
+      apply Subtype.ext
+      show Ordinal.typein (α := α.ToType) (· < ·)
+          ((Ordinal.initialSegToType hsβ_le_α).toOrderEmbedding _) = β
+      rw [show Ordinal.typein (α := α.ToType) (· < ·)
+            ((Ordinal.initialSegToType hsβ_le_α).toOrderEmbedding _) =
+          Ordinal.typein (α := (Order.succ β).ToType) (· < ·)
+            (Ordinal.enum (α := (Order.succ β).ToType) (· < ·)
+              ⟨β, (Ordinal.type_toType _).symm ▸ Order.lt_succ β⟩) from
+        Ordinal.typein_apply _ _, Ordinal.typein_enum]
+    show B.prefixAt α hα _ ∈ validFiber cR s.head s.type
+    rw [← h_id, B.prefix_restrict hsβ_le_α hsβ hα, h_match_head, h_match_type]
+    exact B.top_in_validFiber β hβ hsβ
+
 /-! ### Implications: what `CoherentMajorityBranch` provides
 
 These lemmas show that a `CoherentMajorityBranch B` discharges the
