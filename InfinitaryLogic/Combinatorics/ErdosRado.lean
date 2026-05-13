@@ -6255,6 +6255,105 @@ theorem CoherentMajorityBranch.large_at_succ
       Cardinal.mk (validFiber cR (B.prefixAt δ hδ) (B.branch δ hδ)) :=
   B.large δ hδ
 
+/-! ### `LimitData.ofCoherentMajorityBranch`: branch-based limit data
+
+A `CoherentMajorityBranch` supplies exactly the coherent
+prefix/branch/largeness data that independent majority choices
+lacked. From `B` we can produce `LimitData s hβα` provided the
+caller supplies a cofinal `ω`-sequence and stage extensions whose
+chains match `B` at each level of the sequence.
+
+This isolates branch-data into the limit profile and pushes
+recursion (the construction of the stage extensions) into the
+caller. The compatibility proofs use:
+- `B.prefix_restrict` for `prefix_compat`;
+- `B.branch_restrict` for `type_compat`;
+- `B.large` for `large`.
+-/
+
+/-- **`LimitData.ofCoherentMajorityBranch`**: construct `LimitData s hβα`
+from a `CoherentMajorityBranch B` (supplying `p`, `τ`, `large` from `B`
+at level `α`) together with a caller-supplied cofinal `ω`-sequence
+`e` (with stage extensions `E` whose chains match `B` at each level
+of `e`). -/
+noncomputable def PairERChain.LimitData.ofCoherentMajorityBranch
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (B : CoherentMajorityBranch cR)
+    {β α : Ordinal.{0}} {s : PairERChain cR β}
+    (hβα : β < α) (hα : α < Ordinal.omega.{0} 1)
+    (e : ℕ → Ordinal.{0})
+    (he_mono : StrictMono e)
+    (he_cofinal : ∀ γ : Ordinal.{0}, γ < α → ∃ n, γ < e n)
+    (he_β : ∀ n, β < e n) (he_lt : ∀ n, e n < α)
+    (E : ∀ n, PairERChain.Extension s (he_β n))
+    (h_E_head : ∀ n, (E n).chain.head =
+      B.prefixAt (e n) ((he_lt n).trans hα))
+    (h_E_type : ∀ n, (E n).chain.type =
+      B.branch (e n) ((he_lt n).trans hα)) :
+    PairERChain.LimitData s hβα := by
+  classical
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  refine
+    { e := e
+      he_mono := he_mono
+      he_cofinal := he_cofinal
+      he_β := he_β
+      he_lt := he_lt
+      E := E
+      p := B.prefixAt α hα
+      τ := B.branch α hα
+      large := B.large α hα
+      prefix_compat := ?_
+      type_compat := ?_ }
+  · -- prefix_compat: at each n, δ < e n,
+    --   limitWithType.commitAt δ _ = (E n).chain.commitAt δ hδ.
+    intro n δ hδ
+    haveI : IsWellOrder (e n).ToType (· < ·) := isWellOrder_lt
+    have hen_lt_ω₁ : e n < Ordinal.omega.{0} 1 := (he_lt n).trans hα
+    -- Identification: (initialSegToType (e n ≤ α)).lift (enum (e n) at δ) = enum α at δ.
+    have h_id : (Ordinal.initialSegToType (he_lt n).le).toOrderEmbedding
+        (Ordinal.enum (α := (e n).ToType) (· < ·)
+          ⟨δ, (Ordinal.type_toType (e n)).symm ▸ hδ⟩) =
+        Ordinal.enum (α := α.ToType) (· < ·)
+          ⟨δ, (Ordinal.type_toType α).symm ▸ (hδ.trans (he_lt n))⟩ := by
+      rw [← Ordinal.enum_typein (· < · : α.ToType → α.ToType → Prop)
+        ((Ordinal.initialSegToType (he_lt n).le).toOrderEmbedding _)]
+      congr 1
+      apply Subtype.ext
+      show Ordinal.typein (α := α.ToType) (· < ·)
+          ((Ordinal.initialSegToType (he_lt n).le).toOrderEmbedding _) = δ
+      rw [show Ordinal.typein (α := α.ToType) (· < ·)
+            ((Ordinal.initialSegToType (he_lt n).le).toOrderEmbedding _) =
+          Ordinal.typein (α := (e n).ToType) (· < ·)
+            (Ordinal.enum (α := (e n).ToType) (· < ·)
+              ⟨δ, (Ordinal.type_toType (e n)).symm ▸ hδ⟩) from
+        Ordinal.typein_apply _ _, Ordinal.typein_enum]
+    show B.prefixAt α hα _ = (E n).chain.head _
+    rw [← h_id, B.prefix_restrict (he_lt n).le hen_lt_ω₁ hα, ← h_E_head n]
+  · -- type_compat: identical pattern using B.branch_restrict + h_E_type.
+    intro n δ hδ
+    haveI : IsWellOrder (e n).ToType (· < ·) := isWellOrder_lt
+    have hen_lt_ω₁ : e n < Ordinal.omega.{0} 1 := (he_lt n).trans hα
+    have h_id : (Ordinal.initialSegToType (he_lt n).le).toOrderEmbedding
+        (Ordinal.enum (α := (e n).ToType) (· < ·)
+          ⟨δ, (Ordinal.type_toType (e n)).symm ▸ hδ⟩) =
+        Ordinal.enum (α := α.ToType) (· < ·)
+          ⟨δ, (Ordinal.type_toType α).symm ▸ (hδ.trans (he_lt n))⟩ := by
+      rw [← Ordinal.enum_typein (· < · : α.ToType → α.ToType → Prop)
+        ((Ordinal.initialSegToType (he_lt n).le).toOrderEmbedding _)]
+      congr 1
+      apply Subtype.ext
+      show Ordinal.typein (α := α.ToType) (· < ·)
+          ((Ordinal.initialSegToType (he_lt n).le).toOrderEmbedding _) = δ
+      rw [show Ordinal.typein (α := α.ToType) (· < ·)
+            ((Ordinal.initialSegToType (he_lt n).le).toOrderEmbedding _) =
+          Ordinal.typein (α := (e n).ToType) (· < ·)
+            (Ordinal.enum (α := (e n).ToType) (· < ·)
+              ⟨δ, (Ordinal.type_toType (e n)).symm ▸ hδ⟩) from
+        Ordinal.typein_apply _ _, Ordinal.typein_enum]
+    show B.branch α hα _ = (E n).chain.type _
+    rw [← h_id, B.branch_restrict (he_lt n).le hen_lt_ω₁ hα, ← h_E_type n]
+
 /-! ### Implications: what `CoherentMajorityBranch` provides
 
 These lemmas show that a `CoherentMajorityBranch B` discharges the
