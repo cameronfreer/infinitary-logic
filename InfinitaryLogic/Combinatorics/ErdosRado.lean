@@ -1762,6 +1762,105 @@ noncomputable def PairERChain.Extension.limitOfOmegaSeq
       show (E 0).chain.head _ ∈ validFiber cR s.head s.type
       exact (E 0).head_β_in_validFiber)
 
+/-! ### Cofinal-sequence existence + wrapper for countable limit ordinals
+
+Every countable limit ordinal `α < ω_1` admits a strictly-monotone
+cofinal `ω`-sequence. We extract one from `Ordinal.exists_fundamental_sequence`
+plus the fact that `α.cof = ℵ₀` for countable limit ordinals.
+
+The wrapper `Extension.limitOfCountableLimit` then takes a closure
+that, given the chosen cofinal sequence, produces the `Extension`
+(typically by calling `Extension.limitOfOmegaSeq` with user-supplied
+`p`/`τ`/`hlarge`/stage-extensions/compatibility). The ordinal/
+cofinality bookkeeping is isolated here from the cardinal/fusion
+content. -/
+
+/-- **`exists_strictMono_cofinal_nat_lt`**: every countable limit
+ordinal admits a strictly-monotone cofinal `ω`-sequence. -/
+theorem exists_strictMono_cofinal_nat_lt
+    {α : Ordinal.{0}} (hα : α < Ordinal.omega.{0} 1)
+    (hlim : Order.IsSuccLimit α) :
+    ∃ e : ℕ → Ordinal.{0},
+      StrictMono e ∧ (∀ n, e n < α) ∧
+      (∀ γ : Ordinal.{0}, γ < α → ∃ n, γ < e n) := by
+  -- α.cof = ℵ₀ since α < ω₁ is countable and α is a (succ) limit.
+  have h_cof : α.cof = Cardinal.aleph0 := by
+    apply le_antisymm
+    · have h_card : α.card ≤ Cardinal.aleph0 := by
+        have h1 : α.card < Cardinal.aleph 1 := by
+          rw [show Ordinal.omega.{0} 1 = (Cardinal.aleph 1).ord from
+            (Cardinal.ord_aleph 1).symm] at hα
+          rwa [Cardinal.lt_ord] at hα
+        rw [show (Cardinal.aleph 1 : Cardinal.{0}) =
+            Order.succ Cardinal.aleph0 from Cardinal.succ_aleph0.symm] at h1
+        exact Order.lt_succ_iff.mp h1
+      exact (Ordinal.cof_le_card α).trans h_card
+    · exact Ordinal.aleph0_le_cof.mpr hlim
+  have h_ord : α.cof.ord = Ordinal.omega0 := by
+    rw [h_cof, Cardinal.ord_aleph0]
+  -- Use the existing fundamental sequence machinery.
+  obtain ⟨f, hf⟩ := Ordinal.exists_fundamental_sequence α
+  refine ⟨fun n => f (n : Ordinal.{0}) (h_ord ▸ Ordinal.nat_lt_omega0 n), ?_, ?_, ?_⟩
+  · intro m n hmn
+    apply hf.strict_mono
+    exact_mod_cast hmn
+  · intro n
+    exact hf.lt _
+  · intro γ hγ
+    rw [← hf.blsub_eq] at hγ
+    obtain ⟨b, hb, hγb⟩ := Ordinal.lt_blsub_iff.mp hγ
+    have hb_lt_ω : b < Ordinal.omega0 := h_ord ▸ hb
+    obtain ⟨n, rfl⟩ := Ordinal.lt_omega0.mp hb_lt_ω
+    -- `lt_blsub_iff` gives `γ ≤ f (n : Ordinal) hb`. Use the next index
+    -- `n + 1` for strict inequality.
+    refine ⟨n + 1, hγb.trans_lt ?_⟩
+    apply hf.strict_mono
+    exact_mod_cast Nat.lt_succ_self n
+
+/-- **`Extension.limitOfCountableLimit`**: wrapper around
+`Extension.limitOfOmegaSeq` for countable limit `α < ω_1`. The
+wrapper chooses the cofinal sequence via
+`exists_strictMono_cofinal_nat_lt` (shifted so `β < e n` for all `n`)
+and hands it to the user's `build` closure, which produces the
+`Extension` (typically via `limitOfOmegaSeq`). Limit data `p`/`τ`/
+`hlarge` is supplied **inside `build`** by the caller; only the
+cofinality bookkeeping is handled here. -/
+noncomputable def PairERChain.Extension.limitOfCountableLimit
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {β α : Ordinal.{0}} {s : PairERChain cR β}
+    (hβα : β < α) (hα : α < Ordinal.omega.{0} 1)
+    (hlim : Order.IsSuccLimit α)
+    (build : ∀ (e : ℕ → Ordinal.{0}),
+              StrictMono e →
+              (∀ γ : Ordinal.{0}, γ < α → ∃ n, γ < e n) →
+              (∀ n, β < e n) → (∀ n, e n < α) →
+              PairERChain.Extension s hβα) :
+    PairERChain.Extension s hβα := by
+  classical
+  -- Extract a cofinal sequence via Classical.choose (since `Extension` is
+  -- in `Type`, plain `obtain` on the `Exists` would fail).
+  let hex := exists_strictMono_cofinal_nat_lt hα hlim
+  let e : ℕ → Ordinal.{0} := Classical.choose hex
+  have he_props : StrictMono e ∧ (∀ n, e n < α) ∧
+      (∀ γ : Ordinal.{0}, γ < α → ∃ n, γ < e n) := Classical.choose_spec hex
+  obtain ⟨he_mono, he_lt, he_cofinal⟩ := he_props
+  -- Shift past β: pick n₀ with β < e n₀, define e' n := e (n₀ + n + 1).
+  let n₀ : ℕ := Classical.choose (he_cofinal β hβα)
+  have hn₀ : β < e n₀ := Classical.choose_spec (he_cofinal β hβα)
+  let e' : ℕ → Ordinal.{0} := fun n => e (n₀ + n + 1)
+  have he'_mono : StrictMono e' := fun m n hmn =>
+    he_mono (show n₀ + m + 1 < n₀ + n + 1 by omega)
+  have he'_β : ∀ n, β < e' n := fun n =>
+    hn₀.trans (he_mono (show n₀ < n₀ + n + 1 by omega))
+  have he'_lt : ∀ n, e' n < α := fun n => he_lt _
+  have he'_cofinal : ∀ γ : Ordinal.{0}, γ < α → ∃ n, γ < e' n := fun γ hγ => by
+    obtain ⟨m, hm⟩ := he_cofinal γ hγ
+    refine ⟨m, hm.trans ?_⟩
+    apply he_mono
+    show m < n₀ + m + 1
+    omega
+  exact build e' he'_mono he'_cofinal he'_β he'_lt
+
 /-- **`limitWithType_commitAt`**: commit at position `δ` is the prefix's
 value at the enumerated position — parallel to `PairERChain.limit_commitAt`. -/
 lemma PairERChain.limitWithType_commitAt
