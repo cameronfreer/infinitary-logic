@@ -1861,6 +1861,62 @@ noncomputable def PairERChain.Extension.limitOfCountableLimit
     omega
   exact build e' he'_mono he'_cofinal he'_β he'_lt
 
+/-! ### `PairERChain.LimitData`: bundled inputs to the limit constructor
+
+A single record packaging everything `Extension.limitOfOmegaSeq`
+needs: a cofinal `ω`-sequence shifted past `β`, the stage extensions
+along the sequence, the limit prefix/branch/large at `α`, and the
+two compatibility witnesses. `Extension.ofLimitData` is then a thin
+wrapper.
+
+This isolates the last real construction problem into "produce
+`LimitData`". Once a fusion/cardinal-largeness layer can produce
+this record (typically by gluing along the chosen sequence and
+verifying the validFiber size), the full `extendToExt` becomes
+successor/limit recursion (via `Extension.succ` and `ofLimitData`)
+plus a single limit-data frontier — without mixing recursion,
+cofinality, compatibility, and cardinal largeness in one proof. -/
+
+/-- **`PairERChain.LimitData s hβα`**: bundled data for constructing
+the limit-stage extension `Extension s hβα`. -/
+structure PairERChain.LimitData
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {β : Ordinal.{0}}
+    (s : PairERChain cR β) {α : Ordinal.{0}} (hβα : β < α) where
+  /-- The cofinal `ω`-sequence, shifted so all values exceed `β`. -/
+  e : ℕ → Ordinal.{0}
+  he_mono : StrictMono e
+  he_cofinal : ∀ γ : Ordinal.{0}, γ < α → ∃ n, γ < e n
+  he_β : ∀ n, β < e n
+  he_lt : ∀ n, e n < α
+  /-- Stage extensions along the sequence. -/
+  E : ∀ n, PairERChain.Extension s (he_β n)
+  /-- The limit prefix at `α`. -/
+  p : α.ToType ↪o PairERSource
+  /-- The limit branch at `α`. -/
+  τ : α.ToType → Bool
+  /-- Largeness of the validFiber for `(p, τ)`. -/
+  large : Order.succ (Cardinal.beth.{0} 1) ≤
+    Cardinal.mk (validFiber cR p τ)
+  /-- Compatibility of the limit prefix with each stage chain on its
+  initial segment. -/
+  prefix_compat : ∀ (n : ℕ) (δ : Ordinal.{0}) (hδ : δ < e n),
+    (PairERChain.limitWithType (cR := cR) p τ large).commitAt δ
+        (hδ.trans (he_lt n)) = (E n).chain.commitAt δ hδ
+  /-- Compatibility of the limit branch with each stage chain. -/
+  type_compat : ∀ (n : ℕ) (δ : Ordinal.{0}) (hδ : δ < e n),
+    (PairERChain.limitWithType (cR := cR) p τ large).typeAt δ
+        (hδ.trans (he_lt n)) = (E n).chain.typeAt δ hδ
+
+/-- **`Extension.ofLimitData`**: thin wrapper turning bundled
+`LimitData` into a bundled `Extension` via `limitOfOmegaSeq`. -/
+noncomputable def PairERChain.Extension.ofLimitData
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {β α : Ordinal.{0}} {s : PairERChain cR β} {hβα : β < α}
+    (D : PairERChain.LimitData s hβα) :
+    PairERChain.Extension s hβα :=
+  PairERChain.Extension.limitOfOmegaSeq hβα D.e D.he_mono D.he_cofinal
+    D.he_β D.he_lt D.E D.p D.τ D.large D.prefix_compat D.type_compat
+
 /-- **`limitWithType_commitAt`**: commit at position `δ` is the prefix's
 value at the enumerated position — parallel to `PairERChain.limit_commitAt`. -/
 lemma PairERChain.limitWithType_commitAt
