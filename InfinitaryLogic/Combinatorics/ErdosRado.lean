@@ -1698,6 +1698,70 @@ noncomputable def PairERChain.extendToExt_of_succIter
     PairERChain.Extension s (lt_succIter β n) :=
   PairERChain.Extension.iterateSucc s n
 
+/-! ### First genuine limit constructor: `Extension.limitOfOmegaSeq`
+
+A sequence-parametrized limit extension. The caller supplies:
+- the target `α` and proof `β < α`;
+- a cofinal `ℕ`-sequence `e n < α` strictly above `β`;
+- a family of extensions `E n : Extension s (β < e n)`, one per stage;
+- explicit prefix `p : α.ToType ↪o PairERSource`, branch `τ`, and
+  largeness witness at `α`;
+- compatibility witnesses: at every position `δ < e n`, the supplied
+  `limitWithType p τ hlarge` agrees with `(E n).chain` (one witness
+  per `n` for prefix, one for branch).
+
+The lemma assembles the three `Extension` agreement fields from
+`E 0` plus the compatibility at `n = 0`. The full sequence is
+present in the signature for use by downstream gluing (cross-`n`
+compatibility, ω-cofinality), even though only `E 0` is needed for
+the basic proof.
+
+This isolates the limit-gluing bookkeeping from the cardinal/fusion
+content (which provides `p`, `τ`, `hlarge`, and the compatibility
+witnesses). -/
+noncomputable def PairERChain.Extension.limitOfOmegaSeq
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {β α : Ordinal.{0}} {s : PairERChain cR β}
+    (hβα : β < α)
+    (e : ℕ → Ordinal.{0})
+    (_he_mono : StrictMono e)
+    (_he_cofinal : ∀ γ : Ordinal.{0}, γ < α → ∃ n, γ < e n)
+    (he_β : ∀ n, β < e n) (he_lt : ∀ n, e n < α)
+    (E : ∀ n, PairERChain.Extension s (he_β n))
+    (p : α.ToType ↪o PairERSource) (τ : α.ToType → Bool)
+    (hlarge : Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (validFiber cR p τ))
+    (h_prefix_compat : ∀ (n : ℕ) (δ : Ordinal.{0}) (hδ : δ < e n),
+      (PairERChain.limitWithType (cR := cR) p τ hlarge).commitAt δ
+          (hδ.trans (he_lt n)) = (E n).chain.commitAt δ hδ)
+    (h_type_compat : ∀ (n : ℕ) (δ : Ordinal.{0}) (hδ : δ < e n),
+      (PairERChain.limitWithType (cR := cR) p τ hlarge).typeAt δ
+          (hδ.trans (he_lt n)) = (E n).chain.typeAt δ hδ) :
+    PairERChain.Extension s hβα :=
+  PairERChain.Extension.limitWithType s hβα p τ hlarge
+    (-- commitAt_old at δ < β: use n = 0 and chain through E 0.
+     fun δ hδβ =>
+      (h_prefix_compat 0 δ (hδβ.trans (he_β 0))).trans
+        ((E 0).commitAt_old δ hδβ))
+    (-- typeAt_old at δ < β: analog.
+     fun δ hδβ =>
+      (h_type_compat 0 δ (hδβ.trans (he_β 0))).trans
+        ((E 0).typeAt_old δ hδβ))
+    (-- head at β in validFiber: same pattern with δ = β.
+     by
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      have h := h_prefix_compat 0 β (he_β 0)
+      -- h : limitWithType.commitAt β _ = (E 0).chain.commitAt β _.
+      -- commitAt β _ = head (enum at β); rewrite via h.
+      show (PairERChain.limitWithType (cR := cR) p τ hlarge).head _ ∈
+           validFiber cR s.head s.type
+      show (PairERChain.limitWithType (cR := cR) p τ hlarge).commitAt β
+            ((he_β 0).trans (he_lt 0)) ∈
+           validFiber cR s.head s.type
+      rw [h]
+      show (E 0).chain.head _ ∈ validFiber cR s.head s.type
+      exact (E 0).head_β_in_validFiber)
+
 /-- **`limitWithType_commitAt`**: commit at position `δ` is the prefix's
 value at the enumerated position — parallel to `PairERChain.limit_commitAt`. -/
 lemma PairERChain.limitWithType_commitAt
