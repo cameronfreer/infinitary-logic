@@ -1641,6 +1641,63 @@ noncomputable def PairERChain.Extension.trans
     show e₁.chain.head _ ∈ validFiber cR s.head s.type
     exact e₁.head_β_in_validFiber
 
+/-! ### Finite-gap iteration of `Extension.succ`
+
+The first non-trivial application of the `Extension` API: build a
+finite-gap extension `s → s.succ.succ ⋯ .succ` (with `n + 1`
+applications of `Order.succ` starting at `β`) via `ℕ`-recursion
+composing `Extension.succ` with `Extension.trans`. This is the
+"low-risk milestone" exercising the API under ordinary recursion
+before any transfinite work. -/
+
+/-- **`succIter β n`**: the `(n + 1)`-iterated successor of `β`. Used
+as the canonical "finite gap" endpoint for `Extension.iterateSucc`. -/
+def succIter (β : Ordinal.{0}) : ℕ → Ordinal.{0}
+  | 0 => Order.succ β
+  | n + 1 => Order.succ (succIter β n)
+
+/-- `β < succIter β n` for all `n`. -/
+lemma lt_succIter (β : Ordinal.{0}) : ∀ n : ℕ, β < succIter β n
+  | 0 => Order.lt_succ β
+  | n + 1 => (lt_succIter β n).trans (Order.lt_succ _)
+
+/-- `succIter β n < ω_1` when `β < ω_1`, using closure of `< ω_1`
+under `Order.succ` (since `ω_1` is a successor-limit cardinal). -/
+lemma succIter_lt_omega1 {β : Ordinal.{0}} (hβ : β < Ordinal.omega.{0} 1) :
+    ∀ n : ℕ, succIter β n < Ordinal.omega.{0} 1
+  | 0 => (Cardinal.isSuccLimit_omega 1).succ_lt hβ
+  | n + 1 => (Cardinal.isSuccLimit_omega 1).succ_lt (succIter_lt_omega1 hβ n)
+
+/-- **`Extension.iterateSucc`**: a finite-gap extension from `s` to a
+chain at `succIter β n`, built by `ℕ`-recursion composing
+`Extension.succ` with `Extension.trans`.
+
+- `n = 0`: `Extension.succ s` (a chain at `Order.succ β = succIter β 0`).
+- `n + 1`: compose the IH at `n` with `Extension.succ` of the IH's
+  chain (which produces a chain at
+  `Order.succ (succIter β n) = succIter β (n + 1)`). -/
+noncomputable def PairERChain.Extension.iterateSucc
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {β : Ordinal.{0}} (s : PairERChain cR β) :
+    ∀ n : ℕ, PairERChain.Extension s (lt_succIter β n)
+  | 0 => PairERChain.Extension.succ s
+  | n + 1 =>
+    (iterateSucc s n).trans (PairERChain.Extension.succ (iterateSucc s n).chain)
+
+/-- **`extendToExt_of_succIter`**: the `succIter`-case wrapper for
+`extendToExt`. For the special case `α = succIter β n`, the bundled
+extension is produced by `Extension.iterateSucc` directly — no
+appeal to the transfinite-extension frontier `extendToExt` is
+needed. The `hα` parameter is present for API symmetry with
+`extendToExt` (the actual bound on `succIter β n` is provided
+separately by `succIter_lt_omega1`). -/
+noncomputable def PairERChain.extendToExt_of_succIter
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {β : Ordinal.{0}} (s : PairERChain cR β) (n : ℕ)
+    (_hα : succIter β n < Ordinal.omega.{0} 1) :
+    PairERChain.Extension s (lt_succIter β n) :=
+  PairERChain.Extension.iterateSucc s n
+
 /-- **`limitWithType_commitAt`**: commit at position `δ` is the prefix's
 value at the enumerated position — parallel to `PairERChain.limit_commitAt`. -/
 lemma PairERChain.limitWithType_commitAt
