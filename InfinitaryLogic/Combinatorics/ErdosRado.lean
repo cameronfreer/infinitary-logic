@@ -6479,6 +6479,79 @@ private lemma CoherentBranchApprox.top_in_validFiber_at
   -- irrelevance, so the CBA field applies directly.
   exact A.top_in_validFiber i.val h_j_idx_lt
 
+/-- **`validFiber_between`** (generalization of `top_in_validFiber_at`
+to arbitrary `i < j`): the value at position `A.level i` in the
+chain at `A.level j` lies in the validFiber for `A.level i`,
+regardless of whether `i` and `j` are adjacent in `Fin n`.
+
+Proof: factor through `i + 1`. The element `enum_j at A.level i` is
+the `(initialSegToType (A.level (i+1) ≤ A.level j))`-lift of
+`enum_(i+1) at A.level i`, by `Ordinal.typein_apply` / `typein_enum`.
+Then `A.prefix_restrict` collapses the lift, and `top_in_validFiber_at`
+at `(i, i+1)` closes the goal. -/
+private lemma CoherentBranchApprox.validFiber_between
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR n)
+    {i j : Fin n} (hij : i < j) :
+    haveI : IsWellOrder (A.level j).ToType (· < ·) := isWellOrder_lt
+    A.prefixAt j (Ordinal.enum (α := (A.level j).ToType) (· < ·)
+      ⟨A.level i, by
+        haveI : IsWellOrder (A.level j).ToType (· < ·) := isWellOrder_lt
+        rw [Ordinal.type_toType]
+        exact A.level_strictMono hij⟩) ∈
+    validFiber cR (A.prefixAt i) (A.branchAt i) := by
+  haveI : IsWellOrder (A.level j).ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder (A.level i).ToType (· < ·) := isWellOrder_lt
+  -- Define k = i + 1 (as a Fin index) and verify k ≤ j.
+  have hk_lt : i.val + 1 < n := by
+    have h1 : i.val + 1 ≤ j.val := hij
+    have h2 : j.val < n := j.isLt
+    omega
+  let k : Fin n := ⟨i.val + 1, hk_lt⟩
+  haveI : IsWellOrder (A.level k).ToType (· < ·) := isWellOrder_lt
+  have hik : i < k := by show i.val < k.val; show i.val < i.val + 1; omega
+  have hkj : k ≤ j := by show k.val ≤ j.val; show i.val + 1 ≤ j.val; exact hij
+  have h_lvl_le : A.level k ≤ A.level j := A.level_strictMono.monotone hkj
+  -- Adjacency at (i, k) via top_in_validFiber_at.
+  have h_top : A.prefixAt k (Ordinal.enum (α := (A.level k).ToType) (· < ·)
+        ⟨A.level i, by
+          haveI : IsWellOrder (A.level k).ToType (· < ·) := isWellOrder_lt
+          rw [Ordinal.type_toType]
+          exact A.level_strictMono hik⟩) ∈
+      validFiber cR (A.prefixAt i) (A.branchAt i) :=
+    A.top_in_validFiber_at (show k.val = i.val + 1 from rfl)
+  -- The lift of `enum_k at A.level i` equals `enum_j at A.level i`.
+  have h_lift_eq :
+      (Ordinal.initialSegToType h_lvl_le).toOrderEmbedding
+        (Ordinal.enum (α := (A.level k).ToType) (· < ·)
+          ⟨A.level i, by
+            haveI : IsWellOrder (A.level k).ToType (· < ·) := isWellOrder_lt
+            rw [Ordinal.type_toType]
+            exact A.level_strictMono hik⟩) =
+      Ordinal.enum (α := (A.level j).ToType) (· < ·)
+        ⟨A.level i, by
+          haveI : IsWellOrder (A.level j).ToType (· < ·) := isWellOrder_lt
+          rw [Ordinal.type_toType]
+          exact A.level_strictMono hij⟩ := by
+    rw [← Ordinal.enum_typein (· < · : (A.level j).ToType → (A.level j).ToType → Prop)
+      ((Ordinal.initialSegToType h_lvl_le).toOrderEmbedding _)]
+    congr 1
+    apply Subtype.ext
+    show Ordinal.typein (α := (A.level j).ToType) (· < ·)
+        ((Ordinal.initialSegToType h_lvl_le).toOrderEmbedding _) = A.level i
+    rw [show Ordinal.typein (α := (A.level j).ToType) (· < ·)
+          ((Ordinal.initialSegToType h_lvl_le).toOrderEmbedding _) =
+        Ordinal.typein (α := (A.level k).ToType) (· < ·)
+          (Ordinal.enum (α := (A.level k).ToType) (· < ·)
+            ⟨A.level i, by
+              haveI : IsWellOrder (A.level k).ToType (· < ·) := isWellOrder_lt
+              rw [Ordinal.type_toType]
+              exact A.level_strictMono hik⟩) from
+        Ordinal.typein_apply _ _, Ordinal.typein_enum]
+  -- Conclude via prefix_restrict (k ≤ j).
+  rw [← h_lift_eq, A.prefix_restrict hkj _]
+  exact h_top
+
 theorem CoherentBranchPartial.top_in_validFiber
     {cR : (Fin 2 ↪o PairERSource) → Bool} {S : Finset Ordinal.{0}}
     (P : CoherentBranchPartial cR S) (γ : Ordinal.{0}) (hγ : γ ∈ S)
@@ -6513,6 +6586,70 @@ theorem CoherentBranchPartial.top_in_validFiber
           ⟨γ, (Ordinal.type_toType _).symm ▸ Order.lt_succ γ⟩ from
       Ordinal.enum_succ_eq_top.symm]
   exact enum_transport_eq h_lvl_sγ.symm h_lvl_γ.symm _ _
+
+/-! ### Restriction `CoherentBranchPartial.restrict`
+
+Given `P : CoherentBranchPartial cR T` and `S ⊆ T`, restrict `P` to a
+`CoherentBranchPartial cR S` by pulling back through `P.indexOf`:
+each `i : Fin S.card` lands at the `T`-index of `(S.orderEmbOfFin rfl) i`.
+
+The construction takes the new CBA's `level` to be `P.toApprox.level ∘
+ρ` (rather than `S.orderEmbOfFin rfl` directly), so `prefixAt` and
+`branchAt` need no casts — they are literally
+`P.toApprox.prefixAt (ρ i)` / `P.toApprox.branchAt (ρ i)`. The level
+agreement with `S.orderEmbOfFin rfl` is then a separate field
+(`level_eq`) given by `P.level_indexOf`. The CBA's
+`top_in_validFiber` field — which requires validFiber adjacency at
+**arbitrary** `(ρ i, ρ (i+1))` pairs in `P.toApprox` (not necessarily
+consecutive in `Fin T.card`) — is supplied by `validFiber_between`. -/
+
+noncomputable def CoherentBranchPartial.restrict
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {T : Finset Ordinal.{0}} (P : CoherentBranchPartial cR T)
+    {S : Finset Ordinal.{0}} (hST : S ⊆ T) :
+    CoherentBranchPartial cR S := by
+  classical
+  -- The S-elements as a strict-mono Fin S.card → Ordinal.
+  set σ_S : Fin S.card → Ordinal.{0} := fun i => (S.orderEmbOfFin rfl) i with hσS
+  have h_σ_S : ∀ i, σ_S i ∈ S := S.orderEmbOfFin_mem rfl
+  have h_σ_T : ∀ i, σ_S i ∈ T := fun i => hST (h_σ_S i)
+  -- ρ : Fin S.card → Fin T.card via P.indexOf.
+  set ρ : Fin S.card → Fin T.card := fun i => P.indexOf (σ_S i) (h_σ_T i) with hρ
+  -- Level identification at each pulled-back index.
+  have h_lvl_ρ : ∀ i, P.toApprox.level (ρ i) = σ_S i :=
+    fun i => P.level_indexOf (σ_S i) (h_σ_T i)
+  -- ρ is strictly monotone (via OrderIso composition).
+  have h_ρ_strictMono : StrictMono ρ := by
+    intro a b hab
+    show (T.orderIsoOfFin rfl).symm ⟨σ_S a, h_σ_T a⟩ <
+      (T.orderIsoOfFin rfl).symm ⟨σ_S b, h_σ_T b⟩
+    exact (T.orderIsoOfFin rfl).symm.strictMono
+      ((S.orderEmbOfFin rfl).strictMono hab)
+  -- Build the wrapped CBA + level_eq.
+  refine ⟨{
+    level := fun i => P.toApprox.level (ρ i)
+    level_lt_omega1 := fun i => P.toApprox.level_lt_omega1 (ρ i)
+    level_strictMono := fun _ _ hab =>
+      P.toApprox.level_strictMono (h_ρ_strictMono hab)
+    prefixAt := fun i => P.toApprox.prefixAt (ρ i)
+    branchAt := fun i => P.toApprox.branchAt (ρ i)
+    prefix_restrict := fun {k₁ k₂} hk x =>
+      P.toApprox.prefix_restrict (h_ρ_strictMono.monotone hk) x
+    branch_restrict := fun {k₁ k₂} hk x =>
+      P.toApprox.branch_restrict (h_ρ_strictMono.monotone hk) x
+    large := fun i => P.toApprox.large (ρ i)
+    top_in_validFiber := ?_
+  }, ?_⟩
+  · -- top_in_validFiber: validFiber adjacency at consecutive S-indices.
+    -- New CBA's levels at ⟨i, _⟩ and ⟨i+1, hi⟩ are P.toApprox.level (ρ ⟨i, _⟩)
+    -- and P.toApprox.level (ρ ⟨i+1, hi⟩), with ρ strictly monotone.
+    intro i hi
+    apply P.toApprox.validFiber_between
+    exact h_ρ_strictMono (show (⟨i, Nat.lt_of_succ_lt hi⟩ : Fin S.card) <
+      ⟨i + 1, hi⟩ from by show i < i + 1; omega)
+  · -- level_eq: the new CBA's level equals σ_S = S.orderEmbOfFin rfl.
+    intro i
+    exact h_lvl_ρ i
 
 /-! ### ω-chain of finite approximations
 
