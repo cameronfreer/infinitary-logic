@@ -6956,16 +6956,51 @@ theorem coherentBranchApproxSeq_not_cofinal_in_omega1
   · rw [Ordinal.omega_zero]; exact Ordinal.omega0_lt_omega_one
   · exact coherentBranchApproxSeq_level_lt_omega0 i
 
-/-- **[NEW FRONTIER, sorry]** Existence of a coherent majority branch.
-This replaces the legacy `exists_large_iInter_stage_fibers` as the
-single mathematical frontier of the pair Erdős–Rado proof. Filling
-this is the classical Erdős–Rado canonical-types-tree fusion
-construction. The planned strategy: define `CoherentBranchApprox`
-extensions + ω-chain + limit construction. -/
-theorem exists_coherentMajorityBranch
-    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+/-! ### Inverse-limit compactness frontier
+
+`exists_coherentMajorityBranch_of_finitePartials` is the **inverse-limit
+compactness** statement: from a partial branch on every finite finset
+of countable ordinals, extract a global `CoherentMajorityBranch`. This
+is the **new named frontier** that replaces the old monolithic
+`exists_coherentMajorityBranch` sorry — the finite side
+(`exists_coherentBranchPartial`, `commonExtensionPartialOn`,
+projective-system restriction laws) is already done, so the only
+remaining mathematical content is the projective/compactness
+extraction.
+
+The hypothesis takes `0 < α` together with `α < ω₁`. The positivity
+side condition tracks the existing `exists_coherentBranchPartial`
+construction (which starts from `CoherentBranchApprox.zero` and so
+requires the first extended level to be positive); a `0`-aware
+strengthening of `exists_coherentBranchPartial` would let positivity
+drop from the hypothesis.
+
+After this frontier is filled, `exists_coherentMajorityBranch` becomes
+a one-liner wiring it through `exists_coherentBranchPartial`. -/
+
+/-- **[NEW FRONTIER, sorry]** Inverse-limit compactness for the
+finite partial-branch projective system. Given a partial branch on
+every finite positive-ordinal finset `S ⊂ ω₁`, extract a global
+`CoherentMajorityBranch`. This is the only remaining mathematical
+gap in the active pair Erdős–Rado path; the finite side and the
+restriction laws (the projective system) are fully axiom-clean. -/
+theorem exists_coherentMajorityBranch_of_finitePartials
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    (_hfin : ∀ S : Finset Ordinal.{0},
+      (∀ α ∈ S, 0 < α) → (∀ α ∈ S, α < Ordinal.omega.{0} 1) →
+        Nonempty (CoherentBranchPartial cR S)) :
     Nonempty (CoherentMajorityBranch cR) := by
   sorry
+
+/-- **Existence of a coherent majority branch** — derived by wiring
+the finite-side `exists_coherentBranchPartial` through the
+inverse-limit compactness frontier
+`exists_coherentMajorityBranch_of_finitePartials`. -/
+theorem exists_coherentMajorityBranch
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    Nonempty (CoherentMajorityBranch cR) :=
+  exists_coherentMajorityBranch_of_finitePartials cR
+    (fun S h_pos hS => exists_coherentBranchPartial cR S h_pos hS)
 
 /-- **Conditional implication**: a `CoherentMajorityBranch` would
 discharge the limit-stage typeAt agreement that
