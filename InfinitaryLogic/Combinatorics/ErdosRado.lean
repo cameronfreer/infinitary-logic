@@ -6712,6 +6712,52 @@ theorem CoherentBranchPartial.restrict_validFiber
       validFiber cR (P.prefixAt α (hST hα)) (P.branch α (hST hα)) := by
   rw [P.restrict_prefixAt hST α hα, P.restrict_branch hST α hα]
 
+/-! ### Finite common extension: the projective system's FIP
+
+For any finite family `𝒮 : Finset (Finset Ordinal)` of countable
+positive-ordinal sets, there is a single `CoherentBranchPartial cR`
+defined on the **union** `𝒮.sup id`, whose restriction to each
+`S ∈ 𝒮` is a compatible partial branch over `S`.
+
+This is the **finite-intersection-property** form of the projective
+system: rather than comparing independently chosen partials (which
+are non-canonical), we exhibit one partial over the union and read
+off its restrictions. The construction is immediate from
+`exists_coherentBranchPartial` applied to the union finset.
+
+`commonExtensionPartialOn` is the accessor that produces the
+compatible restriction at each `S ∈ 𝒮`. -/
+
+theorem exists_commonExtensionPartial
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    (𝒮 : Finset (Finset Ordinal.{0}))
+    (h𝒮_pos : ∀ S ∈ 𝒮, ∀ α ∈ S, 0 < α)
+    (h𝒮_lt : ∀ S ∈ 𝒮, ∀ α ∈ S, α < Ordinal.omega.{0} 1) :
+    Nonempty (CoherentBranchPartial cR (𝒮.sup id)) := by
+  classical
+  apply exists_coherentBranchPartial
+  · intro α hα
+    obtain ⟨S, hS, hαS⟩ := Finset.mem_sup.mp hα
+    exact h𝒮_pos S hS α hαS
+  · intro α hα
+    obtain ⟨S, hS, hαS⟩ := Finset.mem_sup.mp hα
+    exact h𝒮_lt S hS α hαS
+
+/-- **`commonExtensionPartialOn`**: given a common extension `P` over
+the union `𝒮.sup id`, restrict to any member `S ∈ 𝒮`. The compatible
+family `{commonExtensionPartialOn P S hS | S ∈ 𝒮}` is the
+projective-system value at each `S`. -/
+noncomputable def commonExtensionPartialOn
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {𝒮 : Finset (Finset Ordinal.{0})}
+    (P : CoherentBranchPartial cR (𝒮.sup id))
+    (S : Finset Ordinal.{0}) (hS : S ∈ 𝒮) :
+    CoherentBranchPartial cR S :=
+  P.restrict (by
+    classical
+    intro α hα
+    exact Finset.mem_sup.mpr ⟨S, hS, hα⟩)
+
 /-! ### ω-chain of finite approximations
 
 The ω-chain `coherentBranchApproxSeq cR : (n : ℕ) → CoherentBranchApprox cR n`
