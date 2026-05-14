@@ -6651,6 +6651,67 @@ noncomputable def CoherentBranchPartial.restrict
     intro i
     exact h_lvl_ρ i
 
+/-! ### Restriction preserves CMB-style fields
+
+`(P.restrict hST)`'s data agrees with `P`'s on the elements of `S`.
+
+These follow by routing through HEq: the underlying `P.toApprox.prefixAt`
+values agree via `congr_arg_heq` once the Fin index round-trip
+(`ρ_indexOf_eq`) aligns. The two `cast`s on each side absorb via
+`cast_heq` (proof-irrelevant cast). -/
+
+private lemma CoherentBranchPartial.ρ_indexOf_eq
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {T : Finset Ordinal.{0}} (P : CoherentBranchPartial cR T)
+    {S : Finset Ordinal.{0}} (hST : S ⊆ T)
+    (α : Ordinal.{0}) (hα : α ∈ S) :
+    P.indexOf ((S.orderEmbOfFin rfl) ((S.orderIsoOfFin rfl).symm ⟨α, hα⟩))
+      (hST (S.orderEmbOfFin_mem rfl _)) =
+      P.indexOf α (hST hα) := by
+  congr 1
+  rw [← S.coe_orderIsoOfFin_apply rfl,
+      (S.orderIsoOfFin rfl).apply_symm_apply]
+
+theorem CoherentBranchPartial.restrict_prefixAt
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {T : Finset Ordinal.{0}} (P : CoherentBranchPartial cR T)
+    {S : Finset Ordinal.{0}} (hST : S ⊆ T)
+    (α : Ordinal.{0}) (hα : α ∈ S) :
+    (P.restrict hST).prefixAt α hα = P.prefixAt α (hST hα) := by
+  have h_eq := P.ρ_indexOf_eq hST α hα
+  apply eq_of_heq
+  -- LHS = cast _ ((P.restrict hST).toApprox.prefixAt ((P.restrict hST).indexOf α hα))
+  --     = cast _ (P.toApprox.prefixAt (ρ ((P.restrict hST).indexOf α hα)))  -- defn of restrict
+  --     ≅ P.toApprox.prefixAt (P.indexOf α (hST hα))                          -- congr_arg_heq + h_eq
+  --     ≅ cast _ (P.toApprox.prefixAt (P.indexOf α (hST hα)))                 -- cast_heq.symm
+  --     = RHS
+  refine HEq.trans (cast_heq _ _) (HEq.trans ?_ (cast_heq _ _).symm)
+  exact congr_arg_heq P.toApprox.prefixAt h_eq
+
+theorem CoherentBranchPartial.restrict_branch
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {T : Finset Ordinal.{0}} (P : CoherentBranchPartial cR T)
+    {S : Finset Ordinal.{0}} (hST : S ⊆ T)
+    (α : Ordinal.{0}) (hα : α ∈ S) :
+    (P.restrict hST).branch α hα = P.branch α (hST hα) := by
+  have h_eq := P.ρ_indexOf_eq hST α hα
+  apply eq_of_heq
+  refine HEq.trans (cast_heq _ _) (HEq.trans ?_ (cast_heq _ _).symm)
+  exact congr_arg_heq P.toApprox.branchAt h_eq
+
+/-- **`restrict_validFiber`**: the validFiber set is preserved under
+restriction (immediate from `restrict_prefixAt` + `restrict_branch`).
+Implies preservation of `large` and `top_in_validFiber`. -/
+theorem CoherentBranchPartial.restrict_validFiber
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {T : Finset Ordinal.{0}} (P : CoherentBranchPartial cR T)
+    {S : Finset Ordinal.{0}} (hST : S ⊆ T)
+    (α : Ordinal.{0}) (hα : α ∈ S) :
+    validFiber cR ((P.restrict hST).prefixAt α hα)
+        ((P.restrict hST).branch α hα) =
+      validFiber cR (P.prefixAt α (hST hα)) (P.branch α (hST hα)) := by
+  rw [P.restrict_prefixAt hST α hα, P.restrict_branch hST α hα]
+
 /-! ### ω-chain of finite approximations
 
 The ω-chain `coherentBranchApproxSeq cR : (n : ℕ) → CoherentBranchApprox cR n`
