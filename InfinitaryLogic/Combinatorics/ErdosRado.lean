@@ -1484,10 +1484,32 @@ structure PairERChain.Extension
       ⟨β, (Ordinal.type_toType α).symm ▸ hβα⟩) ∈
       validFiber cR s.head s.type
 
-/-- **`PairERChain.extendToExt` (the single transfinite frontier)**:
+/-- **`PairERChain.extendToExt` (pre-fusion approximation-building primitive)**:
 extend a chain `s : PairERChain cR β` to a bundled `Extension` for
-any countable `α > β`. Filling this is the named transfinite-extension
-frontier; everything downstream is recovered as projections. -/
+any countable `α > β`.
+
+**Scope and role.** Despite the fully general statement, this is **not**
+the post-fusion chain-extension API. It is the *pre-fusion* primitive
+used to build the finite approximations that eventually fuse into a
+`CoherentMajorityBranch`. Its only current active consumer is
+`CoherentBranchApprox.extendToChain` (together with its projection
+lemmas `extendTo_commitAt`, `extendTo_typeAt_old`,
+`extendTo_head_β_in_validFiber`), all in the approximation layer.
+
+For active **post-fusion** chain extension — extending a chain that
+is aligned with a chosen `CoherentMajorityBranch B` — use
+`PairERChain.extendToExtOfBranch B`, which is **proved**
+(axiom-clean) and does not require the unqualified frontier.
+
+The two frontiers are complementary, not redundant: `extendToExt` is
+upstream construction debt (sorry), `extendToExtOfBranch` is the
+clean downstream API. Arbitrary `s` cannot be routed through the
+branch version because an arbitrary chain need not match a
+globally-chosen branch at its level.
+
+Filling this is the named transfinite-extension frontier for the
+approximation layer; everything downstream of it (in this file) is
+recovered as projections. -/
 noncomputable def PairERChain.extendToExt
     {cR : (Fin 2 ↪o PairERSource) → Bool}
     {β α : Ordinal.{0}} (_s : PairERChain cR β)
@@ -5439,11 +5461,26 @@ lemma CoherentBranchApprox.lastLevel_ge
   have := k.isLt
   omega
 
+/-! ### Boundary note: unqualified `extendToExt` vs branch-aware
+`extendToExtOfBranch`
+
+The unqualified `PairERChain.extendToExt` frontier (sorry) exists
+solely to build the finite approximations below before a coherent
+branch is available. Its only active consumer is
+`CoherentBranchApprox.extendToChain` (and its projection lemmas).
+
+Once a `CoherentMajorityBranch B` is available, downstream chain
+extension must go through `PairERChain.extendToExtOfBranch B` (proved
+axiom-clean), which extends chains aligned with `B` without invoking
+the unqualified frontier. Do not introduce new active consumers of
+`extendToExt` outside this approximation-building layer. -/
+
 /-- **`extendToChain`**: the chain at level `α` extending `A`'s
 last-position data. For `n = 0`: extend from `PairERChain.zero cR`.
 For `n ≥ 1`: extend from the chain at `A.level ⟨n−1, _⟩` extracted
 from `A`. Both branches use `PairERChain.extendTo` (the named
-transfinite frontier). -/
+pre-fusion approximation-building primitive; see the boundary note
+above). -/
 noncomputable def CoherentBranchApprox.extendToChain
     {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
     (A : CoherentBranchApprox cR n)
