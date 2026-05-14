@@ -6066,6 +6066,91 @@ noncomputable def CoherentBranchApprox.extendTo
         exact enum_transport_eq h_lvl
           (A.extendToLevel_castSucc α ⟨i + 1 - 1, hn'⟩) _ _
 
+/-! ### Approximations over arbitrary finite ordinal sequences
+
+`CoherentBranchApprox.extendTo` adds a level at an arbitrary countable
+ordinal `α > A.lastLevel`. Iterating this from
+`CoherentBranchApprox.zero` along a strictly-sorted list of countable
+positive ordinals produces a `CoherentBranchApprox` over those exact
+levels — the **finite-arbitrary-levels** analog of the
+natural-number-only `coherentBranchApproxSeq`.
+
+This is the bridge from finite-ordinal levels (via `extend`) to
+countable-ordinal levels (via `extendTo`). The remaining step toward
+`exists_coherentMajorityBranch` is a compactness/Kőnig-style
+extraction to all countable levels. -/
+
+/-- **`exists_coherentBranchApprox_for_strictMono`**: build a
+`CoherentBranchApprox cR n` over any strictly-monotone `Fin`-indexed
+family of countable positive ordinals, with `A.level i = f i`.
+
+This is the Fin-indexed form of the "finite-arbitrary-levels" bridge.
+The positivity hypothesis `0 < f i` is needed only for the first
+element (when extending from `CoherentBranchApprox.zero` whose
+`lastLevel` is `0`); subsequent elements only need to exceed the
+previous, which is given by `StrictMono f`. -/
+theorem exists_coherentBranchApprox_for_strictMono
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    ∀ {n : ℕ} (f : Fin n → Ordinal.{0})
+      (_h_pos : ∀ i, 0 < f i)
+      (_h_lt : ∀ i, f i < Ordinal.omega.{0} 1)
+      (_h_strictMono : StrictMono f),
+      ∃ A : CoherentBranchApprox cR n, ∀ i, A.level i = f i := by
+  intro n
+  induction n with
+  | zero =>
+    intro f _ _ _
+    refine ⟨CoherentBranchApprox.zero cR, ?_⟩
+    intro i; exact i.elim0
+  | succ k IH =>
+    intro f h_pos h_lt h_strictMono
+    let f' : Fin k → Ordinal.{0} := fun i => f i.castSucc
+    have h_pos' : ∀ i, 0 < f' i := fun i => h_pos _
+    have h_lt' : ∀ i, f' i < Ordinal.omega.{0} 1 := fun i => h_lt _
+    have h_strictMono' : StrictMono f' := fun _ _ hab =>
+      h_strictMono (Fin.castSucc_lt_castSucc_iff.mpr hab)
+    obtain ⟨A', hA'⟩ := IH f' h_pos' h_lt' h_strictMono'
+    let α : Ordinal.{0} := f (Fin.last k)
+    have hα_lt : α < Ordinal.omega.{0} 1 := h_lt _
+    have h_above : A'.lastLevel < α := by
+      unfold CoherentBranchApprox.lastLevel
+      by_cases hk : k = 0
+      · rw [dif_pos hk]; exact h_pos (Fin.last k)
+      · rw [dif_neg hk]
+        have hk' : k - 1 < k := Nat.sub_lt (Nat.pos_of_ne_zero hk) one_pos
+        rw [hA' ⟨k - 1, hk'⟩]
+        show f' ⟨k - 1, hk'⟩ < α
+        show f (⟨k - 1, hk'⟩ : Fin k).castSucc < f (Fin.last k)
+        apply h_strictMono
+        exact Fin.castSucc_lt_last _
+    refine ⟨A'.extendTo α hα_lt h_above, ?_⟩
+    intro i
+    show A'.extendToLevel α i = f i
+    induction i using Fin.lastCases with
+    | last => rw [A'.extendToLevel_last]
+    | cast j =>
+      rw [A'.extendToLevel_castSucc α j, hA' j]
+
+/-- **`exists_coherentBranchApprox_for_list`**: build a
+`CoherentBranchApprox cR l.length` over any strictly-sorted finite
+list `l` of countable positive ordinals, with `A.level i = l.get i`.
+
+Derived from `exists_coherentBranchApprox_for_strictMono` by reading
+the list as a Fin-indexed family. -/
+theorem exists_coherentBranchApprox_for_list
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    (l : List Ordinal.{0})
+    (h_sorted : l.Pairwise (· < ·))
+    (h_pos : ∀ α ∈ l, 0 < α)
+    (h_lt : ∀ α ∈ l, α < Ordinal.omega.{0} 1) :
+    ∃ A : CoherentBranchApprox cR l.length,
+      ∀ i : Fin l.length, A.level i = l.get i := by
+  refine exists_coherentBranchApprox_for_strictMono cR (l.get) ?_ ?_ ?_
+  · exact fun i => h_pos _ (List.get_mem _ _)
+  · exact fun i => h_lt _ (List.get_mem _ _)
+  · intro a b hab
+    exact List.pairwise_iff_get.mp h_sorted a b hab
+
 /-! ### ω-chain of finite approximations
 
 The ω-chain `coherentBranchApproxSeq cR : (n : ℕ) → CoherentBranchApprox cR n`
