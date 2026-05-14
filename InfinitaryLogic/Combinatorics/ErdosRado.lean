@@ -6151,6 +6151,96 @@ theorem exists_coherentBranchApprox_for_list
   · intro a b hab
     exact List.pairwise_iff_get.mp h_sorted a b hab
 
+/-! ### Finset-indexed partial branches
+
+`CoherentBranchPartial cR S` is the Finset-indexed analog of
+`CoherentMajorityBranch`: a partial coherent branch with data
+defined exactly at the ordinals in `S`. It is the compactness object
+on which a Kőnig-style extraction toward `exists_coherentMajorityBranch`
+operates: instead of building approximations indexed by an arbitrary
+n-length list, the projective system is indexed by finite subsets of
+`ω₁`, removing dependence on list order.
+
+The structure is a thin wrapper around `CoherentBranchApprox cR S.card`
+plus a level identification with `S.orderEmbOfFin rfl`. The CMB-style
+accessors (`prefixAt`, `branch`, `prefix_restrict`, `branch_restrict`,
+`large`, `top_in_validFiber`) are derived in subsequent definitions
+and lemmas, with transport handled via `level_indexOf`.
+
+Existence (`exists_coherentBranchPartial`) is immediate from
+`exists_coherentBranchApprox_for_strictMono` using the strictly-
+monotone embedding `S.orderEmbOfFin rfl : Fin S.card ↪o Ordinal`. -/
+
+/-- **`CoherentBranchPartial cR S`**: partial coherent branch indexed
+by a finite set `S` of countable ordinals. Internally backed by a
+`CoherentBranchApprox cR S.card` whose `level` matches
+`S.orderEmbOfFin rfl`. -/
+structure CoherentBranchPartial
+    (cR : (Fin 2 ↪o PairERSource) → Bool) (S : Finset Ordinal.{0}) where
+  /-- The underlying approximation at length `S.card`. -/
+  toApprox : CoherentBranchApprox cR S.card
+  /-- Level identification: the approximation's level at index `i`
+  equals the `i`-th element of `S` (in increasing order). -/
+  level_eq : ∀ i : Fin S.card,
+    toApprox.level i = (S.orderEmbOfFin rfl) i
+
+/-- **`exists_coherentBranchPartial`**: for any finite set `S` of
+countable positive ordinals, there exists a `CoherentBranchPartial cR S`.
+
+The positivity hypothesis `0 < α` is inherited from
+`exists_coherentBranchApprox_for_strictMono` (CBA's zero-level
+constructor has `lastLevel = 0`, so the first level extended must
+be positive). -/
+theorem exists_coherentBranchPartial
+    (cR : (Fin 2 ↪o PairERSource) → Bool) (S : Finset Ordinal.{0})
+    (h_pos : ∀ α ∈ S, 0 < α)
+    (hS : ∀ α ∈ S, α < Ordinal.omega.{0} 1) :
+    Nonempty (CoherentBranchPartial cR S) := by
+  obtain ⟨A, hA⟩ := exists_coherentBranchApprox_for_strictMono cR
+    (S.orderEmbOfFin rfl)
+    (fun i => h_pos _ (S.orderEmbOfFin_mem rfl i))
+    (fun i => hS _ (S.orderEmbOfFin_mem rfl i))
+    (S.orderEmbOfFin rfl).strictMono
+  exact ⟨{ toApprox := A, level_eq := hA }⟩
+
+/-! ### CMB-style accessors for `CoherentBranchPartial`
+
+Project the underlying approximation into the CMB-style API: take
+`α ∈ S` arguments (not Fin indices) and return data over `α.ToType`
+(transported through the level identification). -/
+
+/-- **`indexOf`**: the `Fin S.card` index corresponding to `α ∈ S`. -/
+noncomputable def CoherentBranchPartial.indexOf {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {S : Finset Ordinal.{0}} (_P : CoherentBranchPartial cR S)
+    (α : Ordinal.{0}) (hα : α ∈ S) : Fin S.card :=
+  (S.orderIsoOfFin rfl).symm ⟨α, hα⟩
+
+/-- **`level_indexOf`**: the approximation's level at `indexOf α hα`
+equals `α`. The key transport hypothesis for the accessors below. -/
+lemma CoherentBranchPartial.level_indexOf
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {S : Finset Ordinal.{0}}
+    (P : CoherentBranchPartial cR S) (α : Ordinal.{0}) (hα : α ∈ S) :
+    P.toApprox.level (P.indexOf α hα) = α := by
+  rw [P.level_eq]
+  show ↑((S.orderIsoOfFin rfl) ((S.orderIsoOfFin rfl).symm ⟨α, hα⟩)) = α
+  rw [(S.orderIsoOfFin rfl).apply_symm_apply]
+
+/-- **`prefixAt`**: CMB-style prefix accessor at `α ∈ S`, with the
+type `α.ToType ↪o PairERSource` obtained by transporting the
+approximation's prefix at `indexOf α hα` along `level_indexOf`. -/
+noncomputable def CoherentBranchPartial.prefixAt
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {S : Finset Ordinal.{0}}
+    (P : CoherentBranchPartial cR S) (α : Ordinal.{0}) (hα : α ∈ S) :
+    α.ToType ↪o PairERSource :=
+  P.level_indexOf α hα ▸ P.toApprox.prefixAt (P.indexOf α hα)
+
+/-- **`branch`**: CMB-style branch accessor at `α ∈ S`. -/
+noncomputable def CoherentBranchPartial.branch
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {S : Finset Ordinal.{0}}
+    (P : CoherentBranchPartial cR S) (α : Ordinal.{0}) (hα : α ∈ S) :
+    α.ToType → Bool :=
+  P.level_indexOf α hα ▸ P.toApprox.branchAt (P.indexOf α hα)
+
 /-! ### ω-chain of finite approximations
 
 The ω-chain `coherentBranchApproxSeq cR : (n : ℕ) → CoherentBranchApprox cR n`
