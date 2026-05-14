@@ -6365,6 +6365,63 @@ theorem CoherentBranchPartial.large
   · exact P.prefixAt_heq_toApprox_prefixAt α hα
   · exact P.branch_heq_toApprox_branchAt α hα
 
+/-! ### Successor adjacency in the index map
+
+If both `γ` and `Order.succ γ` lie in `S`, then their `indexOf` indices
+are **consecutive** in `Fin S.card` (i.e., `idx_{succ γ}.val = idx_γ.val + 1`).
+This holds because no ordinal lies strictly between `γ` and `Order.succ γ`
+(by `Order.lt_succ_iff`), and an `OrderEmbedding` from `Fin S.card` into
+`Ordinal` strictly preserves order — so any in-between index would
+witness an in-between ordinal in `S`, a contradiction.
+
+This adjacency is the bridge from CBA's index-adjacent `top_in_validFiber`
+field to the CMB-aligned `(γ, Order.succ γ)` form. -/
+
+/-- Helper: the `orderEmbOfFin` value at the `indexOf` of any element
+`α ∈ S` is `α` itself. -/
+private lemma CoherentBranchPartial.orderEmbOfFin_indexOf
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {S : Finset Ordinal.{0}}
+    (_P : CoherentBranchPartial cR S)
+    (α : Ordinal.{0}) (hα : α ∈ S) :
+    (S.orderEmbOfFin rfl) ((S.orderIsoOfFin rfl).symm ⟨α, hα⟩) = α := by
+  rw [← S.coe_orderIsoOfFin_apply rfl,
+      (S.orderIsoOfFin rfl).apply_symm_apply]
+
+lemma CoherentBranchPartial.indexOf_succ_eq_succ_indexOf
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {S : Finset Ordinal.{0}}
+    (P : CoherentBranchPartial cR S)
+    (γ : Ordinal.{0}) (hγ : γ ∈ S) (hsγ : Order.succ γ ∈ S) :
+    (P.indexOf (Order.succ γ) hsγ).val = (P.indexOf γ hγ).val + 1 := by
+  set i : Fin S.card := P.indexOf γ hγ with hi_def
+  set j : Fin S.card := P.indexOf (Order.succ γ) hsγ with hj_def
+  have h_fi : (S.orderEmbOfFin rfl) i = γ := P.orderEmbOfFin_indexOf γ hγ
+  have h_fj : (S.orderEmbOfFin rfl) j = Order.succ γ :=
+    P.orderEmbOfFin_indexOf (Order.succ γ) hsγ
+  -- f strictly mono + γ < succ γ gives i.val < j.val.
+  have h_lt : i.val < j.val := by
+    have : i < j := (S.orderEmbOfFin rfl).strictMono.lt_iff_lt.mp
+      (by rw [h_fi, h_fj]; exact Order.lt_succ γ)
+    exact this
+  -- Show i.val + 1 = j.val.
+  by_contra h_ne
+  have h_lt' : i.val + 1 < j.val := by omega
+  have hk_lt_card : i.val + 1 < S.card := h_lt'.trans j.isLt
+  set k : Fin S.card := ⟨i.val + 1, hk_lt_card⟩ with hk_def
+  have h_i_lt_k : i < k := by
+    show i.val < k.val
+    show i.val < i.val + 1
+    omega
+  have h_k_lt_j : k < j := by
+    show k.val < j.val
+    show i.val + 1 < j.val
+    exact h_lt'
+  have h_γ_lt_fk : γ < (S.orderEmbOfFin rfl) k :=
+    h_fi ▸ (S.orderEmbOfFin rfl).strictMono h_i_lt_k
+  have h_fk_lt_sγ : (S.orderEmbOfFin rfl) k < Order.succ γ :=
+    h_fj ▸ (S.orderEmbOfFin rfl).strictMono h_k_lt_j
+  have h_fk_le_γ : (S.orderEmbOfFin rfl) k ≤ γ := Order.lt_succ_iff.mp h_fk_lt_sγ
+  exact absurd (lt_of_lt_of_le h_γ_lt_fk h_fk_le_γ) (lt_irrefl γ)
+
 /-! ### ω-chain of finite approximations
 
 The ω-chain `coherentBranchApproxSeq cR : (n : ℕ) → CoherentBranchApprox cR n`
