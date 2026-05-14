@@ -6226,20 +6226,144 @@ lemma CoherentBranchPartial.level_indexOf
   rw [(S.orderIsoOfFin rfl).apply_symm_apply]
 
 /-- **`prefixAt`**: CMB-style prefix accessor at `α ∈ S`, with the
-type `α.ToType ↪o PairERSource` obtained by transporting the
-approximation's prefix at `indexOf α hα` along `level_indexOf`. -/
+type `α.ToType ↪o PairERSource` obtained by casting the
+approximation's prefix at `indexOf α hα` along `level_indexOf`.
+
+Uses `cast` (with explicit `congrArg`) rather than the `▸` shorthand
+so that `cast_heq` directly produces the HEq witness used in the
+projection theorems below. -/
 noncomputable def CoherentBranchPartial.prefixAt
     {cR : (Fin 2 ↪o PairERSource) → Bool} {S : Finset Ordinal.{0}}
     (P : CoherentBranchPartial cR S) (α : Ordinal.{0}) (hα : α ∈ S) :
     α.ToType ↪o PairERSource :=
-  P.level_indexOf α hα ▸ P.toApprox.prefixAt (P.indexOf α hα)
+  cast (congrArg (fun o : Ordinal.{0} => o.ToType ↪o PairERSource)
+    (P.level_indexOf α hα)) (P.toApprox.prefixAt (P.indexOf α hα))
 
 /-- **`branch`**: CMB-style branch accessor at `α ∈ S`. -/
 noncomputable def CoherentBranchPartial.branch
     {cR : (Fin 2 ↪o PairERSource) → Bool} {S : Finset Ordinal.{0}}
     (P : CoherentBranchPartial cR S) (α : Ordinal.{0}) (hα : α ∈ S) :
     α.ToType → Bool :=
-  P.level_indexOf α hα ▸ P.toApprox.branchAt (P.indexOf α hα)
+  cast (congrArg (fun o : Ordinal.{0} => o.ToType → Bool)
+    (P.level_indexOf α hα)) (P.toApprox.branchAt (P.indexOf α hα))
+
+/-- **`prefixAt_heq_prefixAt`**: HEq between the CMB-style accessor and
+the underlying approximation's prefix. -/
+lemma CoherentBranchPartial.prefixAt_heq_toApprox_prefixAt
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {S : Finset Ordinal.{0}}
+    (P : CoherentBranchPartial cR S) (α : Ordinal.{0}) (hα : α ∈ S) :
+    HEq (P.prefixAt α hα) (P.toApprox.prefixAt (P.indexOf α hα)) :=
+  cast_heq _ _
+
+/-- **`branch_heq_toApprox_branchAt`**: HEq between the CMB-style
+branch accessor and the underlying approximation's branch. -/
+lemma CoherentBranchPartial.branch_heq_toApprox_branchAt
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {S : Finset Ordinal.{0}}
+    (P : CoherentBranchPartial cR S) (α : Ordinal.{0}) (hα : α ∈ S) :
+    HEq (P.branch α hα) (P.toApprox.branchAt (P.indexOf α hα)) :=
+  cast_heq _ _
+
+/-! ### Apply-rewriters for the CMB-style accessors
+
+Express `prefixAt α hα y` and `branch α hα y` as applications of
+the underlying `toApprox.prefixAt` / `toApprox.branchAt` after the
+inverse transport. Used as the bridge in the CMB-style theorems
+(`prefix_restrict`, `branch_restrict`, `large`). -/
+
+lemma CoherentBranchPartial.prefixAt_apply
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {S : Finset Ordinal.{0}}
+    (P : CoherentBranchPartial cR S) (α : Ordinal.{0}) (hα : α ∈ S)
+    (y : α.ToType) :
+    P.prefixAt α hα y =
+      P.toApprox.prefixAt (P.indexOf α hα)
+        ((P.level_indexOf α hα).symm ▸ y) :=
+  orderEmbed_ordinal_apply_heq (P.level_indexOf α hα).symm _ _
+    (P.prefixAt_heq_toApprox_prefixAt α hα) y
+
+lemma CoherentBranchPartial.branch_apply
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {S : Finset Ordinal.{0}}
+    (P : CoherentBranchPartial cR S) (α : Ordinal.{0}) (hα : α ∈ S)
+    (y : α.ToType) :
+    P.branch α hα y =
+      P.toApprox.branchAt (P.indexOf α hα)
+        ((P.level_indexOf α hα).symm ▸ y) :=
+  fn_ordinal_apply_heq (P.level_indexOf α hα).symm _ _
+    (P.branch_heq_toApprox_branchAt α hα) y
+
+/-! ### Index monotonicity: `β ≤ α` ∈ `S` implies `indexOf β ≤ indexOf α`
+
+Since `S.orderIsoOfFin rfl` is an order isomorphism, its inverse is
+also order-preserving, so the indices respect the ordinal order on
+the elements of `S`. -/
+
+lemma CoherentBranchPartial.indexOf_le
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {S : Finset Ordinal.{0}}
+    (P : CoherentBranchPartial cR S)
+    {β α : Ordinal.{0}} (hβ : β ∈ S) (hα : α ∈ S) (hβα : β ≤ α) :
+    P.indexOf β hβ ≤ P.indexOf α hα :=
+  (S.orderIsoOfFin rfl).symm.monotone (Subtype.mk_le_mk.mpr hβα)
+
+/-! ### CMB-style projection theorems
+
+The CoherentMajorityBranch-style theorems (`prefix_restrict`,
+`branch_restrict`, `large`) projected onto the partial structure.
+All follow from the corresponding `CoherentBranchApprox` field via
+`indexOf_le` + the `apply` rewriters + the transport-coherence
+lemmas (`initialSegToType_transport_eq`). -/
+
+theorem CoherentBranchPartial.prefix_restrict
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {S : Finset Ordinal.{0}}
+    (P : CoherentBranchPartial cR S)
+    {β α : Ordinal.{0}} (hβα : β ≤ α) (hβ : β ∈ S) (hα : α ∈ S)
+    (x : β.ToType) :
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    P.prefixAt α hα ((Ordinal.initialSegToType hβα).toOrderEmbedding x) =
+      P.prefixAt β hβ x := by
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  have h_lvl_α : P.toApprox.level (P.indexOf α hα) = α := P.level_indexOf α hα
+  have h_lvl_β : P.toApprox.level (P.indexOf β hβ) = β := P.level_indexOf β hβ
+  have hidx_le : P.indexOf β hβ ≤ P.indexOf α hα := P.indexOf_le hβ hα hβα
+  have h_lvl_le : P.toApprox.level (P.indexOf β hβ) ≤
+      P.toApprox.level (P.indexOf α hα) :=
+    P.toApprox.level_strictMono.monotone hidx_le
+  rw [P.prefixAt_apply α hα, P.prefixAt_apply β hβ,
+      initialSegToType_transport_eq h_lvl_β.symm h_lvl_α.symm hβα h_lvl_le x]
+  exact P.toApprox.prefix_restrict hidx_le _
+
+theorem CoherentBranchPartial.branch_restrict
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {S : Finset Ordinal.{0}}
+    (P : CoherentBranchPartial cR S)
+    {β α : Ordinal.{0}} (hβα : β ≤ α) (hβ : β ∈ S) (hα : α ∈ S)
+    (x : β.ToType) :
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    P.branch α hα ((Ordinal.initialSegToType hβα).toOrderEmbedding x) =
+      P.branch β hβ x := by
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  have h_lvl_α : P.toApprox.level (P.indexOf α hα) = α := P.level_indexOf α hα
+  have h_lvl_β : P.toApprox.level (P.indexOf β hβ) = β := P.level_indexOf β hβ
+  have hidx_le : P.indexOf β hβ ≤ P.indexOf α hα := P.indexOf_le hβ hα hβα
+  have h_lvl_le : P.toApprox.level (P.indexOf β hβ) ≤
+      P.toApprox.level (P.indexOf α hα) :=
+    P.toApprox.level_strictMono.monotone hidx_le
+  rw [P.branch_apply α hα, P.branch_apply β hβ,
+      initialSegToType_transport_eq h_lvl_β.symm h_lvl_α.symm hβα h_lvl_le x]
+  exact P.toApprox.branch_restrict hidx_le _
+
+theorem CoherentBranchPartial.large
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {S : Finset Ordinal.{0}}
+    (P : CoherentBranchPartial cR S) (α : Ordinal.{0}) (hα : α ∈ S) :
+    Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (validFiber cR (P.prefixAt α hα) (P.branch α hα)) := by
+  have h_lvl : P.toApprox.level (P.indexOf α hα) = α := P.level_indexOf α hα
+  have := P.toApprox.large (P.indexOf α hα)
+  convert this using 4
+  · exact h_lvl.symm
+  · exact P.prefixAt_heq_toApprox_prefixAt α hα
+  · exact P.branch_heq_toApprox_branchAt α hα
 
 /-! ### ω-chain of finite approximations
 
