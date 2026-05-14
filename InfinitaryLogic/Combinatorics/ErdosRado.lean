@@ -4971,6 +4971,19 @@ private lemma initialSegToType_transport_eq
   subst h_β
   rfl
 
+/-- **`validFiber` is invariant under HEq of its `OrderEmbedding` and
+`Bool` arguments.** Equates two `validFiber`s whose underlying
+ordinals are equal and whose prefix/branch are HEq. -/
+private lemma validFiber_eq_of_HEq
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {α β : Ordinal.{0}} (h_eq : α = β)
+    {p_α : α.ToType ↪o PairERSource} {τ_α : α.ToType → Bool}
+    {p_β : β.ToType ↪o PairERSource} {τ_β : β.ToType → Bool}
+    (hp : HEq p_α p_β) (hτ : HEq τ_α τ_β) :
+    validFiber cR p_α τ_α = validFiber cR p_β τ_β := by
+  subst h_eq
+  rw [eq_of_heq hp, eq_of_heq hτ]
+
 /-- **Applied form of `extendPrefixAt_castSucc_heq`**. -/
 theorem CoherentBranchApprox.extendPrefixAt_castSucc_apply
     {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
@@ -6421,6 +6434,85 @@ lemma CoherentBranchPartial.indexOf_succ_eq_succ_indexOf
     h_fj ▸ (S.orderEmbOfFin rfl).strictMono h_k_lt_j
   have h_fk_le_γ : (S.orderEmbOfFin rfl) k ≤ γ := Order.lt_succ_iff.mp h_fk_lt_sγ
   exact absurd (lt_of_lt_of_le h_γ_lt_fk h_fk_le_γ) (lt_irrefl γ)
+
+/-! ### CMB-style `top_in_validFiber` for `CoherentBranchPartial`
+
+The successor-adjacent validFiber property in CMB-style form: when
+both `γ` and `Order.succ γ` lie in `S`, the top of `(Order.succ γ).ToType`
+under the partial branch's prefix lies in the validFiber for `γ`.
+
+Proof structure:
+1. Use `indexOf_succ_eq_succ_indexOf` to identify
+   `(indexOf γ).val = i.val` and `(indexOf (succ γ)).val = i.val + 1`.
+2. Invoke the CBA's index-adjacent `top_in_validFiber` at `i.val`.
+3. Use `Fin.eta` to rewrite the resulting CBA indices to `i` and `j`.
+4. Use `validFiber_eq_of_HEq` (+ `prefixAt_heq_toApprox_prefixAt`,
+   `branch_heq_toApprox_branchAt`) to convert the validFiber.
+5. Use `prefixAt_apply` to expose the `cast`-transport on the LHS,
+   then `enum_succ_eq_top.symm` + `enum_transport_eq` to identify
+   the transported `⊤` with the `enum` argument of the CBA-level
+   statement. -/
+
+/-- **Helper**: CBA-level `top_in_validFiber` with explicit Fin
+indices and matching level data. Bridges from the index-adjacent form
+(over `i.val`, `i.val + 1`) to a parametric form usable when the
+indices come from `indexOf`-lookup. -/
+private lemma CoherentBranchApprox.top_in_validFiber_at
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR n)
+    {i j : Fin n} (h_adj : j.val = i.val + 1) :
+    haveI : IsWellOrder (A.level j).ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder (A.level i).ToType (· < ·) := isWellOrder_lt
+    A.prefixAt j (Ordinal.enum (α := (A.level j).ToType) (· < ·)
+      ⟨A.level i, by
+        haveI : IsWellOrder (A.level j).ToType (· < ·) := isWellOrder_lt
+        rw [Ordinal.type_toType]
+        exact A.level_strictMono (show i < j by
+          show i.val < j.val; omega)⟩) ∈
+    validFiber cR (A.prefixAt i) (A.branchAt i) := by
+  haveI : IsWellOrder (A.level j).ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder (A.level i).ToType (· < ·) := isWellOrder_lt
+  -- Substitute j = ⟨i.val + 1, _⟩ via subst.
+  have h_j_idx_lt : i.val + 1 < n := h_adj ▸ j.isLt
+  obtain rfl : j = ⟨i.val + 1, h_j_idx_lt⟩ := Fin.ext h_adj
+  -- `i` and `⟨i.val, _⟩` are definitionally equal via Fin proof
+  -- irrelevance, so the CBA field applies directly.
+  exact A.top_in_validFiber i.val h_j_idx_lt
+
+theorem CoherentBranchPartial.top_in_validFiber
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {S : Finset Ordinal.{0}}
+    (P : CoherentBranchPartial cR S) (γ : Ordinal.{0}) (hγ : γ ∈ S)
+    (hsγ : Order.succ γ ∈ S) :
+    haveI : IsWellOrder (Order.succ γ).ToType (· < ·) := isWellOrder_lt
+    P.prefixAt (Order.succ γ) hsγ (⊤ : (Order.succ γ).ToType) ∈
+      validFiber cR (P.prefixAt γ hγ) (P.branch γ hγ) := by
+  haveI : IsWellOrder (Order.succ γ).ToType (· < ·) := isWellOrder_lt
+  have h_lvl_γ : P.toApprox.level (P.indexOf γ hγ) = γ := P.level_indexOf γ hγ
+  have h_lvl_sγ : P.toApprox.level (P.indexOf (Order.succ γ) hsγ) =
+      Order.succ γ := P.level_indexOf (Order.succ γ) hsγ
+  have h_succ : (P.indexOf (Order.succ γ) hsγ).val =
+      (P.indexOf γ hγ).val + 1 :=
+    P.indexOf_succ_eq_succ_indexOf γ hγ hsγ
+  -- Step 1: Convert goal's validFiber to A's via HEq.
+  rw [validFiber_eq_of_HEq h_lvl_γ.symm
+      (P.prefixAt_heq_toApprox_prefixAt γ hγ)
+      (P.branch_heq_toApprox_branchAt γ hγ)]
+  -- Step 2: Expose the cast on LHS via prefixAt_apply.
+  rw [P.prefixAt_apply (Order.succ γ) hsγ]
+  -- Goal: A.prefixAt (P.indexOf (succ γ) hsγ) (h_lvl_sγ.symm ▸ ⊤) ∈
+  --         validFiber cR (A.prefixAt (P.indexOf γ hγ)) (A.branchAt (P.indexOf γ hγ))
+  -- Apply the CBA-level helper (which handles the Fin-index plumbing).
+  haveI : IsWellOrder (P.toApprox.level (P.indexOf (Order.succ γ) hsγ)).ToType
+      (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder (P.toApprox.level (P.indexOf γ hγ)).ToType
+      (· < ·) := isWellOrder_lt
+  convert P.toApprox.top_in_validFiber_at h_succ using 2
+  -- Single subgoal: cast_⊤ = enum at A.level (P.indexOf γ hγ) in A.level (P.indexOf (succ γ) hsγ).
+  rw [show (⊤ : (Order.succ γ).ToType) =
+        Ordinal.enum (α := (Order.succ γ).ToType) (· < ·)
+          ⟨γ, (Ordinal.type_toType _).symm ▸ Order.lt_succ γ⟩ from
+      Ordinal.enum_succ_eq_top.symm]
+  exact enum_transport_eq h_lvl_sγ.symm h_lvl_γ.symm _ _
 
 /-! ### ω-chain of finite approximations
 
