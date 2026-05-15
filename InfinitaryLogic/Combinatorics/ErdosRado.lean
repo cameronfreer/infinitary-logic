@@ -8,6 +8,8 @@ import Mathlib.SetTheory.Cardinal.Continuum
 import Mathlib.SetTheory.Cardinal.Pigeonhole
 import Mathlib.SetTheory.Cardinal.Regular
 import Mathlib.Order.InitialSeg
+import Mathlib.Order.Filter.Ultrafilter.Defs
+import Mathlib.Order.Filter.AtTopBot.Basic
 import Mathlib.Data.Nat.Nth
 import Mathlib.Data.Fin.VecNotation
 
@@ -7079,6 +7081,35 @@ compact structure on each coordinate (e.g., a one-point
 compactification or restricting to a specific compact subspace per
 finite S). -/
 
+/-- **`finiteSupersetUltrafilter ι`**: an ultrafilter on
+`Finset ι` extending the `atTop` (superset) filter. Used as the
+combinatorial backbone of the ultrafilter-style compactness proof
+for `rawBranchCompactness`: every set of the form `{T | S ⊆ T}` (for
+`S : Finset ι` fixed) is in this ultrafilter. -/
+noncomputable def finiteSupersetUltrafilter (ι : Type*) :
+    Ultrafilter (Finset ι) :=
+  Ultrafilter.of (Filter.atTop : Filter (Finset ι))
+
+/-- **`finiteSupersetUltrafilter_eventually_superset`**: for any
+finite `S : Finset ι`, the set of supersets `{T : Finset ι | S ⊆ T}`
+is in `finiteSupersetUltrafilter ι`.
+
+Proof: `Set.Ici S = {T | S ≤ T}` is in `Filter.atTop` by
+`Filter.Ici_mem_atTop`, and `S ≤ T ↔ S ⊆ T` for finsets, so this is
+the same set. The ultrafilter `Ultrafilter.of atTop` is finer than
+`atTop` (`Ultrafilter.of_le`), so the set is in the ultrafilter. -/
+theorem finiteSupersetUltrafilter_eventually_superset
+    {ι : Type*} (S : Finset ι) :
+    {T : Finset ι | S ⊆ T} ∈ finiteSupersetUltrafilter ι := by
+  have h_ici : Set.Ici S ∈ (Filter.atTop : Filter (Finset ι)) :=
+    Filter.Ici_mem_atTop S
+  -- {T | S ⊆ T} = Set.Ici S via Finset.le_iff_subset.
+  have h_eq : ({T : Finset ι | S ⊆ T} : Set (Finset ι)) = Set.Ici S := by
+    ext T
+    exact Iff.rfl
+  rw [h_eq]
+  exact Ultrafilter.of_le _ h_ici
+
 /-- **[NEW FRONTIER, sorry]** The raw-branch compactness principle.
 This is the only remaining mathematical content of the pair
 Erdős–Rado proof. The finite side and the projective-system
@@ -7086,7 +7117,10 @@ restriction laws are axiom-clean; the bridge from this compactness
 to `exists_coherentMajorityBranch_of_finitePartials` is axiom-clean.
 
 See the status note above for proof strategies (Tychonoff or
-ultrafilter). -/
+ultrafilter). The ultrafilter route would use
+`finiteSupersetUltrafilter (Ordinal.{0})` +
+`finiteSupersetUltrafilter_eventually_superset` to extract the
+ultralimit assignment. -/
 theorem rawBranchCompactness_holds
     (cR : (Fin 2 ↪o PairERSource) → Bool) :
     rawBranchCompactness cR := by
