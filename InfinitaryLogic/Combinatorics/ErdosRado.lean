@@ -7022,9 +7022,9 @@ def rawBranchCompactness (cR : (Fin 2 ↪o PairERSource) → Bool) : Prop :=
 `rawBranchCompactness_holds` is the final non-model-theoretic
 compactness frontier. It can be proved either by:
 
-1. **Tychonoff compactness** for products of finite/discrete spaces,
-   reducing to the finite-intersection property of the projective
-   system; or
+1. **Tychonoff compactness** for products of compact (e.g., suitably
+   compactified) spaces, reducing to the finite-intersection property
+   of the projective system; or
 
 2. **An ultrafilter** over `Finset Ordinal.{0}` extending the
    superset/cofinite filter, with the global assignment defined as
@@ -7040,7 +7040,44 @@ The intended packaging is a reusable compactness principle:
 from which `rawBranchCompactness_holds` would follow by an existence
 result for ultrafilters extending the superset filter on `Finset
 Ordinal.{0}`. The construction is real set-theoretic compactness
-work; for now the principle is left as the named frontier sorry. -/
+work; for now the principle is left as the named frontier sorry.
+
+**Mathlib ingredients available** (verified via LeanFinder):
+
+- `Ultrafilter.of (f : Filter α) [NeBot f] : Ultrafilter α` —
+  extends any non-trivial filter to an ultrafilter (via `exists_le`,
+  `Classical.choose`).
+- `Filter.atTop_neBot : NeBot (atTop : Filter α)` — `atTop` is
+  non-trivial for any nonempty directed preorder.
+- `Filter.atTop_finset_eq_iInf : atTop = ⨅ x, 𝓟 (Ici {x})` — `atTop`
+  on `Finset α` IS the superset filter. `Ici S = {T | S ⊆ T}` via
+  `Finset.le_iff_subset`.
+- `Filter.Ici_mem_atTop : Ici a ∈ atTop` — superset sets are in `atTop`.
+
+So `U := Ultrafilter.of (atTop : Filter (Finset Ordinal.{0}))` gives
+an ultrafilter extending the superset filter; `hU_superset` follows
+from `Ici_mem_atTop` and the `U ≤ atTop` inclusion.
+
+- `Pi.compactSpace [∀ i, CompactSpace (X i)] : CompactSpace (∀ i, X i)` —
+  Tychonoff.
+- `Function.compactSpace [CompactSpace Y] : CompactSpace (ι → Y)` —
+  Tychonoff for constant products.
+- `isCompact_iff_finite_subfamily_closed` — FIP characterization.
+- `IsCompact.nonempty_iInter_of_directed_nonempty_isCompact_isClosed` —
+  directed FIP.
+- `isCompact_iff_finite [DiscreteTopology X]` — for discrete, compact
+  iff finite (so direct Tychonoff over `Option (α.ToType ↪o PairERSource)`
+  with discrete topology fails — each coordinate is infinite).
+- `Ultrafilter.lim`, `Ultrafilter.le_nhds_lim` — ultralimit in a
+  compact space.
+- `Ultrafilter.em`, `Ultrafilter.eventually_exists_iff` — Boolean
+  reasoning eventually.
+
+The ultrafilter route is more direct given our Option-valued
+RawBranchAssignment; the Tychonoff route needs a finer-grained
+compact structure on each coordinate (e.g., a one-point
+compactification or restricting to a specific compact subspace per
+finite S). -/
 
 /-- **[NEW FRONTIER, sorry]** The raw-branch compactness principle.
 This is the only remaining mathematical content of the pair
