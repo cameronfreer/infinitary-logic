@@ -7110,6 +7110,55 @@ theorem finiteSupersetUltrafilter_eventually_superset
   rw [h_eq]
   exact Ultrafilter.of_le _ h_ici
 
+/-! ### Coordinate-level ultralimit helper
+
+Generic helper for ultrafilter compactness: given a family
+`f : ι → Option α` and an ultrafilter `U` on `ι`, the "eventual
+value" is `some v` when `{i | f i = some v} ∈ U` for some `v`,
+otherwise `none`. Used at each coordinate of the global raw
+assignment in the compactness proof. -/
+
+/-- **`ultrafilterEventuallyValue U f`**: the value taken by `f i`
+for `U`-many `i`. Returns `some v` if some `v` is eventually equal,
+else `none`. -/
+noncomputable def ultrafilterEventuallyValue
+    {ι : Type*} {α : Type*}
+    (U : Ultrafilter ι) (f : ι → Option α) : Option α :=
+  haveI : Decidable (∃ v : α, {i | f i = some v} ∈ U) := Classical.dec _
+  if h : ∃ v : α, {i | f i = some v} ∈ U then some h.choose else none
+
+/-- **`ultrafilterEventuallyValue_eq_some_mem`**: under the existence
+hypothesis, `f i = ultrafilterEventuallyValue U f` for `U`-many `i`. -/
+theorem ultrafilterEventuallyValue_eq_some_mem
+    {ι : Type*} {α : Type*}
+    {U : Ultrafilter ι} {f : ι → Option α}
+    (h : ∃ v : α, {i | f i = some v} ∈ U) :
+    {i | f i = ultrafilterEventuallyValue U f} ∈ U := by
+  unfold ultrafilterEventuallyValue
+  rw [dif_pos h]
+  exact h.choose_spec
+
+/-- **`ultrafilterEventuallyValue_unique`**: at most one `some v` can
+be eventually equal (else the disjoint pair `{i | f i = some v₁}` and
+`{i | f i = some v₂}` would both be in `U`, but their intersection is
+empty — contradiction since `U` is non-trivial). -/
+theorem ultrafilterEventuallyValue_unique
+    {ι : Type*} {α : Type*}
+    {U : Ultrafilter ι} {f : ι → Option α} {v₁ v₂ : α}
+    (h₁ : {i | f i = some v₁} ∈ U) (h₂ : {i | f i = some v₂} ∈ U) :
+    v₁ = v₂ := by
+  by_contra h_ne
+  have h_inter : {i | f i = some v₁} ∩ {i | f i = some v₂} ∈ U.toFilter :=
+    Filter.inter_mem h₁ h₂
+  have h_empty : ({i | f i = some v₁} ∩ {i | f i = some v₂} : Set ι) = ∅ := by
+    ext i
+    simp only [Set.mem_inter_iff, Set.mem_setOf_eq, Set.mem_empty_iff_false, iff_false,
+      not_and]
+    intro h_v₁ h_v₂
+    exact h_ne (Option.some.inj (h_v₁.symm.trans h_v₂))
+  rw [h_empty] at h_inter
+  exact U.neBot'.ne (Filter.empty_mem_iff_bot.mp h_inter)
+
 /-- **[NEW FRONTIER, sorry]** The raw-branch compactness principle.
 This is the only remaining mathematical content of the pair
 Erdős–Rado proof. The finite side and the projective-system
