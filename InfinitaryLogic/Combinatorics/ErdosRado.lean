@@ -6967,38 +6967,238 @@ theorem coherentBranchApproxSeq_not_cofinal_in_omega1
   · rw [Ordinal.omega_zero]; exact Ordinal.omega0_lt_omega_one
   · exact coherentBranchApproxSeq_level_lt_omega0 i
 
-/-! ### Inverse-limit compactness frontier
+/-! ### Decomposition: raw branch assignment + compactness principle
 
-`exists_coherentMajorityBranch_of_finitePartials` is the **inverse-limit
-compactness** statement: from a partial branch on every finite finset
-of countable ordinals, extract a global `CoherentMajorityBranch`. This
-is the **named frontier** that replaces the old monolithic
-`exists_coherentMajorityBranch` sorry — the finite side
-(`exists_coherentBranchPartial`, `commonExtensionPartialOn`,
-projective-system restriction laws) is fully axiom-clean, so the only
-remaining mathematical content is the projective/compactness
-extraction.
+The inverse-limit compactness frontier
+(`exists_coherentMajorityBranch_of_finitePartials`) factors through a
+more generic Tychonoff/ultrafilter-style compactness principle on a
+product space of "raw" prefix/branch assignments.
 
-The hypothesis quantifies over every finite `S ⊂ ω₁`. No positivity
-side condition — `S` may contain `0` (handled inside
-`exists_coherentBranchPartial` via `CoherentBranchApprox.fromZero`).
+The product space `RawBranchAssignment cR` is a pair of partial
+functions from countable ordinals to prefix/branch data (each
+returning `Option`, so values may be unset; using `Option` avoids
+having to fix arbitrary default OrderEmbeddings at unused levels).
+`SatisfiesFinite A S` asserts that `A`'s `some`-values on `S` match
+some `CoherentBranchPartial cR S`. The compactness principle
+`rawBranchCompactness cR` then says: if every finite `S ⊂ ω₁` is
+satisfied by some `A`, there is a global `A` satisfying every such
+`S`.
 
-`exists_coherentMajorityBranch` is a one-liner derived from this
-frontier through `exists_coherentBranchPartial`. -/
+`rawBranchCompactness_holds` is the new named frontier sorry — a
+generic compactness principle on finite coherent partial assignments,
+not specific to the pair Erdős–Rado model theory. The bridge from
+this compactness to `exists_coherentMajorityBranch_of_finitePartials`
+is axiom-clean. -/
 
-/-- **[NEW FRONTIER, sorry]** Inverse-limit compactness for the
-finite partial-branch projective system. Given a partial branch on
-every finite finset `S ⊂ ω₁`, extract a global
-`CoherentMajorityBranch`. This is the only remaining mathematical
-gap in the active pair Erdős–Rado path; the finite side and the
-restriction laws (the projective system) are fully axiom-clean. -/
+/-- **`RawBranchAssignment cR`**: the product space of partial
+prefix/branch assignments. Values at each level `α < ω₁` may be
+`some` (specified) or `none` (unset). -/
+def RawBranchAssignment (_cR : (Fin 2 ↪o PairERSource) → Bool) : Type 1 :=
+  (∀ α : Ordinal.{0}, α < Ordinal.omega.{0} 1 →
+    Option (α.ToType ↪o PairERSource)) ×
+  (∀ α : Ordinal.{0}, α < Ordinal.omega.{0} 1 →
+    Option (α.ToType → Bool))
+
+/-- **`SatisfiesFinite A S`**: there exists a `CoherentBranchPartial`
+on `S` whose data matches `A`'s `some`-values at each `α ∈ S`. -/
+def SatisfiesFinite {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (A : RawBranchAssignment cR) (S : Finset Ordinal.{0}) : Prop :=
+  ∃ (hS : ∀ α ∈ S, α < Ordinal.omega.{0} 1)
+    (P : CoherentBranchPartial cR S),
+    (∀ α (hα : α ∈ S), A.1 α (hS α hα) = some (P.prefixAt α hα)) ∧
+    (∀ α (hα : α ∈ S), A.2 α (hS α hα) = some (P.branch α hα))
+
+/-- **`rawBranchCompactness cR`** (Prop): the compactness principle.
+If every finite `S ⊂ ω₁` is satisfied by some raw assignment, there
+is a single global raw assignment satisfying every such finite `S`. -/
+def rawBranchCompactness (cR : (Fin 2 ↪o PairERSource) → Bool) : Prop :=
+  (∀ S : Finset Ordinal.{0}, (∀ α ∈ S, α < Ordinal.omega.{0} 1) →
+    ∃ A : RawBranchAssignment cR, SatisfiesFinite A S) →
+  ∃ A : RawBranchAssignment cR, ∀ S : Finset Ordinal.{0},
+    (∀ α ∈ S, α < Ordinal.omega.{0} 1) → SatisfiesFinite A S
+
+/-- **[NEW FRONTIER, sorry]** The raw-branch compactness principle.
+This is the only remaining mathematical content of the pair
+Erdős–Rado proof. The finite side and the projective-system
+restriction laws are axiom-clean; the bridge from this compactness
+to `exists_coherentMajorityBranch_of_finitePartials` is axiom-clean. -/
+theorem rawBranchCompactness_holds
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    rawBranchCompactness cR := by
+  sorry
+
+/-! ### Bridge: rawBranchCompactness → coherentMajorityBranch
+
+Given `rawBranchCompactness cR` and a partial branch on every finite
+`S ⊂ ω₁`, we extract a `CoherentMajorityBranch cR`:
+
+1. For each `S`, build an `A` satisfying `S` using the `CBP` from the
+   hypothesis (`some` values on `S`, `none` off it).
+2. Apply `rawBranchCompactness` to get a global `A` satisfying every
+   finite `S`.
+3. Build the CMB from the global `A`: at each `α < ω₁`, extract
+   `A.1 α hα` (which is `some _` by `SatisfiesFinite A {α}`) to define
+   `prefixAt α hα`, and similarly for `branch`. Coherence laws come
+   from `SatisfiesFinite` at the appropriate finite `S`. -/
+
+private noncomputable def CoherentBranchPartial.toRaw
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {S : Finset Ordinal.{0}}
+    (P : CoherentBranchPartial cR S) : RawBranchAssignment cR := by
+  classical
+  exact
+    (fun α _ => if h : α ∈ S then some (P.prefixAt α h) else none,
+     fun α _ => if h : α ∈ S then some (P.branch α h) else none)
+
+private lemma CoherentBranchPartial.toRaw_prefix_mem
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {S : Finset Ordinal.{0}}
+    (P : CoherentBranchPartial cR S) (α : Ordinal.{0}) (hα_lt : α < Ordinal.omega.{0} 1)
+    (hα : α ∈ S) :
+    P.toRaw.1 α hα_lt = some (P.prefixAt α hα) := by
+  unfold CoherentBranchPartial.toRaw
+  simp [hα]
+
+private lemma CoherentBranchPartial.toRaw_branch_mem
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {S : Finset Ordinal.{0}}
+    (P : CoherentBranchPartial cR S) (α : Ordinal.{0}) (hα_lt : α < Ordinal.omega.{0} 1)
+    (hα : α ∈ S) :
+    P.toRaw.2 α hα_lt = some (P.branch α hα) := by
+  unfold CoherentBranchPartial.toRaw
+  simp [hα]
+
+/-- **Bridge**: `rawBranchCompactness cR` discharges the
+inverse-limit-compactness hypothesis of
+`exists_coherentMajorityBranch_of_finitePartials`. Axiom-clean. -/
 theorem exists_coherentMajorityBranch_of_finitePartials
     (cR : (Fin 2 ↪o PairERSource) → Bool)
-    (_hfin : ∀ S : Finset Ordinal.{0},
+    (hfin : ∀ S : Finset Ordinal.{0},
       (∀ α ∈ S, α < Ordinal.omega.{0} 1) →
         Nonempty (CoherentBranchPartial cR S)) :
     Nonempty (CoherentMajorityBranch cR) := by
-  sorry
+  classical
+  -- Step 1: For each S, produce an A satisfying S (using the CBP from hfin).
+  have h_assign : ∀ S : Finset Ordinal.{0},
+      (∀ α ∈ S, α < Ordinal.omega.{0} 1) →
+        ∃ A : RawBranchAssignment cR, SatisfiesFinite A S := by
+    intro S hS
+    obtain ⟨P⟩ := hfin S hS
+    refine ⟨P.toRaw, hS, P, ?_, ?_⟩
+    · intro α hα
+      exact P.toRaw_prefix_mem α (hS α hα) hα
+    · intro α hα
+      exact P.toRaw_branch_mem α (hS α hα) hα
+  -- Step 2: Apply compactness.
+  obtain ⟨A, hA⟩ := rawBranchCompactness_holds cR h_assign
+  -- Helper: extraction of A's values at each α via SatisfiesFinite at {α}.
+  have h_some_prefix : ∀ (α : Ordinal.{0}) (hα : α < Ordinal.omega.{0} 1),
+      (A.1 α hα).isSome := by
+    intro α hα
+    have hSat : SatisfiesFinite A {α} :=
+      hA {α} (fun β hβ => Finset.mem_singleton.mp hβ ▸ hα)
+    obtain ⟨hS_S, P_S, h_pref, _⟩ := hSat
+    have h_α_in : α ∈ ({α} : Finset Ordinal.{0}) := Finset.mem_singleton.mpr rfl
+    have := h_pref α h_α_in
+    rw [this]
+    rfl
+  have h_some_branch : ∀ (α : Ordinal.{0}) (hα : α < Ordinal.omega.{0} 1),
+      (A.2 α hα).isSome := by
+    intro α hα
+    have hSat : SatisfiesFinite A {α} :=
+      hA {α} (fun β hβ => Finset.mem_singleton.mp hβ ▸ hα)
+    obtain ⟨hS_S, P_S, _, h_br⟩ := hSat
+    have h_α_in : α ∈ ({α} : Finset Ordinal.{0}) := Finset.mem_singleton.mpr rfl
+    have := h_br α h_α_in
+    rw [this]
+    rfl
+  -- Step 3: Build CMB from A.
+  refine ⟨{
+    prefixAt := fun α hα => (A.1 α hα).get (h_some_prefix α hα)
+    branch := fun α hα => (A.2 α hα).get (h_some_branch α hα)
+    prefix_restrict := ?_
+    branch_restrict := ?_
+    top_in_validFiber := ?_
+    large := ?_
+  }⟩
+  · -- prefix_restrict: ∀ β ≤ α, ∀ x, prefixAt α _ (lift x) = prefixAt β _ x.
+    intro β α hβα hβ hα x
+    have hSat : SatisfiesFinite A ({β, α} : Finset Ordinal.{0}) :=
+      hA {β, α} (fun γ hγ => by
+        rcases Finset.mem_insert.mp hγ with rfl | hγ
+        · exact hβ
+        · rwa [Finset.mem_singleton.mp hγ])
+    obtain ⟨hS_S, P_S, h_pref, _⟩ := hSat
+    have hβ_in : β ∈ ({β, α} : Finset Ordinal.{0}) :=
+      Finset.mem_insert.mpr (Or.inl rfl)
+    have hα_in : α ∈ ({β, α} : Finset Ordinal.{0}) :=
+      Finset.mem_insert.mpr (Or.inr (Finset.mem_singleton.mpr rfl))
+    -- Extract A's values as P_S's.
+    have h_A_β := h_pref β hβ_in
+    have h_A_α := h_pref α hα_in
+    -- The Option.get equals P_S's values.
+    have h_get_β : (A.1 β hβ).get (h_some_prefix β hβ) = P_S.prefixAt β hβ_in := by
+      have := h_A_β
+      rw [Option.get_of_eq_some _ this]
+    have h_get_α : (A.1 α hα).get (h_some_prefix α hα) = P_S.prefixAt α hα_in := by
+      have := h_A_α
+      rw [Option.get_of_eq_some _ this]
+    -- Apply P_S.prefix_restrict.
+    rw [h_get_β, h_get_α, P_S.prefix_restrict hβα hβ_in hα_in]
+  · -- branch_restrict: same pattern.
+    intro β α hβα hβ hα x
+    have hSat : SatisfiesFinite A ({β, α} : Finset Ordinal.{0}) :=
+      hA {β, α} (fun γ hγ => by
+        rcases Finset.mem_insert.mp hγ with rfl | hγ
+        · exact hβ
+        · rwa [Finset.mem_singleton.mp hγ])
+    obtain ⟨hS_S, P_S, _, h_br⟩ := hSat
+    have hβ_in : β ∈ ({β, α} : Finset Ordinal.{0}) :=
+      Finset.mem_insert.mpr (Or.inl rfl)
+    have hα_in : α ∈ ({β, α} : Finset Ordinal.{0}) :=
+      Finset.mem_insert.mpr (Or.inr (Finset.mem_singleton.mpr rfl))
+    have h_A_β := h_br β hβ_in
+    have h_A_α := h_br α hα_in
+    have h_get_β : (A.2 β hβ).get (h_some_branch β hβ) = P_S.branch β hβ_in := by
+      rw [Option.get_of_eq_some _ h_A_β]
+    have h_get_α : (A.2 α hα).get (h_some_branch α hα) = P_S.branch α hα_in := by
+      rw [Option.get_of_eq_some _ h_A_α]
+    rw [h_get_β, h_get_α, P_S.branch_restrict hβα hβ_in hα_in]
+  · -- top_in_validFiber.
+    intro γ hγ hsγ
+    haveI : IsWellOrder (Order.succ γ).ToType (· < ·) := isWellOrder_lt
+    have hSat : SatisfiesFinite A ({γ, Order.succ γ} : Finset Ordinal.{0}) :=
+      hA _ (fun β hβ => by
+        rcases Finset.mem_insert.mp hβ with rfl | hβ
+        · exact hγ
+        · rwa [Finset.mem_singleton.mp hβ])
+    obtain ⟨hS_S, P_S, h_pref, h_br⟩ := hSat
+    have hγ_in : γ ∈ ({γ, Order.succ γ} : Finset Ordinal.{0}) :=
+      Finset.mem_insert.mpr (Or.inl rfl)
+    have hsγ_in : Order.succ γ ∈ ({γ, Order.succ γ} : Finset Ordinal.{0}) :=
+      Finset.mem_insert.mpr (Or.inr (Finset.mem_singleton.mpr rfl))
+    have h_get_pref_sγ : (A.1 (Order.succ γ) hsγ).get (h_some_prefix _ _) =
+        P_S.prefixAt (Order.succ γ) hsγ_in := by
+      rw [Option.get_of_eq_some _ (h_pref (Order.succ γ) hsγ_in)]
+    have h_get_pref_γ : (A.1 γ hγ).get (h_some_prefix _ _) =
+        P_S.prefixAt γ hγ_in := by
+      rw [Option.get_of_eq_some _ (h_pref γ hγ_in)]
+    have h_get_br_γ : (A.2 γ hγ).get (h_some_branch _ _) =
+        P_S.branch γ hγ_in := by
+      rw [Option.get_of_eq_some _ (h_br γ hγ_in)]
+    rw [h_get_pref_sγ, h_get_pref_γ, h_get_br_γ]
+    exact P_S.top_in_validFiber γ hγ_in hsγ_in
+  · -- large.
+    intro α hα
+    have hSat : SatisfiesFinite A ({α} : Finset Ordinal.{0}) :=
+      hA {α} (fun β hβ => Finset.mem_singleton.mp hβ ▸ hα)
+    obtain ⟨hS_S, P_S, h_pref, h_br⟩ := hSat
+    have hα_in : α ∈ ({α} : Finset Ordinal.{0}) := Finset.mem_singleton.mpr rfl
+    have h_get_pref : (A.1 α hα).get (h_some_prefix α hα) =
+        P_S.prefixAt α hα_in := by
+      rw [Option.get_of_eq_some _ (h_pref α hα_in)]
+    have h_get_br : (A.2 α hα).get (h_some_branch α hα) =
+        P_S.branch α hα_in := by
+      rw [Option.get_of_eq_some _ (h_br α hα_in)]
+    rw [h_get_pref, h_get_br]
+    exact P_S.large α hα_in
 
 /-- **Existence of a coherent majority branch** — derived by wiring
 the finite-side `exists_coherentBranchPartial` through the
