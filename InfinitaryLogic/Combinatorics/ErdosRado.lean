@@ -6095,58 +6095,80 @@ extraction to all countable levels. -/
 
 /-- **`exists_coherentBranchApprox_for_strictMono`**: build a
 `CoherentBranchApprox cR n` over any strictly-monotone `Fin`-indexed
-family of countable positive ordinals, with `A.level i = f i`.
+family of countable ordinals (no positivity required), with
+`A.level i = f i`.
 
 This is the Fin-indexed form of the "finite-arbitrary-levels" bridge.
-The positivity hypothesis `0 < f i` is needed only for the first
-element (when extending from `CoherentBranchApprox.zero` whose
-`lastLevel` is `0`); subsequent elements only need to exceed the
-previous, which is given by `StrictMono f`. -/
+For `k > 0` the induction proceeds via `extendTo` (strict-monotonicity
+gives `A'.lastLevel < α`); for `k = 0` (the n = 1 base) we case-split:
+`α > 0` uses `(CoherentBranchApprox.zero cR).extendTo α`, while
+`α = 0` uses `CoherentBranchApprox.fromZero` directly. -/
 theorem exists_coherentBranchApprox_for_strictMono
     (cR : (Fin 2 ↪o PairERSource) → Bool) :
     ∀ {n : ℕ} (f : Fin n → Ordinal.{0})
-      (_h_pos : ∀ i, 0 < f i)
       (_h_lt : ∀ i, f i < Ordinal.omega.{0} 1)
       (_h_strictMono : StrictMono f),
       ∃ A : CoherentBranchApprox cR n, ∀ i, A.level i = f i := by
   intro n
   induction n with
   | zero =>
-    intro f _ _ _
+    intro f _ _
     refine ⟨CoherentBranchApprox.zero cR, ?_⟩
     intro i; exact i.elim0
   | succ k IH =>
-    intro f h_pos h_lt h_strictMono
-    let f' : Fin k → Ordinal.{0} := fun i => f i.castSucc
-    have h_pos' : ∀ i, 0 < f' i := fun i => h_pos _
-    have h_lt' : ∀ i, f' i < Ordinal.omega.{0} 1 := fun i => h_lt _
-    have h_strictMono' : StrictMono f' := fun _ _ hab =>
-      h_strictMono (Fin.castSucc_lt_castSucc_iff.mpr hab)
-    obtain ⟨A', hA'⟩ := IH f' h_pos' h_lt' h_strictMono'
-    let α : Ordinal.{0} := f (Fin.last k)
-    have hα_lt : α < Ordinal.omega.{0} 1 := h_lt _
-    have h_above : A'.lastLevel < α := by
-      unfold CoherentBranchApprox.lastLevel
-      by_cases hk : k = 0
-      · rw [dif_pos hk]; exact h_pos (Fin.last k)
-      · rw [dif_neg hk]
+    intro f h_lt h_strictMono
+    by_cases hk : k = 0
+    · -- n = 1 case. Special-handle f ⟨0, _⟩ = 0 via fromZero.
+      subst hk
+      let α : Ordinal.{0} := f ⟨0, Nat.zero_lt_one⟩
+      have hα_lt : α < Ordinal.omega.{0} 1 := h_lt _
+      by_cases hα_pos : 0 < α
+      · -- α > 0: extend CBA.zero.
+        refine ⟨(CoherentBranchApprox.zero cR).extendTo α hα_lt hα_pos, ?_⟩
+        intro i
+        have hi_eq : i = Fin.last 0 :=
+          Fin.ext (by have := i.isLt; omega)
+        rw [hi_eq]
+        exact (CoherentBranchApprox.zero cR).extendToLevel_last α
+      · -- α = 0: use fromZero directly.
+        push_neg at hα_pos
+        have hα_eq : α = 0 := le_antisymm hα_pos (zero_le _)
+        refine ⟨CoherentBranchApprox.fromZero cR, ?_⟩
+        intro i
+        have hi_eq : i = ⟨0, Nat.zero_lt_one⟩ :=
+          Fin.ext (by have := i.isLt; omega)
+        rw [hi_eq]
+        show (0 : Ordinal) = f ⟨0, Nat.zero_lt_one⟩
+        exact hα_eq.symm
+    · -- k > 0 case. IH + extendTo; h_above follows from strict mono.
+      let f' : Fin k → Ordinal.{0} := fun i => f i.castSucc
+      have h_lt' : ∀ i, f' i < Ordinal.omega.{0} 1 := fun i => h_lt _
+      have h_strictMono' : StrictMono f' := fun _ _ hab =>
+        h_strictMono (Fin.castSucc_lt_castSucc_iff.mpr hab)
+      obtain ⟨A', hA'⟩ := IH f' h_lt' h_strictMono'
+      let α : Ordinal.{0} := f (Fin.last k)
+      have hα_lt : α < Ordinal.omega.{0} 1 := h_lt _
+      have h_above : A'.lastLevel < α := by
+        unfold CoherentBranchApprox.lastLevel
+        rw [dif_neg hk]
         have hk' : k - 1 < k := Nat.sub_lt (Nat.pos_of_ne_zero hk) one_pos
         rw [hA' ⟨k - 1, hk'⟩]
         show f' ⟨k - 1, hk'⟩ < α
         show f (⟨k - 1, hk'⟩ : Fin k).castSucc < f (Fin.last k)
         apply h_strictMono
         exact Fin.castSucc_lt_last _
-    refine ⟨A'.extendTo α hα_lt h_above, ?_⟩
-    intro i
-    show A'.extendToLevel α i = f i
-    induction i using Fin.lastCases with
-    | last => rw [A'.extendToLevel_last]
-    | cast j =>
-      rw [A'.extendToLevel_castSucc α j, hA' j]
+      refine ⟨A'.extendTo α hα_lt h_above, ?_⟩
+      intro i
+      show A'.extendToLevel α i = f i
+      induction i using Fin.lastCases with
+      | last => rw [A'.extendToLevel_last]
+      | cast j =>
+        rw [A'.extendToLevel_castSucc α j, hA' j]
 
 /-- **`exists_coherentBranchApprox_for_list`**: build a
 `CoherentBranchApprox cR l.length` over any strictly-sorted finite
-list `l` of countable positive ordinals, with `A.level i = l.get i`.
+list `l` of countable ordinals (no positivity required), with
+`A.level i = l.get i`.
 
 Derived from `exists_coherentBranchApprox_for_strictMono` by reading
 the list as a Fin-indexed family. -/
@@ -6154,12 +6176,10 @@ theorem exists_coherentBranchApprox_for_list
     (cR : (Fin 2 ↪o PairERSource) → Bool)
     (l : List Ordinal.{0})
     (h_sorted : l.Pairwise (· < ·))
-    (h_pos : ∀ α ∈ l, 0 < α)
     (h_lt : ∀ α ∈ l, α < Ordinal.omega.{0} 1) :
     ∃ A : CoherentBranchApprox cR l.length,
       ∀ i : Fin l.length, A.level i = l.get i := by
-  refine exists_coherentBranchApprox_for_strictMono cR (l.get) ?_ ?_ ?_
-  · exact fun i => h_pos _ (List.get_mem _ _)
+  refine exists_coherentBranchApprox_for_strictMono cR (l.get) ?_ ?_
   · exact fun i => h_lt _ (List.get_mem _ _)
   · intro a b hab
     exact List.pairwise_iff_get.mp h_sorted a b hab
@@ -6198,20 +6218,15 @@ structure CoherentBranchPartial
     toApprox.level i = (S.orderEmbOfFin rfl) i
 
 /-- **`exists_coherentBranchPartial`**: for any finite set `S` of
-countable positive ordinals, there exists a `CoherentBranchPartial cR S`.
-
-The positivity hypothesis `0 < α` is inherited from
-`exists_coherentBranchApprox_for_strictMono` (CBA's zero-level
-constructor has `lastLevel = 0`, so the first level extended must
-be positive). -/
+countable ordinals, there exists a `CoherentBranchPartial cR S`.
+No positivity hypothesis required; the `0 ∈ S` case is handled by
+`CoherentBranchApprox.fromZero` inside the `strictMono` constructor. -/
 theorem exists_coherentBranchPartial
     (cR : (Fin 2 ↪o PairERSource) → Bool) (S : Finset Ordinal.{0})
-    (h_pos : ∀ α ∈ S, 0 < α)
     (hS : ∀ α ∈ S, α < Ordinal.omega.{0} 1) :
     Nonempty (CoherentBranchPartial cR S) := by
   obtain ⟨A, hA⟩ := exists_coherentBranchApprox_for_strictMono cR
     (S.orderEmbOfFin rfl)
-    (fun i => h_pos _ (S.orderEmbOfFin_mem rfl i))
     (fun i => hS _ (S.orderEmbOfFin_mem rfl i))
     (S.orderEmbOfFin rfl).strictMono
   exact ⟨{ toApprox := A, level_eq := hA }⟩
@@ -6731,17 +6746,13 @@ compatible restriction at each `S ∈ 𝒮`. -/
 theorem exists_commonExtensionPartial
     (cR : (Fin 2 ↪o PairERSource) → Bool)
     (𝒮 : Finset (Finset Ordinal.{0}))
-    (h𝒮_pos : ∀ S ∈ 𝒮, ∀ α ∈ S, 0 < α)
     (h𝒮_lt : ∀ S ∈ 𝒮, ∀ α ∈ S, α < Ordinal.omega.{0} 1) :
     Nonempty (CoherentBranchPartial cR (𝒮.sup id)) := by
   classical
   apply exists_coherentBranchPartial
-  · intro α hα
-    obtain ⟨S, hS, hαS⟩ := Finset.mem_sup.mp hα
-    exact h𝒮_pos S hS α hαS
-  · intro α hα
-    obtain ⟨S, hS, hαS⟩ := Finset.mem_sup.mp hα
-    exact h𝒮_lt S hS α hαS
+  intro α hα
+  obtain ⟨S, hS, hαS⟩ := Finset.mem_sup.mp hα
+  exact h𝒮_lt S hS α hαS
 
 /-- **`commonExtensionPartialOn`**: given a common extension `P` over
 the union `𝒮.sup id`, restrict to any member `S ∈ 𝒮`. The compatible
@@ -6961,33 +6972,30 @@ theorem coherentBranchApproxSeq_not_cofinal_in_omega1
 `exists_coherentMajorityBranch_of_finitePartials` is the **inverse-limit
 compactness** statement: from a partial branch on every finite finset
 of countable ordinals, extract a global `CoherentMajorityBranch`. This
-is the **new named frontier** that replaces the old monolithic
+is the **named frontier** that replaces the old monolithic
 `exists_coherentMajorityBranch` sorry — the finite side
 (`exists_coherentBranchPartial`, `commonExtensionPartialOn`,
-projective-system restriction laws) is already done, so the only
+projective-system restriction laws) is fully axiom-clean, so the only
 remaining mathematical content is the projective/compactness
 extraction.
 
-The hypothesis takes `0 < α` together with `α < ω₁`. The positivity
-side condition tracks the existing `exists_coherentBranchPartial`
-construction (which starts from `CoherentBranchApprox.zero` and so
-requires the first extended level to be positive); a `0`-aware
-strengthening of `exists_coherentBranchPartial` would let positivity
-drop from the hypothesis.
+The hypothesis quantifies over every finite `S ⊂ ω₁`. No positivity
+side condition — `S` may contain `0` (handled inside
+`exists_coherentBranchPartial` via `CoherentBranchApprox.fromZero`).
 
-After this frontier is filled, `exists_coherentMajorityBranch` becomes
-a one-liner wiring it through `exists_coherentBranchPartial`. -/
+`exists_coherentMajorityBranch` is a one-liner derived from this
+frontier through `exists_coherentBranchPartial`. -/
 
 /-- **[NEW FRONTIER, sorry]** Inverse-limit compactness for the
 finite partial-branch projective system. Given a partial branch on
-every finite positive-ordinal finset `S ⊂ ω₁`, extract a global
+every finite finset `S ⊂ ω₁`, extract a global
 `CoherentMajorityBranch`. This is the only remaining mathematical
 gap in the active pair Erdős–Rado path; the finite side and the
 restriction laws (the projective system) are fully axiom-clean. -/
 theorem exists_coherentMajorityBranch_of_finitePartials
     (cR : (Fin 2 ↪o PairERSource) → Bool)
     (_hfin : ∀ S : Finset Ordinal.{0},
-      (∀ α ∈ S, 0 < α) → (∀ α ∈ S, α < Ordinal.omega.{0} 1) →
+      (∀ α ∈ S, α < Ordinal.omega.{0} 1) →
         Nonempty (CoherentBranchPartial cR S)) :
     Nonempty (CoherentMajorityBranch cR) := by
   sorry
@@ -7000,7 +7008,7 @@ theorem exists_coherentMajorityBranch
     (cR : (Fin 2 ↪o PairERSource) → Bool) :
     Nonempty (CoherentMajorityBranch cR) :=
   exists_coherentMajorityBranch_of_finitePartials cR
-    (fun S h_pos hS => exists_coherentBranchPartial cR S h_pos hS)
+    (fun S hS => exists_coherentBranchPartial cR S hS)
 
 /-- **Conditional implication**: a `CoherentMajorityBranch` would
 discharge the limit-stage typeAt agreement that
