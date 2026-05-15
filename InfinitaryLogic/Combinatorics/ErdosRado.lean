@@ -7017,11 +7017,39 @@ def rawBranchCompactness (cR : (Fin 2 ↪o PairERSource) → Bool) : Prop :=
   ∃ A : RawBranchAssignment cR, ∀ S : Finset Ordinal.{0},
     (∀ α ∈ S, α < Ordinal.omega.{0} 1) → SatisfiesFinite A S
 
+/-! ### Status of `rawBranchCompactness_holds`
+
+`rawBranchCompactness_holds` is the final non-model-theoretic
+compactness frontier. It can be proved either by:
+
+1. **Tychonoff compactness** for products of finite/discrete spaces,
+   reducing to the finite-intersection property of the projective
+   system; or
+
+2. **An ultrafilter** over `Finset Ordinal.{0}` extending the
+   superset/cofinite filter, with the global assignment defined as
+   the ultralimit value at each coordinate.
+
+The intended packaging is a reusable compactness principle:
+
+    theorem rawBranchCompactness_holds_of_ultrafilter
+        (cR) (U : Ultrafilter (Finset Ordinal.{0}))
+        (hU_superset : ∀ S, {T | S ⊆ T} ∈ U) :
+        rawBranchCompactness cR
+
+from which `rawBranchCompactness_holds` would follow by an existence
+result for ultrafilters extending the superset filter on `Finset
+Ordinal.{0}`. The construction is real set-theoretic compactness
+work; for now the principle is left as the named frontier sorry. -/
+
 /-- **[NEW FRONTIER, sorry]** The raw-branch compactness principle.
 This is the only remaining mathematical content of the pair
 Erdős–Rado proof. The finite side and the projective-system
 restriction laws are axiom-clean; the bridge from this compactness
-to `exists_coherentMajorityBranch_of_finitePartials` is axiom-clean. -/
+to `exists_coherentMajorityBranch_of_finitePartials` is axiom-clean.
+
+See the status note above for proof strategies (Tychonoff or
+ultrafilter). -/
 theorem rawBranchCompactness_holds
     (cR : (Fin 2 ↪o PairERSource) → Bool) :
     rawBranchCompactness cR := by
