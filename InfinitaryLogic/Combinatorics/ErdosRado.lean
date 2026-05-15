@@ -7159,6 +7159,66 @@ theorem ultrafilterEventuallyValue_unique
   rw [h_empty] at h_inter
   exact U.neBot'.ne (Filter.empty_mem_iff_bot.mp h_inter)
 
+/-! ### Coordinatewise raw ultralimit
+
+Given a witness family `A : Finset Ordinal → RawBranchAssignment cR`
+(typically chosen via `Classical.choose` from a `SatisfiesFinite`
+existence), the coordinatewise ultralimit raw assignment takes, at
+each coordinate `(α, hα)`, the `ultrafilterEventuallyValue` along the
+`finiteSupersetUltrafilter Ordinal` of `A S` at that coordinate. -/
+
+/-- **`rawBranchUltralimit A`**: coordinatewise ultralimit raw
+assignment, taking eventual `some v`-values along the
+`finiteSupersetUltrafilter Ordinal`. -/
+noncomputable def rawBranchUltralimit
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (A : Finset Ordinal.{0} → RawBranchAssignment cR) :
+    RawBranchAssignment cR :=
+  (fun α hα =>
+      ultrafilterEventuallyValue (finiteSupersetUltrafilter Ordinal.{0})
+        (fun S => (A S).1 α hα),
+   fun α hα =>
+      ultrafilterEventuallyValue (finiteSupersetUltrafilter Ordinal.{0})
+        (fun S => (A S).2 α hα))
+
+/-! ### Diagnostic: eventual-constancy obstruction
+
+For `rawBranchUltralimit A` to satisfy `S₀` (in the sense of
+`SatisfiesFinite`), each coordinate `(α, hα)` for `α ∈ S₀` must
+return `some _` from `ultrafilterEventuallyValue` — equivalently:
+for each `α ∈ S₀`, there must exist `v` with
+`{S | (A S).1 α hα = some v} ∈ finiteSupersetUltrafilter Ordinal`,
+i.e., `(A S).1 α hα` is **eventually constant** along the ultrafilter.
+
+For **arbitrary** independently chosen `A_S` (each just satisfying
+`SatisfiesFinite (A_S) S`), this eventual constancy is **NOT**
+guaranteed: different `S`'s can produce different CBPs that disagree
+at `α`, with no `U`-stable choice. Hence the next obstruction is to
+arrange witnesses so that the coordinate values **agree on supersets**.
+
+Two natural strategies:
+
+1. **Coherent witness net**: pick witnesses `A_S` so that whenever
+   `T ⊆ S`, `A_T` and `A_S` agree on the levels of `T`. This is a
+   strong consistency requirement but follows from
+   `exists_commonExtensionPartial`-style constructions for finite
+   sub-families.
+
+2. **Ultrafilter-respecting witness choice**: for each fixed
+   `α < ω₁`, observe that `(A S).1 α hα` ranges over a (small) set of
+   values as `S` varies over supersets of `{α}`. The ultrafilter
+   `U`-partitions this set into one element by `Ultrafilter.em`-style
+   reasoning, but extracting **U-many supersets giving the same
+   value** requires the value type to be "small relative to `U`"
+   (e.g., countable for `U` extending the cofinite filter on a
+   countable index).
+
+The clean route forward is **option 1**: define a coherent witness
+family by recursively choosing each `A_S` to extend (via `restrict`)
+a witness chosen on the union of finitely many previously-fixed
+finite sets, leveraging `exists_commonExtensionPartial` to ensure
+consistency. -/
+
 /-- **[NEW FRONTIER, sorry]** The raw-branch compactness principle.
 This is the only remaining mathematical content of the pair
 Erdős–Rado proof. The finite side and the projective-system
@@ -7166,10 +7226,9 @@ restriction laws are axiom-clean; the bridge from this compactness
 to `exists_coherentMajorityBranch_of_finitePartials` is axiom-clean.
 
 See the status note above for proof strategies (Tychonoff or
-ultrafilter). The ultrafilter route would use
-`finiteSupersetUltrafilter (Ordinal.{0})` +
-`finiteSupersetUltrafilter_eventually_superset` to extract the
-ultralimit assignment. -/
+ultrafilter), and the diagnostic note above for the
+eventual-constancy obstruction encountered when naively applying
+`rawBranchUltralimit` to arbitrary witnesses. -/
 theorem rawBranchCompactness_holds
     (cR : (Fin 2 ↪o PairERSource) → Bool) :
     rawBranchCompactness cR := by
