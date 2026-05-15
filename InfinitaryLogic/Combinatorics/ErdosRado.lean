@@ -7219,20 +7219,115 @@ a witness chosen on the union of finitely many previously-fixed
 finite sets, leveraging `exists_commonExtensionPartial` to ensure
 consistency. -/
 
-/-- **[NEW FRONTIER, sorry]** The raw-branch compactness principle.
-This is the only remaining mathematical content of the pair
-Erdős–Rado proof. The finite side and the projective-system
-restriction laws are axiom-clean; the bridge from this compactness
-to `exists_coherentMajorityBranch_of_finitePartials` is axiom-clean.
+/-! ### `CoherentWitnessNet`: coherent global section of the projective system
 
-See the status note above for proof strategies (Tychonoff or
-ultrafilter), and the diagnostic note above for the
-eventual-constancy obstruction encountered when naively applying
-`rawBranchUltralimit` to arbitrary witnesses. -/
+The eventual-constancy obstruction documented above shows that
+arbitrary witnesses don't suffice for the ultrafilter compactness
+argument. The right structure is a **coherent witness net**: a
+choice `P S hS : CoherentBranchPartial cR S` for every finite
+`S ⊂ ω₁`, with restrictions compatible across `S ⊆ T`.
+
+`CoherentWitnessNet` makes the compatibility a structural field of
+the witness family. Given a `CoherentWitnessNet`, the compactness
+proof is direct (no ultrafilter required): define `A` coordinatewise
+via `W.P {α}`, and use `prefix_compat` / `branch_compat` to match
+against `W.P S₀` for any `S₀` containing the coordinate.
+
+The frontier thus migrates one level deeper: from
+`rawBranchCompactness_holds` (the abstract compactness Prop) to
+`exists_coherentWitnessNet` (existence of a globally coherent
+section of the projective system). -/
+
+/-- **`CoherentWitnessNet cR`**: a coherent choice of partial
+branches across every finite `S ⊂ ω₁`, with restrictions compatible
+across `S ⊆ T`. -/
+structure CoherentWitnessNet (cR : (Fin 2 ↪o PairERSource) → Bool) where
+  /-- Witness CBP at every finite `S ⊂ ω₁`. -/
+  P : ∀ S : Finset Ordinal.{0}, (∀ α ∈ S, α < Ordinal.omega.{0} 1) →
+    CoherentBranchPartial cR S
+  /-- Prefix compatibility across `S ⊆ T`: the prefix at `α ∈ S` is
+  the same whether viewed in `P S` or `P T`. -/
+  prefix_compat : ∀ {S T : Finset Ordinal.{0}}
+    (hS : ∀ α ∈ S, α < Ordinal.omega.{0} 1)
+    (hT : ∀ α ∈ T, α < Ordinal.omega.{0} 1)
+    (hST : S ⊆ T) (α : Ordinal.{0}) (hα : α ∈ S),
+    (P T hT).prefixAt α (hST hα) = (P S hS).prefixAt α hα
+  /-- Branch compatibility (parallel to `prefix_compat`). -/
+  branch_compat : ∀ {S T : Finset Ordinal.{0}}
+    (hS : ∀ α ∈ S, α < Ordinal.omega.{0} 1)
+    (hT : ∀ α ∈ T, α < Ordinal.omega.{0} 1)
+    (hST : S ⊆ T) (α : Ordinal.{0}) (hα : α ∈ S),
+    (P T hT).branch α (hST hα) = (P S hS).branch α hα
+
+/-- **`rawBranchCompactness_of_coherentWitnessNet`**: axiom-clean
+bridge. Given a `CoherentWitnessNet`, the raw-branch compactness
+principle holds. The construction is direct (no ultrafilter): define
+`A` at each coordinate via `W.P {α}`, and use `prefix_compat` /
+`branch_compat` to match against `W.P S₀` for any `S₀` containing the
+coordinate. -/
+theorem rawBranchCompactness_of_coherentWitnessNet
+    {cR : (Fin 2 ↪o PairERSource) → Bool} (W : CoherentWitnessNet cR) :
+    rawBranchCompactness cR := by
+  intro _hfin
+  -- Singleton-witness helper for each α < ω₁.
+  let hα_singleton : ∀ (α : Ordinal.{0}), α < Ordinal.omega.{0} 1 →
+      ∀ β ∈ ({α} : Finset Ordinal.{0}), β < Ordinal.omega.{0} 1 :=
+    fun α hα β hβ => Finset.mem_singleton.mp hβ ▸ hα
+  -- Build the global raw assignment from singleton witnesses.
+  refine ⟨(fun α hα =>
+      some ((W.P {α} (hα_singleton α hα)).prefixAt α
+        (Finset.mem_singleton.mpr rfl)),
+    fun α hα =>
+      some ((W.P {α} (hα_singleton α hα)).branch α
+        (Finset.mem_singleton.mpr rfl))), ?_⟩
+  intro S₀ hS₀
+  -- The CBP witness for SatisfiesFinite is W.P S₀ hS₀.
+  refine ⟨hS₀, W.P S₀ hS₀, ?_, ?_⟩
+  · -- Prefix matching: A.1 α (hS₀ α hα) = some ((W.P S₀ hS₀).prefixAt α hα).
+    intro α hα
+    -- Both sides have form `some (...)`. The values agree by prefix_compat
+    -- applied to {α} ⊆ S₀.
+    have h_subset : ({α} : Finset Ordinal.{0}) ⊆ S₀ := by
+      intro β hβ
+      rw [Finset.mem_singleton.mp hβ]; exact hα
+    have := W.prefix_compat (hα_singleton α (hS₀ α hα)) hS₀ h_subset α
+      (Finset.mem_singleton.mpr rfl)
+    -- `this : (W.P S₀ hS₀).prefixAt α (h_subset _) = (W.P {α} ...).prefixAt α _`.
+    -- Use proof-irrelevance for the membership proofs.
+    show some ((W.P {α} (hα_singleton α (hS₀ α hα))).prefixAt α
+        (Finset.mem_singleton.mpr rfl)) =
+      some ((W.P S₀ hS₀).prefixAt α hα)
+    rw [← this]
+  · -- Branch matching: parallel.
+    intro α hα
+    have h_subset : ({α} : Finset Ordinal.{0}) ⊆ S₀ := by
+      intro β hβ
+      rw [Finset.mem_singleton.mp hβ]; exact hα
+    have := W.branch_compat (hα_singleton α (hS₀ α hα)) hS₀ h_subset α
+      (Finset.mem_singleton.mpr rfl)
+    show some ((W.P {α} (hα_singleton α (hS₀ α hα))).branch α
+        (Finset.mem_singleton.mpr rfl)) =
+      some ((W.P S₀ hS₀).branch α hα)
+    rw [← this]
+
+/-- **[NEW FRONTIER, sorry]** Existence of a coherent witness net.
+This replaces `rawBranchCompactness_holds` as the active mathematical
+frontier of the Erdős–Rado proof: with a globally coherent section
+of the projective system in hand, the compactness conclusion (and
+hence the full `CoherentMajorityBranch`) follows axiom-clean. -/
+theorem exists_coherentWitnessNet
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    Nonempty (CoherentWitnessNet cR) := by
+  sorry
+
+/-- **`rawBranchCompactness_holds`** — derived axiom-clean from
+`exists_coherentWitnessNet` via the bridge
+`rawBranchCompactness_of_coherentWitnessNet`. -/
 theorem rawBranchCompactness_holds
     (cR : (Fin 2 ↪o PairERSource) → Bool) :
-    rawBranchCompactness cR := by
-  sorry
+    rawBranchCompactness cR :=
+  rawBranchCompactness_of_coherentWitnessNet
+    (Classical.choice (exists_coherentWitnessNet cR))
 
 /-! ### Bridge: rawBranchCompactness → coherentMajorityBranch
 
