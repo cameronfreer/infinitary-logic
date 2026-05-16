@@ -7488,42 +7488,14 @@ theorem FiniteProjectiveSystem.exists_global_section_of_partialExtensions
   intro i j hi hj hij
   exact m.compat (h_dom i hi) (h_dom j hj) hij
 
-/-- **[ACTIVE FINAL FRONTIER, sorry]** Global-section existence for a
-finite projective system. Lifts the finite-extension property to a
-globally coherent section on all valid indices.
+/-! ### Status note
 
-This is **the** remaining mathematical content of the pair Erdős–Rado
-proof: a generic inverse-limit / Zorn-style compactness statement
-that is **not** specific to the Erdős–Rado construction.
-
-**Zorn machinery now in place** (axiom-clean):
-- `PartialSection X` + `instPreorder` (extension order).
-- `chainUpperBound` + `chainUpperBound_isUB` + `bddAbove_of_isChain`
-  (the chain union as upper bound).
-- `exists_maximal` (Zorn application via `zorn_le`).
-
-**Remaining step**: show the maximal partial section's domain is
-all valid indices. The naive Zorn extension argument hits a
-subtlety: extending a maximal section `m` by adding one valid index
-`i₀ ∉ m.domain` requires choosing a value at `i₀` consistent with
-ALL of `m.P` on `m.domain` (potentially infinite). The
-`finite_extension` field only supplies coherent choices over finite
-sub-families, so the "extend `m` by `i₀`" step requires either:
-
-(a) a strengthened `finite_extension` that extends a specified
-    partial choice (not just any choice), or
-(b) a separate compactness argument (e.g., Tychonoff/ultrafilter on
-    the value space at `i₀`) using the finite-consistency from
-    `finite_extension`.
-
-This is the genuine compactness work; the Zorn skeleton above just
-organizes the path. -/
-theorem FiniteProjectiveSystem.exists_global_section
-    {ι : Type*} [PartialOrder ι] (X : FiniteProjectiveSystem ι) :
-    ∃ P : ∀ i, X.Valid i → X.Obj i,
-      ∀ {i j : ι} (hi : X.Valid i) (hj : X.Valid j) (hij : i ≤ j),
-        X.Compat (X.restrict hij (P j hj)) (P i hi) := by
-  sorry
+The previous `FiniteProjectiveSystem.exists_global_section` theorem
+(an unconditional global-section existence) has been **superseded**
+by the conditional `exists_global_section_of_partialExtensions`,
+which derives the global section from a `HasPartialExtensions`
+hypothesis. For concrete instances (e.g., `coherentBranchPartialSystem`),
+the `HasPartialExtensions` is supplied separately. -/
 
 /-! ### `CoherentWitnessNet`: coherent global section of the projective system
 
@@ -7741,14 +7713,64 @@ noncomputable def coherentBranchPartialSystem
       rw [CoherentBranchPartial.restrict_branch, Q.restrict_branch (h_sub hT) α (hST hα),
           Q.restrict_branch (h_sub hS) α hα]
 
+/-! ### CBP-specific `HasPartialExtensions` instance
+
+The strengthened `HasPartialExtensions` property for the CBP
+projective system. Given a partial section `p` and a new valid
+finset `i₀`, must return `q : PartialSection` with `p ≤ q` and
+`i₀ ∈ q.domain`.
+
+**Obstruction analysis**: building `q` from `p` requires constructing
+a CBP at `i₀` whose restriction to each `S ∈ p.domain` agrees with
+`p.P S` (where the relevant overlap is `S ⊆ i₀` for back direction,
+or `(p.P T).restrict i₀` matches `q.P i₀` for forward `T ⊇ i₀`).
+
+The challenges:
+
+- **Back direction** (`S ⊆ i₀`, finitely many subsets of `i₀`): forces
+  `q.P i₀` to restrict to `p.P S` on each such `S`. Mutually
+  compatible (via `p.compat`), so the data on `⋃ S ⊆ i₀` is
+  determined. Extending to all of `i₀` requires a CBP-amalgamation
+  primitive stronger than `exists_coherentBranchPartial` (which
+  doesn't preserve prescribed data on a sub-finset).
+
+- **Forward direction** (`T ⊇ i₀`, possibly infinitely many supersets):
+  `q.P i₀` must equal `(p.P T).restrict i₀` for every such `T`. By
+  `p.compat`, different `T`'s give the same restriction provided
+  there's a common upper bound in `p.domain` — but a generic `p`
+  isn't necessarily directed. Without directedness, infinitely many
+  forward constraints could be inconsistent.
+
+The naive use of `exists_commonExtensionPartial` on a finite slice
+of `p.domain ∪ {i₀}` gives a coherent family, but the values **need
+not match `p.P S`** on overlap. Hence `HasPartialExtensions` requires
+a strictly stronger primitive than `exists_coherentBranchPartial` /
+`finite_extension_property`.
+
+This is the predicted next frontier (per the FPS migration plan):
+the genuine compactness work, now isolated as a sorry on this
+specific CBP-side property. -/
+
+/-- **[NEW FRONTIER, sorry]** The CBP projective system has the
+strengthened `HasPartialExtensions` property. Together with the
+axiom-clean `exists_global_section_of_partialExtensions`, this
+yields `exists_coherentWitnessNet`. -/
+theorem coherentBranchPartial_hasPartialExtensions
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    (coherentBranchPartialSystem cR).HasPartialExtensions := by
+  sorry
+
 /-- **Existence of a coherent witness net** — derived axiom-clean
-from `FiniteProjectiveSystem.exists_global_section` applied to the
-CBP projective system. The pointwise `prefix_compat` / `branch_compat`
-fields fall out directly from the system's fieldwise `Compat`. -/
+from `exists_global_section_of_partialExtensions` applied to the
+CBP projective system, with `HasPartialExtensions` supplied by
+`coherentBranchPartial_hasPartialExtensions`. The pointwise
+`prefix_compat` / `branch_compat` fields fall out directly from the
+system's fieldwise `Compat`. -/
 theorem exists_coherentWitnessNet
     (cR : (Fin 2 ↪o PairERSource) → Bool) :
     Nonempty (CoherentWitnessNet cR) := by
-  obtain ⟨P, hP⟩ := (coherentBranchPartialSystem cR).exists_global_section
+  obtain ⟨P, hP⟩ := (coherentBranchPartialSystem cR).exists_global_section_of_partialExtensions
+    (coherentBranchPartial_hasPartialExtensions cR)
   -- hP : ∀ {S T} (hS) (hT) (hST : S ≤ T),
   --      cbpFieldwiseCompat ((P T hT).restrict hST) (P S hS)
   -- The `Compat` field is `cbpFieldwiseCompat`, so unfolds to pointwise.
