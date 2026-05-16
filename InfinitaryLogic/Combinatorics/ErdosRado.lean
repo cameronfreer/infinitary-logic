@@ -7446,66 +7446,47 @@ theorem FiniteProjectiveSystem.PartialSection.exists_maximal
 
 The finite-extension field (`finite_extension`) says "for any finite
 family of valid indices, there's a compatible choice." It doesn't say
-"for any partial choice over potentially infinitely many indices,
-there's an extension by one new index." The latter is what's needed
-to complete the Zorn proof: take a maximal `m`, attempt to extend by
-a missing valid `i₀`, contradict maximality.
+"for any partial section, there's a strict extension by one new
+index." The latter is what's needed to complete the Zorn proof: take
+a maximal `m`, attempt to extend by a missing valid `i₀`, contradict
+maximality.
 
-`HasPartialExtensions` packages this stronger property: every partial
-section can be extended by any single new valid index with a value
-consistent with the entire partial section. Three Compat clauses
-(self / back / forward) cover the three orderings of `(j, i₀)`:
-self (i₀ = i₀), back (j ≤ i₀), forward (i₀ ≤ j). -/
+`HasPartialExtensions` packages this stronger property at the
+**`PartialSection` level** — returning a partial section `q` that
+extends `p` and contains `i₀`, rather than a raw value `x₀ : X.Obj i₀`.
+This keeps the dependent-transport handling (building `q` from
+`(p, i₀, x₀)`) inside the instance proof, where the model-specific
+machinery is available, instead of in the generic Zorn bridge. -/
 
-/-- **`X.HasPartialExtensions`**: every partial section extends to any
-single new valid index with a value consistent across all comparable
-domain elements. -/
+/-- **`X.HasPartialExtensions`**: every partial section extends to a
+strictly larger partial section containing any specified valid index. -/
 def FiniteProjectiveSystem.HasPartialExtensions
     {ι : Type*} [PartialOrder ι] (X : FiniteProjectiveSystem ι) : Prop :=
-  ∀ (p : X.PartialSection) (i₀ : ι) (_hval : X.Valid i₀),
-    ∃ x₀ : X.Obj i₀,
-      -- self compat at the new index.
-      X.Compat (X.restrict (le_refl i₀) x₀) x₀ ∧
-      -- back direction: j ≤ i₀ gives consistency on j.
-      (∀ {j : ι} (hj : j ∈ p.domain) (hji : j ≤ i₀),
-        X.Compat (X.restrict hji x₀) (p.P j hj)) ∧
-      -- forward direction: i₀ ≤ j gives consistency on j.
-      (∀ {j : ι} (hj : j ∈ p.domain) (hij : i₀ ≤ j),
-        X.Compat (X.restrict hij (p.P j hj)) x₀)
+  ∀ (p : X.PartialSection) (i₀ : ι), X.Valid i₀ →
+    ∃ q : X.PartialSection, p ≤ q ∧ i₀ ∈ q.domain
 
 /-- **Zorn-driven global-section existence** under
-`HasPartialExtensions`. Get a maximal partial section via Zorn, then
-show its domain is all valid indices: if a valid `i₀` were missing,
-`HasPartialExtensions` would supply an extension `m'` strictly above
-`m`, contradicting maximality.
-
-**Proof plan** (Zorn + `HasPartialExtensions`):
-
-1. `exists_maximal` provides `m : PartialSection X` maximal.
-2. Show `∀ i, Valid i → i ∈ m.domain`. By contradiction, suppose
-   `i₀ ∉ m.domain` with `Valid i₀`.
-3. `hExt m i₀ hval` gives `x₀ : Obj i₀` with self/back/forward
-   compatibility.
-4. Define `m' : PartialSection` with:
-   - `domain := m.domain ∪ {i₀}`.
-   - `P j hj := if j = i₀ then transport x₀ else m.P j _`.
-   - `compat` by 4-case split on whether `j` and `k` equal `i₀`:
-     both ≠ i₀ uses `m.compat`; (j, i₀) uses `hx_back`;
-     (i₀, k) uses `hx_forward`; (i₀, i₀) uses `hx_self`.
-5. Verify `m ≤ m'`. By maximality, `m' ≤ m`, hence `i₀ ∈ m.domain`.
-   Contradiction.
-
-The technical sticking point in (4) is the dependent-transport
-handling in the (i₀, i₀) sub-case of `compat`, which is a
-known-tractable but verbose Lean engineering exercise. Deferring
-the full proof here pending careful transport bookkeeping. -/
+`HasPartialExtensions`. Get a maximal partial section via Zorn; any
+missing valid index is supplied by `hExt`, contradicting maximality. -/
 theorem FiniteProjectiveSystem.exists_global_section_of_partialExtensions
     {ι : Type*} [PartialOrder ι] (X : FiniteProjectiveSystem ι)
-    (_hExt : X.HasPartialExtensions) :
+    (hExt : X.HasPartialExtensions) :
     ∃ P : ∀ i, X.Valid i → X.Obj i,
       ∀ {i j : ι} (hi : X.Valid i) (hj : X.Valid j) (hij : i ≤ j),
         X.Compat (X.restrict hij (P j hj)) (P i hi) := by
-  sorry
+  obtain ⟨m, hm_max⟩ := FiniteProjectiveSystem.PartialSection.exists_maximal X
+  -- Show m.domain covers all valid indices.
+  have h_dom : ∀ i, X.Valid i → i ∈ m.domain := by
+    intro i₀ hval
+    by_contra h_not_in
+    obtain ⟨q, h_le, h_i₀_in_q⟩ := hExt m i₀ hval
+    -- By maximality, q ≤ m; so i₀ ∈ q.domain ⊆ m.domain. Contradiction.
+    have h_max := hm_max h_le
+    exact h_not_in (h_max.1 i₀ h_i₀_in_q)
+  -- Extract the global section from m.
+  refine ⟨fun i hval => m.P i (h_dom i hval), ?_⟩
+  intro i j hi hj hij
+  exact m.compat (h_dom i hi) (h_dom j hj) hij
 
 /-- **[ACTIVE FINAL FRONTIER, sorry]** Global-section existence for a
 finite projective system. Lifts the finite-extension property to a
