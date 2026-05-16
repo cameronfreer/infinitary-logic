@@ -7280,6 +7280,58 @@ structure FiniteProjectiveSystem (ι : Type*) [PartialOrder ι] where
         ∀ {i j : ι} (hi : i ∈ 𝒮) (hj : j ∈ 𝒮) (hij : i ≤ j),
           Compat (restrict hij (P j hj)) (P i hi)
 
+/-! ### Zorn machinery for `FiniteProjectiveSystem`
+
+Toward the Zorn proof of `exists_global_section`. A
+`PartialSection` is a partial choice function on a domain `D ⊆ ι`
+of valid indices, with restrictions Compat-coherent on overlapping
+pairs. The extension order on `PartialSection`s makes them a Preorder
+under which a maximal element corresponds (via `finite_extension`)
+to a global section. -/
+
+/-- **`PartialSection X`**: a partial choice function on a domain
+`D : Set ι` of valid indices, with `Compat`-coherent restrictions on
+overlapping pairs. -/
+structure FiniteProjectiveSystem.PartialSection
+    {ι : Type*} [PartialOrder ι] (X : FiniteProjectiveSystem ι) where
+  /-- Domain: the set of indices on which this section is defined. -/
+  domain : Set ι
+  /-- Every index in `domain` is valid. -/
+  domain_valid : ∀ {i : ι}, i ∈ domain → X.Valid i
+  /-- The partial choice function. -/
+  P : ∀ i, i ∈ domain → X.Obj i
+  /-- `Compat`-coherence: restrictions match on overlapping pairs. -/
+  compat : ∀ {i j : ι} (hi : i ∈ domain) (hj : j ∈ domain) (hij : i ≤ j),
+    X.Compat (X.restrict hij (P j hj)) (P i hi)
+
+/-- **Extension order on partial sections**: `ps₁ ≤ ps₂` iff
+`ps₂`'s domain contains `ps₁`'s, and the choice functions agree on
+the common domain.
+
+The agreement is Lean's `=` (not `Compat`) — within the partial
+section world, we work with concrete choice values, while
+`Compat` mediates between objects across the restriction structure. -/
+instance FiniteProjectiveSystem.PartialSection.instLE
+    {ι : Type*} [PartialOrder ι] {X : FiniteProjectiveSystem ι} :
+    LE (X.PartialSection) where
+  le ps₁ ps₂ :=
+    (∀ i, i ∈ ps₁.domain → i ∈ ps₂.domain) ∧
+    (∀ (i : ι) (hi₁ : i ∈ ps₁.domain) (hi₂ : i ∈ ps₂.domain),
+      ps₂.P i hi₂ = ps₁.P i hi₁)
+
+/-- **Preorder instance** on `PartialSection`. Reflexive (domain
+inclusion + proof-irrelevant equality on overlap) and transitive
+(chained inclusions + transported equalities). -/
+instance FiniteProjectiveSystem.PartialSection.instPreorder
+    {ι : Type*} [PartialOrder ι] {X : FiniteProjectiveSystem ι} :
+    Preorder (X.PartialSection) where
+  le := (· ≤ ·)
+  le_refl ps := ⟨fun _ h => h, fun _ _ _ => rfl⟩
+  le_trans ps₁ ps₂ ps₃ h₁₂ h₂₃ :=
+    ⟨fun i hi => h₂₃.1 i (h₁₂.1 i hi),
+     fun i hi₁ hi₃ =>
+       (h₂₃.2 i (h₁₂.1 i hi₁) hi₃).trans (h₁₂.2 i hi₁ (h₁₂.1 i hi₁))⟩
+
 /-- **[ACTIVE FINAL FRONTIER, sorry]** Global-section existence for a
 finite projective system. Lifts the finite-extension property to a
 globally coherent section on all valid indices.
