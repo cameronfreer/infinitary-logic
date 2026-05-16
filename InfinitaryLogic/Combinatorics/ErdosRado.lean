@@ -7332,6 +7332,116 @@ instance FiniteProjectiveSystem.PartialSection.instPreorder
      fun i hi₁ hi₃ =>
        (h₂₃.2 i (h₁₂.1 i hi₁) hi₃).trans (h₁₂.2 i hi₁ (h₁₂.1 i hi₁))⟩
 
+/-! ### Chain upper bound for `PartialSection`
+
+Given a chain of partial sections, the union of their domains
+carries a well-defined partial section that's an upper bound. The
+`P` value at each `i` is selected via `Classical.choose` from a
+witnessing chain element; different choices agree by the chain's
+extension order. -/
+
+/-- **`chainUpperBound`**: the union of a chain of partial sections.
+The domain is `{i | ∃ ps ∈ c, i ∈ ps.domain}`; the `P` value at each
+`i` is chosen from a witnessing chain element via `Classical.choose`. -/
+noncomputable def FiniteProjectiveSystem.PartialSection.chainUpperBound
+    {ι : Type*} [PartialOrder ι] {X : FiniteProjectiveSystem ι}
+    (c : Set X.PartialSection) (hc : IsChain (· ≤ ·) c) :
+    X.PartialSection where
+  domain := {i | ∃ ps ∈ c, i ∈ ps.domain}
+  domain_valid {i} hi := by
+    obtain ⟨ps, _, hi_ps⟩ := hi
+    exact ps.domain_valid hi_ps
+  P i hi := hi.choose.P i hi.choose_spec.2
+  compat {i j} hi hj hij := by
+    classical
+    -- Witnesses for i and j.
+    have hps_i_in_c : hi.choose ∈ c := hi.choose_spec.1
+    have hps_j_in_c : hj.choose ∈ c := hj.choose_spec.1
+    have hi_in_ps_i : i ∈ hi.choose.domain := hi.choose_spec.2
+    have hj_in_ps_j : j ∈ hj.choose.domain := hj.choose_spec.2
+    -- Case on whether hi.choose = hj.choose or they're comparable.
+    rcases eq_or_ne hi.choose hj.choose with h_eq | h_ne
+    · -- Same partial section.
+      have hj_in_ps_i : j ∈ hi.choose.domain := h_eq ▸ hj_in_ps_j
+      have h_pj_eq : hj.choose.P j hj_in_ps_j = hi.choose.P j hj_in_ps_i := by
+        congr 1 <;> exact h_eq.symm
+      rw [h_pj_eq]
+      exact hi.choose.compat hi_in_ps_i hj_in_ps_i hij
+    rcases hc hps_i_in_c hps_j_in_c h_ne with h_le | h_le
+    · -- hi.choose ≤ hj.choose: hj.choose contains i too.
+      have hi_in_ps_j : i ∈ hj.choose.domain := h_le.1 i hi_in_ps_i
+      have h_pi_eq : hj.choose.P i hi_in_ps_j = hi.choose.P i hi_in_ps_i :=
+        h_le.2 i hi_in_ps_i hi_in_ps_j
+      have := hj.choose.compat hi_in_ps_j hj_in_ps_j hij
+      rw [h_pi_eq] at this
+      exact this
+    · -- hj.choose ≤ hi.choose: hi.choose contains j too.
+      have hj_in_ps_i : j ∈ hi.choose.domain := h_le.1 j hj_in_ps_j
+      have h_pj_eq : hi.choose.P j hj_in_ps_i = hj.choose.P j hj_in_ps_j :=
+        h_le.2 j hj_in_ps_j hj_in_ps_i
+      have := hi.choose.compat hi_in_ps_i hj_in_ps_i hij
+      rw [h_pj_eq] at this
+      exact this
+
+/-- **`chainUpperBound_isUB`**: the chain upper bound is indeed an
+upper bound of the chain in the extension order. -/
+theorem FiniteProjectiveSystem.PartialSection.chainUpperBound_isUB
+    {ι : Type*} [PartialOrder ι] {X : FiniteProjectiveSystem ι}
+    (c : Set X.PartialSection) (hc : IsChain (· ≤ ·) c) :
+    ∀ ps ∈ c, ps ≤ chainUpperBound c hc := by
+  intro ps hps
+  refine ⟨fun i hi => ⟨ps, hps, hi⟩, ?_⟩
+  intro i hi_ps hi_union
+  -- The union's P at i picks some ps' ∈ c (via Classical.choose).
+  -- ps and ps' are both in c. By chain, comparable.
+  classical
+  set ps' := hi_union.choose with hps'_def
+  have hps'_in_c : ps' ∈ c := hi_union.choose_spec.1
+  have hi_in_ps' : i ∈ ps'.domain := hi_union.choose_spec.2
+  -- chainUpperBound's P at i = ps'.P i _.
+  show ps'.P i hi_in_ps' = ps.P i hi_ps
+  rcases eq_or_ne ps' ps with h_eq | h_ne
+  · subst h_eq; rfl
+  rcases hc hps'_in_c hps h_ne with h_le | h_le
+  · -- ps' ≤ ps: h_le.2 i hi_in_ps' hi_ps : ps.P i hi_ps = ps'.P i hi_in_ps'.
+    exact (h_le.2 i hi_in_ps' hi_ps).symm
+  · -- ps ≤ ps': h_le.2 i hi_ps hi_in_ps' : ps'.P i hi_in_ps' = ps.P i hi_ps.
+    exact h_le.2 i hi_ps hi_in_ps'
+
+/-- **`bddAbove_of_isChain`**: every chain in `X.PartialSection` is
+bounded above. This is the Zorn hypothesis. -/
+theorem FiniteProjectiveSystem.PartialSection.bddAbove_of_isChain
+    {ι : Type*} [PartialOrder ι] {X : FiniteProjectiveSystem ι}
+    (c : Set X.PartialSection) (hc : IsChain (· ≤ ·) c) :
+    BddAbove c :=
+  ⟨chainUpperBound c hc, chainUpperBound_isUB c hc⟩
+
+/-! ### Zorn application and maximality argument
+
+With `bddAbove_of_isChain` providing the hypothesis of `zorn_le`,
+we obtain a maximal partial section. The next step is to show its
+domain is all valid indices: any missing valid index `i₀` can be
+appended via `finite_extension` applied to `domain ∪ {i₀}` (or a
+relevant finite subfamily), contradicting maximality. -/
+
+/-- **Empty partial section**: an instance of `PartialSection` with
+empty domain, used to ensure `PartialSection X` is nonempty (so
+`zorn_le` applies to a nonempty type). -/
+noncomputable def FiniteProjectiveSystem.PartialSection.empty
+    {ι : Type*} [PartialOrder ι] (X : FiniteProjectiveSystem ι) :
+    X.PartialSection where
+  domain := ∅
+  domain_valid {i} hi := absurd hi (Set.notMem_empty i)
+  P i hi := absurd hi (Set.notMem_empty i)
+  compat {i j} hi _ _ := absurd hi (Set.notMem_empty i)
+
+/-- **Maximal partial section exists**: Zorn applied to
+`bddAbove_of_isChain`. -/
+theorem FiniteProjectiveSystem.PartialSection.exists_maximal
+    {ι : Type*} [PartialOrder ι] (X : FiniteProjectiveSystem ι) :
+    ∃ m : X.PartialSection, IsMax m :=
+  zorn_le (fun c hc => bddAbove_of_isChain c hc)
+
 /-- **[ACTIVE FINAL FRONTIER, sorry]** Global-section existence for a
 finite projective system. Lifts the finite-extension property to a
 globally coherent section on all valid indices.
@@ -7340,22 +7450,28 @@ This is **the** remaining mathematical content of the pair Erdős–Rado
 proof: a generic inverse-limit / Zorn-style compactness statement
 that is **not** specific to the Erdős–Rado construction.
 
-Proof plan (Zorn):
-1. Define partial global sections over an arbitrary domain
-   `D : Set (Finset ι)` of valid finsets (with `D` closed under
-   subsets within finite sub-families covered by `finite_extension`).
-2. Order partial sections by extension: `(D₁, P₁) ≤ (D₂, P₂)` iff
-   `D₁ ⊆ D₂` and `P₁` is the restriction of `P₂` to `D₁`.
-3. Chain union: an ascending chain has a union with `D = ⋃ Dᵢ` and
-   `P` agreeing with each `Pᵢ` on `Dᵢ`. Verify compat using the
-   single-`Pᵢ` witness for each pair `S ⊆ T` (both in some `Dᵢ`).
-4. Apply Zorn to get a maximal partial section. Show its domain is
-   all valid finsets: otherwise pick a missing valid `S₀`, apply
-   `finite_extension` to `D ∪ {S₀}` (or some finite subfamily
-   thereof) to extend, contradicting maximality.
+**Zorn machinery now in place** (axiom-clean):
+- `PartialSection X` + `instPreorder` (extension order).
+- `chainUpperBound` + `chainUpperBound_isUB` + `bddAbove_of_isChain`
+  (the chain union as upper bound).
+- `exists_maximal` (Zorn application via `zorn_le`).
 
-Downstream `exists_coherentMajorityBranch` is fully axiom-clean from
-this. -/
+**Remaining step**: show the maximal partial section's domain is
+all valid indices. The naive Zorn extension argument hits a
+subtlety: extending a maximal section `m` by adding one valid index
+`i₀ ∉ m.domain` requires choosing a value at `i₀` consistent with
+ALL of `m.P` on `m.domain` (potentially infinite). The
+`finite_extension` field only supplies coherent choices over finite
+sub-families, so the "extend `m` by `i₀`" step requires either:
+
+(a) a strengthened `finite_extension` that extends a specified
+    partial choice (not just any choice), or
+(b) a separate compactness argument (e.g., Tychonoff/ultrafilter on
+    the value space at `i₀`) using the finite-consistency from
+    `finite_extension`.
+
+This is the genuine compactness work; the Zorn skeleton above just
+organizes the path. -/
 theorem FiniteProjectiveSystem.exists_global_section
     {ι : Type*} [PartialOrder ι] (X : FiniteProjectiveSystem ι) :
     ∃ P : ∀ i, X.Valid i → X.Obj i,
