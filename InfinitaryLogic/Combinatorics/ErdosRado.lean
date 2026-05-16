@@ -7310,11 +7310,72 @@ theorem rawBranchCompactness_of_coherentWitnessNet
       some ((W.P S₀ hS₀).branch α hα)
     rw [← this]
 
+/-! ### Finite extension property for the projective system
+
+The finite-extension property: for any finite family `𝒮` of finite
+finsets `S ⊂ ω₁`, there is a partial-choice family
+`P S hS_mem : CBP cR S` (for `S ∈ 𝒮`) that is compatible under
+restriction. Proved by choosing a single CBP on the union of `𝒮`
+(via `exists_coherentBranchPartial`) and restricting to each member.
+
+This is the finite case of `CoherentWitnessNet`. The compactness
+step (lifting from finite to all finsets `S ⊂ ω₁`) is the new
+remaining frontier — typically discharged by a Zorn/maximality
+argument or another compactness principle. -/
+
+/-- **`CoherentWitnessNet.finite_extension_property`**: for any
+finite family `𝒮` of `< ω₁`-bounded finsets, there is a
+finite-restricted coherent witness family with mutually compatible
+restrictions. Proved by choosing a single CBP on the union
+`𝒮.sup id` and restricting to each member; the compatibility is
+`restrict_prefixAt` / `restrict_branch` collapsing both sides to the
+same `Q.prefixAt` (resp. `Q.branchAt`) value modulo proof-irrelevant
+membership witnesses. -/
+theorem CoherentWitnessNet.finite_extension_property
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    (𝒮 : Finset (Finset Ordinal.{0}))
+    (h𝒮 : ∀ S ∈ 𝒮, ∀ α ∈ S, α < Ordinal.omega.{0} 1) :
+    ∃ P : ∀ S, S ∈ 𝒮 → CoherentBranchPartial cR S,
+      (∀ {S T : Finset Ordinal.{0}} (hS : S ∈ 𝒮) (hT : T ∈ 𝒮)
+          (hST : S ⊆ T) (α : Ordinal.{0}) (hα : α ∈ S),
+          (P T hT).prefixAt α (hST hα) = (P S hS).prefixAt α hα) ∧
+      (∀ {S T : Finset Ordinal.{0}} (hS : S ∈ 𝒮) (hT : T ∈ 𝒮)
+          (hST : S ⊆ T) (α : Ordinal.{0}) (hα : α ∈ S),
+          (P T hT).branch α (hST hα) = (P S hS).branch α hα) := by
+  classical
+  -- Step 1: union of all sets in 𝒮.
+  set U : Finset Ordinal.{0} := 𝒮.sup id with hU_def
+  have hU_lt : ∀ α ∈ U, α < Ordinal.omega.{0} 1 := by
+    intro α hα
+    obtain ⟨S, hS, hαS⟩ := Finset.mem_sup.mp hα
+    exact h𝒮 S hS α hαS
+  -- Step 2: a CBP on U.
+  obtain ⟨Q⟩ := exists_coherentBranchPartial cR U hU_lt
+  -- Step 3: for each S ∈ 𝒮, S ⊆ U.
+  have h_sub : ∀ {S : Finset Ordinal.{0}}, S ∈ 𝒮 → S ⊆ U := by
+    intro S hS_mem α hα
+    exact Finset.mem_sup.mpr ⟨S, hS_mem, hα⟩
+  -- Step 4: define P S hS := Q.restrict (h_sub hS).
+  refine ⟨fun S hS_mem => Q.restrict (h_sub hS_mem), ?_, ?_⟩
+  · -- Prefix compatibility: both reduce to Q.prefixAt α (some proof in U).
+    intro S T hS hT hST α hα
+    rw [Q.restrict_prefixAt (h_sub hT) α (hST hα),
+        Q.restrict_prefixAt (h_sub hS) α hα]
+  · -- Branch compatibility (parallel).
+    intro S T hS hT hST α hα
+    rw [Q.restrict_branch (h_sub hT) α (hST hα),
+        Q.restrict_branch (h_sub hS) α hα]
+
 /-- **[NEW FRONTIER, sorry]** Existence of a coherent witness net.
 This replaces `rawBranchCompactness_holds` as the active mathematical
 frontier of the Erdős–Rado proof: with a globally coherent section
 of the projective system in hand, the compactness conclusion (and
-hence the full `CoherentMajorityBranch`) follows axiom-clean. -/
+hence the full `CoherentMajorityBranch`) follows axiom-clean.
+
+The finite case is `CoherentWitnessNet.finite_extension_property`
+(already axiom-clean). The remaining content is the compactness
+step lifting from finite families `𝒮` to all finsets `S ⊂ ω₁` —
+typically a Zorn/maximality argument or a Tychonoff-style result. -/
 theorem exists_coherentWitnessNet
     (cR : (Fin 2 ↪o PairERSource) → Bool) :
     Nonempty (CoherentWitnessNet cR) := by
