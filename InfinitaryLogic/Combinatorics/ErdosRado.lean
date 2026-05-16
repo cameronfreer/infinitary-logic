@@ -6986,11 +6986,20 @@ some `CoherentBranchPartial cR S`. The compactness principle
 satisfied by some `A`, there is a global `A` satisfying every such
 `S`.
 
-`rawBranchCompactness_holds` is the new named frontier sorry — a
-generic compactness principle on finite coherent partial assignments,
-not specific to the pair Erdős–Rado model theory. The bridge from
-this compactness to `exists_coherentMajorityBranch_of_finitePartials`
-is axiom-clean. -/
+**Frontier status (as of the `FiniteProjectiveSystem` decomposition):**
+`rawBranchCompactness_holds` is now a **derived bridge**, not the
+final frontier. It is wired through
+`rawBranchCompactness_of_coherentWitnessNet` ←
+`exists_coherentWitnessNet`, which itself derives axiom-clean from
+the generic compactness theorem
+`FiniteProjectiveSystem.exists_global_section`. The remaining
+mathematical content is now a single generic inverse-limit /
+Zorn-style compactness statement, decoupled from the
+Erdős–Rado-specific bookkeeping. See the FPS section near
+`exists_global_section` for the current named frontier.
+
+The bridge from `rawBranchCompactness` to
+`exists_coherentMajorityBranch_of_finitePartials` is axiom-clean. -/
 
 /-- **`RawBranchAssignment cR`**: the product space of partial
 prefix/branch assignments. Values at each level `α < ω₁` may be
@@ -7021,8 +7030,19 @@ def rawBranchCompactness (cR : (Fin 2 ↪o PairERSource) → Bool) : Prop :=
 
 /-! ### Status of `rawBranchCompactness_holds`
 
-`rawBranchCompactness_holds` is the final non-model-theoretic
-compactness frontier. It can be proved either by:
+**Frontier status:** `rawBranchCompactness_holds` was the final
+non-model-theoretic compactness frontier UNTIL the
+`FiniteProjectiveSystem` decomposition was added. It is now a
+**derived bridge**, wired through
+`rawBranchCompactness_of_coherentWitnessNet` ←
+`exists_coherentWitnessNet` ←
+`FiniteProjectiveSystem.exists_global_section` (the current active
+frontier). The notes below preserve the original two-route analysis
+(Tychonoff vs. ultrafilter) — both still apply, but now to the
+generic `exists_global_section` rather than to
+`rawBranchCompactness_holds` directly.
+
+`rawBranchCompactness_holds` can be proved either by:
 
 1. **Tychonoff compactness** for products of compact (e.g., suitably
    compactified) spaces, reducing to the finite-intersection property
@@ -7260,10 +7280,30 @@ structure FiniteProjectiveSystem (ι : Type*) [PartialOrder ι] where
         ∀ {i j : ι} (hi : i ∈ 𝒮) (hj : j ∈ 𝒮) (hij : i ≤ j),
           Compat (restrict hij (P j hj)) (P i hi)
 
-/-- **[NEW FRONTIER, sorry]** Global-section existence for a
+/-- **[ACTIVE FINAL FRONTIER, sorry]** Global-section existence for a
 finite projective system. Lifts the finite-extension property to a
-globally coherent section on all valid indices. This is the classical
-compactness / Zorn step, isolated as a generic principle. -/
+globally coherent section on all valid indices.
+
+This is **the** remaining mathematical content of the pair Erdős–Rado
+proof: a generic inverse-limit / Zorn-style compactness statement
+that is **not** specific to the Erdős–Rado construction.
+
+Proof plan (Zorn):
+1. Define partial global sections over an arbitrary domain
+   `D : Set (Finset ι)` of valid finsets (with `D` closed under
+   subsets within finite sub-families covered by `finite_extension`).
+2. Order partial sections by extension: `(D₁, P₁) ≤ (D₂, P₂)` iff
+   `D₁ ⊆ D₂` and `P₁` is the restriction of `P₂` to `D₁`.
+3. Chain union: an ascending chain has a union with `D = ⋃ Dᵢ` and
+   `P` agreeing with each `Pᵢ` on `Dᵢ`. Verify compat using the
+   single-`Pᵢ` witness for each pair `S ⊆ T` (both in some `Dᵢ`).
+4. Apply Zorn to get a maximal partial section. Show its domain is
+   all valid finsets: otherwise pick a missing valid `S₀`, apply
+   `finite_extension` to `D ∪ {S₀}` (or some finite subfamily
+   thereof) to extend, contradicting maximality.
+
+Downstream `exists_coherentMajorityBranch` is fully axiom-clean from
+this. -/
 theorem FiniteProjectiveSystem.exists_global_section
     {ι : Type*} [PartialOrder ι] (X : FiniteProjectiveSystem ι) :
     ∃ P : ∀ i, X.Valid i → X.Obj i,
@@ -7285,10 +7325,22 @@ proof is direct (no ultrafilter required): define `A` coordinatewise
 via `W.P {α}`, and use `prefix_compat` / `branch_compat` to match
 against `W.P S₀` for any `S₀` containing the coordinate.
 
-The frontier thus migrates one level deeper: from
-`rawBranchCompactness_holds` (the abstract compactness Prop) to
-`exists_coherentWitnessNet` (existence of a globally coherent
-section of the projective system). -/
+The frontier migrated one level deeper to `exists_coherentWitnessNet`
+(existence of a globally coherent section of the projective system),
+and **then one more level** into the generic abstraction
+`FiniteProjectiveSystem.exists_global_section`:
+
+  `exists_coherentMajorityBranch` (axiom-clean, derived)
+    ← `exists_coherentMajorityBranch_of_finitePartials` (axiom-clean bridge)
+    ← `rawBranchCompactness_holds` (axiom-clean, derived)
+    ← `rawBranchCompactness_of_coherentWitnessNet` (axiom-clean bridge)
+    ← `exists_coherentWitnessNet` (axiom-clean, derived from FPS)
+    ← `FiniteProjectiveSystem.exists_global_section` (**active frontier**)
+
+So `CoherentWitnessNet` is now an intermediate object — neither the
+frontier nor the top-level statement, but a clean restatement of the
+projective system in CBP-specific language. The active mathematical
+content lives in the generic FPS abstraction. -/
 
 /-- **`CoherentWitnessNet cR`**: a coherent choice of partial
 branches across every finite `S ⊂ ω₁`, with restrictions compatible
