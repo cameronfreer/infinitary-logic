@@ -7235,7 +7235,14 @@ shape. -/
 
 /-- **`FiniteProjectiveSystem ι`**: a projective system on the
 partial order `ι`. Carries object data, restriction maps, validity
-predicate, and the finite-extension property. -/
+predicate, a parametric compatibility relation on objects, and the
+finite-extension property.
+
+The `Compat` field is a parametric relation (typically `=` or a
+fieldwise equivalence) — necessary because structural equality of
+restrictions may not hold definitionally in concrete instances
+(e.g., `CoherentBranchPartial` restricts are propositionally but
+not definitionally equal under composition). -/
 structure FiniteProjectiveSystem (ι : Type*) [PartialOrder ι] where
   /-- Validity predicate on indices (e.g., `S ⊂ ω₁`). -/
   Valid : ι → Prop
@@ -7243,13 +7250,15 @@ structure FiniteProjectiveSystem (ι : Type*) [PartialOrder ι] where
   Obj : ι → Type*
   /-- Restriction map for `i ≤ j`. -/
   restrict : ∀ {i j : ι}, i ≤ j → Obj j → Obj i
+  /-- Compatibility predicate: typically `=` or fieldwise agreement. -/
+  Compat : ∀ {i : ι}, Obj i → Obj i → Prop
   /-- Finite-extension: for any finite family of valid indices, there
   is a partial choice with restrictions compatible across the family. -/
   finite_extension :
     ∀ (𝒮 : Finset ι) (_h𝒮 : ∀ i ∈ 𝒮, Valid i),
       ∃ P : ∀ i, i ∈ 𝒮 → Obj i,
         ∀ {i j : ι} (hi : i ∈ 𝒮) (hj : j ∈ 𝒮) (hij : i ≤ j),
-          restrict hij (P j hj) = P i hi
+          Compat (restrict hij (P j hj)) (P i hi)
 
 /-- **[NEW FRONTIER, sorry]** Global-section existence for a
 finite projective system. Lifts the finite-extension property to a
@@ -7259,7 +7268,7 @@ theorem FiniteProjectiveSystem.exists_global_section
     {ι : Type*} [PartialOrder ι] (X : FiniteProjectiveSystem ι) :
     ∃ P : ∀ i, X.Valid i → X.Obj i,
       ∀ {i j : ι} (hi : X.Valid i) (hj : X.Valid j) (hij : i ≤ j),
-        X.restrict hij (P j hj) = P i hi := by
+        X.Compat (X.restrict hij (P j hj)) (P i hi) := by
   sorry
 
 /-! ### `CoherentWitnessNet`: coherent global section of the projective system
@@ -7409,20 +7418,86 @@ theorem CoherentWitnessNet.finite_extension_property
     rw [Q.restrict_branch (h_sub hT) α (hST hα),
         Q.restrict_branch (h_sub hS) α hα]
 
-/-- **[NEW FRONTIER, sorry]** Existence of a coherent witness net.
-This replaces `rawBranchCompactness_holds` as the active mathematical
-frontier of the Erdős–Rado proof: with a globally coherent section
-of the projective system in hand, the compactness conclusion (and
-hence the full `CoherentMajorityBranch`) follows axiom-clean.
+/-! ### `CoherentBranchPartial` as a `FiniteProjectiveSystem` instance
 
-The finite case is `CoherentWitnessNet.finite_extension_property`
-(already axiom-clean). The remaining content is the compactness
-step lifting from finite families `𝒮` to all finsets `S ⊂ ω₁` —
-typically a Zorn/maximality argument or a Tychonoff-style result. -/
+The CBP projective system instantiates `FiniteProjectiveSystem`:
+
+- index: `Finset Ordinal.{0}` with `⊆` (Finset's `≤` unfolds to `⊆`).
+- validity: `∀ α ∈ S, α < ω₁`.
+- objects: `CoherentBranchPartial cR S`.
+- restriction: `CoherentBranchPartial.restrict`.
+- compatibility: fieldwise — agreement on `prefixAt` and `branch`.
+- finite extension: from `CoherentWitnessNet.finite_extension_property`.
+
+Structural CBP equality of nested `restrict`s is not definitionally
+true (the underlying `set`-based construction blocks `rfl`), so we
+use a fieldwise `Compat` instead. -/
+
+/-- **`cbpFieldwiseCompat`**: fieldwise compatibility on
+`CoherentBranchPartial cR S` — agreement on `prefixAt` and `branch`. -/
+def cbpFieldwiseCompat {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {S : Finset Ordinal.{0}}
+    (P₁ P₂ : CoherentBranchPartial cR S) : Prop :=
+  (∀ α (hα : α ∈ S), P₁.prefixAt α hα = P₂.prefixAt α hα) ∧
+  (∀ α (hα : α ∈ S), P₁.branch α hα = P₂.branch α hα)
+
+/-- **`coherentBranchPartialSystem cR`**: the `FiniteProjectiveSystem`
+instance for `CoherentBranchPartial`, with fieldwise compatibility. -/
+noncomputable def coherentBranchPartialSystem
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    FiniteProjectiveSystem (Finset Ordinal.{0}) where
+  Valid S := ∀ α ∈ S, α < Ordinal.omega.{0} 1
+  Obj S := CoherentBranchPartial cR S
+  restrict {_ _} hij P := P.restrict hij
+  Compat := cbpFieldwiseCompat
+  finite_extension := by
+    intro 𝒮 h𝒮
+    classical
+    set U : Finset Ordinal.{0} := 𝒮.sup id
+    have hU_lt : ∀ α ∈ U, α < Ordinal.omega.{0} 1 := by
+      intro α hα
+      obtain ⟨S, hS, hαS⟩ := Finset.mem_sup.mp hα
+      exact h𝒮 S hS α hαS
+    obtain ⟨Q⟩ := exists_coherentBranchPartial cR U hU_lt
+    have h_sub : ∀ {S : Finset Ordinal.{0}}, S ∈ 𝒮 → S ⊆ U := fun hS_mem α hα =>
+      Finset.mem_sup.mpr ⟨_, hS_mem, hα⟩
+    refine ⟨fun S hS_mem => Q.restrict (h_sub hS_mem), ?_⟩
+    intro S T hS hT hST
+    -- Compat: pointwise prefixAt/branch agreement.
+    refine ⟨?_, ?_⟩
+    · intro α hα
+      -- `((Q.restrict (h_sub hT)).restrict hST).prefixAt α hα = (Q.restrict (h_sub hS)).prefixAt α hα`.
+      -- Both reduce via restrict_prefixAt to Q.prefixAt at α with U-membership proofs
+      -- (proof-irrelevantly equal).
+      rw [CoherentBranchPartial.restrict_prefixAt, Q.restrict_prefixAt (h_sub hT) α (hST hα),
+          Q.restrict_prefixAt (h_sub hS) α hα]
+    · intro α hα
+      rw [CoherentBranchPartial.restrict_branch, Q.restrict_branch (h_sub hT) α (hST hα),
+          Q.restrict_branch (h_sub hS) α hα]
+
+/-- **Existence of a coherent witness net** — derived axiom-clean
+from `FiniteProjectiveSystem.exists_global_section` applied to the
+CBP projective system. The pointwise `prefix_compat` / `branch_compat`
+fields fall out directly from the system's fieldwise `Compat`. -/
 theorem exists_coherentWitnessNet
     (cR : (Fin 2 ↪o PairERSource) → Bool) :
     Nonempty (CoherentWitnessNet cR) := by
-  sorry
+  obtain ⟨P, hP⟩ := (coherentBranchPartialSystem cR).exists_global_section
+  -- hP : ∀ {S T} (hS) (hT) (hST : S ≤ T),
+  --      cbpFieldwiseCompat ((P T hT).restrict hST) (P S hS)
+  -- The `Compat` field is `cbpFieldwiseCompat`, so unfolds to pointwise.
+  refine ⟨{ P := P, prefix_compat := ?_, branch_compat := ?_ }⟩
+  · intro S T hS hT hST α hα
+    have h := (hP hS hT hST).1 α hα
+    -- h's LHS uses the system's `restrict` field; unfold to CBP.restrict.
+    change ((P T hT).restrict hST).prefixAt α hα = (P S hS).prefixAt α hα at h
+    rw [(P T hT).restrict_prefixAt hST α hα] at h
+    exact h
+  · intro S T hS hT hST α hα
+    have h := (hP hS hT hST).2 α hα
+    change ((P T hT).restrict hST).branch α hα = (P S hS).branch α hα at h
+    rw [(P T hT).restrict_branch hST α hα] at h
+    exact h
 
 /-- **`rawBranchCompactness_holds`** — derived axiom-clean from
 `exists_coherentWitnessNet` via the bridge
