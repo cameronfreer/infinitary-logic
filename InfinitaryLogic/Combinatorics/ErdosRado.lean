@@ -7219,6 +7219,49 @@ a witness chosen on the union of finitely many previously-fixed
 finite sets, leveraging `exists_commonExtensionPartial` to ensure
 consistency. -/
 
+/-! ### `FiniteProjectiveSystem`: generic finite-extension compactness
+
+A `FiniteProjectiveSystem` packages the data needed for a
+finite-to-global compactness argument: an indexed family of "objects"
+over a partial order, with a restriction map for `i ≤ j`, and a
+finite-extension property guaranteeing compatible choices over finite
+sub-families. The `exists_global_section` theorem is the Zorn /
+compactness conclusion.
+
+This abstraction is generic — the pair Erdős–Rado projective system
+(`CoherentBranchPartial` indexed by `Finset Ordinal`) instantiates it
+in a follow-up, but other compactness arguments can reuse the same
+shape. -/
+
+/-- **`FiniteProjectiveSystem ι`**: a projective system on the
+partial order `ι`. Carries object data, restriction maps, validity
+predicate, and the finite-extension property. -/
+structure FiniteProjectiveSystem (ι : Type*) [PartialOrder ι] where
+  /-- Validity predicate on indices (e.g., `S ⊂ ω₁`). -/
+  Valid : ι → Prop
+  /-- Object type at each index. -/
+  Obj : ι → Type*
+  /-- Restriction map for `i ≤ j`. -/
+  restrict : ∀ {i j : ι}, i ≤ j → Obj j → Obj i
+  /-- Finite-extension: for any finite family of valid indices, there
+  is a partial choice with restrictions compatible across the family. -/
+  finite_extension :
+    ∀ (𝒮 : Finset ι) (_h𝒮 : ∀ i ∈ 𝒮, Valid i),
+      ∃ P : ∀ i, i ∈ 𝒮 → Obj i,
+        ∀ {i j : ι} (hi : i ∈ 𝒮) (hj : j ∈ 𝒮) (hij : i ≤ j),
+          restrict hij (P j hj) = P i hi
+
+/-- **[NEW FRONTIER, sorry]** Global-section existence for a
+finite projective system. Lifts the finite-extension property to a
+globally coherent section on all valid indices. This is the classical
+compactness / Zorn step, isolated as a generic principle. -/
+theorem FiniteProjectiveSystem.exists_global_section
+    {ι : Type*} [PartialOrder ι] (X : FiniteProjectiveSystem ι) :
+    ∃ P : ∀ i, X.Valid i → X.Obj i,
+      ∀ {i j : ι} (hi : X.Valid i) (hj : X.Valid j) (hij : i ≤ j),
+        X.restrict hij (P j hj) = P i hi := by
+  sorry
+
 /-! ### `CoherentWitnessNet`: coherent global section of the projective system
 
 The eventual-constancy obstruction documented above shows that
