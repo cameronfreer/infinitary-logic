@@ -1144,6 +1144,81 @@ noncomputable def PairERChain.succ {cR : (Fin 2 ↪o PairERSource) → Bool}
       convert h_zβ_col using 2
       simp [extendHead, dif_neg hβ]
 
+/-- **`PairERChain.succWithChoice`** — successor extension with a
+**prescribed** `(y, b)`, parallel to `limitWithType` for the limit
+case. Bypasses the `exists_successor_refinement` `Classical.choose`
+that `PairERChain.succ` performs, taking `y`, `b`, and the
+fiber-largeness witness as input.
+
+**Role in the local frontier.** This is the underlying
+prescribed-level primitive that
+`coherentGoodBranchPartial_insert_prescribed_new` wants: instead of
+choosing the new level's data freshly, the caller supplies it. With
+this in hand, the CGBP wrapper (`insert_prescribed_new`) can be
+discharged by appropriate bookkeeping on top of `succWithChoice`.
+
+**[FRONTIER, sorry — primitive scaffolding].** The implementation is
+parallel to `PairERChain.succ` (above): construct `head` via
+`extendHead`, `type` via `extendType`, and prove `large` by mapping
+`validFiberExtend` into the `validFiber` at the new level. The proof
+should be a mechanical copy of `succ`'s body with the prescribed
+`y, b` substituted for the `Classical.choose` outputs. -/
+noncomputable def PairERChain.succWithChoice
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (s : PairERChain cR α)
+    (y : PairERSource) (b : Bool)
+    (hy_mem : y ∈ validFiber cR s.head s.type)
+    (hlarge : Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (validFiberExtend cR s.head s.type y b)) :
+    PairERChain cR (Order.succ α) := by
+  classical
+  haveI : IsWellOrder (Order.succ α).ToType (· < ·) := isWellOrder_lt
+  have hy_above : ∀ z : α.ToType, s.head z < y := fun z => (hy_mem z).1
+  refine
+    { head := extendHead s.head y hy_above
+      type := extendType s.type b
+      large := ?_ }
+  apply hlarge.trans
+  apply Cardinal.mk_le_mk_of_subset
+  intro z hz β
+  by_cases hβ : β = (⊤ : (Order.succ α).ToType)
+  · subst hβ
+    obtain ⟨_, hylt, hycol⟩ := hz
+    refine ⟨?_, ?_⟩
+    · show (extendHead s.head y hy_above) _ < z
+      simp only [extendHead, OrderEmbedding.coe_ofStrictMono]
+      exact hylt
+    · show cR (pairEmbed _) = extendType s.type b _
+      simp only [extendType]
+      convert hycol using 2
+      simp [extendHead]
+  · obtain ⟨hzval, _, _⟩ := hz
+    set z_β : α.ToType := Ordinal.enum (α := α.ToType) (· < ·)
+      ⟨Ordinal.typein (· < ·) β, by
+        have hlt : β < (⊤ : (Order.succ α).ToType) :=
+          lt_of_le_of_ne le_top hβ
+        have htop : (⊤ : (Order.succ α).ToType) =
+            Ordinal.enum (α := (Order.succ α).ToType) (· < ·)
+              ⟨α, (Ordinal.type_toType _).symm ▸ Order.lt_succ α⟩ :=
+          Ordinal.enum_succ_eq_top.symm
+        have hte : Ordinal.typein (· < ·)
+            (⊤ : (Order.succ α).ToType) = α := by
+          rw [htop, Ordinal.typein_enum]
+        rw [Ordinal.type_toType]
+        calc Ordinal.typein (· < ·) β
+            < Ordinal.typein (· < ·) (⊤ : (Order.succ α).ToType) :=
+              (Ordinal.typein_lt_typein (· < ·)).mpr hlt
+          _ = α := hte⟩
+    obtain ⟨h_zβ_lt, h_zβ_col⟩ := hzval z_β
+    refine ⟨?_, ?_⟩
+    · show (extendHead s.head y hy_above) β < z
+      simp only [extendHead, OrderEmbedding.coe_ofStrictMono, dif_neg hβ]
+      exact h_zβ_lt
+    · show cR (pairEmbed _) = extendType s.type b β
+      simp only [extendType, dif_neg hβ]
+      convert h_zβ_col using 2
+      simp [extendHead, dif_neg hβ]
+
 /-- **Limit extension of a stage.** At a limit `α < ω_1`, the prefix
 `p : α.ToType ↪o PairERSource` must come from the coherent gluing of
 prior stages (handled by the main-theorem recursion). This helper then
@@ -4960,6 +5035,26 @@ private lemma enum_transport_eq
   subst h_β
   rfl
 
+/-- **Composition of `initialSegToType`** via `InitialSeg.eq` uniqueness
+on well-orders. Two initial segments from `α.ToType` to `γ.ToType`
+(both well-ordered) agree pointwise. -/
+private lemma initialSegToType_compose
+    {α β γ : Ordinal.{0}} (h_αβ : α ≤ β) (h_βγ : β ≤ γ) (x : α.ToType) :
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder γ.ToType (· < ·) := isWellOrder_lt
+    (Ordinal.initialSegToType h_βγ).toOrderEmbedding
+        ((Ordinal.initialSegToType h_αβ).toOrderEmbedding x) =
+      (Ordinal.initialSegToType (h_αβ.trans h_βγ)).toOrderEmbedding x := by
+  haveI : IsWellOrder γ.ToType (· < ·) := isWellOrder_lt
+  rw [InitialSeg.toOrderEmbedding_apply, InitialSeg.toOrderEmbedding_apply,
+      InitialSeg.toOrderEmbedding_apply,
+      ← InitialSeg.trans_apply (Ordinal.initialSegToType h_αβ)
+        (Ordinal.initialSegToType h_βγ) x]
+  exact ((Ordinal.initialSegToType h_αβ).trans
+    (Ordinal.initialSegToType h_βγ)).eq
+    (Ordinal.initialSegToType (h_αβ.trans h_βγ)) x
+
 /-- **Transport commutes with `initialSegToType`**. Used to rewrite the
 "crossing-the-extension-boundary" subgoals in `extendSucc`. -/
 private lemma initialSegToType_transport_eq
@@ -7488,6 +7583,198 @@ theorem FiniteProjectiveSystem.exists_global_section_of_partialExtensions
   intro i j hi hj hij
   exact m.compat (h_dom i hi) (h_dom j hj) hij
 
+/-! ### Ideal-domain variant: `IdealPartialSection`
+
+The CBP `HasPartialExtensions` instance is hard to prove because a
+generic `PartialSection`'s domain can be an arbitrary set of indices,
+forcing extension lemmas to reconcile compatibility across unrelated
+finsets. The ideal-domain variant restricts the domain to be
+**downward closed** and **directed**, so it forms an "ideal" of `ι`.
+
+The parallel structure `IdealPartialSection` has the same fields as
+`PartialSection` plus `downward_closed` and `directed`. The chain
+upper bound, maximality argument, and `HasPartialExtensions` analog
+all carry over (the union of a chain of ideal domains is an ideal
+domain). This is provided alongside the original `PartialSection`,
+not replacing it; CBP migration happens only after the ideal version
+proves simpler. -/
+
+/-- **`IdealPartialSection X`**: a partial choice function whose
+domain is an **ideal** of `ι` — a downward-closed, directed subset
+of valid indices, with `Compat`-coherent restrictions. -/
+structure FiniteProjectiveSystem.IdealPartialSection
+    {ι : Type*} [PartialOrder ι] (X : FiniteProjectiveSystem ι) where
+  /-- Domain: the set of indices on which this section is defined. -/
+  domain : Set ι
+  /-- Every index in `domain` is valid. -/
+  domain_valid : ∀ {i : ι}, i ∈ domain → X.Valid i
+  /-- Downward-closed: if `j ∈ domain` and `i ≤ j`, then `i ∈ domain`. -/
+  downward_closed : ∀ {i j : ι}, j ∈ domain → i ≤ j → i ∈ domain
+  /-- Directed: any two elements have a common upper bound in the domain. -/
+  directed : ∀ {i j : ι}, i ∈ domain → j ∈ domain →
+    ∃ k, k ∈ domain ∧ i ≤ k ∧ j ≤ k
+  /-- The partial choice function. -/
+  P : ∀ i, i ∈ domain → X.Obj i
+  /-- `Compat`-coherence: restrictions match on overlapping pairs. -/
+  compat : ∀ {i j : ι} (hi : i ∈ domain) (hj : j ∈ domain) (hij : i ≤ j),
+    X.Compat (X.restrict hij (P j hj)) (P i hi)
+
+/-- **Extension order on ideal partial sections**: same as for
+`PartialSection` — `ps₁ ≤ ps₂` iff `ps₂`'s domain contains `ps₁`'s,
+and the choice functions agree on the common domain. -/
+instance FiniteProjectiveSystem.IdealPartialSection.instLE
+    {ι : Type*} [PartialOrder ι] {X : FiniteProjectiveSystem ι} :
+    LE (X.IdealPartialSection) where
+  le ps₁ ps₂ :=
+    (∀ i, i ∈ ps₁.domain → i ∈ ps₂.domain) ∧
+    (∀ (i : ι) (hi₁ : i ∈ ps₁.domain) (hi₂ : i ∈ ps₂.domain),
+      ps₂.P i hi₂ = ps₁.P i hi₁)
+
+/-- **Preorder instance** on `IdealPartialSection`. Same proof as for
+`PartialSection`: reflexive + transitive. -/
+instance FiniteProjectiveSystem.IdealPartialSection.instPreorder
+    {ι : Type*} [PartialOrder ι] {X : FiniteProjectiveSystem ι} :
+    Preorder (X.IdealPartialSection) where
+  le := (· ≤ ·)
+  le_refl ps := ⟨fun _ h => h, fun _ _ _ => rfl⟩
+  le_trans ps₁ ps₂ ps₃ h₁₂ h₂₃ :=
+    ⟨fun i hi => h₂₃.1 i (h₁₂.1 i hi),
+     fun i hi₁ hi₃ =>
+       (h₂₃.2 i (h₁₂.1 i hi₁) hi₃).trans (h₁₂.2 i hi₁ (h₁₂.1 i hi₁))⟩
+
+/-- **`chainUpperBound`** for ideal partial sections. The union of a
+chain of ideal domains is itself an ideal: downward closure is
+preserved by union, and directedness is preserved because any two
+elements lie in some chain element (use the chain order to put them
+together, then use that element's `directed`). -/
+noncomputable def FiniteProjectiveSystem.IdealPartialSection.chainUpperBound
+    {ι : Type*} [PartialOrder ι] {X : FiniteProjectiveSystem ι}
+    (c : Set X.IdealPartialSection) (hc : IsChain (· ≤ ·) c) :
+    X.IdealPartialSection where
+  domain := {i | ∃ ps ∈ c, i ∈ ps.domain}
+  domain_valid {i} hi := by
+    obtain ⟨ps, _, hi_ps⟩ := hi
+    exact ps.domain_valid hi_ps
+  downward_closed {i j} hj hij := by
+    obtain ⟨ps, hps_in, hj_ps⟩ := hj
+    exact ⟨ps, hps_in, ps.downward_closed hj_ps hij⟩
+  directed {i j} hi hj := by
+    classical
+    obtain ⟨ps_i, hps_i_in, hi_ps_i⟩ := hi
+    obtain ⟨ps_j, hps_j_in, hj_ps_j⟩ := hj
+    rcases eq_or_ne ps_i ps_j with h_eq | h_ne
+    · subst h_eq
+      obtain ⟨k, hk_in, hik, hjk⟩ := ps_i.directed hi_ps_i hj_ps_j
+      exact ⟨k, ⟨ps_i, hps_i_in, hk_in⟩, hik, hjk⟩
+    rcases hc hps_i_in hps_j_in h_ne with h_le | h_le
+    · -- ps_i ≤ ps_j: lift i into ps_j.
+      have hi_ps_j : i ∈ ps_j.domain := h_le.1 i hi_ps_i
+      obtain ⟨k, hk_in, hik, hjk⟩ := ps_j.directed hi_ps_j hj_ps_j
+      exact ⟨k, ⟨ps_j, hps_j_in, hk_in⟩, hik, hjk⟩
+    · -- ps_j ≤ ps_i: lift j into ps_i.
+      have hj_ps_i : j ∈ ps_i.domain := h_le.1 j hj_ps_j
+      obtain ⟨k, hk_in, hik, hjk⟩ := ps_i.directed hi_ps_i hj_ps_i
+      exact ⟨k, ⟨ps_i, hps_i_in, hk_in⟩, hik, hjk⟩
+  P i hi := hi.choose.P i hi.choose_spec.2
+  compat {i j} hi hj hij := by
+    classical
+    have hps_i_in_c : hi.choose ∈ c := hi.choose_spec.1
+    have hps_j_in_c : hj.choose ∈ c := hj.choose_spec.1
+    have hi_in_ps_i : i ∈ hi.choose.domain := hi.choose_spec.2
+    have hj_in_ps_j : j ∈ hj.choose.domain := hj.choose_spec.2
+    rcases eq_or_ne hi.choose hj.choose with h_eq | h_ne
+    · have hj_in_ps_i : j ∈ hi.choose.domain := h_eq ▸ hj_in_ps_j
+      have h_pj_eq : hj.choose.P j hj_in_ps_j = hi.choose.P j hj_in_ps_i := by
+        congr 1 <;> exact h_eq.symm
+      rw [h_pj_eq]
+      exact hi.choose.compat hi_in_ps_i hj_in_ps_i hij
+    rcases hc hps_i_in_c hps_j_in_c h_ne with h_le | h_le
+    · have hi_in_ps_j : i ∈ hj.choose.domain := h_le.1 i hi_in_ps_i
+      have h_pi_eq : hj.choose.P i hi_in_ps_j = hi.choose.P i hi_in_ps_i :=
+        h_le.2 i hi_in_ps_i hi_in_ps_j
+      have := hj.choose.compat hi_in_ps_j hj_in_ps_j hij
+      rw [h_pi_eq] at this
+      exact this
+    · have hj_in_ps_i : j ∈ hi.choose.domain := h_le.1 j hj_in_ps_j
+      have h_pj_eq : hi.choose.P j hj_in_ps_i = hj.choose.P j hj_in_ps_j :=
+        h_le.2 j hj_in_ps_j hj_in_ps_i
+      have := hi.choose.compat hi_in_ps_i hj_in_ps_i hij
+      rw [h_pj_eq] at this
+      exact this
+
+/-- **`chainUpperBound_isUB`** for ideal partial sections: same proof
+shape as for `PartialSection`. -/
+theorem FiniteProjectiveSystem.IdealPartialSection.chainUpperBound_isUB
+    {ι : Type*} [PartialOrder ι] {X : FiniteProjectiveSystem ι}
+    (c : Set X.IdealPartialSection) (hc : IsChain (· ≤ ·) c) :
+    ∀ ps ∈ c, ps ≤ chainUpperBound c hc := by
+  intro ps hps
+  refine ⟨fun i hi => ⟨ps, hps, hi⟩, ?_⟩
+  intro i hi_ps hi_union
+  classical
+  set ps' := hi_union.choose with hps'_def
+  have hps'_in_c : ps' ∈ c := hi_union.choose_spec.1
+  have hi_in_ps' : i ∈ ps'.domain := hi_union.choose_spec.2
+  show ps'.P i hi_in_ps' = ps.P i hi_ps
+  rcases eq_or_ne ps' ps with h_eq | h_ne
+  · subst h_eq; rfl
+  rcases hc hps'_in_c hps h_ne with h_le | h_le
+  · exact (h_le.2 i hi_in_ps' hi_ps).symm
+  · exact h_le.2 i hi_ps hi_in_ps'
+
+/-- **`bddAbove_of_isChain`** for ideal partial sections. -/
+theorem FiniteProjectiveSystem.IdealPartialSection.bddAbove_of_isChain
+    {ι : Type*} [PartialOrder ι] {X : FiniteProjectiveSystem ι}
+    (c : Set X.IdealPartialSection) (hc : IsChain (· ≤ ·) c) :
+    BddAbove c :=
+  ⟨chainUpperBound c hc, chainUpperBound_isUB c hc⟩
+
+/-- **Empty ideal partial section**: the empty domain is trivially
+downward-closed and (vacuously) directed. -/
+noncomputable def FiniteProjectiveSystem.IdealPartialSection.empty
+    {ι : Type*} [PartialOrder ι] (X : FiniteProjectiveSystem ι) :
+    X.IdealPartialSection where
+  domain := ∅
+  domain_valid {i} hi := absurd hi (Set.notMem_empty i)
+  downward_closed {i j} hj _ := absurd hj (Set.notMem_empty j)
+  directed {i j} hi _ := absurd hi (Set.notMem_empty i)
+  P i hi := absurd hi (Set.notMem_empty i)
+  compat {i j} hi _ _ := absurd hi (Set.notMem_empty i)
+
+/-- **Maximal ideal partial section exists**: Zorn applied to
+`bddAbove_of_isChain` for the ideal variant. -/
+theorem FiniteProjectiveSystem.IdealPartialSection.exists_maximal
+    {ι : Type*} [PartialOrder ι] (X : FiniteProjectiveSystem ι) :
+    ∃ m : X.IdealPartialSection, IsMax m :=
+  zorn_le (fun c hc => bddAbove_of_isChain c hc)
+
+/-- **`X.IdealHasPartialExtensions`**: every ideal partial section
+extends to an ideal partial section containing any specified valid
+index. This is the ideal-domain analog of `HasPartialExtensions`. -/
+def FiniteProjectiveSystem.IdealHasPartialExtensions
+    {ι : Type*} [PartialOrder ι] (X : FiniteProjectiveSystem ι) : Prop :=
+  ∀ (p : X.IdealPartialSection) (i₀ : ι), X.Valid i₀ →
+    ∃ q : X.IdealPartialSection, p ≤ q ∧ i₀ ∈ q.domain
+
+/-- **Zorn-driven global-section existence** for ideal partial
+sections under `IdealHasPartialExtensions`. -/
+theorem FiniteProjectiveSystem.exists_global_section_of_idealPartialExtensions
+    {ι : Type*} [PartialOrder ι] (X : FiniteProjectiveSystem ι)
+    (hExt : X.IdealHasPartialExtensions) :
+    ∃ P : ∀ i, X.Valid i → X.Obj i,
+      ∀ {i j : ι} (hi : X.Valid i) (hj : X.Valid j) (hij : i ≤ j),
+        X.Compat (X.restrict hij (P j hj)) (P i hi) := by
+  obtain ⟨m, hm_max⟩ := FiniteProjectiveSystem.IdealPartialSection.exists_maximal X
+  have h_dom : ∀ i, X.Valid i → i ∈ m.domain := by
+    intro i₀ hval
+    by_contra h_not_in
+    obtain ⟨q, h_le, h_i₀_in_q⟩ := hExt m i₀ hval
+    have h_max := hm_max h_le
+    exact h_not_in (h_max.1 i₀ h_i₀_in_q)
+  refine ⟨fun i hval => m.P i (h_dom i hval), ?_⟩
+  intro i j hi hj hij
+  exact m.compat (h_dom i hi) (h_dom j hj) hij
+
 /-! ### Status note
 
 The previous `FiniteProjectiveSystem.exists_global_section` theorem
@@ -7495,7 +7782,16 @@ The previous `FiniteProjectiveSystem.exists_global_section` theorem
 by the conditional `exists_global_section_of_partialExtensions`,
 which derives the global section from a `HasPartialExtensions`
 hypothesis. For concrete instances (e.g., `coherentBranchPartialSystem`),
-the `HasPartialExtensions` is supplied separately. -/
+the `HasPartialExtensions` is supplied separately.
+
+An **ideal-domain variant** is also provided in parallel
+(`IdealPartialSection`, `IdealHasPartialExtensions`,
+`exists_global_section_of_idealPartialExtensions`). The ideal version
+constrains the domain to a downward-closed, directed subset, which
+makes the model-specific extension lemma significantly easier (each
+new index has a clear set of predecessors to amalgamate against).
+CBP migration to the ideal variant happens once the ideal extension
+proof is shown to be tractable. -/
 
 /-! ### `CoherentWitnessNet`: coherent global section of the projective system
 
@@ -7759,6 +8055,6269 @@ theorem coherentBranchPartial_hasPartialExtensions
     (cR : (Fin 2 ↪o PairERSource) → Bool) :
     (coherentBranchPartialSystem cR).HasPartialExtensions := by
   sorry
+
+/-! ### Ideal-domain CBP frontier (parallel exploration)
+
+The unrestricted `HasPartialExtensions` faces the obstruction noted
+above: arbitrary `p.domain` forces compatibility across unrelated
+finsets. The ideal-domain version
+(`IdealHasPartialExtensions`) restricts attention to ideals
+(downward-closed + directed). In the Finset-Ordinal setting an ideal
+is exactly the downset of a (possibly infinite) set `A ⊆ ω₁`, i.e.
+`p.domain = {S : Finset Ordinal | S ⊆ A ∧ S finite}`.
+
+**Why this should be easier**: extending an ideal section by `i₀`
+amounts to enlarging `A` to `A ∪ i₀`. The compatibility obligations
+become "single-coordinate" — for each new ordinal `α ∈ i₀ \ A`, pick
+`prefixAt α` and `branch α` so the new family remains coherent on
+all finite subsets of `A ∪ i₀`. The hard combinatorial step is now
+isolated as a *single-coordinate CBP extension*, rather than
+amalgamation across arbitrary partial sections.
+
+This stub is the ideal-side analog of
+`coherentBranchPartial_hasPartialExtensions`. Both remain `sorry`
+until the underlying CBP-extension primitive is built; the migration
+plan is to fill the ideal version first, then redirect
+`exists_coherentWitnessNet` to go through it. -/
+
+/-- **[NEW FRONTIER, sorry]** The CBP projective system has the
+strengthened `IdealHasPartialExtensions` property. Parallel to
+`coherentBranchPartial_hasPartialExtensions` but with ideal domains —
+the natural target for the single-coordinate CBP extension primitive. -/
+theorem coherentBranchPartial_idealHasPartialExtensions
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    (coherentBranchPartialSystem cR).IdealHasPartialExtensions := by
+  sorry
+
+/-! ### Diagnostic: finite-subdomain extension via `finite_extension_property`
+
+To test whether the ideal-domain structure actually removes the
+extension obstruction, we attempt a **finite-subdomain** version:
+given an ideal section `p` and a finite `D ⊆ p.domain`, find a
+locally-coherent partial section on `D ∪ {i₀}` that matches `p` on
+`D`. If this passes via `finite_extension_property`, the full
+`IdealHasPartialExtensions` should follow by directedness; if not,
+the obstruction is the primitive's strength, not the domain shape.
+
+**Result**: The finite version is provable as a "raw" coherent
+family (i.e. *some* CBP on `(insert i₀ D).sup id` exists) but
+**not** as one that preserves `p.P` values on `D`. The
+`finite_extension_property` builds a *fresh* CBP `Q`; nothing forces
+`Q.restrict S = p.P S` for `S ∈ D`. Hence even the finite version
+of the ideal extension needs a strictly stronger primitive — a
+**rigid amalgamation** lemma that extends a prescribed coherent
+family rather than building one from scratch.
+
+Conclusion: the ideal-domain structure narrows the missing primitive
+to single-coordinate rigid extension (extend a CBP on `T` to a CBP
+on `T ∪ {α}` for one new `α`), but does not bypass it. -/
+
+/-- **Diagnostic finite-extension lemma (axiom-clean).** Given an
+ideal section `p` of the CBP system, a finite `D ⊆ p.domain`, and a
+new valid finset `i₀`, the `finite_extension_property` produces a
+*fresh* coherent family on `D ∪ {i₀}`. This is the **raw** finite
+version, **without** the requirement that it preserve `p.P` values
+on `D` — that requirement is the missing rigid amalgamation
+primitive. -/
+theorem coherentBranchPartial_finite_extension_with_i0
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    (D : Finset (Finset Ordinal.{0}))
+    (hD_valid : ∀ S ∈ D, ∀ α ∈ S, α < Ordinal.omega.{0} 1)
+    (i₀ : Finset Ordinal.{0})
+    (hi₀ : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1) :
+    ∃ P : ∀ S, S ∈ insert i₀ D → CoherentBranchPartial cR S,
+      ∀ {S T} (hS : S ∈ insert i₀ D) (hT : T ∈ insert i₀ D) (hST : S ⊆ T),
+        cbpFieldwiseCompat ((P T hT).restrict hST) (P S hS) := by
+  classical
+  -- Apply the FPS finite_extension on insert i₀ D.
+  have h_valid : ∀ S ∈ insert i₀ D, (coherentBranchPartialSystem cR).Valid S := by
+    intro S hS
+    rcases Finset.mem_insert.mp hS with h | h
+    · subst h; exact hi₀
+    · exact hD_valid S h
+  exact (coherentBranchPartialSystem cR).finite_extension (insert i₀ D) h_valid
+
+/-- **The actual gap, stated precisely.** This is the
+*rigid* version of the diagnostic: it asks for a coherent family on
+`insert i₀ D` that *agrees with `p.P` on `D`*. Under the current
+primitives (`finite_extension_property` builds a fresh CBP, not a
+prescribed one), this is **not provable** — it is exactly the
+missing rigid amalgamation primitive.
+
+Marked `sorry` to make the gap visible and to enable downstream
+constructions to be stated against it. A **conditional** version
+(`coherentBranchPartial_rigid_finite_extension_above`, defined after
+`coherentBranchPartial_extend_one`) is provable using the rigid
+top-extension primitive when `i₀` is above `⋃ D`. The general case
+(`i₀` interspersed within `⋃ D`) requires interior insertion, still
+pending. -/
+theorem coherentBranchPartial_rigid_finite_extension
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    (p : (coherentBranchPartialSystem cR).IdealPartialSection)
+    (D : Finset (Finset Ordinal.{0}))
+    (hD : ∀ S ∈ D, S ∈ p.domain)
+    (i₀ : Finset Ordinal.{0})
+    (hi₀ : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1) :
+    ∃ P : ∀ S, S ∈ insert i₀ D → CoherentBranchPartial cR S,
+      (∀ {S T} (hS : S ∈ insert i₀ D) (hT : T ∈ insert i₀ D) (hST : S ⊆ T),
+        cbpFieldwiseCompat ((P T hT).restrict hST) (P S hS)) ∧
+      (∀ S (hS_D : S ∈ D),
+        cbpFieldwiseCompat (P S (Finset.mem_insert_of_mem hS_D)) (p.P S (hD S hS_D))) := by
+  sorry
+
+/-! ### Single-coordinate rigid extension (top-extension special case)
+
+The natural primitive for closing the rigid amalgamation gap is to
+extend a CBP by a single ordinal at a time. The cleanest case is
+**top extension**: given `P : CBP cR T` and a new `α > max T`, build
+`Q : CBP cR (insert α T)` whose restriction to `T` is fieldwise
+equal to `P`. This uses `CoherentBranchApprox.extendTo` directly.
+
+The general case (`α` not necessarily above `max T`) requires
+inserting at an interior position, which is a strictly stronger
+primitive. -/
+
+/-- **Single-coordinate rigid top-extension**: given `P : CBP cR T`
+and a new valid `α` strictly above all of `T`, build
+`Q : CBP cR (insert α T)` whose restriction to `T` agrees fieldwise
+with `P`. -/
+theorem coherentBranchPartial_extend_one_above_top
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    {T : Finset Ordinal.{0}} (P : CoherentBranchPartial cR T)
+    (α : Ordinal.{0}) (hα : α < Ordinal.omega.{0} 1)
+    (h_above : ∀ β ∈ T, β < α) :
+    ∃ Q : CoherentBranchPartial cR (insert α T),
+      cbpFieldwiseCompat (Q.restrict (Finset.subset_insert α T)) P := by
+  classical
+  -- α ∉ T (since α < α is false).
+  have hα_not_mem : α ∉ T := fun h => lt_irrefl α (h_above α h)
+  -- Handle T = ∅ trivially: build CBP on {α} fresh; fieldwise compat is vacuous.
+  by_cases hT_empty : T = ∅
+  · subst hT_empty
+    have h_valid : ∀ β ∈ insert α (∅ : Finset Ordinal.{0}),
+        β < Ordinal.omega.{0} 1 := by
+      intro β hβ
+      rcases Finset.mem_insert.mp hβ with h | h
+      · exact h ▸ hα
+      · exact absurd h (Finset.notMem_empty _)
+    obtain ⟨Q⟩ := exists_coherentBranchPartial cR (insert α ∅) h_valid
+    refine ⟨Q, ?_, ?_⟩ <;>
+      intro β hβ <;> exact absurd hβ (Finset.notMem_empty _)
+  -- Main case: T ≠ ∅. (T.card + 1 = (insert α T).card and α > max T.)
+  have hT_card_ne : T.card ≠ 0 :=
+    fun h => hT_empty (Finset.card_eq_zero.mp h)
+  have hT_card_pos : 0 < T.card := Nat.pos_of_ne_zero hT_card_ne
+  have h_card : (insert α T).card = T.card + 1 :=
+    Finset.card_insert_of_notMem hα_not_mem
+  -- P.toApprox.lastLevel < α (the max element of T is < α by h_above).
+  have h_above_last : P.toApprox.lastLevel < α := by
+    have hT_sub : T.card - 1 < T.card := Nat.sub_lt hT_card_pos one_pos
+    have h_last_eq : P.toApprox.lastLevel =
+        (T.orderEmbOfFin rfl) ⟨T.card - 1, hT_sub⟩ := by
+      unfold CoherentBranchApprox.lastLevel
+      rw [dif_neg hT_card_ne]
+      exact P.level_eq ⟨T.card - 1, hT_sub⟩
+    rw [h_last_eq]
+    exact h_above _ (T.orderEmbOfFin_mem rfl _)
+  -- The extended approximation A_ext : CBA cR (T.card + 1).
+  let A_ext := P.toApprox.extendTo α hα h_above_last
+  -- Identification of (insert α T).orderEmbOfFin via uniqueness.
+  -- The strict-mono Fin.lastCases family f matches insert α T's enumeration.
+  set f : Fin (T.card + 1) → Ordinal.{0} :=
+    Fin.lastCases α (fun j => (T.orderEmbOfFin rfl) j) with hf_def
+  have hf_last : f (Fin.last T.card) = α := Fin.lastCases_last
+  have hf_castSucc : ∀ j : Fin T.card,
+      f j.castSucc = (T.orderEmbOfFin rfl) j := fun j => Fin.lastCases_castSucc _
+  have hf_mem : ∀ i, f i ∈ insert α T := by
+    intro i
+    induction i using Fin.lastCases with
+    | last => rw [hf_last]; exact Finset.mem_insert_self α T
+    | cast j =>
+      rw [hf_castSucc j]
+      exact Finset.mem_insert_of_mem (T.orderEmbOfFin_mem rfl j)
+  have hf_strictMono : StrictMono f := by
+    intro a b hab
+    induction b using Fin.lastCases with
+    | last =>
+      induction a using Fin.lastCases with
+      | last => exact absurd hab (lt_irrefl _)
+      | cast j =>
+        rw [hf_castSucc j, hf_last]
+        exact h_above _ (T.orderEmbOfFin_mem rfl j)
+    | cast j₂ =>
+      induction a using Fin.lastCases with
+      | last =>
+        exact absurd hab (not_lt_of_ge (Fin.le_last _))
+      | cast j₁ =>
+        rw [hf_castSucc j₁, hf_castSucc j₂]
+        exact (T.orderEmbOfFin rfl).strictMono
+          (Fin.castSucc_lt_castSucc_iff.mp hab)
+  -- Uniqueness: f = (insert α T).orderEmbOfFin h_card. This identifies the
+  -- (insert α T) enumeration with the Fin.lastCases-glued extension.
+  have hf_eq : f = ⇑((insert α T).orderEmbOfFin h_card) :=
+    Finset.orderEmbOfFin_unique h_card hf_mem hf_strictMono
+  -- A_ext.level matches f (by construction of extendTo).
+  have hA_ext_level : ∀ j, A_ext.level j = f j := by
+    intro j
+    induction j using Fin.lastCases with
+    | last =>
+      rw [hf_last]
+      show P.toApprox.extendToLevel α (Fin.last T.card) = α
+      exact P.toApprox.extendToLevel_last α
+    | cast j =>
+      rw [hf_castSucc j]
+      show P.toApprox.extendToLevel α j.castSucc = (T.orderEmbOfFin rfl) j
+      rw [P.toApprox.extendToLevel_castSucc α j, P.level_eq j]
+  -- Consistency: (insert α T).orderEmbOfFin h_card (Fin.cast h_card i)
+  -- = (insert α T).orderEmbOfFin rfl i.
+  have h_emb_cast : ∀ i : Fin (insert α T).card,
+      (insert α T).orderEmbOfFin h_card (Fin.cast h_card i) =
+        (insert α T).orderEmbOfFin rfl i := by
+    intro i
+    have hg_mem : ∀ x : Fin (insert α T).card,
+        (insert α T).orderEmbOfFin h_card (Fin.cast h_card x) ∈ insert α T :=
+      fun x => Finset.orderEmbOfFin_mem _ _ _
+    have hg_strictMono : StrictMono
+        (fun x : Fin (insert α T).card =>
+          (insert α T).orderEmbOfFin h_card (Fin.cast h_card x)) := by
+      intro a b hab
+      exact ((insert α T).orderEmbOfFin h_card).strictMono hab
+    have h_unique := Finset.orderEmbOfFin_unique
+      (s := insert α T) (k := (insert α T).card) rfl hg_mem hg_strictMono
+    exact congr_fun h_unique i
+  -- Q.toApprox built via reindexing A_ext through Fin.cast h_card.
+  let Q_cba : CoherentBranchApprox cR (insert α T).card := {
+    level := fun i => A_ext.level (Fin.cast h_card i)
+    level_lt_omega1 := fun i => A_ext.level_lt_omega1 _
+    level_strictMono := fun {_ _} hab => A_ext.level_strictMono hab
+    prefixAt := fun i => A_ext.prefixAt (Fin.cast h_card i)
+    branchAt := fun i => A_ext.branchAt (Fin.cast h_card i)
+    prefix_restrict := fun {k₁ k₂} hk x =>
+      A_ext.prefix_restrict (k₁ := Fin.cast h_card k₁)
+        (k₂ := Fin.cast h_card k₂) hk x
+    branch_restrict := fun {k₁ k₂} hk x =>
+      A_ext.branch_restrict (k₁ := Fin.cast h_card k₁)
+        (k₂ := Fin.cast h_card k₂) hk x
+    large := fun i => A_ext.large _
+    top_in_validFiber := by
+      intro i hi
+      have hi' : i + 1 < T.card + 1 := h_card ▸ hi
+      have := A_ext.top_in_validFiber i hi'
+      convert this using 2 <;> rfl
+  }
+  -- Level_eq for Q (built atop Q_cba).
+  have h_level_eq : ∀ i, Q_cba.level i = (insert α T).orderEmbOfFin rfl i := by
+    intro i
+    show A_ext.level (Fin.cast h_card i) = (insert α T).orderEmbOfFin rfl i
+    rw [hA_ext_level (Fin.cast h_card i)]
+    rw [show f (Fin.cast h_card i) = ((insert α T).orderEmbOfFin h_card)
+          (Fin.cast h_card i) from congr_fun hf_eq _]
+    exact h_emb_cast i
+  let Q : CoherentBranchPartial cR (insert α T) :=
+    ⟨Q_cba, h_level_eq⟩
+  -- Key step: Fin.cast h_card (Q.indexOf α' h) = (P.indexOf α' hα').castSucc.
+  -- Proved via A_ext.level injectivity (StrictMono → Injective).
+  -- Both sides give A_ext.level = α', so they coincide.
+  have h_indexOf : ∀ α' (hα' : α' ∈ T),
+      Fin.cast h_card (Q.indexOf α' (Finset.subset_insert α T hα')) =
+        (P.indexOf α' hα').castSucc := by
+    intro α' hα'
+    apply A_ext.level_strictMono.injective
+    -- LHS: A_ext.level (Fin.cast h_card (Q.indexOf α' _)) = α'.
+    have h_LHS : A_ext.level
+        (Fin.cast h_card (Q.indexOf α' (Finset.subset_insert α T hα'))) = α' := by
+      -- A_ext.level (Fin.cast h_card i) = Q_cba.level i = Q.toApprox.level i.
+      change Q_cba.level (Q.indexOf α' (Finset.subset_insert α T hα')) = α'
+      exact Q.level_indexOf α' (Finset.subset_insert α T hα')
+    -- RHS: A_ext.level (P.indexOf α' hα').castSucc = α'.
+    have h_RHS : A_ext.level (P.indexOf α' hα').castSucc = α' := by
+      change P.toApprox.extendToLevel α (P.indexOf α' hα').castSucc = α'
+      rw [P.toApprox.extendToLevel_castSucc α (P.indexOf α' hα'),
+          P.level_indexOf α' hα']
+    rw [h_LHS, h_RHS]
+  refine ⟨Q, ?_, ?_⟩
+  -- prefixAt and branch agreement (parallel proofs).
+  · intro α' hα'
+    rw [Q.restrict_prefixAt (Finset.subset_insert α T) α' hα']
+    -- Q.prefixAt α' h = P.prefixAt α' hα' via HEq chaining.
+    apply eq_of_heq
+    refine HEq.trans (cast_heq _ _) (HEq.trans ?_ (cast_heq _ _).symm)
+    -- HEq (Q.toApprox.prefixAt (Q.indexOf ...)) (P.toApprox.prefixAt (P.indexOf ...))
+    refine HEq.trans (b := A_ext.prefixAt (P.indexOf α' hα').castSucc) ?_ ?_
+    · -- Q.toApprox.prefixAt (Q.indexOf ...) HEq A_ext.prefixAt (castSucc).
+      -- Q.toApprox.prefixAt = (def) fun i => A_ext.prefixAt (Fin.cast h_card i).
+      change HEq (A_ext.prefixAt (Fin.cast h_card
+        (Q.indexOf α' (Finset.subset_insert α T hα'))))
+        (A_ext.prefixAt (P.indexOf α' hα').castSucc)
+      exact congr_arg_heq A_ext.prefixAt (h_indexOf α' hα')
+    · -- A_ext.prefixAt (castSucc) HEq P.toApprox.prefixAt _.
+      change HEq (P.toApprox.extendToPrefixAt
+          (P.toApprox.extendToChain α hα h_above_last)
+          (P.indexOf α' hα').castSucc)
+        (P.toApprox.prefixAt (P.indexOf α' hα'))
+      exact P.toApprox.extendToPrefixAt_castSucc_heq _ (P.indexOf α' hα')
+  · intro α' hα'
+    rw [Q.restrict_branch (Finset.subset_insert α T) α' hα']
+    apply eq_of_heq
+    refine HEq.trans (cast_heq _ _) (HEq.trans ?_ (cast_heq _ _).symm)
+    refine HEq.trans (b := A_ext.branchAt (P.indexOf α' hα').castSucc) ?_ ?_
+    · change HEq (A_ext.branchAt (Fin.cast h_card
+        (Q.indexOf α' (Finset.subset_insert α T hα'))))
+        (A_ext.branchAt (P.indexOf α' hα').castSucc)
+      exact congr_arg_heq A_ext.branchAt (h_indexOf α' hα')
+    · change HEq (P.toApprox.extendToBranchAt
+          (P.toApprox.extendToChain α hα h_above_last)
+          (P.indexOf α' hα').castSucc)
+        (P.toApprox.branchAt (P.indexOf α' hα'))
+      exact P.toApprox.extendToBranchAt_castSucc_heq _ (P.indexOf α' hα')
+
+/-! ### Iterated single-coordinate rigid extension over a sorted list
+
+Iterating `coherentBranchPartial_extend_one_above_top` over a strictly-
+sorted list `l` of ordinals where every element of `l` is above every
+element of `T` yields a CBP on `l.foldl insert T` whose restriction to
+`T` agrees with the original. The use of `List.foldl` makes the
+recursion match the proof structure: each `α :: tail` step extends
+the current `T` by `α`, then applies the inductive hypothesis with
+the new starting set `insert α T`. -/
+
+/-- **Helper**: `T` is a subset of the left-fold of inserts. -/
+private lemma subset_foldl_insert :
+    ∀ (l : List Ordinal.{0}) (T : Finset Ordinal.{0}),
+      T ⊆ l.foldl (fun S α => insert α S) T
+  | [], T => Finset.Subset.refl T
+  | α :: tail, T =>
+    (Finset.subset_insert α T).trans (subset_foldl_insert tail (insert α T))
+
+/-- **Iterated rigid extension**: given `P : CBP cR T` and a
+strictly-sorted list `l` of valid ordinals each above every element
+of `T`, build `Q : CBP cR (l.foldl insert T)` whose restriction to
+`T` agrees fieldwise with `P`. -/
+theorem coherentBranchPartial_extend_list_above_top
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    ∀ (l : List Ordinal.{0}) {T : Finset Ordinal.{0}}
+      (P : CoherentBranchPartial cR T)
+      (_hvalid : ∀ α ∈ l, α < Ordinal.omega.{0} 1)
+      (_hsorted : l.Pairwise (· < ·))
+      (_habove : ∀ α ∈ l, ∀ β ∈ T, β < α),
+      ∃ Q : CoherentBranchPartial cR (l.foldl (fun S α => insert α S) T),
+        cbpFieldwiseCompat (Q.restrict (subset_foldl_insert l T)) P := by
+  intro l
+  induction l with
+  | nil =>
+    intros T P _ _ _
+    refine ⟨P, ?_, ?_⟩ <;> intro α' hα'
+    · exact P.restrict_prefixAt (subset_foldl_insert [] T) α' hα'
+    · exact P.restrict_branch (subset_foldl_insert [] T) α' hα'
+  | cons α tail ih =>
+    intros T P hvalid hsorted habove
+    have hα_lt : α < Ordinal.omega.{0} 1 := hvalid α List.mem_cons_self
+    have h_α_above : ∀ β ∈ T, β < α := habove α List.mem_cons_self
+    obtain ⟨Q', hQ'_prefix, hQ'_branch⟩ :=
+      coherentBranchPartial_extend_one_above_top cR P α hα_lt h_α_above
+    -- IH on tail with starting set insert α T.
+    have h_tail_valid : ∀ γ ∈ tail, γ < Ordinal.omega.{0} 1 :=
+      fun γ hγ => hvalid γ (List.mem_cons_of_mem _ hγ)
+    have h_tail_sorted : tail.Pairwise (· < ·) := List.Pairwise.of_cons hsorted
+    have h_tail_above : ∀ γ ∈ tail, ∀ β ∈ insert α T, β < γ := by
+      intro γ hγ β hβ
+      rcases Finset.mem_insert.mp hβ with rfl | hβT
+      · exact List.rel_of_pairwise_cons hsorted hγ
+      · exact habove γ (List.mem_cons_of_mem _ hγ) β hβT
+    obtain ⟨Q, hQ_prefix, hQ_branch⟩ :=
+      ih Q' h_tail_valid h_tail_sorted h_tail_above
+    refine ⟨Q, ?_, ?_⟩
+    · intro α' hα'
+      have hα'_insα : α' ∈ insert α T := Finset.mem_insert_of_mem hα'
+      have step1 :=
+        (Q.restrict_prefixAt (subset_foldl_insert (α :: tail) T) α' hα').trans
+        (((Q.restrict_prefixAt (subset_foldl_insert tail (insert α T))
+              α' hα'_insα).symm.trans (hQ_prefix α' hα'_insα)).trans
+          ((Q'.restrict_prefixAt (Finset.subset_insert α T) α' hα').symm.trans
+            (hQ'_prefix α' hα')))
+      exact step1
+    · intro α' hα'
+      have hα'_insα : α' ∈ insert α T := Finset.mem_insert_of_mem hα'
+      exact (Q.restrict_branch (subset_foldl_insert (α :: tail) T) α' hα').trans
+        (((Q.restrict_branch (subset_foldl_insert tail (insert α T))
+              α' hα'_insα).symm.trans (hQ_branch α' hα'_insα)).trans
+          ((Q'.restrict_branch (Finset.subset_insert α T) α' hα').symm.trans
+            (hQ'_branch α' hα')))
+
+/-- **`coherentBranchPartial_extend_one`** (rigid extension for any
+finset above the current top): given `P : CBP cR T` and a finset `i₀`
+of valid ordinals each strictly above every element of `T`, extend
+`P` to a CBP on `T ∪ i₀` whose restriction to `T` agrees fieldwise
+with `P`. Derived by sorting `i₀` and iterating
+`extend_one_above_top` via the list-form. -/
+theorem coherentBranchPartial_extend_one
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    {T : Finset Ordinal.{0}} (P : CoherentBranchPartial cR T)
+    (i₀ : Finset Ordinal.{0})
+    (hvalid : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1)
+    (habove : ∀ α ∈ i₀, ∀ β ∈ T, β < α) :
+    ∃ Q : CoherentBranchPartial cR (T ∪ i₀),
+      cbpFieldwiseCompat (Q.restrict Finset.subset_union_left) P := by
+  classical
+  -- Sort i₀ into a strictly-sorted list of valid ordinals each above T.
+  set l : List Ordinal.{0} := i₀.sort (· ≤ ·) with hl_def
+  have hl_toFinset : l.toFinset = i₀ := Finset.sort_toFinset _ _
+  have hl_sortedLT : l.Pairwise (· < ·) :=
+    (Finset.sortedLT_sort i₀).pairwise
+  have hl_mem : ∀ α, α ∈ l ↔ α ∈ i₀ := fun α => Finset.mem_sort _
+  have hl_valid : ∀ α ∈ l, α < Ordinal.omega.{0} 1 :=
+    fun α hα => hvalid α ((hl_mem α).mp hα)
+  have hl_above : ∀ α ∈ l, ∀ β ∈ T, β < α :=
+    fun α hα β hβ => habove α ((hl_mem α).mp hα) β hβ
+  -- Auxiliary: l.foldl insert T = T ∪ l.toFinset = T ∪ i₀.
+  have h_foldl_eq : l.foldl (fun S α => insert α S) T = T ∪ i₀ := by
+    have step1 : ∀ (l' : List Ordinal.{0}) (T' : Finset Ordinal.{0}),
+        l'.foldl (fun S α => insert α S) T' = T' ∪ l'.toFinset := by
+      intro l'
+      induction l' with
+      | nil => intro T'; simp [List.toFinset_nil]
+      | cons α tail ih =>
+        intro T'
+        rw [List.foldl_cons, ih, List.toFinset_cons]
+        ext x
+        simp only [Finset.mem_union, Finset.mem_insert]; tauto
+    rw [step1, hl_toFinset]
+  -- Apply list-form extension.
+  obtain ⟨Q, hQ_pref, hQ_br⟩ :=
+    coherentBranchPartial_extend_list_above_top cR l P
+      hl_valid hl_sortedLT hl_above
+  -- Restrict Q from (l.foldl ... T) down to (T ∪ i₀) via the Finset equality.
+  have h_sub : T ∪ i₀ ⊆ l.foldl (fun S α => insert α S) T := by
+    rw [h_foldl_eq]
+  refine ⟨Q.restrict h_sub, ?_, ?_⟩
+  · intro α' hα'
+    -- (Q.restrict h_sub).restrict subset_union_left = Q.restrict (subset_foldl_insert l T)
+    -- on prefixAt at α' (by two applications of restrict_prefixAt + prop-irrelevance).
+    rw [(Q.restrict h_sub).restrict_prefixAt Finset.subset_union_left α' hα',
+        Q.restrict_prefixAt h_sub α' (Finset.subset_union_left hα'),
+        (Q.restrict_prefixAt (subset_foldl_insert l T) α' hα').symm]
+    exact hQ_pref α' hα'
+  · intro α' hα'
+    rw [(Q.restrict h_sub).restrict_branch Finset.subset_union_left α' hα',
+        Q.restrict_branch h_sub α' (Finset.subset_union_left hα'),
+        (Q.restrict_branch (subset_foldl_insert l T) α' hα').symm]
+    exact hQ_br α' hα'
+
+/-! ### `PairERGoodChain`: chain with explicit inner cR-consistency
+
+`PairERChain` records `head`, `type`, `large` but does not encode
+the **inner cR-consistency** invariant that, in any chain built via
+the standard constructors (`zero`, `succ`, `limit`, `extendTo`),
+holds by construction: for every two positions `x < y` in
+`α.ToType`,
+
+  `cR (pairEmbed (head.strictMono h)) = type x`.
+
+`PairERGoodChain` is a parallel layer (extends `PairERChain`) that
+adds this invariant as an explicit field. This is the missing
+primitive for interior insertion: once a chain is known to satisfy
+inner cR-consistency, the `(α, β₀)` validFiber check at an interior
+insertion reduces to the invariant.
+
+The constructors:
+
+- `zero` — vacuous (`(0).ToType` is empty).
+- `succ` — closes via `succNewElement_in_validFiber` for the new
+  top pair and inductive `inner_consistent` of `s` for old/old
+  pairs.
+- `limit` / `limitWithType` — does **not** automatically satisfy
+  the invariant; explicit hypothesis required.
+- `extendTo` — depends on strengthening `Extension`. This is the
+  expected remaining frontier. -/
+
+/-- **`PairERGoodChain`**: a `PairERChain` augmented with explicit
+inner cR-consistency. Every pair of distinct positions in the chain
+is colored by `cR` consistently with the `type` function. -/
+structure PairERGoodChain (cR : (Fin 2 ↪o PairERSource) → Bool)
+    (α : Ordinal.{0}) extends PairERChain cR α where
+  /-- For every `x < y` in `α.ToType`, the cR-color of the pair
+  `(head x, head y)` equals `type x`. -/
+  inner_consistent : ∀ {x y : α.ToType} (h : x < y),
+    cR (pairEmbed (toPairERChain.head.strictMono h)) = toPairERChain.type x
+
+/-- **`PairERGoodChain.zero`**: vacuous inner consistency at level 0. -/
+noncomputable def PairERGoodChain.zero
+    (cR : (Fin 2 ↪o PairERSource) → Bool) : PairERGoodChain cR 0 where
+  toPairERChain := PairERChain.zero cR
+  inner_consistent {x _} _ :=
+    haveI : IsEmpty (Ordinal.ToType 0) := Ordinal.isEmpty_toType_zero
+    (IsEmpty.false x).elim
+
+/-- **Helper**: applying `s.succ.head` to a lifted α-element recovers
+`s.head` on the α-side. Proof via `extendHead_initialSegToType_apply`
+with `β = α`. -/
+theorem PairERChain.succ_head_initialSeg
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (s : PairERChain cR α) (x : α.ToType) :
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder (Order.succ α).ToType (· < ·) := isWellOrder_lt
+    s.succ.head ((Ordinal.initialSegToType
+        (Order.le_succ α)).toOrderEmbedding x) = s.head x := by
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder (Order.succ α).ToType (· < ·) := isWellOrder_lt
+  -- The lifted x is not ⊤.
+  have h_typein_xs : Ordinal.typein (α := (Order.succ α).ToType) (· < ·)
+      ((Ordinal.initialSegToType (Order.le_succ α)).toOrderEmbedding x) =
+      Ordinal.typein (α := α.ToType) (· < ·) x :=
+    Ordinal.typein_apply _ x
+  have h_typein_x_lt : Ordinal.typein (α := α.ToType) (· < ·) x < α := by
+    have := Ordinal.typein_lt_type (· < ·) x
+    rwa [Ordinal.type_toType] at this
+  have h_typein_top : Ordinal.typein
+      (α := (Order.succ α).ToType) (· < ·)
+      (⊤ : (Order.succ α).ToType) = α := by
+    rw [show (⊤ : (Order.succ α).ToType) =
+        Ordinal.enum (α := (Order.succ α).ToType) (· < ·)
+          ⟨α, (Ordinal.type_toType _).symm ▸ Order.lt_succ α⟩
+      from Ordinal.enum_succ_eq_top.symm, Ordinal.typein_enum]
+  have hxs_ne_top :
+      (Ordinal.initialSegToType (Order.le_succ α)).toOrderEmbedding x ≠
+      (⊤ : (Order.succ α).ToType) := by
+    intro h_eq
+    have : α = Ordinal.typein (· < ·) x :=
+      h_typein_top.symm.trans (h_eq ▸ h_typein_xs)
+    exact absurd this.symm (ne_of_lt h_typein_x_lt)
+  unfold PairERChain.succ
+  simp only [extendHead, OrderEmbedding.coe_ofStrictMono, dif_neg hxs_ne_top]
+  -- Goal: s.head (enum ⟨typein xs, _⟩) = s.head x.
+  congr 1
+  -- Show enum ⟨typein xs, _⟩ = x via enum_typein on x.
+  have hrec := Ordinal.enum_typein (α := α.ToType) (· < ·) x
+  refine Eq.trans ?_ hrec
+  -- Goal: enum ⟨typein xs, _⟩ = enum ⟨typein x, _⟩.
+  congr 1
+  apply Subtype.ext
+  exact h_typein_xs
+
+/-- **Helper**: parallel of `succ_head_initialSeg` for `type`. -/
+theorem PairERChain.succ_type_initialSeg
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (s : PairERChain cR α) (x : α.ToType) :
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder (Order.succ α).ToType (· < ·) := isWellOrder_lt
+    s.succ.type ((Ordinal.initialSegToType
+        (Order.le_succ α)).toOrderEmbedding x) = s.type x := by
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder (Order.succ α).ToType (· < ·) := isWellOrder_lt
+  have h_typein_xs : Ordinal.typein (α := (Order.succ α).ToType) (· < ·)
+      ((Ordinal.initialSegToType (Order.le_succ α)).toOrderEmbedding x) =
+      Ordinal.typein (α := α.ToType) (· < ·) x :=
+    Ordinal.typein_apply _ x
+  have h_typein_x_lt : Ordinal.typein (α := α.ToType) (· < ·) x < α := by
+    have := Ordinal.typein_lt_type (· < ·) x
+    rwa [Ordinal.type_toType] at this
+  have h_typein_top : Ordinal.typein
+      (α := (Order.succ α).ToType) (· < ·)
+      (⊤ : (Order.succ α).ToType) = α := by
+    rw [show (⊤ : (Order.succ α).ToType) =
+        Ordinal.enum (α := (Order.succ α).ToType) (· < ·)
+          ⟨α, (Ordinal.type_toType _).symm ▸ Order.lt_succ α⟩
+      from Ordinal.enum_succ_eq_top.symm, Ordinal.typein_enum]
+  have hxs_ne_top :
+      (Ordinal.initialSegToType (Order.le_succ α)).toOrderEmbedding x ≠
+      (⊤ : (Order.succ α).ToType) := by
+    intro h_eq
+    have : α = Ordinal.typein (· < ·) x :=
+      h_typein_top.symm.trans (h_eq ▸ h_typein_xs)
+    exact absurd this.symm (ne_of_lt h_typein_x_lt)
+  unfold PairERChain.succ
+  simp only [extendType, dif_neg hxs_ne_top]
+  congr 1
+  have hrec := Ordinal.enum_typein (α := α.ToType) (· < ·) x
+  refine Eq.trans ?_ hrec
+  congr 1
+  apply Subtype.ext
+  exact h_typein_xs
+
+/-- **Helper for the dichotomy**: any element `z` of
+`(Order.succ α).ToType` with `typein z < α` is the lift of the
+corresponding α-element. Proof uses `Ordinal.typein_inj`. -/
+private theorem succ_initialSeg_enum_typein_of_lt
+    {α : Ordinal.{0}}
+    (z : (Order.succ α).ToType)
+    (hz : haveI : IsWellOrder (Order.succ α).ToType (· < ·) := isWellOrder_lt
+         (Ordinal.typein (α := (Order.succ α).ToType) (· < ·)).toRelEmbedding z < α) :
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder (Order.succ α).ToType (· < ·) := isWellOrder_lt
+    (Ordinal.initialSegToType (Order.le_succ α)).toOrderEmbedding
+      (Ordinal.enum (α := α.ToType) (· < ·)
+        ⟨(Ordinal.typein _).toRelEmbedding z,
+         by rw [Ordinal.type_toType]; exact hz⟩) = z := by
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder (Order.succ α).ToType (· < ·) := isWellOrder_lt
+  apply (Ordinal.typein_inj (α := (Order.succ α).ToType) (· < ·)).mp
+  exact (Ordinal.typein_apply _ _).trans (Ordinal.typein_enum _ _)
+
+/-- **Dichotomy** on elements of `(Order.succ α).ToType`: every
+element is either the image of an α-element via `initialSegToType`
+or the top `⊤`. -/
+theorem OrderSucc.eq_initialSeg_or_top
+    {α : Ordinal.{0}} (z : (Order.succ α).ToType) :
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder (Order.succ α).ToType (· < ·) := isWellOrder_lt
+    (∃ x : α.ToType,
+      z = (Ordinal.initialSegToType (Order.le_succ α)).toOrderEmbedding x) ∨
+    z = (⊤ : (Order.succ α).ToType) := by
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder (Order.succ α).ToType (· < ·) := isWellOrder_lt
+  by_cases hz_lt_α :
+      (Ordinal.typein (α := (Order.succ α).ToType) (· < ·)).toRelEmbedding z < α
+  · refine Or.inl ⟨Ordinal.enum (α := α.ToType) (· < ·)
+      ⟨(Ordinal.typein _).toRelEmbedding z,
+       by rw [Ordinal.type_toType]; exact hz_lt_α⟩, ?_⟩
+    exact (succ_initialSeg_enum_typein_of_lt z hz_lt_α).symm
+  · refine Or.inr ?_
+    push_neg at hz_lt_α
+    have h_lt_succ : (Ordinal.typein _).toRelEmbedding z <
+        Ordinal.type (α := (Order.succ α).ToType) (· < ·) :=
+      Ordinal.typein_lt_type _ _
+    rw [Ordinal.type_toType] at h_lt_succ
+    have h_typein_le_α : (Ordinal.typein _).toRelEmbedding z ≤ α :=
+      Order.lt_succ_iff.mp h_lt_succ
+    have h_typein_eq_α : (Ordinal.typein _).toRelEmbedding z = α :=
+      le_antisymm h_typein_le_α hz_lt_α
+    have h_typein_top : (Ordinal.typein (α := (Order.succ α).ToType) (· < ·)).toRelEmbedding
+        (⊤ : (Order.succ α).ToType) = α := by
+      rw [show (⊤ : (Order.succ α).ToType) =
+          Ordinal.enum (α := (Order.succ α).ToType) (· < ·)
+            ⟨α, by rw [Ordinal.type_toType]; exact Order.lt_succ α⟩
+        from Ordinal.enum_succ_eq_top.symm]
+      exact Ordinal.typein_enum _ _
+    apply (Ordinal.typein_inj (α := (Order.succ α).ToType) (· < ·)).mp
+    rw [h_typein_eq_α, h_typein_top]
+
+/-- **`PairERGoodChain.succ`**: extends inner cR-consistency over
+`PairERChain.succ`. Uses `OrderSucc.eq_initialSeg_or_top` to case
+split each of `x'`, `y'` into "old (= lifted α-element)" vs "top".
+- Old/old: reduce via helpers to `s.inner_consistent`.
+- Old/top: reduce via helpers + `succNewElement_in_validFiber`.
+- Top/anything: contradiction (nothing strictly above `⊤`). -/
+noncomputable def PairERGoodChain.succ
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {α : Ordinal.{0}} (s : PairERGoodChain cR α) :
+    PairERGoodChain cR (Order.succ α) where
+  toPairERChain := s.toPairERChain.succ
+  inner_consistent {x' y'} hxy' := by
+    classical
+    haveI : IsWellOrder (Order.succ α).ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    rcases OrderSucc.eq_initialSeg_or_top x' with ⟨x_α, hx_eq⟩ | hx_top
+    · rcases OrderSucc.eq_initialSeg_or_top y' with ⟨y_α, hy_eq⟩ | hy_top
+      · -- x' = lifted x_α, y' = lifted y_α.
+        subst hx_eq; subst hy_eq
+        have hxα_lt_yα : x_α < y_α :=
+          (Ordinal.initialSegToType (Order.le_succ α)).toOrderEmbedding.lt_iff_lt.mp hxy'
+        have h_inner := s.inner_consistent hxα_lt_yα
+        rw [s.toPairERChain.succ_type_initialSeg]
+        rw [← h_inner]
+        congr 1
+        apply RelEmbedding.ext
+        intro i
+        match i with
+        | ⟨0, _⟩ =>
+            simp only [pairEmbed, OrderEmbedding.coe_ofStrictMono,
+              Matrix.cons_val_zero]
+            exact s.toPairERChain.succ_head_initialSeg x_α
+        | ⟨1, _⟩ =>
+            simp only [pairEmbed, OrderEmbedding.coe_ofStrictMono,
+              Matrix.cons_val_one, Matrix.head_cons]
+            exact s.toPairERChain.succ_head_initialSeg y_α
+      · -- x' = lifted x_α, y' = ⊤.
+        subst hx_eq; subst hy_top
+        rw [s.toPairERChain.succ_type_initialSeg]
+        obtain ⟨_, h_cR⟩ := s.toPairERChain.succNewElement_in_validFiber x_α
+        rw [← h_cR]
+        congr 1
+        apply RelEmbedding.ext
+        intro i
+        match i with
+        | ⟨0, _⟩ =>
+            simp only [pairEmbed, OrderEmbedding.coe_ofStrictMono,
+              Matrix.cons_val_zero]
+            exact s.toPairERChain.succ_head_initialSeg x_α
+        | ⟨1, _⟩ =>
+            simp only [pairEmbed, OrderEmbedding.coe_ofStrictMono,
+              Matrix.cons_val_one, Matrix.head_cons]
+            exact s.toPairERChain.succ_head_top
+    · -- x' = ⊤. Then x' < y' would need y' > ⊤, impossible.
+      subst hx_top
+      exact absurd hxy' (not_lt_of_ge le_top)
+
+/-- **[FRONTIER, sorry — Good-chain prescribed-level primitive]**
+`PairERGoodChain.succWithChoice`. Successor stage of a Good chain
+with **prescribed** new head `y` and type `b` at the new top, parallel
+to `limitWithType` for limits. Bypasses the `Classical.choose` in
+`PairERGoodChain.succ` (which goes through `PairERChain.succ`).
+
+**The underlying bare-chain primitive** `PairERChain.succWithChoice`
+is now available (proven). What remains is to **discharge
+`inner_consistent`** for the prescribed `(y, b)`:
+
+* Pairs `x' < y'` with both `x', y' ≠ ⊤`: lift to `α.ToType`, use
+  `s.inner_consistent` (mechanical, same as `PairERGoodChain.succ`).
+* Pairs `x' < y' = ⊤`: the new top's head is the prescribed `y`, the
+  new top's type is the prescribed `b`. The `cR` value of
+  `pairEmbed (head x_α < y)` follows from
+  `hy_mem x_α : ∃ h, cR (pairEmbed h) = s.type x_α`. So the inner
+  consistency at `(x_α, ⊤)` forces `extendType b ⊤ = s.type x_α`,
+  i.e. `b = s.type x_α` — which is satisfied **only if** the caller
+  arranges `b` to be consistent.
+
+**Missing local axiom.** Either an additional hypothesis on the
+caller (a `b_consistent` field saying `b` is the type the validFiber
+witness forces), or a stronger primitive choosing `b` to match.
+
+**This is the actual atomic frontier**: the Good-chain layer requires
+prescribed-`b` consistency, not just bare-chain succWithChoice. -/
+noncomputable def PairERGoodChain.succWithChoice
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (s : PairERGoodChain cR α)
+    (y : PairERSource) (b : Bool)
+    (hy_mem : y ∈ validFiber cR s.toPairERChain.head s.toPairERChain.type)
+    (hlarge : Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (validFiberExtend cR s.toPairERChain.head
+        s.toPairERChain.type y b)) :
+    PairERGoodChain cR (Order.succ α) where
+  toPairERChain := s.toPairERChain.succWithChoice y b hy_mem hlarge
+  inner_consistent := by sorry
+
+/-- **`PairERGoodChain.limitWithType`**: limit-stage constructor for
+`PairERGoodChain` with explicit inner-consistency hypothesis. The
+underlying chain is built via `PairERChain.limitWithType`; the inner
+consistency is supplied directly by the caller (it cannot be derived
+from `large` alone). -/
+noncomputable def PairERGoodChain.limitWithType
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (p : α.ToType ↪o PairERSource) (τ : α.ToType → Bool)
+    (hlarge : Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (validFiber cR p τ))
+    (hinner : ∀ {x y : α.ToType} (hxy : x < y),
+      cR (pairEmbed (p.strictMono hxy)) = τ x) :
+    PairERGoodChain cR α where
+  toPairERChain := PairERChain.limitWithType p τ hlarge
+  inner_consistent := hinner
+
+/-! ### `PairERGoodChain.Extension`: bundled extension carrying
+inner cR-consistency
+
+The parallel of `PairERChain.Extension`, but with the underlying
+`chain` strengthened to a `PairERGoodChain`. The `commitAt_old`,
+`typeAt_old`, and `head_β_in_validFiber` fields are stated against
+the projected `toPairERChain`, so existing `PairERChain.Extension`
+machinery composes through. -/
+
+/-- **`PairERGoodChain.Extension`**: an extension of a good chain
+`s : PairERGoodChain cR β` to a good chain at level `α > β`, bundling
+the coherence data parallel to `PairERChain.Extension`. -/
+structure PairERGoodChain.Extension
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {β : Ordinal.{0}} (s : PairERGoodChain cR β)
+    {α : Ordinal.{0}} (hβα : β < α) where
+  /-- The extended good chain at level `α`. -/
+  chain : PairERGoodChain cR α
+  /-- Head agreement at lower positions. -/
+  commitAt_old : ∀ (δ : Ordinal.{0}) (hδβ : δ < β),
+    chain.toPairERChain.commitAt δ (hδβ.trans hβα) =
+      s.toPairERChain.commitAt δ hδβ
+  /-- Type agreement at lower positions. -/
+  typeAt_old : ∀ (δ : Ordinal.{0}) (hδβ : δ < β),
+    chain.toPairERChain.typeAt δ (hδβ.trans hβα) =
+      s.toPairERChain.typeAt δ hδβ
+  /-- The new top at position `β` lies in `s`'s validFiber. -/
+  head_β_in_validFiber :
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    chain.toPairERChain.head (Ordinal.enum (α := α.ToType) (· < ·)
+      ⟨β, (Ordinal.type_toType α).symm ▸ hβα⟩) ∈
+      validFiber cR s.toPairERChain.head s.toPairERChain.type
+
+/-- **`GoodExtension.succ`**: the successor-step extension of a good
+chain via `PairERGoodChain.succ`. -/
+noncomputable def PairERGoodChain.Extension.succ
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {β : Ordinal.{0}}
+    (s : PairERGoodChain cR β) :
+    PairERGoodChain.Extension s (Order.lt_succ β) where
+  chain := s.succ
+  commitAt_old := fun δ hδβ => PairERChain.succ_commitAt s.toPairERChain δ hδβ
+  typeAt_old := fun δ hδβ => PairERChain.succ_typeAt_old s.toPairERChain δ hδβ
+  head_β_in_validFiber := by
+    haveI : IsWellOrder (Order.succ β).ToType (· < ·) := isWellOrder_lt
+    have h_top_eq : (⊤ : (Order.succ β).ToType) =
+        Ordinal.enum (α := (Order.succ β).ToType) (· < ·)
+          ⟨β, (Ordinal.type_toType _).symm ▸ Order.lt_succ β⟩ :=
+      Ordinal.enum_succ_eq_top.symm
+    show (s.succ).toPairERChain.head _ ∈ _
+    rw [← h_top_eq]
+    show s.toPairERChain.succ.head (⊤ : (Order.succ β).ToType) ∈ _
+    rw [PairERChain.succ_head_top]
+    exact s.toPairERChain.succNewElement_in_validFiber
+
+/-- **Helper**: the initial-segment lift of `enum δ` in `β.ToType`
+equals `enum δ` in `α.ToType`, for any `δ < β ≤ α`. Reusable across
+prescribed-extension proofs that bridge the `β`-side enum to the
+`α`-side enum via `Ordinal.initialSegToType`.
+
+Proof: both sides have `typein = δ` (the LHS by
+`Ordinal.typein_apply` for `InitialSeg` + `typein_enum`; the RHS by
+`typein_enum` directly), then `enum_typein` aligns them. -/
+lemma initialSegToType_enum_lift
+    {β α : Ordinal.{0}} (hβα : β ≤ α) {δ : Ordinal.{0}}
+    (hδβ : δ < β) :
+    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    (Ordinal.initialSegToType hβα).toOrderEmbedding
+      (Ordinal.enum (α := β.ToType) (· < ·)
+        ⟨δ, (Ordinal.type_toType β).symm ▸ hδβ⟩) =
+    Ordinal.enum (α := α.ToType) (· < ·)
+      ⟨δ, (Ordinal.type_toType α).symm ▸ hδβ.trans_le hβα⟩ := by
+  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  rw [← Ordinal.enum_typein (α := α.ToType) (r := (· < ·))
+    ((Ordinal.initialSegToType hβα).toOrderEmbedding
+      (Ordinal.enum (α := β.ToType) (· < ·)
+        ⟨δ, (Ordinal.type_toType β).symm ▸ hδβ⟩))]
+  congr 1
+  apply Subtype.ext
+  show (Ordinal.typein (α := α.ToType) (· < ·)).toRelEmbedding
+      ((Ordinal.initialSegToType hβα).toOrderEmbedding _) = δ
+  rw [show (Ordinal.initialSegToType hβα).toOrderEmbedding
+        ((Ordinal.enum (α := β.ToType) (· < ·))
+          ⟨δ, (Ordinal.type_toType β).symm ▸ hδβ⟩) =
+      (Ordinal.initialSegToType hβα)
+        ((Ordinal.enum (α := β.ToType) (· < ·))
+          ⟨δ, (Ordinal.type_toType β).symm ▸ hδβ⟩) from rfl,
+    Ordinal.typein_apply, Ordinal.typein_enum]
+
+/-- **`PairERGoodChain.Extension.byPrescribedTop`**: when an
+already-coherent Good chain `t` at level `α` is **prescribed** as the
+extension of `s` at level `β < α`, package `t` as an
+`Extension s hβα`.
+
+**Hypothesis structure.** The caller supplies pointwise head and type
+agreement between `s` (on `β.ToType`) and the initial-segment image
+of `s`'s positions inside `t` (on `α.ToType` via
+`Ordinal.initialSegToType hβα.le`):
+
+* `h_prefix`: `s.head x = t.head (initialSeg x)` for `x : β.ToType`.
+* `h_type`: `s.type x = t.type (initialSeg x)` for `x : β.ToType`.
+
+**Why this is exactly what prescribed insertion needs.** Unlike the
+constructive `succ`/`limitWithType`, no Good chain is BUILT here —
+the chain `t` is provided already-coherent. The extension property is
+PROVED, not constructed. This dodges the prescribed-level extension
+primitive entirely at the chain layer; the burden moves to the caller
+(who must supply a coherent `t`).
+
+**Status.** Stated as the cleanly-designed primitive for the
+`insert_prescribed_new_compatible` chain. Proof body is `sorry`
+pending the four-line discharge of each Extension field from
+`h_prefix` / `h_type` / `t.inner_consistent`. -/
+noncomputable def PairERGoodChain.Extension.byPrescribedTop
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {β : Ordinal.{0}} (s : PairERGoodChain cR β)
+    {α : Ordinal.{0}} (hβα : β < α)
+    (t : PairERGoodChain cR α)
+    (h_prefix : ∀ x : β.ToType,
+      haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      s.toPairERChain.head x =
+        t.toPairERChain.head
+          ((Ordinal.initialSegToType hβα.le).toOrderEmbedding x))
+    (h_type : ∀ x : β.ToType,
+      haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      s.toPairERChain.type x =
+        t.toPairERChain.type
+          ((Ordinal.initialSegToType hβα.le).toOrderEmbedding x)) :
+    PairERGoodChain.Extension s hβα where
+  chain := t
+  commitAt_old := fun δ hδβ => by
+    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    show t.toPairERChain.head _ = s.toPairERChain.head _
+    rw [h_prefix, initialSegToType_enum_lift hβα.le hδβ]
+  typeAt_old := fun δ hδβ => by
+    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    show t.toPairERChain.type _ = s.toPairERChain.type _
+    rw [h_type, initialSegToType_enum_lift hβα.le hδβ]
+  head_β_in_validFiber := by
+    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    intro x
+    set y := (Ordinal.initialSegToType hβα.le).toOrderEmbedding x with hy_def
+    -- y < enum β in α.ToType: typein y = typein x < β.
+    have hy_lt : y < Ordinal.enum (α := α.ToType) (· < ·)
+        ⟨β, (Ordinal.type_toType α).symm ▸ hβα⟩ := by
+      rw [← Ordinal.enum_typein (α := α.ToType) (r := (· < ·)) y,
+        (Ordinal.enum_lt_enum (α := α.ToType) (r := (· < ·)))]
+      show ((Ordinal.typein (α := α.ToType) (· < ·)).toRelEmbedding y) < β
+      rw [hy_def]
+      rw [show (Ordinal.typein (α := α.ToType) (· < ·)).toRelEmbedding
+            ((Ordinal.initialSegToType hβα.le).toOrderEmbedding x) =
+          (Ordinal.typein (α := β.ToType) (· < ·)).toRelEmbedding x from
+        Ordinal.typein_apply (Ordinal.initialSegToType hβα.le) x]
+      have hx_lt : (Ordinal.typein (α := β.ToType) (· < ·)).toRelEmbedding x <
+          Ordinal.type (α := β.ToType) (· < ·) :=
+        Ordinal.typein_lt_type _ _
+      rwa [Ordinal.type_toType] at hx_lt
+    -- Apply t.inner_consistent to (y, enum β).
+    have h_inner := t.inner_consistent hy_lt
+    refine ⟨?_, ?_⟩
+    · rw [h_prefix]
+      exact t.toPairERChain.head.strictMono hy_lt
+    · rw [h_type, ← h_inner]
+      congr 1
+      apply RelEmbedding.ext
+      intro i
+      match i with
+      | ⟨0, _⟩ =>
+        simp only [pairEmbed, OrderEmbedding.coe_ofStrictMono,
+          Matrix.cons_val_zero]
+        exact h_prefix x
+      | ⟨1, _⟩ =>
+        simp only [pairEmbed, OrderEmbedding.coe_ofStrictMono,
+          Matrix.cons_val_one, Matrix.head_cons]
+        rfl
+
+/-- **`GoodExtension.limitWithType`**: limit-step good extension with
+prescribed prefix/branch/largeness data + agreement witnesses +
+**explicit inner cR-consistency** for the new chain. -/
+noncomputable def PairERGoodChain.Extension.limitWithType
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {β : Ordinal.{0}} (s : PairERGoodChain cR β)
+    {α : Ordinal.{0}} (hβα : β < α)
+    (p : α.ToType ↪o PairERSource) (τ : α.ToType → Bool)
+    (hlarge : Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (validFiber cR p τ))
+    (hinner : ∀ {x y : α.ToType} (hxy : x < y),
+      cR (pairEmbed (p.strictMono hxy)) = τ x)
+    (h_commitAt : ∀ (δ : Ordinal.{0}) (hδβ : δ < β),
+      (PairERChain.limitWithType (cR := cR) p τ hlarge).commitAt δ
+          (hδβ.trans hβα) = s.toPairERChain.commitAt δ hδβ)
+    (h_typeAt : ∀ (δ : Ordinal.{0}) (hδβ : δ < β),
+      (PairERChain.limitWithType (cR := cR) p τ hlarge).typeAt δ
+          (hδβ.trans hβα) = s.toPairERChain.typeAt δ hδβ)
+    (h_realizes :
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      (PairERChain.limitWithType (cR := cR) p τ hlarge).head
+          (Ordinal.enum (α := α.ToType) (· < ·)
+            ⟨β, (Ordinal.type_toType α).symm ▸ hβα⟩) ∈
+        validFiber cR s.toPairERChain.head s.toPairERChain.type) :
+    PairERGoodChain.Extension s hβα where
+  chain := PairERGoodChain.limitWithType p τ hlarge hinner
+  commitAt_old := h_commitAt
+  typeAt_old := h_typeAt
+  head_β_in_validFiber := h_realizes
+
+/-- **`GoodExtension.trans`**: compose two good extensions. Parallel
+to `PairERChain.Extension.trans` but at the `PairERGoodChain` layer. -/
+noncomputable def PairERGoodChain.Extension.trans
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {β γ α : Ordinal.{0}} {s : PairERGoodChain cR β}
+    {hβγ : β < γ} {hγα : γ < α}
+    (e₁ : PairERGoodChain.Extension s hβγ)
+    (e₂ : PairERGoodChain.Extension e₁.chain hγα) :
+    PairERGoodChain.Extension s (hβγ.trans hγα) where
+  chain := e₂.chain
+  commitAt_old := fun δ hδβ =>
+    (e₂.commitAt_old δ (hδβ.trans hβγ)).trans (e₁.commitAt_old δ hδβ)
+  typeAt_old := fun δ hδβ =>
+    (e₂.typeAt_old δ (hδβ.trans hβγ)).trans (e₁.typeAt_old δ hδβ)
+  head_β_in_validFiber := by
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder γ.ToType (· < ·) := isWellOrder_lt
+    have h_commit : e₂.chain.toPairERChain.commitAt β (hβγ.trans hγα) =
+        e₁.chain.toPairERChain.commitAt β hβγ := e₂.commitAt_old β hβγ
+    show e₂.chain.toPairERChain.head _ ∈
+      validFiber cR s.toPairERChain.head s.toPairERChain.type
+    show e₂.chain.toPairERChain.commitAt β (hβγ.trans hγα) ∈
+      validFiber cR s.toPairERChain.head s.toPairERChain.type
+    rw [h_commit]
+    show e₁.chain.toPairERChain.head _ ∈
+      validFiber cR s.toPairERChain.head s.toPairERChain.type
+    exact e₁.head_β_in_validFiber
+
+/-! ### `PairERGoodChain.extendToExt`: the Good transfinite-extension
+frontier
+
+The parallel of `PairERChain.extendToExt`, strengthened to carry
+inner cR-consistency through the recursion. This is the named
+frontier for the Good layer; closing it would close interior
+insertion + the full Erdős-Rado pair theorem from the Good side.
+
+We keep the old `PairERChain.extendToExt` frontier intact (downstream
+approximation code depends on its exact shape); the Good version is
+opt-in via consumers that need inner cR-consistency. -/
+
+/-- **[FRONTIER, sorry]** Extend a good chain `s : PairERGoodChain cR β`
+to a good extension `s → α` for any countable `α > β`. Parallel to
+`PairERChain.extendToExt`. Closing this requires either:
+  (i) building the recursion from scratch at the Good layer (closing
+      under succ/limit/extendTo with explicit inner_consistent care);
+  (ii) lifting an existing (closed) PairERChain Extension to a Good
+      Extension by supplying inner_consistent. -/
+noncomputable def PairERGoodChain.extendToExt
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {β α : Ordinal.{0}} (_s : PairERGoodChain cR β)
+    (_hβα : β < α) (_hα : α < Ordinal.omega.{0} 1) :
+    PairERGoodChain.Extension _s _hβα := by
+  sorry
+
+/-- **`PairERGoodChain.extendTo`**: chain-only projection of
+`extendToExt`. -/
+noncomputable def PairERGoodChain.extendTo
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {β α : Ordinal.{0}} (s : PairERGoodChain cR β)
+    (hβα : β < α) (hα : α < Ordinal.omega.{0} 1) :
+    PairERGoodChain cR α :=
+  (s.extendToExt hβα hα).chain
+
+/-- **`PairERGoodChain.extendTo_commitAt`**: agreement at `δ < β` —
+projection of `Extension.commitAt_old`. -/
+theorem PairERGoodChain.extendTo_commitAt
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {β α : Ordinal.{0}} (s : PairERGoodChain cR β)
+    (hβα : β < α) (hα : α < Ordinal.omega.{0} 1)
+    (δ : Ordinal.{0}) (hδβ : δ < β) :
+    (s.extendTo hβα hα).toPairERChain.commitAt δ (hδβ.trans hβα) =
+      s.toPairERChain.commitAt δ hδβ :=
+  (s.extendToExt hβα hα).commitAt_old δ hδβ
+
+/-- **`PairERGoodChain.extendTo_typeAt_old`**: agreement at `δ < β` for
+the type function — projection of `Extension.typeAt_old`. -/
+theorem PairERGoodChain.extendTo_typeAt_old
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {β α : Ordinal.{0}} (s : PairERGoodChain cR β)
+    (hβα : β < α) (hα : α < Ordinal.omega.{0} 1)
+    (δ : Ordinal.{0}) (hδβ : δ < β) :
+    (s.extendTo hβα hα).toPairERChain.typeAt δ (hδβ.trans hβα) =
+      s.toPairERChain.typeAt δ hδβ :=
+  (s.extendToExt hβα hα).typeAt_old δ hδβ
+
+/-- **`PairERGoodChain.extendTo_head_β_in_validFiber`**: the new chain's
+head at position `β` lies in `s`'s validFiber — projection of
+`Extension.head_β_in_validFiber`. -/
+theorem PairERGoodChain.extendTo_head_β_in_validFiber
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {β α : Ordinal.{0}} (s : PairERGoodChain cR β)
+    (hβα : β < α) (hα : α < Ordinal.omega.{0} 1) :
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    (s.extendTo hβα hα).toPairERChain.head
+        (Ordinal.enum (α := α.ToType) (· < ·)
+          ⟨β, (Ordinal.type_toType α).symm ▸ hβα⟩) ∈
+      validFiber cR s.toPairERChain.head s.toPairERChain.type :=
+  (s.extendToExt hβα hα).head_β_in_validFiber
+
+/-- **`PairERGoodChain.Extension.toPairERChainExtension`**: bridge from
+a good extension to an ordinary `PairERChain.Extension`. Projects the
+underlying chain and drops `inner_consistent`. Allows existing
+consumers of `PairERChain.Extension` to accept good extensions. -/
+def PairERGoodChain.Extension.toPairERChainExtension
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {β : Ordinal.{0}} {s : PairERGoodChain cR β}
+    {α : Ordinal.{0}} {hβα : β < α}
+    (e : PairERGoodChain.Extension s hβα) :
+    PairERChain.Extension s.toPairERChain hβα where
+  chain := e.chain.toPairERChain
+  commitAt_old := e.commitAt_old
+  typeAt_old := e.typeAt_old
+  head_β_in_validFiber := e.head_β_in_validFiber
+
+/-- **`PairERGoodChain.extendToExt_of_succ_eq`**: if `α = Order.succ β`,
+the extension is `PairERGoodChain.Extension.succ`. (Not a generic
+constructor; a *consistency* lemma — useful only after closing
+`extendToExt`'s structure.) Reduces the succ case of the frontier to
+the proven `Extension.succ` constructor. -/
+theorem PairERGoodChain.Extension.succ_eq_extension
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {β : Ordinal.{0}}
+    (s : PairERGoodChain cR β) :
+    ∃ e : PairERGoodChain.Extension s (Order.lt_succ β),
+      e.chain = s.succ :=
+  ⟨PairERGoodChain.Extension.succ s, rfl⟩
+
+/-! ### Validation: inner cR-consistency closes the interior validFiber
+
+For any `s : PairERGoodChain cR β` and any `α < β`, the value of
+`s.head` at the α-position of `β.ToType` lies in the validFiber
+defined by the **restricted** prefix/type to `α.ToType`. This is
+exactly the (α, β₀)-adjacency obligation that blocked the interior
+insertion proof; closing it with `inner_consistent` confirms that
+inner cR-consistency is the missing ingredient. -/
+
+/-- **`PairERGoodChain.head_at_α_in_restricted_validFiber`**: the
+"interior validFiber" check is discharged by `inner_consistent`.
+Given a good chain at `β` and `α < β`, the head value at position
+`α` is in the validFiber of the head/type restricted to `α.ToType`. -/
+theorem PairERGoodChain.head_at_α_in_restricted_validFiber
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {β : Ordinal.{0}} (s : PairERGoodChain cR β)
+    {α : Ordinal.{0}} (hαβ : α < β) :
+    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    s.toPairERChain.head (Ordinal.enum (α := β.ToType) (· < ·)
+        ⟨α, (Ordinal.type_toType β).symm ▸ hαβ⟩) ∈
+      validFiber cR
+        ((Ordinal.initialSegToType hαβ.le).toOrderEmbedding.trans
+          s.toPairERChain.head)
+        (fun x => s.toPairERChain.type
+          ((Ordinal.initialSegToType hαβ.le).toOrderEmbedding x)) := by
+  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  intro x
+  set y_x : β.ToType :=
+    (Ordinal.initialSegToType hαβ.le).toOrderEmbedding x with hy_x_def
+  set y_α : β.ToType := Ordinal.enum (α := β.ToType) (· < ·)
+    ⟨α, (Ordinal.type_toType β).symm ▸ hαβ⟩ with hy_α_def
+  -- y_x < y_α: typein y_x = typein x < α = typein y_α.
+  have h_yx_typein : (Ordinal.typein (α := β.ToType) (· < ·)).toRelEmbedding y_x =
+      (Ordinal.typein (α := α.ToType) (· < ·)).toRelEmbedding x :=
+    Ordinal.typein_apply _ x
+  have h_yα_typein :
+      (Ordinal.typein (α := β.ToType) (· < ·)).toRelEmbedding y_α = α := by
+    rw [hy_α_def, Ordinal.typein_enum]
+  have h_x_typein_lt_α :
+      (Ordinal.typein (α := α.ToType) (· < ·)).toRelEmbedding x < α := by
+    have := Ordinal.typein_lt_type (· < ·) x
+    rwa [Ordinal.type_toType] at this
+  have h_yx_lt_yα : y_x < y_α := by
+    rw [← Ordinal.typein_lt_typein (α := β.ToType) (· < ·)]
+    rw [h_yx_typein, h_yα_typein]
+    exact h_x_typein_lt_α
+  refine ⟨s.toPairERChain.head.strictMono h_yx_lt_yα, ?_⟩
+  exact s.inner_consistent h_yx_lt_yα
+
+/-! ### `CoherentGoodBranchApprox`: Good-strengthened approximation
+
+A parallel `CoherentBranchApprox` carrying a `PairERGoodChain` at
+each level (with head/type agreement). Interior insertion and rigid
+extension can use this layer to discharge the validFiber adjacency
+obligations via `inner_consistent`; the bare CBA pipeline remains
+intact for existing finite-existence consumers. -/
+
+/-- **`CoherentGoodBranchApprox cR n`**: a CBA at length `n`
+augmented with a `PairERGoodChain` at each level whose head/type
+agree with the CBA's `prefixAt`/`branchAt`. -/
+structure CoherentGoodBranchApprox
+    (cR : (Fin 2 ↪o PairERSource) → Bool) (n : ℕ) where
+  /-- The underlying bare approximation. -/
+  toApprox : CoherentBranchApprox cR n
+  /-- The Good chain at each level. -/
+  goodAt : ∀ i : Fin n, PairERGoodChain cR (toApprox.level i)
+  /-- Head agrees with `toApprox.prefixAt`. -/
+  good_head : ∀ (i : Fin n) (x : (toApprox.level i).ToType),
+    (goodAt i).toPairERChain.head x = toApprox.prefixAt i x
+  /-- Type agrees with `toApprox.branchAt`. -/
+  good_type : ∀ (i : Fin n) (x : (toApprox.level i).ToType),
+    (goodAt i).toPairERChain.type x = toApprox.branchAt i x
+
+/-- **Projection**: forget the Good chain data, recover the bare CBA. -/
+def CoherentGoodBranchApprox.toCoherentBranchApprox
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentGoodBranchApprox cR n) : CoherentBranchApprox cR n :=
+  A.toApprox
+
+/-- **`CoherentGoodBranchApprox.zero`**: empty Good approximation. -/
+noncomputable def CoherentGoodBranchApprox.zero
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    CoherentGoodBranchApprox cR 0 where
+  toApprox := CoherentBranchApprox.zero cR
+  goodAt i := i.elim0
+  good_head i := i.elim0
+  good_type i := i.elim0
+
+/-- **`CoherentGoodBranchApprox.fromZero`**: the unique single-level
+Good approximation at level `0` (using `PairERGoodChain.zero`). -/
+noncomputable def CoherentGoodBranchApprox.fromZero
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    CoherentGoodBranchApprox cR 1 where
+  toApprox := CoherentBranchApprox.fromZero cR
+  goodAt _ := PairERGoodChain.zero cR
+  good_head i x := by
+    haveI : IsEmpty ((CoherentBranchApprox.fromZero cR).level i).ToType :=
+      Ordinal.isEmpty_toType_zero
+    exact isEmptyElim x
+  good_type i x := by
+    haveI : IsEmpty ((CoherentBranchApprox.fromZero cR).level i).ToType :=
+      Ordinal.isEmpty_toType_zero
+    exact isEmptyElim x
+
+/-- **Helper**: in a Good approximation, the bare CBA's `lastChain`
+equals the Good chain at the last position. Provable via
+`RelEmbedding.ext` (head agreement) + `funext` (type agreement) +
+proof irrelevance (large). -/
+theorem CoherentGoodBranchApprox.lastChain_eq_goodAt_toPairERChain
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentGoodBranchApprox cR (n + 1)) :
+    A.toApprox.lastChain = (A.goodAt (Fin.last n)).toPairERChain := by
+  have h_head : A.toApprox.prefixAt (Fin.last n) =
+      (A.goodAt (Fin.last n)).toPairERChain.head := by
+    refine RelEmbedding.ext ?_
+    intro x
+    exact (A.good_head (Fin.last n) x).symm
+  have h_type : A.toApprox.branchAt (Fin.last n) =
+      (A.goodAt (Fin.last n)).toPairERChain.type := by
+    funext x
+    exact (A.good_type (Fin.last n) x).symm
+  show ({ head := A.toApprox.prefixAt (Fin.last n)
+          type := A.toApprox.branchAt (Fin.last n)
+          large := A.toApprox.large (Fin.last n) } : PairERChain cR _) = _
+  -- The two structures have matching fields; large is proof-irrelevant.
+  congr 1
+
+/-- **Helper**: structural equality `extendSucc.level = extendLevel`. -/
+@[simp] theorem CoherentBranchApprox.extendSucc_level
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentBranchApprox cR (n + 1)) :
+    A.extendSucc.level = A.extendLevel := rfl
+
+/-- **`PairERGoodChain.castLevel`**: transport a good chain along an
+ordinal equality. -/
+def PairERGoodChain.castLevel
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α β : Ordinal.{0}}
+    (h : α = β) (s : PairERGoodChain cR α) : PairERGoodChain cR β :=
+  h ▸ s
+
+@[simp] theorem PairERGoodChain.castLevel_rfl
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (s : PairERGoodChain cR α) : s.castLevel (rfl : α = α) = s := rfl
+
+/-- **`castLevel_head`**: head of cast chain at `x : β.ToType` equals
+head of original at the transported element `h.symm ▸ x : α.ToType`. -/
+theorem PairERGoodChain.castLevel_head
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α β : Ordinal.{0}}
+    (h : α = β) (s : PairERGoodChain cR α) (x : β.ToType) :
+    (s.castLevel h).toPairERChain.head x =
+      s.toPairERChain.head (h.symm ▸ x) := by
+  subst h; rfl
+
+/-- **`castLevel_type`**: parallel of `castLevel_head` for the type
+function. -/
+theorem PairERGoodChain.castLevel_type
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α β : Ordinal.{0}}
+    (h : α = β) (s : PairERGoodChain cR α) (x : β.ToType) :
+    (s.castLevel h).toPairERChain.type x =
+      s.toPairERChain.type (h.symm ▸ x) := by
+  subst h; rfl
+
+/-- **`PairERGoodChain.restrict`**: restrict a Good chain at level `β`
+to a Good chain at any lower level `α < β`. Head/type are composed
+with `initialSegToType`; `large` follows from validFiber containment
+(more constraints in β-validFiber); `inner_consistent` follows from
+`s.inner_consistent` applied to lifted positions. -/
+noncomputable def PairERGoodChain.restrict
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {β : Ordinal.{0}}
+    (s : PairERGoodChain cR β) {α : Ordinal.{0}} (hαβ : α < β) :
+    PairERGoodChain cR α := by
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  refine
+    { toPairERChain :=
+      { head := (Ordinal.initialSegToType hαβ.le).toOrderEmbedding.trans
+          s.toPairERChain.head
+        type := fun x => s.toPairERChain.type
+          ((Ordinal.initialSegToType hαβ.le).toOrderEmbedding x)
+        large := ?_ }
+      inner_consistent := ?_ }
+  · -- large: restricted validFiber ⊇ original validFiber.
+    apply s.toPairERChain.large.trans
+    apply Cardinal.mk_le_mk_of_subset
+    intro y hy x
+    exact hy ((Ordinal.initialSegToType hαβ.le).toOrderEmbedding x)
+  · -- inner_consistent: lift x < y via initSeg, apply s.inner_consistent.
+    intro x y h
+    exact s.inner_consistent
+      ((Ordinal.initialSegToType hαβ.le).toOrderEmbedding.strictMono h)
+
+/-- **`restrict_head_apply`**: explicit formula for the head of a
+restricted Good chain at `y : α.ToType`. -/
+@[simp] theorem PairERGoodChain.restrict_head_apply
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {β : Ordinal.{0}}
+    (s : PairERGoodChain cR β) {α : Ordinal.{0}} (hαβ : α < β)
+    (y : α.ToType) :
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    (s.restrict hαβ).toPairERChain.head y =
+      s.toPairERChain.head
+        ((Ordinal.initialSegToType hαβ.le).toOrderEmbedding y) := rfl
+
+/-- **`restrict_type_apply`**: parallel for type. -/
+@[simp] theorem PairERGoodChain.restrict_type_apply
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {β : Ordinal.{0}}
+    (s : PairERGoodChain cR β) {α : Ordinal.{0}} (hαβ : α < β)
+    (y : α.ToType) :
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    (s.restrict hαβ).toPairERChain.type y =
+      s.toPairERChain.type
+        ((Ordinal.initialSegToType hαβ.le).toOrderEmbedding y) := rfl
+
+/-- **`CoherentGoodBranchApprox.extendSucc`**: extend by one top
+level via `PairERGoodChain.succ`, using `castLevel` to transport
+along the structural level equalities. -/
+noncomputable def CoherentGoodBranchApprox.extendSucc
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentGoodBranchApprox cR (n + 1)) :
+    CoherentGoodBranchApprox cR (n + 2) := by
+  classical
+  haveI : IsWellOrder (A.toApprox.level (Fin.last n)).ToType (· < ·) := isWellOrder_lt
+  have h_nextChain :
+      A.toApprox.nextChain = ((A.goodAt (Fin.last n)).succ).toPairERChain := by
+    show A.toApprox.lastChain.succ = ((A.goodAt (Fin.last n)).succ).toPairERChain
+    rw [A.lastChain_eq_goodAt_toPairERChain]
+    rfl
+  -- Level equalities for extendSucc.
+  have h_level_last : A.toApprox.extendSucc.level (Fin.last (n + 1)) =
+      Order.succ (A.toApprox.level (Fin.last n)) := A.toApprox.extendLevel_last
+  have h_level_cs : ∀ j : Fin (n + 1),
+      A.toApprox.extendSucc.level j.castSucc = A.toApprox.level j :=
+    fun j => A.toApprox.extendLevel_castSucc j
+  refine
+    { toApprox := A.toApprox.extendSucc
+      goodAt := Fin.lastCases (motive := fun i =>
+          PairERGoodChain cR (A.toApprox.extendSucc.level i))
+        (((A.goodAt (Fin.last n)).succ).castLevel h_level_last.symm)
+        (fun j => (A.goodAt j).castLevel (h_level_cs j).symm)
+      good_head := ?_
+      good_type := ?_ }
+  · intro i x
+    induction i using Fin.lastCases with
+    | last =>
+      simp only [Fin.lastCases_last]
+      rw [PairERGoodChain.castLevel_head h_level_last.symm
+          ((A.goodAt (Fin.last n)).succ) x]
+      show ((A.goodAt (Fin.last n)).succ).toPairERChain.head _ =
+        A.toApprox.extendSucc.prefixAt (Fin.last (n + 1)) x
+      rw [show A.toApprox.extendSucc.prefixAt (Fin.last (n + 1)) x =
+            A.toApprox.extendPrefixAt (Fin.last (n + 1)) x from rfl,
+        A.toApprox.extendPrefixAt_last_apply x, ← h_nextChain]
+    | cast j =>
+      simp only [Fin.lastCases_castSucc]
+      rw [PairERGoodChain.castLevel_head (h_level_cs j).symm
+          (A.goodAt j) x]
+      show (A.goodAt j).toPairERChain.head _ =
+        A.toApprox.extendSucc.prefixAt j.castSucc x
+      rw [show A.toApprox.extendSucc.prefixAt j.castSucc x =
+            A.toApprox.extendPrefixAt j.castSucc x from rfl,
+        A.toApprox.extendPrefixAt_castSucc_apply j x]
+      exact A.good_head j _
+  · intro i x
+    induction i using Fin.lastCases with
+    | last =>
+      simp only [Fin.lastCases_last]
+      rw [PairERGoodChain.castLevel_type h_level_last.symm
+          ((A.goodAt (Fin.last n)).succ) x]
+      show ((A.goodAt (Fin.last n)).succ).toPairERChain.type _ =
+        A.toApprox.extendSucc.branchAt (Fin.last (n + 1)) x
+      rw [show A.toApprox.extendSucc.branchAt (Fin.last (n + 1)) x =
+            A.toApprox.extendBranchAt (Fin.last (n + 1)) x from rfl,
+        A.toApprox.extendBranchAt_last_apply x, ← h_nextChain]
+    | cast j =>
+      simp only [Fin.lastCases_castSucc]
+      rw [PairERGoodChain.castLevel_type (h_level_cs j).symm
+          (A.goodAt j) x]
+      show (A.goodAt j).toPairERChain.type _ =
+        A.toApprox.extendSucc.branchAt j.castSucc x
+      rw [show A.toApprox.extendSucc.branchAt j.castSucc x =
+            A.toApprox.extendBranchAt j.castSucc x from rfl,
+        A.toApprox.extendBranchAt_castSucc_apply j x]
+      exact A.good_type j _
+
+/-- **`CoherentGoodBranchApprox.extendToChain`**: the Good chain at
+level `α` extending `A`'s last position. Dispatches on `n`:
+- `n = 0`: uses `(PairERGoodChain.zero cR).extendTo`.
+- `n = k + 1`: uses `(A.goodAt (Fin.last k)).extendTo`.
+
+Parallels `CoherentBranchApprox.extendToChain` at the Good layer. -/
+noncomputable def CoherentGoodBranchApprox.extendToChain
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentGoodBranchApprox cR n)
+    (α : Ordinal.{0}) (hα : α < Ordinal.omega.{0} 1)
+    (hα_above_last : A.toApprox.lastLevel < α) : PairERGoodChain cR α := by
+  classical
+  by_cases hn : n = 0
+  · have hβα : (0 : Ordinal.{0}) < α := by
+      have h_eq : A.toApprox.lastLevel = 0 := by
+        unfold CoherentBranchApprox.lastLevel; rw [dif_pos hn]
+      exact h_eq ▸ hα_above_last
+    exact (PairERGoodChain.zero cR).extendTo hβα hα
+  · have hn' : n - 1 < n := by omega
+    have hβα : A.toApprox.level ⟨n - 1, hn'⟩ < α := by
+      have h_eq : A.toApprox.lastLevel = A.toApprox.level ⟨n - 1, hn'⟩ := by
+        unfold CoherentBranchApprox.lastLevel; rw [dif_neg hn]
+      exact h_eq ▸ hα_above_last
+    exact (A.goodAt ⟨n - 1, hn'⟩).extendTo hβα hα
+
+/-- **`extendToGoodChain_head_at_level`**: the Good chain's head at
+the position corresponding to `A`'s `k`-th level (lifted via
+`initialSegToType`) agrees with `A.toApprox.prefixAt k`. Parallels
+`extendToChain_head_at_level`; for `n > 0`, the proof routes through
+`PairERGoodChain.extendTo_commitAt` + `lastChain_eq_goodAt_toPairERChain`
++ `A.toApprox.prefix_restrict`. -/
+theorem CoherentGoodBranchApprox.extendToGoodChain_head_at_level
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentGoodBranchApprox cR n)
+    (α : Ordinal.{0}) (hα : α < Ordinal.omega.{0} 1)
+    (hα_above_last : A.toApprox.lastLevel < α)
+    (k : Fin n) (x : (A.toApprox.level k).ToType) :
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder (A.toApprox.level k).ToType (· < ·) := isWellOrder_lt
+    (A.extendToChain α hα hα_above_last).toPairERChain.head
+        ((Ordinal.initialSegToType
+          ((A.toApprox.lastLevel_ge k).trans hα_above_last.le)).toOrderEmbedding x) =
+      A.toApprox.prefixAt k x := by
+  classical
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder (A.toApprox.level k).ToType (· < ·) := isWellOrder_lt
+  have hn_ne_zero : n ≠ 0 := by rintro rfl; exact k.elim0
+  have hn' : n - 1 < n := by omega
+  unfold CoherentGoodBranchApprox.extendToChain
+  rw [dif_neg hn_ne_zero]
+  haveI : IsWellOrder (A.toApprox.level ⟨n - 1, hn'⟩).ToType (· < ·) := isWellOrder_lt
+  set lastGood := A.goodAt ⟨n - 1, hn'⟩ with hlastGood_def
+  set hβα : A.toApprox.level ⟨n - 1, hn'⟩ < α := by
+    have h_eq : A.toApprox.lastLevel = A.toApprox.level ⟨n - 1, hn'⟩ := by
+      unfold CoherentBranchApprox.lastLevel; rw [dif_neg hn_ne_zero]
+    exact h_eq ▸ hα_above_last
+  show (lastGood.extendTo hβα hα).toPairERChain.head _ = _
+  -- Identify the lift as enum at δ := typein x.
+  set δ : Ordinal.{0} :=
+    Ordinal.typein (α := (A.toApprox.level k).ToType) (· < ·) x with hδ_def
+  have hδ_lt_lvlk : δ < A.toApprox.level k := by
+    rw [hδ_def]; exact Ordinal.typein_lt_self x
+  have hk_le : k ≤ (⟨n - 1, hn'⟩ : Fin n) := by
+    show k.val ≤ n - 1
+    have := k.isLt; omega
+  have h_lvl_le : A.toApprox.level k ≤ A.toApprox.level ⟨n - 1, hn'⟩ :=
+    A.toApprox.level_strictMono.monotone hk_le
+  have hδ_lt_β : δ < A.toApprox.level ⟨n - 1, hn'⟩ := hδ_lt_lvlk.trans_le h_lvl_le
+  have hδ_lt_α : δ < α := hδ_lt_β.trans hβα
+  have h_lift_α : (Ordinal.initialSegToType
+      ((A.toApprox.lastLevel_ge k).trans hα_above_last.le)).toOrderEmbedding x =
+      Ordinal.enum (α := α.ToType) (· < ·)
+        ⟨δ, (Ordinal.type_toType _).symm ▸ hδ_lt_α⟩ := by
+    rw [← Ordinal.enum_typein (· < · : α.ToType → α.ToType → Prop)
+      ((Ordinal.initialSegToType
+        ((A.toApprox.lastLevel_ge k).trans hα_above_last.le)).toOrderEmbedding x)]
+    congr 1
+    apply Subtype.ext
+    show Ordinal.typein (α := α.ToType) (· < ·)
+        ((Ordinal.initialSegToType
+          ((A.toApprox.lastLevel_ge k).trans hα_above_last.le)).toOrderEmbedding x) = δ
+    rw [show Ordinal.typein (α := α.ToType) (· < ·)
+          ((Ordinal.initialSegToType
+            ((A.toApprox.lastLevel_ge k).trans hα_above_last.le)).toOrderEmbedding x) =
+        Ordinal.typein (α := (A.toApprox.level k).ToType) (· < ·) x from
+      Ordinal.typein_apply _ x]
+  rw [h_lift_α]
+  -- Use PairERGoodChain.extendTo_commitAt to bridge to lastGood.
+  have h_step : (lastGood.extendTo hβα hα).toPairERChain.head
+      (Ordinal.enum (α := α.ToType) (· < ·)
+        ⟨δ, (Ordinal.type_toType _).symm ▸ hδ_lt_α⟩) =
+      lastGood.toPairERChain.head (Ordinal.enum
+        (α := (A.toApprox.level ⟨n - 1, hn'⟩).ToType) (· < ·)
+        ⟨δ, (Ordinal.type_toType _).symm ▸ hδ_lt_β⟩) := by
+    show (lastGood.extendTo hβα hα).toPairERChain.commitAt δ hδ_lt_α =
+      lastGood.toPairERChain.commitAt δ hδ_lt_β
+    exact PairERGoodChain.extendTo_commitAt lastGood hβα hα δ hδ_lt_β
+  rw [h_step]
+  -- lastGood.head = A.prefixAt ⟨n-1, _⟩ via good_head.
+  -- Then identify enum at δ with the initialSegToType lift of x.
+  have h_lift_αn : Ordinal.enum (α := (A.toApprox.level ⟨n - 1, hn'⟩).ToType) (· < ·)
+      ⟨δ, (Ordinal.type_toType _).symm ▸ hδ_lt_β⟩ =
+      (Ordinal.initialSegToType h_lvl_le).toOrderEmbedding x := by
+    rw [← Ordinal.enum_typein
+      (· < · : (A.toApprox.level ⟨n - 1, hn'⟩).ToType →
+        (A.toApprox.level ⟨n - 1, hn'⟩).ToType → Prop)
+      ((Ordinal.initialSegToType h_lvl_le).toOrderEmbedding x)]
+    congr 1
+    apply Subtype.ext
+    show δ = Ordinal.typein (α := (A.toApprox.level ⟨n - 1, hn'⟩).ToType) (· < ·)
+        ((Ordinal.initialSegToType h_lvl_le).toOrderEmbedding x)
+    rw [show Ordinal.typein
+          (α := (A.toApprox.level ⟨n - 1, hn'⟩).ToType) (· < ·)
+          ((Ordinal.initialSegToType h_lvl_le).toOrderEmbedding x) =
+        Ordinal.typein (α := (A.toApprox.level k).ToType) (· < ·) x from
+      Ordinal.typein_apply (Ordinal.initialSegToType h_lvl_le) x]
+  rw [h_lift_αn]
+  -- Now LHS is lastGood.head ((initialSegToType h_lvl_le).toOrderEmb x) ;
+  -- RHS is A.toApprox.prefixAt k x.
+  rw [A.good_head ⟨n - 1, hn'⟩]
+  exact A.toApprox.prefix_restrict hk_le x
+
+/-- **`extendToGoodChain_type_at_level`**: analog of
+`extendToGoodChain_head_at_level` for the type function. -/
+theorem CoherentGoodBranchApprox.extendToGoodChain_type_at_level
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentGoodBranchApprox cR n)
+    (α : Ordinal.{0}) (hα : α < Ordinal.omega.{0} 1)
+    (hα_above_last : A.toApprox.lastLevel < α)
+    (k : Fin n) (x : (A.toApprox.level k).ToType) :
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder (A.toApprox.level k).ToType (· < ·) := isWellOrder_lt
+    (A.extendToChain α hα hα_above_last).toPairERChain.type
+        ((Ordinal.initialSegToType
+          ((A.toApprox.lastLevel_ge k).trans hα_above_last.le)).toOrderEmbedding x) =
+      A.toApprox.branchAt k x := by
+  classical
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder (A.toApprox.level k).ToType (· < ·) := isWellOrder_lt
+  have hn_ne_zero : n ≠ 0 := by rintro rfl; exact k.elim0
+  have hn' : n - 1 < n := by omega
+  unfold CoherentGoodBranchApprox.extendToChain
+  rw [dif_neg hn_ne_zero]
+  haveI : IsWellOrder (A.toApprox.level ⟨n - 1, hn'⟩).ToType (· < ·) := isWellOrder_lt
+  set lastGood := A.goodAt ⟨n - 1, hn'⟩ with hlastGood_def
+  set hβα : A.toApprox.level ⟨n - 1, hn'⟩ < α := by
+    have h_eq : A.toApprox.lastLevel = A.toApprox.level ⟨n - 1, hn'⟩ := by
+      unfold CoherentBranchApprox.lastLevel; rw [dif_neg hn_ne_zero]
+    exact h_eq ▸ hα_above_last
+  show (lastGood.extendTo hβα hα).toPairERChain.type _ = _
+  set δ : Ordinal.{0} :=
+    Ordinal.typein (α := (A.toApprox.level k).ToType) (· < ·) x with hδ_def
+  have hδ_lt_lvlk : δ < A.toApprox.level k := by
+    rw [hδ_def]; exact Ordinal.typein_lt_self x
+  have hk_le : k ≤ (⟨n - 1, hn'⟩ : Fin n) := by
+    show k.val ≤ n - 1
+    have := k.isLt; omega
+  have h_lvl_le : A.toApprox.level k ≤ A.toApprox.level ⟨n - 1, hn'⟩ :=
+    A.toApprox.level_strictMono.monotone hk_le
+  have hδ_lt_β : δ < A.toApprox.level ⟨n - 1, hn'⟩ := hδ_lt_lvlk.trans_le h_lvl_le
+  have hδ_lt_α : δ < α := hδ_lt_β.trans hβα
+  have h_lift_α : (Ordinal.initialSegToType
+      ((A.toApprox.lastLevel_ge k).trans hα_above_last.le)).toOrderEmbedding x =
+      Ordinal.enum (α := α.ToType) (· < ·)
+        ⟨δ, (Ordinal.type_toType _).symm ▸ hδ_lt_α⟩ := by
+    rw [← Ordinal.enum_typein (· < · : α.ToType → α.ToType → Prop)
+      ((Ordinal.initialSegToType
+        ((A.toApprox.lastLevel_ge k).trans hα_above_last.le)).toOrderEmbedding x)]
+    congr 1
+    apply Subtype.ext
+    show Ordinal.typein (α := α.ToType) (· < ·)
+        ((Ordinal.initialSegToType
+          ((A.toApprox.lastLevel_ge k).trans hα_above_last.le)).toOrderEmbedding x) = δ
+    rw [show Ordinal.typein (α := α.ToType) (· < ·)
+          ((Ordinal.initialSegToType
+            ((A.toApprox.lastLevel_ge k).trans hα_above_last.le)).toOrderEmbedding x) =
+        Ordinal.typein (α := (A.toApprox.level k).ToType) (· < ·) x from
+      Ordinal.typein_apply _ x]
+  rw [h_lift_α]
+  have h_step : (lastGood.extendTo hβα hα).toPairERChain.type
+      (Ordinal.enum (α := α.ToType) (· < ·)
+        ⟨δ, (Ordinal.type_toType _).symm ▸ hδ_lt_α⟩) =
+      lastGood.toPairERChain.type (Ordinal.enum
+        (α := (A.toApprox.level ⟨n - 1, hn'⟩).ToType) (· < ·)
+        ⟨δ, (Ordinal.type_toType _).symm ▸ hδ_lt_β⟩) := by
+    show (lastGood.extendTo hβα hα).toPairERChain.typeAt δ hδ_lt_α =
+      lastGood.toPairERChain.typeAt δ hδ_lt_β
+    exact PairERGoodChain.extendTo_typeAt_old lastGood hβα hα δ hδ_lt_β
+  rw [h_step]
+  have h_lift_αn : Ordinal.enum (α := (A.toApprox.level ⟨n - 1, hn'⟩).ToType) (· < ·)
+      ⟨δ, (Ordinal.type_toType _).symm ▸ hδ_lt_β⟩ =
+      (Ordinal.initialSegToType h_lvl_le).toOrderEmbedding x := by
+    rw [← Ordinal.enum_typein
+      (· < · : (A.toApprox.level ⟨n - 1, hn'⟩).ToType →
+        (A.toApprox.level ⟨n - 1, hn'⟩).ToType → Prop)
+      ((Ordinal.initialSegToType h_lvl_le).toOrderEmbedding x)]
+    congr 1
+    apply Subtype.ext
+    show δ = Ordinal.typein (α := (A.toApprox.level ⟨n - 1, hn'⟩).ToType) (· < ·)
+        ((Ordinal.initialSegToType h_lvl_le).toOrderEmbedding x)
+    rw [show Ordinal.typein
+          (α := (A.toApprox.level ⟨n - 1, hn'⟩).ToType) (· < ·)
+          ((Ordinal.initialSegToType h_lvl_le).toOrderEmbedding x) =
+        Ordinal.typein (α := (A.toApprox.level k).ToType) (· < ·) x from
+      Ordinal.typein_apply (Ordinal.initialSegToType h_lvl_le) x]
+  rw [h_lift_αn]
+  rw [A.good_type ⟨n - 1, hn'⟩]
+  exact A.toApprox.branch_restrict hk_le x
+
+/-- **`extendToGoodChain_realizes_at_lastIndex`**: the Good chain's
+head at the position corresponding to the last existing level lies in
+`A.toApprox`'s validFiber at that level. Parallels
+`extendToChain_realizes_at_lastIndex`; uses
+`PairERGoodChain.extendTo_head_β_in_validFiber` + chain equality. -/
+theorem CoherentGoodBranchApprox.extendToGoodChain_realizes_at_lastIndex
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentGoodBranchApprox cR n)
+    (α : Ordinal.{0}) (hα : α < Ordinal.omega.{0} 1)
+    (hα_above_last : A.toApprox.lastLevel < α) (hn_ne_zero : n ≠ 0) :
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    have hn' : n - 1 < n := Nat.sub_lt (Nat.pos_of_ne_zero hn_ne_zero) Nat.one_pos
+    have hβα : A.toApprox.level ⟨n - 1, hn'⟩ < α := by
+      have h_eq : A.toApprox.lastLevel = A.toApprox.level ⟨n - 1, hn'⟩ := by
+        unfold CoherentBranchApprox.lastLevel; rw [dif_neg hn_ne_zero]
+      exact h_eq ▸ hα_above_last
+    (A.extendToChain α hα hα_above_last).toPairERChain.head
+        (Ordinal.enum (α := α.ToType) (· < ·)
+          ⟨A.toApprox.level ⟨n - 1, hn'⟩, (Ordinal.type_toType _).symm ▸ hβα⟩) ∈
+      validFiber cR (A.toApprox.prefixAt ⟨n - 1, hn'⟩)
+        (A.toApprox.branchAt ⟨n - 1, hn'⟩) := by
+  classical
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  have hn' : n - 1 < n := Nat.sub_lt (Nat.pos_of_ne_zero hn_ne_zero) Nat.one_pos
+  haveI : IsWellOrder (A.toApprox.level ⟨n - 1, hn'⟩).ToType (· < ·) := isWellOrder_lt
+  set lastGood := A.goodAt ⟨n - 1, hn'⟩ with hlastGood_def
+  set hβα : A.toApprox.level ⟨n - 1, hn'⟩ < α := by
+    have h_eq : A.toApprox.lastLevel = A.toApprox.level ⟨n - 1, hn'⟩ := by
+      unfold CoherentBranchApprox.lastLevel; rw [dif_neg hn_ne_zero]
+    exact h_eq ▸ hα_above_last
+  -- Reduce extendToChain to lastGood.extendTo via a separate chain equality.
+  have h_chain_eq :
+      A.extendToChain α hα hα_above_last = lastGood.extendTo hβα hα := by
+    unfold CoherentGoodBranchApprox.extendToChain
+    rw [dif_neg hn_ne_zero]
+  rw [h_chain_eq]
+  -- Bridge validFiber's arguments to lastGood via good_head/good_type.
+  show (lastGood.extendTo hβα hα).toPairERChain.head _ ∈
+    validFiber cR (A.toApprox.prefixAt ⟨n - 1, hn'⟩)
+      (A.toApprox.branchAt ⟨n - 1, hn'⟩)
+  have h_head_eq : A.toApprox.prefixAt ⟨n - 1, hn'⟩ =
+      lastGood.toPairERChain.head := by
+    refine RelEmbedding.ext ?_
+    intro y; exact (A.good_head ⟨n - 1, hn'⟩ y).symm
+  have h_type_eq : A.toApprox.branchAt ⟨n - 1, hn'⟩ =
+      lastGood.toPairERChain.type := by
+    funext y; exact (A.good_type ⟨n - 1, hn'⟩ y).symm
+  rw [h_head_eq, h_type_eq]
+  exact PairERGoodChain.extendTo_head_β_in_validFiber lastGood hβα hα
+
+/-- **`CoherentGoodBranchApprox.extendTo`** (depends only on
+`PairERGoodChain.extendToExt` via `A.extendToChain`): the Good analog
+of `CoherentBranchApprox.extendTo`. Builds the new bare CBA from
+scratch using `A.extendToChain α hα h_above_last`, and uses the
+three Good chain agreement lemmas for boundary cases. `goodAt` is
+defined via `Fin.lastCases` with `castLevel`-transported chains. -/
+noncomputable def CoherentGoodBranchApprox.extendTo
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {n : ℕ}
+    (A : CoherentGoodBranchApprox cR n)
+    (α : Ordinal.{0}) (hα : α < Ordinal.omega.{0} 1)
+    (hα_above_last : A.toApprox.lastLevel < α) :
+    CoherentGoodBranchApprox cR (n + 1) := by
+  classical
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  let nextGood : PairERGoodChain cR α := A.extendToChain α hα hα_above_last
+  let nextChain : PairERChain cR α := nextGood.toPairERChain
+  -- Build the bare CBA.
+  let bareCBA : CoherentBranchApprox cR (n + 1) := {
+    level := A.toApprox.extendToLevel α
+    level_lt_omega1 := by
+      intro k
+      induction k using Fin.lastCases with
+      | last => rw [A.toApprox.extendToLevel_last]; exact hα
+      | cast k => rw [A.toApprox.extendToLevel_castSucc]; exact A.toApprox.level_lt_omega1 k
+    level_strictMono := by
+      intro a b hab
+      induction a using Fin.lastCases with
+      | last => exfalso; exact absurd hab (not_lt_of_ge (Fin.le_last b))
+      | cast j₁ =>
+        induction b using Fin.lastCases with
+        | last =>
+          rw [A.toApprox.extendToLevel_castSucc, A.toApprox.extendToLevel_last]
+          exact (A.toApprox.lastLevel_ge j₁).trans_lt hα_above_last
+        | cast j₂ =>
+          rw [A.toApprox.extendToLevel_castSucc, A.toApprox.extendToLevel_castSucc]
+          apply A.toApprox.level_strictMono
+          exact (Fin.castSucc_lt_castSucc_iff).mp hab
+    prefixAt := A.toApprox.extendToPrefixAt nextChain
+    branchAt := A.toApprox.extendToBranchAt nextChain
+    prefix_restrict := by
+      intro k₁ k₂ hk x
+      induction k₁ using Fin.lastCases with
+      | last =>
+        induction k₂ using Fin.lastCases with
+        | last =>
+          congr 1
+          have h : Ordinal.initialSegToType
+              (le_refl (A.toApprox.extendToLevel α (Fin.last n))) =
+              InitialSeg.refl _ := Subsingleton.elim _ _
+          rw [h]; rfl
+        | cast j₂ =>
+          exact absurd hk (not_le_of_gt (Fin.castSucc_lt_last j₂))
+      | cast j₁ =>
+        induction k₂ using Fin.lastCases with
+        | last =>
+          haveI : IsWellOrder (A.toApprox.level j₁).ToType (· < ·) := isWellOrder_lt
+          set x' : (A.toApprox.level j₁).ToType :=
+            (A.toApprox.extendToLevel_castSucc α j₁) ▸ x with hx'
+          rw [A.toApprox.extendToPrefixAt_last_apply,
+              A.toApprox.extendToPrefixAt_castSucc_apply, ← hx']
+          have h_lvl_le : A.toApprox.level j₁ ≤ α :=
+            (A.toApprox.lastLevel_ge j₁).trans hα_above_last.le
+          rw [initialSegToType_transport_eq (A.toApprox.extendToLevel_castSucc α j₁)
+              (A.toApprox.extendToLevel_last α) _ h_lvl_le x]
+          exact A.extendToGoodChain_head_at_level α hα hα_above_last j₁ x'
+        | cast j₂ =>
+          have hj : j₁ ≤ j₂ := (Fin.castSucc_le_castSucc_iff).mp hk
+          haveI : IsWellOrder (A.toApprox.level j₁).ToType (· < ·) := isWellOrder_lt
+          haveI : IsWellOrder (A.toApprox.level j₂).ToType (· < ·) := isWellOrder_lt
+          set x' : (A.toApprox.level j₁).ToType :=
+            (A.toApprox.extendToLevel_castSucc α j₁) ▸ x with hx'
+          rw [A.toApprox.extendToPrefixAt_castSucc_apply,
+              A.toApprox.extendToPrefixAt_castSucc_apply, ← hx']
+          have hres := A.toApprox.prefix_restrict hj x'
+          convert hres using 2
+          exact initialSegToType_transport_eq
+            (A.toApprox.extendToLevel_castSucc α j₁)
+            (A.toApprox.extendToLevel_castSucc α j₂) _ _ x
+    branch_restrict := by
+      intro k₁ k₂ hk x
+      induction k₁ using Fin.lastCases with
+      | last =>
+        induction k₂ using Fin.lastCases with
+        | last =>
+          congr 1
+          have h : Ordinal.initialSegToType
+              (le_refl (A.toApprox.extendToLevel α (Fin.last n))) =
+              InitialSeg.refl _ := Subsingleton.elim _ _
+          rw [h]; rfl
+        | cast j₂ =>
+          exact absurd hk (not_le_of_gt (Fin.castSucc_lt_last j₂))
+      | cast j₁ =>
+        induction k₂ using Fin.lastCases with
+        | last =>
+          haveI : IsWellOrder (A.toApprox.level j₁).ToType (· < ·) := isWellOrder_lt
+          set x' : (A.toApprox.level j₁).ToType :=
+            (A.toApprox.extendToLevel_castSucc α j₁) ▸ x with hx'
+          rw [A.toApprox.extendToBranchAt_last_apply,
+              A.toApprox.extendToBranchAt_castSucc_apply, ← hx']
+          have h_lvl_le : A.toApprox.level j₁ ≤ α :=
+            (A.toApprox.lastLevel_ge j₁).trans hα_above_last.le
+          rw [initialSegToType_transport_eq (A.toApprox.extendToLevel_castSucc α j₁)
+              (A.toApprox.extendToLevel_last α) _ h_lvl_le x]
+          exact A.extendToGoodChain_type_at_level α hα hα_above_last j₁ x'
+        | cast j₂ =>
+          have hj : j₁ ≤ j₂ := (Fin.castSucc_le_castSucc_iff).mp hk
+          haveI : IsWellOrder (A.toApprox.level j₁).ToType (· < ·) := isWellOrder_lt
+          haveI : IsWellOrder (A.toApprox.level j₂).ToType (· < ·) := isWellOrder_lt
+          set x' : (A.toApprox.level j₁).ToType :=
+            (A.toApprox.extendToLevel_castSucc α j₁) ▸ x with hx'
+          rw [A.toApprox.extendToBranchAt_castSucc_apply,
+              A.toApprox.extendToBranchAt_castSucc_apply, ← hx']
+          have hres := A.toApprox.branch_restrict hj x'
+          convert hres using 2
+          exact initialSegToType_transport_eq
+            (A.toApprox.extendToLevel_castSucc α j₁)
+            (A.toApprox.extendToLevel_castSucc α j₂) _ _ x
+    large := by
+      intro k
+      induction k using Fin.lastCases with
+      | last =>
+        show Order.succ (Cardinal.beth.{0} 1) ≤
+            Cardinal.mk (validFiber cR
+              (A.toApprox.extendToPrefixAt nextChain (Fin.last n))
+              (A.toApprox.extendToBranchAt nextChain (Fin.last n)))
+        convert nextChain.large using 4
+        · exact A.toApprox.extendToLevel_last α
+        · exact A.toApprox.extendToPrefixAt_last_heq nextChain
+        · exact A.toApprox.extendToBranchAt_last_heq nextChain
+      | cast j =>
+        show Order.succ (Cardinal.beth.{0} 1) ≤
+            Cardinal.mk (validFiber cR
+              (A.toApprox.extendToPrefixAt nextChain j.castSucc)
+              (A.toApprox.extendToBranchAt nextChain j.castSucc))
+        convert A.toApprox.large j using 4
+        · exact A.toApprox.extendToLevel_castSucc α j
+        · exact A.toApprox.extendToPrefixAt_castSucc_heq nextChain j
+        · exact A.toApprox.extendToBranchAt_castSucc_heq nextChain j
+    top_in_validFiber := by
+      intro i h
+      have hi : i < n := Nat.lt_of_succ_lt_succ h
+      by_cases hi1 : i + 1 < n
+      · show A.toApprox.extendToPrefixAt nextChain ((⟨i + 1, hi1⟩ : Fin n).castSucc)
+            ((Ordinal.enum (· < ·))
+              ⟨A.toApprox.extendToLevel α ((⟨i, hi⟩ : Fin n).castSucc), _⟩) ∈ _
+        convert A.toApprox.top_in_validFiber i hi1 using 2
+        · exact A.toApprox.extendToLevel_castSucc α ⟨i, hi⟩
+        · exact A.toApprox.extendToPrefixAt_castSucc_heq nextChain ⟨i, hi⟩
+        · exact A.toApprox.extendToBranchAt_castSucc_heq nextChain ⟨i, hi⟩
+        · rw [A.toApprox.extendToPrefixAt_castSucc_apply]
+          congr 1
+          exact enum_transport_eq (A.toApprox.extendToLevel_castSucc α ⟨i + 1, hi1⟩)
+            (A.toApprox.extendToLevel_castSucc α ⟨i, hi⟩) _ _
+      · have hi1_eq : i + 1 = n := by omega
+        obtain rfl : n = i + 1 := hi1_eq.symm
+        have hn_ne_zero : i + 1 ≠ 0 := by omega
+        have hn' : i + 1 - 1 < i + 1 := by omega
+        have h_idx : (⟨i, hi⟩ : Fin (i + 1)) = ⟨i + 1 - 1, hn'⟩ := by
+          apply Fin.ext; show i = i + 1 - 1; omega
+        have h_last : (⟨i + 1, h⟩ : Fin (i + 1 + 1)) = Fin.last (i + 1) :=
+          Fin.ext rfl
+        convert A.extendToGoodChain_realizes_at_lastIndex α hα hα_above_last
+            hn_ne_zero using 2
+        · show A.toApprox.extendToLevel α (⟨i, hi⟩ : Fin (i + 1)).castSucc =
+            A.toApprox.level ⟨i + 1 - 1, hn'⟩
+          rw [A.toApprox.extendToLevel_castSucc α ⟨i, hi⟩, h_idx]
+        · show HEq (A.toApprox.extendToPrefixAt nextChain
+              (⟨i, hi⟩ : Fin (i + 1)).castSucc)
+            (A.toApprox.prefixAt ⟨i + 1 - 1, hn'⟩)
+          rw [h_idx]
+          exact A.toApprox.extendToPrefixAt_castSucc_heq nextChain _
+        · show HEq (A.toApprox.extendToBranchAt nextChain
+              (⟨i, hi⟩ : Fin (i + 1)).castSucc)
+            (A.toApprox.branchAt ⟨i + 1 - 1, hn'⟩)
+          rw [h_idx]
+          exact A.toApprox.extendToBranchAt_castSucc_heq nextChain _
+        · haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+          have h_lvl : A.toApprox.extendToLevel α ⟨i + 1, h⟩ = α := by
+            show A.toApprox.extendToLevel α (Fin.last (i + 1)) = α
+            exact A.toApprox.extendToLevel_last α
+          have h_fn_heq : HEq (A.toApprox.extendToPrefixAt nextChain ⟨i + 1, h⟩)
+              nextChain.head := by
+            rw [h_last]; exact A.toApprox.extendToPrefixAt_last_heq nextChain
+          rw [orderEmbed_ordinal_apply_heq h_lvl _ _ h_fn_heq]
+          congr 1
+          exact enum_transport_eq h_lvl
+            (A.toApprox.extendToLevel_castSucc α ⟨i + 1 - 1, hn'⟩) _ _ }
+  -- Level equalities for the goodAt construction.
+  have h_level_last : bareCBA.level (Fin.last n) = α :=
+    A.toApprox.extendToLevel_last α
+  have h_level_cs : ∀ j : Fin n, bareCBA.level j.castSucc = A.toApprox.level j :=
+    fun j => A.toApprox.extendToLevel_castSucc α j
+  refine
+    { toApprox := bareCBA
+      goodAt := Fin.lastCases (motive := fun i => PairERGoodChain cR (bareCBA.level i))
+        (nextGood.castLevel h_level_last.symm)
+        (fun j => (A.goodAt j).castLevel (h_level_cs j).symm)
+      good_head := ?_
+      good_type := ?_ }
+  · intro i x
+    induction i using Fin.lastCases with
+    | last =>
+      simp only [Fin.lastCases_last]
+      rw [PairERGoodChain.castLevel_head h_level_last.symm nextGood x]
+      show nextGood.toPairERChain.head _ =
+        bareCBA.prefixAt (Fin.last n) x
+      show nextChain.head _ = A.toApprox.extendToPrefixAt nextChain (Fin.last n) x
+      rw [A.toApprox.extendToPrefixAt_last_apply nextChain x]
+    | cast j =>
+      simp only [Fin.lastCases_castSucc]
+      rw [PairERGoodChain.castLevel_head (h_level_cs j).symm (A.goodAt j) x]
+      show (A.goodAt j).toPairERChain.head _ = bareCBA.prefixAt j.castSucc x
+      show (A.goodAt j).toPairERChain.head _ =
+        A.toApprox.extendToPrefixAt nextChain j.castSucc x
+      rw [A.toApprox.extendToPrefixAt_castSucc_apply nextChain j x]
+      exact A.good_head j _
+  · intro i x
+    induction i using Fin.lastCases with
+    | last =>
+      simp only [Fin.lastCases_last]
+      rw [PairERGoodChain.castLevel_type h_level_last.symm nextGood x]
+      show nextGood.toPairERChain.type _ =
+        bareCBA.branchAt (Fin.last n) x
+      show nextChain.type _ = A.toApprox.extendToBranchAt nextChain (Fin.last n) x
+      rw [A.toApprox.extendToBranchAt_last_apply nextChain x]
+    | cast j =>
+      simp only [Fin.lastCases_castSucc]
+      rw [PairERGoodChain.castLevel_type (h_level_cs j).symm (A.goodAt j) x]
+      show (A.goodAt j).toPairERChain.type _ = bareCBA.branchAt j.castSucc x
+      show (A.goodAt j).toPairERChain.type _ =
+        A.toApprox.extendToBranchAt nextChain j.castSucc x
+      rw [A.toApprox.extendToBranchAt_castSucc_apply nextChain j x]
+      exact A.good_type j _
+
+/-- **`CoherentGoodBranchApprox.extend`**: generic one-step extension
+dispatching on `n` (uses `fromZero` for `n = 0`, `extendSucc`
+otherwise). Mirrors `CoherentBranchApprox.extend`. -/
+noncomputable def CoherentGoodBranchApprox.extend
+    {cR : (Fin 2 ↪o PairERSource) → Bool} : ∀ {n : ℕ},
+    CoherentGoodBranchApprox cR n → CoherentGoodBranchApprox cR (n + 1)
+  | 0, _ => CoherentGoodBranchApprox.fromZero cR
+  | _ + 1, A => A.extendSucc
+
+/-- **`coherentGoodBranchApproxSeq`**: the ω-chain of Good
+approximations, defined by primitive recursion. -/
+noncomputable def coherentGoodBranchApproxSeq
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    (n : ℕ) → CoherentGoodBranchApprox cR n
+  | 0 => CoherentGoodBranchApprox.zero cR
+  | n + 1 => (coherentGoodBranchApproxSeq cR n).extend
+
+@[simp] theorem coherentGoodBranchApproxSeq_zero
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    coherentGoodBranchApproxSeq cR 0 = CoherentGoodBranchApprox.zero cR := rfl
+
+@[simp] theorem coherentGoodBranchApproxSeq_succ
+    (cR : (Fin 2 ↪o PairERSource) → Bool) (n : ℕ) :
+    coherentGoodBranchApproxSeq cR (n + 1) =
+      (coherentGoodBranchApproxSeq cR n).extend := rfl
+
+/-- **`coherentGoodBranchApproxSeq_toApprox`**: the bare projection
+of the Good sequence equals the bare sequence. -/
+theorem coherentGoodBranchApproxSeq_toApprox
+    (cR : (Fin 2 ↪o PairERSource) → Bool) (n : ℕ) :
+    (coherentGoodBranchApproxSeq cR n).toApprox =
+      coherentBranchApproxSeq cR n := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+    show ((coherentGoodBranchApproxSeq cR n).extend).toApprox = _
+    cases n with
+    | zero =>
+      show (CoherentGoodBranchApprox.fromZero cR).toApprox = _
+      rfl
+    | succ m =>
+      show ((coherentGoodBranchApproxSeq cR (m + 1)).extendSucc).toApprox = _
+      show (coherentGoodBranchApproxSeq cR (m + 1)).toApprox.extendSucc = _
+      rw [ih]
+      rfl
+
+/-! ### Good arbitrary-finite-levels existence theorems
+
+Mirrors the bare `exists_coherentBranchApprox_for_strictMono` and
+`exists_coherentBranchApprox_for_list`, providing a
+`CoherentGoodBranchApprox` at any strictly-monotone Fin-indexed (or
+list-indexed) family of countable ordinals. Depends only on
+`PairERGoodChain.extendToExt` (the Good frontier). -/
+
+/-- **`exists_coherentGoodBranchApprox_for_strictMono`**: build a
+`CoherentGoodBranchApprox cR n` over any strictly-monotone Fin-indexed
+family of countable ordinals. Parallels the bare version, using CGBA
+primitives `zero`/`fromZero`/`extendTo`. -/
+theorem exists_coherentGoodBranchApprox_for_strictMono
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    ∀ {n : ℕ} (f : Fin n → Ordinal.{0})
+      (_h_lt : ∀ i, f i < Ordinal.omega.{0} 1)
+      (_h_strictMono : StrictMono f),
+      ∃ A : CoherentGoodBranchApprox cR n, ∀ i, A.toApprox.level i = f i := by
+  intro n
+  induction n with
+  | zero =>
+    intro f _ _
+    refine ⟨CoherentGoodBranchApprox.zero cR, ?_⟩
+    intro i; exact i.elim0
+  | succ k IH =>
+    intro f h_lt h_strictMono
+    by_cases hk : k = 0
+    · subst hk
+      let α : Ordinal.{0} := f ⟨0, Nat.zero_lt_one⟩
+      have hα_lt : α < Ordinal.omega.{0} 1 := h_lt _
+      by_cases hα_pos : 0 < α
+      · refine ⟨(CoherentGoodBranchApprox.zero cR).extendTo α hα_lt hα_pos, ?_⟩
+        intro i
+        have hi_eq : i = Fin.last 0 :=
+          Fin.ext (by have := i.isLt; omega)
+        rw [hi_eq]
+        exact (CoherentBranchApprox.zero cR).extendToLevel_last α
+      · push_neg at hα_pos
+        have hα_eq : α = 0 := le_antisymm hα_pos (zero_le _)
+        refine ⟨CoherentGoodBranchApprox.fromZero cR, ?_⟩
+        intro i
+        have hi_eq : i = ⟨0, Nat.zero_lt_one⟩ :=
+          Fin.ext (by have := i.isLt; omega)
+        rw [hi_eq]
+        show (0 : Ordinal) = f ⟨0, Nat.zero_lt_one⟩
+        exact hα_eq.symm
+    · let f' : Fin k → Ordinal.{0} := fun i => f i.castSucc
+      have h_lt' : ∀ i, f' i < Ordinal.omega.{0} 1 := fun i => h_lt _
+      have h_strictMono' : StrictMono f' := fun _ _ hab =>
+        h_strictMono (Fin.castSucc_lt_castSucc_iff.mpr hab)
+      obtain ⟨A', hA'⟩ := IH f' h_lt' h_strictMono'
+      let α : Ordinal.{0} := f (Fin.last k)
+      have hα_lt : α < Ordinal.omega.{0} 1 := h_lt _
+      have h_above : A'.toApprox.lastLevel < α := by
+        unfold CoherentBranchApprox.lastLevel
+        rw [dif_neg hk]
+        have hk' : k - 1 < k := Nat.sub_lt (Nat.pos_of_ne_zero hk) one_pos
+        rw [hA' ⟨k - 1, hk'⟩]
+        show f' ⟨k - 1, hk'⟩ < α
+        show f (⟨k - 1, hk'⟩ : Fin k).castSucc < f (Fin.last k)
+        apply h_strictMono
+        exact Fin.castSucc_lt_last _
+      refine ⟨A'.extendTo α hα_lt h_above, ?_⟩
+      intro i
+      show A'.toApprox.extendToLevel α i = f i
+      induction i using Fin.lastCases with
+      | last => rw [A'.toApprox.extendToLevel_last]
+      | cast j =>
+        rw [A'.toApprox.extendToLevel_castSucc α j, hA' j]
+
+/-- **`exists_coherentGoodBranchApprox_for_list`**: list-indexed
+version. -/
+theorem exists_coherentGoodBranchApprox_for_list
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    (l : List Ordinal.{0})
+    (h_sorted : l.Pairwise (· < ·))
+    (h_lt : ∀ α ∈ l, α < Ordinal.omega.{0} 1) :
+    ∃ A : CoherentGoodBranchApprox cR l.length,
+      ∀ i : Fin l.length, A.toApprox.level i = l.get i := by
+  refine exists_coherentGoodBranchApprox_for_strictMono cR (l.get) ?_ ?_
+  · exact fun i => h_lt _ (List.get_mem _ _)
+  · intro a b hab
+    exact List.pairwise_iff_get.mp h_sorted a b hab
+
+/-! ### `CoherentGoodBranchPartial`: Finset-indexed partial Good
+branches
+
+Parallel wrapper of `CoherentBranchPartial` carrying Good chain data
+at each level. Used by interior insertion (where access to
+`PairERGoodChain.inner_consistent` discharges the (α, β₀) validFiber
+adjacency). -/
+
+/-- **`CoherentGoodBranchPartial cR S`**: a Good-strengthened partial
+branch indexed by a finite set `S` of countable ordinals. Internally
+backed by a `CoherentGoodBranchApprox cR S.card` whose `level` matches
+`S.orderEmbOfFin rfl`. -/
+structure CoherentGoodBranchPartial
+    (cR : (Fin 2 ↪o PairERSource) → Bool) (S : Finset Ordinal.{0}) where
+  /-- The underlying Good approximation at length `S.card`. -/
+  toGoodApprox : CoherentGoodBranchApprox cR S.card
+  /-- Level identification. -/
+  level_eq : ∀ i : Fin S.card,
+    toGoodApprox.toApprox.level i = (S.orderEmbOfFin rfl) i
+
+/-- **Projection** to bare `CoherentBranchPartial`: forget the Good
+chain data, recover the bare CBP. -/
+def CoherentGoodBranchPartial.toCoherentBranchPartial
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {S : Finset Ordinal.{0}}
+    (P : CoherentGoodBranchPartial cR S) : CoherentBranchPartial cR S where
+  toApprox := P.toGoodApprox.toApprox
+  level_eq := P.level_eq
+
+/-- **`goodAt`**: for `α ∈ S`, the Good chain at level `α`. Uses
+`indexOf` and `castLevel` to transport from the Good approximation. -/
+noncomputable def CoherentGoodBranchPartial.goodAt
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {S : Finset Ordinal.{0}}
+    (P : CoherentGoodBranchPartial cR S)
+    (α : Ordinal.{0}) (hα : α ∈ S) : PairERGoodChain cR α :=
+  (P.toGoodApprox.goodAt (P.toCoherentBranchPartial.indexOf α hα)).castLevel
+    (P.toCoherentBranchPartial.level_indexOf α hα)
+
+/-- **`good_head_eq`**: the Good chain's head at `α` matches the
+bare `CBP.prefixAt α`. Routes through `castLevel_head` +
+`A.good_head` + the cast lemmas. -/
+theorem CoherentGoodBranchPartial.good_head_eq
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {S : Finset Ordinal.{0}}
+    (P : CoherentGoodBranchPartial cR S)
+    (α : Ordinal.{0}) (hα : α ∈ S) (x : α.ToType) :
+    (P.goodAt α hα).toPairERChain.head x =
+      P.toCoherentBranchPartial.prefixAt α hα x := by
+  set idx := P.toCoherentBranchPartial.indexOf α hα
+  set h_lvl := P.toCoherentBranchPartial.level_indexOf α hα
+  -- Chain: castLevel + good_head + prefixAt_apply.
+  calc ((P.toGoodApprox.goodAt idx).castLevel h_lvl).toPairERChain.head x
+      = (P.toGoodApprox.goodAt idx).toPairERChain.head (h_lvl.symm ▸ x) :=
+        PairERGoodChain.castLevel_head h_lvl (P.toGoodApprox.goodAt idx) x
+    _ = P.toGoodApprox.toApprox.prefixAt idx (h_lvl.symm ▸ x) :=
+        P.toGoodApprox.good_head idx (h_lvl.symm ▸ x)
+    _ = P.toCoherentBranchPartial.prefixAt α hα x :=
+        (P.toCoherentBranchPartial.prefixAt_apply α hα x).symm
+
+/-- **`good_type_eq`**: parallel for `branch`. -/
+theorem CoherentGoodBranchPartial.good_type_eq
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {S : Finset Ordinal.{0}}
+    (P : CoherentGoodBranchPartial cR S)
+    (α : Ordinal.{0}) (hα : α ∈ S) (x : α.ToType) :
+    (P.goodAt α hα).toPairERChain.type x =
+      P.toCoherentBranchPartial.branch α hα x := by
+  set idx := P.toCoherentBranchPartial.indexOf α hα
+  set h_lvl := P.toCoherentBranchPartial.level_indexOf α hα
+  calc ((P.toGoodApprox.goodAt idx).castLevel h_lvl).toPairERChain.type x
+      = (P.toGoodApprox.goodAt idx).toPairERChain.type (h_lvl.symm ▸ x) :=
+        PairERGoodChain.castLevel_type h_lvl (P.toGoodApprox.goodAt idx) x
+    _ = P.toGoodApprox.toApprox.branchAt idx (h_lvl.symm ▸ x) :=
+        P.toGoodApprox.good_type idx (h_lvl.symm ▸ x)
+    _ = P.toCoherentBranchPartial.branch α hα x :=
+        (P.toCoherentBranchPartial.branch_apply α hα x).symm
+
+/-- **`goodAt_head_apply_eq_of_eq`**: when `α = β`, the head value of
+`P.goodAt α hα` at `y` equals the head value of `P.goodAt β hβ` at the
+transported `h ▸ y`. Closes via `subst h` + definitional proof
+irrelevance on the membership proofs. -/
+theorem CoherentGoodBranchPartial.goodAt_head_apply_eq_of_eq
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {S : Finset Ordinal.{0}}
+    (P : CoherentGoodBranchPartial cR S)
+    {α β : Ordinal.{0}} {hα : α ∈ S} {hβ : β ∈ S} (h : α = β)
+    (y : α.ToType) :
+    (P.goodAt α hα).head y =
+      (P.goodAt β hβ).head (h ▸ y) := by
+  subst h
+  rfl
+
+/-- **`goodAt_type_apply_eq_of_eq`**: parallel for the type function. -/
+theorem CoherentGoodBranchPartial.goodAt_type_apply_eq_of_eq
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {S : Finset Ordinal.{0}}
+    (P : CoherentGoodBranchPartial cR S)
+    {α β : Ordinal.{0}} {hα : α ∈ S} {hβ : β ∈ S} (h : α = β)
+    (y : α.ToType) :
+    (P.goodAt α hα).type y =
+      (P.goodAt β hβ).type (h ▸ y) := by
+  subst h
+  rfl
+
+/-- **`CoherentGoodBranchPartial.restrict`**: Good analog of
+`CoherentBranchPartial.restrict`. Builds a Good CBP on `S ⊆ T` by
+reindexing `PG.toGoodApprox` through `ρ : Fin S.card → Fin T.card`
+(the same reindexing as the bare version). The Good chain at S-index
+`i` is `PG.toGoodApprox.goodAt (ρ i)`; `good_head`/`good_type` carry
+through from `PG.toGoodApprox`. -/
+noncomputable def CoherentGoodBranchPartial.restrict
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {T : Finset Ordinal.{0}} (PG : CoherentGoodBranchPartial cR T)
+    {S : Finset Ordinal.{0}} (hST : S ⊆ T) :
+    CoherentGoodBranchPartial cR S := by
+  classical
+  set σ_S : Fin S.card → Ordinal.{0} := fun i => (S.orderEmbOfFin rfl) i
+  have h_σ_S : ∀ i, σ_S i ∈ S := S.orderEmbOfFin_mem rfl
+  have h_σ_T : ∀ i, σ_S i ∈ T := fun i => hST (h_σ_S i)
+  set ρ : Fin S.card → Fin T.card := fun i =>
+    PG.toCoherentBranchPartial.indexOf (σ_S i) (h_σ_T i)
+  have h_lvl_ρ : ∀ i, PG.toGoodApprox.toApprox.level (ρ i) = σ_S i :=
+    fun i => PG.toCoherentBranchPartial.level_indexOf (σ_S i) (h_σ_T i)
+  have h_ρ_strictMono : StrictMono ρ := by
+    intro a b hab
+    show (T.orderIsoOfFin rfl).symm ⟨σ_S a, h_σ_T a⟩ <
+      (T.orderIsoOfFin rfl).symm ⟨σ_S b, h_σ_T b⟩
+    exact (T.orderIsoOfFin rfl).symm.strictMono
+      ((S.orderEmbOfFin rfl).strictMono hab)
+  refine
+    { toGoodApprox :=
+      { toApprox :=
+        { level := fun i => PG.toGoodApprox.toApprox.level (ρ i)
+          level_lt_omega1 := fun i =>
+            PG.toGoodApprox.toApprox.level_lt_omega1 (ρ i)
+          level_strictMono := fun _ _ hab =>
+            PG.toGoodApprox.toApprox.level_strictMono (h_ρ_strictMono hab)
+          prefixAt := fun i => PG.toGoodApprox.toApprox.prefixAt (ρ i)
+          branchAt := fun i => PG.toGoodApprox.toApprox.branchAt (ρ i)
+          prefix_restrict := fun {k₁ k₂} hk x =>
+            PG.toGoodApprox.toApprox.prefix_restrict
+              (h_ρ_strictMono.monotone hk) x
+          branch_restrict := fun {k₁ k₂} hk x =>
+            PG.toGoodApprox.toApprox.branch_restrict
+              (h_ρ_strictMono.monotone hk) x
+          large := fun i => PG.toGoodApprox.toApprox.large (ρ i)
+          top_in_validFiber := ?_ }
+        goodAt := fun i => PG.toGoodApprox.goodAt (ρ i)
+        good_head := fun i x => PG.toGoodApprox.good_head (ρ i) x
+        good_type := fun i x => PG.toGoodApprox.good_type (ρ i) x }
+      level_eq := ?_ }
+  · intro i hi
+    apply PG.toGoodApprox.toApprox.validFiber_between
+    exact h_ρ_strictMono
+      (show (⟨i, Nat.lt_of_succ_lt hi⟩ : Fin S.card) <
+        ⟨i + 1, hi⟩ from by show i < i + 1; omega)
+  · intro i; exact h_lvl_ρ i
+
+/-- **`CoherentGoodBranchPartial.restrict_toCoherentBranchPartial`**:
+the projection commutes with restrict. Used as a simp lemma to bridge
+Good and bare restricts in the projective-system instance. -/
+@[simp] theorem CoherentGoodBranchPartial.restrict_toCoherentBranchPartial
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {T : Finset Ordinal.{0}} (PG : CoherentGoodBranchPartial cR T)
+    {S : Finset Ordinal.{0}} (hST : S ⊆ T) :
+    (PG.restrict hST).toCoherentBranchPartial =
+      PG.toCoherentBranchPartial.restrict hST := rfl
+
+/-- **`exists_coherentGoodBranchPartial`**: for any finite set `S` of
+countable ordinals, there exists a `CoherentGoodBranchPartial cR S`.
+Derived from `exists_coherentGoodBranchApprox_for_strictMono` applied
+to `S.orderEmbOfFin rfl`. -/
+theorem exists_coherentGoodBranchPartial
+    (cR : (Fin 2 ↪o PairERSource) → Bool) (S : Finset Ordinal.{0})
+    (hS : ∀ α ∈ S, α < Ordinal.omega.{0} 1) :
+    Nonempty (CoherentGoodBranchPartial cR S) := by
+  obtain ⟨A, hA⟩ := exists_coherentGoodBranchApprox_for_strictMono cR
+    (S.orderEmbOfFin rfl)
+    (fun i => hS _ (S.orderEmbOfFin_mem rfl i))
+    (S.orderEmbOfFin rfl).strictMono
+  exact ⟨{ toGoodApprox := A, level_eq := hA }⟩
+
+/-! ### Helper: least upper bound in a finset
+
+For any `T : Finset Ordinal` containing some element strictly above
+`α`, there exists a unique minimal such element. Used by interior
+insertion to locate the upper bound `β₀` of the new level `α`. -/
+
+/-- **`exists_min_above_in_finset`**: in a finset `T`, the minimum
+element strictly above `α` (when one exists). -/
+theorem exists_min_above_in_finset
+    (T : Finset Ordinal.{0}) (α : Ordinal.{0})
+    (h : ∃ β ∈ T, α < β) :
+    ∃ β₀ ∈ T, α < β₀ ∧ ∀ γ ∈ T, α < γ → β₀ ≤ γ := by
+  classical
+  set T_above : Finset Ordinal.{0} := T.filter (fun γ => α < γ)
+  have hT_above_ne : T_above.Nonempty := by
+    obtain ⟨β, hβT, hαβ⟩ := h
+    exact ⟨β, Finset.mem_filter.mpr ⟨hβT, hαβ⟩⟩
+  set β₀ := T_above.min' hT_above_ne
+  have hβ₀_mem : β₀ ∈ T_above := T_above.min'_mem hT_above_ne
+  obtain ⟨hβ₀_T, hαβ₀⟩ := Finset.mem_filter.mp hβ₀_mem
+  refine ⟨β₀, hβ₀_T, hαβ₀, ?_⟩
+  intro γ hγT hαγ
+  exact T_above.min'_le γ (Finset.mem_filter.mpr ⟨hγT, hαγ⟩)
+
+/-! ### Index bookkeeping for `insert α T`
+
+Small helpers to be used by the fixed-β₀ interior insertion. With
+`hmin : ∀ γ ∈ T, α < γ → β₀ ≤ γ`, the sorted enumeration of
+`insert α T` puts α immediately before β₀: positions of T-elements
+below α are unchanged, α takes the position equal to β₀'s index in
+T, and T-elements at-or-above β₀ shift up by one. -/
+
+/-- **`insert_split_of_min`**: under `hmin` AND `α ∉ T`, every γ ∈ T
+satisfies `γ < α ∨ β₀ ≤ γ` — i.e., no T-element lies strictly between
+α and β₀. -/
+theorem insert_split_of_min
+    {T : Finset Ordinal.{0}} {α β₀ : Ordinal.{0}}
+    (hα_not_mem : α ∉ T)
+    (_hαβ₀ : α < β₀) (hmin : ∀ γ ∈ T, α < γ → β₀ ≤ γ)
+    (γ : Ordinal.{0}) (hγ : γ ∈ T) :
+    γ < α ∨ β₀ ≤ γ := by
+  rcases lt_or_ge γ α with hγα | hαγ
+  · exact Or.inl hγα
+  · rcases eq_or_lt_of_le hαγ with h_eq | h_lt
+    · -- γ = α: but α ∉ T contradicts γ ∈ T.
+      exact absurd (h_eq ▸ hγ : α ∈ T) hα_not_mem
+    · exact Or.inr (hmin γ hγ h_lt)
+
+/-- **`card_insert_of_not_mem'`**: cardinality identity for insert
+when α ∉ T (Mathlib reuse). -/
+theorem card_insert_of_not_mem'
+    {T : Finset Ordinal.{0}} {α : Ordinal.{0}} (hα : α ∉ T) :
+    (insert α T).card = T.card + 1 :=
+  Finset.card_insert_of_notMem hα
+
+/-- **`finsetIndexOf`**: helper extracting the Fin-position of an
+element of a finset via `orderIsoOfFin.symm`. -/
+noncomputable def finsetIndexOf
+    (S : Finset Ordinal.{0}) (γ : Ordinal.{0}) (hγ : γ ∈ S) :
+    Fin S.card :=
+  (S.orderIsoOfFin rfl).symm ⟨γ, hγ⟩
+
+@[simp] theorem finsetIndexOf_orderEmb
+    (S : Finset Ordinal.{0}) (γ : Ordinal.{0}) (hγ : γ ∈ S) :
+    (S.orderEmbOfFin rfl) (finsetIndexOf S γ hγ) = γ := by
+  unfold finsetIndexOf
+  show ↑((S.orderIsoOfFin rfl) ((S.orderIsoOfFin rfl).symm ⟨γ, hγ⟩)) = γ
+  rw [(S.orderIsoOfFin rfl).apply_symm_apply]
+
+/-- **`insertOrderEmb`**: the piecewise enumeration of `insert α T`
+built via `Fin.insertNth`. Inserts α at position `pos₀.castSucc` (=
+β₀'s position in T lifted to `Fin (T.card + 1)`), with old T-values
+at all other positions via `succAbove`. -/
+noncomputable def insertOrderEmb
+    (T : Finset Ordinal.{0}) (α β₀ : Ordinal.{0}) (hβ₀ : β₀ ∈ T) :
+    Fin (T.card + 1) → Ordinal.{0} :=
+  Fin.insertNth (finsetIndexOf T β₀ hβ₀).castSucc α
+    (fun j => T.orderEmbOfFin rfl j)
+
+/-- **`insertOrderEmb_mem`**: each value of the piecewise enumeration
+lies in `insert α T`. Case-splits via the explicit equivalent of
+`Fin.succAboveCases`. -/
+theorem insertOrderEmb_mem
+    {T : Finset Ordinal.{0}} {α β₀ : Ordinal.{0}} (hβ₀ : β₀ ∈ T)
+    (i : Fin (T.card + 1)) :
+    insertOrderEmb T α β₀ hβ₀ i ∈ insert α T := by
+  classical
+  unfold insertOrderEmb
+  by_cases h_eq : i = (finsetIndexOf T β₀ hβ₀).castSucc
+  · rw [h_eq, Fin.insertNth_apply_same]
+    exact Finset.mem_insert_self α T
+  · obtain ⟨j, hj⟩ := Fin.exists_succAbove_eq h_eq
+    rw [← hj, Fin.insertNth_apply_succAbove]
+    exact Finset.mem_insert_of_mem (T.orderEmbOfFin_mem rfl j)
+
+/-- **`insertOrderEmb_strictMono`**: the piecewise enumeration is strictly
+monotone. Case analysis on whether each of `a, b` equals the inserted
+position `p := pos₀.castSucc`, with `insert_split_of_min` providing the
+cross-cases: when `a = p` and `b = p.succAbove j` with `p < b`, the value
+at `j` is at-or-above `β₀ > α`; symmetrically when `b = p`. -/
+theorem insertOrderEmb_strictMono
+    {T : Finset Ordinal.{0}} {α β₀ : Ordinal.{0}}
+    (hα_not_mem : α ∉ T) (hαβ₀ : α < β₀) (hβ₀ : β₀ ∈ T)
+    (hmin : ∀ γ ∈ T, α < γ → β₀ ≤ γ) :
+    StrictMono (insertOrderEmb T α β₀ hβ₀) := by
+  classical
+  have hpos₀_value : T.orderEmbOfFin rfl (finsetIndexOf T β₀ hβ₀) = β₀ :=
+    finsetIndexOf_orderEmb T β₀ hβ₀
+  have hvalue_below : ∀ j : Fin T.card,
+      j.castSucc < (finsetIndexOf T β₀ hβ₀).castSucc →
+      T.orderEmbOfFin rfl j < α := by
+    intro j hj
+    have hj_lt : j < finsetIndexOf T β₀ hβ₀ :=
+      Fin.castSucc_lt_castSucc_iff.mp hj
+    have hj_lt_β₀ : T.orderEmbOfFin rfl j < β₀ := by
+      have := (T.orderEmbOfFin rfl).strictMono hj_lt
+      rwa [hpos₀_value] at this
+    have hjT : T.orderEmbOfFin rfl j ∈ T := T.orderEmbOfFin_mem rfl j
+    rcases insert_split_of_min hα_not_mem hαβ₀ hmin _ hjT with h | h
+    · exact h
+    · exact absurd hj_lt_β₀ (not_lt_of_ge h)
+  have hvalue_above : ∀ j : Fin T.card,
+      (finsetIndexOf T β₀ hβ₀).castSucc ≤ j.castSucc →
+      α < T.orderEmbOfFin rfl j := by
+    intro j hj
+    have hj_ge : finsetIndexOf T β₀ hβ₀ ≤ j :=
+      Fin.castSucc_le_castSucc_iff.mp hj
+    have hβ₀_le : β₀ ≤ T.orderEmbOfFin rfl j := by
+      have := (T.orderEmbOfFin rfl).monotone hj_ge
+      rwa [hpos₀_value] at this
+    exact hαβ₀.trans_le hβ₀_le
+  intro a b hab
+  unfold insertOrderEmb
+  by_cases ha : a = (finsetIndexOf T β₀ hβ₀).castSucc
+  · by_cases hb : b = (finsetIndexOf T β₀ hβ₀).castSucc
+    · subst ha; subst hb; exact absurd hab (lt_irrefl _)
+    · obtain ⟨j, hj⟩ := Fin.exists_succAbove_eq hb
+      subst ha
+      rw [Fin.insertNth_apply_same, ← hj, Fin.insertNth_apply_succAbove]
+      apply hvalue_above
+      have h_lt : (finsetIndexOf T β₀ hβ₀).castSucc <
+          (finsetIndexOf T β₀ hβ₀).castSucc.succAbove j := by
+        rw [hj]; exact hab
+      exact (Fin.lt_succAbove_iff_le_castSucc _ j).mp h_lt
+  · by_cases hb : b = (finsetIndexOf T β₀ hβ₀).castSucc
+    · obtain ⟨i, hi⟩ := Fin.exists_succAbove_eq ha
+      subst hb
+      rw [← hi, Fin.insertNth_apply_succAbove, Fin.insertNth_apply_same]
+      apply hvalue_below
+      have h_lt : (finsetIndexOf T β₀ hβ₀).castSucc.succAbove i <
+          (finsetIndexOf T β₀ hβ₀).castSucc := by
+        rw [hi]; exact hab
+      exact (Fin.succAbove_lt_iff_castSucc_lt _ i).mp h_lt
+    · obtain ⟨i, hi⟩ := Fin.exists_succAbove_eq ha
+      obtain ⟨j, hj⟩ := Fin.exists_succAbove_eq hb
+      rw [← hi, ← hj, Fin.insertNth_apply_succAbove,
+          Fin.insertNth_apply_succAbove]
+      apply (T.orderEmbOfFin rfl).strictMono
+      have h_lt : (finsetIndexOf T β₀ hβ₀).castSucc.succAbove i <
+          (finsetIndexOf T β₀ hβ₀).castSucc.succAbove j := by
+        rw [hi, hj]; exact hab
+      exact Fin.succAbove_lt_succAbove_iff.mp h_lt
+
+/-- The piecewise enumeration agrees with the canonical
+`(insert α T).orderEmbOfFin`. Combines `insertOrderEmb_mem` +
+`insertOrderEmb_strictMono` via `Finset.orderEmbOfFin_unique`. -/
+theorem insertOrderEmb_eq_orderEmbOfFin
+    {T : Finset Ordinal.{0}} {α β₀ : Ordinal.{0}}
+    (hα_not_mem : α ∉ T) (hαβ₀ : α < β₀) (hβ₀ : β₀ ∈ T)
+    (hmin : ∀ γ ∈ T, α < γ → β₀ ≤ γ) (i : Fin (T.card + 1)) :
+    insertOrderEmb T α β₀ hβ₀ i =
+      (insert α T).orderEmbOfFin (card_insert_of_not_mem' hα_not_mem)
+        i := by
+  have h_eq : insertOrderEmb T α β₀ hβ₀ =
+      ⇑((insert α T).orderEmbOfFin (card_insert_of_not_mem' hα_not_mem)) :=
+    Finset.orderEmbOfFin_unique (card_insert_of_not_mem' hα_not_mem)
+      (insertOrderEmb_mem hβ₀)
+      (insertOrderEmb_strictMono hα_not_mem hαβ₀ hβ₀ hmin)
+  exact congr_fun h_eq i
+
+/-- **`insert_indexOf_self`**: derived from `insertOrderEmb_eq_orderEmbOfFin`
+by evaluating at `pos₀.castSucc` (the inserted position) and applying
+`Fin.insertNth_apply_same`. -/
+theorem insert_indexOf_self
+    {T : Finset Ordinal.{0}} {α β₀ : Ordinal.{0}}
+    (hα_not_mem : α ∉ T) (hαβ₀ : α < β₀) (hβ₀ : β₀ ∈ T)
+    (hmin : ∀ γ ∈ T, α < γ → β₀ ≤ γ) :
+    finsetIndexOf (insert α T) α (Finset.mem_insert_self α T) =
+      Fin.cast (card_insert_of_not_mem' hα_not_mem).symm
+        (finsetIndexOf T β₀ hβ₀).castSucc := by
+  classical
+  apply ((insert α T).orderEmbOfFin rfl).injective
+  rw [finsetIndexOf_orderEmb]
+  have h_orderEmb : (insert α T).orderEmbOfFin rfl
+        (Fin.cast (card_insert_of_not_mem' hα_not_mem).symm
+          (finsetIndexOf T β₀ hβ₀).castSucc) =
+      (insert α T).orderEmbOfFin (card_insert_of_not_mem' hα_not_mem)
+        (finsetIndexOf T β₀ hβ₀).castSucc :=
+    Finset.orderEmbOfFin_eq_orderEmbOfFin_iff.mpr rfl
+  rw [h_orderEmb,
+      ← insertOrderEmb_eq_orderEmbOfFin hα_not_mem hαβ₀ hβ₀ hmin]
+  unfold insertOrderEmb
+  rw [Fin.insertNth_apply_same]
+
+/-- **`insert_indexOf_old_before`**: derived from
+`insertOrderEmb_eq_orderEmbOfFin` at `pos₀.castSucc.succAbove
+(finsetIndexOf T γ hγ)`. Since `γ < α < β₀`, the T-index of γ is below
+pos₀, so `succAbove` reduces to `castSucc` (via
+`Fin.succAbove_of_castSucc_lt`). -/
+theorem insert_indexOf_old_before
+    {T : Finset Ordinal.{0}} {α β₀ : Ordinal.{0}}
+    (hα_not_mem : α ∉ T) (hαβ₀ : α < β₀) (hβ₀ : β₀ ∈ T)
+    (hmin : ∀ γ ∈ T, α < γ → β₀ ≤ γ)
+    (γ : Ordinal.{0}) (hγ : γ ∈ T) (hγα : γ < α) :
+    finsetIndexOf (insert α T) γ (Finset.mem_insert_of_mem hγ) =
+      Fin.cast (card_insert_of_not_mem' hα_not_mem).symm
+        (finsetIndexOf T γ hγ).castSucc := by
+  classical
+  apply ((insert α T).orderEmbOfFin rfl).injective
+  rw [finsetIndexOf_orderEmb]
+  have h_orderEmb : (insert α T).orderEmbOfFin rfl
+        (Fin.cast (card_insert_of_not_mem' hα_not_mem).symm
+          (finsetIndexOf T γ hγ).castSucc) =
+      (insert α T).orderEmbOfFin (card_insert_of_not_mem' hα_not_mem)
+        (finsetIndexOf T γ hγ).castSucc :=
+    Finset.orderEmbOfFin_eq_orderEmbOfFin_iff.mpr rfl
+  rw [h_orderEmb,
+      ← insertOrderEmb_eq_orderEmbOfFin hα_not_mem hαβ₀ hβ₀ hmin]
+  have h_lt : finsetIndexOf T γ hγ < finsetIndexOf T β₀ hβ₀ := by
+    apply (T.orderEmbOfFin rfl).strictMono.lt_iff_lt.mp
+    rw [finsetIndexOf_orderEmb, finsetIndexOf_orderEmb]
+    exact hγα.trans hαβ₀
+  have h_castSucc_lt : (finsetIndexOf T γ hγ).castSucc <
+      (finsetIndexOf T β₀ hβ₀).castSucc :=
+    Fin.castSucc_lt_castSucc_iff.mpr h_lt
+  unfold insertOrderEmb
+  rw [show (finsetIndexOf T γ hγ).castSucc =
+        (finsetIndexOf T β₀ hβ₀).castSucc.succAbove (finsetIndexOf T γ hγ)
+      from (Fin.succAbove_of_castSucc_lt _ _ h_castSucc_lt).symm,
+      Fin.insertNth_apply_succAbove]
+  exact (finsetIndexOf_orderEmb T γ hγ).symm
+
+/-- **`insert_indexOf_old_after`**: derived from
+`insertOrderEmb_eq_orderEmbOfFin` at `pos₀.castSucc.succAbove
+(finsetIndexOf T γ hγ)`. Since `β₀ ≤ γ`, the T-index of γ is ≥ pos₀,
+so `succAbove` reduces to `succ` (via `Fin.succAbove_of_le_castSucc`). -/
+theorem insert_indexOf_old_after
+    {T : Finset Ordinal.{0}} {α β₀ : Ordinal.{0}}
+    (hα_not_mem : α ∉ T) (hαβ₀ : α < β₀) (hβ₀ : β₀ ∈ T)
+    (hmin : ∀ γ ∈ T, α < γ → β₀ ≤ γ)
+    (γ : Ordinal.{0}) (hγ : γ ∈ T) (hβγ : β₀ ≤ γ) :
+    finsetIndexOf (insert α T) γ (Finset.mem_insert_of_mem hγ) =
+      Fin.cast (card_insert_of_not_mem' hα_not_mem).symm
+        (finsetIndexOf T γ hγ).succ := by
+  classical
+  apply ((insert α T).orderEmbOfFin rfl).injective
+  rw [finsetIndexOf_orderEmb]
+  have h_orderEmb : (insert α T).orderEmbOfFin rfl
+        (Fin.cast (card_insert_of_not_mem' hα_not_mem).symm
+          (finsetIndexOf T γ hγ).succ) =
+      (insert α T).orderEmbOfFin (card_insert_of_not_mem' hα_not_mem)
+        (finsetIndexOf T γ hγ).succ :=
+    Finset.orderEmbOfFin_eq_orderEmbOfFin_iff.mpr rfl
+  rw [h_orderEmb,
+      ← insertOrderEmb_eq_orderEmbOfFin hα_not_mem hαβ₀ hβ₀ hmin]
+  have h_le : finsetIndexOf T β₀ hβ₀ ≤ finsetIndexOf T γ hγ := by
+    apply (T.orderEmbOfFin rfl).strictMono.le_iff_le.mp
+    rw [finsetIndexOf_orderEmb, finsetIndexOf_orderEmb]
+    exact hβγ
+  have h_castSucc_le : (finsetIndexOf T β₀ hβ₀).castSucc ≤
+      (finsetIndexOf T γ hγ).castSucc :=
+    Fin.castSucc_le_castSucc_iff.mpr h_le
+  unfold insertOrderEmb
+  rw [show (finsetIndexOf T γ hγ).succ =
+        (finsetIndexOf T β₀ hβ₀).castSucc.succAbove (finsetIndexOf T γ hγ)
+      from (Fin.succAbove_of_le_castSucc _ _ h_castSucc_le).symm,
+      Fin.insertNth_apply_succAbove]
+  exact (finsetIndexOf_orderEmb T γ hγ).symm
+
+/-! ### Good interior insertion: fixed-β₀ version
+
+`coherentGoodBranchPartial_insert_before` is the structural heart of
+interior insertion. Given `P : CoherentGoodBranchPartial cR T`, a new
+α below some T-element β₀, and `hmin` saying β₀ is the LEAST T-element
+above α (so α goes immediately before β₀ in the sorted enumeration of
+`insert α T`), produces a Good partial branch on `insert α T` whose
+restriction to `T` agrees fieldwise with `P`.
+
+Architecture (two-layer):
+1. `insertBeforeGoodAt` — dispatch helper producing the Good chain at
+   each position of `insert α T`'s sorted enumeration. At the α-position
+   uses `(P.goodAt β₀ hβ₀).restrict hαβ₀`; at old positions uses
+   `P.goodAt γ`.
+2. `insertBeforeGoodApprox` — assembles the Good chains into a
+   `CoherentGoodBranchApprox cR (insert α T).card` whose
+   `prefixAt`/`branchAt` are exactly the heads/types of the Good chains.
+3. `coherentGoodBranchPartial_insert_before` — wraps as a
+   `CoherentGoodBranchPartial cR (insert α T)` with `level_eq := rfl`
+   (since the level function IS `(insert α T).orderEmbOfFin rfl`).
+
+The coherence proof obligations (`prefix_restrict`, `branch_restrict`,
+`top_in_validFiber`) require dispatch via the index lemmas
+(`insert_indexOf_self`, `insert_indexOf_old_before`,
+`insert_indexOf_old_after`) plus P's coherence (T-T pairs) or `restrict`
+properties (α-T pairs at the (γ_pred, α) and (α, β₀) adjacencies).
+Currently stubbed; future commits will fill these in. -/
+
+/-- **`insertBeforeGoodAt`**: dispatch helper. At position `i` in the
+sorted enumeration of `insert α T`, return the Good chain at level
+`(insert α T).orderEmbOfFin rfl i`. Uses
+`(P.goodAt β₀ hβ₀).restrict hαβ₀` when the level equals α, and
+`P.goodAt γ` otherwise. Term-mode `dite` so `dif_pos`/`dif_neg`
+simplify the dispatch in downstream proofs. -/
+noncomputable def insertBeforeGoodAt
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {T : Finset Ordinal.{0}}
+    (P : CoherentGoodBranchPartial cR T)
+    {α β₀ : Ordinal.{0}}
+    (hβ₀ : β₀ ∈ T) (hαβ₀ : α < β₀)
+    (i : Fin (insert α T).card) :
+    PairERGoodChain cR ((insert α T).orderEmbOfFin rfl i) :=
+  letI : Decidable ((insert α T).orderEmbOfFin rfl i = α) := Classical.dec _
+  if h_eq : (insert α T).orderEmbOfFin rfl i = α then
+    ((P.goodAt β₀ hβ₀).restrict hαβ₀).castLevel h_eq.symm
+  else
+    P.goodAt _
+      ((Finset.mem_insert.mp ((insert α T).orderEmbOfFin_mem rfl i)).resolve_left h_eq)
+
+/-- **`insertBeforeGoodAt_eq_alpha`**: when the level at `i` equals α,
+`insertBeforeGoodAt` returns the cast of the restricted chain from β₀. -/
+theorem insertBeforeGoodAt_eq_alpha
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {T : Finset Ordinal.{0}}
+    (P : CoherentGoodBranchPartial cR T) {α β₀ : Ordinal.{0}}
+    (hβ₀ : β₀ ∈ T) (hαβ₀ : α < β₀)
+    {i : Fin (insert α T).card}
+    (h_eq : (insert α T).orderEmbOfFin rfl i = α) :
+    insertBeforeGoodAt P hβ₀ hαβ₀ i =
+      ((P.goodAt β₀ hβ₀).restrict hαβ₀).castLevel h_eq.symm := by
+  classical
+  unfold insertBeforeGoodAt
+  rw [dif_pos h_eq]
+
+/-- **`insertBeforeGoodAt_eq_old`**: when the level at `i` is not α,
+`insertBeforeGoodAt` returns `P.goodAt γ hγ` directly. -/
+theorem insertBeforeGoodAt_eq_old
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {T : Finset Ordinal.{0}}
+    (P : CoherentGoodBranchPartial cR T) {α β₀ : Ordinal.{0}}
+    (hβ₀ : β₀ ∈ T) (hαβ₀ : α < β₀)
+    {i : Fin (insert α T).card}
+    (h_neq : (insert α T).orderEmbOfFin rfl i ≠ α) :
+    insertBeforeGoodAt P hβ₀ hαβ₀ i =
+      P.goodAt _
+        ((Finset.mem_insert.mp ((insert α T).orderEmbOfFin_mem rfl i)).resolve_left h_neq) := by
+  classical
+  unfold insertBeforeGoodAt
+  rw [dif_neg h_neq]
+
+/-- **`validFiber_congr_prefix_branch`**: validFiber sets coincide when
+prefix embeddings are pointwise equal and branch functions are pointwise
+equal. Prevents repeating `RelEmbedding.ext` + `funext` per case. -/
+private lemma validFiber_congr_prefix_branch
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    {p₁ p₂ : α.ToType ↪o PairERSource}
+    {τ₁ τ₂ : α.ToType → Bool}
+    (hp : ∀ x, p₁ x = p₂ x) (hτ : ∀ x, τ₁ x = τ₂ x) :
+    validFiber cR p₁ τ₁ = validFiber cR p₂ τ₂ := by
+  have hp_eq : p₁ = p₂ := RelEmbedding.ext hp
+  have hτ_eq : τ₁ = τ₂ := funext hτ
+  rw [hp_eq, hτ_eq]
+
+/-- **`insert_adjacent_alpha_old_eq_beta0`**: if `α` lies at position `i`
+in the sorted enumeration of `insert α T` and the next position `i+1`
+holds an old T-element, then that element must be `β₀`. Otherwise
+`hmin` puts β₀ strictly between, contradicting adjacency. -/
+private lemma insert_adjacent_alpha_old_eq_beta0
+    {T : Finset Ordinal.{0}} {α β₀ : Ordinal.{0}}
+    (_hα_not_mem : α ∉ T) (hαβ₀ : α < β₀) (hβ₀ : β₀ ∈ T)
+    (hmin : ∀ γ ∈ T, α < γ → β₀ ≤ γ)
+    {i : ℕ} (h : i + 1 < (insert α T).card)
+    (h₁ : (insert α T).orderEmbOfFin rfl ⟨i, Nat.lt_of_succ_lt h⟩ = α)
+    (h₂ : (insert α T).orderEmbOfFin rfl ⟨i + 1, h⟩ ≠ α) :
+    (insert α T).orderEmbOfFin rfl ⟨i + 1, h⟩ = β₀ := by
+  classical
+  have hv₂_mem : (insert α T).orderEmbOfFin rfl ⟨i + 1, h⟩ ∈ insert α T :=
+    (insert α T).orderEmbOfFin_mem rfl _
+  have hv₂_T : (insert α T).orderEmbOfFin rfl ⟨i + 1, h⟩ ∈ T :=
+    (Finset.mem_insert.mp hv₂_mem).resolve_left h₂
+  have hv_lt : (insert α T).orderEmbOfFin rfl ⟨i, Nat.lt_of_succ_lt h⟩ <
+      (insert α T).orderEmbOfFin rfl ⟨i + 1, h⟩ :=
+    ((insert α T).orderEmbOfFin rfl).strictMono
+      (show (⟨i, Nat.lt_of_succ_lt h⟩ : Fin (insert α T).card) <
+        ⟨i + 1, h⟩ from Nat.lt_succ_self i)
+  have h_α_lt_v₂ : α < (insert α T).orderEmbOfFin rfl ⟨i + 1, h⟩ :=
+    calc α = (insert α T).orderEmbOfFin rfl ⟨i, Nat.lt_of_succ_lt h⟩ := h₁.symm
+      _ < (insert α T).orderEmbOfFin rfl ⟨i + 1, h⟩ := hv_lt
+  have h_β₀_le_v₂ : β₀ ≤ (insert α T).orderEmbOfFin rfl ⟨i + 1, h⟩ :=
+    hmin _ hv₂_T h_α_lt_v₂
+  -- Show v₂ ≤ β₀ by contradiction.
+  refine le_antisymm ?_ h_β₀_le_v₂
+  by_contra h_lt
+  push_neg at h_lt
+  -- h_lt : β₀ < v₂. Find finsetIndexOf β₀ in insert α T, show it's
+  -- strictly between ⟨i⟩ and ⟨i+1⟩.
+  have hβ₀_mem : β₀ ∈ insert α T := Finset.mem_insert_of_mem hβ₀
+  have h_lo : (⟨i, Nat.lt_of_succ_lt h⟩ : Fin (insert α T).card) <
+      finsetIndexOf (insert α T) β₀ hβ₀_mem := by
+    apply ((insert α T).orderEmbOfFin rfl).strictMono.lt_iff_lt.mp
+    rw [finsetIndexOf_orderEmb]
+    rw [h₁]; exact hαβ₀
+  have h_hi : finsetIndexOf (insert α T) β₀ hβ₀_mem <
+      (⟨i + 1, h⟩ : Fin (insert α T).card) := by
+    apply ((insert α T).orderEmbOfFin rfl).strictMono.lt_iff_lt.mp
+    rw [finsetIndexOf_orderEmb]
+    exact h_lt
+  have h1 : i < (finsetIndexOf (insert α T) β₀ hβ₀_mem).val := h_lo
+  have h2 : (finsetIndexOf (insert α T) β₀ hβ₀_mem).val < i + 1 := h_hi
+  omega
+
+/-- **`insert_adjacent_old_alpha_predecessor`**: dual of the above.
+If the old T-element is at position `i` and α is at `i+1`, then no
+element of T lies strictly between them in α (the lemma's content is
+just `v₁ < α`, which is the gating fact for the T/α top_in_validFiber
+case). -/
+private lemma insert_adjacent_old_alpha_predecessor
+    {T : Finset Ordinal.{0}} {α : Ordinal.{0}}
+    (hα_not_mem : α ∉ T)
+    {i : ℕ} (h : i + 1 < (insert α T).card)
+    (h₁ : (insert α T).orderEmbOfFin rfl ⟨i, Nat.lt_of_succ_lt h⟩ ≠ α)
+    (h₂ : (insert α T).orderEmbOfFin rfl ⟨i + 1, h⟩ = α) :
+    (insert α T).orderEmbOfFin rfl ⟨i, Nat.lt_of_succ_lt h⟩ < α := by
+  classical
+  have hv₁_mem : (insert α T).orderEmbOfFin rfl ⟨i, Nat.lt_of_succ_lt h⟩ ∈
+      insert α T := (insert α T).orderEmbOfFin_mem rfl _
+  have hv₁_T : (insert α T).orderEmbOfFin rfl ⟨i, Nat.lt_of_succ_lt h⟩ ∈ T :=
+    (Finset.mem_insert.mp hv₁_mem).resolve_left h₁
+  have hv_lt : (insert α T).orderEmbOfFin rfl ⟨i, Nat.lt_of_succ_lt h⟩ <
+      (insert α T).orderEmbOfFin rfl ⟨i + 1, h⟩ :=
+    ((insert α T).orderEmbOfFin rfl).strictMono
+      (show (⟨i, Nat.lt_of_succ_lt h⟩ : Fin (insert α T).card) <
+        ⟨i + 1, h⟩ from Nat.lt_succ_self i)
+  calc (insert α T).orderEmbOfFin rfl ⟨i, Nat.lt_of_succ_lt h⟩
+      < (insert α T).orderEmbOfFin rfl ⟨i + 1, h⟩ := hv_lt
+    _ = α := h₂
+
+/-- **`insertBeforeGoodApprox`**: the inserted Good approximation at
+length `(insert α T).card`. Levels are `(insert α T).orderEmbOfFin rfl`;
+Good chains are routed by `insertBeforeGoodAt`; `prefixAt`/`branchAt`
+are the chain heads/types so `good_head`/`good_type` are `rfl`.
+
+All coherence fields closed (axiom-clean):
+- `prefix_restrict`: all 4 cases (T/T, α/α, α/T, T/α).
+- `branch_restrict`: all 4 cases.
+- `top_in_validFiber`: α/α ruled out by strict-mono; α/T closes via
+  `head_at_α_in_restricted_validFiber (P.goodAt v₂)` + `validFiber_congr`
+  + `prefix_restrict` from β₀ to v₂; T/α via `head_at_α` on the
+  α-position chain + `prefix_restrict` from v₁ to β₀; T/T via
+  `head_at_α (P.goodAt v₂)` + `prefix_restrict` from v₁ to v₂. -/
+noncomputable def insertBeforeGoodApprox
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {T : Finset Ordinal.{0}}
+    (P : CoherentGoodBranchPartial cR T)
+    {α β₀ : Ordinal.{0}}
+    (hα_lt : α < Ordinal.omega.{0} 1)
+    (_hα_not_mem : α ∉ T)
+    (hβ₀ : β₀ ∈ T) (hαβ₀ : α < β₀)
+    (hmin : ∀ γ ∈ T, α < γ → β₀ ≤ γ) :
+    CoherentGoodBranchApprox cR (insert α T).card where
+  toApprox :=
+    { level := fun i => (insert α T).orderEmbOfFin rfl i
+      level_lt_omega1 := by
+        intro i
+        have hv : (insert α T).orderEmbOfFin rfl i ∈ insert α T :=
+          (insert α T).orderEmbOfFin_mem rfl i
+        rcases Finset.mem_insert.mp hv with h_eq | h_T
+        · rw [h_eq]; exact hα_lt
+        · have h := P.toGoodApprox.toApprox.level_lt_omega1
+            (finsetIndexOf T _ h_T)
+          rw [P.level_eq, finsetIndexOf_orderEmb] at h
+          exact h
+      level_strictMono := ((insert α T).orderEmbOfFin rfl).strictMono
+      prefixAt := fun i =>
+        (insertBeforeGoodAt P hβ₀ hαβ₀ i).toPairERChain.head
+      branchAt := fun i =>
+        (insertBeforeGoodAt P hβ₀ hαβ₀ i).toPairERChain.type
+      prefix_restrict := by
+        intro k₁ k₂ hk x
+        have hv₁_mem : (insert α T).orderEmbOfFin rfl k₁ ∈ insert α T :=
+          (insert α T).orderEmbOfFin_mem rfl k₁
+        have hv₂_mem : (insert α T).orderEmbOfFin rfl k₂ ∈ insert α T :=
+          (insert α T).orderEmbOfFin_mem rfl k₂
+        have hv_le : (insert α T).orderEmbOfFin rfl k₁ ≤
+            (insert α T).orderEmbOfFin rfl k₂ :=
+          ((insert α T).orderEmbOfFin rfl).monotone hk
+        by_cases h₁ : (insert α T).orderEmbOfFin rfl k₁ = α
+        · by_cases h₂ : (insert α T).orderEmbOfFin rfl k₂ = α
+          · -- α/α: k₁ = k₂ by injectivity; lift reduces to identity by InitialSeg uniqueness
+            have hk_eq : k₁ = k₂ :=
+              ((insert α T).orderEmbOfFin rfl).injective (h₁.trans h₂.symm)
+            subst hk_eq
+            rw [insertBeforeGoodAt_eq_alpha P hβ₀ hαβ₀ h₁]
+            haveI : IsWellOrder ((insert α T).orderEmbOfFin rfl k₁).ToType
+              (· < ·) := isWellOrder_lt
+            congr 1
+            rw [InitialSeg.toOrderEmbedding_apply]
+            exact ((Ordinal.initialSegToType
+                (((insert α T).orderEmbOfFin rfl).monotone hk)).eq
+              (InitialSeg.refl _) x).trans (InitialSeg.refl_apply x)
+          · -- α/T: h₁ : v₁ = α, h₂ : v₂ ≠ α, hv_le : v₁ ≤ v₂
+            have hv₂_T : (insert α T).orderEmbOfFin rfl k₂ ∈ T :=
+              (Finset.mem_insert.mp hv₂_mem).resolve_left h₂
+            have h_α_lt_v₂ : α < (insert α T).orderEmbOfFin rfl k₂ := by
+              rcases lt_or_eq_of_le hv_le with hlt | heq
+              · calc α = (insert α T).orderEmbOfFin rfl k₁ := h₁.symm
+                  _ < (insert α T).orderEmbOfFin rfl k₂ := hlt
+              · exact absurd (heq ▸ h₁ : (insert α T).orderEmbOfFin rfl k₂ = α) h₂
+            have h_β₀_le_v₂ : β₀ ≤ (insert α T).orderEmbOfFin rfl k₂ :=
+              hmin _ hv₂_T h_α_lt_v₂
+            have h_α_le_v₂ : α ≤ (insert α T).orderEmbOfFin rfl k₂ :=
+              le_of_lt h_α_lt_v₂
+            rw [insertBeforeGoodAt_eq_old P hβ₀ hαβ₀ h₂,
+                insertBeforeGoodAt_eq_alpha P hβ₀ hαβ₀ h₁,
+                PairERGoodChain.castLevel_head h₁.symm,
+                PairERGoodChain.restrict_head_apply,
+                P.good_head_eq, P.good_head_eq]
+            rw [← P.toCoherentBranchPartial.prefix_restrict h_β₀_le_v₂ hβ₀ hv₂_T
+                ((Ordinal.initialSegToType hαβ₀.le).toOrderEmbedding
+                  ((h₁.symm).symm ▸ x))]
+            congr 1
+            rw [initialSegToType_compose hαβ₀.le h_β₀_le_v₂]
+            exact initialSegToType_transport_eq h₁ rfl
+              (((insert α T).orderEmbOfFin rfl).monotone hk) h_α_le_v₂ x
+        · by_cases h₂ : (insert α T).orderEmbOfFin rfl k₂ = α
+          · -- T/α: h₁ : v₁ ≠ α, h₂ : v₂ = α
+            have hv₁_T : (insert α T).orderEmbOfFin rfl k₁ ∈ T :=
+              (Finset.mem_insert.mp hv₁_mem).resolve_left h₁
+            have h_v₁_le_α : (insert α T).orderEmbOfFin rfl k₁ ≤ α :=
+              calc (insert α T).orderEmbOfFin rfl k₁
+                  ≤ (insert α T).orderEmbOfFin rfl k₂ := hv_le
+                _ = α := h₂
+            have h_v₁_lt_α : (insert α T).orderEmbOfFin rfl k₁ < α := by
+              rcases lt_or_eq_of_le h_v₁_le_α with hlt | heq
+              · exact hlt
+              · exact absurd (heq ▸ hv₁_T : α ∈ T) _hα_not_mem
+            have h_v₁_le_β₀ : (insert α T).orderEmbOfFin rfl k₁ ≤ β₀ :=
+              le_of_lt (h_v₁_lt_α.trans hαβ₀)
+            rw [insertBeforeGoodAt_eq_old P hβ₀ hαβ₀ h₁,
+                insertBeforeGoodAt_eq_alpha P hβ₀ hαβ₀ h₂,
+                PairERGoodChain.castLevel_head h₂.symm,
+                PairERGoodChain.restrict_head_apply,
+                P.good_head_eq, P.good_head_eq]
+            rw [← P.toCoherentBranchPartial.prefix_restrict h_v₁_le_β₀ hv₁_T hβ₀ x]
+            congr 1
+            rw [← initialSegToType_compose h_v₁_le_α hαβ₀.le]
+            congr 1
+            exact initialSegToType_transport_eq rfl h₂
+              (((insert α T).orderEmbOfFin rfl).monotone hk) h_v₁_le_α x
+          · have hv₁_T : (insert α T).orderEmbOfFin rfl k₁ ∈ T :=
+              (Finset.mem_insert.mp hv₁_mem).resolve_left h₁
+            have hv₂_T : (insert α T).orderEmbOfFin rfl k₂ ∈ T :=
+              (Finset.mem_insert.mp hv₂_mem).resolve_left h₂
+            rw [insertBeforeGoodAt_eq_old P hβ₀ hαβ₀ h₁,
+                insertBeforeGoodAt_eq_old P hβ₀ hαβ₀ h₂]
+            rw [P.good_head_eq, P.good_head_eq]
+            exact P.toCoherentBranchPartial.prefix_restrict hv_le hv₁_T hv₂_T x
+      branch_restrict := by
+        intro k₁ k₂ hk x
+        have hv₁_mem : (insert α T).orderEmbOfFin rfl k₁ ∈ insert α T :=
+          (insert α T).orderEmbOfFin_mem rfl k₁
+        have hv₂_mem : (insert α T).orderEmbOfFin rfl k₂ ∈ insert α T :=
+          (insert α T).orderEmbOfFin_mem rfl k₂
+        have hv_le : (insert α T).orderEmbOfFin rfl k₁ ≤
+            (insert α T).orderEmbOfFin rfl k₂ :=
+          ((insert α T).orderEmbOfFin rfl).monotone hk
+        by_cases h₁ : (insert α T).orderEmbOfFin rfl k₁ = α
+        · by_cases h₂ : (insert α T).orderEmbOfFin rfl k₂ = α
+          · have hk_eq : k₁ = k₂ :=
+              ((insert α T).orderEmbOfFin rfl).injective (h₁.trans h₂.symm)
+            subst hk_eq
+            rw [insertBeforeGoodAt_eq_alpha P hβ₀ hαβ₀ h₁]
+            haveI : IsWellOrder ((insert α T).orderEmbOfFin rfl k₁).ToType
+              (· < ·) := isWellOrder_lt
+            congr 1
+            rw [InitialSeg.toOrderEmbedding_apply]
+            exact ((Ordinal.initialSegToType
+                (((insert α T).orderEmbOfFin rfl).monotone hk)).eq
+              (InitialSeg.refl _) x).trans (InitialSeg.refl_apply x)
+          · have hv₂_T : (insert α T).orderEmbOfFin rfl k₂ ∈ T :=
+              (Finset.mem_insert.mp hv₂_mem).resolve_left h₂
+            have h_α_lt_v₂ : α < (insert α T).orderEmbOfFin rfl k₂ := by
+              rcases lt_or_eq_of_le hv_le with hlt | heq
+              · calc α = (insert α T).orderEmbOfFin rfl k₁ := h₁.symm
+                  _ < (insert α T).orderEmbOfFin rfl k₂ := hlt
+              · exact absurd (heq ▸ h₁ : (insert α T).orderEmbOfFin rfl k₂ = α) h₂
+            have h_β₀_le_v₂ : β₀ ≤ (insert α T).orderEmbOfFin rfl k₂ :=
+              hmin _ hv₂_T h_α_lt_v₂
+            have h_α_le_v₂ : α ≤ (insert α T).orderEmbOfFin rfl k₂ :=
+              le_of_lt h_α_lt_v₂
+            rw [insertBeforeGoodAt_eq_old P hβ₀ hαβ₀ h₂,
+                insertBeforeGoodAt_eq_alpha P hβ₀ hαβ₀ h₁,
+                PairERGoodChain.castLevel_type h₁.symm,
+                PairERGoodChain.restrict_type_apply,
+                P.good_type_eq, P.good_type_eq]
+            rw [← P.toCoherentBranchPartial.branch_restrict h_β₀_le_v₂ hβ₀ hv₂_T
+                ((Ordinal.initialSegToType hαβ₀.le).toOrderEmbedding
+                  ((h₁.symm).symm ▸ x))]
+            congr 1
+            rw [initialSegToType_compose hαβ₀.le h_β₀_le_v₂]
+            exact initialSegToType_transport_eq h₁ rfl
+              (((insert α T).orderEmbOfFin rfl).monotone hk) h_α_le_v₂ x
+        · by_cases h₂ : (insert α T).orderEmbOfFin rfl k₂ = α
+          · have hv₁_T : (insert α T).orderEmbOfFin rfl k₁ ∈ T :=
+              (Finset.mem_insert.mp hv₁_mem).resolve_left h₁
+            have h_v₁_le_α : (insert α T).orderEmbOfFin rfl k₁ ≤ α :=
+              calc (insert α T).orderEmbOfFin rfl k₁
+                  ≤ (insert α T).orderEmbOfFin rfl k₂ := hv_le
+                _ = α := h₂
+            have h_v₁_lt_α : (insert α T).orderEmbOfFin rfl k₁ < α := by
+              rcases lt_or_eq_of_le h_v₁_le_α with hlt | heq
+              · exact hlt
+              · exact absurd (heq ▸ hv₁_T : α ∈ T) _hα_not_mem
+            have h_v₁_le_β₀ : (insert α T).orderEmbOfFin rfl k₁ ≤ β₀ :=
+              le_of_lt (h_v₁_lt_α.trans hαβ₀)
+            rw [insertBeforeGoodAt_eq_old P hβ₀ hαβ₀ h₁,
+                insertBeforeGoodAt_eq_alpha P hβ₀ hαβ₀ h₂,
+                PairERGoodChain.castLevel_type h₂.symm,
+                PairERGoodChain.restrict_type_apply,
+                P.good_type_eq, P.good_type_eq]
+            rw [← P.toCoherentBranchPartial.branch_restrict h_v₁_le_β₀ hv₁_T hβ₀ x]
+            congr 1
+            rw [← initialSegToType_compose h_v₁_le_α hαβ₀.le]
+            congr 1
+            exact initialSegToType_transport_eq rfl h₂
+              (((insert α T).orderEmbOfFin rfl).monotone hk) h_v₁_le_α x
+          · have hv₁_T : (insert α T).orderEmbOfFin rfl k₁ ∈ T :=
+              (Finset.mem_insert.mp hv₁_mem).resolve_left h₁
+            have hv₂_T : (insert α T).orderEmbOfFin rfl k₂ ∈ T :=
+              (Finset.mem_insert.mp hv₂_mem).resolve_left h₂
+            rw [insertBeforeGoodAt_eq_old P hβ₀ hαβ₀ h₁,
+                insertBeforeGoodAt_eq_old P hβ₀ hαβ₀ h₂]
+            rw [P.good_type_eq, P.good_type_eq]
+            exact P.toCoherentBranchPartial.branch_restrict hv_le hv₁_T hv₂_T x
+      large := fun i => (insertBeforeGoodAt P hβ₀ hαβ₀ i).toPairERChain.large
+      top_in_validFiber := by
+        intro i h
+        have hv₁_mem : (insert α T).orderEmbOfFin rfl ⟨i, Nat.lt_of_succ_lt h⟩ ∈
+            insert α T :=
+          (insert α T).orderEmbOfFin_mem rfl _
+        have hv₂_mem : (insert α T).orderEmbOfFin rfl ⟨i + 1, h⟩ ∈ insert α T :=
+          (insert α T).orderEmbOfFin_mem rfl _
+        have hv_lt : (insert α T).orderEmbOfFin rfl ⟨i, Nat.lt_of_succ_lt h⟩ <
+            (insert α T).orderEmbOfFin rfl ⟨i + 1, h⟩ :=
+          ((insert α T).orderEmbOfFin rfl).strictMono
+            (show (⟨i, Nat.lt_of_succ_lt h⟩ : Fin (insert α T).card) <
+              ⟨i + 1, h⟩ from Nat.lt_succ_self i)
+        by_cases h₁ : (insert α T).orderEmbOfFin rfl ⟨i, Nat.lt_of_succ_lt h⟩ = α
+        · -- α at k₁; k₂ ≠ α (since k₁ < k₂ ⇒ v₁ < v₂); so T at k₂.
+          have h₂ : (insert α T).orderEmbOfFin rfl ⟨i + 1, h⟩ ≠ α := fun heq =>
+            (ne_of_lt hv_lt) (h₁.trans heq.symm)
+          have hv₂_T : (insert α T).orderEmbOfFin rfl ⟨i + 1, h⟩ ∈ T :=
+            (Finset.mem_insert.mp hv₂_mem).resolve_left h₂
+          have h_α_lt_v₂ : α < (insert α T).orderEmbOfFin rfl ⟨i + 1, h⟩ :=
+            calc α = (insert α T).orderEmbOfFin rfl ⟨i, Nat.lt_of_succ_lt h⟩ :=
+                  h₁.symm
+              _ < (insert α T).orderEmbOfFin rfl ⟨i + 1, h⟩ := hv_lt
+          have h_β₀_le_v₂ : β₀ ≤ (insert α T).orderEmbOfFin rfl ⟨i + 1, h⟩ :=
+            hmin _ hv₂_T h_α_lt_v₂
+          rw [insertBeforeGoodAt_eq_old P hβ₀ hαβ₀ h₂,
+              insertBeforeGoodAt_eq_alpha P hβ₀ hαβ₀ h₁]
+          have h_har := (P.goodAt _ hv₂_T).head_at_α_in_restricted_validFiber hv_lt
+          have h_vf_eq : validFiber cR
+              (((P.goodAt β₀ hβ₀).restrict hαβ₀).castLevel h₁.symm).toPairERChain.head
+              (((P.goodAt β₀ hβ₀).restrict hαβ₀).castLevel
+                  h₁.symm).toPairERChain.type =
+            validFiber cR
+              ((Ordinal.initialSegToType hv_lt.le).toOrderEmbedding.trans
+                (P.goodAt _ hv₂_T).toPairERChain.head)
+              (fun x => (P.goodAt _ hv₂_T).toPairERChain.type
+                ((Ordinal.initialSegToType hv_lt.le).toOrderEmbedding x)) := by
+            apply validFiber_congr_prefix_branch
+            · intro y
+              rw [PairERGoodChain.castLevel_head h₁.symm,
+                  PairERGoodChain.restrict_head_apply,
+                  RelEmbedding.trans_apply, P.good_head_eq, P.good_head_eq]
+              rw [← P.toCoherentBranchPartial.prefix_restrict h_β₀_le_v₂
+                  hβ₀ hv₂_T ((Ordinal.initialSegToType hαβ₀.le).toOrderEmbedding
+                    ((h₁.symm).symm ▸ y))]
+              congr 1
+              rw [initialSegToType_compose hαβ₀.le h_β₀_le_v₂]
+              exact (initialSegToType_transport_eq h₁ rfl hv_lt.le
+                (le_of_lt h_α_lt_v₂) y).symm
+            · intro y
+              rw [PairERGoodChain.castLevel_type h₁.symm,
+                  PairERGoodChain.restrict_type_apply,
+                  P.good_type_eq, P.good_type_eq]
+              rw [← P.toCoherentBranchPartial.branch_restrict h_β₀_le_v₂
+                  hβ₀ hv₂_T ((Ordinal.initialSegToType hαβ₀.le).toOrderEmbedding
+                    ((h₁.symm).symm ▸ y))]
+              congr 1
+              rw [initialSegToType_compose hαβ₀.le h_β₀_le_v₂]
+              exact (initialSegToType_transport_eq h₁ rfl hv_lt.le
+                (le_of_lt h_α_lt_v₂) y).symm
+          rw [h_vf_eq]
+          exact h_har
+        · by_cases h₂ : (insert α T).orderEmbOfFin rfl ⟨i + 1, h⟩ = α
+          · -- T/α case: h₁ : v₁ ≠ α, h₂ : v₂ = α
+            have hv₁_T : (insert α T).orderEmbOfFin rfl ⟨i, Nat.lt_of_succ_lt h⟩ ∈
+                T := (Finset.mem_insert.mp hv₁_mem).resolve_left h₁
+            have h_v₁_lt_α : (insert α T).orderEmbOfFin rfl
+                ⟨i, Nat.lt_of_succ_lt h⟩ < α :=
+              insert_adjacent_old_alpha_predecessor _hα_not_mem h h₁ h₂
+            have h_v₁_le_α : (insert α T).orderEmbOfFin rfl
+                ⟨i, Nat.lt_of_succ_lt h⟩ ≤ α := le_of_lt h_v₁_lt_α
+            have h_v₁_le_β₀ : (insert α T).orderEmbOfFin rfl
+                ⟨i, Nat.lt_of_succ_lt h⟩ ≤ β₀ :=
+              le_of_lt (h_v₁_lt_α.trans hαβ₀)
+            rw [insertBeforeGoodAt_eq_old P hβ₀ hαβ₀ h₁,
+                insertBeforeGoodAt_eq_alpha P hβ₀ hαβ₀ h₂]
+            have h_har := (((P.goodAt β₀ hβ₀).restrict hαβ₀).castLevel
+              h₂.symm).head_at_α_in_restricted_validFiber hv_lt
+            have h_vf_eq : validFiber cR
+                (P.goodAt _ hv₁_T).toPairERChain.head
+                (P.goodAt _ hv₁_T).toPairERChain.type =
+              validFiber cR
+                ((Ordinal.initialSegToType hv_lt.le).toOrderEmbedding.trans
+                  (((P.goodAt β₀ hβ₀).restrict hαβ₀).castLevel
+                      h₂.symm).toPairERChain.head)
+                (fun x => (((P.goodAt β₀ hβ₀).restrict hαβ₀).castLevel
+                    h₂.symm).toPairERChain.type
+                  ((Ordinal.initialSegToType hv_lt.le).toOrderEmbedding x)) := by
+              apply validFiber_congr_prefix_branch
+              · intro y
+                rw [RelEmbedding.trans_apply,
+                    PairERGoodChain.castLevel_head h₂.symm,
+                    PairERGoodChain.restrict_head_apply,
+                    P.good_head_eq, P.good_head_eq]
+                rw [← P.toCoherentBranchPartial.prefix_restrict h_v₁_le_β₀
+                    hv₁_T hβ₀ y]
+                congr 1
+                rw [← initialSegToType_compose h_v₁_le_α hαβ₀.le]
+                congr 1
+                exact (initialSegToType_transport_eq rfl h₂ hv_lt.le
+                  h_v₁_le_α y).symm
+              · intro y
+                rw [PairERGoodChain.castLevel_type h₂.symm,
+                    PairERGoodChain.restrict_type_apply,
+                    P.good_type_eq, P.good_type_eq]
+                rw [← P.toCoherentBranchPartial.branch_restrict h_v₁_le_β₀
+                    hv₁_T hβ₀ y]
+                congr 1
+                rw [← initialSegToType_compose h_v₁_le_α hαβ₀.le]
+                congr 1
+                exact (initialSegToType_transport_eq rfl h₂ hv_lt.le
+                  h_v₁_le_α y).symm
+            rw [h_vf_eq]
+            exact h_har
+          · -- T/T: both old elements; use head_at_α on P.goodAt v₂
+            have hv₁_T : (insert α T).orderEmbOfFin rfl ⟨i, Nat.lt_of_succ_lt h⟩ ∈
+                T := (Finset.mem_insert.mp hv₁_mem).resolve_left h₁
+            have hv₂_T : (insert α T).orderEmbOfFin rfl ⟨i + 1, h⟩ ∈ T :=
+              (Finset.mem_insert.mp hv₂_mem).resolve_left h₂
+            rw [insertBeforeGoodAt_eq_old P hβ₀ hαβ₀ h₁,
+                insertBeforeGoodAt_eq_old P hβ₀ hαβ₀ h₂]
+            have h_har := (P.goodAt _ hv₂_T).head_at_α_in_restricted_validFiber hv_lt
+            have h_vf_eq : validFiber cR
+                (P.goodAt _ hv₁_T).toPairERChain.head
+                (P.goodAt _ hv₁_T).toPairERChain.type =
+              validFiber cR
+                ((Ordinal.initialSegToType hv_lt.le).toOrderEmbedding.trans
+                  (P.goodAt _ hv₂_T).toPairERChain.head)
+                (fun x => (P.goodAt _ hv₂_T).toPairERChain.type
+                  ((Ordinal.initialSegToType hv_lt.le).toOrderEmbedding x)) := by
+              apply validFiber_congr_prefix_branch
+              · intro y
+                rw [RelEmbedding.trans_apply, P.good_head_eq, P.good_head_eq]
+                exact (P.toCoherentBranchPartial.prefix_restrict hv_lt.le
+                  hv₁_T hv₂_T y).symm
+              · intro y
+                rw [P.good_type_eq, P.good_type_eq]
+                exact (P.toCoherentBranchPartial.branch_restrict hv_lt.le
+                  hv₁_T hv₂_T y).symm
+            rw [h_vf_eq]
+            exact h_har
+        }
+  goodAt := fun i => insertBeforeGoodAt P hβ₀ hαβ₀ i
+  good_head := fun _ _ => rfl
+  good_type := fun _ _ => rfl
+
+/-- **`insertBeforeGoodApprox_goodAt_old_eq`**: at any old position
+γ ∈ T (so γ ≠ α), the inserted Good chain `Q.goodAt γ` agrees pointwise
+with `P.goodAt γ` for both head and type. Proved via `generalize+subst`
+on `γ' := orderEmbOfFin (Q.indexOf γ)` (= γ via `finsetIndexOf_orderEmb`)
+followed by proof irrelevance on the membership and the residual cast. -/
+private lemma insertBeforeGoodApprox_goodAt_old_head
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {T : Finset Ordinal.{0}}
+    (P : CoherentGoodBranchPartial cR T)
+    {α β₀ : Ordinal.{0}}
+    (hα_lt : α < Ordinal.omega.{0} 1) (hα_not_mem : α ∉ T)
+    (hβ₀ : β₀ ∈ T) (hαβ₀ : α < β₀)
+    (hmin : ∀ γ ∈ T, α < γ → β₀ ≤ γ)
+    (γ : Ordinal.{0}) (hγ : γ ∈ T) (x : γ.ToType) :
+    letI Q : CoherentGoodBranchPartial cR (insert α T) :=
+      { toGoodApprox := insertBeforeGoodApprox P hα_lt hα_not_mem hβ₀ hαβ₀ hmin
+        level_eq := fun _ => rfl }
+    (Q.goodAt γ (Finset.mem_insert_of_mem hγ)).toPairERChain.head x =
+      (P.goodAt γ hγ).toPairERChain.head x := by
+  classical
+  let Q : CoherentGoodBranchPartial cR (insert α T) :=
+    { toGoodApprox := insertBeforeGoodApprox P hα_lt hα_not_mem hβ₀ hαβ₀ hmin
+      level_eq := fun _ => rfl }
+  have h_ne : (insert α T).orderEmbOfFin rfl
+      (Q.toCoherentBranchPartial.indexOf γ (Finset.mem_insert_of_mem hγ)) ≠ α := by
+    show (insert α T).orderEmbOfFin rfl
+      (finsetIndexOf (insert α T) γ (Finset.mem_insert_of_mem hγ)) ≠ α
+    rw [finsetIndexOf_orderEmb]
+    exact fun h => hα_not_mem (h ▸ hγ)
+  have h_chain_eq :
+      Q.toGoodApprox.goodAt (Q.toCoherentBranchPartial.indexOf γ
+          (Finset.mem_insert_of_mem hγ)) =
+        P.goodAt _ ((Finset.mem_insert.mp
+          ((insert α T).orderEmbOfFin_mem rfl _)).resolve_left h_ne) :=
+    insertBeforeGoodAt_eq_old P hβ₀ hαβ₀ h_ne
+  -- Unfold Q.goodAt
+  show ((Q.toGoodApprox.goodAt (Q.toCoherentBranchPartial.indexOf γ
+      (Finset.mem_insert_of_mem hγ))).castLevel _).toPairERChain.head x = _
+  rw [h_chain_eq]
+  rw [PairERGoodChain.castLevel_head]
+  -- Goal: (P.goodAt γ' hv_T).head (h.symm ▸ x) = (P.goodAt γ hγ).head x
+  -- where γ' = (insert α T).orderEmbOfFin rfl (Q.indexOf γ ...) = γ.
+  -- Use goodAt_head_apply_eq_of_eq with h : γ' = γ to transport.
+  have h_eq : (insert α T).orderEmbOfFin rfl
+      (Q.toCoherentBranchPartial.indexOf γ (Finset.mem_insert_of_mem hγ)) = γ :=
+    finsetIndexOf_orderEmb _ _ _
+  refine (P.goodAt_head_apply_eq_of_eq (hα := _) (hβ := hγ) h_eq _).trans ?_
+  -- Goal: (P.goodAt γ hγ).head (h_eq ▸ (h.symm ▸ x)) = (P.goodAt γ hγ).head x
+  congr 1
+  -- Goal: h_eq ▸ (h.symm ▸ x) = x  -- by Eq.rec composition
+  exact eq_of_heq (HEq.trans (eqRec_heq h_eq _) (eqRec_heq _ x))
+
+/-- **`insertBeforeGoodApprox_goodAt_old_type`**: parallel for type. -/
+private lemma insertBeforeGoodApprox_goodAt_old_type
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {T : Finset Ordinal.{0}}
+    (P : CoherentGoodBranchPartial cR T)
+    {α β₀ : Ordinal.{0}}
+    (hα_lt : α < Ordinal.omega.{0} 1) (hα_not_mem : α ∉ T)
+    (hβ₀ : β₀ ∈ T) (hαβ₀ : α < β₀)
+    (hmin : ∀ γ ∈ T, α < γ → β₀ ≤ γ)
+    (γ : Ordinal.{0}) (hγ : γ ∈ T) (x : γ.ToType) :
+    letI Q : CoherentGoodBranchPartial cR (insert α T) :=
+      { toGoodApprox := insertBeforeGoodApprox P hα_lt hα_not_mem hβ₀ hαβ₀ hmin
+        level_eq := fun _ => rfl }
+    (Q.goodAt γ (Finset.mem_insert_of_mem hγ)).toPairERChain.type x =
+      (P.goodAt γ hγ).toPairERChain.type x := by
+  classical
+  let Q : CoherentGoodBranchPartial cR (insert α T) :=
+    { toGoodApprox := insertBeforeGoodApprox P hα_lt hα_not_mem hβ₀ hαβ₀ hmin
+      level_eq := fun _ => rfl }
+  have h_ne : (insert α T).orderEmbOfFin rfl
+      (Q.toCoherentBranchPartial.indexOf γ (Finset.mem_insert_of_mem hγ)) ≠ α := by
+    show (insert α T).orderEmbOfFin rfl
+      (finsetIndexOf (insert α T) γ (Finset.mem_insert_of_mem hγ)) ≠ α
+    rw [finsetIndexOf_orderEmb]
+    exact fun h => hα_not_mem (h ▸ hγ)
+  have h_chain_eq :
+      Q.toGoodApprox.goodAt (Q.toCoherentBranchPartial.indexOf γ
+          (Finset.mem_insert_of_mem hγ)) =
+        P.goodAt _ ((Finset.mem_insert.mp
+          ((insert α T).orderEmbOfFin_mem rfl _)).resolve_left h_ne) :=
+    insertBeforeGoodAt_eq_old P hβ₀ hαβ₀ h_ne
+  show ((Q.toGoodApprox.goodAt (Q.toCoherentBranchPartial.indexOf γ
+      (Finset.mem_insert_of_mem hγ))).castLevel _).toPairERChain.type x = _
+  rw [h_chain_eq]
+  rw [PairERGoodChain.castLevel_type]
+  have h_eq : (insert α T).orderEmbOfFin rfl
+      (Q.toCoherentBranchPartial.indexOf γ (Finset.mem_insert_of_mem hγ)) = γ :=
+    finsetIndexOf_orderEmb _ _ _
+  refine (P.goodAt_type_apply_eq_of_eq (hα := _) (hβ := hγ) h_eq _).trans ?_
+  congr 1
+  exact eq_of_heq (HEq.trans (eqRec_heq h_eq _) (eqRec_heq _ x))
+
+/-- **`coherentGoodBranchPartial_insert_before`**: fixed-β₀ interior
+insertion at the Good layer. Wraps `insertBeforeGoodApprox` into a
+`CoherentGoodBranchPartial cR (insert α T)`. Fieldwise compat reduces
+to the two pointwise helpers `insertBeforeGoodApprox_goodAt_old_head`
+and `_type`, both via `restrict_prefixAt`/`restrict_branch`,
+`good_head_eq`/`good_type_eq`, and `RelEmbedding.ext`/`funext`. -/
+theorem coherentGoodBranchPartial_insert_before
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {T : Finset Ordinal.{0}}
+    (P : CoherentGoodBranchPartial cR T)
+    {α β₀ : Ordinal.{0}}
+    (hα_lt : α < Ordinal.omega.{0} 1)
+    (hα_not_mem : α ∉ T)
+    (hβ₀ : β₀ ∈ T)
+    (hαβ₀ : α < β₀)
+    (hmin : ∀ γ ∈ T, α < γ → β₀ ≤ γ) :
+    ∃ Q : CoherentGoodBranchPartial cR (insert α T),
+      cbpFieldwiseCompat
+        (Q.toCoherentBranchPartial.restrict (Finset.subset_insert α T))
+        P.toCoherentBranchPartial := by
+  letI Q : CoherentGoodBranchPartial cR (insert α T) :=
+    { toGoodApprox := insertBeforeGoodApprox P hα_lt hα_not_mem hβ₀ hαβ₀ hmin
+      level_eq := fun _ => rfl }
+  refine ⟨Q, ?_, ?_⟩
+  · intro γ hγ
+    have hγ_ins : γ ∈ insert α T := Finset.mem_insert_of_mem hγ
+    rw [CoherentBranchPartial.restrict_prefixAt]
+    apply RelEmbedding.ext
+    intro x
+    rw [← Q.good_head_eq γ hγ_ins x, ← P.good_head_eq γ hγ x]
+    exact insertBeforeGoodApprox_goodAt_old_head P hα_lt hα_not_mem
+      hβ₀ hαβ₀ hmin γ hγ x
+  · intro γ hγ
+    have hγ_ins : γ ∈ insert α T := Finset.mem_insert_of_mem hγ
+    rw [CoherentBranchPartial.restrict_branch]
+    funext x
+    rw [← Q.good_type_eq γ hγ_ins x, ← P.good_type_eq γ hγ x]
+    exact insertBeforeGoodApprox_goodAt_old_type P hα_lt hα_not_mem
+      hβ₀ hαβ₀ hmin γ hγ x
+
+/-- **`insertPrescribedGoodAt`**: prescribed-chain analog of
+`insertBeforeGoodAt`. At the new level `α`, dispatches to the
+**prescribed** `Pα.goodAt α` (rather than restricting `P.goodAt β₀` to
+`α`). At old levels `γ ≠ α` in `insert α T`, dispatches to
+`P.goodAt γ`.
+
+**Why this is needed.** The corrected `insert_prescribed_new_compatible`
+requires the new level's Good chain to be the prescribed `Pα`'s
+chain — not a derived/restricted chain from `P`. So
+`insertBeforeGoodAt` (which derives from `P`'s data) is structurally
+wrong for prescribed insertion; this primitive replaces it.
+
+**No `β₀` parameter needed.** Unlike `insertBeforeGoodAt`, which uses
+the minimum `β₀ ∈ T` above `α` to derive the chain at `α`,
+`insertPrescribedGoodAt` takes the chain at `α` directly from `Pα`.
+
+**Dispatch sub-cases.**
+* `(insert α T).orderEmbOfFin rfl i = α`: take
+  `(Pα.goodAt α (mem_singleton)).castLevel`.
+* otherwise (the level is some `γ ∈ T`): take `P.goodAt γ`. -/
+noncomputable def insertPrescribedGoodAt
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {T : Finset Ordinal.{0}}
+    (P : CoherentGoodBranchPartial cR T)
+    {α : Ordinal.{0}}
+    (Pα : CoherentGoodBranchPartial cR ({α} : Finset Ordinal.{0}))
+    (i : Fin (insert α T).card) :
+    PairERGoodChain cR ((insert α T).orderEmbOfFin rfl i) :=
+  letI : Decidable ((insert α T).orderEmbOfFin rfl i = α) := Classical.dec _
+  if h_eq : (insert α T).orderEmbOfFin rfl i = α then
+    (Pα.goodAt α (Finset.mem_singleton.mpr rfl)).castLevel h_eq.symm
+  else
+    P.goodAt _
+      ((Finset.mem_insert.mp ((insert α T).orderEmbOfFin_mem rfl i)).resolve_left h_eq)
+
+/-- **`insertPrescribedGoodAt_eq_alpha`**: at the α-level position,
+`insertPrescribedGoodAt` returns `Pα.goodAt α` cast to the matching
+level. -/
+theorem insertPrescribedGoodAt_eq_alpha
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {T : Finset Ordinal.{0}}
+    (P : CoherentGoodBranchPartial cR T) {α : Ordinal.{0}}
+    (Pα : CoherentGoodBranchPartial cR ({α} : Finset Ordinal.{0}))
+    {i : Fin (insert α T).card}
+    (h_eq : (insert α T).orderEmbOfFin rfl i = α) :
+    insertPrescribedGoodAt P Pα i =
+      (Pα.goodAt α (Finset.mem_singleton.mpr rfl)).castLevel h_eq.symm := by
+  classical
+  unfold insertPrescribedGoodAt
+  rw [dif_pos h_eq]
+
+/-- **`insertPrescribedGoodAt_eq_old`**: at non-α positions,
+`insertPrescribedGoodAt` returns `P.goodAt γ hγ` directly. -/
+theorem insertPrescribedGoodAt_eq_old
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {T : Finset Ordinal.{0}}
+    (P : CoherentGoodBranchPartial cR T) {α : Ordinal.{0}}
+    (Pα : CoherentGoodBranchPartial cR ({α} : Finset Ordinal.{0}))
+    {i : Fin (insert α T).card}
+    (h_neq : (insert α T).orderEmbOfFin rfl i ≠ α) :
+    insertPrescribedGoodAt P Pα i =
+      P.goodAt _
+        ((Finset.mem_insert.mp ((insert α T).orderEmbOfFin_mem rfl i)).resolve_left h_neq) := by
+  classical
+  unfold insertPrescribedGoodAt
+  rw [dif_neg h_neq]
+
+/-- **`insertPrescribedGoodApprox`**: the `CoherentGoodBranchApprox` at
+length `(insert α T).card` assembled from `insertPrescribedGoodAt`.
+Parallel to `insertBeforeGoodApprox` but **does not need a `β₀`** — it
+uses the prescribed `Pα` directly at the α-level.
+
+**Inputs.** `P : CGBP cR T`, `Pα : CGBP cR {α}` (the prescribed chain
+at α), `hα_lt : α < ω₁`, `hα_not_mem : α ∉ T`, and a
+`PrescribedAmbientCompat α P Pα` hypothesis (the strong compat,
+defined alongside `insert_prescribed_new_compatible`).
+
+**Why the compat hypothesis is needed at the approximation layer.**
+The three approximation fields (`prefix_restrict`, `branch_restrict`,
+`top_in_validFiber`) require relating `Pα`'s data at the α-level to
+`P`'s data at neighboring levels in `T`. The `PrescribedAmbientCompat`
+fields (`prefix_below`, `branch_below`) supply exactly those
+relations.
+
+**Status.** Currently a skeleton with `sorry` on the three field
+proofs. The proofs mirror `insertBeforeGoodApprox`'s 4-case dispatch
+(α/α, α/T, T/α, T/T) but with `hamb.prefix_below` / `hamb.branch_below`
+replacing the β₀-anchored equalities that `insertBeforeGoodApprox`
+derives from `P` alone. The closure follows the same pattern as the
+existing approximation — no new mathematical content, just careful
+bookkeeping. -/
+noncomputable def insertPrescribedGoodApprox
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {T : Finset Ordinal.{0}}
+    (P : CoherentGoodBranchPartial cR T)
+    {α : Ordinal.{0}}
+    (hα_lt : α < Ordinal.omega.{0} 1)
+    (_hα_not_mem : α ∉ T)
+    (Pα : CoherentGoodBranchPartial cR ({α} : Finset Ordinal.{0}))
+    (_h_prefix_below : ∀ β (hβ_T : β ∈ T) (hβ_lt_α : β < α),
+      haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      ∀ (x : β.ToType),
+        P.toCoherentBranchPartial.prefixAt β hβ_T x =
+          Pα.toCoherentBranchPartial.prefixAt α (Finset.mem_singleton.mpr rfl)
+            ((Ordinal.initialSegToType hβ_lt_α.le).toOrderEmbedding x))
+    (_h_branch_below : ∀ β (hβ_T : β ∈ T) (hβ_lt_α : β < α),
+      haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      ∀ (x : β.ToType),
+        P.toCoherentBranchPartial.branch β hβ_T x =
+          Pα.toCoherentBranchPartial.branch α (Finset.mem_singleton.mpr rfl)
+            ((Ordinal.initialSegToType hβ_lt_α.le).toOrderEmbedding x))
+    (_h_prefix_above : ∀ β (hβ_T : β ∈ T) (hα_lt_β : α < β),
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+      ∀ (x : α.ToType),
+        Pα.toCoherentBranchPartial.prefixAt α (Finset.mem_singleton.mpr rfl) x =
+          P.toCoherentBranchPartial.prefixAt β hβ_T
+            ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x))
+    (_h_branch_above : ∀ β (hβ_T : β ∈ T) (hα_lt_β : α < β),
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+      ∀ (x : α.ToType),
+        Pα.toCoherentBranchPartial.branch α (Finset.mem_singleton.mpr rfl) x =
+          P.toCoherentBranchPartial.branch β hβ_T
+            ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x)) :
+    CoherentGoodBranchApprox cR (insert α T).card where
+  toApprox :=
+    { level := fun i => (insert α T).orderEmbOfFin rfl i
+      level_lt_omega1 := by
+        intro i
+        have hv : (insert α T).orderEmbOfFin rfl i ∈ insert α T :=
+          (insert α T).orderEmbOfFin_mem rfl i
+        rcases Finset.mem_insert.mp hv with h_eq | h_T
+        · rw [h_eq]; exact hα_lt
+        · have h := P.toGoodApprox.toApprox.level_lt_omega1
+            (finsetIndexOf T _ h_T)
+          rw [P.level_eq, finsetIndexOf_orderEmb] at h
+          exact h
+      level_strictMono := ((insert α T).orderEmbOfFin rfl).strictMono
+      prefixAt := fun i => (insertPrescribedGoodAt P Pα i).toPairERChain.head
+      branchAt := fun i => (insertPrescribedGoodAt P Pα i).toPairERChain.type
+      prefix_restrict := by
+        intro k₁ k₂ hk x
+        have hv₁_mem : (insert α T).orderEmbOfFin rfl k₁ ∈ insert α T :=
+          (insert α T).orderEmbOfFin_mem rfl k₁
+        have hv₂_mem : (insert α T).orderEmbOfFin rfl k₂ ∈ insert α T :=
+          (insert α T).orderEmbOfFin_mem rfl k₂
+        have hv_le : (insert α T).orderEmbOfFin rfl k₁ ≤
+            (insert α T).orderEmbOfFin rfl k₂ :=
+          ((insert α T).orderEmbOfFin rfl).monotone hk
+        by_cases h₁ : (insert α T).orderEmbOfFin rfl k₁ = α
+        · by_cases h₂ : (insert α T).orderEmbOfFin rfl k₂ = α
+          · -- α/α: k₁ = k₂.
+            have hk_eq : k₁ = k₂ :=
+              ((insert α T).orderEmbOfFin rfl).injective (h₁.trans h₂.symm)
+            subst hk_eq
+            rw [insertPrescribedGoodAt_eq_alpha P Pα h₁]
+            haveI : IsWellOrder ((insert α T).orderEmbOfFin rfl k₁).ToType
+              (· < ·) := isWellOrder_lt
+            congr 1
+            rw [InitialSeg.toOrderEmbedding_apply]
+            exact ((Ordinal.initialSegToType
+                (((insert α T).orderEmbOfFin rfl).monotone hk)).eq
+              (InitialSeg.refl _) x).trans (InitialSeg.refl_apply x)
+          · -- α/T case (v₁ = α, v₂ ∈ T, α < v₂)
+            have hv₂_T : (insert α T).orderEmbOfFin rfl k₂ ∈ T :=
+              (Finset.mem_insert.mp hv₂_mem).resolve_left h₂
+            have h_α_lt_v₂ : α < (insert α T).orderEmbOfFin rfl k₂ := by
+              rcases lt_or_eq_of_le hv_le with hlt | heq
+              · calc α = (insert α T).orderEmbOfFin rfl k₁ := h₁.symm
+                  _ < (insert α T).orderEmbOfFin rfl k₂ := hlt
+              · exact absurd (heq ▸ h₁ : (insert α T).orderEmbOfFin rfl k₂ = α) h₂
+            have h_α_le_v₂ : α ≤ (insert α T).orderEmbOfFin rfl k₂ :=
+              le_of_lt h_α_lt_v₂
+            rw [insertPrescribedGoodAt_eq_old P Pα h₂,
+                insertPrescribedGoodAt_eq_alpha P Pα h₁,
+                PairERGoodChain.castLevel_head h₁.symm,
+                P.good_head_eq, Pα.good_head_eq]
+            rw [_h_prefix_above _ hv₂_T h_α_lt_v₂ (h₁ ▸ x)]
+            congr 1
+            exact initialSegToType_transport_eq h₁ rfl
+              (((insert α T).orderEmbOfFin rfl).monotone hk) h_α_le_v₂ x
+        · by_cases h₂ : (insert α T).orderEmbOfFin rfl k₂ = α
+          · -- T/α case (v₁ ∈ T, v₂ = α, v₁ < α)
+            have hv₁_T : (insert α T).orderEmbOfFin rfl k₁ ∈ T :=
+              (Finset.mem_insert.mp hv₁_mem).resolve_left h₁
+            have h_v₁_le_α : (insert α T).orderEmbOfFin rfl k₁ ≤ α :=
+              calc (insert α T).orderEmbOfFin rfl k₁
+                  ≤ (insert α T).orderEmbOfFin rfl k₂ := hv_le
+                _ = α := h₂
+            have h_v₁_lt_α : (insert α T).orderEmbOfFin rfl k₁ < α := by
+              rcases lt_or_eq_of_le h_v₁_le_α with hlt | heq
+              · exact hlt
+              · exact absurd (heq ▸ hv₁_T : α ∈ T) _hα_not_mem
+            rw [insertPrescribedGoodAt_eq_old P Pα h₁,
+                insertPrescribedGoodAt_eq_alpha P Pα h₂,
+                PairERGoodChain.castLevel_head h₂.symm,
+                P.good_head_eq, Pα.good_head_eq]
+            rw [_h_prefix_below _ hv₁_T h_v₁_lt_α x]
+            congr 1
+            exact initialSegToType_transport_eq rfl h₂
+              (((insert α T).orderEmbOfFin rfl).monotone hk) h_v₁_lt_α.le x
+          · -- T/T: both in T, use P.prefix_restrict.
+            have hv₁_T : (insert α T).orderEmbOfFin rfl k₁ ∈ T :=
+              (Finset.mem_insert.mp hv₁_mem).resolve_left h₁
+            have hv₂_T : (insert α T).orderEmbOfFin rfl k₂ ∈ T :=
+              (Finset.mem_insert.mp hv₂_mem).resolve_left h₂
+            rw [insertPrescribedGoodAt_eq_old P Pα h₁,
+                insertPrescribedGoodAt_eq_old P Pα h₂]
+            rw [P.good_head_eq, P.good_head_eq]
+            exact P.toCoherentBranchPartial.prefix_restrict hv_le hv₁_T hv₂_T x
+      branch_restrict := by
+        intro k₁ k₂ hk x
+        have hv₁_mem : (insert α T).orderEmbOfFin rfl k₁ ∈ insert α T :=
+          (insert α T).orderEmbOfFin_mem rfl k₁
+        have hv₂_mem : (insert α T).orderEmbOfFin rfl k₂ ∈ insert α T :=
+          (insert α T).orderEmbOfFin_mem rfl k₂
+        have hv_le : (insert α T).orderEmbOfFin rfl k₁ ≤
+            (insert α T).orderEmbOfFin rfl k₂ :=
+          ((insert α T).orderEmbOfFin rfl).monotone hk
+        by_cases h₁ : (insert α T).orderEmbOfFin rfl k₁ = α
+        · by_cases h₂ : (insert α T).orderEmbOfFin rfl k₂ = α
+          · -- α/α
+            have hk_eq : k₁ = k₂ :=
+              ((insert α T).orderEmbOfFin rfl).injective (h₁.trans h₂.symm)
+            subst hk_eq
+            rw [insertPrescribedGoodAt_eq_alpha P Pα h₁]
+            haveI : IsWellOrder ((insert α T).orderEmbOfFin rfl k₁).ToType
+              (· < ·) := isWellOrder_lt
+            congr 1
+            rw [InitialSeg.toOrderEmbedding_apply]
+            exact ((Ordinal.initialSegToType
+                (((insert α T).orderEmbOfFin rfl).monotone hk)).eq
+              (InitialSeg.refl _) x).trans (InitialSeg.refl_apply x)
+          · -- α/T
+            have hv₂_T : (insert α T).orderEmbOfFin rfl k₂ ∈ T :=
+              (Finset.mem_insert.mp hv₂_mem).resolve_left h₂
+            have h_α_lt_v₂ : α < (insert α T).orderEmbOfFin rfl k₂ := by
+              rcases lt_or_eq_of_le hv_le with hlt | heq
+              · calc α = (insert α T).orderEmbOfFin rfl k₁ := h₁.symm
+                  _ < (insert α T).orderEmbOfFin rfl k₂ := hlt
+              · exact absurd (heq ▸ h₁ : (insert α T).orderEmbOfFin rfl k₂ = α) h₂
+            have h_α_le_v₂ : α ≤ (insert α T).orderEmbOfFin rfl k₂ :=
+              le_of_lt h_α_lt_v₂
+            rw [insertPrescribedGoodAt_eq_old P Pα h₂,
+                insertPrescribedGoodAt_eq_alpha P Pα h₁,
+                PairERGoodChain.castLevel_type h₁.symm,
+                P.good_type_eq, Pα.good_type_eq]
+            rw [_h_branch_above _ hv₂_T h_α_lt_v₂ (h₁ ▸ x)]
+            congr 1
+            exact initialSegToType_transport_eq h₁ rfl
+              (((insert α T).orderEmbOfFin rfl).monotone hk) h_α_le_v₂ x
+        · by_cases h₂ : (insert α T).orderEmbOfFin rfl k₂ = α
+          · -- T/α
+            have hv₁_T : (insert α T).orderEmbOfFin rfl k₁ ∈ T :=
+              (Finset.mem_insert.mp hv₁_mem).resolve_left h₁
+            have h_v₁_le_α : (insert α T).orderEmbOfFin rfl k₁ ≤ α :=
+              calc (insert α T).orderEmbOfFin rfl k₁
+                  ≤ (insert α T).orderEmbOfFin rfl k₂ := hv_le
+                _ = α := h₂
+            have h_v₁_lt_α : (insert α T).orderEmbOfFin rfl k₁ < α := by
+              rcases lt_or_eq_of_le h_v₁_le_α with hlt | heq
+              · exact hlt
+              · exact absurd (heq ▸ hv₁_T : α ∈ T) _hα_not_mem
+            rw [insertPrescribedGoodAt_eq_old P Pα h₁,
+                insertPrescribedGoodAt_eq_alpha P Pα h₂,
+                PairERGoodChain.castLevel_type h₂.symm,
+                P.good_type_eq, Pα.good_type_eq]
+            rw [_h_branch_below _ hv₁_T h_v₁_lt_α x]
+            congr 1
+            exact initialSegToType_transport_eq rfl h₂
+              (((insert α T).orderEmbOfFin rfl).monotone hk) h_v₁_lt_α.le x
+          · -- T/T
+            have hv₁_T : (insert α T).orderEmbOfFin rfl k₁ ∈ T :=
+              (Finset.mem_insert.mp hv₁_mem).resolve_left h₁
+            have hv₂_T : (insert α T).orderEmbOfFin rfl k₂ ∈ T :=
+              (Finset.mem_insert.mp hv₂_mem).resolve_left h₂
+            rw [insertPrescribedGoodAt_eq_old P Pα h₁,
+                insertPrescribedGoodAt_eq_old P Pα h₂]
+            rw [P.good_type_eq, P.good_type_eq]
+            exact P.toCoherentBranchPartial.branch_restrict hv_le hv₁_T hv₂_T x
+      large := fun i => (insertPrescribedGoodAt P Pα i).toPairERChain.large
+      top_in_validFiber := by
+        intro i h
+        have hv₁_mem : (insert α T).orderEmbOfFin rfl ⟨i, Nat.lt_of_succ_lt h⟩ ∈
+            insert α T :=
+          (insert α T).orderEmbOfFin_mem rfl _
+        have hv₂_mem : (insert α T).orderEmbOfFin rfl ⟨i + 1, h⟩ ∈ insert α T :=
+          (insert α T).orderEmbOfFin_mem rfl _
+        have hv_lt : (insert α T).orderEmbOfFin rfl ⟨i, Nat.lt_of_succ_lt h⟩ <
+            (insert α T).orderEmbOfFin rfl ⟨i + 1, h⟩ :=
+          ((insert α T).orderEmbOfFin rfl).strictMono
+            (show (⟨i, Nat.lt_of_succ_lt h⟩ : Fin (insert α T).card) <
+              ⟨i + 1, h⟩ from Nat.lt_succ_self i)
+        by_cases h₁ : (insert α T).orderEmbOfFin rfl ⟨i, Nat.lt_of_succ_lt h⟩ = α
+        · -- α/T (v₁ = α, v₂ ∈ T)
+          have h₂ : (insert α T).orderEmbOfFin rfl ⟨i + 1, h⟩ ≠ α := fun heq =>
+            (ne_of_lt hv_lt) (h₁.trans heq.symm)
+          have hv₂_T : (insert α T).orderEmbOfFin rfl ⟨i + 1, h⟩ ∈ T :=
+            (Finset.mem_insert.mp hv₂_mem).resolve_left h₂
+          have h_α_lt_v₂ : α < (insert α T).orderEmbOfFin rfl ⟨i + 1, h⟩ :=
+            calc α = (insert α T).orderEmbOfFin rfl ⟨i, Nat.lt_of_succ_lt h⟩ :=
+                  h₁.symm
+              _ < (insert α T).orderEmbOfFin rfl ⟨i + 1, h⟩ := hv_lt
+          rw [insertPrescribedGoodAt_eq_old P Pα h₂,
+              insertPrescribedGoodAt_eq_alpha P Pα h₁]
+          have h_har := (P.goodAt _ hv₂_T).head_at_α_in_restricted_validFiber hv_lt
+          have h_vf_eq : validFiber cR
+              (((Pα.goodAt α (Finset.mem_singleton.mpr rfl)).castLevel
+                  h₁.symm).toPairERChain.head)
+              (((Pα.goodAt α (Finset.mem_singleton.mpr rfl)).castLevel
+                  h₁.symm).toPairERChain.type) =
+            validFiber cR
+              ((Ordinal.initialSegToType hv_lt.le).toOrderEmbedding.trans
+                (P.goodAt _ hv₂_T).toPairERChain.head)
+              (fun x => (P.goodAt _ hv₂_T).toPairERChain.type
+                ((Ordinal.initialSegToType hv_lt.le).toOrderEmbedding x)) := by
+            apply validFiber_congr_prefix_branch
+            · intro y
+              rw [PairERGoodChain.castLevel_head h₁.symm,
+                  RelEmbedding.trans_apply, Pα.good_head_eq, P.good_head_eq,
+                  _h_prefix_above _ hv₂_T h_α_lt_v₂ (h₁ ▸ y)]
+              congr 1
+              exact (initialSegToType_transport_eq h₁ rfl hv_lt.le
+                (le_of_lt h_α_lt_v₂) y).symm
+            · intro y
+              rw [PairERGoodChain.castLevel_type h₁.symm,
+                  Pα.good_type_eq, P.good_type_eq,
+                  _h_branch_above _ hv₂_T h_α_lt_v₂ (h₁ ▸ y)]
+              congr 1
+              exact (initialSegToType_transport_eq h₁ rfl hv_lt.le
+                (le_of_lt h_α_lt_v₂) y).symm
+          rw [h_vf_eq]
+          exact h_har
+        · by_cases h₂ : (insert α T).orderEmbOfFin rfl ⟨i + 1, h⟩ = α
+          · -- T/α (v₁ ∈ T, v₂ = α)
+            have hv₁_T : (insert α T).orderEmbOfFin rfl ⟨i, Nat.lt_of_succ_lt h⟩ ∈
+                T := (Finset.mem_insert.mp hv₁_mem).resolve_left h₁
+            have h_v₁_lt_α : (insert α T).orderEmbOfFin rfl
+                ⟨i, Nat.lt_of_succ_lt h⟩ < α := lt_of_lt_of_eq hv_lt h₂
+            rw [insertPrescribedGoodAt_eq_old P Pα h₁,
+                insertPrescribedGoodAt_eq_alpha P Pα h₂]
+            have h_har :=
+              ((Pα.goodAt α (Finset.mem_singleton.mpr rfl)).castLevel
+                h₂.symm).head_at_α_in_restricted_validFiber hv_lt
+            have h_vf_eq : validFiber cR
+                (P.goodAt _ hv₁_T).toPairERChain.head
+                (P.goodAt _ hv₁_T).toPairERChain.type =
+              validFiber cR
+                ((Ordinal.initialSegToType hv_lt.le).toOrderEmbedding.trans
+                  (((Pα.goodAt α (Finset.mem_singleton.mpr rfl)).castLevel
+                      h₂.symm).toPairERChain.head))
+                (fun x => (((Pα.goodAt α (Finset.mem_singleton.mpr rfl)).castLevel
+                    h₂.symm).toPairERChain.type)
+                  ((Ordinal.initialSegToType hv_lt.le).toOrderEmbedding x)) := by
+              apply validFiber_congr_prefix_branch
+              · intro y
+                rw [RelEmbedding.trans_apply,
+                    PairERGoodChain.castLevel_head h₂.symm,
+                    P.good_head_eq, Pα.good_head_eq,
+                    _h_prefix_below _ hv₁_T h_v₁_lt_α y]
+                congr 1
+                exact (initialSegToType_transport_eq rfl h₂ hv_lt.le
+                  h_v₁_lt_α.le y).symm
+              · intro y
+                rw [PairERGoodChain.castLevel_type h₂.symm,
+                    P.good_type_eq, Pα.good_type_eq,
+                    _h_branch_below _ hv₁_T h_v₁_lt_α y]
+                congr 1
+                exact (initialSegToType_transport_eq rfl h₂ hv_lt.le
+                  h_v₁_lt_α.le y).symm
+            rw [h_vf_eq]
+            exact h_har
+          · -- T/T
+            have hv₁_T : (insert α T).orderEmbOfFin rfl ⟨i, Nat.lt_of_succ_lt h⟩ ∈
+                T := (Finset.mem_insert.mp hv₁_mem).resolve_left h₁
+            have hv₂_T : (insert α T).orderEmbOfFin rfl ⟨i + 1, h⟩ ∈ T :=
+              (Finset.mem_insert.mp hv₂_mem).resolve_left h₂
+            rw [insertPrescribedGoodAt_eq_old P Pα h₁,
+                insertPrescribedGoodAt_eq_old P Pα h₂]
+            have h_har := (P.goodAt _ hv₂_T).head_at_α_in_restricted_validFiber hv_lt
+            have h_vf_eq : validFiber cR
+                (P.goodAt _ hv₁_T).toPairERChain.head
+                (P.goodAt _ hv₁_T).toPairERChain.type =
+              validFiber cR
+                ((Ordinal.initialSegToType hv_lt.le).toOrderEmbedding.trans
+                  (P.goodAt _ hv₂_T).toPairERChain.head)
+                (fun x => (P.goodAt _ hv₂_T).toPairERChain.type
+                  ((Ordinal.initialSegToType hv_lt.le).toOrderEmbedding x)) := by
+              apply validFiber_congr_prefix_branch
+              · intro y
+                rw [RelEmbedding.trans_apply, P.good_head_eq, P.good_head_eq]
+                exact (P.toCoherentBranchPartial.prefix_restrict hv_lt.le
+                  hv₁_T hv₂_T y).symm
+              · intro y
+                rw [P.good_type_eq, P.good_type_eq]
+                exact (P.toCoherentBranchPartial.branch_restrict hv_lt.le
+                  hv₁_T hv₂_T y).symm
+            rw [h_vf_eq]
+            exact h_har }
+  goodAt := insertPrescribedGoodAt P Pα
+  good_head := fun _ _ => rfl
+  good_type := fun _ _ => rfl
+
+/-- **`insertPrescribedGoodApprox_goodAt_old_head`**: for γ ∈ T, the
+Good chain head at γ in the inserted CGBP matches `P.goodAt γ`'s head.
+Mirror of `insertBeforeGoodApprox_goodAt_old_head` using
+`insertPrescribedGoodAt_eq_old` + `goodAt_head_apply_eq_of_eq`. -/
+private lemma insertPrescribedGoodApprox_goodAt_old_head
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {T : Finset Ordinal.{0}}
+    (P : CoherentGoodBranchPartial cR T)
+    {α : Ordinal.{0}}
+    (hα_lt : α < Ordinal.omega.{0} 1) (hα_not_mem : α ∉ T)
+    (Pα : CoherentGoodBranchPartial cR ({α} : Finset Ordinal.{0}))
+    (h_prefix_below : ∀ β (hβ_T : β ∈ T) (hβ_lt_α : β < α),
+      haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      ∀ (x : β.ToType),
+        P.toCoherentBranchPartial.prefixAt β hβ_T x =
+          Pα.toCoherentBranchPartial.prefixAt α (Finset.mem_singleton.mpr rfl)
+            ((Ordinal.initialSegToType hβ_lt_α.le).toOrderEmbedding x))
+    (h_branch_below : ∀ β (hβ_T : β ∈ T) (hβ_lt_α : β < α),
+      haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      ∀ (x : β.ToType),
+        P.toCoherentBranchPartial.branch β hβ_T x =
+          Pα.toCoherentBranchPartial.branch α (Finset.mem_singleton.mpr rfl)
+            ((Ordinal.initialSegToType hβ_lt_α.le).toOrderEmbedding x))
+    (h_prefix_above : ∀ β (hβ_T : β ∈ T) (hα_lt_β : α < β),
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+      ∀ (x : α.ToType),
+        Pα.toCoherentBranchPartial.prefixAt α (Finset.mem_singleton.mpr rfl) x =
+          P.toCoherentBranchPartial.prefixAt β hβ_T
+            ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x))
+    (h_branch_above : ∀ β (hβ_T : β ∈ T) (hα_lt_β : α < β),
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+      ∀ (x : α.ToType),
+        Pα.toCoherentBranchPartial.branch α (Finset.mem_singleton.mpr rfl) x =
+          P.toCoherentBranchPartial.branch β hβ_T
+            ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x))
+    (γ : Ordinal.{0}) (hγ : γ ∈ T) (x : γ.ToType) :
+    letI Q : CoherentGoodBranchPartial cR (insert α T) :=
+      { toGoodApprox := insertPrescribedGoodApprox P hα_lt hα_not_mem Pα
+          h_prefix_below h_branch_below h_prefix_above h_branch_above
+        level_eq := fun _ => rfl }
+    (Q.goodAt γ (Finset.mem_insert_of_mem hγ)).toPairERChain.head x =
+      (P.goodAt γ hγ).toPairERChain.head x := by
+  classical
+  let Q : CoherentGoodBranchPartial cR (insert α T) :=
+    { toGoodApprox := insertPrescribedGoodApprox P hα_lt hα_not_mem Pα
+        h_prefix_below h_branch_below h_prefix_above h_branch_above
+      level_eq := fun _ => rfl }
+  have h_ne : (insert α T).orderEmbOfFin rfl
+      (Q.toCoherentBranchPartial.indexOf γ (Finset.mem_insert_of_mem hγ)) ≠ α := by
+    show (insert α T).orderEmbOfFin rfl
+      (finsetIndexOf (insert α T) γ (Finset.mem_insert_of_mem hγ)) ≠ α
+    rw [finsetIndexOf_orderEmb]
+    exact fun h => hα_not_mem (h ▸ hγ)
+  have h_chain_eq :
+      Q.toGoodApprox.goodAt (Q.toCoherentBranchPartial.indexOf γ
+          (Finset.mem_insert_of_mem hγ)) =
+        P.goodAt _ ((Finset.mem_insert.mp
+          ((insert α T).orderEmbOfFin_mem rfl _)).resolve_left h_ne) :=
+    insertPrescribedGoodAt_eq_old P Pα h_ne
+  show ((Q.toGoodApprox.goodAt (Q.toCoherentBranchPartial.indexOf γ
+      (Finset.mem_insert_of_mem hγ))).castLevel _).toPairERChain.head x = _
+  rw [h_chain_eq, PairERGoodChain.castLevel_head]
+  have h_eq : (insert α T).orderEmbOfFin rfl
+      (Q.toCoherentBranchPartial.indexOf γ (Finset.mem_insert_of_mem hγ)) = γ :=
+    finsetIndexOf_orderEmb _ _ _
+  refine (P.goodAt_head_apply_eq_of_eq (hα := _) (hβ := hγ) h_eq _).trans ?_
+  congr 1
+  exact eq_of_heq (HEq.trans (eqRec_heq h_eq _) (eqRec_heq _ x))
+
+/-- **`insertPrescribedGoodApprox_goodAt_old_type`**: parallel of
+`_head` for the type function. -/
+private lemma insertPrescribedGoodApprox_goodAt_old_type
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {T : Finset Ordinal.{0}}
+    (P : CoherentGoodBranchPartial cR T)
+    {α : Ordinal.{0}}
+    (hα_lt : α < Ordinal.omega.{0} 1) (hα_not_mem : α ∉ T)
+    (Pα : CoherentGoodBranchPartial cR ({α} : Finset Ordinal.{0}))
+    (h_prefix_below : ∀ β (hβ_T : β ∈ T) (hβ_lt_α : β < α),
+      haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      ∀ (x : β.ToType),
+        P.toCoherentBranchPartial.prefixAt β hβ_T x =
+          Pα.toCoherentBranchPartial.prefixAt α (Finset.mem_singleton.mpr rfl)
+            ((Ordinal.initialSegToType hβ_lt_α.le).toOrderEmbedding x))
+    (h_branch_below : ∀ β (hβ_T : β ∈ T) (hβ_lt_α : β < α),
+      haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      ∀ (x : β.ToType),
+        P.toCoherentBranchPartial.branch β hβ_T x =
+          Pα.toCoherentBranchPartial.branch α (Finset.mem_singleton.mpr rfl)
+            ((Ordinal.initialSegToType hβ_lt_α.le).toOrderEmbedding x))
+    (h_prefix_above : ∀ β (hβ_T : β ∈ T) (hα_lt_β : α < β),
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+      ∀ (x : α.ToType),
+        Pα.toCoherentBranchPartial.prefixAt α (Finset.mem_singleton.mpr rfl) x =
+          P.toCoherentBranchPartial.prefixAt β hβ_T
+            ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x))
+    (h_branch_above : ∀ β (hβ_T : β ∈ T) (hα_lt_β : α < β),
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+      ∀ (x : α.ToType),
+        Pα.toCoherentBranchPartial.branch α (Finset.mem_singleton.mpr rfl) x =
+          P.toCoherentBranchPartial.branch β hβ_T
+            ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x))
+    (γ : Ordinal.{0}) (hγ : γ ∈ T) (x : γ.ToType) :
+    letI Q : CoherentGoodBranchPartial cR (insert α T) :=
+      { toGoodApprox := insertPrescribedGoodApprox P hα_lt hα_not_mem Pα
+          h_prefix_below h_branch_below h_prefix_above h_branch_above
+        level_eq := fun _ => rfl }
+    (Q.goodAt γ (Finset.mem_insert_of_mem hγ)).toPairERChain.type x =
+      (P.goodAt γ hγ).toPairERChain.type x := by
+  classical
+  let Q : CoherentGoodBranchPartial cR (insert α T) :=
+    { toGoodApprox := insertPrescribedGoodApprox P hα_lt hα_not_mem Pα
+        h_prefix_below h_branch_below h_prefix_above h_branch_above
+      level_eq := fun _ => rfl }
+  have h_ne : (insert α T).orderEmbOfFin rfl
+      (Q.toCoherentBranchPartial.indexOf γ (Finset.mem_insert_of_mem hγ)) ≠ α := by
+    show (insert α T).orderEmbOfFin rfl
+      (finsetIndexOf (insert α T) γ (Finset.mem_insert_of_mem hγ)) ≠ α
+    rw [finsetIndexOf_orderEmb]
+    exact fun h => hα_not_mem (h ▸ hγ)
+  have h_chain_eq :
+      Q.toGoodApprox.goodAt (Q.toCoherentBranchPartial.indexOf γ
+          (Finset.mem_insert_of_mem hγ)) =
+        P.goodAt _ ((Finset.mem_insert.mp
+          ((insert α T).orderEmbOfFin_mem rfl _)).resolve_left h_ne) :=
+    insertPrescribedGoodAt_eq_old P Pα h_ne
+  show ((Q.toGoodApprox.goodAt (Q.toCoherentBranchPartial.indexOf γ
+      (Finset.mem_insert_of_mem hγ))).castLevel _).toPairERChain.type x = _
+  rw [h_chain_eq, PairERGoodChain.castLevel_type]
+  have h_eq : (insert α T).orderEmbOfFin rfl
+      (Q.toCoherentBranchPartial.indexOf γ (Finset.mem_insert_of_mem hγ)) = γ :=
+    finsetIndexOf_orderEmb _ _ _
+  refine (P.goodAt_type_apply_eq_of_eq (hα := _) (hβ := hγ) h_eq _).trans ?_
+  congr 1
+  exact eq_of_heq (HEq.trans (eqRec_heq h_eq _) (eqRec_heq _ x))
+
+/-- **`insertPrescribedGoodApprox_goodAt_alpha_head`**: for the
+α-singleton, the Good chain head at α in the inserted CGBP matches
+`Pα.goodAt α`'s head. Mirror of `_old_head` using
+`insertPrescribedGoodAt_eq_alpha` + `goodAt_head_apply_eq_of_eq`. -/
+private lemma insertPrescribedGoodApprox_goodAt_alpha_head
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {T : Finset Ordinal.{0}}
+    (P : CoherentGoodBranchPartial cR T)
+    {α : Ordinal.{0}}
+    (hα_lt : α < Ordinal.omega.{0} 1) (hα_not_mem : α ∉ T)
+    (Pα : CoherentGoodBranchPartial cR ({α} : Finset Ordinal.{0}))
+    (h_prefix_below : ∀ β (hβ_T : β ∈ T) (hβ_lt_α : β < α),
+      haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      ∀ (x : β.ToType),
+        P.toCoherentBranchPartial.prefixAt β hβ_T x =
+          Pα.toCoherentBranchPartial.prefixAt α (Finset.mem_singleton.mpr rfl)
+            ((Ordinal.initialSegToType hβ_lt_α.le).toOrderEmbedding x))
+    (h_branch_below : ∀ β (hβ_T : β ∈ T) (hβ_lt_α : β < α),
+      haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      ∀ (x : β.ToType),
+        P.toCoherentBranchPartial.branch β hβ_T x =
+          Pα.toCoherentBranchPartial.branch α (Finset.mem_singleton.mpr rfl)
+            ((Ordinal.initialSegToType hβ_lt_α.le).toOrderEmbedding x))
+    (h_prefix_above : ∀ β (hβ_T : β ∈ T) (hα_lt_β : α < β),
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+      ∀ (x : α.ToType),
+        Pα.toCoherentBranchPartial.prefixAt α (Finset.mem_singleton.mpr rfl) x =
+          P.toCoherentBranchPartial.prefixAt β hβ_T
+            ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x))
+    (h_branch_above : ∀ β (hβ_T : β ∈ T) (hα_lt_β : α < β),
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+      ∀ (x : α.ToType),
+        Pα.toCoherentBranchPartial.branch α (Finset.mem_singleton.mpr rfl) x =
+          P.toCoherentBranchPartial.branch β hβ_T
+            ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x))
+    (x : α.ToType) :
+    letI Q : CoherentGoodBranchPartial cR (insert α T) :=
+      { toGoodApprox := insertPrescribedGoodApprox P hα_lt hα_not_mem Pα
+          h_prefix_below h_branch_below h_prefix_above h_branch_above
+        level_eq := fun _ => rfl }
+    (Q.goodAt α (Finset.mem_insert_self α T)).toPairERChain.head x =
+      (Pα.goodAt α (Finset.mem_singleton.mpr rfl)).toPairERChain.head x := by
+  classical
+  let Q : CoherentGoodBranchPartial cR (insert α T) :=
+    { toGoodApprox := insertPrescribedGoodApprox P hα_lt hα_not_mem Pα
+        h_prefix_below h_branch_below h_prefix_above h_branch_above
+      level_eq := fun _ => rfl }
+  have h_eq_α : (insert α T).orderEmbOfFin rfl
+      (Q.toCoherentBranchPartial.indexOf α (Finset.mem_insert_self α T)) = α := by
+    show (insert α T).orderEmbOfFin rfl
+      (finsetIndexOf (insert α T) α (Finset.mem_insert_self α T)) = α
+    rw [finsetIndexOf_orderEmb]
+  have h_chain_eq :
+      Q.toGoodApprox.goodAt (Q.toCoherentBranchPartial.indexOf α
+          (Finset.mem_insert_self α T)) =
+        (Pα.goodAt α (Finset.mem_singleton.mpr rfl)).castLevel h_eq_α.symm :=
+    insertPrescribedGoodAt_eq_alpha P Pα h_eq_α
+  show ((Q.toGoodApprox.goodAt (Q.toCoherentBranchPartial.indexOf α
+      (Finset.mem_insert_self α T))).castLevel _).toPairERChain.head x = _
+  rw [h_chain_eq]
+  rw [PairERGoodChain.castLevel_head, PairERGoodChain.castLevel_head]
+  congr 1
+  exact eq_of_heq (HEq.trans (eqRec_heq _ _) (eqRec_heq _ x))
+
+/-- **`insertPrescribedGoodApprox_goodAt_alpha_type`**: parallel of
+`_alpha_head` for the type function. -/
+private lemma insertPrescribedGoodApprox_goodAt_alpha_type
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {T : Finset Ordinal.{0}}
+    (P : CoherentGoodBranchPartial cR T)
+    {α : Ordinal.{0}}
+    (hα_lt : α < Ordinal.omega.{0} 1) (hα_not_mem : α ∉ T)
+    (Pα : CoherentGoodBranchPartial cR ({α} : Finset Ordinal.{0}))
+    (h_prefix_below : ∀ β (hβ_T : β ∈ T) (hβ_lt_α : β < α),
+      haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      ∀ (x : β.ToType),
+        P.toCoherentBranchPartial.prefixAt β hβ_T x =
+          Pα.toCoherentBranchPartial.prefixAt α (Finset.mem_singleton.mpr rfl)
+            ((Ordinal.initialSegToType hβ_lt_α.le).toOrderEmbedding x))
+    (h_branch_below : ∀ β (hβ_T : β ∈ T) (hβ_lt_α : β < α),
+      haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      ∀ (x : β.ToType),
+        P.toCoherentBranchPartial.branch β hβ_T x =
+          Pα.toCoherentBranchPartial.branch α (Finset.mem_singleton.mpr rfl)
+            ((Ordinal.initialSegToType hβ_lt_α.le).toOrderEmbedding x))
+    (h_prefix_above : ∀ β (hβ_T : β ∈ T) (hα_lt_β : α < β),
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+      ∀ (x : α.ToType),
+        Pα.toCoherentBranchPartial.prefixAt α (Finset.mem_singleton.mpr rfl) x =
+          P.toCoherentBranchPartial.prefixAt β hβ_T
+            ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x))
+    (h_branch_above : ∀ β (hβ_T : β ∈ T) (hα_lt_β : α < β),
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+      ∀ (x : α.ToType),
+        Pα.toCoherentBranchPartial.branch α (Finset.mem_singleton.mpr rfl) x =
+          P.toCoherentBranchPartial.branch β hβ_T
+            ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x))
+    (x : α.ToType) :
+    letI Q : CoherentGoodBranchPartial cR (insert α T) :=
+      { toGoodApprox := insertPrescribedGoodApprox P hα_lt hα_not_mem Pα
+          h_prefix_below h_branch_below h_prefix_above h_branch_above
+        level_eq := fun _ => rfl }
+    (Q.goodAt α (Finset.mem_insert_self α T)).toPairERChain.type x =
+      (Pα.goodAt α (Finset.mem_singleton.mpr rfl)).toPairERChain.type x := by
+  classical
+  let Q : CoherentGoodBranchPartial cR (insert α T) :=
+    { toGoodApprox := insertPrescribedGoodApprox P hα_lt hα_not_mem Pα
+        h_prefix_below h_branch_below h_prefix_above h_branch_above
+      level_eq := fun _ => rfl }
+  have h_eq_α : (insert α T).orderEmbOfFin rfl
+      (Q.toCoherentBranchPartial.indexOf α (Finset.mem_insert_self α T)) = α := by
+    show (insert α T).orderEmbOfFin rfl
+      (finsetIndexOf (insert α T) α (Finset.mem_insert_self α T)) = α
+    rw [finsetIndexOf_orderEmb]
+  have h_chain_eq :
+      Q.toGoodApprox.goodAt (Q.toCoherentBranchPartial.indexOf α
+          (Finset.mem_insert_self α T)) =
+        (Pα.goodAt α (Finset.mem_singleton.mpr rfl)).castLevel h_eq_α.symm :=
+    insertPrescribedGoodAt_eq_alpha P Pα h_eq_α
+  show ((Q.toGoodApprox.goodAt (Q.toCoherentBranchPartial.indexOf α
+      (Finset.mem_insert_self α T))).castLevel _).toPairERChain.type x = _
+  rw [h_chain_eq]
+  rw [PairERGoodChain.castLevel_type, PairERGoodChain.castLevel_type]
+  congr 1
+  exact eq_of_heq (HEq.trans (eqRec_heq _ _) (eqRec_heq _ x))
+
+/-! ### Interior insertion primitive (frontier)
+
+The complementary case to `extend_one_above_top` is **interior**
+insertion: extending `P : CBP cR T` by an `α` that is below at least
+one element of `T`. The natural construction defines the new
+prefixAt at `α` by restriction from the data at the least `β₀ ∈ T`
+above `α`:
+
+  `Q.prefixAt α := P.prefixAt β₀ ∘ initSeg(α → β₀)`
+  `Q.branch  α := P.branch  β₀ ∘ initSeg(α → β₀)`
+
+Restriction laws (`prefix_restrict`, `branch_restrict`) for `T-T`
+pairs come from `P` directly. For pairs involving `α`, they reduce
+via `P.prefix_restrict` since `initSeg` composes nicely.
+
+The non-trivial check is `top_in_validFiber` at the new
+`(α-index, β₀-index)` adjacency:
+
+  `P.prefixAt β₀ (enum at α in β₀) ∈ validFiber (Q.prefixAt α, Q.branch α)`
+
+Unfolding requires for every `x ∈ α.ToType`:
+
+  `cR (pair (P.prefixAt β₀ (initSeg x), P.prefixAt β₀ (enum at α))) =
+   P.branch β₀ (initSeg x)`
+
+This is the **inner cR-consistency** of `P.prefixAt β₀` between
+positions `initSeg x < enum at α` *both inside* `β₀.ToType`. The
+existing `CoherentBranchApprox.validFiber_between` lemma only
+relates positions on different *levels* in the CBA (it generalizes
+adjacency from `(i, i+1)` to `(i, j)`), not two positions inside one
+level. Closing this requires an explicit inner-consistency theorem
+for `PairERChain.head` proven by induction on the chain's
+construction (`zero`, `succ`, `limit`, `extendTo`). -/
+
+/-- **[FRONTIER, sorry]** Interior insertion at the bare CBP layer.
+This form takes a bare `P : CBP cR T` as input, but the proven Good-
+layer theorem `coherentGoodBranchPartial_insert_before` requires a
+`CoherentGoodBranchPartial` (i.e., a CBP carrying inner cR-consistency
+data on its chains). Lifting an arbitrary bare CBP to a Good CBP is
+not generally possible — the inner cR-consistency is real extra data,
+not derivable from the bare structure.
+
+The Good-input form is `coherentBranchPartial_insert_between_of_good`
+(below); this bare form is left as a frontier pending either a Good
+lifting theorem or an alternative bare-level construction. -/
+theorem coherentBranchPartial_insert_between
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    {T : Finset Ordinal.{0}} (P : CoherentBranchPartial cR T)
+    (α : Ordinal.{0}) (hα : α < Ordinal.omega.{0} 1)
+    (hα_not_mem : α ∉ T)
+    (h_between : ∃ β ∈ T, α < β) :
+    ∃ Q : CoherentBranchPartial cR (insert α T),
+      cbpFieldwiseCompat (Q.restrict (Finset.subset_insert α T)) P := by
+  sorry
+
+/-- **`coherentBranchPartial_insert_between_of_good`**: Good-input
+form of interior insertion, derived from
+`coherentGoodBranchPartial_insert_before` by choosing `β₀` via
+`exists_min_above_in_finset` and projecting the resulting Good CBP
+to its bare CBP. Axiom-clean. -/
+theorem coherentBranchPartial_insert_between_of_good
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {T : Finset Ordinal.{0}} (PG : CoherentGoodBranchPartial cR T)
+    {α : Ordinal.{0}} (hα : α < Ordinal.omega.{0} 1)
+    (hα_not_mem : α ∉ T)
+    (h_between : ∃ β ∈ T, α < β) :
+    ∃ Q : CoherentBranchPartial cR (insert α T),
+      cbpFieldwiseCompat (Q.restrict (Finset.subset_insert α T))
+        PG.toCoherentBranchPartial := by
+  obtain ⟨β₀, hβ₀, hαβ₀, hmin⟩ := exists_min_above_in_finset T α h_between
+  obtain ⟨Q, hQ_compat⟩ := coherentGoodBranchPartial_insert_before
+    PG hα hα_not_mem hβ₀ hαβ₀ hmin
+  exact ⟨Q.toCoherentBranchPartial, hQ_compat⟩
+
+/-! ### Good above-top extension and union extension
+
+Lifting `coherentBranchPartial_extend_one_above_top` to the Good layer.
+The construction mirrors the bare proof but uses
+`CoherentGoodBranchApprox.extendTo` so the resulting `Q` carries Good
+chain data at every level. Then iterating gives a Good union extension
+combining above-top and interior insertion. -/
+
+/-- **`coherentGoodBranchPartial_extend_one_above_top`**: Good-layer
+above-top extension. Mirrors the bare proof at
+`coherentBranchPartial_extend_one_above_top` but uses
+`PG.toGoodApprox.extendTo α hα h_above_last` to obtain a
+`CoherentGoodBranchApprox cR (T.card + 1)`, then reindexes to
+`(insert α T).card` via `Fin.cast`. The Good data `goodAt`/`good_head`/
+`good_type` carry through the reindex; fieldwise compat against
+`PG.toCoherentBranchPartial` follows the same HEq + `congr_arg_heq`
+pattern as the bare proof. Empty-T case closed via
+`exists_coherentGoodBranchPartial`; non-empty case stubbed (~200 lines
+of bare-proof mirroring). -/
+theorem coherentGoodBranchPartial_extend_one_above_top
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {T : Finset Ordinal.{0}} (PG : CoherentGoodBranchPartial cR T)
+    {α : Ordinal.{0}} (hα : α < Ordinal.omega.{0} 1)
+    (h_above : ∀ β ∈ T, β < α) :
+    ∃ Q : CoherentGoodBranchPartial cR (insert α T),
+      cbpFieldwiseCompat
+        (Q.toCoherentBranchPartial.restrict (Finset.subset_insert α T))
+        PG.toCoherentBranchPartial := by
+  classical
+  have hα_not_mem : α ∉ T := fun h => lt_irrefl α (h_above α h)
+  by_cases hT_empty : T = ∅
+  · subst hT_empty
+    have h_valid : ∀ β ∈ insert α (∅ : Finset Ordinal.{0}),
+        β < Ordinal.omega.{0} 1 := by
+      intro β hβ
+      rcases Finset.mem_insert.mp hβ with h | h
+      · exact h ▸ hα
+      · exact absurd h (Finset.notMem_empty _)
+    obtain ⟨Q⟩ := exists_coherentGoodBranchPartial cR (insert α ∅) h_valid
+    refine ⟨Q, ?_, ?_⟩ <;>
+      intro β hβ <;> exact absurd hβ (Finset.notMem_empty _)
+  -- Main case: T ≠ ∅. Mirror the bare `extend_one_above_top` proof
+  -- structure, threading Good data through `PG.toGoodApprox.extendTo`.
+  have hT_card_ne : T.card ≠ 0 :=
+    fun h => hT_empty (Finset.card_eq_zero.mp h)
+  have hT_card_pos : 0 < T.card := Nat.pos_of_ne_zero hT_card_ne
+  have h_card : (insert α T).card = T.card + 1 :=
+    Finset.card_insert_of_notMem hα_not_mem
+  -- lastLevel < α.
+  have h_above_last : PG.toCoherentBranchPartial.toApprox.lastLevel < α := by
+    have hT_sub : T.card - 1 < T.card := Nat.sub_lt hT_card_pos one_pos
+    have h_last_eq : PG.toCoherentBranchPartial.toApprox.lastLevel =
+        (T.orderEmbOfFin rfl) ⟨T.card - 1, hT_sub⟩ := by
+      unfold CoherentBranchApprox.lastLevel
+      rw [dif_neg hT_card_ne]
+      exact PG.level_eq ⟨T.card - 1, hT_sub⟩
+    rw [h_last_eq]
+    exact h_above _ (T.orderEmbOfFin_mem rfl _)
+  -- Extended Good CGBA.
+  let A_ext : CoherentGoodBranchApprox cR (T.card + 1) :=
+    PG.toGoodApprox.extendTo α hα h_above_last
+  -- Identification of (insert α T).orderEmbOfFin via uniqueness.
+  set f : Fin (T.card + 1) → Ordinal.{0} :=
+    Fin.lastCases α (fun j => (T.orderEmbOfFin rfl) j) with hf_def
+  have hf_last : f (Fin.last T.card) = α := Fin.lastCases_last
+  have hf_castSucc : ∀ j : Fin T.card,
+      f j.castSucc = (T.orderEmbOfFin rfl) j := fun j => Fin.lastCases_castSucc _
+  have hf_mem : ∀ i, f i ∈ insert α T := by
+    intro i
+    induction i using Fin.lastCases with
+    | last => rw [hf_last]; exact Finset.mem_insert_self α T
+    | cast j =>
+      rw [hf_castSucc j]
+      exact Finset.mem_insert_of_mem (T.orderEmbOfFin_mem rfl j)
+  have hf_strictMono : StrictMono f := by
+    intro a b hab
+    induction b using Fin.lastCases with
+    | last =>
+      induction a using Fin.lastCases with
+      | last => exact absurd hab (lt_irrefl _)
+      | cast j =>
+        rw [hf_castSucc j, hf_last]
+        exact h_above _ (T.orderEmbOfFin_mem rfl j)
+    | cast j₂ =>
+      induction a using Fin.lastCases with
+      | last =>
+        exact absurd hab (not_lt_of_ge (Fin.le_last _))
+      | cast j₁ =>
+        rw [hf_castSucc j₁, hf_castSucc j₂]
+        exact (T.orderEmbOfFin rfl).strictMono
+          (Fin.castSucc_lt_castSucc_iff.mp hab)
+  have hf_eq : f = ⇑((insert α T).orderEmbOfFin h_card) :=
+    Finset.orderEmbOfFin_unique h_card hf_mem hf_strictMono
+  -- A_ext.toApprox.level matches f (by construction of extendTo).
+  have hA_ext_level : ∀ j, A_ext.toApprox.level j = f j := by
+    intro j
+    induction j using Fin.lastCases with
+    | last =>
+      rw [hf_last]
+      show PG.toCoherentBranchPartial.toApprox.extendToLevel α
+        (Fin.last T.card) = α
+      exact PG.toCoherentBranchPartial.toApprox.extendToLevel_last α
+    | cast j =>
+      rw [hf_castSucc j]
+      show PG.toCoherentBranchPartial.toApprox.extendToLevel α j.castSucc =
+        (T.orderEmbOfFin rfl) j
+      rw [PG.toCoherentBranchPartial.toApprox.extendToLevel_castSucc α j]
+      exact PG.level_eq j
+  -- Consistency: (insert α T).orderEmbOfFin h_card ∘ Fin.cast h_card =
+  -- (insert α T).orderEmbOfFin rfl.
+  have h_emb_cast : ∀ i : Fin (insert α T).card,
+      (insert α T).orderEmbOfFin h_card (Fin.cast h_card i) =
+        (insert α T).orderEmbOfFin rfl i := by
+    intro i
+    have hg_mem : ∀ x : Fin (insert α T).card,
+        (insert α T).orderEmbOfFin h_card (Fin.cast h_card x) ∈ insert α T :=
+      fun x => Finset.orderEmbOfFin_mem _ _ _
+    have hg_strictMono : StrictMono
+        (fun x : Fin (insert α T).card =>
+          (insert α T).orderEmbOfFin h_card (Fin.cast h_card x)) := by
+      intro a b hab
+      exact ((insert α T).orderEmbOfFin h_card).strictMono hab
+    have h_unique := Finset.orderEmbOfFin_unique
+      (s := insert α T) (k := (insert α T).card) rfl hg_mem hg_strictMono
+    exact congr_fun h_unique i
+  -- Build Q_cgba: reindex A_ext through Fin.cast h_card.
+  let Q_cgba : CoherentGoodBranchApprox cR (insert α T).card :=
+    { toApprox :=
+        { level := fun i => A_ext.toApprox.level (Fin.cast h_card i)
+          level_lt_omega1 := fun i => A_ext.toApprox.level_lt_omega1 _
+          level_strictMono := fun {_ _} hab => A_ext.toApprox.level_strictMono hab
+          prefixAt := fun i => A_ext.toApprox.prefixAt (Fin.cast h_card i)
+          branchAt := fun i => A_ext.toApprox.branchAt (Fin.cast h_card i)
+          prefix_restrict := fun {k₁ k₂} hk x =>
+            A_ext.toApprox.prefix_restrict (k₁ := Fin.cast h_card k₁)
+              (k₂ := Fin.cast h_card k₂) hk x
+          branch_restrict := fun {k₁ k₂} hk x =>
+            A_ext.toApprox.branch_restrict (k₁ := Fin.cast h_card k₁)
+              (k₂ := Fin.cast h_card k₂) hk x
+          large := fun i => A_ext.toApprox.large _
+          top_in_validFiber := by
+            intro i hi
+            have hi' : i + 1 < T.card + 1 := h_card ▸ hi
+            have := A_ext.toApprox.top_in_validFiber i hi'
+            convert this using 2 <;> rfl }
+      goodAt := fun i => A_ext.goodAt (Fin.cast h_card i)
+      good_head := fun i x => A_ext.good_head (Fin.cast h_card i) x
+      good_type := fun i x => A_ext.good_type (Fin.cast h_card i) x }
+  -- Level_eq for Q (built atop Q_cgba).
+  have h_level_eq : ∀ i, Q_cgba.toApprox.level i =
+      (insert α T).orderEmbOfFin rfl i := by
+    intro i
+    show A_ext.toApprox.level (Fin.cast h_card i) =
+      (insert α T).orderEmbOfFin rfl i
+    rw [hA_ext_level (Fin.cast h_card i)]
+    rw [show f (Fin.cast h_card i) = ((insert α T).orderEmbOfFin h_card)
+          (Fin.cast h_card i) from congr_fun hf_eq _]
+    exact h_emb_cast i
+  let Q : CoherentGoodBranchPartial cR (insert α T) :=
+    { toGoodApprox := Q_cgba, level_eq := h_level_eq }
+  -- Key step: Fin.cast h_card (Q.indexOf α' h) = (P.indexOf α' hα').castSucc.
+  have h_indexOf : ∀ α' (hα' : α' ∈ T),
+      Fin.cast h_card (Q.toCoherentBranchPartial.indexOf α'
+          (Finset.subset_insert α T hα')) =
+        (PG.toCoherentBranchPartial.indexOf α' hα').castSucc := by
+    intro α' hα'
+    apply A_ext.toApprox.level_strictMono.injective
+    have h_LHS : A_ext.toApprox.level
+        (Fin.cast h_card (Q.toCoherentBranchPartial.indexOf α'
+          (Finset.subset_insert α T hα'))) = α' := by
+      change Q_cgba.toApprox.level (Q.toCoherentBranchPartial.indexOf α'
+        (Finset.subset_insert α T hα')) = α'
+      exact Q.toCoherentBranchPartial.level_indexOf α'
+        (Finset.subset_insert α T hα')
+    have h_RHS : A_ext.toApprox.level
+        (PG.toCoherentBranchPartial.indexOf α' hα').castSucc = α' := by
+      change PG.toCoherentBranchPartial.toApprox.extendToLevel α
+        (PG.toCoherentBranchPartial.indexOf α' hα').castSucc = α'
+      rw [PG.toCoherentBranchPartial.toApprox.extendToLevel_castSucc α
+            (PG.toCoherentBranchPartial.indexOf α' hα'),
+          PG.toCoherentBranchPartial.level_indexOf α' hα']
+    rw [h_LHS, h_RHS]
+  refine ⟨Q, ?_, ?_⟩
+  · intro α' hα'
+    rw [Q.toCoherentBranchPartial.restrict_prefixAt
+          (Finset.subset_insert α T) α' hα']
+    apply eq_of_heq
+    refine HEq.trans (cast_heq _ _) (HEq.trans ?_ (cast_heq _ _).symm)
+    refine HEq.trans (b := A_ext.toApprox.prefixAt
+        (PG.toCoherentBranchPartial.indexOf α' hα').castSucc) ?_ ?_
+    · change HEq (A_ext.toApprox.prefixAt (Fin.cast h_card
+        (Q.toCoherentBranchPartial.indexOf α'
+          (Finset.subset_insert α T hα'))))
+        (A_ext.toApprox.prefixAt
+          (PG.toCoherentBranchPartial.indexOf α' hα').castSucc)
+      exact congr_arg_heq A_ext.toApprox.prefixAt (h_indexOf α' hα')
+    · change HEq (PG.toCoherentBranchPartial.toApprox.extendToPrefixAt
+          (PG.toGoodApprox.extendToChain α hα h_above_last).toPairERChain
+          (PG.toCoherentBranchPartial.indexOf α' hα').castSucc)
+        (PG.toCoherentBranchPartial.toApprox.prefixAt
+          (PG.toCoherentBranchPartial.indexOf α' hα'))
+      exact PG.toCoherentBranchPartial.toApprox.extendToPrefixAt_castSucc_heq _
+        (PG.toCoherentBranchPartial.indexOf α' hα')
+  · intro α' hα'
+    rw [Q.toCoherentBranchPartial.restrict_branch
+          (Finset.subset_insert α T) α' hα']
+    apply eq_of_heq
+    refine HEq.trans (cast_heq _ _) (HEq.trans ?_ (cast_heq _ _).symm)
+    refine HEq.trans (b := A_ext.toApprox.branchAt
+        (PG.toCoherentBranchPartial.indexOf α' hα').castSucc) ?_ ?_
+    · change HEq (A_ext.toApprox.branchAt (Fin.cast h_card
+        (Q.toCoherentBranchPartial.indexOf α'
+          (Finset.subset_insert α T hα'))))
+        (A_ext.toApprox.branchAt
+          (PG.toCoherentBranchPartial.indexOf α' hα').castSucc)
+      exact congr_arg_heq A_ext.toApprox.branchAt (h_indexOf α' hα')
+    · change HEq (PG.toCoherentBranchPartial.toApprox.extendToBranchAt
+          (PG.toGoodApprox.extendToChain α hα h_above_last).toPairERChain
+          (PG.toCoherentBranchPartial.indexOf α' hα').castSucc)
+        (PG.toCoherentBranchPartial.toApprox.branchAt
+          (PG.toCoherentBranchPartial.indexOf α' hα'))
+      exact PG.toCoherentBranchPartial.toApprox.extendToBranchAt_castSucc_heq _
+        (PG.toCoherentBranchPartial.indexOf α' hα')
+
+/-- **`coherentGoodBranchPartial_insert_one`**: one-step Good insertion
+of a new (`α ∉ T`) element, dispatching internally on above-top vs
+interior:
+- `α ∉ T` and above all of `T`: use
+  `coherentGoodBranchPartial_extend_one_above_top`.
+- `α ∉ T` and interior: locate `β₀` via `exists_min_above_in_finset`
+  and use `coherentGoodBranchPartial_insert_before`. -/
+theorem coherentGoodBranchPartial_insert_one
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {T : Finset Ordinal.{0}} (PG : CoherentGoodBranchPartial cR T)
+    (α : Ordinal.{0}) (hα : α < Ordinal.omega.{0} 1) (hα_not_mem : α ∉ T) :
+    ∃ Q : CoherentGoodBranchPartial cR (insert α T),
+      cbpFieldwiseCompat
+        (Q.toCoherentBranchPartial.restrict (Finset.subset_insert α T))
+        PG.toCoherentBranchPartial := by
+  classical
+  by_cases h_above : ∀ β ∈ T, β < α
+  · exact coherentGoodBranchPartial_extend_one_above_top PG hα h_above
+  · push_neg at h_above
+    obtain ⟨β, hβ_T, hβα⟩ := h_above
+    have hβ_ne_α : β ≠ α := fun h => hα_not_mem (h ▸ hβ_T)
+    have h_α_lt_β : α < β := lt_of_le_of_ne hβα (Ne.symm hβ_ne_α)
+    have h_between : ∃ β ∈ T, α < β := ⟨β, hβ_T, h_α_lt_β⟩
+    obtain ⟨β₀, hβ₀, hαβ₀, hmin⟩ := exists_min_above_in_finset T α h_between
+    exact coherentGoodBranchPartial_insert_before PG hα hα_not_mem hβ₀ hαβ₀ hmin
+
+/-- **`coherentGoodBranchPartial_extend_list`**: list-fold version of
+the Good union extension. Iterates `coherentGoodBranchPartial_insert_one`
+over `l`, with each element disjoint from the cumulative set. This form
+avoids `T ∪ ∅` / `T ∪ insert` rewrites at every step; instead, the
+`l.foldl insert T` builds up incrementally.
+
+The wrapper `coherentGoodBranchPartial_extend_to_union` then converts to
+the union form once at the end via `l.foldl insert T = T ∪ U` for
+`l = U.toList`. -/
+theorem coherentGoodBranchPartial_extend_list
+    {cR : (Fin 2 ↪o PairERSource) → Bool} :
+    ∀ {T : Finset Ordinal.{0}} (PG : CoherentGoodBranchPartial cR T)
+      (l : List Ordinal.{0})
+      (_h_valid : ∀ α ∈ l, α < Ordinal.omega.{0} 1)
+      (_h_nodup : l.Nodup)
+      (_h_disjoint : ∀ α ∈ l, α ∉ T),
+      ∃ Q : CoherentGoodBranchPartial cR
+        (l.foldl (fun S α => insert α S) T),
+        cbpFieldwiseCompat
+          (Q.toCoherentBranchPartial.restrict (subset_foldl_insert l T))
+          PG.toCoherentBranchPartial
+  | T, PG, [], _, _, _ => by
+    refine ⟨PG, ?_, ?_⟩
+    · intro β hβ; rw [CoherentBranchPartial.restrict_prefixAt]
+    · intro β hβ; rw [CoherentBranchPartial.restrict_branch]
+  | T, PG, α :: tail, h_valid, h_nodup, h_disjoint => by
+    have hα_lt : α < Ordinal.omega.{0} 1 :=
+      h_valid α List.mem_cons_self
+    have hα_not_T : α ∉ T := h_disjoint α List.mem_cons_self
+    obtain ⟨Q₁, hQ₁_compat⟩ :=
+      coherentGoodBranchPartial_insert_one PG α hα_lt hα_not_T
+    -- Q₁ : CGBP cR (insert α T). Now recurse on tail with new T := insert α T.
+    have h_tail_valid : ∀ β ∈ tail, β < Ordinal.omega.{0} 1 := fun β hβ =>
+      h_valid β (List.mem_cons_of_mem α hβ)
+    have h_tail_nodup : tail.Nodup := h_nodup.of_cons
+    have h_tail_disjoint : ∀ β ∈ tail, β ∉ insert α T := fun β hβ h_ins => by
+      rcases Finset.mem_insert.mp h_ins with h_eq | h_T
+      · exact (List.nodup_cons.mp h_nodup).1 (h_eq ▸ hβ)
+      · exact h_disjoint β (List.mem_cons_of_mem α hβ) h_T
+    obtain ⟨Q, hQ_compat⟩ := coherentGoodBranchPartial_extend_list Q₁ tail
+      h_tail_valid h_tail_nodup h_tail_disjoint
+    -- Q : CGBP cR (tail.foldl insert (insert α T)) =
+    -- CGBP cR ((α :: tail).foldl insert T).
+    refine ⟨Q, ?_, ?_⟩
+    · intro β hβ_T
+      -- Chain: (Q.restrict h_outer).prefixAt β hβ_T
+      --   = ((Q.restrict h_to_insert_α_T).restrict h_insert_α_T_to_T).prefixAt β hβ_T
+      --   = Q₁.prefixAt β (Finset.subset_insert α T hβ_T)
+      --   = PG.prefixAt β hβ_T
+      have hβ_in_insert_α_T : β ∈ insert α T := Finset.subset_insert α T hβ_T
+      rw [Q.toCoherentBranchPartial.restrict_prefixAt _ β hβ_T]
+      have h_step1 := hQ_compat.1 β hβ_in_insert_α_T
+      rw [Q.toCoherentBranchPartial.restrict_prefixAt
+          (subset_foldl_insert tail (insert α T)) β hβ_in_insert_α_T] at h_step1
+      rw [h_step1]
+      have h_step2 := hQ₁_compat.1 β hβ_T
+      rw [Q₁.toCoherentBranchPartial.restrict_prefixAt
+          (Finset.subset_insert α T) β hβ_T] at h_step2
+      exact h_step2
+    · intro β hβ_T
+      have hβ_in_insert_α_T : β ∈ insert α T := Finset.subset_insert α T hβ_T
+      rw [Q.toCoherentBranchPartial.restrict_branch _ β hβ_T]
+      have h_step1 := hQ_compat.2 β hβ_in_insert_α_T
+      rw [Q.toCoherentBranchPartial.restrict_branch
+          (subset_foldl_insert tail (insert α T)) β hβ_in_insert_α_T] at h_step1
+      rw [h_step1]
+      have h_step2 := hQ₁_compat.2 β hβ_T
+      rw [Q₁.toCoherentBranchPartial.restrict_branch
+          (Finset.subset_insert α T) β hβ_T] at h_step2
+      exact h_step2
+
+/-- **`foldl_insert_eq_union`**: list-fold of `insert` equals union with
+the list-as-Finset. Proved by induction on `l` with `T` generalized. -/
+private lemma foldl_insert_eq_union :
+    ∀ (l : List Ordinal.{0}) (T : Finset Ordinal.{0}),
+      l.foldl (fun S α => insert α S) T = T ∪ l.toFinset
+  | [], T => by simp
+  | α :: tail, T => by
+    show tail.foldl (fun S α => insert α S) (insert α T) =
+      T ∪ (α :: tail).toFinset
+    rw [foldl_insert_eq_union tail (insert α T)]
+    ext x
+    simp only [Finset.mem_union, Finset.mem_insert, List.toFinset_cons]
+    tauto
+
+/-- **`transport_extend_compat`**: transports an `extend_list`-style
+compat result across a Finset equation. Generic helper for converting
+between forms of the underlying Finset (e.g., `l.foldl insert T` vs
+`T ∪ U`). The subst handles both the type and the subset proof. -/
+private lemma transport_extend_compat
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {T : Finset Ordinal.{0}} (PG : CoherentGoodBranchPartial cR T)
+    {S₁ S₂ : Finset Ordinal.{0}} (h_eq : S₁ = S₂)
+    (hT₁ : T ⊆ S₁) (hT₂ : T ⊆ S₂)
+    (Q : CoherentGoodBranchPartial cR S₁)
+    (h_compat : cbpFieldwiseCompat
+      (Q.toCoherentBranchPartial.restrict hT₁) PG.toCoherentBranchPartial) :
+    cbpFieldwiseCompat
+      ((h_eq ▸ Q).toCoherentBranchPartial.restrict hT₂)
+        PG.toCoherentBranchPartial := by
+  subst h_eq
+  exact h_compat
+
+/-- **`coherentGoodBranchPartial_extend_to_union`**: Good-layer union
+extension via the list version + final equality transport. Uses
+`l := (U \ T).toList` so each element is fresh, then applies
+`coherentGoodBranchPartial_extend_list` and transports via
+`foldl_insert_eq_union`. -/
+theorem coherentGoodBranchPartial_extend_to_union
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {T : Finset Ordinal.{0}} (PG : CoherentGoodBranchPartial cR T)
+    (U : Finset Ordinal.{0})
+    (hU : ∀ α ∈ U, α < Ordinal.omega.{0} 1) :
+    ∃ Q : CoherentGoodBranchPartial cR (T ∪ U),
+      cbpFieldwiseCompat
+        (Q.toCoherentBranchPartial.restrict Finset.subset_union_left)
+        PG.toCoherentBranchPartial := by
+  classical
+  set l : List Ordinal.{0} := (U \ T).toList with hl_def
+  have h_valid : ∀ α ∈ l, α < Ordinal.omega.{0} 1 := fun α hα =>
+    hU α (Finset.mem_sdiff.mp (Finset.mem_toList.mp hα)).1
+  have h_nodup : l.Nodup := Finset.nodup_toList _
+  have h_disjoint : ∀ α ∈ l, α ∉ T := fun α hα =>
+    (Finset.mem_sdiff.mp (Finset.mem_toList.mp hα)).2
+  -- l.foldl _ T = T ∪ U via foldl_insert_eq_union + toList_toFinset + sdiff identity.
+  have h_fold : l.foldl (fun S α => insert α S) T = T ∪ U := by
+    rw [foldl_insert_eq_union l T]
+    show T ∪ l.toFinset = T ∪ U
+    show T ∪ (U \ T).toList.toFinset = T ∪ U
+    rw [Finset.toList_toFinset]
+    ext x
+    simp only [Finset.mem_union, Finset.mem_sdiff]
+    tauto
+  -- Apply extend_list to get Q' on l.foldl _ T.
+  obtain ⟨Q', hQ'⟩ := coherentGoodBranchPartial_extend_list PG l
+    h_valid h_nodup h_disjoint
+  -- Transport via the generic helper.
+  refine ⟨h_fold ▸ Q', transport_extend_compat PG h_fold
+    (subset_foldl_insert l T) Finset.subset_union_left Q' hQ'⟩
+
+/-- **`CoherentGoodBranchPartial.cast`**: transport a CGBP across a
+Finset equality. Generic transport primitive — defined via `h ▸ P`
+with `S, T` as separate parameters so `subst` works cleanly in
+downstream proofs. -/
+def CoherentGoodBranchPartial.cast
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {S T : Finset Ordinal.{0}} (h : S = T)
+    (P : CoherentGoodBranchPartial cR S) :
+    CoherentGoodBranchPartial cR T := h ▸ P
+
+/-- **`CoherentGoodBranchPartial.cast_restrict_self`**: compat between
+a cast CGBP's restriction back to a subset of the source and the
+original CGBP itself. Closes via `subst h` (works because `S, T` are
+separate parameters), then `restrict_prefixAt/branch` reduces to refl
+under proof irrelevance on the subset proof. -/
+theorem CoherentGoodBranchPartial.cast_restrict_self
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {S T : Finset Ordinal.{0}} (h : S = T)
+    (P : CoherentGoodBranchPartial cR S) (hST : S ⊆ T) :
+    cbpFieldwiseCompat
+      ((P.cast h).toCoherentBranchPartial.restrict hST)
+      P.toCoherentBranchPartial := by
+  subst h
+  refine ⟨?_, ?_⟩
+  · intro β hβ
+    rw [CoherentBranchPartial.restrict_prefixAt]
+    rfl
+  · intro β hβ
+    rw [CoherentBranchPartial.restrict_branch]
+    rfl
+
+/-- **`CoherentGoodBranchPartial.AmbientCompat`**: cross-level
+coherence between two CGBPs on different finsets. Strictly stronger
+than the naive "overlap compat on `S ∩ T`" hypothesis: it requires
+agreement on **every** cross-pair of indices, mediated by the
+appropriate initial-segment embedding. This is the **mathematically
+correct** compatibility for pair amalgamation, since a CGBP's prefix
+at `α` already prescribes data at every `β < α` even if `β` is not in
+the finset itself.
+
+**Fields.**
+* `prefix_below`: for `β ∈ S` and `α ∈ T` with `β < α`,
+  `P.prefix β = PR.prefix α` restricted to `β.ToType` via initSeg.
+* `branch_below`: analogous for the type function.
+* `prefix_above`: for `α ∈ T` and `β ∈ S` with `α < β`,
+  `PR.prefix α = P.prefix β` restricted to `α.ToType` via initSeg.
+* `branch_above`: analogous.
+
+**Why "below/above" instead of single direction.** Although the
+relation is logically symmetric, splitting by direction matches how
+the hypothesis is used in `PrescribedAmbientCompat` construction
+(where the "α" being inserted has a specific role). -/
+structure CoherentGoodBranchPartial.AmbientCompat
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {S T : Finset Ordinal.{0}}
+    (P : CoherentGoodBranchPartial cR S)
+    (PR : CoherentGoodBranchPartial cR T) : Prop where
+  prefix_below : ∀ β (hβ_S : β ∈ S) α (hα_T : α ∈ T) (hβ_lt_α : β < α),
+    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    ∀ (x : β.ToType),
+      P.toCoherentBranchPartial.prefixAt β hβ_S x =
+        PR.toCoherentBranchPartial.prefixAt α hα_T
+          ((Ordinal.initialSegToType hβ_lt_α.le).toOrderEmbedding x)
+  branch_below : ∀ β (hβ_S : β ∈ S) α (hα_T : α ∈ T) (hβ_lt_α : β < α),
+    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    ∀ (x : β.ToType),
+      P.toCoherentBranchPartial.branch β hβ_S x =
+        PR.toCoherentBranchPartial.branch α hα_T
+          ((Ordinal.initialSegToType hβ_lt_α.le).toOrderEmbedding x)
+  prefix_above : ∀ α (hα_T : α ∈ T) β (hβ_S : β ∈ S) (hα_lt_β : α < β),
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    ∀ (x : α.ToType),
+      PR.toCoherentBranchPartial.prefixAt α hα_T x =
+        P.toCoherentBranchPartial.prefixAt β hβ_S
+          ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x)
+  branch_above : ∀ α (hα_T : α ∈ T) β (hβ_S : β ∈ S) (hα_lt_β : α < β),
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    ∀ (x : α.ToType),
+      PR.toCoherentBranchPartial.branch α hα_T x =
+        P.toCoherentBranchPartial.branch β hβ_S
+          ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x)
+
+/-- **`cgbp_union_empty_right`**: trivial transport `S ∪ ∅ = S`
+producing a CGBP at the `S ∪ ∅` index with compat back to the
+original. Base case of `amalgamate_pair_aux`. -/
+private lemma cgbp_union_empty_right
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {S : Finset Ordinal.{0}}
+    (P : CoherentGoodBranchPartial cR S) :
+    ∃ Q : CoherentGoodBranchPartial cR (S ∪ ∅),
+      cbpFieldwiseCompat
+        (Q.toCoherentBranchPartial.restrict
+          (fun α hα => Finset.mem_union_left _ hα))
+        P.toCoherentBranchPartial :=
+  ⟨P.cast (Finset.union_empty S).symm,
+    P.cast_restrict_self (Finset.union_empty S).symm _⟩
+
+/-- **`amalgamate_pair_aux`** [auxiliary induction lemma for
+`amalgamate_pair`]: prove pair amalgamation by induction on a disjoint
+subset `D ⊆ R` representing the indices still to be inserted into the
+running `S`-side domain.
+
+**Invariant** at each step: the running `Q` agrees with `P` on `S`
+(via `Q.restrict (S ⊆ S ∪ D)` compat `P`) and agrees with `PR` on
+each `α ∈ D` (singleton-restricted compat). Insertion uses
+`insert_prescribed_new_compatible` with the `PrescribedAmbientCompat`
+assembled from the running invariants.
+
+**Base** `D = ∅`: `S ∪ ∅ = S`, take `Q := P` after observing that
+`S ∪ ∅ = S` as Finsets requires a small transport / direct rfl.
+
+**Step** `D = insert α D'` with `α ∉ D'`: by IH on `D'`, get `Q'` on
+`S ∪ D'` with the running invariants. By `hD_disjoint`,
+`α ∉ S`; by `α ∉ D'`, `α ∉ S ∪ D'`. Apply
+`insert_prescribed_new_compatible (Q', α, PR.restrict {α})` with
+`PrescribedAmbientCompat` built from:
+* `prefix_below/branch_below`: for `β < α` in `S ∪ D'`, agreement
+  follows from either S-side overlap (`β ∈ S` → use
+  `h_overlap_prefix` + PR's `restrict_prefixAt`) or D-side invariant
+  (`β ∈ D'` → use IH's PR-agreement).
+* `prefix_above/branch_above`: symmetric, for `α < β` in `S ∪ D'`.
+
+**Status.** Stated as a sorry skeleton; the proof is mechanical
+Finset induction + careful `PrescribedAmbientCompat` assembly. The
+base case is split out as `cgbp_union_empty_right` below. -/
+private lemma coherentGoodBranchPartial_amalgamate_pair_aux
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {S : Finset Ordinal.{0}}
+    (_hS : ∀ α ∈ S, α < Ordinal.omega.{0} 1)
+    (_P : CoherentGoodBranchPartial cR S)
+    {R : Finset Ordinal.{0}}
+    (_hR : ∀ α ∈ R, α < Ordinal.omega.{0} 1)
+    (_PR : CoherentGoodBranchPartial cR R)
+    (_h_ambient : CoherentGoodBranchPartial.AmbientCompat _P _PR)
+    (D : Finset Ordinal.{0}) (_hD_sub : D ⊆ R)
+    (_hD_disjoint : ∀ α ∈ D, α ∉ S) :
+    ∃ Q : CoherentGoodBranchPartial cR (S ∪ D),
+      cbpFieldwiseCompat
+        (Q.toCoherentBranchPartial.restrict Finset.subset_union_left)
+        _P.toCoherentBranchPartial ∧
+      (∀ α (hα_D : α ∈ D) (x : α.ToType),
+        Q.toCoherentBranchPartial.prefixAt α
+            (Finset.mem_union_right S hα_D) x =
+          _PR.toCoherentBranchPartial.prefixAt α (_hD_sub hα_D) x) ∧
+      (∀ α (hα_D : α ∈ D) (x : α.ToType),
+        Q.toCoherentBranchPartial.branch α
+            (Finset.mem_union_right S hα_D) x =
+          _PR.toCoherentBranchPartial.branch α (_hD_sub hα_D) x) := by
+  classical
+  revert _hD_sub _hD_disjoint
+  induction D using Finset.induction_on with
+  | empty =>
+    intro _hD_sub _hD_disjoint
+    obtain ⟨Q, hQ⟩ := cgbp_union_empty_right _P
+    refine ⟨Q, hQ, ?_, ?_⟩
+    · intro α hα _x
+      exact absurd hα (Finset.notMem_empty α)
+    · intro α hα _x
+      exact absurd hα (Finset.notMem_empty α)
+  | @insert α' D' h_notin IH =>
+    intro _hD_sub _hD_disjoint
+    -- Inductive step strategy:
+    --
+    -- 1. Apply IH on D' (with the restricted hypotheses) to get
+    --    Q' : CGBP cR (S ∪ D') with the running invariants.
+    -- 2. Show α' ∉ S ∪ D':
+    --    * α' ∉ S from _hD_disjoint applied at α' ∈ insert α' D'.
+    --    * α' ∉ D' from h_notin.
+    -- 3. Build PrescribedAmbientCompat (Q', α', PR.restrict ({α'} ⊆ R))
+    --    via a separate helper amalgamate_pair_aux_prescribedCompat:
+    --    * prefix_below/branch_below: case-split β ∈ S vs β ∈ D':
+    --      - β ∈ S: chain Q'-vs-P (hQ'_S) + P-vs-PR (overlap_compat at
+    --        β ∈ S ∩ R via β ∈ D ⊆ R) + PR's restrict_prefixAt.
+    --      - β ∈ D': chain Q'-vs-PR (IH PR-agreement) + PR's
+    --        restrict_prefixAt from β to α'.
+    --    * prefix_above/branch_above: symmetric.
+    -- 4. Apply insert_prescribed_new_compatible to get Q on
+    --    insert α' (S ∪ D') = S ∪ insert α' D' = S ∪ D.
+    -- 5. Chain new invariants:
+    --    * S-side compat: from Q's compat with Q' + Q's compat
+    --      with PR.restrict ({α'}) (which gives P agreement at S).
+    --    * D-side agreement: for β ∈ D':  trans through Q'.
+    --                       for β = α': from the {α'}-side compat.
+    --
+    -- HIDDEN DEPTH: the `prefix_below` case for β ∈ S \ R requires
+    -- P.prefix at β = PR.prefix at α' (restricted to β.ToType) — which
+    -- is NOT directly entailed by overlap_compat (which only handles
+    -- β ∈ S ∩ R). The amalgamate_pair hypothesis as currently stated
+    -- may be too weak; either the hypothesis needs strengthening, or
+    -- the proof needs to use PR's internal coherence in a non-obvious
+    -- way. This is a real mathematical subtlety, not just bookkeeping.
+    sorry
+
+/-- **[FRONTIER, sorry — diagnostic: Good pair amalgamation]**
+`coherentGoodBranchPartial_amalgamate_pair`. Given two CGBPs at
+finsets `S₁, S₂` whose bare-CBP projections agree on the
+intersection (pointwise prefixAt and branch equality at common
+indices), amalgamate them to a single CGBP on `S₁ ∪ S₂` whose
+restrictions are fieldwise-compat with both originals.
+
+**Diagnostic outcome from attempting the proof.** Routing through
+`coherentGoodBranchPartial_extend_to_union` from `P₁` to `S₁ ∪ S₂`
+yields a `Q` with `Q.restrict S₁` compat with `P₁` (good — that's the
+extension lemma's conclusion). But `Q`'s values on `S₂ \ S₁` are
+**chosen freshly** by `extend_to_union` (via `exists_coherentGoodBranchApprox`
+through `extend_list`'s recursive Classical.choose), with **no
+constraint** tying them to `P₂`. So `extend_to_union` alone is **not
+strong enough** for pair amalgamation. The same diagnostic applies
+starting from `P₂` and extending: `Q.restrict S₂` works but the `S₁`
+side is unconstrained.
+
+**Status.** Pair amalgamation is a **genuine separate primitive**,
+on par with `extend_to_union` but with two-sided value preservation.
+It is the local missing axiom underneath
+`GoodPrescription.finite_satisfiable` and hence underneath
+`prescribedGoodCompactness_holds` / `goodIdealCompactness`.
+
+**Special cases.**
+* `coherentGoodBranchPartial_amalgamate_pair_nested` (below): the
+  `S₁ ⊆ S₂` case. **Proven** (axiom-clean) via `P₂.restrict hS`
+  plus the overlap hypothesis.
+* `coherentGoodBranchPartial_amalgamate_pair_ordered` (below): the
+  `S₁ < S₂` (fully separated) case. **Sorry**; the diagnostic
+  attempt confirms that ordered separation does NOT make
+  amalgamation easier — `extend_to_union`'s freshness on `S₂`
+  doesn't respect any prescribed `P₂`.
+
+**Closure route (2026-05-25).** The full pair amalgamation closes
+**via induction on `S₂ \ S₁`** using only
+`coherentGoodBranchPartial_insert_prescribed_new_compatible` (now
+fully proven). Each step inserts one **new** index from `S₂ \ S₁`
+into the running domain — by construction `α ∉ current_domain`, so
+only the new-index case is invoked; the existing-index transport
+branch is **never needed**. The induction step extracts
+`Pα := PR.restrict {α}` and packages `PrescribedAmbientCompat` from
+the overlap hypotheses + running-chain coherence. The closure is
+mechanical wrapping; deferred as the next pure-wrapping milestone. -/
+theorem coherentGoodBranchPartial_amalgamate_pair
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {S₁ S₂ : Finset Ordinal.{0}}
+    (_hS₁ : ∀ α ∈ S₁, α < Ordinal.omega.{0} 1)
+    (_hS₂ : ∀ α ∈ S₂, α < Ordinal.omega.{0} 1)
+    (P₁ : CoherentGoodBranchPartial cR S₁)
+    (P₂ : CoherentGoodBranchPartial cR S₂)
+    (_h_ambient : CoherentGoodBranchPartial.AmbientCompat P₁ P₂) :
+    ∃ Q : CoherentGoodBranchPartial cR (S₁ ∪ S₂),
+      cbpFieldwiseCompat
+        (Q.toCoherentBranchPartial.restrict Finset.subset_union_left)
+        P₁.toCoherentBranchPartial ∧
+      cbpFieldwiseCompat
+        (Q.toCoherentBranchPartial.restrict Finset.subset_union_right)
+        P₂.toCoherentBranchPartial := by
+  -- Closure route (2026-05-25): induction on S₂ \ S₁ using only
+  -- insert_prescribed_new_compatible. Each step inserts a new index
+  -- α ∈ R \ current_domain; the existing-index branch never fires.
+  --
+  -- Structured proof skeleton (deferred — mechanical induction):
+  -- ```
+  -- private lemma amalgamate_pair_aux
+  --     (P : CGBP cR S) (R : Finset Ordinal) (PR : CGBP cR R)
+  --     (overlap_compat : ...)
+  --     (D : Finset Ordinal) (hD_sub : D ⊆ R) (hD_disjoint : ∀ α ∈ D, α ∉ S) :
+  --     ∃ Q : CGBP cR (S ∪ D),
+  --       Q.restrict (S ⊆ S ∪ D) compat P ∧
+  --       ∀ α ∈ D, Q's values at α agree with PR's at α.
+  -- ```
+  -- Base D = ∅: S ∪ ∅ = S, Q := P (refl).
+  -- Step D = insert α D': IH gives Q' on S ∪ D' with α ∉ S ∪ D'. Apply
+  -- insert_prescribed_new_compatible (Q', α, PR.restrict {α}) with the
+  -- PrescribedAmbientCompat assembled from IH compat + overlap_compat +
+  -- PR's internal restrict_prefixAt/branch.
+  -- Apply to D := S₂ \ S₁; observe S ∪ (S₂ \ S₁) = S ∪ S₂.
+  sorry
+
+/-- **`coherentGoodBranchPartial_amalgamate_pair_nested`**: the
+**nested case** of pair amalgamation. When `S₁ ⊆ S₂`, the
+amalgamation is just `P₂` itself (no transport needed): the
+restriction `P₂.restrict hS` is fieldwise-compatible with `P₁`,
+directly via the overlap hypothesis (chained through
+`restrict_prefixAt` / `restrict_branch`).
+
+Axiom-clean. Serves as a **base case** for the finite amalgamation
+induction; also validates that the overlap hypothesis is the right
+shape (when overlap = `S₁`, it's exactly `P₂.restrict hS` matching
+`P₁` fieldwise). -/
+theorem coherentGoodBranchPartial_amalgamate_pair_nested
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {S₁ S₂ : Finset Ordinal.{0}}
+    (hS : S₁ ⊆ S₂)
+    (P₁ : CoherentGoodBranchPartial cR S₁)
+    (P₂ : CoherentGoodBranchPartial cR S₂)
+    (h_overlap_prefix : ∀ α (hα₁ : α ∈ S₁) (hα₂ : α ∈ S₂),
+      P₁.toCoherentBranchPartial.prefixAt α hα₁ =
+        P₂.toCoherentBranchPartial.prefixAt α hα₂)
+    (h_overlap_branch : ∀ α (hα₁ : α ∈ S₁) (hα₂ : α ∈ S₂),
+      P₁.toCoherentBranchPartial.branch α hα₁ =
+        P₂.toCoherentBranchPartial.branch α hα₂) :
+    cbpFieldwiseCompat
+      (P₂.toCoherentBranchPartial.restrict hS)
+      P₁.toCoherentBranchPartial := by
+  refine ⟨?_, ?_⟩
+  · intro α hα
+    rw [CoherentBranchPartial.restrict_prefixAt]
+    exact (h_overlap_prefix α hα (hS hα)).symm
+  · intro α hα
+    rw [CoherentBranchPartial.restrict_branch]
+    exact (h_overlap_branch α hα (hS hα)).symm
+
+/-- **[FRONTIER, sorry — diagnostic: ordered pair amalgamation]**
+`coherentGoodBranchPartial_amalgamate_pair_ordered`. The **separated
+case**: when every element of `S₁` is strictly below every element
+of `S₂`, amalgamate `P₁` and `P₂` into a single CGBP on `S₁ ∪ S₂`.
+
+**Why this is the second diagnostic.** The ordered hypothesis means
+`S₁ ∩ S₂ = ∅`, so overlap compatibility is vacuous and the only
+constraint is that the resulting Good chain coherently extends `P₁`'s
+chain at the top of `S₁` into `P₂`'s chain at the bottom of `S₂`.
+
+**Proof attempt strategy** (deferred): start from `P₁`, extend to
+`S₁ ∪ S₂` via `coherentGoodBranchPartial_extend_to_union`. The `S₁`
+side closes (extension preserves `P₁`). For the `S₂` side, the
+extension's values on `S₂` are **chosen freshly** via
+`exists_coherentGoodBranchApprox` — there is no facility to **force**
+agreement with `P₂`'s prescribed values.
+
+**Diagnostic outcome (predicted).** If this fails, two-sided value
+preservation requires a **prescribed-values extension primitive** —
+strictly stronger than `extend_to_union`. That confirms
+`amalgamate_pair` is genuinely a new construction, not a small lemma
+derivable from existing tools. -/
+theorem coherentGoodBranchPartial_amalgamate_pair_ordered
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {S₁ S₂ : Finset Ordinal.{0}}
+    (_hS₁ : ∀ α ∈ S₁, α < Ordinal.omega.{0} 1)
+    (hS₂ : ∀ α ∈ S₂, α < Ordinal.omega.{0} 1)
+    (_hbelow : ∀ α ∈ S₁, ∀ β ∈ S₂, α < β)
+    (P₁ : CoherentGoodBranchPartial cR S₁)
+    (_P₂ : CoherentGoodBranchPartial cR S₂) :
+    ∃ Q : CoherentGoodBranchPartial cR (S₁ ∪ S₂),
+      cbpFieldwiseCompat
+        (Q.toCoherentBranchPartial.restrict Finset.subset_union_left)
+        P₁.toCoherentBranchPartial ∧
+      cbpFieldwiseCompat
+        (Q.toCoherentBranchPartial.restrict Finset.subset_union_right)
+        _P₂.toCoherentBranchPartial := by
+  -- Diagnostic: extend P₁ above-top via extend_to_union.
+  obtain ⟨Q, hQ_S₁⟩ := coherentGoodBranchPartial_extend_to_union P₁ S₂ hS₂
+  refine ⟨Q, hQ_S₁, ?_⟩
+  -- S₁ side closes. But on the S₂ side, _hbelow is unused — the ordered
+  -- hypothesis does NOT help: extend_to_union's freshness covers ALL of
+  -- S₂ \ S₁ = S₂ uniformly (the ordering of S₁ vs S₂ doesn't constrain
+  -- which CGBP gets picked). The Good chain machinery via
+  -- exists_coherentGoodBranchApprox provides existence at S₁ ∪ S₂, not a
+  -- choice respecting a prescribed `_P₂` on S₂.
+  --
+  -- Conclusion: ordered amalgamation is **not** easier than general
+  -- amalgamation under the current API. Two-sided preservation needs
+  -- a strictly stronger primitive (prescribed-values extension), which
+  -- would itself be a new construction.
+  sorry
+
+/-- **`coherentGoodBranchPartial_extend_prescribed`**: operational
+alias for `coherentGoodBranchPartial_amalgamate_pair`. Same statement,
+clearer name — "extend `P` on `S` with prescribed values from `PR` on
+`R`, agreeing on the overlap".
+
+The two names coexist:
+* `amalgamate_pair` — symmetric reading (combine two CGBPs).
+* `extend_prescribed` — directional reading (extend `P` along `R`
+  with prescribed `PR`-values on `R \ S`).
+
+Both refer to the same theorem; the genuine local constructive
+frontier is the single-point new-index case
+`insert_prescribed_new` (below); the existing-index case
+`insert_prescribed_existing` is axiom-clean. -/
+theorem coherentGoodBranchPartial_extend_prescribed
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {S R : Finset Ordinal.{0}}
+    (hS : ∀ α ∈ S, α < Ordinal.omega.{0} 1)
+    (hR : ∀ α ∈ R, α < Ordinal.omega.{0} 1)
+    (P : CoherentGoodBranchPartial cR S)
+    (PR : CoherentGoodBranchPartial cR R)
+    (h_ambient : CoherentGoodBranchPartial.AmbientCompat P PR) :
+    ∃ Q : CoherentGoodBranchPartial cR (S ∪ R),
+      cbpFieldwiseCompat
+        (Q.toCoherentBranchPartial.restrict Finset.subset_union_left)
+        P.toCoherentBranchPartial ∧
+      cbpFieldwiseCompat
+        (Q.toCoherentBranchPartial.restrict Finset.subset_union_right)
+        PR.toCoherentBranchPartial :=
+  coherentGoodBranchPartial_amalgamate_pair hS hR P PR h_ambient
+
+/-- **`coherentGoodBranchPartial_insert_prescribed_existing`**: the
+**easy branch** of `insert_prescribed`. When `α ∈ T`, the prescribed
+value at `α` is forced to match `P`'s value at `α` by the overlap
+hypothesis; the amalgamation is just `P` itself, and what we need to
+exhibit is exactly `P.restrict {α} = Pα` fieldwise. **Axiom-clean**;
+serves as the existing-index base case for `insert_prescribed`'s
+induction over `R \ T`. -/
+theorem coherentGoodBranchPartial_insert_prescribed_existing
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {T : Finset Ordinal.{0}} (α : Ordinal.{0})
+    (hαT : α ∈ T)
+    (P : CoherentGoodBranchPartial cR T)
+    (Pα : CoherentGoodBranchPartial cR ({α} : Finset Ordinal.{0}))
+    (h_overlap_prefix : ∀ β (hβ_T : β ∈ T)
+        (hβ_α : β ∈ ({α} : Finset Ordinal.{0})),
+      P.toCoherentBranchPartial.prefixAt β hβ_T =
+        Pα.toCoherentBranchPartial.prefixAt β hβ_α)
+    (h_overlap_branch : ∀ β (hβ_T : β ∈ T)
+        (hβ_α : β ∈ ({α} : Finset Ordinal.{0})),
+      P.toCoherentBranchPartial.branch β hβ_T =
+        Pα.toCoherentBranchPartial.branch β hβ_α) :
+    cbpFieldwiseCompat
+      (P.toCoherentBranchPartial.restrict
+        (Finset.singleton_subset_iff.mpr hαT))
+      Pα.toCoherentBranchPartial := by
+  refine ⟨?_, ?_⟩
+  · intro β hβ
+    rw [CoherentBranchPartial.restrict_prefixAt]
+    exact h_overlap_prefix β (Finset.singleton_subset_iff.mpr hαT hβ) hβ
+  · intro β hβ
+    rw [CoherentBranchPartial.restrict_branch]
+    exact h_overlap_branch β (Finset.singleton_subset_iff.mpr hαT hβ) hβ
+
+/-- **[FRONTIER, sorry — WITH MATHEMATICAL CORRECTION]**
+`coherentGoodBranchPartial_insert_prescribed_new`. The **hard branch**
+of `insert_prescribed`: when `α ∉ T`, extend `P` on `T` to
+`insert α T = T ∪ {α}` matching both `P` on `T` and a prescribed
+`Pα` on `{α}`.
+
+**Mathematical correction (2026-05-23).** The naive version (no
+overlap hypothesis, since `T ∩ {α} = ∅` when `α ∉ T`) is **wrong**.
+A CGBP on `{α}` already carries an entire `PairERGoodChain cR α`,
+including:
+* a prefix embedding `α.ToType ↪o PairERSource` covering **all**
+  positions below `α`;
+* a type function `α.ToType → Bool` for all positions below `α`;
+* `inner_consistent` linking pairs across all those positions.
+
+For amalgamation to be possible, `Pα` must already be **coherent
+with the ambient partial branch `P`** at every position where they
+both have data:
+* For `β ∈ T` with `β < α`: `P.prefixAt β` (a prefix on `β.ToType`)
+  must agree with `Pα.prefixAt α` restricted to the initial-segment
+  `β.ToType ⊆ α.ToType`. Similarly for `branch β`.
+* For `β ∈ T` with `α < β`: `P.prefixAt β` at the position
+  corresponding to `α` must equal the new top's head, derivable
+  from `Pα`'s Good-chain data at `α`.
+
+Without these compatibility hypotheses, the prescription `(P, Pα)`
+generally has **no** common extension. Prescribed insertion is only
+possible when `Pα` is already coherent with the surrounding partial
+branch — not just for a vacuous set-theoretic overlap.
+
+**This statement (no strong compat hypothesis) is therefore
+**incompletely specified**.** The corrected form is
+`insert_prescribed_new_compatible` below. The original is retained
+here as a record of the (wrong) shape that motivated the correction. -/
+theorem coherentGoodBranchPartial_insert_prescribed_new
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {T : Finset Ordinal.{0}} (α : Ordinal.{0})
+    (_hαT : α ∉ T)
+    (_hT : ∀ β ∈ T, β < Ordinal.omega.{0} 1)
+    (_hα : α < Ordinal.omega.{0} 1)
+    (_P : CoherentGoodBranchPartial cR T)
+    (_Pα : CoherentGoodBranchPartial cR ({α} : Finset Ordinal.{0})) :
+    ∃ Q : CoherentGoodBranchPartial cR (insert α T),
+      cbpFieldwiseCompat
+        (Q.toCoherentBranchPartial.restrict (Finset.subset_insert α T))
+        _P.toCoherentBranchPartial ∧
+      cbpFieldwiseCompat
+        (Q.toCoherentBranchPartial.restrict
+          (Finset.singleton_subset_iff.mpr (Finset.mem_insert_self α T)))
+        _Pα.toCoherentBranchPartial := by
+  sorry
+
+/-- **`PrescribedAmbientCompat P Pα`**: the strengthened compatibility
+hypothesis required for `insert_prescribed_new_compatible`. Says that
+`Pα`'s prefix and branch at `α` agree with `P`'s prefix and branch at
+every position `β ∈ T` where they both have data, via the appropriate
+initial-segment restrictions.
+
+For `β ∈ T` with `β < α`: the prefix embedding `Pα.prefixAt α` at the
+initial-segment `β.ToType` agrees with `P.prefixAt β`, and the type
+function `Pα.branch α` at the initial-segment agrees with `P.branch β`.
+
+For `β ∈ T` with `α ≤ β`: the prefix `P.prefixAt β` at the
+α-corresponding position equals... [precise statement depends on how
+Pα's head at α relates to P's head data]. Left abstract for now.
+
+**Status.** The precise field shape needs care; this serves as a
+placeholder structure to be filled when `succWithChoice` is wired in. -/
+structure PrescribedAmbientCompat
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {T : Finset Ordinal.{0}} (α : Ordinal.{0})
+    (P : CoherentGoodBranchPartial cR T)
+    (Pα : CoherentGoodBranchPartial cR ({α} : Finset Ordinal.{0})) :
+    Prop where
+  /-- Below-α coherence: `Pα`'s prefix at `α` agrees with `P`'s prefix
+  at each `β ∈ T` with `β < α`, via the initial-segment embedding. -/
+  prefix_below : ∀ β (hβ_T : β ∈ T) (hβ_lt_α : β < α),
+    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    ∀ (x : β.ToType),
+      P.toCoherentBranchPartial.prefixAt β hβ_T x =
+        Pα.toCoherentBranchPartial.prefixAt α (Finset.mem_singleton.mpr rfl)
+          ((Ordinal.initialSegToType hβ_lt_α.le).toOrderEmbedding x)
+  /-- Below-α type coherence: `Pα`'s branch at `α` agrees with `P`'s
+  branch at each `β ∈ T` with `β < α`. -/
+  branch_below : ∀ β (hβ_T : β ∈ T) (hβ_lt_α : β < α),
+    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    ∀ (x : β.ToType),
+      P.toCoherentBranchPartial.branch β hβ_T x =
+        Pα.toCoherentBranchPartial.branch α (Finset.mem_singleton.mpr rfl)
+          ((Ordinal.initialSegToType hβ_lt_α.le).toOrderEmbedding x)
+  /-- Above-α coherence: `Pα`'s prefix at `α` agrees with `P`'s prefix
+  at each `β ∈ T` with `α < β`, via the initial-segment embedding
+  `α.ToType → β.ToType`. -/
+  prefix_above : ∀ β (hβ_T : β ∈ T) (hα_lt_β : α < β),
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    ∀ (x : α.ToType),
+      Pα.toCoherentBranchPartial.prefixAt α (Finset.mem_singleton.mpr rfl) x =
+        P.toCoherentBranchPartial.prefixAt β hβ_T
+          ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x)
+  /-- Above-α type coherence. -/
+  branch_above : ∀ β (hβ_T : β ∈ T) (hα_lt_β : α < β),
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    ∀ (x : α.ToType),
+      Pα.toCoherentBranchPartial.branch α (Finset.mem_singleton.mpr rfl) x =
+        P.toCoherentBranchPartial.branch β hβ_T
+          ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x)
+
+/-- **[FRONTIER, sorry — CORRECTED]**
+`coherentGoodBranchPartial_insert_prescribed_new_compatible`. The
+mathematically correct form: requires `PrescribedAmbientCompat` (the
+strong compat with all four directions: prefix/branch × below/above).
+
+**Construction status (2026-05-24).** The CGBA core
+`insertPrescribedGoodApprox` is now **fully closed axiom-clean** (all
+four fields: prefix_restrict, branch_restrict, large,
+top_in_validFiber). The remaining wrapper packages this into a CGBP
+and discharges the two compat conclusions (with `P` on `T` and `Pα`
+on `{α}`) via:
+1. `letI Q := { toGoodApprox := insertPrescribedGoodApprox ...,
+                 level_eq := fun _ => rfl }`.
+2. For γ ∈ T (compat with P): use the parallel of
+   `insertBeforeGoodApprox_goodAt_old_head/type` —
+   `insertPrescribedGoodApprox_goodAt_old_head/type`, which routes
+   through `insertPrescribedGoodAt_eq_old` + `goodAt_head_apply_eq_of_eq`.
+3. For γ = α (compat with Pα): use the parallel
+   `_goodAt_alpha_head/type`, routing through
+   `insertPrescribedGoodAt_eq_alpha` (the singleton membership
+   `α ∈ {α}` is `Finset.mem_singleton.mpr rfl`).
+
+Both helper-lemma sets follow the existing
+`insertBeforeGoodApprox_goodAt_old_*` template mechanically. -/
+theorem coherentGoodBranchPartial_insert_prescribed_new_compatible
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {T : Finset Ordinal.{0}} (α : Ordinal.{0})
+    (hαT : α ∉ T)
+    (_hT : ∀ β ∈ T, β < Ordinal.omega.{0} 1)
+    (hα : α < Ordinal.omega.{0} 1)
+    (P : CoherentGoodBranchPartial cR T)
+    (Pα : CoherentGoodBranchPartial cR ({α} : Finset Ordinal.{0}))
+    (h_compat : PrescribedAmbientCompat α P Pα) :
+    ∃ Q : CoherentGoodBranchPartial cR (insert α T),
+      cbpFieldwiseCompat
+        (Q.toCoherentBranchPartial.restrict (Finset.subset_insert α T))
+        P.toCoherentBranchPartial ∧
+      cbpFieldwiseCompat
+        (Q.toCoherentBranchPartial.restrict
+          (Finset.singleton_subset_iff.mpr (Finset.mem_insert_self α T)))
+        Pα.toCoherentBranchPartial := by
+  letI Q : CoherentGoodBranchPartial cR (insert α T) :=
+    { toGoodApprox := insertPrescribedGoodApprox P hα hαT Pα
+        h_compat.prefix_below h_compat.branch_below
+        h_compat.prefix_above h_compat.branch_above
+      level_eq := fun _ => rfl }
+  refine ⟨Q, ⟨?_, ?_⟩, ⟨?_, ?_⟩⟩
+  · -- prefix compat with P on T
+    intro γ hγ
+    rw [CoherentBranchPartial.restrict_prefixAt]
+    apply RelEmbedding.ext
+    intro x
+    rw [← Q.good_head_eq γ (Finset.mem_insert_of_mem hγ) x,
+        ← P.good_head_eq γ hγ x]
+    exact insertPrescribedGoodApprox_goodAt_old_head P hα hαT Pα
+      h_compat.prefix_below h_compat.branch_below
+      h_compat.prefix_above h_compat.branch_above γ hγ x
+  · -- branch compat with P on T
+    intro γ hγ
+    rw [CoherentBranchPartial.restrict_branch]
+    funext x
+    rw [← Q.good_type_eq γ (Finset.mem_insert_of_mem hγ) x,
+        ← P.good_type_eq γ hγ x]
+    exact insertPrescribedGoodApprox_goodAt_old_type P hα hαT Pα
+      h_compat.prefix_below h_compat.branch_below
+      h_compat.prefix_above h_compat.branch_above γ hγ x
+  · -- prefix compat with Pα on {α}
+    intro γ hγ_sing
+    have hγ_eq : γ = α := Finset.mem_singleton.mp hγ_sing
+    subst hγ_eq
+    rw [CoherentBranchPartial.restrict_prefixAt]
+    apply RelEmbedding.ext
+    intro x
+    rw [← Q.good_head_eq γ (Finset.mem_insert_self γ T) x,
+        ← Pα.good_head_eq γ (Finset.mem_singleton.mpr rfl) x]
+    exact insertPrescribedGoodApprox_goodAt_alpha_head P hα hαT Pα
+      h_compat.prefix_below h_compat.branch_below
+      h_compat.prefix_above h_compat.branch_above x
+  · -- branch compat with Pα on {α}
+    intro γ hγ_sing
+    have hγ_eq : γ = α := Finset.mem_singleton.mp hγ_sing
+    subst hγ_eq
+    rw [CoherentBranchPartial.restrict_branch]
+    funext x
+    rw [← Q.good_type_eq γ (Finset.mem_insert_self γ T) x,
+        ← Pα.good_type_eq γ (Finset.mem_singleton.mpr rfl) x]
+    exact insertPrescribedGoodApprox_goodAt_alpha_type P hα hαT Pα
+      h_compat.prefix_below h_compat.branch_below
+      h_compat.prefix_above h_compat.branch_above x
+
+/-- **`coherentGoodBranchPartial_insert_prescribed_compatible`**
+[**convenience wrapper — TRANSPORT TODO**]: unified existing/new
+prescribed-insertion theorem.
+
+**Off the critical path.** The induction over `R \ S` in
+`extend_prescribed` only ever inserts indices that are **new** to
+the running domain, so it never invokes the existing-index branch.
+This wrapper is purely a presentational convenience and not load-
+bearing for any downstream theorem. The α ∉ T case routes through
+the now-fully-proven `insert_prescribed_new_compatible`; the α ∈ T
+case requires non-trivial Finset transport bookkeeping (subst on
+`Finset.insert_eq_of_mem hαT : insert α T = T` triggers recursive
+rewriting on the parameter `T`). Left as a `sorry` until/if a
+dedicated transport helper is added. -/
+theorem coherentGoodBranchPartial_insert_prescribed_compatible
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {T : Finset Ordinal.{0}} (α : Ordinal.{0})
+    (_hT : ∀ β ∈ T, β < Ordinal.omega.{0} 1)
+    (hα : α < Ordinal.omega.{0} 1)
+    (P : CoherentGoodBranchPartial cR T)
+    (Pα : CoherentGoodBranchPartial cR ({α} : Finset Ordinal.{0}))
+    (h_compat : PrescribedAmbientCompat α P Pα) :
+    ∃ Q : CoherentGoodBranchPartial cR (insert α T),
+      cbpFieldwiseCompat
+        (Q.toCoherentBranchPartial.restrict (Finset.subset_insert α T))
+        P.toCoherentBranchPartial ∧
+      cbpFieldwiseCompat
+        (Q.toCoherentBranchPartial.restrict
+          (Finset.singleton_subset_iff.mpr (Finset.mem_insert_self α T)))
+        Pα.toCoherentBranchPartial := by
+  classical
+  by_cases hαT : α ∈ T
+  · -- Existing case: insert α T = T, take Q := P via transport.
+    -- The transport bookkeeping is non-trivial — left as one final sorry.
+    sorry
+  · exact coherentGoodBranchPartial_insert_prescribed_new_compatible α hαT _hT hα
+      P Pα h_compat
+
+/-- **Diagnostic for `insert_prescribed_new`.** If `extend_to_union`'s
+freshly chosen extension happens to restrict to the prescribed `Pα`
+on the new level — that is, if the assumption "any T-side-matching
+extension of `P` to `insert α T` also matches `Pα` on `{α}`" holds —
+then `insert_prescribed_new` closes immediately from the
+`extend_to_union` witness.
+
+**Diagnostic outcome.** The proof goes through with no compatibility
+bookkeeping issues: the `obtain` from `extend_to_union` gives the
+T-side; the hypothesis gives the `{α}`-side; done. This **confirms
+the only missing thing is forcing the chosen level**, not anything
+about how restrictions interact with prescribed values. The
+prescribed-level extension primitive *is* the entire remaining
+constructive content. -/
+theorem coherentGoodBranchPartial_insert_prescribed_new_of_level_eq
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {T : Finset Ordinal.{0}} (α : Ordinal.{0})
+    (_hαT : α ∉ T)
+    (_hT : ∀ β ∈ T, β < Ordinal.omega.{0} 1)
+    (hα : α < Ordinal.omega.{0} 1)
+    (P : CoherentGoodBranchPartial cR T)
+    (Pα : CoherentGoodBranchPartial cR ({α} : Finset Ordinal.{0}))
+    (h_force :
+      ∀ (Q : CoherentGoodBranchPartial cR (T ∪ {α})),
+        cbpFieldwiseCompat
+          (Q.toCoherentBranchPartial.restrict Finset.subset_union_left)
+          P.toCoherentBranchPartial →
+        cbpFieldwiseCompat
+          (Q.toCoherentBranchPartial.restrict Finset.subset_union_right)
+          Pα.toCoherentBranchPartial) :
+    ∃ Q : CoherentGoodBranchPartial cR (T ∪ {α}),
+      cbpFieldwiseCompat
+        (Q.toCoherentBranchPartial.restrict Finset.subset_union_left)
+        P.toCoherentBranchPartial ∧
+      cbpFieldwiseCompat
+        (Q.toCoherentBranchPartial.restrict Finset.subset_union_right)
+        Pα.toCoherentBranchPartial := by
+  have h_sing : ∀ β ∈ ({α} : Finset Ordinal.{0}), β < Ordinal.omega.{0} 1 := by
+    intro β hβ
+    rw [Finset.mem_singleton.mp hβ]
+    exact hα
+  obtain ⟨Q, hQ_T⟩ := coherentGoodBranchPartial_extend_to_union P {α} h_sing
+  exact ⟨Q, hQ_T, h_force Q hQ_T⟩
+
+/-! ### Final two-frontier dependency chain
+
+The local constructive frontier `insert_prescribed_new` is the
+**single** remaining algebraic obstacle. The full chain of wrapping
+lemmas — by which `insert_prescribed_new` propagates up to the
+inverse-limit step — is:
+
+```
+insert_prescribed_new   (sorry — local atomic frontier)
+       ↓ + insert_prescribed_existing (proven)
+insert_prescribed       (unified by `by_cases hαT : α ∈ T`)
+       ↓ induction on `R \ S`
+extend_prescribed       (= amalgamate_pair)
+       ↓ induction on `I : Finset ι`
+amalgamate_finset
+       ↓ + pairwise compat from prescription
+GoodPrescription.finite_satisfiable
+       ↓ ultrafilter on finite sub-domains
+prescribedGoodCompactness_holds   (sorry — infinite frontier)
+```
+
+**Two remaining theorem frontiers:**
+* **Local (Frontier 1):** `coherentGoodBranchPartial_insert_prescribed_new`.
+  Requires a prescribed-level Good-chain extension primitive, strictly
+  stronger than `extendSucc`/`extendTo` which choose freshly.
+* **Infinite (Frontier 2):** `prescribedGoodCompactness_holds`.
+  Requires an ultrafilter / inverse-limit argument from finite
+  satisfiability to global existence.
+
+Everything in between is "easy" derivation (induction over finsets +
+transport bookkeeping for the `α ∈ T` case of `insert_prescribed`).
+The wrapping lemmas are documented as theorems with `sorry` proofs
+in the current state; filling them is straightforward but mechanical.
+**The constructive content lives only in the two named frontiers.** -/
+
+/-- **[FRONTIER, sorry — finite multi-amalgamation by induction]**
+`coherentGoodBranchPartial_amalgamate_finset`. The finset
+generalization of `amalgamate_pair`: given a finite family of
+pairwise-compatible CGBPs (compatible on every pairwise overlap),
+produce a single CGBP on `I.sup S` whose restriction to each `S i`
+is fieldwise-compat with `P i`.
+
+**Proof strategy** (induction on `I`, deferred):
+* `I = ∅`: take any CGBP on `∅` (via `exists_coherentGoodBranchPartial`);
+  the conclusion is vacuous.
+* `I = insert i I'`: by IH on `I'`, get `Q'` on `I'.sup S` compat with
+  each `P j` (`j ∈ I'`). Apply `amalgamate_pair` to `P i` and `Q'`:
+  overlap compat between `P i` and `Q'` on `S i ∩ I'.sup S` follows
+  from `h_overlap_*` (`P i` vs `P j` for the `j ∈ I'` containing the
+  overlap point) chained with IH compat (`P j` vs `Q'`). The result
+  `Q` on `S i ∪ I'.sup S = I.sup S` has the required two-sided compat;
+  the `j ∈ I'` side carries through by another compat-transitivity
+  step.
+
+The whole induction is straightforward modulo Lean bookkeeping
+(proof irrelevance for `α ∈ I'.sup S` proofs across the chain). -/
+theorem coherentGoodBranchPartial_amalgamate_finset
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {ι : Type*} (I : Finset ι)
+    (S : ι → Finset Ordinal.{0})
+    (P : ∀ i, i ∈ I → CoherentGoodBranchPartial cR (S i))
+    (_h_valid : ∀ i (hi : i ∈ I), ∀ α ∈ S i, α < Ordinal.omega.{0} 1)
+    (_h_overlap_prefix : ∀ i (hi : i ∈ I) j (hj : j ∈ I) α
+      (hα₁ : α ∈ S i) (hα₂ : α ∈ S j),
+      (P i hi).toCoherentBranchPartial.prefixAt α hα₁ =
+        (P j hj).toCoherentBranchPartial.prefixAt α hα₂)
+    (_h_overlap_branch : ∀ i (hi : i ∈ I) j (hj : j ∈ I) α
+      (hα₁ : α ∈ S i) (hα₂ : α ∈ S j),
+      (P i hi).toCoherentBranchPartial.branch α hα₁ =
+        (P j hj).toCoherentBranchPartial.branch α hα₂) :
+    ∃ Q : CoherentGoodBranchPartial cR (I.sup S),
+      ∀ i (hi : i ∈ I), ∃ (hsub : S i ⊆ I.sup S),
+        cbpFieldwiseCompat
+          (Q.toCoherentBranchPartial.restrict hsub)
+          (P i hi).toCoherentBranchPartial := by
+  sorry
+
+/-! ### Good-layer `FiniteProjectiveSystem` instance
+
+Parallel of `coherentBranchPartialSystem cR` whose objects are
+`CoherentGoodBranchPartial cR S` rather than the bare `CBP`. Built atop
+`CoherentGoodBranchPartial.restrict` + `exists_coherentGoodBranchPartial`.
+Compatibility is at the underlying-bare-CBP layer (since Good chains
+are uniquely determined by their bare projection up to inner
+consistency, fieldwise CBP compat suffices for our purposes). -/
+
+/-- **`coherentGoodBranchPartialSystem cR`**: the `FiniteProjectiveSystem`
+instance for `CoherentGoodBranchPartial`, with fieldwise CBP-level
+compatibility on the underlying bare CBPs. Closes the finite-extension
+property via `exists_coherentGoodBranchPartial`. -/
+noncomputable def coherentGoodBranchPartialSystem
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    FiniteProjectiveSystem (Finset Ordinal.{0}) where
+  Valid S := ∀ α ∈ S, α < Ordinal.omega.{0} 1
+  Obj S := CoherentGoodBranchPartial cR S
+  restrict {_ _} hij PG := PG.restrict hij
+  Compat PG₁ PG₂ :=
+    cbpFieldwiseCompat PG₁.toCoherentBranchPartial PG₂.toCoherentBranchPartial
+  finite_extension := by
+    intro 𝒮 h𝒮
+    classical
+    set U : Finset Ordinal.{0} := 𝒮.sup id
+    have hU_lt : ∀ α ∈ U, α < Ordinal.omega.{0} 1 := by
+      intro α hα
+      obtain ⟨S, hS, hαS⟩ := Finset.mem_sup.mp hα
+      exact h𝒮 S hS α hαS
+    obtain ⟨Q⟩ := exists_coherentGoodBranchPartial cR U hU_lt
+    have h_sub : ∀ {S : Finset Ordinal.{0}}, S ∈ 𝒮 → S ⊆ U := fun hS_mem α hα =>
+      Finset.mem_sup.mpr ⟨_, hS_mem, hα⟩
+    refine ⟨fun S hS_mem => Q.restrict (h_sub hS_mem), ?_⟩
+    intro S T hS hT hST
+    refine ⟨?_, ?_⟩
+    · intro α hα
+      simp only [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial]
+      rw [CoherentBranchPartial.restrict_prefixAt,
+          Q.toCoherentBranchPartial.restrict_prefixAt (h_sub hT) α (hST hα),
+          Q.toCoherentBranchPartial.restrict_prefixAt (h_sub hS) α hα]
+    · intro α hα
+      simp only [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial]
+      rw [CoherentBranchPartial.restrict_branch,
+          Q.toCoherentBranchPartial.restrict_branch (h_sub hT) α (hST hα),
+          Q.toCoherentBranchPartial.restrict_branch (h_sub hS) α hα]
+
+/-! ### Good witness net
+
+Parallel of `CoherentWitnessNet` whose witnesses are Good CBPs at every
+finite `S ⊂ ω₁`. The Good system's intrinsic inner-cR-consistency data
+makes finite-extension easier to prove (via
+`coherentGoodBranchPartial_extend_to_union`). Project down to bare
+`CoherentWitnessNet` via `toCoherentWitnessNet`. -/
+
+/-- **`CoherentGoodWitnessNet cR`**: a Good-strengthened witness net.
+Provides a Good CBP at every finite `S ⊂ ω₁` with cross-compatibility. -/
+structure CoherentGoodWitnessNet (cR : (Fin 2 ↪o PairERSource) → Bool) where
+  /-- Good CBP at every finite `S ⊂ ω₁`. -/
+  P : ∀ S : Finset Ordinal.{0}, (∀ α ∈ S, α < Ordinal.omega.{0} 1) →
+    CoherentGoodBranchPartial cR S
+  /-- Prefix compatibility across `S ⊆ T`. -/
+  prefix_compat : ∀ {S T : Finset Ordinal.{0}}
+    (hS : ∀ α ∈ S, α < Ordinal.omega.{0} 1)
+    (hT : ∀ α ∈ T, α < Ordinal.omega.{0} 1)
+    (hST : S ⊆ T) (α : Ordinal.{0}) (hα : α ∈ S),
+    (P T hT).toCoherentBranchPartial.prefixAt α (hST hα) =
+      (P S hS).toCoherentBranchPartial.prefixAt α hα
+  /-- Branch compatibility. -/
+  branch_compat : ∀ {S T : Finset Ordinal.{0}}
+    (hS : ∀ α ∈ S, α < Ordinal.omega.{0} 1)
+    (hT : ∀ α ∈ T, α < Ordinal.omega.{0} 1)
+    (hST : S ⊆ T) (α : Ordinal.{0}) (hα : α ∈ S),
+    (P T hT).toCoherentBranchPartial.branch α (hST hα) =
+      (P S hS).toCoherentBranchPartial.branch α hα
+
+/-- **`CoherentGoodWitnessNet.toCoherentWitnessNet`**: project a Good
+witness net down to the bare `CoherentWitnessNet` by taking the
+underlying bare CBP at each level. Compatibility carries through
+because `cbpFieldwiseCompat` is fieldwise. -/
+def CoherentGoodWitnessNet.toCoherentWitnessNet
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (W : CoherentGoodWitnessNet cR) : CoherentWitnessNet cR where
+  P := fun S hS => (W.P S hS).toCoherentBranchPartial
+  prefix_compat := W.prefix_compat
+  branch_compat := W.branch_compat
+
+/-- **`GoodPrescription cR`**: a (possibly infinite) consistent
+assignment of `CoherentGoodBranchPartial`s indexed by valid finsets,
+with bare-CBP-level restriction consistency (prefixAt and branch
+agree on overlaps). This is the natural input shape for true
+inverse-limit compactness: it generalizes IPS by dropping
+directedness and downward-closure. -/
+structure GoodPrescription (cR : (Fin 2 ↪o PairERSource) → Bool) where
+  𝒮 : Set (Finset Ordinal.{0})
+  𝒮_valid : ∀ S ∈ 𝒮, ∀ α ∈ S, α < Ordinal.omega.{0} 1
+  obj : ∀ S, S ∈ 𝒮 → CoherentGoodBranchPartial cR S
+  consistent_prefix : ∀ {S T} (hS : S ∈ 𝒮) (hT : T ∈ 𝒮) (hST : S ⊆ T)
+      (α : Ordinal.{0}) (hα : α ∈ S),
+    (obj T hT).toCoherentBranchPartial.prefixAt α (hST hα) =
+      (obj S hS).toCoherentBranchPartial.prefixAt α hα
+  consistent_branch : ∀ {S T} (hS : S ∈ 𝒮) (hT : T ∈ 𝒮) (hST : S ⊆ T)
+      (α : Ordinal.{0}) (hα : α ∈ S),
+    (obj T hT).toCoherentBranchPartial.branch α (hST hα) =
+      (obj S hS).toCoherentBranchPartial.branch α hα
+
+/-- **`prescribedGoodCompactness cR`**: the true final-frontier
+compactness statement. **Every** consistent `GoodPrescription` extends
+to a global Good witness net **storing each prescribed CGBP literally**
+at its index. Drops directedness/downward-closure compared to
+`goodIdealCompactness`, isolating the compactness content. -/
+def prescribedGoodCompactness (cR : (Fin 2 ↪o PairERSource) → Bool) : Prop :=
+  ∀ (P : GoodPrescription cR),
+    ∃ net : CoherentGoodWitnessNet cR,
+      ∀ S (hS : S ∈ P.𝒮),
+        net.P S (P.𝒮_valid S hS) = P.obj S hS
+
+/-- **Bridge**: every `IdealPartialSection` is a `GoodPrescription` by
+forgetting directedness/downward-closure and reading off the IPS-level
+restriction-compat as bare-CBP-level prefix/branch agreement. -/
+def FiniteProjectiveSystem.IdealPartialSection.toGoodPrescription
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection) :
+    GoodPrescription cR where
+  𝒮 := p.domain
+  𝒮_valid := fun S hS => p.domain_valid hS
+  obj := fun S hS => p.P S hS
+  consistent_prefix := fun {S T} hS hT hST α hα => by
+    have h : ((p.P T hT).restrict hST).toCoherentBranchPartial.prefixAt α hα =
+        (p.P S hS).toCoherentBranchPartial.prefixAt α hα :=
+      (p.compat hS hT hST).1 α hα
+    rw [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+        CoherentBranchPartial.restrict_prefixAt] at h
+    exact h
+  consistent_branch := fun {S T} hS hT hST α hα => by
+    have h : ((p.P T hT).restrict hST).toCoherentBranchPartial.branch α hα =
+        (p.P S hS).toCoherentBranchPartial.branch α hα :=
+      (p.compat hS hT hST).2 α hα
+    rw [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+        CoherentBranchPartial.restrict_branch] at h
+    exact h
+
+/-- **Restrict** a `GoodPrescription` to a finite sub-domain. Yields a
+`GoodPrescription` whose `𝒮` is the underlying set of a `Finset`
+`R` (assumed to lie inside the original `P.𝒮`), agreeing with the
+original on each member. Used to state and reason about
+finite-satisfiability slices. -/
+def GoodPrescription.restrictTo
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (P : GoodPrescription cR)
+    (R : Finset (Finset Ordinal.{0}))
+    (hR : ∀ S ∈ R, S ∈ P.𝒮) :
+    GoodPrescription cR where
+  𝒮 := (↑R : Set (Finset Ordinal.{0}))
+  𝒮_valid := fun S hS => P.𝒮_valid S (hR S (Finset.mem_coe.mp hS))
+  obj := fun S hS => P.obj S (hR S (Finset.mem_coe.mp hS))
+  consistent_prefix := fun {S T} hS hT hST α hα =>
+    P.consistent_prefix (hR S (Finset.mem_coe.mp hS))
+      (hR T (Finset.mem_coe.mp hT)) hST α hα
+  consistent_branch := fun {S T} hS hT hST α hα =>
+    P.consistent_branch (hR S (Finset.mem_coe.mp hS))
+      (hR T (Finset.mem_coe.mp hT)) hST α hα
+
+/-- **[FRONTIER, sorry — finite slice of the compactness frontier]**
+`GoodPrescription.finite_satisfiable`. For any finite `R ⊆ P.𝒮`,
+there is a global Good witness net agreeing with `P` on `R`. This is
+the finite-slice version of `prescribedGoodCompactness_holds`; the
+full theorem follows by an inverse-limit / ultrafilter step over
+finite slices.
+
+**Two-step decomposition.**
+1. **Local amalgamation** (handled by
+   `coherentGoodBranchPartial_amalgamate_finset` once `amalgamate_pair`
+   is proven): the finite family `{P.obj S | S ∈ R}` amalgamates into
+   a single `Q : CGBP cR (R.sup id)` with `Q.restrict S` compat
+   `P.obj S` for each `S ∈ R`. **Requires pairwise compat** between
+   `P.obj S₁` and `P.obj S₂` on `S₁ ∩ S₂` — the current
+   `consistent_prefix/branch` fields only give *subset* compat. For
+   IPS-derived prescriptions, pairwise compat is derivable via the
+   intersection trick (use `S₁ ∩ S₂ ∈ p.domain` from
+   `downward_closed`).
+2. **Globalization** from local `Q` to a full witness net: define
+   `net.P W` for every valid `W` consistently — this is essentially
+   the inverse-limit step the parent theorem solves. The finite slice
+   doesn't escape compactness; it localizes the amalgamation step. -/
+theorem GoodPrescription.finite_satisfiable
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (P : GoodPrescription cR)
+    (R : Finset (Finset Ordinal.{0}))
+    (hR : ∀ S ∈ R, S ∈ P.𝒮) :
+    ∃ net : CoherentGoodWitnessNet cR,
+      ∀ S (hS : S ∈ R),
+        net.P S (P.𝒮_valid S (hR S hS)) = P.obj S (hR S hS) := by
+  sorry
+
+/-- **[FRONTIER 2, sorry — infinite compactness].** The
+`prescribedGoodCompactness` predicate holds: every consistent
+`GoodPrescription` extends to a global Good witness net.
+
+**Together with Frontier 1, these are the ONLY two remaining
+substantive theorems.**
+
+**Frontier 1 — local prescribed-level extension primitive:**
+`coherentGoodBranchPartial_insert_prescribed_new` (above). All
+amalgamation lemmas (pair, finset, finite slice) wrap around this
+single atomic primitive — wrapping is mechanical induction +
+transport, no new ideas needed.
+
+**Frontier 2 — infinite compactness from finite satisfiability:**
+*this theorem*. Reduction sketch: take an ultrafilter `𝔘` on the
+finite sub-domains of `P.𝒮`; for each finite `R`, choose a witness
+net `net_R` from `finite_satisfiable`; extract a "limit" net whose
+value at each finset is `𝔘`-eventual. This is the genuinely
+topological / non-constructive step. -/
+theorem prescribedGoodCompactness_holds
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    prescribedGoodCompactness cR := by
+  sorry
+
+/-- **[Corollary — was the frontier, now packaging]**
+`goodIdealCompactness`. **Input:** an `IdealPartialSection p` of the
+Good projective system. **Output:** a global `CoherentGoodWitnessNet`
+whose value at each `S ∈ p.domain` equals `p.P S` **literally** (not
+just fieldwise-compatible).
+
+**Now a one-line corollary of `prescribedGoodCompactness_holds`**
+via `toGoodPrescription`: every IPS is a `GoodPrescription`, so the
+true compactness statement above suffices.
+
+**Why not the generic `goodConstraintCompactness`?** That form
+concludes with `cbpFieldwiseCompat`, not equality. The IPS extension
+order `p ≤ q` requires `q.P S = p.P S` for `S ∈ p.domain`; compat
+alone is insufficient because two CGBPs with equal underlying bare
+CBP can still differ in `toGoodApprox` (Good-chain bundling). The
+specialized form pins down equality directly. -/
+theorem goodIdealCompactness
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection) :
+    ∃ net : CoherentGoodWitnessNet cR,
+      ∀ S (hS : S ∈ p.domain),
+        net.P S (p.domain_valid hS) = p.P S hS :=
+  prescribedGoodCompactness_holds cR p.toGoodPrescription
+
+/-- **Bridge (with explicit hypothesis form).**
+`prescribedGoodCompactness` implies the `goodIdealCompactness`
+statement for every IPS. Kept as an explicit-hypothesis variant for
+readers who want to see the implication structure separately from
+`prescribedGoodCompactness_holds`. -/
+theorem goodIdealCompactness_of_prescribedGoodCompactness
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (hcompact : prescribedGoodCompactness cR)
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection) :
+    ∃ net : CoherentGoodWitnessNet cR,
+      ∀ S (hS : S ∈ p.domain),
+        net.P S (p.domain_valid hS) = p.P S hS :=
+  hcompact p.toGoodPrescription
+
+/-- **Packaging corollary of `goodIdealCompactness`.**
+
+**Input:** an `IdealPartialSection p` of the Good projective system
+plus a new finite valid index `i₀`. **Output:** an ideal extension
+`q ≥ p` containing `i₀`.
+
+The proof is now a one-step packaging: apply `goodIdealCompactness`
+to obtain a global Good witness net agreeing with `p` on `p.domain`,
+then package the net as an IPS whose domain is all valid finsets.
+`p ≤ q` is immediate from `h_net` (proof-irrelevance handles the
+domain-membership coercion); `i₀ ∈ q.domain` is the validity
+hypothesis. Renamed from
+`coherentGoodBranchPartial_idealHasPartialExtensions`; old name is
+kept as a backward-compat alias below. -/
+theorem goodIdealExtensionCompactness
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    (coherentGoodBranchPartialSystem cR).IdealHasPartialExtensions := by
+  intro p i₀ h_valid_i₀
+  classical
+  obtain ⟨net, h_net⟩ := goodIdealCompactness p
+  refine ⟨{
+    domain := {V : Finset Ordinal.{0} | ∀ α ∈ V, α < Ordinal.omega.{0} 1}
+    domain_valid := fun {V} hV => hV
+    downward_closed := fun {V W} hW hVW α hα => hW α (hVW hα)
+    directed := ?_
+    P := fun V hV => net.P V hV
+    compat := ?_
+  }, ?_, h_valid_i₀⟩
+  · -- directed
+    intro V W hV hW
+    refine ⟨V ∪ W, ?_, Finset.subset_union_left, Finset.subset_union_right⟩
+    intro α hα
+    rcases Finset.mem_union.mp hα with hαV | hαW
+    · exact hV α hαV
+    · exact hW α hαW
+  · -- compat
+    intro V W hV hW hVW
+    refine ⟨?_, ?_⟩
+    · intro α hα
+      show ((net.P W hW).restrict hVW).toCoherentBranchPartial.prefixAt α hα =
+        (net.P V hV).toCoherentBranchPartial.prefixAt α hα
+      rw [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+          CoherentBranchPartial.restrict_prefixAt]
+      exact net.prefix_compat hV hW hVW α hα
+    · intro α hα
+      show ((net.P W hW).restrict hVW).toCoherentBranchPartial.branch α hα =
+        (net.P V hV).toCoherentBranchPartial.branch α hα
+      rw [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+          CoherentBranchPartial.restrict_branch]
+      exact net.branch_compat hV hW hVW α hα
+  · -- p ≤ q
+    refine ⟨fun V hV_p => p.domain_valid hV_p, ?_⟩
+    intro V hV_p _
+    exact h_net V hV_p
+
+/-- **Backward-compatible alias** for the old name of
+`goodIdealExtensionCompactness`. Retained so existing docstring
+references and any downstream code keep resolving; new code should
+use `goodIdealExtensionCompactness` directly. -/
+theorem coherentGoodBranchPartial_idealHasPartialExtensions
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    (coherentGoodBranchPartialSystem cR).IdealHasPartialExtensions :=
+  goodIdealExtensionCompactness cR
+
+/-- **`cbpFieldwiseCompat.refl`**: reflexivity. -/
+theorem cbpFieldwiseCompat.refl {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {S : Finset Ordinal.{0}} (P : CoherentBranchPartial cR S) :
+    cbpFieldwiseCompat P P :=
+  ⟨fun _ _ => rfl, fun _ _ => rfl⟩
+
+/-- **`cbpFieldwiseCompat.symm`**: symmetry. -/
+theorem cbpFieldwiseCompat.symm {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {S : Finset Ordinal.{0}} {P Q : CoherentBranchPartial cR S}
+    (h : cbpFieldwiseCompat P Q) : cbpFieldwiseCompat Q P :=
+  ⟨fun α hα => (h.1 α hα).symm, fun α hα => (h.2 α hα).symm⟩
+
+/-- **`cbpFieldwiseCompat.trans`**: transitivity. -/
+theorem cbpFieldwiseCompat.trans {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {S : Finset Ordinal.{0}} {P Q R : CoherentBranchPartial cR S}
+    (h₁ : cbpFieldwiseCompat P Q) (h₂ : cbpFieldwiseCompat Q R) :
+    cbpFieldwiseCompat P R :=
+  ⟨fun α hα => (h₁.1 α hα).trans (h₂.1 α hα),
+   fun α hα => (h₁.2 α hα).trans (h₂.2 α hα)⟩
+
+/-- **`AdjoinGoodOldData`**: bundled witness for the `V ∈ p.domain`
+branch of `adjoinGoodValue`. Packages the chosen upper bound `U`,
+membership proofs, and extension `Q` with its compat. -/
+structure AdjoinGoodOldData
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (T : Finset Ordinal.{0}) (i₀ V : Finset Ordinal.{0}) where
+  U : Finset Ordinal.{0}
+  hU : U ∈ p.domain
+  hVU : V ⊆ U
+  hTU : T ⊆ U
+  Q : CoherentGoodBranchPartial cR (U ∪ i₀)
+  hQ_compat : cbpFieldwiseCompat
+    (Q.toCoherentBranchPartial.restrict Finset.subset_union_left)
+    (p.P U hU).toCoherentBranchPartial
+
+/-- **`adjoinGoodOldData`**: build the bundled `AdjoinGoodOldData`
+when `V ∈ p.domain`. Uses `p.directed` to get `U ⊇ V, T` and
+`extend_to_union` for `Q`. -/
+noncomputable def adjoinGoodOldData
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (T : Finset Ordinal.{0}) (hT : T ∈ p.domain)
+    (i₀ V : Finset Ordinal.{0})
+    (hi₀_valid : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1)
+    (hV_p : V ∈ p.domain) :
+    AdjoinGoodOldData p T i₀ V :=
+  let U_spec := Classical.choose_spec (p.directed hV_p hT)
+  let U := Classical.choose (p.directed hV_p hT)
+  let Q_spec := Classical.choose_spec
+    (coherentGoodBranchPartial_extend_to_union (p.P U U_spec.1) i₀ hi₀_valid)
+  let Q := Classical.choose
+    (coherentGoodBranchPartial_extend_to_union (p.P U U_spec.1) i₀ hi₀_valid)
+  { U := U
+    hU := U_spec.1
+    hVU := U_spec.2.1
+    hTU := U_spec.2.2
+    Q := Q
+    hQ_compat := Q_spec }
+
+/-- **`IdealPartialSection.adjoinGoodValue`**: value construction for
+a single `V` in the new domain. Given the ideal section `p`, anchor
+`T ∈ p.domain`, fresh `i₀`, and `V` such that `∃ S ∈ p.domain,
+V ⊆ S ∪ i₀`, build a Good CGBP at `V`.
+
+**Dispatched construction** to ensure `V ⊆ U` when `V ∈ p.domain`:
+
+- If `V ∈ p.domain`: use `V` directly as anchor for directedness.
+  `p.directed hV_p hT` gives `U ⊇ V, T`. Extend `p.P U` to `U ∪ i₀`
+  via `extend_to_union`, restrict to `V`. Since `V ⊆ U`, restrictions
+  preserve `p.P V`.
+- If `V ∉ p.domain`: use the witness `S_V` from `hV` (via
+  `Classical.choose`). `p.directed hS_V hT` gives `U ⊇ S_V, T`.
+  Extension and restriction as above. This handles new
+  finsets `V ⊆ S ∪ i₀` with `V` strictly larger than any S.
+
+Compat properties: see `adjoinGoodValue_old_compat` and
+`adjoinGoodValue_common_compat`. -/
+noncomputable def FiniteProjectiveSystem.IdealPartialSection.adjoinGoodValue
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (T : Finset Ordinal.{0}) (hT : T ∈ p.domain)
+    (i₀ V : Finset Ordinal.{0})
+    (hi₀_valid : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1)
+    (hV : ∃ S ∈ p.domain, V ⊆ S ∪ i₀) :
+    CoherentGoodBranchPartial cR V :=
+  letI : Decidable (V ∈ p.domain) := Classical.dec _
+  if hV_p : V ∈ p.domain then
+    -- V ∈ p.domain branch: use bundled AdjoinGoodOldData.
+    let d := adjoinGoodOldData p T hT i₀ V hi₀_valid hV_p
+    d.Q.restrict (fun α hα => Finset.mem_union_left _ (d.hVU hα))
+  else
+    -- V ∉ p.domain → use S_V witness from hV.
+    let S_V := Classical.choose hV
+    let hS_V_spec := Classical.choose_spec hV
+    let hS_V := hS_V_spec.1
+    let hV_sub_S_V_i₀ := hS_V_spec.2
+    let U_spec := Classical.choose_spec (p.directed hS_V hT)
+    let U := Classical.choose (p.directed hS_V hT)
+    let hU_in := U_spec.1
+    let hS_V_U := U_spec.2.1
+    let Q := Classical.choose
+      (coherentGoodBranchPartial_extend_to_union (p.P U hU_in) i₀ hi₀_valid)
+    have hV_sub_U_i₀ : V ⊆ U ∪ i₀ := fun α hα => by
+      rcases Finset.mem_union.mp (hV_sub_S_V_i₀ hα) with h_S | h_i
+      · exact Finset.mem_union_left _ (hS_V_U h_S)
+      · exact Finset.mem_union_right _ h_i
+    Q.restrict hV_sub_U_i₀
+
+/-- **[STUB]** `IdealPartialSection.adjoinGoodValue_old_compat`: for
+`V ∈ p.domain`, the constructed value agrees with `p.P V`.
+
+**Subtlety**: the proof requires reconciling `Q.restrict V` (where `Q`
+extends `p.P U` to `U ∪ i₀`) with `p.P V`. For `α ∈ V ∩ U`, the
+agreement follows from `Q_compat` (extending `p.P U`) + `p.compat`
+(reaching `p.P V` via a common upper bound `U' ⊇ V, U` in
+`p.domain`). For `α ∈ V ∩ i₀ ∖ U`, however, `Q`'s value is unconstrained
+by `Q_compat`'s preservation on `U`, so direct agreement with `p.P V`
+isn't immediate.
+
+A possible fix is to use directedness more aggressively in the
+construction of `adjoinGoodValue`: include `V` (when `V ∈ p.domain`)
+in the directed-upper-bound call so that `V ⊆ U` and the `V ∩ i₀ ∖ U`
+case doesn't arise. This makes the construction parametric in whether
+`V ∈ p.domain`. Currently stubbed. -/
+theorem FiniteProjectiveSystem.IdealPartialSection.adjoinGoodValue_old_compat
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (T : Finset Ordinal.{0}) (hT : T ∈ p.domain)
+    (i₀ V : Finset Ordinal.{0})
+    (hi₀_valid : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1)
+    (hV : ∃ S ∈ p.domain, V ⊆ S ∪ i₀)
+    (hV_p : V ∈ p.domain) :
+    cbpFieldwiseCompat
+      (p.adjoinGoodValue T hT i₀ V hi₀_valid hV).toCoherentBranchPartial
+      (p.P V hV_p).toCoherentBranchPartial := by
+  classical
+  -- Unfold adjoinGoodValue's if-then branch.
+  unfold FiniteProjectiveSystem.IdealPartialSection.adjoinGoodValue
+  rw [dif_pos hV_p]
+  -- Now the value is `d.Q.restrict ...` where `d := adjoinGoodOldData ...`.
+  set d := adjoinGoodOldData p T hT i₀ V hi₀_valid hV_p with hd_def
+  -- Compat from chained restricts + d.hQ_compat + p.compat.
+  refine ⟨?_, ?_⟩
+  · intro α hα
+    -- Step 1: restrict_toCBP + restrict_prefixAt on LHS.
+    rw [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+        CoherentBranchPartial.restrict_prefixAt]
+    -- Goal: d.Q.toCBP.prefixAt α (mem_union_left _ (d.hVU hα)) =
+    --       (p.P V hV_p).toCBP.prefixAt α hα
+    -- Step 2: use d.hQ_compat to relate d.Q.toCBP at U to p.P d.U.
+    have h_dQ := d.hQ_compat.1 α (d.hVU hα)
+    rw [CoherentBranchPartial.restrict_prefixAt] at h_dQ
+    -- h_dQ : d.Q.toCBP.prefixAt α (mem_union_left _ (d.hVU hα)) =
+    --        (p.P d.U d.hU).toCBP.prefixAt α (d.hVU hα)
+    rw [h_dQ]
+    -- Goal: (p.P d.U d.hU).toCBP.prefixAt α (d.hVU hα) =
+    --       (p.P V hV_p).toCBP.prefixAt α hα
+    -- Step 3: use p.compat to relate p.P d.U to p.P V.
+    have h_pc := (p.compat hV_p d.hU d.hVU).1 α hα
+    -- h_pc uses FPS restrict; unfold to CGBP.restrict, then to bare CBP restrict.
+    change ((p.P d.U d.hU).restrict d.hVU).toCoherentBranchPartial.prefixAt α hα =
+      (p.P V hV_p).toCoherentBranchPartial.prefixAt α hα at h_pc
+    rw [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+        CoherentBranchPartial.restrict_prefixAt] at h_pc
+    exact h_pc
+  · intro α hα
+    -- Parallel for branch.
+    rw [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+        CoherentBranchPartial.restrict_branch]
+    have h_dQ := d.hQ_compat.2 α (d.hVU hα)
+    rw [CoherentBranchPartial.restrict_branch] at h_dQ
+    rw [h_dQ]
+    have h_pc := (p.compat hV_p d.hU d.hVU).2 α hα
+    change ((p.P d.U d.hU).restrict d.hVU).toCoherentBranchPartial.branch α hα =
+      (p.P V hV_p).toCoherentBranchPartial.branch α hα at h_pc
+    rw [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+        CoherentBranchPartial.restrict_branch] at h_pc
+    exact h_pc
+
+/-! ### `BoundedIdealPartialSection`: principal ideals
+
+A `BoundedIdealPartialSection` is a Good ideal partial section whose
+domain is the principal ideal `{S | S ⊆ top}` for some finite `top`.
+All values are restrictions of a single `topObj : CGBP cR top`, so
+extension and compatibility become trivial: extend `topObj` to
+`top ∪ i₀` via `extend_to_union`, then everything restricts uniformly.
+
+This avoids the canonical-choice obstacle that plagues the general
+ideal extension proof: there's only one chosen extension, used
+consistently for every restriction. -/
+
+/-- **`BoundedIdealPartialSection cR`**: a Good ideal partial section
+backed by a single CGBP on a top finset. -/
+structure BoundedIdealPartialSection
+    (cR : (Fin 2 ↪o PairERSource) → Bool) where
+  top : Finset Ordinal.{0}
+  top_valid : ∀ α ∈ top, α < Ordinal.omega.{0} 1
+  topObj : CoherentGoodBranchPartial cR top
+
+/-- **`BoundedIdealPartialSection.empty`**: the empty bounded section
+(top = ∅, vacuous data). -/
+noncomputable def BoundedIdealPartialSection.empty
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    BoundedIdealPartialSection cR where
+  top := ∅
+  top_valid := fun α hα => absurd hα (Finset.notMem_empty α)
+  topObj := Classical.choice (exists_coherentGoodBranchPartial cR ∅
+    (fun α hα => absurd hα (Finset.notMem_empty α)))
+
+/-- **`BoundedIdealPartialSection.toIdealPartialSection`**: convert
+to a general `IdealPartialSection` of the Good projective system.
+The domain is the principal ideal `{S | S ⊆ top}`; values are
+restrictions of `topObj`. Compatibility is automatic via double
+`restrict_prefixAt`/`restrict_branch`. -/
+noncomputable def BoundedIdealPartialSection.toIdealPartialSection
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (b : BoundedIdealPartialSection cR) :
+    (coherentGoodBranchPartialSystem cR).IdealPartialSection where
+  domain := {S | S ⊆ b.top}
+  domain_valid := fun {S} hS α hα => b.top_valid α (hS hα)
+  downward_closed := fun {S T} hT hST => hST.trans hT
+  directed := fun {S T} hS hT =>
+    ⟨b.top, (Finset.Subset.refl b.top : b.top ⊆ b.top), hS, hT⟩
+  P := fun S hS => b.topObj.restrict hS
+  compat := by
+    intro S T hS hT hST
+    refine ⟨?_, ?_⟩
+    · intro α hα
+      show ((b.topObj.restrict hT).restrict hST).toCoherentBranchPartial.prefixAt α hα =
+        (b.topObj.restrict hS).toCoherentBranchPartial.prefixAt α hα
+      simp only [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial]
+      rw [CoherentBranchPartial.restrict_prefixAt,
+          b.topObj.toCoherentBranchPartial.restrict_prefixAt hT α (hST hα),
+          b.topObj.toCoherentBranchPartial.restrict_prefixAt hS α hα]
+    · intro α hα
+      show ((b.topObj.restrict hT).restrict hST).toCoherentBranchPartial.branch α hα =
+        (b.topObj.restrict hS).toCoherentBranchPartial.branch α hα
+      simp only [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial]
+      rw [CoherentBranchPartial.restrict_branch,
+          b.topObj.toCoherentBranchPartial.restrict_branch hT α (hST hα),
+          b.topObj.toCoherentBranchPartial.restrict_branch hS α hα]
+
+/-- **`BoundedIdealPartialSection.extend`**: extend a bounded section
+by `i₀` to produce a larger bounded section whose top is `top ∪ i₀`.
+Uses `coherentGoodBranchPartial_extend_to_union` to extend the
+underlying `topObj`. -/
+noncomputable def BoundedIdealPartialSection.extend
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (b : BoundedIdealPartialSection cR)
+    (i₀ : Finset Ordinal.{0})
+    (hi₀_valid : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1) :
+    BoundedIdealPartialSection cR where
+  top := b.top ∪ i₀
+  top_valid := by
+    intro α hα
+    rcases Finset.mem_union.mp hα with h | h
+    · exact b.top_valid α h
+    · exact hi₀_valid α h
+  topObj := Classical.choose
+    (coherentGoodBranchPartial_extend_to_union b.topObj i₀ hi₀_valid)
+
+/-- **`BoundedIdealPartialSection.extend_compat`**: the extended
+section's restriction to `top` agrees fieldwise with the original
+`topObj`. -/
+theorem BoundedIdealPartialSection.extend_compat
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (b : BoundedIdealPartialSection cR)
+    (i₀ : Finset Ordinal.{0})
+    (hi₀_valid : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1) :
+    cbpFieldwiseCompat
+      ((b.extend i₀ hi₀_valid).topObj.toCoherentBranchPartial.restrict
+        Finset.subset_union_left)
+      b.topObj.toCoherentBranchPartial :=
+  Classical.choose_spec
+    (coherentGoodBranchPartial_extend_to_union b.topObj i₀ hi₀_valid)
+
+/-- **Preorder on bounded sections**: `B₁ ≤ B₂` iff `B₁.top ⊆ B₂.top`
+and `B₂.topObj` restricts to a CBP fieldwise-compatible with
+`B₁.topObj`. -/
+instance BoundedIdealPartialSection.instLE
+    {cR : (Fin 2 ↪o PairERSource) → Bool} :
+    LE (BoundedIdealPartialSection cR) where
+  le B₁ B₂ :=
+    ∃ h_top : B₁.top ⊆ B₂.top,
+      cbpFieldwiseCompat
+        (B₂.topObj.toCoherentBranchPartial.restrict h_top)
+        B₁.topObj.toCoherentBranchPartial
+
+/-- **Reflexivity** of the bounded-section preorder. -/
+theorem BoundedIdealPartialSection.le_refl
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (B : BoundedIdealPartialSection cR) : B ≤ B := by
+  refine ⟨Finset.Subset.refl _, ?_, ?_⟩
+  · intro α hα
+    rw [CoherentBranchPartial.restrict_prefixAt]
+  · intro α hα
+    rw [CoherentBranchPartial.restrict_branch]
+
+/-- **Transitivity** of the bounded-section preorder. The top inclusion
+chains via `⊆`; the compat field chains via
+`C.topObj.restrict A.top = (C.topObj.restrict B.top).restrict A.top ~
+B.topObj.restrict A.top ~ A.topObj` using `hBC.2`, `hAB.2`, and
+`restrict_prefixAt`/`restrict_branch`. -/
+theorem BoundedIdealPartialSection.le_trans
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {A B C : BoundedIdealPartialSection cR}
+    (hAB : A ≤ B) (hBC : B ≤ C) : A ≤ C := by
+  obtain ⟨h_AB_top, h_AB_compat⟩ := hAB
+  obtain ⟨h_BC_top, h_BC_compat⟩ := hBC
+  refine ⟨h_AB_top.trans h_BC_top, ?_, ?_⟩
+  · intro α hα
+    -- (C.topObj.toCBP.restrict (A ⊆ C)).prefixAt α hα = A.topObj.toCBP.prefixAt α hα
+    rw [CoherentBranchPartial.restrict_prefixAt]
+    -- Goal: C.topObj.toCBP.prefixAt α (A ⊆ C → α) = A.topObj.toCBP.prefixAt α hα
+    -- Bridge through B: use h_BC_compat at α ∈ B.top, then h_AB_compat at α ∈ A.top.
+    have h_BC := h_BC_compat.1 α (h_AB_top hα)
+    rw [CoherentBranchPartial.restrict_prefixAt] at h_BC
+    have h_AB := h_AB_compat.1 α hα
+    rw [CoherentBranchPartial.restrict_prefixAt] at h_AB
+    rw [h_BC, h_AB]
+  · intro α hα
+    rw [CoherentBranchPartial.restrict_branch]
+    have h_BC := h_BC_compat.2 α (h_AB_top hα)
+    rw [CoherentBranchPartial.restrict_branch] at h_BC
+    have h_AB := h_AB_compat.2 α hα
+    rw [CoherentBranchPartial.restrict_branch] at h_AB
+    rw [h_BC, h_AB]
+
+/-- **Preorder** instance on bounded sections. -/
+instance BoundedIdealPartialSection.instPreorder
+    {cR : (Fin 2 ↪o PairERSource) → Bool} :
+    Preorder (BoundedIdealPartialSection cR) where
+  le := (· ≤ ·)
+  le_refl := BoundedIdealPartialSection.le_refl
+  le_trans _ _ _ := BoundedIdealPartialSection.le_trans
+
+/-- **`BoundedIdealPartialSection.le_extend`**: every bounded section
+is below its extension by `i₀`. -/
+theorem BoundedIdealPartialSection.le_extend
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (B : BoundedIdealPartialSection cR)
+    (i₀ : Finset Ordinal.{0})
+    (hi₀_valid : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1) :
+    B ≤ B.extend i₀ hi₀_valid :=
+  ⟨Finset.subset_union_left, B.extend_compat i₀ hi₀_valid⟩
+
+/-- **`BoundedIdealPartialSection.extend_contains`**: `i₀` is a subset
+of the extended top. -/
+theorem BoundedIdealPartialSection.extend_contains
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (B : BoundedIdealPartialSection cR)
+    (i₀ : Finset Ordinal.{0})
+    (hi₀_valid : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1) :
+    i₀ ⊆ (B.extend i₀ hi₀_valid).top := Finset.subset_union_right
+
+/-- **Auxiliary**: every finite totally-ordered family of bounded
+sections is either empty or has a maximum element. Used by
+`finite_chain_upperBound`; also clarifies that the bounded-section
+preorder does **not** support arbitrary Zorn chains — the union of
+tops of an infinite chain need not be finite, so upper bounds inside
+`BoundedIdealPartialSection` only exist for **finite** chains. -/
+private theorem BoundedIdealPartialSection.finite_chain_upperBound_aux
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (C : Finset (BoundedIdealPartialSection cR)) :
+    (∀ B₁ ∈ C, ∀ B₂ ∈ C, B₁ ≤ B₂ ∨ B₂ ≤ B₁) →
+    C = ∅ ∨ ∃ U ∈ C, ∀ B ∈ C, B ≤ U := by
+  classical
+  induction C using Finset.induction_on with
+  | empty => intro _; exact Or.inl rfl
+  | @insert B₀ C' _ IH =>
+    intro hchain
+    have hchain' : ∀ B₁ ∈ C', ∀ B₂ ∈ C', B₁ ≤ B₂ ∨ B₂ ≤ B₁ :=
+      fun B₁ hB₁ B₂ hB₂ =>
+        hchain B₁ (Finset.mem_insert_of_mem hB₁) B₂ (Finset.mem_insert_of_mem hB₂)
+    rcases IH hchain' with h_emp | ⟨U', hU'_in, hU'_max⟩
+    · right
+      refine ⟨B₀, Finset.mem_insert_self _ _, ?_⟩
+      intro B hB
+      rw [h_emp] at hB
+      have hB_eq : B = B₀ := by simpa using hB
+      exact hB_eq ▸ le_refl B₀
+    · right
+      have hU'_in_insert : U' ∈ insert B₀ C' := Finset.mem_insert_of_mem hU'_in
+      have hB₀_in : B₀ ∈ insert B₀ C' := Finset.mem_insert_self _ _
+      rcases hchain B₀ hB₀_in U' hU'_in_insert with h_le | h_le
+      · refine ⟨U', hU'_in_insert, ?_⟩
+        intro B hB
+        rcases Finset.mem_insert.mp hB with hB_eq | hB_in_C'
+        · exact hB_eq ▸ h_le
+        · exact hU'_max B hB_in_C'
+      · refine ⟨B₀, hB₀_in, ?_⟩
+        intro B hB
+        rcases Finset.mem_insert.mp hB with hB_eq | hB_in_C'
+        · exact hB_eq ▸ le_refl B₀
+        · exact le_trans (hU'_max B hB_in_C') h_le
+
+/-- **`BoundedIdealPartialSection.finite_chain_upperBound`**: every
+non-empty finite chain in the bounded-section preorder has an upper
+bound **inside the chain itself** (the chain's maximum element). This
+suffices for finite-extension reasoning but **does not** give a Zorn
+hypothesis: for infinite chains, the union of tops can be infinite,
+so no `BoundedIdealPartialSection` upper bound exists. The full
+compactness step therefore requires an inverse-limit / ultrafilter
+argument, not plain bounded-section Zorn. -/
+theorem BoundedIdealPartialSection.finite_chain_upperBound
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (C : Finset (BoundedIdealPartialSection cR))
+    (hC : C.Nonempty)
+    (hchain : ∀ B₁ ∈ C, ∀ B₂ ∈ C, B₁ ≤ B₂ ∨ B₂ ≤ B₁) :
+    ∃ U ∈ C, ∀ B ∈ C, B ≤ U := by
+  rcases finite_chain_upperBound_aux C hchain with h_emp | h_ub
+  · exact absurd h_emp (Finset.nonempty_iff_ne_empty.mp hC)
+  · exact h_ub
+
+/-! ### Finite **family** (non-chain) upper bounds need consistency
+
+A finite family `𝒞 : Finset (BoundedIdealPartialSection cR)` whose
+members are not pairwise comparable can fail to have an upper bound in
+the bounded-section preorder. Two bounded sections `B₁, B₂` with
+overlapping tops may carry **incompatible** Good data on
+`B₁.top ∩ B₂.top`, with no Good partial over `B₁.top ∪ B₂.top` agreeing
+with both. Neither of the "easy" recipes works unconditionally:
+
+* Iterated `BoundedIdealPartialSection.extend` over the union of tops
+  preserves compat with the **starting** section's `topObj`, but its
+  values on the new indices are chosen freely and need not agree with
+  any other section's `topObj`.
+* Any Good partial built via `exists_coherentGoodBranchPartial` over the
+  union of tops is similarly unconstrained.
+
+The natural compactness input is therefore **conditioned on
+consistency**: given a Good partial `Q` over an enclosing top `T`
+fieldwise-compatible with every member's `topObj`, we package this into
+an upper bound. This is the precise finite-intersection-property
+hypothesis feeding the eventual inverse-limit / ultrafilter compactness
+step over `BoundedIdealPartialSection`. -/
+
+/-- **`BoundedIdealPartialSection.exists_upper_bound_of_consistent`**:
+finite-family upper bound under explicit consistency. The hypothesis is
+the exact FIP shape: a Good partial `Q` over a finset `T` enclosing
+every member's `top`, fieldwise-compatible with each `B.topObj`. -/
+theorem BoundedIdealPartialSection.exists_upper_bound_of_consistent
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {𝒞 : Finset (BoundedIdealPartialSection cR)}
+    {T : Finset Ordinal.{0}}
+    (hT_valid : ∀ α ∈ T, α < Ordinal.omega.{0} 1)
+    (Q : CoherentGoodBranchPartial cR T)
+    (h_consistent : ∀ B ∈ 𝒞, ∃ hsub : B.top ⊆ T,
+      cbpFieldwiseCompat
+        (Q.toCoherentBranchPartial.restrict hsub)
+        B.topObj.toCoherentBranchPartial) :
+    ∃ U : BoundedIdealPartialSection cR, ∀ B ∈ 𝒞, B ≤ U := by
+  refine ⟨⟨T, hT_valid, Q⟩, ?_⟩
+  intro B hB
+  exact h_consistent B hB
+
+/-- **`BoundedSections.FinitelyConsistent`**: the precise hypothesis a
+finite family of bounded sections must satisfy to admit an upper bound
+in the bounded-section preorder. Witnessed by an enclosing valid finset
+`T`, a Good partial `Q : CoherentGoodBranchPartial cR T`, and per-member
+fieldwise compatibility on `B.top`. -/
+def BoundedSections.FinitelyConsistent
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (𝒞 : Finset (BoundedIdealPartialSection cR)) : Prop :=
+  ∃ T : Finset Ordinal.{0},
+    (∀ α ∈ T, α < Ordinal.omega.{0} 1) ∧
+      ∃ Q : CoherentGoodBranchPartial cR T,
+        ∀ B ∈ 𝒞, ∃ hsub : B.top ⊆ T,
+          cbpFieldwiseCompat
+            (Q.toCoherentBranchPartial.restrict hsub)
+            B.topObj.toCoherentBranchPartial
+
+/-- **`BoundedSections.finitelyConsistent_iff_exists_upperBound`**:
+the FIP-shaped consistency predicate is **equivalent** to the
+existence of an upper bound in the bounded-section preorder. Forward
+direction is the freshly added
+`exists_upper_bound_of_consistent`; backward takes `T := U.top`,
+`Q := U.topObj`, and reuses the `B ≤ U` witness directly. -/
+theorem BoundedSections.finitelyConsistent_iff_exists_upperBound
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (𝒞 : Finset (BoundedIdealPartialSection cR)) :
+    BoundedSections.FinitelyConsistent 𝒞 ↔
+      ∃ U : BoundedIdealPartialSection cR, ∀ B ∈ 𝒞, B ≤ U := by
+  refine ⟨?_, ?_⟩
+  · rintro ⟨T, hT_valid, Q, h_consistent⟩
+    exact BoundedIdealPartialSection.exists_upper_bound_of_consistent
+      hT_valid Q h_consistent
+  · rintro ⟨U, hU⟩
+    exact ⟨U.top, U.top_valid, U.topObj, fun B hB => hU B hB⟩
+
+/-! ### Final compactness frontier
+
+For the ER application, the single active frontier above bounded
+sections is plain existence of a global Good witness net,
+`exists_coherentGoodWitnessNet` (currently routed through
+`coherentGoodBranchPartial_idealHasPartialExtensions`, task #44).
+
+`GoodConstraint`, `familyConsistent`, and `goodConstraintCompactness`
+below are **documented** as a possible **stronger** restatement — a
+per-constraint extension property — but are **not** on the active
+proof chain: the trivial `C = ∅` instance only re-derives bare
+existence, doing nothing the per-constraint conclusion adds, and a
+true `∀ 𝒞, familyConsistent 𝒞` hypothesis is false because two
+unrelated `GoodConstraint`s can disagree on overlapping tops. Kept
+here as a clean target for future refactors. -/
+
+/-- **`GoodConstraint cR`**: a single Good constraint — a finite valid
+finset together with a Good partial over it. -/
+structure GoodConstraint (cR : (Fin 2 ↪o PairERSource) → Bool) where
+  S : Finset Ordinal.{0}
+  S_valid : ∀ α ∈ S, α < Ordinal.omega.{0} 1
+  obj : CoherentGoodBranchPartial cR S
+
+/-- **Bridge** to `BoundedIdealPartialSection`. -/
+def GoodConstraint.toBoundedSection
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (c : GoodConstraint cR) : BoundedIdealPartialSection cR where
+  top := c.S
+  top_valid := c.S_valid
+  topObj := c.obj
+
+/-- **`GoodConstraint.familyConsistent`**: finite-consistency predicate
+on a finite family of Good constraints, mirroring
+`BoundedSections.FinitelyConsistent`. Avoids the `Finset.image` /
+`DecidableEq` indirection by quantifying directly over the constraint
+family. -/
+def GoodConstraint.familyConsistent
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (𝒞 : Finset (GoodConstraint cR)) : Prop :=
+  ∃ T : Finset Ordinal.{0},
+    (∀ α ∈ T, α < Ordinal.omega.{0} 1) ∧
+      ∃ Q : CoherentGoodBranchPartial cR T,
+        ∀ c ∈ 𝒞, ∃ hsub : c.S ⊆ T,
+          cbpFieldwiseCompat
+            (Q.toCoherentBranchPartial.restrict hsub)
+            c.obj.toCoherentBranchPartial
+
+/-- **[DOCUMENTED, not on active chain]** `goodConstraintCompactness`:
+under finite-consistency on every finite sub-family of `C`, there is a
+global Good witness net **extending** every constraint in `C` — the
+net's value at each `c.S` is fieldwise-compatible with `c.obj`. This
+captures the inverse-limit / ultrafilter compactness shape over the
+bounded-section preorder; left as `sorry` and **off** the active
+witness-net chain (which routes through `exists_coherentGoodWitnessNet`
+directly). Kept here as the clean target shape for a future refactor
+of the witness-net chain. -/
+theorem goodConstraintCompactness
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (C : Set (GoodConstraint cR))
+    (_hfin : ∀ 𝒞 : Finset (GoodConstraint cR),
+      (∀ c ∈ 𝒞, c ∈ C) → GoodConstraint.familyConsistent 𝒞) :
+    ∃ net : CoherentGoodWitnessNet cR,
+      ∀ c ∈ C, cbpFieldwiseCompat
+        (net.P c.S c.S_valid).toCoherentBranchPartial
+        c.obj.toCoherentBranchPartial := by
+  sorry
+
+/-- **`AdjoinGoodData`**: general bundled witness for any `V` in the
+new domain (not just `V ∈ p.domain`). Generalizes `AdjoinGoodOldData`
+to the case where `V` is unrelated to `p.domain` (only `V ⊆ S ∪ i₀`
+for some `S ∈ p.domain`). -/
+structure AdjoinGoodData
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (i₀ V : Finset Ordinal.{0}) where
+  U : Finset Ordinal.{0}
+  hU : U ∈ p.domain
+  hVU : V ⊆ U ∪ i₀
+  Q : CoherentGoodBranchPartial cR (U ∪ i₀)
+  hQ_compat : cbpFieldwiseCompat
+    (Q.toCoherentBranchPartial.restrict Finset.subset_union_left)
+    (p.P U hU).toCoherentBranchPartial
+
+/-- **[STUB]** `IdealPartialSection.adjoinGoodValue_common_compat`: for
+`V ⊆ W` both in the new domain, restrict of `W`'s value to `V` matches
+`V`'s value.
+
+**Obstacle**: the construction `adjoinGoodValue` uses `Classical.choose`
+to pick `U_V` (for `V`) and `U_W` (for `W`) — these are different
+elements of `p.domain`, with possibly different extensions `Q_V` and
+`Q_W` from `extend_to_union`. Since `extend_to_union` doesn't produce
+canonical extensions, `Q_V` and `Q_W` may disagree on `i₀`-values
+that aren't constrained by `p.P U_V` or `p.P U_W` respectively.
+
+**Resolution path**: redefine `adjoinGoodValue` to thread a *single*
+chosen `Q` (e.g., on `T ∪ i₀` for the anchor `T`) and route arbitrary
+`V` values through this fixed `Q` (when `V ⊆ T ∪ i₀`) plus directed
+upward extensions for `V` not subset of `T ∪ i₀`. The proof of
+well-definedness then becomes a single chain of restrictions of a
+fixed extended CGBP.
+
+Alternatively, prove a uniqueness/agreement lemma for
+`extend_to_union` on the shared `U ⊆ S ∪ i₀` overlap (essentially
+requires a stronger extension primitive). Currently stubbed. -/
+theorem FiniteProjectiveSystem.IdealPartialSection.adjoinGoodValue_common_compat
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (T : Finset Ordinal.{0}) (hT : T ∈ p.domain)
+    (i₀ V W : Finset Ordinal.{0})
+    (hi₀_valid : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1)
+    (hV : ∃ S ∈ p.domain, V ⊆ S ∪ i₀)
+    (hW : ∃ S ∈ p.domain, W ⊆ S ∪ i₀)
+    (hVW : V ⊆ W) :
+    cbpFieldwiseCompat
+      ((p.adjoinGoodValue T hT i₀ W hi₀_valid hW).toCoherentBranchPartial.restrict
+        hVW)
+      (p.adjoinGoodValue T hT i₀ V hi₀_valid hV).toCoherentBranchPartial := by
+  sorry
+
+/-- **[STUB]** `IdealPartialSection.adjoinGood`: factor the non-empty
+case of `coherentGoodBranchPartial_idealHasPartialExtensions` through
+a generic adjoin helper. Given:
+
+- `p : IdealPartialSection` of the Good system;
+- a chosen anchor `T ∈ p.domain`;
+- a fresh `i₀ : Finset Ordinal` (valid);
+- a Good CGBP `Q : CGBP cR (T ∪ i₀)` extending `p.P T`;
+
+produces an IPS whose domain is the directed closure
+`{V | ∃ S ∈ p.domain, V ⊆ S ∪ i₀}`.
+
+**Construction strategy** (deferred — requires canonical-choice
+mechanism):
+
+- For each `V` in the new domain, choose `S_V ∈ p.domain` with
+  `V ⊆ S_V ∪ i₀` (via `Classical.choose` from the existence witness).
+- Use `p.directed` to find `U ⊇ S_V ∪ T` in `p.domain`.
+- Extend `p.P U` to `U ∪ i₀` via `coherentGoodBranchPartial_extend_to_union`
+  (consistent with `p.P U`'s data on `U`).
+- Restrict the extension to `V`.
+
+**Well-definedness across choices** is the substantive obstacle: two
+different choices of `S_V` must give the same value at `V` (up to
+`cbpFieldwiseCompat`). By `p.directed` + extension preservation
+through a common upper bound, the values agree, but formalizing this
+requires careful HEq + uniqueness handling.
+
+Once `adjoinGood` exists, the non-empty branch of
+`coherentGoodBranchPartial_idealHasPartialExtensions` reduces to:
+choose any `T ∈ p.domain`, build `Q` via `extend_to_union`, call
+`adjoinGood`. -/
+noncomputable def FiniteProjectiveSystem.IdealPartialSection.adjoinGood
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (T : Finset Ordinal.{0}) (_hT : T ∈ p.domain)
+    (i₀ : Finset Ordinal.{0})
+    (_hi₀_valid : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1)
+    (_Q : CoherentGoodBranchPartial cR (T ∪ i₀))
+    (_hQ_T :
+      cbpFieldwiseCompat
+        (_Q.toCoherentBranchPartial.restrict Finset.subset_union_left)
+        (p.P T _hT).toCoherentBranchPartial) :
+    (coherentGoodBranchPartialSystem cR).IdealPartialSection := by
+  sorry
+
+/-- **[STUB]** `IdealPartialSection.adjoinGood_le_self`: the adjoined
+section extends `p`. -/
+theorem FiniteProjectiveSystem.IdealPartialSection.adjoinGood_le_self
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (T : Finset Ordinal.{0}) (hT : T ∈ p.domain)
+    (i₀ : Finset Ordinal.{0})
+    (hi₀_valid : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1)
+    (Q : CoherentGoodBranchPartial cR (T ∪ i₀))
+    (hQ_T :
+      cbpFieldwiseCompat
+        (Q.toCoherentBranchPartial.restrict Finset.subset_union_left)
+        (p.P T hT).toCoherentBranchPartial) :
+    p ≤ p.adjoinGood T hT i₀ hi₀_valid Q hQ_T := by
+  sorry
+
+/-- **[STUB]** `IdealPartialSection.adjoinGood_contains`: the adjoined
+section's domain contains `i₀`. -/
+theorem FiniteProjectiveSystem.IdealPartialSection.adjoinGood_contains
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (T : Finset Ordinal.{0}) (hT : T ∈ p.domain)
+    (i₀ : Finset Ordinal.{0})
+    (hi₀_valid : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1)
+    (Q : CoherentGoodBranchPartial cR (T ∪ i₀))
+    (hQ_T :
+      cbpFieldwiseCompat
+        (Q.toCoherentBranchPartial.restrict Finset.subset_union_left)
+        (p.P T hT).toCoherentBranchPartial) :
+    i₀ ∈ (p.adjoinGood T hT i₀ hi₀_valid Q hQ_T).domain := by
+  sorry
+
+/-- **Existence of a Good witness net** via the Good projective system
++ ideal `HasPartialExtensions`. The bare `exists_coherentWitnessNet`
+can be rewired through `toCoherentWitnessNet`
+(`exists_coherentWitnessNet_via_good`) to eliminate the bare
+amalgamation path. -/
+theorem exists_coherentGoodWitnessNet
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    Nonempty (CoherentGoodWitnessNet cR) := by
+  obtain ⟨P, hP⟩ :=
+    (coherentGoodBranchPartialSystem cR).exists_global_section_of_idealPartialExtensions
+      (goodIdealExtensionCompactness cR)
+  refine ⟨{ P := P, prefix_compat := ?_, branch_compat := ?_ }⟩
+  · intro S T hS hT hST α hα
+    have h := (hP hS hT hST).1 α hα
+    change ((P T hT).restrict hST).toCoherentBranchPartial.prefixAt α hα =
+      (P S hS).toCoherentBranchPartial.prefixAt α hα at h
+    rw [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+        (P T hT).toCoherentBranchPartial.restrict_prefixAt hST α hα] at h
+    exact h
+  · intro S T hS hT hST α hα
+    have h := (hP hS hT hST).2 α hα
+    change ((P T hT).restrict hST).toCoherentBranchPartial.branch α hα =
+      (P S hS).toCoherentBranchPartial.branch α hα at h
+    rw [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+        (P T hT).toCoherentBranchPartial.restrict_branch hST α hα] at h
+    exact h
+
+/-- **`exists_coherentWitnessNet_via_good`**: the bare witness net
+exists by projecting from the Good witness net. Once
+`exists_coherentGoodWitnessNet` is filled, this becomes the active
+route to bare `CoherentWitnessNet` (superseding the bare-amalgamation
+path through `coherentBranchPartial_idealHasPartialExtensions`). -/
+theorem exists_coherentWitnessNet_via_good
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    Nonempty (CoherentWitnessNet cR) :=
+  (exists_coherentGoodWitnessNet cR).map
+    CoherentGoodWitnessNet.toCoherentWitnessNet
+
+/-! ### Good-layer rigid finite extension diagnostic
+
+The bare-CBP `coherentBranchPartial_rigid_finite_extension` frontier
+(line ~8079) takes an `IdealPartialSection` of bare CBPs and asks for
+an extension to `insert i₀ D`. The issue: bare CBPs lack the inner
+cR-consistency data needed to apply
+`coherentGoodBranchPartial_extend_to_union` (which requires
+`CoherentGoodBranchPartial` input).
+
+To close the gap properly, the next step is to define a **Good
+projective system** — a `FiniteProjectiveSystem` instance whose
+objects are `CoherentGoodBranchPartial cR S` rather than the bare
+`CoherentBranchPartial cR S`. Then the Good-layer rigid finite
+extension is the corresponding theorem about
+`(coherentGoodBranchPartialSystem cR).IdealPartialSection`.
+
+The Good version of the frontier is below as a statement (with sorry);
+its proof would:
+1. Pick `T₀ := D.sup id` and lift the family to a Good CGBP on `T₀`
+   compatible with the prescribed family (uses the Good FPS
+   `finite_extension`).
+2. Extend `T₀` to `T₀ ∪ i₀` via
+   `coherentGoodBranchPartial_extend_to_union`.
+3. Restrict via `CoherentGoodBranchPartial.restrict` to each member
+   of `insert i₀ D`. -/
+
+/-- **[FRONTIER, sorry]** Good-layer rigid finite extension. The natural
+input is a finite family of `CoherentGoodBranchPartial cR S` over `D`
+together with cross-compatibility. The output extends to
+`insert i₀ D`. Proof outline above; pending the
+`coherentGoodBranchPartialSystem` instance + Good-amalgamation
+machinery. -/
+theorem coherentGoodBranchPartial_rigid_finite_extension
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    (D : Finset (Finset Ordinal.{0}))
+    (_hD_valid : ∀ S ∈ D, ∀ α ∈ S, α < Ordinal.omega.{0} 1)
+    (_PG_family : ∀ S ∈ D, CoherentGoodBranchPartial cR S)
+    (_h_compat_family :
+      ∀ {S T : Finset Ordinal.{0}} (hS : S ∈ D) (hT : T ∈ D) (hST : S ⊆ T),
+        cbpFieldwiseCompat
+          ((_PG_family T hT).toCoherentBranchPartial.restrict hST)
+          (_PG_family S hS).toCoherentBranchPartial)
+    (i₀ : Finset Ordinal.{0})
+    (_hi₀ : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1) :
+    ∃ PG : ∀ S, S ∈ insert i₀ D → CoherentGoodBranchPartial cR S,
+      (∀ {S T : Finset Ordinal.{0}}
+        (hS : S ∈ insert i₀ D) (hT : T ∈ insert i₀ D) (hST : S ⊆ T),
+        cbpFieldwiseCompat
+          ((PG T hT).toCoherentBranchPartial.restrict hST)
+          (PG S hS).toCoherentBranchPartial) ∧
+      (∀ S (hS_D : S ∈ D),
+        cbpFieldwiseCompat
+          (PG S (Finset.mem_insert_of_mem hS_D)).toCoherentBranchPartial
+          (_PG_family S hS_D).toCoherentBranchPartial) := by
+  sorry
+
+/-- **Conditional rigid finite extension** (axiom-clean modulo
+upstream): given an ideal section `p`, a finite `D ⊆ p.domain`, and
+a new valid finset `i₀` **above** every element of `⋃ D`, produce a
+coherent family on `insert i₀ D` agreeing with `p.P` on `D`. Uses
+`extend_one` on `p.P (D.sup id)` to obtain a CBP on `(D.sup id) ∪ i₀`,
+then defines each `P S` as a restriction of that CBP. -/
+theorem coherentBranchPartial_rigid_finite_extension_above
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    (p : (coherentBranchPartialSystem cR).IdealPartialSection)
+    (D : Finset (Finset Ordinal.{0}))
+    (hD : ∀ S ∈ D, S ∈ p.domain)
+    (i₀ : Finset Ordinal.{0})
+    (hi₀ : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1)
+    (h_above : ∀ α ∈ i₀, ∀ S ∈ D, ∀ β ∈ S, β < α) :
+    ∃ P : ∀ S, S ∈ insert i₀ D → CoherentBranchPartial cR S,
+      (∀ {S T} (hS : S ∈ insert i₀ D) (hT : T ∈ insert i₀ D) (hST : S ⊆ T),
+        cbpFieldwiseCompat ((P T hT).restrict hST) (P S hS)) ∧
+      (∀ S (hS_D : S ∈ D),
+        cbpFieldwiseCompat (P S (Finset.mem_insert_of_mem hS_D)) (p.P S (hD S hS_D))) := by
+  classical
+  -- Handle D = ∅ separately: just supply a CBP for i₀.
+  by_cases hD_empty : D = ∅
+  · subst hD_empty
+    obtain ⟨Q⟩ := exists_coherentBranchPartial cR i₀ hi₀
+    refine ⟨fun S hS => ?_, ?_, ?_⟩
+    · have hS_eq : S = i₀ := by
+        rcases Finset.mem_insert.mp hS with h | h
+        · exact h
+        · exact absurd h (Finset.notMem_empty _)
+      exact hS_eq ▸ Q
+    · intro S T hS hT hST
+      have hT_eq : T = i₀ := by
+        rcases Finset.mem_insert.mp hT with h | h
+        · exact h
+        · exact absurd h (Finset.notMem_empty _)
+      have hS_eq : S = i₀ := by
+        rcases Finset.mem_insert.mp hS with h | h
+        · exact h
+        · exact absurd h (Finset.notMem_empty _)
+      subst hT_eq; subst hS_eq
+      refine ⟨?_, ?_⟩ <;> intro α hα
+      · exact Q.restrict_prefixAt hST α hα
+      · exact Q.restrict_branch hST α hα
+    · intro S hS_D
+      exact absurd hS_D (Finset.notMem_empty _)
+  -- D ≠ ∅: pick T₀ = D.sup id ∈ p.domain, extend via extend_one.
+  have hD_ne : D.Nonempty := Finset.nonempty_iff_ne_empty.mpr hD_empty
+  set T₀ : Finset Ordinal.{0} := D.sup id with hT₀_def
+  have h_S_sub_T₀ : ∀ S ∈ D, S ⊆ T₀ := fun S hS => Finset.le_sup (f := id) hS
+  -- T₀ ∈ p.domain via iterated directedness + downward_closed.
+  have hT₀_in_dom : T₀ ∈ p.domain := by
+    obtain ⟨S₀, hS₀_D⟩ := hD_ne
+    have hS₀_dom : S₀ ∈ p.domain := hD S₀ hS₀_D
+    suffices h : ∀ (D' : Finset (Finset Ordinal.{0})),
+        (∀ S ∈ D', S ∈ p.domain) → ∃ U ∈ p.domain, ∀ S ∈ D', S ⊆ U by
+      obtain ⟨U, hU_dom, hU_sub⟩ := h D hD
+      exact p.downward_closed hU_dom (Finset.sup_le hU_sub)
+    intro D'
+    refine D'.induction_on ?_ ?_
+    · intro _
+      exact ⟨S₀, hS₀_dom, fun S hS => absurd hS (Finset.notMem_empty _)⟩
+    · intro a D'' _ ih hD'
+      have ha_dom : a ∈ p.domain := hD' a (Finset.mem_insert_self _ _)
+      have hD''_dom : ∀ S ∈ D'', S ∈ p.domain :=
+        fun S hS => hD' S (Finset.mem_insert_of_mem hS)
+      obtain ⟨U', hU'_dom, hU'_sub⟩ := ih hD''_dom
+      obtain ⟨U, hU_dom, ha_le, hU'_le⟩ := p.directed ha_dom hU'_dom
+      refine ⟨U, hU_dom, ?_⟩
+      intro S hS
+      rcases Finset.mem_insert.mp hS with rfl | hS_D''
+      · exact ha_le
+      · exact (hU'_sub S hS_D'').trans hU'_le
+  set P_T₀ : CoherentBranchPartial cR T₀ := p.P T₀ hT₀_in_dom with hP_T₀_def
+  have h_i₀_above_T₀ : ∀ α ∈ i₀, ∀ β ∈ T₀, β < α := by
+    intro α hα β hβ
+    obtain ⟨S, hS, hβS⟩ := Finset.mem_sup.mp hβ
+    exact h_above α hα S hS β hβS
+  obtain ⟨Q, hQ_prefix, hQ_branch⟩ :=
+    coherentBranchPartial_extend_one cR P_T₀ i₀ hi₀ h_i₀_above_T₀
+  have h_S_sub_big : ∀ S, S ∈ insert i₀ D → S ⊆ T₀ ∪ i₀ := by
+    intro S hS
+    rcases Finset.mem_insert.mp hS with rfl | hS_D
+    · exact Finset.subset_union_right
+    · exact (h_S_sub_T₀ S hS_D).trans Finset.subset_union_left
+  refine ⟨fun S hS => Q.restrict (h_S_sub_big S hS), ?_, ?_⟩
+  · -- Coherence within insert i₀ D.
+    intro S T hS hT hST
+    refine ⟨?_, ?_⟩ <;> intro α hα
+    · rw [(Q.restrict (h_S_sub_big T hT)).restrict_prefixAt hST α hα,
+          Q.restrict_prefixAt (h_S_sub_big T hT) α (hST hα),
+          ← Q.restrict_prefixAt (h_S_sub_big S hS) α hα]
+    · rw [(Q.restrict (h_S_sub_big T hT)).restrict_branch hST α hα,
+          Q.restrict_branch (h_S_sub_big T hT) α (hST hα),
+          ← Q.restrict_branch (h_S_sub_big S hS) α hα]
+  · -- Agreement with p.P on D.
+    intro S hS_D
+    have hS_sub_T₀ : S ⊆ T₀ := h_S_sub_T₀ S hS_D
+    have h_compat_p :=
+      p.compat (hD S hS_D) hT₀_in_dom hS_sub_T₀
+    refine ⟨?_, ?_⟩ <;> intro α hα
+    · rw [Q.restrict_prefixAt (h_S_sub_big S (Finset.mem_insert_of_mem hS_D)) α hα]
+      have h_Q_eq_PT₀ := hQ_prefix α (hS_sub_T₀ hα)
+      rw [Q.restrict_prefixAt Finset.subset_union_left α (hS_sub_T₀ hα)] at h_Q_eq_PT₀
+      rw [show Q.prefixAt α (h_S_sub_big S (Finset.mem_insert_of_mem hS_D) hα)
+            = Q.prefixAt α (Finset.subset_union_left (hS_sub_T₀ hα)) from rfl,
+          h_Q_eq_PT₀]
+      have h_p_compat := h_compat_p.1 α hα
+      change ((p.P T₀ hT₀_in_dom).restrict hS_sub_T₀).prefixAt α hα
+        = (p.P S (hD S hS_D)).prefixAt α hα at h_p_compat
+      rw [(p.P T₀ hT₀_in_dom).restrict_prefixAt hS_sub_T₀ α hα] at h_p_compat
+      exact h_p_compat
+    · rw [Q.restrict_branch (h_S_sub_big S (Finset.mem_insert_of_mem hS_D)) α hα]
+      have h_Q_eq_PT₀ := hQ_branch α (hS_sub_T₀ hα)
+      rw [Q.restrict_branch Finset.subset_union_left α (hS_sub_T₀ hα)] at h_Q_eq_PT₀
+      rw [show Q.branch α (h_S_sub_big S (Finset.mem_insert_of_mem hS_D) hα)
+            = Q.branch α (Finset.subset_union_left (hS_sub_T₀ hα)) from rfl,
+          h_Q_eq_PT₀]
+      have h_p_compat := h_compat_p.2 α hα
+      change ((p.P T₀ hT₀_in_dom).restrict hS_sub_T₀).branch α hα
+        = (p.P S (hD S hS_D)).branch α hα at h_p_compat
+      rw [(p.P T₀ hT₀_in_dom).restrict_branch hS_sub_T₀ α hα] at h_p_compat
+      exact h_p_compat
+
+/-- **Alternative existence proof for `CoherentWitnessNet`** —
+derived from the ideal-domain Zorn bridge
+`exists_global_section_of_idealPartialExtensions`. Provided in
+parallel with `exists_coherentWitnessNet`; once the ideal frontier
+is filled, this becomes the preferred path. -/
+theorem exists_coherentWitnessNet_via_ideal
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    Nonempty (CoherentWitnessNet cR) := by
+  obtain ⟨P, hP⟩ :=
+    (coherentBranchPartialSystem cR).exists_global_section_of_idealPartialExtensions
+      (coherentBranchPartial_idealHasPartialExtensions cR)
+  refine ⟨{ P := P, prefix_compat := ?_, branch_compat := ?_ }⟩
+  · intro S T hS hT hST α hα
+    have h := (hP hS hT hST).1 α hα
+    change ((P T hT).restrict hST).prefixAt α hα = (P S hS).prefixAt α hα at h
+    rw [(P T hT).restrict_prefixAt hST α hα] at h
+    exact h
+  · intro S T hS hT hST α hα
+    have h := (hP hS hT hST).2 α hα
+    change ((P T hT).restrict hST).branch α hα = (P S hS).branch α hα at h
+    rw [(P T hT).restrict_branch hST α hα] at h
+    exact h
 
 /-- **Existence of a coherent witness net** — derived axiom-clean
 from `exists_global_section_of_partialExtensions` applied to the
