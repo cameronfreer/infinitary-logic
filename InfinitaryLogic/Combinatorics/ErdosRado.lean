@@ -12383,6 +12383,114 @@ private lemma cgbp_union_empty_right
   ⟨P.cast (Finset.union_empty S).symm,
     P.cast_restrict_self (Finset.union_empty S).symm _⟩
 
+/-- **`PrescribedAmbientCompat P Pα`**: the strengthened compatibility
+hypothesis required for `insert_prescribed_new_compatible`. Says that
+`Pα`'s prefix and branch at `α` agree with `P`'s prefix and branch at
+every position `β ∈ T` where they both have data, via the appropriate
+initial-segment restrictions.
+
+For `β ∈ T` with `β < α`: the prefix embedding `Pα.prefixAt α` at the
+initial-segment `β.ToType` agrees with `P.prefixAt β`, and the type
+function `Pα.branch α` at the initial-segment agrees with `P.branch β`.
+Symmetric `prefix_above/branch_above` fields handle `β ∈ T` with
+`α < β`. -/
+structure PrescribedAmbientCompat
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {T : Finset Ordinal.{0}} (α : Ordinal.{0})
+    (P : CoherentGoodBranchPartial cR T)
+    (Pα : CoherentGoodBranchPartial cR ({α} : Finset Ordinal.{0})) :
+    Prop where
+  /-- Below-α coherence: `Pα`'s prefix at `α` agrees with `P`'s prefix
+  at each `β ∈ T` with `β < α`, via the initial-segment embedding. -/
+  prefix_below : ∀ β (hβ_T : β ∈ T) (hβ_lt_α : β < α),
+    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    ∀ (x : β.ToType),
+      P.toCoherentBranchPartial.prefixAt β hβ_T x =
+        Pα.toCoherentBranchPartial.prefixAt α (Finset.mem_singleton.mpr rfl)
+          ((Ordinal.initialSegToType hβ_lt_α.le).toOrderEmbedding x)
+  /-- Below-α type coherence: `Pα`'s branch at `α` agrees with `P`'s
+  branch at each `β ∈ T` with `β < α`. -/
+  branch_below : ∀ β (hβ_T : β ∈ T) (hβ_lt_α : β < α),
+    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    ∀ (x : β.ToType),
+      P.toCoherentBranchPartial.branch β hβ_T x =
+        Pα.toCoherentBranchPartial.branch α (Finset.mem_singleton.mpr rfl)
+          ((Ordinal.initialSegToType hβ_lt_α.le).toOrderEmbedding x)
+  /-- Above-α coherence: `Pα`'s prefix at `α` agrees with `P`'s prefix
+  at each `β ∈ T` with `α < β`, via the initial-segment embedding
+  `α.ToType → β.ToType`. -/
+  prefix_above : ∀ β (hβ_T : β ∈ T) (hα_lt_β : α < β),
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    ∀ (x : α.ToType),
+      Pα.toCoherentBranchPartial.prefixAt α (Finset.mem_singleton.mpr rfl) x =
+        P.toCoherentBranchPartial.prefixAt β hβ_T
+          ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x)
+  /-- Above-α type coherence. -/
+  branch_above : ∀ β (hβ_T : β ∈ T) (hα_lt_β : α < β),
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    ∀ (x : α.ToType),
+      Pα.toCoherentBranchPartial.branch α (Finset.mem_singleton.mpr rfl) x =
+        P.toCoherentBranchPartial.branch β hβ_T
+          ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x)
+
+/-- **`amalgamate_pair_aux_prescribedAmbient`**: the
+`PrescribedAmbientCompat` builder used at each insertion step of
+`amalgamate_pair_aux`.
+
+**Inputs** (running invariants at the induction step):
+* `Q' : CGBP cR (S ∪ D')` — the IH's CGBP on the partial domain.
+* `hQ'_P : cbpFieldwiseCompat (Q'|S) P` — Q' agrees with P on S.
+* `hQ'_PR_prefix/branch : ∀ β ∈ D', Q' at β agrees with PR at β`.
+* `h_ambient : AmbientCompat P PR` — the global ambient compat.
+* `α : Ordinal`, `hα_R : α ∈ R`, `hα_S : α ∉ S`, `hα_D' : α ∉ D'`.
+
+**Output**: `PrescribedAmbientCompat α Q' (PR.restrict ({α} ⊆ R))`,
+ready for `insert_prescribed_new_compatible (Q', α, PR.restrict {α})`.
+
+**Proof structure**: for each direction, case-split β ∈ S ∪ D':
+* `β ∈ S` (and β ≠ α since α ∉ S): use hQ'_P to bridge Q' to P, then
+  AmbientCompat to bridge P to PR (the four AmbientCompat fields
+  cover all directions).
+* `β ∈ D'`: use hQ'_PR_* to bridge Q' directly to PR, then PR's
+  internal restrict_prefixAt/branch to bridge PR at β to PR at α
+  restricted.
+
+Sorry stubs for all four PrescribedAmbientCompat fields; substantial
+case-analysis follows the documented structure. -/
+private lemma amalgamate_pair_aux_prescribedAmbient
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {S : Finset Ordinal.{0}}
+    (P : CoherentGoodBranchPartial cR S)
+    {R : Finset Ordinal.{0}}
+    (PR : CoherentGoodBranchPartial cR R)
+    {D' : Finset Ordinal.{0}}
+    (Q' : CoherentGoodBranchPartial cR (S ∪ D'))
+    (_hQ'_P : cbpFieldwiseCompat
+      (Q'.toCoherentBranchPartial.restrict Finset.subset_union_left)
+      P.toCoherentBranchPartial)
+    (_hD'_sub_R : D' ⊆ R)
+    (_hQ'_PR_prefix : ∀ β (hβ_D' : β ∈ D') (x : β.ToType),
+      Q'.toCoherentBranchPartial.prefixAt β
+          (Finset.mem_union_right S hβ_D') x =
+        PR.toCoherentBranchPartial.prefixAt β (_hD'_sub_R hβ_D') x)
+    (_hQ'_PR_branch : ∀ β (hβ_D' : β ∈ D') (x : β.ToType),
+      Q'.toCoherentBranchPartial.branch β
+          (Finset.mem_union_right S hβ_D') x =
+        PR.toCoherentBranchPartial.branch β (_hD'_sub_R hβ_D') x)
+    (_h_ambient : CoherentGoodBranchPartial.AmbientCompat P PR)
+    (α : Ordinal.{0}) (_hα_R : α ∈ R)
+    (_hα_S : α ∉ S) (_hα_D' : α ∉ D') :
+    PrescribedAmbientCompat α Q' (PR.restrict
+        (Finset.singleton_subset_iff.mpr _hα_R)) where
+  prefix_below := by sorry
+  branch_below := by sorry
+  prefix_above := by sorry
+  branch_above := by sorry
+
 /-- **`amalgamate_pair_aux`** [auxiliary induction lemma for
 `amalgamate_pair`]: prove pair amalgamation by induction on a disjoint
 subset `D ⊆ R` representing the indices still to be inserted into the
@@ -12762,65 +12870,6 @@ theorem coherentGoodBranchPartial_insert_prescribed_new
           (Finset.singleton_subset_iff.mpr (Finset.mem_insert_self α T)))
         _Pα.toCoherentBranchPartial := by
   sorry
-
-/-- **`PrescribedAmbientCompat P Pα`**: the strengthened compatibility
-hypothesis required for `insert_prescribed_new_compatible`. Says that
-`Pα`'s prefix and branch at `α` agree with `P`'s prefix and branch at
-every position `β ∈ T` where they both have data, via the appropriate
-initial-segment restrictions.
-
-For `β ∈ T` with `β < α`: the prefix embedding `Pα.prefixAt α` at the
-initial-segment `β.ToType` agrees with `P.prefixAt β`, and the type
-function `Pα.branch α` at the initial-segment agrees with `P.branch β`.
-
-For `β ∈ T` with `α ≤ β`: the prefix `P.prefixAt β` at the
-α-corresponding position equals... [precise statement depends on how
-Pα's head at α relates to P's head data]. Left abstract for now.
-
-**Status.** The precise field shape needs care; this serves as a
-placeholder structure to be filled when `succWithChoice` is wired in. -/
-structure PrescribedAmbientCompat
-    {cR : (Fin 2 ↪o PairERSource) → Bool}
-    {T : Finset Ordinal.{0}} (α : Ordinal.{0})
-    (P : CoherentGoodBranchPartial cR T)
-    (Pα : CoherentGoodBranchPartial cR ({α} : Finset Ordinal.{0})) :
-    Prop where
-  /-- Below-α coherence: `Pα`'s prefix at `α` agrees with `P`'s prefix
-  at each `β ∈ T` with `β < α`, via the initial-segment embedding. -/
-  prefix_below : ∀ β (hβ_T : β ∈ T) (hβ_lt_α : β < α),
-    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
-    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
-    ∀ (x : β.ToType),
-      P.toCoherentBranchPartial.prefixAt β hβ_T x =
-        Pα.toCoherentBranchPartial.prefixAt α (Finset.mem_singleton.mpr rfl)
-          ((Ordinal.initialSegToType hβ_lt_α.le).toOrderEmbedding x)
-  /-- Below-α type coherence: `Pα`'s branch at `α` agrees with `P`'s
-  branch at each `β ∈ T` with `β < α`. -/
-  branch_below : ∀ β (hβ_T : β ∈ T) (hβ_lt_α : β < α),
-    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
-    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
-    ∀ (x : β.ToType),
-      P.toCoherentBranchPartial.branch β hβ_T x =
-        Pα.toCoherentBranchPartial.branch α (Finset.mem_singleton.mpr rfl)
-          ((Ordinal.initialSegToType hβ_lt_α.le).toOrderEmbedding x)
-  /-- Above-α coherence: `Pα`'s prefix at `α` agrees with `P`'s prefix
-  at each `β ∈ T` with `α < β`, via the initial-segment embedding
-  `α.ToType → β.ToType`. -/
-  prefix_above : ∀ β (hβ_T : β ∈ T) (hα_lt_β : α < β),
-    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
-    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
-    ∀ (x : α.ToType),
-      Pα.toCoherentBranchPartial.prefixAt α (Finset.mem_singleton.mpr rfl) x =
-        P.toCoherentBranchPartial.prefixAt β hβ_T
-          ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x)
-  /-- Above-α type coherence. -/
-  branch_above : ∀ β (hβ_T : β ∈ T) (hα_lt_β : α < β),
-    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
-    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
-    ∀ (x : α.ToType),
-      Pα.toCoherentBranchPartial.branch α (Finset.mem_singleton.mpr rfl) x =
-        P.toCoherentBranchPartial.branch β hβ_T
-          ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x)
 
 /-- **[FRONTIER, sorry — CORRECTED]**
 `coherentGoodBranchPartial_insert_prescribed_new_compatible`. The
