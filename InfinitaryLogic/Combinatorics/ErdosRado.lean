@@ -12486,8 +12486,60 @@ private lemma amalgamate_pair_aux_prescribedAmbient
     (_hα_S : α ∉ S) (_hα_D' : α ∉ D') :
     PrescribedAmbientCompat α Q' (PR.restrict
         (Finset.singleton_subset_iff.mpr _hα_R)) where
-  prefix_below := by sorry
-  branch_below := by sorry
+  prefix_below := by
+    intro β hβ hβ_lt_α x
+    -- Reduce RHS via restrict_toCBP + restrict_prefixAt.
+    rw [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+        CoherentBranchPartial.restrict_prefixAt]
+    -- Now goal:
+    --   Q'.toCBP.prefixAt β hβ x = PR.toCBP.prefixAt α _hα_R (initSeg.toOE x)
+    rcases Finset.mem_union.mp hβ with hβ_S | hβ_D'
+    · -- β ∈ S branch
+      have hQP_eq : (Q'.toCoherentBranchPartial.restrict
+            Finset.subset_union_left).prefixAt β hβ_S =
+          P.toCoherentBranchPartial.prefixAt β hβ_S := _hQ'_P.1 β hβ_S
+      have hQP_x : Q'.toCoherentBranchPartial.prefixAt β
+            (Finset.subset_union_left hβ_S) x =
+          P.toCoherentBranchPartial.prefixAt β hβ_S x := by
+        have h := congrFun (congrArg (fun f : β.ToType ↪o PairERSource =>
+          (f : β.ToType → PairERSource)) hQP_eq) x
+        rw [CoherentBranchPartial.restrict_prefixAt] at h
+        exact h
+      rw [hQP_x]
+      exact _h_ambient.prefix_below β hβ_S α _hα_R hβ_lt_α x
+    · -- β ∈ D' branch
+      have hQR_x : Q'.toCoherentBranchPartial.prefixAt β
+            (Finset.mem_union_right S hβ_D') x =
+          PR.toCoherentBranchPartial.prefixAt β (_hD'_sub_R hβ_D') x :=
+        _hQ'_PR_prefix β hβ_D' x
+      rw [hQR_x]
+      exact (PR.toCoherentBranchPartial.prefix_restrict hβ_lt_α.le
+        (_hD'_sub_R hβ_D') _hα_R x).symm
+  branch_below := by
+    intro β hβ hβ_lt_α x
+    rw [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+        CoherentBranchPartial.restrict_branch]
+    rcases Finset.mem_union.mp hβ with hβ_S | hβ_D'
+    · -- β ∈ S branch
+      have hQP_eq : (Q'.toCoherentBranchPartial.restrict
+            Finset.subset_union_left).branch β hβ_S =
+          P.toCoherentBranchPartial.branch β hβ_S := _hQ'_P.2 β hβ_S
+      have hQP_x : Q'.toCoherentBranchPartial.branch β
+            (Finset.subset_union_left hβ_S) x =
+          P.toCoherentBranchPartial.branch β hβ_S x := by
+        have h := congrFun hQP_eq x
+        rw [CoherentBranchPartial.restrict_branch] at h
+        exact h
+      rw [hQP_x]
+      exact _h_ambient.branch_below β hβ_S α _hα_R hβ_lt_α x
+    · -- β ∈ D' branch
+      have hQR_x : Q'.toCoherentBranchPartial.branch β
+            (Finset.mem_union_right S hβ_D') x =
+          PR.toCoherentBranchPartial.branch β (_hD'_sub_R hβ_D') x :=
+        _hQ'_PR_branch β hβ_D' x
+      rw [hQR_x]
+      exact (PR.toCoherentBranchPartial.branch_restrict hβ_lt_α.le
+        (_hD'_sub_R hβ_D') _hα_R x).symm
   prefix_above := by sorry
   branch_above := by sorry
 
