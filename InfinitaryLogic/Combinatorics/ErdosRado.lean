@@ -12330,6 +12330,10 @@ the finset itself.
 * `prefix_above`: for `α ∈ T` and `β ∈ S` with `α < β`,
   `PR.prefix α = P.prefix β` restricted to `α.ToType` via initSeg.
 * `branch_above`: analogous.
+* `prefix_diag`/`branch_diag`: same-level agreement on the overlap
+  `α ∈ S ∩ T` (`P.prefix α = PR.prefix α`). The strict cross-level
+  fields do not entail this at a common maximum, so it is explicit;
+  it is what the `S₂ ∩ S₁` overlap case of `amalgamate_pair` needs.
 
 **Why "below/above" instead of single direction.** Although the
 relation is logically symmetric, splitting by direction matches how
@@ -12368,6 +12372,17 @@ structure CoherentGoodBranchPartial.AmbientCompat
       PR.toCoherentBranchPartial.branch α hα_T x =
         P.toCoherentBranchPartial.branch β hβ_S
           ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x)
+  /-- Diagonal coherence: on the overlap `α ∈ S ∩ T`, `P` and `PR`
+  prescribe the same prefix embedding. The strict cross-level fields
+  do not entail this when `α` is a common maximum (no element lies
+  strictly above it), so same-level agreement is stated explicitly. -/
+  prefix_diag : ∀ α (hα_S : α ∈ S) (hα_T : α ∈ T),
+    P.toCoherentBranchPartial.prefixAt α hα_S =
+      PR.toCoherentBranchPartial.prefixAt α hα_T
+  /-- Diagonal type coherence on the overlap. -/
+  branch_diag : ∀ α (hα_S : α ∈ S) (hα_T : α ∈ T),
+    P.toCoherentBranchPartial.branch α hα_S =
+      PR.toCoherentBranchPartial.branch α hα_T
 
 /-- **`cgbp_union_empty_right`**: trivial transport `S ∪ ∅ = S`
 producing a CGBP at the `S ∪ ∅` index with compat back to the
@@ -12868,50 +12883,34 @@ private lemma coherentGoodBranchPartial_amalgamate_pair_aux
         simp only [CoherentBranchPartial.restrict_branch] at e1
         exact (congrFun e1 x).trans (hQ'_PR_branch a ha_D' x)
 
-/-- **[FRONTIER, sorry — diagnostic: Good pair amalgamation]**
-`coherentGoodBranchPartial_amalgamate_pair`. Given two CGBPs at
-finsets `S₁, S₂` whose bare-CBP projections agree on the
-intersection (pointwise prefixAt and branch equality at common
-indices), amalgamate them to a single CGBP on `S₁ ∪ S₂` whose
-restrictions are fieldwise-compat with both originals.
+/-- **`coherentGoodBranchPartial_amalgamate_pair`** (proved, axiom-clean).
+Given two CGBPs at finsets `S₁, S₂` that are `AmbientCompat` (cross-level
+coherence plus same-level overlap agreement), amalgamate them to a single
+CGBP on `S₁ ∪ S₂` whose restrictions are fieldwise-compat with both `P₁`
+and `P₂`.
 
-**Diagnostic outcome from attempting the proof.** Routing through
-`coherentGoodBranchPartial_extend_to_union` from `P₁` to `S₁ ∪ S₂`
-yields a `Q` with `Q.restrict S₁` compat with `P₁` (good — that's the
-extension lemma's conclusion). But `Q`'s values on `S₂ \ S₁` are
-**chosen freshly** by `extend_to_union` (via `exists_coherentGoodBranchApprox`
-through `extend_list`'s recursive Classical.choose), with **no
-constraint** tying them to `P₂`. So `extend_to_union` alone is **not
-strong enough** for pair amalgamation. The same diagnostic applies
-starting from `P₂` and extending: `Q.restrict S₂` works but the `S₁`
-side is unconstrained.
-
-**Status.** Pair amalgamation is a **genuine separate primitive**,
-on par with `extend_to_union` but with two-sided value preservation.
-It is the local missing axiom underneath
-`GoodPrescription.finite_satisfiable` and hence underneath
+**Why a genuine primitive.** A naive route through
+`coherentGoodBranchPartial_extend_to_union` from `P₁` gives `Q.restrict S₁`
+compat with `P₁`, but `Q`'s values on `S₂ \ S₁` are chosen freshly (via
+`exists_coherentGoodBranchApprox`/`extend_list`'s `Classical.choose`), with
+no constraint tying them to `P₂`. So two-sided value preservation is
+strictly stronger than `extend_to_union`. This lemma is load-bearing
+underneath `GoodPrescription.finite_satisfiable`, hence under
 `prescribedGoodCompactness_holds` / `goodIdealCompactness`.
+
+**Proof.** Induction on the frontier `S₂ \ S₁` via
+`coherentGoodBranchPartial_amalgamate_pair_aux` (each step inserts a new
+index using `insert_prescribed_new_compatible`), then transport across
+`S₁ ∪ (S₂ \ S₁) = S₁ ∪ S₂`. The `S₂`-side splits into `S₂ \ S₁` (aux's
+PR-agreement invariant) and `S₁ ∩ S₂` (the `S₁`-side compat composed with
+`AmbientCompat.prefix_diag`/`branch_diag`).
 
 **Special cases.**
 * `coherentGoodBranchPartial_amalgamate_pair_nested` (below): the
-  `S₁ ⊆ S₂` case. **Proven** (axiom-clean) via `P₂.restrict hS`
-  plus the overlap hypothesis.
+  `S₁ ⊆ S₂` case, axiom-clean via `P₂.restrict hS` + overlap.
 * `coherentGoodBranchPartial_amalgamate_pair_ordered` (below): the
-  `S₁ < S₂` (fully separated) case. **Sorry**; the diagnostic
-  attempt confirms that ordered separation does NOT make
-  amalgamation easier — `extend_to_union`'s freshness on `S₂`
-  doesn't respect any prescribed `P₂`.
-
-**Closure route (2026-05-25).** The full pair amalgamation closes
-**via induction on `S₂ \ S₁`** using only
-`coherentGoodBranchPartial_insert_prescribed_new_compatible` (now
-fully proven). Each step inserts one **new** index from `S₂ \ S₁`
-into the running domain — by construction `α ∉ current_domain`, so
-only the new-index case is invoked; the existing-index transport
-branch is **never needed**. The induction step extracts
-`Pα := PR.restrict {α}` and packages `PrescribedAmbientCompat` from
-the overlap hypotheses + running-chain coherence. The closure is
-mechanical wrapping; deferred as the next pure-wrapping milestone. -/
+  `S₁ < S₂` separated case, retained as a diagnostic (still `sorry`)
+  showing `extend_to_union`'s freshness is the wrong tool there. -/
 theorem coherentGoodBranchPartial_amalgamate_pair
     {cR : (Fin 2 ↪o PairERSource) → Bool}
     {S₁ S₂ : Finset Ordinal.{0}}
@@ -12927,27 +12926,74 @@ theorem coherentGoodBranchPartial_amalgamate_pair
       cbpFieldwiseCompat
         (Q.toCoherentBranchPartial.restrict Finset.subset_union_right)
         P₂.toCoherentBranchPartial := by
-  -- Closure route (2026-05-25): induction on S₂ \ S₁ using only
-  -- insert_prescribed_new_compatible. Each step inserts a new index
-  -- α ∈ R \ current_domain; the existing-index branch never fires.
-  --
-  -- Structured proof skeleton (deferred — mechanical induction):
-  -- ```
-  -- private lemma amalgamate_pair_aux
-  --     (P : CGBP cR S) (R : Finset Ordinal) (PR : CGBP cR R)
-  --     (overlap_compat : ...)
-  --     (D : Finset Ordinal) (hD_sub : D ⊆ R) (hD_disjoint : ∀ α ∈ D, α ∉ S) :
-  --     ∃ Q : CGBP cR (S ∪ D),
-  --       Q.restrict (S ⊆ S ∪ D) compat P ∧
-  --       ∀ α ∈ D, Q's values at α agree with PR's at α.
-  -- ```
-  -- Base D = ∅: S ∪ ∅ = S, Q := P (refl).
-  -- Step D = insert α D': IH gives Q' on S ∪ D' with α ∉ S ∪ D'. Apply
-  -- insert_prescribed_new_compatible (Q', α, PR.restrict {α}) with the
-  -- PrescribedAmbientCompat assembled from IH compat + overlap_compat +
-  -- PR's internal restrict_prefixAt/branch.
-  -- Apply to D := S₂ \ S₁; observe S ∪ (S₂ \ S₁) = S ∪ S₂.
-  sorry
+  classical
+  -- Apply the aux induction lemma with base S₁, target S₂, frontier S₂ \ S₁.
+  obtain ⟨Q₀, hQ₀_S₁, hQ₀_prefix, hQ₀_branch⟩ :=
+    coherentGoodBranchPartial_amalgamate_pair_aux _hS₁ P₁ _hS₂ P₂ _h_ambient
+      (S₂ \ S₁) Finset.sdiff_subset (fun α hα => (Finset.mem_sdiff.mp hα).2)
+  -- Transport Q₀ : CGBP (S₁ ∪ (S₂ \ S₁)) to CGBP (S₁ ∪ S₂).
+  have h_dom : S₁ ∪ (S₂ \ S₁) = S₁ ∪ S₂ := Finset.union_sdiff_self_eq_union
+  -- Cast-transport helpers (as in the aux step).
+  have cast_pref : ∀ {A B : Finset Ordinal.{0}} (hAB : A = B)
+      (Pc : CoherentGoodBranchPartial cR A) (γ : Ordinal.{0})
+      (hA : γ ∈ A) (hB : γ ∈ B),
+      (Pc.cast hAB).toCoherentBranchPartial.prefixAt γ hB =
+        Pc.toCoherentBranchPartial.prefixAt γ hA := by
+    intro A B hAB Pc γ hA hB; subst hAB; rfl
+  have cast_branch : ∀ {A B : Finset Ordinal.{0}} (hAB : A = B)
+      (Pc : CoherentGoodBranchPartial cR A) (γ : Ordinal.{0})
+      (hA : γ ∈ A) (hB : γ ∈ B),
+      (Pc.cast hAB).toCoherentBranchPartial.branch γ hB =
+        Pc.toCoherentBranchPartial.branch γ hA := by
+    intro A B hAB Pc γ hA hB; subst hAB; rfl
+  refine ⟨Q₀.cast h_dom, ?_, ?_⟩
+  · -- S₁-side fieldwise compat with P₁ (transport aux's S-side).
+    refine ⟨?_, ?_⟩
+    · intro γ hγ
+      have hA : γ ∈ S₁ ∪ (S₂ \ S₁) := Finset.mem_union_left _ hγ
+      simp only [CoherentBranchPartial.restrict_prefixAt]
+      rw [cast_pref h_dom Q₀ γ hA (Finset.subset_union_left hγ)]
+      have e1 := hQ₀_S₁.1 γ hγ
+      simp only [CoherentBranchPartial.restrict_prefixAt] at e1
+      exact e1
+    · intro γ hγ
+      have hA : γ ∈ S₁ ∪ (S₂ \ S₁) := Finset.mem_union_left _ hγ
+      simp only [CoherentBranchPartial.restrict_branch]
+      rw [cast_branch h_dom Q₀ γ hA (Finset.subset_union_left hγ)]
+      have e1 := hQ₀_S₁.2 γ hγ
+      simp only [CoherentBranchPartial.restrict_branch] at e1
+      exact e1
+  · -- S₂-side fieldwise compat with P₂: split γ ∈ S₂ via membership in S₁.
+    refine ⟨?_, ?_⟩
+    · intro γ hγ
+      simp only [CoherentBranchPartial.restrict_prefixAt]
+      by_cases hγ_S₁ : γ ∈ S₁
+      · -- γ ∈ S₁ ∩ S₂: Q₀ agrees with P₁ (S₁-side), then P₁ = P₂ (prefix_diag).
+        have hA : γ ∈ S₁ ∪ (S₂ \ S₁) := Finset.mem_union_left _ hγ_S₁
+        rw [cast_pref h_dom Q₀ γ hA (Finset.subset_union_right hγ)]
+        have e1 := hQ₀_S₁.1 γ hγ_S₁
+        simp only [CoherentBranchPartial.restrict_prefixAt] at e1
+        exact e1.trans (_h_ambient.prefix_diag γ hγ_S₁ hγ)
+      · -- γ ∈ S₂ \ S₁: aux's D-side agreement (value level via ext).
+        have hγ_D : γ ∈ S₂ \ S₁ := Finset.mem_sdiff.mpr ⟨hγ, hγ_S₁⟩
+        have hA : γ ∈ S₁ ∪ (S₂ \ S₁) := Finset.mem_union_right _ hγ_D
+        apply RelEmbedding.ext
+        intro x
+        rw [cast_pref h_dom Q₀ γ hA (Finset.subset_union_right hγ)]
+        exact hQ₀_prefix γ hγ_D x
+    · intro γ hγ
+      simp only [CoherentBranchPartial.restrict_branch]
+      by_cases hγ_S₁ : γ ∈ S₁
+      · have hA : γ ∈ S₁ ∪ (S₂ \ S₁) := Finset.mem_union_left _ hγ_S₁
+        rw [cast_branch h_dom Q₀ γ hA (Finset.subset_union_right hγ)]
+        have e1 := hQ₀_S₁.2 γ hγ_S₁
+        simp only [CoherentBranchPartial.restrict_branch] at e1
+        exact e1.trans (_h_ambient.branch_diag γ hγ_S₁ hγ)
+      · have hγ_D : γ ∈ S₂ \ S₁ := Finset.mem_sdiff.mpr ⟨hγ, hγ_S₁⟩
+        have hA : γ ∈ S₁ ∪ (S₂ \ S₁) := Finset.mem_union_right _ hγ_D
+        rw [cast_branch h_dom Q₀ γ hA (Finset.subset_union_right hγ)]
+        funext x
+        exact hQ₀_branch γ hγ_D x
 
 /-- **`coherentGoodBranchPartial_amalgamate_pair_nested`**: the
 **nested case** of pair amalgamation. When `S₁ ⊆ S₂`, the
