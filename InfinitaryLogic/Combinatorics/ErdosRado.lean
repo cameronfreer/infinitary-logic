@@ -12607,6 +12607,96 @@ private lemma amalgamate_pair_aux_prescribedAmbient
       exact (PR.toCoherentBranchPartial.branch_restrict hα_lt_β.le
         _hα_R (_hD'_sub_R hβ_D') x).symm
 
+/-- **[FRONTIER, sorry — CORRECTED]**
+`coherentGoodBranchPartial_insert_prescribed_new_compatible`. The
+mathematically correct form: requires `PrescribedAmbientCompat` (the
+strong compat with all four directions: prefix/branch × below/above).
+
+**Construction status (2026-05-24).** The CGBA core
+`insertPrescribedGoodApprox` is now **fully closed axiom-clean** (all
+four fields: prefix_restrict, branch_restrict, large,
+top_in_validFiber). The remaining wrapper packages this into a CGBP
+and discharges the two compat conclusions (with `P` on `T` and `Pα`
+on `{α}`) via:
+1. `letI Q := { toGoodApprox := insertPrescribedGoodApprox ...,
+                 level_eq := fun _ => rfl }`.
+2. For γ ∈ T (compat with P): use the parallel of
+   `insertBeforeGoodApprox_goodAt_old_head/type` —
+   `insertPrescribedGoodApprox_goodAt_old_head/type`, which routes
+   through `insertPrescribedGoodAt_eq_old` + `goodAt_head_apply_eq_of_eq`.
+3. For γ = α (compat with Pα): use the parallel
+   `_goodAt_alpha_head/type`, routing through
+   `insertPrescribedGoodAt_eq_alpha` (the singleton membership
+   `α ∈ {α}` is `Finset.mem_singleton.mpr rfl`).
+
+Both helper-lemma sets follow the existing
+`insertBeforeGoodApprox_goodAt_old_*` template mechanically. -/
+theorem coherentGoodBranchPartial_insert_prescribed_new_compatible
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {T : Finset Ordinal.{0}} (α : Ordinal.{0})
+    (hαT : α ∉ T)
+    (_hT : ∀ β ∈ T, β < Ordinal.omega.{0} 1)
+    (hα : α < Ordinal.omega.{0} 1)
+    (P : CoherentGoodBranchPartial cR T)
+    (Pα : CoherentGoodBranchPartial cR ({α} : Finset Ordinal.{0}))
+    (h_compat : PrescribedAmbientCompat α P Pα) :
+    ∃ Q : CoherentGoodBranchPartial cR (insert α T),
+      cbpFieldwiseCompat
+        (Q.toCoherentBranchPartial.restrict (Finset.subset_insert α T))
+        P.toCoherentBranchPartial ∧
+      cbpFieldwiseCompat
+        (Q.toCoherentBranchPartial.restrict
+          (Finset.singleton_subset_iff.mpr (Finset.mem_insert_self α T)))
+        Pα.toCoherentBranchPartial := by
+  letI Q : CoherentGoodBranchPartial cR (insert α T) :=
+    { toGoodApprox := insertPrescribedGoodApprox P hα hαT Pα
+        h_compat.prefix_below h_compat.branch_below
+        h_compat.prefix_above h_compat.branch_above
+      level_eq := fun _ => rfl }
+  refine ⟨Q, ⟨?_, ?_⟩, ⟨?_, ?_⟩⟩
+  · -- prefix compat with P on T
+    intro γ hγ
+    rw [CoherentBranchPartial.restrict_prefixAt]
+    apply RelEmbedding.ext
+    intro x
+    rw [← Q.good_head_eq γ (Finset.mem_insert_of_mem hγ) x,
+        ← P.good_head_eq γ hγ x]
+    exact insertPrescribedGoodApprox_goodAt_old_head P hα hαT Pα
+      h_compat.prefix_below h_compat.branch_below
+      h_compat.prefix_above h_compat.branch_above γ hγ x
+  · -- branch compat with P on T
+    intro γ hγ
+    rw [CoherentBranchPartial.restrict_branch]
+    funext x
+    rw [← Q.good_type_eq γ (Finset.mem_insert_of_mem hγ) x,
+        ← P.good_type_eq γ hγ x]
+    exact insertPrescribedGoodApprox_goodAt_old_type P hα hαT Pα
+      h_compat.prefix_below h_compat.branch_below
+      h_compat.prefix_above h_compat.branch_above γ hγ x
+  · -- prefix compat with Pα on {α}
+    intro γ hγ_sing
+    have hγ_eq : γ = α := Finset.mem_singleton.mp hγ_sing
+    subst hγ_eq
+    rw [CoherentBranchPartial.restrict_prefixAt]
+    apply RelEmbedding.ext
+    intro x
+    rw [← Q.good_head_eq γ (Finset.mem_insert_self γ T) x,
+        ← Pα.good_head_eq γ (Finset.mem_singleton.mpr rfl) x]
+    exact insertPrescribedGoodApprox_goodAt_alpha_head P hα hαT Pα
+      h_compat.prefix_below h_compat.branch_below
+      h_compat.prefix_above h_compat.branch_above x
+  · -- branch compat with Pα on {α}
+    intro γ hγ_sing
+    have hγ_eq : γ = α := Finset.mem_singleton.mp hγ_sing
+    subst hγ_eq
+    rw [CoherentBranchPartial.restrict_branch]
+    funext x
+    rw [← Q.good_type_eq γ (Finset.mem_insert_self γ T) x,
+        ← Pα.good_type_eq γ (Finset.mem_singleton.mpr rfl) x]
+    exact insertPrescribedGoodApprox_goodAt_alpha_type P hα hαT Pα
+      h_compat.prefix_below h_compat.branch_below
+      h_compat.prefix_above h_compat.branch_above x
+
 /-- **`amalgamate_pair_aux`** [auxiliary induction lemma for
 `amalgamate_pair`]: prove pair amalgamation by induction on a disjoint
 subset `D ⊆ R` representing the indices still to be inserted into the
@@ -12632,9 +12722,11 @@ assembled from the running invariants.
   (`β ∈ D'` → use IH's PR-agreement).
 * `prefix_above/branch_above`: symmetric, for `α < β` in `S ∪ D'`.
 
-**Status.** Stated as a sorry skeleton; the proof is mechanical
-Finset induction + careful `PrescribedAmbientCompat` assembly. The
-base case is split out as `cgbp_union_empty_right` below. -/
+**Status.** Proved (axiom-clean). Finset induction on `D`; the base
+case is split out as `cgbp_union_empty_right`, and the step assembles
+`PrescribedAmbientCompat` via `amalgamate_pair_aux_prescribedAmbient`,
+inserts via `insert_prescribed_new_compatible`, and transports the
+result across `insert α' (S ∪ D') = S ∪ insert α' D'`. -/
 private lemma coherentGoodBranchPartial_amalgamate_pair_aux
     {cR : (Fin 2 ↪o PairERSource) → Bool}
     {S : Finset Ordinal.{0}}
@@ -12671,37 +12763,110 @@ private lemma coherentGoodBranchPartial_amalgamate_pair_aux
       exact absurd hα (Finset.notMem_empty α)
   | @insert α' D' h_notin IH =>
     intro _hD_sub _hD_disjoint
-    -- Inductive step strategy:
+    -- The "hidden depth" concern (β ∈ S \ R) is resolved by the
+    -- `AmbientCompat _P _PR` hypothesis (`_h_ambient`): the helper
+    -- `amalgamate_pair_aux_prescribedAmbient` assembles the required
+    -- `PrescribedAmbientCompat` from it together with the running
+    -- invariants, covering all cross-pairs via PR's internal coherence.
     --
-    -- 1. Apply IH on D' (with the restricted hypotheses) to get
-    --    Q' : CGBP cR (S ∪ D') with the running invariants.
-    -- 2. Show α' ∉ S ∪ D':
-    --    * α' ∉ S from _hD_disjoint applied at α' ∈ insert α' D'.
-    --    * α' ∉ D' from h_notin.
-    -- 3. Build PrescribedAmbientCompat (Q', α', PR.restrict ({α'} ⊆ R))
-    --    via a separate helper amalgamate_pair_aux_prescribedCompat:
-    --    * prefix_below/branch_below: case-split β ∈ S vs β ∈ D':
-    --      - β ∈ S: chain Q'-vs-P (hQ'_S) + P-vs-PR (overlap_compat at
-    --        β ∈ S ∩ R via β ∈ D ⊆ R) + PR's restrict_prefixAt.
-    --      - β ∈ D': chain Q'-vs-PR (IH PR-agreement) + PR's
-    --        restrict_prefixAt from β to α'.
-    --    * prefix_above/branch_above: symmetric.
-    -- 4. Apply insert_prescribed_new_compatible to get Q on
-    --    insert α' (S ∪ D') = S ∪ insert α' D' = S ∪ D.
-    -- 5. Chain new invariants:
-    --    * S-side compat: from Q's compat with Q' + Q's compat
-    --      with PR.restrict ({α'}) (which gives P agreement at S).
-    --    * D-side agreement: for β ∈ D':  trans through Q'.
-    --                       for β = α': from the {α'}-side compat.
-    --
-    -- HIDDEN DEPTH: the `prefix_below` case for β ∈ S \ R requires
-    -- P.prefix at β = PR.prefix at α' (restricted to β.ToType) — which
-    -- is NOT directly entailed by overlap_compat (which only handles
-    -- β ∈ S ∩ R). The amalgamate_pair hypothesis as currently stated
-    -- may be too weak; either the hypothesis needs strengthening, or
-    -- the proof needs to use PR's internal coherence in a non-obvious
-    -- way. This is a real mathematical subtlety, not just bookkeeping.
-    sorry
+    -- Cast-transport helpers: target-side prefix/branch under a domain
+    -- equality `A = B` (provable by `subst` since `A, B` are variables).
+    have cast_pref : ∀ {A B : Finset Ordinal.{0}} (hAB : A = B)
+        (Pc : CoherentGoodBranchPartial cR A) (γ : Ordinal.{0})
+        (hA : γ ∈ A) (hB : γ ∈ B),
+        (Pc.cast hAB).toCoherentBranchPartial.prefixAt γ hB =
+          Pc.toCoherentBranchPartial.prefixAt γ hA := by
+      intro A B hAB Pc γ hA hB; subst hAB; rfl
+    have cast_branch : ∀ {A B : Finset Ordinal.{0}} (hAB : A = B)
+        (Pc : CoherentGoodBranchPartial cR A) (γ : Ordinal.{0})
+        (hA : γ ∈ A) (hB : γ ∈ B),
+        (Pc.cast hAB).toCoherentBranchPartial.branch γ hB =
+          Pc.toCoherentBranchPartial.branch γ hA := by
+      intro A B hAB Pc γ hA hB; subst hAB; rfl
+    -- Membership bookkeeping for the inserted index α'.
+    have hα'_mem : α' ∈ insert α' D' := Finset.mem_insert_self α' D'
+    have hα'_R : α' ∈ R := _hD_sub hα'_mem
+    have hα'_S : α' ∉ S := _hD_disjoint α' hα'_mem
+    have hD'_sub : D' ⊆ R := fun x hx => _hD_sub (Finset.mem_insert_of_mem hx)
+    have hD'_disjoint : ∀ a ∈ D', a ∉ S :=
+      fun a ha => _hD_disjoint a (Finset.mem_insert_of_mem ha)
+    have hα'_notin : α' ∉ S ∪ D' := by
+      simp only [Finset.mem_union, not_or]; exact ⟨hα'_S, h_notin⟩
+    -- Inductive hypothesis on the smaller frontier D'.
+    obtain ⟨Q', hQ'_S, hQ'_PR_prefix, hQ'_PR_branch⟩ := IH hD'_sub hD'_disjoint
+    -- ω₁ side conditions.
+    have hα'_lt : α' < Ordinal.omega.{0} 1 := _hR α' hα'_R
+    have hSD'_lt : ∀ β ∈ S ∪ D', β < Ordinal.omega.{0} 1 := by
+      intro β hβ
+      rcases Finset.mem_union.mp hβ with hβ_S | hβ_D'
+      · exact _hS β hβ_S
+      · exact _hR β (hD'_sub hβ_D')
+    -- Strong prescribed-ambient compat assembled by the helper.
+    have h_compat :
+        PrescribedAmbientCompat α' Q'
+          (_PR.restrict (Finset.singleton_subset_iff.mpr hα'_R)) :=
+      amalgamate_pair_aux_prescribedAmbient _P _PR Q' hQ'_S hD'_sub
+        hQ'_PR_prefix hQ'_PR_branch _h_ambient α' hα'_R hα'_S h_notin
+    -- Insert α' via the prescribed-new-compatible insertion theorem.
+    obtain ⟨Q₀, hQ₀_Q', hQ₀_Pα⟩ :=
+      coherentGoodBranchPartial_insert_prescribed_new_compatible α' hα'_notin
+        hSD'_lt hα'_lt Q' (_PR.restrict (Finset.singleton_subset_iff.mpr hα'_R))
+        h_compat
+    -- Transport Q₀ : CGBP (insert α' (S ∪ D')) to CGBP (S ∪ insert α' D').
+    have h_dom : insert α' (S ∪ D') = S ∪ insert α' D' :=
+      (Finset.union_insert α' S D').symm
+    refine ⟨Q₀.cast h_dom, ?_, ?_, ?_⟩
+    · -- S-side fieldwise compat with _P (embedding/function level).
+      refine ⟨?_, ?_⟩
+      · intro γ hγ
+        have hγ_SD' : γ ∈ S ∪ D' := Finset.mem_union_left _ hγ
+        have e1 := hQ₀_Q'.1 γ hγ_SD'
+        have e2 := hQ'_S.1 γ hγ
+        simp only [CoherentBranchPartial.restrict_prefixAt] at e1 e2 ⊢
+        rw [cast_pref h_dom Q₀ γ (Finset.mem_insert_of_mem hγ_SD')
+          (Finset.subset_union_left hγ)]
+        exact e1.trans e2
+      · intro γ hγ
+        have hγ_SD' : γ ∈ S ∪ D' := Finset.mem_union_left _ hγ
+        have e1 := hQ₀_Q'.2 γ hγ_SD'
+        have e2 := hQ'_S.2 γ hγ
+        simp only [CoherentBranchPartial.restrict_branch] at e1 e2 ⊢
+        rw [cast_branch h_dom Q₀ γ (Finset.mem_insert_of_mem hγ_SD')
+          (Finset.subset_union_left hγ)]
+        exact e1.trans e2
+    · -- D-side prefix agreement with _PR (value level).
+      intro a ha x
+      have hA : a ∈ insert α' (S ∪ D') :=
+        Finset.insert_subset_insert α' Finset.subset_union_right ha
+      rw [cast_pref h_dom Q₀ a hA (Finset.mem_union_right S ha)]
+      -- `rcases … with rfl` substitutes `α'` away, leaving everything in `a`.
+      rcases Finset.mem_insert.mp ha with rfl | ha_D'
+      · -- a = α': use the singleton-side compat from the insertion.
+        have eP := hQ₀_Pα.1 a (Finset.mem_singleton.mpr rfl)
+        simp only [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+          CoherentBranchPartial.restrict_prefixAt] at eP
+        exact congrFun (congrArg (fun e : a.ToType ↪o PairERSource =>
+          (e : a.ToType → PairERSource)) eP) x
+      · -- a ∈ D': chain Q₀-vs-Q' (insertion) with Q'-vs-PR (IH).
+        have ha_SD' : a ∈ S ∪ D' := Finset.mem_union_right _ ha_D'
+        have e1 := hQ₀_Q'.1 a ha_SD'
+        simp only [CoherentBranchPartial.restrict_prefixAt] at e1
+        exact (congrFun (congrArg (fun e : a.ToType ↪o PairERSource =>
+          (e : a.ToType → PairERSource)) e1) x).trans (hQ'_PR_prefix a ha_D' x)
+    · -- D-side branch agreement with _PR (value level).
+      intro a ha x
+      have hA : a ∈ insert α' (S ∪ D') :=
+        Finset.insert_subset_insert α' Finset.subset_union_right ha
+      rw [cast_branch h_dom Q₀ a hA (Finset.mem_union_right S ha)]
+      rcases Finset.mem_insert.mp ha with rfl | ha_D'
+      · have eP := hQ₀_Pα.2 a (Finset.mem_singleton.mpr rfl)
+        simp only [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+          CoherentBranchPartial.restrict_branch] at eP
+        exact congrFun eP x
+      · have ha_SD' : a ∈ S ∪ D' := Finset.mem_union_right _ ha_D'
+        have e1 := hQ₀_Q'.2 a ha_SD'
+        simp only [CoherentBranchPartial.restrict_branch] at e1
+        exact (congrFun e1 x).trans (hQ'_PR_branch a ha_D' x)
 
 /-- **[FRONTIER, sorry — diagnostic: Good pair amalgamation]**
 `coherentGoodBranchPartial_amalgamate_pair`. Given two CGBPs at
@@ -12986,96 +13151,6 @@ theorem coherentGoodBranchPartial_insert_prescribed_new
           (Finset.singleton_subset_iff.mpr (Finset.mem_insert_self α T)))
         _Pα.toCoherentBranchPartial := by
   sorry
-
-/-- **[FRONTIER, sorry — CORRECTED]**
-`coherentGoodBranchPartial_insert_prescribed_new_compatible`. The
-mathematically correct form: requires `PrescribedAmbientCompat` (the
-strong compat with all four directions: prefix/branch × below/above).
-
-**Construction status (2026-05-24).** The CGBA core
-`insertPrescribedGoodApprox` is now **fully closed axiom-clean** (all
-four fields: prefix_restrict, branch_restrict, large,
-top_in_validFiber). The remaining wrapper packages this into a CGBP
-and discharges the two compat conclusions (with `P` on `T` and `Pα`
-on `{α}`) via:
-1. `letI Q := { toGoodApprox := insertPrescribedGoodApprox ...,
-                 level_eq := fun _ => rfl }`.
-2. For γ ∈ T (compat with P): use the parallel of
-   `insertBeforeGoodApprox_goodAt_old_head/type` —
-   `insertPrescribedGoodApprox_goodAt_old_head/type`, which routes
-   through `insertPrescribedGoodAt_eq_old` + `goodAt_head_apply_eq_of_eq`.
-3. For γ = α (compat with Pα): use the parallel
-   `_goodAt_alpha_head/type`, routing through
-   `insertPrescribedGoodAt_eq_alpha` (the singleton membership
-   `α ∈ {α}` is `Finset.mem_singleton.mpr rfl`).
-
-Both helper-lemma sets follow the existing
-`insertBeforeGoodApprox_goodAt_old_*` template mechanically. -/
-theorem coherentGoodBranchPartial_insert_prescribed_new_compatible
-    {cR : (Fin 2 ↪o PairERSource) → Bool}
-    {T : Finset Ordinal.{0}} (α : Ordinal.{0})
-    (hαT : α ∉ T)
-    (_hT : ∀ β ∈ T, β < Ordinal.omega.{0} 1)
-    (hα : α < Ordinal.omega.{0} 1)
-    (P : CoherentGoodBranchPartial cR T)
-    (Pα : CoherentGoodBranchPartial cR ({α} : Finset Ordinal.{0}))
-    (h_compat : PrescribedAmbientCompat α P Pα) :
-    ∃ Q : CoherentGoodBranchPartial cR (insert α T),
-      cbpFieldwiseCompat
-        (Q.toCoherentBranchPartial.restrict (Finset.subset_insert α T))
-        P.toCoherentBranchPartial ∧
-      cbpFieldwiseCompat
-        (Q.toCoherentBranchPartial.restrict
-          (Finset.singleton_subset_iff.mpr (Finset.mem_insert_self α T)))
-        Pα.toCoherentBranchPartial := by
-  letI Q : CoherentGoodBranchPartial cR (insert α T) :=
-    { toGoodApprox := insertPrescribedGoodApprox P hα hαT Pα
-        h_compat.prefix_below h_compat.branch_below
-        h_compat.prefix_above h_compat.branch_above
-      level_eq := fun _ => rfl }
-  refine ⟨Q, ⟨?_, ?_⟩, ⟨?_, ?_⟩⟩
-  · -- prefix compat with P on T
-    intro γ hγ
-    rw [CoherentBranchPartial.restrict_prefixAt]
-    apply RelEmbedding.ext
-    intro x
-    rw [← Q.good_head_eq γ (Finset.mem_insert_of_mem hγ) x,
-        ← P.good_head_eq γ hγ x]
-    exact insertPrescribedGoodApprox_goodAt_old_head P hα hαT Pα
-      h_compat.prefix_below h_compat.branch_below
-      h_compat.prefix_above h_compat.branch_above γ hγ x
-  · -- branch compat with P on T
-    intro γ hγ
-    rw [CoherentBranchPartial.restrict_branch]
-    funext x
-    rw [← Q.good_type_eq γ (Finset.mem_insert_of_mem hγ) x,
-        ← P.good_type_eq γ hγ x]
-    exact insertPrescribedGoodApprox_goodAt_old_type P hα hαT Pα
-      h_compat.prefix_below h_compat.branch_below
-      h_compat.prefix_above h_compat.branch_above γ hγ x
-  · -- prefix compat with Pα on {α}
-    intro γ hγ_sing
-    have hγ_eq : γ = α := Finset.mem_singleton.mp hγ_sing
-    subst hγ_eq
-    rw [CoherentBranchPartial.restrict_prefixAt]
-    apply RelEmbedding.ext
-    intro x
-    rw [← Q.good_head_eq γ (Finset.mem_insert_self γ T) x,
-        ← Pα.good_head_eq γ (Finset.mem_singleton.mpr rfl) x]
-    exact insertPrescribedGoodApprox_goodAt_alpha_head P hα hαT Pα
-      h_compat.prefix_below h_compat.branch_below
-      h_compat.prefix_above h_compat.branch_above x
-  · -- branch compat with Pα on {α}
-    intro γ hγ_sing
-    have hγ_eq : γ = α := Finset.mem_singleton.mp hγ_sing
-    subst hγ_eq
-    rw [CoherentBranchPartial.restrict_branch]
-    funext x
-    rw [← Q.good_type_eq γ (Finset.mem_insert_self γ T) x,
-        ← Pα.good_type_eq γ (Finset.mem_singleton.mpr rfl) x]
-    exact insertPrescribedGoodApprox_goodAt_alpha_type P hα hαT Pα
-      h_compat.prefix_below h_compat.branch_below
-      h_compat.prefix_above h_compat.branch_above x
 
 /-- **`coherentGoodBranchPartial_insert_prescribed_compatible`**
 [**convenience wrapper — TRANSPORT TODO**]: unified existing/new
