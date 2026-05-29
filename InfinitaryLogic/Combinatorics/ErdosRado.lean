@@ -12459,8 +12459,8 @@ ready for `insert_prescribed_new_compatible (Q', α, PR.restrict {α})`.
   internal restrict_prefixAt/branch to bridge PR at β to PR at α
   restricted.
 
-Sorry stubs for all four PrescribedAmbientCompat fields; substantial
-case-analysis follows the documented structure. -/
+All four PrescribedAmbientCompat fields proven by the case-analysis
+documented above. -/
 private lemma amalgamate_pair_aux_prescribedAmbient
     {cR : (Fin 2 ↪o PairERSource) → Bool}
     {S : Finset Ordinal.{0}}
@@ -12540,8 +12540,72 @@ private lemma amalgamate_pair_aux_prescribedAmbient
       rw [hQR_x]
       exact (PR.toCoherentBranchPartial.branch_restrict hβ_lt_α.le
         (_hD'_sub_R hβ_D') _hα_R x).symm
-  prefix_above := by sorry
-  branch_above := by sorry
+  prefix_above := by
+    intro β hβ hα_lt_β x
+    -- Reduce LHS via restrict_toCBP + restrict_prefixAt.
+    rw [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+        CoherentBranchPartial.restrict_prefixAt]
+    -- Now goal:
+    --   PR.toCBP.prefixAt α _hα_R x = Q'.toCBP.prefixAt β hβ (initSeg.toOE x)
+    rcases Finset.mem_union.mp hβ with hβ_S | hβ_D'
+    · -- β ∈ S branch
+      have hQP_eq : (Q'.toCoherentBranchPartial.restrict
+            Finset.subset_union_left).prefixAt β hβ_S =
+          P.toCoherentBranchPartial.prefixAt β hβ_S := _hQ'_P.1 β hβ_S
+      have hQP_x : Q'.toCoherentBranchPartial.prefixAt β
+            (Finset.subset_union_left hβ_S)
+            ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x) =
+          P.toCoherentBranchPartial.prefixAt β hβ_S
+            ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x) := by
+        have h := congrFun (congrArg (fun f : β.ToType ↪o PairERSource =>
+          (f : β.ToType → PairERSource)) hQP_eq)
+          ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x)
+        rw [CoherentBranchPartial.restrict_prefixAt] at h
+        exact h
+      rw [hQP_x]
+      exact _h_ambient.prefix_above α _hα_R β hβ_S hα_lt_β x
+    · -- β ∈ D' branch
+      have hQR_x : Q'.toCoherentBranchPartial.prefixAt β
+            (Finset.mem_union_right S hβ_D')
+            ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x) =
+          PR.toCoherentBranchPartial.prefixAt β (_hD'_sub_R hβ_D')
+            ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x) :=
+        _hQ'_PR_prefix β hβ_D'
+          ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x)
+      rw [hQR_x]
+      exact (PR.toCoherentBranchPartial.prefix_restrict hα_lt_β.le
+        _hα_R (_hD'_sub_R hβ_D') x).symm
+  branch_above := by
+    intro β hβ hα_lt_β x
+    rw [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+        CoherentBranchPartial.restrict_branch]
+    rcases Finset.mem_union.mp hβ with hβ_S | hβ_D'
+    · -- β ∈ S branch
+      have hQP_eq : (Q'.toCoherentBranchPartial.restrict
+            Finset.subset_union_left).branch β hβ_S =
+          P.toCoherentBranchPartial.branch β hβ_S := _hQ'_P.2 β hβ_S
+      have hQP_x : Q'.toCoherentBranchPartial.branch β
+            (Finset.subset_union_left hβ_S)
+            ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x) =
+          P.toCoherentBranchPartial.branch β hβ_S
+            ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x) := by
+        have h := congrFun hQP_eq
+          ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x)
+        rw [CoherentBranchPartial.restrict_branch] at h
+        exact h
+      rw [hQP_x]
+      exact _h_ambient.branch_above α _hα_R β hβ_S hα_lt_β x
+    · -- β ∈ D' branch
+      have hQR_x : Q'.toCoherentBranchPartial.branch β
+            (Finset.mem_union_right S hβ_D')
+            ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x) =
+          PR.toCoherentBranchPartial.branch β (_hD'_sub_R hβ_D')
+            ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x) :=
+        _hQ'_PR_branch β hβ_D'
+          ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x)
+      rw [hQR_x]
+      exact (PR.toCoherentBranchPartial.branch_restrict hα_lt_β.le
+        _hα_R (_hD'_sub_R hβ_D') x).symm
 
 /-- **`amalgamate_pair_aux`** [auxiliary induction lemma for
 `amalgamate_pair`]: prove pair amalgamation by induction on a disjoint
