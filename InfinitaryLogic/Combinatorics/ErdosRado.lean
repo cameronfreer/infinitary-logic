@@ -13652,6 +13652,52 @@ theorem goodIdealGlobalization_finite_consistent
           (p.P S (hD_dom S hS)).toCoherentBranchPartial :=
   coherentGoodBranchPartial_amalgamate_from_common_upper p D hD_dom
 
+/-- **`GoodIdealDemandIndex p`**: index type for the ultrafilter globalization of
+`goodIdealGlobalization` — the prescribed indices of `p` (finsets in `p.domain`).
+A finite *demand set* is a `Finset (GoodIdealDemandIndex p)`; its underlying
+finsets are recovered by `Finset.image Subtype.val`. -/
+abbrev GoodIdealDemandIndex {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection) :=
+  {S : Finset Ordinal.{0} // S ∈ p.domain}
+
+/-- The underlying finsets of a finite demand set all lie in `p.domain`. -/
+theorem demandImage_mem_domain
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (D : Finset (GoodIdealDemandIndex p)) :
+    ∀ S ∈ D.image Subtype.val, S ∈ p.domain := by
+  intro S hS
+  obtain ⟨x, _, rfl⟩ := Finset.mem_image.mp hS
+  exact x.2
+
+/-- **`finiteDemandWitness p D`**: a canonical CGBP on the union of a finite
+demand set's finsets, restricting compatibly to each prescribed `p.P S`. Chosen
+from `goodIdealGlobalization_finite_consistent` (so the ultrafilter argument has
+one canonical finite witness per finite demand set). -/
+noncomputable def finiteDemandWitness
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (D : Finset (GoodIdealDemandIndex p)) :
+    CoherentGoodBranchPartial cR ((D.image Subtype.val).sup id) :=
+  (goodIdealGlobalization_finite_consistent p (D.image Subtype.val)
+    (demandImage_mem_domain p D)).choose
+
+/-- The canonical finite-demand witness restricts compatibly to `p.P s` for every
+member `s` of the demand set. -/
+theorem finiteDemandWitness_compat
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (D : Finset (GoodIdealDemandIndex p))
+    (s : GoodIdealDemandIndex p) (hs : s ∈ D) :
+    cbpFieldwiseCompat
+      ((finiteDemandWitness p D).toCoherentBranchPartial.restrict
+        (fun _ hα => Finset.mem_sup.mpr
+          ⟨s.val, Finset.mem_image_of_mem Subtype.val hs, hα⟩))
+      (p.P s.val s.2).toCoherentBranchPartial :=
+  (goodIdealGlobalization_finite_consistent p (D.image Subtype.val)
+    (demandImage_mem_domain p D)).choose_spec s.val
+    (Finset.mem_image_of_mem Subtype.val hs)
+
 /-- **[FRONTIER — Good ideal globalization]** `goodIdealGlobalization`:
 every finitely-consistent `IdealPartialSection` of the Good system extends to a
 total `CoherentGoodWitnessNet` storing each prescribed CGBP literally on
