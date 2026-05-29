@@ -13629,6 +13629,29 @@ theorem prescribedGoodCompactness_holds
     prescribedGoodCompactness cR := by
   sorry
 
+/-- **`goodIdealGlobalization_finite_consistent`**: the finite-consistency input
+to `goodIdealGlobalization`. For any finite demand set `D ⊆ p.domain`, the
+prescribed objects `{p.P S | S ∈ D}` amalgamate into a single CGBP on `D.sup id`
+whose restriction to each `S ∈ D` is fieldwise-compat with `p.P S`.
+
+A thin wrapper over `coherentGoodBranchPartial_amalgamate_from_common_upper`
+(directedness supplies the common object `p.P (D.sup id)`), named here so the
+compactness argument reads as "every finite demand set is consistent ⇒
+globalize". This is the *finite* half of `goodIdealGlobalization`; the remaining
+work is the inverse-limit/ultrafilter globalization. -/
+theorem goodIdealGlobalization_finite_consistent
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (D : Finset (Finset Ordinal.{0}))
+    (hD_dom : ∀ S ∈ D, S ∈ p.domain) :
+    ∃ Q : CoherentGoodBranchPartial cR (D.sup id),
+      ∀ S (hS : S ∈ D),
+        cbpFieldwiseCompat
+          (Q.toCoherentBranchPartial.restrict
+            (fun _ hα => Finset.mem_sup.mpr ⟨S, hS, hα⟩))
+          (p.P S (hD_dom S hS)).toCoherentBranchPartial :=
+  coherentGoodBranchPartial_amalgamate_from_common_upper p D hD_dom
+
 /-- **[FRONTIER — Good ideal globalization]** `goodIdealGlobalization`:
 every finitely-consistent `IdealPartialSection` of the Good system extends to a
 total `CoherentGoodWitnessNet` storing each prescribed CGBP literally on
