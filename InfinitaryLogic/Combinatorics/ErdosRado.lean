@@ -13629,15 +13629,45 @@ theorem prescribedGoodCompactness_holds
     prescribedGoodCompactness cR := by
   sorry
 
+/-- **[FRONTIER — Good ideal globalization]** `goodIdealGlobalization`:
+every finitely-consistent `IdealPartialSection` of the Good system extends to a
+total `CoherentGoodWitnessNet` storing each prescribed CGBP literally on
+`p.domain`.
+
+This is the genuine remaining content of `goodIdealCompactness`, isolated from
+the finite part. **Finite consistency is already discharged**: for any finite
+demand set `D ⊆ p.domain`,
+`coherentGoodBranchPartial_amalgamate_from_common_upper` produces a single CGBP
+on `D.sup id` restricting compatibly to each `p.P S` (directedness supplies the
+common object). What remains is the **globalization / inverse-limit step**:
+choose a coherent value `net.P W` for *every* valid finite `W` (not just those
+in `p.domain`), agreeing with `p` on `p.domain`. Intended route: an ultrafilter
+over finite demand sets — finite consistency from the common-upper lemma, a
+`𝔘`-eventual global choice for each `W`, and equality on `p.domain` forced by
+the prescribed constraints.
+
+Stated directly over the IPS (retaining directedness), unlike the route through
+`prescribedGoodCompactness_holds`/`toGoodPrescription` which discards it. -/
+theorem goodIdealGlobalization
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection) :
+    ∃ net : CoherentGoodWitnessNet cR,
+      ∀ S (hS : S ∈ p.domain),
+        net.P S (p.domain_valid hS) = p.P S hS := by
+  sorry
+
 /-- **[Corollary — was the frontier, now packaging]**
 `goodIdealCompactness`. **Input:** an `IdealPartialSection p` of the
 Good projective system. **Output:** a global `CoherentGoodWitnessNet`
 whose value at each `S ∈ p.domain` equals `p.P S` **literally** (not
 just fieldwise-compatible).
 
-**Now a one-line corollary of `prescribedGoodCompactness_holds`**
-via `toGoodPrescription`: every IPS is a `GoodPrescription`, so the
-true compactness statement above suffices.
+**Now a one-line corollary of `goodIdealGlobalization`** — the IPS-level
+frontier that retains directedness (so its finite-consistency obligation is met
+by `coherentGoodBranchPartial_amalgamate_from_common_upper`), rather than routing
+through `prescribedGoodCompactness_holds`/`toGoodPrescription`, which discards
+directedness. (The old route remains available as
+`goodIdealCompactness_of_prescribedGoodCompactness`.)
 
 **Why not the generic `goodConstraintCompactness`?** That form
 concludes with `cbpFieldwiseCompat`, not equality. The IPS extension
@@ -13651,7 +13681,7 @@ theorem goodIdealCompactness
     ∃ net : CoherentGoodWitnessNet cR,
       ∀ S (hS : S ∈ p.domain),
         net.P S (p.domain_valid hS) = p.P S hS :=
-  prescribedGoodCompactness_holds cR p.toGoodPrescription
+  goodIdealGlobalization p
 
 /-- **Bridge (with explicit hypothesis form).**
 `prescribedGoodCompactness` implies the `goodIdealCompactness`
