@@ -13403,6 +13403,60 @@ noncomputable def coherentGoodBranchPartialSystem
           Q.toCoherentBranchPartial.restrict_branch (h_sub hT) α (hST hα),
           Q.toCoherentBranchPartial.restrict_branch (h_sub hS) α hα]
 
+/-- **`coherentGoodBranchPartial_amalgamate_from_common_upper`**: finite-domain
+amalgamation for an `IdealPartialSection` of the Good system, via the common
+upper bound. Given a finite family `D` of domain finsets, directedness +
+downward-closure place `T₀ := D.sup id` itself in the domain, so `p.P T₀` is a
+single CGBP on the union whose restriction to each `S ∈ D` is fieldwise-compat
+with `p.P S` (directly from `p.compat`).
+
+This is the IPS-level finite amalgamation primitive: no pairwise `AmbientCompat`
+and no induction over `amalgamate_pair`, because the cross-level coherence is
+already carried by the single common object `p.P T₀`. (Contrast
+`coherentGoodBranchPartial_amalgamate_finset`, whose overlap-only hypotheses are
+too weak to reconstruct that coherence; here directedness supplies a genuine
+common object instead.) It does not address global net construction. -/
+theorem coherentGoodBranchPartial_amalgamate_from_common_upper
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (D : Finset (Finset Ordinal.{0}))
+    (hD : ∀ S ∈ D, S ∈ p.domain) :
+    ∃ Q : CoherentGoodBranchPartial cR (D.sup id),
+      ∀ S (hS : S ∈ D),
+        cbpFieldwiseCompat
+          (Q.toCoherentBranchPartial.restrict
+            (fun _ hα => Finset.mem_sup.mpr ⟨S, hS, hα⟩))
+          (p.P S (hD S hS)).toCoherentBranchPartial := by
+  classical
+  rcases D.eq_empty_or_nonempty with rfl | hD_ne
+  · -- `D = ∅`: vacuous family; any CGBP on `(∅).sup id` works.
+    refine ⟨Classical.choice (exists_coherentGoodBranchPartial cR
+      ((∅ : Finset (Finset Ordinal.{0})).sup id) (by simp)),
+      fun S hS => absurd hS (Finset.notMem_empty S)⟩
+  · -- `D ≠ ∅`: the common upper `T₀ = D.sup id` lies in the domain.
+    obtain ⟨S₀, hS₀_D⟩ := hD_ne
+    have hT₀_dom : D.sup id ∈ p.domain := by
+      -- Iterated directedness: every finite subfamily has a domain upper bound.
+      have key : ∀ (D' : Finset (Finset Ordinal.{0})),
+          (∀ S ∈ D', S ∈ p.domain) → ∃ U ∈ p.domain, ∀ S ∈ D', S ⊆ U := by
+        intro D'
+        refine D'.induction_on ?_ ?_
+        · intro _
+          exact ⟨S₀, hD S₀ hS₀_D, fun S hS => absurd hS (Finset.notMem_empty S)⟩
+        · intro a D'' _ ih hD'
+          have ha_dom : a ∈ p.domain := hD' a (Finset.mem_insert_self _ _)
+          obtain ⟨U', hU'_dom, hU'_sub⟩ :=
+            ih (fun S hS => hD' S (Finset.mem_insert_of_mem hS))
+          obtain ⟨U, hU_dom, ha_le, hU'_le⟩ := p.directed ha_dom hU'_dom
+          refine ⟨U, hU_dom, fun S hS => ?_⟩
+          rcases Finset.mem_insert.mp hS with rfl | hS_D''
+          · exact ha_le
+          · exact (hU'_sub S hS_D'').trans hU'_le
+      obtain ⟨U, hU_dom, hU_sub⟩ := key D hD
+      exact p.downward_closed hU_dom (Finset.sup_le hU_sub)
+    refine ⟨p.P (D.sup id) hT₀_dom, fun S hS => ?_⟩
+    exact p.compat (hD S hS) hT₀_dom (fun _ hα => Finset.mem_sup.mpr ⟨S, hS, hα⟩)
+
 /-! ### Good witness net
 
 Parallel of `CoherentWitnessNet` whose witnesses are Good CBPs at every
