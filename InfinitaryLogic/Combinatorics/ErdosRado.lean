@@ -13827,6 +13827,122 @@ theorem goodGlobalDemandUltrafilter_eventually_contains_one
     ext D; exact Finset.singleton_subset_iff
   rwa [h_eq] at h
 
+/-- **`domain_sup_mem`**: a nonempty finite family `E` of `p.domain` finsets has
+its union `E.sup id` again in `p.domain`, by iterated directedness (each step
+takes a common upper bound via `p.directed`) followed by `p.downward_closed`. The
+same argument underlies `coherentGoodBranchPartial_amalgamate_from_common_upper`. -/
+theorem domain_sup_mem
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (E : Finset (Finset Ordinal.{0})) (hE : ∀ S ∈ E, S ∈ p.domain)
+    (hne : E.Nonempty) :
+    E.sup id ∈ p.domain := by
+  classical
+  obtain ⟨S₀, hS₀⟩ := hne
+  have key : ∀ (E' : Finset (Finset Ordinal.{0})),
+      (∀ S ∈ E', S ∈ p.domain) → ∃ U ∈ p.domain, ∀ S ∈ E', S ⊆ U := by
+    intro E'
+    refine E'.induction_on ?_ ?_
+    · intro _
+      exact ⟨S₀, hE S₀ hS₀, fun S hS => absurd hS (Finset.notMem_empty S)⟩
+    · intro a E'' _ ih hE'
+      obtain ⟨U', hU'_dom, hU'_sub⟩ :=
+        ih (fun S hS => hE' S (Finset.mem_insert_of_mem hS))
+      obtain ⟨U, hU_dom, ha_le, hU'_le⟩ :=
+        p.directed (hE' a (Finset.mem_insert_self _ _)) hU'_dom
+      refine ⟨U, hU_dom, fun S hS => ?_⟩
+      rcases Finset.mem_insert.mp hS with rfl | hS''
+      · exact ha_le
+      · exact (hU'_sub S hS'').trans hU'_le
+  obtain ⟨U, hU_dom, hU_sub⟩ := key E hE
+  exact p.downward_closed hU_dom (Finset.sup_le hU_sub)
+
+/-- Existence of the finite global-demand witness, with its domain-compatibility
+property bundled in. `finiteGlobalDemandWitness` and
+`finiteGlobalDemandWitness_domain_compat` are the `choose`/`choose_spec` of this.
+
+Construction: if `D` has any `p.domain` members, take their common upper
+`T₀ = E.sup id ∈ p.domain` (`domain_sup_mem`), extend `p.P T₀` over the full
+demand union via `coherentGoodBranchPartial_extend_to_union`, and restrict back to
+the union. On each domain member `S ⊆ T₀ ⊆ union`, the extension agrees with
+`p.P T₀` (extend lemma) and `p.P T₀` agrees with `p.P S` (`p.compat`). If `D` has
+no domain members, any Good partial on the union works (the property is vacuous). -/
+theorem exists_finiteGlobalDemandWitness
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (D : Finset (GoodGlobalDemandIndex p)) :
+    ∃ Q : CoherentGoodBranchPartial cR ((D.image Subtype.val).sup id),
+      ∀ (s : GoodGlobalDemandIndex p) (hs : s ∈ D) (hsdom : s.1 ∈ p.domain),
+        cbpFieldwiseCompat
+          (Q.toCoherentBranchPartial.restrict
+            (fun _ hα => Finset.mem_sup.mpr ⟨s.1, Finset.mem_image_of_mem _ hs, hα⟩))
+          (p.P s.1 hsdom).toCoherentBranchPartial := by
+  classical
+  have hU_valid : ∀ α ∈ (D.image Subtype.val).sup id, α < Ordinal.omega.{0} 1 := by
+    intro α hα
+    obtain ⟨W, hW, hαW⟩ := Finset.mem_sup.mp hα
+    obtain ⟨w, _, rfl⟩ := Finset.mem_image.mp hW
+    exact w.2 α hαW
+  by_cases hDom : (D.filter (fun s => s.1 ∈ p.domain)).Nonempty
+  · -- Domain members present: extend their common upper over the demand union.
+    set E := (D.filter (fun s => s.1 ∈ p.domain)).image Subtype.val with hE_def
+    have hE_dom : ∀ S ∈ E, S ∈ p.domain := by
+      intro S hS
+      obtain ⟨s, hs, rfl⟩ := Finset.mem_image.mp hS
+      exact (Finset.mem_filter.mp hs).2
+    have hE_ne : E.Nonempty := by
+      obtain ⟨s, hs⟩ := hDom
+      exact ⟨s.1, Finset.mem_image_of_mem _ hs⟩
+    have hT₀_dom : E.sup id ∈ p.domain := domain_sup_mem p E hE_dom hE_ne
+    obtain ⟨Q, hQ_compat⟩ := coherentGoodBranchPartial_extend_to_union
+      (p.P (E.sup id) hT₀_dom) ((D.image Subtype.val).sup id) hU_valid
+    refine ⟨Q.restrict Finset.subset_union_right, fun s hs hsdom => ?_⟩
+    have hs_E : s.1 ∈ E :=
+      Finset.mem_image_of_mem _ (Finset.mem_filter.mpr ⟨hs, hsdom⟩)
+    have hs1_subE : s.1 ⊆ E.sup id := Finset.le_sup (f := id) hs_E
+    refine ⟨?_, ?_⟩
+    · intro α hα
+      have e1 := hQ_compat.1 α (hs1_subE hα)
+      have e2 := (p.compat hsdom hT₀_dom hs1_subE).1 α hα
+      simp only [coherentGoodBranchPartialSystem,
+        CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+        CoherentBranchPartial.restrict_prefixAt] at e1 e2 ⊢
+      exact e1.trans e2
+    · intro α hα
+      have e1 := hQ_compat.2 α (hs1_subE hα)
+      have e2 := (p.compat hsdom hT₀_dom hs1_subE).2 α hα
+      simp only [coherentGoodBranchPartialSystem,
+        CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+        CoherentBranchPartial.restrict_branch] at e1 e2 ⊢
+      exact e1.trans e2
+  · -- No domain members: any Good partial on the union; property vacuous.
+    refine ⟨Classical.choice (exists_coherentGoodBranchPartial cR _ hU_valid),
+      fun s hs hsdom => ?_⟩
+    exact absurd ⟨s, Finset.mem_filter.mpr ⟨hs, hsdom⟩⟩ hDom
+
+/-- **`finiteGlobalDemandWitness p D`**: the canonical CGBP on the demand union
+`(D.image Subtype.val).sup id`, restricting compatibly to `p.P S` on every
+`p.domain`-member of `D`. -/
+noncomputable def finiteGlobalDemandWitness
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (D : Finset (GoodGlobalDemandIndex p)) :
+    CoherentGoodBranchPartial cR ((D.image Subtype.val).sup id) :=
+  (exists_finiteGlobalDemandWitness p D).choose
+
+/-- For a demanded `p.domain`-member `s`, the global witness restricts on `s.1` to
+the prescribed `p.P s.1` (fieldwise). -/
+theorem finiteGlobalDemandWitness_domain_compat
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (D : Finset (GoodGlobalDemandIndex p))
+    (s : GoodGlobalDemandIndex p) (hs : s ∈ D) (hsdom : s.1 ∈ p.domain) :
+    cbpFieldwiseCompat
+      ((finiteGlobalDemandWitness p D).toCoherentBranchPartial.restrict
+        (fun _ hα => Finset.mem_sup.mpr ⟨s.1, Finset.mem_image_of_mem _ hs, hα⟩))
+      (p.P s.1 hsdom).toCoherentBranchPartial :=
+  (exists_finiteGlobalDemandWitness p D).choose_spec s hs hsdom
+
 /-- **[FRONTIER — Good ideal globalization]** `goodIdealGlobalization`:
 every finitely-consistent `IdealPartialSection` of the Good system extends to a
 total `CoherentGoodWitnessNet` storing each prescribed CGBP literally on
