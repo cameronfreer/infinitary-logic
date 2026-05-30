@@ -13753,6 +13753,34 @@ theorem finiteDemandWitness_eventually_compat
           (p.P s.1 s.2).toCoherentBranchPartial :=
   Filter.Eventually.of_forall (fun D hs => finiteDemandWitness_compat p D s hs)
 
+/-- **`goodIdealGlobalizationValue p W hW`**: the candidate net value at a valid
+finite `W`. On the prescribed domain it is fixed to `p.P W`; off the domain it is
+an independent fresh choice (placeholder for the ultralimit/compactness value).
+
+This makes the domain/non-domain split explicit: the domain branch is forced
+(see `goodIdealGlobalizationValue_of_mem`), while the off-domain branch is chosen
+independently — so it is **not yet** cross-compatible. Establishing compatibility
+for the off-domain values is precisely the remaining ultralimit construction. -/
+noncomputable def goodIdealGlobalizationValue
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (W : Finset Ordinal.{0}) (hW : ∀ α ∈ W, α < Ordinal.omega.{0} 1) :
+    CoherentGoodBranchPartial cR W := by
+  classical
+  exact if h : W ∈ p.domain then p.P W h
+    else Classical.choice (exists_coherentGoodBranchPartial cR W hW)
+
+/-- On the prescribed domain, `goodIdealGlobalizationValue` is exactly `p.P`. This
+is the equality `goodIdealGlobalization` requires on `p.domain`. -/
+theorem goodIdealGlobalizationValue_of_mem
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (W : Finset Ordinal.{0}) (hW : ∀ α ∈ W, α < Ordinal.omega.{0} 1)
+    (hWdom : W ∈ p.domain) :
+    goodIdealGlobalizationValue p W hW = p.P W hWdom := by
+  classical
+  rw [goodIdealGlobalizationValue, dif_pos hWdom]
+
 /-- **[FRONTIER — Good ideal globalization]** `goodIdealGlobalization`:
 every finitely-consistent `IdealPartialSection` of the Good system extends to a
 total `CoherentGoodWitnessNet` storing each prescribed CGBP literally on
