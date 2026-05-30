@@ -13943,6 +13943,29 @@ theorem finiteGlobalDemandWitness_domain_compat
       (p.P s.1 hsdom).toCoherentBranchPartial :=
   (exists_finiteGlobalDemandWitness p D).choose_spec s hs hsdom
 
+/-- **`finiteGlobalDemandWitness_member_compat`**: any two demanded members of `D`
+route into the *same* common witness, so their values agree wherever both are
+defined — `prefixAt`/`branch` at a shared `α` depend only on `α` being in the
+demand union, not on which member exposed it (definitional, by proof-irrelevance
+on the union-membership). This is the within-`D` compatibility that the
+ultrafilter then upgrades to eventual compatibility between demanded finite sets;
+in particular it yields `net.P T |_S = net.P S` when `S ⊆ T` are both demanded. -/
+theorem finiteGlobalDemandWitness_member_compat
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (D : Finset (GoodGlobalDemandIndex p))
+    (s t : GoodGlobalDemandIndex p) (hs : s ∈ D) (ht : t ∈ D)
+    {α : Ordinal.{0}} (hαs : α ∈ s.1) (hαt : α ∈ t.1) :
+    (finiteGlobalDemandWitness p D).toCoherentBranchPartial.prefixAt α
+        (Finset.mem_sup.mpr ⟨s.1, Finset.mem_image_of_mem _ hs, hαs⟩)
+      = (finiteGlobalDemandWitness p D).toCoherentBranchPartial.prefixAt α
+        (Finset.mem_sup.mpr ⟨t.1, Finset.mem_image_of_mem _ ht, hαt⟩)
+    ∧ (finiteGlobalDemandWitness p D).toCoherentBranchPartial.branch α
+        (Finset.mem_sup.mpr ⟨s.1, Finset.mem_image_of_mem _ hs, hαs⟩)
+      = (finiteGlobalDemandWitness p D).toCoherentBranchPartial.branch α
+        (Finset.mem_sup.mpr ⟨t.1, Finset.mem_image_of_mem _ ht, hαt⟩) :=
+  ⟨rfl, rfl⟩
+
 /-- **[FRONTIER — Good ideal globalization]** `goodIdealGlobalization`:
 every finitely-consistent `IdealPartialSection` of the Good system extends to a
 total `CoherentGoodWitnessNet` storing each prescribed CGBP literally on
