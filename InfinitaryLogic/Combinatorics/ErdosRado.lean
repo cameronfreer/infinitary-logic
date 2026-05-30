@@ -13698,6 +13698,39 @@ theorem finiteDemandWitness_compat
     (demandImage_mem_domain p D)).choose_spec s.val
     (Finset.mem_image_of_mem Subtype.val hs)
 
+/-- **`goodIdealDemandUltrafilter p`**: the ultrafilter on finite demand sets
+`Finset (GoodIdealDemandIndex p)` extending the superset (`atTop`) filter — the
+combinatorial backbone of the `goodIdealGlobalization` ultralimit, the same
+`finiteSupersetUltrafilter` pattern used for `rawBranchCompactness`. -/
+noncomputable def goodIdealDemandUltrafilter
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection) :
+    Ultrafilter (Finset (GoodIdealDemandIndex p)) :=
+  finiteSupersetUltrafilter (GoodIdealDemandIndex p)
+
+/-- Every superset class `{D | D₀ ⊆ D}` is eventual in the demand ultrafilter. -/
+theorem goodIdealDemandUltrafilter_eventually_contains
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (D₀ : Finset (GoodIdealDemandIndex p)) :
+    {D : Finset (GoodIdealDemandIndex p) | D₀ ⊆ D} ∈ goodIdealDemandUltrafilter p :=
+  finiteSupersetUltrafilter_eventually_superset D₀
+
+/-- The demand sets containing a fixed index `s` are eventual in the demand
+ultrafilter (the singleton case of `goodIdealDemandUltrafilter_eventually_contains`,
+via `Finset.singleton_subset_iff`). -/
+theorem goodIdealDemandUltrafilter_eventually_contains_one
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (s : GoodIdealDemandIndex p) :
+    {D : Finset (GoodIdealDemandIndex p) | s ∈ D} ∈ goodIdealDemandUltrafilter p := by
+  have h := finiteSupersetUltrafilter_eventually_superset
+    ({s} : Finset (GoodIdealDemandIndex p))
+  have h_eq : {D : Finset (GoodIdealDemandIndex p) | ({s} : Finset _) ⊆ D}
+      = {D : Finset (GoodIdealDemandIndex p) | s ∈ D} := by
+    ext D; exact Finset.singleton_subset_iff
+  rwa [h_eq] at h
+
 /-- **[FRONTIER — Good ideal globalization]** `goodIdealGlobalization`:
 every finitely-consistent `IdealPartialSection` of the Good system extends to a
 total `CoherentGoodWitnessNet` storing each prescribed CGBP literally on
