@@ -13731,6 +13731,28 @@ theorem goodIdealDemandUltrafilter_eventually_contains_one
     ext D; exact Finset.singleton_subset_iff
   rwa [h_eq] at h
 
+/-- **`finiteDemandWitness_eventually_compat`**: for a demanded index `s`, the
+finite witness eventually restricts on `s.1` to the prescribed `p.P s`.
+
+The body is conditioned on `hs : s ∈ D` because the restriction target `s.1` is
+contained in the demand union `(D.image Subtype.val).sup id` only when `s ∈ D`;
+off the cone `{D | s ∈ D}` it is vacuous, and on the cone it is exactly
+`finiteDemandWitness_compat`. (The per-`D` implication holds for *every* `D`, so
+the proof is `eventually_of_forall`; the "eventual" framing is for the consumer,
+which combines this with `goodIdealDemandUltrafilter_eventually_contains_one` to
+force `net.P S = p.P S` on `p.domain`.) -/
+theorem finiteDemandWitness_eventually_compat
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (s : GoodIdealDemandIndex p) :
+    ∀ᶠ D in goodIdealDemandUltrafilter p,
+      ∀ (hs : s ∈ D),
+        cbpFieldwiseCompat
+          ((finiteDemandWitness p D).toCoherentBranchPartial.restrict
+            (fun _ hα => Finset.mem_sup.mpr ⟨s.1, Finset.mem_image_of_mem _ hs, hα⟩))
+          (p.P s.1 s.2).toCoherentBranchPartial :=
+  Filter.Eventually.of_forall (fun D hs => finiteDemandWitness_compat p D s hs)
+
 /-- **[FRONTIER — Good ideal globalization]** `goodIdealGlobalization`:
 every finitely-consistent `IdealPartialSection` of the Good system extends to a
 total `CoherentGoodWitnessNet` storing each prescribed CGBP literally on
