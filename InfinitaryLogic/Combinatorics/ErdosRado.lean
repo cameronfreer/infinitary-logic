@@ -13781,6 +13781,52 @@ theorem goodIdealGlobalizationValue_of_mem
   classical
   rw [goodIdealGlobalizationValue, dif_pos hWdom]
 
+/-- **`GoodGlobalDemandIndex p`**: the *widened* demand index — **all** valid
+finite sets, not just `p.domain`. (The carrier does not actually depend on `p`;
+`p` is kept for notational uniformity with `GoodIdealDemandIndex` and the
+witness/compat lemmas downstream.)
+
+**Why widen.** An ultrafilter over `p.domain`-only demands cannot determine
+coherent values off the domain: if neither `S` nor `T` is in `p.domain` there is
+no demand forcing a stable common value. Indexing demands by *all* valid finite
+sets lets a single per-demand witness on `D.sup` restrict compatibly to every
+`W ∈ D`, while prescribed equality is still imposed only on the `p.domain`
+members. -/
+abbrev GoodGlobalDemandIndex {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (_p : (coherentGoodBranchPartialSystem cR).IdealPartialSection) :=
+  {W : Finset Ordinal.{0} // ∀ α ∈ W, α < Ordinal.omega.{0} 1}
+
+/-- The ultrafilter on finite demand sets of valid finite sets (superset/`atTop`
+backbone), widened from `goodIdealDemandUltrafilter` to all valid finite sets. -/
+noncomputable def goodGlobalDemandUltrafilter
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection) :
+    Ultrafilter (Finset (GoodGlobalDemandIndex p)) :=
+  finiteSupersetUltrafilter (GoodGlobalDemandIndex p)
+
+/-- Every superset class `{D | D₀ ⊆ D}` is eventual in the global demand
+ultrafilter. -/
+theorem goodGlobalDemandUltrafilter_eventually_contains
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (D₀ : Finset (GoodGlobalDemandIndex p)) :
+    {D : Finset (GoodGlobalDemandIndex p) | D₀ ⊆ D} ∈ goodGlobalDemandUltrafilter p :=
+  finiteSupersetUltrafilter_eventually_superset D₀
+
+/-- The demand sets containing a fixed valid finite set `w` are eventual in the
+global demand ultrafilter. -/
+theorem goodGlobalDemandUltrafilter_eventually_contains_one
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (w : GoodGlobalDemandIndex p) :
+    {D : Finset (GoodGlobalDemandIndex p) | w ∈ D} ∈ goodGlobalDemandUltrafilter p := by
+  have h := finiteSupersetUltrafilter_eventually_superset
+    ({w} : Finset (GoodGlobalDemandIndex p))
+  have h_eq : {D : Finset (GoodGlobalDemandIndex p) | ({w} : Finset _) ⊆ D}
+      = {D : Finset (GoodGlobalDemandIndex p) | w ∈ D} := by
+    ext D; exact Finset.singleton_subset_iff
+  rwa [h_eq] at h
+
 /-- **[FRONTIER — Good ideal globalization]** `goodIdealGlobalization`:
 every finitely-consistent `IdealPartialSection` of the Good system extends to a
 total `CoherentGoodWitnessNet` storing each prescribed CGBP literally on
