@@ -13966,6 +13966,81 @@ theorem finiteGlobalDemandWitness_member_compat
         (Finset.mem_sup.mpr ⟨t.1, Finset.mem_image_of_mem _ ht, hαt⟩) :=
   ⟨rfl, rfl⟩
 
+/-- **`finiteGlobalDemandValue p D w hw`**: the global witness restricted to the
+demanded finite set `w.1` (for `w ∈ D`). This is the per-coordinate value the
+ultralimit reads off as `D` varies. -/
+noncomputable def finiteGlobalDemandValue
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (D : Finset (GoodGlobalDemandIndex p)) (w : GoodGlobalDemandIndex p)
+    (hw : w ∈ D) :
+    CoherentGoodBranchPartial cR w.1 :=
+  (finiteGlobalDemandWitness p D).restrict
+    (fun _ hα => Finset.mem_sup.mpr ⟨w.1, Finset.mem_image_of_mem _ hw, hα⟩)
+
+/-- **Domain forcing.** If `w.1 ∈ p.domain`, then for every `D` with `w ∈ D` the
+per-demand value is fieldwise-compat with `p.P w.1`. -/
+theorem finiteGlobalDemandValue_domain_compat
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (D : Finset (GoodGlobalDemandIndex p)) (w : GoodGlobalDemandIndex p)
+    (hw : w ∈ D) (hwdom : w.1 ∈ p.domain) :
+    cbpFieldwiseCompat
+      (finiteGlobalDemandValue p D w hw).toCoherentBranchPartial
+      (p.P w.1 hwdom).toCoherentBranchPartial :=
+  finiteGlobalDemandWitness_domain_compat p D w hw hwdom
+
+/-- **Same-`D` coherence.** For `s, t ∈ D` with `s.1 ⊆ t.1`, the value at `t`
+restricted to `s.1` is fieldwise-compat with the value at `s` — both are
+restrictions of the one common witness. -/
+theorem finiteGlobalDemandValue_restrict_compat
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (D : Finset (GoodGlobalDemandIndex p)) (s t : GoodGlobalDemandIndex p)
+    (hs : s ∈ D) (ht : t ∈ D) (hst : s.1 ⊆ t.1) :
+    cbpFieldwiseCompat
+      ((finiteGlobalDemandValue p D t ht).toCoherentBranchPartial.restrict hst)
+      (finiteGlobalDemandValue p D s hs).toCoherentBranchPartial := by
+  refine ⟨?_, ?_⟩
+  · intro α hα
+    simp only [finiteGlobalDemandValue,
+      CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+      CoherentBranchPartial.restrict_prefixAt]
+  · intro α hα
+    simp only [finiteGlobalDemandValue,
+      CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+      CoherentBranchPartial.restrict_branch]
+
+/-- **Eventual domain forcing.** Along the demand ultrafilter, for any `D`
+containing `w` the value is compat with `p.P w.1` (it holds for *every* such `D`).
+Combined with `goodGlobalDemandUltrafilter_eventually_contains_one p w` (the cone
+`{D | w ∈ D}` is eventual), this pins the net value at domain coordinates. -/
+theorem finiteGlobalDemandValue_eventually_domain_compat
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (w : GoodGlobalDemandIndex p) (hwdom : w.1 ∈ p.domain) :
+    ∀ᶠ D in goodGlobalDemandUltrafilter p, ∀ (hw : w ∈ D),
+      cbpFieldwiseCompat
+        (finiteGlobalDemandValue p D w hw).toCoherentBranchPartial
+        (p.P w.1 hwdom).toCoherentBranchPartial :=
+  Filter.Eventually.of_forall
+    (fun D hw => finiteGlobalDemandValue_domain_compat p D w hw hwdom)
+
+/-- **Eventual same-`D` coherence.** Along the demand ultrafilter, for any `D`
+containing both `s` and `t` (with `s.1 ⊆ t.1`), the value at `t` restricts to the
+value at `s`. Combined with `goodGlobalDemandUltrafilter_eventually_contains_one`
+for `s` and `t`, this gives `net.P T |_S = net.P S` for demanded `S ⊆ T`. -/
+theorem finiteGlobalDemandValue_eventually_restrict_compat
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (s t : GoodGlobalDemandIndex p) (hst : s.1 ⊆ t.1) :
+    ∀ᶠ D in goodGlobalDemandUltrafilter p, ∀ (hs : s ∈ D) (ht : t ∈ D),
+      cbpFieldwiseCompat
+        ((finiteGlobalDemandValue p D t ht).toCoherentBranchPartial.restrict hst)
+        (finiteGlobalDemandValue p D s hs).toCoherentBranchPartial :=
+  Filter.Eventually.of_forall
+    (fun D hs ht => finiteGlobalDemandValue_restrict_compat p D s t hs ht hst)
+
 /-- **[FRONTIER — Good ideal globalization]** `goodIdealGlobalization`:
 every finitely-consistent `IdealPartialSection` of the Good system extends to a
 total `CoherentGoodWitnessNet` storing each prescribed CGBP literally on
