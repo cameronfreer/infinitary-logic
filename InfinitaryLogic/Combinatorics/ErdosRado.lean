@@ -14890,6 +14890,71 @@ theorem FiniteProjectiveSystem.IdealPartialSection.adjoinGood_contains
     i₀ ∈ (p.adjoinGood T hT i₀ hi₀_valid Q hQ_T).domain := by
   sorry
 
+/-! ### Pi₀-threaded adjunction path (`…With`)
+
+Parallel to `adjoinGoodValue`/`adjoinGood`, but threading a *single* fixed
+`Pi₀ : CGBP cR i₀` (ambient-compatible with every `p.P S`, as produced by
+`goodIdealOneIndexCompactness`) through every new value via
+`coherentGoodBranchPartial_amalgamate_pair (p.P S) Pi₀`. Because the `i₀`-part of
+every value is the same `Pi₀`, cross-`V` coherence (`common_compat`) holds — the
+obstacle that stalls the legacy `adjoinGoodValue_common_compat`. The legacy path
+is kept until this one is verified. -/
+
+/-- **`adjoinGoodValueWith`**: `Pi₀`-threaded value at `V`. On `p.domain` it is
+literally `p.P V`; otherwise it is `amalgamate_pair (p.P S) Pi₀` (for a chosen
+`S` with `V ⊆ S ∪ i₀`) restricted to `V`. -/
+noncomputable def FiniteProjectiveSystem.IdealPartialSection.adjoinGoodValueWith
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (i₀ : Finset Ordinal.{0}) (hi₀_valid : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1)
+    (Pi₀ : CoherentGoodBranchPartial cR i₀)
+    (hPi₀_ambient : ∀ S (hS : S ∈ p.domain),
+      CoherentGoodBranchPartial.AmbientCompat (p.P S hS) Pi₀)
+    (V : Finset Ordinal.{0}) (hV : ∃ S ∈ p.domain, V ⊆ S ∪ i₀) :
+    CoherentGoodBranchPartial cR V :=
+  letI : Decidable (V ∈ p.domain) := Classical.dec _
+  if hV_p : V ∈ p.domain then
+    p.P V hV_p
+  else
+    (coherentGoodBranchPartial_amalgamate_pair
+        (p.domain_valid (Classical.choose_spec hV).1) hi₀_valid
+        (p.P (Classical.choose hV) (Classical.choose_spec hV).1) Pi₀
+        (hPi₀_ambient (Classical.choose hV)
+          (Classical.choose_spec hV).1)).choose.restrict
+      (Classical.choose_spec hV).2
+
+/-- For `V ∈ p.domain`, the `Pi₀`-threaded value is literally `p.P V`. -/
+theorem FiniteProjectiveSystem.IdealPartialSection.adjoinGoodValueWith_eq_of_mem
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (i₀ : Finset Ordinal.{0}) (hi₀_valid : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1)
+    (Pi₀ : CoherentGoodBranchPartial cR i₀)
+    (hPi₀_ambient : ∀ S (hS : S ∈ p.domain),
+      CoherentGoodBranchPartial.AmbientCompat (p.P S hS) Pi₀)
+    (V : Finset Ordinal.{0}) (hV : ∃ S ∈ p.domain, V ⊆ S ∪ i₀)
+    (hV_p : V ∈ p.domain) :
+    p.adjoinGoodValueWith i₀ hi₀_valid Pi₀ hPi₀_ambient V hV = p.P V hV_p := by
+  classical
+  unfold FiniteProjectiveSystem.IdealPartialSection.adjoinGoodValueWith
+  rw [dif_pos hV_p]
+
+/-- `old_compat`: for `V ∈ p.domain`, the `Pi₀`-threaded value is
+fieldwise-compat with `p.P V` (trivially, being literally equal to it). -/
+theorem FiniteProjectiveSystem.IdealPartialSection.adjoinGoodValueWith_old_compat
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (i₀ : Finset Ordinal.{0}) (hi₀_valid : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1)
+    (Pi₀ : CoherentGoodBranchPartial cR i₀)
+    (hPi₀_ambient : ∀ S (hS : S ∈ p.domain),
+      CoherentGoodBranchPartial.AmbientCompat (p.P S hS) Pi₀)
+    (V : Finset Ordinal.{0}) (hV : ∃ S ∈ p.domain, V ⊆ S ∪ i₀)
+    (hV_p : V ∈ p.domain) :
+    cbpFieldwiseCompat
+      (p.adjoinGoodValueWith i₀ hi₀_valid Pi₀ hPi₀_ambient V hV).toCoherentBranchPartial
+      (p.P V hV_p).toCoherentBranchPartial := by
+  rw [p.adjoinGoodValueWith_eq_of_mem i₀ hi₀_valid Pi₀ hPi₀_ambient V hV hV_p]
+  exact cbpFieldwiseCompat.refl _
+
 /-- **Existence of a Good witness net** via the Good projective system
 + ideal `HasPartialExtensions`. The bare `exists_coherentWitnessNet`
 can be rewired through `toCoherentWitnessNet`
