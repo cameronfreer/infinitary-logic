@@ -14140,37 +14140,70 @@ theorem goodIdealOneIndex_finite_consistent
     rw [CoherentBranchPartial.restrict_branch]
     exact ((ambS V hV).branch_diag α hα (hVi₀ hα)).symm
 
-/-- **[ACTIVE FRONTIER — one-index compactness]** `goodIdealOneIndexCompactness`:
-the sharp local frontier on the live witness-net route
-(`goodIdealOneIndexCompactness → goodIdealExtensionCompactness →
-exists_global_section_of_idealPartialExtensions → exists_coherentGoodWitnessNet`).
-Given an ideal section
-`p` and a new valid index `i₀`, there is a single CGBP `Pi₀` on `i₀` that is
-`AmbientCompat` with **every** prescribed `p.P S` (`S ∈ p.domain`).
+/-- **`GoodOneIndexFixedCarrierCompactness`**: the fixed-carrier compactness
+principle. For a fixed valid `i₀`, if every *finite* sub-demand admits an
+ambient-compatible CGBP on `i₀`, then a single CGBP on `i₀` is ambient-compatible
+with the whole (possibly infinite) prescribed family `{p.P S | S ∈ p.domain}`.
 
-**Why this is the right boundary (directedness).** To extend `p` by `i₀`, the
-extended section's domain must stay directed: for every old `S ∈ p.domain` and
-the new `i₀`, there must be a common upper `U` in the domain with `S ⊆ U` and
-`i₀ ⊆ U` — forcing a coherent value on `S ∪ i₀`, hence `Pi₀` must be ambient-
-compatible with **all** old `p.P S` simultaneously (not merely with the finitely
-many `S ⊆ i₀`). That simultaneous compatibility — over a possibly infinite
-`p.domain` — is the genuine compactness content, in one-index form.
+**This is a genuine compactness/inverse-limit principle, NOT finite branching.**
+A witness on `i₀` carries, for each `α ∈ i₀`, a `prefixAt α : α.ToType ↪o
+PairERSource` and `branch α : α.ToType → Bool`; with `α.ToType` countably infinite
+and `PairERSource` infinite, the coordinate value spaces are infinite. So this
+cannot be discharged by finite-branching König; it needs a real
+compactness/inverse-limit argument over the (fixed) carrier `i₀`. -/
+def GoodOneIndexFixedCarrierCompactness
+    (cR : (Fin 2 ↪o PairERSource) → Bool) : Prop :=
+  ∀ (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (i₀ : Finset Ordinal.{0}) (_hi₀ : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1),
+    (∀ (D : Finset (Finset Ordinal.{0})) (hD : ∀ S ∈ D, S ∈ p.domain),
+        ∃ Pi₀ : CoherentGoodBranchPartial cR i₀,
+          ∀ S (hS : S ∈ D),
+            CoherentGoodBranchPartial.AmbientCompat (p.P S (hD S hS)) Pi₀) →
+      ∃ Pi₀ : CoherentGoodBranchPartial cR i₀,
+        ∀ S (hS : S ∈ p.domain),
+          CoherentGoodBranchPartial.AmbientCompat (p.P S hS) Pi₀
 
-`AmbientCompat (p.P S) Pi₀` packages the cross-level fields *and* (via
-`prefix_diag`/`branch_diag`) agreement on the overlap `S ∩ i₀`; in particular,
-for old `V ∈ p.domain` with `V ⊆ i₀`, `Pi₀` agrees with `p.P V` on `V`.
+/-- **Reduction** (proved): given fixed-carrier compactness, the one-index
+frontier follows — feed it the finite consistency from
+`goodIdealOneIndex_finite_consistent`. -/
+theorem goodIdealOneIndexCompactness_of_fixedCarrierCompactness
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (h : GoodOneIndexFixedCarrierCompactness cR)
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (i₀ : Finset Ordinal.{0}) (hi₀ : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1) :
+    ∃ Pi₀ : CoherentGoodBranchPartial cR i₀,
+      ∀ S (hS : S ∈ p.domain),
+        CoherentGoodBranchPartial.AmbientCompat (p.P S hS) Pi₀ :=
+  h p i₀ hi₀ (fun D hD =>
+    (goodIdealOneIndex_finite_consistent p i₀ hi₀ D hD).imp (fun _ hPi₀ => hPi₀.1))
 
-**Finite satisfiability** of this (any finite subfamily of `p.domain` admits such
-a `Pi₀`) is exactly `coherentGoodBranchPartial_amalgamate_from_common_upper`; the
-content here is choosing one `Pi₀` working for the whole (infinite) `p.domain`. -/
+/-- **[ACTIVE FRONTIER — fixed-carrier compactness]**
+`goodOneIndexFixedCarrierCompactness_holds`: the genuine remaining compactness
+content (one CGBP on the fixed `i₀` satisfying all demands, from finite
+satisfiability). Needs a real inverse-limit argument over the carrier `i₀` (the
+coordinate value spaces are infinite — see `GoodOneIndexFixedCarrierCompactness`).
+This is the single live frontier under the witness-net chain. -/
+theorem goodOneIndexFixedCarrierCompactness_holds
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    GoodOneIndexFixedCarrierCompactness cR := by
+  sorry
+
+/-- **`goodIdealOneIndexCompactness`** (derived): one `Pi₀` on `i₀`
+`AmbientCompat` with every prescribed `p.P S` (`S ∈ p.domain`). Now a corollary of
+`goodOneIndexFixedCarrierCompactness_holds` via the reduction
+`goodIdealOneIndexCompactness_of_fixedCarrierCompactness`; the genuine content has
+moved to that fixed-carrier principle. (Finite satisfiability — any finite
+subfamily — is `goodIdealOneIndex_finite_consistent`, itself built on
+`coherentGoodBranchPartial_amalgamate_from_common_upper`.) -/
 theorem goodIdealOneIndexCompactness
     {cR : (Fin 2 ↪o PairERSource) → Bool}
     (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
     (i₀ : Finset Ordinal.{0}) (hi₀ : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1) :
     ∃ Pi₀ : CoherentGoodBranchPartial cR i₀,
       ∀ S (hS : S ∈ p.domain),
-        CoherentGoodBranchPartial.AmbientCompat (p.P S hS) Pi₀ := by
-  sorry
+        CoherentGoodBranchPartial.AmbientCompat (p.P S hS) Pi₀ :=
+  goodIdealOneIndexCompactness_of_fixedCarrierCompactness
+    (goodOneIndexFixedCarrierCompactness_holds cR) p i₀ hi₀
 
 /-- **[LEGACY — OFF-CHAIN, sorry]** `goodIdealGlobalization`:
 every finitely-consistent `IdealPartialSection` of the Good system extends to a
@@ -15300,7 +15333,10 @@ amalgamation path.
 exists_coherentGoodWitnessNet
   ← exists_global_section_of_idealPartialExtensions   (generic Zorn, axiom-clean)
   ← goodIdealExtensionCompactness                     (one-index path, rewired)
-  ← goodIdealOneIndexCompactness                      [ACTIVE FRONTIER, sorry]
+  ← goodIdealOneIndexCompactness                      (derived)
+  ← goodIdealOneIndexCompactness_of_fixedCarrierCompactness  (reduction, proved)
+  ← goodOneIndexFixedCarrierCompactness_holds         [ACTIVE FRONTIER, sorry]
+  + goodIdealOneIndex_finite_consistent               (finite satisfiability, proved)
   + adjoinGoodWith / _le_self / _contains             (packaging)
   + coherentGoodBranchPartial_amalgamate_from_common_upper  (finite consistency)
   + exists_coherentGoodBranchPartial                  [deeper system frontier, sorry]
