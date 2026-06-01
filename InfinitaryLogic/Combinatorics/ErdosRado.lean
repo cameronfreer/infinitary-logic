@@ -14138,70 +14138,6 @@ theorem goodIdealCompactness_of_prescribedGoodCompactness
         net.P S (p.domain_valid hS) = p.P S hS :=
   hcompact p.toGoodPrescription
 
-/-- **Packaging corollary of `goodIdealCompactness`.**
-
-**Input:** an `IdealPartialSection p` of the Good projective system
-plus a new finite valid index `i₀`. **Output:** an ideal extension
-`q ≥ p` containing `i₀`.
-
-The proof is now a one-step packaging: apply `goodIdealCompactness`
-to obtain a global Good witness net agreeing with `p` on `p.domain`,
-then package the net as an IPS whose domain is all valid finsets.
-`p ≤ q` is immediate from `h_net` (proof-irrelevance handles the
-domain-membership coercion); `i₀ ∈ q.domain` is the validity
-hypothesis. Renamed from
-`coherentGoodBranchPartial_idealHasPartialExtensions`; old name is
-kept as a backward-compat alias below. -/
-theorem goodIdealExtensionCompactness
-    (cR : (Fin 2 ↪o PairERSource) → Bool) :
-    (coherentGoodBranchPartialSystem cR).IdealHasPartialExtensions := by
-  intro p i₀ h_valid_i₀
-  classical
-  obtain ⟨net, h_net⟩ := goodIdealCompactness p
-  refine ⟨{
-    domain := {V : Finset Ordinal.{0} | ∀ α ∈ V, α < Ordinal.omega.{0} 1}
-    domain_valid := fun {V} hV => hV
-    downward_closed := fun {V W} hW hVW α hα => hW α (hVW hα)
-    directed := ?_
-    P := fun V hV => net.P V hV
-    compat := ?_
-  }, ?_, h_valid_i₀⟩
-  · -- directed
-    intro V W hV hW
-    refine ⟨V ∪ W, ?_, Finset.subset_union_left, Finset.subset_union_right⟩
-    intro α hα
-    rcases Finset.mem_union.mp hα with hαV | hαW
-    · exact hV α hαV
-    · exact hW α hαW
-  · -- compat
-    intro V W hV hW hVW
-    refine ⟨?_, ?_⟩
-    · intro α hα
-      show ((net.P W hW).restrict hVW).toCoherentBranchPartial.prefixAt α hα =
-        (net.P V hV).toCoherentBranchPartial.prefixAt α hα
-      rw [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
-          CoherentBranchPartial.restrict_prefixAt]
-      exact net.prefix_compat hV hW hVW α hα
-    · intro α hα
-      show ((net.P W hW).restrict hVW).toCoherentBranchPartial.branch α hα =
-        (net.P V hV).toCoherentBranchPartial.branch α hα
-      rw [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
-          CoherentBranchPartial.restrict_branch]
-      exact net.branch_compat hV hW hVW α hα
-  · -- p ≤ q
-    refine ⟨fun V hV_p => p.domain_valid hV_p, ?_⟩
-    intro V hV_p _
-    exact h_net V hV_p
-
-/-- **Backward-compatible alias** for the old name of
-`goodIdealExtensionCompactness`. Retained so existing docstring
-references and any downstream code keep resolving; new code should
-use `goodIdealExtensionCompactness` directly. -/
-theorem coherentGoodBranchPartial_idealHasPartialExtensions
-    (cR : (Fin 2 ↪o PairERSource) → Bool) :
-    (coherentGoodBranchPartialSystem cR).IdealHasPartialExtensions :=
-  goodIdealExtensionCompactness cR
-
 /-- **`cbpFieldwiseCompat.refl`**: reflexivity. -/
 theorem cbpFieldwiseCompat.refl {cR : (Fin 2 ↪o PairERSource) → Bool}
     {S : Finset Ordinal.{0}} (P : CoherentBranchPartial cR S) :
@@ -15184,6 +15120,69 @@ theorem FiniteProjectiveSystem.IdealPartialSection.adjoinGoodWith_contains
       CoherentGoodBranchPartial.AmbientCompat (p.P S hS) Pi₀) :
     i₀ ∈ (p.adjoinGoodWith T hT i₀ hi₀_valid Pi₀ hPi₀_ambient).domain :=
   ⟨T, hT, Finset.subset_union_right⟩
+
+/-- **`goodIdealExtensionCompactness`**: the Good ideal system has partial
+extensions.
+
+**Input:** an `IdealPartialSection p` plus a new finite valid index `i₀`.
+**Output:** an ideal extension `q ≥ p` containing `i₀`.
+
+**Proved via the `Pi₀`-threaded one-index path** (not `goodIdealCompactness`):
+if `p.domain` is empty, take the `i₀`-downward-closure section; otherwise pick an
+anchor `T ∈ p.domain`, obtain a single `Pi₀` ambient-compatible with all `p.P S`
+from `goodIdealOneIndexCompactness`, and return `adjoinGoodWith` (with
+`adjoinGoodWith_le_self` giving literal `p ≤ q` and `adjoinGoodWith_contains`
+giving `i₀ ∈ q.domain`). This **breaks the former circular dependency** on
+`goodIdealCompactness`/`goodIdealGlobalization`: the remaining frontier under this
+theorem is `goodIdealOneIndexCompactness` (plus the system-level
+`exists_coherentGoodBranchPartial`). Old name kept as a backward-compat alias
+below. -/
+theorem goodIdealExtensionCompactness
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    (coherentGoodBranchPartialSystem cR).IdealHasPartialExtensions := by
+  intro p i₀ h_valid_i₀
+  classical
+  -- Rewired through the Pi₀-threaded one-index path (breaks the dependency on
+  -- goodIdealCompactness/goodIdealGlobalization). The remaining frontier is
+  -- goodIdealOneIndexCompactness.
+  rcases (p.domain).eq_empty_or_nonempty with hp_empty | hp_ne
+  · -- Empty domain: the `i₀`-downward-closure section (anchor-free).
+    obtain ⟨Pi₀⟩ := exists_coherentGoodBranchPartial cR i₀ h_valid_i₀
+    refine ⟨{
+      domain := {V : Finset Ordinal.{0} | V ⊆ i₀}
+      domain_valid := fun {V} hV α hα => h_valid_i₀ α (hV hα)
+      downward_closed := fun {V W} hW hVW => hVW.trans hW
+      directed := fun {V W} hV hW => ⟨i₀, Finset.Subset.refl _, hV, hW⟩
+      P := fun V hV => Pi₀.restrict hV
+      compat := by
+        intro V W hV hW hVW
+        refine ⟨?_, ?_⟩
+        · intro α hα
+          simp only [coherentGoodBranchPartialSystem,
+            CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+            CoherentBranchPartial.restrict_prefixAt]
+        · intro α hα
+          simp only [coherentGoodBranchPartialSystem,
+            CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+            CoherentBranchPartial.restrict_branch]
+    }, ⟨fun V hV => absurd hV (by rw [hp_empty]; exact Set.notMem_empty V),
+        fun V hV _ => absurd hV (by rw [hp_empty]; exact Set.notMem_empty V)⟩,
+      Finset.Subset.refl _⟩
+  · -- Nonempty domain: anchor `T`, one-index witness `Pi₀`, `adjoinGoodWith`.
+    obtain ⟨T, hT⟩ := hp_ne
+    obtain ⟨Pi₀, hPi₀_ambient⟩ := goodIdealOneIndexCompactness p i₀ h_valid_i₀
+    exact ⟨p.adjoinGoodWith T hT i₀ h_valid_i₀ Pi₀ hPi₀_ambient,
+           p.adjoinGoodWith_le_self T hT i₀ h_valid_i₀ Pi₀ hPi₀_ambient,
+           p.adjoinGoodWith_contains T hT i₀ h_valid_i₀ Pi₀ hPi₀_ambient⟩
+
+/-- **Backward-compatible alias** for the old name of
+`goodIdealExtensionCompactness`. Retained so existing docstring
+references and any downstream code keep resolving; new code should
+use `goodIdealExtensionCompactness` directly. -/
+theorem coherentGoodBranchPartial_idealHasPartialExtensions
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    (coherentGoodBranchPartialSystem cR).IdealHasPartialExtensions :=
+  goodIdealExtensionCompactness cR
 
 /-- **Existence of a Good witness net** via the Good projective system
 + ideal `HasPartialExtensions`. The bare `exists_coherentWitnessNet`
