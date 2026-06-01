@@ -14955,6 +14955,175 @@ theorem FiniteProjectiveSystem.IdealPartialSection.adjoinGoodValueWith_old_compa
   rw [p.adjoinGoodValueWith_eq_of_mem i₀ hi₀_valid Pi₀ hPi₀_ambient V hV hV_p]
   exact cbpFieldwiseCompat.refl _
 
+/-- Helper: any two prescribed values agree (fieldwise) at a common index, via a
+common upper bound `U` in the directed domain (`p.P S₁ = p.P U|_{S₁}` and
+`p.P S₂ = p.P U|_{S₂}`, both equal to `p.P U` at `α`). -/
+theorem FiniteProjectiveSystem.IdealPartialSection.pValue_agree_at
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    {S₁ S₂ : Finset Ordinal.{0}} (hS₁ : S₁ ∈ p.domain) (hS₂ : S₂ ∈ p.domain)
+    {α : Ordinal.{0}} (hα₁ : α ∈ S₁) (hα₂ : α ∈ S₂) :
+    (p.P S₁ hS₁).toCoherentBranchPartial.prefixAt α hα₁
+        = (p.P S₂ hS₂).toCoherentBranchPartial.prefixAt α hα₂
+    ∧ (p.P S₁ hS₁).toCoherentBranchPartial.branch α hα₁
+        = (p.P S₂ hS₂).toCoherentBranchPartial.branch α hα₂ := by
+  classical
+  obtain ⟨U, hU, h₁U, h₂U⟩ := p.directed hS₁ hS₂
+  have ep₁ := (p.compat hS₁ hU h₁U).1 α hα₁
+  have eb₁ := (p.compat hS₁ hU h₁U).2 α hα₁
+  have ep₂ := (p.compat hS₂ hU h₂U).1 α hα₂
+  have eb₂ := (p.compat hS₂ hU h₂U).2 α hα₂
+  simp only [coherentGoodBranchPartialSystem,
+    CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+    CoherentBranchPartial.restrict_prefixAt,
+    CoherentBranchPartial.restrict_branch] at ep₁ eb₁ ep₂ eb₂
+  exact ⟨by rw [← ep₁, ← ep₂], by rw [← eb₁, ← eb₂]⟩
+
+/-- Characterization on `i₀`: the `Pi₀`-threaded value at `V` equals `Pi₀` at any
+shared index `α ∈ V ∩ i₀`. (On `p.domain` via `AmbientCompat`'s diagonal; off it
+via the amalgam's `i₀`-side compat.) -/
+theorem FiniteProjectiveSystem.IdealPartialSection.adjoinGoodValueWith_eq_Pi₀
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (i₀ : Finset Ordinal.{0}) (hi₀_valid : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1)
+    (Pi₀ : CoherentGoodBranchPartial cR i₀)
+    (hPi₀_ambient : ∀ S (hS : S ∈ p.domain),
+      CoherentGoodBranchPartial.AmbientCompat (p.P S hS) Pi₀)
+    (V : Finset Ordinal.{0}) (hV : ∃ S ∈ p.domain, V ⊆ S ∪ i₀)
+    {α : Ordinal.{0}} (hα_V : α ∈ V) (hα_i₀ : α ∈ i₀) :
+    (p.adjoinGoodValueWith i₀ hi₀_valid Pi₀ hPi₀_ambient V hV).toCoherentBranchPartial.prefixAt
+          α hα_V
+        = Pi₀.toCoherentBranchPartial.prefixAt α hα_i₀
+    ∧ (p.adjoinGoodValueWith i₀ hi₀_valid Pi₀ hPi₀_ambient V hV).toCoherentBranchPartial.branch
+          α hα_V
+        = Pi₀.toCoherentBranchPartial.branch α hα_i₀ := by
+  classical
+  unfold FiniteProjectiveSystem.IdealPartialSection.adjoinGoodValueWith
+  by_cases hV_p : V ∈ p.domain
+  · rw [dif_pos hV_p]
+    exact ⟨(hPi₀_ambient V hV_p).prefix_diag α hα_V hα_i₀,
+           (hPi₀_ambient V hV_p).branch_diag α hα_V hα_i₀⟩
+  · rw [dif_neg hV_p]
+    refine ⟨?_, ?_⟩
+    · have hq := (coherentGoodBranchPartial_amalgamate_pair
+          (p.domain_valid (Classical.choose_spec hV).1) hi₀_valid
+          (p.P (Classical.choose hV) (Classical.choose_spec hV).1) Pi₀
+          (hPi₀_ambient (Classical.choose hV) (Classical.choose_spec hV).1)).choose_spec.2.1
+          α hα_i₀
+      simp only [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+        CoherentBranchPartial.restrict_prefixAt] at hq ⊢
+      rw [← hq]
+    · have hq := (coherentGoodBranchPartial_amalgamate_pair
+          (p.domain_valid (Classical.choose_spec hV).1) hi₀_valid
+          (p.P (Classical.choose hV) (Classical.choose_spec hV).1) Pi₀
+          (hPi₀_ambient (Classical.choose hV) (Classical.choose_spec hV).1)).choose_spec.2.2
+          α hα_i₀
+      simp only [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+        CoherentBranchPartial.restrict_branch] at hq ⊢
+      rw [← hq]
+
+/-- Characterization off `i₀`: at `α ∈ V` with `α ∉ i₀` and `α ∈ S` for some
+`S ∈ p.domain`, the `Pi₀`-threaded value at `V` equals `p.P S`. (On `p.domain`
+via `pValue_agree_at`; off it via the amalgam's `S`-side compat, then
+`pValue_agree_at`.) -/
+theorem FiniteProjectiveSystem.IdealPartialSection.adjoinGoodValueWith_eq_pP
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (i₀ : Finset Ordinal.{0}) (hi₀_valid : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1)
+    (Pi₀ : CoherentGoodBranchPartial cR i₀)
+    (hPi₀_ambient : ∀ S (hS : S ∈ p.domain),
+      CoherentGoodBranchPartial.AmbientCompat (p.P S hS) Pi₀)
+    (V : Finset Ordinal.{0}) (hV : ∃ S ∈ p.domain, V ⊆ S ∪ i₀)
+    {α : Ordinal.{0}} (hα_V : α ∈ V) (hα_i₀ : α ∉ i₀)
+    {S : Finset Ordinal.{0}} (hS : S ∈ p.domain) (hα_S : α ∈ S) :
+    (p.adjoinGoodValueWith i₀ hi₀_valid Pi₀ hPi₀_ambient V hV).toCoherentBranchPartial.prefixAt
+          α hα_V
+        = (p.P S hS).toCoherentBranchPartial.prefixAt α hα_S
+    ∧ (p.adjoinGoodValueWith i₀ hi₀_valid Pi₀ hPi₀_ambient V hV).toCoherentBranchPartial.branch
+          α hα_V
+        = (p.P S hS).toCoherentBranchPartial.branch α hα_S := by
+  classical
+  unfold FiniteProjectiveSystem.IdealPartialSection.adjoinGoodValueWith
+  by_cases hV_p : V ∈ p.domain
+  · rw [dif_pos hV_p]
+    exact ⟨(p.pValue_agree_at hV_p hS hα_V hα_S).1,
+           (p.pValue_agree_at hV_p hS hα_V hα_S).2⟩
+  · rw [dif_neg hV_p]
+    have hα_SV : α ∈ Classical.choose hV := by
+      rcases Finset.mem_union.mp ((Classical.choose_spec hV).2 hα_V) with h | h
+      · exact h
+      · exact absurd h hα_i₀
+    refine ⟨?_, ?_⟩
+    · have hq := (coherentGoodBranchPartial_amalgamate_pair
+          (p.domain_valid (Classical.choose_spec hV).1) hi₀_valid
+          (p.P (Classical.choose hV) (Classical.choose_spec hV).1) Pi₀
+          (hPi₀_ambient (Classical.choose hV) (Classical.choose_spec hV).1)).choose_spec.1.1
+          α hα_SV
+      simp only [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+        CoherentBranchPartial.restrict_prefixAt] at hq ⊢
+      exact hq.trans (p.pValue_agree_at (Classical.choose_spec hV).1 hS hα_SV hα_S).1
+    · have hq := (coherentGoodBranchPartial_amalgamate_pair
+          (p.domain_valid (Classical.choose_spec hV).1) hi₀_valid
+          (p.P (Classical.choose hV) (Classical.choose_spec hV).1) Pi₀
+          (hPi₀_ambient (Classical.choose hV) (Classical.choose_spec hV).1)).choose_spec.1.2
+          α hα_SV
+      simp only [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+        CoherentBranchPartial.restrict_branch] at hq ⊢
+      exact hq.trans (p.pValue_agree_at (Classical.choose_spec hV).1 hS hα_SV hα_S).2
+
+/-- **`adjoinGoodValueWith_common_compat`**: cross-`V` coherence for the
+`Pi₀`-threaded values. For `V ⊆ W` in the new domain, the value at `W` restricted
+to `V` is fieldwise-compat with the value at `V`. At each `α ∈ V` the two agree:
+if `α ∈ i₀` both equal `Pi₀` (`eq_Pi₀`); otherwise both equal `p.P S` for a domain
+`S ∋ α` from `V`'s witness (`eq_pP`). This is the lemma the shared `Pi₀`
+unblocks. -/
+theorem FiniteProjectiveSystem.IdealPartialSection.adjoinGoodValueWith_common_compat
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (i₀ : Finset Ordinal.{0}) (hi₀_valid : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1)
+    (Pi₀ : CoherentGoodBranchPartial cR i₀)
+    (hPi₀_ambient : ∀ S (hS : S ∈ p.domain),
+      CoherentGoodBranchPartial.AmbientCompat (p.P S hS) Pi₀)
+    (V W : Finset Ordinal.{0})
+    (hV : ∃ S ∈ p.domain, V ⊆ S ∪ i₀) (hW : ∃ S ∈ p.domain, W ⊆ S ∪ i₀)
+    (hVW : V ⊆ W) :
+    cbpFieldwiseCompat
+      ((p.adjoinGoodValueWith i₀ hi₀_valid Pi₀ hPi₀_ambient W hW).toCoherentBranchPartial.restrict
+        hVW)
+      (p.adjoinGoodValueWith i₀ hi₀_valid Pi₀ hPi₀_ambient V hV).toCoherentBranchPartial := by
+  classical
+  refine ⟨?_, ?_⟩
+  · intro α hα
+    rw [CoherentBranchPartial.restrict_prefixAt]
+    by_cases hα_i₀ : α ∈ i₀
+    · rw [(p.adjoinGoodValueWith_eq_Pi₀ i₀ hi₀_valid Pi₀ hPi₀_ambient W hW (hVW hα) hα_i₀).1,
+          (p.adjoinGoodValueWith_eq_Pi₀ i₀ hi₀_valid Pi₀ hPi₀_ambient V hV hα hα_i₀).1]
+    · have hVc := hV
+      obtain ⟨S, hS, hVsub⟩ := hVc
+      have hα_S : α ∈ S := by
+        rcases Finset.mem_union.mp (hVsub hα) with h | h
+        · exact h
+        · exact absurd h hα_i₀
+      rw [(p.adjoinGoodValueWith_eq_pP i₀ hi₀_valid Pi₀ hPi₀_ambient W hW
+            (hVW hα) hα_i₀ hS hα_S).1,
+          (p.adjoinGoodValueWith_eq_pP i₀ hi₀_valid Pi₀ hPi₀_ambient V hV
+            hα hα_i₀ hS hα_S).1]
+  · intro α hα
+    rw [CoherentBranchPartial.restrict_branch]
+    by_cases hα_i₀ : α ∈ i₀
+    · rw [(p.adjoinGoodValueWith_eq_Pi₀ i₀ hi₀_valid Pi₀ hPi₀_ambient W hW (hVW hα) hα_i₀).2,
+          (p.adjoinGoodValueWith_eq_Pi₀ i₀ hi₀_valid Pi₀ hPi₀_ambient V hV hα hα_i₀).2]
+    · have hVc := hV
+      obtain ⟨S, hS, hVsub⟩ := hVc
+      have hα_S : α ∈ S := by
+        rcases Finset.mem_union.mp (hVsub hα) with h | h
+        · exact h
+        · exact absurd h hα_i₀
+      rw [(p.adjoinGoodValueWith_eq_pP i₀ hi₀_valid Pi₀ hPi₀_ambient W hW
+            (hVW hα) hα_i₀ hS hα_S).2,
+          (p.adjoinGoodValueWith_eq_pP i₀ hi₀_valid Pi₀ hPi₀_ambient V hV
+            hα hα_i₀ hS hα_S).2]
+
 /-- **Existence of a Good witness net** via the Good projective system
 + ideal `HasPartialExtensions`. The bare `exists_coherentWitnessNet`
 can be rewired through `toCoherentWitnessNet`
