@@ -14041,8 +14041,11 @@ theorem finiteGlobalDemandValue_eventually_restrict_compat
   Filter.Eventually.of_forall
     (fun D hs ht => finiteGlobalDemandValue_restrict_compat p D s t hs ht hst)
 
-/-- **[FRONTIER — one-index compactness]** `goodIdealOneIndexCompactness`: the
-sharp local frontier underlying `goodIdealGlobalization`. Given an ideal section
+/-- **[ACTIVE FRONTIER — one-index compactness]** `goodIdealOneIndexCompactness`:
+the sharp local frontier on the live witness-net route
+(`goodIdealOneIndexCompactness → goodIdealExtensionCompactness →
+exists_global_section_of_idealPartialExtensions → exists_coherentGoodWitnessNet`).
+Given an ideal section
 `p` and a new valid index `i₀`, there is a single CGBP `Pi₀` on `i₀` that is
 `AmbientCompat` with **every** prescribed `p.P S` (`S ∈ p.domain`).
 
@@ -14070,10 +14073,17 @@ theorem goodIdealOneIndexCompactness
         CoherentGoodBranchPartial.AmbientCompat (p.P S hS) Pi₀ := by
   sorry
 
-/-- **[FRONTIER — Good ideal globalization]** `goodIdealGlobalization`:
+/-- **[LEGACY — OFF-CHAIN, sorry]** `goodIdealGlobalization`:
 every finitely-consistent `IdealPartialSection` of the Good system extends to a
 total `CoherentGoodWitnessNet` storing each prescribed CGBP literally on
 `p.domain`.
+
+**No longer on the witness-net route.** `exists_coherentGoodWitnessNet` now goes
+`goodIdealOneIndexCompactness → goodIdealExtensionCompactness (rewired) →
+exists_global_section_of_idealPartialExtensions`. The ultralimit globalization
+sketched below is a documented dead end (the eventual-constancy obstruction:
+freely-chosen finite witnesses do not converge). Retained for reference only;
+a candidate for later pruning along with `goodIdealCompactness`.
 
 This is the genuine remaining content of `goodIdealCompactness`, isolated from
 the finite part. **Finite consistency is already discharged**: for any finite
@@ -14097,18 +14107,14 @@ theorem goodIdealGlobalization
         net.P S (p.domain_valid hS) = p.P S hS := by
   sorry
 
-/-- **[Corollary — was the frontier, now packaging]**
-`goodIdealCompactness`. **Input:** an `IdealPartialSection p` of the
-Good projective system. **Output:** a global `CoherentGoodWitnessNet`
-whose value at each `S ∈ p.domain` equals `p.P S` **literally** (not
-just fieldwise-compatible).
+/-- **[LEGACY — OFF-CHAIN]** `goodIdealCompactness`: a global
+`CoherentGoodWitnessNet` whose value at each `S ∈ p.domain` equals `p.P S`
+**literally**.
 
-**Now a one-line corollary of `goodIdealGlobalization`** — the IPS-level
-frontier that retains directedness (so its finite-consistency obligation is met
-by `coherentGoodBranchPartial_amalgamate_from_common_upper`), rather than routing
-through `prescribedGoodCompactness_holds`/`toGoodPrescription`, which discards
-directedness. (The old route remains available as
-`goodIdealCompactness_of_prescribedGoodCompactness`.)
+**Off the witness-net route**: a one-line corollary of the now-orphaned
+`goodIdealGlobalization` (sorry). The live route to `exists_coherentGoodWitnessNet`
+no longer passes through here — it goes via `goodIdealExtensionCompactness`
+(rewired) ← `goodIdealOneIndexCompactness`. Retained for reference.
 
 **Why not the generic `goodConstraintCompactness`?** That form
 concludes with `cbpFieldwiseCompat`, not equality. The IPS extension
@@ -15188,7 +15194,27 @@ theorem coherentGoodBranchPartial_idealHasPartialExtensions
 + ideal `HasPartialExtensions`. The bare `exists_coherentWitnessNet`
 can be rewired through `toCoherentWitnessNet`
 (`exists_coherentWitnessNet_via_good`) to eliminate the bare
-amalgamation path. -/
+amalgamation path.
+
+**Active dependency chain (Good-system compactness):**
+```
+exists_coherentGoodWitnessNet
+  ← exists_global_section_of_idealPartialExtensions   (generic Zorn, axiom-clean)
+  ← goodIdealExtensionCompactness                     (one-index path, rewired)
+  ← goodIdealOneIndexCompactness                      [ACTIVE FRONTIER, sorry]
+  + adjoinGoodWith / _le_self / _contains             (packaging)
+  + coherentGoodBranchPartial_amalgamate_from_common_upper  (finite consistency)
+  + exists_coherentGoodBranchPartial                  [deeper system frontier, sorry]
+```
+**Off-chain / legacy (still `sorry`, candidates for pruning):**
+`goodIdealGlobalization`, `goodIdealCompactness` (ultralimit route —
+eventual-constancy dead end); `GoodPrescription.finite_satisfiable`,
+`prescribedGoodCompactness_holds`, `goodConstraintCompactness` (general-
+prescription route); `coherentGoodBranchPartial_amalgamate_finset` (overlap-only,
+unprovable); `coherentGoodBranchPartial_amalgamate_pair_ordered` (diagnostic);
+`coherentGoodBranchPartial_insert_prescribed_new` / `_insert_prescribed_compatible`
+(superseded shapes); legacy `adjoinGoodValue_common_compat` / `adjoinGood` /
+`adjoinGood_le_self` / `adjoinGood_contains` (superseded by the `…With` path). -/
 theorem exists_coherentGoodWitnessNet
     (cR : (Fin 2 ↪o PairERSource) → Bool) :
     Nonempty (CoherentGoodWitnessNet cR) := by
