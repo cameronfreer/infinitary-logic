@@ -14041,6 +14041,105 @@ theorem finiteGlobalDemandValue_eventually_restrict_compat
   Filter.Eventually.of_forall
     (fun D hs ht => finiteGlobalDemandValue_restrict_compat p D s t hs ht hst)
 
+/-- **`AmbientCompat_of_common_witness`**: if `P_S` (on `S`) reads off a single
+common `Q` on `U ⊇ S` fieldwise, then `P_S` is `AmbientCompat` with `Q.restrict`
+to any `i₀ ⊆ U`. All cross-level/diagonal coherence comes from `Q`'s internal
+`prefix_restrict`/`branch_restrict` (both `P_S` and the `i₀`-value are views of
+the one object `Q`). -/
+theorem CoherentGoodBranchPartial.AmbientCompat_of_common_witness
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {U : Finset Ordinal.{0}} (Q : CoherentGoodBranchPartial cR U)
+    {S : Finset Ordinal.{0}} (hSU : S ⊆ U) (P_S : CoherentGoodBranchPartial cR S)
+    (hpref : ∀ α (hα : α ∈ S),
+      P_S.toCoherentBranchPartial.prefixAt α hα
+        = Q.toCoherentBranchPartial.prefixAt α (hSU hα))
+    (hbr : ∀ α (hα : α ∈ S),
+      P_S.toCoherentBranchPartial.branch α hα
+        = Q.toCoherentBranchPartial.branch α (hSU hα))
+    {i₀ : Finset Ordinal.{0}} (hi₀U : i₀ ⊆ U) :
+    CoherentGoodBranchPartial.AmbientCompat P_S (Q.restrict hi₀U) where
+  prefix_below := fun β hβ_S α hα_i₀ hβ_lt_α x => by
+    rw [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+        CoherentBranchPartial.restrict_prefixAt, hpref β hβ_S]
+    exact (Q.toCoherentBranchPartial.prefix_restrict hβ_lt_α.le
+      (hSU hβ_S) (hi₀U hα_i₀) x).symm
+  branch_below := fun β hβ_S α hα_i₀ hβ_lt_α x => by
+    rw [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+        CoherentBranchPartial.restrict_branch]
+    have hL := congrFun (hbr β hβ_S) x
+    rw [hL,
+      ← Q.toCoherentBranchPartial.branch_restrict hβ_lt_α.le (hSU hβ_S) (hi₀U hα_i₀) x]
+  prefix_above := fun α hα_i₀ β hβ_S hα_lt_β x => by
+    rw [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+        CoherentBranchPartial.restrict_prefixAt, hpref β hβ_S]
+    exact (Q.toCoherentBranchPartial.prefix_restrict hα_lt_β.le
+      (hi₀U hα_i₀) (hSU hβ_S) x).symm
+  branch_above := fun α hα_i₀ β hβ_S hα_lt_β x => by
+    rw [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+        CoherentBranchPartial.restrict_branch]
+    have hR := congrFun (hbr β hβ_S)
+      ((Ordinal.initialSegToType hα_lt_β.le).toOrderEmbedding x)
+    rw [hR, Q.toCoherentBranchPartial.branch_restrict hα_lt_β.le (hi₀U hα_i₀) (hSU hβ_S) x]
+  prefix_diag := fun α hα_S hα_i₀ => by
+    rw [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+        CoherentBranchPartial.restrict_prefixAt, hpref α hα_S]
+  branch_diag := fun α hα_S hα_i₀ => by
+    rw [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+        CoherentBranchPartial.restrict_branch, hbr α hα_S]
+
+/-- **`goodIdealOneIndex_finite_consistent`**: the finite slice of the one-index
+frontier. For a finite demand set `D ⊆ p.domain`, a single `Pi₀` on `i₀` is
+`AmbientCompat` with every `p.P S` (`S ∈ D`) and prescribed-agrees with `p.P V`
+for `V ∈ D` with `V ⊆ i₀`.
+
+Construction: amalgamate `D` into `Q'` on `D.sup id`
+(`amalgamate_from_common_upper`), freely extend `Q'` over `i₀` to `Q` on
+`D.sup ∪ i₀` (`extend_to_union`), and take `Pi₀ := Q.restrict i₀`. Each `p.P S`
+reads off the one common `Q` on `S` (amalgam + extend compat), so
+`AmbientCompat_of_common_witness` applies. -/
+theorem goodIdealOneIndex_finite_consistent
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (i₀ : Finset Ordinal.{0}) (hi₀ : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1)
+    (D : Finset (Finset Ordinal.{0})) (hD : ∀ S ∈ D, S ∈ p.domain) :
+    ∃ Pi₀ : CoherentGoodBranchPartial cR i₀,
+      (∀ S (hS : S ∈ D),
+        CoherentGoodBranchPartial.AmbientCompat (p.P S (hD S hS)) Pi₀) ∧
+      (∀ V (hV : V ∈ D) (hVi₀ : V ⊆ i₀),
+        cbpFieldwiseCompat
+          (Pi₀.toCoherentBranchPartial.restrict hVi₀)
+          (p.P V (hD V hV)).toCoherentBranchPartial) := by
+  classical
+  obtain ⟨Q', hQ'⟩ := coherentGoodBranchPartial_amalgamate_from_common_upper p D hD
+  obtain ⟨Q, hQ_ext⟩ := coherentGoodBranchPartial_extend_to_union Q' i₀ hi₀
+  have ambS : ∀ S (hS : S ∈ D),
+      CoherentGoodBranchPartial.AmbientCompat (p.P S (hD S hS))
+        (Q.restrict Finset.subset_union_right) := by
+    intro S hS
+    have hSsup : S ⊆ D.sup id := fun _ hα => Finset.mem_sup.mpr ⟨S, hS, hα⟩
+    refine CoherentGoodBranchPartial.AmbientCompat_of_common_witness Q
+      (hSsup.trans Finset.subset_union_left) (p.P S (hD S hS)) ?_ ?_
+      Finset.subset_union_right
+    · intro α hα
+      have ea := (hQ' S hS).1 α hα
+      have ee := hQ_ext.1 α (hSsup hα)
+      simp only [CoherentBranchPartial.restrict_prefixAt] at ea ee
+      rw [← ea, ← ee]
+    · intro α hα
+      have ea := (hQ' S hS).2 α hα
+      have ee := hQ_ext.2 α (hSsup hα)
+      simp only [CoherentBranchPartial.restrict_branch] at ea ee
+      rw [← ea, ← ee]
+  refine ⟨Q.restrict Finset.subset_union_right, ambS, ?_⟩
+  intro V hV hVi₀
+  refine ⟨?_, ?_⟩
+  · intro α hα
+    rw [CoherentBranchPartial.restrict_prefixAt]
+    exact ((ambS V hV).prefix_diag α hα (hVi₀ hα)).symm
+  · intro α hα
+    rw [CoherentBranchPartial.restrict_branch]
+    exact ((ambS V hV).branch_diag α hα (hVi₀ hα)).symm
+
 /-- **[ACTIVE FRONTIER — one-index compactness]** `goodIdealOneIndexCompactness`:
 the sharp local frontier on the live witness-net route
 (`goodIdealOneIndexCompactness → goodIdealExtensionCompactness →
