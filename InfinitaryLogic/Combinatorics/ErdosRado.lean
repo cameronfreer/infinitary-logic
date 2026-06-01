@@ -13146,7 +13146,7 @@ theorem coherentGoodBranchPartial_insert_prescribed_existing
     rw [CoherentBranchPartial.restrict_branch]
     exact h_overlap_branch β (Finset.singleton_subset_iff.mpr hαT hβ) hβ
 
-/-- **[FRONTIER, sorry — WITH MATHEMATICAL CORRECTION]**
+/-- **[OFF-CHAIN, sorry — superseded by `insert_prescribed_new_compatible`]**
 `coherentGoodBranchPartial_insert_prescribed_new`. The **hard branch**
 of `insert_prescribed`: when `α ∉ T`, extend `P` on `T` to
 `insert α T = T ∪ {α}` matching both `P` on `T` and a prescribed
@@ -13315,7 +13315,7 @@ The wrapping lemmas are documented as theorems with `sorry` proofs
 in the current state; filling them is straightforward but mechanical.
 **The constructive content lives only in the two named frontiers.** -/
 
-/-- **[FRONTIER, sorry — finite multi-amalgamation by induction]**
+/-- **[OFF-CHAIN, sorry — overlap-only hypotheses too weak; superseded]**
 `coherentGoodBranchPartial_amalgamate_finset`. The finset
 generalization of `amalgamate_pair`: given a finite family of
 pairwise-compatible CGBPs (compatible on every pairwise overlap),
@@ -13573,7 +13573,7 @@ def GoodPrescription.restrictTo
     P.consistent_branch (hR S (Finset.mem_coe.mp hS))
       (hR T (Finset.mem_coe.mp hT)) hST α hα
 
-/-- **[FRONTIER, sorry — finite slice of the compactness frontier]**
+/-- **[OFF-CHAIN, sorry — general-prescription route, not the witness-net chain]**
 `GoodPrescription.finite_satisfiable`. For any finite `R ⊆ P.𝒮`,
 there is a global Good witness net agreeing with `P` on `R`. This is
 the finite-slice version of `prescribedGoodCompactness_holds`; the
@@ -13605,7 +13605,7 @@ theorem GoodPrescription.finite_satisfiable
         net.P S (P.𝒮_valid S (hR S hS)) = P.obj S (hR S hS) := by
   sorry
 
-/-- **[FRONTIER 2, sorry — infinite compactness].** The
+/-- **[OFF-CHAIN, sorry — general-prescription compactness, not the witness-net chain].** The
 `prescribedGoodCompactness` predicate holds: every consistent
 `GoodPrescription` extends to a global Good witness net.
 
@@ -14182,7 +14182,23 @@ theorem goodIdealOneIndexCompactness_of_fixedCarrierCompactness
 content (one CGBP on the fixed `i₀` satisfying all demands, from finite
 satisfiability). Needs a real inverse-limit argument over the carrier `i₀` (the
 coordinate value spaces are infinite — see `GoodOneIndexFixedCarrierCompactness`).
-This is the single live frontier under the witness-net chain. -/
+This is the single live (IPS-extension) frontier under the witness-net chain;
+the only other open sorry on the chain is the deeper, orthogonal
+`exists_coherentGoodBranchPartial` (Good-chain construction).
+
+**Two plausible proof routes** (no commitment yet):
+1. *Topological/product compactness over the carrier coordinates* — if the
+   per-coordinate value spaces (`α.ToType ↪o PairERSource` and `α.ToType → Bool`,
+   for `α ∈ i₀`) can be given compact topologies with the constraints closed,
+   the witness is a point in a nonempty intersection of closeds in a compact
+   product.
+2. *Direct inverse-limit / Zorn over finite coordinate restrictions* — order
+   partial witnesses by coordinate-restriction and take a maximal/limit element,
+   using finite consistency at each finite restriction.
+
+**If attacking:** first prove a *finite-coordinate restriction* version —
+restrict each `α.ToType` (`α ∈ i₀`) to a finite subset of coordinates. That
+exposes the true compactness shape before committing to a topology. -/
 theorem goodOneIndexFixedCarrierCompactness_holds
     (cR : (Fin 2 ↪o PairERSource) → Bool) :
     GoodOneIndexFixedCarrierCompactness cR := by
