@@ -14177,6 +14177,107 @@ theorem goodIdealOneIndexCompactness_of_fixedCarrierCompactness
   h p i₀ hi₀ (fun D hD =>
     (goodIdealOneIndex_finite_consistent p i₀ hi₀ D hD).imp (fun _ hPi₀ => hPi₀.1))
 
+/-- **`AmbientCompat.congr_right`**: `AmbientCompat P R` depends on the right CGBP
+`R` only through its `prefixAt`/`branch` (fieldwise) data. So a fieldwise-equal
+CGBP `R'` on the same carrier inherits the same `AmbientCompat`. This is the
+*transport* step in the uniform-common-witness reduction: each per-`S` common
+witness yields `AmbientCompat (p.P S) (Q_S.restrict i₀)`, and this lemma replaces
+the per-`S` restriction by the single uniform witness `Pi₀` it agrees with. -/
+theorem CoherentGoodBranchPartial.AmbientCompat.congr_right
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {S T : Finset Ordinal.{0}}
+    {P : CoherentGoodBranchPartial cR S}
+    {R R' : CoherentGoodBranchPartial cR T}
+    (h : CoherentGoodBranchPartial.AmbientCompat P R)
+    (hRR' : cbpFieldwiseCompat R.toCoherentBranchPartial R'.toCoherentBranchPartial) :
+    CoherentGoodBranchPartial.AmbientCompat P R' where
+  prefix_below := fun β hβ_S α hα_T hβ_lt_α x => by
+    rw [← hRR'.1 α hα_T]; exact h.prefix_below β hβ_S α hα_T hβ_lt_α x
+  branch_below := fun β hβ_S α hα_T hβ_lt_α x => by
+    rw [← hRR'.2 α hα_T]; exact h.branch_below β hβ_S α hα_T hβ_lt_α x
+  prefix_above := fun α hα_T β hβ_S hα_lt_β x => by
+    rw [← hRR'.1 α hα_T]; exact h.prefix_above α hα_T β hβ_S hα_lt_β x
+  branch_above := fun α hα_T β hβ_S hα_lt_β x => by
+    rw [← hRR'.2 α hα_T]; exact h.branch_above α hα_T β hβ_S hα_lt_β x
+  prefix_diag := fun α hα_S hα_T => by
+    rw [← hRR'.1 α hα_T]; exact h.prefix_diag α hα_S hα_T
+  branch_diag := fun α hα_S hα_T => by
+    rw [← hRR'.2 α hα_T]; exact h.branch_diag α hα_S hα_T
+
+/-- **`GoodUniformCommonWitness p i₀ Pi₀`**: the uniform-common-witness form of
+the one-index frontier's genuine content. Says the *single* CGBP `Pi₀` on `i₀`
+amalgamates with *every* prescribed `p.P S` (`S ∈ p.domain`) through a shared
+finite super-carrier `U ⊇ i₀ ∪ S`: there is a `Q` on `U` reading off `Pi₀` on
+`i₀` and `p.P S` on `S`, both fieldwise. This is precisely the inverse-limit
+object — one `Pi₀` pairwise-compatible (via a common `Q`) with the whole directed
+family. Contrast the finite case `goodIdealOneIndex_finite_consistent`, where a
+*single* `Q` works for all of `D` at once (the union `D.sup id` is in the
+domain); here each `S` may need its own `Q_S` because the union of the whole
+(possibly unbounded) domain is not finite. The existence of such a uniform `Pi₀`
+is the fusion content — see the diagnostic note on
+`goodOneIndexFixedCarrierCompactness_holds`. -/
+def GoodUniformCommonWitness
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (i₀ : Finset Ordinal.{0}) (Pi₀ : CoherentGoodBranchPartial cR i₀) : Prop :=
+  ∀ S (hS : S ∈ p.domain),
+    ∃ (U : Finset Ordinal.{0}) (hiU : i₀ ⊆ U) (hSU : S ⊆ U)
+      (Q : CoherentGoodBranchPartial cR U),
+      cbpFieldwiseCompat (Q.restrict hiU).toCoherentBranchPartial
+          Pi₀.toCoherentBranchPartial ∧
+        cbpFieldwiseCompat (Q.restrict hSU).toCoherentBranchPartial
+          (p.P S hS).toCoherentBranchPartial
+
+/-- **`ambientCompat_of_uniformCommonWitness`** (proved, sorry-free): a uniform
+common witness `Pi₀` is `AmbientCompat` with every prescribed `p.P S`. Per `S`,
+the shared `Q` makes `p.P S` and `Pi₀` both views of `Q` (`Q.restrict i₀` =
+`Pi₀` fieldwise, `Q.restrict S` = `p.P S` fieldwise), so
+`AmbientCompat_of_common_witness` gives `AmbientCompat (p.P S) (Q.restrict i₀)`,
+and `AmbientCompat.congr_right` transports it to `Pi₀`. -/
+theorem ambientCompat_of_uniformCommonWitness
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    {p : (coherentGoodBranchPartialSystem cR).IdealPartialSection}
+    {i₀ : Finset Ordinal.{0}} {Pi₀ : CoherentGoodBranchPartial cR i₀}
+    (h : GoodUniformCommonWitness p i₀ Pi₀) :
+    ∀ S (hS : S ∈ p.domain),
+      CoherentGoodBranchPartial.AmbientCompat (p.P S hS) Pi₀ := by
+  intro S hS
+  obtain ⟨U, hiU, hSU, Q, hQi₀, hQS⟩ := h S hS
+  have hambQ : CoherentGoodBranchPartial.AmbientCompat (p.P S hS) (Q.restrict hiU) := by
+    refine CoherentGoodBranchPartial.AmbientCompat_of_common_witness Q hSU (p.P S hS) ?_ ?_ hiU
+    · intro α hα
+      have e := hQS.1 α hα
+      rw [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+          CoherentBranchPartial.restrict_prefixAt] at e
+      exact e.symm
+    · intro α hα
+      have e := hQS.2 α hα
+      rw [CoherentGoodBranchPartial.restrict_toCoherentBranchPartial,
+          CoherentBranchPartial.restrict_branch] at e
+      exact e.symm
+  exact hambQ.congr_right hQi₀
+
+/-- **`goodOneIndexFixedCarrierCompactness_of_uniformCommonWitness`** (proved,
+sorry-free): the fixed-carrier compactness principle *follows from* a
+uniform-common-witness existence principle. This is the exact prescription-
+relative reduction the diagnostic was after: it discharges all the `AmbientCompat`
+bookkeeping and isolates the genuine remaining content into the single hypothesis
+`H` — "for every `p`, `i₀` there is one `Pi₀` on `i₀` that amalgamates (through a
+shared finite super-carrier) with the whole directed family `{p.P S}`." The
+finite-satisfiability hypothesis of `GoodOneIndexFixedCarrierCompactness` is
+*unused* here (it is the easy direction, already proved as
+`goodIdealOneIndex_finite_consistent`); the content lives entirely in `H`, which
+is the fusion / inverse-limit frontier. -/
+theorem goodOneIndexFixedCarrierCompactness_of_uniformCommonWitness
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (H : ∀ (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+          (i₀ : Finset Ordinal.{0}) (_hi₀ : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1),
+          ∃ Pi₀ : CoherentGoodBranchPartial cR i₀, GoodUniformCommonWitness p i₀ Pi₀) :
+    GoodOneIndexFixedCarrierCompactness cR := by
+  intro p i₀ hi₀ _hfin
+  obtain ⟨Pi₀, hPi₀⟩ := H p i₀ hi₀
+  exact ⟨Pi₀, ambientCompat_of_uniformCommonWitness hPi₀⟩
+
 /-- **[ACTIVE FRONTIER — fixed-carrier compactness]**
 `goodOneIndexFixedCarrierCompactness_holds`: the genuine remaining compactness
 content (one CGBP on the fixed `i₀` satisfying all demands, from finite
@@ -14198,7 +14299,34 @@ the only other open sorry on the chain is the deeper, orthogonal
 
 **If attacking:** first prove a *finite-coordinate restriction* version —
 restrict each `α.ToType` (`α ∈ i₀`) to a finite subset of coordinates. That
-exposes the true compactness shape before committing to a topology. -/
+exposes the true compactness shape before committing to a topology.
+
+**Phase-A diagnostic finding (reduction map).** The `AmbientCompat` bookkeeping
+is *not* the content: `goodOneIndexFixedCarrierCompactness_of_uniformCommonWitness`
+proves (sorry-free in its body) that this principle follows from a
+*uniform-common-witness* existence principle `H` — one `Pi₀` on `i₀` that
+amalgamates, through a shared finite super-carrier, with the whole directed
+family `{p.P S}` (`GoodUniformCommonWitness`). The finite-satisfiability
+hypothesis is unused there. So the genuine content is exactly the existence of
+that uniform `Pi₀`, i.e. the *coherent limit* of `{p.P S}` over `i₀`'s levels.
+
+That limit is the same fusion object as the rest of the chain. With `M` the
+maximum of the finite `i₀` (`M < ω₁`, so `M.ToType` is countable), a witness is
+essentially `goodAt M : PairERGoodChain cR M`, whose head `M.ToType ↪o
+PairERSource` is forced coordinatewise on levels *seen* by some `p.P S` and free
+elsewhere. Assembling it = `F.prefix` for the `PairERCoherentFamily F` induced by
+`{p.P S}` together with a point in `validFiber cR F.prefix F.typeFn`, which by
+`PairERCoherentFamily.validFiber_prefix_typeFn_eq_iInter` is exactly the nonempty
+stage-fiber intersection `exists_nonempty_iInter_stage_fibers` (~2604) provides.
+But choosing the free coordinates and discharging Good-adjacency is the fusion
+construction itself (`PairERGoodChain.succWithChoice`'s `inner_consistent`, the
+sorry underlying `exists_coherentGoodBranchPartial`).
+
+**Conclusion:** this is *not an independent frontier*. It is another presentation
+of the single deep fusion frontier; closing `exists_nonempty_iInter_stage_fibers`
+plus the `succWithChoice` `inner_consistent` step closes both
+`exists_coherentGoodBranchPartial` and — via `_of_uniformCommonWitness` — this
+principle. The two open chain sorries collapse to that one fusion target. -/
 theorem goodOneIndexFixedCarrierCompactness_holds
     (cR : (Fin 2 ↪o PairERSource) → Bool) :
     GoodOneIndexFixedCarrierCompactness cR := by
