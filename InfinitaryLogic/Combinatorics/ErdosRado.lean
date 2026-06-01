@@ -14041,6 +14041,35 @@ theorem finiteGlobalDemandValue_eventually_restrict_compat
   Filter.Eventually.of_forall
     (fun D hs ht => finiteGlobalDemandValue_restrict_compat p D s t hs ht hst)
 
+/-- **[FRONTIER — one-index compactness]** `goodIdealOneIndexCompactness`: the
+sharp local frontier underlying `goodIdealGlobalization`. Given an ideal section
+`p` and a new valid index `i₀`, there is a single CGBP `Pi₀` on `i₀` that is
+`AmbientCompat` with **every** prescribed `p.P S` (`S ∈ p.domain`).
+
+**Why this is the right boundary (directedness).** To extend `p` by `i₀`, the
+extended section's domain must stay directed: for every old `S ∈ p.domain` and
+the new `i₀`, there must be a common upper `U` in the domain with `S ⊆ U` and
+`i₀ ⊆ U` — forcing a coherent value on `S ∪ i₀`, hence `Pi₀` must be ambient-
+compatible with **all** old `p.P S` simultaneously (not merely with the finitely
+many `S ⊆ i₀`). That simultaneous compatibility — over a possibly infinite
+`p.domain` — is the genuine compactness content, in one-index form.
+
+`AmbientCompat (p.P S) Pi₀` packages the cross-level fields *and* (via
+`prefix_diag`/`branch_diag`) agreement on the overlap `S ∩ i₀`; in particular,
+for old `V ∈ p.domain` with `V ⊆ i₀`, `Pi₀` agrees with `p.P V` on `V`.
+
+**Finite satisfiability** of this (any finite subfamily of `p.domain` admits such
+a `Pi₀`) is exactly `coherentGoodBranchPartial_amalgamate_from_common_upper`; the
+content here is choosing one `Pi₀` working for the whole (infinite) `p.domain`. -/
+theorem goodIdealOneIndexCompactness
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (i₀ : Finset Ordinal.{0}) (hi₀ : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1) :
+    ∃ Pi₀ : CoherentGoodBranchPartial cR i₀,
+      ∀ S (hS : S ∈ p.domain),
+        CoherentGoodBranchPartial.AmbientCompat (p.P S hS) Pi₀ := by
+  sorry
+
 /-- **[FRONTIER — Good ideal globalization]** `goodIdealGlobalization`:
 every finitely-consistent `IdealPartialSection` of the Good system extends to a
 total `CoherentGoodWitnessNet` storing each prescribed CGBP literally on
