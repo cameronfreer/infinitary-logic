@@ -15124,6 +15124,67 @@ theorem FiniteProjectiveSystem.IdealPartialSection.adjoinGoodValueWith_common_co
           (p.adjoinGoodValueWith_eq_pP i₀ hi₀_valid Pi₀ hPi₀_ambient V hV
             hα hα_i₀ hS hα_S).2]
 
+/-- **`adjoinGoodWith`**: the extended ideal section, `Pi₀`-threaded. Domain is
+the directed closure `{V | ∃ S ∈ p.domain, V ⊆ S ∪ i₀}`; values are
+`adjoinGoodValueWith`; `compat` is exactly `adjoinGoodValueWith_common_compat`. -/
+noncomputable def FiniteProjectiveSystem.IdealPartialSection.adjoinGoodWith
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (T : Finset Ordinal.{0}) (_hT : T ∈ p.domain)
+    (i₀ : Finset Ordinal.{0}) (hi₀_valid : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1)
+    (Pi₀ : CoherentGoodBranchPartial cR i₀)
+    (hPi₀_ambient : ∀ S (hS : S ∈ p.domain),
+      CoherentGoodBranchPartial.AmbientCompat (p.P S hS) Pi₀) :
+    (coherentGoodBranchPartialSystem cR).IdealPartialSection where
+  domain := {V | ∃ S, S ∈ p.domain ∧ V ⊆ S ∪ i₀}
+  domain_valid {V} hV := by
+    obtain ⟨S, hS, hVsub⟩ := hV
+    intro α hα
+    rcases Finset.mem_union.mp (hVsub hα) with h | h
+    · exact p.domain_valid hS α h
+    · exact hi₀_valid α h
+  downward_closed {V W} hW hVW := by
+    obtain ⟨S, hS, hWsub⟩ := hW
+    exact ⟨S, hS, hVW.trans hWsub⟩
+  directed {V W} hV hW := by
+    obtain ⟨Sᵥ, hSᵥ, hVsub⟩ := hV
+    obtain ⟨S_w, hS_w, hWsub⟩ := hW
+    obtain ⟨U, hU, hSᵥU, hS_wU⟩ := p.directed hSᵥ hS_w
+    refine ⟨U ∪ i₀, ⟨U, hU, Finset.Subset.refl _⟩, ?_, ?_⟩
+    · exact hVsub.trans (Finset.union_subset_union hSᵥU (Finset.Subset.refl i₀))
+    · exact hWsub.trans (Finset.union_subset_union hS_wU (Finset.Subset.refl i₀))
+  P := fun V hV => p.adjoinGoodValueWith i₀ hi₀_valid Pi₀ hPi₀_ambient V hV
+  compat := fun {V W} hV hW hVW =>
+    p.adjoinGoodValueWith_common_compat i₀ hi₀_valid Pi₀ hPi₀_ambient V W hV hW hVW
+
+/-- `adjoinGoodWith` extends `p` (literally on the old domain, via
+`adjoinGoodValueWith_eq_of_mem`). -/
+theorem FiniteProjectiveSystem.IdealPartialSection.adjoinGoodWith_le_self
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (T : Finset Ordinal.{0}) (hT : T ∈ p.domain)
+    (i₀ : Finset Ordinal.{0}) (hi₀_valid : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1)
+    (Pi₀ : CoherentGoodBranchPartial cR i₀)
+    (hPi₀_ambient : ∀ S (hS : S ∈ p.domain),
+      CoherentGoodBranchPartial.AmbientCompat (p.P S hS) Pi₀) :
+    p ≤ p.adjoinGoodWith T hT i₀ hi₀_valid Pi₀ hPi₀_ambient := by
+  refine ⟨fun V hV_p => ⟨V, hV_p, Finset.subset_union_left⟩, ?_⟩
+  intro V hi₁ hi₂
+  exact p.adjoinGoodValueWith_eq_of_mem i₀ hi₀_valid Pi₀ hPi₀_ambient V hi₂ hi₁
+
+/-- `adjoinGoodWith`'s domain contains the new index `i₀` (witnessed by the
+anchor `T`, since `i₀ ⊆ T ∪ i₀`). -/
+theorem FiniteProjectiveSystem.IdealPartialSection.adjoinGoodWith_contains
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (p : (coherentGoodBranchPartialSystem cR).IdealPartialSection)
+    (T : Finset Ordinal.{0}) (hT : T ∈ p.domain)
+    (i₀ : Finset Ordinal.{0}) (hi₀_valid : ∀ α ∈ i₀, α < Ordinal.omega.{0} 1)
+    (Pi₀ : CoherentGoodBranchPartial cR i₀)
+    (hPi₀_ambient : ∀ S (hS : S ∈ p.domain),
+      CoherentGoodBranchPartial.AmbientCompat (p.P S hS) Pi₀) :
+    i₀ ∈ (p.adjoinGoodWith T hT i₀ hi₀_valid Pi₀ hPi₀_ambient).domain :=
+  ⟨T, hT, Finset.subset_union_right⟩
+
 /-- **Existence of a Good witness net** via the Good projective system
 + ideal `HasPartialExtensions`. The bare `exists_coherentWitnessNet`
 can be rewired through `toCoherentWitnessNet`
