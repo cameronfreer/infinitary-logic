@@ -2582,37 +2582,23 @@ lemma large_set_exists_above
     Cardinal.mk_le_mk_of_subset hS_sub_Iio
   exact absurd (hS.trans hS_card_le) (not_le.mpr h_iio_card)
 
-/-- **[FRONTIER, nat-reindexed preparatory]** The nonempty frontier on
-a cofinal ℕ-reindex. This is the form that exposes the fusion/tree
-combinatorics cleanly — the real target for the next session. -/
-theorem exists_nonempty_iInter_stage_fibers_nat_reindex
-    (cR : (Fin 2 ↪o PairERSource) → Bool)
-    {α : Ordinal.{0}} (_hα : α < Ordinal.omega.{0} 1)
-    (F : PairERCoherentFamily cR α) (_hF_type : F.IsTypeCoherent)
-    (_e : ℕ → {β : Ordinal.{0} // β < α})
-    (_e_mono : ∀ {n m : ℕ}, n ≤ m → (_e n).1 ≤ (_e m).1)
-    (_e_cofinal : ∀ β : Ordinal.{0}, β < α → ∃ n : ℕ, β ≤ (_e n).1) :
-    Set.Nonempty (⋂ n : ℕ, validFiber cR
-      (F.stage (_e n).1 (_e n).2).head (F.stage (_e n).1 (_e n).2).type) := by
-  sorry
+/-! ### [REMOVED — false under `IsTypeCoherent` alone]
+`exists_nonempty_iInter_stage_fibers_nat_reindex` and the α-indexed
+`exists_nonempty_iInter_stage_fibers` formerly lived here, each concluding a
+nonempty stage-fiber intersection from `F.IsTypeCoherent` **alone**. That
+hypothesis is *insufficient at limit levels* — see the documented ω-pattern
+adversary below (the `limit_fusion_of_canonical_restrictions` negative result):
+an `IsTypeCoherent` family can have large finite stages but an empty ω-limit
+intersection. So those statements were unprovable as written (their bodies were
+`sorry`), and nothing consumed them.
 
-/-- **[FRONTIER, preparatory]** *Nonempty intersection of stage fibers*
-(α-indexed). Reduces to `exists_nonempty_iInter_stage_fibers_nat_reindex`
-via `iInter_stage_fibers_eq_iInter_nat_of_cofinal`. So once the nat-
-reindex version is proved, the α-version follows for free (given a
-cofinal ℕ-sequence, which exists for any α < ω_1). -/
-theorem exists_nonempty_iInter_stage_fibers
-    (cR : (Fin 2 ↪o PairERSource) → Bool)
-    {α : Ordinal.{0}} (hα : α < Ordinal.omega.{0} 1)
-    (F : PairERCoherentFamily cR α) (hF_type : F.IsTypeCoherent)
-    (e : ℕ → {β : Ordinal.{0} // β < α})
-    (e_mono : ∀ {n m : ℕ}, n ≤ m → (e n).1 ≤ (e m).1)
-    (e_cofinal : ∀ β : Ordinal.{0}, β < α → ∃ n : ℕ, β ≤ (e n).1) :
-    Set.Nonempty (⋂ (β : Ordinal.{0}) (hβα : β < α),
-      validFiber cR (F.stage β hβα).head (F.stage β hβα).type) := by
-  rw [iInter_stage_fibers_eq_iInter_nat_of_cofinal F hF_type e e_mono e_cofinal]
-  exact exists_nonempty_iInter_stage_fibers_nat_reindex cR hα F hF_type e
-    e_mono e_cofinal
+They are **superseded by the `PairERTypeTree` projection theorems**
+(`PairERTypeTree.toNonemptyIntersection` / `…Nat`, below), which derive the same
+nonempty intersection from genuine branching data (a realized `F.typeFn`). The
+true top-level intersection API — `exists_nonempty_iInter_stage_fibers`, now a
+thin wrapper over those projections — is defined just after the tree projections.
+The real fusion content is the *construction* of such a tree
+(`exists_realizedPairERTypeTree`, the named fusion target). -/
 
 /-- **Finite-prefix collapse**: every finite-prefix intersection
 `⋂ k<n, validFiber(F.stage (e k))` along a monotone `e` collapses to a
@@ -2998,6 +2984,22 @@ theorem PairERTypeTree.toNonemptyIntersectionNat
   rw [← iInter_stage_fibers_eq_iInter_nat_of_cofinal F hF_type e e_mono e_cofinal]
   exact T.toNonemptyIntersection hF_type h_realized
 
+/-- **`exists_nonempty_iInter_stage_fibers`** (true intersection API). The
+nonempty stage-fiber intersection, now derived from genuine branching data.
+**Replaces** the former `IsTypeCoherent`-only statement (false at limits — see
+the REMOVED note above): the added input is a `PairERTypeTree F` with a realized
+`F.typeFn`. Thin wrapper over `PairERTypeTree.toNonemptyIntersection`; the real
+fusion content is *constructing* such a tree (`exists_realizedPairERTypeTree`,
+the named fusion target). -/
+theorem exists_nonempty_iInter_stage_fibers
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    {F : PairERCoherentFamily cR α} (T : PairERTypeTree F)
+    (hF_type : F.IsTypeCoherent)
+    (h_realized : (T.realizers F.typeFn).Nonempty) :
+    Set.Nonempty (⋂ (β : Ordinal.{0}) (hβα : β < α),
+      validFiber cR (F.stage β hβα).head (F.stage β hβα).type) :=
+  T.toNonemptyIntersection hF_type h_realized
+
 /-- **Bridge to `IsCanonicalTypeCoherent`**: the tree provides exactly
 the missing data. Given a `PairERTypeTree F`, `F.IsTypeCoherent`, and
 that `F.typeFn` is a realized branch in the tree, we get
@@ -3078,6 +3080,35 @@ theorem PairERTypeTree.exists_large_realized_branch
   calc Order.succ (Cardinal.beth.{0} 1)
       ≤ Cardinal.mk (f ⁻¹' {b}) := hb_large
     _ ≤ Cardinal.mk (T.realizers b) := Cardinal.mk_le_of_injective h_inj
+
+/-- **[FUSION TARGET — the genuine Erdős–Rado limit fusion]**
+`exists_realizedPairERTypeTree`: at every countable level `α`, there *exists* a
+coherent family of that length carrying a **realized** type-tree — a
+`PairERTypeTree F` whose committed branch `F.typeFn` has a nonempty realizer set.
+
+This is the single open mathematical frontier the witness-net chain reduces to
+(see `goodOneIndexFixedCarrierCompactness_holds`). Note the **existential** form:
+the universal-over-`IsTypeCoherent` claim (the removed
+`exists_nonempty_iInter_stage_fibers`) is *false* — the ω-pattern adversary gives
+an `IsTypeCoherent` family whose committed `typeFn` is a 0-realizer minority at
+the limit even though *some* branch is large (`exists_large_validFiber_at_level`
+gives a large τ, but `F.typeFn` need not be it). The content here is that a
+*good* family — one whose committed branch is the large/realized one coherently
+across all levels — can be built. That requires the global branch pigeonhole
+(`exists_large_realized_branch`) threaded through the successor/limit recursion
+with cross-level coherent branch selection.
+
+Once proved, it feeds `toNonemptyIntersection` / `toIsCanonicalTypeCoherent`
+directly. **The exact form the witness-net chain needs (prescribed lower data /
+extension form) is to be fixed when planning the proof** — this existential
+statement names the core; the prescribed-extension refinement is the next design
+step (after the `succWithChoice.inner_consistent` warm-up). -/
+theorem exists_realizedPairERTypeTree
+    (cR : (Fin 2 ↪o PairERSource) → Bool)
+    {α : Ordinal.{0}} (_hα : α < Ordinal.omega.{0} 1) :
+    ∃ (F : PairERCoherentFamily cR α) (T : PairERTypeTree F),
+      F.IsTypeCoherent ∧ (T.realizers F.typeFn).Nonempty := by
+  sorry
 
 /-- **`toLargeValidFiber`**: once the tree has a branch `b` with
 `succ ℶ_1`-many realizers, and `b = F.typeFn`, project to
@@ -14284,8 +14315,8 @@ all (possibly infinitely many) prescribed demands, from finite satisfiability.
 
 **This is NOT an independent compactness theorem.** Phase-A diagnosis (see below)
 shows it is *downstream of the single deep fusion target*:
-- `exists_nonempty_iInter_stage_fibers` (~2604) — nonempty stage-fiber
-  intersection at a countable limit; and
+- `exists_realizedPairERTypeTree` — the genuine limit fusion (existence of a
+  coherent family carrying a *realized* type-tree); and
 - `PairERGoodChain.succWithChoice`'s `inner_consistent` (~8787) — the
   prescribed-successor Good-adjacency step.
 
@@ -14293,7 +14324,9 @@ Closing those two closes both this principle (via the bridge theorem
 `goodOneIndexFixedCarrierCompactness_of_uniformCommonWitness`) and the
 Good-chain construction `exists_coherentGoodBranchPartial`. They are the *same*
 frontier, not orthogonal ones; do not attack this statement directly — attack
-the fusion target.
+the fusion target. (The *universal*-over-`IsTypeCoherent` intersection claim is
+false — see the REMOVED note at the former `exists_nonempty_iInter_stage_fibers`;
+the realized-tree existence is the correct, true target.)
 
 **Reduction map (why they coincide).** The `AmbientCompat` bookkeeping is not the
 content: the bridge theorem `_of_uniformCommonWitness` proves (sorry-free in its
@@ -14307,10 +14340,10 @@ essentially `goodAt M : PairERGoodChain cR M`; its head `M.ToType ↪o PairERSou
 is forced on levels *seen* by some `p.P S`, free elsewhere. Assembling it =
 `F.prefix` for the induced `PairERCoherentFamily F` + a point in
 `validFiber cR F.prefix F.typeFn`, which by
-`PairERCoherentFamily.validFiber_prefix_typeFn_eq_iInter` is exactly the
-intersection `exists_nonempty_iInter_stage_fibers` provides — while choosing the
-free coordinates and discharging Good-adjacency is `succWithChoice`'s
-`inner_consistent` itself. -/
+`PairERCoherentFamily.validFiber_prefix_typeFn_eq_iInter` is exactly a *realized*
+type-tree for `F` (`exists_realizedPairERTypeTree` →
+`PairERTypeTree.toNonemptyIntersection`) — while choosing the free coordinates and
+discharging Good-adjacency is `succWithChoice`'s `inner_consistent` itself. -/
 theorem goodOneIndexFixedCarrierCompactness_holds
     (cR : (Fin 2 ↪o PairERSource) → Bool) :
     GoodOneIndexFixedCarrierCompactness cR := by
@@ -15471,13 +15504,17 @@ exists_coherentGoodWitnessNet
   + exists_coherentGoodBranchPartial                  [downstream of FUSION TARGET]
 
 FUSION TARGET (the single open frontier both arrows above reduce to):
-  exists_nonempty_iInter_stage_fibers (~2604)         [sorry]
-    + PairERGoodChain.succWithChoice.inner_consistent (~8787)  [sorry]
+  exists_realizedPairERTypeTree                       [sorry — the limit fusion]
+    + PairERGoodChain.succWithChoice.inner_consistent (~8787)  [sorry — Good adjacency]
 ```
 Phase-A diagnosis collapsed the two former "independent" sorries
 (`goodOneIndexFixedCarrierCompactness_holds`, `exists_coherentGoodBranchPartial`)
 onto this one fusion target; see the docstring of the former for the reduction
-map. The next theorem project is the fusion target itself, not either consumer.
+map. The next theorem project is the fusion target itself, not either consumer:
+first the local `succWithChoice.inner_consistent` warm-up, then
+`exists_realizedPairERTypeTree`. (The former `exists_nonempty_iInter_stage_fibers`
+was false under `IsTypeCoherent` alone — removed; the realized-tree existence is
+the correct target, feeding `PairERTypeTree.toNonemptyIntersection`.)
 **Off-chain / legacy (still `sorry`, candidates for pruning):**
 `goodIdealGlobalization`, `goodIdealCompactness` (ultralimit route —
 eventual-constancy dead end); `GoodPrescription.finite_satisfiable`,
