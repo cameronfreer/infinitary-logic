@@ -14278,55 +14278,39 @@ theorem goodOneIndexFixedCarrierCompactness_of_uniformCommonWitness
   obtain ⟨Pi₀, hPi₀⟩ := H p i₀ hi₀
   exact ⟨Pi₀, ambientCompat_of_uniformCommonWitness hPi₀⟩
 
-/-- **[ACTIVE FRONTIER — fixed-carrier compactness]**
-`goodOneIndexFixedCarrierCompactness_holds`: the genuine remaining compactness
-content (one CGBP on the fixed `i₀` satisfying all demands, from finite
-satisfiability). Needs a real inverse-limit argument over the carrier `i₀` (the
-coordinate value spaces are infinite — see `GoodOneIndexFixedCarrierCompactness`).
-This is the single live (IPS-extension) frontier under the witness-net chain;
-the only other open sorry on the chain is the deeper, orthogonal
-`exists_coherentGoodBranchPartial` (Good-chain construction).
+/-- **[DOWNSTREAM OF THE FUSION TARGET — not an independent frontier]**
+`goodOneIndexFixedCarrierCompactness_holds`: one CGBP on the fixed `i₀` satisfying
+all (possibly infinitely many) prescribed demands, from finite satisfiability.
 
-**Two plausible proof routes** (no commitment yet):
-1. *Topological/product compactness over the carrier coordinates* — if the
-   per-coordinate value spaces (`α.ToType ↪o PairERSource` and `α.ToType → Bool`,
-   for `α ∈ i₀`) can be given compact topologies with the constraints closed,
-   the witness is a point in a nonempty intersection of closeds in a compact
-   product.
-2. *Direct inverse-limit / Zorn over finite coordinate restrictions* — order
-   partial witnesses by coordinate-restriction and take a maximal/limit element,
-   using finite consistency at each finite restriction.
+**This is NOT an independent compactness theorem.** Phase-A diagnosis (see below)
+shows it is *downstream of the single deep fusion target*:
+- `exists_nonempty_iInter_stage_fibers` (~2604) — nonempty stage-fiber
+  intersection at a countable limit; and
+- `PairERGoodChain.succWithChoice`'s `inner_consistent` (~8787) — the
+  prescribed-successor Good-adjacency step.
 
-**If attacking:** first prove a *finite-coordinate restriction* version —
-restrict each `α.ToType` (`α ∈ i₀`) to a finite subset of coordinates. That
-exposes the true compactness shape before committing to a topology.
+Closing those two closes both this principle (via the bridge theorem
+`goodOneIndexFixedCarrierCompactness_of_uniformCommonWitness`) and the
+Good-chain construction `exists_coherentGoodBranchPartial`. They are the *same*
+frontier, not orthogonal ones; do not attack this statement directly — attack
+the fusion target.
 
-**Phase-A diagnostic finding (reduction map).** The `AmbientCompat` bookkeeping
-is *not* the content: `goodOneIndexFixedCarrierCompactness_of_uniformCommonWitness`
-proves (sorry-free in its body) that this principle follows from a
-*uniform-common-witness* existence principle `H` — one `Pi₀` on `i₀` that
-amalgamates, through a shared finite super-carrier, with the whole directed
-family `{p.P S}` (`GoodUniformCommonWitness`). The finite-satisfiability
-hypothesis is unused there. So the genuine content is exactly the existence of
-that uniform `Pi₀`, i.e. the *coherent limit* of `{p.P S}` over `i₀`'s levels.
-
-That limit is the same fusion object as the rest of the chain. With `M` the
-maximum of the finite `i₀` (`M < ω₁`, so `M.ToType` is countable), a witness is
-essentially `goodAt M : PairERGoodChain cR M`, whose head `M.ToType ↪o
-PairERSource` is forced coordinatewise on levels *seen* by some `p.P S` and free
-elsewhere. Assembling it = `F.prefix` for the `PairERCoherentFamily F` induced by
-`{p.P S}` together with a point in `validFiber cR F.prefix F.typeFn`, which by
-`PairERCoherentFamily.validFiber_prefix_typeFn_eq_iInter` is exactly the nonempty
-stage-fiber intersection `exists_nonempty_iInter_stage_fibers` (~2604) provides.
-But choosing the free coordinates and discharging Good-adjacency is the fusion
-construction itself (`PairERGoodChain.succWithChoice`'s `inner_consistent`, the
-sorry underlying `exists_coherentGoodBranchPartial`).
-
-**Conclusion:** this is *not an independent frontier*. It is another presentation
-of the single deep fusion frontier; closing `exists_nonempty_iInter_stage_fibers`
-plus the `succWithChoice` `inner_consistent` step closes both
-`exists_coherentGoodBranchPartial` and — via `_of_uniformCommonWitness` — this
-principle. The two open chain sorries collapse to that one fusion target. -/
+**Reduction map (why they coincide).** The `AmbientCompat` bookkeeping is not the
+content: the bridge theorem `_of_uniformCommonWitness` proves (sorry-free in its
+body) that the principle follows from a *uniform-common-witness* existence
+principle `H` — one `Pi₀` on `i₀` amalgamating, through a shared finite
+super-carrier, with the whole directed family `{p.P S}` (`GoodUniformCommonWitness`;
+the finite-satisfiability hypothesis is unused). So the genuine content is the
+existence of that uniform `Pi₀` = the *coherent limit* of `{p.P S}` over `i₀`'s
+levels. With `M = max i₀` (`M < ω₁`, so `M.ToType` countable), a witness is
+essentially `goodAt M : PairERGoodChain cR M`; its head `M.ToType ↪o PairERSource`
+is forced on levels *seen* by some `p.P S`, free elsewhere. Assembling it =
+`F.prefix` for the induced `PairERCoherentFamily F` + a point in
+`validFiber cR F.prefix F.typeFn`, which by
+`PairERCoherentFamily.validFiber_prefix_typeFn_eq_iInter` is exactly the
+intersection `exists_nonempty_iInter_stage_fibers` provides — while choosing the
+free coordinates and discharging Good-adjacency is `succWithChoice`'s
+`inner_consistent` itself. -/
 theorem goodOneIndexFixedCarrierCompactness_holds
     (cR : (Fin 2 ↪o PairERSource) → Bool) :
     GoodOneIndexFixedCarrierCompactness cR := by
@@ -15479,12 +15463,21 @@ exists_coherentGoodWitnessNet
   ← goodIdealExtensionCompactness                     (one-index path, rewired)
   ← goodIdealOneIndexCompactness                      (derived)
   ← goodIdealOneIndexCompactness_of_fixedCarrierCompactness  (reduction, proved)
-  ← goodOneIndexFixedCarrierCompactness_holds         [ACTIVE FRONTIER, sorry]
+  ← goodOneIndexFixedCarrierCompactness_holds         [downstream of FUSION TARGET]
+      ← goodOneIndexFixedCarrierCompactness_of_uniformCommonWitness  (bridge, proved)
   + goodIdealOneIndex_finite_consistent               (finite satisfiability, proved)
   + adjoinGoodWith / _le_self / _contains             (packaging)
   + coherentGoodBranchPartial_amalgamate_from_common_upper  (finite consistency)
-  + exists_coherentGoodBranchPartial                  [deeper system frontier, sorry]
+  + exists_coherentGoodBranchPartial                  [downstream of FUSION TARGET]
+
+FUSION TARGET (the single open frontier both arrows above reduce to):
+  exists_nonempty_iInter_stage_fibers (~2604)         [sorry]
+    + PairERGoodChain.succWithChoice.inner_consistent (~8787)  [sorry]
 ```
+Phase-A diagnosis collapsed the two former "independent" sorries
+(`goodOneIndexFixedCarrierCompactness_holds`, `exists_coherentGoodBranchPartial`)
+onto this one fusion target; see the docstring of the former for the reduction
+map. The next theorem project is the fusion target itself, not either consumer.
 **Off-chain / legacy (still `sorry`, candidates for pruning):**
 `goodIdealGlobalization`, `goodIdealCompactness` (ultralimit route —
 eventual-constancy dead end); `GoodPrescription.finite_satisfiable`,
