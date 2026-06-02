@@ -14477,19 +14477,21 @@ theorem goodOneIndexFixedCarrierCompactness_of_uniformCommonWitness
 all (possibly infinitely many) prescribed demands, from finite satisfiability.
 
 **This is NOT an independent compactness theorem.** Phase-A diagnosis (see below)
-shows it is *downstream of the single deep fusion target*:
-- `exists_realizedPairERTypeTree` — the genuine limit fusion (existence of a
-  coherent family carrying a *realized* type-tree); and
-- `PairERGoodChain.succWithChoice`'s `inner_consistent` (~8787) — the
-  prescribed-successor Good-adjacency step.
-
-Closing those two closes both this principle (via the bridge theorem
-`goodOneIndexFixedCarrierCompactness_of_uniformCommonWitness`) and the
-Good-chain construction `exists_coherentGoodBranchPartial`. They are the *same*
-frontier, not orthogonal ones; do not attack this statement directly — attack
-the fusion target. (The *universal*-over-`IsTypeCoherent` intersection claim is
-false — see the REMOVED note at the former `exists_nonempty_iInter_stage_fibers`;
-the realized-tree existence is the correct, true target.)
+shows it is *downstream of the single deep fusion target*
+`exists_realizedPairERTypeTree` — the genuine limit fusion (existence of a
+coherent family carrying a *realized* type-tree). Closing it yields a
+`CoherentMajorityBranch` (`exists_coherentMajorityBranch`), which lets the
+transfinite extension route through the *proved* `PairERChain.extendToExtOfBranch`
+instead of the open `extendToExt` (~1595) — closing the Good-chain construction
+`exists_coherentGoodBranchPartial`, and hence this principle (via the bridge
+theorem `goodOneIndexFixedCarrierCompactness_of_uniformCommonWitness`). They are
+the *same* frontier, not orthogonal; do not attack this statement directly —
+attack the fusion target. (The *universal*-over-`IsTypeCoherent` intersection
+claim is false — see the REMOVED note at the former
+`exists_nonempty_iInter_stage_fibers`; the realized-tree existence is the correct,
+true target. The prescribed-successor primitive `PairERGoodChain.succWithChoice`,
+formerly a separate sorry, is now **proved** — its `b` is free, no
+`b`-consistency side condition is needed.)
 
 **Reduction map (why they coincide).** The `AmbientCompat` bookkeeping is not the
 content: the bridge theorem `_of_uniformCommonWitness` proves (sorry-free in its
@@ -14505,8 +14507,9 @@ is forced on levels *seen* by some `p.P S`, free elsewhere. Assembling it =
 `validFiber cR F.prefix F.typeFn`, which by
 `PairERCoherentFamily.validFiber_prefix_typeFn_eq_iInter` is exactly a *realized*
 type-tree for `F` (`exists_realizedPairERTypeTree` →
-`PairERTypeTree.toNonemptyIntersection`) — while choosing the free coordinates and
-discharging Good-adjacency is `succWithChoice`'s `inner_consistent` itself. -/
+`PairERTypeTree.toNonemptyIntersection`). Good-adjacency at the prescribed
+successors is already discharged by the now-proved
+`PairERGoodChain.succWithChoice`. -/
 theorem goodOneIndexFixedCarrierCompactness_holds
     (cR : (Fin 2 ↪o PairERSource) → Bool) :
     GoodOneIndexFixedCarrierCompactness cR := by
@@ -15665,19 +15668,21 @@ exists_coherentGoodWitnessNet
   + adjoinGoodWith / _le_self / _contains             (packaging)
   + coherentGoodBranchPartial_amalgamate_from_common_upper  (finite consistency)
   + exists_coherentGoodBranchPartial                  [downstream of FUSION TARGET]
+      ← CoherentBranchApprox.extendToChain ← PairERChain.extendToExt (~1595) [sorry]
+          ⟹ replace by extendToExtOfBranch B once a CoherentMajorityBranch B exists
 
 FUSION TARGET (the single open frontier both arrows above reduce to):
   exists_realizedPairERTypeTree                       [sorry — the limit fusion]
-    + PairERGoodChain.succWithChoice.inner_consistent (~8787)  [sorry — Good adjacency]
+    ⟹ exists_coherentMajorityBranch ⟹ extendToExtOfBranch retires the extendToExt sorry
 ```
 Phase-A diagnosis collapsed the two former "independent" sorries
 (`goodOneIndexFixedCarrierCompactness_holds`, `exists_coherentGoodBranchPartial`)
 onto this one fusion target; see the docstring of the former for the reduction
-map. The next theorem project is the fusion target itself, not either consumer:
-first the local `succWithChoice.inner_consistent` warm-up, then
-`exists_realizedPairERTypeTree`. (The former `exists_nonempty_iInter_stage_fibers`
-was false under `IsTypeCoherent` alone — removed; the realized-tree existence is
-the correct target, feeding `PairERTypeTree.toNonemptyIntersection`.)
+map. The next theorem project is the fusion target itself, not either consumer.
+The prescribed-successor warm-up `PairERGoodChain.succWithChoice` is now **proved**
+(its `b` is free). (The former `exists_nonempty_iInter_stage_fibers` was false
+under `IsTypeCoherent` alone — removed; the realized-tree existence is the correct
+target, feeding `PairERTypeTree.toNonemptyIntersection`.)
 **Off-chain / legacy (still `sorry`, candidates for pruning):**
 `goodIdealGlobalization`, `goodIdealCompactness` (ultralimit route —
 eventual-constancy dead end); `GoodPrescription.finite_satisfiable`,
