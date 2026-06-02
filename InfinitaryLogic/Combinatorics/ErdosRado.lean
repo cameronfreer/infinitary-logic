@@ -8665,6 +8665,129 @@ theorem PairERChain.succ_type_initialSeg
   apply Subtype.ext
   exact h_typein_xs
 
+/-- **Projection**: the head of `succWithChoice` is `extendHead` of the
+prescribed `y`. (The proof argument to `extendHead` is a Prop, hence
+irrelevant.) -/
+lemma PairERChain.succWithChoice_head_eq
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (s : PairERChain cR α) (y : PairERSource) (b : Bool)
+    (hy_mem : y ∈ validFiber cR s.head s.type)
+    (hlarge : Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (validFiberExtend cR s.head s.type y b)) :
+    (s.succWithChoice y b hy_mem hlarge).head
+      = extendHead s.head y (fun z => (hy_mem z).1) := rfl
+
+/-- **Projection**: the type of `succWithChoice` is `extendType` of the
+prescribed `b`. -/
+lemma PairERChain.succWithChoice_type_eq
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (s : PairERChain cR α) (y : PairERSource) (b : Bool)
+    (hy_mem : y ∈ validFiber cR s.head s.type)
+    (hlarge : Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (validFiberExtend cR s.head s.type y b)) :
+    (s.succWithChoice y b hy_mem hlarge).type = extendType s.type b := rfl
+
+/-- **`succWithChoice_head_top`**: the head at the new top `⊤` is the
+prescribed `y`. -/
+lemma PairERChain.succWithChoice_head_top
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (s : PairERChain cR α) (y : PairERSource) (b : Bool)
+    (hy_mem : y ∈ validFiber cR s.head s.type)
+    (hlarge : Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (validFiberExtend cR s.head s.type y b)) :
+    (s.succWithChoice y b hy_mem hlarge).head (⊤ : (Order.succ α).ToType) = y := by
+  classical
+  rw [s.succWithChoice_head_eq y b hy_mem hlarge]
+  simp [extendHead]
+
+/-- **`succWithChoice_head_initialSeg`**: on lifted α-elements the head
+agrees with `s.head`. Parallel of `succ_head_initialSeg`. -/
+theorem PairERChain.succWithChoice_head_initialSeg
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (s : PairERChain cR α) (y : PairERSource) (b : Bool)
+    (hy_mem : y ∈ validFiber cR s.head s.type)
+    (hlarge : Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (validFiberExtend cR s.head s.type y b)) (x : α.ToType) :
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder (Order.succ α).ToType (· < ·) := isWellOrder_lt
+    (s.succWithChoice y b hy_mem hlarge).head ((Ordinal.initialSegToType
+        (Order.le_succ α)).toOrderEmbedding x) = s.head x := by
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder (Order.succ α).ToType (· < ·) := isWellOrder_lt
+  have h_typein_xs : Ordinal.typein (α := (Order.succ α).ToType) (· < ·)
+      ((Ordinal.initialSegToType (Order.le_succ α)).toOrderEmbedding x) =
+      Ordinal.typein (α := α.ToType) (· < ·) x :=
+    Ordinal.typein_apply _ x
+  have h_typein_x_lt : Ordinal.typein (α := α.ToType) (· < ·) x < α := by
+    have := Ordinal.typein_lt_type (· < ·) x
+    rwa [Ordinal.type_toType] at this
+  have h_typein_top : Ordinal.typein
+      (α := (Order.succ α).ToType) (· < ·)
+      (⊤ : (Order.succ α).ToType) = α := by
+    rw [show (⊤ : (Order.succ α).ToType) =
+        Ordinal.enum (α := (Order.succ α).ToType) (· < ·)
+          ⟨α, (Ordinal.type_toType _).symm ▸ Order.lt_succ α⟩
+      from Ordinal.enum_succ_eq_top.symm, Ordinal.typein_enum]
+  have hxs_ne_top :
+      (Ordinal.initialSegToType (Order.le_succ α)).toOrderEmbedding x ≠
+      (⊤ : (Order.succ α).ToType) := by
+    intro h_eq
+    have : α = Ordinal.typein (· < ·) x :=
+      h_typein_top.symm.trans (h_eq ▸ h_typein_xs)
+    exact absurd this.symm (ne_of_lt h_typein_x_lt)
+  rw [s.succWithChoice_head_eq y b hy_mem hlarge]
+  simp only [extendHead, OrderEmbedding.coe_ofStrictMono, dif_neg hxs_ne_top]
+  congr 1
+  have hrec := Ordinal.enum_typein (α := α.ToType) (· < ·) x
+  refine Eq.trans ?_ hrec
+  congr 1
+  apply Subtype.ext
+  exact h_typein_xs
+
+/-- **`succWithChoice_type_initialSeg`**: on lifted α-elements the type
+agrees with `s.type`. Parallel of `succ_type_initialSeg`. -/
+theorem PairERChain.succWithChoice_type_initialSeg
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {α : Ordinal.{0}}
+    (s : PairERChain cR α) (y : PairERSource) (b : Bool)
+    (hy_mem : y ∈ validFiber cR s.head s.type)
+    (hlarge : Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (validFiberExtend cR s.head s.type y b)) (x : α.ToType) :
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder (Order.succ α).ToType (· < ·) := isWellOrder_lt
+    (s.succWithChoice y b hy_mem hlarge).type ((Ordinal.initialSegToType
+        (Order.le_succ α)).toOrderEmbedding x) = s.type x := by
+  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder (Order.succ α).ToType (· < ·) := isWellOrder_lt
+  have h_typein_xs : Ordinal.typein (α := (Order.succ α).ToType) (· < ·)
+      ((Ordinal.initialSegToType (Order.le_succ α)).toOrderEmbedding x) =
+      Ordinal.typein (α := α.ToType) (· < ·) x :=
+    Ordinal.typein_apply _ x
+  have h_typein_x_lt : Ordinal.typein (α := α.ToType) (· < ·) x < α := by
+    have := Ordinal.typein_lt_type (· < ·) x
+    rwa [Ordinal.type_toType] at this
+  have h_typein_top : Ordinal.typein
+      (α := (Order.succ α).ToType) (· < ·)
+      (⊤ : (Order.succ α).ToType) = α := by
+    rw [show (⊤ : (Order.succ α).ToType) =
+        Ordinal.enum (α := (Order.succ α).ToType) (· < ·)
+          ⟨α, (Ordinal.type_toType _).symm ▸ Order.lt_succ α⟩
+      from Ordinal.enum_succ_eq_top.symm, Ordinal.typein_enum]
+  have hxs_ne_top :
+      (Ordinal.initialSegToType (Order.le_succ α)).toOrderEmbedding x ≠
+      (⊤ : (Order.succ α).ToType) := by
+    intro h_eq
+    have : α = Ordinal.typein (· < ·) x :=
+      h_typein_top.symm.trans (h_eq ▸ h_typein_xs)
+    exact absurd this.symm (ne_of_lt h_typein_x_lt)
+  rw [s.succWithChoice_type_eq y b hy_mem hlarge]
+  simp only [extendType, dif_neg hxs_ne_top]
+  congr 1
+  have hrec := Ordinal.enum_typein (α := α.ToType) (· < ·) x
+  refine Eq.trans ?_ hrec
+  congr 1
+  apply Subtype.ext
+  exact h_typein_xs
+
 /-- **Helper for the dichotomy**: any element `z` of
 `(Order.succ α).ToType` with `typein z < α` is the lift of the
 corresponding α-element. Proof uses `Ordinal.typein_inj`. -/
@@ -8815,7 +8938,47 @@ noncomputable def PairERGoodChain.succWithChoice
         s.toPairERChain.type y b)) :
     PairERGoodChain cR (Order.succ α) where
   toPairERChain := s.toPairERChain.succWithChoice y b hy_mem hlarge
-  inner_consistent := by sorry
+  inner_consistent {x' y'} hxy' := by
+    classical
+    haveI : IsWellOrder (Order.succ α).ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    rcases OrderSucc.eq_initialSeg_or_top x' with ⟨x_α, hx_eq⟩ | hx_top
+    · rcases OrderSucc.eq_initialSeg_or_top y' with ⟨y_α, hy_eq⟩ | hy_top
+      · -- x' = lifted x_α, y' = lifted y_α: reduce to `s.inner_consistent`.
+        subst hx_eq; subst hy_eq
+        have hxα_lt_yα : x_α < y_α :=
+          (Ordinal.initialSegToType (Order.le_succ α)).toOrderEmbedding.lt_iff_lt.mp hxy'
+        have h_inner := s.inner_consistent hxα_lt_yα
+        rw [s.toPairERChain.succWithChoice_type_initialSeg y b hy_mem hlarge]
+        rw [← h_inner]
+        congr 1
+        apply RelEmbedding.ext
+        intro i
+        match i with
+        | ⟨0, _⟩ =>
+            simp only [pairEmbed, OrderEmbedding.coe_ofStrictMono]
+            exact s.toPairERChain.succWithChoice_head_initialSeg y b hy_mem hlarge x_α
+        | ⟨1, _⟩ =>
+            simp only [pairEmbed, OrderEmbedding.coe_ofStrictMono]
+            exact s.toPairERChain.succWithChoice_head_initialSeg y b hy_mem hlarge y_α
+      · -- x' = lifted x_α, y' = ⊤: the new top's head is `y`; use `hy_mem`.
+        subst hx_eq; subst hy_top
+        rw [s.toPairERChain.succWithChoice_type_initialSeg y b hy_mem hlarge]
+        obtain ⟨_, h_cR⟩ := hy_mem x_α
+        rw [← h_cR]
+        congr 1
+        apply RelEmbedding.ext
+        intro i
+        match i with
+        | ⟨0, _⟩ =>
+            simp only [pairEmbed, OrderEmbedding.coe_ofStrictMono]
+            exact s.toPairERChain.succWithChoice_head_initialSeg y b hy_mem hlarge x_α
+        | ⟨1, _⟩ =>
+            simp only [pairEmbed, OrderEmbedding.coe_ofStrictMono]
+            exact s.toPairERChain.succWithChoice_head_top y b hy_mem hlarge
+    · -- x' = ⊤: nothing lies strictly above ⊤.
+      subst hx_top
+      exact absurd hxy' (not_lt_of_ge le_top)
 
 /-- **`PairERGoodChain.limitWithType`**: limit-stage constructor for
 `PairERGoodChain` with explicit inner-consistency hypothesis. The
