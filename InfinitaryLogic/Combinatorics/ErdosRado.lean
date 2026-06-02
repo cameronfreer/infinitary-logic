@@ -4283,6 +4283,61 @@ noncomputable def PairERTypeTree.universal
         exact Subtype.ext h2
     exact h_above_large.trans h_inj
 
+/-- **[FUSION — successor case, stage 1]** `universal_realized_of_succ`:
+for a type-coherent family at a **successor** length `succ β`, the universal
+tree's committed branch `F.typeFn` is *realized* (nonempty realizers). This is
+the successor step of `exists_realizedPairERTypeTree`, and it is **sorry-clean**:
+at successors realized-ness is automatic via `isCanonicalTypeCoherent_of_succ`
+(no limit fusion). The cofinal ℕ-sequence is the trivial constant one at the top
+predecessor `β` (every `γ < succ β` satisfies `γ ≤ β`).
+
+Notably, no *input* realized-ness is needed — a successor family is
+unconditionally realized once type-coherent. So the eventual successor
+constructor `exists_realizedPairERTypeTree (succ β)` does not thread the
+predecessor's realized witness; it only needs an `IsTypeCoherent` family at
+`succ β` (e.g. via `extendAtSucc`, which preserves `IsTypeCoherent`). The genuine
+fusion content is entirely in the limit case. -/
+lemma PairERTypeTree.universal_realized_of_succ
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {β : Ordinal.{0}}
+    (hβ : Order.succ β < Ordinal.omega.{0} 1)
+    (F : PairERCoherentFamily cR (Order.succ β))
+    (hF_type : F.IsTypeCoherent) :
+    ((PairERTypeTree.universal hβ F).realizers F.typeFn).Nonempty := by
+  show (validFiber cR F.prefix F.typeFn).Nonempty
+  rw [F.validFiber_prefix_typeFn_eq_iInter hF_type]
+  -- The top stage's fiber (at `β`) is contained in the whole intersection
+  -- (descending nestedness) and is large, hence nonempty.
+  have h_sub : validFiber cR (F.stage β (Order.lt_succ β)).head
+        (F.stage β (Order.lt_succ β)).type ⊆
+      ⋂ (γ : Ordinal.{0}) (hγ : γ < Order.succ β),
+        validFiber cR (F.stage γ hγ).head (F.stage γ hγ).type := by
+    intro y hy
+    simp only [Set.mem_iInter]
+    intro γ hγ
+    rcases lt_or_eq_of_le (Order.lt_succ_iff.mp hγ) with hγ_lt | hγ_eq
+    · exact F.validFiber_mono hF_type hγ_lt (Order.lt_succ β) hy
+    · subst hγ_eq; exact hy
+  have h_pos : (0 : Cardinal.{0}) < Cardinal.mk
+      (validFiber cR (F.stage β (Order.lt_succ β)).head
+        (F.stage β (Order.lt_succ β)).type) :=
+    (Cardinal.aleph0_pos.trans_le isRegular_succ_beth_one.aleph0_le).trans_le
+      (F.stage β (Order.lt_succ β)).large
+  obtain ⟨⟨z, hz⟩⟩ := Cardinal.mk_ne_zero_iff.mp h_pos.ne'
+  exact ⟨z, h_sub hz⟩
+
+/-- **Successor inductive step of `exists_realizedPairERTypeTree`** (sorry-clean):
+any type-coherent family at a *successor* length admits a realized tree (the
+universal one). This is the easy half of the fusion induction; the genuine
+content is the limit case. -/
+lemma exists_realizedPairERTypeTree_of_succ
+    {cR : (Fin 2 ↪o PairERSource) → Bool} {β : Ordinal.{0}}
+    (hβ : Order.succ β < Ordinal.omega.{0} 1)
+    (F : PairERCoherentFamily cR (Order.succ β))
+    (hF_type : F.IsTypeCoherent) :
+    ∃ T : PairERTypeTree F, (T.realizers F.typeFn).Nonempty :=
+  ⟨PairERTypeTree.universal hβ F,
+    PairERTypeTree.universal_realized_of_succ hβ F hF_type⟩
+
 /-- **Commit-coherence predicate** on a `PairERTypeTree`: every branch
 in `T.branches` agrees with `F.typeVal` at every position
 `δ < α`. This is the structural invariant needed to make
