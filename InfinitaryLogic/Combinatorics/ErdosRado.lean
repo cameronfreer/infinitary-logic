@@ -4782,10 +4782,6 @@ structure CoherentMajorityBranch
     haveI : IsWellOrder (Order.succ γ).ToType (· < ·) := isWellOrder_lt
     prefixAt (Order.succ γ) hsγ (⊤ : (Order.succ γ).ToType) ∈
       validFiber cR (prefixAt γ hγ) (branch γ hγ)
-  /-- Largeness: the validFiber at each level has size ≥ succ ℶ_1. -/
-  large : ∀ (α : Ordinal.{0}) (hα : α < Ordinal.omega.{0} 1),
-    Order.succ (Cardinal.beth.{0} 1) ≤
-      Cardinal.mk (validFiber cR (prefixAt α hα) (branch α hα))
 
 /-! ### Finite approximations: `CoherentBranchApprox`
 
@@ -16162,7 +16158,6 @@ theorem exists_coherentMajorityBranch_of_finitePartials
     prefix_restrict := ?_
     branch_restrict := ?_
     top_in_validFiber := ?_
-    large := ?_
   }⟩
   · -- prefix_restrict: ∀ β ≤ α, ∀ x, prefixAt α _ (lift x) = prefixAt β _ x.
     intro β α hβα hβ hα x
@@ -16231,27 +16226,14 @@ theorem exists_coherentMajorityBranch_of_finitePartials
       rw [Option.get_of_eq_some _ (h_br γ hγ_in)]
     rw [h_get_pref_sγ, h_get_pref_γ, h_get_br_γ]
     exact P_S.top_in_validFiber γ hγ_in hsγ_in
-  · -- large.
-    intro α hα
-    have hSat : SatisfiesFinite A ({α} : Finset Ordinal.{0}) :=
-      hA {α} (fun β hβ => Finset.mem_singleton.mp hβ ▸ hα)
-    obtain ⟨hS_S, P_S, h_pref, h_br⟩ := hSat
-    have hα_in : α ∈ ({α} : Finset Ordinal.{0}) := Finset.mem_singleton.mpr rfl
-    have h_get_pref : (A.1 α hα).get (h_some_prefix α hα) =
-        P_S.prefixAt α hα_in := by
-      rw [Option.get_of_eq_some _ (h_pref α hα_in)]
-    have h_get_br : (A.2 α hα).get (h_some_branch α hα) =
-        P_S.branch α hα_in := by
-      rw [Option.get_of_eq_some _ (h_br α hα_in)]
-    rw [h_get_pref, h_get_br]
-    exact P_S.large α hα_in
 
-/-- **[CONSOLIDATED LIMIT-FUSION TARGET]** Existence of a coherent majority
-branch `B` — the single object the limit side reduces to (see the consolidation
-map at `exists_large_iInter_stage_fibers`). `B` carries `succ ℶ_1`-large fibers
-at *every* level; given `B`, `TreeBundle.limitFromCoherentMajority` and
-`extendToExtOfBranch` are sorry-free, retiring the false-as-stated
-`exists_large_iInter_stage_fibers`/`commitCoherent` path and both `extendToExt`s.
+/-- **[CONSOLIDATED TARGET]** Existence of a `CoherentMajorityBranch` `B` — a
+coherent branch (prefix/branch restriction coherence + `top_in_validFiber`) of
+length `ω₁`, the object the pair Erdős–Rado theorem
+(`erdos_rado_pair_omega1_of_coherentMajorityBranch`) consumes. (The former
+`large` field — `succ ℶ_1`-large fibers per level — was DROPPED: it was unused by
+the pair theorem, only feeding the now-removed `limitFromCoherentMajority`
+machinery, and at limits it was the false-intersection shape.)
 
 Derived by wiring the finite-side `exists_coherentBranchPartial` through the
 inverse-limit compactness frontier `exists_coherentMajorityBranch_of_finitePartials`
@@ -16277,9 +16259,10 @@ partition tree for the pair-coloring `cR`. At each level `β < ω₁`:
 * `bit β` is the recorded color (the node bit `h(β)`);
 * `rep_strictMono`: the reps form a strictly increasing transfinite sequence;
 * `coloring` is **EHMR fact (8)**, `cR({s(h↾β), s(h↾γ)}) = h(β)` for `β < γ` — the
-  `inner_consistent` / `top_in_validFiber` content;
-* `large`: the per-level fiber-largeness the tree maintains (`succ ℶ_1` elements
-  above the reps respecting the recorded colors).
+  `inner_consistent` / `top_in_validFiber` content.
+
+(No `large` field: `CoherentMajorityBranch.large` was dropped as unused by the
+pair theorem, so the branch needs only nonempty live fibers, not `succ ℶ_1` ones.)
 
 Intermediate object: `ehmr_tree_has_omega1_branch` produces it (tree-counting), and
 `exists_coherentMajorityBranch_of_ehmrBranch` assembles it into a
@@ -16292,10 +16275,6 @@ structure EHMRBranch (cR : (Fin 2 ↪o PairERSource) → Bool) where
   coloring : ∀ {β γ : Ordinal.{0}} (hβ : β < Ordinal.omega.{0} 1)
     (hγ : γ < Ordinal.omega.{0} 1) (hβγ : β < γ),
     cR (pairEmbed (rep_strictMono hβ hγ hβγ)) = bit β hβ
-  large : ∀ (β : Ordinal.{0}) (hβ : β < Ordinal.omega.{0} 1),
-    Order.succ (Cardinal.beth.{0} 1) ≤ Cardinal.mk
-      { y : PairERSource // ∀ (γ : Ordinal.{0}) (hγβ : γ < β),
-          ∃ h : rep γ (hγβ.trans hβ) < y, cR (pairEmbed h) = bit γ (hγβ.trans hβ) }
 
 /-- **[EHMR §14, Lemma 14.2 + |E| counting — coverage/counting engine]**
 `ehmr_partitionTree_card_lower`: if the "used-up" sets `R i` cover `PairERSource`
@@ -16335,9 +16314,8 @@ theorem ehmr_tree_has_omega1_branch
 `CoherentMajorityBranch`. `prefixAt α` is the embedding `α.ToType ↪o PairERSource`
 sending position `β < α` to `rep β`; `branch α` reads off `bit`;
 `prefix_restrict`/`branch_restrict` are immediate from the assembly;
-`top_in_validFiber` is EHMR fact (8) (`coloring`); `large` is `EHMRBranch.large`.
-(Named `_of_ehmrBranch` — the partition tree itself is internal to
-`ehmr_tree_has_omega1_branch`.) -/
+`top_in_validFiber` is EHMR fact (8) (`coloring`). (Named `_of_ehmrBranch` — the
+partition tree itself is internal to `ehmr_tree_has_omega1_branch`.) -/
 theorem exists_coherentMajorityBranch_of_ehmrBranch
     {cR : (Fin 2 ↪o PairERSource) → Bool} (b : EHMRBranch cR) :
     Nonempty (CoherentMajorityBranch cR) := by
@@ -16391,8 +16369,7 @@ theorem exists_coherentMajorityBranch_of_ehmrBranch
     branch := br
     prefix_restrict := ?_
     branch_restrict := ?_
-    top_in_validFiber := ?_
-    large := ?_ }⟩
+    top_in_validFiber := ?_ }⟩
   · -- prefix_restrict
     intro β α hβα hβ hα x
     haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
@@ -16427,20 +16404,6 @@ theorem exists_coherentMajorityBranch_of_ehmrBranch
       | ⟨1, _⟩ => simp only [pairEmbed, OrderEmbedding.coe_ofStrictMono]; exact hpt
     rw [hpe, br_apply γ hγ]
     exact b.coloring (htlt hγ x) hγ hx_lt
-  · -- large
-    intro α hα
-    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
-    have h_subset : { y : PairERSource | ∀ (γ : Ordinal.{0}) (hγα : γ < α),
-          ∃ h : b.rep γ (hγα.trans hα) < y, cR (pairEmbed h) = b.bit γ (hγα.trans hα) }
-        ⊆ validFiber cR (pre α hα) (br α hα) := by
-      intro y hy x
-      have hx_lt : Ordinal.typein (· < ·) x < α := by
-        have h := Ordinal.typein_lt_type (· < · : α.ToType → α.ToType → Prop) x
-        rwa [Ordinal.type_toType] at h
-      obtain ⟨h, hc⟩ := hy (Ordinal.typein (· < ·) x) hx_lt
-      rw [pre_apply α hα, br_apply α hα]
-      exact ⟨h, hc⟩
-    exact (b.large α hα).trans (Cardinal.mk_le_mk_of_subset h_subset)
 
 /-- **[DIRECT — supersedes `_of_finitePartials` once proved]**
 `exists_coherentMajorityBranch_direct`: construct `B` directly via the EHMR
@@ -16455,614 +16418,6 @@ theorem exists_coherentMajorityBranch_direct
     Nonempty (CoherentMajorityBranch cR) := by
   obtain ⟨b⟩ := ehmr_tree_has_omega1_branch cR
   exact exists_coherentMajorityBranch_of_ehmrBranch b
-
-/-- **Conditional implication**: a `CoherentMajorityBranch` would
-discharge the limit-stage typeAt agreement that
-`selectedBranch_agrees_with_prior_commit` requires.
-
-The intended downstream use: replace `commitCoherent`'s deep-frontier
-dependency by routing through a chosen `CoherentMajorityBranch`. The
-branch's per-level largeness gives `commitCoherent.large_sigma`; the
-restriction laws give type-coherence across levels (the gap that
-broke the naive `limitFromMajority` integration). -/
-theorem CoherentMajorityBranch.large_at_succ
-    {cR : (Fin 2 ↪o PairERSource) → Bool}
-    (B : CoherentMajorityBranch cR) (δ : Ordinal.{0})
-    (hδ : δ < Ordinal.omega.{0} 1) :
-    Order.succ (Cardinal.beth.{0} 1) ≤
-      Cardinal.mk (validFiber cR (B.prefixAt δ hδ) (B.branch δ hδ)) :=
-  B.large δ hδ
-
-/-! ### `LimitData.ofCoherentMajorityBranch`: branch-based limit data
-
-A `CoherentMajorityBranch` supplies exactly the coherent
-prefix/branch/largeness data that independent majority choices
-lacked. From `B` we can produce `LimitData s hβα` provided the
-caller supplies a cofinal `ω`-sequence and stage extensions whose
-chains match `B` at each level of the sequence.
-
-This isolates branch-data into the limit profile and pushes
-recursion (the construction of the stage extensions) into the
-caller. The compatibility proofs use:
-- `B.prefix_restrict` for `prefix_compat`;
-- `B.branch_restrict` for `type_compat`;
-- `B.large` for `large`.
--/
-
-/-- **`LimitData.ofCoherentMajorityBranch`**: construct `LimitData s hβα`
-from a `CoherentMajorityBranch B` (supplying `p`, `τ`, `large` from `B`
-at level `α`) together with a caller-supplied cofinal `ω`-sequence
-`e` (with stage extensions `E` whose chains match `B` at each level
-of `e`). -/
-noncomputable def PairERChain.LimitData.ofCoherentMajorityBranch
-    {cR : (Fin 2 ↪o PairERSource) → Bool}
-    (B : CoherentMajorityBranch cR)
-    {β α : Ordinal.{0}} {s : PairERChain cR β}
-    (hβα : β < α) (hα : α < Ordinal.omega.{0} 1)
-    (e : ℕ → Ordinal.{0})
-    (he_mono : StrictMono e)
-    (he_cofinal : ∀ γ : Ordinal.{0}, γ < α → ∃ n, γ < e n)
-    (he_β : ∀ n, β < e n) (he_lt : ∀ n, e n < α)
-    (E : ∀ n, PairERChain.Extension s (he_β n))
-    (h_E_head : ∀ n, (E n).chain.head =
-      B.prefixAt (e n) ((he_lt n).trans hα))
-    (h_E_type : ∀ n, (E n).chain.type =
-      B.branch (e n) ((he_lt n).trans hα)) :
-    PairERChain.LimitData s hβα := by
-  classical
-  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
-  refine
-    { e := e
-      he_mono := he_mono
-      he_cofinal := he_cofinal
-      he_β := he_β
-      he_lt := he_lt
-      E := E
-      p := B.prefixAt α hα
-      τ := B.branch α hα
-      large := B.large α hα
-      prefix_compat := ?_
-      type_compat := ?_ }
-  · -- prefix_compat: at each n, δ < e n,
-    --   limitWithType.commitAt δ _ = (E n).chain.commitAt δ hδ.
-    intro n δ hδ
-    haveI : IsWellOrder (e n).ToType (· < ·) := isWellOrder_lt
-    have hen_lt_ω₁ : e n < Ordinal.omega.{0} 1 := (he_lt n).trans hα
-    -- Identification: (initialSegToType (e n ≤ α)).lift (enum (e n) at δ) = enum α at δ.
-    have h_id : (Ordinal.initialSegToType (he_lt n).le).toOrderEmbedding
-        (Ordinal.enum (α := (e n).ToType) (· < ·)
-          ⟨δ, (Ordinal.type_toType (e n)).symm ▸ hδ⟩) =
-        Ordinal.enum (α := α.ToType) (· < ·)
-          ⟨δ, (Ordinal.type_toType α).symm ▸ (hδ.trans (he_lt n))⟩ := by
-      rw [← Ordinal.enum_typein (· < · : α.ToType → α.ToType → Prop)
-        ((Ordinal.initialSegToType (he_lt n).le).toOrderEmbedding _)]
-      congr 1
-      apply Subtype.ext
-      show Ordinal.typein (α := α.ToType) (· < ·)
-          ((Ordinal.initialSegToType (he_lt n).le).toOrderEmbedding _) = δ
-      rw [show Ordinal.typein (α := α.ToType) (· < ·)
-            ((Ordinal.initialSegToType (he_lt n).le).toOrderEmbedding _) =
-          Ordinal.typein (α := (e n).ToType) (· < ·)
-            (Ordinal.enum (α := (e n).ToType) (· < ·)
-              ⟨δ, (Ordinal.type_toType (e n)).symm ▸ hδ⟩) from
-        Ordinal.typein_apply _ _, Ordinal.typein_enum]
-    show B.prefixAt α hα _ = (E n).chain.head _
-    rw [← h_id, B.prefix_restrict (he_lt n).le hen_lt_ω₁ hα, ← h_E_head n]
-  · -- type_compat: identical pattern using B.branch_restrict + h_E_type.
-    intro n δ hδ
-    haveI : IsWellOrder (e n).ToType (· < ·) := isWellOrder_lt
-    have hen_lt_ω₁ : e n < Ordinal.omega.{0} 1 := (he_lt n).trans hα
-    have h_id : (Ordinal.initialSegToType (he_lt n).le).toOrderEmbedding
-        (Ordinal.enum (α := (e n).ToType) (· < ·)
-          ⟨δ, (Ordinal.type_toType (e n)).symm ▸ hδ⟩) =
-        Ordinal.enum (α := α.ToType) (· < ·)
-          ⟨δ, (Ordinal.type_toType α).symm ▸ (hδ.trans (he_lt n))⟩ := by
-      rw [← Ordinal.enum_typein (· < · : α.ToType → α.ToType → Prop)
-        ((Ordinal.initialSegToType (he_lt n).le).toOrderEmbedding _)]
-      congr 1
-      apply Subtype.ext
-      show Ordinal.typein (α := α.ToType) (· < ·)
-          ((Ordinal.initialSegToType (he_lt n).le).toOrderEmbedding _) = δ
-      rw [show Ordinal.typein (α := α.ToType) (· < ·)
-            ((Ordinal.initialSegToType (he_lt n).le).toOrderEmbedding _) =
-          Ordinal.typein (α := (e n).ToType) (· < ·)
-            (Ordinal.enum (α := (e n).ToType) (· < ·)
-              ⟨δ, (Ordinal.type_toType (e n)).symm ▸ hδ⟩) from
-        Ordinal.typein_apply _ _, Ordinal.typein_enum]
-    show B.branch α hα _ = (E n).chain.type _
-    rw [← h_id, B.branch_restrict (he_lt n).le hen_lt_ω₁ hα, ← h_E_type n]
-
-/-! ### `extendToExtOfBranch`: branch-parametrized chain extension
-
-Given a `CoherentMajorityBranch B` and a source chain `s` that agrees
-with `B` at level `β`, produce the bundled `Extension s hβα` for any
-`β < α < ω₁` by **directly** invoking `Extension.limitWithType` with
-`B`'s data at level `α` — no transfinite recursion required.
-
-The construction works because `B` already encodes all the coherence
-data needed for an `α`-level chain:
-
-- **`chain`** uses `PairERChain.limitWithType` with `p := B.prefixAt α hα`,
-  `τ := B.branch α hα`, `large := B.large α hα`.
-- **`commitAt_old`** at `δ < β`: identify `enum α at δ` with the lift of
-  `enum β at δ` via `(initialSegToType β ≤ α).toOrderEmbedding`, apply
-  `B.prefix_restrict` to descend to `B.prefixAt β`, then convert to
-  `s.head` via `h_match_head`.
-- **`typeAt_old`** at `δ < β`: parallel via `B.branch_restrict` and
-  `h_match_type`.
-- **`head_β_in_validFiber`**: identify `enum α at β` with the lift of
-  `⊤ : (succ β).ToType` (since `enum (succ β) at β = ⊤`), apply
-  `B.prefix_restrict` to descend, then `B.top_in_validFiber β hβ hsβ`
-  gives membership in `validFiber cR (B.prefixAt β hβ) (B.branch β hβ)`,
-  which equals `validFiber cR s.head s.type` by the matching hypotheses.
-
-The unqualified `extendToExt` frontier can either remain as is or
-become a projection after obtaining `exists_coherentMajorityBranch`. -/
-
-/-- **`PairERChain.extendToExtOfBranch`**: branch-parametrized chain
-extension. Given a `CoherentMajorityBranch B` and a chain `s` that
-agrees with `B` at level `β`, produce `Extension s hβα` for any
-`β < α < ω₁`. No transfinite recursion: the construction goes directly
-through `Extension.limitWithType` with `B`'s data at level `α`. -/
-noncomputable def PairERChain.extendToExtOfBranch
-    {cR : (Fin 2 ↪o PairERSource) → Bool}
-    (B : CoherentMajorityBranch cR)
-    {β α : Ordinal.{0}} (s : PairERChain cR β)
-    (hβα : β < α) (hα : α < Ordinal.omega.{0} 1)
-    (h_match_head : s.head = B.prefixAt β (hβα.trans hα))
-    (h_match_type : s.type = B.branch β (hβα.trans hα)) :
-    PairERChain.Extension s hβα := by
-  classical
-  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
-  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
-  have hβ : β < Ordinal.omega.{0} 1 := hβα.trans hα
-  have hsβ : Order.succ β < Ordinal.omega.{0} 1 :=
-    (Cardinal.isSuccLimit_omega 1).succ_lt hβ
-  have hsβ_le_α : Order.succ β ≤ α := Order.succ_le_of_lt hβα
-  refine PairERChain.Extension.limitWithType s hβα
-    (B.prefixAt α hα) (B.branch α hα) (B.large α hα) ?_ ?_ ?_
-  · -- h_commitAt: ∀ δ < β, limitWithType.commitAt δ _ = s.commitAt δ.
-    intro δ hδβ
-    have hδα : δ < α := hδβ.trans hβα
-    have h_id : (Ordinal.initialSegToType hβα.le).toOrderEmbedding
-        (Ordinal.enum (α := β.ToType) (· < ·)
-          ⟨δ, (Ordinal.type_toType β).symm ▸ hδβ⟩) =
-        Ordinal.enum (α := α.ToType) (· < ·)
-          ⟨δ, (Ordinal.type_toType α).symm ▸ hδα⟩ := by
-      rw [← Ordinal.enum_typein (· < · : α.ToType → α.ToType → Prop)
-        ((Ordinal.initialSegToType hβα.le).toOrderEmbedding _)]
-      congr 1
-      apply Subtype.ext
-      show Ordinal.typein (α := α.ToType) (· < ·)
-          ((Ordinal.initialSegToType hβα.le).toOrderEmbedding _) = δ
-      rw [show Ordinal.typein (α := α.ToType) (· < ·)
-            ((Ordinal.initialSegToType hβα.le).toOrderEmbedding _) =
-          Ordinal.typein (α := β.ToType) (· < ·)
-            (Ordinal.enum (α := β.ToType) (· < ·)
-              ⟨δ, (Ordinal.type_toType β).symm ▸ hδβ⟩) from
-        Ordinal.typein_apply _ _, Ordinal.typein_enum]
-    show B.prefixAt α hα _ = s.head _
-    rw [← h_id, B.prefix_restrict hβα.le hβ hα, h_match_head]
-  · -- h_typeAt: identical pattern with B.branch_restrict + h_match_type.
-    intro δ hδβ
-    have hδα : δ < α := hδβ.trans hβα
-    have h_id : (Ordinal.initialSegToType hβα.le).toOrderEmbedding
-        (Ordinal.enum (α := β.ToType) (· < ·)
-          ⟨δ, (Ordinal.type_toType β).symm ▸ hδβ⟩) =
-        Ordinal.enum (α := α.ToType) (· < ·)
-          ⟨δ, (Ordinal.type_toType α).symm ▸ hδα⟩ := by
-      rw [← Ordinal.enum_typein (· < · : α.ToType → α.ToType → Prop)
-        ((Ordinal.initialSegToType hβα.le).toOrderEmbedding _)]
-      congr 1
-      apply Subtype.ext
-      show Ordinal.typein (α := α.ToType) (· < ·)
-          ((Ordinal.initialSegToType hβα.le).toOrderEmbedding _) = δ
-      rw [show Ordinal.typein (α := α.ToType) (· < ·)
-            ((Ordinal.initialSegToType hβα.le).toOrderEmbedding _) =
-          Ordinal.typein (α := β.ToType) (· < ·)
-            (Ordinal.enum (α := β.ToType) (· < ·)
-              ⟨δ, (Ordinal.type_toType β).symm ▸ hδβ⟩) from
-        Ordinal.typein_apply _ _, Ordinal.typein_enum]
-    show B.branch α hα _ = s.type _
-    rw [← h_id, B.branch_restrict hβα.le hβ hα, h_match_type]
-  · -- h_realizes: limitWithType.head (enum α at β) ∈ validFiber cR s.head s.type.
-    haveI : IsWellOrder (Order.succ β).ToType (· < ·) := isWellOrder_lt
-    -- ⊤ : (succ β).ToType is the enum at position β.
-    have h_top_eq : (⊤ : (Order.succ β).ToType) =
-        Ordinal.enum (α := (Order.succ β).ToType) (· < ·)
-          ⟨β, (Ordinal.type_toType _).symm ▸ Order.lt_succ β⟩ :=
-      Ordinal.enum_succ_eq_top.symm
-    -- lift_(succ β → α) ⊤ = enum α at β.
-    have h_id : (Ordinal.initialSegToType hsβ_le_α).toOrderEmbedding
-        (⊤ : (Order.succ β).ToType) =
-        Ordinal.enum (α := α.ToType) (· < ·)
-          ⟨β, (Ordinal.type_toType α).symm ▸ hβα⟩ := by
-      conv_lhs => rw [h_top_eq]
-      rw [← Ordinal.enum_typein (· < · : α.ToType → α.ToType → Prop)
-        ((Ordinal.initialSegToType hsβ_le_α).toOrderEmbedding _)]
-      congr 1
-      apply Subtype.ext
-      show Ordinal.typein (α := α.ToType) (· < ·)
-          ((Ordinal.initialSegToType hsβ_le_α).toOrderEmbedding _) = β
-      rw [show Ordinal.typein (α := α.ToType) (· < ·)
-            ((Ordinal.initialSegToType hsβ_le_α).toOrderEmbedding _) =
-          Ordinal.typein (α := (Order.succ β).ToType) (· < ·)
-            (Ordinal.enum (α := (Order.succ β).ToType) (· < ·)
-              ⟨β, (Ordinal.type_toType _).symm ▸ Order.lt_succ β⟩) from
-        Ordinal.typein_apply _ _, Ordinal.typein_enum]
-    show B.prefixAt α hα _ ∈ validFiber cR s.head s.type
-    rw [← h_id, B.prefix_restrict hsβ_le_α hsβ hα, h_match_head, h_match_type]
-    exact B.top_in_validFiber β hβ hsβ
-
-/-! ### Implications: what `CoherentMajorityBranch` provides
-
-These lemmas show that a `CoherentMajorityBranch B` discharges the
-key obligations of the active limit path (specifically, the
-type-coherent fiber largeness frontier and the cross-level coherence
-that broke `limitFromMajority`'s naive integration).
-
-The implications are conditional: they assume an `F` whose data
-matches `B`'s at the relevant level/positions. Constructing such an
-`F` from `B` (by modifying the recursion's successor extensions to
-prescribe the new top via `B.branch`) is the natural follow-up; the
-conditional form here states the architectural payoff. -/
-
-/-- **Validfiber largeness via `B`** (the conditional fusion result):
-if `F` matches `B` pointwise at level `α`, the type-coherent fiber
-has size `≥ succ ℶ_1`.
-
-This is the discharge of the legacy
-`exists_large_iInter_stage_fibers` frontier under the new
-`CoherentMajorityBranch` hypothesis. -/
-theorem CoherentMajorityBranch.typeCoherentFiber_large_via_branch
-    {cR : (Fin 2 ↪o PairERSource) → Bool}
-    (B : CoherentMajorityBranch cR) {α : Ordinal.{0}}
-    (hα : α < Ordinal.omega.{0} 1)
-    (F : PairERCoherentFamily cR α)
-    (h_prefix_eq : ∀ x : α.ToType, F.prefix x = B.prefixAt α hα x)
-    (h_typeFn_eq : F.typeFn = B.branch α hα) :
-    Order.succ (Cardinal.beth.{0} 1) ≤
-      Cardinal.mk (validFiber cR F.prefix F.typeFn) := by
-  apply (B.large α hα).trans
-  -- Inject validFiber cR (B.prefixAt α hα) (B.branch α hα) into validFiber cR F.prefix F.typeFn.
-  refine Cardinal.mk_le_of_injective
-    (f := fun y : validFiber cR (B.prefixAt α hα) (B.branch α hα) =>
-      (⟨y.val, fun x => ?_⟩ : validFiber cR F.prefix F.typeFn)) ?_
-  · -- y.val ∈ validFiber cR F.prefix F.typeFn at position x.
-    obtain ⟨h_lt, h_col⟩ := y.property x
-    have h_lt' : F.prefix x < y.val := by rw [h_prefix_eq]; exact h_lt
-    refine ⟨h_lt', ?_⟩
-    -- pairEmbed h_lt' = pairEmbed h_lt via OrderEmbedding ext.
-    have h_pair : pairEmbed h_lt' = pairEmbed h_lt := by
-      ext k
-      match k with
-      | ⟨0, _⟩ =>
-        show F.prefix x = B.prefixAt α hα x
-        exact h_prefix_eq x
-      | ⟨1, _⟩ => rfl
-    rw [h_pair, congr_fun h_typeFn_eq x]
-    exact h_col
-  · intro y₁ y₂ heq
-    apply Subtype.ext
-    exact Subtype.mk.inj heq
-
-/-- **Cross-level branch coherence** (re-stated): the branch at level
-`α` restricted to `β.ToType` equals the branch at level `β`. This is
-the cross-level matching that *raw* `Classical.choose` H3 majority
-branches cannot provide — it is part of `B`'s chosen data. -/
-theorem CoherentMajorityBranch.branch_at_lower
-    {cR : (Fin 2 ↪o PairERSource) → Bool}
-    (B : CoherentMajorityBranch cR)
-    {β α : Ordinal.{0}} (hβα : β ≤ α)
-    (hβ : β < Ordinal.omega.{0} 1) (hα : α < Ordinal.omega.{0} 1)
-    (x : β.ToType) :
-    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
-    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
-    B.branch α hα ((Ordinal.initialSegToType hβα).toOrderEmbedding x) =
-      B.branch β hβ x :=
-  B.branch_restrict hβα hβ hα x
-
-/-! ### The branch-parametrized active path
-
-Given a `CoherentMajorityBranch B`, build a parallel `TreeBundle`
-recursion (`treeStageOfBranch`) whose limit case uses
-`limitFromCoherentMajority` instead of `limitExtend`. The downstream
-definitions and the pair-homogeneity theorem are re-built in parallel
-(`*OfBranch` versions). The headline conditional theorem
-`erdos_rado_pair_omega1_of_coherentMajorityBranch` then depends only
-on `exists_coherentMajorityBranch` (the new fusion frontier) plus
-recursion-bookkeeping sorries, not on the legacy
-`exists_large_iInter_stage_fibers`. -/
-
-/-- **`CoherentMajorityBranch.toFamily`**: the canonical coherent
-family at level `α` built from `B`. Each stage at `β < α` is a
-`(succ β)`-chain whose head/type/largeness come directly from `B`
-at level `succ β`. -/
-noncomputable def CoherentMajorityBranch.toFamily
-    {cR : (Fin 2 ↪o PairERSource) → Bool}
-    (B : CoherentMajorityBranch cR) (α : Ordinal.{0})
-    (hα : α < Ordinal.omega.{0} 1) :
-    PairERCoherentFamily cR α := by
-  refine
-    { stage := fun β hβα => ?_
-      coherent := ?_ }
-  · -- (succ β)-chain via B at level (succ β).
-    have hsβ : Order.succ β < Ordinal.omega.{0} 1 :=
-      (Cardinal.isSuccLimit_omega 1).succ_lt (hβα.trans hα)
-    exact PairERChain.limitWithType (cR := cR)
-      (B.prefixAt (Order.succ β) hsβ)
-      (B.branch (Order.succ β) hsβ)
-      (B.large (Order.succ β) hsβ)
-  · -- coherent: cross-stage head matching via B.prefix_restrict.
-    intro δ β hδβ hβα
-    haveI : IsWellOrder (Order.succ β).ToType (· < ·) := isWellOrder_lt
-    haveI : IsWellOrder (Order.succ δ).ToType (· < ·) := isWellOrder_lt
-    have hsβ : Order.succ β < Ordinal.omega.{0} 1 :=
-      (Cardinal.isSuccLimit_omega 1).succ_lt (hβα.trans hα)
-    have hsδ : Order.succ δ < Ordinal.omega.{0} 1 :=
-      (Cardinal.isSuccLimit_omega 1).succ_lt ((hδβ.trans hβα).trans hα)
-    have hsδ_le_sβ : Order.succ δ ≤ Order.succ β :=
-      Order.succ_le_succ (le_of_lt hδβ)
-    show ((PairERChain.limitWithType (cR := cR) (B.prefixAt (Order.succ β) hsβ)
-        (B.branch (Order.succ β) hsβ) (B.large (Order.succ β) hsβ)).commitAt δ
-        (hδβ.trans (Order.lt_succ β))) =
-      ((PairERChain.limitWithType (cR := cR) (B.prefixAt (Order.succ δ) hsδ)
-        (B.branch (Order.succ δ) hsδ) (B.large (Order.succ δ) hsδ)).commitAt δ
-        (Order.lt_succ δ))
-    rw [PairERChain.limitWithType_commitAt, PairERChain.limitWithType_commitAt]
-    -- Both sides: B.prefixAt (succ _) _ applied at enum ⟨δ, ...⟩.
-    -- Strategy: rewrite both via B.prefix_restrict to a SHARED expression
-    -- (via initialSegToType from (succ δ).ToType to (succ β).ToType).
-    set x_sδ : (Order.succ δ).ToType :=
-      Ordinal.enum (α := (Order.succ δ).ToType) (· < ·)
-        ⟨δ, (Ordinal.type_toType (Order.succ δ)).symm ▸ Order.lt_succ δ⟩
-    -- B.prefix_restrict gives: B.prefixAt (succ β) (init x_sδ) = B.prefixAt (succ δ) x_sδ.
-    rw [← B.prefix_restrict hsδ_le_sβ hsδ hsβ x_sδ]
-    -- Now both sides have B.prefixAt (succ β) hsβ applied to something.
-    -- LHS: enum ⟨δ, ...⟩ in (succ β).ToType.
-    -- RHS: initialSegToType x_sδ.
-    -- Both have typein = δ; show equal by congrArg + typein injectivity.
-    congr 1
-    -- Apply Ordinal.enum_typein to rewrite both elements into enum form, then their
-    -- typein values match by Ordinal.typein_enum and Ordinal.typein_apply.
-    have h_typein_init :
-        Ordinal.typein (α := (Order.succ β).ToType) (· < ·)
-          ((Ordinal.initialSegToType hsδ_le_sβ).toOrderEmbedding x_sδ) = δ := by
-      rw [show Ordinal.typein (α := (Order.succ β).ToType) (· < ·)
-            ((Ordinal.initialSegToType hsδ_le_sβ).toOrderEmbedding x_sδ) =
-          Ordinal.typein (α := (Order.succ δ).ToType) (· < ·) x_sδ from
-        Ordinal.typein_apply (Ordinal.initialSegToType hsδ_le_sβ) x_sδ]
-      show Ordinal.typein _ (Ordinal.enum _ _) = δ
-      rw [Ordinal.typein_enum]
-    -- Use Ordinal.enum_typein on the initialSegToType side.
-    rw [← Ordinal.enum_typein
-        (· < · : (Order.succ β).ToType → (Order.succ β).ToType → Prop)
-        ((Ordinal.initialSegToType hsδ_le_sβ).toOrderEmbedding x_sδ)]
-    -- Goal: enum ⟨δ, _⟩ = enum ⟨typein (init x_sδ), _⟩.
-    -- By h_typein_init, typein (init x_sδ) = δ, so these are equal.
-    congr 1
-    apply Subtype.ext
-    exact h_typein_init.symm
-
-/-- **`TreeBundle.limitFromCoherentMajority`**: the successful version
-of `limitFromMajority`, using a coherent `B` to avoid the per-level
-`Classical.choose` mismatch. Builds a `TreeBundle cR α` whose
-- stage is the level-α chain from B (head = `B.prefixAt α hα`,
-  type = `B.branch α hα`, large = `B.large α hα`).
-- family is `B.toFamily α hα` paired with the singleton-branch tree.
-- coh / type_match / type_coh follow from `B.prefix_restrict` /
-  `B.branch_restrict` / per-level largeness. -/
-noncomputable def TreeBundle.limitFromCoherentMajority
-    {cR : (Fin 2 ↪o PairERSource) → Bool}
-    (B : CoherentMajorityBranch cR) {α : Ordinal.{0}}
-    (hα : α < Ordinal.omega.{0} 1) :
-    TreeBundle cR α := by
-  haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
-  let F : PairERCoherentFamily cR α := B.toFamily α hα
-  let stage_α : PairERChain cR α :=
-    PairERChain.limitWithType (cR := cR)
-      (B.prefixAt α hα) (B.branch α hα) (B.large α hα)
-  -- Helper: at any δ < α, F.commitVal δ = B.prefixAt α hα at enum δ.
-  -- Proof: F.stage δ uses B.prefixAt (succ δ) at top; transfer to α via
-  -- B.prefix_restrict at (succ δ) ≤ α + typein-init argument.
-  have h_F_commitVal : ∀ (δ : Ordinal.{0}) (hδα : δ < α),
-      F.commitVal δ hδα =
-        B.prefixAt α hα
-          (Ordinal.enum (α := α.ToType) (· < ·)
-            ⟨δ, (Ordinal.type_toType α).symm ▸ hδα⟩) := by
-    intro δ hδα
-    haveI : IsWellOrder (Order.succ δ).ToType (· < ·) := isWellOrder_lt
-    have hsδ : Order.succ δ < Ordinal.omega.{0} 1 :=
-      (Cardinal.isSuccLimit_omega 1).succ_lt (hδα.trans hα)
-    have hsδ_le_α : Order.succ δ ≤ α := Order.succ_le_of_lt hδα
-    show ((F.stage δ hδα).commitAt δ (Order.lt_succ δ)) = _
-    show (PairERChain.limitWithType (cR := cR) _ _ _).commitAt δ
-        (Order.lt_succ δ) = _
-    rw [PairERChain.limitWithType_commitAt]
-    set x_sδ : (Order.succ δ).ToType :=
-      Ordinal.enum (α := (Order.succ δ).ToType) (· < ·)
-        ⟨δ, (Ordinal.type_toType (Order.succ δ)).symm ▸ Order.lt_succ δ⟩
-    rw [← B.prefix_restrict hsδ_le_α hsδ hα x_sδ]
-    congr 1
-    have h_typein_init :
-        Ordinal.typein (α := α.ToType) (· < ·)
-          ((Ordinal.initialSegToType hsδ_le_α).toOrderEmbedding x_sδ) = δ := by
-      rw [show Ordinal.typein (α := α.ToType) (· < ·)
-            ((Ordinal.initialSegToType hsδ_le_α).toOrderEmbedding x_sδ) =
-          Ordinal.typein (α := (Order.succ δ).ToType) (· < ·) x_sδ from
-        Ordinal.typein_apply (Ordinal.initialSegToType hsδ_le_α) x_sδ]
-      show Ordinal.typein _ (Ordinal.enum _ _) = δ
-      rw [Ordinal.typein_enum]
-    rw [← Ordinal.enum_typein
-        (· < · : α.ToType → α.ToType → Prop)
-        ((Ordinal.initialSegToType hsδ_le_α).toOrderEmbedding x_sδ)]
-    congr 1
-    apply Subtype.ext
-    exact h_typein_init
-  -- Helper for typeVal: analogous via B.branch_restrict.
-  have h_F_typeVal : ∀ (δ : Ordinal.{0}) (hδα : δ < α),
-      F.typeVal δ hδα =
-        B.branch α hα
-          (Ordinal.enum (α := α.ToType) (· < ·)
-            ⟨δ, (Ordinal.type_toType α).symm ▸ hδα⟩) := by
-    intro δ hδα
-    haveI : IsWellOrder (Order.succ δ).ToType (· < ·) := isWellOrder_lt
-    have hsδ : Order.succ δ < Ordinal.omega.{0} 1 :=
-      (Cardinal.isSuccLimit_omega 1).succ_lt (hδα.trans hα)
-    have hsδ_le_α : Order.succ δ ≤ α := Order.succ_le_of_lt hδα
-    show ((F.stage δ hδα).typeAt δ (Order.lt_succ δ)) = _
-    show (PairERChain.limitWithType (cR := cR) _ _ _).typeAt δ
-        (Order.lt_succ δ) = _
-    rw [PairERChain.limitWithType_typeAt]
-    set x_sδ : (Order.succ δ).ToType :=
-      Ordinal.enum (α := (Order.succ δ).ToType) (· < ·)
-        ⟨δ, (Ordinal.type_toType (Order.succ δ)).symm ▸ Order.lt_succ δ⟩
-    rw [← B.branch_restrict hsδ_le_α hsδ hα x_sδ]
-    congr 1
-    have h_typein_init :
-        Ordinal.typein (α := α.ToType) (· < ·)
-          ((Ordinal.initialSegToType hsδ_le_α).toOrderEmbedding x_sδ) = δ := by
-      rw [show Ordinal.typein (α := α.ToType) (· < ·)
-            ((Ordinal.initialSegToType hsδ_le_α).toOrderEmbedding x_sδ) =
-          Ordinal.typein (α := (Order.succ δ).ToType) (· < ·) x_sδ from
-        Ordinal.typein_apply (Ordinal.initialSegToType hsδ_le_α) x_sδ]
-      show Ordinal.typein _ (Ordinal.enum _ _) = δ
-      rw [Ordinal.typein_enum]
-    rw [← Ordinal.enum_typein
-        (· < · : α.ToType → α.ToType → Prop)
-        ((Ordinal.initialSegToType hsδ_le_α).toOrderEmbedding x_sδ)]
-    congr 1
-    apply Subtype.ext
-    exact h_typein_init
-  -- F.prefix pointwise = B.prefixAt α hα.
-  have h_F_prefix : ∀ x : α.ToType, F.prefix x = B.prefixAt α hα x := by
-    intro x
-    unfold PairERCoherentFamily.prefix
-    simp only [OrderEmbedding.coe_ofStrictMono]
-    rw [h_F_commitVal]
-    congr 1
-    exact Ordinal.enum_typein _ x
-  -- F.typeFn = B.branch α hα.
-  have h_F_typeFn : F.typeFn = B.branch α hα := by
-    funext x
-    show F.typeVal _ _ = _
-    rw [h_F_typeVal]
-    congr 1
-    exact Ordinal.enum_typein _ x
-  refine
-    { family :=
-        { family := F
-          tree := ?_ }
-      stage := stage_α
-      coh := ?_
-      type_match := ?_
-      type_coh := ?_ }
-  · -- tree: singleton-branch around F.typeFn.
-    refine
-      { branches := {F.typeFn}
-        realizers := fun b => validFiber cR F.prefix b
-        realizers_sub_validFiber := fun _ _ hy => hy
-        large_sigma := ?_ }
-    -- σ injects from validFiber cR (B.prefixAt α hα) (B.branch α hα) ≥ succ ℶ_1.
-    apply (B.large α hα).trans
-    refine Cardinal.mk_le_of_injective
-      (f := fun y : validFiber cR (B.prefixAt α hα) (B.branch α hα) =>
-        (⟨(F.typeFn, y.val), rfl, fun x => ?_⟩ :
-          { p : (α.ToType → Bool) × PairERSource |
-            p.1 ∈ ({F.typeFn} : Set _) ∧
-              p.2 ∈ validFiber cR F.prefix p.1 })) ?_
-    · -- y.val ∈ validFiber cR F.prefix F.typeFn at position x.
-      obtain ⟨h_lt, h_col⟩ := y.property x
-      have h_lt' : F.prefix x < y.val := by rw [h_F_prefix]; exact h_lt
-      refine ⟨h_lt', ?_⟩
-      have h_pair : pairEmbed h_lt' = pairEmbed h_lt := by
-        ext k
-        match k with
-        | ⟨0, _⟩ => exact h_F_prefix x
-        | ⟨1, _⟩ => rfl
-      show cR (pairEmbed h_lt') = F.typeFn x
-      rw [h_pair, congr_fun h_F_typeFn x]
-      exact h_col
-    · intro y₁ y₂ heq
-      apply Subtype.ext
-      have h1 := Subtype.mk.inj heq
-      exact (Prod.mk.inj h1).2
-  · -- coh: stage.commitAt δ = F.commitVal δ.
-    intro δ hδα
-    show (PairERChain.limitWithType (cR := cR) _ _ _).commitAt δ hδα = _
-    rw [PairERChain.limitWithType_commitAt]
-    -- LHS: B.prefixAt α hα (enum ⟨δ, ...⟩).
-    -- RHS: F.commitVal δ hδα = (by h_F_commitVal) B.prefixAt α hα (enum ⟨δ, ...⟩).
-    rw [h_F_commitVal δ hδα]
-  · -- type_match: stage.typeAt δ = F.typeVal δ.
-    intro δ hδα
-    show (PairERChain.limitWithType (cR := cR) _ _ _).typeAt δ hδα = _
-    rw [PairERChain.limitWithType_typeAt]
-    rw [h_F_typeVal δ hδα]
-  · -- type_coh: F.IsTypeCoherent. Cross-stage typeAt agreement.
-    intro δ β hδβ hβα
-    haveI : IsWellOrder (Order.succ β).ToType (· < ·) := isWellOrder_lt
-    haveI : IsWellOrder (Order.succ δ).ToType (· < ·) := isWellOrder_lt
-    have hsβ : Order.succ β < Ordinal.omega.{0} 1 :=
-      (Cardinal.isSuccLimit_omega 1).succ_lt (hβα.trans hα)
-    have hsδ : Order.succ δ < Ordinal.omega.{0} 1 :=
-      (Cardinal.isSuccLimit_omega 1).succ_lt ((hδβ.trans hβα).trans hα)
-    have hsδ_le_sβ : Order.succ δ ≤ Order.succ β :=
-      Order.succ_le_succ (le_of_lt hδβ)
-    show ((PairERChain.limitWithType (cR := cR) (B.prefixAt (Order.succ β) hsβ)
-        (B.branch (Order.succ β) hsβ) (B.large (Order.succ β) hsβ)).typeAt δ
-        (hδβ.trans (Order.lt_succ β))) =
-      ((PairERChain.limitWithType (cR := cR) (B.prefixAt (Order.succ δ) hsδ)
-        (B.branch (Order.succ δ) hsδ) (B.large (Order.succ δ) hsδ)).typeAt δ
-        (Order.lt_succ δ))
-    rw [PairERChain.limitWithType_typeAt, PairERChain.limitWithType_typeAt]
-    set x_sδ : (Order.succ δ).ToType :=
-      Ordinal.enum (α := (Order.succ δ).ToType) (· < ·)
-        ⟨δ, (Ordinal.type_toType (Order.succ δ)).symm ▸ Order.lt_succ δ⟩
-    rw [← B.branch_restrict hsδ_le_sβ hsδ hsβ x_sδ]
-    congr 1
-    have h_typein_init :
-        Ordinal.typein (α := (Order.succ β).ToType) (· < ·)
-          ((Ordinal.initialSegToType hsδ_le_sβ).toOrderEmbedding x_sδ) = δ := by
-      rw [show Ordinal.typein (α := (Order.succ β).ToType) (· < ·)
-            ((Ordinal.initialSegToType hsδ_le_sβ).toOrderEmbedding x_sδ) =
-          Ordinal.typein (α := (Order.succ δ).ToType) (· < ·) x_sδ from
-        Ordinal.typein_apply (Ordinal.initialSegToType hsδ_le_sβ) x_sδ]
-      show Ordinal.typein _ (Ordinal.enum _ _) = δ
-      rw [Ordinal.typein_enum]
-    rw [← Ordinal.enum_typein
-        (· < · : (Order.succ β).ToType → (Order.succ β).ToType → Prop)
-        ((Ordinal.initialSegToType hsδ_le_sβ).toOrderEmbedding x_sδ)]
-    congr 1
-    apply Subtype.ext
-    exact h_typein_init.symm
-
-/-- **`TreeBundle.limitExtend_of_coherentMajorityBranch`** — the
-branch-parametrized **replacement** for `TreeBundle.limitExtend`. Given a
-`CoherentMajorityBranch B`, builds the limit `TreeBundle` directly (via
-`limitFromCoherentMajority`), taking largeness from `B.large`. Unlike `limitExtend`
-it needs **no** recursive `IH`/`prev_succ`/`type_succ` obligations and, crucially,
-**does not depend on the false-as-stated `exists_large_iInter_stage_fibers`**
-(`commitCoherent` path) — verified axiom-clean. This is the reroute target from the
-limit-fusion consolidation: the active limit step factors through `B`, so the only
-remaining hard theorem is the compactness producing `B`
-(`exists_coherentMajorityBranch_of_finitePartials`). -/
-noncomputable def TreeBundle.limitExtend_of_coherentMajorityBranch
-    {cR : (Fin 2 ↪o PairERSource) → Bool}
-    (B : CoherentMajorityBranch cR) {α : Ordinal.{0}}
-    (hα : α < Ordinal.omega.{0} 1) :
-    TreeBundle cR α :=
-  TreeBundle.limitFromCoherentMajority B hα
-
-/-- **`treeStageOfBranch`**: the branch-parametrized treeStage. At
-every level α < ω₁, build the TreeBundle directly using B (no
-recursion needed since B is already coherent across all levels). -/
-noncomputable def treeStageOfBranch
-    {cR : (Fin 2 ↪o PairERSource) → Bool}
-    (B : CoherentMajorityBranch cR) (α : Ordinal.{0})
-    (hα : α < Ordinal.omega.{0} 1) :
-    TreeBundle cR α :=
-  TreeBundle.limitFromCoherentMajority B hα
 
 /-- **`treeCommitOfBranch`**: canonical commit at position `δ` using
 B. Reads off `B.prefixAt (succ δ) ⊤` (the top of the succ δ chain). -/
