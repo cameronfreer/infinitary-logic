@@ -16299,25 +16299,28 @@ theorem ehmr_partitionTree_card_lower
 
 /-! ### [STAGE 1] EHMR canonical-tree skeleton (basic defs; no proofs yet)
 
-Nodes are recorded-color sequences; reps `s(h↾γ) = min S(h↾γ)` are derived by
-well-founded recursion on length; live = nonempty successor set; children split by
-the recorded color. No fiber-largeness (post-refactor `EHMRBranch` has no `large`). -/
+Nodes are recorded-color sequences `β.ToType → Bool` (Type 0, so the counting stays
+in `Cardinal.{0}`); reps `s(h↾γ) = min S(h↾γ)` are derived by well-founded recursion
+on length; live = nonempty successor set; children split by the recorded color. No
+fiber-largeness (post-refactor `EHMRBranch` has no `large`). -/
 
-/-- A node at level `β`: the recorded colors at positions `γ < β`. The eventual
-branch is a cofinal chain through these of length `< ω₁`. -/
-abbrev EHMRNodeAt (β : Ordinal.{0}) := ∀ γ : Ordinal.{0}, γ < β → Bool
+/-- A node at level `β`: the recorded colors at the positions `β.ToType`. The
+eventual branch is a cofinal chain through these of length `< ω₁`. (`β.ToType`-indexed
+— `Type 0` — so it matches `validFiber`/`prefixAt` and the counting is in `Cardinal.{0}`.) -/
+abbrev EHMRNodeAt (β : Ordinal.{0}) := β.ToType → Bool
 
-/-- Restrict a node to a shorter length `δ ≤ β`. -/
-def EHMRNodeAt.restrict {β : Ordinal.{0}} (h : EHMRNodeAt β) {δ : Ordinal.{0}}
-    (hδβ : δ ≤ β) : EHMRNodeAt δ := fun γ hγ => h γ (lt_of_lt_of_le hγ hδβ)
+/-- Restrict a node to a shorter length `δ ≤ β`, via the initial-segment embedding. -/
+noncomputable def EHMRNodeAt.restrict {β : Ordinal.{0}} (h : EHMRNodeAt β)
+    {δ : Ordinal.{0}} (hδβ : δ ≤ β) : EHMRNodeAt δ :=
+  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder δ.ToType (· < ·) := isWellOrder_lt
+  fun x => h ((Ordinal.initialSegToType hδβ).toOrderEmbedding x)
 
-/-- The successor set `S(h)` (ordinal-indexed `validFiber`): points above all the
-reps that respect the recorded colors. -/
+/-- The successor set `S(h)`: points above all the reps respecting the recorded
+colors. (`β.ToType`-indexed `validFiber` shape, with a plain-function `rep`.) -/
 def ehmrFiber (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ordinal.{0}}
-    (rep : ∀ γ : Ordinal.{0}, γ < β → PairERSource) (col : EHMRNodeAt β) :
-    Set PairERSource :=
-  { y | ∀ (γ : Ordinal.{0}) (hγ : γ < β),
-      ∃ h : rep γ hγ < y, cR (pairEmbed h) = col γ hγ }
+    (rep : β.ToType → PairERSource) (col : EHMRNodeAt β) : Set PairERSource :=
+  { y | ∀ x : β.ToType, ∃ h : rep x < y, cR (pairEmbed h) = col x }
 
 instance : Nonempty PairERSource :=
   Cardinal.mk_ne_zero_iff.mp (by
@@ -16326,24 +16329,36 @@ instance : Nonempty PairERSource :=
 
 /-- **Chosen representative** `s(h) = min S(h)` — the `<`-least element of the
 successor set (via `PairERSource`'s well-order), by well-founded recursion on the
-node length: the reps at lower positions are the chosen reps of the restrictions.
-Junk default on dead (empty-fiber) nodes. -/
+node length: the rep at position `x : β.ToType` is the chosen rep of the restriction
+to `typein x`. Junk default on dead (empty-fiber) nodes. -/
 noncomputable def ehmrChosen (cR : (Fin 2 ↪o PairERSource) → Bool)
     (β : Ordinal.{0}) (h : EHMRNodeAt β) : PairERSource := by
   classical
+  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
   exact
     if hne : (ehmrFiber cR
-        (fun γ hγ => ehmrChosen cR γ (h.restrict (le_of_lt hγ))) h).Nonempty then
+        (fun x => ehmrChosen cR (Ordinal.typein (· < ·) x)
+          (h.restrict (le_of_lt (by
+            have hh := Ordinal.typein_lt_type (· < · : β.ToType → β.ToType → Prop) x
+            rwa [Ordinal.type_toType] at hh)))) h).Nonempty then
       (IsWellFounded.wf : WellFounded (· < · : PairERSource → PairERSource → Prop)).min _ hne
     else
       Classical.arbitrary PairERSource
 termination_by β
-decreasing_by all_goals exact hγ
+decreasing_by
+  all_goals
+    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    have hh := Ordinal.typein_lt_type (· < · : β.ToType → β.ToType → Prop) x
+    rwa [Ordinal.type_toType] at hh
 
-/-- The reps along a node: the chosen reps of its restrictions. -/
+/-- The reps along a node: the chosen rep of the restriction to each position. -/
 noncomputable def ehmrRep (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ordinal.{0}}
-    (h : EHMRNodeAt β) : ∀ γ : Ordinal.{0}, γ < β → PairERSource :=
-  fun γ hγ => ehmrChosen cR γ (h.restrict (le_of_lt hγ))
+    (h : EHMRNodeAt β) : β.ToType → PairERSource := by
+  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  exact fun x => ehmrChosen cR (Ordinal.typein (· < ·) x)
+    (h.restrict (le_of_lt (by
+      have hh := Ordinal.typein_lt_type (· < · : β.ToType → β.ToType → Prop) x
+      rwa [Ordinal.type_toType] at hh)))
 
 /-- `S(h)` as a set, via `ehmrRep`. -/
 def ehmrS (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ordinal.{0}} (h : EHMRNodeAt β) :
@@ -16359,10 +16374,10 @@ noncomputable def ehmrR (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ordinal.
   classical
   exact if ehmrLive cR h then {ehmrChosen cR β h} else ∅
 
-/-- **Child** of `h` recording color `c` at the new top position `β`. -/
+/-- **Child** of `h` recording color `c` at the new top position `β`, via
+`extendType`. -/
 noncomputable def EHMRNodeAt.child {β : Ordinal.{0}} (h : EHMRNodeAt β) (c : Bool) :
-    EHMRNodeAt (Order.succ β) :=
-  fun γ _hγ => if hγβ : γ < β then h γ hγβ else c
+    EHMRNodeAt (Order.succ β) := extendType h c
 
 /-- **[STAGE 2a]** `R(h)` is a subsingleton (it is `{s(h)}` or `∅`). -/
 theorem ehmrR_subsingleton (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ordinal.{0}}
@@ -16378,21 +16393,42 @@ theorem ehmrChosen_mem (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ordinal.{
     (h : EHMRNodeAt β) (hlive : ehmrLive cR h) :
     ehmrChosen cR β h ∈ ehmrS cR h := by
   classical
-  have hset : ehmrS cR h =
-      ehmrFiber cR (fun γ hγ => ehmrChosen cR γ (h.restrict (le_of_lt hγ))) h := rfl
-  have hne : (ehmrFiber cR
-      (fun γ hγ => ehmrChosen cR γ (h.restrict (le_of_lt hγ))) h).Nonempty := hset ▸ hlive
-  rw [ehmrChosen, dif_pos hne]
-  rw [hset]
-  exact WellFounded.min_mem _ _ hne
+  have hcond : (ehmrFiber cR
+      (fun x => ehmrChosen cR (Ordinal.typein (· < ·) x)
+        (h.restrict (le_of_lt (by
+          have hh := Ordinal.typein_lt_type (· < · : β.ToType → β.ToType → Prop) x
+          rwa [Ordinal.type_toType] at hh)))) h).Nonempty := hlive
+  rw [ehmrChosen, dif_pos hcond]
+  exact WellFounded.min_mem _ _ hcond
 
-/-- **[STAGE 2a]** The recorded-color property (local EHMR fact (8)): for `γ < β`,
-the chosen rep at `γ` sits below `s(h)` and the pair gets color `h γ`. -/
+/-- **[STAGE 2a]** The recorded-color property (local EHMR fact (8)): at position
+`x : β.ToType`, the chosen rep sits below `s(h)` and the pair gets color `h x`. -/
 theorem ehmrRep_coloring (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ordinal.{0}}
-    (h : EHMRNodeAt β) (hlive : ehmrLive cR h) (γ : Ordinal.{0}) (hγ : γ < β) :
-    ∃ hlt : ehmrRep cR h γ hγ < ehmrChosen cR β h,
-      cR (pairEmbed hlt) = h γ hγ :=
-  ehmrChosen_mem cR h hlive γ hγ
+    (h : EHMRNodeAt β) (hlive : ehmrLive cR h) (x : β.ToType) :
+    ∃ hlt : ehmrRep cR h x < ehmrChosen cR β h, cR (pairEmbed hlt) = h x :=
+  ehmrChosen_mem cR h hlive x
+
+/-- **[STAGE 2a]** Level cardinality: for `β < ω₁` the level (all length-`β` nodes)
+has cardinality `≤ ℶ_1` — `β.ToType` countable, `Bool`-valued. -/
+theorem ehmr_level_card_le_beth1 (β : Ordinal.{0}) (hβ : β < Ordinal.omega.{0} 1) :
+    Cardinal.mk (EHMRNodeAt β) ≤ Cardinal.beth.{0} 1 := by
+  haveI : Countable β.ToType := countable_toType_of_lt_omega1 hβ
+  show Cardinal.mk (β.ToType → Bool) ≤ Cardinal.beth.{0} 1
+  have h_le_pow : Cardinal.mk (β.ToType → Bool) ≤
+      Cardinal.aleph0 ^ Cardinal.mk β.ToType := by
+    have h_pow_eq : Cardinal.mk (β.ToType → Bool) =
+        (Cardinal.mk Bool) ^ (Cardinal.mk β.ToType) := by rw [Cardinal.mk_arrow]; simp
+    rw [h_pow_eq]
+    exact Cardinal.power_le_power_right (Cardinal.mk_le_aleph0 (α := Bool))
+  have h_pow_le : Cardinal.aleph0 ^ Cardinal.mk β.ToType ≤
+      Cardinal.aleph0 ^ Cardinal.aleph0 :=
+    Cardinal.power_le_power_left Cardinal.aleph0_ne_zero
+      (Cardinal.mk_le_aleph0 (α := β.ToType))
+  have h_aleph_pow : Cardinal.aleph0.{0} ^ Cardinal.aleph0.{0} = Cardinal.beth.{0} 1 := by
+    rw [Cardinal.power_self_eq (le_refl Cardinal.aleph0),
+      show (1 : Ordinal.{0}) = Order.succ 0 from Ordinal.succ_zero.symm,
+      Cardinal.beth_succ, Cardinal.beth_zero]
+  exact (h_le_pow.trans h_pow_le).trans_eq h_aleph_pow
 
 /-- **[EHMR §13 Theorem 13.1 / §14 Theorem 14.3 — branch-length]**
 `ehmr_tree_has_omega1_branch`: the canonical partition tree for `cR` has a branch
