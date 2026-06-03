@@ -3761,20 +3761,69 @@ lemma PairERCoherentFamily.toMajorityType_isTypeCoherent
   rw [PairERChain.limitWithType_typeAt, PairERChain.limitWithType_typeAt]
   simp only [Ordinal.typein_enum]
 
-/-- **[FRONTIER]** Large-cardinality α-indexed intersection of stage
-fibers — the genuine Erdős–Rado fusion theorem.
+/-! ### [LIMIT-FUSION CONSOLIDATION MAP — read before touching the limit case]
 
-Now broken into cases on `α`:
+A read-only inventory + classification of the limit/fusion sorries, and the one
+consolidated target. (Companion to the witness-net chain note at
+`exists_coherentGoodWitnessNet`.)
+
+**Decisive finding.** The *active* tree recursion bottoms out in a single
+**false-as-stated** claim. `treeStage`'s limit → `TreeBundle.limitExtend` builds
+its tree via `PairERTypeTree.commitCoherent` (branches `= {F.typeFn}`), whose
+`large_sigma` = `typeCoherentFiber_large` = **`exists_large_iInter_stage_fibers`
+(this theorem, limit case)**. That asserts the *committed* `F.typeFn` has a large
+fiber for **every** `IsTypeCoherent F` — refuted by the documented ω-pattern
+adversary (`F.typeFn` can be a 0-realizer minority at a limit). So this universal
+claim cannot be proved; it is the linchpin of the *wrong* path.
+
+**The correct path already exists and is sorry-free given the right input.**
+`TreeBundle.limitFromCoherentMajority` builds the limit bundle from a
+`CoherentMajorityBranch B`, taking largeness from `B.large` (B's own per-level
+large-fiber field), *not* from this theorem. And `extendToExtOfBranch` (proved)
+retires `extendToExt` given `B`. So "extend-at-limit *given* `B`" is already done.
+
+**The single minimal active target is `exists_coherentMajorityBranch`** (`B`): a
+globally-coherent branch with `succ ℶ_1`-large fibers at *every* level. `B` is
+the coherent realized branch packaged at all levels; constructing it retires the
+items marked ⓦ below. Its hard limit step (to be stated *after* the wrong-path
+items are rerouted) is the coherent-realized-branch selection
+(`exists_coherent_realized_limit_branch`).
+
+**Classification of the limit/fusion sorries:**
+- `exists_large_iInter_stage_fibers` (limit) — **FALSE-AS-STATED** (universal over
+  `IsTypeCoherent`); linchpin of the wrong path. Reroute consumers to `B`.
+- `exists_point_in_iInter_of_fusion_sequence` — **FALSE-AS-STATED + LEGACY** (kept
+  for backward compat; off-chain).
+- `exists_realizedPairERTypeTree` — genuine, but **subsumed** by `B` (B gives a
+  realized branch at every level, including this existential).
+- `PairERChain/PairERGoodChain.extendToExt` — ⓦ **downstream**: retired by the
+  proved `extendToExtOfBranch` once `B` exists.
+- `IsCanonicalTypeCoherent.restrict` — architectural bookkeeping (cofinality
+  transport).
+- `TreeBundle.extendSucc` (`type_match`/`type_coh`), `treeStage`
+  (`prev_succ`/`type_succ`) — architectural bookkeeping (cyclic; post-hoc via the
+  `treeStage_*`/`richStage_*` canonicalization lemmas).
+- `richStage` (`cross_agree`) — LEGACY parallel recursion / bookkeeping.
+
+The `commitCoherent`/this-theorem path is the false-as-stated dead end; the
+`B`/`limitFromCoherentMajority` path is the live one. **Do not build new limit
+statements on this theorem.** -/
+
+/-- **[FRONTIER — FALSE-AS-STATED at limits; see the consolidation map above]**
+Large-cardinality α-indexed intersection of stage fibers.
+
+Cases on `α`:
 - `α = 0`: vacuous; intersection = `Set.univ` of size `succ ℶ_1`.
 - `α = succ β`: intersection = `validFiber` at the top stage (via
   `validFiber_mono` under `IsTypeCoherent`); size ≥ succ ℶ_1 by
-  `(F.stage β _).large`.
-- `α` a limit: requires `F.IsMajorityType hα` (i.e., F.typeFn equals
-  the H3-pigeonhole-chosen type). With this strengthened invariant,
-  the limit case follows from `typeCoherentFiber_large_via_majority`
-  + `validFiber_prefix_typeFn_eq_iInter`. The remaining work is to
-  PROPAGATE `IsMajorityType` through the recursion (limit constructor
-  sets typeFn := majorityType F). -/
+  `(F.stage β _).large`. (This case is genuinely provable.)
+- `α` a limit: **unprovable under `IsTypeCoherent` alone** — the committed
+  `F.typeFn` can be a 0-realizer minority (ω-adversary). It would need the
+  strengthened `F.IsMajorityType hα` (then `typeCoherentFiber_large_via_majority`
+  + `validFiber_prefix_typeFn_eq_iInter`), i.e. the recursion must set `typeFn :=`
+  the realized branch — which is exactly the `CoherentMajorityBranch` `B` route.
+  This `IsTypeCoherent`-only statement is retained only because existing consumers
+  still reference it; new code should route through `B`. -/
 theorem exists_large_iInter_stage_fibers
     (cR : (Fin 2 ↪o PairERSource) → Bool)
     {α : Ordinal.{0}} (hα : α < Ordinal.omega.{0} 1)
@@ -16191,10 +16240,17 @@ theorem exists_coherentMajorityBranch_of_finitePartials
     rw [h_get_pref, h_get_br]
     exact P_S.large α hα_in
 
-/-- **Existence of a coherent majority branch** — derived by wiring
-the finite-side `exists_coherentBranchPartial` through the
-inverse-limit compactness frontier
-`exists_coherentMajorityBranch_of_finitePartials`. -/
+/-- **[CONSOLIDATED LIMIT-FUSION TARGET]** Existence of a coherent majority
+branch `B` — the single object the limit side reduces to (see the consolidation
+map at `exists_large_iInter_stage_fibers`). `B` carries `succ ℶ_1`-large fibers
+at *every* level; given `B`, `TreeBundle.limitFromCoherentMajority` and
+`extendToExtOfBranch` are sorry-free, retiring the false-as-stated
+`exists_large_iInter_stage_fibers`/`commitCoherent` path and both `extendToExt`s.
+
+Derived by wiring the finite-side `exists_coherentBranchPartial` through the
+inverse-limit compactness frontier `exists_coherentMajorityBranch_of_finitePartials`
+(the actual open work now lives in that compactness lemma, not in a recursion
+limit step). -/
 theorem exists_coherentMajorityBranch
     (cR : (Fin 2 ↪o PairERSource) → Bool) :
     Nonempty (CoherentMajorityBranch cR) :=
