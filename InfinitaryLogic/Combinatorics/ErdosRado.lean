@@ -16307,7 +16307,16 @@ theorem ehmr_partitionTree_card_lower
     (hcover : ∀ y : PairERSource, ∃ i : ι, y ∈ R i)
     (hsub : ∀ i : ι, (R i).Subsingleton) :
     Order.succ (Cardinal.beth.{0} 1) ≤ Cardinal.mk ι := by
-  sorry
+  classical
+  -- The choice function `y ↦ (some i with y ∈ R i)` is injective: subsingleton fibers.
+  have hf : ∀ y : PairERSource, y ∈ R (hcover y).choose := fun y => (hcover y).choose_spec
+  have hinj : Function.Injective (fun y : PairERSource => (hcover y).choose) := by
+    intro y₁ y₂ h
+    change (hcover y₁).choose = (hcover y₂).choose at h
+    have h2 : y₂ ∈ R (hcover y₁).choose := by rw [h]; exact hf y₂
+    exact hsub _ (hf y₁) h2
+  calc Order.succ (Cardinal.beth.{0} 1) = Cardinal.mk PairERSource := mk_pairERSource.symm
+    _ ≤ Cardinal.mk ι := Cardinal.mk_le_of_injective hinj
 
 /-- **[EHMR §13 Theorem 13.1 / §14 Theorem 14.3 — branch-length]**
 `ehmr_tree_has_omega1_branch`: the canonical partition tree for `cR` has a branch
