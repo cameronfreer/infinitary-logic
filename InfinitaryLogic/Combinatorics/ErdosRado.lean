@@ -16297,6 +16297,73 @@ theorem ehmr_partitionTree_card_lower
   calc Order.succ (Cardinal.beth.{0} 1) = Cardinal.mk PairERSource := mk_pairERSource.symm
     _ ≤ Cardinal.mk ι := Cardinal.mk_le_of_injective hinj
 
+/-! ### [STAGE 1] EHMR canonical-tree skeleton (basic defs; no proofs yet)
+
+Nodes are recorded-color sequences; reps `s(h↾γ) = min S(h↾γ)` are derived by
+well-founded recursion on length; live = nonempty successor set; children split by
+the recorded color. No fiber-largeness (post-refactor `EHMRBranch` has no `large`). -/
+
+/-- A node at level `β`: the recorded colors at positions `γ < β`. The eventual
+branch is a cofinal chain through these of length `< ω₁`. -/
+abbrev EHMRNodeAt (β : Ordinal.{0}) := ∀ γ : Ordinal.{0}, γ < β → Bool
+
+/-- Restrict a node to a shorter length `δ ≤ β`. -/
+def EHMRNodeAt.restrict {β : Ordinal.{0}} (h : EHMRNodeAt β) {δ : Ordinal.{0}}
+    (hδβ : δ ≤ β) : EHMRNodeAt δ := fun γ hγ => h γ (lt_of_lt_of_le hγ hδβ)
+
+/-- The successor set `S(h)` (ordinal-indexed `validFiber`): points above all the
+reps that respect the recorded colors. -/
+def ehmrFiber (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ordinal.{0}}
+    (rep : ∀ γ : Ordinal.{0}, γ < β → PairERSource) (col : EHMRNodeAt β) :
+    Set PairERSource :=
+  { y | ∀ (γ : Ordinal.{0}) (hγ : γ < β),
+      ∃ h : rep γ hγ < y, cR (pairEmbed h) = col γ hγ }
+
+instance : Nonempty PairERSource :=
+  Cardinal.mk_ne_zero_iff.mp (by
+    rw [mk_pairERSource]
+    exact (lt_of_lt_of_le Cardinal.aleph0_pos aleph0_le_succ_beth_one).ne')
+
+/-- **Chosen representative** `s(h) = min S(h)` — the `<`-least element of the
+successor set (via `PairERSource`'s well-order), by well-founded recursion on the
+node length: the reps at lower positions are the chosen reps of the restrictions.
+Junk default on dead (empty-fiber) nodes. -/
+noncomputable def ehmrChosen (cR : (Fin 2 ↪o PairERSource) → Bool)
+    (β : Ordinal.{0}) (h : EHMRNodeAt β) : PairERSource := by
+  classical
+  exact
+    if hne : (ehmrFiber cR
+        (fun γ hγ => ehmrChosen cR γ (h.restrict (le_of_lt hγ))) h).Nonempty then
+      (IsWellFounded.wf : WellFounded (· < · : PairERSource → PairERSource → Prop)).min _ hne
+    else
+      Classical.arbitrary PairERSource
+termination_by β
+decreasing_by all_goals exact hγ
+
+/-- The reps along a node: the chosen reps of its restrictions. -/
+noncomputable def ehmrRep (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ordinal.{0}}
+    (h : EHMRNodeAt β) : ∀ γ : Ordinal.{0}, γ < β → PairERSource :=
+  fun γ hγ => ehmrChosen cR γ (h.restrict (le_of_lt hγ))
+
+/-- `S(h)` as a set, via `ehmrRep`. -/
+def ehmrS (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ordinal.{0}} (h : EHMRNodeAt β) :
+    Set PairERSource := ehmrFiber cR (ehmrRep cR h) h
+
+/-- A node is **live** iff its successor set is nonempty. -/
+def ehmrLive (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ordinal.{0}}
+    (h : EHMRNodeAt β) : Prop := (ehmrS cR h).Nonempty
+
+/-- The used/remainder set `R(h)`: `{s(h)}` on live nodes, else `∅`. -/
+noncomputable def ehmrR (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ordinal.{0}}
+    (h : EHMRNodeAt β) : Set PairERSource := by
+  classical
+  exact if ehmrLive cR h then {ehmrChosen cR β h} else ∅
+
+/-- **Child** of `h` recording color `c` at the new top position `β`. -/
+noncomputable def EHMRNodeAt.child {β : Ordinal.{0}} (h : EHMRNodeAt β) (c : Bool) :
+    EHMRNodeAt (Order.succ β) :=
+  fun γ _hγ => if hγβ : γ < β then h γ hγβ else c
+
 /-- **[EHMR §13 Theorem 13.1 / §14 Theorem 14.3 — branch-length]**
 `ehmr_tree_has_omega1_branch`: the canonical partition tree for `cR` has a branch
 of length `ω₁`. Proof (future): the used-up singletons `R(h) = {s(h)}` cover
