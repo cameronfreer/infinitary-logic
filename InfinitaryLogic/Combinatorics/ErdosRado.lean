@@ -4428,7 +4428,13 @@ theorem typeCoherentFiber_large
       Cardinal.mk (validFiber cR F.prefix F.typeFn) :=
   exists_large_limit_fiber_prescribed cR hα F hF_type
 
-/-- **`PairERTypeTree.commitCoherent`**: commit-coherent tree at level
+/-- **[LEGACY — off-chain; the false-path tree]** Its `large_sigma` reduces to
+`typeCoherentFiber_large` = the false-as-stated `exists_large_iInter_stage_fibers`
+(committed `{F.typeFn}` realized for every `IsTypeCoherent F` — refuted by the
+ω-adversary). Only `TreeBundle.limitExtend` (itself legacy) uses it; the live path
+uses `B`'s realized branch via `limitFromCoherentMajority` instead.
+
+**`PairERTypeTree.commitCoherent`**: commit-coherent tree at level
 `α` with `branches = {F.typeFn}`. The singleton-branches structure
 makes `IsCommitCoherent` hold by construction.
 
@@ -16838,6 +16844,23 @@ noncomputable def TreeBundle.limitFromCoherentMajority
     apply Subtype.ext
     exact h_typein_init.symm
 
+/-- **`TreeBundle.limitExtend_of_coherentMajorityBranch`** — the
+branch-parametrized **replacement** for `TreeBundle.limitExtend`. Given a
+`CoherentMajorityBranch B`, builds the limit `TreeBundle` directly (via
+`limitFromCoherentMajority`), taking largeness from `B.large`. Unlike `limitExtend`
+it needs **no** recursive `IH`/`prev_succ`/`type_succ` obligations and, crucially,
+**does not depend on the false-as-stated `exists_large_iInter_stage_fibers`**
+(`commitCoherent` path) — verified axiom-clean. This is the reroute target from the
+limit-fusion consolidation: the active limit step factors through `B`, so the only
+remaining hard theorem is the compactness producing `B`
+(`exists_coherentMajorityBranch_of_finitePartials`). -/
+noncomputable def TreeBundle.limitExtend_of_coherentMajorityBranch
+    {cR : (Fin 2 ↪o PairERSource) → Bool}
+    (B : CoherentMajorityBranch cR) {α : Ordinal.{0}}
+    (hα : α < Ordinal.omega.{0} 1) :
+    TreeBundle cR α :=
+  TreeBundle.limitFromCoherentMajority B hα
+
 /-- **`treeStageOfBranch`**: the branch-parametrized treeStage. At
 every level α < ω₁, build the TreeBundle directly using B (no
 recursion needed since B is already coherent across all levels). -/
@@ -17426,7 +17449,17 @@ lemma TreeBundle.extend_typeAt_old
   show TB.stage.succ.typeAt δ _ = _
   rw [PairERChain.succ_typeAt_old _ δ hδα]
 
-/-- **`TreeBundle.limitExtend`**: limit-level constructor for
+/-- **[LEGACY — off-chain; superseded by
+`TreeBundle.limitExtend_of_coherentMajorityBranch`]** This recursive limit
+constructor attaches `PairERTypeTree.commitCoherent` (branches = `{F.typeFn}`),
+whose `large_sigma` reduces to the **false-as-stated** `exists_large_iInter_stage_
+fibers` (it asserts the committed `typeFn` is realized for every `IsTypeCoherent`
+family — refuted by the ω-adversary). Nothing on the active `B`/witness-net path
+consumes it; use the axiom-clean `B`-based replacement instead. Retained only
+until the dead recursive tower (`treeStage`/`richStage`/`commitCoherent`) is
+removed.
+
+**`TreeBundle.limitExtend`**: limit-level constructor for
 `TreeBundle`, parameterized by prior bundles below `α` plus a
 `prev_succ` cross-stage coherence witness.
 
@@ -18480,7 +18513,17 @@ discharged post-hoc by reduction lemmas + a canonicalization theorem
 (treeStage_bundle_eq_self analog), in the same pattern that resolved
 `richStage`. -/
 
-/-- **Tree-driven transfinite stage.** Produces `TreeBundle cR α` at
+/-- **[LEGACY — off-chain; superseded by `treeStageOfBranch`]** Tree-driven
+transfinite stage producing `TreeBundle cR α` via `Ordinal.limitRecOn`. Its limit
+case goes through `TreeBundle.limitExtend` → `commitCoherent` → the false-as-stated
+`exists_large_iInter_stage_fibers`, so this recursion can never be axiom-clean.
+The branch-parametrized `treeStageOfBranch` (`:= limitFromCoherentMajority B`) is
+the axiom-clean replacement: given `B : CoherentMajorityBranch`, it builds the
+bundle at every level with no recursion and no dependence on the false theorem.
+Nothing on the active `B`/witness-net path consumes `treeStage`; retained only
+until this dead tower is removed.
+
+**Tree-driven transfinite stage.** Produces `TreeBundle cR α` at
 every `α < ω_1`. The limit case attaches a universal tree (so
 `selectedBranch` survives across recursion levels) and discharges
 `prev_succ` from the eventual canonicalization (currently sorry'd,
