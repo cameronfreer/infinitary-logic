@@ -16364,6 +16364,36 @@ noncomputable def EHMRNodeAt.child {β : Ordinal.{0}} (h : EHMRNodeAt β) (c : B
     EHMRNodeAt (Order.succ β) :=
   fun γ _hγ => if hγβ : γ < β then h γ hγβ else c
 
+/-- **[STAGE 2a]** `R(h)` is a subsingleton (it is `{s(h)}` or `∅`). -/
+theorem ehmrR_subsingleton (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ordinal.{0}}
+    (h : EHMRNodeAt β) : (ehmrR cR h).Subsingleton := by
+  classical
+  rw [ehmrR]
+  split_ifs with hlive
+  · exact Set.subsingleton_singleton
+  · exact Set.subsingleton_empty
+
+/-- **[STAGE 2a]** On a live node, the chosen rep lies in the successor set. -/
+theorem ehmrChosen_mem (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ordinal.{0}}
+    (h : EHMRNodeAt β) (hlive : ehmrLive cR h) :
+    ehmrChosen cR β h ∈ ehmrS cR h := by
+  classical
+  have hset : ehmrS cR h =
+      ehmrFiber cR (fun γ hγ => ehmrChosen cR γ (h.restrict (le_of_lt hγ))) h := rfl
+  have hne : (ehmrFiber cR
+      (fun γ hγ => ehmrChosen cR γ (h.restrict (le_of_lt hγ))) h).Nonempty := hset ▸ hlive
+  rw [ehmrChosen, dif_pos hne]
+  rw [hset]
+  exact WellFounded.min_mem _ _ hne
+
+/-- **[STAGE 2a]** The recorded-color property (local EHMR fact (8)): for `γ < β`,
+the chosen rep at `γ` sits below `s(h)` and the pair gets color `h γ`. -/
+theorem ehmrRep_coloring (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ordinal.{0}}
+    (h : EHMRNodeAt β) (hlive : ehmrLive cR h) (γ : Ordinal.{0}) (hγ : γ < β) :
+    ∃ hlt : ehmrRep cR h γ hγ < ehmrChosen cR β h,
+      cR (pairEmbed hlt) = h γ hγ :=
+  ehmrChosen_mem cR h hlive γ hγ
+
 /-- **[EHMR §13 Theorem 13.1 / §14 Theorem 14.3 — branch-length]**
 `ehmr_tree_has_omega1_branch`: the canonical partition tree for `cR` has a branch
 of length `ω₁`. Proof (future): the used-up singletons `R(h) = {s(h)}` cover
