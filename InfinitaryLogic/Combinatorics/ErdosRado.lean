@@ -16263,6 +16263,91 @@ theorem exists_coherentMajorityBranch
   exists_coherentMajorityBranch_of_finitePartials cR
     (fun S hS => exists_coherentBranchPartial cR S hS)
 
+/-! ### [PHASE 1 SCAFFOLD] Direct `CoherentMajorityBranch` via the EHMR canonical
+partition tree (EHMR §13/§14/§17). Statement-level only — bodies are `sorry`. This
+is the intended *direct* construction of `B`, superseding the
+`_of_finitePartials`/`rawBranchCompactness`/`HasPartialExtensions` route (and its
+near-circular `extendToExt` dependency) **once proved**. The old route is left
+intact for now. -/
+
+/-- **[EHMR §17 — output branch of the canonical partition tree]**
+`EHMRBranch cR`: the raw data of a length-`ω₁` branch of the Erdős–Rado canonical
+partition tree for the pair-coloring `cR`. At each level `β < ω₁`:
+* `rep β` is the chosen representative `s(h↾β)` (EHMR `s(h) = min S(h)`);
+* `bit β` is the recorded color (the node bit `h(β)`);
+* `rep_strictMono`: the reps form a strictly increasing transfinite sequence;
+* `coloring` is **EHMR fact (8)**, `cR({s(h↾β), s(h↾γ)}) = h(β)` for `β < γ` — the
+  `inner_consistent` / `top_in_validFiber` content;
+* `large`: the per-level fiber-largeness the tree maintains (`succ ℶ_1` elements
+  above the reps respecting the recorded colors).
+
+Intermediate object: `ehmr_tree_has_omega1_branch` produces it (tree-counting), and
+`exists_coherentMajorityBranch_of_ehmrBranch` assembles it into a
+`CoherentMajorityBranch`. -/
+structure EHMRBranch (cR : (Fin 2 ↪o PairERSource) → Bool) where
+  rep : ∀ β : Ordinal.{0}, β < Ordinal.omega.{0} 1 → PairERSource
+  bit : ∀ β : Ordinal.{0}, β < Ordinal.omega.{0} 1 → Bool
+  rep_strictMono : ∀ {β γ : Ordinal.{0}} (hβ : β < Ordinal.omega.{0} 1)
+    (hγ : γ < Ordinal.omega.{0} 1), β < γ → rep β hβ < rep γ hγ
+  coloring : ∀ {β γ : Ordinal.{0}} (hβ : β < Ordinal.omega.{0} 1)
+    (hγ : γ < Ordinal.omega.{0} 1) (hβγ : β < γ),
+    cR (pairEmbed (rep_strictMono hβ hγ hβγ)) = bit β hβ
+  large : ∀ (β : Ordinal.{0}) (hβ : β < Ordinal.omega.{0} 1),
+    Order.succ (Cardinal.beth.{0} 1) ≤ Cardinal.mk
+      { y : PairERSource // ∀ (γ : Ordinal.{0}) (hγβ : γ < β),
+          ∃ h : rep γ (hγβ.trans hβ) < y, cR (pairEmbed h) = bit γ (hγβ.trans hβ) }
+
+/-- **[EHMR §14, Lemma 14.2 + |E| counting — coverage/counting engine]**
+`ehmr_partitionTree_card_lower`: if the "used-up" sets `R i` cover `PairERSource`
+and each is a subsingleton (the canonical tree has `R(h) = {s(h)}`, so `|R(h)| = 1`),
+then the node index set has cardinality `≥ succ ℶ_1 = |PairERSource|`. This is the
+counting feeding the branch-length theorem. -/
+theorem ehmr_partitionTree_card_lower
+    {ι : Type} (R : ι → Set PairERSource)
+    (hcover : ∀ y : PairERSource, ∃ i : ι, y ∈ R i)
+    (hsub : ∀ i : ι, (R i).Subsingleton) :
+    Order.succ (Cardinal.beth.{0} 1) ≤ Cardinal.mk ι := by
+  sorry
+
+/-- **[EHMR §13 Theorem 13.1 / §14 Theorem 14.3 — branch-length]**
+`ehmr_tree_has_omega1_branch`: the canonical partition tree for `cR` has a branch
+of length `ω₁`. Proof (future): the used-up singletons `R(h) = {s(h)}` cover
+`PairERSource` (Lemma 14.2), so `ehmr_partitionTree_card_lower` gives node count
+`≥ succ ℶ_1`; the levels have size `≤ ℶ_1` (countable recorded-color branches into
+`2`); and `succ ℶ_1` is regular — so Theorem 13.1 yields a path of length `ω₁`,
+i.e. an `EHMRBranch cR`. -/
+theorem ehmr_tree_has_omega1_branch
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    Nonempty (EHMRBranch cR) := by
+  sorry
+
+/-- **[EHMR branch → `CoherentMajorityBranch`]**
+`exists_coherentMajorityBranch_of_ehmrBranch`: assemble an `EHMRBranch` into a
+`CoherentMajorityBranch`. `prefixAt α` is the embedding `α.ToType ↪o PairERSource`
+sending position `β < α` to `rep β`; `branch α` reads off `bit`;
+`prefix_restrict`/`branch_restrict` are immediate from the assembly;
+`top_in_validFiber` is EHMR fact (8) (`coloring`); `large` is `EHMRBranch.large`.
+(Named `_of_ehmrBranch` — the partition tree itself is internal to
+`ehmr_tree_has_omega1_branch`.) -/
+theorem exists_coherentMajorityBranch_of_ehmrBranch
+    {cR : (Fin 2 ↪o PairERSource) → Bool} (b : EHMRBranch cR) :
+    Nonempty (CoherentMajorityBranch cR) := by
+  sorry
+
+/-- **[DIRECT — supersedes `_of_finitePartials` once proved]**
+`exists_coherentMajorityBranch_direct`: construct `B` directly via the EHMR
+canonical partition tree (`ehmr_tree_has_omega1_branch` +
+`exists_coherentMajorityBranch_of_ehmrBranch`), bypassing the
+`_of_finitePartials` / `rawBranchCompactness` / `HasPartialExtensions` tower and its
+near-circular `extendToExt` dependency. Once the two scaffold lemmas are proved,
+`exists_coherentMajorityBranch` should be re-routed through this (do NOT rewire
+yet). -/
+theorem exists_coherentMajorityBranch_direct
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    Nonempty (CoherentMajorityBranch cR) := by
+  obtain ⟨b⟩ := ehmr_tree_has_omega1_branch cR
+  exact exists_coherentMajorityBranch_of_ehmrBranch b
+
 /-- **Conditional implication**: a `CoherentMajorityBranch` would
 discharge the limit-stage typeAt agreement that
 `selectedBranch_agrees_with_prior_commit` requires.
