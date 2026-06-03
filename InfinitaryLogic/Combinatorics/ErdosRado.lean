@@ -16332,7 +16332,106 @@ sending position `β < α` to `rep β`; `branch α` reads off `bit`;
 theorem exists_coherentMajorityBranch_of_ehmrBranch
     {cR : (Fin 2 ↪o PairERSource) → Bool} (b : EHMRBranch cR) :
     Nonempty (CoherentMajorityBranch cR) := by
-  sorry
+  classical
+  -- `typein x < ω₁` for `x : α.ToType` when `α < ω₁`.
+  have htlt : ∀ {α : Ordinal.{0}} (_hα : α < Ordinal.omega.{0} 1) (x : α.ToType),
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      Ordinal.typein (· < ·) x < Ordinal.omega.{0} 1 := by
+    intro α hα x
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    have h := Ordinal.typein_lt_type (· < · : α.ToType → α.ToType → Prop) x
+    rw [Ordinal.type_toType] at h
+    exact h.trans hα
+  -- `rep`/`bit` depend on the ordinal only (proof-irrelevant in the `< ω₁` arg).
+  have repc : ∀ {A B : Ordinal.{0}} (hA : A < Ordinal.omega.{0} 1)
+      (hB : B < Ordinal.omega.{0} 1), A = B → b.rep A hA = b.rep B hB := by
+    intro A B hA hB h; subst h; rfl
+  have bitc : ∀ {A B : Ordinal.{0}} (hA : A < Ordinal.omega.{0} 1)
+      (hB : B < Ordinal.omega.{0} 1), A = B → b.bit A hA = b.bit B hB := by
+    intro A B hA hB h; subst h; rfl
+  -- `typein ⊤ = γ` inside `(succ γ).ToType`.
+  have htop : ∀ (γ : Ordinal.{0}),
+      haveI : IsWellOrder (Order.succ γ).ToType (· < ·) := isWellOrder_lt
+      Ordinal.typein (· < ·) (⊤ : (Order.succ γ).ToType) = γ := by
+    intro γ
+    haveI : IsWellOrder (Order.succ γ).ToType (· < ·) := isWellOrder_lt
+    rw [show (⊤ : (Order.succ γ).ToType) = Ordinal.enum (α := (Order.succ γ).ToType) (· < ·)
+          ⟨γ, (Ordinal.type_toType _).symm ▸ Order.lt_succ γ⟩ from Ordinal.enum_succ_eq_top.symm,
+      Ordinal.typein_enum]
+  -- The assembled prefix embedding at each level.
+  let pre : ∀ α : Ordinal.{0}, α < Ordinal.omega.{0} 1 → α.ToType ↪o PairERSource :=
+    fun α hα =>
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      OrderEmbedding.ofStrictMono
+        (fun x => b.rep (Ordinal.typein (· < ·) x) (htlt hα x))
+        (fun _ _ hxy => b.rep_strictMono _ _ ((Ordinal.typein_lt_typein (· < ·)).mpr hxy))
+  let br : ∀ α : Ordinal.{0}, α < Ordinal.omega.{0} 1 → α.ToType → Bool :=
+    fun α hα x =>
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      b.bit (Ordinal.typein (· < ·) x) (htlt hα x)
+  have pre_apply : ∀ (α : Ordinal.{0}) (hα : α < Ordinal.omega.{0} 1) (x : α.ToType),
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      pre α hα x = b.rep (Ordinal.typein (· < ·) x) (htlt hα x) := by
+    intro α hα x; haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt; rfl
+  have br_apply : ∀ (α : Ordinal.{0}) (hα : α < Ordinal.omega.{0} 1) (x : α.ToType),
+      haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+      br α hα x = b.bit (Ordinal.typein (· < ·) x) (htlt hα x) := by
+    intro α hα x; rfl
+  refine ⟨{
+    prefixAt := pre
+    branch := br
+    prefix_restrict := ?_
+    branch_restrict := ?_
+    top_in_validFiber := ?_
+    large := ?_ }⟩
+  · -- prefix_restrict
+    intro β α hβα hβ hα x
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    rw [pre_apply α hα, pre_apply β hβ]
+    exact repc _ _ (Ordinal.typein_apply _ x)
+  · -- branch_restrict
+    intro β α hβα hβ hα x
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    rw [br_apply α hα, br_apply β hβ]
+    exact bitc _ _ (Ordinal.typein_apply _ x)
+  · -- top_in_validFiber
+    intro γ hγ hsγ
+    haveI : IsWellOrder (Order.succ γ).ToType (· < ·) := isWellOrder_lt
+    haveI : IsWellOrder γ.ToType (· < ·) := isWellOrder_lt
+    intro x
+    have hx_lt : Ordinal.typein (· < ·) x < γ := by
+      have h := Ordinal.typein_lt_type (· < · : γ.ToType → γ.ToType → Prop) x
+      rwa [Ordinal.type_toType] at h
+    have hpx : pre γ hγ x = b.rep (Ordinal.typein (· < ·) x) (htlt hγ x) := pre_apply γ hγ x
+    have hpt : pre (Order.succ γ) hsγ (⊤ : (Order.succ γ).ToType) = b.rep γ hγ := by
+      rw [pre_apply (Order.succ γ) hsγ]; exact repc _ _ (htop γ)
+    have h₀ : pre γ hγ x < pre (Order.succ γ) hsγ (⊤ : (Order.succ γ).ToType) := by
+      rw [hpx, hpt]; exact b.rep_strictMono _ _ hx_lt
+    refine ⟨h₀, ?_⟩
+    have hpe : pairEmbed h₀ = pairEmbed (b.rep_strictMono (htlt hγ x) hγ hx_lt) := by
+      apply RelEmbedding.ext
+      intro i
+      match i with
+      | ⟨0, _⟩ => simp only [pairEmbed, OrderEmbedding.coe_ofStrictMono]; exact hpx
+      | ⟨1, _⟩ => simp only [pairEmbed, OrderEmbedding.coe_ofStrictMono]; exact hpt
+    rw [hpe, br_apply γ hγ]
+    exact b.coloring (htlt hγ x) hγ hx_lt
+  · -- large
+    intro α hα
+    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    have h_subset : { y : PairERSource | ∀ (γ : Ordinal.{0}) (hγα : γ < α),
+          ∃ h : b.rep γ (hγα.trans hα) < y, cR (pairEmbed h) = b.bit γ (hγα.trans hα) }
+        ⊆ validFiber cR (pre α hα) (br α hα) := by
+      intro y hy x
+      have hx_lt : Ordinal.typein (· < ·) x < α := by
+        have h := Ordinal.typein_lt_type (· < · : α.ToType → α.ToType → Prop) x
+        rwa [Ordinal.type_toType] at h
+      obtain ⟨h, hc⟩ := hy (Ordinal.typein (· < ·) x) hx_lt
+      rw [pre_apply α hα, br_apply α hα]
+      exact ⟨h, hc⟩
+    exact (b.large α hα).trans (Cardinal.mk_le_mk_of_subset h_subset)
 
 /-- **[DIRECT — supersedes `_of_finitePartials` once proved]**
 `exists_coherentMajorityBranch_direct`: construct `B` directly via the EHMR
