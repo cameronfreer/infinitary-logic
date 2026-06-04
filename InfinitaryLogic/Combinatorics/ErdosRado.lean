@@ -16711,16 +16711,94 @@ theorem ehmrRep_yNode (cR : (Fin 2 ↪o PairERSource) → Bool) (y : PairERSourc
      = yRep cR y (Ordinal.typein (· < ·) x)
   rw [yRep_eq, yNode_restrict]
 
-/-- **[STAGE 2b FRONTIER — coverage / EHMR Lemma 14.2]** Every source element is the
-chosen representative of some node (`y ∈ R(h)`). Idea: follow the y-path
-(`ehmrS_mem_child_of_ne`) — the chosen reps stay `< y` and strictly increase along
-it, so by regularity of `succ ℶ_1` the path must reach a node where `y` is itself the
-min (`y = s(h)`, i.e. `y ∈ R(h)`). Length left unrestricted (it may exceed `ω₁`); the
-branch counting bounds the relevant nodes later. -/
+/-- **[STAGE 2b]** Liveness criterion: if every earlier rep stays `< y`, then `y` is a
+successor of `yNode cR y β` (so the node is live and `y ∈ S`). -/
+theorem yNode_mem_of (cR : (Fin 2 ↪o PairERSource) → Bool) (y : PairERSource)
+    {β : Ordinal.{0}} (hbelow : ∀ δ : Ordinal.{0}, δ < β → yRep cR y δ < y) :
+    y ∈ ehmrS cR (yNode cR y β) := by
+  classical
+  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  intro x
+  have hrep : ehmrRep cR (yNode cR y β) x = yRep cR y (Ordinal.typein (· < ·) x) :=
+    ehmrRep_yNode cR y x
+  have htx_lt : Ordinal.typein (· < ·) x < β :=
+    lt_of_lt_of_eq (Ordinal.typein_lt_type (· < ·) x) (Ordinal.type_toType β)
+  have hlt : yRep cR y (Ordinal.typein (· < ·) x) < y := hbelow _ htx_lt
+  rw [hrep]
+  refine ⟨hlt, ?_⟩
+  show cR (pairEmbed hlt) = yNode cR y β x
+  simp only [yNode]
+  rw [dif_pos hlt]
+
+/-- **[STAGE 2b]** As long as `yNode cR y γ₂` is live (every earlier rep stays `< y`), the
+canonical reps strictly increase: `yRep γ₁ < yRep γ₂` for `γ₁ < γ₂`. (The rep at the
+position `γ₁` of `yNode γ₂` is `yRep γ₁`, and it lies strictly below the chosen min
+`yRep γ₂`.) -/
+theorem yRep_strictMono (cR : (Fin 2 ↪o PairERSource) → Bool) (y : PairERSource)
+    {γ₁ γ₂ : Ordinal.{0}} (h12 : γ₁ < γ₂)
+    (hlive : ∀ δ : Ordinal.{0}, δ < γ₂ → yRep cR y δ < y) :
+    yRep cR y γ₁ < yRep cR y γ₂ := by
+  classical
+  haveI : IsWellOrder γ₂.ToType (· < ·) := isWellOrder_lt
+  have hlive2 : ehmrLive cR (yNode cR y γ₂) := ⟨y, yNode_mem_of cR y hlive⟩
+  have hγ₁ : γ₁ < Ordinal.type (· < · : γ₂.ToType → γ₂.ToType → Prop) := by
+    rw [Ordinal.type_toType]; exact h12
+  obtain ⟨hlt, _⟩ :=
+    ehmrChosen_mem cR (yNode cR y γ₂) hlive2 (Ordinal.enum (· < ·) ⟨γ₁, hγ₁⟩)
+  rw [ehmrRep_yNode cR y, Ordinal.typein_enum] at hlt
+  rwa [← yRep_eq] at hlt
+
+/-- **[STAGE 2b — stopping]** The canonical `y`-path stops: there is a *least* level `γ`
+where the chosen rep reaches `y` (`y ≤ yRep γ`), with all earlier reps strictly below
+`y`. Existence is pure well-foundedness — if every `yRep γ` stayed `< y` then `yRep`
+would be a strictly increasing `Ordinal → PairERSource`, and composing with `typein`
+gives a strictly increasing `Ordinal → Ordinal` exceeding the order type of
+`PairERSource`, impossible. -/
+theorem exists_yRep_ge (cR : (Fin 2 ↪o PairERSource) → Bool) (y : PairERSource) :
+    ∃ γ : Ordinal.{0}, y ≤ yRep cR y γ ∧ ∀ δ : Ordinal.{0}, δ < γ → yRep cR y δ < y := by
+  classical
+  have hexists : ∃ γ : Ordinal.{0}, y ≤ yRep cR y γ := by
+    by_contra hcon
+    push_neg at hcon
+    haveI : IsWellOrder PairERSource (· < ·) := isWellOrder_lt
+    have hmono : StrictMono (yRep cR y) := fun a b hab =>
+      yRep_strictMono cR y hab (fun δ _ => hcon δ)
+    have hmono_g : StrictMono (fun γ => Ordinal.typein (· < ·) (yRep cR y γ)) :=
+      fun a b hab => (Ordinal.typein_lt_typein (· < ·)).mpr (hmono hab)
+    have hself : ∀ a : Ordinal.{0}, a ≤ Ordinal.typein (· < ·) (yRep cR y a) := by
+      intro a
+      induction a using Ordinal.induction with
+      | _ a ih =>
+        by_contra hlt
+        push_neg at hlt
+        exact absurd ((ih _ hlt).trans_lt (hmono_g hlt)) (lt_irrefl _)
+    have hΩ := hself (Ordinal.type (· < · : PairERSource → PairERSource → Prop))
+    exact absurd (hΩ.trans_lt (Ordinal.typein_lt_type (· < ·) _)) (lt_irrefl _)
+  obtain ⟨γ₀, hγ₀⟩ := hexists
+  refine ⟨Ordinal.lt_wf.min {γ | y ≤ yRep cR y γ} ⟨γ₀, hγ₀⟩, ?_, ?_⟩
+  · exact Ordinal.lt_wf.min_mem {γ | y ≤ yRep cR y γ} ⟨γ₀, hγ₀⟩
+  · intro δ hδ
+    exact not_le.mp (fun ha => Ordinal.lt_wf.not_lt_min {γ | y ≤ yRep cR y γ} ⟨γ₀, hγ₀⟩ ha hδ)
+
+/-- **[STAGE 2b — coverage / EHMR Lemma 14.2]** Every source element is the chosen
+representative of some node (`y ∈ R(h)`): take the least level `γ` where the canonical
+`y`-path reaches `y` (`exists_yRep_ge`). There every earlier rep is `< y`, so the node is
+live (`yNode_mem_of`) and its chosen min is `≤ y` (`ehmrChosen_le_of_mem`); combined with
+`y ≤ yRep γ` this forces `y = s(yNode γ)`, i.e. `y ∈ R(yNode γ)`. -/
 theorem exists_node_choosing_source (cR : (Fin 2 ↪o PairERSource) → Bool)
     (y : PairERSource) :
     ∃ (β : Ordinal.{0}) (h : EHMRNodeAt β), y ∈ ehmrR cR h := by
-  sorry
+  classical
+  obtain ⟨γ, hge, hbelow⟩ := exists_yRep_ge cR y
+  have hmem : y ∈ ehmrS cR (yNode cR y γ) := yNode_mem_of cR y hbelow
+  have hle : yRep cR y γ ≤ y := by
+    rw [yRep_eq]; exact ehmrChosen_le_of_mem cR (yNode cR y γ) hmem
+  have heq : y = ehmrChosen cR γ (yNode cR y γ) := by
+    rw [← yRep_eq]; exact le_antisymm hge hle
+  have hlive : ehmrLive cR (yNode cR y γ) := ⟨y, hmem⟩
+  refine ⟨γ, yNode cR y γ, ?_⟩
+  rw [ehmrR, if_pos hlive, Set.mem_singleton_iff]
+  exact heq
 
 /-- **[EHMR §13 Theorem 13.1 / §14 Theorem 14.3 — branch-length]**
 `ehmr_tree_has_omega1_branch`: the canonical partition tree for `cR` has a branch
