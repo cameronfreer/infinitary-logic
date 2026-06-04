@@ -16401,6 +16401,33 @@ theorem ehmrChosen_mem (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ordinal.{
   rw [ehmrChosen, dif_pos hcond]
   exact WellFounded.min_mem _ _ hcond
 
+/-- **[STAGE 2a]** On a live node, `ehmrChosen` is exactly the well-order minimum of
+the successor set (the defining unfold). -/
+theorem ehmrChosen_eq_min (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ordinal.{0}}
+    (h : EHMRNodeAt β) (hlive : ehmrLive cR h) :
+    ehmrChosen cR β h =
+      (IsWellFounded.wf : WellFounded (· < · : PairERSource → PairERSource → Prop)).min
+        (ehmrS cR h) hlive := by
+  classical
+  have hcond : (ehmrFiber cR
+      (fun x => ehmrChosen cR (Ordinal.typein (· < ·) x)
+        (h.restrict (le_of_lt (by
+          have hh := Ordinal.typein_lt_type (· < · : β.ToType → β.ToType → Prop) x
+          rwa [Ordinal.type_toType] at hh)))) h).Nonempty := hlive
+  rw [ehmrChosen, dif_pos hcond]
+  -- `rw`'s closing `rfl` is reducible-only; `ehmrS`/`ehmrRep` are regular defs, so the
+  -- raw fiber and `ehmrS cR h` are defeq only at default transparency. Close it manually.
+  rfl
+
+/-- **[STAGE 2b prereq]** If `y` is a live successor of `h` other than the chosen min,
+then the chosen min is strictly below `y` (it is the `<`-least element of `S(h)`). -/
+theorem ehmrChosen_lt_of_mem_ne (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ordinal.{0}}
+    (h : EHMRNodeAt β) {y : PairERSource} (hy : y ∈ ehmrS cR h)
+    (hne : y ≠ ehmrChosen cR β h) : ehmrChosen cR β h < y := by
+  have hlive : ehmrLive cR h := ⟨y, hy⟩
+  rw [ehmrChosen_eq_min cR h hlive] at hne ⊢
+  exact lt_of_le_of_ne (not_lt.mp (WellFounded.not_lt_min _ _ hlive hy)) (Ne.symm hne)
+
 /-- **[STAGE 2a]** The recorded-color property (local EHMR fact (8)): at position
 `x : β.ToType`, the chosen rep sits below `s(h)` and the pair gets color `h x`. -/
 theorem ehmrRep_coloring (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ordinal.{0}}
@@ -16432,6 +16459,143 @@ theorem ehmr_level_card_le_beth1 (β : Ordinal.{0}) (hβ : β < Ordinal.omega.{0
 
 /-! ### [STAGE 2b] Coverage (EHMR Lemma 14.2) — the y-path. Statements first. -/
 
+/-- **[STAGE 2b helper]** Restricting a child node to a length `δ ≤ β` (strictly below
+the new top position) agrees with restricting the parent: the child only adds the
+top coordinate, leaving the old positions untouched. -/
+theorem EHMRNodeAt.restrict_child {β : Ordinal.{0}} (h : EHMRNodeAt β) (c : Bool)
+    {δ : Ordinal.{0}} (hδβ : δ ≤ β) :
+    (h.child c).restrict (hδβ.trans (Order.le_succ β)) = h.restrict hδβ := by
+  classical
+  funext x
+  exact extendType_initialSegToType_apply h c hδβ x
+
+/-- **[STAGE 2b helper]** Restricting a node to its own full length is the identity. -/
+theorem EHMRNodeAt.restrict_self {β : Ordinal.{0}} (h : EHMRNodeAt β) (hββ : β ≤ β) :
+    h.restrict hββ = h := by
+  classical
+  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  funext x
+  show h ((Ordinal.initialSegToType hββ).toOrderEmbedding x) = h x
+  congr 1
+  exact (Ordinal.typein_inj (· < ·)).mp (Ordinal.typein_apply (Ordinal.initialSegToType hββ) x)
+
+/-- **[STAGE 2b helper]** `ehmrChosen` transported along a level equality: equal levels
+plus heterogeneously-equal nodes give equal chosen reps. -/
+theorem ehmrChosen_congr (cR : (Fin 2 ↪o PairERSource) → Bool) {δ₁ δ₂ : Ordinal.{0}}
+    (hδ : δ₁ = δ₂) {n₁ : EHMRNodeAt δ₁} {n₂ : EHMRNodeAt δ₂} (hn : HEq n₁ n₂) :
+    ehmrChosen cR δ₁ n₁ = ehmrChosen cR δ₂ n₂ := by
+  subst hδ
+  rw [eq_of_heq hn]
+
+/-- **[STAGE 2b helper]** Heterogeneous version of `restrict_child`: when `δ₁ = δ₂ ≤ β`,
+restricting the child to `δ₁` is heq to restricting the parent to `δ₂`. -/
+theorem EHMRNodeAt.restrict_child_heq {β : Ordinal.{0}} (h : EHMRNodeAt β) (c : Bool)
+    {δ₁ δ₂ : Ordinal.{0}} (hδ : δ₁ = δ₂) (h1 : δ₁ ≤ Order.succ β) (h2 : δ₂ ≤ β) :
+    HEq ((h.child c).restrict h1) (h.restrict h2) := by
+  subst hδ
+  exact heq_of_eq (EHMRNodeAt.restrict_child h c h2)
+
+/-- **[STAGE 2b helper]** The reps of a child agree with the parent's reps at every old
+position (the lift of `x : β.ToType` into the successor level). -/
+theorem ehmrRep_child_lift (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ordinal.{0}}
+    (h : EHMRNodeAt β) (c : Bool) (x : β.ToType) :
+    ehmrRep cR (h.child c)
+        ((Ordinal.initialSegToType (Order.le_succ β)).toOrderEmbedding x) =
+      ehmrRep cR h x := by
+  classical
+  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder (Order.succ β).ToType (· < ·) := isWellOrder_lt
+  set z : (Order.succ β).ToType :=
+    (Ordinal.initialSegToType (Order.le_succ β)).toOrderEmbedding x with hz_def
+  have htz : Ordinal.typein (· < ·) z = Ordinal.typein (· < ·) x := by
+    rw [hz_def]
+    exact Ordinal.typein_apply (Ordinal.initialSegToType (Order.le_succ β)) x
+  have h1 : Ordinal.typein (· < ·) z ≤ Order.succ β :=
+    le_of_lt (by
+      have := Ordinal.typein_lt_type (· < · : (Order.succ β).ToType → _ → Prop) z
+      rwa [Ordinal.type_toType] at this)
+  have h2 : Ordinal.typein (· < ·) x ≤ β :=
+    le_of_lt (by
+      have := Ordinal.typein_lt_type (· < · : β.ToType → _ → Prop) x
+      rwa [Ordinal.type_toType] at this)
+  exact ehmrChosen_congr cR htz (EHMRNodeAt.restrict_child_heq h c htz h1 h2)
+
+/-- **[STAGE 2b helper]** The new top rep of a child is the parent's chosen rep `s(h)`. -/
+theorem ehmrRep_child_top (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ordinal.{0}}
+    (h : EHMRNodeAt β) (c : Bool) :
+    ehmrRep cR (h.child c) (⊤ : (Order.succ β).ToType) = ehmrChosen cR β h := by
+  classical
+  haveI : IsWellOrder (Order.succ β).ToType (· < ·) := isWellOrder_lt
+  have htop : Ordinal.typein (· < ·) (⊤ : (Order.succ β).ToType) = β := by
+    rw [show (⊤ : (Order.succ β).ToType) =
+        Ordinal.enum (α := (Order.succ β).ToType) (· < ·)
+          ⟨β, (Ordinal.type_toType _).symm ▸ Order.lt_succ β⟩
+      from Ordinal.enum_succ_eq_top.symm, Ordinal.typein_enum]
+  have h1 : Ordinal.typein (· < ·) (⊤ : (Order.succ β).ToType) ≤ Order.succ β :=
+    le_of_lt (by
+      have := Ordinal.typein_lt_type (· < · : (Order.succ β).ToType → _ → Prop)
+        (⊤ : (Order.succ β).ToType)
+      rwa [Ordinal.type_toType] at this)
+  refine ehmrChosen_congr cR htop ?_
+  exact HEq.trans (EHMRNodeAt.restrict_child_heq h c htop h1 (le_refl β))
+    (heq_of_eq (EHMRNodeAt.restrict_self h (le_refl β)))
+
+/-- **[STAGE 2b helper]** The recorded color of a child at the new top position is `c`. -/
+theorem EHMRNodeAt.child_top {β : Ordinal.{0}} (h : EHMRNodeAt β) (c : Bool) :
+    (h.child c) (⊤ : (Order.succ β).ToType) = c := by
+  classical
+  haveI : IsWellOrder (Order.succ β).ToType (· < ·) := isWellOrder_lt
+  show extendType h c (⊤ : (Order.succ β).ToType) = c
+  simp only [extendType, dif_pos]
+
+/-- **[STAGE 2b helper]** The recorded color of a child at an old (lifted) position
+agrees with the parent's recorded color there. -/
+theorem EHMRNodeAt.child_lift {β : Ordinal.{0}} (h : EHMRNodeAt β) (c : Bool) (x : β.ToType) :
+    (h.child c) ((Ordinal.initialSegToType (Order.le_succ β)).toOrderEmbedding x) = h x := by
+  classical
+  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  have hid : (Ordinal.initialSegToType (le_refl β)).toOrderEmbedding x = x :=
+    (Ordinal.typein_inj (· < ·)).mp
+      (Ordinal.typein_apply (Ordinal.initialSegToType (le_refl β)) x)
+  have key := extendType_initialSegToType_apply h c (le_refl β) x
+  rw [hid] at key
+  exact key
+
+/-- **[STAGE 2b helper]** Every position of a successor level is either the new top, or
+the lift of a unique old position `x : β.ToType`. -/
+theorem EHMRNodeAt.eq_top_or_exists_lift {β : Ordinal.{0}} (z : (Order.succ β).ToType) :
+    z = (⊤ : (Order.succ β).ToType) ∨
+      ∃ x : β.ToType, z = (Ordinal.initialSegToType (Order.le_succ β)).toOrderEmbedding x := by
+  classical
+  haveI : IsWellOrder (Order.succ β).ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  by_cases hz : z = (⊤ : (Order.succ β).ToType)
+  · exact Or.inl hz
+  · refine Or.inr ?_
+    have htop : Ordinal.typein (· < ·) (⊤ : (Order.succ β).ToType) = β := by
+      rw [show (⊤ : (Order.succ β).ToType) =
+          Ordinal.enum (α := (Order.succ β).ToType) (· < ·)
+            ⟨β, (Ordinal.type_toType _).symm ▸ Order.lt_succ β⟩
+        from Ordinal.enum_succ_eq_top.symm, Ordinal.typein_enum]
+    have hlt : Ordinal.typein (· < ·) z < β := by
+      have h1 := (Ordinal.typein_lt_typein (· < ·)).mpr (lt_of_le_of_ne le_top hz)
+      rwa [htop] at h1
+    have hval : Ordinal.typein (· < ·) z <
+        Ordinal.type (· < · : β.ToType → β.ToType → Prop) := by
+      rwa [Ordinal.type_toType]
+    refine ⟨Ordinal.enum (α := β.ToType) (· < ·) ⟨Ordinal.typein (· < ·) z, hval⟩, ?_⟩
+    have e1 : Ordinal.typein (· < ·)
+          ((Ordinal.initialSegToType (Order.le_succ β)).toOrderEmbedding
+            (Ordinal.enum (α := β.ToType) (· < ·) ⟨Ordinal.typein (· < ·) z, hval⟩)) =
+        Ordinal.typein (· < ·)
+          (Ordinal.enum (α := β.ToType) (· < ·) ⟨Ordinal.typein (· < ·) z, hval⟩) :=
+      Ordinal.typein_apply (Ordinal.initialSegToType (Order.le_succ β)) _
+    have e2 : Ordinal.typein (· < ·)
+          (Ordinal.enum (α := β.ToType) (· < ·) ⟨Ordinal.typein (· < ·) z, hval⟩) =
+        Ordinal.typein (· < ·) z := Ordinal.typein_enum (· < ·) _
+    refine (Ordinal.typein_inj (· < ·)).mp ?_
+    rw [e1, e2]
+
 /-- **[STAGE 2b — `yFollows` step]** If a source element `y` is a live successor of
 `h` but not its chosen min, then `y` survives into a child of `h` (the one whose
 recorded top-color is the pair-color `cR(s(h), y)`). This is the y-path extension
@@ -16440,7 +16604,22 @@ theorem ehmrS_mem_child_of_ne (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Or
     (h : EHMRNodeAt β) {y : PairERSource}
     (hy : y ∈ ehmrS cR h) (hne : y ≠ ehmrChosen cR β h) :
     ∃ c : Bool, y ∈ ehmrS cR (h.child c) := by
-  sorry
+  classical
+  -- `s(h) < y` (strict, since `y` is a successor distinct from the chosen min), so the
+  -- pair `{s(h), y}` has a definite color `c`; route `y` into the child recording `c`.
+  have hsy : ehmrChosen cR β h < y := ehmrChosen_lt_of_mem_ne cR h hy hne
+  refine ⟨cR (pairEmbed hsy), ?_⟩
+  intro z
+  rcases EHMRNodeAt.eq_top_or_exists_lift z with rfl | ⟨x, rfl⟩
+  · -- New top position: the child's recorded color is `c` and its rep is `s(h)`.
+    rw [ehmrRep_child_top cR h (cR (pairEmbed hsy)),
+        EHMRNodeAt.child_top h (cR (pairEmbed hsy))]
+    exact ⟨hsy, rfl⟩
+  · -- Old position: the child's rep and recorded color coincide with the parent's, so
+    -- the parent's witness `hy x` transfers directly.
+    rw [ehmrRep_child_lift cR h (cR (pairEmbed hsy)) x,
+        EHMRNodeAt.child_lift h (cR (pairEmbed hsy)) x]
+    exact hy x
 
 /-- **[STAGE 2b FRONTIER — coverage / EHMR Lemma 14.2]** Every source element is the
 chosen representative of some node (`y ∈ R(h)`). Idea: follow the y-path
