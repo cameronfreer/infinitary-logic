@@ -16430,6 +16430,29 @@ theorem ehmr_level_card_le_beth1 (β : Ordinal.{0}) (hβ : β < Ordinal.omega.{0
       Cardinal.beth_succ, Cardinal.beth_zero]
   exact (h_le_pow.trans h_pow_le).trans_eq h_aleph_pow
 
+/-! ### [STAGE 2b] Coverage (EHMR Lemma 14.2) — the y-path. Statements first. -/
+
+/-- **[STAGE 2b — `yFollows` step]** If a source element `y` is a live successor of
+`h` but not its chosen min, then `y` survives into a child of `h` (the one whose
+recorded top-color is the pair-color `cR(s(h), y)`). This is the y-path extension
+step. -/
+theorem ehmrS_mem_child_of_ne (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ordinal.{0}}
+    (h : EHMRNodeAt β) {y : PairERSource}
+    (hy : y ∈ ehmrS cR h) (hne : y ≠ ehmrChosen cR β h) :
+    ∃ c : Bool, y ∈ ehmrS cR (h.child c) := by
+  sorry
+
+/-- **[STAGE 2b FRONTIER — coverage / EHMR Lemma 14.2]** Every source element is the
+chosen representative of some node (`y ∈ R(h)`). Idea: follow the y-path
+(`ehmrS_mem_child_of_ne`) — the chosen reps stay `< y` and strictly increase along
+it, so by regularity of `succ ℶ_1` the path must reach a node where `y` is itself the
+min (`y = s(h)`, i.e. `y ∈ R(h)`). Length left unrestricted (it may exceed `ω₁`); the
+branch counting bounds the relevant nodes later. -/
+theorem exists_node_choosing_source (cR : (Fin 2 ↪o PairERSource) → Bool)
+    (y : PairERSource) :
+    ∃ (β : Ordinal.{0}) (h : EHMRNodeAt β), y ∈ ehmrR cR h := by
+  sorry
+
 /-- **[EHMR §13 Theorem 13.1 / §14 Theorem 14.3 — branch-length]**
 `ehmr_tree_has_omega1_branch`: the canonical partition tree for `cR` has a branch
 of length `ω₁`. Proof (future): the used-up singletons `R(h) = {s(h)}` cover
