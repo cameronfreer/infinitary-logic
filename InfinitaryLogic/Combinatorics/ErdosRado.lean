@@ -16621,6 +16621,96 @@ theorem ehmrS_mem_child_of_ne (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Or
         EHMRNodeAt.child_lift h (cR (pairEmbed hsy)) x]
     exact hy x
 
+/-- **[STAGE 2b helper]** The chosen min is `≤` every successor (the `<`-least element
+of `S(h)` in the linear well-order). -/
+theorem ehmrChosen_le_of_mem (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ordinal.{0}}
+    (h : EHMRNodeAt β) {y : PairERSource} (hy : y ∈ ehmrS cR h) :
+    ehmrChosen cR β h ≤ y := by
+  have hlive : ehmrLive cR h := ⟨y, hy⟩
+  rw [ehmrChosen_eq_min cR h hlive]
+  exact not_lt.mp (WellFounded.not_lt_min _ _ hlive hy)
+
+/-- **[STAGE 2b — path strictness step]** Passing to a live child strictly increases the
+chosen rep: `s(h) < s(h.child c)`. (The child's top rep is `s(h)` by `ehmrRep_child_top`,
+and every rep is strictly below the child's own chosen min.) -/
+theorem ehmrChosen_lt_child (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ordinal.{0}}
+    (h : EHMRNodeAt β) (c : Bool) (hlive : ehmrLive cR (h.child c)) :
+    ehmrChosen cR β h < ehmrChosen cR (Order.succ β) (h.child c) := by
+  obtain ⟨hlt, _⟩ := ehmrChosen_mem cR (h.child c) hlive (⊤ : (Order.succ β).ToType)
+  rwa [ehmrRep_child_top cR h c] at hlt
+
+/-! ### [STAGE 2b] The canonical `y`-path as a single well-founded recursion.
+
+Rather than build the `y`-path by transfinite recursion with an explicit limit step
+(and the attendant coherence bookkeeping), we define the whole path at once: `yNode cR
+y β` is the length-`β` node recording, at each position `x`, the pair-color of `y`
+against the chosen rep of the path so far — or junk (`false`) once that rep is no
+longer `< y`. Restriction-coherence then becomes a lemma (every restriction is again a
+`yNode`), and the stopping argument is pure well-foundedness: a strictly increasing
+`Ordinal → PairERSource` is impossible. -/
+
+/-- **[STAGE 2b]** The chosen rep of the canonical `y`-path at level `γ`, defined by
+well-founded recursion: it is the chosen min of the node whose recorded color at each
+position `x` is `cR({yRep(typein x), y})` (or junk `false` once that rep is `≥ y`).
+Because the recursion lands in `PairERSource` (non-dependent), restriction-coherence
+later needs only `congrArg`, not a heterogeneous transport. -/
+noncomputable def yRep (cR : (Fin 2 ↪o PairERSource) → Bool) (y : PairERSource)
+    (γ : Ordinal.{0}) : PairERSource := by
+  classical
+  haveI : IsWellOrder γ.ToType (· < ·) := isWellOrder_lt
+  exact ehmrChosen cR γ (fun x =>
+    if hlt : yRep cR y (Ordinal.typein (· < ·) x) < y then cR (pairEmbed hlt) else false)
+termination_by γ
+decreasing_by
+  all_goals
+    haveI : IsWellOrder γ.ToType (· < ·) := isWellOrder_lt
+    exact lt_of_lt_of_eq (Ordinal.typein_lt_type _ _) (Ordinal.type_toType γ)
+
+/-- **[STAGE 2b]** The canonical `y`-path node of length `β` (a *plain* def over `yRep`):
+at position `x` it records the pair-color of `y` against `yRep (typein x)` (junk `false`
+once that rep is `≥ y`). -/
+noncomputable def yNode (cR : (Fin 2 ↪o PairERSource) → Bool) (y : PairERSource)
+    (β : Ordinal.{0}) : EHMRNodeAt β := by
+  classical
+  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  exact fun x =>
+    if hlt : yRep cR y (Ordinal.typein (· < ·) x) < y then cR (pairEmbed hlt) else false
+
+/-- **[STAGE 2b]** The defining fixpoint equation: `yRep` is the chosen min of `yNode`. -/
+theorem yRep_eq (cR : (Fin 2 ↪o PairERSource) → Bool) (y : PairERSource) (γ : Ordinal.{0}) :
+    yRep cR y γ = ehmrChosen cR γ (yNode cR y γ) := by
+  classical
+  conv_lhs => rw [yRep]
+  rfl
+
+/-- **[STAGE 2b]** Restriction-coherence: every restriction of a `yNode` is again the
+`yNode` of that length. (Each color depends only on `yRep (typein x)`, and `typein` is
+preserved by the initial-segment embedding.) -/
+theorem yNode_restrict (cR : (Fin 2 ↪o PairERSource) → Bool) (y : PairERSource)
+    {β δ : Ordinal.{0}} (hδ : δ ≤ β) :
+    (yNode cR y β).restrict hδ = yNode cR y δ := by
+  classical
+  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder δ.ToType (· < ·) := isWellOrder_lt
+  funext x'
+  have htx : Ordinal.typein (· < ·) ((Ordinal.initialSegToType hδ).toOrderEmbedding x')
+      = Ordinal.typein (· < ·) x' := Ordinal.typein_apply (Ordinal.initialSegToType hδ) x'
+  show yNode cR y β ((Ordinal.initialSegToType hδ).toOrderEmbedding x') = yNode cR y δ x'
+  simp only [yNode, htx]
+
+/-- **[STAGE 2b]** The reps of `yNode cR y β` are exactly `yRep cR y (typein x)`. (The
+`IsWellOrder` binder lets `typein` appear in the signature; call sites discharge it with
+`isWellOrder_lt`.) -/
+theorem ehmrRep_yNode (cR : (Fin 2 ↪o PairERSource) → Bool) (y : PairERSource)
+    {β : Ordinal.{0}} [IsWellOrder β.ToType (· < ·)] (x : β.ToType) :
+    ehmrRep cR (yNode cR y β) x = yRep cR y (Ordinal.typein (· < ·) x) := by
+  classical
+  have hlt : Ordinal.typein (· < ·) x < β :=
+    lt_of_lt_of_eq (Ordinal.typein_lt_type (· < ·) x) (Ordinal.type_toType β)
+  show ehmrChosen cR (Ordinal.typein (· < ·) x) ((yNode cR y β).restrict (le_of_lt hlt))
+     = yRep cR y (Ordinal.typein (· < ·) x)
+  rw [yRep_eq, yNode_restrict]
+
 /-- **[STAGE 2b FRONTIER — coverage / EHMR Lemma 14.2]** Every source element is the
 chosen representative of some node (`y ∈ R(h)`). Idea: follow the y-path
 (`ehmrS_mem_child_of_ne`) — the chosen reps stay `< y` and strictly increase along
