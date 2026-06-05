@@ -16947,6 +16947,35 @@ theorem ehmr_fact8 (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ordinal.{0}}
   rw [← hcol_z, ← hcol]
   exact cR_pairEmbed_congr cR hrep_z.symm rfl (ehmrRep_strictMono cR hlive hx) hlt
 
+/-- **[STAGE 3 — branch extraction]** The position `enum β'` of a length-`β` node, for
+`β' < ω₁ ≤ β`. -/
+noncomputable def ehmrBranchPos {β : Ordinal.{0}} (hβ : Ordinal.omega.{0} 1 ≤ β)
+    (β' : Ordinal.{0}) (hβ' : β' < Ordinal.omega.{0} 1) : β.ToType := by
+  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  exact Ordinal.enum (· < ·) ⟨β', by rw [Ordinal.type_toType]; exact hβ'.trans_le hβ⟩
+
+/-- **[STAGE 3 — branch extraction]** Positions are strictly monotone in the level. -/
+theorem ehmrBranchPos_strictMono {β : Ordinal.{0}} (hβ : Ordinal.omega.{0} 1 ≤ β)
+    {β' γ' : Ordinal.{0}} (hβ' : β' < Ordinal.omega.{0} 1)
+    (hγ' : γ' < Ordinal.omega.{0} 1) (h' : β' < γ') :
+    ehmrBranchPos hβ β' hβ' < ehmrBranchPos hβ γ' hγ' := by
+  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  show Ordinal.enum (· < ·) ⟨β', _⟩ < Ordinal.enum (· < ·) ⟨γ', _⟩
+  exact Ordinal.enum_lt_enum.mpr h'
+
+/-- **[STAGE 3 — branch extraction]** A live node of length `≥ ω₁` *is* an `EHMRBranch`:
+its reps (read off at the positions `enum β'`) strictly increase (`ehmrRep_strictMono`)
+and satisfy fact (8) (`ehmr_fact8`). -/
+noncomputable def ehmrBranch_of_live {β : Ordinal.{0}}
+    (cR : (Fin 2 ↪o PairERSource) → Bool) (h : EHMRNodeAt β)
+    (hβ : Ordinal.omega.{0} 1 ≤ β) (hlive : ehmrLive cR h) : EHMRBranch cR where
+  rep β' hβ' := ehmrRep cR h (ehmrBranchPos hβ β' hβ')
+  bit β' hβ' := h (ehmrBranchPos hβ β' hβ')
+  rep_strictMono hβ' hγ' h' :=
+    ehmrRep_strictMono cR hlive (ehmrBranchPos_strictMono hβ hβ' hγ' h')
+  coloring hβ' hγ' h' :=
+    ehmr_fact8 cR hlive (ehmrBranchPos_strictMono hβ hβ' hγ' h')
+
 /-- **[EHMR §13 Theorem 13.1 / §14 Theorem 14.3 — branch-length]**
 `ehmr_tree_has_omega1_branch`: the canonical partition tree for `cR` has a branch
 of length `ω₁`. Proof (future): the used-up singletons `R(h) = {s(h)}` cover
