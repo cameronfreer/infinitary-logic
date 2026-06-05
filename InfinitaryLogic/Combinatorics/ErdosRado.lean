@@ -19170,7 +19170,10 @@ theorem exists_omega1_embedding_pair
     Nonempty ((Ordinal.omega.{0} 1).ToType ↪o I) := by
   obtain ⟨emb⟩ : Nonempty (PairERSource ↪o I) :=
     exists_ordToType_embedding_of_card_ge hI
-  exact ⟨(pairERChainEmbedding cR).trans emb⟩
+  -- Route through the clean EHMR pair theorem: it produces a (homogeneous) ω₁-embedding
+  -- into `PairERSource`; compose with `emb` for the conclusion (homogeneity unused here).
+  obtain ⟨f, _, _⟩ := erdos_rado_pair_omega1 cR
+  exact ⟨f.trans emb⟩
 
 /-! ### Tree-driven chain extraction (parallel to `pairERCommit`)
 
@@ -19581,7 +19584,10 @@ theorem exists_omega1_embedding_pair_tree
     Nonempty ((Ordinal.omega.{0} 1).ToType ↪o I) := by
   obtain ⟨emb⟩ : Nonempty (PairERSource ↪o I) :=
     exists_ordToType_embedding_of_card_ge hI
-  exact ⟨(treeChainEmbedding cR).trans emb⟩
+  -- Route through the clean EHMR pair theorem (same as `exists_omega1_embedding_pair`);
+  -- the `treeChainEmbedding`/`treeStage` path is now bypassed.
+  obtain ⟨f, _, _⟩ := erdos_rado_pair_omega1 cR
+  exact ⟨f.trans emb⟩
 
 /-! ### Existence of stages at every level `< ω_1`
 
