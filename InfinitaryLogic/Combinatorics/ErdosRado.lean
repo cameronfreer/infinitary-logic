@@ -16800,6 +16800,153 @@ theorem exists_node_choosing_source (cR : (Fin 2 ↪o PairERSource) → Bool)
   rw [ehmrR, if_pos hlive, Set.mem_singleton_iff]
   exact heq
 
+/-! ### [STAGE 3] Branch extraction from a high live node.
+
+EHMR Theorem 13.1 is realized concretely: the `succ ℶ₁`-many live nodes (coverage) cannot
+all sit at levels `< ω₁` (each such level has `≤ ℶ₁` nodes, and there are only `ℵ₁` of
+them), so some live node has length `≥ ω₁`; restricting it to `ω₁` yields a length-`ω₁`
+branch. The end-homogeneity of the reps (`ehmrRep_strictMono` + fact (8)) makes that
+restricted node an `EHMRBranch`. -/
+
+/-- **[STAGE 3]** Level smallness: for `β < ω₁` there are `≤ ℶ₁` live length-`β` nodes
+(a fortiori `≤ ℶ₁` nodes, by `ehmr_level_card_le_beth1`). -/
+theorem ehmr_live_level_small (cR : (Fin 2 ↪o PairERSource) → Bool) (β : Ordinal.{0})
+    (hβ : β < Ordinal.omega.{0} 1) :
+    Cardinal.mk {h : EHMRNodeAt β // ehmrLive cR h} ≤ Cardinal.beth.{0} 1 :=
+  (Cardinal.mk_subtype_le _).trans (ehmr_level_card_le_beth1 β hβ)
+
+/-- **[STAGE 3 helper]** Restriction is transitive (initial segments compose). -/
+theorem EHMRNodeAt.restrict_trans {β : Ordinal.{0}} (h : EHMRNodeAt β)
+    {δ ε : Ordinal.{0}} (hδ : δ ≤ β) (hε : ε ≤ δ) :
+    (h.restrict hδ).restrict hε = h.restrict (hε.trans hδ) := by
+  classical
+  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder δ.ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder ε.ToType (· < ·) := isWellOrder_lt
+  funext z
+  show h ((Ordinal.initialSegToType hδ).toOrderEmbedding
+        ((Ordinal.initialSegToType hε).toOrderEmbedding z))
+     = h ((Ordinal.initialSegToType (hε.trans hδ)).toOrderEmbedding z)
+  rw [initialSegToType_compose]
+
+/-- **[STAGE 3 helper]** `EHMRNodeAt.restrict` at heterogeneously-equal lengths. -/
+theorem EHMRNodeAt.restrict_heq {β : Ordinal.{0}} (h : EHMRNodeAt β)
+    {δ₁ δ₂ : Ordinal.{0}} (hδ : δ₁ = δ₂) (h1 : δ₁ ≤ β) (h2 : δ₂ ≤ β) :
+    HEq (h.restrict h1) (h.restrict h2) := by
+  subst hδ; exact heq_of_eq rfl
+
+/-- **[STAGE 3 helper]** The reps of a restriction agree with the parent's reps at the
+lifted positions. -/
+theorem ehmrRep_restrict (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ordinal.{0}}
+    (h : EHMRNodeAt β) {δ : Ordinal.{0}} (hδ : δ ≤ β) (x : δ.ToType) :
+    ehmrRep cR (h.restrict hδ) x =
+      ehmrRep cR h ((Ordinal.initialSegToType hδ).toOrderEmbedding x) := by
+  classical
+  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder δ.ToType (· < ·) := isWellOrder_lt
+  set lx := (Ordinal.initialSegToType hδ).toOrderEmbedding x with hlx_def
+  have htx : Ordinal.typein (· < ·) lx = Ordinal.typein (· < ·) x := by
+    rw [hlx_def]; exact Ordinal.typein_apply (Ordinal.initialSegToType hδ) x
+  have hx_lt : Ordinal.typein (· < ·) x < δ :=
+    lt_of_lt_of_eq (Ordinal.typein_lt_type (· < ·) x) (Ordinal.type_toType δ)
+  have hlx_lt : Ordinal.typein (· < ·) lx < β :=
+    lt_of_lt_of_eq (Ordinal.typein_lt_type (· < ·) lx) (Ordinal.type_toType β)
+  show ehmrChosen cR (Ordinal.typein (· < ·) x) ((h.restrict hδ).restrict (le_of_lt hx_lt))
+     = ehmrChosen cR (Ordinal.typein (· < ·) lx) (h.restrict (le_of_lt hlx_lt))
+  refine ehmrChosen_congr cR htx.symm ?_
+  rw [EHMRNodeAt.restrict_trans h hδ (le_of_lt hx_lt)]
+  exact EHMRNodeAt.restrict_heq h htx.symm ((le_of_lt hx_lt).trans hδ) (le_of_lt hlx_lt)
+
+/-- **[STAGE 3 helper]** A restriction of a live node is live (the same witness `y`
+serves, since the reps and recorded colors only shrink). -/
+theorem ehmrLive_restrict (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ordinal.{0}}
+    {h : EHMRNodeAt β} (hlive : ehmrLive cR h) {δ : Ordinal.{0}} (hδ : δ ≤ β) :
+    ehmrLive cR (h.restrict hδ) := by
+  classical
+  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder δ.ToType (· < ·) := isWellOrder_lt
+  obtain ⟨y, hy⟩ := hlive
+  refine ⟨y, ?_⟩
+  intro x
+  obtain ⟨hlt, hcol⟩ := hy ((Ordinal.initialSegToType hδ).toOrderEmbedding x)
+  rw [ehmrRep_restrict cR h hδ x]
+  exact ⟨hlt, hcol⟩
+
+/-- **[STAGE 3 helper]** `cR ∘ pairEmbed` depends only on the two endpoints, not on the
+`<`-proof: equal endpoints give equal colors. -/
+theorem cR_pairEmbed_congr (cR : (Fin 2 ↪o PairERSource) → Bool)
+    {a a' b b' : PairERSource} (ha : a = a') (hb : b = b') (p : a < b) (q : a' < b') :
+    cR (pairEmbed p) = cR (pairEmbed q) := by
+  subst ha; subst hb; rfl
+
+/-- **[STAGE 3 — end-homogeneity, strict monotonicity]** On a live node the chosen reps
+strictly increase: the rep at `x₁` is the rep of the restriction-to-`x₂` at the position
+of `x₁`, hence strictly below that restriction's chosen min `= rep x₂`. -/
+theorem ehmrRep_strictMono (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ordinal.{0}}
+    {h : EHMRNodeAt β} (hlive : ehmrLive cR h) {x₁ x₂ : β.ToType} (hx : x₁ < x₂) :
+    ehmrRep cR h x₁ < ehmrRep cR h x₂ := by
+  classical
+  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder (Ordinal.typein (· < · : β.ToType → β.ToType → Prop) x₂).ToType (· < ·) :=
+    isWellOrder_lt
+  have hx₂lt : Ordinal.typein (· < ·) x₂ < β :=
+    lt_of_lt_of_eq (Ordinal.typein_lt_type (· < ·) x₂) (Ordinal.type_toType β)
+  have h₂live : ehmrLive cR (h.restrict (le_of_lt hx₂lt)) :=
+    ehmrLive_restrict cR hlive (le_of_lt hx₂lt)
+  have hx₁ty : Ordinal.typein (· < ·) x₁ <
+      Ordinal.type (· < · : (Ordinal.typein (· < ·) x₂).ToType →
+        (Ordinal.typein (· < ·) x₂).ToType → Prop) := by
+    rw [Ordinal.type_toType]; exact (Ordinal.typein_lt_typein (· < ·)).mpr hx
+  set z₁ := Ordinal.enum (· < ·) ⟨Ordinal.typein (· < ·) x₁, hx₁ty⟩ with hz₁_def
+  have hlift : (Ordinal.initialSegToType (le_of_lt hx₂lt)).toOrderEmbedding z₁ = x₁ := by
+    refine (Ordinal.typein_inj (· < ·)).mp ?_
+    have e1 : Ordinal.typein (· < ·)
+          ((Ordinal.initialSegToType (le_of_lt hx₂lt)).toOrderEmbedding z₁) =
+        Ordinal.typein (· < ·) z₁ :=
+      Ordinal.typein_apply (Ordinal.initialSegToType (le_of_lt hx₂lt)) z₁
+    have e2 : Ordinal.typein (· < ·) z₁ = Ordinal.typein (· < ·) x₁ := by
+      rw [hz₁_def]; exact Ordinal.typein_enum (· < ·) _
+    rw [e1, e2]
+  obtain ⟨hlt, _⟩ := ehmrChosen_mem cR (h.restrict (le_of_lt hx₂lt)) h₂live z₁
+  rw [ehmrRep_restrict cR h (le_of_lt hx₂lt) z₁, hlift] at hlt
+  exact hlt
+
+/-- **[STAGE 3 — end-homogeneity, EHMR fact (8)]** On a live node, the recorded color at
+`x₁` is the pair-color of the reps `{rep x₁, rep x₂}` for any `x₁ < x₂`. -/
+theorem ehmr_fact8 (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ordinal.{0}}
+    {h : EHMRNodeAt β} (hlive : ehmrLive cR h) {x₁ x₂ : β.ToType} (hx : x₁ < x₂) :
+    cR (pairEmbed (ehmrRep_strictMono cR hlive hx)) = h x₁ := by
+  classical
+  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  haveI : IsWellOrder (Ordinal.typein (· < · : β.ToType → β.ToType → Prop) x₂).ToType (· < ·) :=
+    isWellOrder_lt
+  have hx₂lt : Ordinal.typein (· < ·) x₂ < β :=
+    lt_of_lt_of_eq (Ordinal.typein_lt_type (· < ·) x₂) (Ordinal.type_toType β)
+  have h₂live : ehmrLive cR (h.restrict (le_of_lt hx₂lt)) :=
+    ehmrLive_restrict cR hlive (le_of_lt hx₂lt)
+  have hx₁ty : Ordinal.typein (· < ·) x₁ <
+      Ordinal.type (· < · : (Ordinal.typein (· < ·) x₂).ToType →
+        (Ordinal.typein (· < ·) x₂).ToType → Prop) := by
+    rw [Ordinal.type_toType]; exact (Ordinal.typein_lt_typein (· < ·)).mpr hx
+  set z₁ := Ordinal.enum (· < ·) ⟨Ordinal.typein (· < ·) x₁, hx₁ty⟩ with hz₁_def
+  have hlift : (Ordinal.initialSegToType (le_of_lt hx₂lt)).toOrderEmbedding z₁ = x₁ := by
+    refine (Ordinal.typein_inj (· < ·)).mp ?_
+    have e1 : Ordinal.typein (· < ·)
+          ((Ordinal.initialSegToType (le_of_lt hx₂lt)).toOrderEmbedding z₁) =
+        Ordinal.typein (· < ·) z₁ :=
+      Ordinal.typein_apply (Ordinal.initialSegToType (le_of_lt hx₂lt)) z₁
+    have e2 : Ordinal.typein (· < ·) z₁ = Ordinal.typein (· < ·) x₁ := by
+      rw [hz₁_def]; exact Ordinal.typein_enum (· < ·) _
+    rw [e1, e2]
+  obtain ⟨hlt, hcol⟩ := ehmrChosen_mem cR (h.restrict (le_of_lt hx₂lt)) h₂live z₁
+  have hrep_z : ehmrRep cR (h.restrict (le_of_lt hx₂lt)) z₁ = ehmrRep cR h x₁ := by
+    rw [ehmrRep_restrict cR h (le_of_lt hx₂lt) z₁, hlift]
+  have hcol_z : (h.restrict (le_of_lt hx₂lt)) z₁ = h x₁ := by
+    show h ((Ordinal.initialSegToType (le_of_lt hx₂lt)).toOrderEmbedding z₁) = h x₁
+    rw [hlift]
+  rw [← hcol_z, ← hcol]
+  exact cR_pairEmbed_congr cR hrep_z.symm rfl (ehmrRep_strictMono cR hlive hx) hlt
+
 /-- **[EHMR §13 Theorem 13.1 / §14 Theorem 14.3 — branch-length]**
 `ehmr_tree_has_omega1_branch`: the canonical partition tree for `cR` has a branch
 of length `ω₁`. Proof (future): the used-up singletons `R(h) = {s(h)}` cover
