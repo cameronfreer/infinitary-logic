@@ -16992,7 +16992,55 @@ per fibre, `Cardinal.sum_le_sum` + `Cardinal.sum_const`) `= ℵ₁ * ℶ₁ = �
 `aleph 1 ≤ ℶ₁`, `Cardinal.mul_eq_self`). So `succ ℶ₁ ≤ ℶ₁`, contradiction. -/
 theorem exists_live_node_ge_omega1 (cR : (Fin 2 ↪o PairERSource) → Bool) :
     ∃ (β : Ordinal.{0}) (h : EHMRNodeAt β), Ordinal.omega.{0} 1 ≤ β ∧ ehmrLive cR h := by
-  sorry
+  classical
+  by_contra hcon
+  push_neg at hcon
+  haveI : IsWellOrder (Ordinal.omega.{0} 1).ToType (· < ·) := isWellOrder_lt
+  -- The Type-0 index of live nodes of length `< ω₁`.
+  have hlower : Order.succ (Cardinal.beth.{0} 1) ≤
+      Cardinal.mk (Σ b : (Ordinal.omega.{0} 1).ToType,
+        { h : EHMRNodeAt (Ordinal.typein (· < ·) b) // ehmrLive cR h }) := by
+    apply ehmr_partitionTree_card_lower (R := fun n => ehmrR cR n.2.1)
+    · -- Coverage: every `y` is the chosen rep of a live node, which (by `hcon`) has length `< ω₁`.
+      intro y
+      obtain ⟨β_y, h_y, hy⟩ := exists_node_choosing_source cR y
+      have hlive_y : ehmrLive cR h_y := by
+        by_contra hnl
+        rw [ehmrR, if_neg hnl] at hy
+        exact (Set.mem_empty_iff_false y).mp hy
+      have hβ_lt : β_y < Ordinal.omega.{0} 1 := by
+        by_contra hge
+        exact hcon β_y h_y (not_lt.mp hge) hlive_y
+      have hβ_ty : β_y < Ordinal.type (· < · : (Ordinal.omega.{0} 1).ToType →
+          (Ordinal.omega.{0} 1).ToType → Prop) := by
+        rw [Ordinal.type_toType]; exact hβ_lt
+      set b_y := Ordinal.enum (· < ·) ⟨β_y, hβ_ty⟩ with hb_def
+      have htb : Ordinal.typein (· < ·) b_y = β_y := by rw [hb_def, Ordinal.typein_enum]
+      -- Move the node to length `typein b_y` by substituting the length equality.
+      have key : ∃ (h' : EHMRNodeAt (Ordinal.typein (· < ·) b_y)) (_ : ehmrLive cR h'),
+          y ∈ ehmrR cR h' := by
+        rw [htb]; exact ⟨h_y, hlive_y, hy⟩
+      obtain ⟨h', hl', hy'⟩ := key
+      exact ⟨⟨b_y, h', hl'⟩, hy'⟩
+    · -- Each used-up set is a subsingleton.
+      intro n
+      exact ehmrR_subsingleton cR n.2.1
+  -- The index has size `≤ ℵ₁ · ℶ₁ = ℶ₁`, contradicting the lower bound.
+  have hupper : Cardinal.mk (Σ b : (Ordinal.omega.{0} 1).ToType,
+      { h : EHMRNodeAt (Ordinal.typein (· < ·) b) // ehmrLive cR h }) ≤ Cardinal.beth.{0} 1 := by
+    rw [Cardinal.mk_sigma]
+    calc Cardinal.sum (fun b => Cardinal.mk
+            { h : EHMRNodeAt (Ordinal.typein (· < ·) b) // ehmrLive cR h })
+        ≤ Cardinal.sum (fun _ : (Ordinal.omega.{0} 1).ToType => Cardinal.beth.{0} 1) :=
+          Cardinal.sum_le_sum _ _ (fun b => ehmr_live_level_small cR _
+            (lt_of_lt_of_eq (Ordinal.typein_lt_type (· < ·) b) (Ordinal.type_toType _)))
+      _ = Cardinal.mk (Ordinal.omega.{0} 1).ToType * Cardinal.beth.{0} 1 := Cardinal.sum_const' _ _
+      _ = Cardinal.aleph 1 * Cardinal.beth.{0} 1 := by
+          rw [Cardinal.mk_toType, Ordinal.card_omega]
+      _ = Cardinal.beth.{0} 1 := by
+          rw [Cardinal.mul_eq_max (Cardinal.aleph0_le_aleph 1) (Cardinal.aleph0_le_beth 1)]
+          exact max_eq_right (Cardinal.aleph_le_beth 1)
+  exact absurd (hlower.trans hupper) (not_le.mpr (Order.lt_succ (Cardinal.beth.{0} 1)))
 
 /-- **[EHMR §13 Theorem 13.1 / §14 Theorem 14.3 — branch-length]**
 `ehmr_tree_has_omega1_branch`: the canonical partition tree for `cR` has a branch of
