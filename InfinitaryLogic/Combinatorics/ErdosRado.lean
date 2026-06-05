@@ -16976,17 +16976,34 @@ noncomputable def ehmrBranch_of_live {β : Ordinal.{0}}
   coloring hβ' hγ' h' :=
     ehmr_fact8 cR hlive (ehmrBranchPos_strictMono hβ hβ' hγ' h')
 
+/-- **[STAGE 3 FRONTIER — counting / EHMR Theorem 13.1 core]** Some live node has length
+`≥ ω₁`.
+
+Strategy (Type-0 counting, so it stays in `Cardinal.{0}`). Suppose not: every live node
+has length `< ω₁`. Then the coverage map (`exists_node_choosing_source`) injects
+`PairERSource` into the Type-0 index `Σ b : ω₁.ToType, EHMRNodeAt (typein b)` — concretely,
+apply `ehmr_partitionTree_card_lower` to `R := fun p => ehmrR cR p.2` over that sigma: the
+cover sends `y` to `⟨enum β_y, cast h_y⟩` (transport along `typein (enum β_y) = β_y`, with
+`y ∈ ehmrR cR (cast h_y)` from an `ehmrR`-congruence + `cast_heq`), and each `ehmrR` is a
+subsingleton. That gives `succ ℶ₁ ≤ #(Σ b, EHMRNodeAt (typein b))`. But
+`#(Σ b, EHMRNodeAt (typein b)) = Cardinal.sum (fun b => #(EHMRNodeAt (typein b)))`
+(`Cardinal.mk_sigma`) `≤ #(ω₁.ToType) * ℶ₁` (`ehmr_live_level_small`/`ehmr_level_card_le_beth1`
+per fibre, `Cardinal.sum_le_sum` + `Cardinal.sum_const`) `= ℵ₁ * ℶ₁ = ℶ₁` (`Cardinal.mk_toType`,
+`aleph 1 ≤ ℶ₁`, `Cardinal.mul_eq_self`). So `succ ℶ₁ ≤ ℶ₁`, contradiction. -/
+theorem exists_live_node_ge_omega1 (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    ∃ (β : Ordinal.{0}) (h : EHMRNodeAt β), Ordinal.omega.{0} 1 ≤ β ∧ ehmrLive cR h := by
+  sorry
+
 /-- **[EHMR §13 Theorem 13.1 / §14 Theorem 14.3 — branch-length]**
-`ehmr_tree_has_omega1_branch`: the canonical partition tree for `cR` has a branch
-of length `ω₁`. Proof (future): the used-up singletons `R(h) = {s(h)}` cover
-`PairERSource` (Lemma 14.2), so `ehmr_partitionTree_card_lower` gives node count
-`≥ succ ℶ_1`; the levels have size `≤ ℶ_1` (countable recorded-color branches into
-`2`); and `succ ℶ_1` is regular — so Theorem 13.1 yields a path of length `ω₁`,
-i.e. an `EHMRBranch cR`. -/
+`ehmr_tree_has_omega1_branch`: the canonical partition tree for `cR` has a branch of
+length `ω₁`. A live node of length `≥ ω₁` (`exists_live_node_ge_omega1`) restricts to the
+sought `EHMRBranch` (`ehmrBranch_of_live`); end-homogeneity (`ehmrRep_strictMono` + fact (8))
+makes the restriction coherent. -/
 theorem ehmr_tree_has_omega1_branch
     (cR : (Fin 2 ↪o PairERSource) → Bool) :
     Nonempty (EHMRBranch cR) := by
-  sorry
+  obtain ⟨β, h, hβ, hlive⟩ := exists_live_node_ge_omega1 cR
+  exact ⟨ehmrBranch_of_live cR h hβ hlive⟩
 
 /-- **[EHMR branch → `CoherentMajorityBranch`]**
 `exists_coherentMajorityBranch_of_ehmrBranch`: assemble an `EHMRBranch` into a
