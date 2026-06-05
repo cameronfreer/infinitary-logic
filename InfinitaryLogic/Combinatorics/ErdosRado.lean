@@ -16227,23 +16227,14 @@ theorem exists_coherentMajorityBranch_of_finitePartials
     rw [h_get_pref_sγ, h_get_pref_γ, h_get_br_γ]
     exact P_S.top_in_validFiber γ hγ_in hsγ_in
 
-/-- **[CONSOLIDATED TARGET]** Existence of a `CoherentMajorityBranch` `B` — a
-coherent branch (prefix/branch restriction coherence + `top_in_validFiber`) of
-length `ω₁`, the object the pair Erdős–Rado theorem
-(`erdos_rado_pair_omega1_of_coherentMajorityBranch`) consumes. (The former
-`large` field — `succ ℶ_1`-large fibers per level — was DROPPED: it was unused by
-the pair theorem, only feeding the now-removed `limitFromCoherentMajority`
-machinery, and at limits it was the false-intersection shape.)
-
-Derived by wiring the finite-side `exists_coherentBranchPartial` through the
-inverse-limit compactness frontier `exists_coherentMajorityBranch_of_finitePartials`
-(the actual open work now lives in that compactness lemma, not in a recursion
-limit step). -/
-theorem exists_coherentMajorityBranch
-    (cR : (Fin 2 ↪o PairERSource) → Bool) :
-    Nonempty (CoherentMajorityBranch cR) :=
-  exists_coherentMajorityBranch_of_finitePartials cR
-    (fun S hS => exists_coherentBranchPartial cR S hS)
+/-! **[CONSOLIDATED TARGET — definition relocated below]** Existence of a
+`CoherentMajorityBranch` `B` (the object the pair Erdős–Rado theorem
+`erdos_rado_pair_omega1_of_coherentMajorityBranch` consumes) is now proved **directly**
+via the EHMR canonical partition tree. Because that construction
+(`exists_coherentMajorityBranch_direct`) lives further down this file, the theorem
+`exists_coherentMajorityBranch` itself is stated right after it. The legacy
+`_of_finitePartials`/`rawBranchCompactness`/`HasPartialExtensions` tower is left intact
+but is now off-chain (no longer feeds the active target). -/
 
 /-! ### [PHASE 1 SCAFFOLD] Direct `CoherentMajorityBranch` via the EHMR canonical
 partition tree (EHMR §13/§14/§17). Statement-level only — bodies are `sorry`. This
@@ -17149,19 +17140,28 @@ theorem exists_coherentMajorityBranch_of_ehmrBranch
     rw [hpe, br_apply γ hγ]
     exact b.coloring (htlt hγ x) hγ hx_lt
 
-/-- **[DIRECT — supersedes `_of_finitePartials` once proved]**
-`exists_coherentMajorityBranch_direct`: construct `B` directly via the EHMR
-canonical partition tree (`ehmr_tree_has_omega1_branch` +
-`exists_coherentMajorityBranch_of_ehmrBranch`), bypassing the
-`_of_finitePartials` / `rawBranchCompactness` / `HasPartialExtensions` tower and its
-near-circular `extendToExt` dependency. Once the two scaffold lemmas are proved,
-`exists_coherentMajorityBranch` should be re-routed through this (do NOT rewire
-yet). -/
+/-- **[DIRECT — now the active route]**
+`exists_coherentMajorityBranch_direct`: construct `B` directly via the EHMR canonical
+partition tree (`ehmr_tree_has_omega1_branch` + `exists_coherentMajorityBranch_of_ehmrBranch`),
+bypassing the `_of_finitePartials` / `rawBranchCompactness` / `HasPartialExtensions` tower
+and its near-circular `extendToExt` dependency. Both scaffold lemmas are now proved and
+axiom-clean, so this is the route `exists_coherentMajorityBranch` is wired through. -/
 theorem exists_coherentMajorityBranch_direct
     (cR : (Fin 2 ↪o PairERSource) → Bool) :
     Nonempty (CoherentMajorityBranch cR) := by
   obtain ⟨b⟩ := ehmr_tree_has_omega1_branch cR
   exact exists_coherentMajorityBranch_of_ehmrBranch b
+
+/-- **[CONSOLIDATED TARGET]** Existence of a `CoherentMajorityBranch` `B` — a coherent
+branch (prefix/branch restriction coherence + `top_in_validFiber`) of length `ω₁`, the
+object the pair Erdős–Rado theorem `erdos_rado_pair_omega1_of_coherentMajorityBranch`
+consumes. Now derived **directly** from the EHMR canonical partition tree
+(`exists_coherentMajorityBranch_direct`); the legacy
+`_of_finitePartials`/`exists_coherentBranchPartial` route is retained but off-chain. -/
+theorem exists_coherentMajorityBranch
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    Nonempty (CoherentMajorityBranch cR) :=
+  exists_coherentMajorityBranch_direct cR
 
 /-- **`treeCommitOfBranch`**: canonical commit at position `δ` using
 B. Reads off `B.prefixAt (succ δ) ⊤` (the top of the succ δ chain). -/
@@ -17487,6 +17487,19 @@ theorem erdos_rado_pair_omega1_of_coherentMajorityBranch
     | ⟨1, _⟩ => rfl
   rw [h_pair_eq, h_pair]
   exact h_bool_eq
+
+/-- **[HEADLINE — pair Erdős–Rado at `ω₁`, unconditional]** There is a Bool `b` and an
+`ω₁`-indexed strict-mono sequence into `PairERSource` whose every pair gets `cR`-color
+`b`. Composes the now-clean existence of a `CoherentMajorityBranch`
+(`exists_coherentMajorityBranch`, via the EHMR canonical partition tree) with the
+conditional headline `erdos_rado_pair_omega1_of_coherentMajorityBranch`, so it no longer
+inherits the legacy `_of_finitePartials` `sorry` tower. -/
+theorem erdos_rado_pair_omega1
+    (cR : (Fin 2 ↪o PairERSource) → Bool) :
+    ∃ (f : (Ordinal.omega.{0} 1).ToType ↪o PairERSource) (b : Bool),
+      ∀ {x y : (Ordinal.omega.{0} 1).ToType} (hxy : x < y),
+        cR (pairEmbed (f.strictMono hxy)) = b :=
+  erdos_rado_pair_omega1_of_coherentMajorityBranch (exists_coherentMajorityBranch cR).some
 
 /-- **[LEGACY] `TreeBundle.extendSucc`** — uses
 `(TB.family.family.stage β _).succ` (family-stored) instead of
