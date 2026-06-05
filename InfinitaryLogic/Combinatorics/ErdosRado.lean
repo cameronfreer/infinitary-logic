@@ -16060,8 +16060,10 @@ theorem exists_coherentWitnessNet
     rw [(P T hT).restrict_branch hST α hα] at h
     exact h
 
-/-- **`rawBranchCompactness_holds`** — derived axiom-clean from
-`exists_coherentWitnessNet` via the bridge
+/-- **[OFF-CHAIN — superseded by the EHMR route; see the EHMR SUPERSESSION BANNER.]**
+`rawBranchCompactness_holds` — the raw-compactness leaf of the legacy finite-partials tower.
+No longer on the active pair–ER path (which is the EHMR tree via `erdos_rado_pair_omega1`).
+Derived (modulo off-chain `sorry`) from `exists_coherentWitnessNet` via the bridge
 `rawBranchCompactness_of_coherentWitnessNet`. -/
 theorem rawBranchCompactness_holds
     (cR : (Fin 2 ↪o PairERSource) → Bool) :
@@ -16107,9 +16109,15 @@ private lemma CoherentBranchPartial.toRaw_branch_mem
   unfold CoherentBranchPartial.toRaw
   simp [hα]
 
-/-- **Bridge**: `rawBranchCompactness cR` discharges the
+/-- **[OFF-CHAIN — superseded by the EHMR route; see the EHMR SUPERSESSION BANNER.]** This
+is the entry point of the legacy finite-partials / inverse-limit-compactness construction of
+`CoherentMajorityBranch`. `exists_coherentMajorityBranch` no longer routes through it (it now
+uses `exists_coherentMajorityBranch_direct`, the EHMR tree). Retained, not deleted.
+
+**Bridge**: `rawBranchCompactness cR` discharges the
 inverse-limit-compactness hypothesis of
-`exists_coherentMajorityBranch_of_finitePartials`. Axiom-clean. -/
+`exists_coherentMajorityBranch_of_finitePartials`. Axiom-clean (modulo the off-chain
+`rawBranchCompactness_holds` leaf `sorry`). -/
 theorem exists_coherentMajorityBranch_of_finitePartials
     (cR : (Fin 2 ↪o PairERSource) → Bool)
     (hfin : ∀ S : Finset Ordinal.{0},
@@ -17501,6 +17509,33 @@ theorem erdos_rado_pair_omega1
         cR (pairEmbed (f.strictMono hxy)) = b :=
   erdos_rado_pair_omega1_of_coherentMajorityBranch (exists_coherentMajorityBranch cR).some
 
+/-! ### ⚑ EHMR SUPERSESSION BANNER — active route vs. off-chain legacy towers
+
+**Active, sorry-free, axiom-clean public pair–Erdős–Rado API** (all `[propext, Classical.choice,
+Quot.sound]`):
+`ehmr_tree_has_omega1_branch` → `exists_coherentMajorityBranch_of_ehmrBranch` →
+`exists_coherentMajorityBranch_direct` → `exists_coherentMajorityBranch` →
+`erdos_rado_pair_omega1_of_coherentMajorityBranch` → `erdos_rado_pair_omega1`; the embedding
+theorems `exists_omega1_embedding_pair`/`_tree` are routed through `erdos_rado_pair_omega1`.
+
+**Off-chain legacy towers** (retained, NOT deleted; they carry *all* remaining `sorry`s in this file —
+every one is off the active path above). They were three independent attempts to construct
+`CoherentMajorityBranch`, now superseded by the EHMR canonical partition tree:
+* **finite-partials / inverse-limit compactness**: `exists_coherentMajorityBranch_of_finitePartials`,
+  `rawBranchCompactness_holds`, `coherentBranchPartial_*`, `PairERGoodChain.extendToExt`.
+* **good witness-net / FPS ideal**: `exists_coherentGoodWitnessNet`, `goodOneIndexFixedCarrierCompactness_holds`,
+  `goodConstraintCompactness`, `goodIdealGlobalization`, `prescribedGoodCompactness_holds`,
+  `coherentGoodBranchPartial_*`, `GoodPrescription.finite_satisfiable`,
+  `FiniteProjectiveSystem.IdealPartialSection.adjoinGood*`.
+* **canonical type-tree / fusion**: `exists_realizedPairERTypeTree`,
+  `exists_point_in_iInter_of_fusion_sequence`, `exists_large_iInter_stage_fibers` (false-as-stated),
+  `PairERCoherentFamily.IsCanonicalTypeCoherent.restrict`.
+* **tree-driven chain extraction** (parallel embedding route, now bypassed): `treeStage`, `stageAt`,
+  `richStage`, `TreeBundle.extendSucc`, `pairERChainEmbedding` (now fully unreferenced),
+  `treeChainEmbedding`.
+
+Deletion of these is deferred to a separate cleanup commit. -/
+
 /-- **[LEGACY] `TreeBundle.extendSucc`** — uses
 `(TB.family.family.stage β _).succ` (family-stored) instead of
 `TB.stage.succ`. **Do NOT use in the main tree-driven path**: if `TB`
@@ -18818,15 +18853,17 @@ discharged post-hoc by reduction lemmas + a canonicalization theorem
 (treeStage_bundle_eq_self analog), in the same pattern that resolved
 `richStage`. -/
 
-/-- **[LEGACY — off-chain; superseded by `treeStageOfBranch`]** Tree-driven
-transfinite stage producing `TreeBundle cR α` via `Ordinal.limitRecOn`. Its limit
-case goes through `TreeBundle.limitExtend` → `commitCoherent` → the false-as-stated
-`exists_large_iInter_stage_fibers`, so this recursion can never be axiom-clean.
-The branch-parametrized `treeStageOfBranch` (`:= limitFromCoherentMajority B`) is
-the axiom-clean replacement: given `B : CoherentMajorityBranch`, it builds the
-bundle at every level with no recursion and no dependence on the false theorem.
-Nothing on the active `B`/witness-net path consumes `treeStage`; retained only
-until this dead tower is removed.
+/-- **[OFF-CHAIN — superseded by the EHMR route; see the EHMR SUPERSESSION BANNER.]**
+Tree-driven transfinite stage producing `TreeBundle cR α` via `Ordinal.limitRecOn`. Its
+limit case goes through `TreeBundle.limitExtend` → `commitCoherent` → the false-as-stated
+`exists_large_iInter_stage_fibers`, so this recursion can never be axiom-clean. The pair–ER
+goal is now met directly by the EHMR canonical partition tree
+(`ehmr_tree_has_omega1_branch` → `exists_coherentMajorityBranch` → `erdos_rado_pair_omega1`),
+which needs no `CoherentMajorityBranch`-from-stage recursion at all. Nothing on the active
+path consumes `treeStage`; retained only until this dead tower is removed.
+(Earlier notes referenced a `treeStageOfBranch`/`limitFromCoherentMajority` replacement that
+has since been deleted — the live replacement is the EHMR route, not a branch-parametrized
+`treeStage`.)
 
 **Tree-driven transfinite stage.** Produces `TreeBundle cR α` at
 every `α < ω_1`. The limit case attaches a universal tree (so
@@ -19131,8 +19168,10 @@ theorem exists_large_pairERCommit_fiber
     (pairERCommitBoolFn cR)
   exact ⟨b, haleph1 ▸ hb⟩
 
-/-- **The ω_1-indexed chain embedding** into `PairERSource`. Wraps
-`pairERCommit` as an `OrderEmbedding` via strict monotonicity. -/
+/-- **[OFF-CHAIN — superseded by the EHMR route; now fully unreferenced. See the EHMR
+SUPERSESSION BANNER.]** **The ω_1-indexed chain embedding** into `PairERSource`. Wraps
+`pairERCommit` as an `OrderEmbedding` via strict monotonicity. The embedding theorems no
+longer call this; they route through `erdos_rado_pair_omega1`. -/
 noncomputable def pairERChainEmbedding
     (cR : (Fin 2 ↪o PairERSource) → Bool) :
     (Ordinal.omega.{0} 1).ToType ↪o PairERSource := by
@@ -19349,8 +19388,10 @@ noncomputable def treeCommitBoolFn
         (· < · : (Ordinal.omega.{0} 1).ToType →
           (Ordinal.omega.{0} 1).ToType → Prop) x)
 
-/-- **Tree-driven ω_1-indexed chain embedding** into `PairERSource`.
-Wraps `treeCommit` as an `OrderEmbedding` via `treeCommit_strictMono`. -/
+/-- **[OFF-CHAIN — superseded by the EHMR route; see the EHMR SUPERSESSION BANNER.]**
+**Tree-driven ω_1-indexed chain embedding** into `PairERSource`. Wraps `treeCommit` as an
+`OrderEmbedding` via `treeCommit_strictMono`. `exists_omega1_embedding_pair_tree` no longer
+calls this; it routes through `erdos_rado_pair_omega1`. -/
 noncomputable def treeChainEmbedding
     (cR : (Fin 2 ↪o PairERSource) → Bool) :
     (Ordinal.omega.{0} 1).ToType ↪o PairERSource := by
@@ -19605,7 +19646,11 @@ every `α < ω_1`, there exists a `PairERChain cR α`. Proved by
 This existence is a stepping stone toward the main theorem, which
 requires coherent stages (built in a later commit). -/
 
-/-- **Stage at every level `< ω_1`**, as a `noncomputable def`. Built
+/-- **[OFF-CHAIN — superseded by the EHMR route; see the EHMR SUPERSESSION BANNER.]** The
+pair–ER goal is now met by `erdos_rado_pair_omega1` (EHMR tree), so the head-coherence work
+this def defers is no longer on the critical path.
+
+**Stage at every level `< ω_1`**, as a `noncomputable def`. Built
 by `Ordinal.limitRecOn`; at limits, uses a canonical
 initial-segment prefix (`Ordinal.initialSegToType`).
 
