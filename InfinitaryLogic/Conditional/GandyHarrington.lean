@@ -42,6 +42,26 @@ universe u v
 
 open Set Cardinal Topology MeasureTheory
 
+/-! ### Frontier status
+
+Invariant for this development (audited; axioms confirmed via `#print axioms`):
+
+* **All active infinitary-logic results are proved**, and the only active descriptive-set-
+  theory frontier is Silver / Gandy–Harrington, namely `gandy_harrington_for_relation` below
+  — the single non-legacy `sorry` in the project.
+* **Conditional endpoints** chain through exactly that one `sorry` and nothing else
+  (`[propext, Classical.choice, Quot.sound, sorryAx]`): `silver_core_polish`,
+  `silverBurgessDichotomy`, and the *unconditional* instantiation of `morley_counting`.
+  `morley_counting` itself takes the dichotomy as a hypothesis, so the parametrized form is
+  axiom-clean — the `sorry` enters only when one supplies `silverBurgessDichotomy`.
+* **The false "potentially closed" reduction is explicitly ruled out** (`E₀`; see the `## Status`
+  note and the `gandy_harrington_for_relation` docstring). No declaration depends on it.
+* `gandy_harrington_for_eq` is a small axiom-clean sanity check (the `r = ⊥` case), **not** a
+  step toward the general theorem — it does not shorten the route to `gandy_harrington_for_relation`.
+
+Do not add smooth / potentially-closed Silver variants unless deliberately building DST
+infrastructure: the missing content is exactly the non-smooth case, which is the core theorem. -/
+
 /-- **Silver's theorem for Borel equivalence relations.** A Borel equivalence
 relation on a Polish space with uncountably many classes contains a perfect set
 of pairwise-inequivalent points: there is a continuous injection
