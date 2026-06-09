@@ -3,6 +3,7 @@ Copyright (c) 2026 Cameron Freer. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
+import InfinitaryLogic.Descriptive.CantorAntichain
 import InfinitaryLogic.Descriptive.CountingDichotomy
 import Mathlib.Topology.MetricSpace.Perfect
 import Mathlib.Topology.MetricSpace.Polish
@@ -22,7 +23,12 @@ modulo one sorry in `gandy_harrington_for_relation` (see `GandyHarrington.lean`)
 - `continuum_classes_of_perfect_transversal`: Perfect antichain → continuum classes.
 - `splitting_lemma_closed`: Closed equiv relation with uncountably many classes splits
   into disjoint closed pieces, each uncountable, cross-inequivalent.
-- `silver_core_closed`: Silver's theorem for closed equivalence relations on Polish spaces.
+- `splitting_lemma_closed_small_diam`: the same splitting with diameter ≤ ε control
+  (shrink around a condensation point first).
+- `silver_core_closed`: Silver's theorem for closed equivalence relations on Polish spaces,
+  obtained by feeding `splitting_lemma_closed_small_diam` to the abstract Cantor-antichain
+  builder `CantorScheme.exists_antichain_map_of_splitting`
+  (`InfinitaryLogic/Descriptive/CantorAntichain.lean`).
 - `silver_core_polish`: Silver's theorem for Borel equivalence relations (depends on
   `gandy_harrington_for_relation` in `GandyHarrington.lean`; remaining sorry — boldface
   Silver-for-Borel DST not yet in mathlib).
@@ -313,6 +319,67 @@ theorem splitting_lemma_closed {α : Type u}
     -- (a, b) ∈ V₀ ×ˢ V₁ ⊆ Eᶜ, so ¬ r.r a b
     exact hV_prod (Set.mk_mem_prod ha_V₀ hb_V₁) h_r
 
+/-- **Small-diameter splitting** for closed equivalence relations: a closed set meeting
+uncountably many classes splits into two disjoint closed pieces of diameter ≤ ε, each
+nonempty, each meeting uncountably many classes, with no cross-equivalence. Obtained from
+`splitting_lemma_closed` by first shrinking around a condensation point. -/
+theorem splitting_lemma_closed_small_diam {α : Type u}
+    [MetricSpace α] [SecondCountableTopology α]
+    (r : Setoid α) (hclosed_r : IsClosed {p : α × α | r.r p.1 p.2})
+    {E : Set α} (hE_cl : IsClosed E)
+    (hE_unc : ¬Set.Countable {q : Quotient r | ∃ y ∈ E, ⟦y⟧ = q})
+    {ε : ENNReal} (hε : 0 < ε) :
+    ∃ E₀ E₁ : Set α,
+      (IsClosed E₀ ∧ E₀.Nonempty ∧ E₀ ⊆ E ∧ Metric.ediam E₀ ≤ ε ∧
+        ¬Set.Countable {q : Quotient r | ∃ y ∈ E₀, ⟦y⟧ = q}) ∧
+      (IsClosed E₁ ∧ E₁.Nonempty ∧ E₁ ⊆ E ∧ Metric.ediam E₁ ≤ ε ∧
+        ¬Set.Countable {q : Quotient r | ∃ y ∈ E₁, ⟦y⟧ = q}) ∧
+      Disjoint E₀ E₁ ∧
+      (∀ x ∈ E₀, ∀ y ∈ E₁, ¬ r.r x y) := by
+  -- Pick a condensation point
+  obtain ⟨x₀, hx₀_mem, hx₀_cond⟩ :=
+    exists_classCondensationPt_of_uncountable r hE_unc
+  -- Get a real radius δ > 0 with 2 * ofReal δ ≤ ε
+  obtain ⟨δ, hδ_pos, hδ_bound⟩ : ∃ δ : ℝ, 0 < δ ∧ 2 * ENNReal.ofReal δ ≤ ε := by
+    by_cases hε_top : ε = ⊤
+    · exact ⟨1, one_pos, by simp [hε_top]⟩
+    · have hε2_ne : ε / 2 ≠ ⊤ := ENNReal.div_ne_top hε_top (by norm_num)
+      have hε2_pos : 0 < ε / 2 := ENNReal.div_pos hε.ne' (by norm_num)
+      refine ⟨(ε / 2).toReal, ENNReal.toReal_pos hε2_pos.ne' hε2_ne, ?_⟩
+      rw [ENNReal.ofReal_toReal hε2_ne, two_mul, ENNReal.add_halves]
+  -- Shrink to E ∩ closedBall x₀ δ; this is still closed and uncountable-classes
+  set E' := E ∩ Metric.closedBall x₀ δ with hE'_def
+  have hE'_cl : IsClosed E' := hE_cl.inter Metric.isClosed_closedBall
+  have hE'_unc : ¬Set.Countable {q : Quotient r | ∃ y ∈ E', ⟦y⟧ = q} := by
+    intro h_count
+    apply hx₀_cond (Metric.ball x₀ δ) Metric.isOpen_ball (Metric.mem_ball_self hδ_pos)
+    exact h_count.mono fun q hq => by
+      obtain ⟨y, ⟨hy_E, hy_ball⟩, hy_eq⟩ := hq
+      exact ⟨y, ⟨hy_E, Metric.ball_subset_closedBall hy_ball⟩, hy_eq⟩
+  -- Split E'
+  obtain ⟨U₀, U₁, hU₀_cl, hU₁_cl, hU₀_sub, hU₁_sub, hU_disj,
+    hU₀_unc, hU₁_unc, hU_cross⟩ :=
+    splitting_lemma_closed r hclosed_r hE'_cl hE'_unc
+  -- U₀, U₁ ⊆ E' ⊆ closedBall x₀ δ, so ediam ≤ 2δ ≤ ε
+  have hball_eq : Metric.closedBall x₀ δ = EMetric.closedBall x₀ (ENNReal.ofReal δ) :=
+    (Metric.emetric_closedBall hδ_pos.le).symm
+  have hU₀_diam : Metric.ediam U₀ ≤ ε :=
+    (Metric.ediam_mono (hU₀_sub.trans Set.inter_subset_right)).trans
+      ((hball_eq ▸ Metric.ediam_closedEBall_le).trans hδ_bound)
+  have hU₁_diam : Metric.ediam U₁ ≤ ε :=
+    (Metric.ediam_mono (hU₁_sub.trans Set.inter_subset_right)).trans
+      ((hball_eq ▸ Metric.ediam_closedEBall_le).trans hδ_bound)
+  have hU₀_ne : U₀.Nonempty := by
+    by_contra h; rw [Set.not_nonempty_iff_eq_empty] at h
+    exact hU₀_unc (h ▸ by simp [Set.countable_empty])
+  have hU₁_ne : U₁.Nonempty := by
+    by_contra h; rw [Set.not_nonempty_iff_eq_empty] at h
+    exact hU₁_unc (h ▸ by simp [Set.countable_empty])
+  exact ⟨U₀, U₁,
+    ⟨hU₀_cl, hU₀_ne, hU₀_sub.trans Set.inter_subset_left, hU₀_diam, hU₀_unc⟩,
+    ⟨hU₁_cl, hU₁_ne, hU₁_sub.trans Set.inter_subset_left, hU₁_diam, hU₁_unc⟩,
+    hU_disj, hU_cross⟩
+
 /-! ### Core Silver theorem -/
 
 /-- **Silver's theorem** (core Polish space version, for closed equivalence
@@ -333,179 +400,26 @@ theorem silver_core_closed {α : Type u}
       convert hcount using 1; ext q; simp [Quotient.exists_rep]
     exact Set.countable_univ_iff.mp this
   · right
-    -- Build a Cantor scheme via iterated splitting with diameter control,
-    -- following the pattern of Perfect.exists_nat_bool_injection.
-    open CantorScheme in
-    -- Step 1: A "small-diameter splitting" operation.
-    -- Given a closed set meeting uncountably many classes and ε > 0,
-    -- produce two children that are closed, uncountable-classes, disjoint,
-    -- cross-r-disjoint, and each with ediam ≤ ε.
-    -- We achieve this by: (a) pick a condensation point, (b) shrink to a
-    -- small ball, (c) apply splitting_lemma_closed.
-    have small_split :
-        ∀ {E : Set α}, IsClosed E →
-          ¬Set.Countable {q : Quotient r | ∃ y ∈ E, ⟦y⟧ = q} →
-          ∀ {ε : ENNReal}, 0 < ε →
-          ∃ E₀ E₁ : Set α,
-            (IsClosed E₀ ∧ E₀.Nonempty ∧ E₀ ⊆ E ∧ Metric.ediam E₀ ≤ ε ∧
-              ¬Set.Countable {q : Quotient r | ∃ y ∈ E₀, ⟦y⟧ = q}) ∧
-            (IsClosed E₁ ∧ E₁.Nonempty ∧ E₁ ⊆ E ∧ Metric.ediam E₁ ≤ ε ∧
-              ¬Set.Countable {q : Quotient r | ∃ y ∈ E₁, ⟦y⟧ = q}) ∧
-            Disjoint E₀ E₁ ∧
-            (∀ x ∈ E₀, ∀ y ∈ E₁, ¬ r.r x y) := by
-      intro E hE_cl hE_unc ε hε
-      -- Pick a condensation point
-      obtain ⟨x₀, hx₀_mem, hx₀_cond⟩ :=
-        exists_classCondensationPt_of_uncountable r hE_unc
-      -- Get a real radius δ > 0 with 2 * ofReal δ ≤ ε
-      obtain ⟨δ, hδ_pos, hδ_bound⟩ : ∃ δ : ℝ, 0 < δ ∧ 2 * ENNReal.ofReal δ ≤ ε := by
-        by_cases hε_top : ε = ⊤
-        · exact ⟨1, one_pos, by simp [hε_top]⟩
-        · have hε2_ne : ε / 2 ≠ ⊤ := ENNReal.div_ne_top hε_top (by norm_num)
-          have hε2_pos : 0 < ε / 2 := ENNReal.div_pos hε.ne' (by norm_num)
-          refine ⟨(ε / 2).toReal, ENNReal.toReal_pos hε2_pos.ne' hε2_ne, ?_⟩
-          rw [ENNReal.ofReal_toReal hε2_ne, two_mul, ENNReal.add_halves]
-      -- Shrink to E ∩ closedBall x₀ δ; this is still closed and uncountable-classes
-      set E' := E ∩ Metric.closedBall x₀ δ with hE'_def
-      have hE'_cl : IsClosed E' := hE_cl.inter Metric.isClosed_closedBall
-      have hE'_unc : ¬Set.Countable {q : Quotient r | ∃ y ∈ E', ⟦y⟧ = q} := by
-        intro h_count
-        apply hx₀_cond (Metric.ball x₀ δ) Metric.isOpen_ball (Metric.mem_ball_self hδ_pos)
-        exact h_count.mono fun q hq => by
-          obtain ⟨y, ⟨hy_E, hy_ball⟩, hy_eq⟩ := hq
-          exact ⟨y, ⟨hy_E, Metric.ball_subset_closedBall hy_ball⟩, hy_eq⟩
-      -- Split E'
-      obtain ⟨U₀, U₁, hU₀_cl, hU₁_cl, hU₀_sub, hU₁_sub, hU_disj,
-        hU₀_unc, hU₁_unc, hU_cross⟩ :=
-        splitting_lemma_closed r hclosed_r hE'_cl hE'_unc
-      -- U₀, U₁ ⊆ E' ⊆ closedBall x₀ δ, so ediam ≤ 2δ ≤ ε
-      have hball_eq : Metric.closedBall x₀ δ = EMetric.closedBall x₀ (ENNReal.ofReal δ) :=
-        (Metric.emetric_closedBall hδ_pos.le).symm
-      have hU₀_diam : Metric.ediam U₀ ≤ ε :=
-        (Metric.ediam_mono (hU₀_sub.trans Set.inter_subset_right)).trans
-          ((hball_eq ▸ Metric.ediam_closedEBall_le).trans hδ_bound)
-      have hU₁_diam : Metric.ediam U₁ ≤ ε :=
-        (Metric.ediam_mono (hU₁_sub.trans Set.inter_subset_right)).trans
-          ((hball_eq ▸ Metric.ediam_closedEBall_le).trans hδ_bound)
-      have hU₀_ne : U₀.Nonempty := by
-        by_contra h; rw [Set.not_nonempty_iff_eq_empty] at h
-        exact hU₀_unc (h ▸ by simp [Set.countable_empty])
-      have hU₁_ne : U₁.Nonempty := by
-        by_contra h; rw [Set.not_nonempty_iff_eq_empty] at h
-        exact hU₁_unc (h ▸ by simp [Set.countable_empty])
-      exact ⟨U₀, U₁,
-        ⟨hU₀_cl, hU₀_ne, hU₀_sub.trans Set.inter_subset_left, hU₀_diam, hU₀_unc⟩,
-        ⟨hU₁_cl, hU₁_ne, hU₁_sub.trans Set.inter_subset_left, hU₁_diam, hU₁_unc⟩,
-        hU_disj, hU_cross⟩
-    -- Step 2: Build the Cantor scheme using small_split
-    -- Get a decreasing sequence u(n) → 0 in ENNReal with u(n) > 0
-    obtain ⟨u, -, upos', hu⟩ := exists_seq_strictAnti_tendsto' (zero_lt_one' ENNReal)
-    have upos := fun n => (upos' n).1
-    -- Choose the splitting function
-    choose C0 C1 hC0 hC1 hC_disj hC_cross using
-      fun {E : Set α} (hcl : IsClosed E)
-        (hunc : ¬Set.Countable {q : Quotient r | ∃ y ∈ E, ⟦y⟧ = q})
-        {ε : ENNReal} (hε : 0 < ε) => small_split hcl hunc hε
-    -- Bundled type for scheme nodes
-    let P := Subtype fun E : Set α => IsClosed E ∧ E.Nonempty ∧
-      ¬Set.Countable {q : Quotient r | ∃ y ∈ E, ⟦y⟧ = q}
-    -- Uncountable classes ⇒ nonempty universe
-    have hne_univ : (Set.univ : Set α).Nonempty := by
-      by_contra h; rw [Set.not_nonempty_iff_eq_empty] at h
-      exact hcount (by rw [h]; simp [Set.countable_empty])
-    -- Build the scheme recursively on List Bool
-    let DP : List Bool → P := fun l => by
-      induction l with
-      | nil =>
-        exact ⟨Set.univ, isClosed_univ, hne_univ, hcount⟩
-      | cons a l ih =>
-        cases a
-        · exact ⟨C0 ih.2.1 ih.2.2.2 (upos (l.length + 1)),
-            (hC0 ih.2.1 ih.2.2.2 (upos (l.length + 1))).1,
-            (hC0 ih.2.1 ih.2.2.2 (upos (l.length + 1))).2.1,
-            (hC0 ih.2.1 ih.2.2.2 (upos (l.length + 1))).2.2.2.2⟩
-        · exact ⟨C1 ih.2.1 ih.2.2.2 (upos (l.length + 1)),
-            (hC1 ih.2.1 ih.2.2.2 (upos (l.length + 1))).1,
-            (hC1 ih.2.1 ih.2.2.2 (upos (l.length + 1))).2.1,
-            (hC1 ih.2.1 ih.2.2.2 (upos (l.length + 1))).2.2.2.2⟩
-    let D : List Bool → Set α := fun l => (DP l).val
-    -- Prove scheme properties
-    -- (a) ClosureAntitone (since all sets are closed, this is just Antitone)
-    have hanti : ClosureAntitone D := by
-      apply CantorScheme.Antitone.closureAntitone
-      · intro l a
-        show (DP (a :: l)).1 ⊆ (DP l).1
-        cases a
-        · exact (hC0 (DP l).2.1 (DP l).2.2.2 (upos (l.length + 1))).2.2.1
-        · exact (hC1 (DP l).2.1 (DP l).2.2.2 (upos (l.length + 1))).2.2.1
-      · intro l; exact (DP l).2.1
-    -- (b) VanishingDiam
-    have hdiam : VanishingDiam D := by
-      intro x
-      apply tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds hu
-      · simp
-      rw [Filter.eventually_atTop]
-      refine ⟨1, fun m hm => ?_⟩
-      obtain ⟨n, rfl⟩ : ∃ n, m = n + 1 := ⟨m - 1, by omega⟩
-      show Metric.ediam (D (x n :: PiNat.res x n)) ≤ u (n + 1)
-      cases x n
-      · exact (hC0 (DP (PiNat.res x n)).2.1 (DP (PiNat.res x n)).2.2.2
-          (upos ((PiNat.res x n).length + 1))).2.2.2.1
-          |>.trans (by rw [PiNat.res_length])
-      · exact (hC1 (DP (PiNat.res x n)).2.1 (DP (PiNat.res x n)).2.2.2
-          (upos ((PiNat.res x n).length + 1))).2.2.2.1
-          |>.trans (by rw [PiNat.res_length])
-    -- (c) Disjoint
-    have hdisj : CantorScheme.Disjoint D := by
-      intro l a b hab
-      show Disjoint (DP (a :: l)).1 (DP (b :: l)).1
-      cases a <;> cases b <;> try contradiction
-      · exact hC_disj (DP l).2.1 (DP l).2.2.2 (upos (l.length + 1))
-      · exact (hC_disj (DP l).2.1 (DP l).2.2.2 (upos (l.length + 1))).symm
-    -- (d) Cross-r-disjointness for siblings
-    have hcross : ∀ l : List Bool, ∀ a b : Bool, a ≠ b →
-        ∀ x ∈ (DP (a :: l)).1, ∀ y ∈ (DP (b :: l)).1, ¬ r.r x y := by
-      intro l a b hab
-      cases a <;> cases b <;> try contradiction
-      · exact hC_cross (DP l).2.1 (DP l).2.2.2 (upos (l.length + 1))
-      · intro x hx y hy hr_xy
-        exact hC_cross (DP l).2.1 (DP l).2.2.2 (upos (l.length + 1)) y hy x hx
-          (r.iseqv.symm hr_xy)
-    -- Step 3: Extract the continuous injective map
-    have hnonempty : ∀ l, (D l).Nonempty := fun l => (DP l).2.2.1
-    have hdom : ∀ {x : ℕ → Bool}, x ∈ (inducedMap D).1 := fun {x} => by
-      rw [hanti.map_of_vanishingDiam hdiam hnonempty]; exact Set.mem_univ _
-    -- The map
-    refine ⟨fun x => (inducedMap D).2 ⟨x, hdom⟩, ?_, ?_, ?_⟩
-    -- Continuous
-    · exact hdiam.map_continuous.comp (by fun_prop)
-    -- Injective
-    · intro x y hxy
-      simpa only [← Subtype.val_inj] using hdisj.map_injective hxy
-    -- Pairwise r-inequivalent
-    · intro s t hst
-      -- Find first position where s and t differ
-      have hdiff : ∃ n, s n ≠ t n := by
-        by_contra h; push_neg at h; exact hst (funext h)
-      -- Take the minimal such n
-      let n₀ := Nat.find hdiff
-      have hn₀ : s n₀ ≠ t n₀ := Nat.find_spec hdiff
-      have hagree : ∀ i < n₀, s i = t i := by
-        intro i hi; by_contra h; exact Nat.find_min hdiff hi h
-      -- s and t agree on [0, n₀), so res s n₀ = res t n₀
-      have hres_eq : PiNat.res s n₀ = PiNat.res t n₀ := by
-        rw [PiNat.res_eq_res]; exact hagree
-      -- f(s) ∈ D(res s (n₀+1)) = D(s n₀ :: res s n₀)
-      -- f(t) ∈ D(res t (n₀+1)) = D(t n₀ :: res t n₀) = D(t n₀ :: res s n₀)
-      have hfs : (inducedMap D).2 ⟨s, hdom⟩ ∈ D (PiNat.res s (n₀ + 1)) :=
-        map_mem (A := D) ⟨s, hdom⟩ (n₀ + 1)
-      have hft : (inducedMap D).2 ⟨t, hdom⟩ ∈ D (PiNat.res t (n₀ + 1)) :=
-        map_mem (A := D) ⟨t, hdom⟩ (n₀ + 1)
-      rw [PiNat.res_succ] at hfs hft
-      rw [← hres_eq] at hft
-      exact hcross (PiNat.res s n₀) (s n₀) (t n₀) hn₀
-        ((inducedMap D).2 ⟨s, hdom⟩) hfs
-        ((inducedMap D).2 ⟨t, hdom⟩) hft
+    -- Instantiate the abstract Cantor-antichain builder with the largeness predicate
+    -- "closed and meeting uncountably many classes"; the splitting hypothesis is
+    -- `splitting_lemma_closed_small_diam`.
+    obtain ⟨f, hcont, hinj, -, hanti⟩ :=
+      CantorScheme.exists_antichain_map_of_splitting r
+        (P := fun F => IsClosed F ∧
+          ¬Set.Countable {q : Quotient r | ∃ y ∈ F, ⟦y⟧ = q})
+        (fun F hF => hF.1)
+        (fun F hF => by
+          by_contra h
+          rw [Set.not_nonempty_iff_eq_empty] at h
+          exact hF.2 (h ▸ by simp [Set.countable_empty]))
+        ⟨isClosed_univ, hcount⟩
+        (fun F hF ε hε => by
+          obtain ⟨E₀, E₁, ⟨h0cl, -, h0sub, h0diam, h0unc⟩,
+            ⟨h1cl, -, h1sub, h1diam, h1unc⟩, -, hcross⟩ :=
+            splitting_lemma_closed_small_diam r hclosed_r hF.1 hF.2 hε
+          exact ⟨E₀, E₁, ⟨h0cl, h0unc⟩, ⟨h1cl, h1unc⟩,
+            h0sub, h1sub, h0diam, h1diam, hcross⟩)
+    exact ⟨f, hcont, hinj, hanti⟩
 
 -- silver_core_polish and silverBurgessDichotomy are in GandyHarrington.lean
 -- (which imports this file and provides the Borel→closed reduction).

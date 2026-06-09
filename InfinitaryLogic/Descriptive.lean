@@ -11,6 +11,9 @@ import InfinitaryLogic.Descriptive.BFEquivBorel
 import InfinitaryLogic.Descriptive.IsomorphismBorel
 import InfinitaryLogic.Descriptive.ModelClassStandardBorel
 
+-- Cantor scheme / perfect antichain extraction (pure Mathlib infrastructure)
+import InfinitaryLogic.Descriptive.CantorAntichain
+
 -- Counting dichotomy and finite carrier
 import InfinitaryLogic.Descriptive.CountingDichotomy
 import InfinitaryLogic.Descriptive.FiniteCarrier
