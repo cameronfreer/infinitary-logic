@@ -1,6 +1,7 @@
 import InfinitaryLogic.Conditional.MorleyHanfTransfer
 import InfinitaryLogic.Conditional.SilverBurgess
 import InfinitaryLogic.Conditional.GandyHarrington
+import InfinitaryLogic.Conditional.SilverCategoryRoute
 
 /-!
 # Conditional: theorems depending on external hypotheses or sorries
@@ -27,4 +28,9 @@ the external dependency visible at the directory level.
   (1 remaining sorry: boldface Silver-for-Borel DST — Kuratowski–Ulam + Banach–Mazur
   games, or lightface Gandy–Harrington — not yet in mathlib). Downstream
   `silver_core_polish` and `silverBurgessDichotomy` chain through this sorry.
+- `SilverCategoryRoute.lean`: chosen route to the sorry (Miller's classical
+  category proof). Hypothesis Props `CategoryReductionHypothesis` and
+  `MycielskiCantorHypothesis`, with the **proved** assembly
+  `gandy_harrington_of_category_route` (axiom-clean) deriving the exact
+  `gandy_harrington_for_relation` statement from the two hypotheses.
 -/

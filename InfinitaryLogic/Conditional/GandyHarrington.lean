@@ -28,6 +28,11 @@ unconditional.
 The **equality case** is unconditional: see `gandy_harrington_for_eq` (axiom-clean, via
 Cantor–Bendixson).
 
+**Chosen route (Phase 2A audit, 2026-06-09)**: Miller's classical category proof, scaffolded in
+`SilverCategoryRoute.lean` — the proved assembly `gandy_harrington_of_category_route` reduces
+this sorry to `CategoryReductionHypothesis` (G₀-dichotomy + Kuratowski–Ulam) and
+`MycielskiCantorHypothesis`. See `docs/silver-phase2-route.md` for the route decision record.
+
 **Why there is no easy reduction to a "closed relation" case.** A tempting plan is to refine
 the Polish topology so the Borel relation becomes *closed* and then run a Cantor scheme. This
 is invalid in general: a closed equivalence relation on a Polish space is *smooth* (the class
