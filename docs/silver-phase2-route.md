@@ -136,7 +136,16 @@ Missing (= the frontier):
   [BaireSpace Y]`, `BaireMeasurableSet A`, all vertical sections meager ⟹ `A` meager.
   Auxiliary section lemmas (`residual_isNowhereDense_section`,
   `residual_isMeagre_section`) need only second countability of `Y`. Mathlib-worthy.
-- **2B-iii: `G_S` graphs + Prop 6** (small; defines the objects for 2C).
+- **2B-iii: `G_S` graphs + Prop 6. DONE (2026-06-10).**
+  `InfinitaryLogic/Descriptive/GSGraph.lean` (axiom-clean): `prependWord`/`wordCylinder`
+  (word-indexed clopen cylinders via `List.getD`, no dependent indexing), the prepend
+  injections as continuous open maps, `GSGraph S` / `DenseWords S`, Miller Prop 6
+  (`exists_gSGraph_edge_of_not_isMeagre`: non-meager + Baire property ⟹ contains a
+  `G_S`-edge, for dense `S`), and the route deliverable
+  `isMeagre_pullback_class_of_gSGraph_hom`: a continuous `G_S → ¬E` homomorphism makes all
+  pullback sections meager. `CategoryReductionHypothesis` is now reduced to exactly the
+  classical `G₀`-dichotomy (plus constructing a dense sparse `S` — routine, deferred
+  to 2C).
 - **2C: classical `G₀`-dichotomy**, then discharge `CategoryReductionHypothesis` from
   2B-ii + 2B-iii + 2C and fill `gandy_harrington_for_relation` via
   `gandy_harrington_of_category_route`.

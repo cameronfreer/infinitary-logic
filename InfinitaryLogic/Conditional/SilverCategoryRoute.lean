@@ -47,11 +47,14 @@ for this route; it remains the assembly point for the closed case (`silver_core_
 * `CategoryReductionHypothesis` — decomposes further into: Kuratowski–Ulam — **PROVED**
   (`isMeagre_of_isMeagre_sections` in `InfinitaryLogic/Descriptive/KuratowskiUlam.lean`,
   with the section lemmas `residual_isNowhereDense_section` / `residual_isMeagre_section`);
-  the `G_S(2^ℕ)` graphs with the dense-`S` independence lemma (Miller, Prop 6; bounded);
+  the `G_S(2^ℕ)` graphs with the dense-`S` independence lemma — **PROVED**
+  (`exists_gSGraph_edge_of_not_isMeagre` and the deliverable
+  `isMeagre_pullback_class_of_gSGraph_hom` in `InfinitaryLogic/Descriptive/GSGraph.lean`);
   and the classical `G₀`-dichotomy (Miller's proof of KST via `I_n`-positive sets of
-  partial homomorphisms; the hard core). The remaining pieces should be interfaced only
-  when work on them starts — freezing their statements now would repeat the
-  premature-abstraction mistake this audit caught.
+  partial homomorphisms; the hard core — the only remaining piece). Producing a continuous
+  homomorphism `φ` from `G_S` (some dense, sparse `S`) to `¬r` and feeding it to
+  `isMeagre_pullback_class_of_gSGraph_hom` + `isMeagre_of_isMeagre_sections` discharges
+  `CategoryReductionHypothesis`.
 -/
 
 universe u
