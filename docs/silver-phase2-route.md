@@ -1,7 +1,15 @@
-# Silver / Gandy–Harrington Phase 2A: route decision record
+# Silver / Gandy–Harrington Phase 2: route decision record
 
-Date: 2026-06-09. Status: route chosen, interface layer scaffolded and proved
-(`InfinitaryLogic/Conditional/SilverCategoryRoute.lean`).
+Date: 2026-06-09. **COMPLETED 2026-06-10**: every phase below is done;
+`gandy_harrington_for_relation` is proved (axioms exactly
+`[propext, Classical.choice, Quot.sound]`), and with it `silver_core_polish`,
+`silverBurgessDichotomy`, and the unconditional `morley_counting` instantiation.
+The fusion finale (2C-b sub-block 4) is `Descriptive/G0Fusion.lean`
+(`FusionStage`, `exists_fusionStage_succ`, `fusionTower`, `exists_gsGraph_hom`)
+with the assembly `gSGraphHomHypothesis_holds` in
+`Conditional/SilverCategoryRoute.lean` and the fill in
+`Conditional/GandyHarrington.lean` (import flipped: the route file no longer
+imports GandyHarrington; GandyHarrington imports the route).
 
 ## 1. Target (exact current statement)
 

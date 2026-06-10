@@ -22,15 +22,17 @@ the external dependency visible at the directory level.
     The EM stretching side is now fully formalized in
     `Methods/EM/FragmentAdapter.lean`, so only the extraction residual
     remains conditional.
-- `SilverBurgess.lean`: Silver-Burgess dichotomy (sorry-free splitting lemmas,
-  but the endpoint `silverBurgessDichotomy` chains through the GH sorry).
-- `GandyHarrington.lean`: Silver-for-Borel via `gandy_harrington_for_relation`
-  (1 remaining sorry: boldface Silver-for-Borel DST — Kuratowski–Ulam + Banach–Mazur
-  games, or lightface Gandy–Harrington — not yet in mathlib). Downstream
-  `silver_core_polish` and `silverBurgessDichotomy` chain through this sorry.
-- `SilverCategoryRoute.lean`: chosen route to the sorry (Miller's classical
-  category proof). Hypothesis Props `CategoryReductionHypothesis` and
-  `MycielskiCantorHypothesis`, with the **proved** assembly
-  `gandy_harrington_of_category_route` (axiom-clean) deriving the exact
-  `gandy_harrington_for_relation` statement from the two hypotheses.
+- `SilverBurgess.lean`: Silver-Burgess splitting lemmas and `silver_core_closed`
+  (sorry-free).
+- `SilverCategoryRoute.lean`: Miller's classical category route, now **complete**:
+  the hypothesis Props are all discharged (`mycielskiCantorHypothesis_holds`,
+  `gSGraphHomHypothesis_holds` via the `G₀`-dichotomy fusion in
+  `Descriptive/G0Fusion.lean`), so `gandy_harrington_of_gSGraphHom` is fed a proved
+  input.
+- `GandyHarrington.lean`: Silver-for-Borel, **PROVED** (2026-06-10, sorry-free):
+  `gandy_harrington_for_relation`, `silver_core_polish`, `silverBurgessDichotomy`
+  all report axioms exactly `[propext, Classical.choice, Quot.sound]`.
+
+The only remaining `sorry` anywhere in the project is legacy, off-chain material in
+`InfinitaryLogic/Combinatorics/ErdosRado.lean`.
 -/

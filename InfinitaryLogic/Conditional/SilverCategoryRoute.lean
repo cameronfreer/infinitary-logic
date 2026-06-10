@@ -3,16 +3,16 @@ Copyright (c) 2026 Cameron Freer. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
-import InfinitaryLogic.Conditional.GandyHarrington
 import InfinitaryLogic.Descriptive.Mycielski
 import InfinitaryLogic.Descriptive.KuratowskiUlam
 import InfinitaryLogic.Descriptive.GSGraph
+import InfinitaryLogic.Descriptive.G0Fusion
 
 /-!
 # Silver via the classical category route (Miller): interface layer
 
-This file scaffolds the chosen route to `gandy_harrington_for_relation` (the project's one
-remaining sorry): Benjamin Miller's classical, forcing-free, effective-DST-free proof of
+This file holds the route to `gandy_harrington_for_relation` (now fully proved):
+Benjamin Miller's classical, forcing-free, effective-DST-free proof of
 Silver's theorem ["The graph-theoretic approach to descriptive set theory", BSL 18(4), 2012,
 Theorem 11; also "Forceless, ineffective, powerless proofs of descriptive dichotomy theorems,
 Lecture I"]. The proof composes:
@@ -57,8 +57,10 @@ for this route; it remains the assembly point for the closed case (`silver_core_
   (`categoryReductionHypothesis_of_gSGraphHom`, proved) reduces it to the single Prop
   `GSGraphHomHypothesis`: a continuous homomorphism from `GSGraph canonicalS` (dense and
   sparse, see `denseWords_canonicalS` / `sparseWords_canonicalS`) into `¬r`, whenever `r`
-  is Borel with uncountable quotient. Proving that (2C-b) fells the last sorry via
-  `gandy_harrington_of_gSGraphHom`.
+  is Borel with uncountable quotient. That hypothesis is now **proved**
+  (`gSGraphHomHypothesis_holds`, via the `G₀`-dichotomy fusion
+  `G0Fusion.exists_gsGraph_hom`), so the whole chain through
+  `gandy_harrington_of_gSGraphHom` is unconditional.
 -/
 
 universe u
@@ -169,9 +171,8 @@ theorem categoryReductionHypothesis_of_gSGraphHom (h : GSGraphHomHypothesis.{u})
     ((hφ_cont.comp continuous_fst).prodMk (hφ_cont.comp continuous_snd)).measurable
   exact isMeagre_of_isMeagre_sections ((hmeas hr).baireMeasurableSet) hsec
 
-/-- **The full conditional chain**: the `G₀`-dichotomy input alone yields the exact
-statement of `gandy_harrington_for_relation`. Once `GSGraphHomHypothesis` is proved (2C-b),
-the project's last sorry falls. -/
+/-- **The full chain**: the `G₀`-dichotomy input alone yields the exact statement of
+`gandy_harrington_for_relation`; it is fed `gSGraphHomHypothesis_holds` below. -/
 theorem gandy_harrington_of_gSGraphHom (h : GSGraphHomHypothesis.{u})
     {α : Type u} [MetricSpace α] [CompleteSpace α] [SecondCountableTopology α]
     [MeasurableSpace α] [BorelSpace α]
@@ -181,3 +182,41 @@ theorem gandy_harrington_of_gSGraphHom (h : GSGraphHomHypothesis.{u})
       Continuous f ∧ Function.Injective f ∧
       ∀ a b, a ≠ b → ¬ r.r (f a) (f b) :=
   gandy_harrington_of_categoryReduction (categoryReductionHypothesis_of_gSGraphHom h) r hr hunc
+
+/-- **The `G₀`-dichotomy input holds** (2C-b complete): proved by the fusion construction
+`G0Fusion.exists_gsGraph_hom` over the positivity machinery of `G0Dichotomy.lean`. The
+complement graph is Borel hence analytic, nonempty (else the quotient is a singleton), and
+mathlib's `AnalyticSet` definition provides the continuous parametrization `g` whose
+witnesses drive the fusion. -/
+theorem gSGraphHomHypothesis_holds : GSGraphHomHypothesis.{u} := by
+  intro α _ _ _ _ _ r hr hunc
+  classical
+  set G : Set (α × α) := {p : α × α | ¬ r.r p.1 p.2} with hGdef
+  have hGm : MeasurableSet G := hr.compl
+  have hGa : MeasureTheory.AnalyticSet G := hGm.analyticSet
+  -- G is nonempty: otherwise the quotient is a singleton, hence countable
+  have hGne : G.Nonempty := by
+    by_contra h
+    rw [Set.not_nonempty_iff_eq_empty] at h
+    apply hunc
+    have hall : ∀ a b : α, r.r a b := by
+      intro a b
+      by_contra hab
+      have hmem : (a, b) ∈ G := hab
+      rw [h] at hmem
+      exact hmem
+    haveI : Subsingleton (Quotient r) :=
+      ⟨fun q₁ q₂ => Quotient.inductionOn₂ q₁ q₂ fun a b => Quotient.sound (hall a b)⟩
+    infer_instance
+  -- the continuous parametrization of G
+  have hGa2 := hGa
+  rw [MeasureTheory.AnalyticSet_def] at hGa2
+  rcases hGa2 with hempty | ⟨g, hgc, hgr⟩
+  · exact absurd hempty (Set.nonempty_iff_ne_empty.mp hGne)
+  haveI : Nonempty α := ⟨hGne.some.1⟩
+  have hpos := not_smallFam_univ (ι := Fin 0 → Bool) r hunc
+  have hsymm : ∀ a b : α, (a, b) ∈ G → (b, a) ∈ G := by
+    intro a b hab hba
+    exact hab (r.iseqv.symm hba)
+  obtain ⟨φ, hφc, hφhom⟩ := G0Fusion.exists_gsGraph_hom hGa hgc hgr hpos hsymm
+  exact ⟨φ, hφc, fun y z hyz => hφhom y z hyz⟩

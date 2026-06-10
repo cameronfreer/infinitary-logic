@@ -149,6 +149,28 @@ theorem lvlEdgeAt_succ_elim {m n : ℕ} {u v : Fin (n + 1) → Bool}
     · intro j hjm
       exact htail (Fin.castSucc j) (by simpa using hjm)
 
+/-- The `snoc` of a level edge by a common last bit is a level edge. -/
+theorem lvlEdgeAt_snoc {m n : ℕ} {u v : Fin n → Bool} (h : LvlEdgeAt m n u v) (i : Bool) :
+    LvlEdgeAt m (n + 1) (Fin.snoc u i) (Fin.snoc v i) := by
+  obtain ⟨hle, hword, hcross, htail⟩ := h
+  refine ⟨by omega, ?_, ?_, ?_⟩
+  · intro j hjm
+    have hjn : (j : ℕ) < n := by omega
+    rw [snoc_apply_lt _ _ j hjn, snoc_apply_lt _ _ j hjn]
+    exact hword ⟨j, hjn⟩ hjm
+  · intro j hjm
+    have hjn : (j : ℕ) < n := by omega
+    rw [snoc_apply_lt _ _ j hjn, snoc_apply_lt _ _ j hjn]
+    exact hcross ⟨j, hjn⟩ hjm
+  · intro j hjm
+    rcases lt_or_ge (j : ℕ) n with hjn | hjn
+    · rw [snoc_apply_lt _ _ j hjn, snoc_apply_lt _ _ j hjn]
+      exact htail ⟨j, hjn⟩ hjm
+    · have hjeq : (j : ℕ) = n := by
+        have := j.isLt
+        omega
+      rw [snoc_apply_eq _ _ j hjeq, snoc_apply_eq _ _ j hjeq]
+
 /-- The level restrictions of an oriented `GSGraph` edge pair are level edges. -/
 theorem lvlEdgeAt_restr {m n : ℕ} (h : canonicalLen m + 1 ≤ n) (x : ℕ → Bool) :
     LvlEdgeAt m n
@@ -406,5 +428,403 @@ theorem exists_extend_witnesses {G : Set (α × α)}
       exact hout₁ q (fun h => hq (List.mem_cons_of_mem p h))
 
 end WitnessFold
+
+/-! ### The fusion recursion -/
+
+section Fusion
+
+variable {α : Type*} [MetricSpace α] [CompleteSpace α] [SecondCountableTopology α]
+  [MeasurableSpace α] [BorelSpace α]
+variable {G : Set (α × α)} {g : (ℕ → ℕ) → α × α}
+
+/-- The combination map: a pair of level-`n` assignments gives a level-`(n + 1)` assignment,
+sending each vertex to the value of the parent under the assignment selected by the last
+bit. -/
+def combFun (n : ℕ) (φ₀ φ₁ : (Fin n → Bool) → α) : (Fin (n + 1) → Bool) → α :=
+  fun v => (if v (Fin.last n) then φ₁ else φ₀) (Fin.init v)
+
+omit [MetricSpace α] [CompleteSpace α] [SecondCountableTopology α] [MeasurableSpace α]
+  [BorelSpace α] in
+theorem combFun_vals (n : ℕ) (φ₀ φ₁ : (Fin n → Bool) → α) (v : Fin (n + 1) → Bool) :
+    (∃ i, combFun n φ₀ φ₁ v = φ₀ i) ∨ (∃ i, combFun n φ₀ φ₁ v = φ₁ i) := by
+  cases hv : v (Fin.last n)
+  · exact Or.inl ⟨Fin.init v, by simp [combFun, hv]⟩
+  · exact Or.inr ⟨Fin.init v, by simp [combFun, hv]⟩
+
+omit [MetricSpace α] [CompleteSpace α] [SecondCountableTopology α] [MeasurableSpace α]
+  [BorelSpace α] in
+theorem combFun_snoc (n : ℕ) (φ₀ φ₁ : (Fin n → Bool) → α) (u : Fin n → Bool) (i : Bool) :
+    combFun n φ₀ φ₁ (Fin.snoc u i) = (if i then φ₁ else φ₀) u := by
+  cases i <;> simp [combFun]
+
+omit [CompleteSpace α] [SecondCountableTopology α] [MeasurableSpace α] [BorelSpace α] in
+theorem continuous_combFun (n : ℕ) :
+    Continuous fun p : ((Fin n → Bool) → α) × ((Fin n → Bool) → α) =>
+      combFun n p.1 p.2 := by
+  refine continuous_pi fun v => ?_
+  cases hv : v (Fin.last n)
+  · have h : (fun p : ((Fin n → Bool) → α) × ((Fin n → Bool) → α) =>
+        combFun n p.1 p.2 v) = fun p => p.1 (Fin.init v) := by
+      funext p
+      simp [combFun, hv]
+    rw [h]
+    exact (continuous_apply _).comp continuous_fst
+  · have h : (fun p : ((Fin n → Bool) → α) × ((Fin n → Bool) → α) =>
+        combFun n p.1 p.2 v) = fun p => p.2 (Fin.init v) := by
+      funext p
+      simp [combFun, hv]
+    rw [h]
+    exact (continuous_apply _).comp continuous_snd
+
+/-- The inherited witness words: a level-`(n + 1)` pair with agreeing last bits inherits the
+word of its parent pair; the fresh cross pair (differing last bits) starts at the empty
+word. -/
+def precw (n : ℕ) (cw : (Fin n → Bool) × (Fin n → Bool) → List ℕ) :
+    (Fin (n + 1) → Bool) × (Fin (n + 1) → Bool) → List ℕ :=
+  fun p => if p.1 (Fin.last n) = p.2 (Fin.last n) then cw (Fin.init p.1, Fin.init p.2)
+    else []
+
+theorem precw_of_last_eq {n : ℕ} {cw : (Fin n → Bool) × (Fin n → Bool) → List ℕ}
+    {u v : Fin (n + 1) → Bool} (h : u (Fin.last n) = v (Fin.last n)) :
+    precw n cw (u, v) = cw (Fin.init u, Fin.init v) := if_pos h
+
+theorem precw_of_last_ne {n : ℕ} {cw : (Fin n → Bool) × (Fin n → Bool) → List ℕ}
+    {u v : Fin (n + 1) → Bool} (h : ¬ u (Fin.last n) = v (Fin.last n)) :
+    precw n cw (u, v) = [] := if_neg h
+
+theorem precw_snoc {n : ℕ} (cw : (Fin n → Bool) × (Fin n → Bool) → List ℕ)
+    (u v : Fin n → Bool) (i : Bool) :
+    precw n cw (Fin.snoc u i, Fin.snoc v i) = cw (u, v) := by
+  have h : (Fin.snoc u i : Fin (n + 1) → Bool) (Fin.last n) =
+      (Fin.snoc v i : Fin (n + 1) → Bool) (Fin.last n) := by
+    rw [Fin.snoc_last, Fin.snoc_last]
+  rw [precw_of_last_eq h, Fin.init_snoc, Fin.init_snoc]
+
+/-- A stage of the fusion construction: a positive analytic family of level-`n` assignments
+whose members are uniformly close at every vertex and uniformly `g`-witnessed through the
+tracked word at every level edge. -/
+structure FusionStage (G : Set (α × α)) (g : (ℕ → ℕ) → α × α) (n : ℕ) where
+  fam : Set ((Fin n → Bool) → α)
+  cw : (Fin n → Bool) × (Fin n → Bool) → List ℕ
+  analytic : AnalyticSet fam
+  positive : ¬ SmallFam G fam
+  close : ∀ φ ∈ fam, ∀ φ' ∈ fam, ∀ u, dist (φ u) (φ' u) ≤ (1 / 2) ^ n
+  witness : ∀ m (u v : Fin n → Bool), LvlEdgeAt m n u v →
+    ∀ φ ∈ fam, φ ∈ WitSet g u v (cw (u, v))
+  wlen : ∀ m (u v : Fin n → Bool), LvlEdgeAt m n u v →
+    n ≤ canonicalLen m + 1 + (cw (u, v)).length
+
+/-- The base stage: the full family, shrunk once for the level-`0` closeness control. -/
+theorem exists_fusionStage_zero [Nonempty α]
+    (hpos : ¬ SmallFam G (univ : Set ((Fin 0 → Bool) → α))) :
+    Nonempty (FusionStage G g 0) := by
+  have hana : AnalyticSet (univ : Set ((Fin 0 → Bool) → α)) := by
+    rw [← Set.range_id]
+    exact analyticSet_range_of_polishSpace continuous_id
+  obtain ⟨Φ', hsub, hana', hpos', hclose'⟩ := exists_shrink hana hpos 0
+  refine ⟨⟨Φ', fun _ => [], hana', hpos', hclose', ?_, ?_⟩⟩
+  · intro m u v hedge
+    exact absurd hedge.1 (by omega)
+  · intro m u v hedge
+    exact absurd hedge.1 (by omega)
+
+/-- **The one-step extension lemma**: every fusion stage extends to the next level, with
+children's values among the parents' values and inherited witness words extending the
+parents' words. Combination (`not_smallFam_comb_cross` at fresh cross levels,
+`not_smallFam_comb_pairs` otherwise), then the witness-extension fold, then vertex
+shrinking. -/
+theorem exists_fusionStage_succ [Nonempty α] (hG : AnalyticSet G) (hg : Continuous g)
+    (hrange : Set.range g = G) {n : ℕ} (S : FusionStage G g n) :
+    ∃ T : FusionStage G g (n + 1),
+      (∀ ψ ∈ T.fam, ∀ v : Fin (n + 1) → Bool, ∃ φ ∈ S.fam, ψ v = φ (Fin.init v)) ∧
+      (∀ m (u v : Fin n → Bool) (i : Bool), LvlEdgeAt m n u v →
+        S.cw (u, v) <+: T.cw (Fin.snoc u i, Fin.snoc v i)) := by
+  classical
+  -- The common tail: fold the witness extensions, shrink, and assemble.
+  suffices hmain : ∀ Ψ : Set ((Fin (n + 1) → Bool) → α),
+      AnalyticSet Ψ → ¬ SmallFam G Ψ →
+      (∀ ψ ∈ Ψ, ∀ v : Fin (n + 1) → Bool, ∃ φ ∈ S.fam, ψ v = φ (Fin.init v)) →
+      (∀ ψ ∈ Ψ, ∀ m (u v : Fin (n + 1) → Bool), LvlEdgeAt m (n + 1) u v →
+        ψ ∈ WitSet g u v (precw n S.cw (u, v))) →
+      ∃ T : FusionStage G g (n + 1),
+        (∀ ψ ∈ T.fam, ∀ v : Fin (n + 1) → Bool, ∃ φ ∈ S.fam, ψ v = φ (Fin.init v)) ∧
+        (∀ m (u v : Fin n → Bool) (i : Bool), LvlEdgeAt m n u v →
+          S.cw (u, v) <+: T.cw (Fin.snoc u i, Fin.snoc v i)) by
+    by_cases hcross : ∃ m, canonicalLen m = n
+    · -- A fresh cross edge is born at this level
+      obtain ⟨m₀, hm₀⟩ := hcross
+      refine hmain
+        {ψ | ∃ φ₀ ∈ S.fam, ∃ φ₁ ∈ S.fam,
+          (φ₀ (cvert m₀ n), φ₁ (cvert m₀ n)) ∈ G ∧ ψ = combFun n φ₀ φ₁}
+        (analyticSet_comb_cross hG S.analytic _ _ (continuous_combFun n))
+        (not_smallFam_comb_cross hG S.analytic S.positive _ _ (combFun_vals n))
+        ?_ ?_
+      · rintro ψ ⟨φ₀, h₀, φ₁, h₁, -, rfl⟩ v
+        cases hv : v (Fin.last n)
+        · exact ⟨φ₀, h₀, by simp [combFun, hv]⟩
+        · exact ⟨φ₁, h₁, by simp [combFun, hv]⟩
+      · rintro ψ ⟨φ₀, h₀, φ₁, h₁, hcr, rfl⟩ m u v hedge
+        rcases lvlEdgeAt_succ_elim hedge with ⟨heq, hu, hv⟩ | ⟨hle, hlast, hpar⟩
+        · -- the fresh cross pair
+          have hmm : m = m₀ := canonicalLen_strictMono.injective (heq.trans hm₀.symm)
+          subst hmm
+          have hne : (precw n S.cw (u, v)) = [] := by
+            apply precw_of_last_ne
+            rw [hu, hv, Fin.snoc_last, Fin.snoc_last]
+            simp
+          rw [hne]
+          have hval : (combFun n φ₀ φ₁ u, combFun n φ₀ φ₁ v) =
+              (φ₀ (cvert m n), φ₁ (cvert m n)) := by
+            rw [hu, hv, combFun_snoc, combFun_snoc]
+            simp
+          obtain ⟨w, hw⟩ := hrange.symm ▸ hcr
+          exact ⟨w, by rw [prepw_nil, hval]; exact hw⟩
+        · -- an inherited pair
+          rw [precw_of_last_eq hlast]
+          obtain ⟨w, hw⟩ := S.witness m _ _ hpar (if u (Fin.last n) then φ₁ else φ₀)
+            (by
+              cases hu : u (Fin.last n)
+              · simpa [hu] using h₀
+              · simpa [hu] using h₁)
+          refine ⟨w, hw.trans ?_⟩
+          have hcv : combFun n φ₀ φ₁ v = (if u (Fin.last n) then φ₁ else φ₀) (Fin.init v) := by
+            show (if v (Fin.last n) then φ₁ else φ₀) (Fin.init v) = _
+            rw [hlast]
+          rw [hcv]
+          rfl
+    · -- No fresh edge at this level
+      refine hmain {ψ | ∃ φ₀ ∈ S.fam, ∃ φ₁ ∈ S.fam, ψ = combFun n φ₀ φ₁}
+        (analyticSet_comb_pairs S.analytic _ (continuous_combFun n))
+        (not_smallFam_comb_pairs S.positive _ (combFun_vals n)) ?_ ?_
+      · rintro ψ ⟨φ₀, h₀, φ₁, h₁, rfl⟩ v
+        cases hv : v (Fin.last n)
+        · exact ⟨φ₀, h₀, by simp [combFun, hv]⟩
+        · exact ⟨φ₁, h₁, by simp [combFun, hv]⟩
+      · rintro ψ ⟨φ₀, h₀, φ₁, h₁, rfl⟩ m u v hedge
+        rcases lvlEdgeAt_succ_elim hedge with ⟨heq, -, -⟩ | ⟨hle, hlast, hpar⟩
+        · exact absurd ⟨m, heq⟩ hcross
+        · rw [precw_of_last_eq hlast]
+          obtain ⟨w, hw⟩ := S.witness m _ _ hpar (if u (Fin.last n) then φ₁ else φ₀)
+            (by
+              cases hu : u (Fin.last n)
+              · simpa [hu] using h₀
+              · simpa [hu] using h₁)
+          refine ⟨w, hw.trans ?_⟩
+          have hcv : combFun n φ₀ φ₁ v = (if u (Fin.last n) then φ₁ else φ₀) (Fin.init v) := by
+            show (if v (Fin.last n) then φ₁ else φ₀) (Fin.init v) = _
+            rw [hlast]
+          rw [hcv]
+          rfl
+  -- The common tail
+  intro Ψ hana hpos hchild hwit
+  set L := (Finset.univ.filter
+    fun p : ((Fin (n + 1) → Bool) × (Fin (n + 1) → Bool)) =>
+      ∃ m, LvlEdgeAt m (n + 1) p.1 p.2).toList with hLdef
+  obtain ⟨Φ₂, c', hsub₂, hana₂, hpos₂, hLspec, -⟩ :=
+    exists_extend_witnesses hg L (Finset.nodup_toList _) hana hpos (precw n S.cw)
+      (fun p hp ψ hψ => by
+        obtain ⟨-, m, hedge⟩ := Finset.mem_filter.mp (Finset.mem_toList.mp hp)
+        exact hwit ψ hψ m p.1 p.2 hedge)
+  obtain ⟨Φ₃, hsub₃, hana₃, hpos₃, hclose₃⟩ := exists_shrink hana₂ hpos₂ (n + 1)
+  have hmemL : ∀ {m} {u v : Fin (n + 1) → Bool}, LvlEdgeAt m (n + 1) u v → (u, v) ∈ L :=
+    fun {m u v} hedge => Finset.mem_toList.mpr
+      (Finset.mem_filter.mpr ⟨Finset.mem_univ _, m, hedge⟩)
+  refine ⟨⟨Φ₃, c', hana₃, hpos₃, hclose₃, ?_, ?_⟩, ?_, ?_⟩
+  · -- witnesses at the extended words
+    intro m u v hedge φ hφ
+    exact (hLspec (u, v) (hmemL hedge)).2.2 φ (hsub₃ hφ)
+  · -- word lengths
+    intro m u v hedge
+    obtain ⟨-, hlen, -⟩ := hLspec (u, v) (hmemL hedge)
+    rcases lvlEdgeAt_succ_elim hedge with ⟨heq, -, -⟩ | ⟨hle, hlast, hpar⟩
+    · omega
+    · rw [precw_of_last_eq hlast] at hlen
+      have hw := S.wlen m _ _ hpar
+      omega
+  · -- children's values come from the parents
+    intro ψ hψ v
+    exact hchild ψ (hsub₂ (hsub₃ hψ)) v
+  · -- inherited words extend the parents' words
+    intro m u v i hedge
+    have hedge' := lvlEdgeAt_snoc hedge i
+    obtain ⟨hpre, -, -⟩ := hLspec (Fin.snoc u i, Fin.snoc v i) (hmemL hedge')
+    rw [precw_snoc] at hpre
+    exact hpre
+
+variable (G g) in
+/-- The tower of fusion stages. -/
+noncomputable def fusionTower [Nonempty α] (hG : AnalyticSet G) (hg : Continuous g)
+    (hrange : Set.range g = G)
+    (hpos : ¬ SmallFam G (univ : Set ((Fin 0 → Bool) → α))) : ∀ n, FusionStage G g n
+  | 0 => (exists_fusionStage_zero hpos).some
+  | n + 1 => (exists_fusionStage_succ hG hg hrange
+      (fusionTower hG hg hrange hpos n)).choose
+
+theorem fusionTower_spec [Nonempty α] (hG : AnalyticSet G) (hg : Continuous g)
+    (hrange : Set.range g = G)
+    (hpos : ¬ SmallFam G (univ : Set ((Fin 0 → Bool) → α))) (n : ℕ) :
+    (∀ ψ ∈ (fusionTower G g hG hg hrange hpos (n + 1)).fam,
+      ∀ v : Fin (n + 1) → Bool, ∃ φ ∈ (fusionTower G g hG hg hrange hpos n).fam,
+        ψ v = φ (Fin.init v)) ∧
+    (∀ m (u v : Fin n → Bool) (i : Bool), LvlEdgeAt m n u v →
+      (fusionTower G g hG hg hrange hpos n).cw (u, v) <+:
+        (fusionTower G g hG hg hrange hpos (n + 1)).cw (Fin.snoc u i, Fin.snoc v i)) :=
+  (exists_fusionStage_succ hG hg hrange (fusionTower G g hG hg hrange hpos n)).choose_spec
+
+/-- **The fusion limit**: a continuous map of Cantor space all of whose
+`GSGraph canonicalS` edge pairs land in `G`. -/
+theorem exists_gsGraph_hom [Nonempty α] (hG : AnalyticSet G) (hg : Continuous g)
+    (hrange : Set.range g = G)
+    (hpos : ¬ SmallFam G (univ : Set ((Fin 0 → Bool) → α)))
+    (hsymm : ∀ a b : α, (a, b) ∈ G → (b, a) ∈ G) :
+    ∃ φ : (ℕ → Bool) → α, Continuous φ ∧
+      ∀ y z : ℕ → Bool, GSGraph canonicalS y z → (φ y, φ z) ∈ G := by
+  classical
+  set S : ∀ n, FusionStage G g n := fusionTower G g hG hg hrange hpos with hS
+  have hspec := fusionTower_spec hG hg hrange hpos
+  have hne : ∀ n, (S n).fam.Nonempty := fun n => nonempty_of_not_smallFam (S n).positive
+  choose φseq hφseq using hne
+  -- the approximating values along prefixes
+  set a : (ℕ → Bool) → ℕ → α := fun x n => φseq n (restr n x) with ha
+  have hinit : ∀ (x : ℕ → Bool) (n : ℕ), Fin.init (restr (n + 1) x) = restr n x := by
+    intro x n
+    funext j
+    show x ↑(Fin.castSucc j) = x ↑j
+    simp
+  have hstep : ∀ x n, dist (a x n) (a x (n + 1)) ≤ (1 / 2) ^ n := by
+    intro x n
+    obtain ⟨φ, hφ, heq⟩ := (hspec n).1 (φseq (n + 1)) (hφseq (n + 1)) (restr (n + 1) x)
+    show dist (φseq n (restr n x)) (φseq (n + 1) (restr (n + 1) x)) ≤ _
+    rw [heq, hinit]
+    exact (S n).close _ (hφseq n) _ hφ _
+  have hcauchy : ∀ x, CauchySeq (a x) := fun x =>
+    cauchySeq_of_le_geometric (1 / 2) 1 (by norm_num)
+      (fun n => by simpa using hstep x n)
+  choose φlim hφlim using fun x => cauchySeq_tendsto_of_complete (hcauchy x)
+  have hdlim : ∀ x n, dist (a x n) (φlim x) ≤ (1 / 2) ^ n * 2 := by
+    intro x n
+    have h := dist_le_of_le_geometric_of_tendsto (1 / 2) 1 (by norm_num)
+      (fun k => by simpa using hstep x k) (hφlim x) n
+    calc dist (a x n) (φlim x) ≤ 1 * (1 / 2) ^ n / (1 - 1 / 2) := h
+      _ = (1 / 2) ^ n * 2 := by ring
+  refine ⟨φlim, ?_, ?_⟩
+  · -- continuity: prefix agreement controls the limit values
+    rw [continuous_iff_continuousAt]
+    intro x
+    rw [ContinuousAt, Metric.tendsto_nhds]
+    intro ε hε
+    obtain ⟨N, hN⟩ := exists_pow_lt_of_lt_one (show (0 : ℝ) < ε / 4 by linarith)
+      (by norm_num : (1 : ℝ) / 2 < 1)
+    refine Filter.eventually_of_mem
+      ((PiNat.isOpen_cylinder _ x N).mem_nhds (PiNat.self_mem_cylinder x N)) ?_
+    intro y hy
+    have heqa : a y N = a x N := by
+      show φseq N (restr N y) = φseq N (restr N x)
+      rw [restr_eq_restr_of_mem_cylinder hy]
+    have h1 : dist (φlim y) (φlim x) ≤ dist (a y N) (φlim y) + dist (a x N) (φlim x) :=
+      calc dist (φlim y) (φlim x)
+          ≤ dist (φlim y) (a y N) + dist (a y N) (φlim x) := dist_triangle _ _ _
+        _ = dist (a y N) (φlim y) + dist (a x N) (φlim x) := by rw [dist_comm, heqa]
+    have h2 := hdlim y N
+    have h3 := hdlim x N
+    calc dist (φlim y) (φlim x)
+        ≤ (1 / 2) ^ N * 2 + (1 / 2) ^ N * 2 := by linarith
+      _ < ε := by linarith
+  · -- the homomorphism condition
+    intro y z hyz
+    obtain ⟨m, x, hor⟩ := gsGraph_oriented hyz
+    have hkey : ∀ y' z' : ℕ → Bool,
+        y' = prependWord (canonicalWord m ++ [false]) x →
+        z' = prependWord (canonicalWord m ++ [true]) x →
+        (φlim y', φlim z') ∈ G := by
+      intro y' z' hy' hz'
+      set L₀ := canonicalLen m + 1 with hL₀
+      -- the finite edge traces
+      have hedge : ∀ n, L₀ ≤ n → LvlEdgeAt m n (restr n y') (restr n z') := by
+        intro n hn
+        rw [hy', hz']
+        exact lvlEdgeAt_restr hn x
+      -- the tails agree beyond the cross position
+      have htails : ∀ n, L₀ ≤ n → y' n = z' n := by
+        intro n hn
+        rw [hy', hz',
+          prependWord_apply_of_le (by simp [length_canonicalWord]; omega),
+          prependWord_apply_of_le (by simp [length_canonicalWord]; omega)]
+        simp [length_canonicalWord]
+      -- the witness-word chain
+      set c : ℕ → List ℕ := fun n => (S n).cw (restr n y', restr n z') with hc
+      have hchain : ∀ n, L₀ ≤ n → c n <+: c (n + 1) := by
+        intro n hn
+        have h2 := (hspec n).2 m (restr n y') (restr n z') (y' n) (hedge n hn)
+        have hy2 : Fin.snoc (restr n y') (y' n) = restr (n + 1) y' := (restr_succ n y').symm
+        have hz2 : Fin.snoc (restr n z') (y' n) = restr (n + 1) z' := by
+          rw [htails n hn]
+          exact (restr_succ n z').symm
+        rw [hy2, hz2] at h2
+        exact h2
+      have hchain' : ∀ n N, L₀ ≤ n → n ≤ N → c n <+: c N := by
+        intro n N hn hnN
+        induction N with
+        | zero => exact absurd hn (by omega)
+        | succ N ih =>
+          rcases eq_or_lt_of_le hnN with rfl | hlt
+          · exact List.prefix_rfl
+          · exact (ih (by omega)).trans (hchain N (by omega))
+      have hlen : ∀ n, L₀ ≤ n → n ≤ L₀ + (c n).length := by
+        intro n hn
+        have := (S n).wlen m _ _ (hedge n hn)
+        omega
+      -- the limit witness word
+      set wlim : ℕ → ℕ := fun j => (c (L₀ + j + 1)).getD j 0 with hwlim
+      have hgetD : ∀ j n, L₀ + j + 1 ≤ n → (c n).getD j 0 = wlim j := by
+        intro j n hn
+        have hj1 : j < (c (L₀ + j + 1)).length := by
+          have := hlen (L₀ + j + 1) (by omega)
+          omega
+        exact getD_of_prefix (hchain' (L₀ + j + 1) n (by omega) hn) hj1
+      -- stage witnesses
+      have hwitn : ∀ n, L₀ ≤ n → ∃ w, g (prepw (c n) w) = (a y' n, a z' n) := by
+        intro n hn
+        exact (S n).witness m _ _ (hedge n hn) (φseq n) (hφseq n)
+      set W : ℕ → ℕ → ℕ := fun n =>
+        if h : L₀ ≤ n then prepw (c n) ((hwitn n h).choose) else fun _ => 0 with hW
+      have hgW : ∀ n, L₀ ≤ n → g (W n) = (a y' n, a z' n) := by
+        intro n h
+        rw [hW]
+        simp only [dif_pos h]
+        exact (hwitn n h).choose_spec
+      -- the witness points converge to the limit word
+      have hWlim : Filter.Tendsto W Filter.atTop (nhds wlim) := by
+        rw [tendsto_pi_nhds]
+        intro j
+        refine tendsto_const_nhds.congr' ?_
+        rw [Filter.EventuallyEq, Filter.eventually_atTop]
+        refine ⟨L₀ + j + 1, fun n hn => ?_⟩
+        have hL₀n : L₀ ≤ n := by omega
+        have hjlen : j < (c n).length := by
+          have := hlen n hL₀n
+          omega
+        rw [hW]
+        simp only [dif_pos hL₀n]
+        rw [prepw_apply_of_lt hjlen]
+        exact (hgetD j n hn).symm
+      -- identify the limits
+      have hpair : Filter.Tendsto (fun n => g (W n)) Filter.atTop
+          (nhds (φlim y', φlim z')) := by
+        have h1 : Filter.Tendsto (fun n => (a y' n, a z' n)) Filter.atTop
+            (nhds (φlim y', φlim z')) := (hφlim y').prodMk_nhds (hφlim z')
+        refine h1.congr' ?_
+        rw [Filter.EventuallyEq, Filter.eventually_atTop]
+        exact ⟨L₀, fun n hn => (hgW n hn).symm⟩
+      have hg2 : Filter.Tendsto (fun n => g (W n)) Filter.atTop (nhds (g wlim)) :=
+        (hg.tendsto wlim).comp hWlim
+      have hfinal : g wlim = (φlim y', φlim z') := tendsto_nhds_unique hg2 hpair
+      rw [← hrange]
+      exact hfinal ▸ mem_range_self wlim
+    rcases hor with ⟨hy, hz⟩ | ⟨hy, hz⟩
+    · exact hkey y z hy hz
+    · exact hsymm _ _ (hkey z y hz hy)
+
+end Fusion
 
 end G0Fusion

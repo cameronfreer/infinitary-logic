@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Conditional.SilverBurgess
+import InfinitaryLogic.Conditional.SilverCategoryRoute
 
 /-!
 # Silver's Theorem for Borel Equivalence Relations
@@ -18,72 +19,54 @@ This file provides:
 
 ## Status
 
-`gandy_harrington_for_relation` (general Borel relations) currently carries a sorry. The
-statement is a classical ZFC theorem (Silver, 1980), but its proof requires
-descriptive-set-theory infrastructure not yet in mathlib: either Kuratowski–Ulam +
-Banach–Mazur games (Kechris, CDST Ch 21) or lightface Gandy–Harrington (Harrington 1985).
-Once filled, `silver_core_polish`, `silverBurgessDichotomy`, and `morley_counting` become
-unconditional.
+**PROVED (2026-06-10).** `gandy_harrington_for_relation` is now sorry-free: it is the
+endpoint of Miller's classical category route, fully formalized in this project
+(see `docs/silver-phase2-route.md` for the development record):
 
-The **equality case** is unconditional: see `gandy_harrington_for_eq` (axiom-clean, via
-Cantor–Bendixson).
+* `G0Fusion.exists_gsGraph_hom` — the classical Kechris–Solecki–Todorcevic
+  `G₀`-dichotomy construction (positivity ideals, Lusin separation, fusion);
+* `gSGraphHomHypothesis_holds` — the homomorphism input, in `SilverCategoryRoute.lean`;
+* `isMeagre_pullback_class_of_gSGraph_hom` (Miller Prop. 6), `isMeagre_of_isMeagre_sections`
+  (Kuratowski–Ulam), and `mycielski_cantor` (Mycielski) — the category glue;
+* `gandy_harrington_of_gSGraphHom` — the assembly used below.
 
-**Chosen route (Phase 2A audit, 2026-06-09)**: Miller's classical category proof, scaffolded in
-`SilverCategoryRoute.lean` — the proved assembly `gandy_harrington_of_category_route` reduces
-this sorry to `CategoryReductionHypothesis` (G₀-dichotomy + Kuratowski–Ulam) and
-`MycielskiCantorHypothesis`. The latter is **proved** (Phase 2B-i, 2026-06-10:
-`mycielski_cantor` in `Descriptive/Mycielski.lean`), so the remaining frontier is exactly
-`CategoryReductionHypothesis` via `gandy_harrington_of_categoryReduction`. See
-`docs/silver-phase2-route.md` for the route decision record.
+Consequently `silver_core_polish`, `silverBurgessDichotomy`, and the instantiation of
+`morley_counting` are unconditional, with axioms exactly
+`[propext, Classical.choice, Quot.sound]`.
 
-**Why there is no easy reduction to a "closed relation" case.** A tempting plan is to refine
+The **equality case** `gandy_harrington_for_eq` (via Cantor–Bendixson) is kept as a simple
+direct proof of the smooth end of the dichotomy.
+
+**Why there was no easy reduction to a "closed relation" case.** A tempting plan is to refine
 the Polish topology so the Borel relation becomes *closed* and then run a Cantor scheme. This
 is invalid in general: a closed equivalence relation on a Polish space is *smooth* (the class
 map `x ↦ [x]` into the Effros–Borel space is Borel), so "potentially closed ⟹ smooth". But
 `E₀` (eventual equality on `2^ℕ`) is a Borel equivalence relation with continuum-many classes
 — so Silver applies — that is **not** smooth (Glimm–Effros), hence not potentially closed. So
-the hard core of Silver is exactly the non-smooth relations, which cannot be made closed by a
-change of topology; the effective (Gandy–Harrington) or games content is irreducible here.
+the hard core of Silver is exactly the non-smooth relations — the `G₀`-dichotomy content of
+the category route.
 -/
 
 universe u v
 
 open Set Cardinal Topology MeasureTheory
 
-/-! ### Frontier status
+/-! ### Status
 
-Invariant for this development (audited; axioms confirmed via `#print axioms`):
-
-* **All active infinitary-logic results are proved**, and the only active descriptive-set-
-  theory frontier is Silver / Gandy–Harrington, namely `gandy_harrington_for_relation` below
-  — the single non-legacy `sorry` in the project.
-* **Conditional endpoints** chain through exactly that one `sorry` and nothing else
-  (`[propext, Classical.choice, Quot.sound, sorryAx]`): `silver_core_polish`,
-  `silverBurgessDichotomy`, and the *unconditional* instantiation of `morley_counting`.
-  `morley_counting` itself takes the dichotomy as a hypothesis, so the parametrized form is
-  axiom-clean — the `sorry` enters only when one supplies `silverBurgessDichotomy`.
-* **The false "potentially closed" reduction is explicitly ruled out** (`E₀`; see the `## Status`
-  note and the `gandy_harrington_for_relation` docstring). No declaration depends on it.
-* `gandy_harrington_for_eq` is a small axiom-clean sanity check (the `r = ⊥` case), **not** a
-  step toward the general theorem — it does not shorten the route to `gandy_harrington_for_relation`.
-
-Do not add smooth / potentially-closed Silver variants unless deliberately building DST
-infrastructure: the missing content is exactly the non-smooth case, which is the core theorem. -/
+Audited invariant (axioms confirmed via `#print axioms`): the project's descriptive-set-theory
+chain is **sorry-free**. `gandy_harrington_for_relation`, `silver_core_polish`,
+`silverBurgessDichotomy`, and the unconditional instantiation of `morley_counting` all report
+exactly `[propext, Classical.choice, Quot.sound]`. -/
 
 /-- **Silver's theorem for Borel equivalence relations.** A Borel equivalence
 relation on a Polish space with uncountably many classes contains a perfect set
 of pairwise-inequivalent points: there is a continuous injection
 `f : (ℕ → Bool) → α` such that distinct inputs produce r-inequivalent outputs.
 
-Provable via Kuratowski–Ulam + Banach–Mazur games (Kechris CDST Ch 21) or via
-lightface Gandy–Harrington; neither DST infrastructure is currently in mathlib.
-
-**`E₀` obstruction (do not try to reduce to a closed relation).** One cannot prove this by
-refining the topology to make `r` closed and running a Cantor scheme: that route only works
-for *smooth* (potentially closed) relations, and `E₀` — eventual equality on `2^ℕ`, a Borel
-relation with continuum-many classes — is not smooth, so it is not potentially closed. The
-hard content is precisely these non-smooth relations. The equality case (`r = ⊥`) *is*
-unconditional: see `gandy_harrington_for_eq`. (See the module `## Status` note for detail.) -/
+Proved via Miller's classical category route: the `G₀`-dichotomy homomorphism
+(`gSGraphHomHypothesis_holds`, by the fusion construction `G0Fusion.exists_gsGraph_hom`),
+Miller's independence lemma, Kuratowski–Ulam, and Mycielski's theorem, assembled by
+`gandy_harrington_of_gSGraphHom`. -/
 theorem gandy_harrington_for_relation {α : Type u}
     [MetricSpace α] [CompleteSpace α] [SecondCountableTopology α]
     [MeasurableSpace α] [BorelSpace α]
@@ -91,8 +74,8 @@ theorem gandy_harrington_for_relation {α : Type u}
     (hunc : ¬ Countable (Quotient r)) :
     ∃ f : (ℕ → Bool) → α,
       Continuous f ∧ Function.Injective f ∧
-      ∀ a b, a ≠ b → ¬ r.r (f a) (f b) := by
-  sorry
+      ∀ a b, a ≠ b → ¬ r.r (f a) (f b) :=
+  gandy_harrington_of_gSGraphHom gSGraphHomHypothesis_holds r hr hunc
 
 /-- **[Equality case, unconditional]** Silver's theorem when the relation is *equality*
 (`r = ⊥`): an uncountable Polish space already contains a continuous injection

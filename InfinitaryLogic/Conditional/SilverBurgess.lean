@@ -13,9 +13,10 @@ import Architect
 /-!
 # Silver-Burgess Dichotomy for Borel Equivalence Relations
 
-This file proves the Silver-Burgess dichotomy for closed equivalence relations
-on Polish spaces and derives `SilverBurgessDichotomy` for standard Borel spaces,
-modulo one sorry in `gandy_harrington_for_relation` (see `GandyHarrington.lean`).
+This file proves the Silver-Burgess splitting lemmas and Silver's theorem for closed
+equivalence relations on Polish spaces; the Borel case and the full
+`SilverBurgessDichotomy` for standard Borel spaces are derived in
+`GandyHarrington.lean` (sorry-free since 2026-06-10).
 
 ## Main Results
 
@@ -29,10 +30,9 @@ modulo one sorry in `gandy_harrington_for_relation` (see `GandyHarrington.lean`)
   obtained by feeding `splitting_lemma_closed_small_diam` to the abstract Cantor-antichain
   builder `CantorScheme.exists_antichain_map_of_splitting`
   (`InfinitaryLogic/Descriptive/CantorAntichain.lean`).
-- `silver_core_polish`: Silver's theorem for Borel equivalence relations (depends on
-  `gandy_harrington_for_relation` in `GandyHarrington.lean`; remaining sorry — boldface
-  Silver-for-Borel DST not yet in mathlib).
-- `silverBurgessDichotomy`: The Silver-Burgess dichotomy (depends on `silver_core_polish`).
+- `silver_core_polish` and `silverBurgessDichotomy` live in `GandyHarrington.lean`,
+  derived from `gandy_harrington_for_relation` (proved via the category route in
+  `SilverCategoryRoute.lean`).
 -/
 
 open Cardinal Set MeasureTheory
