@@ -30,9 +30,20 @@ see `InfinitaryLogic/Conditional/SilverCategoryRoute.lean` and
   `¬r`-independent set lies in a single class, so a countable capture family would make the
   quotient countable.
 
-The remaining steps of the dichotomy (the combination lemma transferring positivity from
-level `n` to level `n + 1`, and the fusion extracting the continuous homomorphism) build on
-these; see the 2C-b plan in `docs/silver-phase2-route.md`.
+* **Combination positivity** (`not_smallFam_comb_cross`, with `not_smallFam_comb_pairs`
+  for levels with no fresh constraint): combining pairs of assignments from a positive
+  analytic family across a fresh `G`-edge constraint at a designated index yields a
+  positive family. This is Miller's "combining pairs of homomorphisms preserves
+  `I_n`-positivity": if a countable Borel independent family captured the combined family,
+  the assignments avoiding the capture would form a positive analytic family whose values
+  at the cross index are `G`-independent, and the KST superset lemma would capture it —
+  contradiction. The analyticity side (`analyticSet_comb_pairs`/`analyticSet_comb_cross`)
+  keeps the recursion going; the closure facts needed (`AnalyticSet.inter`,
+  `AnalyticSet.inter_measurableSet`, `AnalyticSet.prod`) are proved here.
+
+The remaining step of the dichotomy (the level recursion with vertex-shrinking and
+witness-extension pigeonholes, and the fusion extracting the continuous homomorphism)
+builds on these; see the 2C-b plan in `docs/silver-phase2-route.md`.
 -/
 
 open Set Function MeasureTheory
@@ -239,4 +250,168 @@ theorem not_smallFam_univ {ι : Type*} [Nonempty ι] (r : Setoid α)
     exact Quotient.sound (rel_of_relIndependent_compl r (hC k).2 hne.choose_spec hk)
   exact hsurj.countable
 
+/-- Smallness is binary additive. -/
+theorem SmallFam.union {G : Set (α × α)} {ι : Type*} {Φ₁ Φ₂ : Set (ι → α)}
+    (h₁ : SmallFam G Φ₁) (h₂ : SmallFam G Φ₂) : SmallFam G (Φ₁ ∪ Φ₂) := by
+  have hcov : Φ₁ ∪ Φ₂ = ⋃ n : ℕ, if n = 0 then Φ₁ else Φ₂ := by
+    ext φ
+    simp only [mem_union, mem_iUnion]
+    constructor
+    · rintro (h | h)
+      · exact ⟨0, by simpa⟩
+      · exact ⟨1, by simpa⟩
+    · rintro ⟨n, hn⟩
+      by_cases h : n = 0
+      · exact Or.inl (by simpa [h] using hn)
+      · exact Or.inr (by simpa [h] using hn)
+  rw [hcov]
+  exact SmallFam.iUnion_of_forall fun n => by
+    by_cases h : n = 0 <;> simp [h, h₁, h₂]
+
 end Smallness
+
+/-! ### Analytic-set closure helpers -/
+
+section AnalyticClosure
+
+namespace MeasureTheory
+
+variable {α : Type*} [TopologicalSpace α]
+
+protected theorem AnalyticSet.inter [T2Space α] {A B : Set α}
+    (hA : AnalyticSet A) (hB : AnalyticSet B) : AnalyticSet (A ∩ B) := by
+  rw [Set.inter_eq_iInter]
+  exact AnalyticSet.iInter fun b => by cases b <;> simpa
+
+protected theorem AnalyticSet.inter_measurableSet [PolishSpace α] [MeasurableSpace α]
+    [BorelSpace α] {A B : Set α} (hA : AnalyticSet A) (hB : MeasurableSet B) :
+    AnalyticSet (A ∩ B) :=
+  hA.inter hB.analyticSet
+
+protected theorem AnalyticSet.prod {β : Type*} [TopologicalSpace β] {A : Set α} {B : Set β}
+    (hA : AnalyticSet A) (hB : AnalyticSet B) : AnalyticSet (A ×ˢ B) := by
+  obtain ⟨X, hXt, hXp, f, hf, rfl⟩ := analyticSet_iff_exists_polishSpace_range.mp hA
+  obtain ⟨Y, hYt, hYp, g, hg, rfl⟩ := analyticSet_iff_exists_polishSpace_range.mp hB
+  letI := hXt; haveI := hXp; letI := hYt; haveI := hYp
+  rw [← Set.range_prodMap]
+  exact analyticSet_range_of_polishSpace (hf.prodMap hg)
+
+end MeasureTheory
+
+end AnalyticClosure
+
+/-! ### Combination positivity -/
+
+section Combination
+
+variable {α : Type*} [TopologicalSpace α] [PolishSpace α] [MeasurableSpace α] [BorelSpace α]
+variable {G : Set (α × α)} {ι κ : Type*}
+
+omit [TopologicalSpace α] [PolishSpace α] [BorelSpace α] in
+/-- Capture transfer for the plain combination (a level with no fresh cross constraint):
+combining pairs from a positive family yields a positive family. -/
+theorem not_smallFam_comb_pairs {Φ : Set (ι → α)} (hΦ : ¬ SmallFam G Φ)
+    (comb : (ι → α) → (ι → α) → κ → α)
+    (hvals : ∀ φ₀ φ₁ : ι → α, ∀ v : κ,
+      (∃ i, comb φ₀ φ₁ v = φ₀ i) ∨ (∃ i, comb φ₀ φ₁ v = φ₁ i)) :
+    ¬ SmallFam G {ψ : κ → α | ∃ φ₀ ∈ Φ, ∃ φ₁ ∈ Φ, ψ = comb φ₀ φ₁} := by
+  rintro ⟨C, hC, hcap⟩
+  refine hΦ ⟨C, hC, fun φ hφ => ?_⟩
+  obtain ⟨v, k, hvk⟩ := hcap (comb φ φ) ⟨φ, hφ, φ, hφ, rfl⟩
+  rcases hvals φ φ v with ⟨i, hi⟩ | ⟨i, hi⟩ <;> exact ⟨i, k, hi ▸ hvk⟩
+
+/-- **Combination positivity across a fresh edge** (the core lemma of the classical
+`G₀`-dichotomy; Miller's "combining pairs of homomorphisms preserves `I_n`-positivity"):
+combining pairs of assignments from a positive analytic family subject to a fresh `G`-edge
+constraint between the values at `s` yields a positive family.
+
+If a countable Borel independent family captured the combined family, the members of `Φ`
+avoiding its union would form a positive analytic subfamily `Φ'` (positivity by additivity,
+analyticity since the avoided set is Borel); no two members of `Φ'` can satisfy the cross
+constraint (the combination would escape the capture), so the values of `Φ'` at `s` form an
+analytic `G`-independent set, and the KST superset lemma yields a single Borel independent
+set capturing `Φ'` — contradiction. -/
+theorem not_smallFam_comb_cross [Countable ι] (hG : AnalyticSet G)
+    {Φ : Set (ι → α)} (hΦa : AnalyticSet Φ) (hΦ : ¬ SmallFam G Φ) (s : ι)
+    (comb : (ι → α) → (ι → α) → κ → α)
+    (hvals : ∀ φ₀ φ₁ : ι → α, ∀ v : κ,
+      (∃ i, comb φ₀ φ₁ v = φ₀ i) ∨ (∃ i, comb φ₀ φ₁ v = φ₁ i)) :
+    ¬ SmallFam G {ψ : κ → α | ∃ φ₀ ∈ Φ, ∃ φ₁ ∈ Φ, (φ₀ s, φ₁ s) ∈ G ∧ ψ = comb φ₀ φ₁} := by
+  rintro ⟨C, hC, hcap⟩
+  set B : Set α := ⋃ k, C k with hBdef
+  have hBm : MeasurableSet B := MeasurableSet.iUnion fun k => (hC k).1
+  set Φ' : Set (ι → α) := Φ ∩ {φ | ∀ u, φ u ∉ B} with hΦ'def
+  -- Φ' is analytic
+  have hΦ'a : AnalyticSet Φ' := by
+    refine hΦa.inter_measurableSet ?_
+    have h : {φ : ι → α | ∀ u, φ u ∉ B} = ⋂ u, (fun φ : ι → α => φ u) ⁻¹' Bᶜ := by
+      ext φ
+      simp
+    rw [h]
+    exact MeasurableSet.iInter fun u => measurable_pi_apply u hBm.compl
+  -- Φ' is positive
+  have hΦ'pos : ¬ SmallFam G Φ' := by
+    intro hsmall
+    apply hΦ
+    have hsub : Φ ⊆ Φ' ∪ {φ : ι → α | ∃ u, φ u ∈ B} := by
+      intro φ hφ
+      by_cases h : ∀ u, φ u ∉ B
+      · exact Or.inl ⟨hφ, h⟩
+      · push_neg at h
+        exact Or.inr h
+    refine SmallFam.mono hsub (hsmall.union ⟨C, hC, ?_⟩)
+    rintro φ ⟨u, hu⟩
+    obtain ⟨k, hk⟩ := mem_iUnion.mp hu
+    exact ⟨u, k, hk⟩
+  -- the values of Φ' at s form an analytic G-independent set
+  have hind : RelIndependent G ((fun φ : ι → α => φ s) '' Φ') := by
+    rintro a ⟨φ₀, hφ₀, rfl⟩ b ⟨φ₁, hφ₁, rfl⟩ hab
+    obtain ⟨v, k, hvk⟩ := hcap (comb φ₀ φ₁) ⟨φ₀, hφ₀.1, φ₁, hφ₁.1, hab, rfl⟩
+    rcases hvals φ₀ φ₁ v with ⟨i, hi⟩ | ⟨i, hi⟩
+    · exact hφ₀.2 i (mem_iUnion.mpr ⟨k, hi ▸ hvk⟩)
+    · exact hφ₁.2 i (mem_iUnion.mpr ⟨k, hi ▸ hvk⟩)
+  obtain ⟨B', hB'm, hAB', hB'ind⟩ := exists_measurableSet_relIndependent_superset hG
+    (hΦ'a.image_of_continuous (continuous_apply s)) hind
+  exact hΦ'pos ⟨fun _ => B', fun _ => ⟨hB'm, hB'ind⟩,
+    fun φ hφ => ⟨s, 0, hAB' ⟨φ, hφ, rfl⟩⟩⟩
+
+omit [PolishSpace α] [MeasurableSpace α] [BorelSpace α] in
+/-- Analyticity of the plain combined family. -/
+theorem analyticSet_comb_pairs {Φ : Set (ι → α)} (hΦa : AnalyticSet Φ)
+    (comb : (ι → α) → (ι → α) → κ → α)
+    (hcomb : Continuous fun p : (ι → α) × (ι → α) => comb p.1 p.2) :
+    AnalyticSet {ψ : κ → α | ∃ φ₀ ∈ Φ, ∃ φ₁ ∈ Φ, ψ = comb φ₀ φ₁} := by
+  have h : {ψ : κ → α | ∃ φ₀ ∈ Φ, ∃ φ₁ ∈ Φ, ψ = comb φ₀ φ₁} =
+      (fun p : (ι → α) × (ι → α) => comb p.1 p.2) '' (Φ ×ˢ Φ) := by
+    ext ψ
+    constructor
+    · rintro ⟨φ₀, h₀, φ₁, h₁, rfl⟩
+      exact ⟨(φ₀, φ₁), ⟨h₀, h₁⟩, rfl⟩
+    · rintro ⟨⟨φ₀, φ₁⟩, ⟨h₀, h₁⟩, rfl⟩
+      exact ⟨φ₀, h₀, φ₁, h₁, rfl⟩
+  rw [h]
+  exact (hΦa.prod hΦa).image_of_continuous hcomb
+
+omit [MeasurableSpace α] [BorelSpace α] in
+/-- Analyticity of the combined family with a fresh edge constraint. -/
+theorem analyticSet_comb_cross [Countable ι] (hG : AnalyticSet G)
+    {Φ : Set (ι → α)} (hΦa : AnalyticSet Φ) (s : ι)
+    (comb : (ι → α) → (ι → α) → κ → α)
+    (hcomb : Continuous fun p : (ι → α) × (ι → α) => comb p.1 p.2) :
+    AnalyticSet {ψ : κ → α | ∃ φ₀ ∈ Φ, ∃ φ₁ ∈ Φ, (φ₀ s, φ₁ s) ∈ G ∧ ψ = comb φ₀ φ₁} := by
+  have hpre : AnalyticSet ((fun p : (ι → α) × (ι → α) => (p.1 s, p.2 s)) ⁻¹' G) :=
+    hG.preimage (((continuous_apply s).comp continuous_fst).prodMk
+      ((continuous_apply s).comp continuous_snd))
+  have h : {ψ : κ → α | ∃ φ₀ ∈ Φ, ∃ φ₁ ∈ Φ, (φ₀ s, φ₁ s) ∈ G ∧ ψ = comb φ₀ φ₁} =
+      (fun p : (ι → α) × (ι → α) => comb p.1 p.2) ''
+        ((Φ ×ˢ Φ) ∩ (fun p : (ι → α) × (ι → α) => (p.1 s, p.2 s)) ⁻¹' G) := by
+    ext ψ
+    constructor
+    · rintro ⟨φ₀, h₀, φ₁, h₁, hcr, rfl⟩
+      exact ⟨(φ₀, φ₁), ⟨⟨h₀, h₁⟩, hcr⟩, rfl⟩
+    · rintro ⟨⟨φ₀, φ₁⟩, ⟨⟨h₀, h₁⟩, hcr⟩, rfl⟩
+      exact ⟨φ₀, h₀, φ₁, h₁, hcr, rfl⟩
+  rw [h]
+  exact ((hΦa.prod hΦa).inter hpre).image_of_continuous hcomb
+
+end Combination

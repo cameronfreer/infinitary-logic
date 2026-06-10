@@ -184,14 +184,15 @@ Missing (= the frontier):
   witness words `c_e : List ℕ` of length `≥ n - birth(e)` with
   `∀ φ ∈ Φ_n, ∃ w ∈ cylinder c_e, g w = (φ u, φ v)`.
 
-  *Combination lemma* (sub-block 3 core): `comb(Φ) := {snoc-combine φ₀ φ₁ | φ₀, φ₁ ∈ Φ,`
-  cross pair in `G` (when a cross word exists)`}` preserves positivity: if a Borel capture
-  `B` worked for `comb(Φ)`, then `Φ' := Φ ∩ {φ | ∀ u, φ u ∉ B}` is positive and analytic,
-  and no two of its members combine, so `eval_s(Φ')` is `G`-independent and analytic; the
-  KST superset lemma gives a Borel independent capture of `Φ'` — contradiction. (With no
-  cross word, `combine φ φ` already contradicts the capture.) Analyticity of `comb(Φ)`
-  needs `AnalyticSet.prod` (build via `(ℕ → ℕ) × (ℕ → ℕ) ≃ₜ (ℕ → ℕ)` if missing from
-  mathlib) and the witnessed-cross-pair set as a closed-set projection.
+  *Combination lemma* — **sub-block 3 DONE (2026-06-10)**, in `G0Dichotomy.lean`
+  (axiom-clean): `not_smallFam_comb_cross` (positivity transfer across a fresh `G`-edge at
+  a designated index `s`, stated abstractly over any combine map whose values come from its
+  two arguments) and `not_smallFam_comb_pairs` (no-cross levels, by pure capture transfer
+  through `combine φ φ`). Analyticity side: `analyticSet_comb_pairs` /
+  `analyticSet_comb_cross` (image of `(Φ ×ˢ Φ) ∩` cross-preimage under the continuous
+  uncurried combine). Closure helpers proved: `MeasureTheory.AnalyticSet.inter` (Bool-`iInter`),
+  `.inter_measurableSet`, `.prod` (via `analyticSet_iff_exists_polishSpace_range` +
+  `Set.range_prodMap` — no Baire-pairing homeomorphism needed), and `SmallFam.union`.
 
   *Per-level refinement folds*: vertex shrinking (cover `α` by balls of radius `2⁻ⁿ`
   around a countable dense set; `Φ = ⋃` over assignments of basic opens — countable, so
