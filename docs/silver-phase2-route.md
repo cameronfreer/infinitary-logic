@@ -155,11 +155,57 @@ Missing (= the frontier):
   `categoryReductionHypothesis_of_gSGraphHom` and the end-to-end
   `gandy_harrington_of_gSGraphHom` are **proved** (axiom-clean): the whole route now hangs
   on the single Prop `GSGraphHomHypothesis`.
-- **2C-b: prove `GSGraphHomHypothesis`** — the classical `G₀`-dichotomy core (Miller's
-  `I_n`-positive sets of partial homomorphisms `2^n → α`, Lusin separation for extracting
-  Borel independent sets, a finite-approximation construction for the continuous
-  homomorphism, and the Borel-ℵ₀-coloring ⟹ countably-many-classes counting argument).
-  Then fill `gandy_harrington_for_relation` via `gandy_harrington_of_gSGraphHom`.
+- **2C-b: prove `GSGraphHomHypothesis`** — the classical `G₀`-dichotomy core.
+  **Sub-blocks 1–2 DONE (2026-06-10)**: `InfinitaryLogic/Descriptive/G0Dichotomy.lean`
+  (axiom-clean) has the separation core and the positivity machinery:
+  `RelIndependent`/`relNbhd` with `analyticSet_relNbhd` (projection form);
+  `exists_measurableSet_relIndependent_superset` (KST: analytic independent ⊆ Borel
+  independent, by an ω-recursion of `AnalyticSet.measurablySeparable` against neighborhoods
+  of the previous stage); `SmallFam` (Miller's `I_n`: countable Borel-independent capture)
+  with monotonicity, countable additivity, the positivity pigeonhole
+  `exists_not_smallFam_inter`, nonemptiness of positive families, and the seed
+  `not_smallFam_univ` (uncountable quotient ⟹ the full family is positive, since
+  `¬r`-independent sets are single-class).
+
+  **Remaining construction blueprint** (worked out 2026-06-10; sub-blocks 3–4):
+
+  *Setup.* `G := {p | ¬ r.r p.1 p.2}` is Borel hence analytic; `G` nonempty (else one
+  class), so by mathlib's `AnalyticSet` definition `G = range g` for a continuous
+  `g : (ℕ → ℕ) → α × α`. Suslin witnesses for edges are exactly `g`-preimages; no separate
+  tree representation is needed. Vertices at level `n` are `Fin n → Bool`; the active edges
+  at level `n` are pairs `(u, v)` agreeing with `canonicalWord m` below `L_m`, differing at
+  `L_m`, equal above (for `L_m < n`) — these are precisely the level-`n` prefixes of
+  `GSGraph canonicalS` edge pairs, and each level-`(n+1)` edge is a `snoc` of a level-`n`
+  edge or the fresh cross pair at `s = canonicalWord m` when `L_m = n`.
+
+  *Stage data* (recursion over levels): an analytic positive (`¬ SmallFam`) family
+  `Φ_n ⊆ (Fin n → Bool) → α`, vertex controls `V_u` (basic opens of diameter `≤ 2⁻ⁿ` with
+  `∀ φ ∈ Φ_n, φ u ∈ V_u`, and children's values lying in parent `V`s), and per-active-edge
+  witness words `c_e : List ℕ` of length `≥ n - birth(e)` with
+  `∀ φ ∈ Φ_n, ∃ w ∈ cylinder c_e, g w = (φ u, φ v)`.
+
+  *Combination lemma* (sub-block 3 core): `comb(Φ) := {snoc-combine φ₀ φ₁ | φ₀, φ₁ ∈ Φ,`
+  cross pair in `G` (when a cross word exists)`}` preserves positivity: if a Borel capture
+  `B` worked for `comb(Φ)`, then `Φ' := Φ ∩ {φ | ∀ u, φ u ∉ B}` is positive and analytic,
+  and no two of its members combine, so `eval_s(Φ')` is `G`-independent and analytic; the
+  KST superset lemma gives a Borel independent capture of `Φ'` — contradiction. (With no
+  cross word, `combine φ φ` already contradicts the capture.) Analyticity of `comb(Φ)`
+  needs `AnalyticSet.prod` (build via `(ℕ → ℕ) × (ℕ → ℕ) ≃ₜ (ℕ → ℕ)` if missing from
+  mathlib) and the witnessed-cross-pair set as a closed-set projection.
+
+  *Per-level refinement folds*: vertex shrinking (cover `α` by balls of radius `2⁻ⁿ`
+  around a countable dense set; `Φ = ⋃` over assignments of basic opens — countable, so
+  the pigeonhole keeps a positive piece) and witness extension (`Φ = ⋃` over one-step
+  extensions of `c_e` — countable). Finitely many constraints per level, folded
+  sequentially as in the Mycielski/KU pair-killing folds.
+
+  *Fusion* (sub-block 4): pick `φ_n ∈ Φ_n` (positive ⟹ nonempty); `a_n(x) := φ_n(x|n)`
+  is Cauchy (consecutive values share the level-`n` vertex control), giving
+  `φ(x) := lim a_n`, continuous since `x|n` determines `φ x` to within `2^{1-n}`. For a
+  `GSGraph` edge `(y, z)` born of `canonicalWord m`: the witness words `c_e^n` along the
+  branch pair nest and grow, defining `w ∈ ℕ → ℕ`; stage witnesses `w_n → w`, so by
+  continuity `g w = lim g w_n = lim (φ_n u_n, φ_n v_n) = (φ y, φ z) ∈ G`. This yields
+  `GSGraphHomHypothesis`, and `gandy_harrington_of_gSGraphHom` fells the last sorry.
 
 Do not modify `CantorAntichain.lean`, `silver_core_closed`, or the statement of
 `gandy_harrington_for_relation` in any of these phases.
