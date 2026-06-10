@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.ModelTheory.Hanf
 import InfinitaryLogic.Methods.EM.FragmentAdapter
+import InfinitaryLogic.Methods.EM.TailAdapter
 import InfinitaryLogic.Methods.EM.Extraction
 
 /-!
@@ -244,6 +245,138 @@ theorem hasArbLargeModels_of_restricted_extraction
       · exact helper hlt hbjj'
       · exact helper hlt hbjj'.symm
     -- #N ≥ #J = κ via injection.
+    calc Cardinal.mk N ≥ Cardinal.mk J := Cardinal.mk_le_of_injective hbInj
+      _ = κ := hJ_card
+
+/-! ### Tail-weakened residual
+
+The interface-refinement audit (2026-06-10) showed that the EM stretching pipeline consumes
+source-side indiscernibility only through the finite-satisfiability lemma, where the
+interpreting tuple is freely chosen — so per-formula **tail** indiscernibility suffices
+(see `Methods/EM/TailAdapter.lean`). The tail residual below matches what classical
+Erdős–Rado extraction actually produces in the source model (per-arity cutoffs, no full
+simultaneity across arities), and is implied by the original `MorleyHanfExtraction`. -/
+
+/-- **Tail-weakened residual extraction hypothesis.** Like `MorleyHanfExtraction`, but the
+extracted sequence is only required to be *tail*-indiscernible on the family: for each
+formula there is a cutoff beyond which all strictly monotone tuples agree. This is the
+form a per-arity Erdős–Rado schedule produces. -/
+def MorleyHanfExtractionTail : Prop :=
+  ∀ (s : ℕ → Σ n, L'.BoundedFormulaω Empty n) (M : Type) [L'.Structure M],
+    Cardinal.mk M ≥ Cardinal.beth (Ordinal.omega 1) →
+    ∃ (a : ℕ → M),
+      (∀ i j : ℕ, i ≠ j → a i ≠ a j) ∧
+      IsLomega1omegaIndiscernibleOnTail a (Set.range s)
+
+omit [Countable (Σ l, L'.Relations l)] in
+/-- The original (full-indiscernibility) residual implies the tail residual. -/
+theorem morleyHanfExtractionTail_of_morleyHanfExtraction
+    (h : MorleyHanfExtraction (L' := L')) : MorleyHanfExtractionTail (L' := L') := by
+  intro s M _ hSize
+  obtain ⟨a, hPair, hInd⟩ := h s M hSize
+  exact ⟨a, hPair, hInd.isLomega1omegaIndiscernibleOnTail⟩
+
+omit [Countable (Σ l, L'.Relations l)] in
+/-- **Morley–Hanf via tail extraction + compactness** (proved).
+
+The tail-weakened analogue of `hasArbLargeModels_of_restricted_extraction`: the residual
+extraction only needs to produce a tail-indiscernible sequence. Same proof shape, through
+the tail-template stretching pipeline of `Methods/EM/TailAdapter.lean`. -/
+@[blueprint "thm:morley-hanf-tail"
+  (title := /-- Morley-Hanf via tail extraction -/)
+  (statement := /-- Assuming tail-restricted source-side extraction and a per-target
+    compactness oracle, every Lω₁ω sentence satisfied in a model of size
+    $\geq \beth_{\omegaone}$ has arbitrarily large models. -/)
+  (proof := /-- Extract a pairwise-distinct ℕ-indexed sequence tail-indiscernible on the
+    family $\{\varphi, x_0 \neq x_1\}$, stretch along an ordinal of the target cardinality
+    through the eventually-form template, and read off $\varphi$ preservation and
+    injectivity from the sequence-form equivalence. -/)
+  (uses := ["def:arb-large-models"])]
+theorem hasArbLargeModels_of_tail_extraction
+    (hExtract : MorleyHanfExtractionTail (L' := L'))
+    (hCompact : ∀ (J : Type) [LinearOrder J] (S : Set L'[[J]].Sentenceω),
+      (∀ F : Set L'[[J]].Sentenceω, F.Finite → F ⊆ S →
+        ∃ (N : Type) (_ : L'[[J]].Structure N), Theoryω.Model F N) →
+      ∃ (N : Type) (_ : L'[[J]].Structure N), Theoryω.Model S N)
+    (φ : L'.Sentenceω)
+    (hφ : ∃ (M : Type) (_ : L'.Structure M), Sentenceω.Realize φ M ∧
+      Cardinal.mk M ≥ Cardinal.beth (Ordinal.omega 1)) :
+    HasArbLargeModels φ := by
+  classical
+  obtain ⟨M, instM, hRealizeM, hSizeM⟩ := hφ
+  let s : ℕ → Σ n, L'.BoundedFormulaω Empty n := fun i =>
+    match i with
+    | 0 => ⟨0, φ⟩
+    | 1 => ⟨2, disEqFormula⟩
+    | _ + 2 => ⟨0, φ⟩
+  have hs0 : s 0 = ⟨0, φ⟩ := rfl
+  have hs1 : s 1 = ⟨2, disEqFormula⟩ := rfl
+  obtain ⟨a, hPairwise, hIndisc⟩ := hExtract s M hSizeM
+  intro κ
+  let J : Type := (Cardinal.ord κ).ToType
+  haveI : LinearOrder J := linearOrder_toType _
+  have hJ_card : Cardinal.mk J = κ := Cardinal.mk_ord_toType κ
+  obtain ⟨N, instN, b, hSeq⟩ :=
+    IsLomega1omegaIndiscernibleOnTail.stretch_restricted_sequence_of_compact (J := J)
+      s hIndisc
+      (Order.succ (Ordinal.omega0 : Ordinal.{0}))
+      (Order.lt_succ (Ordinal.omega0 : Ordinal.{0})) (hCompact J)
+  letI : L'.Structure N := (L'.lhomWithConstants J).reduct N
+  refine ⟨N, inferInstance, ?_, ?_⟩
+  · -- Sentence preservation
+    have hSeq_at_0 := hSeq 0
+    rw [hs0] at hSeq_at_0
+    dsimp only at hSeq_at_0
+    let t0 : Fin 0 ↪o J :=
+      ⟨⟨Fin.elim0, fun ⟨_, hk⟩ => absurd hk (Nat.not_lt_zero _)⟩, fun {x} => x.elim0⟩
+    have hkey := hSeq_at_0 t0
+    have hbt0 : (b ∘ t0 : Fin 0 → N) = Fin.elim0 := funext fun k => k.elim0
+    rw [hbt0] at hkey
+    have hTmpl : (tailTemplateOfSeq a : Lomega1omegaTemplate L').truth φ := by
+      refine ⟨0, fun u _ _ => ?_⟩
+      have hu0 : (a ∘ u : Fin 0 → M) = Fin.elim0 := funext fun k => k.elim0
+      rw [hu0]
+      exact hRealizeM
+    show Sentenceω.Realize φ N
+    exact hkey.mpr hTmpl
+  · -- Injectivity ⇒ #N ≥ #J = κ
+    have hDisTruth : (tailTemplateOfSeq a : Lomega1omegaTemplate L').truth disEqFormula := by
+      refine ⟨0, fun u hu _ => ?_⟩
+      simp only [disEqFormula, BoundedFormulaω.realize_not, BoundedFormulaω.realize_equal,
+        Term.realize_var]
+      intro heq
+      have h01 : u 0 ≠ u 1 := ne_of_lt (hu (show (0 : Fin 2) < 1 by decide))
+      exact hPairwise (u 0) (u 1) h01 (by simpa using heq)
+    have hSeq_at_1 := hSeq 1
+    rw [hs1] at hSeq_at_1
+    dsimp only at hSeq_at_1
+    have hbInj : Function.Injective b := by
+      have helper : ∀ {j₀ j₁ : J}, j₀ < j₁ → b j₀ = b j₁ → False := by
+        intro j₀ j₁ hlt heq
+        have hmono : StrictMono (![j₀, j₁] : Fin 2 → J) := by
+          intro p q hpq
+          match p, q, hpq with
+          | ⟨0, _⟩, ⟨1, _⟩, _ => exact hlt
+          | ⟨0, _⟩, ⟨0, _⟩, h => exact absurd h (lt_irrefl _)
+          | ⟨1, _⟩, ⟨1, _⟩, h => exact absurd h (lt_irrefl _)
+          | ⟨1, _⟩, ⟨0, _⟩, h =>
+            have hval : (1 : ℕ) < 0 := h
+            exact absurd hval (by omega)
+        set t : Fin 2 ↪o J := OrderEmbedding.ofStrictMono ![j₀, j₁] hmono with ht_def
+        have hrealize := (hSeq_at_1 t).mpr hDisTruth
+        simp only [disEqFormula, BoundedFormulaω.realize_not, BoundedFormulaω.realize_equal,
+          Term.realize_var] at hrealize
+        apply hrealize
+        show b (t 0) = b (t 1)
+        have h0 : t 0 = j₀ := by simp [ht_def, OrderEmbedding.coe_ofStrictMono]
+        have h1 : t 1 = j₁ := by simp [ht_def, OrderEmbedding.coe_ofStrictMono]
+        rw [h0, h1]
+        exact heq
+      intro j j' hbjj'
+      by_contra hne
+      rcases lt_or_gt_of_ne hne with hlt | hlt
+      · exact helper hlt hbjj'
+      · exact helper hlt hbjj'.symm
     calc Cardinal.mk N ≥ Cardinal.mk J := Cardinal.mk_le_of_injective hbInj
       _ = κ := hJ_card
 

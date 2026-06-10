@@ -7,6 +7,7 @@ import InfinitaryLogic.Admissible.Barwise.ProofSystem
 import InfinitaryLogic.Admissible.Barwise.Soundness
 import InfinitaryLogic.Admissible.Barwise.ConsistencyBridge
 import InfinitaryLogic.Methods.EM.FragmentAdapter
+import InfinitaryLogic.Methods.EM.TailAdapter
 
 /-!
 # Admissible: admissible fragments, Barwise compactness, proof system
@@ -14,4 +15,7 @@ import InfinitaryLogic.Methods.EM.FragmentAdapter
 Import this bundle for the admissible-fragment interface, Barwise compactness
 (both the project's HF-style axiom and the literature-faithful interface),
 proof system / derivability, soundness, and the consistency-property bridge.
+The EM adapter theorems (`Methods/EM/FragmentAdapter.lean` and the
+tail-indiscernibility variants in `Methods/EM/TailAdapter.lean`) live here
+rather than in `Countable`, keeping that bundle admissible-free.
 -/
