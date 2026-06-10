@@ -17,6 +17,7 @@ import InfinitaryLogic.Descriptive.Mycielski
 import InfinitaryLogic.Descriptive.KuratowskiUlam
 import InfinitaryLogic.Descriptive.GSGraph
 import InfinitaryLogic.Descriptive.G0Dichotomy
+import InfinitaryLogic.Descriptive.G0Fusion
 
 -- Counting dichotomy and finite carrier
 import InfinitaryLogic.Descriptive.CountingDichotomy
