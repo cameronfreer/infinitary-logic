@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Conditional.GandyHarrington
+import InfinitaryLogic.Descriptive.Mycielski
 
 /-!
 # Silver via the classical category route (Miller): interface layer
@@ -40,9 +41,9 @@ for this route; it remains the assembly point for the closed case (`silver_core_
 
 ## Frontier decomposition (all classical; no effective DST)
 
-* `MycielskiCantorHypothesis` — bounded next target: a Cantor-scheme construction with
-  open boxes avoiding countably many nowhere dense closed sets scheduled across levels
-  (Kechris, CDST 19.1). Mathlib has the meager/residual API but not this theorem.
+* `MycielskiCantorHypothesis` — **PROVED** (`mycielskiCantorHypothesis_holds`, via
+  `mycielski_cantor` in `InfinitaryLogic/Descriptive/Mycielski.lean`). The assembly
+  `gandy_harrington_of_categoryReduction` therefore needs only the remaining hypothesis.
 * `CategoryReductionHypothesis` — decomposes further into: Kuratowski–Ulam (absent from
   mathlib; bounded), the `G_S(2^ℕ)` graphs with the dense-`S` independence lemma
   (Miller, Prop 6; bounded), and the classical `G₀`-dichotomy (Miller's proof of KST via
@@ -107,3 +108,24 @@ theorem gandy_harrington_of_category_route
   apply hψ_anti a b hne
   show r.r (φ (ψ a)) (φ (ψ b))
   rw [show φ (ψ a) = φ (ψ b) from hfab]
+
+/-- `MycielskiCantorHypothesis` holds: proved by the level-scheduled Cantor scheme in
+`InfinitaryLogic/Descriptive/Mycielski.lean`. -/
+theorem mycielskiCantorHypothesis_holds : MycielskiCantorHypothesis := by
+  intro E hE
+  obtain ⟨ψ, hψ_cont, hψ_anti⟩ := mycielski_cantor hE
+  exact ⟨ψ, hψ_cont, fun a b hab => hψ_anti a b hab⟩
+
+/-- **Assembly, Mycielski discharged**: the category route to
+`gandy_harrington_for_relation` now reduces to `CategoryReductionHypothesis` alone
+(`G₀`-dichotomy + `G_S`-independence + Kuratowski–Ulam). -/
+theorem gandy_harrington_of_categoryReduction
+    (hred : CategoryReductionHypothesis.{u})
+    {α : Type u} [MetricSpace α] [CompleteSpace α] [SecondCountableTopology α]
+    [MeasurableSpace α] [BorelSpace α]
+    (r : Setoid α) (hr : MeasurableSet {p : α × α | r.r p.1 p.2})
+    (hunc : ¬ Countable (Quotient r)) :
+    ∃ f : (ℕ → Bool) → α,
+      Continuous f ∧ Function.Injective f ∧
+      ∀ a b, a ≠ b → ¬ r.r (f a) (f b) :=
+  gandy_harrington_of_category_route hred mycielskiCantorHypothesis_holds r hr hunc

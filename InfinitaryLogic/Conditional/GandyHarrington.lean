@@ -31,7 +31,10 @@ Cantor–Bendixson).
 **Chosen route (Phase 2A audit, 2026-06-09)**: Miller's classical category proof, scaffolded in
 `SilverCategoryRoute.lean` — the proved assembly `gandy_harrington_of_category_route` reduces
 this sorry to `CategoryReductionHypothesis` (G₀-dichotomy + Kuratowski–Ulam) and
-`MycielskiCantorHypothesis`. See `docs/silver-phase2-route.md` for the route decision record.
+`MycielskiCantorHypothesis`. The latter is **proved** (Phase 2B-i, 2026-06-10:
+`mycielski_cantor` in `Descriptive/Mycielski.lean`), so the remaining frontier is exactly
+`CategoryReductionHypothesis` via `gandy_harrington_of_categoryReduction`. See
+`docs/silver-phase2-route.md` for the route decision record.
 
 **Why there is no easy reduction to a "closed relation" case.** A tempting plan is to refine
 the Polish topology so the Borel relation becomes *closed* and then run a Cantor scheme. This

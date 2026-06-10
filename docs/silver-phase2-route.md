@@ -121,9 +121,15 @@ Missing (= the frontier):
 
 ## 5. Phase plan
 
-- **2B-i (next bounded target): prove `MycielskiCantorHypothesis`.** Self-contained category
-  + scheme construction; no dependence on the other frontiers; immediately halves the
-  hypothesis count of the assembly.
+- **2B-i: prove `MycielskiCantorHypothesis`. DONE (2026-06-10).**
+  `mycielski_cantor` in `InfinitaryLogic/Descriptive/Mycielski.lean` (axiom-clean), via a
+  level-indexed tower of pointed cylinders with a Finset-induction pair-killing fold against
+  `⋂ k ≤ m, U k` (dense by the Baire property of the complete product), extracted through
+  `CantorScheme.inducedMap`. Cantor space carries `PiNat.metricSpaceOfDiscreteUniformity`
+  (NOT `PiNat.metricSpace` — `Bool` has a `UniformSpace` instance, so the plain variant
+  creates a non-defeq uniformity diamond; the OfDiscreteUniformity variant's uniformity is
+  definitionally `Pi.uniformSpace`). `gandy_harrington_of_categoryReduction` now reduces the
+  sorry to `CategoryReductionHypothesis` alone.
 - **2B-ii: Kuratowski–Ulam** (independent of 2B-i; generic, mathlib-worthy).
 - **2B-iii: `G_S` graphs + Prop 6** (small; defines the objects for 2C).
 - **2C: classical `G₀`-dichotomy**, then discharge `CategoryReductionHypothesis` from
