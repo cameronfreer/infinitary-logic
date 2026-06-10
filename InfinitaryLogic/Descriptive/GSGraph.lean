@@ -182,6 +182,63 @@ def GSGraph (S : Set (List Bool)) (y z : ℕ → Bool) : Prop :=
 def DenseWords (S : Set (List Bool)) : Prop :=
   ∀ r : List Bool, ∃ s ∈ S, r <+: s
 
+/-- A set of words is sparse if it contains at most one word of each length. The graphs
+`G_S` for sparse `S` are acyclic, and the `G₀`-dichotomy holds for them. -/
+def SparseWords (S : Set (List Bool)) : Prop :=
+  ∀ ⦃s⦄, s ∈ S → ∀ ⦃t⦄, t ∈ S → s.length = t.length → s = t
+
+/-! ### A canonical dense and sparse set of words -/
+
+/-- An enumeration of all finite binary words. -/
+def wordEnum (n : ℕ) : List Bool := (Encodable.decode (α := List Bool) n).getD []
+
+theorem wordEnum_encode (w : List Bool) : wordEnum (Encodable.encode w) = w := by
+  simp [wordEnum, Encodable.encodek]
+
+/-- Pad a word with `false` up to length `n`. -/
+def padTo (w : List Bool) (n : ℕ) : List Bool := w ++ List.replicate (n - w.length) false
+
+theorem length_padTo {w : List Bool} {n : ℕ} (h : w.length ≤ n) : (padTo w n).length = n := by
+  simp only [padTo, List.length_append, List.length_replicate]
+  omega
+
+theorem prefix_padTo (w : List Bool) (n : ℕ) : w <+: padTo w n := ⟨_, rfl⟩
+
+/-- A strictly increasing length schedule dominating the word enumeration. -/
+def canonicalLen : ℕ → ℕ
+  | 0 => (wordEnum 0).length
+  | n + 1 => max (wordEnum (n + 1)).length (canonicalLen n + 1)
+
+theorem le_canonicalLen (n : ℕ) : (wordEnum n).length ≤ canonicalLen n := by
+  cases n with
+  | zero => exact le_rfl
+  | succ _ => exact le_max_left _ _
+
+theorem canonicalLen_strictMono : StrictMono canonicalLen :=
+  strictMono_nat_of_lt_succ fun n =>
+    lt_of_lt_of_le (Nat.lt_succ_self _) (le_max_right _ _)
+
+/-- The `n`-th canonical word: the `n`-th word of the enumeration, padded to the `n`-th
+length of the schedule. -/
+def canonicalWord (n : ℕ) : List Bool := padTo (wordEnum n) (canonicalLen n)
+
+theorem length_canonicalWord (n : ℕ) : (canonicalWord n).length = canonicalLen n :=
+  length_padTo (le_canonicalLen n)
+
+/-- The canonical dense and sparse set of finite binary words. -/
+def canonicalS : Set (List Bool) := Set.range canonicalWord
+
+theorem denseWords_canonicalS : DenseWords canonicalS := by
+  intro r
+  refine ⟨canonicalWord (Encodable.encode r), ⟨_, rfl⟩, ?_⟩
+  rw [canonicalWord, wordEnum_encode]
+  exact prefix_padTo _ _
+
+theorem sparseWords_canonicalS : SparseWords canonicalS := by
+  rintro s ⟨m, rfl⟩ t ⟨n, rfl⟩ hlen
+  rw [length_canonicalWord, length_canonicalWord] at hlen
+  rw [canonicalLen_strictMono.injective hlen]
+
 /-! ### Miller's independence lemma (Prop. 6) -/
 
 /-- **Miller, Prop. 6**: for a dense set `S` of words, a non-meager set with the Baire

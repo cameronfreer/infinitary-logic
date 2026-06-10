@@ -146,9 +146,20 @@ Missing (= the frontier):
   pullback sections meager. `CategoryReductionHypothesis` is now reduced to exactly the
   classical `G₀`-dichotomy (plus constructing a dense sparse `S` — routine, deferred
   to 2C).
-- **2C: classical `G₀`-dichotomy**, then discharge `CategoryReductionHypothesis` from
-  2B-ii + 2B-iii + 2C and fill `gandy_harrington_for_relation` via
-  `gandy_harrington_of_category_route`.
+- **2C-a: canonical `S` + packaging. DONE (2026-06-10).**
+  `canonicalS` (`Descriptive/GSGraph.lean`): Encodable enumeration of words padded along a
+  strictly increasing length schedule; `denseWords_canonicalS`, `sparseWords_canonicalS`
+  both proved. `GSGraphHomHypothesis` (`Conditional/SilverCategoryRoute.lean`) states the
+  `G₀`-dichotomy input: Borel `r` with uncountable quotient admits continuous
+  `φ : 2^ℕ → α` with `GSGraph canonicalS y z → ¬ r (φ y) (φ z)`. The wiring
+  `categoryReductionHypothesis_of_gSGraphHom` and the end-to-end
+  `gandy_harrington_of_gSGraphHom` are **proved** (axiom-clean): the whole route now hangs
+  on the single Prop `GSGraphHomHypothesis`.
+- **2C-b: prove `GSGraphHomHypothesis`** — the classical `G₀`-dichotomy core (Miller's
+  `I_n`-positive sets of partial homomorphisms `2^n → α`, Lusin separation for extracting
+  Borel independent sets, a finite-approximation construction for the continuous
+  homomorphism, and the Borel-ℵ₀-coloring ⟹ countably-many-classes counting argument).
+  Then fill `gandy_harrington_for_relation` via `gandy_harrington_of_gSGraphHom`.
 
 Do not modify `CantorAntichain.lean`, `silver_core_closed`, or the statement of
 `gandy_harrington_for_relation` in any of these phases.

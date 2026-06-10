@@ -5,6 +5,8 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Conditional.GandyHarrington
 import InfinitaryLogic.Descriptive.Mycielski
+import InfinitaryLogic.Descriptive.KuratowskiUlam
+import InfinitaryLogic.Descriptive.GSGraph
 
 /-!
 # Silver via the classical category route (Miller): interface layer
@@ -51,10 +53,12 @@ for this route; it remains the assembly point for the closed case (`silver_core_
   (`exists_gSGraph_edge_of_not_isMeagre` and the deliverable
   `isMeagre_pullback_class_of_gSGraph_hom` in `InfinitaryLogic/Descriptive/GSGraph.lean`);
   and the classical `G₀`-dichotomy (Miller's proof of KST via `I_n`-positive sets of
-  partial homomorphisms; the hard core — the only remaining piece). Producing a continuous
-  homomorphism `φ` from `G_S` (some dense, sparse `S`) to `¬r` and feeding it to
-  `isMeagre_pullback_class_of_gSGraph_hom` + `isMeagre_of_isMeagre_sections` discharges
-  `CategoryReductionHypothesis`.
+  partial homomorphisms; the hard core — the only remaining piece). The 2C-a wiring below
+  (`categoryReductionHypothesis_of_gSGraphHom`, proved) reduces it to the single Prop
+  `GSGraphHomHypothesis`: a continuous homomorphism from `GSGraph canonicalS` (dense and
+  sparse, see `denseWords_canonicalS` / `sparseWords_canonicalS`) into `¬r`, whenever `r`
+  is Borel with uncountable quotient. Proving that (2C-b) fells the last sorry via
+  `gandy_harrington_of_gSGraphHom`.
 -/
 
 universe u
@@ -134,3 +138,46 @@ theorem gandy_harrington_of_categoryReduction
       Continuous f ∧ Function.Injective f ∧
       ∀ a b, a ≠ b → ¬ r.r (f a) (f b) :=
   gandy_harrington_of_category_route hred mycielskiCantorHypothesis_holds r hr hunc
+
+/-- **The `G₀`-dichotomy input** (the 2C-b frontier, hypothesis form): a Borel equivalence
+relation with uncountably many classes on a Polish space admits a continuous graph
+homomorphism from `GSGraph canonicalS` into its complement. This is the homomorphism half
+of the Kechris–Solecki–Todorcevic `G₀`-dichotomy applied to the graph `¬r` (the coloring
+half is impossible: a Borel ℵ₀-coloring of `¬r` would make the quotient countable);
+`canonicalS` is dense (consumed by `isMeagre_pullback_class_of_gSGraph_hom`) and sparse
+(required for the dichotomy itself; see `sparseWords_canonicalS`). -/
+def GSGraphHomHypothesis : Prop :=
+  ∀ {α : Type u} [MetricSpace α] [CompleteSpace α] [SecondCountableTopology α]
+    [MeasurableSpace α] [BorelSpace α] (r : Setoid α),
+    MeasurableSet {p : α × α | r.r p.1 p.2} → ¬ Countable (Quotient r) →
+    ∃ φ : (ℕ → Bool) → α, Continuous φ ∧
+      ∀ y z : ℕ → Bool, GSGraph canonicalS y z → ¬ r.r (φ y) (φ z)
+
+/-- **2C-a wiring (proved)**: the `G₀`-dichotomy input discharges
+`CategoryReductionHypothesis`. Given the homomorphism `φ`, every pullback section is meager
+(`isMeagre_pullback_class_of_gSGraph_hom`, density of `canonicalS`), the pullback relation
+is Baire measurable (Borel, as a continuous preimage), and Kuratowski–Ulam
+(`isMeagre_of_isMeagre_sections`) makes it meager. -/
+theorem categoryReductionHypothesis_of_gSGraphHom (h : GSGraphHomHypothesis.{u}) :
+    CategoryReductionHypothesis.{u} := by
+  intro α _ _ _ _ _ r hr hunc
+  obtain ⟨φ, hφ_cont, hhom⟩ := h r hr hunc
+  refine ⟨φ, hφ_cont, ?_⟩
+  have hsec : ∀ a : ℕ → Bool, IsMeagre {b : ℕ → Bool | r.r (φ a) (φ b)} := fun a =>
+    isMeagre_pullback_class_of_gSGraph_hom r hr denseWords_canonicalS hφ_cont hhom a
+  have hmeas : Measurable fun p : (ℕ → Bool) × (ℕ → Bool) => (φ p.1, φ p.2) :=
+    ((hφ_cont.comp continuous_fst).prodMk (hφ_cont.comp continuous_snd)).measurable
+  exact isMeagre_of_isMeagre_sections ((hmeas hr).baireMeasurableSet) hsec
+
+/-- **The full conditional chain**: the `G₀`-dichotomy input alone yields the exact
+statement of `gandy_harrington_for_relation`. Once `GSGraphHomHypothesis` is proved (2C-b),
+the project's last sorry falls. -/
+theorem gandy_harrington_of_gSGraphHom (h : GSGraphHomHypothesis.{u})
+    {α : Type u} [MetricSpace α] [CompleteSpace α] [SecondCountableTopology α]
+    [MeasurableSpace α] [BorelSpace α]
+    (r : Setoid α) (hr : MeasurableSet {p : α × α | r.r p.1 p.2})
+    (hunc : ¬ Countable (Quotient r)) :
+    ∃ f : (ℕ → Bool) → α,
+      Continuous f ∧ Function.Injective f ∧
+      ∀ a b, a ≠ b → ¬ r.r (f a) (f b) :=
+  gandy_harrington_of_categoryReduction (categoryReductionHypothesis_of_gSGraphHom h) r hr hunc
