@@ -14,6 +14,7 @@ import InfinitaryLogic.Descriptive.ModelClassStandardBorel
 -- Cantor scheme / perfect antichain extraction (pure Mathlib infrastructure)
 import InfinitaryLogic.Descriptive.CantorAntichain
 import InfinitaryLogic.Descriptive.Mycielski
+import InfinitaryLogic.Descriptive.KuratowskiUlam
 
 -- Counting dichotomy and finite carrier
 import InfinitaryLogic.Descriptive.CountingDichotomy

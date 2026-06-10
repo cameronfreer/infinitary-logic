@@ -130,7 +130,12 @@ Missing (= the frontier):
   creates a non-defeq uniformity diamond; the OfDiscreteUniformity variant's uniformity is
   definitionally `Pi.uniformSpace`). `gandy_harrington_of_categoryReduction` now reduces the
   sorry to `CategoryReductionHypothesis` alone.
-- **2B-ii: Kuratowski–Ulam** (independent of 2B-i; generic, mathlib-worthy).
+- **2B-ii: Kuratowski–Ulam. DONE (2026-06-10).**
+  `isMeagre_of_isMeagre_sections` in `InfinitaryLogic/Descriptive/KuratowskiUlam.lean`
+  (axiom-clean), in full generality: `[SecondCountableTopology Y] [BaireSpace X]
+  [BaireSpace Y]`, `BaireMeasurableSet A`, all vertical sections meager ⟹ `A` meager.
+  Auxiliary section lemmas (`residual_isNowhereDense_section`,
+  `residual_isMeagre_section`) need only second countability of `Y`. Mathlib-worthy.
 - **2B-iii: `G_S` graphs + Prop 6** (small; defines the objects for 2C).
 - **2C: classical `G₀`-dichotomy**, then discharge `CategoryReductionHypothesis` from
   2B-ii + 2B-iii + 2C and fill `gandy_harrington_for_relation` via

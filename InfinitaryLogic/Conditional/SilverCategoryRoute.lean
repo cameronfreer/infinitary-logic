@@ -44,11 +44,13 @@ for this route; it remains the assembly point for the closed case (`silver_core_
 * `MycielskiCantorHypothesis` — **PROVED** (`mycielskiCantorHypothesis_holds`, via
   `mycielski_cantor` in `InfinitaryLogic/Descriptive/Mycielski.lean`). The assembly
   `gandy_harrington_of_categoryReduction` therefore needs only the remaining hypothesis.
-* `CategoryReductionHypothesis` — decomposes further into: Kuratowski–Ulam (absent from
-  mathlib; bounded), the `G_S(2^ℕ)` graphs with the dense-`S` independence lemma
-  (Miller, Prop 6; bounded), and the classical `G₀`-dichotomy (Miller's proof of KST via
-  `I_n`-positive sets of partial homomorphisms; the hard core). These should be interfaced
-  only when work on them starts — freezing their statements now would repeat the
+* `CategoryReductionHypothesis` — decomposes further into: Kuratowski–Ulam — **PROVED**
+  (`isMeagre_of_isMeagre_sections` in `InfinitaryLogic/Descriptive/KuratowskiUlam.lean`,
+  with the section lemmas `residual_isNowhereDense_section` / `residual_isMeagre_section`);
+  the `G_S(2^ℕ)` graphs with the dense-`S` independence lemma (Miller, Prop 6; bounded);
+  and the classical `G₀`-dichotomy (Miller's proof of KST via `I_n`-positive sets of
+  partial homomorphisms; the hard core). The remaining pieces should be interfaced only
+  when work on them starts — freezing their statements now would repeat the
   premature-abstraction mistake this audit caught.
 -/
 
