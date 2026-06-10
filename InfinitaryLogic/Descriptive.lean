@@ -34,7 +34,24 @@ Import this bundle for the structure space, satisfaction measurability,
 Borel complexity, counting dichotomy, finite carrier analysis, and the
 countable-model counting theorems.
 
-**Note**: Silver-Burgess and Gandy-Harrington have been moved to
-`InfinitaryLogic.Conditional` (the sorry boundary). `CountingCountable`
+It also provides a reusable, model-theory-free DST library (pure Mathlib
+imports), developed for the proof of Silver's theorem:
+
+- `CantorAntichain`: Cantor-scheme → perfect-antichain extraction
+  (`CantorScheme.exists_antichain_map` and the splitting-predicate builder);
+- `Mycielski`: Mycielski's theorem for Cantor space (`mycielski_cantor`);
+- `KuratowskiUlam`: the meager-sections direction of Kuratowski–Ulam
+  (`isMeagre_of_isMeagre_sections`);
+- `GSGraph`: the graphs `G_S(2^ℕ)` and Miller's independence lemma
+  (`exists_gSGraph_edge_of_not_isMeagre`);
+- `G0Dichotomy`: the KST independent-superset lemma
+  (`exists_measurableSet_relIndependent_superset`) and the positivity
+  ideals (`SmallFam`) with the combination lemma (`not_smallFam_comb_cross`);
+- `G0Fusion`: the fusion recursion and limit (`G0Fusion.exists_gsGraph_hom`),
+  the classical `G₀`-dichotomy construction.
+
+**Note**: the Silver chain (Silver-Burgess, the category route, and
+Gandy-Harrington — all sorry-free) lives in `InfinitaryLogic.Conditional`.
+`CountingCountable`
 and `MorleyCounting` depend on descriptive results and are included here.
 -/

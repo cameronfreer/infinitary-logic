@@ -1,4 +1,30 @@
-# Silver / Gandy–Harrington Phase 2: route decision record
+# Silver / Gandy–Harrington: completed proof map
+
+Started 2026-06-09 as the route decision record; **COMPLETED 2026-06-10** — this document
+is now the postmortem and proof map for the formalization of Silver's theorem.
+
+## Final dependency chain
+
+```
+G0Fusion.exists_gsGraph_hom            (G₀-dichotomy fusion: FusionStage tower + limit)
+  ← G0Dichotomy: SmallFam ideals, not_smallFam_comb_cross,
+      exists_measurableSet_relIndependent_superset (KST, Lusin separation)
+  ← GSGraph: canonicalS (dense + sparse), prependWord/wordCylinder
+→ gSGraphHomHypothesis_holds           (SilverCategoryRoute.lean)
+→ isMeagre_pullback_class_of_gSGraph_hom   (Miller Prop. 6, GSGraph.lean)
+→ isMeagre_of_isMeagre_sections        (Kuratowski–Ulam, KuratowskiUlam.lean)
+→ categoryReductionHypothesis_of_gSGraphHom
+→ mycielski_cantor                     (Mycielski, Mycielski.lean)
+→ gandy_harrington_of_category_route → gandy_harrington_of_gSGraphHom
+→ gandy_harrington_for_relation        (Silver; GandyHarrington.lean)
+→ silver_core_polish → silverBurgessDichotomy → morley_counting instantiation
+```
+
+Axiom status of every endpoint above: exactly `[propext, Classical.choice, Quot.sound]`.
+The closed-relation case (`silver_core_closed` via `CantorScheme.exists_antichain_map_of_splitting`
+in `CantorAntichain.lean`) is independent validation infrastructure, off the final route.
+
+## Historical record
 
 Date: 2026-06-09. **COMPLETED 2026-06-10**: every phase below is done;
 `gandy_harrington_for_relation` is proved (axioms exactly

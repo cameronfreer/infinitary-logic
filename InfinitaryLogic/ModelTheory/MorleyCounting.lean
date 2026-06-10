@@ -12,7 +12,10 @@ import Architect
 
 This file proves the full Morley counting theorem: for any Lω₁ω sentence φ,
 the number of isomorphism classes of countable models is either ≤ ℵ₁ or exactly
-2^ℵ₀, conditional on the Silver-Burgess dichotomy.
+2^ℵ₀. The theorem is parametrized by the Silver–Burgess dichotomy
+(`SilverBurgessDichotomy`), which the repository proves unconditionally
+(`silverBurgessDichotomy` in `Conditional/GandyHarrington.lean`, via the
+classical `G₀`-dichotomy route); supplying it makes the conclusion axiom-clean.
 
 The proof stratifies by Scott height. For each α < ω₁, BFEquiv_α is a Borel
 equivalence relation on ModelsOf φ, coarser than isomorphism. If any BFEquiv_α
@@ -22,7 +25,8 @@ each α, the iso classes with height ≤ α inject into BFEquiv_α classes, givi
 
 ## Main Result
 
-- `morley_counting`: Conditional Morley counting theorem for all countable models.
+- `morley_counting`: Morley counting theorem for all countable models, parametrized
+  by `SilverBurgessDichotomy` (proved in this repository).
 -/
 
 universe u v

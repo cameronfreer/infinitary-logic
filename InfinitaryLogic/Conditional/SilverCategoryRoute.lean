@@ -41,26 +41,23 @@ limit of a scheme on `α`. Sibling cross-avoidance at finite stages is impossibl
 relations (e.g. the pullback of `E₀`), so `exists_antichain_map` is *not* the assembly point
 for this route; it remains the assembly point for the closed case (`silver_core_closed`).
 
-## Frontier decomposition (all classical; no effective DST)
+## Route decomposition (all classical; no effective DST; all proved)
 
-* `MycielskiCantorHypothesis` — **PROVED** (`mycielskiCantorHypothesis_holds`, via
-  `mycielski_cantor` in `InfinitaryLogic/Descriptive/Mycielski.lean`). The assembly
-  `gandy_harrington_of_categoryReduction` therefore needs only the remaining hypothesis.
-* `CategoryReductionHypothesis` — decomposes further into: Kuratowski–Ulam — **PROVED**
-  (`isMeagre_of_isMeagre_sections` in `InfinitaryLogic/Descriptive/KuratowskiUlam.lean`,
-  with the section lemmas `residual_isNowhereDense_section` / `residual_isMeagre_section`);
-  the `G_S(2^ℕ)` graphs with the dense-`S` independence lemma — **PROVED**
-  (`exists_gSGraph_edge_of_not_isMeagre` and the deliverable
-  `isMeagre_pullback_class_of_gSGraph_hom` in `InfinitaryLogic/Descriptive/GSGraph.lean`);
-  and the classical `G₀`-dichotomy (Miller's proof of KST via `I_n`-positive sets of
-  partial homomorphisms; the hard core — the only remaining piece). The 2C-a wiring below
-  (`categoryReductionHypothesis_of_gSGraphHom`, proved) reduces it to the single Prop
-  `GSGraphHomHypothesis`: a continuous homomorphism from `GSGraph canonicalS` (dense and
-  sparse, see `denseWords_canonicalS` / `sparseWords_canonicalS`) into `¬r`, whenever `r`
-  is Borel with uncountable quotient. That hypothesis is now **proved**
-  (`gSGraphHomHypothesis_holds`, via the `G₀`-dichotomy fusion
-  `G0Fusion.exists_gsGraph_hom`), so the whole chain through
-  `gandy_harrington_of_gSGraphHom` is unconditional.
+* `MycielskiCantorHypothesis` — proved as `mycielskiCantorHypothesis_holds`, via
+  `mycielski_cantor` in `InfinitaryLogic/Descriptive/Mycielski.lean`.
+* `CategoryReductionHypothesis` — decomposes into: Kuratowski–Ulam
+  (`isMeagre_of_isMeagre_sections` in `InfinitaryLogic/Descriptive/KuratowskiUlam.lean`);
+  the `G_S(2^ℕ)` graphs with the dense-`S` independence lemma
+  (`exists_gSGraph_edge_of_not_isMeagre` and `isMeagre_pullback_class_of_gSGraph_hom` in
+  `InfinitaryLogic/Descriptive/GSGraph.lean`); and the classical `G₀`-dichotomy (Miller's
+  proof of KST via `I_n`-positive sets of partial homomorphisms — the hard core, proved by
+  the fusion construction `G0Fusion.exists_gsGraph_hom` over the positivity machinery of
+  `InfinitaryLogic/Descriptive/G0Dichotomy.lean`). The wiring
+  `categoryReductionHypothesis_of_gSGraphHom` reduces it to the single Prop
+  `GSGraphHomHypothesis` — a continuous homomorphism from `GSGraph canonicalS` (dense and
+  sparse, see `denseWords_canonicalS` / `sparseWords_canonicalS`) into `¬r` whenever `r` is
+  Borel with uncountable quotient — proved below as `gSGraphHomHypothesis_holds`, so the
+  whole chain through `gandy_harrington_of_gSGraphHom` is unconditional.
 -/
 
 universe u
@@ -141,13 +138,14 @@ theorem gandy_harrington_of_categoryReduction
       ∀ a b, a ≠ b → ¬ r.r (f a) (f b) :=
   gandy_harrington_of_category_route hred mycielskiCantorHypothesis_holds r hr hunc
 
-/-- **The `G₀`-dichotomy input** (the 2C-b frontier, hypothesis form): a Borel equivalence
-relation with uncountably many classes on a Polish space admits a continuous graph
-homomorphism from `GSGraph canonicalS` into its complement. This is the homomorphism half
-of the Kechris–Solecki–Todorcevic `G₀`-dichotomy applied to the graph `¬r` (the coloring
-half is impossible: a Borel ℵ₀-coloring of `¬r` would make the quotient countable);
-`canonicalS` is dense (consumed by `isMeagre_pullback_class_of_gSGraph_hom`) and sparse
-(required for the dichotomy itself; see `sparseWords_canonicalS`). -/
+/-- **The `G₀`-dichotomy input** (hypothesis form; proved below as
+`gSGraphHomHypothesis_holds`): a Borel equivalence relation with uncountably many classes on
+a Polish space admits a continuous graph homomorphism from `GSGraph canonicalS` into its
+complement. This is the homomorphism half of the Kechris–Solecki–Todorcevic `G₀`-dichotomy
+applied to the graph `¬r` (the coloring half is impossible: a Borel ℵ₀-coloring of `¬r`
+would make the quotient countable); `canonicalS` is dense (consumed by
+`isMeagre_pullback_class_of_gSGraph_hom`) and sparse (required for the dichotomy itself;
+see `sparseWords_canonicalS`). -/
 def GSGraphHomHypothesis : Prop :=
   ∀ {α : Type u} [MetricSpace α] [CompleteSpace α] [SecondCountableTopology α]
     [MeasurableSpace α] [BorelSpace α] (r : Setoid α),

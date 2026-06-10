@@ -32,8 +32,10 @@ see `docs/silver-phase2-route.md`), building on the positivity machinery of
   members are uniformly `(1/2)^n`-close at every vertex, by the pigeonhole over a countable
   cover of `α` by small balls.
 
-The fusion recursion itself (the `FusionStage` tower and the limit extraction) is built on
-top of these in the sequel.
+On top of these, the final section builds the fusion recursion itself: the `FusionStage`
+tower (`exists_fusionStage_zero`, `exists_fusionStage_succ`, `fusionTower`) and the limit
+extraction `exists_gsGraph_hom` — the classical `G₀`-dichotomy construction completing
+Silver's theorem.
 -/
 
 open Set Function MeasureTheory

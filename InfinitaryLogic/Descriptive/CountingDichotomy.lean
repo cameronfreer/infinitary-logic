@@ -41,9 +41,10 @@ open Cardinal Ordinal
 on a standard Borel space, a Borel equivalence relation has either
 at most countably many classes or exactly continuum-many. -/
 @[blueprint "def:silver-burgess-dichotomy"
-  (title := /-- Silver–Burgess dichotomy (hypothesis) -/)
+  (title := /-- Silver–Burgess dichotomy (statement) -/)
   (statement := /-- On any standard Borel space, a Borel equivalence relation has either
-    at most countably many equivalence classes or exactly $2^{\aleph_0}$. -/)]
+    at most countably many equivalence classes or exactly $2^{\aleph_0}$. Proved in this
+    repository as `silverBurgessDichotomy`, via the classical $G_0$-dichotomy route. -/)]
 def SilverBurgessDichotomy : Prop :=
   ∀ {X : Type w} [MeasurableSpace X] [StandardBorelSpace X]
     (r : Setoid X),

@@ -6,9 +6,10 @@ import InfinitaryLogic.Conditional.SilverCategoryRoute
 /-!
 # Conditional: theorems depending on external hypotheses or sorries
 
-This bundle isolates results that rely on hypotheses not yet internalized
-or on remaining sorry boundaries. Placing them in `Conditional/` makes
-the external dependency visible at the directory level.
+This bundle historically isolated results relying on external hypotheses or
+sorries. The Silver chain here is now **sorry-free**; the directory remains
+for the Morley–Hanf transfer hypotheses, the only genuinely conditional
+content left.
 
 ## Contents
 

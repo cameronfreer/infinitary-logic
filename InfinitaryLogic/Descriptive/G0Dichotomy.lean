@@ -41,9 +41,10 @@ see `InfinitaryLogic/Conditional/SilverCategoryRoute.lean` and
   keeps the recursion going; the closure facts needed (`AnalyticSet.inter`,
   `AnalyticSet.inter_measurableSet`, `AnalyticSet.prod`) are proved here.
 
-The remaining step of the dichotomy (the level recursion with vertex-shrinking and
-witness-extension pigeonholes, and the fusion extracting the continuous homomorphism)
-builds on these; see the 2C-b plan in `docs/silver-phase2-route.md`.
+The level recursion (vertex-shrinking and witness-extension pigeonholes) and the fusion
+extracting the continuous homomorphism build on these in
+`InfinitaryLogic/Descriptive/G0Fusion.lean`; see `docs/silver-phase2-route.md` for the
+completed proof map.
 -/
 
 open Set Function MeasureTheory
