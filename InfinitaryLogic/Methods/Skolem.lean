@@ -68,4 +68,33 @@ theorem skolem₁ω_funMap_spec {n : ℕ} (ψ : L.BoundedFormulaω Empty (n + 1)
     (Fin.snoc x (Classical.epsilon fun a => ψ.Realize (Empty.elim : Empty → M) (Fin.snoc x a)))
   exact Classical.epsilon_spec h
 
+/-! ### C7 bridge: the Skolem term realizes to the chosen witness
+
+These connect the *syntactic* `skolemTerm` to the *semantic* Skolem function of
+`skolem₁ωStructure`, so the consistency-property proof (Phase 4D) can discharge the `C7`
+quantifier-witness rule by citing `exists_witness_skolemTerm` directly, without unfolding the
+Skolem language each time. -/
+
+/-- The syntactic Skolem term evaluates to the semantic Skolem function value: realizing
+`skolemTerm ψ ts` under `v` is `funMap ψ` applied to the realized arguments. Definitional, via
+`Term.realize_func` and `funMap_sumInr`. -/
+theorem realize_skolemTerm {γ : Type u'} {n : ℕ} (ψ : L.BoundedFormulaω Empty (n + 1))
+    (ts : Fin n → (L.sum (skolem₁ω L)).Term γ) (v : γ → M) :
+    (skolemTerm ψ ts).realize v
+      = Structure.funMap (L := skolem₁ω L) ψ (fun i => (ts i).realize v) := by
+  simp only [skolemTerm, Term.realize_func]
+  rfl
+
+/-- **C7 witness lemma.** If, under the assignment given by `ts`, the formula `ψ` has a witness for
+its last variable, then the Skolem term `skolemTerm ψ ts` *is* such a witness: `ψ` holds at the
+realized arguments extended by the realized Skolem term. This is the local fact Phase 4D cites to
+discharge the `C7` quantifier-witness rule. -/
+theorem exists_witness_skolemTerm {γ : Type u'} {n : ℕ} (ψ : L.BoundedFormulaω Empty (n + 1))
+    (ts : Fin n → (L.sum (skolem₁ω L)).Term γ) (v : γ → M)
+    (h : ∃ a, ψ.Realize (Empty.elim : Empty → M) (Fin.snoc (fun i => (ts i).realize v) a)) :
+    ψ.Realize (Empty.elim : Empty → M)
+      (Fin.snoc (fun i => (ts i).realize v) ((skolemTerm ψ ts).realize v)) := by
+  rw [realize_skolemTerm]
+  exact skolem₁ω_funMap_spec ψ (fun i => (ts i).realize v) h
+
 end FirstOrder.Language
