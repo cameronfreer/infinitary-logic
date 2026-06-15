@@ -7,6 +7,7 @@ import InfinitaryLogic.ModelTheory.Hanf
 import InfinitaryLogic.Methods.EM.FragmentAdapter
 import InfinitaryLogic.Methods.EM.TailAdapter
 import InfinitaryLogic.Methods.EM.Extraction
+import InfinitaryLogic.Combinatorics.InfiniteRamseyFamily
 
 /-!
 # Morley-Hanf Transfer Hypothesis (Conditional)
@@ -267,6 +268,67 @@ def MorleyHanfExtractionTail : Prop :=
     ∃ (a : ℕ → M),
       (∀ i j : ℕ, i ≠ j → a i ≠ a j) ∧
       IsLomega1omegaIndiscernibleOnTail a (Set.range s)
+
+omit [Countable (Σ l, L'.Relations l)] in
+/-- **`MorleyHanfExtractionTail` holds (cheap route, modulo `infinite_ramsey_nat_family`).**
+
+The tail residual is dischargeable from a merely countably-infinite source — the `ℶ_{ω₁}`
+hypothesis is not consumed. Because the colorings are `Bool`-per-formula and the tail cutoff is
+per-formula, the extraction is an *infinite Ramsey* fact on `ℕ`, not an Erdős–Rado/beth-schedule
+theorem:
+
+* take an injective `a : ℕ → M` (`Infinite.natEmbedding`; no order on `M` is needed — the
+  formula realization ignores it, the "increasing tuple" structure lives entirely in the `ℕ`
+  index);
+* pull each formula's truth back to a `Bool` coloring of strictly-increasing `ℕ`-tuples;
+* apply the countable-family diagonal Ramsey theorem `infinite_ramsey_nat_family` to obtain a
+  single `g : ℕ ↪o ℕ` that is eventually homogeneous for every coloring;
+* read off pairwise-distinctness (injectivity) and per-formula tail indiscernibility of
+  `a ∘ g`.
+
+The `ℶ_{ω₁}` beth schedule is a strictly stronger statement (full/uncountable indiscernibility),
+not required by this bridge. -/
+theorem morleyHanfExtractionTail_holds : MorleyHanfExtractionTail (L' := L') := by
+  classical
+  intro s M instM hSize
+  -- `M` is infinite: `ℵ₀ ≤ ℶ_{ω₁} ≤ #M`.
+  haveI : Infinite M := by
+    rw [Cardinal.infinite_iff]
+    exact le_trans (Cardinal.aleph0_le_beth _) hSize
+  -- Injective base sequence `a : ℕ → M` (no order on `M` is needed).
+  let a : ℕ → M := Infinite.natEmbedding M
+  have ha_inj : Function.Injective a := (Infinite.natEmbedding M).injective
+  -- Pull each formula's truth back to a `Bool` coloring of strictly-increasing `ℕ`-tuples.
+  let c : ℕ → Σ n, (Fin n ↪o ℕ) → Bool := fun i =>
+    ⟨(s i).1, fun t => decide ((s i).2.Realize (Empty.elim : Empty → M) (fun k => a (t k)))⟩
+  obtain ⟨g, hg⟩ := infinite_ramsey_nat_family c
+  refine ⟨a ∘ g, ?_, ?_⟩
+  · -- Pairwise distinct.
+    intro i j hij h
+    exact hij (g.injective (ha_inj h))
+  · -- Tail indiscernible on `Set.range s`.
+    intro n φ hmem
+    obtain ⟨i, hi⟩ := hmem
+    obtain ⟨N, hN⟩ := hg i
+    refine ⟨N, ?_⟩
+    intro u v hu hv hu_deep hv_deep
+    -- Arity transport: `(c i).1 = n`.
+    have hnEq : (c i).1 = n := by simp [c, hi]
+    let uC : Fin (c i).1 ↪o ℕ := hnEq ▸ OrderEmbedding.ofStrictMono u hu
+    let vC : Fin (c i).1 ↪o ℕ := hnEq ▸ OrderEmbedding.ofStrictMono v hv
+    have huCdeep : ∀ k, N ≤ uC k := by intro k; simp only [uC]; cases hnEq; exact hu_deep k
+    have hvCdeep : ∀ k, N ≤ vC k := by intro k; simp only [vC]; cases hnEq; exact hv_deep k
+    have hbool : (c i).2 (uC.trans g) = (c i).2 (vC.trans g) := hN uC vC huCdeep hvCdeep
+    -- Decode the `Bool` equation back to a truth equivalence for `φ`.
+    cases hnEq
+    simp only [c, uC, vC, RelEmbedding.trans_apply, OrderEmbedding.coe_ofStrictMono] at hbool
+    have hi_eta : (⟨(s i).fst, (s i).snd⟩ : Σ n, L'.BoundedFormulaω Empty n) =
+        ⟨(c i).fst, φ⟩ := hi
+    obtain ⟨_, h_snd⟩ := Sigma.mk.inj_iff.mp hi_eta
+    rw [eq_of_heq h_snd] at hbool
+    show φ.Realize (Empty.elim : Empty → M) ((a ∘ g) ∘ u) ↔
+         φ.Realize (Empty.elim : Empty → M) ((a ∘ g) ∘ v)
+    exact decide_eq_decide.mp hbool
 
 omit [Countable (Σ l, L'.Relations l)] in
 /-- The original (full-indiscernibility) residual implies the tail residual. -/
@@ -575,6 +637,45 @@ theorem morley_hanf_of_pureColoring_and_compact
   intro ⟨M, hStr, hRealize, hSize⟩
   exact hasArbLargeModels_of_pureColoring_and_compact hPure hCompact φ
     ⟨M, hStr, hRealize, hSize⟩
+
+/-! ### Compact-only Morley–Hanf via the proved tail extraction
+
+The tail-weakened source extraction is now **formalized** (`morleyHanfExtractionTail_holds`,
+proved from `infinite_ramsey_nat_family` — countable Ramsey on `ℕ`, not an `ℶ_{ω₁}` Erdős–Rado
+schedule). Composing it with `hasArbLargeModels_of_tail_extraction` discharges the combinatorial
+hypothesis entirely: the wrappers below take **only** the per-target compactness oracle. So for
+this bridge the sole remaining non-formal content is that infinitary compactness oracle — **not**
+source-side extraction, and **not** the beth partition calculus. -/
+
+/-- **Morley–Hanf reduction (compact-only, extraction discharged)**: assuming only a per-target
+compactness oracle for every `L'[[J]]`, any sentence satisfied in a model of size ≥ ℶ_ω₁ has
+arbitrarily large models. The source-side extraction is supplied by the proved
+`morleyHanfExtractionTail_holds`, so no combinatorial hypothesis appears. -/
+theorem hasArbLargeModels_of_tail_compact
+    {L' : Language.{0, 0}}
+    (hCompact : ∀ (J : Type) [LinearOrder J] (S : Set L'[[J]].Sentenceω),
+      (∀ F : Set L'[[J]].Sentenceω, F.Finite → F ⊆ S →
+        ∃ (N : Type) (_ : L'[[J]].Structure N), Theoryω.Model F N) →
+      ∃ (N : Type) (_ : L'[[J]].Structure N), Theoryω.Model S N)
+    (φ : L'.Sentenceω)
+    (hφ : ∃ (M : Type) (_ : L'.Structure M), Sentenceω.Realize φ M ∧
+      Cardinal.mk M ≥ Cardinal.beth (Ordinal.omega 1)) :
+    HasArbLargeModels φ :=
+  hasArbLargeModels_of_tail_extraction (morleyHanfExtractionTail_holds (L' := L')) hCompact φ hφ
+
+/-- **Morley–Hanf bound (compact-only, extraction discharged)**: `ℶ_ω₁` is a Hanf bound for every
+Lω₁ω sentence, assuming only a per-target compactness oracle. The combinatorial extraction step
+is the proved `morleyHanfExtractionTail_holds`. -/
+theorem morley_hanf_of_tail_compact
+    {L' : Language.{0, 0}}
+    (hCompact : ∀ (J : Type) [LinearOrder J] (S : Set L'[[J]].Sentenceω),
+      (∀ F : Set L'[[J]].Sentenceω, F.Finite → F ⊆ S →
+        ∃ (N : Type) (_ : L'[[J]].Structure N), Theoryω.Model F N) →
+      ∃ (N : Type) (_ : L'[[J]].Structure N), Theoryω.Model S N)
+    (φ : L'.Sentenceω) :
+    IsHanfBound φ (Cardinal.beth (Ordinal.omega 1)) := by
+  intro ⟨M, hStr, hRealize, hSize⟩
+  exact hasArbLargeModels_of_tail_compact hCompact φ ⟨M, hStr, hRealize, hSize⟩
 
 end Language
 
