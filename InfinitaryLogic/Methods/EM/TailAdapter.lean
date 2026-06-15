@@ -296,4 +296,60 @@ theorem IsLomega1omegaIndiscernibleOnTail.stretch_restricted_sequence_of_compact
     realize_templateSentence_of_structure (L := L) (J := J) (N := N) (s i).2 t
   exact hBridge.symm.trans (hBase i t)
 
+/-! ### Stretching from a model of the tail-template theory (honest residual)
+
+The compact-oracle lemmas above assume full `L_{ω₁ω}` compactness for `L[[J]]` (false in general).
+But the pipeline only ever needs that the *specific* tail-template theory — which is finitely
+satisfiable by `templateTheoryOn_finitelySatisfiable` — has *some* model. The lemmas below take
+exactly that model as input; the broad compactness oracle factors through them. -/
+
+/-- **EM stretching (sentence form) from a model of the tail-template theory.** Needs only that
+the (proved finitely-satisfiable) tail-template theory over `J` has a model — not a compactness
+oracle. -/
+theorem IsLomega1omegaIndiscernibleOnTail.stretch_restricted_of_model
+    {M : Type} [L.Structure M] {a : ℕ → M}
+    (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
+    {J : Type u} [LinearOrder J]
+    (hModel : ∃ (N : Type) (_ : L[[J]].Structure N),
+      Theoryω.Model ((tailTemplateOfSeq a : Lomega1omegaTemplate L).templateTheoryOfSeq s J) N) :
+    ∃ (N : Type) (_ : L[[J]].Structure N),
+      ∀ (i : ℕ) (t : Fin (s i).1 ↪o J),
+        Sentenceω.Realize (Lomega1omegaTemplate.templateSentence (s i).2 t) N ↔
+          (tailTemplateOfSeq a : Lomega1omegaTemplate L).truth (s i).2 := by
+  classical
+  obtain ⟨N, _, hModel⟩ := hModel
+  refine ⟨N, inferInstance, ?_⟩
+  intro i t
+  have hmem : ⟨(s i).1, (s i).2⟩ ∈ Set.range s := ⟨i, rfl⟩
+  by_cases htruth : (tailTemplateOfSeq a : Lomega1omegaTemplate L).truth (s i).2
+  · refine ⟨fun _ => htruth, fun _ => ?_⟩
+    exact hModel _ ⟨(s i).1, (s i).2, t, hmem, Or.inl ⟨htruth, rfl⟩⟩
+  · refine ⟨fun hreal => ?_, fun hT => absurd hT htruth⟩
+    exact absurd hreal
+      (hModel _ ⟨(s i).1, (s i).2, t, hmem, Or.inr ⟨htruth, rfl⟩⟩)
+
+/-- **EM stretching (sequence form) from a model of the tail-template theory.** -/
+theorem IsLomega1omegaIndiscernibleOnTail.stretch_restricted_sequence_of_model
+    {M : Type} [L.Structure M] {a : ℕ → M}
+    (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
+    {J : Type u} [LinearOrder J]
+    (hModel : ∃ (N : Type) (_ : L[[J]].Structure N),
+      Theoryω.Model ((tailTemplateOfSeq a : Lomega1omegaTemplate L).templateTheoryOfSeq s J) N) :
+    ∃ (N : Type) (_ : L[[J]].Structure N) (b : J → N),
+      letI : L.Structure N := (L.lhomWithConstants J).reduct N
+      ∀ (i : ℕ) (t : Fin (s i).1 ↪o J),
+        ((s i).2).Realize (Empty.elim : Empty → N) (b ∘ t) ↔
+          (tailTemplateOfSeq a : Lomega1omegaTemplate L).truth (s i).2 := by
+  obtain ⟨N, _inst, hBase⟩ :=
+    IsLomega1omegaIndiscernibleOnTail.stretch_restricted_of_model s hModel
+  let b : J → N := fun j =>
+    (Term.func (Sum.inr j : L[[J]].Functions 0) Fin.elim0 : L[[J]].Term Empty).realize
+      (Empty.elim : Empty → N)
+  refine ⟨N, inferInstance, b, ?_⟩
+  letI : L.Structure N := (L.lhomWithConstants J).reduct N
+  intro i t
+  have hBridge :=
+    realize_templateSentence_of_structure (L := L) (J := J) (N := N) (s i).2 t
+  exact hBridge.symm.trans (hBase i t)
+
 end FirstOrder.Language

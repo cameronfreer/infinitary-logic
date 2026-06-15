@@ -338,28 +338,66 @@ theorem morleyHanfExtractionTail_of_morleyHanfExtraction
   obtain ⟨a, hPair, hInd⟩ := h s M hSize
   exact ⟨a, hPair, hInd.isLomega1omegaIndiscernibleOnTail⟩
 
-omit [Countable (Σ l, L'.Relations l)] in
-/-- **Morley–Hanf via tail extraction + compactness** (proved).
+/-- **The honest residual consumed by the tail Morley–Hanf bridge.** From a tail-indiscernible
+sequence in a model of size `≥ ℶ_ω₁`, the EM tail-template theory is realizable over every target
+order `J`.
 
-The tail-weakened analogue of `hasArbLargeModels_of_restricted_extraction`: the residual
-extraction only needs to produce a tail-indiscernible sequence. Same proof shape, through
-the tail-template stretching pipeline of `Methods/EM/TailAdapter.lean`. -/
-@[blueprint "thm:morley-hanf-tail"
-  (title := /-- Morley-Hanf via tail extraction -/)
-  (statement := /-- Assuming tail-restricted source-side extraction and a per-target
-    compactness oracle, every Lω₁ω sentence satisfied in a model of size
-    $\geq \beth_{\omegaone}$ has arbitrarily large models. -/)
-  (proof := /-- Extract a pairwise-distinct ℕ-indexed sequence tail-indiscernible on the
-    family $\{\varphi, x_0 \neq x_1\}$, stretch along an ordinal of the target cardinality
-    through the eventually-form template, and read off $\varphi$ preservation and
-    injectivity from the sequence-form equivalence. -/)
-  (uses := ["def:arb-large-models"])]
-theorem hasArbLargeModels_of_tail_extraction
-    (hExtract : MorleyHanfExtractionTail (L' := L'))
+The `|M| ≥ ℶ_ω₁` premise is essential for the statement to be **true-shaped**: the bridge's
+template theory is `{φ} ∪ {distinct constants}`, so realizability over a size-`κ` order is "`φ`
+has a model of size `≥ κ`". Without the cardinality premise this would assert that *every* `φ`
+with an infinite model has arbitrarily large models — false for Scott sentences of bounded Hanf
+number. With it, the statement is classically true (it is the model-existence half of
+Morley–Hanf, realized by the Ehrenfeucht–Mostowski / Skolem-hull construction over `J`).
+
+Strictly weaker than the broad `L_{ω₁ω}` compactness oracle: it asks for realizability only of
+the specific finitely-satisfiable EM template theories (finite satisfiability is the proved
+`IsLomega1omegaIndiscernibleOnTail.templateTheoryOn_finitelySatisfiable`), from a large source —
+not full `L_{ω₁ω}` compactness (false in general). The genuine remaining non-formal content for
+this bridge is exactly its proof: the EM construction. -/
+def TailTemplateRealizable : Prop :=
+  ∀ (s : ℕ → Σ n, L'.BoundedFormulaω Empty n) (M : Type) [L'.Structure M] (a : ℕ → M)
+    (J : Type) [LinearOrder J],
+    Cardinal.mk M ≥ Cardinal.beth (Ordinal.omega 1) →
+    IsLomega1omegaIndiscernibleOnTail a (Set.range s) →
+    ∃ (N : Type) (_ : L'[[J]].Structure N),
+      Theoryω.Model
+        ((tailTemplateOfSeq a : Lomega1omegaTemplate L').templateTheoryOfSeq s J) N
+
+omit [Countable (Σ l, L'.Relations l)] in
+/-- The broad per-target compactness oracle implies the honest tail-template realizability
+residual: apply compactness to the (finitely-satisfiable) tail-template theory itself. Witnesses
+that `TailTemplateRealizable` is genuinely weaker than full compactness. -/
+theorem tailTemplateRealizable_of_compact
     (hCompact : ∀ (J : Type) [LinearOrder J] (S : Set L'[[J]].Sentenceω),
       (∀ F : Set L'[[J]].Sentenceω, F.Finite → F ⊆ S →
         ∃ (N : Type) (_ : L'[[J]].Structure N), Theoryω.Model F N) →
-      ∃ (N : Type) (_ : L'[[J]].Structure N), Theoryω.Model S N)
+      ∃ (N : Type) (_ : L'[[J]].Structure N), Theoryω.Model S N) :
+    TailTemplateRealizable (L' := L') := by
+  intro s M instM a J instJ _hSize hIndisc
+  exact hIndisc.templateTheoryOfSeq_model_of_compact s
+    (Order.succ (Ordinal.omega0 : Ordinal.{0}))
+    (Order.lt_succ (Ordinal.omega0 : Ordinal.{0})) (hCompact J)
+
+omit [Countable (Σ l, L'.Relations l)] in
+/-- **Morley–Hanf via tail extraction + template realizability** (proved).
+
+The honest tail bridge: the residual extraction produces a tail-indiscernible sequence, and the
+EM template theory it generates is realized via the weakest-honest residual
+`TailTemplateRealizable` — NOT a broad `L_{ω₁ω}` compactness oracle. Same proof shape, through
+the model-form stretching of `Methods/EM/TailAdapter.lean`. -/
+@[blueprint "thm:morley-hanf-tail"
+  (title := /-- Morley-Hanf via tail extraction -/)
+  (statement := /-- Assuming tail-restricted source-side extraction and realizability of the
+    EM tail-template theory, every Lω₁ω sentence satisfied in a model of size
+    $\geq \beth_{\omegaone}$ has arbitrarily large models. -/)
+  (proof := /-- Extract a pairwise-distinct ℕ-indexed sequence tail-indiscernible on the
+    family $\{\varphi, x_0 \neq x_1\}$, stretch along an ordinal of the target cardinality
+    through the eventually-form template realized by the residual, and read off $\varphi$
+    preservation and injectivity from the sequence-form equivalence. -/)
+  (uses := ["def:arb-large-models"])]
+theorem hasArbLargeModels_of_tail_realizability
+    (hExtract : MorleyHanfExtractionTail (L' := L'))
+    (hRealize : TailTemplateRealizable (L' := L'))
     (φ : L'.Sentenceω)
     (hφ : ∃ (M : Type) (_ : L'.Structure M), Sentenceω.Realize φ M ∧
       Cardinal.mk M ≥ Cardinal.beth (Ordinal.omega 1)) :
@@ -379,10 +417,8 @@ theorem hasArbLargeModels_of_tail_extraction
   haveI : LinearOrder J := linearOrder_toType _
   have hJ_card : Cardinal.mk J = κ := Cardinal.mk_ord_toType κ
   obtain ⟨N, instN, b, hSeq⟩ :=
-    IsLomega1omegaIndiscernibleOnTail.stretch_restricted_sequence_of_compact (J := J)
-      s hIndisc
-      (Order.succ (Ordinal.omega0 : Ordinal.{0}))
-      (Order.lt_succ (Ordinal.omega0 : Ordinal.{0})) (hCompact J)
+    IsLomega1omegaIndiscernibleOnTail.stretch_restricted_sequence_of_model (J := J)
+      s (hRealize s M a J hSizeM hIndisc)
   letI : L'.Structure N := (L'.lhomWithConstants J).reduct N
   refine ⟨N, inferInstance, ?_, ?_⟩
   · -- Sentence preservation
@@ -441,6 +477,25 @@ theorem hasArbLargeModels_of_tail_extraction
       · exact helper hlt hbjj'.symm
     calc Cardinal.mk N ≥ Cardinal.mk J := Cardinal.mk_le_of_injective hbInj
       _ = κ := hJ_card
+
+omit [Countable (Σ l, L'.Relations l)] in
+/-- **Legacy: Morley–Hanf via tail extraction + a broad compactness oracle.** Kept for
+compatibility. The compactness oracle is *stronger than needed*: it asserts full `L_{ω₁ω}`
+compactness for every `L'[[J]]`, which is false in general. It factors through the honest
+residual via `tailTemplateRealizable_of_compact`. Prefer
+`hasArbLargeModels_of_tail_realizability`. -/
+theorem hasArbLargeModels_of_tail_extraction
+    (hExtract : MorleyHanfExtractionTail (L' := L'))
+    (hCompact : ∀ (J : Type) [LinearOrder J] (S : Set L'[[J]].Sentenceω),
+      (∀ F : Set L'[[J]].Sentenceω, F.Finite → F ⊆ S →
+        ∃ (N : Type) (_ : L'[[J]].Structure N), Theoryω.Model F N) →
+      ∃ (N : Type) (_ : L'[[J]].Structure N), Theoryω.Model S N)
+    (φ : L'.Sentenceω)
+    (hφ : ∃ (M : Type) (_ : L'.Structure M), Sentenceω.Realize φ M ∧
+      Cardinal.mk M ≥ Cardinal.beth (Ordinal.omega 1)) :
+    HasArbLargeModels φ :=
+  hasArbLargeModels_of_tail_realizability hExtract
+    (tailTemplateRealizable_of_compact hCompact) φ hφ
 
 /-! ### Combinatorial residual via `IsIndiscernibleOnSet` -/
 
@@ -638,19 +693,46 @@ theorem morley_hanf_of_pureColoring_and_compact
   exact hasArbLargeModels_of_pureColoring_and_compact hPure hCompact φ
     ⟨M, hStr, hRealize, hSize⟩
 
-/-! ### Compact-only Morley–Hanf via the proved tail extraction
+/-! ### Realizability-only Morley–Hanf via the proved tail extraction
 
 The tail-weakened source extraction is now **formalized** (`morleyHanfExtractionTail_holds`,
 proved from `infinite_ramsey_nat_family` — countable Ramsey on `ℕ`, not an `ℶ_{ω₁}` Erdős–Rado
-schedule). Composing it with `hasArbLargeModels_of_tail_extraction` discharges the combinatorial
-hypothesis entirely: the wrappers below take **only** the per-target compactness oracle. So for
-this bridge the sole remaining non-formal content is that infinitary compactness oracle — **not**
-source-side extraction, and **not** the beth partition calculus. -/
+schedule). Composing it with `hasArbLargeModels_of_tail_realizability` discharges the
+combinatorial hypothesis entirely: the headline below takes **only** the honest residual
+`TailTemplateRealizable` (realizability of the EM tail-template theory). So for this bridge the
+sole remaining non-formal content is that template realizability — whose honest proof is the
+classical Ehrenfeucht–Mostowski / Skolem-hull construction — **not** source extraction, **not**
+the beth partition calculus, and **not** full `L_{ω₁ω}` compactness (false in general). The
+`*_compact` wrappers are retained as legacy; their oracle is strictly stronger than needed. -/
 
-/-- **Morley–Hanf reduction (compact-only, extraction discharged)**: assuming only a per-target
-compactness oracle for every `L'[[J]]`, any sentence satisfied in a model of size ≥ ℶ_ω₁ has
-arbitrarily large models. The source-side extraction is supplied by the proved
-`morleyHanfExtractionTail_holds`, so no combinatorial hypothesis appears. -/
+/-- **Morley–Hanf reduction (realizability-only, extraction discharged)**: assuming only the
+honest residual `TailTemplateRealizable`, any sentence satisfied in a model of size ≥ ℶ_ω₁ has
+arbitrarily large models. Source extraction is the proved `morleyHanfExtractionTail_holds`; no
+combinatorial hypothesis, no compactness oracle. -/
+theorem hasArbLargeModels_of_tail_realizable
+    {L' : Language.{0, 0}}
+    (hRealize : TailTemplateRealizable (L' := L'))
+    (φ : L'.Sentenceω)
+    (hφ : ∃ (M : Type) (_ : L'.Structure M), Sentenceω.Realize φ M ∧
+      Cardinal.mk M ≥ Cardinal.beth (Ordinal.omega 1)) :
+    HasArbLargeModels φ :=
+  hasArbLargeModels_of_tail_realizability (morleyHanfExtractionTail_holds (L' := L')) hRealize φ hφ
+
+/-- **Morley–Hanf bound (realizability-only, extraction discharged)**: `ℶ_ω₁` is a Hanf bound for
+every Lω₁ω sentence, assuming only `TailTemplateRealizable`. This is the project's tightest
+Morley–Hanf endpoint — the only non-formal input is realizing the EM tail-template theory. -/
+theorem morley_hanf_of_tail_realizable
+    {L' : Language.{0, 0}}
+    (hRealize : TailTemplateRealizable (L' := L'))
+    (φ : L'.Sentenceω) :
+    IsHanfBound φ (Cardinal.beth (Ordinal.omega 1)) := by
+  intro ⟨M, hStr, hRealizeφ, hSize⟩
+  exact hasArbLargeModels_of_tail_realizable hRealize φ ⟨M, hStr, hRealizeφ, hSize⟩
+
+/-- **Legacy (compact-only): Morley–Hanf reduction via a broad compactness oracle.** Retained for
+compatibility; the per-target compactness oracle is strictly stronger than the honest residual
+`TailTemplateRealizable` (see `tailTemplateRealizable_of_compact`) and asserts full `L_{ω₁ω}`
+compactness, which is false in general. Prefer `hasArbLargeModels_of_tail_realizable`. -/
 theorem hasArbLargeModels_of_tail_compact
     {L' : Language.{0, 0}}
     (hCompact : ∀ (J : Type) [LinearOrder J] (S : Set L'[[J]].Sentenceω),
@@ -661,11 +743,10 @@ theorem hasArbLargeModels_of_tail_compact
     (hφ : ∃ (M : Type) (_ : L'.Structure M), Sentenceω.Realize φ M ∧
       Cardinal.mk M ≥ Cardinal.beth (Ordinal.omega 1)) :
     HasArbLargeModels φ :=
-  hasArbLargeModels_of_tail_extraction (morleyHanfExtractionTail_holds (L' := L')) hCompact φ hφ
+  hasArbLargeModels_of_tail_realizable (tailTemplateRealizable_of_compact hCompact) φ hφ
 
-/-- **Morley–Hanf bound (compact-only, extraction discharged)**: `ℶ_ω₁` is a Hanf bound for every
-Lω₁ω sentence, assuming only a per-target compactness oracle. The combinatorial extraction step
-is the proved `morleyHanfExtractionTail_holds`. -/
+/-- **Legacy (compact-only): Morley–Hanf bound via a broad compactness oracle.** Prefer
+`morley_hanf_of_tail_realizable`. -/
 theorem morley_hanf_of_tail_compact
     {L' : Language.{0, 0}}
     (hCompact : ∀ (J : Type) [LinearOrder J] (S : Set L'[[J]].Sentenceω),
