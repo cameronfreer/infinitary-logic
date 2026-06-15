@@ -80,6 +80,41 @@ theorem consistent_theory_has_model [Countable (Σ l, L.Functions l)] [Countable
       T.Model M :=
   model_existence C T hT hT_countable
 
+/-! ### Model existence over arbitrary (possibly uncountable) languages
+
+The countability assumptions of `model_existence` are entirely **cosmetic** — they secure only
+the *countable model* conclusion. The model-building core carries no countability hypothesis:
+`ConsistencyProperty.exists_maximal` (Zorn), `TermModel`, `termModelStructure`, and `truthLemma`
+have no `Countable` requirement anywhere in `Construction.lean` / `ConsistencyProperty.lean` (the
+sole `Countable` in those files, at `Construction.lean:344`, is the `Countable (TermModel)`
+instance, used only to certify a *countable* output). `model_existence`'s own
+`_hS_countable : S.Countable` argument is underscore-prefixed — genuinely unused.
+
+So dropping the gate yields model existence over an arbitrary language; the term model is
+uncountable exactly when the language is. This is the cardinal-agnostic backend for the
+EM/Skolem-hull realizability project (Phase 3 spike of the Morley–Hanf plan). Output-size
+refinements (`#M ≥ #J`) are deferred — the goal here is modest (`∃ M, M ⊨ S`). -/
+
+/-- **Model existence over an arbitrary language** (cardinal-agnostic core of `model_existence`).
+If `S` belongs to a consistency property with equality, then `S` has a model — with **no**
+countability hypothesis on the language or `S`, and no cardinality claim on the model. The model
+is the Henkin term model of a maximal consistent extension of `S`; identical proof to
+`model_existence` minus the `Countable M` certificate. -/
+theorem model_existence_uncountable_language
+    (C : ConsistencyPropertyEq L)
+    (S : Set L.Sentenceω) (hS : S ∈ C.toConsistencyProperty.sets) :
+    ∃ (M : Type u) (_ : L.Structure M), Theoryω.Model S M := by
+  obtain ⟨S', hSS', hmax⟩ := C.toConsistencyProperty.exists_maximal S hS
+  exact ⟨TermModel C S' hmax, termModelStructure, fun φ hφ => (truthLemma φ).mp (hSS' hφ)⟩
+
+/-- A consistent theory over an arbitrary language has a model (no countability assumption).
+Corollary of `model_existence_uncountable_language`. -/
+theorem consistent_theory_has_model_uncountable_language
+    (C : ConsistencyPropertyEq L)
+    (T : L.Theoryω) (hT : T ∈ C.toConsistencyProperty.sets) :
+    ∃ (M : Type u) (_ : L.Structure M), T.Model M :=
+  model_existence_uncountable_language C T hT
+
 end Language
 
 end FirstOrder
