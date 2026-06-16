@@ -85,4 +85,21 @@ def skolemStageInclusion (k : ℕ) : skolemStage L k →ᴸ skolemColim L where
     DirectedColim.incl (F := fun j => (skolemStage L j).Relations m)
       (φ := fun j x => (skolemStageHom L j).onRelation x) k r
 
+/-! ### Stage structures on a fixed model -/
+
+section Structures
+
+variable {M : Type} [L.Structure M] [Nonempty M]
+
+/-- The **stage-`k` structure** on a fixed `L`-model `M`: stage `0` is `M`'s own `L`-structure, and
+each successor stage adds the Hilbert-choice interpretation of the new Skolem symbols
+(`skolem₁ωStructure`) on top of the previous stage, via the sum structure. -/
+noncomputable def skolemStageStructure : (k : ℕ) → (skolemStage L k).Structure M
+  | 0 => ‹L.Structure M›
+  | k + 1 =>
+      letI := skolemStageStructure k
+      inferInstanceAs (((skolemStage L k).sum (skolem₁ω (skolemStage L k))).Structure M)
+
+end Structures
+
 end FirstOrder.Language
