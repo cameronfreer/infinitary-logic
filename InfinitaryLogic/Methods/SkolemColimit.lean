@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.Skolem
+import InfinitaryLogic.Lomega1omega.Operations
 
 /-!
 # Iterated Skolemization: the staged language tower and its colimit `L^Sk`
@@ -128,6 +129,30 @@ noncomputable def skolemColimStructure : (skolemColim L).Structure M where
     Quot.lift
       (fun p => @Structure.RelMap (skolemStage L p.1) M (skolemStageStructure L p.1) m p.2 x)
       (fun a b hab => by subst hab; exact (skolemStageStructure_relMap_succ L a.2 x).symm) r
+
+/-- The stage inclusion is an **expansion**: the colimit structure restricts to the stage
+structure along `skolemStageInclusion` (the colimit `funMap`/`RelMap` on an included symbol
+computes — by `rfl` — to the stage interpretation). -/
+theorem skolemStageInclusion_isExpansionOn (k : ℕ) :
+    letI : (skolemStage L k).Structure M := skolemStageStructure L k
+    letI : (skolemColim L).Structure M := skolemColimStructure L
+    (skolemStageInclusion L k).IsExpansionOn M :=
+  letI : (skolemStage L k).Structure M := skolemStageStructure L k
+  letI : (skolemColim L).Structure M := skolemColimStructure L
+  ⟨fun _ _ => rfl, fun _ _ => rfl⟩
+
+/-- **Semantic preservation by stage inclusion** (deliverable 4): transporting a stage-`k` formula
+into `L^Sk` along `skolemStageInclusion` preserves its realization in `M`. Immediate from
+`realize_mapLanguage` and the expansion property above. -/
+theorem realize_map_stageInclusion (k : ℕ) {n : ℕ}
+    (φ : (skolemStage L k).BoundedFormulaω Empty n) (v : Empty → M) (xs : Fin n → M) :
+    letI : (skolemStage L k).Structure M := skolemStageStructure L k
+    letI : (skolemColim L).Structure M := skolemColimStructure L
+    (φ.mapLanguage (skolemStageInclusion L k)).Realize v xs ↔ φ.Realize v xs := by
+  letI : (skolemStage L k).Structure M := skolemStageStructure L k
+  letI : (skolemColim L).Structure M := skolemColimStructure L
+  haveI := skolemStageInclusion_isExpansionOn (L := L) (M := M) k
+  exact BoundedFormulaω.realize_mapLanguage (skolemStageInclusion L k) φ v xs
 
 end Structures
 
