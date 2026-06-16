@@ -100,6 +100,35 @@ noncomputable def skolemStageStructure : (k : ℕ) → (skolemStage L k).Structu
       letI := skolemStageStructure k
       inferInstanceAs (((skolemStage L k).sum (skolem₁ω (skolemStage L k))).Structure M)
 
+/-- Stage coherence (functions): a stage-`k` symbol pushed to stage `k+1` interprets the same way.
+This is the cocone-compatibility witnessing the colimit interpretation is well-defined. -/
+theorem skolemStageStructure_funMap_succ {k m : ℕ}
+    (f : (skolemStage L k).Functions m) (x : Fin m → M) :
+    @Structure.funMap (skolemStage L (k + 1)) M (skolemStageStructure L (k + 1)) m
+        ((skolemStageHom L k).onFunction f) x
+      = @Structure.funMap (skolemStage L k) M (skolemStageStructure L k) m f x :=
+  rfl
+
+/-- Stage coherence (relations). -/
+theorem skolemStageStructure_relMap_succ {k m : ℕ}
+    (r : (skolemStage L k).Relations m) (x : Fin m → M) :
+    @Structure.RelMap (skolemStage L (k + 1)) M (skolemStageStructure L (k + 1)) m
+        ((skolemStageHom L k).onRelation r) x
+      = @Structure.RelMap (skolemStage L k) M (skolemStageStructure L k) m r x :=
+  rfl
+
+/-- The **colimit structure** `L^Sk`-structure on `M`: a colimit symbol is interpreted through any
+stage representative, well-defined by the (definitional) stage coherence above. -/
+noncomputable def skolemColimStructure : (skolemColim L).Structure M where
+  funMap {m} f x :=
+    Quot.lift
+      (fun p => @Structure.funMap (skolemStage L p.1) M (skolemStageStructure L p.1) m p.2 x)
+      (fun a b hab => by subst hab; exact (skolemStageStructure_funMap_succ L a.2 x).symm) f
+  RelMap {m} r x :=
+    Quot.lift
+      (fun p => @Structure.RelMap (skolemStage L p.1) M (skolemStageStructure L p.1) m p.2 x)
+      (fun a b hab => by subst hab; exact (skolemStageStructure_relMap_succ L a.2 x).symm) r
+
 end Structures
 
 end FirstOrder.Language
