@@ -58,4 +58,34 @@ theorem setClosure_countable (stepOne : α → Set α) {Γ₀ : Set α} (hΓ₀ 
     (hstep : ∀ x, (stepOne x).Countable) : (setClosure stepOne Γ₀).Countable :=
   Set.countable_iUnion (iterClosure_countable stepOne hΓ₀ hstep)
 
+/-! ### Subformula / connective-component step inside `L^Sk` -/
+
+variable (L : Language.{0, 0})
+
+/-- A colimit-language formula packaged with its arity. -/
+abbrev ColimFormula := Σ n, (skolemColim L).BoundedFormulaω Empty n
+
+/-- Immediate subformulas and countable-connective components of a colimit formula: `imp` gives
+both parts, `all` gives the body (one higher arity), `iSup`/`iInf` give all countably-many
+components, and the atomic forms (`falsum`/`equal`/`rel`) give none. -/
+def subformulaStep : ColimFormula L → Set (ColimFormula L)
+  | ⟨_, .imp φ ψ⟩ => {⟨_, φ⟩, ⟨_, ψ⟩}
+  | ⟨_, .all φ⟩ => {⟨_, φ⟩}
+  | ⟨_, .iSup φs⟩ => Set.range fun k => ⟨_, φs k⟩
+  | ⟨_, .iInf φs⟩ => Set.range fun k => ⟨_, φs k⟩
+  | _ => ∅
+
+/-- The subformula step is pointwise countable (finite for `imp`/`all`, countably-indexed for
+`iSup`/`iInf`, empty for atomics). -/
+theorem subformulaStep_countable (χ : ColimFormula L) : (subformulaStep L χ).Countable := by
+  obtain ⟨n, φ⟩ := χ
+  cases φ with
+  | imp φ ψ => exact (Set.countable_singleton _).insert _
+  | all φ => exact Set.countable_singleton _
+  | iSup φs => exact Set.countable_range _
+  | iInf φs => exact Set.countable_range _
+  | falsum => exact Set.countable_empty
+  | equal _ _ => exact Set.countable_empty
+  | rel _ _ => exact Set.countable_empty
+
 end FirstOrder.Language
