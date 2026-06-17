@@ -169,4 +169,19 @@ theorem skWitnessStep_subset_Γstar {Γ₀ : Set (SkFormula L)} {χ : SkFormula 
     (hχ : χ ∈ Γstar L Γ₀) : skWitnessStep L χ ⊆ Γstar L Γ₀ :=
   (Set.subset_union_right).trans (skStep_subset_Γstar L hχ)
 
+/-! ### Colimit image and enumeration -/
+
+/-- The colimit-language image of `Γ*` is countable. -/
+theorem toColimFormula_image_Γstar_countable {Γ₀ : Set (SkFormula L)} (hΓ₀ : Γ₀.Countable) :
+    (toColimFormula L '' Γstar L Γ₀).Countable :=
+  (Γstar_countable L hΓ₀).image _
+
+/-- An **enumeration** of `Γ*`'s colimit image as a sequence `ℕ → ColimFormula L`, suitable as the
+formula family fed to `morleyHanfExtractionTail_holds` (whose extraction yields tail-indiscernibility
+on `Set.range`). Exists since the image is countable and nonempty. -/
+theorem exists_ΓEnum {Γ₀ : Set (SkFormula L)} (hΓ₀ : Γ₀.Countable)
+    (hne : (toColimFormula L '' Γstar L Γ₀).Nonempty) :
+    ∃ ΓEnum : ℕ → ColimFormula L, toColimFormula L '' Γstar L Γ₀ = Set.range ΓEnum :=
+  (toColimFormula_image_Γstar_countable L hΓ₀).exists_eq_range hne
+
 end FirstOrder.Language
