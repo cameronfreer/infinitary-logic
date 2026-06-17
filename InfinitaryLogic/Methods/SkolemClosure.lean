@@ -58,26 +58,22 @@ theorem setClosure_countable (stepOne : α → Set α) {Γ₀ : Set α} (hΓ₀ 
     (hstep : ∀ x, (stepOne x).Countable) : (setClosure stepOne Γ₀).Countable :=
   Set.countable_iUnion (iterClosure_countable stepOne hΓ₀ hstep)
 
-/-! ### Subformula / connective-component step inside `L^Sk` -/
+/-! ### Subformula / connective-component step (any language) -/
 
-variable (L : Language.{0, 0})
-
-/-- A colimit-language formula packaged with its arity. -/
-abbrev ColimFormula := Σ n, (skolemColim L).BoundedFormulaω Empty n
-
-/-- Immediate subformulas and countable-connective components of a colimit formula: `imp` gives
-both parts, `all` gives the body (one higher arity), `iSup`/`iInf` give all countably-many
-components, and the atomic forms (`falsum`/`equal`/`rel`) give none. -/
-def subformulaStep : ColimFormula L → Set (ColimFormula L)
+/-- Immediate subformulas and countable-connective components of a formula, over **any** language:
+`imp` gives both parts, `all` gives the body (one higher arity), `iSup`/`iInf` give all
+countably-many components, and the atomic forms give none. -/
+def bfSubformulas {Λ : Language.{0, 0}} :
+    (Σ n, Λ.BoundedFormulaω Empty n) → Set (Σ n, Λ.BoundedFormulaω Empty n)
   | ⟨_, .imp φ ψ⟩ => {⟨_, φ⟩, ⟨_, ψ⟩}
   | ⟨_, .all φ⟩ => {⟨_, φ⟩}
   | ⟨_, .iSup φs⟩ => Set.range fun k => ⟨_, φs k⟩
   | ⟨_, .iInf φs⟩ => Set.range fun k => ⟨_, φs k⟩
   | _ => ∅
 
-/-- The subformula step is pointwise countable (finite for `imp`/`all`, countably-indexed for
-`iSup`/`iInf`, empty for atomics). -/
-theorem subformulaStep_countable (χ : ColimFormula L) : (subformulaStep L χ).Countable := by
+/-- `bfSubformulas` is pointwise countable. -/
+theorem bfSubformulas_countable {Λ : Language.{0, 0}} (χ : Σ n, Λ.BoundedFormulaω Empty n) :
+    (bfSubformulas χ).Countable := by
   obtain ⟨n, φ⟩ := χ
   cases φ with
   | imp φ ψ => exact (Set.countable_singleton _).insert _
@@ -87,5 +83,34 @@ theorem subformulaStep_countable (χ : ColimFormula L) : (subformulaStep L χ).C
   | falsum => exact Set.countable_empty
   | equal _ _ => exact Set.countable_empty
   | rel _ _ => exact Set.countable_empty
+
+/-! ### Staged formulas and the colimit projection -/
+
+variable (L : Language.{0, 0})
+
+/-- A colimit-language formula packaged with its arity. -/
+abbrev ColimFormula := Σ n, (skolemColim L).BoundedFormulaω Empty n
+
+/-- A formula tagged with the finite language **stage** at which it lives. The closure works at
+this staged level — so the existential-witness Skolem term is directly available at the next stage
+— and projects to a colimit formula only via `toColimFormula`. This avoids ever inverting the
+colimit quotient. -/
+abbrev SkFormula := Σ k : ℕ, Σ n : ℕ, (skolemStage L k).BoundedFormulaω Empty n
+
+/-- Project a staged formula to a colimit-language formula, transporting along the stage inclusion
+`skolemStageInclusion L k`. `Γ*` in the colimit language is the image of the staged closure under
+this map. -/
+def toColimFormula : SkFormula L → ColimFormula L
+  | ⟨k, n, φ⟩ => ⟨n, φ.mapLanguage (skolemStageInclusion L k)⟩
+
+/-- The subformula/component step at the **staged** level: take `bfSubformulas` of the stage-`k`
+formula, keeping the stage `k` fixed. -/
+def skSubStep : SkFormula L → Set (SkFormula L)
+  | ⟨k, χ⟩ => (fun p => (⟨k, p⟩ : SkFormula L)) '' bfSubformulas χ
+
+/-- The staged subformula step is pointwise countable. -/
+theorem skSubStep_countable (χ : SkFormula L) : (skSubStep L χ).Countable := by
+  obtain ⟨k, χ⟩ := χ
+  exact (bfSubformulas_countable χ).image _
 
 end FirstOrder.Language
