@@ -87,6 +87,20 @@ position `≥ d`, so `N ≤ d` forces all positions `≥ N`. -/
 theorem le_depth_position (d : ℕ) (S : Finset J) (j : J) : d ≤ d + deepRank J S j :=
   Nat.le_add_right _ _
 
+/-- **De-substitution bridge** (step 2): the deep interpretation of a closed term equals the
+*de-substituted* `L^Sk`-term `constantsToVars t` (each skeleton constant `c_j` turned into the
+variable `Sum.inl j`) realized with `j ↦ a (d + deepRank S j)`. Turns the support machinery from
+combinatorial into semantic — the right-hand side is a genuine formula realization, so tail
+indiscernibility applies. -/
+theorem deepInterp_eq_realize (d : ℕ) (S : Finset J) (t : (skolemColim L)[[J]].Term Empty) :
+    letI : (skolemColim L).Structure M := skolemColimStructure L
+    deepInterp L J a d S t =
+      t.constantsToVars.realize (Sum.elim (fun j => a (d + deepRank J S j)) Empty.elim) := by
+  letI : (skolemColim L).Structure M := skolemColimStructure L
+  letI : (constantsOn J).Structure M := constantsOn.structure (fun j => a (d + deepRank J S j))
+  show t.realize Empty.elim = _
+  exact (Term.realize_constantsToVars (t := t) (v := Empty.elim)).symm
+
 /-! ### Step 4: eventual deep equality `EMEq` and the carrier -/
 
 /-- **Eventual deep equality**: closed terms `t, u` are identified when, for all sufficiently deep
