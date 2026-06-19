@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.SkolemClosure
+import Mathlib.Order.Filter.AtTopBot.Basic
 
 /-!
 # Ehrenfeucht–Mostowski term model (M-deep-interpretation), step 1: skeleton support
@@ -85,6 +86,33 @@ theorem deepInterp_func (d : ℕ) (S : Finset J) {n : ℕ}
 position `≥ d`, so `N ≤ d` forces all positions `≥ N`. -/
 theorem le_depth_position (d : ℕ) (S : Finset J) (j : J) : d ≤ d + deepRank J S j :=
   Nat.le_add_right _ _
+
+/-! ### Step 4: eventual deep equality `EMEq` and the carrier -/
+
+/-- **Eventual deep equality**: closed terms `t, u` are identified when, for all sufficiently deep
+interpretations of their **combined** skeleton support, they evaluate equally in `M`. (The combined
+support means both terms are read against the same ordered finite skeleton.) -/
+def EMEq (t u : (skolemColim L)[[J]].Term Empty) : Prop :=
+  ∀ᶠ d in Filter.atTop,
+    deepInterp L J a d (jSupport L J t ∪ jSupport L J u) t =
+      deepInterp L J a d (jSupport L J t ∪ jSupport L J u) u
+
+theorem EMEq.refl (t : (skolemColim L)[[J]].Term Empty) : EMEq L J a t t :=
+  Filter.Eventually.of_forall fun _ => rfl
+
+theorem EMEq.symm {t u : (skolemColim L)[[J]].Term Empty} (h : EMEq L J a t u) :
+    EMEq L J a u t := by
+  unfold EMEq
+  rw [Finset.union_comm (jSupport L J u) (jSupport L J t)]
+  exact h.mono fun _ hd => hd.symm
+
+/-- The **EM term model carrier**: closed terms of `(skolemColim L)[[J]]` quotiented by eventual
+deep equality. (`Quot`, so no equivalence proof is needed to form the carrier; transitivity enters
+only when reasoning about the quotient, via support-enlargement invariance.) -/
+def EMTermModel : Type := Quot (EMEq L J a)
+
+/-- A closed term as an element of the EM term model. -/
+def EMTermModel.mk (t : (skolemColim L)[[J]].Term Empty) : EMTermModel L J a := Quot.mk _ t
 
 end DeepInterp
 
