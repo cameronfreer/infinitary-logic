@@ -23,6 +23,17 @@ mentioned in a closed term, which the deep interpretation enumerates in increasi
 
 namespace FirstOrder.Language
 
+/-- The variables of a relabeled term are the image of the original variables (a Mathlib gap). -/
+theorem Term.varFinset_relabel {L' : Language} {α β : Type} [DecidableEq α] [DecidableEq β]
+    (g : α → β) (t : L'.Term α) : (t.relabel g).varFinset = t.varFinset.image g := by
+  induction t with
+  | var i => simp [Term.relabel, Term.varFinset]
+  | func f ts ih =>
+    ext x
+    simp only [Term.relabel, Term.varFinset, ih, Finset.mem_biUnion, Finset.mem_univ, true_and,
+      Finset.mem_image]
+    tauto
+
 variable (L : Language.{0, 0}) (J : Type) [LinearOrder J]
 
 /-- The `J`-constant carried by a function symbol of `(skolemColim L)[[J]]`: only an arity-`0`
@@ -42,6 +53,26 @@ theorem jSupport_subterm {α : Type} {n : ℕ} (f : (skolemColim L)[[J]].Functio
     (ts : Fin n → (skolemColim L)[[J]].Term α) (i : Fin n) :
     jSupport L J (ts i) ⊆ jSupport L J (.func f ts) := fun _ hx =>
   Finset.mem_union_left _ (Finset.mem_biUnion.mpr ⟨i, Finset.mem_univ i, hx⟩)
+
+/-- The de-substituted term `constantsToVars t` uses only the variables `Sum.inl j` for `j` a
+skeleton constant of `t`: its variable set is contained in `Sum.inl` of the skeleton support. -/
+theorem constantsToVars_varFinset_subset (t : (skolemColim L)[[J]].Term Empty) :
+    t.constantsToVars.varFinset ⊆ (jSupport L J t).image Sum.inl := by
+  induction t with
+  | var e => exact e.elim
+  | @func l f ts ih =>
+    rcases l with _ | l
+    · rcases f with f' | c
+      · simp [Term.constantsToVars, Term.varFinset]
+      · simp [Term.constantsToVars, jSupport, jConstOf, Term.varFinset]
+    · rcases f with f' | c
+      · simp only [Term.constantsToVars, Term.varFinset, jSupport, jConstOf, Finset.union_empty]
+        intro x hx
+        simp only [Finset.mem_biUnion, Finset.mem_univ, true_and] at hx
+        obtain ⟨i, hxi⟩ := hx
+        obtain ⟨y, hy, rfl⟩ := Finset.mem_image.mp (ih i hxi)
+        exact Finset.mem_image.mpr ⟨y, Finset.mem_biUnion.mpr ⟨i, Finset.mem_univ i, hy⟩, rfl⟩
+      · exact c.elim
 
 /-! ### Step 2: ordered support (ranks) -/
 
@@ -142,6 +173,17 @@ the `ℕ`-variable `deepRank S j` (its 0-indexed position in the increasing supp
 the values `< S.card` are hit when `jSupport t ⊆ S`.) -/
 def deTermPos (S : Finset J) (t : (skolemColim L)[[J]].Term Empty) : (skolemColim L).Term ℕ :=
   t.constantsToVars.relabel (Sum.elim (fun j => deepRank J S j) Empty.elim)
+
+/-- The ordered-position term uses only variables `< S.card` (valid `Fin S.card` positions), once the
+support `S` covers the term's skeleton constants. -/
+theorem deTermPos_varFinset_subset {S : Finset J} {t : (skolemColim L)[[J]].Term Empty}
+    (hsub : jSupport L J t ⊆ S) : (deTermPos L J S t).varFinset ⊆ Finset.range S.card := by
+  rw [deTermPos, Term.varFinset_relabel]
+  intro n hn
+  obtain ⟨x, hx, rfl⟩ := Finset.mem_image.mp hn
+  obtain ⟨j, hj, rfl⟩ := Finset.mem_image.mp (constantsToVars_varFinset_subset L J t hx)
+  simp only [Sum.elim_inl]
+  exact Finset.mem_range.mpr (deepRank_lt_card (J := J) (hsub hj))
 
 /-- **Ordered-position realize bridge** (step 3): the deep interpretation is the realize of the
 ordered-position de-substituted term on the *consecutive* deep tuple `n ↦ a (d + n)`. The cleaned-up
