@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.SkolemClosure
+import InfinitaryLogic.Methods.EM.TailAdapter
 import Mathlib.Order.Filter.AtTopBot.Basic
 import Mathlib.Data.Finset.Sort
 import Mathlib.Order.Interval.Finset.Fin
@@ -316,6 +317,45 @@ theorem EMEq.symm {t u : (skolemColim L)[[J]].Term Empty} (h : EMEq L J a t u) :
   unfold EMEq
   rw [Finset.union_comm (jSupport L J u) (jSupport L J t)]
   exact h.mono fun _ hd => hd.symm
+
+/-- **Support-enlargement invariance** (steps 6-7, the atom-slice payoff): if `t, u` are eventually
+deep-equal on their combined support `S₀` (i.e. `EMEq t u`) and the de-substituted equality atom of
+`S₀` lies in a tail-indiscernible family `Γ`, then they are eventually deep-equal on *any* larger
+support `S ⊇ S₀`. Tail indiscernibility identifies the truth of the one arity-`S₀.card` atom on the
+consecutive `S₀`-tuple and on the strictly-increasing `S`-tuple; the two atom bridges convert those to
+the `S₀`- and `S`-deep equalities. This is the unlock for `EMEq.trans` and the quotient structure's
+function/relation congruence. -/
+theorem EMEq_eventually_on_superset
+    {Γ : Set (Σ n, (skolemColim L).BoundedFormulaω Empty n)}
+    (hind : @IsLomega1omegaIndiscernibleOnTail (skolemColim L) M (skolemColimStructure L) a Γ)
+    {t u : (skolemColim L)[[J]].Term Empty}
+    (hmem : (⟨(jSupport L J t ∪ jSupport L J u).card,
+        deEqAtom L J (jSupport L J t ∪ jSupport L J u) t u Finset.subset_union_left
+          Finset.subset_union_right⟩ : Σ n, (skolemColim L).BoundedFormulaω Empty n) ∈ Γ)
+    (h : EMEq L J a t u) {S : Finset J} (hS : jSupport L J t ∪ jSupport L J u ⊆ S) :
+    ∀ᶠ d in Filter.atTop, deepInterp L J a d S t = deepInterp L J a d S u := by
+  letI : (skolemColim L).Structure M := skolemColimStructure L
+  set S₀ := jSupport L J t ∪ jSupport L J u with hS₀def
+  obtain ⟨N, hN⟩ := hind hmem
+  rw [EMEq, Filter.eventually_atTop] at h
+  obtain ⟨N₀, hN₀⟩ := h
+  rw [Filter.eventually_atTop]
+  refine ⟨max N N₀, fun d hd => ?_⟩
+  have hdN : N ≤ d := le_trans (le_max_left _ _) hd
+  have hdN₀ : N₀ ≤ d := le_trans (le_max_right _ _) hd
+  have hsmono : StrictMono (fun i : Fin S₀.card => d + (i : ℕ)) :=
+    fun i i' hii' => Nat.add_lt_add_left hii' d
+  have hs'mono : StrictMono (fun i : Fin S₀.card => d + deepRank J S (S₀.orderEmbOfFin rfl i)) := by
+    intro i i' hii'
+    refine Nat.add_lt_add_left (deepRank_lt_of_lt (J := J) ?_ ((S₀.orderEmbOfFin rfl).strictMono hii')) d
+    exact hS (Finset.orderEmbOfFin_mem S₀ rfl i)
+  have hiff := hN (fun i => d + (i : ℕ)) (fun i => d + deepRank J S (S₀.orderEmbOfFin rfl i))
+    hsmono hs'mono (fun k => le_trans hdN (Nat.le_add_right d k))
+    (fun k => le_trans hdN (Nat.le_add_right d _))
+  have hb0 := realize_deEqAtom L J a d S₀ t u Finset.subset_union_left Finset.subset_union_right
+  have hbS := realize_deEqAtom_superset L J a d hS t u Finset.subset_union_left
+    Finset.subset_union_right
+  exact hbS.mp (hiff.mp (hb0.mpr (hN₀ d hdN₀)))
 
 /-- The **EM term model carrier**: closed terms of `(skolemColim L)[[J]]` quotiented by eventual
 deep equality. (`Quot`, so no equivalence proof is needed to form the carrier; transitivity enters
