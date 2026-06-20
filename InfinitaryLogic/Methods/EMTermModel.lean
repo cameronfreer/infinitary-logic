@@ -221,6 +221,28 @@ theorem deepInterp_eq_realize_fin (d : ℕ) (S : Finset J) (t : (skolemColim L)[
   symm
   exact Term.realize_restrictVar (fun n => a (d + n)) (fun _ => rfl)
 
+/-- The **de-substituted equality atom** of two closed terms over a covering support `S`: an
+`L^Sk`-formula of arity `S.card` whose truth on the consecutive deep tuple is the deep equality of
+`t, u`. Since `L^Sk` is countable, all such atoms form a countable family that seeds the
+tail-indiscernible `Γ`. -/
+def deEqAtom (S : Finset J) (t u : (skolemColim L)[[J]].Term Empty)
+    (ht : jSupport L J t ⊆ S) (hu : jSupport L J u ⊆ S) :
+    (skolemColim L).BoundedFormulaω Empty S.card :=
+  BoundedFormulaω.equal ((deTermFin L J S t ht).relabel Sum.inr)
+    ((deTermFin L J S u hu).relabel Sum.inr)
+
+/-- **Atom realize bridge** (step 4): the de-substituted equality atom holds on the consecutive deep
+tuple `i ↦ a (d + i)` iff `t` and `u` have equal deep interpretations at depth `d` over `S`. -/
+theorem realize_deEqAtom (d : ℕ) (S : Finset J) (t u : (skolemColim L)[[J]].Term Empty)
+    (ht : jSupport L J t ⊆ S) (hu : jSupport L J u ⊆ S) :
+    letI : (skolemColim L).Structure M := skolemColimStructure L
+    (deEqAtom L J S t u ht hu).Realize Empty.elim (fun i : Fin S.card => a (d + i)) ↔
+      deepInterp L J a d S t = deepInterp L J a d S u := by
+  letI : (skolemColim L).Structure M := skolemColimStructure L
+  rw [deEqAtom, BoundedFormulaω.realize_equal, Term.realize_relabel, Term.realize_relabel,
+    Sum.elim_comp_inr, ← deepInterp_eq_realize_fin (t := t) (hsub := ht),
+    ← deepInterp_eq_realize_fin (t := u) (hsub := hu)]
+
 /-! ### Step 4: eventual deep equality `EMEq` and the carrier -/
 
 /-- **Eventual deep equality**: closed terms `t, u` are identified when, for all sufficiently deep
