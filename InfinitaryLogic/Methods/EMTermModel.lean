@@ -5,6 +5,8 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.SkolemClosure
 import Mathlib.Order.Filter.AtTopBot.Basic
+import Mathlib.Data.Finset.Sort
+import Mathlib.Order.Interval.Finset.Fin
 
 /-!
 # Ehrenfeucht–Mostowski term model (M-deep-interpretation), step 1: skeleton support
@@ -57,6 +59,39 @@ theorem deepRank_lt_of_lt {S : Finset J} {j j' : J} (hj : j ∈ S) (hjj' : j < j
   · rw [Finset.mem_filter] at hx ⊢
     exact ⟨hx.1, lt_trans hx.2 hjj'⟩
   · exact absurd (Finset.mem_filter.mp (hsub (Finset.mem_filter.mpr ⟨hj, hjj'⟩))).2 (lt_irrefl j)
+
+/-- The rank of the `i`-th support element (in increasing order) is `i`: the enumeration
+`orderEmbOfFin` and the rank are mutually inverse. The elements of `S` strictly below the `i`-th
+are exactly the first `i`. -/
+theorem deepRank_orderEmbOfFin (S : Finset J) {k : ℕ} (h : S.card = k) (i : Fin k) :
+    deepRank J S (S.orderEmbOfFin h i) = (i : ℕ) := by
+  have step : S.filter (· < S.orderEmbOfFin h i)
+      = (Finset.univ.filter (fun j : Fin k => j < i)).image (S.orderEmbOfFin h) := by
+    conv_lhs => arg 2; rw [← Finset.image_orderEmbOfFin_univ S h]
+    rw [Finset.filter_image]
+    congr 1
+    ext j
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and, OrderEmbedding.lt_iff_lt]
+  unfold deepRank
+  rw [step, Finset.card_image_of_injective _ (S.orderEmbOfFin h).injective,
+    Finset.filter_gt_eq_Iio, Fin.card_Iio]
+
+/-- The rank of a support element is below the cardinality: a valid `Fin S.card` position. -/
+theorem deepRank_lt_card {S : Finset J} {j : J} (hj : j ∈ S) : deepRank J S j < S.card := by
+  have hmem : (j : J) ∈ Set.range (S.orderEmbOfFin rfl) := by
+    rw [Finset.range_orderEmbOfFin S rfl]; exact hj
+  obtain ⟨i, rfl⟩ := hmem
+  rw [deepRank_orderEmbOfFin]; exact i.2
+
+/-- The enumeration recovers a support element from its rank: `orderEmbOfFin` at position
+`deepRank S j` is `j`, for `j ∈ S`. -/
+theorem orderEmbOfFin_deepRank (S : Finset J) {k : ℕ} (h : S.card = k) {j : J} (hj : j ∈ S)
+    (hlt : deepRank J S j < k) : S.orderEmbOfFin h ⟨deepRank J S j, hlt⟩ = j := by
+  have hmem : (j : J) ∈ Set.range (S.orderEmbOfFin h) := by
+    rw [Finset.range_orderEmbOfFin S h]; exact hj
+  obtain ⟨i, rfl⟩ := hmem
+  congr 1
+  exact Fin.ext (deepRank_orderEmbOfFin J S h i)
 
 /-! ### Step 3: deep interpretation -/
 
