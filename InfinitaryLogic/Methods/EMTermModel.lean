@@ -260,6 +260,44 @@ theorem realize_deEqAtom (d : ℕ) (S : Finset J) (t u : (skolemColim L)[[J]].Te
     Sum.elim_comp_inr, ← deepInterp_eq_realize_fin (t := t) (hsub := ht),
     ← deepInterp_eq_realize_fin (t := u) (hsub := hu)]
 
+/-- **Superset atom bridge** (step 5, renaming): the *same* equality atom over `S`, realized on the
+`T`-induced deep tuple `i ↦ a (d + deepRank T (orderEmbOfFin S i))` (where `S ⊆ T`), holds iff `t` and
+`u` have equal deep interpretations over the larger support `T`. So one arity-`S.card` formula carries
+both the `S`-truth (on the consecutive tuple) and the `T`-truth (on this strictly-increasing tuple) —
+the input to tail indiscernibility. -/
+theorem realize_deEqAtom_superset (d : ℕ) {S T : Finset J} (_hST : S ⊆ T)
+    (t u : (skolemColim L)[[J]].Term Empty)
+    (ht : jSupport L J t ⊆ S) (hu : jSupport L J u ⊆ S) :
+    letI : (skolemColim L).Structure M := skolemColimStructure L
+    (deEqAtom L J S t u ht hu).Realize Empty.elim
+        (fun i : Fin S.card => a (d + deepRank J T (S.orderEmbOfFin rfl i))) ↔
+      deepInterp L J a d T t = deepInterp L J a d T u := by
+  letI : (skolemColim L).Structure M := skolemColimStructure L
+  have key : ∀ (w : (skolemColim L)[[J]].Term Empty) (hw : jSupport L J w ⊆ S),
+      (deTermFin L J S w hw).realize
+          (fun i : Fin S.card => a (d + deepRank J T (S.orderEmbOfFin rfl i)))
+        = deepInterp L J a d T w := by
+    intro w hw
+    have hrv : (deTermFin L J S w hw).realize
+          (fun i : Fin S.card => a (d + deepRank J T (S.orderEmbOfFin rfl i)))
+        = (deTermPos L J S w).realize
+          (fun n => a (d + if h : n < S.card then deepRank J T (S.orderEmbOfFin rfl ⟨n, h⟩) else 0)) := by
+      rw [deTermFin]
+      refine Term.realize_restrictVar
+        (fun n => a (d + if h : n < S.card then deepRank J T (S.orderEmbOfFin rfl ⟨n, h⟩) else 0))
+        (fun x => ?_)
+      simp only [dif_pos (Finset.mem_range.mp (deTermPos_varFinset_subset (L := L) (J := J) hw x.2))]
+    rw [hrv, deepInterp_eq_realize, deTermPos, Term.realize_relabel]
+    apply Term.realize_eq_of_eq_on_varFinset
+    intro x hx
+    obtain ⟨j, hj, rfl⟩ := Finset.mem_image.mp (constantsToVars_varFinset_subset L J w hx)
+    have hjS : j ∈ S := hw hj
+    have hlt : deepRank J S j < S.card := deepRank_lt_card (J := J) hjS
+    simp only [Function.comp_apply, Sum.elim_inl, dif_pos hlt]
+    rw [orderEmbOfFin_deepRank J S rfl hjS hlt]
+  rw [deEqAtom, BoundedFormulaω.realize_equal, Term.realize_relabel, Term.realize_relabel,
+    Sum.elim_comp_inr, key t ht, key u hu]
+
 /-! ### Step 4: eventual deep equality `EMEq` and the carrier -/
 
 /-- **Eventual deep equality**: closed terms `t, u` are identified when, for all sufficiently deep
