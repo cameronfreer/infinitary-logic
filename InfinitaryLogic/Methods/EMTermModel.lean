@@ -34,6 +34,23 @@ theorem Term.varFinset_relabel {L' : Language} {α β : Type} [DecidableEq α] [
       Finset.mem_image]
     tauto
 
+/-- A term's realization depends only on the assignment of the variables that actually appear (a
+Mathlib gap). -/
+theorem Term.realize_eq_of_eq_on_varFinset {L' : Language} {M' : Type} [L'.Structure M']
+    {α : Type} [DecidableEq α] {v w : α → M'} :
+    ∀ t : L'.Term α, (∀ x ∈ t.varFinset, v x = w x) → t.realize v = t.realize w := by
+  intro t
+  induction t with
+  | var i => intro h; exact h i (by simp [Term.varFinset])
+  | func f ts ih =>
+    intro h
+    simp only [Term.realize]
+    congr 1
+    funext i
+    exact ih i (fun x hx => h x (by
+      simp only [Term.varFinset, Finset.mem_biUnion]
+      exact ⟨i, Finset.mem_univ i, hx⟩))
+
 variable (L : Language.{0, 0}) (J : Type) [LinearOrder J]
 
 /-- The `J`-constant carried by a function symbol of `(skolemColim L)[[J]]`: only an arity-`0`
