@@ -200,6 +200,27 @@ theorem deepInterp_eq_realize_pos (d : ℕ) (S : Finset J) (t : (skolemColim L)[
   | inl j => rfl
   | inr e => exact e.elim
 
+/-- The **de-substituted term at `Fin S.card` positions**: `deTermPos` with its (already `< S.card`)
+variables packaged as genuine `Fin S.card` indices, via `restrictVar` (no junk value needed, since
+every variable that appears is `< S.card` when `S` covers the skeleton constants). The arity-`S.card`
+term whose equality atom tail indiscernibility consumes. -/
+def deTermFin (S : Finset J) (t : (skolemColim L)[[J]].Term Empty) (hsub : jSupport L J t ⊆ S) :
+    (skolemColim L).Term (Fin S.card) :=
+  (deTermPos L J S t).restrictVar
+    (fun x => ⟨x.1, Finset.mem_range.mp (deTermPos_varFinset_subset (L := L) (J := J) hsub x.2)⟩)
+
+/-- **`Fin`-arity realize bridge**: the deep interpretation is the realize of the `Fin S.card`-indexed
+de-substituted term on the consecutive deep tuple `i ↦ a (d + i)`. The `Fin`-arity form of
+`deepInterp_eq_realize_pos`, directly feeding the atom. -/
+theorem deepInterp_eq_realize_fin (d : ℕ) (S : Finset J) (t : (skolemColim L)[[J]].Term Empty)
+    (hsub : jSupport L J t ⊆ S) :
+    letI : (skolemColim L).Structure M := skolemColimStructure L
+    deepInterp L J a d S t = (deTermFin L J S t hsub).realize (fun i : Fin S.card => a (d + i)) := by
+  letI : (skolemColim L).Structure M := skolemColimStructure L
+  rw [deepInterp_eq_realize_pos, deTermFin]
+  symm
+  exact Term.realize_restrictVar (fun n => a (d + n)) (fun _ => rfl)
+
 /-! ### Step 4: eventual deep equality `EMEq` and the carrier -/
 
 /-- **Eventual deep equality**: closed terms `t, u` are identified when, for all sufficiently deep
