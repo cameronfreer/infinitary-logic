@@ -136,6 +136,28 @@ theorem deepInterp_eq_realize (d : ℕ) (S : Finset J) (t : (skolemColim L)[[J]]
   show t.realize Empty.elim = _
   exact (Term.realize_constantsToVars (t := t) (v := Empty.elim)).symm
 
+/-- The **de-substituted term at ordered support positions**: each skeleton constant `c_j` becomes
+the `ℕ`-variable `deepRank S j` (its 0-indexed position in the increasing support order). An
+`L^Sk`-term over `ℕ`. (Over `ℕ` rather than `Fin S.card` so the relabel needs no junk value; only
+the values `< S.card` are hit when `jSupport t ⊆ S`.) -/
+def deTermPos (S : Finset J) (t : (skolemColim L)[[J]].Term Empty) : (skolemColim L).Term ℕ :=
+  t.constantsToVars.relabel (Sum.elim (fun j => deepRank J S j) Empty.elim)
+
+/-- **Ordered-position realize bridge** (step 3): the deep interpretation is the realize of the
+ordered-position de-substituted term on the *consecutive* deep tuple `n ↦ a (d + n)`. The cleaned-up
+form of `deepInterp_eq_realize`, with variables at ordered support positions — exactly the shape tail
+indiscernibility consumes (a strictly-increasing deep tuple). -/
+theorem deepInterp_eq_realize_pos (d : ℕ) (S : Finset J) (t : (skolemColim L)[[J]].Term Empty) :
+    letI : (skolemColim L).Structure M := skolemColimStructure L
+    deepInterp L J a d S t = (deTermPos L J S t).realize (fun n => a (d + n)) := by
+  letI : (skolemColim L).Structure M := skolemColimStructure L
+  rw [deepInterp_eq_realize, deTermPos, Term.realize_relabel]
+  congr 1
+  funext x
+  cases x with
+  | inl j => rfl
+  | inr e => exact e.elim
+
 /-! ### Step 4: eventual deep equality `EMEq` and the carrier -/
 
 /-- **Eventual deep equality**: closed terms `t, u` are identified when, for all sufficiently deep
