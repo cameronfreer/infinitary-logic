@@ -459,6 +459,37 @@ def EMContext.setoid (ctx : EMContext L J (M := M)) : Setoid ((skolemColim L)[[J
   iseqv := ⟨fun t => EMEq.refl L J ctx.a t, fun h => EMEq.symm L J ctx.a h,
     fun h1 h2 => EMContext.trans (L := L) (J := J) ctx h1 h2⟩
 
+/-- The **EM term model carrier** for a context: closed `(skolemColim L)[[J]]`-terms modulo `EMEq`. -/
+def EMContext.Carrier (ctx : EMContext L J (M := M)) : Type :=
+  Quotient ctx.setoid
+
+/-- A closed term as an element of the carrier. -/
+def EMContext.mkClass (ctx : EMContext L J (M := M)) (t : (skolemColim L)[[J]].Term Empty) :
+    ctx.Carrier :=
+  Quotient.mk ctx.setoid t
+
+/-- A common support covering all argument representatives — the support over which a relation's deep
+truth is read. -/
+noncomputable def EMContext.commonSupport (ctx : EMContext L J (M := M)) {n : ℕ}
+    (xs : Fin n → ctx.Carrier) : Finset J :=
+  Finset.univ.biUnion fun i => jSupport L J (Quotient.out (xs i))
+
+/-- The **EM term-model structure** on the carrier: function symbols act by term formation
+`f([t̄]) := [func f t̄]` (skeleton constants `c_j` are the arity-0 case, giving the classes `[c_j]`),
+and a relation holds iff it holds in `M` on the deep interpretations for all sufficiently deep `d`
+(read over a common support of the arguments). Well-definedness is proved separately, via the
+enlargement-invariance congruence engine. -/
+noncomputable def EMContext.structure (ctx : EMContext L J (M := M)) :
+    (skolemColim L)[[J]].Structure ctx.Carrier where
+  funMap {_} f xs := Quotient.mk ctx.setoid (Term.func f fun i => Quotient.out (xs i))
+  RelMap {n} R xs :=
+    ∀ᶠ d in Filter.atTop,
+      letI : (skolemColim L).Structure M := skolemColimStructure L
+      letI : (constantsOn J).Structure M :=
+        constantsOn.structure fun j => ctx.a (d + deepRank J (ctx.commonSupport (xs := xs)) j)
+      @Structure.RelMap ((skolemColim L)[[J]]) M _ n R
+        fun i => deepInterp L J ctx.a d (ctx.commonSupport (xs := xs)) (Quotient.out (xs i))
+
 end Quotient
 
 end FirstOrder.Language
