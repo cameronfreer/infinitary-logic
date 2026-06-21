@@ -357,6 +357,41 @@ theorem EMEq_eventually_on_superset
     Finset.subset_union_right
   exact hbS.mp (hiff.mp (hb0.mpr (hN₀ d hdN₀)))
 
+/-- **Support-enlargement *iff*** (the symmetric core): on the deep tail the deep equality over the
+combined support `S₀` is *equivalent* to the deep equality over any larger support `S ⊇ S₀`. This
+gives both directions — descending from a larger support back to `S₀` is what `EMEq.trans` needs (it
+works over the union of three supports and must return to the `(t,v)`-support). -/
+theorem eventually_deepInterp_superset_iff
+    {Γ : Set (Σ n, (skolemColim L).BoundedFormulaω Empty n)}
+    (hind : @IsLomega1omegaIndiscernibleOnTail (skolemColim L) M (skolemColimStructure L) a Γ)
+    {t u : (skolemColim L)[[J]].Term Empty}
+    (hmem : (⟨(jSupport L J t ∪ jSupport L J u).card,
+        deEqAtom L J (jSupport L J t ∪ jSupport L J u) t u Finset.subset_union_left
+          Finset.subset_union_right⟩ : Σ n, (skolemColim L).BoundedFormulaω Empty n) ∈ Γ)
+    {S : Finset J} (hS : jSupport L J t ∪ jSupport L J u ⊆ S) :
+    ∀ᶠ d in Filter.atTop,
+      (deepInterp L J a d (jSupport L J t ∪ jSupport L J u) t
+            = deepInterp L J a d (jSupport L J t ∪ jSupport L J u) u ↔
+          deepInterp L J a d S t = deepInterp L J a d S u) := by
+  letI : (skolemColim L).Structure M := skolemColimStructure L
+  obtain ⟨N, hN⟩ := hind hmem
+  rw [Filter.eventually_atTop]
+  refine ⟨N, fun d hd => ?_⟩
+  set S₀ := jSupport L J t ∪ jSupport L J u with hS₀def
+  have hsmono : StrictMono (fun i : Fin S₀.card => d + (i : ℕ)) :=
+    fun i i' hii' => Nat.add_lt_add_left hii' d
+  have hs'mono : StrictMono (fun i : Fin S₀.card => d + deepRank J S (S₀.orderEmbOfFin rfl i)) := by
+    intro i i' hii'
+    refine Nat.add_lt_add_left (deepRank_lt_of_lt (J := J) ?_ ((S₀.orderEmbOfFin rfl).strictMono hii')) d
+    exact hS (Finset.orderEmbOfFin_mem S₀ rfl i)
+  have hiff := hN (fun i => d + (i : ℕ)) (fun i => d + deepRank J S (S₀.orderEmbOfFin rfl i))
+    hsmono hs'mono (fun k => le_trans hd (Nat.le_add_right d k))
+    (fun k => le_trans hd (Nat.le_add_right d _))
+  have hb0 := realize_deEqAtom L J a d S₀ t u Finset.subset_union_left Finset.subset_union_right
+  have hbS := realize_deEqAtom_superset L J a d hS t u Finset.subset_union_left
+    Finset.subset_union_right
+  exact Iff.trans hb0.symm (Iff.trans hiff hbS)
+
 /-- The **EM term model carrier**: closed terms of `(skolemColim L)[[J]]` quotiented by eventual
 deep equality. (`Quot`, so no equivalence proof is needed to form the carrier; transitivity enters
 only when reasoning about the quotient, via support-enlargement invariance.) -/
@@ -366,5 +401,64 @@ def EMTermModel : Type := Quot (EMEq L J a)
 def EMTermModel.mk (t : (skolemColim L)[[J]].Term Empty) : EMTermModel L J a := Quot.mk _ t
 
 end DeepInterp
+
+/-! ### Step 4D-4/5/6: the EM quotient and its structure
+
+To avoid threading the indiscernible sequence, its tail-indiscernible family, and the atomic-diagram
+membership through every congruence proof, we bundle them in an `EMContext`. Every quotient operation
+then uses `EMEq_eventually_on_superset` (via the support-enlargement *iff*) as its standing congruence
+engine. -/
+
+section Quotient
+
+variable {M : Type} [L.Structure M] [Nonempty M]
+
+/-- The **standing data** for the EM quotient over a fixed source model `M`: a sequence `a` of deep
+indiscernibles, a tail-indiscernible family `Γ`, and the fact that every de-substituted equality atom
+lies in `Γ` (dischargeable since `L^Sk` is countable, so the whole atomic diagram seeds `Γ`). -/
+structure EMContext where
+  /-- The deep indiscernible sequence. -/
+  a : ℕ → M
+  /-- The tail-indiscernible formula family. -/
+  Γ : Set (Σ n, (skolemColim L).BoundedFormulaω Empty n)
+  /-- Tail indiscernibility of `a` on `Γ`. -/
+  hind : @IsLomega1omegaIndiscernibleOnTail (skolemColim L) M (skolemColimStructure L) a Γ
+  /-- Every de-substituted equality atom is in `Γ`. -/
+  atom_mem : ∀ (S : Finset J) (t u : (skolemColim L)[[J]].Term Empty)
+    (ht : jSupport L J t ⊆ S) (hu : jSupport L J u ⊆ S),
+    (⟨S.card, deEqAtom L J S t u ht hu⟩ : Σ n, (skolemColim L).BoundedFormulaω Empty n) ∈ Γ
+
+/-- **Transitivity of `EMEq`** (the congruence engine's first payoff): enlarge to the union of all
+three supports, transport both hypotheses up to it via the enlargement *iff*, chain the equalities
+in `M`, and descend back to the `(t,v)`-support. -/
+theorem EMContext.trans (ctx : EMContext L J (M := M)) {t u v : (skolemColim L)[[J]].Term Empty}
+    (h1 : EMEq L J ctx.a t u) (h2 : EMEq L J ctx.a u v) : EMEq L J ctx.a t v := by
+  set S := jSupport L J t ∪ jSupport L J u ∪ jSupport L J v with hSdef
+  have hsub_tu : jSupport L J t ∪ jSupport L J u ⊆ S := Finset.subset_union_left
+  have hsub_uv : jSupport L J u ∪ jSupport L J v ⊆ S :=
+    Finset.union_subset
+      ((Finset.subset_union_right).trans Finset.subset_union_left) Finset.subset_union_right
+  have hsub_tv : jSupport L J t ∪ jSupport L J v ⊆ S :=
+    Finset.union_subset
+      ((Finset.subset_union_left).trans Finset.subset_union_left) Finset.subset_union_right
+  have iff_tu := eventually_deepInterp_superset_iff L J ctx.a ctx.hind
+    (ctx.atom_mem _ t u Finset.subset_union_left Finset.subset_union_right) hsub_tu
+  have iff_uv := eventually_deepInterp_superset_iff L J ctx.a ctx.hind
+    (ctx.atom_mem _ u v Finset.subset_union_left Finset.subset_union_right) hsub_uv
+  have iff_tv := eventually_deepInterp_superset_iff L J ctx.a ctx.hind
+    (ctx.atom_mem _ t v Finset.subset_union_left Finset.subset_union_right) hsub_tv
+  have hS_tu := (h1.and iff_tu).mono (fun _ p => p.2.mp p.1)
+  have hS_uv := (h2.and iff_uv).mono (fun _ p => p.2.mp p.1)
+  have hS_tv := (hS_tu.and hS_uv).mono (fun _ p => p.1.trans p.2)
+  exact (iff_tv.and hS_tv).mono (fun _ p => p.1.mpr p.2)
+
+/-- `EMEq` is an equivalence relation on closed terms (refl/symm need no context; trans is
+`EMContext.trans`). -/
+def EMContext.setoid (ctx : EMContext L J (M := M)) : Setoid ((skolemColim L)[[J]].Term Empty) where
+  r := EMEq L J ctx.a
+  iseqv := ⟨fun t => EMEq.refl L J ctx.a t, fun h => EMEq.symm L J ctx.a h,
+    fun h1 h2 => EMContext.trans (L := L) (J := J) ctx h1 h2⟩
+
+end Quotient
 
 end FirstOrder.Language
