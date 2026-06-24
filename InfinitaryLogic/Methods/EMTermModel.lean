@@ -6,6 +6,7 @@ Authors: Cameron Freer
 import InfinitaryLogic.Methods.SkolemClosure
 import InfinitaryLogic.Methods.EM.TailAdapter
 import Mathlib.Order.Filter.AtTopBot.Basic
+import Mathlib.Order.Filter.Finite
 import Mathlib.Data.Finset.Sort
 import Mathlib.Order.Interval.Finset.Fin
 
@@ -452,6 +453,29 @@ theorem EMContext.trans (ctx : EMContext L J (M := M)) {t u v : (skolemColim L)[
   have hS_tv := (hS_tu.and hS_uv).mono (fun _ p => p.1.trans p.2)
   exact (iff_tv.and hS_tv).mono (fun _ p => p.1.mpr p.2)
 
+/-- **Function congruence**: if the arguments are pairwise `EMEq`, so are the function terms. Enlarge
+every argument's deep equality up to the whole term's support, combine the finitely many eventual
+equalities, and apply `deepInterp_func` (deep interpretation commutes with function application). -/
+theorem EMContext.func_congr (ctx : EMContext L J (M := M)) {n : ℕ}
+    (f : (skolemColim L)[[J]].Functions n) {ts ts' : Fin n → (skolemColim L)[[J]].Term Empty}
+    (h : ∀ i, EMEq L J ctx.a (ts i) (ts' i)) :
+    EMEq L J ctx.a (.func f ts) (.func f ts') := by
+  unfold EMEq
+  set S₀ := jSupport L J (.func f ts) ∪ jSupport L J (.func f ts') with hS₀
+  have hi : ∀ i, ∀ᶠ d in Filter.atTop,
+      deepInterp L J ctx.a d S₀ (ts i) = deepInterp L J ctx.a d S₀ (ts' i) := by
+    intro i
+    refine EMEq_eventually_on_superset L J ctx.a ctx.hind
+      (ctx.atom_mem _ (ts i) (ts' i) Finset.subset_union_left Finset.subset_union_right) (h i) ?_
+    exact Finset.union_subset
+      ((jSupport_subterm L J f ts i).trans Finset.subset_union_left)
+      ((jSupport_subterm L J f ts' i).trans Finset.subset_union_right)
+  refine (Filter.eventually_all.mpr hi).mono (fun d hd => ?_)
+  rw [deepInterp_func, deepInterp_func]
+  congr 1
+  funext i
+  exact hd i
+
 /-- `EMEq` is an equivalence relation on closed terms (refl/symm need no context; trans is
 `EMContext.trans`). -/
 def EMContext.setoid (ctx : EMContext L J (M := M)) : Setoid ((skolemColim L)[[J]].Term Empty) where
@@ -489,6 +513,28 @@ noncomputable def EMContext.structure (ctx : EMContext L J (M := M)) :
         constantsOn.structure fun j => ctx.a (d + deepRank J (ctx.commonSupport (xs := xs)) j)
       @Structure.RelMap ((skolemColim L)[[J]]) M _ n R
         fun i => deepInterp L J ctx.a d (ctx.commonSupport (xs := xs)) (Quotient.out (xs i))
+
+/-- **Function interpretation computes on classes** (well-definedness, API form): applying the
+interpreted function symbol to a tuple of term-classes gives the class of the function term. Immediate
+from `func_congr` and `Quotient.out_eq`. (The arity-0 case is `constMap_mkClass`: skeleton constants
+`c_j` interpret as `[c_j]`.) -/
+theorem EMContext.funMap_mkClass (ctx : EMContext L J (M := M)) {n : ℕ}
+    (f : (skolemColim L)[[J]].Functions n) (ts : Fin n → (skolemColim L)[[J]].Term Empty) :
+    @Structure.funMap ((skolemColim L)[[J]]) ctx.Carrier ctx.structure n f
+        (fun i => ctx.mkClass (t := ts i)) = ctx.mkClass (t := .func f ts) := by
+  apply Quotient.sound
+  apply ctx.func_congr
+  exact fun i => Quotient.exact (Quotient.out_eq (ctx.mkClass (t := ts i)))
+
+/-- The arity-0 case: a skeleton constant `c_j` (or any `L^Sk`-constant) interprets as the class of
+its constant term. -/
+theorem EMContext.constMap_mkClass (ctx : EMContext L J (M := M))
+    (c : (skolemColim L)[[J]].Functions 0) :
+    @Structure.funMap ((skolemColim L)[[J]]) ctx.Carrier ctx.structure 0 c Fin.elim0
+      = ctx.mkClass (t := .func c Fin.elim0) := by
+  apply Quotient.sound
+  apply ctx.func_congr
+  exact fun i => i.elim0
 
 end Quotient
 
