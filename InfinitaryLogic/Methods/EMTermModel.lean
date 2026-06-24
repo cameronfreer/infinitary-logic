@@ -240,6 +240,36 @@ theorem deepInterp_eq_realize_fin (d : ℕ) (S : Finset J) (t : (skolemColim L)[
   symm
   exact Term.realize_restrictVar (fun n => a (d + n)) (fun _ => rfl)
 
+/-- **Per-term superset realize**: the `Fin`-arity de-substituted term over `S`, realized on the
+`T`-induced deep tuple `i ↦ a (d + deepRank T (orderEmbOfFin S i))`, equals the deep interpretation
+over the larger support `T`. The core shared by the equality- and relation-atom superset bridges
+(restrictVar realize with a `dite`-extended assignment, then `realize_eq_of_eq_on_varFinset` to
+discard the junk, then `orderEmbOfFin_deepRank`). -/
+theorem deTermFin_realize_superset (d : ℕ) (S T : Finset J) (w : (skolemColim L)[[J]].Term Empty)
+    (hw : jSupport L J w ⊆ S) :
+    letI : (skolemColim L).Structure M := skolemColimStructure L
+    (deTermFin L J S w hw).realize
+        (fun i : Fin S.card => a (d + deepRank J T (S.orderEmbOfFin rfl i)))
+      = deepInterp L J a d T w := by
+  letI : (skolemColim L).Structure M := skolemColimStructure L
+  have hrv : (deTermFin L J S w hw).realize
+        (fun i : Fin S.card => a (d + deepRank J T (S.orderEmbOfFin rfl i)))
+      = (deTermPos L J S w).realize
+        (fun n => a (d + if h : n < S.card then deepRank J T (S.orderEmbOfFin rfl ⟨n, h⟩) else 0)) := by
+    rw [deTermFin]
+    refine Term.realize_restrictVar
+      (fun n => a (d + if h : n < S.card then deepRank J T (S.orderEmbOfFin rfl ⟨n, h⟩) else 0))
+      (fun x => ?_)
+    simp only [dif_pos (Finset.mem_range.mp (deTermPos_varFinset_subset (L := L) (J := J) hw x.2))]
+  rw [hrv, deepInterp_eq_realize, deTermPos, Term.realize_relabel]
+  apply Term.realize_eq_of_eq_on_varFinset
+  intro x hx
+  obtain ⟨j, hj, rfl⟩ := Finset.mem_image.mp (constantsToVars_varFinset_subset L J w hx)
+  have hjS : j ∈ S := hw hj
+  have hlt : deepRank J S j < S.card := deepRank_lt_card (J := J) hjS
+  simp only [Function.comp_apply, Sum.elim_inl, dif_pos hlt]
+  rw [orderEmbOfFin_deepRank J S rfl hjS hlt]
+
 /-- The **de-substituted equality atom** of two closed terms over a covering support `S`: an
 `L^Sk`-formula of arity `S.card` whose truth on the consecutive deep tuple is the deep equality of
 `t, u`. Since `L^Sk` is countable, all such atoms form a countable family that seeds the
@@ -299,6 +329,44 @@ theorem realize_deEqAtom_superset (d : ℕ) {S T : Finset J} (_hST : S ⊆ T)
     rw [orderEmbOfFin_deepRank J S rfl hjS hlt]
   rw [deEqAtom, BoundedFormulaω.realize_equal, Term.realize_relabel, Term.realize_relabel,
     Sum.elim_comp_inr, key t ht, key u hu]
+
+/-- The **de-substituted relation atom**: the relation `R` applied to the `Fin`-arity de-substituted
+terms of a tuple over a covering support `S`. The relation analogue of `deEqAtom`. -/
+def deRelAtom (S : Finset J) {l : ℕ} (R : (skolemColim L).Relations l)
+    (ts : Fin l → (skolemColim L)[[J]].Term Empty) (ht : ∀ i, jSupport L J (ts i) ⊆ S) :
+    (skolemColim L).BoundedFormulaω Empty S.card :=
+  BoundedFormulaω.rel R fun i => (deTermFin L J S (ts i) (ht i)).relabel Sum.inr
+
+/-- **Relation atom realize bridge**: the de-substituted relation atom holds on the consecutive deep
+tuple iff `R` holds in `M` on the deep interpretations over `S`. -/
+theorem realize_deRelAtom (d : ℕ) (S : Finset J) {l : ℕ} (R : (skolemColim L).Relations l)
+    (ts : Fin l → (skolemColim L)[[J]].Term Empty) (ht : ∀ i, jSupport L J (ts i) ⊆ S) :
+    letI : (skolemColim L).Structure M := skolemColimStructure L
+    (deRelAtom L J S R ts ht).Realize Empty.elim (fun i : Fin S.card => a (d + i)) ↔
+      Structure.RelMap R fun i => deepInterp L J a d S (ts i) := by
+  letI : (skolemColim L).Structure M := skolemColimStructure L
+  rw [deRelAtom, BoundedFormulaω.realize_rel]
+  apply Iff.of_eq
+  congr 1
+  funext i
+  rw [Term.realize_relabel, Sum.elim_comp_inr, ← deepInterp_eq_realize_fin]
+
+/-- **Superset relation atom bridge**: the same relation atom over `S`, realized on the `T`-induced
+deep tuple (`S ⊆ T`), holds iff `R` holds in `M` on the deep interpretations over `T`. The relation
+analogue of `realize_deEqAtom_superset`, via `deTermFin_realize_superset`. -/
+theorem realize_deRelAtom_superset (d : ℕ) {S T : Finset J} (_hST : S ⊆ T) {l : ℕ}
+    (R : (skolemColim L).Relations l) (ts : Fin l → (skolemColim L)[[J]].Term Empty)
+    (ht : ∀ i, jSupport L J (ts i) ⊆ S) :
+    letI : (skolemColim L).Structure M := skolemColimStructure L
+    (deRelAtom L J S R ts ht).Realize Empty.elim
+        (fun i : Fin S.card => a (d + deepRank J T (S.orderEmbOfFin rfl i))) ↔
+      Structure.RelMap R fun i => deepInterp L J a d T (ts i) := by
+  letI : (skolemColim L).Structure M := skolemColimStructure L
+  rw [deRelAtom, BoundedFormulaω.realize_rel]
+  apply Iff.of_eq
+  congr 1
+  funext i
+  rw [Term.realize_relabel, Sum.elim_comp_inr, deTermFin_realize_superset]
 
 /-! ### Step 4: eventual deep equality `EMEq` and the carrier -/
 
@@ -428,6 +496,10 @@ structure EMContext where
   atom_mem : ∀ (S : Finset J) (t u : (skolemColim L)[[J]].Term Empty)
     (ht : jSupport L J t ⊆ S) (hu : jSupport L J u ⊆ S),
     (⟨S.card, deEqAtom L J S t u ht hu⟩ : Σ n, (skolemColim L).BoundedFormulaω Empty n) ∈ Γ
+  /-- Every de-substituted relation atom is in `Γ`. -/
+  rel_mem : ∀ (S : Finset J) {l : ℕ} (R : (skolemColim L).Relations l)
+    (ts : Fin l → (skolemColim L)[[J]].Term Empty) (ht : ∀ i, jSupport L J (ts i) ⊆ S),
+    (⟨S.card, deRelAtom L J S R ts ht⟩ : Σ n, (skolemColim L).BoundedFormulaω Empty n) ∈ Γ
 
 /-- **Transitivity of `EMEq`** (the congruence engine's first payoff): enlarge to the union of all
 three supports, transport both hypotheses up to it via the enlargement *iff*, chain the equalities
