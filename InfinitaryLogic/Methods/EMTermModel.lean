@@ -461,6 +461,44 @@ theorem eventually_deepInterp_superset_iff
     Finset.subset_union_right
   exact Iff.trans hb0.symm (Iff.trans hiff hbS)
 
+/-- **Relation support-independence** (the relation analogue of `eventually_deepInterp_superset_iff`):
+on the deep tail, the truth of `R` on the deep interpretations over the combined support `S₀` of the
+arguments is equivalent to its truth over any larger support `S ⊇ S₀`. This is what makes the
+quotient `RelMap` independent of the chosen common support. -/
+theorem eventually_relMap_superset_iff
+    {Γ : Set (Σ n, (skolemColim L).BoundedFormulaω Empty n)}
+    (hind : @IsLomega1omegaIndiscernibleOnTail (skolemColim L) M (skolemColimStructure L) a Γ)
+    {l : ℕ} (R : (skolemColim L).Relations l) {ts : Fin l → (skolemColim L)[[J]].Term Empty}
+    (hmem : (⟨(Finset.univ.biUnion fun i => jSupport L J (ts i)).card,
+        deRelAtom L J (Finset.univ.biUnion fun i => jSupport L J (ts i)) R ts
+          fun i => Finset.subset_biUnion_of_mem (fun i => jSupport L J (ts i)) (Finset.mem_univ i)⟩ :
+        Σ n, (skolemColim L).BoundedFormulaω Empty n) ∈ Γ)
+    {S : Finset J} (hS : (Finset.univ.biUnion fun i => jSupport L J (ts i)) ⊆ S) :
+    letI : (skolemColim L).Structure M := skolemColimStructure L
+    ∀ᶠ d in Filter.atTop,
+      (Structure.RelMap R
+            (fun i => deepInterp L J a d (Finset.univ.biUnion fun i => jSupport L J (ts i)) (ts i)) ↔
+        Structure.RelMap R (fun i => deepInterp L J a d S (ts i))) := by
+  letI : (skolemColim L).Structure M := skolemColimStructure L
+  obtain ⟨N, hN⟩ := hind hmem
+  rw [Filter.eventually_atTop]
+  refine ⟨N, fun d hd => ?_⟩
+  set S₀ := Finset.univ.biUnion fun i => jSupport L J (ts i) with hS₀def
+  have hsmono : StrictMono (fun i : Fin S₀.card => d + (i : ℕ)) :=
+    fun i i' hii' => Nat.add_lt_add_left hii' d
+  have hs'mono : StrictMono (fun i : Fin S₀.card => d + deepRank J S (S₀.orderEmbOfFin rfl i)) := by
+    intro i i' hii'
+    refine Nat.add_lt_add_left (deepRank_lt_of_lt (J := J) ?_ ((S₀.orderEmbOfFin rfl).strictMono hii')) d
+    exact hS (Finset.orderEmbOfFin_mem S₀ rfl i)
+  have hiff := hN (fun i => d + (i : ℕ)) (fun i => d + deepRank J S (S₀.orderEmbOfFin rfl i))
+    hsmono hs'mono (fun k => le_trans hd (Nat.le_add_right d k))
+    (fun k => le_trans hd (Nat.le_add_right d _))
+  have hb0 := realize_deRelAtom L J a d S₀ R ts
+    fun i => Finset.subset_biUnion_of_mem (fun i => jSupport L J (ts i)) (Finset.mem_univ i)
+  have hbS := realize_deRelAtom_superset L J a d hS R ts
+    fun i => Finset.subset_biUnion_of_mem (fun i => jSupport L J (ts i)) (Finset.mem_univ i)
+  exact Iff.trans hb0.symm (Iff.trans hiff hbS)
+
 /-- The **EM term model carrier**: closed terms of `(skolemColim L)[[J]]` quotiented by eventual
 deep equality. (`Quot`, so no equivalence proof is needed to form the carrier; transitivity enters
 only when reasoning about the quotient, via support-enlargement invariance.) -/
