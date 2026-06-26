@@ -646,6 +646,70 @@ theorem EMContext.constMap_mkClass (ctx : EMContext L J (M := M))
   apply ctx.func_congr
   exact fun i => i.elim0
 
+/-- **Relation congruence on terms** (helper): changing a finite tuple of argument terms by `EMEq`,
+all over a fixed covering support `T`, preserves the eventual deep truth of a relation. Combines the
+per-term equality invariance over `T` (`EMEq_eventually_on_superset`) with `Filter.eventually_all`. -/
+theorem EMContext.eventually_relMap_congr_terms (ctx : EMContext L J (M := M)) {l : ℕ}
+    (R : (skolemColim L).Relations l) {ts ts' : Fin l → (skolemColim L)[[J]].Term Empty}
+    (h : ∀ i, EMEq L J ctx.a (ts i) (ts' i)) {T : Finset J}
+    (hts : ∀ i, jSupport L J (ts i) ⊆ T) (hts' : ∀ i, jSupport L J (ts' i) ⊆ T) :
+    letI : (skolemColim L).Structure M := skolemColimStructure L
+    (∀ᶠ d in Filter.atTop, Structure.RelMap R fun i => deepInterp L J ctx.a d T (ts i)) ↔
+      (∀ᶠ d in Filter.atTop, Structure.RelMap R fun i => deepInterp L J ctx.a d T (ts' i)) := by
+  letI : (skolemColim L).Structure M := skolemColimStructure L
+  have hcong : ∀ᶠ d in Filter.atTop, ∀ i,
+      deepInterp L J ctx.a d T (ts i) = deepInterp L J ctx.a d T (ts' i) :=
+    Filter.eventually_all.mpr fun i =>
+      EMEq_eventually_on_superset L J ctx.a ctx.hind
+        (ctx.atom_mem _ (ts i) (ts' i) Finset.subset_union_left Finset.subset_union_right) (h i)
+        (Finset.union_subset (hts i) (hts' i))
+  exact Filter.eventually_congr (hcong.mono fun _ hd => Iff.of_eq (congrArg _ (funext hd)))
+
+/-- **Relation interpretation computes on classes** (well-definedness, API form): the interpreted
+relation holds on a tuple of term-classes iff it holds in `M` on the deep interpretations for all
+sufficiently deep `d`, over *any* support `S` covering the arguments — independent of the quotient
+representatives and of the chosen support. The relation analogue of `funMap_mkClass`, by
+support-normalization through a bridge support `T = S ∪ Sout`. -/
+theorem EMContext.relMap_mkClass_iff (ctx : EMContext L J (M := M)) {l : ℕ}
+    (R : (skolemColim L).Relations l) (ts : Fin l → (skolemColim L)[[J]].Term Empty)
+    {S : Finset J} (hS : (Finset.univ.biUnion fun i => jSupport L J (ts i)) ⊆ S) :
+    @Structure.RelMap ((skolemColim L)[[J]]) ctx.Carrier ctx.structure l (Sum.inl R)
+        (fun i => ctx.mkClass (t := ts i)) ↔
+      letI : (skolemColim L).Structure M := skolemColimStructure L
+      ∀ᶠ d in Filter.atTop, Structure.RelMap R fun i => deepInterp L J ctx.a d S (ts i) := by
+  letI : (skolemColim L).Structure M := skolemColimStructure L
+  show (∀ᶠ d in Filter.atTop, Structure.RelMap R fun i =>
+        deepInterp L J ctx.a d
+          (Finset.univ.biUnion fun i => jSupport L J (Quotient.out (ctx.mkClass (t := ts i))))
+          (Quotient.out (ctx.mkClass (t := ts i)))) ↔ _
+  set rep : Fin l → (skolemColim L)[[J]].Term Empty :=
+    fun i => Quotient.out (ctx.mkClass (t := ts i)) with hrep
+  set Sout : Finset J := Finset.univ.biUnion fun i => jSupport L J (rep i) with hSout
+  set T : Finset J := S ∪ Sout with hT
+  have hrep_eq : ∀ i, EMEq L J ctx.a (rep i) (ts i) :=
+    fun i => Quotient.exact (Quotient.out_eq (ctx.mkClass (t := ts i)))
+  have hSout_T : Sout ⊆ T := Finset.subset_union_right
+  have hS_T : S ⊆ T := Finset.subset_union_left
+  have hrep_T : ∀ i, jSupport L J (rep i) ⊆ T := fun i =>
+    (Finset.subset_biUnion_of_mem (fun i => jSupport L J (rep i)) (Finset.mem_univ i)).trans hSout_T
+  have hts_S : ∀ i, jSupport L J (ts i) ⊆ S := fun i =>
+    (Finset.subset_biUnion_of_mem (fun i => jSupport L J (ts i)) (Finset.mem_univ i)).trans hS
+  have hts_T : ∀ i, jSupport L J (ts i) ⊆ T := fun i => (hts_S i).trans hS_T
+  -- (a) move the rep-side from Sout up to T
+  have ha := Filter.eventually_congr (eventually_relMap_superset_iff L J ctx.a ctx.hind R (ts := rep)
+    (ctx.rel_mem _ R rep fun i =>
+      Finset.subset_biUnion_of_mem (fun i => jSupport L J (rep i)) (Finset.mem_univ i)) hSout_T)
+  -- (b) swap reps for ts over T
+  have hb := EMContext.eventually_relMap_congr_terms (L := L) (J := J) ctx R hrep_eq hrep_T hts_T
+  -- (c) relate the ts-side over T and over S (both to the canonical S₀(ts))
+  have hcT := Filter.eventually_congr (eventually_relMap_superset_iff L J ctx.a ctx.hind R (ts := ts)
+    (ctx.rel_mem _ R ts fun i =>
+      Finset.subset_biUnion_of_mem (fun i => jSupport L J (ts i)) (Finset.mem_univ i)) (hS.trans hS_T))
+  have hcS := Filter.eventually_congr (eventually_relMap_superset_iff L J ctx.a ctx.hind R (ts := ts)
+    (ctx.rel_mem _ R ts fun i =>
+      Finset.subset_biUnion_of_mem (fun i => jSupport L J (ts i)) (Finset.mem_univ i)) hS)
+  exact ha.trans (hb.trans (hcT.symm.trans hcS))
+
 end Quotient
 
 end FirstOrder.Language
