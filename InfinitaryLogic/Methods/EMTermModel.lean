@@ -186,6 +186,26 @@ theorem deepInterp_eq_realize (d : ℕ) (S : Finset J) (t : (skolemColim L)[[J]]
   show t.realize Empty.elim = _
   exact (Term.realize_constantsToVars (t := t) (v := Empty.elim)).symm
 
+/-- **M-side term substitution**: the deep interpretation of a substituted term is the realization
+(in `M`'s `[[J]]`-structure at depth `d`) of the body on the deep interpretations of the substituted
+terms. Mostly `Term.realize_subst` (deep interpretation *is* realization in the `σ_d`-structure). -/
+theorem deepInterp_subst (d : ℕ) (S : Finset J) {n : ℕ}
+    (t : (skolemColim L)[[J]].Term (Empty ⊕ Fin n))
+    (ts : Fin n → (skolemColim L)[[J]].Term Empty) :
+    letI : (skolemColim L).Structure M := skolemColimStructure L
+    letI : (constantsOn J).Structure M := constantsOn.structure fun j => a (d + deepRank J S j)
+    deepInterp L J a d S (t.subst (Sum.elim (fun e => e.elim) ts)) =
+      t.realize (Sum.elim Empty.elim fun i => deepInterp L J a d S (ts i)) := by
+  letI : (skolemColim L).Structure M := skolemColimStructure L
+  letI : (constantsOn J).Structure M := constantsOn.structure fun j => a (d + deepRank J S j)
+  show (t.subst (Sum.elim (fun e => e.elim) ts)).realize Empty.elim = _
+  rw [Term.realize_subst]
+  congr 1
+  funext x
+  cases x with
+  | inl e => exact e.elim
+  | inr i => rfl
+
 /-- The **de-substituted term at ordered support positions**: each skeleton constant `c_j` becomes
 the `ℕ`-variable `deepRank S j` (its 0-indexed position in the increasing support order). An
 `L^Sk`-term over `ℕ`. (Over `ℕ` rather than `Fin S.card` so the relabel needs no junk value; only
