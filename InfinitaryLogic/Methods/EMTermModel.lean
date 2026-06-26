@@ -727,6 +727,45 @@ def EMContext.eventualDeepTruth (ctx : EMContext L J (M := M)) {n : ℕ}
   letI : (skolemColim L).Structure M := skolemColimStructure L
   ∀ᶠ d in Filter.atTop, φ.Realize Empty.elim fun i => deepInterp L J ctx.a d S (ts i)
 
+/-- The **base `L^Sk`-structure** on the carrier: the reduct of the term-model `[[J]]`-structure along
+the skeleton-constant inclusion (a base function/relation symbol acts as its `Sum.inl` image). -/
+noncomputable def EMContext.structureBase (ctx : EMContext L J (M := M)) :
+    (skolemColim L).Structure ctx.Carrier where
+  funMap {n} f xs := @Structure.funMap ((skolemColim L)[[J]]) ctx.Carrier ctx.structure n (Sum.inl f) xs
+  RelMap {n} R xs := @Structure.RelMap ((skolemColim L)[[J]]) ctx.Carrier ctx.structure n (Sum.inl R) xs
+
+/-- **Map-language plumbing**: the skeleton-constant inclusion `skolemColim L → (skolemColim L)[[J]]`
+is an expansion of the carrier's base structure to its term-model `[[J]]`-structure (definitional, as
+the `[[J]]`-structure interprets `Sum.inl` symbols by the base reduct). Lets `realize_mapLanguage`
+transfer realizations of base-language formulas. Mirrors `skolemStageInclusion_isExpansionOn`. -/
+theorem EMContext.lhomWithConstants_isExpansionOn (ctx : EMContext L J (M := M)) :
+    @LHom.IsExpansionOn (skolemColim L) ((skolemColim L)[[J]])
+      (lhomWithConstants (skolemColim L) J) ctx.Carrier ctx.structureBase ctx.structure := by
+  letI : (skolemColim L).Structure ctx.Carrier := ctx.structureBase
+  letI : (skolemColim L)[[J]].Structure ctx.Carrier := ctx.structure
+  exact ⟨fun _ _ => rfl, fun _ _ => rfl⟩
+
+/-- **Carrier-side term substitution**: realizing a term in the EM term model under the assignment
+`Sum.elim Empty.elim (mkClass ∘ ts)` gives the class of the substituted closed term. By induction on
+the term, using `funMap_mkClass`. -/
+theorem EMContext.realize_term_mkClass (ctx : EMContext L J (M := M)) {n : ℕ}
+    (ts : Fin n → (skolemColim L)[[J]].Term Empty)
+    (t : (skolemColim L)[[J]].Term (Empty ⊕ Fin n)) :
+    @Term.realize ((skolemColim L)[[J]]) ctx.Carrier ctx.structure (Empty ⊕ Fin n)
+        (Sum.elim Empty.elim fun i => ctx.mkClass (t := ts i)) t
+      = ctx.mkClass (t := t.subst (Sum.elim (fun e => e.elim) ts)) := by
+  induction t with
+  | var x => cases x with
+    | inl e => exact e.elim
+    | inr i => rfl
+  | func f args ih =>
+    have hargs : (fun j => @Term.realize ((skolemColim L)[[J]]) ctx.Carrier ctx.structure _
+          (Sum.elim Empty.elim fun i => ctx.mkClass (t := ts i)) (args j))
+        = (fun j => ctx.mkClass (t := (args j).subst (Sum.elim (fun e => e.elim) ts))) := funext ih
+    show @Structure.funMap ((skolemColim L)[[J]]) ctx.Carrier ctx.structure _ f _ = _
+    rw [hargs, ctx.funMap_mkClass]
+    rfl
+
 end Quotient
 
 end FirstOrder.Language
