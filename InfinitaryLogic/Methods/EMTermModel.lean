@@ -206,6 +206,21 @@ theorem deepInterp_subst (d : ℕ) (S : Finset J) {n : ℕ}
   | inl e => exact e.elim
   | inr i => rfl
 
+/-- **Deep interpretation of a base-language substituted term**: combining `deepInterp_subst` with
+`realize_onTerm`, the deep interpretation of `(onTerm t).subst ts` equals `t` realized in `M`'s
+`L^Sk`-structure on the deep interpretations of the substituted terms. -/
+theorem deepInterp_onTerm_subst (d : ℕ) (S : Finset J) {n : ℕ}
+    (t : (skolemColim L).Term (Empty ⊕ Fin n))
+    (ts : Fin n → (skolemColim L)[[J]].Term Empty) :
+    letI : (skolemColim L).Structure M := skolemColimStructure L
+    deepInterp L J a d S
+        (((lhomWithConstants (skolemColim L) J).onTerm t).subst (Sum.elim (fun e => e.elim) ts)) =
+      t.realize (Sum.elim Empty.elim fun i => deepInterp L J a d S (ts i)) := by
+  letI : (skolemColim L).Structure M := skolemColimStructure L
+  letI : (constantsOn J).Structure M := constantsOn.structure fun j => a (d + deepRank J S j)
+  rw [deepInterp_subst]
+  exact LHom.realize_onTerm (lhomWithConstants (skolemColim L) J) t _
+
 /-- The **de-substituted term at ordered support positions**: each skeleton constant `c_j` becomes
 the `ℕ`-variable `deepRank S j` (its 0-indexed position in the increasing support order). An
 `L^Sk`-term over `ℕ`. (Over `ℕ` rather than `Fin S.card` so the relabel needs no junk value; only
