@@ -710,6 +710,23 @@ theorem EMContext.relMap_mkClass_iff (ctx : EMContext L J (M := M)) {l : ℕ}
       Finset.subset_biUnion_of_mem (fun i => jSupport L J (ts i)) (Finset.mem_univ i)) hS)
   exact ha.trans (hb.trans (hcT.symm.trans hcS))
 
+/-! ### Step 4D-7: the Γ*-restricted truth-lemma RHS
+
+The Γ*-restricted truth lemma will state that realizing a (base-language) formula `φ` in the EM term
+model on a tuple of term-classes is equivalent to `φ`'s **eventual deep truth**: `φ` holds in the
+source model `M` on the deep interpretations of the argument terms, for all sufficiently deep `d`.
+That predicate is named here (not inlined through the induction); `φ` ranges over `skolemColim L`
+(the family `Γ*` carries no `J`-constants — those enter only through the argument terms `ts`). -/
+
+/-- **Eventual deep truth** of a base-language formula `φ` on a tuple of closed argument terms over a
+support `S`: `φ` holds in `M` (in its `L^Sk`-structure) on the deep interpretations of the terms, for
+all sufficiently deep `d`. The right-hand side of the Γ*-truth lemma. -/
+def EMContext.eventualDeepTruth (ctx : EMContext L J (M := M)) {n : ℕ}
+    (φ : (skolemColim L).BoundedFormulaω Empty n) (ts : Fin n → (skolemColim L)[[J]].Term Empty)
+    (S : Finset J) : Prop :=
+  letI : (skolemColim L).Structure M := skolemColimStructure L
+  ∀ᶠ d in Filter.atTop, φ.Realize Empty.elim fun i => deepInterp L J ctx.a d S (ts i)
+
 end Quotient
 
 end FirstOrder.Language
