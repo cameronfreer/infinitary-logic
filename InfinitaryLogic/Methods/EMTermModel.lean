@@ -929,6 +929,36 @@ theorem EMContext.eventualDeepTruth_rel_iff (ctx : EMContext L J (M := M)) {n l 
     (fun i => ((lhomWithConstants (skolemColim L) J).onTerm (args i)).subst
       (Sum.elim (fun e => e.elim) ts)) hS
 
+/-- **0-1 law for eventual deep truth** (the unlock for the truth lemma's `imp`/connective cases): if
+the de-substituted formula `deForm S φ ts` lies in the tail-indiscernible family `Γ`, then `φ`'s
+eventual deep truth is *decided* — either `φ` holds on the deep interpretations for all sufficiently
+deep `d`, or it fails for all sufficiently deep `d`. The value is eventually constant because tail
+indiscernibility makes all sufficiently-deep consecutive tuples agree on the single arity-`S.card`
+formula `deForm S φ ts`. -/
+theorem EMContext.eventualDeepTruth_decided (ctx : EMContext L J (M := M)) {n : ℕ}
+    (φ : (skolemColim L).BoundedFormulaω Empty n)
+    (ts : Fin n → (skolemColim L)[[J]].Term Empty) (S : Finset J)
+    (hsub : ∀ i, jSupport L J (ts i) ⊆ S)
+    (hmem : (⟨S.card, deForm L J S φ ts hsub⟩ :
+        Σ n, (skolemColim L).BoundedFormulaω Empty n) ∈ ctx.Γ) :
+    letI : (skolemColim L).Structure M := skolemColimStructure L
+    (∀ᶠ d in Filter.atTop, φ.Realize Empty.elim fun i => deepInterp L J ctx.a d S (ts i)) ∨
+      (∀ᶠ d in Filter.atTop, ¬ φ.Realize Empty.elim fun i => deepInterp L J ctx.a d S (ts i)) := by
+  letI : (skolemColim L).Structure M := skolemColimStructure L
+  obtain ⟨N, hN⟩ := ctx.hind hmem
+  have hmono : ∀ d : ℕ, StrictMono (fun i : Fin S.card => d + (i : ℕ)) :=
+    fun d _ _ hii' => Nat.add_lt_add_left hii' d
+  by_cases hbase :
+      (deForm L J S φ ts hsub).Realize Empty.elim (fun i : Fin S.card => ctx.a (N + (i : ℕ)))
+  · refine Or.inl (Filter.eventually_atTop.mpr ⟨N, fun d hd => ?_⟩)
+    rw [← realize_deForm L J ctx.a d S φ ts hsub]
+    exact (hN (fun i => d + (i : ℕ)) (fun i => N + (i : ℕ)) (hmono d) (hmono N)
+      (fun k => le_trans hd (Nat.le_add_right d k)) (fun k => Nat.le_add_right N k)).mpr hbase
+  · refine Or.inr (Filter.eventually_atTop.mpr ⟨N, fun d hd hPd => hbase ?_⟩)
+    rw [← realize_deForm L J ctx.a d S φ ts hsub] at hPd
+    exact (hN (fun i => N + (i : ℕ)) (fun i => d + (i : ℕ)) (hmono N) (hmono d)
+      (fun k => Nat.le_add_right N k) (fun k => le_trans hd (Nat.le_add_right d k))).mpr hPd
+
 end Quotient
 
 end FirstOrder.Language
