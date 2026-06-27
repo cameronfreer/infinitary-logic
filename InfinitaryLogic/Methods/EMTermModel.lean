@@ -403,6 +403,28 @@ theorem realize_deRelAtom_superset (d : ℕ) {S T : Finset J} (_hST : S ⊆ T) {
   funext i
   rw [Term.realize_relabel, Sum.elim_comp_inr, deTermFin_realize_superset]
 
+/-- **Support of a base-language term after bound-variable substitution**: substituting the closed
+terms `ts` for the free variables of a base-language term `(onTerm t)` (which itself carries no
+`J`-constants, being a `skolemColim L`-image) produces only the `J`-constants of the `ts`. The bridge
+from the truth lemma's uniform support hypothesis `S ⊇ ⋃ jSupport (ts i)` to the per-atom support
+hypotheses of `eventualDeepTruth_equal_iff`/`_rel_iff`. -/
+theorem jSupport_onTerm_subst_subset {n : ℕ} (t : (skolemColim L).Term (Empty ⊕ Fin n))
+    (ts : Fin n → (skolemColim L)[[J]].Term Empty) :
+    jSupport L J (((lhomWithConstants (skolemColim L) J).onTerm t).subst
+        (Sum.elim (fun e => e.elim) ts))
+      ⊆ Finset.univ.biUnion fun i => jSupport L J (ts i) := by
+  induction t with
+  | var x =>
+    cases x with
+    | inl e => exact e.elim
+    | inr i => exact Finset.subset_biUnion_of_mem (fun i => jSupport L J (ts i)) (Finset.mem_univ i)
+  | @func l f args ih =>
+    have hjc : jConstOf L J ((lhomWithConstants (skolemColim L) J).onFunction f) = ∅ := by
+      cases l <;> rfl
+    show jSupport L J (Term.func ((lhomWithConstants (skolemColim L) J).onFunction f) _) ⊆ _
+    rw [jSupport, hjc, Finset.union_empty]
+    exact Finset.biUnion_subset.mpr fun i _ => ih i
+
 /-! ### Step 3': the general de-substituted formula
 
 `deEqAtom`/`deRelAtom` reduce *atoms* on deep interpretations to `L^Sk`-formulas of arity `S.card`
@@ -998,6 +1020,50 @@ theorem EMContext.eventualDeepTruth_imp_iff (ctx : EMContext L J (M := M)) {n : 
   letI : (skolemColim L).Structure M := skolemColimStructure L
   simp only [EMContext.eventualDeepTruth, BoundedFormulaω.realize_imp]
   exact eventually_imp_iff_imp_eventually hdec
+
+/-! ### Step 4D-7: the `⋁`/`⋀`-completeness mixin and the Γ*-restricted truth lemma
+
+The countable connectives need more than tail indiscernibility: the truth lemma's `iSup` case asks for
+a *uniform witness* (`∀ᶠ d, ∃i Pᵢ d → ∃i ∀ᶠ d, Pᵢ d`) and the `iInf` case for a *uniform cutoff*
+(`∀i ∀ᶠ d, Pᵢ d → ∀ᶠ d, ∀i Pᵢ d`). Since `atTop` on `ℕ` is not countably complete, neither follows
+from `IsLomega1omegaIndiscernibleOnTail` + decidedness. They are the infinitary analogue of the
+consistency-property `C3`/`C4` rules for `⋁`/`⋀`, packaged here as a **separate `Prop` mixin** over
+`EMContext` (not core fields, so the quotient/congruence/atom API is untouched). The truth lemma takes
+`hc : ctx.OmegaComplete`; producing such a context (from a witness-homogeneous extraction) is later
+work. -/
+
+/-- **`⋁`/`⋀`-completeness of an `EMContext`'s eventual deep truth**: the genuinely non-formal residual
+for the countable connectives — a uniform `iSup`-witness and a uniform `iInf`-cutoff. -/
+structure EMContext.OmegaComplete (ctx : EMContext L J (M := M)) : Prop where
+  /-- Eventual deep truth of `⋁φs` provides a single component witness. -/
+  iSup_complete : ∀ {m : ℕ} (φs : ℕ → (skolemColim L).BoundedFormulaω Empty m)
+    (ts : Fin m → (skolemColim L)[[J]].Term Empty) (S : Finset J),
+    EMContext.eventualDeepTruth (L := L) (J := J) ctx (BoundedFormulaω.iSup φs) ts S →
+      ∃ i, EMContext.eventualDeepTruth (L := L) (J := J) ctx (φs i) ts S
+  /-- Eventual deep truth of all components provides eventual deep truth of `⋀φs`. -/
+  iInf_complete : ∀ {m : ℕ} (φs : ℕ → (skolemColim L).BoundedFormulaω Empty m)
+    (ts : Fin m → (skolemColim L)[[J]].Term Empty) (S : Finset J),
+    (∀ i, EMContext.eventualDeepTruth (L := L) (J := J) ctx (φs i) ts S) →
+      EMContext.eventualDeepTruth (L := L) (J := J) ctx (BoundedFormulaω.iInf φs) ts S
+
+/-- The easy `iSup` direction: a single component's eventual deep truth gives the disjunction's. -/
+theorem EMContext.eventualDeepTruth_iSup_of_exists (ctx : EMContext L J (M := M)) {m : ℕ}
+    (φs : ℕ → (skolemColim L).BoundedFormulaω Empty m)
+    (ts : Fin m → (skolemColim L)[[J]].Term Empty) (S : Finset J)
+    (h : ∃ i, EMContext.eventualDeepTruth (L := L) (J := J) ctx (φs i) ts S) :
+    EMContext.eventualDeepTruth (L := L) (J := J) ctx (BoundedFormulaω.iSup φs) ts S := by
+  obtain ⟨i, hi⟩ := h
+  simp only [EMContext.eventualDeepTruth, BoundedFormulaω.realize_iSup] at hi ⊢
+  exact hi.mono fun _ hd => ⟨i, hd⟩
+
+/-- The easy `iInf` direction: the conjunction's eventual deep truth gives every component's. -/
+theorem EMContext.eventualDeepTruth_iInf_forall (ctx : EMContext L J (M := M)) {m : ℕ}
+    (φs : ℕ → (skolemColim L).BoundedFormulaω Empty m)
+    (ts : Fin m → (skolemColim L)[[J]].Term Empty) (S : Finset J)
+    (h : EMContext.eventualDeepTruth (L := L) (J := J) ctx (BoundedFormulaω.iInf φs) ts S) (i : ℕ) :
+    EMContext.eventualDeepTruth (L := L) (J := J) ctx (φs i) ts S := by
+  simp only [EMContext.eventualDeepTruth, BoundedFormulaω.realize_iInf] at h ⊢
+  exact h.mono fun _ hd => hd i
 
 end Quotient
 
