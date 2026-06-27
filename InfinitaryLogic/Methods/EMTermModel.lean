@@ -83,7 +83,7 @@ theorem constantsToVars_varFinset_subset (t : (skolemColim L)[[J]].Term Empty) :
     rcases l with _ | l
     · rcases f with f' | c
       · simp [Term.constantsToVars, Term.varFinset]
-      · simp [Term.constantsToVars, jSupport, jConstOf, Term.varFinset]
+      · simp only [Term.constantsToVars, jSupport, jConstOf, Term.varFinset]; rfl
     · rcases f with f' | c
       · simp only [Term.constantsToVars, Term.varFinset, jSupport, jConstOf, Finset.union_empty]
         intro x hx
