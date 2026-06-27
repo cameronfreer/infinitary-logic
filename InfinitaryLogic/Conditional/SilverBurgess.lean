@@ -363,12 +363,14 @@ theorem splitting_lemma_closed_small_diam {α : Type u}
   -- U₀, U₁ ⊆ E' ⊆ closedBall x₀ δ, so ediam ≤ 2δ ≤ ε
   have hball_eq : Metric.closedBall x₀ δ = EMetric.closedBall x₀ (ENNReal.ofReal δ) :=
     (Metric.emetric_closedBall hδ_pos.le).symm
+  have hball_diam : Metric.ediam (Metric.closedBall x₀ δ) ≤ 2 * ENNReal.ofReal δ := by
+    rw [hball_eq]; exact Metric.ediam_closedEBall_le
   have hU₀_diam : Metric.ediam U₀ ≤ ε :=
     (Metric.ediam_mono (hU₀_sub.trans Set.inter_subset_right)).trans
-      ((hball_eq ▸ Metric.ediam_closedEBall_le).trans hδ_bound)
+      (hball_diam.trans hδ_bound)
   have hU₁_diam : Metric.ediam U₁ ≤ ε :=
     (Metric.ediam_mono (hU₁_sub.trans Set.inter_subset_right)).trans
-      ((hball_eq ▸ Metric.ediam_closedEBall_le).trans hδ_bound)
+      (hball_diam.trans hδ_bound)
   have hU₀_ne : U₀.Nonempty := by
     by_contra h; rw [Set.not_nonempty_iff_eq_empty] at h
     exact hU₀_unc (h ▸ by simp [Set.countable_empty])

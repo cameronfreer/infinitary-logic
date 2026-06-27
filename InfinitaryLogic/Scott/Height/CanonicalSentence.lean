@@ -71,7 +71,7 @@ theorem canonicalScottSentence_iff_potentialIso_of
       family := { p | BFEquiv (L := L) (scottHeight (L := L) M) p.1 p.2.1 p.2.2 }
       empty_mem := h
       compatible := fun p hp =>
-        (BFEquiv.zero p.2.1 p.2.2).mp (BFEquiv.monotone (zero_le _) hp)
+        (BFEquiv.zero p.2.1 p.2.2).mp (BFEquiv.monotone bot_le hp)
       forth := fun ⟨k, a, b⟩ hp m => by
         simp only [Set.mem_setOf_eq] at hp ⊢
         exact BFEquiv.forth ((hstab k N a b).mp hp) m
