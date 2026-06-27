@@ -1141,8 +1141,10 @@ def EMContext.Decided (ctx : EMContext L J (M := M)) {m : ℕ}
 
 /-- **Truth-lemma readiness** of a formula on `ts`/`S`: the closure data the Γ*-truth-lemma induction
 consumes — decidedness at every `imp`-antecedent (for `eventualDeepTruth_imp_iff`), recursively down
-the connectives. The `all` case is `False` (this is the `all`-free fragment; the Skolem `all` case is
-a separate chunk). Discharged later from the Γ* deForm-closure via `eventualDeepTruth_decided`. -/
+the connectives. The `all φ` case requires the **body** `φ` to be ready at every one-point extension
+`Fin.snoc ts u` (the carrier's `∀x` ranges over all term-classes `mkClass u` via `Quotient.ind`), so
+the `all` case recurses on the structural subformula `φ` — no skolem-witness recursion is needed here.
+Discharged later from the Γ* deForm-closure via `eventualDeepTruth_decided`. -/
 def EMContext.TLReady (ctx : EMContext L J (M := M)) :
     ∀ {m : ℕ}, (skolemColim L).BoundedFormulaω Empty m →
       (Fin m → (skolemColim L)[[J]].Term Empty) → Finset J → Prop
@@ -1154,16 +1156,47 @@ def EMContext.TLReady (ctx : EMContext L J (M := M)) :
         EMContext.TLReady ctx φ ts S ∧ EMContext.TLReady ctx ψ ts S
   | _, .iSup φs, ts, S => ∀ i, EMContext.TLReady ctx (φs i) ts S
   | _, .iInf φs, ts, S => ∀ i, EMContext.TLReady ctx (φs i) ts S
-  | _, .all _, _, _ => False
+  | _, .all φ, ts, S =>
+      ∀ u : (skolemColim L)[[J]].Term Empty,
+        EMContext.TLReady ctx φ (Fin.snoc ts u) (S ∪ jSupport L J u)
 
-/-- **The Γ*-restricted truth lemma** (all-free fragment), conditional on `⋁`/`⋀`-completeness `hc`.
-For a base-language formula `φ` realized in the EM term model on a tuple of term-classes `mkClass ∘ ts`
-(over a covering support `S`), realization is equivalent to `φ`'s **eventual deep truth** in the source
-model. Atoms use `eventualDeepTruth_equal_iff`/`_rel_iff` (support bridged by
-`jSupport_onTerm_subst_subset`); `imp` uses antecedent decidedness from `TLReady`; `iSup`/`iInf` use
-`hc`'s uniform witness/cutoff plus the easy directions. The `all` (Skolem) case is excluded by
-`TLReady` and handled in a later chunk. -/
-theorem EMContext.truthLemma (ctx : EMContext L J (M := M)) (hc : ctx.OmegaComplete) :
+/-- Forming classes commutes with `Fin.snoc`: the carrier tuple obtained by snocing `mkClass u` onto
+`mkClass ∘ ts` is `mkClass ∘ (Fin.snoc ts u)`. The bridge between the carrier-side `∀x` (over
+term-classes) and the term-side `Fin.snoc ts u` in the `all` case. -/
+theorem EMContext.mkClass_snoc (ctx : EMContext L J (M := M)) {m : ℕ}
+    (ts : Fin m → (skolemColim L)[[J]].Term Empty) (u : (skolemColim L)[[J]].Term Empty) :
+    Fin.snoc (fun i => ctx.mkClass (t := ts i)) (ctx.mkClass (t := u))
+      = fun i => ctx.mkClass
+          (t := (Fin.snoc ts u : Fin (m + 1) → (skolemColim L)[[J]].Term Empty) i) := by
+  funext i
+  refine Fin.lastCases ?_ (fun j => ?_) i
+  · simp only [Fin.snoc_last]
+  · simp only [Fin.snoc_castSucc]
+
+/-- **The exact `all`-case Skolem obligation** (stated, proved in a later chunk against the colimit
+machinery): the eventual deep truth of `∀ φ` over `S` is the conjunction over *all* closed argument
+terms `u` of the eventual deep truth of the body at `Fin.snoc ts u`. The `→` direction is universal
+instantiation (`x := deep u`); the hard `←` picks `u` to be the Skolem witness term of `¬φ` (whence
+`qrank_skolemWitnessFormula_lt`) and uses `M`'s Skolem axiom — that proof needs the stage/colimit
+transport and is deferred. With it, the truth lemma's `all` case is `Quotient.ind` + the body's IH. -/
+def EMContext.SkolemSemantic (ctx : EMContext L J (M := M)) : Prop :=
+  ∀ {m : ℕ} (φ : (skolemColim L).BoundedFormulaω Empty (m + 1))
+    (ts : Fin m → (skolemColim L)[[J]].Term Empty) (S : Finset J),
+    (∀ i, jSupport L J (ts i) ⊆ S) →
+    (EMContext.eventualDeepTruth (L := L) (J := J) ctx (BoundedFormulaω.all φ) ts S ↔
+      ∀ u : (skolemColim L)[[J]].Term Empty,
+        EMContext.eventualDeepTruth (L := L) (J := J) ctx φ (Fin.snoc ts u) (S ∪ jSupport L J u))
+
+/-- **The Γ*-restricted truth lemma**, conditional on `⋁`/`⋀`-completeness `hc` and the `all`-case
+Skolem obligation `hsk : ctx.SkolemSemantic`. For a base-language formula `φ` realized in the EM term
+model on a tuple of term-classes `mkClass ∘ ts` (over a covering support `S`), realization is equivalent
+to `φ`'s **eventual deep truth** in the source model. Atoms use `eventualDeepTruth_equal_iff`/`_rel_iff`
+(support bridged by `jSupport_onTerm_subst_subset`); `imp` uses antecedent decidedness from `TLReady`;
+`iSup`/`iInf` use `hc`'s uniform witness/cutoff; `all` uses `Quotient.ind` + the body's IH + `hsk`. The
+induction is structural — the `all` case needs only the body `φ` (a subformula), not the (non-subformula)
+skolem-witness formula; the Skolem content is isolated in `hsk` (proved separately). -/
+theorem EMContext.truthLemma (ctx : EMContext L J (M := M)) (hc : ctx.OmegaComplete)
+    (hsk : ctx.SkolemSemantic) :
     ∀ {m : ℕ} (φ : (skolemColim L).BoundedFormulaω Empty m)
       (ts : Fin m → (skolemColim L)[[J]].Term Empty) (S : Finset J),
       (∀ i, jSupport L J (ts i) ⊆ S) → EMContext.TLReady (L := L) (J := J) ctx φ ts S →
@@ -1197,7 +1230,30 @@ theorem EMContext.truthLemma (ctx : EMContext L J (M := M)) (hc : ctx.OmegaCompl
     rw [EMContext.eventualDeepTruth_imp_iff (L := L) (J := J) ctx φ ψ ts S hdec]
     simp only [BoundedFormulaω.mapLanguage_imp, BoundedFormulaω.realize_imp]
     exact imp_congr (ihφ ts S hsub hrφ) (ihψ ts S hsub hrψ)
-  | all φ ih => intro ts S _ hready; exact hready.elim
+  | all φ ih =>
+    intro ts S hsub hready
+    have hsub_u : ∀ (u : (skolemColim L)[[J]].Term Empty) (i : Fin _),
+        jSupport L J ((Fin.snoc ts u : Fin _ → (skolemColim L)[[J]].Term Empty) i)
+          ⊆ S ∪ jSupport L J u := by
+      intro u i
+      refine Fin.lastCases ?_ (fun j => ?_) i
+      · rw [Fin.snoc_last]; exact Finset.subset_union_right
+      · rw [Fin.snoc_castSucc]; exact (hsub j).trans Finset.subset_union_left
+    rw [hsk φ ts S hsub,
+      show (BoundedFormulaω.all φ).mapLanguage (lhomWithConstants (skolemColim L) J)
+          = BoundedFormulaω.all (φ.mapLanguage (lhomWithConstants (skolemColim L) J)) from rfl,
+      BoundedFormulaω.realize_all]
+    constructor
+    · intro h u
+      rw [← ih (Fin.snoc ts u) (S ∪ jSupport L J u) (hsub_u u) (hready u)]
+      have hx := h (ctx.mkClass (t := u))
+      rwa [EMContext.mkClass_snoc (L := L) (J := J) ctx ts u] at hx
+    · intro h
+      refine Quotient.ind (fun u => ?_)
+      show (φ.mapLanguage (lhomWithConstants (skolemColim L) J)).Realize Empty.elim
+          (Fin.snoc (fun i => ctx.mkClass (t := ts i)) (ctx.mkClass (t := u)))
+      rw [EMContext.mkClass_snoc (L := L) (J := J) ctx ts u, ih (Fin.snoc ts u) (S ∪ jSupport L J u) (hsub_u u) (hready u)]
+      exact h u
   | iSup φs ih =>
     intro ts S hsub hready
     rw [show (BoundedFormulaω.iSup φs).mapLanguage (lhomWithConstants (skolemColim L) J)
