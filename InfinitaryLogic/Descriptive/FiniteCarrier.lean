@@ -54,7 +54,7 @@ theorem perm_smul_apply (n : ℕ) (σ : Equiv.Perm (Fin n))
 
 instance permMulAction (n : ℕ) :
     MulAction (Equiv.Perm (Fin n)) (StructureSpaceOn L (Fin n)) where
-  one_smul c := by ext ⟨R, v⟩; simp [HSMul.hSMul, SMul.smul]
+  one_smul c := by ext ⟨R, v⟩; show c ⟨R, ⇑(1 : Equiv.Perm (Fin n)).symm ∘ v⟩ = c ⟨R, v⟩; congr 1
   mul_smul σ τ c := by
     ext ⟨R, v⟩
     show c ⟨R, ⇑(σ * τ).symm ∘ v⟩ = c ⟨R, ⇑τ.symm ∘ ⇑σ.symm ∘ v⟩
@@ -357,8 +357,8 @@ private theorem compose_encoded_iso
   simp only [Equiv.inducedStructure_RelMap, Function.comp_def, Equiv.trans_apply, Equiv.toFun_as_coe]
   simp_rw [eN.symm_apply_apply]
   constructor
-  · intro h; exact (e.map_rel' R (⇑eM.symm ∘ v)).mp (by convert h using 2)
-  · intro h; convert (e.map_rel' R (⇑eM.symm ∘ v)).mpr h using 2
+  · intro h; exact (e.map_rel' R (⇑eM.symm ∘ v)).mp (by convert h using 2 <;> rfl)
+  · intro h; convert (e.map_rel' R (⇑eM.symm ∘ v)).mpr h using 2 <;> rfl
 
 omit [Countable ((l : ℕ) × L.Relations l)] in
 /-- L-isomorphic countable models map to the same coded class. -/

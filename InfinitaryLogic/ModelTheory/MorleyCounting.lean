@@ -76,7 +76,8 @@ theorem bfEquivSetoid_measurableSet (φ : L.Sentenceω) (α : Ordinal.{0})
       (fun p : ↥(ModelsOf φ) × ↥(ModelsOf φ) => (p.1.1, p.2.1)) ⁻¹'
         (BFEquivSet (L := L) α 0 Fin.elim0 Fin.elim0) := by
     ext ⟨⟨c₁, _⟩, ⟨c₂, _⟩⟩
-    simp only [bfEquivSetoid, Set.mem_setOf_eq, Set.mem_preimage, BFEquivSet]
+    simp only [Set.mem_setOf_eq, Set.mem_preimage, BFEquivSet]
+    exact Iff.rfl
   rw [hset]
   exact ((measurable_subtype_coe.comp measurable_fst).prodMk
     (measurable_subtype_coe.comp measurable_snd))

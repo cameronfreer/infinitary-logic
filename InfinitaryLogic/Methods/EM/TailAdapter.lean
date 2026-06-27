@@ -225,7 +225,7 @@ theorem IsLomega1omegaIndiscernibleOnTail.templateTheoryOfSeq_model_of_compact
     (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
     (h : IsLomega1omegaIndiscernibleOnTail (L := L) a (Set.range s))
     {J : Type u} [LinearOrder J]
-    (height : Ordinal) (h_height : Ordinal.omega0 < height)
+    (height : Ordinal.{0}) (h_height : Ordinal.omega0 < height)
     (hCompact : ∀ S : Set L[[J]].Sentenceω,
       (∀ F : Set L[[J]].Sentenceω, F.Finite → F ⊆ S →
         ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model F N) →
@@ -246,7 +246,7 @@ theorem IsLomega1omegaIndiscernibleOnTail.stretch_restricted_of_compact
     (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
     (h : IsLomega1omegaIndiscernibleOnTail (L := L) a (Set.range s))
     {J : Type u} [LinearOrder J]
-    (height : Ordinal) (h_height : Ordinal.omega0 < height)
+    (height : Ordinal.{0}) (h_height : Ordinal.omega0 < height)
     (hCompact : ∀ S : Set L[[J]].Sentenceω,
       (∀ F : Set L[[J]].Sentenceω, F.Finite → F ⊆ S →
         ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model F N) →
@@ -274,7 +274,7 @@ theorem IsLomega1omegaIndiscernibleOnTail.stretch_restricted_sequence_of_compact
     (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
     (h : IsLomega1omegaIndiscernibleOnTail (L := L) a (Set.range s))
     {J : Type u} [LinearOrder J]
-    (height : Ordinal) (h_height : Ordinal.omega0 < height)
+    (height : Ordinal.{0}) (h_height : Ordinal.omega0 < height)
     (hCompact : ∀ S : Set L[[J]].Sentenceω,
       (∀ F : Set L[[J]].Sentenceω, F.Finite → F ⊆ S →
         ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model F N) →

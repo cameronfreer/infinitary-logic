@@ -176,7 +176,8 @@ theorem BFEquiv.monotone {α β : Ordinal} (hαβ : α ≤ β)
   | zero =>
     simp only [nonpos_iff_eq_zero] at hαβ
     rwa [hαβ]
-  | succ γ ih =>
+  | add_one γ ih =>
+    rw [← Order.succ_eq_add_one] at hαβ h
     rcases hαβ.lt_or_eq with hαβ' | rfl
     · rw [Order.lt_succ_iff] at hαβ'
       exact ih hαβ' (BFEquiv.of_succ h)
@@ -212,8 +213,8 @@ theorem BFEquiv.refl (α : Ordinal) (a : Fin n → M) :
     BFEquiv (L := L) (M := M) (N := M) α n a a := by
   induction α using Ordinal.limitRecOn generalizing n a with
   | zero => exact (BFEquiv.zero a a).mpr (SameAtomicType.refl a)
-  | succ β ih =>
-    rw [BFEquiv.succ]
+  | add_one β ih =>
+    rw [← Order.succ_eq_add_one, BFEquiv.succ]
     exact ⟨ih a, fun m => ⟨m, ih (snoc a m)⟩, fun m => ⟨m, ih (snoc a m)⟩⟩
   | limit β hβ ih =>
     rw [BFEquiv.limit β hβ]
@@ -227,8 +228,8 @@ theorem BFEquiv.symm {α : Ordinal} {a : Fin n → M} {b : Fin n → N}
   | zero =>
     rw [BFEquiv.zero] at h ⊢
     exact h.symm
-  | succ β ih =>
-    rw [BFEquiv.succ] at h ⊢
+  | add_one β ih =>
+    rw [← Order.succ_eq_add_one, BFEquiv.succ] at h ⊢
     exact ⟨ih h.1, fun n' => let ⟨m, hm⟩ := h.2.2 n'; ⟨m, ih hm⟩,
            fun m => let ⟨n', hn'⟩ := h.2.1 m; ⟨n', ih hn'⟩⟩
   | limit β hβ ih =>
@@ -247,8 +248,8 @@ theorem BFEquiv.trans {P : Type*} [L.Structure P]
   | zero =>
     rw [BFEquiv.zero] at hab hbc ⊢
     exact fun idx => (hab idx).trans (hbc idx)
-  | succ β ih =>
-    rw [BFEquiv.succ] at hab hbc ⊢
+  | add_one β ih =>
+    rw [← Order.succ_eq_add_one, BFEquiv.succ] at hab hbc ⊢
     refine ⟨ih hab.1 hbc.1, fun m => ?_, fun p => ?_⟩
     · let ⟨nb, hnb⟩ := hab.2.1 m; let ⟨p, hp⟩ := hbc.2.1 nb; exact ⟨p, ih hnb hp⟩
     · let ⟨nb, hnb⟩ := hbc.2.2 p; let ⟨m, hm⟩ := hab.2.2 nb; exact ⟨m, ih hm hnb⟩
@@ -349,8 +350,8 @@ theorem BFEquiv.ofOrdinalLift
   induction β using Ordinal.limitRecOn generalizing n a b with
   | zero =>
     rw [Ordinal.lift_zero, BFEquiv.zero] at *; exact h
-  | succ γ ih =>
-    rw [Ordinal.lift_succ, BFEquiv.succ] at *
+  | add_one γ ih =>
+    rw [← Order.succ_eq_add_one, Ordinal.lift_succ, BFEquiv.succ] at *
     exact ⟨ih h.1,
            fun m => let ⟨n', hn'⟩ := h.2.1 m; ⟨n', ih hn'⟩,
            fun n' => let ⟨m, hm⟩ := h.2.2 n'; ⟨m, ih hm⟩⟩
@@ -372,8 +373,9 @@ theorem BFEquiv.toOrdinalLift
   induction β using Ordinal.limitRecOn generalizing n a b with
   | zero =>
     rw [Ordinal.lift_zero, BFEquiv.zero] at *; exact h
-  | succ γ ih =>
-    rw [Ordinal.lift_succ, BFEquiv.succ] at h; rw [BFEquiv.succ]
+  | add_one γ ih =>
+    rw [← Order.succ_eq_add_one, Ordinal.lift_succ, BFEquiv.succ] at h
+    rw [← Order.succ_eq_add_one, BFEquiv.succ]
     exact ⟨ih h.1,
            fun m => let ⟨n', hn'⟩ := h.2.1 m; ⟨n', ih hn'⟩,
            fun n' => let ⟨m, hm⟩ := h.2.2 n'; ⟨m, ih hm⟩⟩

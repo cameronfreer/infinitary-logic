@@ -120,7 +120,8 @@ theorem isMeagre_of_isMeagre_sections [SecondCountableTopology Y]
   -- The symmetric difference of A and W is meager
   have hM : IsMeagre {p : X × Y | ¬(p ∈ A ↔ p ∈ W)} := by
     rw [IsMeagre, compl_setOf]
-    simpa using Filter.eventuallyEq_set.mp hAW
+    simp only [not_not]
+    exact Filter.eventuallyEq_set.mp hAW
   by_contra hA_nm
   -- W is nonempty (otherwise A is contained in the symmetric difference)
   have hW_ne : W.Nonempty := by

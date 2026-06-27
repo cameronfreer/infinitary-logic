@@ -70,7 +70,7 @@ theorem scottHeight_lt_omega1_of
       BFEquiv (L := L) α n a b → BFEquiv (L := L) (Order.succ α) n a b} := by
     intro n a N _ _ b hBF
     exact (hstab n N a b).mp hBF
-  exact lt_of_le_of_lt (csInf_le ⟨0, fun _ _ => zero_le _⟩ h_mem) hα_lt
+  exact lt_of_le_of_lt (csInf_le ⟨0, fun _ _ => bot_le⟩ h_mem) hα_lt
 
 /-- Conditional variant of `scottHeight_stabilizesCompletely`. -/
 theorem scottHeight_stabilizesCompletely_of
@@ -140,7 +140,7 @@ theorem scottHeight_eq_of_equiv
   · -- scottHeight M ≤ scottHeight N: show S_N ⊆ S_M
     apply csInf_le_csInf
     · -- S_M is BddBelow
-      exact ⟨0, fun _ _ => zero_le _⟩
+      exact ⟨0, fun _ _ => bot_le⟩
     · -- S_N is nonempty: exists_complete_stabilization N gives a member
       obtain ⟨α, _, hstab⟩ := exists_complete_stabilization (L := L) N
       exact ⟨α, fun {n} a P _ _ b hBF => (hstab n P a b).mp hBF⟩
@@ -158,7 +158,7 @@ theorem scottHeight_eq_of_equiv
       exact (equiv_implies_BFEquiv e (Order.succ α) n a).trans h2
   · -- scottHeight N ≤ scottHeight M: show S_M ⊆ S_N
     apply csInf_le_csInf
-    · exact ⟨0, fun _ _ => zero_le _⟩
+    · exact ⟨0, fun _ _ => bot_le⟩
     · obtain ⟨α, _, hstab⟩ := exists_complete_stabilization (L := L) M
       exact ⟨α, fun {n} a P _ _ b hBF => (hstab n P a b).mp hBF⟩
     · intro α hα_M

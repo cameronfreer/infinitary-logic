@@ -101,8 +101,8 @@ theorem equiv_implies_BFEquiv {M N : Type w} [L.Structure M] [L.Structure N]
     | rel R f =>
       simp only [AtomicIdx.holds, Function.comp_assoc]
       exact (e.map_rel R (a ∘ f)).symm
-  | succ β ih =>
-    rw [BFEquiv.succ]
+  | add_one β ih =>
+    rw [← Order.succ_eq_add_one, BFEquiv.succ]
     refine ⟨ih n a, ?_, ?_⟩
     · intro m
       use e m
@@ -162,8 +162,9 @@ theorem BFEquiv_upgrade_at_stabilization {M N : Type w} [L.Structure M] [L.Struc
     (h : BFEquiv (L := L) α n a b) (β : Ordinal) (hβ : α ≤ β) :
     BFEquiv (L := L) β n a b := by
   induction β using Ordinal.limitRecOn generalizing n a b with
-  | zero => rwa [le_antisymm hβ (zero_le α)] at h
-  | succ γ ih =>
+  | zero => rwa [le_antisymm hβ bot_le] at h
+  | add_one γ ih =>
+    rw [← Order.succ_eq_add_one] at hβ ⊢
     rw [BFEquiv.succ]
     rcases hβ.lt_or_eq with hlt | heq
     · rw [Order.lt_succ_iff] at hlt
@@ -294,11 +295,9 @@ theorem exists_complete_self_stabilization (M : Type w) [L.Structure M] [Countab
   -- Step 4: Define globalStab as supremum + 1
   let globalStab : Ordinal.{0} := ⨆ k, boundOrd (enumTriples k) + 1
   -- Step 5: Show globalStab < ω₁
-  have hGlobalLt : globalStab < Ordinal.omega 1 := by
-    rw [← Cardinal.ord_aleph]
-    exact Ordinal.iSup_sequence_lt_omega_one _ fun k => by
-      rw [Cardinal.ord_aleph]
-      exact Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) (hboundOrd_lt _)
+  have hGlobalLt : globalStab < Ordinal.omega 1 :=
+    Ordinal.iSup_lt_omega_one fun k =>
+      Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) (hboundOrd_lt _)
   -- Step 6: succ globalStab < ω₁ (since ω₁ is a limit ordinal)
   have hSuccGlobalLt : Order.succ globalStab < Ordinal.omega 1 :=
     Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) hGlobalLt
@@ -333,8 +332,8 @@ private theorem BFEquiv_all_countable_ordinals_implies_all
   intro α
   induction α using Ordinal.limitRecOn generalizing n a b with
   | zero => exact h 0 (Ordinal.omega_pos 1)
-  | succ β ih =>
-    rw [BFEquiv.succ]
+  | add_one β ih =>
+    rw [← Order.succ_eq_add_one, BFEquiv.succ]
     have hβ : BFEquiv (L := L) β n a b := ih (fun γ hγ => h γ hγ)
     refine ⟨hβ, ?_, ?_⟩
     · -- Forth: for each m : M, ∃ n' : N, BFEquiv β (n+1) (snoc a m) (snoc b n')
@@ -355,8 +354,7 @@ private theorem BFEquiv_all_countable_ordinals_implies_all
         have hbdd : BddAbove (Set.range αbad_seq) :=
           ⟨Ordinal.omega 1, fun _ ⟨k, hk⟩ => hk ▸ le_of_lt (hαbad_lt _)⟩
         have hS_lt : (⨆ k, αbad_seq k) < Ordinal.omega 1 := by
-          rw [← Cardinal.ord_aleph]; exact Ordinal.iSup_sequence_lt_omega_one _ fun k => by
-            rw [Cardinal.ord_aleph]; exact hαbad_lt _
+          exact Ordinal.iSup_lt_omega_one fun k => hαbad_lt _
         obtain ⟨n'₀, hn'₀⟩ := BFEquiv.forth
           (h _ (Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) hS_lt)) m
         exact hαbad_fail n'₀ (BFEquiv.monotone
@@ -376,8 +374,7 @@ private theorem BFEquiv_all_countable_ordinals_implies_all
         have hbdd : BddAbove (Set.range αbad_seq) :=
           ⟨Ordinal.omega 1, fun _ ⟨k, hk⟩ => hk ▸ le_of_lt (hαbad_lt _)⟩
         have hS_lt : (⨆ k, αbad_seq k) < Ordinal.omega 1 := by
-          rw [← Cardinal.ord_aleph]; exact Ordinal.iSup_sequence_lt_omega_one _ fun k => by
-            rw [Cardinal.ord_aleph]; exact hαbad_lt _
+          exact Ordinal.iSup_lt_omega_one fun k => hαbad_lt _
         obtain ⟨m₀, hm₀⟩ := BFEquiv.back
           (h _ (Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) hS_lt)) n'
         exact hαbad_fail m₀ (BFEquiv.monotone
@@ -456,9 +453,8 @@ theorem nonempty_iInter_of_antitone_of_nonempty {X : Type*} [Countable X]
       simp only [depart]
       rw [dif_neg hx]
       exact Ordinal.omega_pos 1
-  have hSup_lt : (⨆ k, depart_seq k) < Ordinal.omega 1 := by
-    rw [← Cardinal.ord_aleph]
-    exact Ordinal.iSup_sequence_lt_omega_one depart_seq hdepart_seq_lt
+  have hSup_lt : (⨆ k, depart_seq k) < Ordinal.omega 1 :=
+    Ordinal.iSup_lt_omega_one fun k => by rw [← Cardinal.ord_aleph]; exact hdepart_seq_lt k
   have hBdd_seq : BddAbove (Set.range depart_seq) :=
     ⟨Ordinal.omega 1, fun _ ⟨k, hk⟩ => hk ▸ le_of_lt
       (by rw [Cardinal.ord_aleph] at hdepart_seq_lt; exact hdepart_seq_lt k)⟩
@@ -471,7 +467,7 @@ theorem nonempty_iInter_of_antitone_of_nonempty {X : Type*} [Countable X]
   -- S (iSup depart_seq) is nonempty
   obtain ⟨x, hx⟩ := hNonempty (⨆ k, depart_seq k) hSup_lt
   -- x ∈ S (iSup depart_seq) ⊆ S 0
-  have hx0 : x ∈ S 0 := hAnti (zero_le _) hx
+  have hx0 : x ∈ S 0 := hAnti bot_le hx
   -- But depart x ≤ iSup depart_seq, so S (iSup ...) ⊆ S (depart x)
   -- And x ∉ S (depart x), contradiction
   exact hdepart_spec x hx0 (hAnti (hle_sup x) hx)
@@ -583,8 +579,9 @@ private theorem BFEquiv_upgrade_from_iff
     ∀ β, γ ≤ β → β < Ordinal.omega 1 → BFEquiv (L := L) β n a b := by
   intro β hβ_ge hβ_lt
   induction β using Ordinal.limitRecOn with
-  | zero => exact BFEquiv.monotone (zero_le _) hBF
-  | succ δ ih =>
+  | zero => exact BFEquiv.monotone bot_le hBF
+  | add_one δ ih =>
+    rw [← Order.succ_eq_add_one] at hβ_ge hβ_lt ⊢
     rcases hβ_ge.lt_or_eq with hlt | heq
     · rw [Order.lt_succ_iff] at hlt
       have hδ_lt := lt_of_lt_of_le (Order.lt_succ δ) (le_of_lt hβ_lt)
@@ -728,7 +725,7 @@ theorem exists_refinement_between
       (le_or_gt γ δ).elim (fun h => BFEquiv.monotone h hBFδ) (fun h => hβ_min γ h hγ)) hβ_fail
   · have hβ_notMin : ¬IsMin β := not_isMin_of_lt (lt_of_le_of_lt bot_le hβ_gt_δ)
     have : ¬Order.IsSuccPrelimit β := fun h => hβ_sl ⟨hβ_notMin, h⟩
-    rw [Order.not_isSuccPrelimit_iff] at this
+    rw [Order.not_isSuccPrelimit_iff_succ_eq] at this
     obtain ⟨ε, _, hεβ⟩ := this
     have hBFε : BFEquiv (L := L) ε n a b :=
       (le_or_gt ε δ).elim (fun h => BFEquiv.monotone h hBFδ)
@@ -803,7 +800,7 @@ theorem refinement_descent
   · -- Successor case: ε = succ δ for some δ
     have hε_notMin : ¬IsMin ε := not_isMin_of_lt (lt_of_le_of_lt bot_le hε)
     have : ¬Order.IsSuccPrelimit ε := fun h => hε_sl ⟨hε_notMin, h⟩
-    rw [Order.not_isSuccPrelimit_iff] at this
+    rw [Order.not_isSuccPrelimit_iff_succ_eq] at this
     obtain ⟨δ, _, hδε⟩ := this
     -- hδε : Order.succ δ = ε
     subst hδε
@@ -870,10 +867,7 @@ theorem per_tuple_stabilization_below_omega1_of
             BFEquiv (L := L) α n a b ∧ ¬BFEquiv (L := L) (Order.succ α) n a b})
       let seq : ℕ → Ordinal.{0} := fun k => (enum k).1
       have hseq_lt : ∀ k, seq k < Ordinal.omega 1 := fun k => (enum k).2.1
-      have hseq_lt' : ∀ k, seq k < (Cardinal.aleph 1).ord := by
-        intro k; rw [Cardinal.ord_aleph]; exact hseq_lt k
-      have hsup_lt := Ordinal.iSup_sequence_lt_omega_one seq hseq_lt'
-      rw [Cardinal.ord_aleph] at hsup_lt
+      have hsup_lt := Ordinal.iSup_lt_omega_one hseq_lt
       have hSuccSupLt : Order.succ (⨆ k, seq k) < Ordinal.omega 1 :=
         Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) hsup_lt
       refine ⟨Order.succ (⨆ k, seq k), hSuccSupLt,
@@ -945,14 +939,9 @@ theorem exists_complete_stabilization_of
   obtain ⟨enumTuples, hTuples_surj⟩ := exists_surjective_nat (Σ n, Fin n → M)
   let globalStab : Ordinal.{0} := ⨆ k, boundOrd (enumTuples k) + 1
   have hGlobalLt : globalStab < Ordinal.omega 1 := by
-    have hEachLt : ∀ k, boundOrd (enumTuples k) + 1 < (Cardinal.aleph 1).ord := by
-      intro k; rw [Cardinal.ord_aleph]
-      exact Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1)
-        (hboundOrd_lt (enumTuples k))
-    have hsup := Ordinal.iSup_sequence_lt_omega_one
-      (fun k => boundOrd (enumTuples k) + 1) hEachLt
-    rw [Cardinal.ord_aleph] at hsup
-    exact hsup
+    have hEachLt : ∀ k, boundOrd (enumTuples k) + 1 < Ordinal.omega 1 := fun k =>
+      Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) (hboundOrd_lt (enumTuples k))
+    exact Ordinal.iSup_lt_omega_one hEachLt
   have hSuccGlobalLt : Order.succ globalStab < Ordinal.omega 1 :=
     Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) hGlobalLt
   use globalStab, hGlobalLt
@@ -982,7 +971,7 @@ theorem BFEquiv_stabilization_implies_equiv {M N : Type w} [L.Structure M] [L.St
   exact (PotentialIso.mk
     { p | BFEquiv (L := L) α p.1 p.2.1 p.2.2 }
     h
-    (fun p hp => (BFEquiv.zero p.2.1 p.2.2).mp (BFEquiv.monotone (zero_le _) hp))
+    (fun p hp => (BFEquiv.zero p.2.1 p.2.2).mp (BFEquiv.monotone bot_le hp))
     (fun ⟨k, a, b⟩ hp m => by
       simp only [Set.mem_setOf_eq] at hp ⊢
       exact BFEquiv.forth ((hstab k N a b).mp hp) m)

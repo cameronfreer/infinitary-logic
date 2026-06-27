@@ -328,10 +328,11 @@ theorem mycielski_cantor {M : Set ((ℕ → Bool) × (ℕ → Bool))} (hM : IsMe
       exact ENNReal.tendsto_pow_atTop_nhds_zero_of_lt_one
         (by rw [ENNReal.ofReal_lt_one]; norm_num)
     exact tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds hlim
-      (fun n => zero_le _) hbound
+      (fun _ => bot_le) hbound
   -- Extract the induced map
   have hdom : ∀ x : ℕ → Bool, x ∈ (CantorScheme.inducedMap A).1 := fun x => by
-    rw [hanti.map_of_vanishingDiam hdiam hnonempty]
+    rw [@CantorScheme.ClosureAntitone.map_of_vanishingDiam Bool (ℕ → Bool) A _
+      cantorCompleteSpace hdiam hanti hnonempty]
     exact mem_univ x
   refine ⟨fun x => (CantorScheme.inducedMap A).2 ⟨x, hdom x⟩, ?_, ?_⟩
   · exact hdiam.map_continuous.comp (by fun_prop)

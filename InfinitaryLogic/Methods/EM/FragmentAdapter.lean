@@ -282,7 +282,7 @@ theorem IsLomega1omegaIndiscernible.templateTheoryOfSeq_model_of_compact
     (h : IsLomega1omegaIndiscernible (L := L) a)
     {J : Type u} [LinearOrder J]
     (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
-    (height : Ordinal) (h_height : Ordinal.omega0 < height)
+    (height : Ordinal.{0}) (h_height : Ordinal.omega0 < height)
     (hCompact : ∀ S : Set L[[J]].Sentenceω,
       (∀ F : Set L[[J]].Sentenceω, F.Finite → F ⊆ S →
         ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model F N) →
@@ -307,7 +307,7 @@ theorem IsLomega1omegaIndiscernible.stretch_restricted_of_compact
     (h : IsLomega1omegaIndiscernible (L := L) a)
     (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
     {J : Type u} [LinearOrder J]
-    (height : Ordinal) (h_height : Ordinal.omega0 < height)
+    (height : Ordinal.{0}) (h_height : Ordinal.omega0 < height)
     (hCompact : ∀ S : Set L[[J]].Sentenceω,
       (∀ F : Set L[[J]].Sentenceω, F.Finite → F ⊆ S →
         ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model F N) →
@@ -338,7 +338,7 @@ theorem IsLomega1omegaIndiscernible.stretch_restricted_sequence_of_compact
     (h : IsLomega1omegaIndiscernible (L := L) a)
     (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
     {J : Type u} [LinearOrder J]
-    (height : Ordinal) (h_height : Ordinal.omega0 < height)
+    (height : Ordinal.{0}) (h_height : Ordinal.omega0 < height)
     (hCompact : ∀ S : Set L[[J]].Sentenceω,
       (∀ F : Set L[[J]].Sentenceω, F.Finite → F ⊆ S →
         ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model F N) →
@@ -493,7 +493,7 @@ theorem IsLomega1omegaIndiscernibleOn.templateTheoryOfSeq_model_of_compact
     (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
     (h : IsLomega1omegaIndiscernibleOn a (Set.range s))
     {J : Type u} [LinearOrder J]
-    (height : Ordinal) (h_height : Ordinal.omega0 < height)
+    (height : Ordinal.{0}) (h_height : Ordinal.omega0 < height)
     (hCompact : ∀ S : Set L[[J]].Sentenceω,
       (∀ F : Set L[[J]].Sentenceω, F.Finite → F ⊆ S →
         ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model F N) →
@@ -537,7 +537,7 @@ theorem IsLomega1omegaIndiscernibleOn.stretch_restricted_of_compact
     (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
     (h : IsLomega1omegaIndiscernibleOn a (Set.range s))
     {J : Type u} [LinearOrder J]
-    (height : Ordinal) (h_height : Ordinal.omega0 < height)
+    (height : Ordinal.{0}) (h_height : Ordinal.omega0 < height)
     (hCompact : ∀ S : Set L[[J]].Sentenceω,
       (∀ F : Set L[[J]].Sentenceω, F.Finite → F ⊆ S →
         ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model F N) →
@@ -588,7 +588,7 @@ theorem IsLomega1omegaIndiscernibleOn.stretch_restricted_sequence_of_compact
     (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
     (h : IsLomega1omegaIndiscernibleOn a (Set.range s))
     {J : Type u} [LinearOrder J]
-    (height : Ordinal) (h_height : Ordinal.omega0 < height)
+    (height : Ordinal.{0}) (h_height : Ordinal.omega0 < height)
     (hCompact : ∀ S : Set L[[J]].Sentenceω,
       (∀ F : Set L[[J]].Sentenceω, F.Finite → F ⊆ S →
         ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model F N) →

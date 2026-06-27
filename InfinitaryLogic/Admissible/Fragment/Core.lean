@@ -49,7 +49,7 @@ structure AdmissibleFragmentCore (L : Language.{u, v}) where
   at this layer: the HF case (o(A) = ω) is structurally important and
   should not be excluded. See `FiniteCompactFragment.height_gt_omega` for
   the stronger constraint used by the legacy compact wrapper. -/
-  height : Ordinal
+  height : Ordinal.{0}
   /-- Closure under negation. -/
   closed_neg : ∀ φ ∈ formulas, φ.not ∈ formulas
   /-- Closure under implication. -/

@@ -104,7 +104,9 @@ theorem realize_atomicFormula (idx : L.AtomicIdx n) (a : Fin n → M) :
   | eq i j => simp [atomicFormula, AtomicIdx.holds, Term.equal, Term.realize]
   | rel R f =>
     simp only [atomicFormula, AtomicIdx.holds, Relations.formula, BoundedFormula.realize_rel]
-    constructor <;> intro h <;> convert h using 1
+    refine iff_of_eq (congrArg (Structure.RelMap R) ?_)
+    funext i
+    simp [Term.realize_relabel]
 
 omit [L.IsRelational] in
 @[simp]

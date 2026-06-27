@@ -106,8 +106,7 @@ theorem qrank_top : (⊤ : L.BoundedFormulaInf α n).qrank = 0 := by
 /-- Negation preserves quantifier rank. -/
 @[simp]
 theorem qrank_not (φ : L.BoundedFormulaInf α n) : φ.not.qrank = φ.qrank := by
-  simp only [BoundedFormulaInf.not, qrank_imp, qrank_bot]
-  exact max_eq_left (zero_le _)
+  simp [BoundedFormulaInf.not, qrank_imp, qrank_bot]
 
 /-- Conjunction takes max of ranks. -/
 theorem qrank_and (φ ψ : L.BoundedFormulaInf α n) :

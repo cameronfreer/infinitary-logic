@@ -206,6 +206,21 @@ theorem deepInterp_subst (d : ℕ) (S : Finset J) {n : ℕ}
   | inl e => exact e.elim
   | inr i => rfl
 
+/-- **Deep interpretation of a base-language substituted term**: combining `deepInterp_subst` with
+`realize_onTerm`, the deep interpretation of `(onTerm t).subst ts` equals `t` realized in `M`'s
+`L^Sk`-structure on the deep interpretations of the substituted terms. -/
+theorem deepInterp_onTerm_subst (d : ℕ) (S : Finset J) {n : ℕ}
+    (t : (skolemColim L).Term (Empty ⊕ Fin n))
+    (ts : Fin n → (skolemColim L)[[J]].Term Empty) :
+    letI : (skolemColim L).Structure M := skolemColimStructure L
+    deepInterp L J a d S
+        (((lhomWithConstants (skolemColim L) J).onTerm t).subst (Sum.elim (fun e => e.elim) ts)) =
+      t.realize (Sum.elim Empty.elim fun i => deepInterp L J a d S (ts i)) := by
+  letI : (skolemColim L).Structure M := skolemColimStructure L
+  letI : (constantsOn J).Structure M := constantsOn.structure fun j => a (d + deepRank J S j)
+  rw [deepInterp_subst]
+  exact LHom.realize_onTerm (lhomWithConstants (skolemColim L) J) t _
+
 /-- The **de-substituted term at ordered support positions**: each skeleton constant `c_j` becomes
 the `ℕ`-variable `deepRank S j` (its 0-indexed position in the increasing support order). An
 `L^Sk`-term over `ℕ`. (Over `ℕ` rather than `Fin S.card` so the relabel needs no junk value; only
@@ -785,6 +800,98 @@ theorem EMContext.realize_term_mkClass (ctx : EMContext L J (M := M)) {n : ℕ}
     show @Structure.funMap ((skolemColim L)[[J]]) ctx.Carrier ctx.structure _ f _ = _
     rw [hargs, ctx.funMap_mkClass]
     rfl
+
+/-- **Truth lemma, equality-atom case**: realizing a base-language equality atom in the EM term model
+on a tuple of term-classes is equivalent to its eventual deep truth. Carrier side via
+`realize_term_mkClass`; quotient side via `Quotient.eq`; deep side via
+`eventually_deepInterp_superset_iff` and `deepInterp_onTerm_subst`. -/
+theorem EMContext.eventualDeepTruth_equal_iff (ctx : EMContext L J (M := M)) {n : ℕ}
+    (t₁ t₂ : (skolemColim L).Term (Empty ⊕ Fin n))
+    (ts : Fin n → (skolemColim L)[[J]].Term Empty) {S : Finset J}
+    (hS : jSupport L J (((lhomWithConstants (skolemColim L) J).onTerm t₁).subst
+            (Sum.elim (fun e => e.elim) ts))
+          ∪ jSupport L J (((lhomWithConstants (skolemColim L) J).onTerm t₂).subst
+            (Sum.elim (fun e => e.elim) ts)) ⊆ S) :
+    @BoundedFormulaω.Realize ((skolemColim L)[[J]]) ctx.Carrier ctx.structure Empty n
+        ((BoundedFormulaω.equal t₁ t₂).mapLanguage (lhomWithConstants (skolemColim L) J))
+        Empty.elim (fun i => ctx.mkClass (t := ts i)) ↔
+      EMContext.eventualDeepTruth (L := L) (J := J) ctx (BoundedFormulaω.equal t₁ t₂) ts S := by
+  have hcarrier : @BoundedFormulaω.Realize ((skolemColim L)[[J]]) ctx.Carrier ctx.structure Empty n
+        ((BoundedFormulaω.equal t₁ t₂).mapLanguage (lhomWithConstants (skolemColim L) J))
+        Empty.elim (fun i => ctx.mkClass (t := ts i))
+      ↔ ctx.mkClass (t := ((lhomWithConstants (skolemColim L) J).onTerm t₁).subst
+            (Sum.elim (fun e => e.elim) ts))
+        = ctx.mkClass (t := ((lhomWithConstants (skolemColim L) J).onTerm t₂).subst
+            (Sum.elim (fun e => e.elim) ts)) := by
+    letI : (skolemColim L)[[J]].Structure ctx.Carrier := ctx.structure
+    rw [show (BoundedFormulaω.equal t₁ t₂).mapLanguage (lhomWithConstants (skolemColim L) J)
+        = BoundedFormulaω.equal ((lhomWithConstants (skolemColim L) J).onTerm t₁)
+            ((lhomWithConstants (skolemColim L) J).onTerm t₂) from rfl,
+      BoundedFormulaω.realize_equal, EMContext.realize_term_mkClass (L := L) (J := J) ctx ts,
+      EMContext.realize_term_mkClass (L := L) (J := J) ctx ts]
+  have hcommon : EMContext.eventualDeepTruth (L := L) (J := J) ctx (BoundedFormulaω.equal t₁ t₂) ts S ↔
+      (∀ᶠ d in Filter.atTop,
+        letI : (skolemColim L).Structure M := skolemColimStructure L
+        deepInterp L J ctx.a d S (((lhomWithConstants (skolemColim L) J).onTerm t₁).subst
+            (Sum.elim (fun e => e.elim) ts))
+          = deepInterp L J ctx.a d S (((lhomWithConstants (skolemColim L) J).onTerm t₂).subst
+            (Sum.elim (fun e => e.elim) ts))) := by
+    letI : (skolemColim L).Structure M := skolemColimStructure L
+    refine Filter.eventually_congr (Filter.Eventually.of_forall fun d => ?_)
+    rw [BoundedFormulaω.realize_equal, ← deepInterp_onTerm_subst, ← deepInterp_onTerm_subst]
+  rw [hcarrier, hcommon]
+  show Quotient.mk ctx.setoid _ = Quotient.mk ctx.setoid _ ↔ _
+  rw [Quotient.eq]
+  show EMEq L J ctx.a _ _ ↔ _
+  unfold EMEq
+  exact Filter.eventually_congr (eventually_deepInterp_superset_iff L J ctx.a ctx.hind
+    (ctx.atom_mem _ _ _ Finset.subset_union_left Finset.subset_union_right) hS)
+
+/-- **Truth lemma, relation-atom case**: realizing a base-language relation atom in the EM term model
+on a tuple of term-classes is equivalent to its eventual deep truth. Carrier side via
+`realize_term_mkClass`; then `relMap_mkClass_iff`; deep side via `deepInterp_onTerm_subst`. -/
+theorem EMContext.eventualDeepTruth_rel_iff (ctx : EMContext L J (M := M)) {n l : ℕ}
+    (R : (skolemColim L).Relations l) (args : Fin l → (skolemColim L).Term (Empty ⊕ Fin n))
+    (ts : Fin n → (skolemColim L)[[J]].Term Empty) {S : Finset J}
+    (hS : (Finset.univ.biUnion fun i => jSupport L J
+            (((lhomWithConstants (skolemColim L) J).onTerm (args i)).subst
+              (Sum.elim (fun e => e.elim) ts))) ⊆ S) :
+    @BoundedFormulaω.Realize ((skolemColim L)[[J]]) ctx.Carrier ctx.structure Empty n
+        ((BoundedFormulaω.rel R args).mapLanguage (lhomWithConstants (skolemColim L) J))
+        Empty.elim (fun i => ctx.mkClass (t := ts i)) ↔
+      EMContext.eventualDeepTruth (L := L) (J := J) ctx (BoundedFormulaω.rel R args) ts S := by
+  have hcarrier : @BoundedFormulaω.Realize ((skolemColim L)[[J]]) ctx.Carrier ctx.structure Empty n
+        ((BoundedFormulaω.rel R args).mapLanguage (lhomWithConstants (skolemColim L) J))
+        Empty.elim (fun i => ctx.mkClass (t := ts i))
+      ↔ @Structure.RelMap ((skolemColim L)[[J]]) ctx.Carrier ctx.structure l (Sum.inl R)
+          (fun i => ctx.mkClass (t := ((lhomWithConstants (skolemColim L) J).onTerm (args i)).subst
+            (Sum.elim (fun e => e.elim) ts))) := by
+    letI : (skolemColim L)[[J]].Structure ctx.Carrier := ctx.structure
+    rw [show (BoundedFormulaω.rel R args).mapLanguage (lhomWithConstants (skolemColim L) J)
+        = BoundedFormulaω.rel (Sum.inl R)
+            (fun i => (lhomWithConstants (skolemColim L) J).onTerm (args i)) from rfl,
+      BoundedFormulaω.realize_rel]
+    apply Iff.of_eq
+    congr 1
+    funext i
+    exact EMContext.realize_term_mkClass (L := L) (J := J) ctx ts _
+  have hcommon : EMContext.eventualDeepTruth (L := L) (J := J) ctx (BoundedFormulaω.rel R args) ts S ↔
+      (∀ᶠ d in Filter.atTop,
+        letI : (skolemColim L).Structure M := skolemColimStructure L
+        Structure.RelMap R fun i => deepInterp L J ctx.a d S
+          (((lhomWithConstants (skolemColim L) J).onTerm (args i)).subst
+            (Sum.elim (fun e => e.elim) ts))) := by
+    letI : (skolemColim L).Structure M := skolemColimStructure L
+    refine Filter.eventually_congr (Filter.Eventually.of_forall fun d => ?_)
+    rw [BoundedFormulaω.realize_rel]
+    apply Iff.of_eq
+    congr 1
+    funext i
+    exact (deepInterp_onTerm_subst L J ctx.a d S (args i) ts).symm
+  rw [hcarrier, hcommon]
+  exact EMContext.relMap_mkClass_iff (L := L) (J := J) ctx R
+    (fun i => ((lhomWithConstants (skolemColim L) J).onTerm (args i)).subst
+      (Sum.elim (fun e => e.elim) ts)) hS
 
 end Quotient
 

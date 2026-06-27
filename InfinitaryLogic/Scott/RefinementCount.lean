@@ -82,8 +82,9 @@ private theorem BFEquiv_self_upgrade
     (h : BFEquiv (L := L) α₀ n a a') (β : Ordinal.{0}) (hβ : α₀ ≤ β) :
     BFEquiv (L := L) β n a a' := by
   induction β using Ordinal.limitRecOn generalizing n a a' with
-  | zero => rwa [le_antisymm hβ (zero_le α₀)] at h
-  | succ γ ih =>
+  | zero => rwa [le_antisymm hβ bot_le] at h
+  | add_one γ ih =>
+    rw [← Order.succ_eq_add_one] at hβ ⊢
     rcases hβ.lt_or_eq with hlt | heq
     · rw [Order.lt_succ_iff] at hlt
       have h_succ := (hstab n a a').mp h
@@ -154,11 +155,11 @@ private theorem BFEquiv_of_all_finite_levels
     (ε : Ordinal.{0}) :
     BFEquiv (L := L) ε n a b := by
   induction ε using Ordinal.limitRecOn generalizing n a b with
-  | zero => exact BFEquiv.monotone (zero_le α₀) (by simpa using h 0)
-  | succ ε ih =>
+  | zero => exact BFEquiv.monotone bot_le (by simpa using h 0)
+  | add_one ε ih =>
     have hsucc_α₀ : BFEquiv (L := L) (Order.succ α₀) n a b := by
       have := h 1; rwa [Nat.cast_one, ← Order.succ_eq_add_one] at this
-    rw [BFEquiv.succ]; refine ⟨@ih n a b h, fun m => ?_, fun m' => ?_⟩
+    rw [← Order.succ_eq_add_one, BFEquiv.succ]; refine ⟨@ih n a b h, fun m => ?_, fun m' => ?_⟩
     · let ⟨m'₀, hm'₀⟩ := BFEquiv.forth hsucc_α₀ m
       exact ⟨m'₀, @ih _ _ _ (witness_at_all_levels hstab h hm'₀)⟩
     · let ⟨m₀, hm₀⟩ := BFEquiv.back hsucc_α₀ m'
@@ -204,8 +205,7 @@ theorem countableRefinementHypothesis : CountableRefinementHypothesis.{u, v, w} 
     ⟨(Cardinal.aleph 1).ord, fun _ ⟨k, hk⟩ => hk ▸ le_of_lt (hα_k_lt k)⟩
   set γ := ⨆ k : ℕ, (α₀ + (↑k : Ordinal.{0}))
   have hγ_lt : γ < Ordinal.omega 1 := by
-    have := Ordinal.iSup_sequence_lt_omega_one _ hα_k_lt
-    rwa [Cardinal.ord_aleph] at this
+    exact Ordinal.iSup_lt_omega_one fun k => by rw [← Cardinal.ord_aleph]; exact hα_k_lt k
   apply Set.Countable.mono (s₂ := Set.Iio γ) _ (countable_Iio_of_lt_omega1 γ hγ_lt)
   intro ε ⟨_, N, instN, instCN, b, hBF, hNot⟩
   simp only [Set.mem_Iio]

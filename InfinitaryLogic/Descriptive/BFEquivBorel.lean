@@ -141,7 +141,8 @@ theorem bfEquivSet_measurableSet
       ext p; exact @BFEquiv.zero L ℕ p.1.toStructure ℕ p.2.toStructure n a b
     rw [this]
     exact sameAtomicType_measurableSet n a b
-  | succ β ih =>
+  | add_one β ih =>
+    rw [← Order.succ_eq_add_one] at hα ⊢
     have hβ : β < Ordinal.omega 1 := lt_trans (Order.lt_succ β) hα
     have : BFEquivSet (L := L) (Order.succ β) n a b =
       BFEquivSet β n a b ∩
