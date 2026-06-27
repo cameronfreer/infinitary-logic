@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.SkolemClosure
 import InfinitaryLogic.Methods.EM.TailAdapter
+import InfinitaryLogic.Lomega1omega.QuantifierRank
 import Mathlib.Order.Filter.AtTopBot.Basic
 import Mathlib.Order.Filter.Finite
 import Mathlib.Data.Finset.Sort
@@ -53,7 +54,71 @@ theorem Term.realize_eq_of_eq_on_varFinset {L' : Language} {M' : Type} [L'.Struc
       simp only [Term.varFinset, Finset.mem_biUnion]
       exact ⟨i, Finset.mem_univ i, hx⟩))
 
+/-! ### Quantifier-rank invariance under the operations of `skolemWitnessFormula`
+
+The `all`/Skolem case of the truth lemma recurses into `skolemWitnessFormula (¬φ)`, which is **not a
+structural subformula** of `all φ`. The correct termination measure is lexicographic `(qrank, depth)`:
+`qrank` strictly drops at the Skolem step (`qrank (skolemWitnessFormula (¬φ)) = qrank φ < qrank (all φ)`)
+while `depth` handles `imp`/`iSup`/`iInf` at equal `qrank`. These lemmas establish the `qrank` half.
+(`qrank_relabel`/`qrank_not`/`qrank_castLE` already exist in `QuantifierRank.lean`; these three are the
+remaining `mapLanguage`/`openBounds`/`subst` cases. They belong in `QuantifierRank.lean` eventually.) -/
+
+/-- `qrank` is invariant under language maps (they preserve the connective/quantifier skeleton). -/
+theorem BoundedFormulaω.qrank_mapLanguage {L L' : Language} (g : L →ᴸ L') {α : Type*} {n : ℕ}
+    (φ : L.BoundedFormulaω α n) : (φ.mapLanguage g).qrank = φ.qrank := by
+  induction φ with
+  | falsum => rfl
+  | equal _ _ => rfl
+  | rel _ _ => rfl
+  | imp φ ψ ihφ ihψ => simp only [BoundedFormulaω.mapLanguage, BoundedFormulaω.qrank, ihφ, ihψ]
+  | all φ ih => simp only [BoundedFormulaω.mapLanguage, BoundedFormulaω.qrank, ih]
+  | iSup φs ih =>
+    simp only [BoundedFormulaω.mapLanguage, BoundedFormulaω.qrank]; exact iSup_congr ih
+  | iInf φs ih =>
+    simp only [BoundedFormulaω.mapLanguage, BoundedFormulaω.qrank]; exact iSup_congr ih
+
+/-- `qrank` is invariant under free-variable substitution. -/
+theorem BoundedFormulaω.qrank_subst {L : Language} {α β : Type} {n : ℕ} (tf : α → L.Term β)
+    (φ : L.BoundedFormulaω α n) : (φ.subst tf).qrank = φ.qrank := by
+  induction φ with
+  | falsum => rfl
+  | equal _ _ => rfl
+  | rel _ _ => rfl
+  | imp φ ψ ihφ ihψ => simp only [BoundedFormulaω.subst, BoundedFormulaω.qrank, ihφ, ihψ]
+  | all φ ih => simp only [BoundedFormulaω.subst, BoundedFormulaω.qrank, ih]
+  | iSup φs ih => simp only [BoundedFormulaω.subst, BoundedFormulaω.qrank]; exact iSup_congr ih
+  | iInf φs ih => simp only [BoundedFormulaω.subst, BoundedFormulaω.qrank]; exact iSup_congr ih
+
+/-- `qrank` is invariant under `openBounds` (it preserves quantifier nesting; the `all` case adds a
+`relabel`, which `qrank_relabel` discharges). -/
+theorem BoundedFormulaω.qrank_openBounds {L : Language} {n : ℕ} (φ : L.BoundedFormulaω Empty n) :
+    φ.openBounds.qrank = φ.qrank := by
+  induction φ with
+  | falsum => rfl
+  | equal _ _ => rfl
+  | rel _ _ => rfl
+  | imp φ ψ ihφ ihψ => simp only [BoundedFormulaω.openBounds, BoundedFormulaω.qrank, ihφ, ihψ]
+  | all φ ih =>
+    simp only [BoundedFormulaω.openBounds, BoundedFormulaω.qrank, BoundedFormulaω.qrank_relabel, ih]
+  | iSup φs ih =>
+    simp only [BoundedFormulaω.openBounds, BoundedFormulaω.qrank]; exact iSup_congr ih
+  | iInf φs ih =>
+    simp only [BoundedFormulaω.openBounds, BoundedFormulaω.qrank]; exact iSup_congr ih
+
 variable (L : Language.{0, 0}) (J : Type) [LinearOrder J]
+
+/-- **The Skolem-step measure decrease** (foundation of the `all`-case induction): the Skolem witness
+formula of `¬φ` has strictly smaller quantifier rank than `all φ`. Since `skolemWitnessFormula` only
+applies `openBounds`/`mapLanguage`/`subst`/`relabel`/`not` to `φ` — all `qrank`-invariant — its rank is
+`qrank φ`, while `qrank (all φ) = qrank φ + 1`. This is the `qrank` component of the lexicographic
+`(qrank, depth)` termination measure for the full truth lemma. -/
+theorem qrank_skolemWitnessFormula_lt {k n : ℕ}
+    (φ : (skolemStage L k).BoundedFormulaω Empty (n + 1)) :
+    (skolemWitnessFormula L φ.not).qrank < (BoundedFormulaω.all φ).qrank := by
+  simp only [skolemWitnessFormula, BoundedFormulaω.qrank_relabel, BoundedFormulaω.qrank_subst,
+    BoundedFormulaω.qrank_mapLanguage, BoundedFormulaω.qrank_openBounds, BoundedFormulaω.qrank_not,
+    BoundedFormulaω.qrank_all]
+  exact lt_add_one _
 
 /-- The `J`-constant carried by a function symbol of `(skolemColim L)[[J]]`: only an arity-`0`
 symbol from the `constantsOn J` summand is a skeleton constant. -/
