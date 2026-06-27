@@ -78,7 +78,7 @@ structure BarwiseCompactnessData (L : Language.{u, v})
   /-- The ordinal height o(A) of the admissible set. No lower bound is
   imposed: o(A) = ω (the HF case) is the structurally important special
   case where A-coded = finite and L_A = first-order logic. -/
-  barwiseHeight : Ordinal
+  barwiseHeight : Ordinal.{0}
   /-- Every finite subset of the fragment has an A-code. This holds for all
   admissible sets A ⊇ ω (including HF, L(ω₁^CK), etc.). -/
   finite_has_code : ∀ S, S.Finite → S ⊆ formulas → ∃ c, decode c = S
