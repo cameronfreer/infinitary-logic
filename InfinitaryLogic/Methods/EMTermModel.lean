@@ -1065,6 +1065,100 @@ theorem EMContext.eventualDeepTruth_iInf_forall (ctx : EMContext L J (M := M)) {
   simp only [EMContext.eventualDeepTruth, BoundedFormulaω.realize_iInf] at h ⊢
   exact h.mono fun _ hd => hd i
 
+/-- **Decidedness of a formula's eventual deep truth** (the named output of
+`eventualDeepTruth_decided`): either it holds eventually, or it fails eventually. -/
+def EMContext.Decided (ctx : EMContext L J (M := M)) {m : ℕ}
+    (φ : (skolemColim L).BoundedFormulaω Empty m)
+    (ts : Fin m → (skolemColim L)[[J]].Term Empty) (S : Finset J) : Prop :=
+  letI : (skolemColim L).Structure M := skolemColimStructure L
+  (∀ᶠ d in Filter.atTop, φ.Realize Empty.elim fun i => deepInterp L J ctx.a d S (ts i)) ∨
+    (∀ᶠ d in Filter.atTop, ¬ φ.Realize Empty.elim fun i => deepInterp L J ctx.a d S (ts i))
+
+/-- **Truth-lemma readiness** of a formula on `ts`/`S`: the closure data the Γ*-truth-lemma induction
+consumes — decidedness at every `imp`-antecedent (for `eventualDeepTruth_imp_iff`), recursively down
+the connectives. The `all` case is `False` (this is the `all`-free fragment; the Skolem `all` case is
+a separate chunk). Discharged later from the Γ* deForm-closure via `eventualDeepTruth_decided`. -/
+def EMContext.TLReady (ctx : EMContext L J (M := M)) :
+    ∀ {m : ℕ}, (skolemColim L).BoundedFormulaω Empty m →
+      (Fin m → (skolemColim L)[[J]].Term Empty) → Finset J → Prop
+  | _, .falsum, _, _ => True
+  | _, .equal _ _, _, _ => True
+  | _, .rel _ _, _, _ => True
+  | _, .imp φ ψ, ts, S =>
+      EMContext.Decided (L := L) (J := J) ctx φ ts S ∧
+        EMContext.TLReady ctx φ ts S ∧ EMContext.TLReady ctx ψ ts S
+  | _, .iSup φs, ts, S => ∀ i, EMContext.TLReady ctx (φs i) ts S
+  | _, .iInf φs, ts, S => ∀ i, EMContext.TLReady ctx (φs i) ts S
+  | _, .all _, _, _ => False
+
+/-- **The Γ*-restricted truth lemma** (all-free fragment), conditional on `⋁`/`⋀`-completeness `hc`.
+For a base-language formula `φ` realized in the EM term model on a tuple of term-classes `mkClass ∘ ts`
+(over a covering support `S`), realization is equivalent to `φ`'s **eventual deep truth** in the source
+model. Atoms use `eventualDeepTruth_equal_iff`/`_rel_iff` (support bridged by
+`jSupport_onTerm_subst_subset`); `imp` uses antecedent decidedness from `TLReady`; `iSup`/`iInf` use
+`hc`'s uniform witness/cutoff plus the easy directions. The `all` (Skolem) case is excluded by
+`TLReady` and handled in a later chunk. -/
+theorem EMContext.truthLemma (ctx : EMContext L J (M := M)) (hc : ctx.OmegaComplete) :
+    ∀ {m : ℕ} (φ : (skolemColim L).BoundedFormulaω Empty m)
+      (ts : Fin m → (skolemColim L)[[J]].Term Empty) (S : Finset J),
+      (∀ i, jSupport L J (ts i) ⊆ S) → EMContext.TLReady (L := L) (J := J) ctx φ ts S →
+      (@BoundedFormulaω.Realize ((skolemColim L)[[J]]) ctx.Carrier ctx.structure Empty m
+          (φ.mapLanguage (lhomWithConstants (skolemColim L) J))
+          Empty.elim (fun i => ctx.mkClass (t := ts i)) ↔
+        EMContext.eventualDeepTruth (L := L) (J := J) ctx φ ts S) := by
+  letI : (skolemColim L)[[J]].Structure ctx.Carrier := ctx.structure
+  intro m φ
+  induction φ with
+  | falsum =>
+    intro ts S _ _
+    simp only [BoundedFormulaω.mapLanguage, BoundedFormulaω.realize_falsum,
+      EMContext.eventualDeepTruth_falsum_iff]
+  | equal t₁ t₂ =>
+    intro ts S hsub _
+    have hbi : (Finset.univ.biUnion fun i => jSupport L J (ts i)) ⊆ S :=
+      Finset.biUnion_subset.mpr fun i _ => hsub i
+    exact EMContext.eventualDeepTruth_equal_iff (L := L) (J := J) ctx t₁ t₂ ts
+      (Finset.union_subset ((jSupport_onTerm_subst_subset L J t₁ ts).trans hbi)
+        ((jSupport_onTerm_subst_subset L J t₂ ts).trans hbi))
+  | rel R args =>
+    intro ts S hsub _
+    have hbi : (Finset.univ.biUnion fun i => jSupport L J (ts i)) ⊆ S :=
+      Finset.biUnion_subset.mpr fun i _ => hsub i
+    exact EMContext.eventualDeepTruth_rel_iff (L := L) (J := J) ctx R args ts
+      (Finset.biUnion_subset.mpr fun i _ => (jSupport_onTerm_subst_subset L J (args i) ts).trans hbi)
+  | imp φ ψ ihφ ihψ =>
+    intro ts S hsub hready
+    obtain ⟨hdec, hrφ, hrψ⟩ := hready
+    rw [EMContext.eventualDeepTruth_imp_iff (L := L) (J := J) ctx φ ψ ts S hdec]
+    simp only [BoundedFormulaω.mapLanguage_imp, BoundedFormulaω.realize_imp]
+    exact imp_congr (ihφ ts S hsub hrφ) (ihψ ts S hsub hrψ)
+  | all φ ih => intro ts S _ hready; exact hready.elim
+  | iSup φs ih =>
+    intro ts S hsub hready
+    rw [show (BoundedFormulaω.iSup φs).mapLanguage (lhomWithConstants (skolemColim L) J)
+          = BoundedFormulaω.iSup
+              (fun i => (φs i).mapLanguage (lhomWithConstants (skolemColim L) J)) from rfl,
+      BoundedFormulaω.realize_iSup]
+    constructor
+    · rintro ⟨i, hi⟩
+      exact EMContext.eventualDeepTruth_iSup_of_exists (L := L) (J := J) ctx φs ts S
+        ⟨i, (ih i ts S hsub (hready i)).mp hi⟩
+    · intro h
+      obtain ⟨i, hi⟩ := hc.iSup_complete φs ts S h
+      exact ⟨i, (ih i ts S hsub (hready i)).mpr hi⟩
+  | iInf φs ih =>
+    intro ts S hsub hready
+    rw [show (BoundedFormulaω.iInf φs).mapLanguage (lhomWithConstants (skolemColim L) J)
+          = BoundedFormulaω.iInf
+              (fun i => (φs i).mapLanguage (lhomWithConstants (skolemColim L) J)) from rfl,
+      BoundedFormulaω.realize_iInf]
+    constructor
+    · intro h
+      exact hc.iInf_complete φs ts S fun i => (ih i ts S hsub (hready i)).mp (h i)
+    · intro h i
+      exact (ih i ts S hsub (hready i)).mpr
+        (EMContext.eventualDeepTruth_iInf_forall (L := L) (J := J) ctx φs ts S h i)
+
 end Quotient
 
 end FirstOrder.Language
