@@ -250,6 +250,74 @@ theorem deepInterp_snoc (d : ℕ) (S : Finset J) {n : ℕ}
   · simp only [Fin.snoc_last]
   · simp only [Fin.snoc_castSucc]
 
+/-- The **colimit Skolem-witness term**: the stage-`(k+1)` Skolem function symbol for the stage-`k`
+formula `χ` (of arity `n+1`), included into `L^Sk` and then `[[J]]`, applied to the closed argument
+terms `ts`. Its deep interpretation is the Hilbert-Skolem value for `∃x χ`. -/
+def skWitnessTerm {k n : ℕ} (χ : (skolemStage L k).BoundedFormulaω Empty (n + 1))
+    (ts : Fin n → (skolemColim L)[[J]].Term Empty) : (skolemColim L)[[J]].Term Empty :=
+  Term.func ((lhomWithConstants (skolemColim L) J).onFunction
+    ((skolemStageInclusion L (k + 1)).onFunction
+      (Sum.inr χ : (skolemStage L (k + 1)).Functions n))) ts
+
+/-- The witness term mentions only the `J`-constants of its arguments (its head is an `L^Sk`-function
+symbol, not a skeleton constant), so its support is covered whenever the arguments' is. -/
+theorem jSupport_skWitnessTerm {k n : ℕ} (χ : (skolemStage L k).BoundedFormulaω Empty (n + 1))
+    (ts : Fin n → (skolemColim L)[[J]].Term Empty) :
+    jSupport L J (skWitnessTerm L J χ ts) = Finset.univ.biUnion fun i => jSupport L J (ts i) := by
+  have hjc : jConstOf L J ((lhomWithConstants (skolemColim L) J).onFunction
+      ((skolemStageInclusion L (k + 1)).onFunction (Sum.inr χ))) = ∅ := by cases n <;> rfl
+  rw [skWitnessTerm,
+    show jSupport L J (Term.func ((lhomWithConstants (skolemColim L) J).onFunction
+        ((skolemStageInclusion L (k + 1)).onFunction (Sum.inr χ))) ts)
+      = (Finset.univ.biUnion fun i => jSupport L J (ts i))
+        ∪ jConstOf L J ((lhomWithConstants (skolemColim L) J).onFunction
+            ((skolemStageInclusion L (k + 1)).onFunction (Sum.inr χ))) from rfl,
+    hjc, Finset.union_empty]
+
+/-- **Deep value of the Skolem-witness term**: it is exactly the Hilbert-choice Skolem value for `χ`
+on the deep interpretations of the arguments (read in the source model's stage-`k` structure). The
+funMap coherence through `skolemColimStructure`/`skolemStageStructure`/`skolem₁ωStructure` is fully
+definitional, so this is `rfl` after the term/funMap unfolding. -/
+theorem deepInterp_skWitness (d : ℕ) (S : Finset J) {k n : ℕ}
+    (χ : (skolemStage L k).BoundedFormulaω Empty (n + 1))
+    (ts : Fin n → (skolemColim L)[[J]].Term Empty) :
+    letI : (skolemStage L k).Structure M := skolemStageStructure L k
+    deepInterp L J a d S (skWitnessTerm L J χ ts)
+      = Classical.epsilon (fun b => χ.Realize (Empty.elim : Empty → M)
+          (Fin.snoc (fun i => deepInterp L J a d S (ts i)) b)) := by
+  rw [skWitnessTerm, deepInterp_func]; rfl
+
+/-- **Skolem-witness universality** (the contrapositive Skolem axiom, transported to the deep tuple):
+if the body `ψ₀` holds at the deep interpretation of its Skolem-witness term (for `¬ψ₀`), then it holds
+at *every* `M`-element. This is `hw` for the truth lemma's `all` case, supplied to
+`eventualDeepTruth_all_support_self_of_skolem`. Proof: transport the colimit realizations to stage `k`
+(`realize_map_stageInclusion`), then `skolem₁ω_funMap_spec` on `¬ψ₀` — its Skolem value (the witness
+term's deep value, by `deepInterp_skWitness`) is a counterexample whenever one exists. -/
+theorem skWitness_universal (d : ℕ) (S : Finset J) {k n : ℕ}
+    (ψ₀ : (skolemStage L k).BoundedFormulaω Empty (n + 1))
+    (ts : Fin n → (skolemColim L)[[J]].Term Empty) :
+    letI : (skolemColim L).Structure M := skolemColimStructure L
+    (ψ₀.mapLanguage (skolemStageInclusion L k)).Realize (Empty.elim : Empty → M)
+        (Fin.snoc (fun i => deepInterp L J a d S (ts i))
+          (deepInterp L J a d S (skWitnessTerm L J ψ₀.not ts))) →
+      ∀ x : M, (ψ₀.mapLanguage (skolemStageInclusion L k)).Realize (Empty.elim : Empty → M)
+          (Fin.snoc (fun i => deepInterp L J a d S (ts i)) x) := by
+  letI : (skolemColim L).Structure M := skolemColimStructure L
+  letI : (skolemStage L k).Structure M := skolemStageStructure L k
+  simp only [realize_map_stageInclusion]
+  intro hψw x
+  by_contra hcon
+  have hex : ∃ b, (ψ₀.not).Realize (Empty.elim : Empty → M)
+      (Fin.snoc (fun i => deepInterp L J a d S (ts i)) b) :=
+    ⟨x, by rw [BoundedFormulaω.realize_not]; exact hcon⟩
+  have hspec := skolem₁ω_funMap_spec (ψ₀.not) (fun i => deepInterp L J a d S (ts i)) hex
+  rw [show Structure.funMap (L := skolem₁ω (skolemStage L k)) ψ₀.not
+        (fun i => deepInterp L J a d S (ts i))
+      = deepInterp L J a d S (skWitnessTerm L J ψ₀.not ts) from
+      (deepInterp_skWitness L J a d S ψ₀.not ts).symm,
+    BoundedFormulaω.realize_not] at hspec
+  exact hspec hψw
+
 /-- **De-substitution bridge** (step 2): the deep interpretation of a closed term equals the
 *de-substituted* `L^Sk`-term `constantsToVars t` (each skeleton constant `c_j` turned into the
 variable `Sum.inl j`) realized with `j ↦ a (d + deepRank S j)`. Turns the support machinery from
