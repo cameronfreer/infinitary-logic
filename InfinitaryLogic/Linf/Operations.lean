@@ -278,7 +278,7 @@ private lemma sum_elim_relabelAux_insertLastBoundInf {n : ℕ} {k : ℕ}
 /-- snoc xs y at position 0 equals xs at position 0. -/
 private lemma snoc_zero_eq_inf {k : ℕ} (xs : Fin (1 + k) → γ) (y : γ) :
     (Fin.snoc (α := fun _ => γ) xs y) (0 : Fin (1 + k + 1)) = xs (0 : Fin (1 + k)) := by
-  simp [Fin.snoc, show (0 : ℕ) < 1 + k from by omega]
+  rw [show (0 : Fin (1 + k + 1)) = (0 : Fin (1 + k)).castSucc from by ext; rfl, Fin.snoc_castSucc]
 
 /-- snoc composed with succShiftInf: on LHS, `Fin.succShiftInf` is at `k+1`
 (mapping `Fin (k+1) → Fin (1+k+1)`); on RHS, it is at `k` (mapping `Fin k → Fin (1+k)`).

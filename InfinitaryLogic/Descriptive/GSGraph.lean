@@ -252,7 +252,8 @@ theorem exists_gSGraph_edge_of_not_isMeagre
   obtain ⟨W, hW_open, hBW⟩ := hB.residualEq_isOpen
   have hsym : IsMeagre {p : ℕ → Bool | ¬(p ∈ B ↔ p ∈ W)} := by
     rw [IsMeagre, compl_setOf]
-    simpa using Filter.eventuallyEq_set.mp hBW
+    simp only [not_not]
+    exact Filter.eventuallyEq_set.mp hBW
   have hW_ne : W.Nonempty := by
     rcases W.eq_empty_or_nonempty with rfl | h
     · exact (hBnm (hsym.mono fun p hp => by simp [hp])).elim
