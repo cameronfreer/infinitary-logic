@@ -4,30 +4,21 @@ keywords = ["math"]
 defaultTargets = ["InfinitaryLogic"]
 
 [[require]]
-name = "mathlib"
-git = "https://github.com/leanprover-community/mathlib4"
-rev = "v4.27.0"
-
-[[require]]
 name = "LeanArchitect"
-git = "https://github.com/cameronfreer/LeanArchitect.git"
-rev = "e14a867"
-
-[[require]]
-name = "batteries"
-scope = "leanprover-community"
-git = "https://github.com/leanprover-community/batteries"
-rev = "v4.27.0"
-
-[[require]]
-name = "Cli"
-git = "https://github.com/mhuisi/lean4-cli"
-rev = "v4.27.0"
+git = "https://github.com/hanwenzhu/LeanArchitect.git"
+rev = "d9013cc08bd2"
 
 [[require]]
 name = "checkdecls"
 git = "https://github.com/PatrickMassot/checkdecls.git"
 rev = "3d425859e73fcfbef85b9638c2a91708ef4a22d4"
+
+# Mathlib last so its dependency versions take precedence over transitive ones
+# (e.g. batteries / Cli pulled in by LeanArchitect), per Mathlib's lake update guidance.
+[[require]]
+name = "mathlib"
+git = "https://github.com/leanprover-community/mathlib4"
+rev = "v4.32.0-rc1"
 
 [[lean_lib]]
 name = "InfinitaryLogic"
