@@ -959,6 +959,46 @@ theorem EMContext.eventualDeepTruth_decided (ctx : EMContext L J (M := M)) {n : 
     exact (hN (fun i => N + (i : ℕ)) (fun i => d + (i : ℕ)) (hmono N) (hmono d)
       (fun k => Nat.le_add_right N k) (fun k => le_trans hd (Nat.le_add_right d k))).mpr hPd
 
+/-- An eventual implication splits as an implication of eventuals exactly when the antecedent's
+eventual truth is *decided*. The Filter fact behind the truth lemma's `imp` case — note only the
+antecedent's decidedness is needed (the consequent's plays no role). -/
+theorem eventually_imp_iff_imp_eventually {α : Type*} {f : Filter α} {P Q : α → Prop}
+    (hP : (∀ᶠ x in f, P x) ∨ (∀ᶠ x in f, ¬ P x)) :
+    (∀ᶠ x in f, P x → Q x) ↔ ((∀ᶠ x in f, P x) → (∀ᶠ x in f, Q x)) := by
+  constructor
+  · intro h hP'
+    exact (h.and hP').mono fun _ p => p.1 p.2
+  · intro h
+    rcases hP with hP | hP
+    · exact (h hP).mono fun _ hQ _ => hQ
+    · exact hP.mono fun _ hnp hp => absurd hp hnp
+
+/-- **Truth lemma, falsum case** (eventual-deep-truth side): `falsum` has no eventual deep truth.
+Immediate from `Filter.eventually_const` (`atTop` on `ℕ` is `NeBot`). -/
+theorem EMContext.eventualDeepTruth_falsum_iff (ctx : EMContext L J (M := M)) {n : ℕ}
+    (ts : Fin n → (skolemColim L)[[J]].Term Empty) (S : Finset J) :
+    EMContext.eventualDeepTruth (L := L) (J := J) ctx (BoundedFormulaω.falsum) ts S ↔ False := by
+  simp only [EMContext.eventualDeepTruth, BoundedFormulaω.realize_falsum]
+  exact Filter.eventually_const
+
+/-- **Truth lemma, imp case** (eventual-deep-truth side): the eventual deep truth of `φ ⟹ ψ` is the
+implication of their eventual deep truths, *provided* `φ`'s eventual deep truth is decided (supplied
+by `eventualDeepTruth_decided`). Combined with the carrier-side `realize_imp` and the inductive
+hypotheses, this is the `imp` step of the truth lemma. -/
+theorem EMContext.eventualDeepTruth_imp_iff (ctx : EMContext L J (M := M)) {n : ℕ}
+    (φ ψ : (skolemColim L).BoundedFormulaω Empty n)
+    (ts : Fin n → (skolemColim L)[[J]].Term Empty) (S : Finset J)
+    (hdec :
+      letI : (skolemColim L).Structure M := skolemColimStructure L
+      (∀ᶠ d in Filter.atTop, φ.Realize Empty.elim fun i => deepInterp L J ctx.a d S (ts i)) ∨
+        (∀ᶠ d in Filter.atTop, ¬ φ.Realize Empty.elim fun i => deepInterp L J ctx.a d S (ts i))) :
+    EMContext.eventualDeepTruth (L := L) (J := J) ctx (φ.imp ψ) ts S ↔
+      (EMContext.eventualDeepTruth (L := L) (J := J) ctx φ ts S →
+        EMContext.eventualDeepTruth (L := L) (J := J) ctx ψ ts S) := by
+  letI : (skolemColim L).Structure M := skolemColimStructure L
+  simp only [EMContext.eventualDeepTruth, BoundedFormulaω.realize_imp]
+  exact eventually_imp_iff_imp_eventually hdec
+
 end Quotient
 
 end FirstOrder.Language
