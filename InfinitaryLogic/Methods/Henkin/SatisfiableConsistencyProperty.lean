@@ -207,7 +207,7 @@ noncomputable def trueInModelConsistencyPropertyEq
     rw [snoc_elim0_eq_const, realize_relabel_sumInr_zero] at hm
     exact union_subset_trueInModel hS (by
       simp only [Sentenceω.Realize, realize_subst]
-      convert hm)
+      exact hm)
   C7_neg_all := by
     intro S hS φ hmem
     have hsat := hS hmem
@@ -230,7 +230,7 @@ noncomputable def trueInModelConsistencyPropertyEq
     exact union_subset_trueInModel hS (by
       simp only [Sentenceω.Realize, realize_not, realize_subst]
       intro h; apply hm
-      convert h)
+      exact h)
   C7_all_bound := by
     intro S hS φ hmem t
     have hsat := hS hmem
