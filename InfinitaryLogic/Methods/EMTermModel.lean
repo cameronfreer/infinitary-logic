@@ -1388,6 +1388,15 @@ theorem EMContext.truthLemma (ctx : EMContext L J (M := M)) (hc : ctx.OmegaCompl
       exact (ih i ts S hsub (hready i)).mpr
         (EMContext.eventualDeepTruth_iInf_forall (L := L) (J := J) ctx φs ts S h i)
 
+/-- **Staged truth-lemma readiness**: the colimit `TLReady` of the staged formula's image under
+`skolemStageInclusion k`. Since `mapLanguage` distributes over the constructors definitionally, this
+unfolds to: `imp`-antecedent decidedness, `iSup`/`iInf` component readiness, and `all`-body readiness
+at every `Fin.snoc ts u` over `S ∪ jSupport u` — exactly what `truthLemmaStage` consumes. -/
+def EMContext.TLReadyStage (ctx : EMContext L J (M := M)) (k : ℕ) {n : ℕ}
+    (ψ : (skolemStage L k).BoundedFormulaω Empty n)
+    (ts : Fin n → (skolemColim L)[[J]].Term Empty) (S : Finset J) : Prop :=
+  EMContext.TLReady (L := L) (J := J) ctx (ψ.mapLanguage (skolemStageInclusion L k)) ts S
+
 end Quotient
 
 end FirstOrder.Language
