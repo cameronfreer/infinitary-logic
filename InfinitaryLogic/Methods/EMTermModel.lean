@@ -237,6 +237,19 @@ position `≥ d`, so `N ≤ d` forces all positions `≥ N`. -/
 theorem le_depth_position (d : ℕ) (S : Finset J) (j : J) : d ≤ d + deepRank J S j :=
   Nat.le_add_right _ _
 
+/-- Deep interpretation commutes with `Fin.snoc`: interpreting the one-point extension `Fin.snoc ts u`
+gives the snoc of the interpretations. The term-side bridge for the truth lemma's `all` case (relating
+the carrier's `∀x` over term-classes to the body's argument tuple). -/
+theorem deepInterp_snoc (d : ℕ) (S : Finset J) {n : ℕ}
+    (ts : Fin n → (skolemColim L)[[J]].Term Empty) (u : (skolemColim L)[[J]].Term Empty) :
+    (fun i => deepInterp L J a d S
+        ((Fin.snoc ts u : Fin (n + 1) → (skolemColim L)[[J]].Term Empty) i))
+      = Fin.snoc (fun i => deepInterp L J a d S (ts i)) (deepInterp L J a d S u) := by
+  funext i
+  refine Fin.lastCases ?_ (fun j => ?_) i
+  · simp only [Fin.snoc_last]
+  · simp only [Fin.snoc_castSucc]
+
 /-- **De-substitution bridge** (step 2): the deep interpretation of a closed term equals the
 *de-substituted* `L^Sk`-term `constantsToVars t` (each skeleton constant `c_j` turned into the
 variable `Sum.inl j`) realized with `j ↦ a (d + deepRank S j)`. Turns the support machinery from
@@ -1186,6 +1199,33 @@ def EMContext.SkolemSemantic (ctx : EMContext L J (M := M)) : Prop :=
     (EMContext.eventualDeepTruth (L := L) (J := J) ctx (BoundedFormulaω.all φ) ts S ↔
       ∀ u : (skolemColim L)[[J]].Term Empty,
         EMContext.eventualDeepTruth (L := L) (J := J) ctx φ (Fin.snoc ts u) (S ∪ jSupport L J u))
+
+/-- **Pure-Skolem `all`-self-support lemma** (the genuinely-new `all`-case content, isolated from the
+support-enlargement bookkeeping): given a witness term `w` whose deep interpretation is a Skolem
+counterexample for `¬φ` at every depth (`hw`: if `φ` holds at `w`'s deep value then it holds at *every*
+`M`-element — the contrapositive Skolem axiom), the eventual deep truth of `∀ φ` over `S` equals the
+universal-over-terms statement at the **same** support `S`. The `→` is universal instantiation; the
+`←` plugs in `u := w` and applies `hw` pointwise. No support invariance is used (the witness `w` will
+have support `⊆ S`); constructing `w`/`hw` via the Skolem-axiom colimit transport is the WF refactor's
+job. -/
+theorem EMContext.eventualDeepTruth_all_support_self_of_skolem (ctx : EMContext L J (M := M)) {m : ℕ}
+    (φ : (skolemColim L).BoundedFormulaω Empty (m + 1))
+    (ts : Fin m → (skolemColim L)[[J]].Term Empty) (S : Finset J)
+    (w : (skolemColim L)[[J]].Term Empty)
+    (hw : letI : (skolemColim L).Structure M := skolemColimStructure L
+      ∀ d : ℕ, φ.Realize Empty.elim (Fin.snoc (fun i => deepInterp L J ctx.a d S (ts i))
+              (deepInterp L J ctx.a d S w)) →
+            ∀ x : M, φ.Realize Empty.elim (Fin.snoc (fun i => deepInterp L J ctx.a d S (ts i)) x)) :
+    EMContext.eventualDeepTruth (L := L) (J := J) ctx (BoundedFormulaω.all φ) ts S ↔
+      ∀ u : (skolemColim L)[[J]].Term Empty,
+        EMContext.eventualDeepTruth (L := L) (J := J) ctx φ (Fin.snoc ts u) S := by
+  letI : (skolemColim L).Structure M := skolemColimStructure L
+  simp only [EMContext.eventualDeepTruth, BoundedFormulaω.realize_all, deepInterp_snoc]
+  constructor
+  · intro h u
+    exact h.mono fun d hd => hd (deepInterp L J ctx.a d S u)
+  · intro h
+    exact (h w).mono fun d hd => hw d hd
 
 /-- **The Γ*-restricted truth lemma**, conditional on `⋁`/`⋀`-completeness `hc` and the `all`-case
 Skolem obligation `hsk : ctx.SkolemSemantic`. For a base-language formula `φ` realized in the EM term
