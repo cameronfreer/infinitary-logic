@@ -330,8 +330,8 @@ theorem potentialIso_family_BFEquiv [Countable (Σ l, L.Relations l)]
   induction α using Ordinal.limitRecOn generalizing n a b with
   | zero =>
     exact (BFEquiv.zero a b).mpr (P.compatible _ hab)
-  | succ β ih =>
-    rw [BFEquiv.succ]
+  | add_one β ih =>
+    rw [← Order.succ_eq_add_one, BFEquiv.succ]
     refine ⟨ih hab, ?_, ?_⟩
     · intro m
       obtain ⟨n', hn'⟩ := P.forth _ hab m
@@ -378,7 +378,7 @@ theorem BFEquiv_all_implies_potentialIso [Countable (Σ l, L.Relations l)]
     exact hBF
   · -- compatible: BFEquiv at level 0 gives SameAtomicType
     intro p hp
-    exact (BFEquiv.zero p.2.1 p.2.2).mp (BFEquiv.monotone (zero_le _) (hp 0))
+    exact (BFEquiv.zero p.2.1 p.2.2).mp (BFEquiv.monotone le_rfl (hp 0))
   · -- forth: by sSup contradiction
     intro ⟨n, a, b⟩ hfamily m
     simp only [Set.mem_setOf_eq] at hfamily ⊢

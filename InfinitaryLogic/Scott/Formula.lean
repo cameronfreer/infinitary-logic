@@ -252,7 +252,7 @@ theorem scottFormula_succ {n : ℕ} (a : Fin n → M) (α : Ordinal) :
       einf (fun m : M => existsLastVar (scottFormula (snoc a m) α)) ⊓
       forallLastVar (esup (fun m : M => scottFormula (snoc a m) α)) := by
   haveI : Encodable M := Encodable.ofCountable M
-  simp only [scottFormula, Ordinal.limitRecOn_succ]
+  simp only [scottFormula, Order.succ_eq_add_one, Ordinal.limitRecOn_add_one]
 
 omit [L.IsRelational] in
 /-- The fundamental correspondence: a tuple b realizes the Scott formula for a at level α
@@ -283,7 +283,8 @@ theorem realize_scottFormula_iff_BFEquiv
   | zero =>
     rw [scottFormula_zero, BFEquiv.zero]
     exact (sameAtomicType_iff_realize_atomicDiagram (L := L) (M := M) (N := N) a b).symm
-  | succ β ih =>
+  | add_one β ih =>
+    rw [← Order.succ_eq_add_one] at hα ⊢
     have hβ : β < Ordinal.omega 1 := lt_of_lt_of_le (Order.lt_succ β) (le_of_lt hα)
     rw [scottFormula_succ, BFEquiv.succ]
     simp only [Formulaω.realize_inf]
