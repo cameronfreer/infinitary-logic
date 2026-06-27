@@ -60,7 +60,7 @@ theorem atomicDiagram_qrank_eq_zero {M : Type w} [L.Structure M]
     split_ifs with h
     · exact le_of_eq (atomicFormulaω_qrank idx)
     · simp only [qrank_not]; exact le_of_eq (atomicFormulaω_qrank idx)
-  · exact zero_le _
+  · exact bot_le
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- `existsLastVar` adds 1 to quantifier rank. -/
@@ -88,7 +88,8 @@ theorem scottFormula_qrank_le {M : Type w} [L.Structure M] [Countable M]
   induction α using Ordinal.limitRecOn generalizing n a with
   | zero =>
     rw [scottFormula_zero, atomicDiagram_qrank_eq_zero]
-  | succ β ih =>
+  | add_one β ih =>
+    rw [← Order.succ_eq_add_one] at hα ⊢
     have hβ : β < Ordinal.omega 1 := lt_of_lt_of_le (Order.lt_succ β) (le_of_lt hα)
     rw [scottFormula_succ]
     -- Goal: ((scottFormula a β ⊓ einf ...) ⊓ forallLastVar ...).qrank ≤ Order.succ β
