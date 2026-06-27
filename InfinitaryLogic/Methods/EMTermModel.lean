@@ -403,6 +403,42 @@ theorem realize_deRelAtom_superset (d : ℕ) {S T : Finset J} (_hST : S ⊆ T) {
   funext i
   rw [Term.realize_relabel, Sum.elim_comp_inr, deTermFin_realize_superset]
 
+/-! ### Step 3': the general de-substituted formula
+
+`deEqAtom`/`deRelAtom` reduce *atoms* on deep interpretations to `L^Sk`-formulas of arity `S.card`
+on the consecutive deep tuple. The general truth lemma needs the same reduction for an *arbitrary*
+base-language formula `φ` (to obtain the 0-1 law for `φ`'s eventual deep truth from tail
+indiscernibility). `deForm` performs it uniformly: open `φ`'s bound variables to free, substitute each
+by the `Fin`-arity de-substituted term `deTermFin S (ts i)`, and rebind the support positions. -/
+
+/-- The **general de-substituted formula** of `φ` on closed argument terms `ts` over a covering
+support `S`: an `L^Sk`-formula of arity `S.card` whose realization on the consecutive deep tuple is
+`φ` realized on the deep interpretations of `ts`. Generalizes `deEqAtom`/`deRelAtom` to all formulas
+(`openBounds → subst → relabel Sum.inr`). -/
+def deForm (S : Finset J) {n : ℕ} (φ : (skolemColim L).BoundedFormulaω Empty n)
+    (ts : Fin n → (skolemColim L)[[J]].Term Empty) (hsub : ∀ i, jSupport L J (ts i) ⊆ S) :
+    (skolemColim L).BoundedFormulaω Empty S.card :=
+  (φ.openBounds.subst (fun i => deTermFin L J S (ts i) (hsub i))).relabel Sum.inr
+
+/-- **General formula realize bridge** (generalizes `realize_deEqAtom`/`realize_deRelAtom`): the
+de-substituted formula holds on the consecutive deep tuple `i ↦ a (d + i)` iff `φ` holds in `M` (its
+`L^Sk`-structure) on the deep interpretations of `ts` at depth `d` over `S`. -/
+theorem realize_deForm (d : ℕ) (S : Finset J) {n : ℕ}
+    (φ : (skolemColim L).BoundedFormulaω Empty n)
+    (ts : Fin n → (skolemColim L)[[J]].Term Empty) (hsub : ∀ i, jSupport L J (ts i) ⊆ S) :
+    letI : (skolemColim L).Structure M := skolemColimStructure L
+    (deForm L J S φ ts hsub).Realize Empty.elim (fun i : Fin S.card => a (d + i)) ↔
+      φ.Realize Empty.elim (fun i => deepInterp L J a d S (ts i)) := by
+  letI : (skolemColim L).Structure M := skolemColimStructure L
+  have hassign : (fun i => (deTermFin L J S (ts i) (hsub i)).realize
+        (fun i : Fin S.card => a (d + i)))
+      = (fun i => deepInterp L J a d S (ts i)) :=
+    funext fun i => (deepInterp_eq_realize_fin L J a d S (ts i) (hsub i)).symm
+  rw [deForm, BoundedFormulaω.realize_relabel_sumInr_zero]
+  simp only [Formulaω.Realize, BoundedFormulaω.realize_subst]
+  rw [hassign]
+  exact realize_openBounds φ _
+
 /-! ### Step 4: eventual deep equality `EMEq` and the carrier -/
 
 /-- **Eventual deep equality**: closed terms `t, u` are identified when, for all sufficiently deep
