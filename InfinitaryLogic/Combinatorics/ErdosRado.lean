@@ -776,17 +776,28 @@ theorem large_above_prefix
   -- Step 1: the prefix range is bounded in `PairERSource`.
   have hBounded : Set.Bounded (· < · : PairERSource → PairERSource → Prop)
       (Set.range p) := by
-    have hcof : Ordinal.cof
-        (@Ordinal.type PairERSource (· < ·) _) =
+    have hcof : Order.cof PairERSource =
         Order.succ (Cardinal.beth.{0} 1) := by
+      rw [← Ordinal.cof_type PairERSource]
+      change Ordinal.cof (@Ordinal.type PairERSource (· < ·) _) = _
       rw [Ordinal.type_toType]; exact cof_ord_succ_beth_one
-    apply Ordinal.lt_cof_type
-    rw [hcof]
-    calc Cardinal.mk (Set.range p)
-        ≤ Cardinal.mk α.ToType := Cardinal.mk_range_le
-      _ ≤ Cardinal.aleph0 := Cardinal.mk_le_aleph0
-      _ < Order.succ (Cardinal.beth.{0} 1) :=
-          lt_of_le_of_lt (Cardinal.aleph0_le_beth 1) (Order.lt_succ _)
+    have hcard : Cardinal.mk (Set.range p) <
+        Order.succ (Cardinal.beth.{0} 1) := by
+      calc Cardinal.mk (Set.range p)
+          ≤ Cardinal.mk α.ToType := Cardinal.mk_range_le
+        _ ≤ Cardinal.aleph0 := Cardinal.mk_le_aleph0
+        _ < Order.succ (Cardinal.beth.{0} 1) :=
+            lt_of_le_of_lt (Cardinal.aleph0_le_beth 1) (Order.lt_succ _)
+    -- `Bounded (· < ·) s` is definitionally `¬ IsCofinal s`; if `s` were
+    -- cofinal then `Order.cof = succ (ℶ_1) ≤ #s`, contradicting `hcard`.
+    rw [show Set.Bounded (· < · : PairERSource → PairERSource → Prop)
+          (Set.range p) = ¬ IsCofinal (Set.range p) from
+        propext (not_isCofinal_iff).symm]
+    intro hcof_set
+    have hle : Order.cof PairERSource ≤ Cardinal.mk (Set.range p) :=
+      Order.cof_le hcof_set
+    rw [hcof] at hle
+    exact absurd hle (not_le.mpr hcard)
   -- Step 2: extract a strict upper bound `m` for the prefix.
   obtain ⟨m, hm⟩ := hBounded
   -- Step 3: `{y | m ≤ y} ⊆ {y | ∀ x, p x < y}`.
@@ -904,7 +915,7 @@ theorem exists_successor_refinement
       (· < · : PairERSource → PairERSource → Prop)).min F hFne
   have hy_mem : y ∈ F := WellFounded.min_mem _ _ _
   have hy_min : ∀ z ∈ F, ¬ z < y := fun z hz =>
-    WellFounded.not_lt_min _ F hFne hz
+    WellFounded.not_lt_min _ F hz
   -- For `z ∈ F \ {y}`, `y < z`.
   have hlt_of_mem : ∀ z ∈ F \ {y}, y < z := fun z hz =>
     lt_of_le_of_ne (not_lt.mp (hy_min z hz.1))
@@ -1109,7 +1120,7 @@ noncomputable def PairERChain.succ {cR : (Fin 2 ↪o PairERSource) → Bool}
       simp only [extendHead, OrderEmbedding.coe_ofStrictMono]
       exact hylt
     · show cR (pairEmbed _) = extendType s.type b _
-      simp only [extendType]
+      simp only [extendType, dif_pos]
       convert hycol using 2
       simp [extendHead]
   · -- Case: β ≠ ⊤. Let `z_β := enum ⟨typein β, _⟩ : α.ToType`.
@@ -1189,7 +1200,7 @@ noncomputable def PairERChain.succWithChoice
       simp only [extendHead, OrderEmbedding.coe_ofStrictMono]
       exact hylt
     · show cR (pairEmbed _) = extendType s.type b _
-      simp only [extendType]
+      simp only [extendType, dif_pos]
       convert hycol using 2
       simp [extendHead]
   · obtain ⟨hzval, _, _⟩ := hz
@@ -2255,7 +2266,7 @@ lemma PairERCoherentFamily.validFiber_of_stages
     rfl
   refine ⟨?_, ?_⟩
   · rw [← h_head]; exact h_lt
-  · rw [← h_type]; convert h_col using 2
+  · rw [← h_type]; exact h_col
 
 /-- **Reverse inclusion of `validFiber_of_stages`** (under
 `IsTypeCoherent`): if `y` lies in `validFiber cR F.prefix F.typeFn`,
@@ -3557,6 +3568,7 @@ theorem PairERCoherentFamily.typeCoherentFiber_large_via_majority
   rw [hF_majority]
   exact F.majorityType_large hα
 
+set_option maxHeartbeats 1000000 in
 /-- **`toMajorityType`**: rebuild a coherent family at level `α` so that
 its `typeFn` equals `majorityType F`. The prefix/commits are
 preserved (= F.prefix as a function), but each stage's `type` is reset
@@ -3841,9 +3853,9 @@ theorem exists_large_iInter_stage_fibers
       intro y
       simp only [Set.mem_iInter]
       intro β hβ0
-      exact absurd hβ0 (not_lt.mpr (zero_le β))
+      exact absurd hβ0 (not_lt.mpr bot_le)
     rw [h_iInter_eq, Cardinal.mk_univ, mk_pairERSource]
-  | succ β _ =>
+  | add_one β _ =>
     -- α = succ β: intersection collapses to validFiber at stage β.
     have h_top_lt : β < Order.succ β := Order.lt_succ β
     have h_subset :
@@ -4062,8 +4074,8 @@ successor stages; all fields are vacuous. Provides the base case for
 the transfinite recursion. -/
 def PairERCoherentFamily.empty (cR : (Fin 2 ↪o PairERSource) → Bool) :
     PairERCoherentFamily cR 0 where
-  stage := fun β h => absurd h (not_lt.mpr (zero_le β))
-  coherent := fun _ hβα => absurd hβα (not_lt.mpr (zero_le _))
+  stage := fun β h => absurd h (not_lt.mpr bot_le)
+  coherent := fun _ hβα => absurd hβα (not_lt.mpr (bot_le))
 
 /-- **Successor-case extension of the coherent family.** Given a
 coherent family `F : PairERCoherentFamily cR (Order.succ β)` (i.e.,
@@ -4107,7 +4119,7 @@ noncomputable def PairERCoherentFamily.extendAtSucc
 lemma PairERCoherentFamily.empty_isTypeCoherent
     (cR : (Fin 2 ↪o PairERSource) → Bool) :
     (PairERCoherentFamily.empty cR).IsTypeCoherent :=
-  fun _ hβα => absurd hβα (not_lt.mpr (zero_le _))
+  fun _ hβα => absurd hβα (not_lt.mpr (bot_le))
 
 /-- `extendAtSucc` preserves `IsTypeCoherent`: if the input family is
 type-coherent, so is the extension. Uses `succ_typeAt_old` to reduce
@@ -4143,7 +4155,7 @@ lemma PairERCoherentFamily.empty_isCanonicalTypeCoherent
     (PairERCoherentFamily.empty cR).IsCanonicalTypeCoherent := by
   refine ⟨PairERCoherentFamily.empty_isTypeCoherent cR, ?_⟩
   intro e _ _
-  exact absurd (e 0).2 (not_lt.mpr (zero_le _))
+  exact absurd (e 0).2 (not_lt.mpr (bot_le))
 
 /-! ### Base + extension constructors for `PairERTypeTree`
 
@@ -4571,8 +4583,8 @@ noncomputable def TreeBundle.zero
     { family := PairERCoherentFamily.empty cR
       tree := PairERTypeTree.empty cR }
   stage := PairERChain.zero cR
-  coh := fun δ hδ => absurd hδ (not_lt.mpr (zero_le δ))
-  type_match := fun δ hδ => absurd hδ (not_lt.mpr (zero_le δ))
+  coh := fun δ hδ => absurd hδ (not_lt.mpr bot_le)
+  type_match := fun δ hδ => absurd hδ (not_lt.mpr bot_le)
   type_coh := PairERCoherentFamily.empty_isTypeCoherent cR
 
 /-- **`TreeBundle.limitFromTree`**: build a `TreeBundle` at limit level
@@ -6366,7 +6378,7 @@ theorem exists_coherentBranchApprox_for_strictMono
         exact (CoherentBranchApprox.zero cR).extendToLevel_last α
       · -- α = 0: use fromZero directly.
         push_neg at hα_pos
-        have hα_eq : α = 0 := le_antisymm hα_pos (zero_le _)
+        have hα_eq : α = 0 := le_antisymm hα_pos (bot_le)
         refine ⟨CoherentBranchApprox.fromZero cR, ?_⟩
         intro i
         have hi_eq : i = ⟨0, Nat.zero_lt_one⟩ :=
@@ -9695,6 +9707,7 @@ noncomputable def CoherentGoodBranchApprox.extendSucc
       rw [show A.toApprox.extendSucc.prefixAt (Fin.last (n + 1)) x =
             A.toApprox.extendPrefixAt (Fin.last (n + 1)) x from rfl,
         A.toApprox.extendPrefixAt_last_apply x, ← h_nextChain]
+      rfl
     | cast j =>
       simp only [Fin.lastCases_castSucc]
       rw [PairERGoodChain.castLevel_head (h_level_cs j).symm
@@ -9716,6 +9729,7 @@ noncomputable def CoherentGoodBranchApprox.extendSucc
       rw [show A.toApprox.extendSucc.branchAt (Fin.last (n + 1)) x =
             A.toApprox.extendBranchAt (Fin.last (n + 1)) x from rfl,
         A.toApprox.extendBranchAt_last_apply x, ← h_nextChain]
+      rfl
     | cast j =>
       simp only [Fin.lastCases_castSucc]
       rw [PairERGoodChain.castLevel_type (h_level_cs j).symm
@@ -10304,7 +10318,7 @@ theorem exists_coherentGoodBranchApprox_for_strictMono
         rw [hi_eq]
         exact (CoherentBranchApprox.zero cR).extendToLevel_last α
       · push_neg at hα_pos
-        have hα_eq : α = 0 := le_antisymm hα_pos (zero_le _)
+        have hα_eq : α = 0 := le_antisymm hα_pos (bot_le)
         refine ⟨CoherentGoodBranchApprox.fromZero cR, ?_⟩
         intro i
         have hi_eq : i = ⟨0, Nat.zero_lt_one⟩ :=
@@ -12047,12 +12061,18 @@ private lemma insertPrescribedGoodApprox_goodAt_alpha_head
           (Finset.mem_insert_self α T)) =
         (Pα.goodAt α (Finset.mem_singleton.mpr rfl)).castLevel h_eq_α.symm :=
     insertPrescribedGoodAt_eq_alpha P Pα h_eq_α
-  show ((Q.toGoodApprox.goodAt (Q.toCoherentBranchPartial.indexOf α
-      (Finset.mem_insert_self α T))).castLevel _).toPairERChain.head x = _
-  rw [h_chain_eq]
-  rw [PairERGoodChain.castLevel_head, PairERGoodChain.castLevel_head]
-  congr 1
-  exact eq_of_heq (HEq.trans (eqRec_heq _ _) (eqRec_heq _ x))
+  -- Show the two Good chains at level `α` are equal, then take `.head`.
+  -- The chain on the left is `Q.goodAt`'s underlying approx chain cast
+  -- back to level `α`; `h_chain_eq` makes it `Pα.goodAt α` cast by a
+  -- round trip (`α → level idx → α`), which is the identity.
+  have h_chain : Q.goodAt α (Finset.mem_insert_self α T) =
+      Pα.goodAt α (Finset.mem_singleton.mpr rfl) := by
+    show (Q.toGoodApprox.goodAt (Q.toCoherentBranchPartial.indexOf α
+        (Finset.mem_insert_self α T))).castLevel _ = _
+    rw [h_chain_eq]
+    apply eq_of_heq
+    exact HEq.trans (eqRec_heq _ _) (eqRec_heq _ _)
+  rw [h_chain]
 
 /-- **`insertPrescribedGoodApprox_goodAt_alpha_type`**: parallel of
 `_alpha_head` for the type function. -/
@@ -12466,8 +12486,8 @@ theorem coherentGoodBranchPartial_extend_list
           PG.toCoherentBranchPartial
   | T, PG, [], _, _, _ => by
     refine ⟨PG, ?_, ?_⟩
-    · intro β hβ; rw [CoherentBranchPartial.restrict_prefixAt]
-    · intro β hβ; rw [CoherentBranchPartial.restrict_branch]
+    · intro β hβ; rw [CoherentBranchPartial.restrict_prefixAt]; rfl
+    · intro β hβ; rw [CoherentBranchPartial.restrict_branch]; rfl
   | T, PG, α :: tail, h_valid, h_nodup, h_disjoint => by
     have hα_lt : α < Ordinal.omega.{0} 1 :=
       h_valid α List.mem_cons_self
@@ -12493,26 +12513,16 @@ theorem coherentGoodBranchPartial_extend_list
       --   = Q₁.prefixAt β (Finset.subset_insert α T hβ_T)
       --   = PG.prefixAt β hβ_T
       have hβ_in_insert_α_T : β ∈ insert α T := Finset.subset_insert α T hβ_T
-      rw [Q.toCoherentBranchPartial.restrict_prefixAt _ β hβ_T]
       have h_step1 := hQ_compat.1 β hβ_in_insert_α_T
-      rw [Q.toCoherentBranchPartial.restrict_prefixAt
-          (subset_foldl_insert tail (insert α T)) β hβ_in_insert_α_T] at h_step1
-      rw [h_step1]
       have h_step2 := hQ₁_compat.1 β hβ_T
-      rw [Q₁.toCoherentBranchPartial.restrict_prefixAt
-          (Finset.subset_insert α T) β hβ_T] at h_step2
-      exact h_step2
+      simp only [CoherentBranchPartial.restrict_prefixAt] at h_step1 h_step2 ⊢
+      exact h_step1.trans h_step2
     · intro β hβ_T
       have hβ_in_insert_α_T : β ∈ insert α T := Finset.subset_insert α T hβ_T
-      rw [Q.toCoherentBranchPartial.restrict_branch _ β hβ_T]
       have h_step1 := hQ_compat.2 β hβ_in_insert_α_T
-      rw [Q.toCoherentBranchPartial.restrict_branch
-          (subset_foldl_insert tail (insert α T)) β hβ_in_insert_α_T] at h_step1
-      rw [h_step1]
       have h_step2 := hQ₁_compat.2 β hβ_T
-      rw [Q₁.toCoherentBranchPartial.restrict_branch
-          (Finset.subset_insert α T) β hβ_T] at h_step2
-      exact h_step2
+      simp only [CoherentBranchPartial.restrict_branch] at h_step1 h_step2 ⊢
+      exact h_step1.trans h_step2
 
 /-- **`foldl_insert_eq_union`**: list-fold of `insert` equals union with
 the list-as-Finset. Proved by induction on `l` with `T` generalized. -/
@@ -14424,12 +14434,12 @@ theorem goodIdealOneIndex_finite_consistent
       have ea := (hQ' S hS).1 α hα
       have ee := hQ_ext.1 α (hSsup hα)
       simp only [CoherentBranchPartial.restrict_prefixAt] at ea ee
-      rw [← ea, ← ee]
+      exact ea.symm.trans ee.symm
     · intro α hα
       have ea := (hQ' S hS).2 α hα
       have ee := hQ_ext.2 α (hSsup hα)
       simp only [CoherentBranchPartial.restrict_branch] at ea ee
-      rw [← ea, ← ee]
+      exact ea.symm.trans ee.symm
   refine ⟨Q.restrict Finset.subset_union_right, ambS, ?_⟩
   intro V hV hVi₀
   refine ⟨?_, ?_⟩
@@ -16425,7 +16435,7 @@ theorem ehmrChosen_lt_of_mem_ne (cR : (Fin 2 ↪o PairERSource) → Bool) {β : 
     (hne : y ≠ ehmrChosen cR β h) : ehmrChosen cR β h < y := by
   have hlive : ehmrLive cR h := ⟨y, hy⟩
   rw [ehmrChosen_eq_min cR h hlive] at hne ⊢
-  exact lt_of_le_of_ne (not_lt.mp (WellFounded.not_lt_min _ _ hlive hy)) (Ne.symm hne)
+  exact lt_of_le_of_ne (not_lt.mp (WellFounded.not_lt_min _ _ hy)) (Ne.symm hne)
 
 /-- **[STAGE 2a]** The recorded-color property (local EHMR fact (8)): at position
 `x : β.ToType`, the chosen rep sits below `s(h)` and the pair gets color `h x`. -/
@@ -16627,7 +16637,7 @@ theorem ehmrChosen_le_of_mem (cR : (Fin 2 ↪o PairERSource) → Bool) {β : Ord
     ehmrChosen cR β h ≤ y := by
   have hlive : ehmrLive cR h := ⟨y, hy⟩
   rw [ehmrChosen_eq_min cR h hlive]
-  exact not_lt.mp (WellFounded.not_lt_min _ _ hlive hy)
+  exact not_lt.mp (WellFounded.not_lt_min _ _ hy)
 
 /-- **[STAGE 2b — path strictness step]** Passing to a live child strictly increases the
 chosen rep: `s(h) < s(h.child c)`. (The child's top rep is `s(h)` by `ehmrRep_child_top`,
@@ -16777,7 +16787,7 @@ theorem exists_yRep_ge (cR : (Fin 2 ↪o PairERSource) → Bool) (y : PairERSour
   refine ⟨Ordinal.lt_wf.min {γ | y ≤ yRep cR y γ} ⟨γ₀, hγ₀⟩, ?_, ?_⟩
   · exact Ordinal.lt_wf.min_mem {γ | y ≤ yRep cR y γ} ⟨γ₀, hγ₀⟩
   · intro δ hδ
-    exact not_le.mp (fun ha => Ordinal.lt_wf.not_lt_min {γ | y ≤ yRep cR y γ} ⟨γ₀, hγ₀⟩ ha hδ)
+    exact not_le.mp (fun ha => Ordinal.lt_wf.not_lt_min {γ | y ≤ yRep cR y γ} ha hδ)
 
 /-- **[STAGE 2b — coverage / EHMR Lemma 14.2]** Every source element is the chosen
 representative of some node (`y ∈ R(h)`): take the least level `γ` where the canonical
@@ -17916,7 +17926,7 @@ noncomputable def CoherentBundle.zero
     CoherentBundle cR 0 where
   stage := PairERChain.zero cR
   family := PairERCoherentFamily.empty cR
-  coh := fun δ hδ => absurd hδ (not_lt.mpr (zero_le δ))
+  coh := fun δ hδ => absurd hδ (not_lt.mpr bot_le)
 
 /-- **Successor extension of a coherent bundle.** From a bundle at `α`,
 produce the bundle at `α + 1`: the new stage is `b.stage.succ`; the new
@@ -18001,7 +18011,7 @@ structure CoherentBundle.IsTypeCoh
 lemma CoherentBundle.zero_isTypeCoh
     (cR : (Fin 2 ↪o PairERSource) → Bool) :
     (CoherentBundle.zero cR).IsTypeCoh where
-  stage_type := fun _ hδ => absurd hδ (not_lt.mpr (zero_le _))
+  stage_type := fun _ hδ => absurd hδ (not_lt.mpr (bot_le))
   family_type := PairERCoherentFamily.empty_isTypeCoherent cR
 
 /-- `CoherentBundle.extend` preserves `IsTypeCoh`. -/
@@ -18145,7 +18155,7 @@ private theorem crossCoh (cR : (Fin 2 ↪o PairERSource) → Bool)
   | ind γ IHγ =>
     intro δ hδγ
     rcases Ordinal.zero_or_succ_or_isSuccLimit γ with hz | ⟨γ', hγ'⟩ | hγ_lim
-    · exact absurd hδγ (hz ▸ not_lt.mpr (zero_le _))
+    · exact absurd hδγ (hz ▸ not_lt.mpr (bot_le))
     · subst hγ'
       have hγ'_lt : γ' < Ordinal.omega.{0} 1 :=
         (Order.lt_succ γ').trans hγ
@@ -18187,7 +18197,7 @@ private theorem crossCohLocal
   | ind γ IHγ =>
     intro hγβ hγ hδγ
     rcases Ordinal.zero_or_succ_or_isSuccLimit γ with hz | ⟨γ', hγ'⟩ | hγ_lim
-    · exact absurd hδγ (hz ▸ not_lt.mpr (zero_le _))
+    · exact absurd hδγ (hz ▸ not_lt.mpr (bot_le))
     · subst hγ'
       have hγ'sβ : γ' < β := (Order.lt_succ γ').trans hγβ
       have hγ'_lt : γ' < Ordinal.omega.{0} 1 := (Order.lt_succ γ').trans hγ
@@ -18301,7 +18311,7 @@ private theorem rawStage_commitAt_stable
   | ind β IHβ =>
     intro hβ δ hδβ hsδ is_succ_chain
     rcases Ordinal.zero_or_succ_or_isSuccLimit β with hz | ⟨β', hβ'⟩ | hβ_lim
-    · exact absurd hδβ (hz ▸ not_lt.mpr (zero_le _))
+    · exact absurd hδβ (hz ▸ not_lt.mpr (bot_le))
     · subst hβ'
       rcases lt_or_eq_of_le (Order.lt_succ_iff.mp hδβ) with hδ_lt | hδ_eq
       · rw [rawStage_commitAt_of_succ _ _ _ _ hδ_lt]
@@ -18393,10 +18403,10 @@ structure RichBundle (cR : (Fin 2 ↪o PairERSource) → Bool)
 noncomputable def RichBundle.zero (cR : (Fin 2 ↪o PairERSource) → Bool) :
     RichBundle cR 0 where
   bundle := CoherentBundle.zero cR
-  commit := fun δ h => absurd h (not_lt.mpr (zero_le δ))
-  stage_eq := fun δ h => absurd h (not_lt.mpr (zero_le δ))
-  family_eq := fun γ h _ _ => absurd h (not_lt.mpr (zero_le γ))
-  commit_top := fun δ h => absurd h (not_lt.mpr (zero_le δ))
+  commit := fun δ h => absurd h (not_lt.mpr bot_le)
+  stage_eq := fun δ h => absurd h (not_lt.mpr bot_le)
+  family_eq := fun γ h _ _ => absurd h (not_lt.mpr bot_le)
+  commit_top := fun δ h => absurd h (not_lt.mpr bot_le)
 
 /-- **Successor extension of a rich bundle.** -/
 noncomputable def RichBundle.extend
@@ -18557,11 +18567,11 @@ structure RichState (cR : (Fin 2 ↪o PairERSource) → Bool)
 noncomputable def RichState.zero (cR : (Fin 2 ↪o PairERSource) → Bool) :
     RichState cR 0 where
   bundles := fun γ hγ0 _ =>
-    have h_eq : γ = 0 := le_antisymm hγ0 (zero_le γ)
+    have h_eq : γ = 0 := le_antisymm hγ0 bot_le
     h_eq ▸ RichBundle.zero cR
   prev_eq := fun γ _ _ _ hδγ _ _ =>
-    absurd (hδγ.trans_le (le_of_eq (le_antisymm ‹γ ≤ 0› (zero_le γ))))
-      (not_lt.mpr (zero_le _))
+    absurd (hδγ.trans_le (le_of_eq (le_antisymm ‹γ ≤ 0› bot_le)))
+      (not_lt.mpr (bot_le))
 
 /-- **Successor rich state**: extend to level `α+1` using
 `RichBundle.extend` on the level-α bundle. -/
@@ -18770,11 +18780,14 @@ private theorem richStage_bundle_eq_self
   induction α using Ordinal.limitRecOn with
   | zero =>
     -- α = 0: δ ≤ 0, so δ = 0.
-    have hδ0 : δ = 0 := le_antisymm hδα (zero_le _)
+    have hδ0 : δ = 0 := le_antisymm hδα (bot_le)
     subst hδ0
     rfl
-  | succ β IH =>
+  | add_one β IH =>
     -- α = succ β: unfold richStage_succ; bundles is RichState.extend's dif.
+    revert hα hδα
+    rw [show (β + 1 : Ordinal.{0}) = Order.succ β from rfl]
+    intro hα hδα
     have hβω : β < Ordinal.omega.{0} 1 := (Order.lt_succ β).trans hα
     rw [richStage_succ]
     by_cases h_δ_le_β : δ ≤ β
@@ -18963,8 +18976,11 @@ theorem treeStage_canonical_commit
     (treeStage cR α hα).stage.commitAt δ hδα =
       treeStageCanonicalCommit cR δ hδ := by
   induction α using Ordinal.limitRecOn with
-  | zero => exact absurd hδα (not_lt.mpr (zero_le δ))
-  | succ β IH =>
+  | zero => exact absurd hδα (not_lt.mpr bot_le)
+  | add_one β IH =>
+    revert hα hδα
+    rw [show (β + 1 : Ordinal.{0}) = Order.succ β from rfl]
+    intro hα hδα
     have hβ : β < Ordinal.omega.{0} 1 := (Order.lt_succ β).trans hα
     rw [treeStage_succ]
     by_cases h_δ_eq_β : δ = β
@@ -19313,8 +19329,11 @@ theorem treeStage_typeAt_canonical
     (δ : Ordinal.{0}) (hδη : δ < η) (hδ : δ < Ordinal.omega.{0} 1) :
     (treeStage cR η hη).stage.typeAt δ hδη = treeCommitBool cR δ hδ := by
   induction η using Ordinal.limitRecOn with
-  | zero => exact absurd hδη (not_lt.mpr (zero_le δ))
-  | succ ζ IH =>
+  | zero => exact absurd hδη (not_lt.mpr bot_le)
+  | add_one ζ IH =>
+    revert hη hδη
+    rw [show (ζ + 1 : Ordinal.{0}) = Order.succ ζ from rfl]
+    intro hη hδη
     have hζ : ζ < Ordinal.omega.{0} 1 := (Order.lt_succ ζ).trans hη
     rw [treeStage_succ]
     by_cases h_eq : δ = ζ
