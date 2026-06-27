@@ -107,7 +107,7 @@ private theorem realize_atomicFormulaInf {M : Type*} [L.Structure M]
   | rel R f =>
     simp only [atomicFormulaInf, FormulaInf.Realize, BoundedFormulaInf.realize_rel,
       Term.realize, Sum.elim_inl, AtomicIdx.holds]
-    constructor <;> intro h <;> convert h using 1
+    constructor <;> intro h <;> convert h using 1 <;> rfl
 
 omit [Countable (Σ l, L.Relations l)] in
 /-- The forward direction of the Karp lemma, generalized to handle bound variables.
@@ -125,14 +125,14 @@ private theorem BFEquiv_implies_agree_aux {M N : Type w} [L.Structure M] [L.Stru
     obtain ⟨x₂, rfl⟩ := Term.eq_var_of_isRelational t₂
     simp only [BoundedFormulaInf.realize_equal, Term.realize]
     have hSAT : SameAtomicType (L := L) (Fin.append v xs) (Fin.append w ys) :=
-      (BFEquiv.zero _ _).mp (BFEquiv.monotone (zero_le _) hBF)
+      (BFEquiv.zero _ _).mp (BFEquiv.monotone bot_le hBF)
     rw [sumElim_eq_append_comp v xs, sumElim_eq_append_comp w ys]
     simp only [Function.comp]
     exact hSAT (.eq (finSumFinEquiv x₁) (finSumFinEquiv x₂))
   | rel R ts =>
     simp only [BoundedFormulaInf.realize_rel]
     have hSAT : SameAtomicType (L := L) (Fin.append v xs) (Fin.append w ys) :=
-      (BFEquiv.zero _ _).mp (BFEquiv.monotone (zero_le _) hBF)
+      (BFEquiv.zero _ _).mp (BFEquiv.monotone bot_le hBF)
     have hvars : ∀ i, ∃ x, ts i = Term.var x := fun i => Term.eq_var_of_isRelational (ts i)
     choose ts_var hts using hvars
     have hM : (RelMap R fun i => (ts i).realize (Sum.elim v xs)) ↔
@@ -242,7 +242,7 @@ private theorem realize_atomicFormulaInfW {M : Type*} [L.Structure M]
   | rel R f =>
     simp only [atomicFormulaInfW, FormulaInf.Realize, BoundedFormulaInf.Realize, Term.realize,
       Sum.elim_inl, AtomicIdx.holds]
-    constructor <;> intro h <;> convert h using 1
+    constructor <;> intro h <;> convert h using 1 <;> rfl
 
 /-! #### Forward: PotentialIso → LinfEquivW -/
 
