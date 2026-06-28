@@ -1388,14 +1388,181 @@ theorem EMContext.truthLemma (ctx : EMContext L J (M := M)) (hc : ctx.OmegaCompl
       exact (ih i ts S hsub (hready i)).mpr
         (EMContext.eventualDeepTruth_iInf_forall (L := L) (J := J) ctx φs ts S h i)
 
-/-- **Staged truth-lemma readiness**: the colimit `TLReady` of the staged formula's image under
-`skolemStageInclusion k`. Since `mapLanguage` distributes over the constructors definitionally, this
-unfolds to: `imp`-antecedent decidedness, `iSup`/`iInf` component readiness, and `all`-body readiness
-at every `Fin.snoc ts u` over `S ∪ jSupport u` — exactly what `truthLemmaStage` consumes. -/
+/-- **Staged truth-lemma readiness** (support-*uniform*): the colimit `TLReady` of the staged formula's
+image under `skolemStageInclusion k` holds at *every* enlarged support `T ⊇ S`. The uniformity is what
+the `all` case needs — it reads the body's readiness at `S ∪ jSupport u` (for the Skolem witness, whose
+own support is `⊆ S`). Monotone in `S` by construction; `Γ*` later discharges it uniformly. Since
+`mapLanguage` distributes definitionally, `TLReady` at each `T` unfolds to `imp`-antecedent decidedness,
+`iSup`/`iInf` component readiness, and `all`-body readiness at `Fin.snoc ts u` over `T ∪ jSupport u`. -/
 def EMContext.TLReadyStage (ctx : EMContext L J (M := M)) (k : ℕ) {n : ℕ}
     (ψ : (skolemStage L k).BoundedFormulaω Empty n)
     (ts : Fin n → (skolemColim L)[[J]].Term Empty) (S : Finset J) : Prop :=
-  EMContext.TLReady (L := L) (J := J) ctx (ψ.mapLanguage (skolemStageInclusion L k)) ts S
+  ∀ T : Finset J, S ⊆ T →
+    EMContext.TLReady (L := L) (J := J) ctx (ψ.mapLanguage (skolemStageInclusion L k)) ts T
+
+/-- **The staged Γ*-truth lemma** (the load-bearing endpoint): for a **staged** base-language formula
+`ψ : (skolemStage L k).BoundedFormulaω`, realizing its colimit image in the EM term model on term-classes
+is equivalent to its eventual deep truth. Structural induction on `ψ`: atoms/connectives via the colimit
+lemmas (`mapLanguage` distributes definitionally), `iSup`/`iInf` via `hc.OmegaComplete`, and the `all`
+case via the Skolem-witness transport — the witness has support `⊆ S`, and support-uniform readiness
+supplies the body's readiness at every enlarged support. No `SkolemSemantic`/`hsk` parameter; the
+Skolem step is discharged inline. -/
+theorem EMContext.truthLemmaStage (ctx : EMContext L J (M := M)) (hc : ctx.OmegaComplete) (k : ℕ) :
+    ∀ {n : ℕ} (ψ : (skolemStage L k).BoundedFormulaω Empty n)
+      (ts : Fin n → (skolemColim L)[[J]].Term Empty) (S : Finset J),
+      (∀ i, jSupport L J (ts i) ⊆ S) → EMContext.TLReadyStage (L := L) (J := J) ctx k ψ ts S →
+      (@BoundedFormulaω.Realize ((skolemColim L)[[J]]) ctx.Carrier ctx.structure Empty n
+          ((ψ.mapLanguage (skolemStageInclusion L k)).mapLanguage (lhomWithConstants (skolemColim L) J))
+          Empty.elim (fun i => ctx.mkClass (t := ts i)) ↔
+        EMContext.eventualDeepTruth (L := L) (J := J) ctx
+          (ψ.mapLanguage (skolemStageInclusion L k)) ts S) := by
+  letI : (skolemColim L)[[J]].Structure ctx.Carrier := ctx.structure
+  intro n ψ
+  induction ψ with
+  | falsum =>
+    intro ts S _ _
+    simp only [BoundedFormulaω.mapLanguage, BoundedFormulaω.realize_falsum,
+      EMContext.eventualDeepTruth_falsum_iff]
+  | equal t₁ t₂ =>
+    intro ts S hsub _
+    have hbi : (Finset.univ.biUnion fun i => jSupport L J (ts i)) ⊆ S :=
+      Finset.biUnion_subset.mpr fun i _ => hsub i
+    exact EMContext.eventualDeepTruth_equal_iff (L := L) (J := J) ctx
+      ((skolemStageInclusion L k).onTerm t₁) ((skolemStageInclusion L k).onTerm t₂) ts
+      (Finset.union_subset
+        ((jSupport_onTerm_subst_subset L J ((skolemStageInclusion L k).onTerm t₁) ts).trans hbi)
+        ((jSupport_onTerm_subst_subset L J ((skolemStageInclusion L k).onTerm t₂) ts).trans hbi))
+  | rel R args =>
+    intro ts S hsub _
+    have hbi : (Finset.univ.biUnion fun i => jSupport L J (ts i)) ⊆ S :=
+      Finset.biUnion_subset.mpr fun i _ => hsub i
+    exact EMContext.eventualDeepTruth_rel_iff (L := L) (J := J) ctx
+      ((skolemStageInclusion L k).onRelation R)
+      (fun i => (skolemStageInclusion L k).onTerm (args i)) ts
+      (Finset.biUnion_subset.mpr fun i _ =>
+        (jSupport_onTerm_subst_subset L J ((skolemStageInclusion L k).onTerm (args i)) ts).trans hbi)
+  | imp φ ψ ihφ ihψ =>
+    intro ts S hsub hready
+    have hdec := (hready S (le_refl S)).1
+    simp only [BoundedFormulaω.mapLanguage_imp]
+    rw [EMContext.eventualDeepTruth_imp_iff (L := L) (J := J) ctx
+      (φ.mapLanguage (skolemStageInclusion L k)) (ψ.mapLanguage (skolemStageInclusion L k)) ts S hdec,
+      BoundedFormulaω.realize_imp]
+    exact imp_congr (ihφ ts S hsub fun T hT => (hready T hT).2.1)
+      (ihψ ts S hsub fun T hT => (hready T hT).2.2)
+  | iSup φs ih =>
+    intro ts S hsub hready
+    rw [show ((BoundedFormulaω.iSup φs).mapLanguage (skolemStageInclusion L k)).mapLanguage
+          (lhomWithConstants (skolemColim L) J)
+        = BoundedFormulaω.iSup (fun i => ((φs i).mapLanguage (skolemStageInclusion L k)).mapLanguage
+            (lhomWithConstants (skolemColim L) J)) from rfl,
+      BoundedFormulaω.realize_iSup]
+    constructor
+    · rintro ⟨i, hi⟩
+      exact EMContext.eventualDeepTruth_iSup_of_exists (L := L) (J := J) ctx
+        (fun i => (φs i).mapLanguage (skolemStageInclusion L k)) ts S
+        ⟨i, (ih i ts S hsub fun T hT => (hready T hT) i).mp hi⟩
+    · intro h
+      obtain ⟨i, hi⟩ := hc.iSup_complete
+        (fun i => (φs i).mapLanguage (skolemStageInclusion L k)) ts S h
+      exact ⟨i, (ih i ts S hsub fun T hT => (hready T hT) i).mpr hi⟩
+  | iInf φs ih =>
+    intro ts S hsub hready
+    rw [show ((BoundedFormulaω.iInf φs).mapLanguage (skolemStageInclusion L k)).mapLanguage
+          (lhomWithConstants (skolemColim L) J)
+        = BoundedFormulaω.iInf (fun i => ((φs i).mapLanguage (skolemStageInclusion L k)).mapLanguage
+            (lhomWithConstants (skolemColim L) J)) from rfl,
+      BoundedFormulaω.realize_iInf]
+    constructor
+    · intro h
+      exact hc.iInf_complete (fun i => (φs i).mapLanguage (skolemStageInclusion L k)) ts S
+        fun i => (ih i ts S hsub fun T hT => (hready T hT) i).mp (h i)
+    · intro h i
+      exact (ih i ts S hsub fun T hT => (hready T hT) i).mpr
+        (EMContext.eventualDeepTruth_iInf_forall (L := L) (J := J) ctx
+          (fun i => (φs i).mapLanguage (skolemStageInclusion L k)) ts S h i)
+  | all ψ₀ ih =>
+    intro ts S hsub hready
+    set φ₀ := ψ₀.mapLanguage (skolemStageInclusion L k) with hφ₀
+    have hwS : jSupport L J (skWitnessTerm L J ψ₀.not ts) ⊆ S := by
+      rw [jSupport_skWitnessTerm]; exact Finset.biUnion_subset.mpr fun i _ => hsub i
+    have hsnoc : ∀ (u : (skolemColim L)[[J]].Term Empty) (i : Fin (_ + 1)),
+        jSupport L J ((Fin.snoc ts u : Fin _ → (skolemColim L)[[J]].Term Empty) i)
+          ⊆ S ∪ jSupport L J u := by
+      intro u i
+      refine Fin.lastCases ?_ (fun j => ?_) i
+      · rw [Fin.snoc_last]; exact Finset.subset_union_right
+      · rw [Fin.snoc_castSucc]; exact (hsub j).trans Finset.subset_union_left
+    have hsnocw : ∀ i, jSupport L J
+        ((Fin.snoc ts (skWitnessTerm L J ψ₀.not ts) :
+            Fin _ → (skolemColim L)[[J]].Term Empty) i) ⊆ S := by
+      intro i
+      refine Fin.lastCases ?_ (fun j => ?_) i
+      · rw [Fin.snoc_last]; exact hwS
+      · rw [Fin.snoc_castSucc]; exact hsub j
+    -- support-uniform body readiness at every `snoc ts u` over `S ∪ jSupport u`
+    have hbody : ∀ (u : (skolemColim L)[[J]].Term Empty),
+        EMContext.TLReadyStage (L := L) (J := J) ctx k ψ₀ (Fin.snoc ts u) (S ∪ jSupport L J u) := by
+      intro u T' hT'
+      have h := (hready T' (Finset.subset_union_left.trans hT')) u
+      rwa [Finset.union_eq_left.mpr (Finset.subset_union_right.trans hT')] at h
+    have hready_wS : EMContext.TLReadyStage (L := L) (J := J) ctx k ψ₀
+        (Fin.snoc ts (skWitnessTerm L J ψ₀.not ts)) S := by
+      have h := hbody (skWitnessTerm L J ψ₀.not ts)
+      rwa [Finset.union_eq_left.mpr hwS] at h
+    -- witness bridge: `eDT (∀φ₀)` over any `T` ↔ body `eDT` at the witness
+    have hwit : ∀ (T : Finset J),
+        EMContext.eventualDeepTruth (L := L) (J := J) ctx φ₀
+            (Fin.snoc ts (skWitnessTerm L J ψ₀.not ts)) T ↔
+          EMContext.eventualDeepTruth (L := L) (J := J) ctx (BoundedFormulaω.all φ₀) ts T := by
+      intro T
+      letI : (skolemColim L).Structure M := skolemColimStructure L
+      rw [EMContext.eventualDeepTruth, EMContext.eventualDeepTruth]
+      refine Filter.eventually_congr (Filter.Eventually.of_forall fun d => ?_)
+      rw [BoundedFormulaω.realize_all, deepInterp_snoc]
+      exact ⟨fun hd => skWitness_universal L J ctx.a d T ψ₀ ts hd,
+        fun hd => hd (deepInterp L J ctx.a d T (skWitnessTerm L J ψ₀.not ts))⟩
+    have hinst : ∀ (T : Finset J) (u : (skolemColim L)[[J]].Term Empty),
+        EMContext.eventualDeepTruth (L := L) (J := J) ctx (BoundedFormulaω.all φ₀) ts T →
+          EMContext.eventualDeepTruth (L := L) (J := J) ctx φ₀ (Fin.snoc ts u) T := by
+      intro T u h
+      letI : (skolemColim L).Structure M := skolemColimStructure L
+      rw [EMContext.eventualDeepTruth] at h ⊢
+      refine h.mono fun d hd => ?_
+      rw [deepInterp_snoc]
+      rw [BoundedFormulaω.realize_all] at hd
+      exact hd (deepInterp L J ctx.a d T u)
+    rw [show ((BoundedFormulaω.all ψ₀).mapLanguage (skolemStageInclusion L k)).mapLanguage
+          (lhomWithConstants (skolemColim L) J)
+        = BoundedFormulaω.all (φ₀.mapLanguage (lhomWithConstants (skolemColim L) J)) from rfl,
+      BoundedFormulaω.realize_all]
+    constructor
+    · intro hcar
+      have hcarw := hcar (ctx.mkClass (t := skWitnessTerm L J ψ₀.not ts))
+      rw [EMContext.mkClass_snoc (L := L) (J := J) ctx ts (skWitnessTerm L J ψ₀.not ts)] at hcarw
+      exact (hwit S).mp
+        ((ih (Fin.snoc ts (skWitnessTerm L J ψ₀.not ts)) S hsnocw hready_wS).mp hcarw)
+    · intro heDT
+      refine Quotient.ind (fun u => ?_)
+      show (φ₀.mapLanguage (lhomWithConstants (skolemColim L) J)).Realize Empty.elim
+          (Fin.snoc (fun i => ctx.mkClass (t := ts i)) (ctx.mkClass (t := u)))
+      rw [EMContext.mkClass_snoc (L := L) (J := J) ctx ts u]
+      have hready_wSj : EMContext.TLReadyStage (L := L) (J := J) ctx k ψ₀
+          (Fin.snoc ts (skWitnessTerm L J ψ₀.not ts)) (S ∪ jSupport L J u) :=
+        fun T' hT' => hready_wS T' (Finset.subset_union_left.trans hT')
+      have hsnocwj : ∀ i, jSupport L J
+          ((Fin.snoc ts (skWitnessTerm L J ψ₀.not ts) :
+              Fin _ → (skolemColim L)[[J]].Term Empty) i) ⊆ S ∪ jSupport L J u :=
+        fun i => (hsnocw i).trans Finset.subset_union_left
+      have hcarw := (ih (Fin.snoc ts (skWitnessTerm L J ψ₀.not ts)) S hsnocw hready_wS).mpr
+        ((hwit S).mpr heDT)
+      have hwT : EMContext.eventualDeepTruth (L := L) (J := J) ctx (BoundedFormulaω.all φ₀) ts
+          (S ∪ jSupport L J u) :=
+        (hwit (S ∪ jSupport L J u)).mp
+          ((ih (Fin.snoc ts (skWitnessTerm L J ψ₀.not ts)) (S ∪ jSupport L J u) hsnocwj
+            hready_wSj).mp hcarw)
+      exact (ih (Fin.snoc ts u) (S ∪ jSupport L J u) (hsnoc u) (hbody u)).mpr
+        (hinst (S ∪ jSupport L J u) u hwT)
 
 end Quotient
 
