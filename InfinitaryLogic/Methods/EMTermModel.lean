@@ -1566,25 +1566,37 @@ theorem EMContext.truthLemmaStage (ctx : EMContext L J (M := M)) (hc : ctx.Omega
 
 /-! ### Step 4D-9: Γ* supplies support-uniform readiness
 
-Given a deForm-membership closure `hmem` (every `Γ*` member's de-substituted formula, over every
-covering support and argument tuple, lies in `Γ`), the readiness `TLReadyStage` holds for every `Γ*`
-formula. The `imp`-antecedent decidedness obligations are discharged by `eventualDeepTruth_decided`
-(fed by `hmem`); the recursion descends through `Γ*`'s subformula/component closure (`skSubStep`); the
-`all` case reads the body's readiness at the one-point extension over the enlarged support — supplied
-uniformly because the witness's own support is `⊆ S`. `hmem` itself (the "template-renaming" closure)
-is produced from `Γ*` in the following chunk. `OmegaComplete` is a *separate* obligation, not here. -/
+The readiness `TLReadyStage` holds for every `Γ*` formula, **given** the deForm-membership closure
+packaged as the mixin `DeFormClosedForGammaStar` (every `Γ*` member's de-substituted formula, over
+every covering support and argument tuple, lies in `Γ`). The `imp`-antecedent decidedness obligations
+are discharged by `eventualDeepTruth_decided` (fed by the mixin); the recursion descends through `Γ*`'s
+subformula/component closure (`skSubStep`); the `all` case reads the body's readiness at the one-point
+extension over the enlarged support — supplied uniformly because the witness's own support is `⊆ S`.
 
-/-- **Readiness (un-quantified support form)**: from the deForm-membership closure `hmem`, every `Γ*`
-formula `ψ` has `TLReady` at every covering support `T`. The core induction; `TLReadyStage_of_GammaStar`
-wraps it over `T ⊇ S`. -/
+The mixin is kept **separate from `EMContext`** (which stays purely semantic — quotient/congruence/atom
+API need no deForm closure). Its content (a countable colimit-level deForm-closure `⊆ Γ`) is discharged
+later, when `ctx.Γ` is actually constructed (the final-assembly chunk: colimit/term countability, then
+`Γ` = `Γ*`-image ∪ atom-diagram ∪ deForm-closure, extracted tail-indiscernible). `OmegaComplete` is a
+*separate* obligation, not here. -/
+
+/-- **deForm-membership closure** (construction-data mixin, the seam between `Γ*` readiness and the
+extracted family): every `Γ*` member's de-substituted formula — over every covering support `T` and
+argument tuple `ts` — lies in `ctx.Γ`. Discharged when `ctx.Γ` is built. -/
+structure EMContext.DeFormClosedForGammaStar (ctx : EMContext L J (M := M))
+    (Γ₀ : Set (SkFormula L)) : Prop where
+  /-- Each `Γ*` member's deForm, over any covering support and arguments, is in `Γ`. -/
+  deForm_mem : ∀ {k n : ℕ} {φ : (skolemStage L k).BoundedFormulaω Empty n},
+    (⟨k, n, φ⟩ : SkFormula L) ∈ Γstar L Γ₀ →
+    ∀ (ts : Fin n → (skolemColim L)[[J]].Term Empty) (T : Finset J)
+      (hcov : ∀ i, jSupport L J (ts i) ⊆ T),
+      (⟨T.card, deForm L J T (φ.mapLanguage (skolemStageInclusion L k)) ts hcov⟩ :
+        Σ n, (skolemColim L).BoundedFormulaω Empty n) ∈ ctx.Γ
+
+/-- **Readiness (un-quantified support form)**: from the deForm-closure mixin, every `Γ*` formula `ψ`
+has `TLReady` at every covering support `T`. The core induction; `TLReadyStage_of_GammaStar` wraps it
+over `T ⊇ S`. -/
 theorem EMContext.TLReady_mapLang_of_GammaStar (ctx : EMContext L J (M := M)) {k : ℕ}
-    {Γ₀ : Set (SkFormula L)}
-    (hmem : ∀ {m' : ℕ} (φ' : (skolemStage L k).BoundedFormulaω Empty m'),
-      (⟨k, m', φ'⟩ : SkFormula L) ∈ Γstar L Γ₀ →
-      ∀ (ts' : Fin m' → (skolemColim L)[[J]].Term Empty) (T' : Finset J)
-        (hcov' : ∀ i, jSupport L J (ts' i) ⊆ T'),
-        (⟨T'.card, deForm L J T' (φ'.mapLanguage (skolemStageInclusion L k)) ts' hcov'⟩ :
-          Σ n, (skolemColim L).BoundedFormulaω Empty n) ∈ ctx.Γ) :
+    {Γ₀ : Set (SkFormula L)} (hclosed : EMContext.DeFormClosedForGammaStar (L := L) (J := J) ctx Γ₀) :
     ∀ {n : ℕ} (ψ : (skolemStage L k).BoundedFormulaω Empty n),
       (⟨k, n, ψ⟩ : SkFormula L) ∈ Γstar L Γ₀ →
       ∀ (ts : Fin n → (skolemColim L)[[J]].Term Empty) (T : Finset J),
@@ -1603,7 +1615,7 @@ theorem EMContext.TLReady_mapLang_of_GammaStar (ctx : EMContext L J (M := M)) {k
     have hψ'mem : (⟨k, _, ψ'⟩ : SkFormula L) ∈ Γstar L Γ₀ :=
       skSubStep_subset_Γstar L hψ (Set.mem_image_of_mem _ (Set.mem_insert_of_mem _ rfl))
     exact ⟨EMContext.eventualDeepTruth_decided (L := L) (J := J) ctx
-        (φ'.mapLanguage (skolemStageInclusion L k)) ts T hcov (hmem φ' hφ'mem ts T hcov),
+        (φ'.mapLanguage (skolemStageInclusion L k)) ts T hcov (hclosed.deForm_mem hφ'mem ts T hcov),
       ihφ hφ'mem ts T hcov, ihψ hψ'mem ts T hcov⟩
   | iSup φs ih =>
     intro hψ ts T hcov i
@@ -1626,22 +1638,16 @@ theorem EMContext.TLReady_mapLang_of_GammaStar (ctx : EMContext L J (M := M)) {k
     exact ih hχ'mem (Fin.snoc ts u) (T ∪ jSupport L J u) hcov'
 
 /-- **`Γ*` supplies support-uniform `TLReadyStage`** (this chunk's endpoint, modulo the deForm-closure
-`hmem`): every `Γ*` formula is `truthLemmaStage`-ready. Wraps `TLReady_mapLang_of_GammaStar` over the
-enlarged supports `T ⊇ S` (each still covers `ts`). -/
+mixin `hclosed`): every `Γ*` formula is `truthLemmaStage`-ready. Wraps `TLReady_mapLang_of_GammaStar`
+over the enlarged supports `T ⊇ S` (each still covers `ts`). -/
 theorem EMContext.TLReadyStage_of_GammaStar (ctx : EMContext L J (M := M)) {k : ℕ}
-    {Γ₀ : Set (SkFormula L)}
-    (hmem : ∀ {m' : ℕ} (φ' : (skolemStage L k).BoundedFormulaω Empty m'),
-      (⟨k, m', φ'⟩ : SkFormula L) ∈ Γstar L Γ₀ →
-      ∀ (ts' : Fin m' → (skolemColim L)[[J]].Term Empty) (T' : Finset J)
-        (hcov' : ∀ i, jSupport L J (ts' i) ⊆ T'),
-        (⟨T'.card, deForm L J T' (φ'.mapLanguage (skolemStageInclusion L k)) ts' hcov'⟩ :
-          Σ n, (skolemColim L).BoundedFormulaω Empty n) ∈ ctx.Γ)
+    {Γ₀ : Set (SkFormula L)} (hclosed : EMContext.DeFormClosedForGammaStar (L := L) (J := J) ctx Γ₀)
     {n : ℕ} (ψ : (skolemStage L k).BoundedFormulaω Empty n)
     (hψ : (⟨k, n, ψ⟩ : SkFormula L) ∈ Γstar L Γ₀)
     (ts : Fin n → (skolemColim L)[[J]].Term Empty) (S : Finset J)
     (hcov : ∀ i, jSupport L J (ts i) ⊆ S) :
     EMContext.TLReadyStage (L := L) (J := J) ctx k ψ ts S :=
-  fun T hST => EMContext.TLReady_mapLang_of_GammaStar (L := L) (J := J) ctx hmem ψ hψ ts T
+  fun T hST => EMContext.TLReady_mapLang_of_GammaStar (L := L) (J := J) ctx hclosed ψ hψ ts T
     (fun i => (hcov i).trans hST)
 
 end Quotient
