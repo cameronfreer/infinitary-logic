@@ -27,3 +27,9 @@ name = "InfinitaryLogic"
 name = "InfinitaryLogicConditional"
 roots = ["InfinitaryLogic.Conditional"]
 globs = ["InfinitaryLogic.Conditional.*"]
+
+# Non-default target for the work-in-progress frontier (Skolem towers + EM term model);
+# built explicitly in CI so toolchain bumps cannot silently break it.
+[[lean_lib]]
+name = "InfinitaryLogicWIP"
+roots = ["InfinitaryLogic.WIP"]
