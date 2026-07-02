@@ -265,13 +265,13 @@ theorem toLocalColimFormula_step (k : ℕ) (p : Σ n, (Llocal s₀ k).BoundedFor
     = ⟨p.1, p.2.mapLanguage (LlocalInclusion s₀ k)⟩
   rw [BoundedFormulaω.mapLanguage_mapLanguage, LlocalInclusion_comp_LlocalHom]
 
-/-- The colimit image of a stage-`k` member's stage-`(k+1)` lift is in `ΓlocalColim`, *and* equals
-its direct colimit image (combining `liftGamma_mem_Γlocal_succ` with the step coherence). -/
+/-- **Lifted membership**: the stage-`(k+1)` lift of a stage-`k` family member has its colimit
+image in `ΓlocalColim` — and by `toLocalColimFormula_step` that image coincides with the direct
+stage-`k` image, so the two membership routes agree. -/
 theorem toLocalColimFormula_lift_mem_ΓlocalColim {k : ℕ}
     {p : Σ n, (Llocal s₀ k).BoundedFormulaω Empty n} (hp : p ∈ Γlocal s₀ k) :
-    toLocalColimFormula s₀ k p ∈ ΓlocalColim s₀ :=
-  toLocalColimFormula_step s₀ k p ▸
-    toLocalColimFormula_mem_ΓlocalColim s₀ (liftGamma_mem_Γlocal_succ s₀ hp)
+    toLocalColimFormula s₀ (k + 1) ⟨p.1, p.2.mapLanguage (LlocalHom s₀ k)⟩ ∈ ΓlocalColim s₀ :=
+  toLocalColimFormula_mem_ΓlocalColim s₀ (liftGamma_mem_Γlocal_succ s₀ hp)
 
 /-- **Witness-body membership in the colimit family**: for every universal member `∀ψ` of a stage
 family, the local Skolem witness body of `¬ψ` (available at the next stage thanks to `skolemNeed`)
