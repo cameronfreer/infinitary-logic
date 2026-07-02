@@ -15,9 +15,14 @@ we iterate. The difference is that here the family `Γ` grows *in lock-step* wit
 language and the family are **mutually recursive**:
 
 * `L₀ = L`, `Γ₀` = the seed family;
-* `L_{k+1} = L_k.sum (localSkolem L_k Γ_k)` (adjoin Skolem symbols for the *current* family);
-* `Γ_{k+1}` = the subformula/component closure of a seed built from `Γ_k` (lifted along the language
-  inclusion), the Skolem-witness bodies of the new symbols, and a reserved deForm-closure slot.
+* `L_{k+1} = L_k.sum (localSkolem L_k (skolemNeed Γ_k))` — adjoin Skolem symbols for the
+  **Skolem-need family** `skolemNeed Γ_k = Γ_k ∪ {¬ψ | ∀ψ ∈ Γ_k}`: the EM truth lemma's `all` case
+  consumes the witness symbol of the *negated body* `¬ψ` (cf. `skWitnessStep` in
+  `SkolemClosure.lean` and `skWitnessTerm … ψ₀.not` in `EMTermModel.lean`), so Skolemizing `Γ_k`
+  alone would miss exactly the symbol the rebased truth lemma needs;
+* `Γ_{k+1}` = the subformula/component closure of a seed built from `skolemNeed Γ_k` (lifted along
+  the language inclusion), the Skolem-witness bodies of the new symbols, and a reserved
+  deForm-closure slot.
 
 The mutual recursion is packaged as a single `ℕ`-indexed sequence of `LocalStage` bundles (language +
 family + countability certificates), sidestepping dependent-recursion sprawl. The **deliverable of
@@ -76,6 +81,57 @@ def localSkolemWitnessFormula {Γ : Set (Σ n, L.BoundedFormulaω Empty n)} {n :
     (sym : (localSkolem L Γ).Functions n) : (L.sum (localSkolem L Γ)).BoundedFormulaω Empty n :=
   ((sym.1.openBounds.mapLanguage (LHom.sumInl : L →ᴸ L.sum (localSkolem L Γ))).subst
     (Fin.snoc (fun i => Term.var i) (localSkolemTerm sym (fun i => Term.var i)))).relabel Sum.inr
+
+/-! ### The Skolem-need family: `Γ` plus the negated bodies of its universals
+
+The EM truth lemma's `all` case for `∀ψ` uses the Skolem witness of the **negation** of the body:
+`skWitnessTerm … ψ.not` (mirroring `skWitnessStep` in the full `Γ*`, which adds the witness body of
+`¬ψ` for every `.all ψ`). So the successor language must carry a local Skolem symbol for `¬ψ`, not
+just for the members of `Γ` themselves. `skolemNeed Γ` is the countable enlargement that provisions
+exactly these symbols. -/
+
+/-- The negated body contributed by a single family member: a universal `∀ψ` (arity `n`)
+contributes `¬ψ` (arity `n+1`) — the formula whose local Skolem symbol the EM `all`-case consumes;
+every other form contributes nothing. -/
+def allNegBody : (Σ n, L.BoundedFormulaω Empty n) → Set (Σ n, L.BoundedFormulaω Empty n)
+  | ⟨_, .all ψ⟩ => {⟨_, ψ.not⟩}
+  | _ => ∅
+
+/-- `allNegBody` is pointwise countable (a singleton on `∀`, empty otherwise). -/
+theorem allNegBody_countable (p : Σ n, L.BoundedFormulaω Empty n) : (allNegBody p).Countable := by
+  obtain ⟨n, φ⟩ := p
+  cases φ <;> first | exact Set.countable_singleton _ | exact Set.countable_empty
+
+/-- The **Skolem-need family**: `Γ` together with the negated bodies of its universal members.
+This — not `Γ` itself — is the family the successor stage Skolemizes. -/
+def skolemNeed (Γ : Set (Σ n, L.BoundedFormulaω Empty n)) :
+    Set (Σ n, L.BoundedFormulaω Empty n) :=
+  Γ ∪ ⋃ p ∈ Γ, allNegBody p
+
+/-- The Skolem-need family is countable when `Γ` is. -/
+theorem skolemNeed_countable {Γ : Set (Σ n, L.BoundedFormulaω Empty n)} (hΓ : Γ.Countable) :
+    (skolemNeed Γ).Countable :=
+  hΓ.union (hΓ.biUnion fun p _ => allNegBody_countable p)
+
+/-- `Γ` is contained in its Skolem-need family. -/
+theorem subset_skolemNeed (Γ : Set (Σ n, L.BoundedFormulaω Empty n)) : Γ ⊆ skolemNeed Γ :=
+  Set.subset_union_left
+
+/-- **The guarantee the EM `all`-case needs**: if `∀ψ ∈ Γ` then `¬ψ ∈ skolemNeed Γ`, so the local
+Skolem language over `skolemNeed Γ` carries a witness symbol for `∃ xₙ, ¬ψ`. -/
+theorem not_mem_skolemNeed_of_all_mem {Γ : Set (Σ n, L.BoundedFormulaω Empty n)} {n : ℕ}
+    {ψ : L.BoundedFormulaω Empty (n + 1)}
+    (h : (⟨n, .all ψ⟩ : Σ n, L.BoundedFormulaω Empty n) ∈ Γ) :
+    (⟨n + 1, ψ.not⟩ : Σ n, L.BoundedFormulaω Empty n) ∈ skolemNeed Γ :=
+  Or.inr (Set.mem_biUnion h rfl)
+
+/-- The local Skolem **witness symbol** for (the negated body of) a universal family member — the
+arity-`n` function symbol of `localSkolem L (skolemNeed Γ)` witnessing `∃ xₙ, ¬ψ`. -/
+def skolemNeedSymbol {Γ : Set (Σ n, L.BoundedFormulaω Empty n)} {n : ℕ}
+    {ψ : L.BoundedFormulaω Empty (n + 1)}
+    (h : (⟨n, .all ψ⟩ : Σ n, L.BoundedFormulaω Empty n) ∈ Γ) :
+    (localSkolem L (skolemNeed Γ)).Functions n :=
+  ⟨ψ.not, not_mem_skolemNeed_of_all_mem h⟩
 
 /-! ### Seed of the successor family
 
@@ -170,19 +226,23 @@ structure LocalStage where
   /-- The stage language has countably many relation symbols. -/
   rel_countable : Countable (Σ n, Lang.Relations n)
 
-/-- The **successor stage**: Skolemize the current family (`Lang.sum (localSkolem Lang Gamma)`) and
-replace the family by its successor closure. Every countability certificate is carried forward:
-the family via `localGammaNext_countable`, the language via `sum_sigma_functions_countable` /
-`sum_sigma_relations_countable` together with `localSkolem`'s own countability. -/
+/-- The **successor stage**: Skolemize the current **Skolem-need** family
+(`Lang.sum (localSkolem Lang (skolemNeed Gamma))` — `skolemNeed` so the EM `all`-case witness
+symbol for `¬ψ` of each `∀ψ ∈ Gamma` exists) and replace the family by its successor closure.
+Every countability certificate is carried forward: the family via `localGammaNext_countable`, the
+language via `sum_sigma_functions_countable` / `sum_sigma_relations_countable` together with
+`localSkolem`'s own countability (fed by `skolemNeed_countable`). -/
 def LocalStage.succ (s : LocalStage) : LocalStage where
-  Lang := s.Lang.sum (localSkolem s.Lang s.Gamma)
-  Gamma := localGammaNext s.Gamma
-  gamma_countable := localGammaNext_countable s.gamma_countable
+  Lang := s.Lang.sum (localSkolem s.Lang (skolemNeed s.Gamma))
+  Gamma := localGammaNext (skolemNeed s.Gamma)
+  gamma_countable := localGammaNext_countable (skolemNeed_countable s.gamma_countable)
   fun_countable :=
     sum_sigma_functions_countable s.fun_countable
-      (localSkolem_sigma_functions_countable s.Gamma s.gamma_countable)
+      (localSkolem_sigma_functions_countable (skolemNeed s.Gamma)
+        (skolemNeed_countable s.gamma_countable))
   rel_countable :=
-    sum_sigma_relations_countable s.rel_countable (localSkolem_sigma_relations_countable s.Gamma)
+    sum_sigma_relations_countable s.rel_countable
+      (localSkolem_sigma_relations_countable (skolemNeed s.Gamma))
 
 /-- The **local Skolem tower** seeded at `s₀`: stage `0` is the seed and each successor Skolemizes
 the current stage. -/
@@ -207,7 +267,8 @@ def Γlocal (s₀ : LocalStage) (k : ℕ) : Set (Σ n, (Llocal s₀ k).BoundedFo
 @[simp] theorem Llocal_zero (s₀ : LocalStage) : Llocal s₀ 0 = s₀.Lang := rfl
 
 @[simp] theorem Llocal_succ (s₀ : LocalStage) (k : ℕ) :
-    Llocal s₀ (k + 1) = (Llocal s₀ k).sum (localSkolem (Llocal s₀ k) (Γlocal s₀ k)) := rfl
+    Llocal s₀ (k + 1)
+      = (Llocal s₀ k).sum (localSkolem (Llocal s₀ k) (skolemNeed (Γlocal s₀ k))) := rfl
 
 /-- The **stage-`k` → stage-`(k+1)` language inclusion**: the left injection of the Skolemizing sum.
 The later colimit's cocone is assembled from these. -/
@@ -224,5 +285,28 @@ theorem Llocal_fun_countable (s₀ : LocalStage) (k : ℕ) :
 /-- Each stage-`k` language has countably many relation symbols. -/
 theorem Llocal_rel_countable (s₀ : LocalStage) (k : ℕ) :
     Countable (Σ n, (Llocal s₀ k).Relations n) := (localStage s₀ k).rel_countable
+
+/-! ### Family-membership coherence up the tower -/
+
+/-- **Lift stability**: a stage-`k` family member, lifted along the stage inclusion `LlocalHom`,
+lies in the successor family (via `subset_skolemNeed`, the `liftGamma` part of the seed, and
+`localSeed_subset_localGammaNext`). -/
+theorem liftGamma_mem_Γlocal_succ (s₀ : LocalStage) {k : ℕ}
+    {p : Σ n, (Llocal s₀ k).BoundedFormulaω Empty n} (hp : p ∈ Γlocal s₀ k) :
+    (⟨p.1, p.2.mapLanguage (LlocalHom s₀ k)⟩ :
+      Σ n, (Llocal s₀ (k + 1)).BoundedFormulaω Empty n) ∈ Γlocal s₀ (k + 1) :=
+  localSeed_subset_localGammaNext _
+    (Or.inl (Or.inl (Set.mem_image_of_mem _ (subset_skolemNeed _ hp))))
+
+/-- **Witness-body membership**: for every universal member `∀ψ` of the stage-`k` family, the local
+Skolem witness body of `¬ψ` (built from the `skolemNeed` symbol) lies in the successor family — the
+formula the rebased EM truth lemma's `all` case will need in its readiness data. -/
+theorem localSkolemWitnessFormula_mem_Γlocal_succ (s₀ : LocalStage) {k n : ℕ}
+    {ψ : (Llocal s₀ k).BoundedFormulaω Empty (n + 1)}
+    (h : (⟨n, .all ψ⟩ : Σ n, (Llocal s₀ k).BoundedFormulaω Empty n) ∈ Γlocal s₀ k) :
+    (⟨n, localSkolemWitnessFormula (skolemNeedSymbol h)⟩ :
+      Σ n, (Llocal s₀ (k + 1)).BoundedFormulaω Empty n) ∈ Γlocal s₀ (k + 1) :=
+  localSeed_subset_localGammaNext _
+    (Or.inl (Or.inr ⟨⟨n, skolemNeedSymbol h⟩, rfl⟩))
 
 end FirstOrder.Language

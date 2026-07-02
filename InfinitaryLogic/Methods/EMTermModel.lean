@@ -388,8 +388,9 @@ theorem deTermFin_realize_superset (d : ℕ) (S T : Finset J) (w : (skolemColim 
 
 /-- The **de-substituted equality atom** of two closed terms over a covering support `S`: an
 `L^Sk`-formula of arity `S.card` whose truth on the consecutive deep tuple is the deep equality of
-`t, u`. Since `L^Sk` is countable, all such atoms form a countable family that seeds the
-tail-indiscernible `Γ`. -/
+`t, u`. (Over the uncountable `L^Sk` these atoms form an **uncountable** family — see the
+`EMContext` docstring below; only the local re-base over the countable `localColim` yields a
+countable atom seed for the tail-indiscernible `Γ`.) -/
 def deEqAtom (S : Finset J) (t u : (skolemColim L)[[J]].Term Empty)
     (ht : jSupport L J t ⊆ S) (hu : jSupport L J u ⊆ S) :
     (skolemColim L).BoundedFormulaω Empty S.card :=

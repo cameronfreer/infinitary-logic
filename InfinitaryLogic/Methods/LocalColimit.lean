@@ -28,6 +28,10 @@ the staged families.
   `realize_map_LlocalInclusion` — the semantic-transport API on a fixed `s₀.Lang`-model `M`.
 * `toLocalColimFormula` / `ΓlocalColim` / `ΓlocalColim_countable` — the (countable) colimit image
   of the staged families, the family the truth lemma will consume.
+* Formula-level cocone coherence for the EM rebase: `LlocalInclusion_comp_LlocalHom`,
+  `toLocalColimFormula_step`, `toLocalColimFormula_lift_mem_ΓlocalColim`, and
+  `localSkolemWitnessFormula_mem_ΓlocalColim` (the `skolemNeed` witness body of every family
+  universal lands in `ΓlocalColim`).
 
 Next chunks (not here): the local atom/deForm seed and its countability, then the `EMContext`
 re-base over `localColim`.
@@ -42,6 +46,24 @@ theorem DirectedColim.countable {F : ℕ → Type} {φ : ∀ k, F k → F (k + 1
     (h : ∀ k, Countable (F k)) : Countable (DirectedColim F φ) := by
   haveI : ∀ k, Countable (F k) := h
   exact inferInstanceAs (Countable (Quot _))
+
+/-- `mapLanguage` composes: transporting along `g` then `h` is transporting along `h.comp g`.
+(A Mathlib-gap-style generic lemma; belongs in `Lomega1omega/Operations.lean` eventually —
+localized here, where the cocone coherence needs it, to keep the default build path untouched.) -/
+theorem BoundedFormulaω.mapLanguage_mapLanguage {L₁ L₂ L₃ : Language} (g : L₁ →ᴸ L₂)
+    (h : L₂ →ᴸ L₃) {α : Type*} {n : ℕ} (φ : L₁.BoundedFormulaω α n) :
+    (φ.mapLanguage g).mapLanguage h = φ.mapLanguage (h.comp g) := by
+  induction φ with
+  | falsum => rfl
+  | equal t₁ t₂ =>
+    simp only [BoundedFormulaω.mapLanguage, LHom.comp_onTerm, Function.comp_apply]
+  | rel R ts =>
+    simp only [BoundedFormulaω.mapLanguage, LHom.comp_onTerm, Function.comp_apply]
+    rfl
+  | imp φ ψ ihφ ihψ => simp only [BoundedFormulaω.mapLanguage, ihφ, ihψ]
+  | all φ ih => simp only [BoundedFormulaω.mapLanguage, ih]
+  | iSup φs ih => simp only [BoundedFormulaω.mapLanguage]; exact congrArg _ (funext ih)
+  | iInf φs ih => simp only [BoundedFormulaω.mapLanguage]; exact congrArg _ (funext ih)
 
 variable (s₀ : LocalStage)
 
@@ -95,6 +117,15 @@ theorem LlocalInclusion_onRelation_step {k m : ℕ} (r : (Llocal s₀ k).Relatio
   DirectedColim.incl_step (F := fun j => (Llocal s₀ j).Relations m)
     (φ := fun j x => (LlocalHom s₀ j).onRelation x) k r
 
+/-- **Cocone compatibility as an `LHom` equation**: including stage `k` via stage `k+1` is the
+direct inclusion. The formula-level coherence (`toLocalColimFormula_step`) is this plus
+`mapLanguage` composition. -/
+theorem LlocalInclusion_comp_LlocalHom (k : ℕ) :
+    (LlocalInclusion s₀ (k + 1)).comp (LlocalHom s₀ k) = LlocalInclusion s₀ k :=
+  LHom.funext
+    (funext fun _m => funext fun f => LlocalInclusion_onFunction_step s₀ f)
+    (funext fun _m => funext fun r => LlocalInclusion_onRelation_step s₀ r)
+
 /-! ### Countability of the colimit language — the payoff of the pivot -/
 
 /-- Per-arity: the colimit function symbols are countable. -/
@@ -135,7 +166,8 @@ and each successor stage adds the Hilbert-choice interpretation of the new *loca
   | k + 1 =>
       letI := localStageStructure k
       inferInstanceAs
-        (((Llocal s₀ k).sum (localSkolem (Llocal s₀ k) (Γlocal s₀ k))).Structure M)
+        (((Llocal s₀ k).sum
+          (localSkolem (Llocal s₀ k) (skolemNeed (Γlocal s₀ k)))).Structure M)
 
 /-- Stage coherence (functions): a stage-`k` symbol pushed to stage `k+1` interprets the same
 way. This is the cocone-compatibility witnessing the colimit interpretation is well-defined. -/
@@ -218,5 +250,38 @@ construction really does produce a countable language *and* family in the colimi
 size interface the tail extraction (`MorleyHanfExtractionTail`) can serve. -/
 theorem ΓlocalColim_countable : (ΓlocalColim s₀).Countable :=
   Set.countable_iUnion fun k => (Γlocal_countable s₀ k).image _
+
+/-! ### Formula-level cocone coherence
+
+The wrappers the EM rebase will consume, so its proofs never touch raw `mapLanguage` equalities. -/
+
+/-- **Formula-level cocone coherence**: a stage-`k` formula lifted one stage (along `LlocalHom`)
+and then included into the colimit is the same colimit formula as including it directly. -/
+theorem toLocalColimFormula_step (k : ℕ) (p : Σ n, (Llocal s₀ k).BoundedFormulaω Empty n) :
+    toLocalColimFormula s₀ (k + 1) ⟨p.1, p.2.mapLanguage (LlocalHom s₀ k)⟩
+      = toLocalColimFormula s₀ k p := by
+  show (⟨p.1, (p.2.mapLanguage (LlocalHom s₀ k)).mapLanguage (LlocalInclusion s₀ (k + 1))⟩ :
+      Σ n, (localColim s₀).BoundedFormulaω Empty n)
+    = ⟨p.1, p.2.mapLanguage (LlocalInclusion s₀ k)⟩
+  rw [BoundedFormulaω.mapLanguage_mapLanguage, LlocalInclusion_comp_LlocalHom]
+
+/-- The colimit image of a stage-`k` member's stage-`(k+1)` lift is in `ΓlocalColim`, *and* equals
+its direct colimit image (combining `liftGamma_mem_Γlocal_succ` with the step coherence). -/
+theorem toLocalColimFormula_lift_mem_ΓlocalColim {k : ℕ}
+    {p : Σ n, (Llocal s₀ k).BoundedFormulaω Empty n} (hp : p ∈ Γlocal s₀ k) :
+    toLocalColimFormula s₀ k p ∈ ΓlocalColim s₀ :=
+  toLocalColimFormula_step s₀ k p ▸
+    toLocalColimFormula_mem_ΓlocalColim s₀ (liftGamma_mem_Γlocal_succ s₀ hp)
+
+/-- **Witness-body membership in the colimit family**: for every universal member `∀ψ` of a stage
+family, the local Skolem witness body of `¬ψ` (available at the next stage thanks to `skolemNeed`)
+has its colimit image in `ΓlocalColim` — the closure fact the rebased truth lemma's `all`-case
+readiness will cite. -/
+theorem localSkolemWitnessFormula_mem_ΓlocalColim {k n : ℕ}
+    {ψ : (Llocal s₀ k).BoundedFormulaω Empty (n + 1)}
+    (h : (⟨n, .all ψ⟩ : Σ n, (Llocal s₀ k).BoundedFormulaω Empty n) ∈ Γlocal s₀ k) :
+    toLocalColimFormula s₀ (k + 1)
+        ⟨n, localSkolemWitnessFormula (skolemNeedSymbol h)⟩ ∈ ΓlocalColim s₀ :=
+  toLocalColimFormula_mem_ΓlocalColim s₀ (localSkolemWitnessFormula_mem_Γlocal_succ s₀ h)
 
 end FirstOrder.Language
