@@ -8,6 +8,11 @@ import InfinitaryLogic.Scott.QuantifierRank
 /-!
 # Countable Code Layer for Lω₁ω Formulas
 
+**Legacy / off-path.** The Scott analysis pipeline was decoupled from the `FormulaCode`
+bridge (see the notes around `per_tuple_stabilization_below_omega1` in
+`Scott/Sentence.lean`), so this module is no longer imported by any library root; it is
+kept for its public `FormulaCode` API and is reachable via `InfinitaryLogic.Everything`.
+
 This file defines a countable code type for Lω₁ω formulas over a countable relational
 language, and proves the key bridge lemma: if two tuples agree on all codes of bounded
 quantifier rank, they are BFEquiv.
