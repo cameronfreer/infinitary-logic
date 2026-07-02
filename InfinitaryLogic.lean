@@ -78,7 +78,9 @@ For narrower entry points:
   `Methods/Skolem.lean`, `Methods/SkolemColimit.lean`, `Methods/SkolemClosure.lean` (the
   `skolemStage`/`skolemColim` tower and the countable staged family `Γ*`),
   `Methods/EMTermModel.lean` (EM term model, staged truth lemma `truthLemmaStage`),
-  `Methods/LocalSkolem.lean`, `Methods/LocalTower.lean` (countable family-restricted re-base)
+  `Methods/LocalSkolem.lean`, `Methods/LocalTower.lean`, `Methods/LocalColimit.lean`
+  (countable family-restricted re-base: `localSkolem`, the `Llocal`/`Γlocal` tower, and the
+  countable colimit `localColim` with cocone and `ΓlocalColim`)
 
 ### Model theory (ModelTheory/)
 - `ModelTheory/LowenheimSkolem.lean`: Downward Löwenheim-Skolem for Lω₁ω

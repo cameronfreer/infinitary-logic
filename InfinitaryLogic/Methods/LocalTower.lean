@@ -23,8 +23,8 @@ The mutual recursion is packaged as a single `ℕ`-indexed sequence of `LocalSta
 family + countability certificates), sidestepping dependent-recursion sprawl. The **deliverable of
 this chunk** is that every stage is countable — both the language's symbol types and the family
 `Γ_k` — which is what keeps the eventual local colimit `L_Γ` countable (the fatal size problem that
-`localSkolem` was introduced to fix). The local colimit and its cocone inclusions are a later chunk;
-here we stop at the tower and its stagewise countability.
+`localSkolem` was introduced to fix). The local colimit, its cocone inclusions, and the transported
+countability live in `LocalColimit.lean`; here we stop at the tower and its stagewise countability.
 -/
 
 universe u v w

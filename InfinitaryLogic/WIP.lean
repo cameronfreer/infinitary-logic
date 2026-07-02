@@ -1,5 +1,5 @@
--- The countable local Skolem tower (L_Γ pivot): localSkolem + Llocal/Γlocal
-import InfinitaryLogic.Methods.LocalTower
+-- The countable local Skolem colimit L_Γ (localSkolem + Llocal/Γlocal tower + localColim)
+import InfinitaryLogic.Methods.LocalColimit
 -- The EM term model on the colimit Skolem language (truth lemmas, congruence engine)
 import InfinitaryLogic.Methods.EMTermModel
 
@@ -16,8 +16,10 @@ the whole frontier cluster:
   family `Γ*`;
 * `Methods/EMTermModel.lean` — the EM term model over `(skolemColim L)[[J]]` with the
   staged truth lemma `truthLemmaStage`;
-* `Methods/LocalSkolem.lean` → `LocalTower.lean` — the countable family-restricted
-  re-base (`localSkolem`, the mutually recursive `Llocal`/`Γlocal` tower).
+* `Methods/LocalSkolem.lean` → `LocalTower.lean` → `LocalColimit.lean` — the countable
+  family-restricted re-base (`localSkolem`, the mutually recursive `Llocal`/`Γlocal` tower,
+  and the countable colimit `localColim` with cocone, semantic transport, and the countable
+  colimit family `ΓlocalColim`).
 
 These modules are deliberately NOT part of `InfinitaryLogic.All` or
 `InfinitaryLogic.Everything` — they are under active construction. This target exists
