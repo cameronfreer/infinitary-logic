@@ -1,6 +1,7 @@
--- The countable local atom/deForm family GammaEMlocal (imports the whole frontier:
--- LocalColimit -> LocalTower -> LocalSkolem and EMTermModel -> SkolemClosure chain)
-import InfinitaryLogic.Methods.LocalEMFamily
+-- The local EM context (extraction bridge onward; imports the whole frontier:
+-- LocalEMFamily -> LocalColimit -> LocalTower -> LocalSkolem, EMTermModel -> SkolemClosure
+-- chain, and the proved tail extraction from Conditional/MorleyHanfTransfer)
+import InfinitaryLogic.Methods.LocalEMContext
 
 /-!
 # WIP: the work-in-progress frontier bundle
@@ -15,11 +16,12 @@ the whole frontier cluster:
   family `Γ*`;
 * `Methods/EMTermModel.lean` — the EM term model over `(skolemColim L)[[J]]` with the
   staged truth lemma `truthLemmaStage`;
-* `Methods/LocalSkolem.lean` → `LocalTower.lean` → `LocalColimit.lean` → `LocalEMFamily.lean` —
-  the countable family-restricted re-base (`localSkolem`, the mutually recursive
-  `Llocal`/`Γlocal` tower with `skolemNeed`, the countable colimit `localColim` with cocone and
-  semantic transport, and the countable atom/deForm family `ΓEMlocal` with the canonical J-free
-  seeds and the `EMContext`-instantiation membership interface).
+* `Methods/LocalSkolem.lean` → `LocalTower.lean` → `LocalColimit.lean` → `LocalEMFamily.lean` →
+  `LocalEMContext.lean` — the countable family-restricted re-base (`localSkolem`, the mutually
+  recursive `Llocal`/`Γlocal` tower with `skolemNeed`, the countable colimit `localColim` with
+  cocone and semantic transport, the countable atom/deForm family `ΓEMlocal` with the canonical
+  J-free seeds and the `EMContext`-instantiation membership interface, and the extraction
+  bridge `exists_ΓEMlocal_tail_indiscernible`).
 
 These modules are deliberately NOT part of `InfinitaryLogic.All` or
 `InfinitaryLogic.Everything` — they are under active construction. This target exists

@@ -298,6 +298,35 @@ theorem liftGamma_mem_Γlocal_succ (s₀ : LocalStage) {k : ℕ}
   localSeed_subset_localGammaNext _
     (Or.inl (Or.inl (Set.mem_image_of_mem _ (subset_skolemNeed _ hp))))
 
+/-- **Successor-stage closure**: every successor family is closed under immediate
+subformulas/components (it is a `setClosure bfSubformulas`). Stage `0` — the raw seed — need not
+be closed, hence the lift wrapper `bfSubformulas_lift_subset_Γlocal_succ` below. -/
+theorem bfSubformulas_subset_Γlocal_succ (s₀ : LocalStage) {k : ℕ}
+    {p : Σ n, (Llocal s₀ (k + 1)).BoundedFormulaω Empty n} (hp : p ∈ Γlocal s₀ (k + 1)) :
+    bfSubformulas p ⊆ Γlocal s₀ (k + 1) :=
+  stepOne_subset_setClosure _ _ hp
+
+/-- **Lift-into-closure wrapper**: the subformulas/components of the lift of any stage-`k` member
+lie in the (subformula-closed) successor family. Working one stage up always makes closure
+available, even from the unclosed seed stage. -/
+theorem bfSubformulas_lift_subset_Γlocal_succ (s₀ : LocalStage) {k : ℕ}
+    {p : Σ n, (Llocal s₀ k).BoundedFormulaω Empty n} (hp : p ∈ Γlocal s₀ k) :
+    bfSubformulas (⟨p.1, p.2.mapLanguage (LlocalHom s₀ k)⟩ :
+        Σ n, (Llocal s₀ (k + 1)).BoundedFormulaω Empty n)
+      ⊆ Γlocal s₀ (k + 1) :=
+  bfSubformulas_subset_Γlocal_succ s₀ (liftGamma_mem_Γlocal_succ s₀ hp)
+
+/-- The lift of the **negated body** of a universal family member is in the successor family (the
+seed lifts the whole `skolemNeed` enlargement, not just `Γ_k`). Feeds the local truth lemma's
+`all` case, whose Skolemized body `¬ψ` lives one stage up. -/
+theorem liftNegBody_mem_Γlocal_succ (s₀ : LocalStage) {k n : ℕ}
+    {ψ : (Llocal s₀ k).BoundedFormulaω Empty (n + 1)}
+    (h : (⟨n, .all ψ⟩ : Σ n, (Llocal s₀ k).BoundedFormulaω Empty n) ∈ Γlocal s₀ k) :
+    (⟨n + 1, (ψ.not).mapLanguage (LlocalHom s₀ k)⟩ :
+      Σ n, (Llocal s₀ (k + 1)).BoundedFormulaω Empty n) ∈ Γlocal s₀ (k + 1) :=
+  localSeed_subset_localGammaNext _
+    (Or.inl (Or.inl (Set.mem_image_of_mem _ (not_mem_skolemNeed_of_all_mem h))))
+
 /-- **Witness-body membership**: for every universal member `∀ψ` of the stage-`k` family, the local
 Skolem witness body of `¬ψ` (built from the `skolemNeed` symbol) lies in the successor family — the
 formula the rebased EM truth lemma's `all` case will need in its readiness data. -/
