@@ -69,6 +69,14 @@ jobs:
       - name: Build blueprint website
         run: leanblueprint web
 
+      # lean_decls is committed so the fast per-push CI can run checkdecls without
+      # a blueprint build; the web build above regenerates it, so fail here if the
+      # committed snapshot has drifted from the blueprint sources.
+      - name: Check lean_decls freshness and declarations
+        run: |
+          git diff --exit-code blueprint/lean_decls
+          lake exe checkdecls blueprint/lean_decls
+
       - name: Build blueprint PDF
         run: leanblueprint pdf
 

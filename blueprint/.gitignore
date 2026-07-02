@@ -2,4 +2,3 @@ web/
 print/
 !print/print.pdf
 src/web.paux
-lean_decls
