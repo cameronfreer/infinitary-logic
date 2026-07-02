@@ -4,7 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.LocalColimit
-import InfinitaryLogic.Methods.EMTermModel
+import InfinitaryLogic.Methods.LocalEMSupport
+import Mathlib.ModelTheory.Encoding
 
 /-!
 # The countable local atom/deForm family `ΓEMlocal`
@@ -28,9 +29,10 @@ Contents:
 * Canonical seeds over any `Λ : Language.{0,0}`: `canonEqAtom(s)`, `canonRelAtom(s)`,
   `canonDeForm(s)` + countability (`canonEqAtoms_countable` etc.) from countable symbol types.
 * The `J`-side de-substitution pipeline over any `Λ` (mirroring the `skolemColim`-specific chain
-  in `EMTermModel.lean`, whose generic pieces `deepRank`/`Term.varFinset_relabel` are reused):
-  `locJConstOf`, `locJSupport`, `locDeTermPos`, `locDeTermFin`, and the local atoms/deForm
-  `locDeEqAtom`/`locDeRelAtom`/`locDeForm` with membership in the canonical seeds.
+  in `EMTermModel.lean`; the generic pieces `deepRank`/`Term.varFinset_relabel` live in the
+  shared `LocalEMSupport.lean`): `locJConstOf`, `locJSupport`, `locDeTermPos`, `locDeTermFin`,
+  and the local atoms/deForm `locDeEqAtom`/`locDeRelAtom`/`locDeForm` with membership in the
+  canonical seeds.
 * The assembled family `ΓEMlocal s₀ = ΓlocalColim ∪ eq-atoms ∪ rel-atoms ∪ deForms(ΓlocalColim)`
   over `localColim s₀`, with `ΓEMlocal_countable`, the membership interface the future local
   `EMContext` instantiation will discharge (`locDeEqAtom_mem_ΓEMlocal` = `atom_mem`,
@@ -120,9 +122,8 @@ theorem canonDeForm_mem_canonDeForms {Γc : Set (Σ n, Λ.BoundedFormulaω Empty
 /-! ### The `J`-side de-substitution pipeline
 
 Mirrors the `skolemColim`-specific chain of `EMTermModel.lean` over an arbitrary `Λ` (the generic
-pieces `deepRank`, `deepRank_lt_card`, `Term.varFinset_relabel` are reused from there; at the
-re-base they should migrate to a shared home). The `loc` prefix disambiguates from the
-`skolemColim` versions. -/
+pieces `deepRank`, `deepRank_lt_card`, `Term.varFinset_relabel` live in the shared
+`LocalEMSupport.lean`). The `loc` prefix disambiguates from the `skolemColim` versions. -/
 
 variable (J : Type) [LinearOrder J]
 

@@ -1,6 +1,8 @@
--- The local EM extraction bridge (imports the whole frontier: LocalEMFamily -> LocalColimit ->
--- LocalTower -> LocalSkolem, EMTermModel -> SkolemClosure chain, and the proved tail
--- extraction from Conditional/MorleyHanfTransfer)
+-- The old skolemColim EM term model (kept CI-checked; no longer imported by the local stack)
+import InfinitaryLogic.Methods.EMTermModel
+-- The local EM extraction bridge (pulls the local stack LocalEMFamily -> LocalColimit ->
+-- LocalTower -> LocalSkolem -> LocalEMSupport, plus the proved tail extraction from
+-- Conditional/MorleyHanfTransfer)
 import InfinitaryLogic.Methods.LocalEMExtraction
 
 /-!
