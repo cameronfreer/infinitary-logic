@@ -1,4 +1,4 @@
-name: Build API Docs
+name: Build and Deploy Site
 
 on:
   workflow_dispatch:
@@ -14,10 +14,14 @@ permissions:
   pages: write
   id-token: write
 
+# The full site pipeline (API docs via doc-gen4, blueprint web + PDF, homepage,
+# GitHub Pages deploy). Kept off the push path — doc-gen4 alone takes ~21 min —
+# so per-push CI (build.yml) stays fast. Trigger manually with
+# `gh workflow run docs.yml` to refresh the site after notable pushes.
 jobs:
   docs:
     runs-on: ubuntu-latest
-    name: Build and deploy API docs + blueprint
+    name: Build and deploy API docs + blueprint + homepage
     steps:
       - name: Free disk space
         uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
@@ -46,17 +50,27 @@ jobs:
           cd docbuild
           lake build InfinitaryLogic:docs
 
-      - name: Install blueprint dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y graphviz libgraphviz-dev texlive-latex-extra texlive-xetex texlive-fonts-recommended texlive-fonts-extra latexmk
-          pip install leanblueprint
+      - name: Install blueprint dependencies (cached apt)
+        uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9 # v1.6.3
+        with:
+          packages: graphviz libgraphviz-dev texlive-latex-extra texlive-xetex texlive-fonts-recommended texlive-fonts-extra latexmk
+          version: 1.0
 
-      - name: Build blueprint PDF
-        run: leanblueprint pdf
+      - name: Install leanblueprint
+        run: pip install leanblueprint
+
+      - name: Generate bibliography for web
+        run: |
+          cd blueprint/src
+          pdflatex -interaction=nonstopmode print.tex || true
+          bibtex print
+          cp print.bbl web.bbl
 
       - name: Build blueprint website
         run: leanblueprint web
+
+      - name: Build blueprint PDF
+        run: leanblueprint pdf
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
