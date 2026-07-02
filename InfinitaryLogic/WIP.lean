@@ -1,7 +1,6 @@
--- The countable local Skolem colimit L_Γ (localSkolem + Llocal/Γlocal tower + localColim)
-import InfinitaryLogic.Methods.LocalColimit
--- The EM term model on the colimit Skolem language (truth lemmas, congruence engine)
-import InfinitaryLogic.Methods.EMTermModel
+-- The countable local atom/deForm family GammaEMlocal (imports the whole frontier:
+-- LocalColimit -> LocalTower -> LocalSkolem and EMTermModel -> SkolemClosure chain)
+import InfinitaryLogic.Methods.LocalEMFamily
 
 /-!
 # WIP: the work-in-progress frontier bundle
@@ -16,10 +15,11 @@ the whole frontier cluster:
   family `Γ*`;
 * `Methods/EMTermModel.lean` — the EM term model over `(skolemColim L)[[J]]` with the
   staged truth lemma `truthLemmaStage`;
-* `Methods/LocalSkolem.lean` → `LocalTower.lean` → `LocalColimit.lean` — the countable
-  family-restricted re-base (`localSkolem`, the mutually recursive `Llocal`/`Γlocal` tower,
-  and the countable colimit `localColim` with cocone, semantic transport, and the countable
-  colimit family `ΓlocalColim`).
+* `Methods/LocalSkolem.lean` → `LocalTower.lean` → `LocalColimit.lean` → `LocalEMFamily.lean` —
+  the countable family-restricted re-base (`localSkolem`, the mutually recursive
+  `Llocal`/`Γlocal` tower with `skolemNeed`, the countable colimit `localColim` with cocone and
+  semantic transport, and the countable atom/deForm family `ΓEMlocal` with the canonical J-free
+  seeds and the `EMContext`-instantiation membership interface).
 
 These modules are deliberately NOT part of `InfinitaryLogic.All` or
 `InfinitaryLogic.Everything` — they are under active construction. This target exists
