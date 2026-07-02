@@ -10,14 +10,16 @@ import InfinitaryLogic.Lomega1omega.Semantics
 
 Infinitary analogue of Mathlib's `Language.skolem₁`: a Skolem function symbol for each L_{ω₁ω}
 formula `ψ(x₀, …, x_{n-1}, x_n)`, interpreted by Hilbert choice to witness `∃ x_n, ψ`. This is the
-ambient Skolem language for the Ehrenfeucht–Mostowski / Skolem-hull realizability construction
-(the *family-local* restriction — closing a countable family under the relevant Skolem instances —
-happens later, at the consistency-property level; indexing the language itself by the closed family
-would be circular, since the closure is defined using these very symbols).
+ambient one-layer Skolem language iterated by the `skolemStage`/`skolemColim` tower
+(`SkolemColimit.lean`) and consumed by the Ehrenfeucht–Mostowski term model (`EMTermModel.lean`),
+whose Skolem-witness transport (`skWitness_universal`) is powered by `skolem₁ω_funMap_spec`.
+Note `skolem₁ω L` is **uncountable** (a symbol per `BoundedFormulaω`); the countable
+*family-restricted* variant is `localSkolem` (`LocalSkolem.lean`), which adjoins symbols only for
+a countable family `Γ` and is the basis of the `Llocal`/`Γlocal` re-base.
 
 **Only `∃` is Skolemized here.** The countable connectives `⋁`/`⋀` are *not* given object-language
-selectors — they are witnessed externally by the consistency property's `C3`/`C4` closure rules.
-So this layer adds function symbols only; `iSup`/`iInf` are untouched.
+selectors — witnessing them is external (the EM term model's `OmegaComplete` mixin). So this layer
+adds function symbols only; `iSup`/`iInf` are untouched.
 
 ## Main definitions
 
@@ -28,7 +30,8 @@ So this layer adds function symbols only; `iSup`/`iInf` are untouched.
 ## Main result
 
 * `skolem₁ω_funMap_spec` — the **Skolem axiom schema** (semantic form): if `∃ a, ψ(x, a)` then
-  `ψ` holds at `x` extended by the Skolem value. This is what discharges the `C7` quantifier rule.
+  `ψ` holds at `x` extended by the Skolem value. Consumed by the EM term model's
+  `skWitness_universal` (the `all`-case Skolem input of `truthLemmaStage`).
 -/
 
 universe u v u' w
@@ -68,12 +71,13 @@ theorem skolem₁ω_funMap_spec {n : ℕ} (ψ : L.BoundedFormulaω Empty (n + 1)
     (Fin.snoc x (Classical.epsilon fun a => ψ.Realize (Empty.elim : Empty → M) (Fin.snoc x a)))
   exact Classical.epsilon_spec h
 
-/-! ### C7 bridge: the Skolem term realizes to the chosen witness
+/-! ### Syntactic-to-semantic bridge: the Skolem term realizes to the chosen witness
 
 These connect the *syntactic* `skolemTerm` to the *semantic* Skolem function of
-`skolem₁ωStructure`, so the consistency-property proof (Phase 4D) can discharge the `C7`
-quantifier-witness rule by citing `exists_witness_skolemTerm` directly, without unfolding the
-Skolem language each time. -/
+`skolem₁ωStructure`. **Currently unused API**: the envisioned consistency-property consumer (a
+`C7` quantifier-witness discharge) never materialized — the live consumer of this file is the EM
+term model, which uses `skolem₁ω_funMap_spec` directly. Kept as the natural entry points for any
+future syntactic Skolemization. -/
 
 /-- The syntactic Skolem term evaluates to the semantic Skolem function value: realizing
 `skolemTerm ψ ts` under `v` is `funMap ψ` applied to the realized arguments. Definitional, via
@@ -85,10 +89,9 @@ theorem realize_skolemTerm {γ : Type u'} {n : ℕ} (ψ : L.BoundedFormulaω Emp
   simp only [skolemTerm, Term.realize_func]
   rfl
 
-/-- **C7 witness lemma.** If, under the assignment given by `ts`, the formula `ψ` has a witness for
-its last variable, then the Skolem term `skolemTerm ψ ts` *is* such a witness: `ψ` holds at the
-realized arguments extended by the realized Skolem term. This is the local fact Phase 4D cites to
-discharge the `C7` quantifier-witness rule. -/
+/-- **Skolem witness lemma** (currently unused). If, under the assignment given by `ts`, the
+formula `ψ` has a witness for its last variable, then the Skolem term `skolemTerm ψ ts` *is* such
+a witness: `ψ` holds at the realized arguments extended by the realized Skolem term. -/
 theorem exists_witness_skolemTerm {γ : Type u'} {n : ℕ} (ψ : L.BoundedFormulaω Empty (n + 1))
     (ts : Fin n → (L.sum (skolem₁ω L)).Term γ) (v : γ → M)
     (h : ∃ a, ψ.Realize (Empty.elim : Empty → M) (Fin.snoc (fun i => (ts i).realize v) a)) :

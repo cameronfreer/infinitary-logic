@@ -18,7 +18,10 @@ layer (`skolem₁ω`) is not closed under its own witness formulas, so we iterat
   finite stage `k`, and its existential's Skolem function appears at stage `k+1`.
 
 This is *ambient* infrastructure: the family `Γ*` consumed by the truth lemma is a **countable**
-staged closure inside `L^Sk`, so the continuum size of `L^Sk` is never enumerated.
+staged closure inside `L^Sk`. Caveat: the EM term model's `EMContext` also needs the **full atom
+diagram** over `L^Sk`, which *does* enumerate its continuum-many symbols — the reason for the
+countable family-restricted re-base (`localSkolem` and the `Llocal`/`Γlocal` tower in
+`LocalSkolem.lean`/`LocalTower.lean`); `skolemColim` is retained as exploratory infrastructure.
 
 For `L : Language.{0,0}` every stage stays in `Type 0` (`BoundedFormulaω Empty n` over a `{0,0}`
 language is `Type 0`), so the tower has no universe blowup.
@@ -95,7 +98,7 @@ variable {M : Type} [L.Structure M] [Nonempty M]
 /-- The **stage-`k` structure** on a fixed `L`-model `M`: stage `0` is `M`'s own `L`-structure, and
 each successor stage adds the Hilbert-choice interpretation of the new Skolem symbols
 (`skolem₁ωStructure`) on top of the previous stage, via the sum structure. -/
-noncomputable def skolemStageStructure : (k : ℕ) → (skolemStage L k).Structure M
+@[implicit_reducible] noncomputable def skolemStageStructure : (k : ℕ) → (skolemStage L k).Structure M
   | 0 => ‹L.Structure M›
   | k + 1 =>
       letI := skolemStageStructure k
@@ -120,7 +123,7 @@ theorem skolemStageStructure_relMap_succ {k m : ℕ}
 
 /-- The **colimit structure** `L^Sk`-structure on `M`: a colimit symbol is interpreted through any
 stage representative, well-defined by the (definitional) stage coherence above. -/
-noncomputable def skolemColimStructure : (skolemColim L).Structure M where
+@[implicit_reducible] noncomputable def skolemColimStructure : (skolemColim L).Structure M where
   funMap {m} f x :=
     Quot.lift
       (fun p => @Structure.funMap (skolemStage L p.1) M (skolemStageStructure L p.1) m p.2 x)
