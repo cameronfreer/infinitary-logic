@@ -56,10 +56,10 @@ import InfinitaryLogic.Admissible   -- admissible fragments, Barwise compactness
 import InfinitaryLogic.Descriptive  -- descriptive set theory of model classes
 import InfinitaryLogic.All          -- all of the above (sorry-free)
 import InfinitaryLogic.Conditional  -- Silver chain (sorry-free) + Morley-Hanf transfer hypotheses
-import InfinitaryLogic.Everything   -- everything including Conditional
+import InfinitaryLogic.Everything   -- everything including Conditional and legacy off-path modules
 ```
 
-`import InfinitaryLogic` now loads the sorry-free surface (`InfinitaryLogic.All`); use `import InfinitaryLogic.Everything` if you want `Conditional/` included. `InfinitaryLogic/Basic.lean` is a deprecated redirect to `All`.
+`import InfinitaryLogic` now loads the sorry-free surface (`InfinitaryLogic.All`); use `import InfinitaryLogic.Everything` if you want `Conditional/` and the legacy off-path modules (`Scott/Code.lean`, the sorry-bearing `Combinatorics/ErdosRado.lean` scaffolding) included — work-in-progress frontier modules under `Methods/` are excluded and live in the separate non-default `InfinitaryLogicWIP` target. `InfinitaryLogic/Basic.lean` is a deprecated redirect to `All`.
 
 ### Key Declarations
 

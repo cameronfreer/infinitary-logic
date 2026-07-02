@@ -27,8 +27,9 @@ For narrower entry points:
 - `InfinitaryLogic.Countable`: model existence, Löwenheim-Skolem, Hanf, counting, EM chain
 - `InfinitaryLogic.Admissible`: admissible fragments, Barwise compactness, proof system
 - `InfinitaryLogic.Descriptive`: descriptive set theory of model classes
-- `InfinitaryLogic.Conditional`: results with external hypotheses or sorries
-- `InfinitaryLogic.Everything`: everything including `Conditional/` (not sorry-free)
+- `InfinitaryLogic.Conditional`: results with external hypotheses
+- `InfinitaryLogic.Everything`: everything including `Conditional/` and the
+  legacy off-path modules (not sorry-free)
 
 ## Organization
 

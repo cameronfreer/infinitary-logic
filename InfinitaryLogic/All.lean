@@ -6,9 +6,10 @@ import InfinitaryLogic.Descriptive
 /-!
 # All: the sorry-free library surface
 
-Imports everything EXCEPT the `Conditional` bundle (which contains results
-depending on external hypotheses or the remaining sorry). Use
-`InfinitaryLogic.Everything` if you want Conditional included.
+Imports everything EXCEPT the `Conditional` bundle (results depending on
+external hypotheses) and the legacy off-path modules (`Scott/Code.lean`,
+`Combinatorics/ErdosRado.lean`). Use `InfinitaryLogic.Everything` if you
+want those included.
 
 ## Targeted imports
 
@@ -16,6 +17,8 @@ depending on external hypotheses or the remaining sorry). Use
 - `InfinitaryLogic.Countable`: model existence, LS, Hanf, counting, EM chain
 - `InfinitaryLogic.Admissible`: admissible fragments, Barwise compactness
 - `InfinitaryLogic.Descriptive`: descriptive set theory of model classes
-- `InfinitaryLogic.Conditional`: results with external hypotheses or sorries
-- `InfinitaryLogic.Everything`: all of the above including Conditional
+- `InfinitaryLogic.Conditional`: results with external hypotheses
+- `InfinitaryLogic.Everything`: all of the above plus Conditional and the
+  legacy off-path modules (not sorry-free); WIP frontier modules under
+  `Methods/` are excluded (see the `InfinitaryLogicWIP` target)
 -/
