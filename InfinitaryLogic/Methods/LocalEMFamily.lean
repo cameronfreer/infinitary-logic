@@ -39,8 +39,9 @@ Contents:
   `locDeRelAtom_mem_ΓEMlocal` = `rel_mem`, `locDeForm_mem_ΓEMlocal` = the deForm closure), and
   the enumeration `exists_ΓEMlocalEnum` in the exact shape the tail extraction consumes.
 
-The semantic (realize) bridges stay in `EMTermModel.lean` for now; they are mirrored during the
-EMContext re-base, not here — this file is deliberately purely syntactic.
+The GENERIC semantic (realize) bridges live in `LocalEMContext.lean`; the old
+`skolemColim`-specific ones remain in `EMTermModel.lean`. This file is deliberately purely
+syntactic.
 -/
 
 namespace FirstOrder.Language

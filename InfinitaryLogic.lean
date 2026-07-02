@@ -78,11 +78,12 @@ For narrower entry points:
   `Methods/Skolem.lean`, `Methods/SkolemColimit.lean`, `Methods/SkolemClosure.lean` (the
   `skolemStage`/`skolemColim` tower and the countable staged family `Γ*`),
   `Methods/EMTermModel.lean` (EM term model, staged truth lemma `truthLemmaStage`),
-  `Methods/LocalSkolem.lean`, `Methods/LocalTower.lean`, `Methods/LocalColimit.lean`,
-  `Methods/LocalEMFamily.lean`, `Methods/LocalEMExtraction.lean` (countable family-restricted
-  re-base: `localSkolem`, the `Llocal`/`Γlocal` tower with `skolemNeed`, the countable colimit
-  `localColim` with cocone and `ΓlocalColim`, the countable atom/deForm family `ΓEMlocal`, and
-  the tail-extraction bridge)
+  `Methods/LocalEMSupport.lean`, `Methods/LocalSkolem.lean`, `Methods/LocalTower.lean`,
+  `Methods/LocalColimit.lean`, `Methods/LocalEMFamily.lean`, `Methods/LocalEMExtraction.lean`,
+  `Methods/LocalEMContext.lean` (countable family-restricted re-base: shared generic support,
+  `localSkolem`, the `Llocal`/`Γlocal` tower with `skolemNeed`, the countable colimit
+  `localColim` with cocone and `ΓlocalColim`, the countable atom/deForm family `ΓEMlocal`, the
+  tail-extraction bridge, and the generic deep-interpretation semantic layer)
 
 ### Model theory (ModelTheory/)
 - `ModelTheory/LowenheimSkolem.lean`: Downward Löwenheim-Skolem for Lω₁ω
