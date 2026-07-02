@@ -46,6 +46,9 @@ jobs:
       - name: Verify sorry boundary
         run: python3 scripts/check_sorry_boundary.py
 
+      - name: Verify import boundary
+        run: bash scripts/check_import_boundary.sh
+
       - name: Install blueprint dependencies
         run: |
           sudo apt-get update

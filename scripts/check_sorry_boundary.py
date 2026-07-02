@@ -2,11 +2,12 @@
 """Verify no syntactic `sorry` (or `sorryAx`) appears in Lean code outside
 the configured exempt regions.
 
-Exempt regions are paths where in-progress frontier sorries are allowed:
+Exempt regions are paths where sorries are allowed:
 - `InfinitaryLogic/Conditional/`: conditional results stratum.
-- `InfinitaryLogic/Combinatorics/ErdosRado.lean`: active Erdős–Rado work
-  region (named frontier sorries such as `extendToExt`,
-  `exists_coherentMajorityBranch`, plus internal scaffolding).
+- `InfinitaryLogic/Combinatorics/ErdosRado.lean`: legacy/off-path exempt
+  region (Erdős–Rado scaffolding, off the build path since 2026-07-02;
+  reachable via `Everything` only — see `scripts/check_import_boundary.sh`
+  for the guard keeping it off the default surface).
 
 Strips Lean comments (line `--` and block `/- ... -/`, including the docstring
 variants `/-- ... -/` and `/-! ... -/`) before searching, so docstring and
