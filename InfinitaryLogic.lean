@@ -49,7 +49,8 @@ For narrower entry points:
 - `Scott/AtomicDiagram.lean`: Atomic types for relational languages
 - `Scott/BackAndForth.lean`: Back-and-forth equivalence
 - `Scott/Formula.lean`: Scott formula construction
-- `Scott/Code.lean`: Countable formula codes (FormulaCode, encoding, BFEquiv bridge)
+- `Scott/Code.lean`: LEGACY/off-path countable formula codes (`FormulaCode`; the Scott pipeline
+  is decoupled from this bridge — kept for its public API, reachable via `Everything` only)
 - `Scott/Sentence.lean`: Scott sentence and characterization theorem (`_of` variants)
 - `Scott/RefinementCount.lean`: CRH theorem + unconditional Sentence-level wrappers
 - `Scott/Rank.lean`: Scott rank definition and bounds
@@ -70,6 +71,14 @@ For narrower entry points:
 - `Methods/EM/Indiscernible.lean`: Lω₁ω-indiscernible sequences API (restrict, reindex, pair/unary invariance)
 - `Methods/EM/Template.lean`: Ehrenfeucht–Mostowski templates — bridge between indiscernible sequences and EM stretching
 - `Methods/EM/Realization.lean`: template → L[[J]]-theory bridge; finite satisfiability of `templateTheory h.template J` in the source indiscernible
+- `Methods/EM/Extraction.lean`: extraction of indiscernible sequences (Ramsey side of the EM chain)
+- `Methods/EM/FragmentAdapter.lean`: admissible-fragment adapter theorems (`_of_fragment`, `_of_fullFragment`, `_of_compact`; imported by the `Admissible` bundle)
+- `Methods/EM/TailAdapter.lean`: tail-indiscernibility variants (`IsLomega1omegaIndiscernibleOnTail`, tail templates)
+- WIP frontier (non-default `InfinitaryLogicWIP` target, excluded from `All`/`Everything`):
+  `Methods/Skolem.lean`, `Methods/SkolemColimit.lean`, `Methods/SkolemClosure.lean` (the
+  `skolemStage`/`skolemColim` tower and the countable staged family `Γ*`),
+  `Methods/EMTermModel.lean` (EM term model, staged truth lemma `truthLemmaStage`),
+  `Methods/LocalSkolem.lean`, `Methods/LocalTower.lean` (countable family-restricted re-base)
 
 ### Model theory (ModelTheory/)
 - `ModelTheory/LowenheimSkolem.lean`: Downward Löwenheim-Skolem for Lω₁ω
@@ -100,8 +109,22 @@ For narrower entry points:
 - `Descriptive/CountingDichotomy.lean`: Conditional counting dichotomy (Silver–Burgess)
 - `Descriptive/SatisfactionBorelOn.lean`: Generic satisfaction measurability for carrier-parametric spaces
 - `Descriptive/FiniteCarrier.lean`: Finite-carrier counting via permutation orbits; combined dichotomy
+- `Descriptive/CantorAntichain.lean`: Cantor-scheme antichain extraction (completeness-free core)
+- `Descriptive/Mycielski.lean`: Mycielski's theorem
+- `Descriptive/KuratowskiUlam.lean`: Kuratowski–Ulam
+- `Descriptive/GSGraph.lean`: the `G_S` graphs
+- `Descriptive/G0Dichotomy.lean`: the classical G₀ dichotomy
+- `Descriptive/G0Fusion.lean`: G₀ fusion machinery
+
+### Combinatorics (Combinatorics/)
+- `Combinatorics/InfiniteRamsey.lean`: n-ary infinite Ramsey on ℕ (`infinite_ramsey_nat_arity`)
+- `Combinatorics/InfiniteRamseyFamily.lean`: family/diagonal version (`infinite_ramsey_nat_family`), consumed by the Morley–Hanf tail extraction
+- `Combinatorics/ErdosRado.lean`: LEGACY Erdős–Rado scaffolding — off the build path (sorry-bearing,
+  exempt in the sorry-boundary check), reachable via `Everything` only
+
 ### Conditional (Conditional/)
-- `Conditional/MorleyHanfTransfer.lean`: original `MorleyHanfTransfer` + `morley_hanf_of_transfer`, plus split residual `MorleyHanfExtraction` with proved `hasArbLargeModels_of_restricted_extraction` bridge
-- `Conditional/SilverBurgess.lean`: Silver-Burgess dichotomy (chains through GH sorry)
-- `Conditional/GandyHarrington.lean`: Silver-for-Borel (1 sorry in `gandy_harrington_for_relation`; boldface Silver-for-Borel DST not yet in mathlib)
+- `Conditional/MorleyHanfTransfer.lean`: Morley–Hanf transfer, reduced to the single residual `TailTemplateRealizable` (extraction side discharged by `morleyHanfExtractionTail_holds`; tightest theorem `morley_hanf_of_tail_realizable`)
+- `Conditional/SilverBurgess.lean`: Silver–Burgess dichotomy (sorry-free)
+- `Conditional/GandyHarrington.lean`: Silver-for-Borel via Gandy–Harrington-style core (`gandy_harrington_for_relation`, sorry-free, axiom-clean)
+- `Conditional/SilverCategoryRoute.lean`: Silver's theorem via Miller's classical category route (Mycielski + KU + G₀ fusion)
 -/
