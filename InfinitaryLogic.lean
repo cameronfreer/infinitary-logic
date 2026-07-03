@@ -73,7 +73,8 @@ For narrower entry points:
 - `Methods/EM/Realization.lean`: template → L[[J]]-theory bridge; finite satisfiability of `templateTheory h.template J` in the source indiscernible
 - `Methods/EM/Extraction.lean`: extraction of indiscernible sequences (Ramsey side of the EM chain)
 - `Methods/EM/FragmentAdapter.lean`: admissible-fragment adapter theorems (`_of_fragment`, `_of_fullFragment`, `_of_compact`; imported by the `Admissible` bundle)
-- `Methods/EM/TailAdapter.lean`: tail-indiscernibility variants (`IsLomega1omegaIndiscernibleOnTail`, tail templates)
+- `Methods/TailIndiscernible.lean`: neutral bare definition of `IsLomega1omegaIndiscernibleOnTail` (EM-free, shared by `TailAdapter` and the local `EMContext` re-base)
+- `Methods/EM/TailAdapter.lean`: tail-indiscernibility variants (tail templates, finite satisfiability, stretching) built on the neutral `IsLomega1omegaIndiscernibleOnTail`
 - WIP frontier (non-default `InfinitaryLogicWIP` target, excluded from `All`/`Everything`):
   `Methods/Skolem.lean`, `Methods/SkolemColimit.lean`, `Methods/SkolemClosure.lean` (the
   `skolemStage`/`skolemColim` tower and the countable staged family `Γ*`),

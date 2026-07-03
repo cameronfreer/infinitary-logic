@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.EM.FragmentAdapter
+import InfinitaryLogic.Methods.TailIndiscernible
 
 /-!
 # Tail-indiscernibility: the eventually-form EM adapter
@@ -52,18 +53,6 @@ variable {L : Language.{u, v}}
 section TailTemplate
 
 variable {M : Type*} [L.Structure M]
-
-/-- **Tail-restricted indiscernibility**: for every formula of the family there is a cutoff
-beyond which all strictly monotone tuples of the sequence agree. Weaker than
-`IsLomega1omegaIndiscernibleOn` (which is the cutoff-`0` case), and the form actually
-produced by Erdős–Rado extraction arguments. -/
-def IsLomega1omegaIndiscernibleOnTail (a : ℕ → M)
-    (Γ : Set (Σ n, L.BoundedFormulaω Empty n)) : Prop :=
-  ∀ {n : ℕ} {φ : L.BoundedFormulaω Empty n}, ⟨n, φ⟩ ∈ Γ →
-    ∃ N : ℕ, ∀ s t : Fin n → ℕ, StrictMono s → StrictMono t →
-      (∀ k, N ≤ s k) → (∀ k, N ≤ t k) →
-      (φ.Realize (Empty.elim : Empty → M) (a ∘ s) ↔
-       φ.Realize (Empty.elim : Empty → M) (a ∘ t))
 
 /-- Full restricted indiscernibility gives tail indiscernibility (cutoff `0`). -/
 theorem IsLomega1omegaIndiscernibleOn.isLomega1omegaIndiscernibleOnTail {a : ℕ → M}

@@ -5,6 +5,9 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.LocalEMFamily
 import InfinitaryLogic.Methods.Henkin.Construction
+import InfinitaryLogic.Methods.TailIndiscernible
+import Mathlib.Order.Filter.AtTopBot.Basic
+import Mathlib.Order.Filter.Finite
 
 /-!
 # The local EM context, layer 1: deep interpretation and realize bridges
@@ -31,9 +34,16 @@ Contents (source lemma in `EMTermModel.lean` in parentheses):
   `realize_openBounds` (imported explicitly from `Methods/Henkin/Construction.lean`) and
   `realize_relabel_sumInr_zero` (from the `Lomega1omega` core).
 
-Next layers (subsequent chunks): `locDeepInterp_snoc`, the `skolemNeedSymbol` witness-term
-transport, local `EMEq`/quotient/congruence, and the family-membership-carrying restricted
-truth lemma.
+This file also carries the generic quotient layer: `locDeepInterp_snoc`, the eventual-equality
+relation `LocalEMEq` (refl/symm) with its support-enlargement engine
+(`LocalEMEq_eventually_on_superset`, `eventually_locDeepInterp_superset_iff`,
+`eventually_locRelMap_superset_iff`), the `LocalEMContext` standing-data structure, and (in the
+`Quotient` section) the carrier + `Λ[[J]]`-`Structure`. The tail-indiscernibility predicate
+`IsLomega1omegaIndiscernibleOnTail` comes from the neutral `Methods/TailIndiscernible.lean`, so this
+file stays EM-free.
+
+Next layers (subsequent chunks): the `skolemNeedSymbol` witness-term transport and the
+family-membership-carrying restricted truth lemma.
 -/
 
 namespace FirstOrder.Language
@@ -254,6 +264,182 @@ theorem realize_locDeForm (d : ℕ) (S : Finset J) {n : ℕ}
   rw [hassign]
   exact realize_openBounds φ _
 
+/-- Deep interpretation commutes with `Fin.snoc`: interpreting the one-point extension
+`Fin.snoc ts u` gives the snoc of the interpretations. Semantic prep for the later truth lemma's
+`all` case (relating the carrier's `∀x` over term-classes to the body's argument tuple). -/
+theorem locDeepInterp_snoc (d : ℕ) (S : Finset J) {n : ℕ}
+    (ts : Fin n → Λ[[J]].Term Empty) (u : Λ[[J]].Term Empty) :
+    (fun i => locDeepInterp Λ J a d S
+        ((Fin.snoc ts u : Fin (n + 1) → Λ[[J]].Term Empty) i))
+      = Fin.snoc (fun i => locDeepInterp Λ J a d S (ts i)) (locDeepInterp Λ J a d S u) := by
+  funext i
+  refine Fin.lastCases ?_ (fun j => ?_) i
+  · simp only [Fin.snoc_last]
+  · simp only [Fin.snoc_castSucc]
+
+/-! ### Eventual deep equality `LocalEMEq` and the support-enlargement engine -/
+
+/-- **Eventual deep equality**: closed terms `t, u` are identified when, for all sufficiently deep
+interpretations of their **combined** skeleton support, they evaluate equally in `M`. (The combined
+support means both terms are read against the same ordered finite skeleton.) -/
+def LocalEMEq (t u : Λ[[J]].Term Empty) : Prop :=
+  ∀ᶠ d in Filter.atTop,
+    locDeepInterp Λ J a d (locJSupport Λ J t ∪ locJSupport Λ J u) t =
+      locDeepInterp Λ J a d (locJSupport Λ J t ∪ locJSupport Λ J u) u
+
+theorem LocalEMEq.refl (t : Λ[[J]].Term Empty) : LocalEMEq Λ J a t t :=
+  Filter.Eventually.of_forall fun _ => rfl
+
+theorem LocalEMEq.symm {t u : Λ[[J]].Term Empty} (h : LocalEMEq Λ J a t u) :
+    LocalEMEq Λ J a u t := by
+  unfold LocalEMEq
+  rw [Finset.union_comm (locJSupport Λ J u) (locJSupport Λ J t)]
+  exact h.mono fun _ hd => hd.symm
+
+/-- **Support-enlargement invariance** (the atom-slice payoff): if `t, u` are eventually deep-equal
+on their combined support `S₀` (i.e. `LocalEMEq t u`) and the de-substituted equality atom of `S₀`
+lies in a tail-indiscernible family `Γ`, then they are eventually deep-equal on *any* larger support
+`S ⊇ S₀`. Tail indiscernibility identifies the truth of the one arity-`S₀.card` atom on the
+consecutive `S₀`-tuple and on the strictly-increasing `S`-tuple; the two atom bridges convert those
+to the `S₀`- and `S`-deep equalities. The unlock for `LocalEMContext.trans` and congruence. -/
+theorem LocalEMEq_eventually_on_superset
+    {Γ : Set (Σ n, Λ.BoundedFormulaω Empty n)}
+    (hind : IsLomega1omegaIndiscernibleOnTail (L := Λ) a Γ)
+    {t u : Λ[[J]].Term Empty}
+    (hmem : (⟨(locJSupport Λ J t ∪ locJSupport Λ J u).card,
+        locDeEqAtom Λ J (locJSupport Λ J t ∪ locJSupport Λ J u) t u Finset.subset_union_left
+          Finset.subset_union_right⟩ : Σ n, Λ.BoundedFormulaω Empty n) ∈ Γ)
+    (h : LocalEMEq Λ J a t u) {S : Finset J} (hS : locJSupport Λ J t ∪ locJSupport Λ J u ⊆ S) :
+    ∀ᶠ d in Filter.atTop, locDeepInterp Λ J a d S t = locDeepInterp Λ J a d S u := by
+  set S₀ := locJSupport Λ J t ∪ locJSupport Λ J u with hS₀def
+  obtain ⟨N, hN⟩ := hind hmem
+  rw [LocalEMEq, Filter.eventually_atTop] at h
+  obtain ⟨N₀, hN₀⟩ := h
+  rw [Filter.eventually_atTop]
+  refine ⟨max N N₀, fun d hd => ?_⟩
+  have hdN : N ≤ d := le_trans (le_max_left _ _) hd
+  have hdN₀ : N₀ ≤ d := le_trans (le_max_right _ _) hd
+  have hsmono : StrictMono (fun i : Fin S₀.card => d + (i : ℕ)) :=
+    fun i i' hii' => Nat.add_lt_add_left hii' d
+  have hs'mono : StrictMono (fun i : Fin S₀.card => d + deepRank J S (S₀.orderEmbOfFin rfl i)) := by
+    intro i i' hii'
+    refine Nat.add_lt_add_left
+      (deepRank_lt_of_lt (J := J) ?_ ((S₀.orderEmbOfFin rfl).strictMono hii')) d
+    exact hS (Finset.orderEmbOfFin_mem S₀ rfl i)
+  have hiff := hN (fun i => d + (i : ℕ)) (fun i => d + deepRank J S (S₀.orderEmbOfFin rfl i))
+    hsmono hs'mono (fun k => le_trans hdN (Nat.le_add_right d k))
+    (fun k => le_trans hdN (Nat.le_add_right d _))
+  have hb0 := realize_locDeEqAtom Λ J a d S₀ t u Finset.subset_union_left Finset.subset_union_right
+  have hbS := realize_locDeEqAtom_superset Λ J a d hS t u Finset.subset_union_left
+    Finset.subset_union_right
+  exact hbS.mp (hiff.mp (hb0.mpr (hN₀ d hdN₀)))
+
+/-- **Support-enlargement *iff*** (the symmetric core): on the deep tail the deep equality over the
+combined support `S₀` is *equivalent* to the deep equality over any larger support `S ⊇ S₀`. Both
+directions — descending from a larger support back to `S₀` is what `LocalEMContext.trans` needs. -/
+theorem eventually_locDeepInterp_superset_iff
+    {Γ : Set (Σ n, Λ.BoundedFormulaω Empty n)}
+    (hind : IsLomega1omegaIndiscernibleOnTail (L := Λ) a Γ)
+    {t u : Λ[[J]].Term Empty}
+    (hmem : (⟨(locJSupport Λ J t ∪ locJSupport Λ J u).card,
+        locDeEqAtom Λ J (locJSupport Λ J t ∪ locJSupport Λ J u) t u Finset.subset_union_left
+          Finset.subset_union_right⟩ : Σ n, Λ.BoundedFormulaω Empty n) ∈ Γ)
+    {S : Finset J} (hS : locJSupport Λ J t ∪ locJSupport Λ J u ⊆ S) :
+    ∀ᶠ d in Filter.atTop,
+      (locDeepInterp Λ J a d (locJSupport Λ J t ∪ locJSupport Λ J u) t
+            = locDeepInterp Λ J a d (locJSupport Λ J t ∪ locJSupport Λ J u) u ↔
+          locDeepInterp Λ J a d S t = locDeepInterp Λ J a d S u) := by
+  obtain ⟨N, hN⟩ := hind hmem
+  rw [Filter.eventually_atTop]
+  refine ⟨N, fun d hd => ?_⟩
+  set S₀ := locJSupport Λ J t ∪ locJSupport Λ J u with hS₀def
+  have hsmono : StrictMono (fun i : Fin S₀.card => d + (i : ℕ)) :=
+    fun i i' hii' => Nat.add_lt_add_left hii' d
+  have hs'mono : StrictMono (fun i : Fin S₀.card => d + deepRank J S (S₀.orderEmbOfFin rfl i)) := by
+    intro i i' hii'
+    refine Nat.add_lt_add_left
+      (deepRank_lt_of_lt (J := J) ?_ ((S₀.orderEmbOfFin rfl).strictMono hii')) d
+    exact hS (Finset.orderEmbOfFin_mem S₀ rfl i)
+  have hiff := hN (fun i => d + (i : ℕ)) (fun i => d + deepRank J S (S₀.orderEmbOfFin rfl i))
+    hsmono hs'mono (fun k => le_trans hd (Nat.le_add_right d k))
+    (fun k => le_trans hd (Nat.le_add_right d _))
+  have hb0 := realize_locDeEqAtom Λ J a d S₀ t u Finset.subset_union_left Finset.subset_union_right
+  have hbS := realize_locDeEqAtom_superset Λ J a d hS t u Finset.subset_union_left
+    Finset.subset_union_right
+  exact Iff.trans hb0.symm (Iff.trans hiff hbS)
+
+/-- **Relation support-independence** (the relation analogue of the previous *iff*): on the deep
+tail, the truth of `R` on the deep interpretations over the combined support `S₀` of the arguments is
+equivalent to its truth over any larger support `S ⊇ S₀`. Makes the quotient `RelMap` independent of
+the chosen common support. -/
+theorem eventually_locRelMap_superset_iff
+    {Γ : Set (Σ n, Λ.BoundedFormulaω Empty n)}
+    (hind : IsLomega1omegaIndiscernibleOnTail (L := Λ) a Γ)
+    {l : ℕ} (R : Λ.Relations l) {ts : Fin l → Λ[[J]].Term Empty}
+    (hmem : (⟨(Finset.univ.biUnion fun i => locJSupport Λ J (ts i)).card,
+        locDeRelAtom Λ J (Finset.univ.biUnion fun i => locJSupport Λ J (ts i)) R ts
+          fun i => Finset.subset_biUnion_of_mem (fun i => locJSupport Λ J (ts i))
+            (Finset.mem_univ i)⟩ : Σ n, Λ.BoundedFormulaω Empty n) ∈ Γ)
+    {S : Finset J} (hS : (Finset.univ.biUnion fun i => locJSupport Λ J (ts i)) ⊆ S) :
+    ∀ᶠ d in Filter.atTop,
+      (Structure.RelMap R
+            (fun i => locDeepInterp Λ J a d
+              (Finset.univ.biUnion fun i => locJSupport Λ J (ts i)) (ts i)) ↔
+        Structure.RelMap R (fun i => locDeepInterp Λ J a d S (ts i))) := by
+  obtain ⟨N, hN⟩ := hind hmem
+  rw [Filter.eventually_atTop]
+  refine ⟨N, fun d hd => ?_⟩
+  set S₀ := Finset.univ.biUnion fun i => locJSupport Λ J (ts i) with hS₀def
+  have hsmono : StrictMono (fun i : Fin S₀.card => d + (i : ℕ)) :=
+    fun i i' hii' => Nat.add_lt_add_left hii' d
+  have hs'mono : StrictMono (fun i : Fin S₀.card => d + deepRank J S (S₀.orderEmbOfFin rfl i)) := by
+    intro i i' hii'
+    refine Nat.add_lt_add_left
+      (deepRank_lt_of_lt (J := J) ?_ ((S₀.orderEmbOfFin rfl).strictMono hii')) d
+    exact hS (Finset.orderEmbOfFin_mem S₀ rfl i)
+  have hiff := hN (fun i => d + (i : ℕ)) (fun i => d + deepRank J S (S₀.orderEmbOfFin rfl i))
+    hsmono hs'mono (fun k => le_trans hd (Nat.le_add_right d k))
+    (fun k => le_trans hd (Nat.le_add_right d _))
+  have hb0 := realize_locDeRelAtom Λ J a d S₀ R ts
+    fun i => Finset.subset_biUnion_of_mem (fun i => locJSupport Λ J (ts i)) (Finset.mem_univ i)
+  have hbS := realize_locDeRelAtom_superset Λ J a d hS R ts
+    fun i => Finset.subset_biUnion_of_mem (fun i => locJSupport Λ J (ts i)) (Finset.mem_univ i)
+  exact Iff.trans hb0.symm (Iff.trans hiff hbS)
+
 end DeepInterp
+
+/-! ### The local EM quotient context
+
+To avoid threading the indiscernible sequence, its tail-indiscernible family, and the atomic-diagram
+membership through every congruence proof, we bundle them in a `LocalEMContext`. Every quotient
+operation then uses `LocalEMEq_eventually_on_superset` (via the support-enlargement *iff*) as its
+standing congruence engine. Generic over `Λ` and `[Λ.Structure M]`; the countable local instance is
+built in `LocalEMExtraction.lean`. -/
+
+section Quotient
+
+variable {M : Type} [Λ.Structure M]
+
+/-- The **standing data** for the local EM quotient over a fixed source model `M`: a sequence `a` of
+deep indiscernibles, a tail-indiscernible family `Γ`, and the fact that every de-substituted atom
+lies in `Γ`. The structure accepts an *arbitrary* `Γ`; the countable local family `ΓEMlocal` and its
+tail-indiscernible sequence discharge these fields at instantiation (`LocalEMExtraction.lean`). -/
+structure LocalEMContext where
+  /-- The deep indiscernible sequence. -/
+  a : ℕ → M
+  /-- The tail-indiscernible formula family. -/
+  Γ : Set (Σ n, Λ.BoundedFormulaω Empty n)
+  /-- Tail indiscernibility of `a` on `Γ`. -/
+  hind : IsLomega1omegaIndiscernibleOnTail (L := Λ) a Γ
+  /-- Every de-substituted equality atom is in `Γ`. -/
+  atom_mem : ∀ (S : Finset J) (t u : Λ[[J]].Term Empty)
+    (ht : locJSupport Λ J t ⊆ S) (hu : locJSupport Λ J u ⊆ S),
+    (⟨S.card, locDeEqAtom Λ J S t u ht hu⟩ : Σ n, Λ.BoundedFormulaω Empty n) ∈ Γ
+  /-- Every de-substituted relation atom is in `Γ`. -/
+  rel_mem : ∀ (S : Finset J) {l : ℕ} (R : Λ.Relations l)
+    (ts : Fin l → Λ[[J]].Term Empty) (ht : ∀ i, locJSupport Λ J (ts i) ⊆ S),
+    (⟨S.card, locDeRelAtom Λ J S R ts ht⟩ : Σ n, Λ.BoundedFormulaω Empty n) ∈ Γ
+
+end Quotient
 
 end FirstOrder.Language
