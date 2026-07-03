@@ -20,13 +20,15 @@ discharged by the `ΓEMlocal` membership interface (`locDeEqAtom_mem_ΓEMlocal` 
 `LocalEMFamily.lean`). What could not even be *stated* usefully over the uncountable
 `skolemColim` atom diagram is here a two-line composition — the payoff of the whole L_Γ pivot.
 
-This file holds ONLY the bridge, isolated from the rest of the local stack because of its
-import: it consumes `Conditional/MorleyHanfTransfer.lean` — a deliberate, temporary inversion of
-the Core→Methods→Conditional axis. The consumed theorem `morleyHanfExtractionTail_holds` is
-*proved* (sorry-free, axiom-clean), not a conditional hypothesis; once the frontier stabilizes
-it should migrate out of `Conditional/` and this inversion disappears. The local context
-machinery itself (deep interpretation, realize bridges, quotient, truth lemma) lives in the
-pure `LocalEMContext.lean`, which imports only the Methods-side local stack.
+This file holds the extraction bridge together with the concrete-context assembly
+`exists_localEMContext` (which builds an actual `LocalEMContext` from the bridge + the `ΓEMlocal`
+membership dischargers). It is isolated from the rest of the local stack because of its import: it
+consumes `Conditional/MorleyHanfTransfer.lean` — a deliberate, temporary inversion of the
+Core→Methods→Conditional axis. The consumed theorem `morleyHanfExtractionTail_holds` is *proved*
+(sorry-free, axiom-clean), not a conditional hypothesis; once the frontier stabilizes it should
+migrate out of `Conditional/` and this inversion disappears. The local context machinery itself
+(deep interpretation, realize bridges, quotient, structure, truth lemma) lives in the pure
+`LocalEMContext.lean`, which imports only the Methods-side local stack.
 -/
 
 namespace FirstOrder.Language

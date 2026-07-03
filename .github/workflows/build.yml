@@ -39,5 +39,8 @@ jobs:
       - name: Verify import boundary
         run: bash scripts/check_import_boundary.sh
 
+      - name: Verify local EMContext import boundary
+        run: bash scripts/check_local_boundary.sh
+
       - name: Check blueprint declarations
         run: lake exe checkdecls blueprint/lean_decls

@@ -11,11 +11,12 @@ import InfinitaryLogic.Methods.LocalEMContext
 
 Root of the **non-default** `InfinitaryLogicWIP` build target: the in-progress
 Ehrenfeucht–Mostowski / Skolem-hull realizability construction aimed at discharging
-the Morley–Hanf residual `TailTemplateRealizable`. Three imports are needed — since the
-local stack no longer imports `EMTermModel`, no single module covers the cluster:
-the old `skolemColim` track (`EMTermModel`), the extraction bridge (`LocalEMExtraction`,
-isolating the Conditional import), and the pure local stack (`LocalEMContext`). Together
-they transitively cover:
+the Morley–Hanf residual `TailTemplateRealizable`. The frontier has two disjoint roots —
+the old `skolemColim` track (`EMTermModel`) and the pure local stack, whose top is the
+extraction bridge (`LocalEMExtraction`, isolating the Conditional import); since
+`LocalEMExtraction` now imports `LocalEMContext`, that one root already pulls in the whole
+local stack. `LocalEMContext` is imported explicitly too, as a manifest anchor. Together
+these imports transitively cover:
 
 * `Methods/Skolem.lean` → `SkolemColimit.lean` → `SkolemClosure.lean` — the full
   (uncountable) Skolem tower `skolemStage`/`skolemColim` and the countable staged
