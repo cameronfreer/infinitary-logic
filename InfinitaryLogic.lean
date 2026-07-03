@@ -84,7 +84,9 @@ For narrower entry points:
   `Methods/LocalEMContext.lean` (countable family-restricted re-base: shared generic support,
   `localSkolem`, the `Llocal`/`Γlocal` tower with `skolemNeed`, the countable colimit
   `localColim` with cocone and `ΓlocalColim`, the countable atom/deForm family `ΓEMlocal`, the
-  tail-extraction bridge, and the generic deep-interpretation semantic layer)
+  tail-extraction bridge, the generic deep-interpretation semantic layer, the `LocalEMEq`
+  quotient carrier + `Λ[[J]]`-`Structure` (`LocalEMContext`), and the concrete instantiation
+  `exists_localEMContext`)
 
 ### Model theory (ModelTheory/)
 - `ModelTheory/LowenheimSkolem.lean`: Downward Löwenheim-Skolem for Lω₁ω

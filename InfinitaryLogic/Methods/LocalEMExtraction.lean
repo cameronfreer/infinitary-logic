@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.LocalEMFamily
+import InfinitaryLogic.Methods.LocalEMContext
 import InfinitaryLogic.Conditional.MorleyHanfTransfer
 
 /-!
@@ -51,5 +52,23 @@ theorem exists_ΓEMlocal_tail_indiscernible (M : Type) [s₀.Lang.Structure M] [
   refine ⟨a, hinj, ?_⟩
   rw [he]
   exact hind
+
+/-- **The concrete local EM context**: inside any `s₀.Lang`-structure `M` of size `≥ ℶ_{ω₁}`, the
+extraction bridge assembles an actual `LocalEMContext` over the countable colimit language
+`localColim s₀` on the ambient carrier `M` (structured by `localColimStructure s₀`). Its `hind` comes
+from `exists_ΓEMlocal_tail_indiscernible`; its `atom_mem`/`rel_mem` are the `ΓEMlocal` membership
+dischargers. The family `ctx.Γ = ΓEMlocal s₀` and the pairwise-distinctness of the deep sequence
+`ctx.a` are exposed as explicit conjuncts — the family is fixed for the downstream deForm/truth-lemma
+work, and distinctness feeds the later cardinality / skeleton-injection argument. -/
+theorem exists_localEMContext (J : Type) [LinearOrder J]
+    (M : Type) [s₀.Lang.Structure M] [Nonempty M]
+    (hSize : Cardinal.mk M ≥ Cardinal.beth (Ordinal.omega 1)) :
+    letI : (localColim s₀).Structure M := localColimStructure s₀
+    ∃ ctx : LocalEMContext (localColim s₀) J (M := M),
+      ctx.Γ = ΓEMlocal s₀ ∧ (∀ i j : ℕ, i ≠ j → ctx.a i ≠ ctx.a j) := by
+  letI : (localColim s₀).Structure M := localColimStructure s₀
+  obtain ⟨a, hinj, hind⟩ := exists_ΓEMlocal_tail_indiscernible s₀ M hSize
+  refine ⟨(⟨a, ΓEMlocal s₀, hind, locDeEqAtom_mem_ΓEMlocal J s₀,
+      locDeRelAtom_mem_ΓEMlocal J s₀⟩ : LocalEMContext (localColim s₀) J (M := M)), rfl, hinj⟩
 
 end FirstOrder.Language
