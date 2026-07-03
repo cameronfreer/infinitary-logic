@@ -48,6 +48,20 @@ noncomputable instance localSkolemStructure {M : Type w} [L.Structure M] [Nonemp
   funMap {_} φ x := Classical.epsilon fun a => φ.1.Realize (Empty.elim : Empty → M) (Fin.snoc x a)
   RelMap {_} r := r.elim
 
+/-- **Local Skolem axiom schema** (semantic form). If `∃ a, φ(x, a)` holds in `M`, then the witnessed
+body `φ` holds at `x` extended by the Skolem value `funMap φ x`. This is `Classical.epsilon_spec`;
+the local analogue of `skolem₁ω_funMap_spec`, powering the local EM term model's Skolem-witness
+transport. -/
+theorem localSkolem_funMap_spec {M : Type w} [L.Structure M] [Nonempty M]
+    {Γ : Set (Σ n, L.BoundedFormulaω Empty n)} {n : ℕ}
+    (φ : (localSkolem L Γ).Functions n) (x : Fin n → M)
+    (h : ∃ a, φ.1.Realize (Empty.elim : Empty → M) (Fin.snoc x a)) :
+    φ.1.Realize (Empty.elim : Empty → M)
+      (Fin.snoc x (Structure.funMap (L := localSkolem L Γ) φ x)) := by
+  show φ.1.Realize (Empty.elim : Empty → M)
+    (Fin.snoc x (Classical.epsilon fun a => φ.1.Realize (Empty.elim : Empty → M) (Fin.snoc x a)))
+  exact Classical.epsilon_spec h
+
 /-- The arity-`n` function symbols of `localSkolem L Γ` are countable when `Γ` is: each is a formula
 of `Γ`, so they inject into `↥Γ`. -/
 theorem localSkolem_functions_countable (Γ : Set (Σ n, L.BoundedFormulaω Empty n))
