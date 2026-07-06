@@ -51,10 +51,15 @@ deliberate statement-shape divergences from the EM original:
   `truthLemmaStage_of_mem` restores the stage-agnostic form for original stage-`k` members via
   `liftGamma_mem_Γlocal_succ` + the cocone coherence `LlocalInclusion_comp_LlocalHom`.
 
-`OmegaComplete` remains an **assumed** mixin (`hc`), exactly as in the EM stack: producing a
-witness for it (from a witness-homogeneous extraction) is later work, as is the final connection
-to `TailTemplateRealizable`. This is a pure file (imports `LocalEMTruth`, hence the pure local
-stack only) — no EM-stack or `Conditional/` reach.
+The completeness input remains an **assumed** mixin (`hc`), but in the honest restricted form
+`OmegaCompleteForColim` (= `OmegaCompleteOn` at `ΓlocalColim s₀`): the induction only ever
+consumes `⋁`/`⋀`-completeness at colimit images of family members, whose memberships it threads —
+while an arbitrary tail-indiscernible sequence can have drifting witnesses for countable
+disjunctions outside the family, so the global `OmegaComplete` (kept, with the adapter
+`OmegaComplete.toOmegaCompleteOn`) is strictly stronger than any extraction needs to deliver.
+Producing the restricted witness ("`ΓlocalColim`-restricted witness homogeneity") is later work,
+as is the final connection to `TailTemplateRealizable`. This is a pure file (imports
+`LocalEMTruth`, hence the pure local stack only) — no EM-stack or `Conditional/` reach.
 -/
 
 namespace FirstOrder.Language
@@ -86,6 +91,38 @@ structure LocalEMContext.OmegaComplete (ctx : LocalEMContext Λ J (M := M)) : Pr
     (ts : Fin m → Λ[[J]].Term Empty) (S : Finset J),
     (∀ i, LocalEMContext.eventualDeepTruth (Λ := Λ) (J := J) ctx (φs i) ts S) →
       LocalEMContext.eventualDeepTruth (Λ := Λ) (J := J) ctx (BoundedFormulaω.iInf φs) ts S
+
+/-- **`Γ`-restricted `⋁`/`⋀`-completeness**: like `OmegaComplete`, but the uniform `iSup`-witness
+and uniform `iInf`-cutoff are demanded only at disjunctions/conjunctions that are **members of the
+family** `Γ'` (still over arbitrary `ts`/`S`). This is the honest form of the obligation: the
+staged truth-lemma induction only ever consumes completeness at colimit images of family members
+(their memberships are threaded through the induction), while an arbitrary tail-indiscernible
+sequence can have *drifting witnesses* for countable disjunctions outside the family — so the
+global `OmegaComplete` is strictly stronger than what any extraction argument needs to deliver. -/
+structure LocalEMContext.OmegaCompleteOn (ctx : LocalEMContext Λ J (M := M))
+    (Γ' : Set (Σ n, Λ.BoundedFormulaω Empty n)) : Prop where
+  /-- Eventual deep truth of a family disjunction `⋁φs ∈ Γ'` provides a single component
+  witness. -/
+  iSup_complete : ∀ {m : ℕ} (φs : ℕ → Λ.BoundedFormulaω Empty m),
+    (⟨m, BoundedFormulaω.iSup φs⟩ : Σ n, Λ.BoundedFormulaω Empty n) ∈ Γ' →
+    ∀ (ts : Fin m → Λ[[J]].Term Empty) (S : Finset J),
+    LocalEMContext.eventualDeepTruth (Λ := Λ) (J := J) ctx (BoundedFormulaω.iSup φs) ts S →
+      ∃ i, LocalEMContext.eventualDeepTruth (Λ := Λ) (J := J) ctx (φs i) ts S
+  /-- Eventual deep truth of all components of a family conjunction `⋀φs ∈ Γ'` provides eventual
+  deep truth of the conjunction. -/
+  iInf_complete : ∀ {m : ℕ} (φs : ℕ → Λ.BoundedFormulaω Empty m),
+    (⟨m, BoundedFormulaω.iInf φs⟩ : Σ n, Λ.BoundedFormulaω Empty n) ∈ Γ' →
+    ∀ (ts : Fin m → Λ[[J]].Term Empty) (S : Finset J),
+    (∀ i, LocalEMContext.eventualDeepTruth (Λ := Λ) (J := J) ctx (φs i) ts S) →
+      LocalEMContext.eventualDeepTruth (Λ := Λ) (J := J) ctx (BoundedFormulaω.iInf φs) ts S
+
+/-- **Compatibility adapter**: global completeness restricts to any family — existing
+`OmegaComplete` producers serve every `OmegaCompleteOn` consumer by dropping the membership. -/
+theorem LocalEMContext.OmegaComplete.toOmegaCompleteOn {ctx : LocalEMContext Λ J (M := M)}
+    (hc : ctx.OmegaComplete) (Γ' : Set (Σ n, Λ.BoundedFormulaω Empty n)) :
+    LocalEMContext.OmegaCompleteOn (Λ := Λ) (J := J) ctx Γ' :=
+  ⟨fun φs _ ts S h => hc.iSup_complete φs ts S h,
+   fun φs _ ts S h => hc.iInf_complete φs ts S h⟩
 
 /-- The easy `iSup` direction: a single component's eventual deep truth gives the disjunction's. -/
 theorem LocalEMContext.eventualDeepTruth_iSup_of_exists (ctx : LocalEMContext Λ J (M := M)) {m : ℕ}
@@ -161,6 +198,14 @@ def LocalEMContext.TLReadyStage (ctx : LocalEMContext (localColim s₀) J (M := 
   ∀ T : Finset J, S ⊆ T →
     LocalEMContext.TLReady (Λ := localColim s₀) (J := J) ctx
       (ψ.mapLanguage (LlocalInclusion s₀ k)) ts T
+
+/-- **The colimit-family completeness obligation** — the exact `⋁`/`⋀`-completeness the staged
+truth lemma consumes: `OmegaCompleteOn` at the colimit family `ΓlocalColim s₀`. This, not the
+global `OmegaComplete`, is the final residual shape the witness-homogeneous extraction has to
+deliver ("`ΓlocalColim`-restricted witness homogeneity"). -/
+abbrev LocalEMContext.OmegaCompleteForColim
+    (ctx : LocalEMContext (localColim s₀) J (M := M)) : Prop :=
+  LocalEMContext.OmegaCompleteOn (Λ := localColim s₀) (J := J) ctx (ΓlocalColim s₀)
 
 /-- **deForm-membership closure** (construction-data mixin, the seam between family readiness and
 the extracted family): every colimit-family member's de-substituted formula — **support-uniformly**,
@@ -307,10 +352,15 @@ distributes definitionally), `iSup`/`iInf` via `hc : ctx.OmegaComplete`, and the
 the Skolem-witness transport — the witness `locSkWitnessTerm` is keyed by the `.all` membership
 `hmem` itself, has support `⊆ S`, and support-uniform readiness supplies the body's readiness at
 every enlarged support. No separate Skolem obligation is assumed; the Skolem step is discharged
-inline by `locSkWitness_universal`. Local analogue of `EMContext.truthLemmaStage`. -/
+inline by `locSkWitness_universal`. Local analogue of `EMContext.truthLemmaStage`.
+
+The completeness input is the **restricted** `OmegaCompleteForColim`: the `iSup`/`iInf` cases
+consume it only at the colimit images of family members, whose memberships the induction
+threads (global `OmegaComplete` users go through `OmegaComplete.toOmegaCompleteOn`). -/
 theorem LocalEMContext.truthLemmaStage :
     letI : (localColim s₀).Structure M := localColimStructure s₀
-    ∀ (ctx : LocalEMContext (localColim s₀) J (M := M)), ctx.OmegaComplete →
+    ∀ (ctx : LocalEMContext (localColim s₀) J (M := M)),
+      LocalEMContext.OmegaCompleteForColim s₀ J ctx →
       ∀ (k : ℕ) {n : ℕ} (ψ : (Llocal s₀ (k + 1)).BoundedFormulaω Empty n),
         (⟨n, ψ⟩ : Σ n, (Llocal s₀ (k + 1)).BoundedFormulaω Empty n) ∈ Γlocal s₀ (k + 1) →
         ∀ (ts : Fin n → (localColim s₀)[[J]].Term Empty) (S : Finset J),
@@ -383,7 +433,8 @@ theorem LocalEMContext.truthLemmaStage :
           fun T hT => (hready T hT) i).mp hi⟩
     · intro h
       obtain ⟨i, hi⟩ := hc.iSup_complete
-        (fun i => (φs i).mapLanguage (LlocalInclusion s₀ (k + 1))) ts S h
+        (fun i => (φs i).mapLanguage (LlocalInclusion s₀ (k + 1)))
+        (toLocalColimFormula_mem_ΓlocalColim s₀ hmem) ts S h
       exact ⟨i, (ih i (bfSubformulas_subset_Γlocal_succ s₀ hmem (Set.mem_range_self i)) ts S hsub
         fun T hT => (hready T hT) i).mpr hi⟩
   | iInf φs ih =>
@@ -396,7 +447,8 @@ theorem LocalEMContext.truthLemmaStage :
       BoundedFormulaω.realize_iInf]
     constructor
     · intro h
-      exact hc.iInf_complete (fun i => (φs i).mapLanguage (LlocalInclusion s₀ (k + 1))) ts S
+      exact hc.iInf_complete (fun i => (φs i).mapLanguage (LlocalInclusion s₀ (k + 1)))
+        (toLocalColimFormula_mem_ΓlocalColim s₀ hmem) ts S
         fun i => (ih i (bfSubformulas_subset_Γlocal_succ s₀ hmem (Set.mem_range_self i)) ts S hsub
           fun T hT => (hready T hT) i).mp (h i)
     · intro h i
@@ -504,7 +556,8 @@ member, at any stage including the raw seed stage `0`. Lifts the member one stag
 the colimit image back down with the cocone coherence `mapLanguage_LlocalInclusion_lift`. -/
 theorem LocalEMContext.truthLemmaStage_of_mem :
     letI : (localColim s₀).Structure M := localColimStructure s₀
-    ∀ (ctx : LocalEMContext (localColim s₀) J (M := M)), ctx.OmegaComplete →
+    ∀ (ctx : LocalEMContext (localColim s₀) J (M := M)),
+      LocalEMContext.OmegaCompleteForColim s₀ J ctx →
       ∀ (k : ℕ) {n : ℕ} (ψ : (Llocal s₀ k).BoundedFormulaω Empty n),
         (⟨n, ψ⟩ : Σ n, (Llocal s₀ k).BoundedFormulaω Empty n) ∈ Γlocal s₀ k →
         ∀ (ts : Fin n → (localColim s₀)[[J]].Term Empty) (S : Finset J),
