@@ -6,6 +6,10 @@
 # `Methods/TailIndiscernible.lean`, never through `Methods/EM/*`, the legacy
 # `Methods/EMTermModel.lean`, or anything under `Conditional/`.
 #
+# A second, weaker class: `LocalEMTemplateRealization.lean` (the template-realization bridge)
+# legitimately imports the EM-side template machinery but must stay Conditional-free — the
+# `TailTemplateRealizable` connection belongs to a downstream Conditional-touching file.
+#
 # `lake env lean --deps <file>` reports only DIRECT imports, so it cannot catch an indirect leak;
 # this walks the transitive source-import closure instead.
 set -euo pipefail
@@ -58,6 +62,22 @@ for root in roots:
         continue
     print("OK: " + root + " transitive closure (" + str(len(seen))
           + " modules) is EM-free and Conditional-free.")
+
+# Bridge modules: EM imports allowed, Conditional imports forbidden.
+bridge_roots = ["InfinitaryLogic.Methods.LocalEMTemplateRealization"]
+for root in bridge_roots:
+    seen = closure(root)
+    bad = [m for m in sorted(seen)
+           if '.Conditional.' in m or m.endswith('.Conditional')]
+    if bad:
+        failed = True
+        print("ERROR: the bridge module " + root + " transitively imports")
+        print("Conditional modules (the TailTemplateRealizable connection belongs downstream):")
+        for m in bad:
+            print("  " + m)
+        continue
+    print("OK: " + root + " transitive closure (" + str(len(seen))
+          + " modules) is Conditional-free.")
 if failed:
     sys.exit(1)
 PY

@@ -266,6 +266,24 @@ theorem mapLanguage_LlocalInclusion_lift {k n : ℕ} (ψ : (Llocal s₀ k).Bound
       = ψ.mapLanguage (LlocalInclusion s₀ k) := by
   rw [BoundedFormulaω.mapLanguage_mapLanguage, LlocalInclusion_comp_LlocalHom]
 
+/-- **Stage-agnostic readiness**: every stage-`k` family member — including the raw seed stage
+`0`, where subformula closure is not available — is `TLReadyStage`-ready, by lifting one stage
+(along `LlocalHom`, via `liftGamma_mem_Γlocal_succ`) and rewriting the colimit image back down
+with the cocone coherence `mapLanguage_LlocalInclusion_lift`. -/
+theorem LocalEMContext.TLReadyStage_of_Γlocal
+    (ctx : LocalEMContext (localColim s₀) J (M := M)) {k : ℕ}
+    (hclosed : LocalEMContext.DeFormClosedForColim (s₀ := s₀) (J := J) ctx)
+    {n : ℕ} (ψ : (Llocal s₀ k).BoundedFormulaω Empty n)
+    (hψ : (⟨n, ψ⟩ : Σ n, (Llocal s₀ k).BoundedFormulaω Empty n) ∈ Γlocal s₀ k)
+    (ts : Fin n → (localColim s₀)[[J]].Term Empty) (S : Finset J)
+    (hcov : ∀ i, locJSupport (localColim s₀) J (ts i) ⊆ S) :
+    LocalEMContext.TLReadyStage s₀ J ctx k ψ ts S := by
+  intro T hT
+  rw [← mapLanguage_LlocalInclusion_lift]
+  exact LocalEMContext.TLReady_mapLang_of_Γlocal_succ s₀ J ctx hclosed
+    (ψ.mapLanguage (LlocalHom s₀ k)) (liftGamma_mem_Γlocal_succ s₀ hψ) ts T
+    (fun i => (hcov i).trans hT)
+
 end StagedReadiness
 
 /-! ## The staged truth lemma (over a source model)

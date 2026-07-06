@@ -9,6 +9,8 @@ import InfinitaryLogic.Methods.LocalEMContext
 import InfinitaryLogic.Methods.LocalEMTruth
 -- The local EM truth lemma layer 2: readiness + the staged truth lemma (imports LocalEMTruth)
 import InfinitaryLogic.Methods.LocalEMTruthLemma
+-- The template-realization bridge (imports the EM-side template machinery; Conditional-free)
+import InfinitaryLogic.Methods.LocalEMTemplateRealization
 
 /-!
 # WIP: the work-in-progress frontier bundle
@@ -39,7 +41,14 @@ these imports transitively cover:
   transport `locSkWitnessTerm`/`locDeepInterp_skWitness`/`locSkWitness_universal`, and the
   truth-lemma endpoints: the `OmegaComplete` mixin, `TLReady`/`TLReadyStage` readiness with the
   `DeFormClosedForColim` mixin + `ΓEMlocal` discharger, and the staged truth lemma
-  `LocalEMContext.truthLemmaStage` with its stage-`k` lift corollary `truthLemmaStage_of_mem`).
+  `LocalEMContext.truthLemmaStage` with its stage-`k` lift corollary `truthLemmaStage_of_mem`);
+* `Methods/LocalEMTemplateRealization.lean` — the template-realization bridge (imports the
+  EM-side template machinery, stays Conditional-free): `LocalStage.ofSeq`, the
+  subsequence-preserving Ramsey extraction `exists_orderEmb_tailIndiscernible_ΓEMlocal` +
+  `exists_localEMContext_subseq`, template preservation under subsequence, the parameterized EM
+  model theorem `LocalEMContext.templateTheoryOn_seed_model`, and the acceptance theorem
+  `tailTemplateRealizable_of_localEM` — the `TailTemplateRealizable` conclusion shape modulo the
+  single remaining `OmegaComplete` extraction hypothesis.
 
 These modules are deliberately NOT part of `InfinitaryLogic.All` or
 `InfinitaryLogic.Everything` — they are under active construction. This target exists
