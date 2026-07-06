@@ -92,37 +92,44 @@ structure LocalEMContext.OmegaComplete (ctx : LocalEMContext Λ J (M := M)) : Pr
     (∀ i, LocalEMContext.eventualDeepTruth (Λ := Λ) (J := J) ctx (φs i) ts S) →
       LocalEMContext.eventualDeepTruth (Λ := Λ) (J := J) ctx (BoundedFormulaω.iInf φs) ts S
 
-/-- **`Γ`-restricted `⋁`/`⋀`-completeness**: like `OmegaComplete`, but the uniform `iSup`-witness
-and uniform `iInf`-cutoff are demanded only at disjunctions/conjunctions that are **members of the
-family** `Γ'` (still over arbitrary `ts`/`S`). This is the honest form of the obligation: the
+/-- **`Γ`-restricted, support-covered `⋁`/`⋀`-completeness**: like `OmegaComplete`, but the
+uniform `iSup`-witness and uniform `iInf`-cutoff are demanded only at disjunctions/conjunctions
+that are **members of the family** `Γ'`, and only at argument tuples whose skeleton support is
+**covered** by the ambient support (`hcov`). This is the honest form of the obligation: the
 staged truth-lemma induction only ever consumes completeness at colimit images of family members
-(their memberships are threaded through the induction), while an arbitrary tail-indiscernible
-sequence can have *drifting witnesses* for countable disjunctions outside the family — so the
-global `OmegaComplete` is strictly stronger than what any extraction argument needs to deliver. -/
+(their memberships are threaded through the induction) and always under a support-covering proof
+(`hsub`), while an arbitrary tail-indiscernible sequence can have *drifting witnesses* for
+countable disjunctions outside the family — so the global `OmegaComplete` is strictly stronger
+than what any extraction argument needs to deliver. The covering makes the clauses deForm-
+normalizable (`eventualDeepTruth_iff_eventual_locDeForm`), hence reducible to the source-side
+`LocalEMOmegaHomogeneous` below. -/
 structure LocalEMContext.OmegaCompleteOn (ctx : LocalEMContext Λ J (M := M))
     (Γ' : Set (Σ n, Λ.BoundedFormulaω Empty n)) : Prop where
-  /-- Eventual deep truth of a family disjunction `⋁φs ∈ Γ'` provides a single component
-  witness. -/
+  /-- Eventual deep truth of a family disjunction `⋁φs ∈ Γ'`, over a covered support, provides a
+  single component witness. -/
   iSup_complete : ∀ {m : ℕ} (φs : ℕ → Λ.BoundedFormulaω Empty m),
     (⟨m, BoundedFormulaω.iSup φs⟩ : Σ n, Λ.BoundedFormulaω Empty n) ∈ Γ' →
     ∀ (ts : Fin m → Λ[[J]].Term Empty) (S : Finset J),
+    (∀ i, locJSupport Λ J (ts i) ⊆ S) →
     LocalEMContext.eventualDeepTruth (Λ := Λ) (J := J) ctx (BoundedFormulaω.iSup φs) ts S →
       ∃ i, LocalEMContext.eventualDeepTruth (Λ := Λ) (J := J) ctx (φs i) ts S
-  /-- Eventual deep truth of all components of a family conjunction `⋀φs ∈ Γ'` provides eventual
-  deep truth of the conjunction. -/
+  /-- Eventual deep truth of all components of a family conjunction `⋀φs ∈ Γ'`, over a covered
+  support, provides eventual deep truth of the conjunction. -/
   iInf_complete : ∀ {m : ℕ} (φs : ℕ → Λ.BoundedFormulaω Empty m),
     (⟨m, BoundedFormulaω.iInf φs⟩ : Σ n, Λ.BoundedFormulaω Empty n) ∈ Γ' →
     ∀ (ts : Fin m → Λ[[J]].Term Empty) (S : Finset J),
+    (∀ i, locJSupport Λ J (ts i) ⊆ S) →
     (∀ i, LocalEMContext.eventualDeepTruth (Λ := Λ) (J := J) ctx (φs i) ts S) →
       LocalEMContext.eventualDeepTruth (Λ := Λ) (J := J) ctx (BoundedFormulaω.iInf φs) ts S
 
-/-- **Compatibility adapter**: global completeness restricts to any family — existing
-`OmegaComplete` producers serve every `OmegaCompleteOn` consumer by dropping the membership. -/
+/-- **Compatibility adapter**: global completeness restricts to any family and any covering —
+existing `OmegaComplete` producers serve every `OmegaCompleteOn` consumer by dropping the
+membership and the covering. -/
 theorem LocalEMContext.OmegaComplete.toOmegaCompleteOn {ctx : LocalEMContext Λ J (M := M)}
     (hc : ctx.OmegaComplete) (Γ' : Set (Σ n, Λ.BoundedFormulaω Empty n)) :
     LocalEMContext.OmegaCompleteOn (Λ := Λ) (J := J) ctx Γ' :=
-  ⟨fun φs _ ts S h => hc.iSup_complete φs ts S h,
-   fun φs _ ts S h => hc.iInf_complete φs ts S h⟩
+  ⟨fun φs _ ts S _ h => hc.iSup_complete φs ts S h,
+   fun φs _ ts S _ h => hc.iInf_complete φs ts S h⟩
 
 /-- The easy `iSup` direction: a single component's eventual deep truth gives the disjunction's. -/
 theorem LocalEMContext.eventualDeepTruth_iSup_of_exists (ctx : LocalEMContext Λ J (M := M)) {m : ℕ}
@@ -143,6 +150,42 @@ theorem LocalEMContext.eventualDeepTruth_iInf_forall (ctx : LocalEMContext Λ J 
     LocalEMContext.eventualDeepTruth (Λ := Λ) (J := J) ctx (φs i) ts S := by
   simp only [LocalEMContext.eventualDeepTruth, BoundedFormulaω.realize_iInf] at h ⊢
   exact h.mono fun _ hd => hd i
+
+/-! ### deForm normal forms
+
+Over a covered support, eventual deep truth is eventual truth of the **de-substituted source
+formula** on consecutive `ctx.a`-tuples — and de-substitution commutes syntactically with the
+countable connectives. Together these turn the support-covered Ω-clauses into pure statements
+about the source sequence (`LocalEMOmegaHomogeneous` below). -/
+
+/-- **deForm normal form for eventual deep truth**: over a covered support, the eventual deep
+truth of `φ` on `ts`/`S` is the eventual truth of the de-substituted `locDeForm S φ ts` on the
+consecutive deep tuples `k ↦ ctx.a (d + k)`. Pointwise `realize_locDeForm`. -/
+theorem LocalEMContext.eventualDeepTruth_iff_eventual_locDeForm
+    (ctx : LocalEMContext Λ J (M := M)) {n : ℕ} (φ : Λ.BoundedFormulaω Empty n)
+    (ts : Fin n → Λ[[J]].Term Empty) (S : Finset J)
+    (hsub : ∀ i, locJSupport Λ J (ts i) ⊆ S) :
+    LocalEMContext.eventualDeepTruth (Λ := Λ) (J := J) ctx φ ts S ↔
+      ∀ᶠ d in Filter.atTop,
+        (locDeForm Λ J S φ ts hsub).Realize Empty.elim
+          (fun k : Fin S.card => ctx.a (d + (k : ℕ))) :=
+  Filter.eventually_congr (Filter.Eventually.of_forall fun d =>
+    (realize_locDeForm Λ J ctx.a d S φ ts hsub).symm)
+
+/-- De-substitution commutes with `⋁` (the `openBounds → subst → relabel` template is
+structural). -/
+theorem locDeForm_iSup {n : ℕ} (φs : ℕ → Λ.BoundedFormulaω Empty n)
+    (ts : Fin n → Λ[[J]].Term Empty) {S : Finset J}
+    (hsub : ∀ i, locJSupport Λ J (ts i) ⊆ S) :
+    locDeForm Λ J S (BoundedFormulaω.iSup φs) ts hsub
+      = BoundedFormulaω.iSup (fun i => locDeForm Λ J S (φs i) ts hsub) := rfl
+
+/-- De-substitution commutes with `⋀`. -/
+theorem locDeForm_iInf {n : ℕ} (φs : ℕ → Λ.BoundedFormulaω Empty n)
+    (ts : Fin n → Λ[[J]].Term Empty) {S : Finset J}
+    (hsub : ∀ i, locJSupport Λ J (ts i) ⊆ S) :
+    locDeForm Λ J S (BoundedFormulaω.iInf φs) ts hsub
+      = BoundedFormulaω.iInf (fun i => locDeForm Λ J S (φs i) ts hsub) := rfl
 
 /-- **Decidedness of a formula's eventual deep truth** (the named output of
 `eventualDeepTruth_decided`): either it holds eventually, or it fails eventually. Local analogue of
@@ -206,6 +249,82 @@ deliver ("`ΓlocalColim`-restricted witness homogeneity"). -/
 abbrev LocalEMContext.OmegaCompleteForColim
     (ctx : LocalEMContext (localColim s₀) J (M := M)) : Prop :=
   LocalEMContext.OmegaCompleteOn (Λ := localColim s₀) (J := J) ctx (ΓlocalColim s₀)
+
+/-- **Source-side Ω-homogeneity of a sequence** — the deForm normal form of the support-covered
+completeness obligation, freed of the term model entirely: no `J`, no supports, no quotient, no
+`LocalEMContext`. For each family disjunction/conjunction (member of `ΓlocalColim s₀`) and each
+**canonical** de-substitution tuple `g` (through which every `J`/`ts`/`S` instance factors, via
+`locDeTermFin`), the uniform witness/cutoff exchange holds for the eventual truth of the
+de-substituted components on consecutive `a`-tuples. This is a pure statement about the sequence
+`a` in the source model — the shape the remaining combinatorial extraction has to homogenize. -/
+structure LocalEMOmegaHomogeneous (s₀ : LocalStage) {M : Type} [(localColim s₀).Structure M]
+    (a : ℕ → M) : Prop where
+  /-- Uniform `iSup`-witness: if, eventually in depth, *some* de-substituted component of a
+  family disjunction holds on the consecutive tuple, then a *single* component eventually
+  holds. -/
+  iSup_homogeneous : ∀ {m : ℕ} (φs : ℕ → (localColim s₀).BoundedFormulaω Empty m),
+    (⟨m, BoundedFormulaω.iSup φs⟩ :
+      Σ n, (localColim s₀).BoundedFormulaω Empty n) ∈ ΓlocalColim s₀ →
+    ∀ {p : ℕ} (g : Fin m → (localColim s₀).Term (Fin p)),
+    (∀ᶠ d in Filter.atTop, ∃ i, (canonDeForm (localColim s₀) (φs i) g).Realize
+        (Empty.elim : Empty → M) (fun k : Fin p => a (d + (k : ℕ)))) →
+    ∃ i, ∀ᶠ d in Filter.atTop, (canonDeForm (localColim s₀) (φs i) g).Realize
+        (Empty.elim : Empty → M) (fun k : Fin p => a (d + (k : ℕ)))
+  /-- Uniform `iInf`-cutoff: if every de-substituted component of a family conjunction
+  eventually holds on the consecutive tuple, then eventually *all* components hold
+  simultaneously. -/
+  iInf_homogeneous : ∀ {m : ℕ} (φs : ℕ → (localColim s₀).BoundedFormulaω Empty m),
+    (⟨m, BoundedFormulaω.iInf φs⟩ :
+      Σ n, (localColim s₀).BoundedFormulaω Empty n) ∈ ΓlocalColim s₀ →
+    ∀ {p : ℕ} (g : Fin m → (localColim s₀).Term (Fin p)),
+    (∀ i, ∀ᶠ d in Filter.atTop, (canonDeForm (localColim s₀) (φs i) g).Realize
+        (Empty.elim : Empty → M) (fun k : Fin p => a (d + (k : ℕ)))) →
+    ∀ᶠ d in Filter.atTop, ∀ i, (canonDeForm (localColim s₀) (φs i) g).Realize
+        (Empty.elim : Empty → M) (fun k : Fin p => a (d + (k : ℕ)))
+
+/-- **The reduction theorem**: source-side Ω-homogeneity of the context's sequence delivers the
+support-covered colimit-family completeness — the term-model side of the obligation dissolves.
+Each Ω-clause converts pointwise through `realize_locDeForm` (with `locDeForm` *definitionally*
+the canonical deForm at the `locDeTermFin` tuple, so the homogeneity fields apply at
+`g := locDeTermFin ∘ ts`), and `realize_iSup`/`realize_iInf` split the connective on the deep
+side. After this, the remaining extraction target is `LocalEMOmegaHomogeneous` alone. -/
+theorem LocalEMContext.omegaCompleteForColim_of_omegaHomogeneous
+    (ctx : LocalEMContext (localColim s₀) J (M := M))
+    (h : LocalEMOmegaHomogeneous s₀ ctx.a) :
+    LocalEMContext.OmegaCompleteForColim s₀ J ctx := by
+  constructor
+  · intro m φs hmem ts S hcov hev
+    have hev' : ∀ᶠ d in Filter.atTop, ∃ i,
+        (canonDeForm (localColim s₀) (φs i)
+            (fun i => locDeTermFin (localColim s₀) J S (ts i) (hcov i))).Realize
+          (Empty.elim : Empty → M) (fun k : Fin S.card => ctx.a (d + (k : ℕ))) := by
+      rw [LocalEMContext.eventualDeepTruth] at hev
+      refine hev.mono fun d hd => ?_
+      rw [BoundedFormulaω.realize_iSup] at hd
+      obtain ⟨i, hi⟩ := hd
+      exact ⟨i, (realize_locDeForm (localColim s₀) J ctx.a d S (φs i) ts hcov).mpr hi⟩
+    obtain ⟨i, hi⟩ := h.iSup_homogeneous φs hmem
+      (fun i => locDeTermFin (localColim s₀) J S (ts i) (hcov i)) hev'
+    refine ⟨i, ?_⟩
+    rw [LocalEMContext.eventualDeepTruth]
+    exact hi.mono fun d hd =>
+      (realize_locDeForm (localColim s₀) J ctx.a d S (φs i) ts hcov).mp hd
+  · intro m φs hmem ts S hcov hev
+    have hev' : ∀ i, ∀ᶠ d in Filter.atTop,
+        (canonDeForm (localColim s₀) (φs i)
+            (fun i => locDeTermFin (localColim s₀) J S (ts i) (hcov i))).Realize
+          (Empty.elim : Empty → M) (fun k : Fin S.card => ctx.a (d + (k : ℕ))) := by
+      intro i
+      have hi := hev i
+      rw [LocalEMContext.eventualDeepTruth] at hi
+      exact hi.mono fun d hd =>
+        (realize_locDeForm (localColim s₀) J ctx.a d S (φs i) ts hcov).mpr hd
+    have hcut := h.iInf_homogeneous φs hmem
+      (fun i => locDeTermFin (localColim s₀) J S (ts i) (hcov i)) hev'
+    rw [LocalEMContext.eventualDeepTruth]
+    refine hcut.mono fun d hd => ?_
+    rw [BoundedFormulaω.realize_iInf]
+    exact fun i => (realize_locDeForm (localColim s₀) J ctx.a d S (φs i) ts hcov).mp (hd i)
 
 /-- **deForm-membership closure** (construction-data mixin, the seam between family readiness and
 the extracted family): every colimit-family member's de-substituted formula — **support-uniformly**,
@@ -434,7 +553,7 @@ theorem LocalEMContext.truthLemmaStage :
     · intro h
       obtain ⟨i, hi⟩ := hc.iSup_complete
         (fun i => (φs i).mapLanguage (LlocalInclusion s₀ (k + 1)))
-        (toLocalColimFormula_mem_ΓlocalColim s₀ hmem) ts S h
+        (toLocalColimFormula_mem_ΓlocalColim s₀ hmem) ts S hsub h
       exact ⟨i, (ih i (bfSubformulas_subset_Γlocal_succ s₀ hmem (Set.mem_range_self i)) ts S hsub
         fun T hT => (hready T hT) i).mpr hi⟩
   | iInf φs ih =>
@@ -448,7 +567,7 @@ theorem LocalEMContext.truthLemmaStage :
     constructor
     · intro h
       exact hc.iInf_complete (fun i => (φs i).mapLanguage (LlocalInclusion s₀ (k + 1)))
-        (toLocalColimFormula_mem_ΓlocalColim s₀ hmem) ts S
+        (toLocalColimFormula_mem_ΓlocalColim s₀ hmem) ts S hsub
         fun i => (ih i (bfSubformulas_subset_Γlocal_succ s₀ hmem (Set.mem_range_self i)) ts S hsub
           fun T hT => (hready T hT) i).mp (h i)
     · intro h i
