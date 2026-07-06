@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Guard the pure local EMContext/EMTruth stack's import boundary. `LocalEMContext.lean` (the
-# quotient/structure machinery) and `LocalEMTruth.lean` (the Skolem-witness transport) must stay
-# EM-free and Conditional-free: they may reach tail-indiscernibility ONLY through the neutral
+# quotient/structure machinery), `LocalEMTruth.lean` (the Skolem-witness transport), and
+# `LocalEMTruthLemma.lean` (readiness + the staged truth lemma) must stay EM-free and
+# Conditional-free: they may reach tail-indiscernibility ONLY through the neutral
 # `Methods/TailIndiscernible.lean`, never through `Methods/EM/*`, the legacy
 # `Methods/EMTermModel.lean`, or anything under `Conditional/`.
 #
@@ -17,7 +18,8 @@ def path_of(mod):
     p = mod.replace('.', '/') + '.lean'
     return p if os.path.exists(p) else None
 
-roots = ["InfinitaryLogic.Methods.LocalEMContext", "InfinitaryLogic.Methods.LocalEMTruth"]
+roots = ["InfinitaryLogic.Methods.LocalEMContext", "InfinitaryLogic.Methods.LocalEMTruth",
+         "InfinitaryLogic.Methods.LocalEMTruthLemma"]
 
 def closure(root):
     seen, stack = set(), [root]

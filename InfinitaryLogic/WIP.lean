@@ -7,6 +7,8 @@ import InfinitaryLogic.Methods.LocalEMExtraction
 import InfinitaryLogic.Methods.LocalEMContext
 -- The local EM truth lemma layer 1: Skolem-witness transport (imports LocalEMContext)
 import InfinitaryLogic.Methods.LocalEMTruth
+-- The local EM truth lemma layer 2: readiness + the staged truth lemma (imports LocalEMTruth)
+import InfinitaryLogic.Methods.LocalEMTruthLemma
 
 /-!
 # WIP: the work-in-progress frontier bundle
@@ -26,14 +28,18 @@ these imports transitively cover:
 * `Methods/EMTermModel.lean` — the EM term model over `(skolemColim L)[[J]]` with the
   staged truth lemma `truthLemmaStage`;
 * `Methods/LocalEMSupport.lean` → `LocalSkolem.lean` → `LocalTower.lean` → `LocalColimit.lean`
-  → `LocalEMFamily.lean` → {`LocalEMExtraction.lean`, `LocalEMContext.lean` → `LocalEMTruth.lean`}
+  → `LocalEMFamily.lean` → {`LocalEMExtraction.lean`, `LocalEMContext.lean` → `LocalEMTruth.lean`
+  → `LocalEMTruthLemma.lean`}
   — the countable family-restricted re-base (shared generic support, `localSkolem`, the mutually
   recursive `Llocal`/`Γlocal` tower with `skolemNeed`, the countable colimit `localColim` with
   cocone and semantic transport, the countable atom/deForm family `ΓEMlocal` with the canonical
   J-free seeds and the `EMContext`-instantiation membership interface, the extraction bridge
   `exists_ΓEMlocal_tail_indiscernible`, the generic deep-interpretation/realize-bridge semantic
-  layer, the `LocalEMEq` quotient carrier + `Λ[[J]]`-`Structure`, and the local Skolem-witness
-  transport `locSkWitnessTerm`/`locDeepInterp_skWitness`/`locSkWitness_universal`).
+  layer, the `LocalEMEq` quotient carrier + `Λ[[J]]`-`Structure`, the local Skolem-witness
+  transport `locSkWitnessTerm`/`locDeepInterp_skWitness`/`locSkWitness_universal`, and the
+  truth-lemma endpoints: the `OmegaComplete` mixin, `TLReady`/`TLReadyStage` readiness with the
+  `DeFormClosedForColim` mixin + `ΓEMlocal` discharger, and the staged truth lemma
+  `LocalEMContext.truthLemmaStage` with its stage-`k` lift corollary `truthLemmaStage_of_mem`).
 
 These modules are deliberately NOT part of `InfinitaryLogic.All` or
 `InfinitaryLogic.Everything` — they are under active construction. This target exists
