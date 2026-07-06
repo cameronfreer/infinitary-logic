@@ -56,9 +56,11 @@ these imports transitively cover:
   `tailTemplateRealizable_of_localEMOmega : LocalEMOmegaExtraction L' → TailTemplateRealizable`
   (modulo the bridge's extra function-symbol countability), isolating the
   `Conditional/MorleyHanfTransfer` import like `LocalEMExtraction`. The project's final frontier
-  for the Morley–Hanf residual is now exactly `LocalEMOmegaExtraction`:
-  `ΓlocalColim`-restricted witness homogeneity of the subsequence extraction, not global
-  `OmegaComplete`.
+  for the Morley–Hanf residual is `LocalEMOmegaHomogeneousExtraction` (implying
+  `LocalEMOmegaExtraction` via the reduction theorem
+  `omegaCompleteForColim_of_omegaHomogeneous`): a `J`-free, term-model-free countable-family
+  homogeneity statement — uniform `iSup`-witness / `iInf`-cutoff for the de-substituted family
+  formulas on consecutive tuples of the extracted subsequence.
 
 These modules are deliberately NOT part of `InfinitaryLogic.All` or
 `InfinitaryLogic.Everything` — they are under active construction. This target exists

@@ -51,9 +51,12 @@ input `a` and the single remaining hypothesis — an extracted subsequence conte
 This is exactly the conclusion shape of `TailTemplateRealizable` (minus its unused `ℶ_{ω₁}`
 premise). The `hOmega` hypothesis is an existential bundle: `exists_localEMContext_subseq` proves
 every conjunct except `ctx.OmegaCompleteForColim`, and `LocalEMOmegaExtraction` names its
-∀-closure — **the project's final frontier**: not "prove global `OmegaComplete`" (false-shaped
-for arbitrary tail-indiscernible sequences, whose off-family disjunctions can have drifting
-witnesses), but "prove `ΓlocalColim`-restricted witness homogeneity of the extraction".
+∀-closure. The frontier's cleanest form is `LocalEMOmegaHomogeneousExtraction` — the `J`-free
+source-side homogeneity residual (via the reduction theorem
+`omegaCompleteForColim_of_omegaHomogeneous` and `localEMOmegaExtraction_of_homogeneousExtraction`):
+not "prove global `OmegaComplete`" (false-shaped for arbitrary tail-indiscernible sequences,
+whose off-family disjunctions can have drifting witnesses), but a countable-family homogeneity
+extraction statement about `a ∘ g` — no term model, no quotients, no supports.
 
 This file imports the EM-side template machinery (`Methods/EM/TailAdapter.lean`), so it is NOT
 part of the pure local stack guarded by `check_local_boundary.sh`'s EM-free roots; it must stay
@@ -463,5 +466,41 @@ theorem tailTemplateRealizable_of_localEMExtraction {L' : Language.{0, 0}}
     ∃ (N : Type) (_ : L'[[J]].Structure N),
       Theoryω.Model ((tailTemplateOfSeq (L := L') a).templateTheoryOfSeq s J) N :=
   tailTemplateRealizable_of_localEM s M a J hTail (h s M a J hTail)
+
+/-- **The source-side homogeneity residual** — the final frontier in its cleanest form: for
+every tail-template setup there is a subsequence `a ∘ g` that is tail-indiscernible on
+`ΓEMlocal` **and** source-side Ω-homogeneous (`LocalEMOmegaHomogeneous`). Note the statement is
+`J`-free — the target order enters only downstream, through the `LocalEMContext` machinery that
+`omegaCompleteForColim_of_omegaHomogeneous` supplies for every `J` at once. The plain Ramsey
+extraction (`exists_orderEmb_tailIndiscernible_ΓEMlocal`) already achieves the first conjunct;
+the remaining combinatorial content is exactly the second: a countable-family homogeneity
+statement about eventual truth of the de-substituted family formulas on consecutive
+`(a ∘ g)`-tuples — no term model, no quotients, no supports, no deForm plumbing. -/
+def LocalEMOmegaHomogeneousExtraction (L' : Language.{0, 0})
+    [Countable (Σ n, L'.Functions n)] [Countable (Σ n, L'.Relations n)] : Prop :=
+  ∀ (s : ℕ → Σ n, L'.BoundedFormulaω Empty n) (M : Type) [L'.Structure M] [Nonempty M]
+    (a : ℕ → M),
+    IsLomega1omegaIndiscernibleOnTail (L := L') a (Set.range s) →
+    letI : (localColim (LocalStage.ofSeq L' s)).Structure M :=
+      localColimStructure (LocalStage.ofSeq L' s)
+    ∃ g : ℕ ↪o ℕ,
+      IsLomega1omegaIndiscernibleOnTail (a ∘ ⇑g) (ΓEMlocal (LocalStage.ofSeq L' s)) ∧
+      LocalEMOmegaHomogeneous (LocalStage.ofSeq L' s) (a ∘ ⇑g)
+
+/-- **The homogeneity residual discharges the Ω-residual**: a homogeneous extraction yields, for
+every target order `J`, the subsequence context bundle — the context is the canonical one over
+`a ∘ g` (as in `exists_localEMContext_subseq`), and its `OmegaCompleteForColim` comes from the
+reduction theorem `omegaCompleteForColim_of_omegaHomogeneous`. -/
+theorem localEMOmegaExtraction_of_homogeneousExtraction {L' : Language.{0, 0}}
+    [Countable (Σ n, L'.Functions n)] [Countable (Σ n, L'.Relations n)]
+    (h : LocalEMOmegaHomogeneousExtraction L') : LocalEMOmegaExtraction L' := by
+  intro s M instM instNe a J instJ hTail
+  letI : (localColim (LocalStage.ofSeq L' s)).Structure M :=
+    localColimStructure (LocalStage.ofSeq L' s)
+  obtain ⟨g, hind, hhom⟩ := h s M a hTail
+  refine ⟨g, ⟨a ∘ ⇑g, ΓEMlocal (LocalStage.ofSeq L' s), hind,
+    locDeEqAtom_mem_ΓEMlocal J (LocalStage.ofSeq L' s),
+    locDeRelAtom_mem_ΓEMlocal J (LocalStage.ofSeq L' s)⟩, rfl, rfl, ?_⟩
+  exact LocalEMContext.omegaCompleteForColim_of_omegaHomogeneous (LocalStage.ofSeq L' s) J _ hhom
 
 end FirstOrder.Language
