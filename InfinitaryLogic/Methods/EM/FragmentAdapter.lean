@@ -411,6 +411,24 @@ def disEqFormula : L.BoundedFormulaω Empty 2 :=
     (Term.var (Sum.inr (0 : Fin 2)) : L.Term (Empty ⊕ Fin 2))
     (Term.var (Sum.inr (1 : Fin 2)) : L.Term (Empty ⊕ Fin 2))).not
 
+/-- **The Morley seed** of a sentence `φ`: the concrete two-formula family the Morley–Hanf tail
+bridge feeds the EM machinery — `φ` itself, the disequality `x₀ ≠ x₁`, and repeated `φ`-filler.
+The honest tail-template residual quantifies over exactly this seed
+(`MorleySeedTailTemplateRealizable` in `Conditional/MorleyHanfTransfer.lean`), NOT over arbitrary
+formula sequences: an arbitrary sequence can enumerate `{Pᵢ x}ᵢ ∪ {⋀ᵢ Pᵢ x}` against a "height"
+model, whose tail template is finitely satisfiable but unsatisfiable — a genuine `L_{ω₁ω}`
+compactness failure. -/
+def morleySeed (φ : L.Sentenceω) : ℕ → Σ n, L.BoundedFormulaω Empty n := fun i =>
+  match i with
+  | 0 => ⟨0, φ⟩
+  | 1 => ⟨2, disEqFormula⟩
+  | _ + 2 => ⟨0, φ⟩
+
+@[simp] theorem morleySeed_zero (φ : L.Sentenceω) : morleySeed φ 0 = ⟨0, φ⟩ := rfl
+
+@[simp] theorem morleySeed_one (φ : L.Sentenceω) :
+    morleySeed φ 1 = ⟨2, (disEqFormula : L.BoundedFormulaω Empty 2)⟩ := rfl
+
 /-- **Injectivity of the stretched sequence.**
 
 If the source sequence `a : I → M` is pairwise distinct on its index set and
