@@ -11,6 +11,8 @@ import InfinitaryLogic.Methods.LocalEMTruth
 import InfinitaryLogic.Methods.LocalEMTruthLemma
 -- The template-realization bridge (imports the EM-side template machinery; Conditional-free)
 import InfinitaryLogic.Methods.LocalEMTemplateRealization
+-- The Conditional-facing Ω-residual bridge (LocalEMOmegaExtraction → TailTemplateRealizable)
+import InfinitaryLogic.Methods.LocalEMOmegaResidual
 
 /-!
 # WIP: the work-in-progress frontier bundle
@@ -48,7 +50,15 @@ these imports transitively cover:
   `exists_localEMContext_subseq`, template preservation under subsequence, the parameterized EM
   model theorem `LocalEMContext.templateTheoryOn_seed_model`, and the acceptance theorem
   `tailTemplateRealizable_of_localEM` — the `TailTemplateRealizable` conclusion shape modulo the
-  single remaining `OmegaComplete` extraction hypothesis.
+  single remaining restricted-completeness extraction hypothesis, named
+  `LocalEMOmegaExtraction`;
+* `Methods/LocalEMOmegaResidual.lean` — the Conditional-facing one-theorem bridge
+  `tailTemplateRealizable_of_localEMOmega : LocalEMOmegaExtraction L' → TailTemplateRealizable`
+  (modulo the bridge's extra function-symbol countability), isolating the
+  `Conditional/MorleyHanfTransfer` import like `LocalEMExtraction`. The project's final frontier
+  for the Morley–Hanf residual is now exactly `LocalEMOmegaExtraction`:
+  `ΓlocalColim`-restricted witness homogeneity of the subsequence extraction, not global
+  `OmegaComplete`.
 
 These modules are deliberately NOT part of `InfinitaryLogic.All` or
 `InfinitaryLogic.Everything` — they are under active construction. This target exists
