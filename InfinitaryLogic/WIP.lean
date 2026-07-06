@@ -48,19 +48,21 @@ these imports transitively cover:
   EM-side template machinery, stays Conditional-free): `LocalStage.ofSeq`, the
   subsequence-preserving Ramsey extraction `exists_orderEmb_tailIndiscernible_ΓEMlocal` +
   `exists_localEMContext_subseq`, template preservation under subsequence, the parameterized EM
-  model theorem `LocalEMContext.templateTheoryOn_seed_model`, and the acceptance theorem
-  `tailTemplateRealizable_of_localEM` — the `TailTemplateRealizable` conclusion shape modulo the
-  single remaining restricted-completeness extraction hypothesis, named
-  `LocalEMOmegaExtraction`;
+  model theorem `LocalEMContext.templateTheoryOn_seed_model`, and the per-`s` acceptance lemma
+  `tailTemplateRealizable_of_localEM` (hypothesis-relative; its ∀-`s` closure is false-shaped —
+  a `{Pᵢ} ∪ {⋀ᵢ Pᵢ}` seed against a height model defeats any extraction — so the named
+  residuals are seed-specific and source-aware: `MorleySeedOmegaExtraction` and its cleanest
+  form `MorleySeedOmegaHomogeneousExtraction`, both over `morleySeed φ = {φ, x₀ ≠ x₁}` with the
+  `ℶ_{ω₁}`/`φ`-realization/pairwise source facts);
 * `Methods/LocalEMOmegaResidual.lean` — the Conditional-facing one-theorem bridge
-  `tailTemplateRealizable_of_localEMOmega : LocalEMOmegaExtraction L' → TailTemplateRealizable`
-  (modulo the bridge's extra function-symbol countability), isolating the
-  `Conditional/MorleyHanfTransfer` import like `LocalEMExtraction`. The project's final frontier
-  for the Morley–Hanf residual is `LocalEMOmegaHomogeneousExtraction` (implying
-  `LocalEMOmegaExtraction` via the reduction theorem
-  `omegaCompleteForColim_of_omegaHomogeneous`): a `J`-free, term-model-free countable-family
-  homogeneity statement — uniform `iSup`-witness / `iInf`-cutoff for the de-substituted family
-  formulas on consecutive tuples of the extracted subsequence.
+  `morleySeedTailTemplateRealizable_of_localEMOmega : MorleySeedOmegaExtraction L' →
+  MorleySeedTailTemplateRealizable` (modulo the bridge's extra function-symbol countability),
+  isolating the `Conditional/MorleyHanfTransfer` import like `LocalEMExtraction`. The project's
+  final frontier for the Morley–Hanf residual is `MorleySeedOmegaHomogeneousExtraction`
+  (implying `MorleySeedOmegaExtraction` via `omegaCompleteForColim_of_omegaHomogeneous`): a
+  `J`-free, term-model-free countable-family homogeneity statement — uniform `iSup`-witness /
+  `iInf`-cutoff for the de-substituted seed-family formulas on consecutive tuples of the
+  extracted subsequence, with the large-model hypothesis available.
 
 These modules are deliberately NOT part of `InfinitaryLogic.All` or
 `InfinitaryLogic.Everything` — they are under active construction. This target exists

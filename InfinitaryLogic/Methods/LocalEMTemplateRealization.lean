@@ -11,7 +11,7 @@ import InfinitaryLogic.Combinatorics.InfiniteRamseyFamily
 # The local EM template-realization bridge
 
 The adapter between the local EM truth-lemma stack (`LocalEMTruthLemma.lean`) and the honest
-Morley–Hanf residual `TailTemplateRealizable` (`Conditional/MorleyHanfTransfer.lean`),
+Morley–Hanf residual `MorleySeedTailTemplateRealizable` (`Conditional/MorleyHanfTransfer.lean`),
 **parameterized by the restricted `OmegaCompleteForColim`** (the exact `ΓlocalColim`-restricted
 completeness the truth lemma consumes — not the strictly stronger global `OmegaComplete`).
 Four deliverables:
@@ -46,17 +46,19 @@ Four deliverables:
    positive/negative sentence of the seed-family template theory.
 
 **Acceptance** (`tailTemplateRealizable_of_localEM`): given a tail-indiscernible-on-`Set.range s`
-input `a` and the single remaining hypothesis — an extracted subsequence context that is
-`OmegaCompleteForColim` — the tail-template theory of `a` over any target order `J` has a model.
-This is exactly the conclusion shape of `TailTemplateRealizable` (minus its unused `ℶ_{ω₁}`
-premise). The `hOmega` hypothesis is an existential bundle: `exists_localEMContext_subseq` proves
-every conjunct except `ctx.OmegaCompleteForColim`, and `LocalEMOmegaExtraction` names its
-∀-closure. The frontier's cleanest form is `LocalEMOmegaHomogeneousExtraction` — the `J`-free
-source-side homogeneity residual (via the reduction theorem
-`omegaCompleteForColim_of_omegaHomogeneous` and `localEMOmegaExtraction_of_homogeneousExtraction`):
-not "prove global `OmegaComplete`" (false-shaped for arbitrary tail-indiscernible sequences,
-whose off-family disjunctions can have drifting witnesses), but a countable-family homogeneity
-extraction statement about `a ∘ g` — no term model, no quotients, no supports.
+input `a` and, **for that `s`**, an extracted subsequence context that is `OmegaCompleteForColim`,
+the tail-template theory of `a` over any target order `J` has a model. This per-`s` lemma is
+hypothesis-relative and true as stated — but its ∀-`s` closure is **false-shaped** (a seed
+enumerating `{Pᵢ x}ᵢ ∪ {⋀ᵢ Pᵢ x}` against a height model has a finitely-satisfiable,
+unsatisfiable tail-template theory; see `TailTemplateRealizable`'s docstring in
+`Conditional/MorleyHanfTransfer.lean`), so no named residual quantifies over arbitrary `s`. The
+named residuals are **seed-specific and source-aware**: `MorleySeedOmegaExtraction` (the
+acceptance bundle at `s := morleySeed φ`, carrying `Sentenceω.Realize φ M`, the `ℶ_{ω₁}` size
+premise, and pairwise distinctness) and its cleanest form `MorleySeedOmegaHomogeneousExtraction`
+— the `J`-free source-side homogeneity residual (via
+`omegaCompleteForColim_of_omegaHomogeneous` and
+`morleySeedOmegaExtraction_of_homogeneousExtraction`): a countable-family homogeneity extraction
+statement about `a ∘ g` on the seed family — no term model, no quotients, no supports.
 
 This file imports the EM-side template machinery (`Methods/EM/TailAdapter.lean`), so it is NOT
 part of the pure local stack guarded by `check_local_boundary.sh`'s EM-free roots; it must stay
@@ -386,20 +388,21 @@ theorem LocalEMContext.templateTheoryOn_seed_model (s₀ : LocalStage) (J : Type
 
 /-! ## Acceptance: tail-template realizability from the local EM model -/
 
-/-- **Tail-template realizability via the local EM construction** (the acceptance theorem):
-given the input sequence's tail indiscernibility on `Set.range s` and the single remaining
-hypothesis `hOmega` — an extracted subsequence context over `localColim (LocalStage.ofSeq L' s)`
-that is `OmegaCompleteForColim` — the tail-template theory of `a` over any target order `J` has
-a model. This is the conclusion shape of `TailTemplateRealizable` (its `ℶ_{ω₁}` premise is not
-consumed — the model is the countable-language EM quotient, not a large substructure).
+/-- **Per-`s` tail-template realizability via the local EM construction** (the acceptance
+lemma): given the input sequence's tail indiscernibility on `Set.range s` and, **for that
+`s`**, the hypothesis `hOmega` — an extracted subsequence context over
+`localColim (LocalStage.ofSeq L' s)` that is `OmegaCompleteForColim` — the tail-template theory
+of `a` over any target order `J` has a model.
 
-Every conjunct of `hOmega` **except** `ctx.OmegaCompleteForColim` is proved by
-`exists_localEMContext_subseq`; the honest hole this bridge leaves is upgrading the Ramsey
-extraction to also deliver the `ΓlocalColim`-restricted witness homogeneity (see
-`LocalEMOmegaExtraction` for the named ∀-closure). The extracted context's template agrees with
-the input's on the seed family (`tailTemplateOfSeq_comp_truth_iff` — this is why `hOmega`
-demands `ctx.a = a ∘ g` for an order embedding `g`, rather than an unrelated extracted
-sequence), so the model of the extracted template theory is a model of `a`'s. -/
+This lemma is hypothesis-relative and true for every `s`; what is **not** claimed is that
+`hOmega` is dischargeable for arbitrary `s` — its ∀-`s` closure is false-shaped (see the file
+docstring; a `{Pᵢ} ∪ {⋀ᵢ Pᵢ}` seed against a height model defeats any extraction). The honest
+instantiation is at `s := morleySeed φ` (`MorleySeedOmegaExtraction`). Every conjunct of
+`hOmega` **except** `ctx.OmegaCompleteForColim` is proved by `exists_localEMContext_subseq`.
+The extracted context's template agrees with the input's on the seed family
+(`tailTemplateOfSeq_comp_truth_iff` — this is why `hOmega` demands `ctx.a = a ∘ g` for an order
+embedding `g`, rather than an unrelated extracted sequence), so the model of the extracted
+template theory is a model of `a`'s. -/
 theorem tailTemplateRealizable_of_localEM {L' : Language.{0, 0}}
     [Countable (Σ n, L'.Functions n)] [Countable (Σ n, L'.Relations n)]
     (s : ℕ → Σ n, L'.BoundedFormulaω Empty n) (M : Type) [L'.Structure M] [Nonempty M]
@@ -433,74 +436,76 @@ theorem tailTemplateRealizable_of_localEM {L' : Language.{0, 0}}
     (Lomega1omegaTemplate.templateTheoryOn_congr hagree J).symm]
   exact hmodel
 
-/-- **The final residual, named**: for every tail-template setup — formula sequence `s`, model
-`M`, input sequence `a` tail-indiscernible on `Set.range s`, target order `J` — there is an
-extracted subsequence context (`ctx.a = a ∘ g`, `ctx.Γ = ΓEMlocal`) that is
-`ΓlocalColim`-restricted `⋁`/`⋀`-complete. This is the honest frontier left by the local EM
-construction: every conjunct except `OmegaCompleteForColim` is already proved
-(`exists_localEMContext_subseq`), so the remaining content is exactly
-"`ΓlocalColim`-restricted witness homogeneity" of the Ramsey extraction — NOT global
-`OmegaComplete`, which arbitrary tail-indiscernible sequences (with drifting witnesses for
-off-family disjunctions) cannot deliver. The downstream Conditional-facing
-`tailTemplateRealizable_of_localEMOmega` shows this residual implies `TailTemplateRealizable`
-(modulo the extra function-symbol countability of this bridge). -/
-def LocalEMOmegaExtraction (L' : Language.{0, 0}) [Countable (Σ n, L'.Functions n)]
+/-- **The seed Ω-residual, named**: for the Morley-seed setup — sentence `φ` holding in the
+large source model `M`, input sequence `a` pairwise distinct and tail-indiscernible on
+`Set.range (morleySeed φ)`, target order `J` — there is an extracted subsequence context
+(`ctx.a = a ∘ g`, `ctx.Γ = ΓEMlocal`) that is `ΓlocalColim`-restricted `⋁`/`⋀`-complete.
+
+Deliberately **seed-specific and source-aware**: the ∀-`s` closure of the acceptance bundle is
+false-shaped (see `TailTemplateRealizable`'s docstring in `Conditional/MorleyHanfTransfer.lean` —
+a seed enumerating `{Pᵢ x}ᵢ ∪ {⋀ᵢ Pᵢ x}` against a height model defeats any extraction), so the
+residual carries exactly the facts the Morley–Hanf bridge actually has, including the `ℶ_{ω₁}`
+premise, all available to the future combinatorial proof. Every conjunct except
+`OmegaCompleteForColim` is already proved without them (`exists_localEMContext_subseq`). The
+downstream Conditional-facing `morleySeedTailTemplateRealizable_of_localEMOmega` shows this
+residual implies `MorleySeedTailTemplateRealizable` (modulo the extra function-symbol
+countability of this bridge). -/
+def MorleySeedOmegaExtraction (L' : Language.{0, 0}) [Countable (Σ n, L'.Functions n)]
     [Countable (Σ n, L'.Relations n)] : Prop :=
-  ∀ (s : ℕ → Σ n, L'.BoundedFormulaω Empty n) (M : Type) [L'.Structure M] [Nonempty M]
-    (a : ℕ → M) (J : Type) [LinearOrder J],
-    IsLomega1omegaIndiscernibleOnTail (L := L') a (Set.range s) →
-    letI : (localColim (LocalStage.ofSeq L' s)).Structure M :=
-      localColimStructure (LocalStage.ofSeq L' s)
-    ∃ (g : ℕ ↪o ℕ) (ctx : LocalEMContext (localColim (LocalStage.ofSeq L' s)) J (M := M)),
-      ctx.a = a ∘ ⇑g ∧ ctx.Γ = ΓEMlocal (LocalStage.ofSeq L' s) ∧
-      LocalEMContext.OmegaCompleteForColim (LocalStage.ofSeq L' s) J ctx
+  ∀ (φ : L'.Sentenceω) (M : Type) [L'.Structure M] [Nonempty M] (a : ℕ → M)
+    (J : Type) [LinearOrder J],
+    Cardinal.mk M ≥ Cardinal.beth (Ordinal.omega 1) →
+    Sentenceω.Realize φ M →
+    (∀ i j : ℕ, i ≠ j → a i ≠ a j) →
+    IsLomega1omegaIndiscernibleOnTail (L := L') a (Set.range (morleySeed φ)) →
+    letI : (localColim (LocalStage.ofSeq L' (morleySeed φ))).Structure M :=
+      localColimStructure (LocalStage.ofSeq L' (morleySeed φ))
+    ∃ (g : ℕ ↪o ℕ)
+      (ctx : LocalEMContext (localColim (LocalStage.ofSeq L' (morleySeed φ))) J (M := M)),
+      ctx.a = a ∘ ⇑g ∧ ctx.Γ = ΓEMlocal (LocalStage.ofSeq L' (morleySeed φ)) ∧
+      LocalEMContext.OmegaCompleteForColim (LocalStage.ofSeq L' (morleySeed φ)) J ctx
 
-/-- The named residual instantiates the acceptance theorem's `hOmega` bundle: realizability of
-the tail-template theory for every setup, from `LocalEMOmegaExtraction` alone. -/
-theorem tailTemplateRealizable_of_localEMExtraction {L' : Language.{0, 0}}
-    [Countable (Σ n, L'.Functions n)] [Countable (Σ n, L'.Relations n)]
-    (h : LocalEMOmegaExtraction L')
-    (s : ℕ → Σ n, L'.BoundedFormulaω Empty n) (M : Type) [L'.Structure M] [Nonempty M]
-    (a : ℕ → M) (J : Type) [LinearOrder J]
-    (hTail : IsLomega1omegaIndiscernibleOnTail (L := L') a (Set.range s)) :
-    ∃ (N : Type) (_ : L'[[J]].Structure N),
-      Theoryω.Model ((tailTemplateOfSeq (L := L') a).templateTheoryOfSeq s J) N :=
-  tailTemplateRealizable_of_localEM s M a J hTail (h s M a J hTail)
-
-/-- **The source-side homogeneity residual** — the final frontier in its cleanest form: for
-every tail-template setup there is a subsequence `a ∘ g` that is tail-indiscernible on
-`ΓEMlocal` **and** source-side Ω-homogeneous (`LocalEMOmegaHomogeneous`). Note the statement is
-`J`-free — the target order enters only downstream, through the `LocalEMContext` machinery that
-`omegaCompleteForColim_of_omegaHomogeneous` supplies for every `J` at once. The plain Ramsey
-extraction (`exists_orderEmb_tailIndiscernible_ΓEMlocal`) already achieves the first conjunct;
-the remaining combinatorial content is exactly the second: a countable-family homogeneity
-statement about eventual truth of the de-substituted family formulas on consecutive
-`(a ∘ g)`-tuples — no term model, no quotients, no supports, no deForm plumbing. -/
-def LocalEMOmegaHomogeneousExtraction (L' : Language.{0, 0})
+/-- **The seed homogeneity residual** — the final frontier in its cleanest form: for the
+Morley-seed setup there is a subsequence `a ∘ g` that is tail-indiscernible on `ΓEMlocal`
+**and** source-side Ω-homogeneous (`LocalEMOmegaHomogeneous`). `J`-free — the target order
+enters only downstream, through `omegaCompleteForColim_of_omegaHomogeneous`, for every `J` at
+once. Seed-specific and source-aware like `MorleySeedOmegaExtraction` (whose docstring records
+why the ∀-`s` form is false-shaped); the `ℶ_{ω₁}` and `φ`-realization facts are available to
+the future combinatorial proof. The plain Ramsey extraction
+(`exists_orderEmb_tailIndiscernible_ΓEMlocal`) already achieves the first conjunct; the
+remaining content is the second — a countable-family homogeneity statement about eventual truth
+of the de-substituted seed-family formulas on consecutive `(a ∘ g)`-tuples, with no term model,
+no quotients, no supports. -/
+def MorleySeedOmegaHomogeneousExtraction (L' : Language.{0, 0})
     [Countable (Σ n, L'.Functions n)] [Countable (Σ n, L'.Relations n)] : Prop :=
-  ∀ (s : ℕ → Σ n, L'.BoundedFormulaω Empty n) (M : Type) [L'.Structure M] [Nonempty M]
-    (a : ℕ → M),
-    IsLomega1omegaIndiscernibleOnTail (L := L') a (Set.range s) →
-    letI : (localColim (LocalStage.ofSeq L' s)).Structure M :=
-      localColimStructure (LocalStage.ofSeq L' s)
+  ∀ (φ : L'.Sentenceω) (M : Type) [L'.Structure M] [Nonempty M] (a : ℕ → M),
+    Cardinal.mk M ≥ Cardinal.beth (Ordinal.omega 1) →
+    Sentenceω.Realize φ M →
+    (∀ i j : ℕ, i ≠ j → a i ≠ a j) →
+    IsLomega1omegaIndiscernibleOnTail (L := L') a (Set.range (morleySeed φ)) →
+    letI : (localColim (LocalStage.ofSeq L' (morleySeed φ))).Structure M :=
+      localColimStructure (LocalStage.ofSeq L' (morleySeed φ))
     ∃ g : ℕ ↪o ℕ,
-      IsLomega1omegaIndiscernibleOnTail (a ∘ ⇑g) (ΓEMlocal (LocalStage.ofSeq L' s)) ∧
-      LocalEMOmegaHomogeneous (LocalStage.ofSeq L' s) (a ∘ ⇑g)
+      IsLomega1omegaIndiscernibleOnTail (a ∘ ⇑g)
+        (ΓEMlocal (LocalStage.ofSeq L' (morleySeed φ))) ∧
+      LocalEMOmegaHomogeneous (LocalStage.ofSeq L' (morleySeed φ)) (a ∘ ⇑g)
 
-/-- **The homogeneity residual discharges the Ω-residual**: a homogeneous extraction yields, for
-every target order `J`, the subsequence context bundle — the context is the canonical one over
-`a ∘ g` (as in `exists_localEMContext_subseq`), and its `OmegaCompleteForColim` comes from the
-reduction theorem `omegaCompleteForColim_of_omegaHomogeneous`. -/
-theorem localEMOmegaExtraction_of_homogeneousExtraction {L' : Language.{0, 0}}
+/-- **The seed homogeneity residual discharges the seed Ω-residual**: a homogeneous extraction
+yields, for every target order `J`, the subsequence context bundle — the context is the
+canonical one over `a ∘ g` (as in `exists_localEMContext_subseq`), and its
+`OmegaCompleteForColim` comes from the reduction theorem
+`omegaCompleteForColim_of_omegaHomogeneous`. -/
+theorem morleySeedOmegaExtraction_of_homogeneousExtraction {L' : Language.{0, 0}}
     [Countable (Σ n, L'.Functions n)] [Countable (Σ n, L'.Relations n)]
-    (h : LocalEMOmegaHomogeneousExtraction L') : LocalEMOmegaExtraction L' := by
-  intro s M instM instNe a J instJ hTail
-  letI : (localColim (LocalStage.ofSeq L' s)).Structure M :=
-    localColimStructure (LocalStage.ofSeq L' s)
-  obtain ⟨g, hind, hhom⟩ := h s M a hTail
-  refine ⟨g, ⟨a ∘ ⇑g, ΓEMlocal (LocalStage.ofSeq L' s), hind,
-    locDeEqAtom_mem_ΓEMlocal J (LocalStage.ofSeq L' s),
-    locDeRelAtom_mem_ΓEMlocal J (LocalStage.ofSeq L' s)⟩, rfl, rfl, ?_⟩
-  exact LocalEMContext.omegaCompleteForColim_of_omegaHomogeneous (LocalStage.ofSeq L' s) J _ hhom
+    (h : MorleySeedOmegaHomogeneousExtraction L') : MorleySeedOmegaExtraction L' := by
+  intro φ M instM instNe a J instJ hSize hφreal hPair hTail
+  letI : (localColim (LocalStage.ofSeq L' (morleySeed φ))).Structure M :=
+    localColimStructure (LocalStage.ofSeq L' (morleySeed φ))
+  obtain ⟨g, hind, hhom⟩ := h φ M a hSize hφreal hPair hTail
+  refine ⟨g, ⟨a ∘ ⇑g, ΓEMlocal (LocalStage.ofSeq L' (morleySeed φ)), hind,
+    locDeEqAtom_mem_ΓEMlocal J (LocalStage.ofSeq L' (morleySeed φ)),
+    locDeRelAtom_mem_ΓEMlocal J (LocalStage.ofSeq L' (morleySeed φ))⟩, rfl, rfl, ?_⟩
+  exact LocalEMContext.omegaCompleteForColim_of_omegaHomogeneous
+    (LocalStage.ofSeq L' (morleySeed φ)) J _ hhom
 
 end FirstOrder.Language
