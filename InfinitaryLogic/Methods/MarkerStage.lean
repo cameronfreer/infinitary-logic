@@ -6,6 +6,7 @@ Authors: Cameron Freer
 import Mathlib.Data.Finset.Sort
 import Mathlib.SetTheory.Cardinal.Regular
 import InfinitaryLogic.Combinatorics.FiniteArityErdosRadoInduction
+import InfinitaryLogic.Lomega1omega.Theory
 import InfinitaryLogic.Methods.GeneratedSublanguage
 
 /-!
@@ -68,14 +69,20 @@ predicate and its easy closure lemmas:
   sentences, which certification cannot supply for sentences of infinite support — another
   reason the finite-member adapter may be the honest endpoint).
 
-**C7/Henkin witness design note (decision pending, do not leave implicit):** over a
+**C7/Henkin witness design (SETTLED: Henkin constant expansion — see Layer 3):** over a
 relational `L'`, the closed `L'[[J]]`-terms are exactly the `J`-constants, so quantifier
-witnesses must be *fresh constants*; freshness alone is not enough — the witness constant
-must occupy a specific order-position of `J` relative to the fragment's support, and an
-arbitrary linear `J` need not have an element in the required gap. Candidate resolutions:
-run the construction over a Henkin constant expansion of `L'[[J]]`; or restrict/embed `J`
-into a dense-enough order first; or route witnesses through the existing local Skolem
-machinery. To be settled before `markerConsistencyPropertyEq`.
+witnesses must be fresh constants; a fresh `J`-constant would have to occupy a specific
+order-position that an arbitrary linear `J` need not offer, so witnesses live in a separate
+layer `(L'[[J]])[[ℕ]]` instead (`henkinConst`, `henkinConstsIn`, `expJConstsIn`), with the
+reduct lemma (`Theoryω.model_reduct_of_expansion`) returning the final model to `L'[[J]]`.
+The finite-member predicates over the expansion (`MarkerHenkinCert`,
+`MarkerHenkinConsistent`) avoid the arbitrary-set `extension` field and the global `C4`
+uniformization entirely — the Henkin construction consumes finite members along its
+enumeration, per the classical Marker/Keisler shape. Next: the finite closure rules
+(per-member `C4` disjunct choice by re-homogenization inside the certificate, `C7` via a
+fresh witness index — both need the constant-agreement congruence engine, to be built as a
+`realizeWith` API to avoid dual-instance `letI` juggling), then the Henkin
+construction/model-existence adapter decision.
 -/
 
 universe u
@@ -172,22 +179,24 @@ section Certification
 
 variable {L' : Language.{0, 0}} {J : Type}
 
-/-- The syntactic `J`-constant support of an `L'[[J]]`-sentence: the constants (arity-0
+/-- The syntactic constant support of an `L'[[J]]`-formula: the added constants (arity-0
 `Sum.inr` function symbols) among its mentioned symbols. Only countable in general
-(`functionsIn_countable` — countably-branching connectives); the certification predicate
-below *demands* containment in a finite set rather than computing one. -/
-def sentenceJConsts (τ : L'[[J]].Sentenceω) : Set J :=
+(`functionsIn_countable` — countably-branching connectives); the certification predicates
+below *demand* containment in a finite set rather than computing one. Generic in the base
+language, so it also serves the Henkin layer (`L := L'[[J]]`, constants `ℕ`). -/
+def sentenceJConsts {α : Type} {n : ℕ} (φ : L'[[J]].BoundedFormulaω α n) : Set J :=
   {j | (⟨0, (Sum.inr j : L'[[J]].Functions 0)⟩ : Σ n, L'[[J]].Functions n) ∈
-    BoundedFormulaω.functionsIn τ}
+    BoundedFormulaω.functionsIn φ}
 
 /-- Negation does not change the constant support (`not` is `imp · falsum`). -/
-theorem sentenceJConsts_not (τ : L'[[J]].Sentenceω) :
-    sentenceJConsts (L' := L') τ.not = sentenceJConsts (L' := L') τ := by
+theorem sentenceJConsts_not {α : Type} {n : ℕ} (φ : L'[[J]].BoundedFormulaω α n) :
+    sentenceJConsts (L' := L') φ.not = sentenceJConsts (L' := L') φ := by
   ext j
   simp [sentenceJConsts, BoundedFormulaω.functionsIn]
 
 /-- A conjunction component's constant support is contained in the conjunction's. -/
-theorem sentenceJConsts_component_iInf (φs : ℕ → L'[[J]].Sentenceω) (k : ℕ) :
+theorem sentenceJConsts_component_iInf {α : Type} {n : ℕ}
+    (φs : ℕ → L'[[J]].BoundedFormulaω α n) (k : ℕ) :
     sentenceJConsts (L' := L') (φs k) ⊆
       sentenceJConsts (L' := L') (BoundedFormulaω.iInf φs) := by
   intro j hj
@@ -195,12 +204,14 @@ theorem sentenceJConsts_component_iInf (φs : ℕ → L'[[J]].Sentenceω) (k : �
   exact Set.mem_iUnion.mpr ⟨k, hj⟩
 
 /-- A disjunction component's constant support is contained in the disjunction's. -/
-theorem sentenceJConsts_component_iSup (φs : ℕ → L'[[J]].Sentenceω) (k : ℕ) :
+theorem sentenceJConsts_component_iSup {α : Type} {n : ℕ}
+    (φs : ℕ → L'[[J]].BoundedFormulaω α n) (k : ℕ) :
     sentenceJConsts (L' := L') (φs k) ⊆
       sentenceJConsts (L' := L') (BoundedFormulaω.iSup φs) := by
   intro j hj
   simp only [sentenceJConsts, Set.mem_setOf_eq, BoundedFormulaω.functionsIn] at hj ⊢
   exact Set.mem_iUnion.mpr ⟨k, hj⟩
+
 
 variable [LinearOrder J] (M : Type) [L'.Structure M] [LinearOrder M]
 
@@ -427,5 +438,91 @@ def MarkerISupUniform (M : Type) [L'.Structure M] [LinearOrder M] : Prop :=
   ∀ (Sset : Set L'[[J]].Sentenceω) (φs : ℕ → L'[[J]].Sentenceω),
     MarkerCofinalConsistent M Sset → BoundedFormulaω.iSup φs ∈ Sset →
     ∃ k, MarkerCofinalConsistent M (Sset ∪ {φs k})
+
+/-! ## Layer 3: the Henkin-witness substrate
+
+**C7 design decision (settled): Henkin constant expansion.** Quantifier witnesses live in a
+separate `withConstants` layer `(L'[[J]])[[ℕ]]`, NOT among the `J`-constants: an arbitrary
+linear `J` need not have an element in the order-gap a witness would require (and
+`MorleySeedTailTemplateRealizable` quantifies over every linear `J`); a relational `L'`
+provides no closed terms beyond constants, so witnesses cannot be generated internally; and
+a separate layer keeps the EM skeleton (`J`, order-positioned, universally quantified in
+certification) apart from proof-theoretic witnesses (`ℕ`, existentially interpreted per
+skeleton interpretation). The finite-member consistency predicate lives over the expansion;
+the endpoint returns to `L'[[J]]` by the reduct lemma. -/
+
+section HenkinSubstrate
+
+variable {L'' : Language.{0, 0}} {J : Type}
+
+/-- The `n`-th Henkin witness constant of a constant expansion `L[[ℕ]]`, as a closed term. -/
+def henkinConst {L : Language.{0, 0}} (n : ℕ) : (L[[ℕ]]).Term Empty :=
+  Term.func (Sum.inr n : (L[[ℕ]]).Functions 0) Fin.elim0
+
+/-- The Henkin-constant support of an expansion formula — the generalized `sentenceJConsts`
+at base `L'[[J]]` and constant type `ℕ`. Freshness of a witness index `n` for a fragment
+`F` is `∀ τ ∈ F, n ∉ henkinConstsIn τ`. -/
+abbrev henkinConstsIn {α : Type} {n : ℕ}
+    (φ : ((L''[[J]])[[ℕ]]).BoundedFormulaω α n) : Set ℕ :=
+  sentenceJConsts (L' := L''[[J]]) (J := ℕ) φ
+
+/-- The `J`-constant support of an expansion formula: the `J`-constants sit inside the base
+`L''[[J]]` layer, under `Sum.inl ∘ Sum.inr`. -/
+def expJConstsIn {α : Type} {n : ℕ} (φ : ((L''[[J]])[[ℕ]]).BoundedFormulaω α n) : Set J :=
+  {j | (⟨0, (Sum.inl (Sum.inr j) : ((L''[[J]])[[ℕ]]).Functions 0)⟩ :
+      Σ n, ((L''[[J]])[[ℕ]]).Functions n) ∈ BoundedFormulaω.functionsIn φ}
+
+/-- **The forgetful/reduct lemma**: realizing the `mapLanguage`-image of an `L`-theory in a
+constant-expansion structure yields, by reduct, a model of the original theory. The Henkin
+construction will model the expanded theory over `(L'[[J]])[[ℕ]]`; the Marker endpoint
+needs the `L'[[J]]` original. -/
+theorem Theoryω.model_reduct_of_expansion {L : Language.{0, 0}} {γ : Type} (T : L.Theoryω)
+    {N : Type} [L[[γ]].Structure N]
+    (h : ∀ τ ∈ T,
+      Sentenceω.Realize (BoundedFormulaω.mapLanguage (L.lhomWithConstants γ) τ) N) :
+    letI : L.Structure N := (L.lhomWithConstants γ).reduct N
+    Theoryω.Model T N := by
+  letI : L.Structure N := (L.lhomWithConstants γ).reduct N
+  intro τ hτ
+  exact (BoundedFormulaω.realize_mapLanguage (L.lhomWithConstants γ) τ _ _).mp (h τ hτ)
+
+/-- Image form of the reduct lemma: a model of the pushed-forward theory reducts to a model
+of the original. -/
+theorem Theoryω.model_reduct_of_model_image {L : Language.{0, 0}} {γ : Type} (T : L.Theoryω)
+    {N : Type} [L[[γ]].Structure N]
+    (h : Theoryω.Model
+      (BoundedFormulaω.mapLanguage (L.lhomWithConstants γ) '' T) N) :
+    letI : L.Structure N := (L.lhomWithConstants γ).reduct N
+    Theoryω.Model T N :=
+  Theoryω.model_reduct_of_expansion T fun _ hτ => h _ (Set.mem_image_of_mem _ hτ)
+
+variable [LinearOrder J] (M : Type) [L''.Structure M] [LinearOrder M]
+
+/-- **The per-level Henkin–Marker certification of a finite fragment** over the expansion
+`(L''[[J]])[[ℕ]]`: a common finite `J`-support `S`, a `(ℶ_α)⁺`-suborder `e` of the source,
+and — for EVERY skeleton interpretation increasing on `S` into `e`'s range — SOME
+Henkin-witness interpretation making every member true. The skeleton side stays universal
+(the EM tuples); the witness side is existential per interpretation, because quantifier
+witnesses vary with the tuple. -/
+def MarkerHenkinCert (α : Ordinal.{0}) (F : Set ((L''[[J]])[[ℕ]].Sentenceω)) : Prop :=
+  ∃ S : Finset J, (∀ τ ∈ F, expJConstsIn (L'' := L'') τ ⊆ ↑S) ∧
+    ∃ e : (Order.succ (Cardinal.beth α)).ord.ToType ↪o M,
+      ∀ σ : J → M, StrictMonoOn σ ↑S → (∀ j ∈ S, σ j ∈ Set.range e) →
+        ∃ h : ℕ → M,
+          letI : (constantsOn J).Structure M := constantsOn.structure σ
+          letI : (constantsOn ℕ).Structure M := constantsOn.structure h
+          ∀ τ ∈ F, Sentenceω.Realize τ M
+
+/-- **The finite-member consistency predicate**: certification at cofinally many levels
+below `ω₁`, over FINITE fragments only. The arbitrary-set `extension` field and the global
+`C4` uniformization of the ambient `ConsistencyPropertyEq` API are deliberately avoided:
+the Henkin construction consumes finite members along its enumeration, choosing disjuncts
+and witnesses per member (the classical Marker/Keisler shape). -/
+def MarkerHenkinConsistent (F : Finset ((L''[[J]])[[ℕ]].Sentenceω)) : Prop :=
+  ∀ β, β < Ordinal.omega 1 →
+    ∃ α, β ≤ α ∧ α < Ordinal.omega 1 ∧
+      MarkerHenkinCert M α (↑F : Set ((L''[[J]])[[ℕ]].Sentenceω))
+
+end HenkinSubstrate
 
 end FirstOrder.Language
