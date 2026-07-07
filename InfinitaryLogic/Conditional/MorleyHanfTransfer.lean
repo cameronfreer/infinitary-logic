@@ -8,6 +8,7 @@ import InfinitaryLogic.Methods.EM.FragmentAdapter
 import InfinitaryLogic.Methods.EM.TailAdapter
 import InfinitaryLogic.Methods.EM.Extraction
 import InfinitaryLogic.Combinatorics.InfiniteRamseyFamily
+import InfinitaryLogic.Combinatorics.FiniteArityErdosRado
 
 /-!
 # Morley-Hanf Transfer Hypothesis (Conditional)
@@ -666,7 +667,32 @@ theorem indiscernibleSequence_of_pureColoring
   rw [eq_of_heq h_snd] at hbool
   exact decide_eq_decide.mp hbool
 
-/-! ### Compact-only Morley–Hanf headlines
+/-- **Reduction**: the finite-arity Erdős–Rado residual at color bound `ℶ_1` implies the
+pure-coloring hypothesis. For each arity `n`, the countably many `Bool` colorings of that arity
+pack into ONE coloring with color type `{i // (c i).1 = n} → Bool` (size `≤ 2^{ℵ₀} = ℶ_1` — this
+is why the ER residual must take a color bound beyond `ℵ₀`); the single `ω₁`-homogeneous
+suborder restricts along its first `ω` elements (`omegaOneNatEmb`) to the required
+strictly-monotone `ℕ`-sequence, and per-coloring constancy is the packed constancy evaluated at
+the coloring's own index. -/
+theorem pureColoringHypothesis_of_finiteArityErdosRadoOmega1
+    (h : FiniteArityErdosRadoOmega1 (Cardinal.beth 1)) : PureColoringHypothesis := by
+  intro I _ _ hSize c
+  have hbeth : Cardinal.beth 1 = 2 ^ Cardinal.aleph0 := by
+    rw [show (1 : Ordinal) = Order.succ 0 from by rw [Order.succ_eq_add_one, zero_add],
+      Cardinal.beth_succ, Cardinal.beth_zero]
+  obtain ⟨e, he⟩ := h I hSize (fun n => {i : ℕ // (c i).1 = n} → Bool)
+    (fun n => by
+      rw [← Cardinal.power_def Bool {i : ℕ // (c i).1 = n}, Cardinal.mk_bool, hbeth]
+      exact Cardinal.power_le_power_left two_ne_zero Cardinal.mk_le_aleph0)
+    (fun _ t i => (c i.1).2 (cast (congrArg (fun m => Fin m ↪o I) i.2.symm) t))
+  refine ⟨⇑e ∘ omegaOneNatEmb, e.strictMono.comp omegaOneNatEmb_strictMono, ?_⟩
+  intro i t t' htR ht'R
+  have hpack := he (c i).1 t t'
+    (fun k => (htR k).elim fun m hm => ⟨omegaOneNatEmb m, hm⟩)
+    (fun k => (ht'R k).elim fun m hm => ⟨omegaOneNatEmb m, hm⟩)
+  exact congrFun hpack ⟨i, rfl⟩
+
+/-! ### Compact-only Morley–Hanf headlines (LEGACY)
 
 These wrappers collapse the proved reduction chain
 (`hasArbLargeModels_of_restricted_extraction` ∘
@@ -674,11 +700,13 @@ These wrappers collapse the proved reduction chain
 `indiscernibleSequence_of_pureColoring`) into a single theorem parameterized
 by the pure combinatorial hypothesis and a compactness oracle.
 
-When Phase 2d2 discharges `PureColoringHypothesis` via the Erdős–Rado
-theorem in `InfinitaryLogic/Combinatorics/ErdosRado.lean`, the
-`hPure` argument becomes a theorem rather than a hypothesis, and the
-wrappers below lose it — producing an unconditional
-`hasArbLargeModels_of_compact` and `morley_hanf_of_compact`. -/
+**Legacy-shaped**: the compactness oracle is no longer needed — the local EM
+route discharges the model-existence side, so `morley_hanf_of_pureColoring`
+(`Methods/LocalEMOmegaResidual.lean`) derives the Hanf bound from
+`PureColoringHypothesis` alone, and `morley_hanf_of_finiteArityErdosRado`
+from the ER-facing residual `FiniteArityErdosRadoOmega1 ℶ_1` (via
+`pureColoringHypothesis_of_finiteArityErdosRadoOmega1` above). Prefer those
+endpoints; the wrappers below are retained for compatibility. -/
 
 /-- **Morley–Hanf reduction**: assuming the pure combinatorial hypothesis
 `PureColoringHypothesis` and a per-target compactness oracle for every

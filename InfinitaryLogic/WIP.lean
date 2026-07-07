@@ -76,7 +76,14 @@ these imports transitively cover:
   `functionsIn`/`funSublang`/`restrictFuns`, plus the `expandFunStructure` re-expansion and the
   `IsEmpty J` fallback in `LocalEMOmegaResidual`). The project's sole remaining non-formal
   content on this chain is the genuine Erdős–Rado/Morley extraction (`MorleyHanfExtraction`),
-  with no local-EM caveats.
+  with no local-EM caveats. The bridge is normalized down to partition calculus:
+  `morley_hanf_of_pureColoring` (no compactness oracle — superseding the legacy
+  `*_pureColoring_and_compact` wrappers) and `morley_hanf_of_finiteArityErdosRado`, whose
+  hypothesis `FiniteArityErdosRadoOmega1 ℶ_1` (`Combinatorics/FiniteArityErdosRado.lean`: one
+  `ω₁`-suborder homogeneous for a per-arity coloring family with color bound `ℶ_1` — the bound
+  must exceed `ℵ₀` because same-arity `Bool` colorings pack into a `ℕ → Bool` color, and
+  iterating a one-coloring theorem dies after one pass) is the exact ER-facing residual: next
+  are the parameterized pair Erdős–Rado and the finite-arity induction.
 
 These modules are deliberately NOT part of `InfinitaryLogic.All` or
 `InfinitaryLogic.Everything` — they are under active construction. This target exists

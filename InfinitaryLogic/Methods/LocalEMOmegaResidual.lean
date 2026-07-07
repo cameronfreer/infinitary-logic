@@ -313,6 +313,47 @@ theorem morley_hanf_of_morleyHanfExtraction {L' : Language.{0, 0}}
   morley_hanf_of_tail_realizable
     (morleySeedTailTemplateRealizable_of_morleyHanfExtraction hExtract) φ
 
+/-! ### Compact-free pure-coloring and Erdős–Rado endpoints
+
+The pure-coloring headlines with **no compactness oracle** — the local EM route discharges the
+model-existence side, so the sole hypothesis is the partition-calculus content. The legacy
+`*_pureColoring_and_compact` wrappers in `Conditional/MorleyHanfTransfer.lean` are superseded. -/
+
+/-- **Morley–Hanf from the pure-coloring hypothesis alone**: `ℶ_{ω₁}` is a Hanf bound for every
+`L_{ω₁ω}` sentence over a countable-relational language, assuming only
+`PureColoringHypothesis` — the language-free partition-calculus residual. No compactness
+oracle: composes the proved chain `PureColoringHypothesis →
+IndiscernibleSequenceHypothesis → MorleyHanfExtraction → Morley–Hanf` (the last arrow being the
+local EM construction). -/
+theorem morley_hanf_of_pureColoring {L' : Language.{0, 0}}
+    [Countable (Σ l, L'.Relations l)]
+    (hPure : PureColoringHypothesis) (φ : L'.Sentenceω) :
+    IsHanfBound φ (Cardinal.beth (Ordinal.omega 1)) :=
+  morley_hanf_of_morleyHanfExtraction
+    (fun _ _ => morleyHanfExtraction_of_indiscernibleSequence
+      (indiscernibleSequence_of_pureColoring hPure)) φ
+
+/-- `HasArbLargeModels` form of `morley_hanf_of_pureColoring`. -/
+theorem hasArbLargeModels_of_pureColoring {L' : Language.{0, 0}}
+    [Countable (Σ l, L'.Relations l)]
+    (hPure : PureColoringHypothesis) (φ : L'.Sentenceω)
+    (hφ : ∃ (M : Type) (_ : L'.Structure M), Sentenceω.Realize φ M ∧
+      Cardinal.mk M ≥ Cardinal.beth (Ordinal.omega 1)) :
+    HasArbLargeModels φ :=
+  morley_hanf_of_pureColoring hPure φ hφ
+
+/-- **Morley–Hanf from the finite-arity Erdős–Rado residual**: the project's ER-facing endpoint.
+`FiniteArityErdosRadoOmega1 ℶ_1` — one `ω₁`-suborder homogeneous for a per-arity coloring family
+with color types of size `≤ ℶ_1` — implies the `ℶ_{ω₁}` Hanf bound, via the countable-family
+packing `pureColoringHypothesis_of_finiteArityErdosRadoOmega1` and the compact-free chain above.
+Proving `FiniteArityErdosRadoOmega1 (Cardinal.beth 1)` (parameterized pair Erdős–Rado, then the
+finite-arity induction) is the project's remaining combinatorial content. -/
+theorem morley_hanf_of_finiteArityErdosRado {L' : Language.{0, 0}}
+    [Countable (Σ l, L'.Relations l)]
+    (hER : FiniteArityErdosRadoOmega1 (Cardinal.beth 1)) (φ : L'.Sentenceω) :
+    IsHanfBound φ (Cardinal.beth (Ordinal.omega 1)) :=
+  morley_hanf_of_pureColoring (pureColoringHypothesis_of_finiteArityErdosRadoOmega1 hER) φ
+
 end FirstOrder.Language
 
 -- lean4:disprove-begin txn=a444a2eb7a18 cycle=1 role=artifact decl=not_morleySeedOmegaExtraction_height
