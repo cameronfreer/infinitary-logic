@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.LocalEMTemplateRealization
+import InfinitaryLogic.Methods.GeneratedSublanguage
 import InfinitaryLogic.Conditional.MorleyHanfTransfer
 
 /-!
@@ -14,13 +15,12 @@ The one-theorem file connecting the named local-EM seed residual `MorleySeedOmeg
 `MorleySeedTailTemplateRealizable` (`Conditional/MorleyHanfTransfer.lean`):
 
 * `morleySeedTailTemplateRealizable_of_localEMOmega` — `ΓlocalColim`-restricted witness
-  homogeneity of the seed extraction implies seed-template realizability, **modulo the bridge's
-  extra `[Countable (Σ n, L'.Functions n)]`** (`MorleySeedTailTemplateRealizable` itself assumes
-  only countably many relation symbols; removing the extra assumption is the planned
-  generated-sublanguage cleanup chunk). Both sides carry the full source facts — `φ` holds in
-  `M`, `|M| ≥ ℶ_{ω₁}`, pairwise distinctness — and the realizing model is the
-  countable-language EM quotient; the broad `TailTemplateRealizable` over arbitrary sequences is
-  false-shaped (see its docstring) and is deliberately NOT the target here.
+  homogeneity of the seed extraction implies seed-template realizability (kept as a diagnostic
+  artifact; it still carries the extra `[Countable (Σ n, L'.Functions n)]`). Both sides carry
+  the full source facts — `φ` holds in `M`, `|M| ≥ ℶ_{ω₁}`, pairwise distinctness — and the
+  realizing model is the countable-language EM quotient; the broad `TailTemplateRealizable`
+  over arbitrary sequences is false-shaped (see its docstring) and is deliberately NOT the
+  target here.
 
 This file is deliberately isolated, like `LocalEMExtraction.lean`, because it imports
 `Conditional/MorleyHanfTransfer.lean`; the template-realization bridge itself
@@ -48,6 +48,15 @@ the absolute Morley-seed template agreement, into the existing truth-lemma pipel
 endpoint `morley_hanf_of_morleyHanfExtraction` derives the Hanf bound from the extraction alone.
 The remaining non-formal content of the Morley–Hanf chain is exactly the genuine
 Erdős–Rado/Morley extraction — not a local EM truth-lemma problem.
+
+**Countability cleanup (also this file):** the endpoints assume only
+`[Countable (Σ l, L'.Relations l)]` — the tower's function-symbol countability is discharged by
+running the construction in the **generated sublanguage** of `φ`
+(`Methods/GeneratedSublanguage.lean`) and expanding the resulting EM quotient back to `L'[[J]]`
+(`expandFunStructure` + `realize_templateSentence_expand`; missing symbols act arbitrarily on
+the nonempty carrier, and the degenerate `IsEmpty J` case is served by `M` itself,
+`morleySeed_theory_model_of_isEmptyJ`). So the public frontier is exactly
+`MorleyHanfExtraction → Morley–Hanf`, with no local-EM caveats.
 -/
 
 namespace FirstOrder.Language
@@ -79,16 +88,128 @@ Full indiscernibility kills the witness drift (`omegaCompleteForColim_of_indisce
 Morley seed's template values are absolute (`morleySeed_template_agreement` — no subsequence
 relation to the input is needed), and the whole existing truth-lemma pipeline goes through. -/
 
-/-- **Morley-seed tail-template realizability from the classical extraction**: the
-full-indiscernibility extraction residual `MorleyHanfExtraction` (over countable-relational
-languages) implies `MorleySeedTailTemplateRealizable`, through a fully indiscernible local EM
-context over `ΓEMlocal`. The realizing model is the EM quotient of a **fresh** extraction from
-`M` — not a subsequence of the input `a`; the input's template is matched on the seed by the
-absolute-value agreement. With this bridge the remaining non-formal content of the Morley–Hanf
-chain is exactly the genuine Erdős–Rado/Morley extraction — no local EM truth-lemma problem, no
-Ω-completeness residual. -/
+open Classical in
+/-- **Expansion of a sublanguage `[[J]]`-structure to the full language**: function symbols of
+the generating set act as before (via the subtype), missing function symbols act arbitrarily
+(hence `[Nonempty N]`), constants and all relations pass through (the generated sublanguage
+keeps every relation). -/
+@[reducible] noncomputable def expandFunStructure {L : Language.{0, 0}} (F : Set (Σ n, L.Functions n))
+    (J : Type) {N : Type} [Nonempty N] [instN : (funSublang (L := L) F)[[J]].Structure N] :
+    L[[J]].Structure N where
+  funMap := fun {m} f xs =>
+    match f with
+    | Sum.inl f' =>
+      if h : (⟨m, f'⟩ : Σ n, L.Functions n) ∈ F then
+        Structure.funMap (L := (funSublang (L := L) F)[[J]])
+          (Sum.inl (⟨f', h⟩ : (funSublang (L := L) F).Functions m)) xs
+      else Classical.arbitrary N
+    | Sum.inr c => Structure.funMap (L := (funSublang (L := L) F)[[J]]) (Sum.inr c) xs
+  RelMap := fun {_} r xs =>
+    match r with
+    | Sum.inl r' => Structure.RelMap (L := (funSublang (L := L) F)[[J]]) (Sum.inl r') xs
+    | Sum.inr c => Structure.RelMap (L := (funSublang (L := L) F)[[J]]) (Sum.inr c) xs
+
+/-- **Template sentences transfer along the expansion**: the full-language template sentence of
+a restricted formula's image holds in the expanded structure iff the sublanguage template
+sentence holds in the original — the skeleton constants agree definitionally, and the language
+maps peel off through the expansion property (`dif_pos` on the generating set). -/
+theorem realize_templateSentence_expand {L : Language.{0, 0}} {F : Set (Σ n, L.Functions n)}
+    (J : Type) [LinearOrder J] {N : Type} [Nonempty N]
+    [instN : (funSublang (L := L) F)[[J]].Structure N]
+    {n : ℕ} (ψ₀ : (funSublang (L := L) F).BoundedFormulaω Empty n) (t : Fin n ↪o J) :
+    letI : L[[J]].Structure N := expandFunStructure F J
+    (Sentenceω.Realize
+        (Lomega1omegaTemplate.templateSentence (ψ₀.mapLanguage (funSublangIncl F)) t) N ↔
+      Sentenceω.Realize (Lomega1omegaTemplate.templateSentence ψ₀ t) N) := by
+  classical
+  letI instE : L[[J]].Structure N := expandFunStructure F J
+  refine (realize_templateSentence_of_structure (L := L) (J := J) (N := N)
+    (ψ₀.mapLanguage (funSublangIncl F)) t).trans
+    (Iff.trans ?_ (realize_templateSentence_of_structure (L := funSublang (L := L) F)
+      (J := J) (N := N) ψ₀ t).symm)
+  letI : L.Structure N := (L.lhomWithConstants J).reduct N
+  letI : (funSublang (L := L) F).Structure N :=
+    ((funSublang (L := L) F).lhomWithConstants J).reduct N
+  haveI : (funSublangIncl F).IsExpansionOn N := by
+    constructor
+    · intro m f xs
+      show (if h : (⟨m, f.1⟩ : Σ n, L.Functions n) ∈ F then
+          Structure.funMap (L := (funSublang (L := L) F)[[J]])
+            (Sum.inl (⟨f.1, h⟩ : (funSublang (L := L) F).Functions m)) xs
+        else Classical.arbitrary N) = _
+      rw [dif_pos f.2]
+      rfl
+    · intro m r xs
+      rfl
+  have htup : (fun i => (Term.func (Sum.inr (t i) : L[[J]].Functions 0)
+        Fin.elim0 : L[[J]].Term Empty).realize (Empty.elim : Empty → N))
+      = (fun i => (Term.func (Sum.inr (t i) : (funSublang (L := L) F)[[J]].Functions 0)
+          Fin.elim0 : (funSublang (L := L) F)[[J]].Term Empty).realize
+          (Empty.elim : Empty → N)) := by
+    funext i
+    show Structure.funMap (L := L[[J]]) (Sum.inr (t i) : L[[J]].Functions 0)
+        (fun j => ((Fin.elim0 : Fin 0 → L[[J]].Term Empty) j).realize
+          (Empty.elim : Empty → N))
+      = Structure.funMap (L := (funSublang (L := L) F)[[J]])
+        (Sum.inr (t i) : (funSublang (L := L) F)[[J]].Functions 0)
+        (fun j => ((Fin.elim0 : Fin 0 → (funSublang (L := L) F)[[J]].Term Empty) j).realize
+          (Empty.elim : Empty → N))
+    rw [show (fun j => ((Fin.elim0 : Fin 0 → L[[J]].Term Empty) j).realize
+        (Empty.elim : Empty → N)) = (Fin.elim0 : Fin 0 → N) from funext fun j => j.elim0,
+      show (fun j => ((Fin.elim0 : Fin 0 → (funSublang (L := L) F)[[J]].Term Empty) j).realize
+        (Empty.elim : Empty → N)) = (Fin.elim0 : Fin 0 → N) from funext fun j => j.elim0]
+    rfl
+  rw [htup]
+  exact BoundedFormulaω.realize_mapLanguage (funSublangIncl F) ψ₀ (Empty.elim : Empty → N) _
+
+/-- **The `IsEmpty J` degenerate case**: over an empty target order, the Morley-seed template
+theory contains only the arity-`0` (sentence) members, and the source model `M` itself realizes
+them — no EM construction needed. -/
+theorem morleySeed_theory_model_of_isEmptyJ {L' : Language.{0, 0}} {M : Type}
+    [L'.Structure M] (φ : L'.Sentenceω) (a : ℕ → M) (J : Type) [LinearOrder J]
+    [IsEmpty J] (hφreal : Sentenceω.Realize φ M) :
+    ∃ (N : Type) (_ : L'[[J]].Structure N),
+      Theoryω.Model
+        ((tailTemplateOfSeq (L := L') a).templateTheoryOfSeq (morleySeed φ) J) N := by
+  letI : (constantsOn J).Structure M := constantsOn.structure fun j => isEmptyElim j
+  refine ⟨M, inferInstance, ?_⟩
+  rintro σ ⟨n, ψ, t, ⟨k, hk⟩, hcase⟩
+  match k, hk with
+  | 1, hk =>
+    cases hk
+    exact isEmptyElim (t 0)
+  | 0, hk =>
+    cases hk
+    rcases hcase with ⟨_, rfl⟩ | ⟨hnot, _⟩
+    · refine (realize_templateSentence_of_structure (L := L') (J := J) (N := M) φ t).mpr ?_
+      rw [show (fun i : Fin 0 => (Term.func (Sum.inr (t i) : L'[[J]].Functions 0)
+          Fin.elim0 : L'[[J]].Term Empty).realize (Empty.elim : Empty → M))
+        = Fin.elim0 from funext fun i => i.elim0]
+      exact hφreal
+    · exact absurd ((tailTemplateOfSeq_truth_sentence_iff a φ).mpr hφreal) hnot
+  | k + 2, hk =>
+    cases hk
+    rcases hcase with ⟨_, rfl⟩ | ⟨hnot, _⟩
+    · refine (realize_templateSentence_of_structure (L := L') (J := J) (N := M) φ t).mpr ?_
+      rw [show (fun i : Fin 0 => (Term.func (Sum.inr (t i) : L'[[J]].Functions 0)
+          Fin.elim0 : L'[[J]].Term Empty).realize (Empty.elim : Empty → M))
+        = Fin.elim0 from funext fun i => i.elim0]
+      exact hφreal
+    · exact absurd ((tailTemplateOfSeq_truth_sentence_iff a φ).mpr hφreal) hnot
+
+/-- **Morley-seed tail-template realizability from the classical extraction** — with NO
+function-symbol countability assumption on `L'` (only the ambient countable relations, matching
+`MorleySeedTailTemplateRealizable` itself): the construction runs in the **generated
+sublanguage** of `φ` (`funSublang φ.functionsIn`, whose function-symbol countability is proved,
+not assumed), and the resulting EM quotient is expanded back to `L'[[J]]` — missing symbols act
+arbitrarily on the (nonempty, via the skeleton class of any `j : J`) carrier; the degenerate
+`IsEmpty J` case is served by `M` itself. The realizing model is the EM quotient of a **fresh**
+fully indiscernible extraction from `M` (`MorleyHanfExtraction`, where the `ℶ_{ω₁}` premise does
+real Erdős–Rado work) — not a subsequence of the input `a`; the input's template is matched on
+the seed by the absolute-value agreement. With this bridge the remaining non-formal content of
+the Morley–Hanf chain is exactly the genuine Erdős–Rado/Morley extraction. -/
 theorem morleySeedTailTemplateRealizable_of_morleyHanfExtraction {L' : Language.{0, 0}}
-    [Countable (Σ n, L'.Functions n)] [Countable (Σ l, L'.Relations l)]
+    [Countable (Σ l, L'.Relations l)]
     (hExtract : ∀ (L'' : Language.{0, 0}) [Countable (Σ l, L''.Relations l)],
       MorleyHanfExtraction (L' := L'')) :
     MorleySeedTailTemplateRealizable (L' := L') := by
@@ -97,30 +218,94 @@ theorem morleySeedTailTemplateRealizable_of_morleyHanfExtraction {L' : Language.
     rw [Cardinal.infinite_iff]
     exact le_trans (Cardinal.aleph0_le_beth _) hSize
   haveI : Nonempty M := ⟨(Infinite.natEmbedding M) 0⟩
-  letI : (localColim (LocalStage.ofSeq L' (morleySeed φ))).Structure M :=
-    localColimStructure (LocalStage.ofSeq L' (morleySeed φ))
-  haveI := localColim_rel_countable (LocalStage.ofSeq L' (morleySeed φ))
-  obtain ⟨e, he⟩ := exists_ΓEMlocalEnum (LocalStage.ofSeq L' (morleySeed φ))
-  obtain ⟨b, hbPair, hbInd⟩ :=
-    hExtract (localColim (LocalStage.ofSeq L' (morleySeed φ))) e M hSize
+  rcases isEmpty_or_nonempty J with hJe | hJne
+  · exact morleySeed_theory_model_of_isEmptyJ φ a J hφreal
+  -- the generated sublanguage of φ and the restricted seed sentence
+  haveI : Countable (Σ n, (funSublang (L := L') φ.functionsIn).Functions n) :=
+    funSublang_fun_countable φ.functionsIn_countable
+  haveI : Countable (Σ l, (funSublang (L := L') φ.functionsIn).Relations l) :=
+    funSublang_rel_countable _
+  letI : (funSublang (L := L') φ.functionsIn).Structure M :=
+    (funSublangIncl φ.functionsIn).reduct M
+  haveI : (funSublangIncl (L := L') φ.functionsIn).IsExpansionOn M :=
+    LHom.isExpansionOn_reduct _ _
+  have hφ₀map : (φ.restrictFuns (subset_refl _)).mapLanguage (funSublangIncl φ.functionsIn)
+      = φ := BoundedFormulaω.mapLanguage_restrictFuns φ (subset_refl _)
+  have hφ₀real : Sentenceω.Realize (φ.restrictFuns (subset_refl _) :
+      (funSublang (L := L') φ.functionsIn).Sentenceω) M := by
+    have h := BoundedFormulaω.realize_mapLanguage (funSublangIncl φ.functionsIn)
+      (φ.restrictFuns (subset_refl _)) (Empty.elim : Empty → M) Fin.elim0
+    rw [hφ₀map] at h
+    exact h.mp hφreal
+  -- the local EM construction over the sublanguage seed
+  set s₀' := LocalStage.ofSeq (funSublang (L := L') φ.functionsIn)
+    (morleySeed (φ.restrictFuns (subset_refl _))) with hs₀'
+  letI : (localColim s₀').Structure M := localColimStructure s₀'
+  haveI := localColim_rel_countable s₀'
+  obtain ⟨e, he⟩ := exists_ΓEMlocalEnum s₀'
+  obtain ⟨b, hbPair, hbInd⟩ := hExtract (localColim s₀') e M hSize
   rw [← he] at hbInd
-  exact tailTemplateRealizable_of_localEMContext (morleySeed φ) M a J
-    ⟨b, ΓEMlocal (LocalStage.ofSeq L' (morleySeed φ)),
-      hbInd.isLomega1omegaIndiscernibleOnTail,
-      locDeEqAtom_mem_ΓEMlocal J (LocalStage.ofSeq L' (morleySeed φ)),
-      locDeRelAtom_mem_ΓEMlocal J (LocalStage.ofSeq L' (morleySeed φ))⟩
-    subset_rfl
-    (LocalEMContext.omegaCompleteForColim_of_indiscernibleOn
-      (LocalStage.ofSeq L' (morleySeed φ)) J _ subset_rfl hbInd)
-    (morleySeed_template_agreement φ hPair hbPair)
+  set ctx : LocalEMContext (localColim s₀') J (M := M) :=
+    ⟨b, ΓEMlocal s₀', hbInd.isLomega1omegaIndiscernibleOnTail,
+      locDeEqAtom_mem_ΓEMlocal J s₀', locDeRelAtom_mem_ΓEMlocal J s₀'⟩ with hctx
+  letI : (localColim s₀')[[J]].Structure ctx.Carrier := ctx.structure
+  letI instN : (funSublang (L := L') φ.functionsIn)[[J]].Structure ctx.Carrier :=
+    ((LlocalInclusion s₀' 0).addConstants J).reduct ctx.Carrier
+  have hmodel := LocalEMContext.templateTheoryOn_seed_model s₀' J ctx subset_rfl
+    (LocalEMContext.omegaCompleteForColim_of_indiscernibleOn s₀' J ctx subset_rfl hbInd)
+  -- the two positive template facts at the sublanguage
+  have hposφ : ∀ t : Fin 0 ↪o J, Sentenceω.Realize
+      (Lomega1omegaTemplate.templateSentence (φ.restrictFuns (subset_refl _)) t)
+      ctx.Carrier :=
+    fun t => hmodel _ ⟨0, φ.restrictFuns (subset_refl _), t, ⟨0, rfl⟩,
+      Or.inl ⟨(tailTemplateOfSeq_truth_sentence_iff b _).mpr hφ₀real, rfl⟩⟩
+  have hposd : ∀ t : Fin 2 ↪o J, Sentenceω.Realize
+      (Lomega1omegaTemplate.templateSentence
+        (disEqFormula : (funSublang (L := L') φ.functionsIn).BoundedFormulaω Empty 2) t)
+      ctx.Carrier :=
+    fun t => hmodel _ ⟨2, disEqFormula, t, ⟨1, rfl⟩,
+      Or.inl ⟨tailTemplateOfSeq_truth_disEq hbPair, rfl⟩⟩
+  -- nonempty carrier (a skeleton class), expansion, and the member-wise model
+  haveI : Nonempty ctx.Carrier := ⟨ctx.mkClass (t := Term.func
+    (Sum.inr (Classical.arbitrary J) : (localColim s₀')[[J]].Functions 0) Fin.elim0)⟩
+  letI instE : L'[[J]].Structure ctx.Carrier := expandFunStructure φ.functionsIn J
+  refine ⟨ctx.Carrier, instE, ?_⟩
+  rintro σ ⟨n, ψ, t, ⟨k, hk⟩, hcase⟩
+  match k, hk with
+  | 0, hk =>
+    cases hk
+    rcases hcase with ⟨_, rfl⟩ | ⟨hnot, _⟩
+    · have h := (realize_templateSentence_expand (F := φ.functionsIn) J
+        (φ.restrictFuns (subset_refl _)) t).mpr (hposφ t)
+      rwa [hφ₀map] at h
+    · exact absurd ((tailTemplateOfSeq_truth_sentence_iff a φ).mpr hφreal) hnot
+  | 1, hk =>
+    cases hk
+    rcases hcase with ⟨_, rfl⟩ | ⟨hnot, _⟩
+    · have h := (realize_templateSentence_expand (F := φ.functionsIn) J
+        (disEqFormula : (funSublang (L := L') φ.functionsIn).BoundedFormulaω Empty 2) t).mpr
+        (hposd t)
+      rwa [show ((disEqFormula :
+          (funSublang (L := L') φ.functionsIn).BoundedFormulaω Empty 2).mapLanguage
+          (funSublangIncl φ.functionsIn)) = (disEqFormula : L'.BoundedFormulaω Empty 2)
+        from rfl] at h
+    · exact absurd (tailTemplateOfSeq_truth_disEq hPair) hnot
+  | k + 2, hk =>
+    cases hk
+    rcases hcase with ⟨_, rfl⟩ | ⟨hnot, _⟩
+    · have h := (realize_templateSentence_expand (F := φ.functionsIn) J
+        (φ.restrictFuns (subset_refl _)) t).mpr (hposφ t)
+      rwa [hφ₀map] at h
+    · exact absurd ((tailTemplateOfSeq_truth_sentence_iff a φ).mpr hφreal) hnot
 
 /-- **Morley–Hanf from the classical extraction alone**: `ℶ_{ω₁}` is a Hanf bound for every
-`L_{ω₁ω}` sentence, assuming only the full-indiscernibility extraction residual
-`MorleyHanfExtraction` (modulo this bridge's extra function-symbol countability). The tightest
-endpoint of the local EM route: extraction is the sole non-formal input — no compactness oracle,
-no template-realizability oracle, no Ω-completeness. -/
+`L_{ω₁ω}` sentence over a countable-relational language, assuming only the
+full-indiscernibility extraction residual `MorleyHanfExtraction` — with no extra
+function-symbol countability (discharged by the generated sublanguage). The tightest endpoint
+of the local EM route: extraction is the sole non-formal input — no compactness oracle, no
+template-realizability oracle, no Ω-completeness. -/
 theorem morley_hanf_of_morleyHanfExtraction {L' : Language.{0, 0}}
-    [Countable (Σ n, L'.Functions n)] [Countable (Σ l, L'.Relations l)]
+    [Countable (Σ l, L'.Relations l)]
     (hExtract : ∀ (L'' : Language.{0, 0}) [Countable (Σ l, L''.Relations l)],
       MorleyHanfExtraction (L' := L''))
     (φ : L'.Sentenceω) :

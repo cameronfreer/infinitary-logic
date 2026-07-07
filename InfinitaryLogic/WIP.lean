@@ -71,9 +71,12 @@ these imports transitively cover:
   constructor-inversion component plumbing `iSup/iInf_component_mem_ΓlocalColim`) and the
   absolute Morley-seed template agreement (`morleySeed_template_agreement`), into the existing
   truth-lemma pipeline; `morley_hanf_of_morleyHanfExtraction` derives the Hanf bound from the
-  extraction alone. The project's sole remaining non-formal content on this chain is the genuine
-  Erdős–Rado/Morley extraction (`MorleyHanfExtraction`, modulo the bridge's extra
-  function-symbol countability).
+  extraction alone — over any countable-relational `L'`, with the tower's function-symbol
+  countability discharged by the generated sublanguage (`Methods/GeneratedSublanguage.lean`:
+  `functionsIn`/`funSublang`/`restrictFuns`, plus the `expandFunStructure` re-expansion and the
+  `IsEmpty J` fallback in `LocalEMOmegaResidual`). The project's sole remaining non-formal
+  content on this chain is the genuine Erdős–Rado/Morley extraction (`MorleyHanfExtraction`),
+  with no local-EM caveats.
 
 These modules are deliberately NOT part of `InfinitaryLogic.All` or
 `InfinitaryLogic.Everything` — they are under active construction. This target exists
