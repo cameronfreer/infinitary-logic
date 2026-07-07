@@ -19,6 +19,8 @@ import InfinitaryLogic.Combinatorics.PairErdosRadoGeneral
 import InfinitaryLogic.Combinatorics.FiniteArityErdosRadoInduction
 -- The arity-general end-homogenization engine (EHMR with tuple-typed nodes): ER hard chunk 2a
 import InfinitaryLogic.Combinatorics.EndHomogeneousErdosRado
+-- The Marker stage: finite-fragment support extraction + ER certification (reshape layer 1)
+import InfinitaryLogic.Methods.MarkerStage
 
 /-!
 # WIP: the work-in-progress frontier bundle
@@ -112,9 +114,18 @@ these imports transitively cover:
   the easy arities `0`/`1`/`2`, the hard step `finiteArityHomogeneousUpTo_step`
   (end-homogenize the top arity, feed the induced color to the IH), and the assembled
   `finiteArityErdosRadoBounded` (+ `_beth_one`) — one `κ⁺`-suborder homogeneous for all
-  arities `≤ N` simultaneously, every finite `N`. This is the TRUE bounded supply for the
-  template/consistency-property reshape; the all-arity jump to `FiniteArityErdosRadoOmega1`
-  is refutable (see the audit fences).
+  arities `≤ N` simultaneously, every finite `N`, plus the Marker-stage supply
+  `finiteArityHomogeneousUpTo_beth_stage` (per-`α`, per-`N` approximations). This is the
+  TRUE bounded supply for the template/consistency-property reshape; the all-arity jump to
+  `FiniteArityErdosRadoOmega1` is refutable (see the audit fences);
+* `Methods/MarkerStage.lean` — reshape layer 1, the finite-fragment certification bridge:
+  `exists_markerSupport_factor` (collect + enumerate the finite `J`-constant support of a
+  fragment's index data, factor every tuple through it) and `markerStage_homogeneous`
+  (pull the fragment back to one arity-`k` truth-vector coloring over the source and apply
+  the Marker-stage supply: for every `α < ω₁`, a `(ℶ_α)⁺`-suborder on which the whole
+  fragment's truth vector is tuple-independent). Next: the Marker consistency property
+  (`ConsistencyPropertyEq L'[[J]]`, C4 via re-homogenization + the cofinal `α`-pigeonhole),
+  then `model_existence_uncountable_language`, then `MorleySeedTailTemplateRealizable`.
 
 These modules are deliberately NOT part of `InfinitaryLogic.All` or
 `InfinitaryLogic.Everything` — they are under active construction. This target exists
