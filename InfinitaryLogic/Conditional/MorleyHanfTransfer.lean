@@ -108,7 +108,19 @@ on any chosen countable formula family `s`.
 This is the genuine combinatorial content left after separating out EM
 stretching: Erdős–Rado-style partition arguments for Lω₁ω plus a stable-type
 extraction. The sequence does NOT need to have an uncountable index set —
-Phase 1's arbitrary-J stretching means a countable source suffices. -/
+Phase 1's arbitrary-J stretching means a countable source suffices.
+
+**FALSE-SHAPED (statement audit 2026-07-07).** Refutable in ZFC: over an
+arbitrary countable relational `L'`, every `Bool` coloring of increasing
+`n`-tuples of a well-ordered carrier is definable (one `n`-ary relation
+symbol per coloring), and an increasing subsequence of the extracted
+pairwise-distinct sequence exists by well-foundedness — so this hypothesis
+implies the failed partition relation `ℶ_ω₁ → (ω)^{<ω}_2`; see the full
+Erdős-cardinal argument on `PureColoringHypothesis` below. Full `ω`-sequence
+indiscernibility on a countable family never lives in the SOURCE model;
+classically it appears only in the model built from the EM template by Model
+Existence [Marker §5.2]. Kept as the consumer interface of the local EM route
+(`morley_hanf_of_morleyHanfExtraction` remains a true implication). -/
 def MorleyHanfExtraction : Prop :=
   ∀ (s : ℕ → Σ n, L'.BoundedFormulaω Empty n) (M : Type) [L'.Structure M],
     Cardinal.mk M ≥ Cardinal.beth (Ordinal.omega 1) →
@@ -542,7 +554,13 @@ no pairwise-distinct clause — only the combinatorial statement
 
 The hypothesis still quantifies over `L`, `M`, and formulas. The truly
 pure partition-calculus form is `PureColoringHypothesis` (below), which
-implies this via `indiscernibleSequence_of_pureColoring`. -/
+implies this via `indiscernibleSequence_of_pureColoring`.
+
+**FALSE-SHAPED (statement audit 2026-07-07).** Sandwiched between two
+refutable statements: it is implied by `PureColoringHypothesis`
+(`indiscernibleSequence_of_pureColoring`) and implies the failed partition
+relation `ℶ_ω₁ → (ω)^{<ω}_2` by interpreting colorings as relation symbols.
+See the Erdős-cardinal argument on `PureColoringHypothesis` below. -/
 def IndiscernibleSequenceHypothesis : Prop :=
   ∀ (s : ℕ → Σ n, L'.BoundedFormulaω Empty n)
     (M : Type) [L'.Structure M] (_ : LinearOrder M) (_ : WellFoundedLT M),
@@ -604,7 +622,30 @@ Note on the well-ordering assumption: arbitrary `LinearOrder I` does not
 admit strict-monotone `ℕ → I` in general (counterexample: `I = ℕ` with
 opposite order). The consumer chain always provides `I` as a canonical
 well-ordering of a model's carrier (via `WellOrderingRel`), so
-`WellFoundedLT I` is the right strengthening. -/
+`WellFoundedLT I` is the right strengthening.
+
+**FALSE-SHAPED (statement audit 2026-07-07; external literature check, not
+formalized here).** This statement is refutable in ZFC. One strictly monotone
+`f : ℕ → I` whose whole range is homogeneous for every coloring of every
+finite arity simultaneously is — already for one `Bool` coloring per arity —
+the partition relation `ℶ_ω₁ → (ω)^{<ω}_2`, which (the relation being upward
+closed in the source) holds iff the Erdős cardinal `κ(ω)`, the least `κ` with
+`κ → (ω)^{<ω}_2`, satisfies `κ(ω) ≤ ℶ_ω₁`. But `κ(ω)` is inaccessible
+[Silver 1966/1970; Kanamori, *The Higher Infinite*, 2nd ed., §7,
+Props. 7.14(b), 7.15(b)]; an inaccessible `κ` has `ℶ_α < κ` for every
+`α < κ` (strong limit at successors, regularity at limits), and
+`cf κ(ω) = κ(ω) > ω₁`, so `ℶ_ω₁ = sup_{α<ω₁} ℶ_α < κ(ω)`. Hence
+`ℶ_ω₁ ↛ (ω)^{<ω}_2` is a theorem of ZFC, and no extraction can satisfy this
+hypothesis. The classical Morley/Hanf argument is consistent with this: it
+never produces one simultaneously-homogeneous set in the source — scheduled
+per-arity Erdős–Rado yields coherent *finite* approximations (an EM template
+certified through a consistency property), and the indiscernible sequence
+materializes only in the model built by Model Existence [Marker, *Lectures on
+Infinitary Model Theory*, §5.2]. The TRUE per-arity-bounded supply is
+`finiteArityErdosRadoBounded` (`Combinatorics/FiniteArityErdosRadoInduction`):
+one `κ⁺`-suborder homogeneous for all arities `≤ N`, any finite `N`. Kept —
+like `TailTemplateRealizable` — as a strength marker and consumer interface;
+the bridges below remain true implications. -/
 def PureColoringHypothesis : Prop :=
   ∀ (I : Type) [LinearOrder I] [WellFoundedLT I],
     Cardinal.mk I ≥ Cardinal.beth (Ordinal.omega 1) →

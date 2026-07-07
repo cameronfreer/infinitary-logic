@@ -9,10 +9,23 @@ import Mathlib.Order.Hom.Basic
 /-!
 # The finite-arity Erdős–Rado residual (bounded color cardinal, `ω₁` output)
 
-The ER-facing residual that discharges the Morley–Hanf pure-coloring hypothesis
+The ER-facing statement that would discharge the Morley–Hanf pure-coloring hypothesis
 (`pureColoringHypothesis_of_finiteArityErdosRadoOmega1` in `Conditional/MorleyHanfTransfer.lean`):
 for every well-ordered source of size `≥ ℶ_{ω₁}` and every per-arity coloring family with color
 types of size `≤ κ`, there is **one** `ω₁`-suborder homogeneous for all arities simultaneously.
+
+**FALSE-SHAPED (statement audit 2026-07-07; external literature check, not formalized here).**
+This statement is refutable in ZFC: instantiating `C n := Bool` and restricting the
+`ω₁`-suborder to its first `ω` elements gives the partition relation `ℶ_ω₁ → (ω)^{<ω}_2`,
+which fails in ZFC — the least `κ` with `κ → (ω)^{<ω}_2` is the Erdős cardinal `κ(ω)`,
+inaccessible [Silver; Kanamori, *The Higher Infinite*, 2nd ed., §7, Props. 7.14(b)/7.15(b)],
+hence `> ℶ_ω₁` (an inaccessible dominates every `ℶ_α`, `α` below it). The full argument is
+recorded on `PureColoringHypothesis` (`Conditional/MorleyHanfTransfer.lean`). The TRUE,
+proved supply is the **bounded** finite-arity theorem `finiteArityErdosRadoBounded`
+(`Combinatorics/FiniteArityErdosRadoInduction.lean`): one `κ⁺`-suborder homogeneous for all
+arities `≤ N`, for every finite `N` — exactly the per-stage approximations the classical
+Morley/Hanf template route consumes. This definition is kept as a strength marker and
+consumer interface; `morley_hanf_of_finiteArityErdosRado` remains a true implication.
 
 Two design constraints, learned the hard way, dictate the shape:
 
@@ -26,12 +39,14 @@ Two design constraints, learned the hard way, dictate the shape:
   arities must happen inside the (per-arity, finitely iterated) construction, with the countable
   same-arity family packed into one large color.
 
-The classical proof target: for each arity `n + 1`, Erdős–Rado gives
-`(ℶ_n(κ))^+ → (κ^+)^{n+1}_κ`-style homogenization; the source `ℶ_{ω₁}` dominates every finite
-stage, and the per-arity outputs are intersected/diagonalized along a single `ω₁`-suborder. The
-first hard sub-chunk is the pair case with parameterized colors
-(`#C ≤ κ`, `#I ≥ (2^κ)⁺` ⇒ a `κ⁺`-suborder pair-homogeneous), of which the legacy
-`Bool`/`ℵ₀` pair theorem is the specialization.
+What per-arity Erdős–Rado actually gives — `(ℶ_n(κ))^+ → (κ^+)^{n+1}_κ`-style homogenization,
+with the source `ℶ_{ω₁}` dominating every finite stage — is the bounded theorem: the per-arity
+outputs can NOT be intersected/diagonalized along a single `ω₁`-suborder (an ω-schedule of
+passes needs an infinite descending sequence of ladder levels, and the audit above shows the
+all-arity conclusion is outright refutable). The proved chain lives in
+`PairErdosRadoGeneral.lean` (parameterized pair case: `#C ≤ κ`, `#I ≥ (2^κ)⁺` ⇒ a
+`κ⁺`-suborder pair-homogeneous), `EndHomogeneousErdosRado.lean` (the end-homogenization
+engine), and `FiniteArityErdosRadoInduction.lean` (the induction and the bounded theorem).
 -/
 
 universe u
@@ -59,7 +74,11 @@ This is the exact interface the Morley–Hanf chain consumes at `κ := ℶ_1`
 each arity pack into one color type `{i // arity i = n} → Bool` of size `≤ 2^{ℵ₀} = ℶ_1`. The
 color bound must be a parameter — a `Bool`-only statement cannot absorb the packing, and
 iterating a one-coloring theorem over the family dies after one pass (the output `ω₁`-suborder
-is too small to source the next). -/
+is too small to source the next).
+
+**FALSE-SHAPED** for every `κ ≥ 2` — refutable in ZFC via the Erdős-cardinal argument; see the
+module docstring above and `PureColoringHypothesis`. Kept as a strength marker and consumer
+interface; the proved supply is the bounded `finiteArityErdosRadoBounded`. -/
 def FiniteArityErdosRadoOmega1 (κ : Cardinal.{0}) : Prop :=
   ∀ (I : Type) [LinearOrder I] [WellFoundedLT I],
     Cardinal.mk I ≥ Cardinal.beth (Ordinal.omega 1) →

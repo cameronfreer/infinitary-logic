@@ -22,9 +22,12 @@ This is a fresh-namespace (`PairERGen`) port of the proven Bool/ℵ₀ theorem
 `FirstOrder.Combinatorics.erdos_rado_pair_omega1` from `Combinatorics/ErdosRado.lean`,
 with the renaming table `Bool → C`, `ℶ_1 → 2 ^ κ`, `ℵ_1 → Order.succ κ`,
 `ω_1 → (Order.succ κ).ord`. The legacy theorem's shape is recovered as the `κ = ℵ₀`
-specialization `erdos_rado_pair_omega1_from_general`. The next consumer is the
-finite-arity induction toward `FiniteArityErdosRadoOmega1 (beth 1)`, which needs the
-color bound at `κ = ℶ_1` (colors = functions on continuum-indexed positions).
+specialization `erdos_rado_pair_omega1_from_general`. The consumers are the
+end-homogenization engine (`EndHomogeneousErdosRado.lean`) and the finite-arity induction
+(`FiniteArityErdosRadoInduction.lean`, culminating in the bounded
+`finiteArityErdosRadoBounded`), which need the color bound at `κ = ℶ_1` (colors = functions
+on continuum-indexed positions); the all-arity `FiniteArityErdosRadoOmega1` is false-shaped
+(statement audit 2026-07-07 — see its docstring).
 
 ## Structure
 

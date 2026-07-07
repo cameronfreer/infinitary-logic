@@ -17,11 +17,18 @@ step `finiteArityHomogeneousUpTo_step` (end-homogenization via
 `exists_endHomogeneous_of_large` + the induced top-arity color fed to the IH), and the
 assembled bounded theorem `finiteArityErdosRadoBounded` with its `ℶ₁` instance.
 
-The eventual chain is
-`FiniteArityErdosRadoBounded ℶ₁ → FiniteArityErdosRadoOmega1 ℶ₁ → morley_hanf`, where the
-first arrow needs care: the per-`N` outputs cannot be iterated (each output `κ⁺`-suborder is
-far too small to source the next pass), so the all-arity version must recurse internally over
-the arity, not iterate over the external sequence.
+The previously envisaged continuation
+`FiniteArityErdosRadoBounded ℶ₁ → FiniteArityErdosRadoOmega1 ℶ₁ → morley_hanf` is DEAD at the
+first arrow (statement audit 2026-07-07): the all-arity `FiniteArityErdosRadoOmega1` is
+refutable in ZFC — it is the Erdős-cardinal partition relation `ℶ_ω₁ → (ω₁)^{<ω}`, whose
+order-type-`ω` weakening already requires the inaccessible `κ(ω) ≤ ℶ_ω₁` (see the fences on
+`FiniteArityErdosRadoOmega1` and `PureColoringHypothesis`). The obstruction the earlier
+docstring flagged (per-`N` outputs cannot be iterated; an `ω`-schedule of passes needs an
+infinite descending sequence of ladder levels) is that refutation's shadow. The bounded
+theorem here is instead the per-stage approximation supply of the classical Morley/Hanf
+template route (Marker §5.2): instantiating the color/output parameter at `κ := ℶ_α` gives
+`ℶ_α⁺`-sized homogeneous-up-to-`N` suborders for the consistency-property certification, with
+the indiscernible sequence materializing in the constructed model, not in the source.
 
 ## The ladder
 

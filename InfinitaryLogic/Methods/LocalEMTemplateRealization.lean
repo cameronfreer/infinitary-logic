@@ -401,9 +401,12 @@ cannot drift and the Ω-clauses hold outright. -/
 sequence is fully indiscernible on its family and the family contains the de-substituted
 *components* of the `Γ'` disjunctions/conjunctions, then the support-covered Ω-clauses hold —
 each component's eventual deep truth is a `d`-independent value, so a witness at one depth is a
-witness at every depth. This is the reduction that replaces the false tail-side residuals: the
-honest remaining content is the classical full-indiscernibility extraction
-(`MorleyHanfExtraction`-shaped), not any `atTop` cutoff exchange. -/
+witness at every depth. This is the reduction that replaces the false tail-side residuals; its
+intended supply was the classical full-indiscernibility extraction
+(`MorleyHanfExtraction`-shaped), not any `atTop` cutoff exchange — but that extraction was
+itself found false-shaped (statement audit 2026-07-07; see its docstring), so the supply must
+come from a fully indiscernible sequence in a *constructed* model (the template /
+consistency-property route), where this reduction applies unchanged. -/
 theorem LocalEMContext.omegaCompleteOn_of_indiscernibleOn
     {Λ : Language.{0, 0}} (J : Type) [LinearOrder J] {M : Type} [Λ.Structure M]
     (ctx : LocalEMContext Λ J (M := M))
@@ -453,8 +456,10 @@ whose family contains `ΓEMlocal` and whose sequence is fully indiscernible on i
 support-covered `OmegaCompleteForColim` holds outright — the component memberships come from the
 constructor-inversion plumbing (`iSup/iInf_component_mem_ΓlocalColim`) composed with the deForm
 discharger (`locDeForm_mem_ΓEMlocal`). This replaces the (refuted) tail-side residuals as the
-route into the truth lemma: the honest remaining content is producing the fully indiscernible
-sequence — the classical Erdős–Rado extraction (`MorleyHanfExtraction`-shaped). -/
+route into the truth lemma: what remains is producing the fully indiscernible sequence. The
+in-`M` form (`MorleyHanfExtraction`) was found false-shaped (statement audit 2026-07-07; see
+its docstring), so the sequence must come from a constructed model via the template /
+consistency-property route; this discharger applies there unchanged. -/
 theorem LocalEMContext.omegaCompleteForColim_of_indiscernibleOn (s₀ : LocalStage) (J : Type)
     [LinearOrder J] {M : Type} [(localColim s₀).Structure M]
     (ctx : LocalEMContext (localColim s₀) J (M := M)) (hΓ : ΓEMlocal s₀ ⊆ ctx.Γ)

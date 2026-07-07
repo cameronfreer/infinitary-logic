@@ -46,8 +46,18 @@ residual `MorleyHanfExtraction` — a **fresh, fully indiscernible** sequence fr
 `omegaCompleteForColim_of_indiscernibleOn` (full indiscernibility kills the witness drift) and
 the absolute Morley-seed template agreement, into the existing truth-lemma pipeline; the
 endpoint `morley_hanf_of_morleyHanfExtraction` derives the Hanf bound from the extraction alone.
-The remaining non-formal content of the Morley–Hanf chain is exactly the genuine
-Erdős–Rado/Morley extraction — not a local EM truth-lemma problem.
+
+**Second audit outcome (statement audit 2026-07-07): `MorleyHanfExtraction` is itself
+FALSE-SHAPED** — full in-`M` indiscernibility of an `ω`-sequence on an arbitrary countable
+family implies the ZFC-refutable partition relation `ℶ_ω₁ → (ω)^{<ω}_2` (Erdős-cardinal
+argument; see the `PureColoringHypothesis` docstring in `Conditional/MorleyHanfTransfer.lean`).
+The wiring above remains a true implication and the truth-lemma pipeline it exercises is fully
+proved, but the extraction hypothesis cannot be discharged: the classical route (Marker §5.2)
+never extracts indiscernibles inside `M` — it certifies an EM template through a consistency
+property using per-arity **bounded** Erdős–Rado approximations (now proved:
+`finiteArityErdosRadoBounded`, `Combinatorics/FiniteArityErdosRadoInduction.lean`) and
+materializes the sequence only in the model built by Model Existence. Reshaping the residual
+into that template/consistency-property form is the next design chunk.
 
 **Countability cleanup (also this file):** the endpoints assume only
 `[Countable (Σ l, L'.Relations l)]` — the tower's function-symbol countability is discharged by
@@ -55,8 +65,9 @@ running the construction in the **generated sublanguage** of `φ`
 (`Methods/GeneratedSublanguage.lean`) and expanding the resulting EM quotient back to `L'[[J]]`
 (`expandFunStructure` + `realize_templateSentence_expand`; missing symbols act arbitrarily on
 the nonempty carrier, and the degenerate `IsEmpty J` case is served by `M` itself,
-`morleySeed_theory_model_of_isEmptyJ`). So the public frontier is exactly
-`MorleyHanfExtraction → Morley–Hanf`, with no local-EM caveats.
+`morleySeed_theory_model_of_isEmptyJ`). So the proved implication surface is exactly
+`MorleyHanfExtraction → Morley–Hanf`, with no local-EM caveats — with the hypothesis itself
+false-shaped per the second audit outcome above.
 -/
 
 namespace FirstOrder.Language
@@ -342,12 +353,16 @@ theorem hasArbLargeModels_of_pureColoring {L' : Language.{0, 0}}
     HasArbLargeModels φ :=
   morley_hanf_of_pureColoring hPure φ hφ
 
-/-- **Morley–Hanf from the finite-arity Erdős–Rado residual**: the project's ER-facing endpoint.
+/-- **Morley–Hanf from the finite-arity Erdős–Rado statement**: the ER-facing endpoint.
 `FiniteArityErdosRadoOmega1 ℶ_1` — one `ω₁`-suborder homogeneous for a per-arity coloring family
 with color types of size `≤ ℶ_1` — implies the `ℶ_{ω₁}` Hanf bound, via the countable-family
 packing `pureColoringHypothesis_of_finiteArityErdosRadoOmega1` and the compact-free chain above.
-Proving `FiniteArityErdosRadoOmega1 (Cardinal.beth 1)` (parameterized pair Erdős–Rado, then the
-finite-arity induction) is the project's remaining combinatorial content. -/
+**The hypothesis is FALSE-SHAPED** (statement audit 2026-07-07: refutable in ZFC via the
+Erdős-cardinal argument — see `PureColoringHypothesis`/`FiniteArityErdosRadoOmega1`), so this
+true implication cannot be discharged. The proved combinatorial supply is the bounded
+`finiteArityErdosRadoBounded` (`Combinatorics/FiniteArityErdosRadoInduction.lean`), and the
+honest route to the Hanf bound is a template/consistency-property reshape of the extraction
+hypothesis (Marker §5.2) — the next design chunk — not an in-`M` extraction. -/
 theorem morley_hanf_of_finiteArityErdosRado {L' : Language.{0, 0}}
     [Countable (Σ l, L'.Relations l)]
     (hER : FiniteArityErdosRadoOmega1 (Cardinal.beth 1)) (φ : L'.Sentenceω) :

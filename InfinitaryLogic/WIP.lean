@@ -80,15 +80,19 @@ these imports transitively cover:
   extraction alone — over any countable-relational `L'`, with the tower's function-symbol
   countability discharged by the generated sublanguage (`Methods/GeneratedSublanguage.lean`:
   `functionsIn`/`funSublang`/`restrictFuns`, plus the `expandFunStructure` re-expansion and the
-  `IsEmpty J` fallback in `LocalEMOmegaResidual`). The project's sole remaining non-formal
-  content on this chain is the genuine Erdős–Rado/Morley extraction (`MorleyHanfExtraction`),
-  with no local-EM caveats. The bridge is normalized down to partition calculus:
-  `morley_hanf_of_pureColoring` (no compactness oracle — superseding the legacy
-  `*_pureColoring_and_compact` wrappers) and `morley_hanf_of_finiteArityErdosRado`, whose
-  hypothesis `FiniteArityErdosRadoOmega1 ℶ_1` (`Combinatorics/FiniteArityErdosRado.lean`: one
-  `ω₁`-suborder homogeneous for a per-arity coloring family with color bound `ℶ_1` — the bound
-  must exceed `ℵ₀` because same-arity `Bool` colorings pack into a `ℕ → Bool` color, and
-  iterating a one-coloring theorem dies after one pass) is the exact ER-facing residual;
+  `IsEmpty J` fallback in `LocalEMOmegaResidual`). The bridge is normalized down to partition
+  calculus: `morley_hanf_of_pureColoring` (no compactness oracle — superseding the legacy
+  `*_pureColoring_and_compact` wrappers) and `morley_hanf_of_finiteArityErdosRado` with
+  hypothesis `FiniteArityErdosRadoOmega1 ℶ_1` (`Combinatorics/FiniteArityErdosRado.lean`).
+  **Second audit outcome (statement audit 2026-07-07):** the whole in-`M` extraction ladder —
+  `FiniteArityErdosRadoOmega1`, `PureColoringHypothesis`, `IndiscernibleSequenceHypothesis`,
+  `MorleyHanfExtraction` — is FALSE-SHAPED, refutable in ZFC via the Erdős-cardinal argument
+  (`ℶ_ω₁ ↛ (ω)^{<ω}_2`: the least `κ → (ω)^{<ω}_2` is the inaccessible `κ(ω) > ℶ_ω₁`; full
+  fences with citations on `PureColoringHypothesis` and `FiniteArityErdosRadoOmega1`). The
+  bridges remain true implications and the local-EM truth-lemma pipeline they exercise is fully
+  proved; the honest continuation is the template/consistency-property reshape (Marker §5.2 —
+  per-arity bounded ER approximations certify an EM template, the sequence materializes in the
+  constructed model), the next design chunk;
 * `Combinatorics/PairErdosRadoGeneral.lean` — the **parameterized pair Erdős–Rado**, ER hard
   chunk 1: a controlled, sorry-free extraction of the active EHMR path from the legacy
   `ErdosRado.lean` (fresh namespace `PairERGen`, ~61 declarations), generalized from
@@ -97,9 +101,20 @@ these imports transitively cover:
   wrapper `pairErdosRado_general_of_large` (any well-ordered `I` with `#I ≥ (2^κ)⁺`), and the
   regression check `erdos_rado_pair_omega1_from_general` recovering the legacy Bool/ℵ₀ shape at
   `κ = ℵ₀`. Cardinal arithmetic isolated in a helpers section (`mk_source`,
-  `succ_le_two_power`, `mk_node_le`, `succ_mul_two_power`, `ordIso_ordToType_of_card_ge`).
-  Next: ER hard chunk 2, the finite-arity induction
-  `pairErdosRado_general → FiniteArityErdosRadoOmega1 (Cardinal.beth 1)`.
+  `succ_le_two_power`, `mk_node_le`, `succ_mul_two_power`, `ordIso_ordToType_of_card_ge`);
+* `Combinatorics/EndHomogeneousErdosRado.lean` — the **arity-general end-homogenization
+  engine**, ER hard chunk 2a (EHMR with tuple-typed nodes, namespace `EndHomogER`):
+  `exists_endHomogeneous_of_large` (source `#I ≥ (2^λ)⁺` ⇒ a `λ⁺`-suborder on which the color
+  of any `(n+2)`-tuple is independent of its final point), with the regression check
+  `pairER_from_endHomogeneous` recovering the pair theorem at `n = 0`;
+* `Combinatorics/FiniteArityErdosRadoInduction.lean` — the **finite-arity induction and the
+  bounded theorem**, ER chunk 2b: the cardinal ladder `finiteERBound` with its beth bounds,
+  the easy arities `0`/`1`/`2`, the hard step `finiteArityHomogeneousUpTo_step`
+  (end-homogenize the top arity, feed the induced color to the IH), and the assembled
+  `finiteArityErdosRadoBounded` (+ `_beth_one`) — one `κ⁺`-suborder homogeneous for all
+  arities `≤ N` simultaneously, every finite `N`. This is the TRUE bounded supply for the
+  template/consistency-property reshape; the all-arity jump to `FiniteArityErdosRadoOmega1`
+  is refutable (see the audit fences).
 
 These modules are deliberately NOT part of `InfinitaryLogic.All` or
 `InfinitaryLogic.Everything` — they are under active construction. This target exists
