@@ -62,9 +62,18 @@ these imports transitively cover:
   `not_morleySeedOmegaHomogeneousExtraction_height`, `not_morleySeedOmegaExtraction_height`) —
   the height pattern hides inside the true seed sentence `∃x, ¬⋀ᵢ Pᵢ(x)`, whose subformula
   closure re-imports the divergent conjunction into `ΓlocalColim`, defeating the uniform
-  `iInf`-cutoff on every subsequence. The honest route to `MorleySeedTailTemplateRealizable`
-  must go below the `OmegaCompleteForColim` bundle: closer to the classical EM/Skolem-hull
-  proof, using the truth of `φ` and Skolem closure; the reshape is the next chunk.
+  `iInf`-cutoff on every subsequence; those artifacts are kept as permanent fences.
+  **The honest route (the reshape, end of that file):**
+  `morleySeedTailTemplateRealizable_of_morleyHanfExtraction` wires the classical
+  full-indiscernibility extraction residual `MorleyHanfExtraction` — a fresh fully indiscernible
+  sequence from `M`, the `ℶ_{ω₁}` premise doing real Erdős–Rado work — through
+  `omegaCompleteForColim_of_indiscernibleOn` (full indiscernibility kills witness drift, via the
+  constructor-inversion component plumbing `iSup/iInf_component_mem_ΓlocalColim`) and the
+  absolute Morley-seed template agreement (`morleySeed_template_agreement`), into the existing
+  truth-lemma pipeline; `morley_hanf_of_morleyHanfExtraction` derives the Hanf bound from the
+  extraction alone. The project's sole remaining non-formal content on this chain is the genuine
+  Erdős–Rado/Morley extraction (`MorleyHanfExtraction`, modulo the bridge's extra
+  function-symbol countability).
 
 These modules are deliberately NOT part of `InfinitaryLogic.All` or
 `InfinitaryLogic.Everything` — they are under active construction. This target exists

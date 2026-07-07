@@ -35,11 +35,19 @@ never is — defeating the uniform `iInf`-cutoff. `height_no_seed_omega_homogene
 diagnostic, for *every* subsequence), `not_morleySeedOmegaHomogeneousExtraction_height`, and
 `not_morleySeedOmegaExtraction_height` (the Ω-bundle itself, via `iInf_complete` at the constant
 terms) are all axiom-clean. So the honest route to `MorleySeedTailTemplateRealizable` must go
-**below** the `OmegaCompleteForColim` bundle: closer to the classical EM/Skolem-hull proof,
-using the truth of `φ` in the source model and Skolem closure, rather than demanding arbitrary
-`atTop` countable-intersection upgrades from the extracted sequence. The theorems above
+**below** the `OmegaCompleteForColim` bundle. The theorems above
 (`morleySeedTailTemplateRealizable_of_localEMOmega` etc.) remain true implications, but their
-hypotheses are now known to be over-strong; the reshape is the next chunk.
+hypotheses are known to be over-strong — they are kept as refutation/diagnostic artifacts only.
+
+**The reshape (end of this file): the full-indiscernibility route.**
+`morleySeedTailTemplateRealizable_of_morleyHanfExtraction` wires the classical extraction
+residual `MorleyHanfExtraction` — a **fresh, fully indiscernible** sequence from `M`, where the
+`ℶ_{ω₁}` premise does real combinatorial work — through
+`omegaCompleteForColim_of_indiscernibleOn` (full indiscernibility kills the witness drift) and
+the absolute Morley-seed template agreement, into the existing truth-lemma pipeline; the
+endpoint `morley_hanf_of_morleyHanfExtraction` derives the Hanf bound from the extraction alone.
+The remaining non-formal content of the Morley–Hanf chain is exactly the genuine
+Erdős–Rado/Morley extraction — not a local EM truth-lemma problem.
 -/
 
 namespace FirstOrder.Language
@@ -60,6 +68,65 @@ theorem morleySeedTailTemplateRealizable_of_localEMOmega {L' : Language.{0, 0}}
   haveI : Nonempty M := ⟨(Infinite.natEmbedding M) 0⟩
   exact tailTemplateRealizable_of_localEM (morleySeed φ) M a J hTail
     (h φ M a J hSize hφreal hPair hTail)
+
+/-! ## The full-indiscernibility route (the honest one)
+
+The refuted residuals above all extracted a subsequence of the *given* sequence; the honest route
+extracts a **fresh, fully indiscernible** sequence from `M` — the classical Erdős–Rado shape
+`MorleyHanfExtraction`, where the `ℶ_{ω₁}` premise does real combinatorial work (e.g. in the
+height model the extraction must leave the growing diagonal for a single large height fiber).
+Full indiscernibility kills the witness drift (`omegaCompleteForColim_of_indiscernibleOn`), the
+Morley seed's template values are absolute (`morleySeed_template_agreement` — no subsequence
+relation to the input is needed), and the whole existing truth-lemma pipeline goes through. -/
+
+/-- **Morley-seed tail-template realizability from the classical extraction**: the
+full-indiscernibility extraction residual `MorleyHanfExtraction` (over countable-relational
+languages) implies `MorleySeedTailTemplateRealizable`, through a fully indiscernible local EM
+context over `ΓEMlocal`. The realizing model is the EM quotient of a **fresh** extraction from
+`M` — not a subsequence of the input `a`; the input's template is matched on the seed by the
+absolute-value agreement. With this bridge the remaining non-formal content of the Morley–Hanf
+chain is exactly the genuine Erdős–Rado/Morley extraction — no local EM truth-lemma problem, no
+Ω-completeness residual. -/
+theorem morleySeedTailTemplateRealizable_of_morleyHanfExtraction {L' : Language.{0, 0}}
+    [Countable (Σ n, L'.Functions n)] [Countable (Σ l, L'.Relations l)]
+    (hExtract : ∀ (L'' : Language.{0, 0}) [Countable (Σ l, L''.Relations l)],
+      MorleyHanfExtraction (L' := L'')) :
+    MorleySeedTailTemplateRealizable (L' := L') := by
+  intro φ M instM a J instJ hSize hφreal hPair _hTail
+  haveI : Infinite M := by
+    rw [Cardinal.infinite_iff]
+    exact le_trans (Cardinal.aleph0_le_beth _) hSize
+  haveI : Nonempty M := ⟨(Infinite.natEmbedding M) 0⟩
+  letI : (localColim (LocalStage.ofSeq L' (morleySeed φ))).Structure M :=
+    localColimStructure (LocalStage.ofSeq L' (morleySeed φ))
+  haveI := localColim_rel_countable (LocalStage.ofSeq L' (morleySeed φ))
+  obtain ⟨e, he⟩ := exists_ΓEMlocalEnum (LocalStage.ofSeq L' (morleySeed φ))
+  obtain ⟨b, hbPair, hbInd⟩ :=
+    hExtract (localColim (LocalStage.ofSeq L' (morleySeed φ))) e M hSize
+  rw [← he] at hbInd
+  exact tailTemplateRealizable_of_localEMContext (morleySeed φ) M a J
+    ⟨b, ΓEMlocal (LocalStage.ofSeq L' (morleySeed φ)),
+      hbInd.isLomega1omegaIndiscernibleOnTail,
+      locDeEqAtom_mem_ΓEMlocal J (LocalStage.ofSeq L' (morleySeed φ)),
+      locDeRelAtom_mem_ΓEMlocal J (LocalStage.ofSeq L' (morleySeed φ))⟩
+    subset_rfl
+    (LocalEMContext.omegaCompleteForColim_of_indiscernibleOn
+      (LocalStage.ofSeq L' (morleySeed φ)) J _ subset_rfl hbInd)
+    (morleySeed_template_agreement φ hPair hbPair)
+
+/-- **Morley–Hanf from the classical extraction alone**: `ℶ_{ω₁}` is a Hanf bound for every
+`L_{ω₁ω}` sentence, assuming only the full-indiscernibility extraction residual
+`MorleyHanfExtraction` (modulo this bridge's extra function-symbol countability). The tightest
+endpoint of the local EM route: extraction is the sole non-formal input — no compactness oracle,
+no template-realizability oracle, no Ω-completeness. -/
+theorem morley_hanf_of_morleyHanfExtraction {L' : Language.{0, 0}}
+    [Countable (Σ n, L'.Functions n)] [Countable (Σ l, L'.Relations l)]
+    (hExtract : ∀ (L'' : Language.{0, 0}) [Countable (Σ l, L''.Relations l)],
+      MorleyHanfExtraction (L' := L''))
+    (φ : L'.Sentenceω) :
+    IsHanfBound φ (Cardinal.beth (Ordinal.omega 1)) :=
+  morley_hanf_of_tail_realizable
+    (morleySeedTailTemplateRealizable_of_morleyHanfExtraction hExtract) φ
 
 end FirstOrder.Language
 
