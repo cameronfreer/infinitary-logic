@@ -449,7 +449,13 @@ premise, all available to the future combinatorial proof. Every conjunct except
 `OmegaCompleteForColim` is already proved without them (`exists_localEMContext_subseq`). The
 downstream Conditional-facing `morleySeedTailTemplateRealizable_of_localEMOmega` shows this
 residual implies `MorleySeedTailTemplateRealizable` (modulo the extra function-symbol
-countability of this bridge). -/
+countability of this bridge).
+
+**WARNING — REFUTED** (`not_morleySeedOmegaExtraction_height`, `LocalEMOmegaResidual.lean`):
+even seed-specific and source-aware, this bundle is false — the height pattern hides inside the
+true seed sentence `∃x, ¬⋀ᵢ Pᵢ(x)`, whose subformula closure re-imports the divergent
+conjunction into `ΓlocalColim`. Kept as the historical bundle shape; the honest residual must
+sit below `OmegaCompleteForColim`. -/
 def MorleySeedOmegaExtraction (L' : Language.{0, 0}) [Countable (Σ n, L'.Functions n)]
     [Countable (Σ n, L'.Relations n)] : Prop :=
   ∀ (φ : L'.Sentenceω) (M : Type) [L'.Structure M] [Nonempty M] (a : ℕ → M)
@@ -475,7 +481,13 @@ the future combinatorial proof. The plain Ramsey extraction
 (`exists_orderEmb_tailIndiscernible_ΓEMlocal`) already achieves the first conjunct; the
 remaining content is the second — a countable-family homogeneity statement about eventual truth
 of the de-substituted seed-family formulas on consecutive `(a ∘ g)`-tuples, with no term model,
-no quotients, no supports. -/
+no quotients, no supports.
+
+**WARNING — REFUTED** (`not_morleySeedOmegaHomogeneousExtraction_height`,
+`LocalEMOmegaResidual.lean`): the uniform `iInf`-cutoff clause fails for every subsequence of
+the height sequence once the divergent conjunction hides inside a true seed sentence. Kept as
+the historical clean form; see `LocalEMOmegaResidual.lean` for the audit and the reshape
+direction. -/
 def MorleySeedOmegaHomogeneousExtraction (L' : Language.{0, 0})
     [Countable (Σ n, L'.Functions n)] [Countable (Σ n, L'.Relations n)] : Prop :=
   ∀ (φ : L'.Sentenceω) (M : Type) [L'.Structure M] [Nonempty M] (a : ℕ → M),

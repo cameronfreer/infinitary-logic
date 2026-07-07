@@ -57,12 +57,14 @@ these imports transitively cover:
 * `Methods/LocalEMOmegaResidual.lean` — the Conditional-facing one-theorem bridge
   `morleySeedTailTemplateRealizable_of_localEMOmega : MorleySeedOmegaExtraction L' →
   MorleySeedTailTemplateRealizable` (modulo the bridge's extra function-symbol countability),
-  isolating the `Conditional/MorleyHanfTransfer` import like `LocalEMExtraction`. The project's
-  final frontier for the Morley–Hanf residual is `MorleySeedOmegaHomogeneousExtraction`
-  (implying `MorleySeedOmegaExtraction` via `omegaCompleteForColim_of_omegaHomogeneous`): a
-  `J`-free, term-model-free countable-family homogeneity statement — uniform `iSup`-witness /
-  `iInf`-cutoff for the de-substituted seed-family formulas on consecutive tuples of the
-  extracted subsequence, with the large-model hypothesis available.
+  isolating the `Conditional/MorleyHanfTransfer` import like `LocalEMExtraction`. **Audit
+  outcome:** both seed Ω-residuals are REFUTED there (`height_no_seed_omega_homogeneous`,
+  `not_morleySeedOmegaHomogeneousExtraction_height`, `not_morleySeedOmegaExtraction_height`) —
+  the height pattern hides inside the true seed sentence `∃x, ¬⋀ᵢ Pᵢ(x)`, whose subformula
+  closure re-imports the divergent conjunction into `ΓlocalColim`, defeating the uniform
+  `iInf`-cutoff on every subsequence. The honest route to `MorleySeedTailTemplateRealizable`
+  must go below the `OmegaCompleteForColim` bundle: closer to the classical EM/Skolem-hull
+  proof, using the truth of `φ` and Skolem closure; the reshape is the next chunk.
 
 These modules are deliberately NOT part of `InfinitaryLogic.All` or
 `InfinitaryLogic.Everything` — they are under active construction. This target exists
