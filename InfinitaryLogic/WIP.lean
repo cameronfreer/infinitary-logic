@@ -15,6 +15,8 @@ import InfinitaryLogic.Methods.LocalEMTemplateRealization
 import InfinitaryLogic.Methods.LocalEMOmegaResidual
 -- The parameterized pair Erdős–Rado (color bound κ): the first hard chunk toward FiniteArityErdosRadoOmega1
 import InfinitaryLogic.Combinatorics.PairErdosRadoGeneral
+-- The finite-arity ER induction scaffold: cardinal ladder + validated API + easy arities 0/1/2
+import InfinitaryLogic.Combinatorics.FiniteArityErdosRadoInduction
 
 /-!
 # WIP: the work-in-progress frontier bundle
