@@ -448,7 +448,109 @@ theorem LocalEMContext.omegaCompleteOn_of_indiscernibleOn
       (hmono _ d) (hmono _ dᵢ)).mpr
       ((realize_locDeForm Λ J ctx.a dᵢ S (φs i) ts hcov).mpr hdᵢ)
 
+/-- **The colimit-family Ω-completeness from full indiscernibility, discharged**: for a context
+whose family contains `ΓEMlocal` and whose sequence is fully indiscernible on it, the
+support-covered `OmegaCompleteForColim` holds outright — the component memberships come from the
+constructor-inversion plumbing (`iSup/iInf_component_mem_ΓlocalColim`) composed with the deForm
+discharger (`locDeForm_mem_ΓEMlocal`). This replaces the (refuted) tail-side residuals as the
+route into the truth lemma: the honest remaining content is producing the fully indiscernible
+sequence — the classical Erdős–Rado extraction (`MorleyHanfExtraction`-shaped). -/
+theorem LocalEMContext.omegaCompleteForColim_of_indiscernibleOn (s₀ : LocalStage) (J : Type)
+    [LinearOrder J] {M : Type} [(localColim s₀).Structure M]
+    (ctx : LocalEMContext (localColim s₀) J (M := M)) (hΓ : ΓEMlocal s₀ ⊆ ctx.Γ)
+    (hfull : IsLomega1omegaIndiscernibleOn (L := localColim s₀) ctx.a ctx.Γ) :
+    LocalEMContext.OmegaCompleteForColim s₀ J ctx :=
+  LocalEMContext.omegaCompleteOn_of_indiscernibleOn J ctx hfull
+    (fun _ hmem i ts S hcov => hΓ (locDeForm_mem_ΓEMlocal J s₀ S
+      (iSup_component_mem_ΓlocalColim s₀ hmem i) ts hcov))
+    (fun _ hmem i ts S hcov => hΓ (locDeForm_mem_ΓEMlocal J s₀ S
+      (iInf_component_mem_ΓlocalColim s₀ hmem i) ts hcov))
+
+/-! ## Absolute template truths on the Morley seed
+
+The Morley seed's two members have sequence-independent template values: a sentence's tail
+template is its absolute truth in the model, and the disequality's is `True` for any pairwise
+distinct sequence. So the templates of ANY two pairwise-distinct sequences agree on the seed —
+which frees the realizing context's sequence from being a subsequence of the input. -/
+
+/-- The tail template of any sequence assigns a **sentence** its absolute truth value (arity-`0`
+formulas ignore the tuple). -/
+theorem tailTemplateOfSeq_truth_sentence_iff {L : Language.{u, v}} {M : Type*} [L.Structure M]
+    (c : ℕ → M) (φ : L.Sentenceω) :
+    (tailTemplateOfSeq (L := L) c).truth φ ↔ Sentenceω.Realize φ M := by
+  constructor
+  · rintro ⟨N, hN⟩
+    have h := hN Fin.elim0 (fun p _ _ => p.elim0) (fun p => p.elim0)
+    rwa [show (c ∘ Fin.elim0 : Fin 0 → M) = Fin.elim0 from funext fun p => p.elim0] at h
+  · intro h
+    refine ⟨0, fun u _ _ => ?_⟩
+    rw [show (c ∘ u : Fin 0 → M) = Fin.elim0 from funext fun p => p.elim0]
+    exact h
+
+/-- The tail template of any **pairwise distinct** sequence declares the disequality true. -/
+theorem tailTemplateOfSeq_truth_disEq {L : Language.{u, v}} {M : Type*} [L.Structure M]
+    {c : ℕ → M} (hc : ∀ i j : ℕ, i ≠ j → c i ≠ c j) :
+    (tailTemplateOfSeq (L := L) c).truth (disEqFormula : L.BoundedFormulaω Empty 2) := by
+  refine ⟨0, fun u hu _ => ?_⟩
+  simp only [disEqFormula, BoundedFormulaω.realize_not, BoundedFormulaω.realize_equal,
+    Term.realize_var]
+  intro heq
+  exact hc (u 0) (u 1) (ne_of_lt (hu (show (0 : Fin 2) < 1 by decide))) heq
+
+/-- **Morley-seed template agreement**: the tail templates of any two pairwise-distinct sequences
+in the same model agree on `Set.range (morleySeed φ)` — the sentence member's value is absolute,
+and the disequality member's is `True` for both. -/
+theorem morleySeed_template_agreement {L' : Language.{0, 0}} {M : Type} [L'.Structure M]
+    (φ : L'.Sentenceω) {a b : ℕ → M}
+    (ha : ∀ i j : ℕ, i ≠ j → a i ≠ a j) (hb : ∀ i j : ℕ, i ≠ j → b i ≠ b j) :
+    ∀ (n : ℕ) (ψ : L'.BoundedFormulaω Empty n), ⟨n, ψ⟩ ∈ Set.range (morleySeed φ) →
+      ((tailTemplateOfSeq (L := L') b).truth ψ ↔ (tailTemplateOfSeq (L := L') a).truth ψ) := by
+  rintro n ψ ⟨k, hk⟩
+  match k, hk with
+  | 0, hk =>
+    cases hk
+    rw [tailTemplateOfSeq_truth_sentence_iff, tailTemplateOfSeq_truth_sentence_iff]
+  | 1, hk =>
+    cases hk
+    exact iff_of_true (tailTemplateOfSeq_truth_disEq hb) (tailTemplateOfSeq_truth_disEq ha)
+  | k + 2, hk =>
+    cases hk
+    rw [tailTemplateOfSeq_truth_sentence_iff, tailTemplateOfSeq_truth_sentence_iff]
+
 /-! ## Acceptance: tail-template realizability from the local EM model -/
+
+/-- **Context-generic acceptance**: any local EM context over the seed stage with
+`ΓEMlocal`-closure, support-covered Ω-completeness, and a template that agrees with the input's
+on `Set.range s` realizes the input's tail-template theory. The common core of the subsequence
+acceptance below (agreement from `tailTemplateOfSeq_comp_truth_iff`) and the
+full-indiscernibility wiring (agreement from the absolute Morley-seed values,
+`morleySeed_template_agreement` — no subsequence relation to the input needed). -/
+theorem tailTemplateRealizable_of_localEMContext {L' : Language.{0, 0}}
+    [Countable (Σ n, L'.Functions n)] [Countable (Σ n, L'.Relations n)]
+    (s : ℕ → Σ n, L'.BoundedFormulaω Empty n) (M : Type) [L'.Structure M] [Nonempty M]
+    (a : ℕ → M) (J : Type) [LinearOrder J] :
+    letI : (localColim (LocalStage.ofSeq L' s)).Structure M :=
+      localColimStructure (LocalStage.ofSeq L' s)
+    ∀ (ctx : LocalEMContext (localColim (LocalStage.ofSeq L' s)) J (M := M)),
+      ΓEMlocal (LocalStage.ofSeq L' s) ⊆ ctx.Γ →
+      LocalEMContext.OmegaCompleteForColim (LocalStage.ofSeq L' s) J ctx →
+      (∀ (n : ℕ) (ψ : L'.BoundedFormulaω Empty n), ⟨n, ψ⟩ ∈ Set.range s →
+        ((tailTemplateOfSeq (L := L') ctx.a).truth ψ ↔
+          (tailTemplateOfSeq (L := L') a).truth ψ)) →
+      ∃ (N : Type) (_ : L'[[J]].Structure N),
+        Theoryω.Model ((tailTemplateOfSeq (L := L') a).templateTheoryOfSeq s J) N := by
+  letI : (localColim (LocalStage.ofSeq L' s)).Structure M :=
+    localColimStructure (LocalStage.ofSeq L' s)
+  intro ctx hΓ hc hagree
+  letI : (localColim (LocalStage.ofSeq L' s))[[J]].Structure ctx.Carrier := ctx.structure
+  letI : L'[[J]].Structure ctx.Carrier :=
+    ((LlocalInclusion (LocalStage.ofSeq L' s) 0).addConstants J).reduct ctx.Carrier
+  have hmodel := LocalEMContext.templateTheoryOn_seed_model (LocalStage.ofSeq L' s) J ctx hΓ hc
+  refine ⟨ctx.Carrier, inferInstance, ?_⟩
+  rw [show ((tailTemplateOfSeq (L := L') a).templateTheoryOfSeq s J)
+      = ((tailTemplateOfSeq (L := L') ctx.a).templateTheoryOn (Set.range s) J) from
+    (Lomega1omegaTemplate.templateTheoryOn_congr hagree J).symm]
+  exact hmodel
 
 /-- **Per-`s` tail-template realizability via the local EM construction** (the acceptance
 lemma): given the input sequence's tail indiscernibility on `Set.range s` and, **for that
@@ -481,22 +583,10 @@ theorem tailTemplateRealizable_of_localEM {L' : Language.{0, 0}}
   letI : (localColim (LocalStage.ofSeq L' s)).Structure M :=
     localColimStructure (LocalStage.ofSeq L' s)
   obtain ⟨g, ctx, hctxa, hctxΓ, hc⟩ := hOmega
-  letI : (localColim (LocalStage.ofSeq L' s))[[J]].Structure ctx.Carrier := ctx.structure
-  letI : L'[[J]].Structure ctx.Carrier :=
-    ((LlocalInclusion (LocalStage.ofSeq L' s) 0).addConstants J).reduct ctx.Carrier
-  have hmodel := LocalEMContext.templateTheoryOn_seed_model (LocalStage.ofSeq L' s) J ctx
-    hctxΓ.symm.subset hc
-  -- transport the theory across the template agreement on the seed family
-  have hagree : ∀ (n : ℕ) (φ : L'.BoundedFormulaω Empty n), ⟨n, φ⟩ ∈ Set.range s →
-      ((tailTemplateOfSeq (L := L') ctx.a).truth φ ↔ (tailTemplateOfSeq (L := L') a).truth φ) := by
-    intro n φ hφ
-    rw [hctxa]
-    exact hTail.tailTemplateOfSeq_comp_truth_iff g hφ
-  refine ⟨ctx.Carrier, inferInstance, ?_⟩
-  rw [show ((tailTemplateOfSeq (L := L') a).templateTheoryOfSeq s J)
-      = ((tailTemplateOfSeq (L := L') ctx.a).templateTheoryOn (Set.range s) J) from
-    (Lomega1omegaTemplate.templateTheoryOn_congr hagree J).symm]
-  exact hmodel
+  refine tailTemplateRealizable_of_localEMContext s M a J ctx hctxΓ.symm.subset hc ?_
+  intro n φ hφ
+  rw [hctxa]
+  exact hTail.tailTemplateOfSeq_comp_truth_iff g hφ
 
 /-- **The seed Ω-residual, named**: for the Morley-seed setup — sentence `φ` holding in the
 large source model `M`, input sequence `a` pairwise distinct and tail-indiscernible on
