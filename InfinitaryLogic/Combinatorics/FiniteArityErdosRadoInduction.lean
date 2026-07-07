@@ -3,7 +3,7 @@ Copyright (c) 2026 Cameron Freer. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
-import InfinitaryLogic.Combinatorics.PairErdosRadoGeneral
+import InfinitaryLogic.Combinatorics.EndHomogeneousErdosRado
 
 /-!
 # Finite-arity Erdős–Rado: the induction scaffold
@@ -33,6 +33,7 @@ At `κ = ℶ₁` every level sits below `ℶ_{ω₁}` (`finiteERBound_le_beth_om
 -/
 
 open FirstOrder.Combinatorics.PairERGen
+open FirstOrder.Combinatorics.EndHomogER
 
 /-! ## The cardinal ladder -/
 
@@ -224,6 +225,34 @@ theorem exists_gt_succOrdToType {κ : Cardinal.{0}} (hκ : Cardinal.aleph0 ≤ �
 
 end Utilities
 
+/-! ## Tuple factoring and decomposition -/
+
+section Factoring
+
+/-- Factor a finite tuple through an order embedding: a tuple whose values lie in the range
+of `f : J ↪o I` is the `f`-image of a (unique) tuple in `J`. The order structure transports
+back through `f.lt_iff_lt`, so the preimage tuple is again an order embedding. -/
+theorem exists_orderEmbedding_factor {J I : Type*} [LinearOrder J] [LinearOrder I]
+    {m : ℕ} (f : J ↪o I) (t : Fin m ↪o I) (ht : ∀ k, t k ∈ Set.range f) :
+    ∃ s : Fin m ↪o J, s.trans f = t := by
+  choose g hg using ht
+  have hmono : StrictMono g := fun a b hab =>
+    f.lt_iff_lt.mp (by rw [hg a, hg b]; exact t.strictMono hab)
+  exact ⟨OrderEmbedding.ofStrictMono g hmono, DFunLike.ext _ _ hg⟩
+
+/-- Every `(n+2)`-tuple is its `castSucc`-prefix extended by its last point — the
+decomposition through which end-homogeneity reaches an arbitrary top-arity tuple. -/
+theorem eq_appendLastOE {I : Type*} [LinearOrder I] {n : ℕ} (t : Fin (n + 2) ↪o I) :
+    t = appendLastOE (Fin.castSuccOrderEmb.trans t) (t (Fin.last (n + 1)))
+      (fun k => t.strictMono (Fin.castSucc_lt_last k)) := by
+  refine DFunLike.ext _ _ fun k => ?_
+  refine Fin.lastCases ?_ (fun j => ?_) k
+  · rw [appendLastOE_last]
+  · rw [appendLastOE_castSucc]
+    rfl
+
+end Factoring
+
 /-! ## The easy arities: `0`, `1`, `2` -/
 
 /-- **Arity `≤ 0`.** Homogeneity up to arity `0` from a `κ⁺`-sized source: there is nothing
@@ -305,3 +334,109 @@ theorem finiteArityHomogeneousUpTo_two (κ : Cardinal.{0}) (hκ : Cardinal.aleph
   | 1, _ => rw [key1 t ht, key1 t' ht']
   | 2, _ => rw [key2 t ht, key2 t' ht']
   | (m + 3), h => exact absurd h (by omega)
+
+/-! ## The induction step -/
+
+/-- **The induction step.** Homogeneity up to arity `n+1` implies homogeneity up to arity
+`n+2`, from the next ladder level: end-homogenize the top-arity coloring with the engine
+(`exists_endHomogeneous_of_large` at `lam := finiteERBound κ (n+1)` — the ladder recursion
+is sized exactly so the level-`n+2` source meets the engine's `succ (2 ^ lam)` demand and
+the engine's `lam⁺`-sized output meets the level-`n+1` demand), pull the coloring family
+back to the end-homogeneous suborder together with the **induced top-arity color**
+`ind s := c (n+2) (s ⌢ chosen-point-above)` — well-defined by end-homogeneity plus the
+no-max lemma `exists_gt_succOrdToType` — and feed everything to the inductive hypothesis.
+An arity-`(n+2)` tuple from the final suborder is then handled by decomposing it as
+prefix-plus-last (`eq_appendLastOE`), swapping the last point for the chosen point above
+its prefix (end-homogeneity), and reading off the induced color's constancy from the IH. -/
+theorem finiteArityHomogeneousUpTo_step (κ : Cardinal.{0}) (hκ : Cardinal.aleph0 ≤ κ) (n : ℕ)
+    (ih : FiniteArityHomogeneousUpTo κ (n + 1)) : FiniteArityHomogeneousUpTo κ (n + 2) := by
+  intro I _ _ hI C hC c
+  set lam := finiteERBound κ (n + 1) with hlam_def
+  have hκlam : κ ≤ lam := (Order.le_succ κ).trans (succ_le_finiteERBound κ (n + 1))
+  have hlam : Cardinal.aleph0 ≤ lam := hκ.trans hκlam
+  have hI' : Order.succ ((2 : Cardinal.{0}) ^ lam) ≤ Cardinal.mk I := by
+    simpa [hlam_def, finiteERBound_succ_succ] using hI
+  -- End-homogenize the top-arity coloring.
+  obtain ⟨f, hf⟩ := exists_endHomogeneous_of_large lam hlam ((hC (n + 2)).trans hκlam) n hI'
+    (c (n + 2))
+  -- The no-max choice on the engine's output order.
+  choose nxt hnxt using exists_gt_succOrdToType hlam
+  have habove : ∀ (s : Fin (n + 1) ↪o (Order.succ lam).ord.ToType) (k : Fin (n + 1)),
+      s k < nxt (s (Fin.last n)) :=
+    fun s k => (s.monotone (Fin.le_last k)).trans_lt (hnxt _)
+  -- The induced top-arity color of an `(n+1)`-tuple in the suborder.
+  let ind : (Fin (n + 1) ↪o (Order.succ lam).ord.ToType) → C (n + 2) := fun s =>
+    c (n + 2) (appendLastOE (s.trans f) (f (nxt (s (Fin.last n))))
+      (fun k => f.strictMono (habove s k)))
+  -- The second component of the pulled-back family: the induced color at arity `n+1`,
+  -- `none` elsewhere.
+  let extra : ∀ m, (Fin m ↪o (Order.succ lam).ord.ToType) → Option (C (n + 2)) :=
+    Function.update (fun _ _ => none) (n + 1) (fun s => some (ind s))
+  have hextra : extra (n + 1) = fun s => some (ind s) := Function.update_self _ _ _
+  have hD : ∀ m, Cardinal.mk (C m × Option (C (n + 2))) ≤ κ := by
+    intro m
+    calc Cardinal.mk (C m × Option (C (n + 2)))
+        = Cardinal.mk (C m) * (Cardinal.mk (C (n + 2)) + 1) := by
+          simp [Cardinal.mk_option]
+      _ ≤ κ * (κ + 1) := mul_le_mul' (hC m) (add_le_add (hC (n + 2)) le_rfl)
+      _ = κ * κ := by rw [Cardinal.add_one_eq hκ]
+      _ = κ := Cardinal.mul_eq_self hκ
+  have hJ : Cardinal.mk ((Order.succ lam).ord.ToType) ≥ finiteERBound κ (n + 1) := by
+    rw [Cardinal.mk_ord_toType]
+    exact Order.le_succ lam
+  -- Feed the pulled-back family (original colors + induced color) to the IH.
+  obtain ⟨e, he⟩ := ih ((Order.succ lam).ord.ToType) hJ
+    (fun m => C m × Option (C (n + 2))) hD
+    (fun m s => (c m (s.trans f), extra m s))
+  refine ⟨e.trans f, ?_⟩
+  -- Factor a tuple from the final suborder through the composite embedding.
+  have factor : ∀ {m : ℕ} (t : Fin m ↪o I), (∀ k, t k ∈ Set.range (e.trans f)) →
+      ∃ s : Fin m ↪o (Order.succ lam).ord.ToType,
+        (∀ k, s k ∈ Set.range e) ∧ s.trans f = t := by
+    intro m t ht
+    obtain ⟨w, hw⟩ := exists_orderEmbedding_factor (e.trans f) t ht
+    exact ⟨w.trans e, fun k => ⟨w k, rfl⟩, hw⟩
+  -- Every top-arity tuple from the suborder carries the induced color of its prefix.
+  have key : ∀ (t : Fin (n + 2) ↪o I), (∀ k, t k ∈ Set.range (e.trans f)) →
+      ∃ s : Fin (n + 1) ↪o (Order.succ lam).ord.ToType,
+        (∀ k, s k ∈ Set.range e) ∧ c (n + 2) t = ind s := by
+    intro t ht
+    obtain ⟨s, hsr, hs⟩ := factor (Fin.castSuccOrderEmb.trans t) (fun k => ht k.castSucc)
+    refine ⟨s, hsr, ?_⟩
+    have hxlt : ∀ k : Fin (n + 1), (s.trans f) k < t (Fin.last (n + 1)) := fun k => by
+      rw [DFunLike.congr_fun hs k]
+      exact t.strictMono (Fin.castSucc_lt_last k)
+    obtain ⟨u, hu⟩ := ht (Fin.last (n + 1))
+    calc c (n + 2) t
+        = c (n + 2) (appendLastOE (Fin.castSuccOrderEmb.trans t) (t (Fin.last (n + 1)))
+            (fun k => t.strictMono (Fin.castSucc_lt_last k))) :=
+          congrArg (c (n + 2)) (eq_appendLastOE t)
+      _ = c (n + 2) (appendLastOE (s.trans f) (t (Fin.last (n + 1))) hxlt) :=
+          congrArg (c (n + 2))
+            (appendLastOE_congr (fun k => (DFunLike.congr_fun hs k).symm) rfl _ _)
+      _ = c (n + 2) (appendLastOE (s.trans f) (f (nxt (s (Fin.last n))))
+            (fun k => f.strictMono (habove s k))) :=
+          hf (s.trans f) (t (Fin.last (n + 1))) (f (nxt (s (Fin.last n))))
+            (fun k => ⟨s k, rfl⟩) ⟨e u, hu⟩ ⟨nxt (s (Fin.last n)), rfl⟩
+            hxlt (fun k => f.strictMono (habove s k))
+      _ = ind s := rfl
+  -- The homogeneity conclusion, per arity.
+  intro m hm t t' ht ht'
+  obtain hlt | rfl := hm.lt_or_eq
+  · -- Arities `≤ n+1`: the first component of the pulled-back family through the IH.
+    have hm' : m ≤ n + 1 := Nat.lt_succ_iff.mp hlt
+    obtain ⟨s, hsr, hs⟩ := factor t ht
+    obtain ⟨s', hsr', hs'⟩ := factor t' ht'
+    have h1 : c m (s.trans f) = c m (s'.trans f) :=
+      congrArg Prod.fst (he m hm' s s' hsr hsr')
+    rw [← hs, ← hs']
+    exact h1
+  · -- Arity `n+2`: end-homogeneity reduces to the induced color, constant by the IH.
+    obtain ⟨s, hsr, hcs⟩ := key t ht
+    obtain ⟨s', hsr', hcs'⟩ := key t' ht'
+    have h2 : extra (n + 1) s = extra (n + 1) s' :=
+      congrArg Prod.snd (he (n + 1) le_rfl s s' hsr hsr')
+    have hxs : extra (n + 1) s = some (ind s) := congrFun hextra s
+    have hxs' : extra (n + 1) s' = some (ind s') := congrFun hextra s'
+    rw [hcs, hcs']
+    exact Option.some_inj.mp ((hxs.symm.trans h2).trans hxs')
