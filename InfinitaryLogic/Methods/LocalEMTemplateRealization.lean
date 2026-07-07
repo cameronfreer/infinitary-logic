@@ -386,6 +386,68 @@ theorem LocalEMContext.templateTheoryOn_seed_model (s₀ : LocalStage) (J : Type
     rw [BoundedFormulaω.realize_not]
     exact fun hreal => htruth (hkey.mp hreal)
 
+/-! ## Full indiscernibility restores Ω-completeness
+
+The refuted Ω-residuals all fail on *drift*: a tail-indiscernible sequence lets the truth value
+of a de-substituted component at the depth-`d` consecutive tuple vary with `d` below its cutoff,
+so the witnessing component of a countable connective can escape to infinity. Under **full**
+(cutoff-`0`) restricted indiscernibility — `IsLomega1omegaIndiscernibleOn`, the classical
+Erdős–Rado extraction output, whose production genuinely consumes the `ℶ_{ω₁}` premise (e.g. in
+the height model it must move off the growing diagonal into a single large height fiber) — every
+de-substituted formula in the family has ONE value on all strictly monotone tuples, so witnesses
+cannot drift and the Ω-clauses hold outright. -/
+
+/-- **Full indiscernibility restores the (refuted-for-tail) Ω-completeness**: if the context's
+sequence is fully indiscernible on its family and the family contains the de-substituted
+*components* of the `Γ'` disjunctions/conjunctions, then the support-covered Ω-clauses hold —
+each component's eventual deep truth is a `d`-independent value, so a witness at one depth is a
+witness at every depth. This is the reduction that replaces the false tail-side residuals: the
+honest remaining content is the classical full-indiscernibility extraction
+(`MorleyHanfExtraction`-shaped), not any `atTop` cutoff exchange. -/
+theorem LocalEMContext.omegaCompleteOn_of_indiscernibleOn
+    {Λ : Language.{0, 0}} (J : Type) [LinearOrder J] {M : Type} [Λ.Structure M]
+    (ctx : LocalEMContext Λ J (M := M))
+    (hfull : IsLomega1omegaIndiscernibleOn (L := Λ) ctx.a ctx.Γ)
+    {Γ' : Set (Σ n, Λ.BoundedFormulaω Empty n)}
+    (hSup : ∀ {m : ℕ} (φs : ℕ → Λ.BoundedFormulaω Empty m),
+      (⟨m, BoundedFormulaω.iSup φs⟩ : Σ n, Λ.BoundedFormulaω Empty n) ∈ Γ' →
+      ∀ (i : ℕ) (ts : Fin m → Λ[[J]].Term Empty) (S : Finset J)
+        (hcov : ∀ i, locJSupport Λ J (ts i) ⊆ S),
+        (⟨S.card, locDeForm Λ J S (φs i) ts hcov⟩ : Σ n, Λ.BoundedFormulaω Empty n) ∈ ctx.Γ)
+    (hInf : ∀ {m : ℕ} (φs : ℕ → Λ.BoundedFormulaω Empty m),
+      (⟨m, BoundedFormulaω.iInf φs⟩ : Σ n, Λ.BoundedFormulaω Empty n) ∈ Γ' →
+      ∀ (i : ℕ) (ts : Fin m → Λ[[J]].Term Empty) (S : Finset J)
+        (hcov : ∀ i, locJSupport Λ J (ts i) ⊆ S),
+        (⟨S.card, locDeForm Λ J S (φs i) ts hcov⟩ : Σ n, Λ.BoundedFormulaω Empty n) ∈ ctx.Γ) :
+    LocalEMContext.OmegaCompleteOn (Λ := Λ) (J := J) ctx Γ' := by
+  have hmono : ∀ (p d : ℕ), StrictMono fun k : Fin p => d + (k : ℕ) :=
+    fun _ d _ _ hkk' => Nat.add_lt_add_left hkk' d
+  constructor
+  · intro m φs hmem ts S hcov hev
+    rw [LocalEMContext.eventualDeepTruth] at hev
+    obtain ⟨d₀, hd₀⟩ := hev.exists
+    rw [BoundedFormulaω.realize_iSup] at hd₀
+    obtain ⟨i, hi⟩ := hd₀
+    refine ⟨i, ?_⟩
+    rw [LocalEMContext.eventualDeepTruth]
+    refine Filter.Eventually.of_forall fun d => ?_
+    rw [← realize_locDeForm Λ J ctx.a d S (φs i) ts hcov]
+    exact (hfull (hSup φs hmem i ts S hcov) (fun k => d + (k : ℕ)) (fun k => d₀ + (k : ℕ))
+      (hmono _ d) (hmono _ d₀)).mpr
+      ((realize_locDeForm Λ J ctx.a d₀ S (φs i) ts hcov).mpr hi)
+  · intro m φs hmem ts S hcov hev
+    rw [LocalEMContext.eventualDeepTruth]
+    refine Filter.Eventually.of_forall fun d => ?_
+    rw [BoundedFormulaω.realize_iInf]
+    intro i
+    have hi := hev i
+    rw [LocalEMContext.eventualDeepTruth] at hi
+    obtain ⟨dᵢ, hdᵢ⟩ := hi.exists
+    rw [← realize_locDeForm Λ J ctx.a d S (φs i) ts hcov]
+    exact (hfull (hInf φs hmem i ts S hcov) (fun k => d + (k : ℕ)) (fun k => dᵢ + (k : ℕ))
+      (hmono _ d) (hmono _ dᵢ)).mpr
+      ((realize_locDeForm Λ J ctx.a dᵢ S (φs i) ts hcov).mpr hdᵢ)
+
 /-! ## Acceptance: tail-template realizability from the local EM model -/
 
 /-- **Per-`s` tail-template realizability via the local EM construction** (the acceptance
