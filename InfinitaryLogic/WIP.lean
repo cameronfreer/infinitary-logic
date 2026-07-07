@@ -13,6 +13,8 @@ import InfinitaryLogic.Methods.LocalEMTruthLemma
 import InfinitaryLogic.Methods.LocalEMTemplateRealization
 -- The Conditional-facing Ω-residual bridge (LocalEMOmegaExtraction → TailTemplateRealizable)
 import InfinitaryLogic.Methods.LocalEMOmegaResidual
+-- The parameterized pair Erdős–Rado (color bound κ): the first hard chunk toward FiniteArityErdosRadoOmega1
+import InfinitaryLogic.Combinatorics.PairErdosRadoGeneral
 
 /-!
 # WIP: the work-in-progress frontier bundle
@@ -82,8 +84,18 @@ these imports transitively cover:
   hypothesis `FiniteArityErdosRadoOmega1 ℶ_1` (`Combinatorics/FiniteArityErdosRado.lean`: one
   `ω₁`-suborder homogeneous for a per-arity coloring family with color bound `ℶ_1` — the bound
   must exceed `ℵ₀` because same-arity `Bool` colorings pack into a `ℕ → Bool` color, and
-  iterating a one-coloring theorem dies after one pass) is the exact ER-facing residual: next
-  are the parameterized pair Erdős–Rado and the finite-arity induction.
+  iterating a one-coloring theorem dies after one pass) is the exact ER-facing residual;
+* `Combinatorics/PairErdosRadoGeneral.lean` — the **parameterized pair Erdős–Rado**, ER hard
+  chunk 1: a controlled, sorry-free extraction of the active EHMR path from the legacy
+  `ErdosRado.lean` (fresh namespace `PairERGen`, ~61 declarations), generalized from
+  `Bool`/`ℵ₀` to an arbitrary color bound — `pairErdosRado_general` (`#C ≤ κ`, source
+  `Source κ = ((2^κ)⁺).ord.ToType` ⇒ a `κ⁺`-suborder pair-monochromatic), the abstract-source
+  wrapper `pairErdosRado_general_of_large` (any well-ordered `I` with `#I ≥ (2^κ)⁺`), and the
+  regression check `erdos_rado_pair_omega1_from_general` recovering the legacy Bool/ℵ₀ shape at
+  `κ = ℵ₀`. Cardinal arithmetic isolated in a helpers section (`mk_source`,
+  `succ_le_two_power`, `mk_node_le`, `succ_mul_two_power`, `ordIso_ordToType_of_card_ge`).
+  Next: ER hard chunk 2, the finite-arity induction
+  `pairErdosRado_general → FiniteArityErdosRadoOmega1 (Cardinal.beth 1)`.
 
 These modules are deliberately NOT part of `InfinitaryLogic.All` or
 `InfinitaryLogic.Everything` — they are under active construction. This target exists
