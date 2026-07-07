@@ -352,7 +352,9 @@ The honest residual is `MorleySeedTailTemplateRealizable` below, quantified only
 **Morley seed** `{φ, x₀ ≠ x₁}` actually fed to the bridge, and carrying the source facts
 actually available (`φ` holds in the large `M`, the sequence is pairwise distinct). This broad
 form is retained only as the compactness-strength marker witnessed by
-`tailTemplateRealizable_of_compact`; nothing should aim to prove it. -/
+`tailTemplateRealizable_of_compact`; nothing should aim to prove it — it is now **formally
+refuted**: `T_counterexample` (end of this file) instantiates the height-model counterexample
+at the concrete language `HeightCex.Lang`. -/
 def TailTemplateRealizable : Prop :=
   ∀ (s : ℕ → Σ n, L'.BoundedFormulaω Empty n) (M : Type) [L'.Structure M] (a : ℕ → M)
     (J : Type) [LinearOrder J],
@@ -794,3 +796,163 @@ theorem morley_hanf_of_tail_compact
 end Language
 
 end FirstOrder
+
+-- lean4:disprove-begin txn=e12264ecbafc cycle=1 role=artifact decl=T_counterexample
+namespace FirstOrder.Language
+
+namespace HeightCex
+
+/-- The counterexample language: unary predicates `Pᵢ` indexed by `i : ℕ`, nothing else. -/
+def Lang : Language.{0, 0} where
+  Functions _ := Empty
+  Relations n := match n with
+    | 1 => ℕ
+    | _ => Empty
+
+instance : ∀ n, Countable (Lang.Relations n) := fun n =>
+  match n with
+  | 0 => inferInstanceAs (Countable Empty)
+  | 1 => inferInstanceAs (Countable ℕ)
+  | _ + 2 => inferInstanceAs (Countable Empty)
+
+instance : Countable (Σ l, Lang.Relations l) := inferInstance
+
+/-- The carrier: a set of size exactly `ℶ_{ω₁}`. -/
+def Carrier : Type := (Cardinal.beth (Ordinal.omega 1)).ord.ToType
+
+theorem mk_Carrier : Cardinal.mk Carrier = Cardinal.beth (Ordinal.omega 1) :=
+  Cardinal.mk_ord_toType _
+
+instance : Infinite Carrier :=
+  Cardinal.infinite_iff.mpr (mk_Carrier ▸ Cardinal.aleph0_le_beth _)
+
+/-- A copy of `ℕ` inside the carrier, along which heights are unbounded. -/
+noncomputable def emb : ℕ ↪ Carrier := Infinite.natEmbedding Carrier
+
+/-- The height of a carrier element: the inverse of `emb` on its range, arbitrary elsewhere. -/
+noncomputable def hgt (x : Carrier) : ℕ := Function.invFun emb x
+
+theorem hgt_emb (n : ℕ) : hgt (emb n) = n := Function.leftInverse_invFun emb.injective n
+
+/-- The height structure: `Pᵢ x` holds iff `i ≤ hgt x`. -/
+noncomputable instance : Lang.Structure Carrier where
+  funMap := fun {_} f _ => f.elim
+  RelMap := fun {n} r =>
+    match n, r with
+    | 1, (i : ℕ) => fun xs => i ≤ hgt (xs 0)
+    | 0, r => r.elim
+    | _ + 2, r => r.elim
+
+/-- The unary atom `Pᵢ x₀`. -/
+def P (i : ℕ) : Lang.BoundedFormulaω Empty 1 :=
+  BoundedFormulaω.rel (n := 1) (show Lang.Relations 1 from i)
+    (fun _ => Term.var (Sum.inr (0 : Fin 1)))
+
+/-- The countable conjunction `⋀ᵢ Pᵢ x₀`. -/
+def conj : Lang.BoundedFormulaω Empty 1 := BoundedFormulaω.iInf P
+
+theorem realize_P (i : ℕ) (v : Empty → Carrier) (xs : Fin 1 → Carrier) :
+    (P i).Realize v xs ↔ i ≤ hgt (xs 0) := by
+  rw [P, BoundedFormulaω.realize_rel]
+  exact Iff.rfl
+
+/-- The seed: `⋀ᵢ Pᵢ` first, then every `Pᵢ`. -/
+def seed : ℕ → Σ n, Lang.BoundedFormulaω Empty n := fun k =>
+  match k with
+  | 0 => ⟨1, conj⟩
+  | i + 1 => ⟨1, P i⟩
+
+/-- The sequence of unboundedly growing height. -/
+noncomputable def a : ℕ → Carrier := fun n => emb n
+
+/-- Every `Fin 1`-tuple is strictly monotone (vacuously). -/
+theorem strictMono_fin_one {β : Type*} [Preorder β] (w : Fin 1 → β) : StrictMono w :=
+  fun p q hpq => absurd (Subsingleton.elim p q ▸ hpq) (lt_irrefl q)
+
+/-- `⋀ᵢ Pᵢ` fails at every carrier element (heights are finite). -/
+theorem not_realize_conj (v : Empty → Carrier) (xs : Fin 1 → Carrier) :
+    ¬ conj.Realize v xs := by
+  intro h
+  rw [conj, BoundedFormulaω.realize_iInf] at h
+  have h1 := (realize_P (hgt (xs 0) + 1) v xs).mp (h (hgt (xs 0) + 1))
+  omega
+
+/-- `a` is tail-indiscernible on the seed: each `Pᵢ (a n)` is eventually true (cutoff `i`), and
+`⋀ᵢ Pᵢ (a n)` is constantly false (cutoff `0`). -/
+theorem tail_indisc : IsLomega1omegaIndiscernibleOnTail (L := Lang) a (Set.range seed) := by
+  rintro n φ ⟨k, hk⟩
+  match k, hk with
+  | 0, hk =>
+    cases hk
+    exact ⟨0, fun u v _ _ _ _ =>
+      iff_of_false (not_realize_conj _ _) (not_realize_conj _ _)⟩
+  | i + 1, hk =>
+    cases hk
+    refine ⟨i, fun u v _ _ hud hvd => ?_⟩
+    rw [realize_P, realize_P]
+    show i ≤ hgt (emb (u 0)) ↔ i ≤ hgt (emb (v 0))
+    rw [hgt_emb, hgt_emb]
+    exact iff_of_true (hud 0) (hvd 0)
+
+/-- The tail template declares every `Pᵢ` true... -/
+theorem truth_P (i : ℕ) : (tailTemplateOfSeq (L := Lang) a).truth (P i) := by
+  refine ⟨i, fun u _ hud => ?_⟩
+  rw [realize_P]
+  show i ≤ hgt (emb (u 0))
+  rw [hgt_emb]
+  exact hud 0
+
+/-- ... and `⋀ᵢ Pᵢ` false. -/
+theorem not_truth_conj : ¬ (tailTemplateOfSeq (L := Lang) a).truth conj := by
+  rintro ⟨N, hN⟩
+  exact not_realize_conj _ _
+    (hN (fun _ => N) (strictMono_fin_one _) (fun _ => le_refl N))
+
+end HeightCex
+
+/-- **The broad tail-template residual is refutable** (the height-model counterexample of the
+`TailTemplateRealizable` docstring, formalized): over the language of unary predicates `Pᵢ`, the
+height model of size `ℶ_{ω₁}` with the seed `{⋀ᵢ Pᵢ} ∪ {Pᵢ}ᵢ` and the sequence `a n` of height
+`n` is tail-indiscernible on the seed, but its tail-template theory contains every positive
+`Pᵢ(c₀)` together with `¬⋀ᵢ Pᵢ(c₀)` — unsatisfiable. So the ∀-sequence residual is a genuine
+`L_{ω₁ω}` compactness failure; only the Morley-seed form (`MorleySeedTailTemplateRealizable`)
+can be the honest target. -/
+theorem T_counterexample : ¬ TailTemplateRealizable (L' := HeightCex.Lang) := by
+  intro h
+  obtain ⟨N, instN, hModel⟩ := h HeightCex.seed HeightCex.Carrier HeightCex.a ℕ
+    (ge_of_eq HeightCex.mk_Carrier) HeightCex.tail_indisc
+  letI : HeightCex.Lang[[ℕ]].Structure N := instN
+  let t : Fin 1 ↪o ℕ :=
+    OrderEmbedding.ofStrictMono (fun _ => 0) (HeightCex.strictMono_fin_one _)
+  -- the positive `Pᵢ` sentences and the negative `⋀ᵢ Pᵢ` sentence are all in the theory
+  have hpos : ∀ i : ℕ,
+      Sentenceω.Realize (Lomega1omegaTemplate.templateSentence (HeightCex.P i) t) N :=
+    fun i => hModel _ ⟨1, HeightCex.P i, t, ⟨i + 1, rfl⟩, Or.inl ⟨HeightCex.truth_P i, rfl⟩⟩
+  have hneg : Sentenceω.Realize (Lomega1omegaTemplate.templateSentence HeightCex.conj t).not N :=
+    hModel _ ⟨1, HeightCex.conj, t, ⟨0, rfl⟩, Or.inr ⟨HeightCex.not_truth_conj, rfl⟩⟩
+  -- bridge to component realizations at the constants tuple
+  letI : HeightCex.Lang.Structure N := (HeightCex.Lang.lhomWithConstants ℕ).reduct N
+  set bt : Fin 1 → N := fun i =>
+    (Term.func (Sum.inr (t i) : HeightCex.Lang[[ℕ]].Functions 0) Fin.elim0 :
+      HeightCex.Lang[[ℕ]].Term Empty).realize (Empty.elim : Empty → N) with hbt
+  have hP : ∀ i : ℕ, (HeightCex.P i).Realize (Empty.elim : Empty → N) bt := fun i =>
+    (realize_templateSentence_of_structure (L := HeightCex.Lang) (J := ℕ) (N := N)
+      (HeightCex.P i) t).mp (hpos i)
+  have hconj : HeightCex.conj.Realize (Empty.elim : Empty → N) bt := by
+    rw [HeightCex.conj, BoundedFormulaω.realize_iInf]
+    exact hP
+  have hnconj : ¬ HeightCex.conj.Realize (Empty.elim : Empty → N) bt := by
+    intro hc
+    have hneg' : ¬ Sentenceω.Realize
+        (Lomega1omegaTemplate.templateSentence HeightCex.conj t) N := by
+      have := hneg
+      rw [show Sentenceω.Realize (Lomega1omegaTemplate.templateSentence HeightCex.conj t).not N
+          ↔ ¬ Sentenceω.Realize (Lomega1omegaTemplate.templateSentence HeightCex.conj t) N from
+        BoundedFormulaω.realize_not _] at this
+      exact this
+    exact hneg' ((realize_templateSentence_of_structure (L := HeightCex.Lang) (J := ℕ)
+      (N := N) HeightCex.conj t).mpr hc)
+  exact hnconj hconj
+
+end FirstOrder.Language
+-- lean4:disprove-end txn=e12264ecbafc
