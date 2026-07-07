@@ -8,15 +8,16 @@ import InfinitaryLogic.Combinatorics.EndHomogeneousErdosRado
 /-!
 # Finite-arity Erdős–Rado: the induction scaffold
 
-The finite-arity induction SCAFFOLD toward the bounded finite-arity Erdős–Rado theorem:
+The finite-arity induction toward the bounded finite-arity Erdős–Rado theorem:
 the cardinal ladder `finiteERBound` (with its arithmetic validated against the beth scale),
-the validated API (`FiniteArityHomogeneousUpTo`, `FiniteArityErdosRadoBounded`), and the easy
+the validated API (`FiniteArityHomogeneousUpTo`, `FiniteArityErdosRadoBounded`), the easy
 arities `0`, `1`, `2` (`finiteArityHomogeneousUpTo_zero`/`_one`/`_two`), the last consuming the
-proven generalized pair theorem `pairErdosRado_general_of_large`.
+proven generalized pair theorem `pairErdosRado_general_of_large`, the hard `n → n+1` induction
+step `finiteArityHomogeneousUpTo_step` (end-homogenization via
+`exists_endHomogeneous_of_large` + the induced top-arity color fed to the IH), and the
+assembled bounded theorem `finiteArityErdosRadoBounded` with its `ℶ₁` instance.
 
-The hard `n → n+1` induction step — coloring pairs by induced `n`-types and applying
-`pairErdosRado_general_of_large` at the previous ladder level — is deliberately the NEXT
-chunk. The eventual chain is
+The eventual chain is
 `FiniteArityErdosRadoBounded ℶ₁ → FiniteArityErdosRadoOmega1 ℶ₁ → morley_hanf`, where the
 first arrow needs care: the per-`N` outputs cannot be iterated (each output `κ⁺`-suborder is
 far too small to source the next pass), so the all-arity version must recurse internally over
@@ -440,3 +441,30 @@ theorem finiteArityHomogeneousUpTo_step (κ : Cardinal.{0}) (hκ : Cardinal.alep
     have hxs' : extra (n + 1) s' = some (ind s') := congrFun hextra s'
     rw [hcs, hcs']
     exact Option.some_inj.mp ((hxs.symm.trans h2).trans hxs')
+
+/-! ## The bounded finite-arity theorem -/
+
+/-- Homogeneity up to every finite arity: ladder levels `0`/`1` are the proven base cases
+and each higher level is one application of the induction step. (The step at `n = 0`
+subsumes the independently validated `finiteArityHomogeneousUpTo_two`, which is kept as a
+regression check on the statement.) -/
+theorem finiteArityHomogeneousUpTo_all (κ : Cardinal.{0}) (hκ : Cardinal.aleph0 ≤ κ) :
+    ∀ N : ℕ, FiniteArityHomogeneousUpTo κ N
+  | 0 => finiteArityHomogeneousUpTo_zero κ hκ
+  | 1 => finiteArityHomogeneousUpTo_one κ hκ
+  | (n + 2) =>
+    finiteArityHomogeneousUpTo_step κ hκ n (finiteArityHomogeneousUpTo_all κ hκ (n + 1))
+
+/-- **The bounded finite-arity Erdős–Rado theorem**: for every infinite color bound `κ` and
+every finite arity bound `N`, any well-ordered source of size `≥ finiteERBound κ N` and any
+`ℕ`-indexed coloring family with color types of size `≤ κ` admit a single `κ⁺`-suborder
+homogeneous for all arities `≤ N` simultaneously. -/
+theorem finiteArityErdosRadoBounded (κ : Cardinal.{0}) (hκ : Cardinal.aleph0 ≤ κ) :
+    FiniteArityErdosRadoBounded κ :=
+  finiteArityHomogeneousUpTo_all κ hκ
+
+/-- The bounded finite-arity Erdős–Rado theorem at the Morley–Hanf color bound `ℶ₁`, where
+every ladder level sits below `ℶ_{ω₁}` (`finiteERBound_le_beth_omega1`). -/
+theorem finiteArityErdosRadoBounded_beth_one :
+    FiniteArityErdosRadoBounded (Cardinal.beth 1) :=
+  finiteArityErdosRadoBounded _ aleph0_le_beth_one
