@@ -430,6 +430,100 @@ theorem mapLanguage_LlocalInclusion_lift {k n : ℕ} (ψ : (Llocal s₀ k).Bound
       = ψ.mapLanguage (LlocalInclusion s₀ k) := by
   rw [BoundedFormulaω.mapLanguage_mapLanguage, LlocalInclusion_comp_LlocalHom]
 
+/-- **Constructor inversion for `mapLanguage` at `⋁`**: language maps preserve constructor heads,
+so a `⋁`-image comes from a `⋁`-preimage, componentwise. Feeds the colimit component-membership
+lemmas below. -/
+theorem BoundedFormulaω.mapLanguage_eq_iSup {L₁ L₂ : Language.{0, 0}} {g : L₁ →ᴸ L₂}
+    {α : Type} {m : ℕ} {ψ : L₁.BoundedFormulaω α m} {φs : ℕ → L₂.BoundedFormulaω α m}
+    (h : ψ.mapLanguage g = BoundedFormulaω.iSup φs) :
+    ∃ ψs : ℕ → L₁.BoundedFormulaω α m,
+      ψ = BoundedFormulaω.iSup ψs ∧ ∀ i, φs i = (ψs i).mapLanguage g := by
+  cases ψ with
+  | iSup ψs =>
+    refine ⟨ψs, rfl, fun i => ?_⟩
+    have h' : BoundedFormulaω.iSup (fun i => (ψs i).mapLanguage g)
+        = BoundedFormulaω.iSup φs := h
+    injection h' with h1 h2
+    exact (congrFun h2 i).symm
+  | falsum => exact absurd h (by simp [BoundedFormulaω.mapLanguage])
+  | equal t₁ t₂ => exact absurd h (by simp [BoundedFormulaω.mapLanguage])
+  | rel R ts => exact absurd h (by simp [BoundedFormulaω.mapLanguage])
+  | imp φ₁ φ₂ => exact absurd h (by simp [BoundedFormulaω.mapLanguage])
+  | all φ₀ => exact absurd h (by simp [BoundedFormulaω.mapLanguage])
+  | iInf ψs => exact absurd h (by simp [BoundedFormulaω.mapLanguage])
+
+/-- Constructor inversion for `mapLanguage` at `⋀`. -/
+theorem BoundedFormulaω.mapLanguage_eq_iInf {L₁ L₂ : Language.{0, 0}} {g : L₁ →ᴸ L₂}
+    {α : Type} {m : ℕ} {ψ : L₁.BoundedFormulaω α m} {φs : ℕ → L₂.BoundedFormulaω α m}
+    (h : ψ.mapLanguage g = BoundedFormulaω.iInf φs) :
+    ∃ ψs : ℕ → L₁.BoundedFormulaω α m,
+      ψ = BoundedFormulaω.iInf ψs ∧ ∀ i, φs i = (ψs i).mapLanguage g := by
+  cases ψ with
+  | iInf ψs =>
+    refine ⟨ψs, rfl, fun i => ?_⟩
+    have h' : BoundedFormulaω.iInf (fun i => (ψs i).mapLanguage g)
+        = BoundedFormulaω.iInf φs := h
+    injection h' with h1 h2
+    exact (congrFun h2 i).symm
+  | falsum => exact absurd h (by simp [BoundedFormulaω.mapLanguage])
+  | equal t₁ t₂ => exact absurd h (by simp [BoundedFormulaω.mapLanguage])
+  | rel R ts => exact absurd h (by simp [BoundedFormulaω.mapLanguage])
+  | imp φ₁ φ₂ => exact absurd h (by simp [BoundedFormulaω.mapLanguage])
+  | all φ₀ => exact absurd h (by simp [BoundedFormulaω.mapLanguage])
+  | iSup ψs => exact absurd h (by simp [BoundedFormulaω.mapLanguage])
+
+/-- **Components of colimit-family disjunctions stay in the colimit family**: a `⋁` in
+`ΓlocalColim` is the colimit image of a staged `⋁` (constructor inversion), whose components
+reach the successor family by lift + subformula closure, hence the colimit family by the cocone
+coherence. The membership plumbing that feeds the full-indiscernibility Ω-restoration at the
+colimit family. -/
+theorem iSup_component_mem_ΓlocalColim {m : ℕ}
+    {φs : ℕ → (localColim s₀).BoundedFormulaω Empty m}
+    (h : (⟨m, BoundedFormulaω.iSup φs⟩ : Σ n, (localColim s₀).BoundedFormulaω Empty n)
+      ∈ ΓlocalColim s₀) (i : ℕ) :
+    (⟨m, φs i⟩ : Σ n, (localColim s₀).BoundedFormulaω Empty n) ∈ ΓlocalColim s₀ := by
+  obtain ⟨k, hk⟩ := Set.mem_iUnion.mp h
+  obtain ⟨⟨n, ψ⟩, hpΓ, hpe⟩ := hk
+  rw [show toLocalColimFormula s₀ k ⟨n, ψ⟩
+      = ⟨n, ψ.mapLanguage (LlocalInclusion s₀ k)⟩ from rfl] at hpe
+  obtain ⟨hn, h_snd⟩ := Sigma.mk.inj_iff.mp hpe
+  subst hn
+  obtain ⟨ψs, hψ, hcomp⟩ := BoundedFormulaω.mapLanguage_eq_iSup (eq_of_heq h_snd)
+  subst hψ
+  have hmem2 : (⟨n, ((ψs i).mapLanguage (LlocalHom s₀ k)).mapLanguage
+        (LlocalInclusion s₀ (k + 1))⟩ :
+      Σ n, (localColim s₀).BoundedFormulaω Empty n) ∈ ΓlocalColim s₀ :=
+    toLocalColimFormula_mem_ΓlocalColim s₀
+      (bfSubformulas_subset_Γlocal_succ s₀ (liftGamma_mem_Γlocal_succ s₀ hpΓ)
+        (Set.mem_range_self i))
+  rw [mapLanguage_LlocalInclusion_lift s₀] at hmem2
+  rw [hcomp i]
+  exact hmem2
+
+/-- Components of colimit-family conjunctions stay in the colimit family. -/
+theorem iInf_component_mem_ΓlocalColim {m : ℕ}
+    {φs : ℕ → (localColim s₀).BoundedFormulaω Empty m}
+    (h : (⟨m, BoundedFormulaω.iInf φs⟩ : Σ n, (localColim s₀).BoundedFormulaω Empty n)
+      ∈ ΓlocalColim s₀) (i : ℕ) :
+    (⟨m, φs i⟩ : Σ n, (localColim s₀).BoundedFormulaω Empty n) ∈ ΓlocalColim s₀ := by
+  obtain ⟨k, hk⟩ := Set.mem_iUnion.mp h
+  obtain ⟨⟨n, ψ⟩, hpΓ, hpe⟩ := hk
+  rw [show toLocalColimFormula s₀ k ⟨n, ψ⟩
+      = ⟨n, ψ.mapLanguage (LlocalInclusion s₀ k)⟩ from rfl] at hpe
+  obtain ⟨hn, h_snd⟩ := Sigma.mk.inj_iff.mp hpe
+  subst hn
+  obtain ⟨ψs, hψ, hcomp⟩ := BoundedFormulaω.mapLanguage_eq_iInf (eq_of_heq h_snd)
+  subst hψ
+  have hmem2 : (⟨n, ((ψs i).mapLanguage (LlocalHom s₀ k)).mapLanguage
+        (LlocalInclusion s₀ (k + 1))⟩ :
+      Σ n, (localColim s₀).BoundedFormulaω Empty n) ∈ ΓlocalColim s₀ :=
+    toLocalColimFormula_mem_ΓlocalColim s₀
+      (bfSubformulas_subset_Γlocal_succ s₀ (liftGamma_mem_Γlocal_succ s₀ hpΓ)
+        (Set.mem_range_self i))
+  rw [mapLanguage_LlocalInclusion_lift s₀] at hmem2
+  rw [hcomp i]
+  exact hmem2
+
 /-- **Stage-agnostic readiness**: every stage-`k` family member — including the raw seed stage
 `0`, where subformula closure is not available — is `TLReadyStage`-ready, by lifting one stage
 (along `LlocalHom`, via `liftGamma_mem_Γlocal_succ`) and rewriting the colimit image back down
