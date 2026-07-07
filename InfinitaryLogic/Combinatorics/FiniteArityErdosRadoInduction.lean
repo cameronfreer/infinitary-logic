@@ -159,6 +159,42 @@ theorem finiteERBound_le_beth_omega1 (n : ℕ) :
     finiteERBound (Cardinal.beth 1) n ≤ Cardinal.beth (Ordinal.omega 1) :=
   (finiteERBound_lt_beth_omega1 n).le
 
+/-- **The general beth-scheduled ladder bound**: at `κ = ℶ_α`, ladder level `N` is bounded by
+`ℶ_{α + 2N + 2}` — each ladder step `succ ∘ (2 ^ ·)` is absorbed by two beth steps, uniformly
+in the base index `α` (the `α = 1` bound above is the sharper special case; this one is loose
+on purpose — the goal is a reusable scheduled estimate, not sharpness). This is the arithmetic
+behind the Marker-style consistency-property schedule: per-arity Erdős–Rado approximations at
+every base `ℶ_α`, `α < ω₁`, all fed from a `ℶ_{ω₁}`-sized source. -/
+theorem finiteERBound_beth_le (α : Ordinal.{0}) :
+    ∀ N : ℕ, finiteERBound (Cardinal.beth α) N ≤ Cardinal.beth (α + ((2 * N + 2 : ℕ) : Ordinal))
+  | 0 => by
+    rw [finiteERBound_zero]
+    have h1 : (1 : Ordinal.{0}) ≤ ((2 * 0 + 2 : ℕ) : Ordinal) := by simp
+    exact (succ_beth_le α).trans (Cardinal.beth_le_beth.mpr (add_le_add le_rfl h1))
+  | 1 => by
+    have h0 : finiteERBound (Cardinal.beth α) 0
+        ≤ Cardinal.beth (α + ((2 * 0 + 2 : ℕ) : Ordinal)) := finiteERBound_beth_le α 0
+    have hle : ((2 * 0 + 2 : ℕ) : Ordinal.{0}) ≤ ((2 * 1 + 2 : ℕ) : Ordinal) :=
+      Nat.mono_cast (by omega)
+    exact h0.trans (Cardinal.beth_le_beth.mpr (add_le_add le_rfl hle))
+  | (n + 2) => by
+    have ih : finiteERBound (Cardinal.beth α) (n + 1)
+        ≤ Cardinal.beth (α + ((2 * (n + 1) + 2 : ℕ) : Ordinal)) := finiteERBound_beth_le α (n + 1)
+    calc finiteERBound (Cardinal.beth α) (n + 2)
+        = Order.succ (2 ^ finiteERBound (Cardinal.beth α) (n + 1)) :=
+          finiteERBound_succ_succ _ n
+      _ ≤ Order.succ (2 ^ Cardinal.beth (α + ((2 * (n + 1) + 2 : ℕ) : Ordinal))) :=
+          Order.succ_le_succ (Cardinal.power_le_power_left two_ne_zero ih)
+      _ = Order.succ (Cardinal.beth ((α + ((2 * (n + 1) + 2 : ℕ) : Ordinal)) + 1)) := by
+          rw [beth_add_one]
+      _ ≤ Cardinal.beth ((α + ((2 * (n + 1) + 2 : ℕ) : Ordinal)) + 1 + 1) := succ_beth_le _
+      _ = Cardinal.beth (α + ((2 * (n + 2) + 2 : ℕ) : Ordinal)) := by
+          have h : ((2 * (n + 2) + 2 : ℕ) : Ordinal.{0})
+              = ((2 * (n + 1) + 2 : ℕ) : Ordinal) + 1 + 1 := by
+            rw [show (2 * (n + 2) + 2 : ℕ) = (2 * (n + 1) + 2) + 1 + 1 from by omega,
+              Nat.cast_add, Nat.cast_add, Nat.cast_one]
+          rw [h, ← add_assoc, ← add_assoc]
+
 end LadderLemmas
 
 /-! ## The API -/
@@ -475,3 +511,28 @@ every ladder level sits below `ℶ_{ω₁}` (`finiteERBound_le_beth_omega1`). -/
 theorem finiteArityErdosRadoBounded_beth_one :
     FiniteArityErdosRadoBounded (Cardinal.beth 1) :=
   finiteArityErdosRadoBounded _ aleph0_le_beth_one
+
+/-- **The Marker-stage Erdős–Rado supply**: from a source of size `≥ ℶ_{α + 2N + 2}` and any
+`ℕ`-indexed coloring family with color types of size `≤ ℶ_α`, one `(ℶ_α)⁺`-suborder
+homogeneous for all arities `≤ N` simultaneously.
+
+This is the TRUE replacement for the false all-arity jump
+(`FiniteArityErdosRadoOmega1` — refutable in ZFC, see its docstring and
+`PureColoringHypothesis`): per-`α`, per-finite-`N` approximations, NOT one `ω₁`-suborder
+homogeneous for all arities at once. It is exactly the per-stage lemma the classical
+Morley/Hanf consistency-property schedule consumes [Marker, *Lectures on Infinitary Model
+Theory*, §5.2]: for each finite formula/arity budget `N` and cofinally many `α < ω₁`, a
+`ℶ_{ω₁}`-sized source dominates the demanded `ℶ_{α + 2N + 2}` (the beth index stays below
+`ω₁`), yielding `ℶ_α`-large approximations of the EM template; the indiscernible sequence
+itself materializes only in the model built by Model Existence, never in the source. -/
+theorem finiteArityHomogeneousUpTo_beth_stage (α : Ordinal.{0}) (N : ℕ)
+    {I : Type} [LinearOrder I] [WellFoundedLT I]
+    (hI : Cardinal.beth (α + ((2 * N + 2 : ℕ) : Ordinal)) ≤ Cardinal.mk I)
+    (C : ℕ → Type) (hC : ∀ n, Cardinal.mk (C n) ≤ Cardinal.beth α)
+    (c : ∀ n, (Fin n ↪o I) → C n) :
+    ∃ e : (Order.succ (Cardinal.beth α)).ord.ToType ↪o I,
+      ∀ n, n ≤ N → ∀ t t' : Fin n ↪o I,
+        (∀ k, t k ∈ Set.range e) → (∀ k, t' k ∈ Set.range e) →
+        c n t = c n t' :=
+  finiteArityHomogeneousUpTo_all (Cardinal.beth α) (Cardinal.aleph0_le_beth α) N I
+    ((finiteERBound_beth_le α N).trans hI) C hC c

@@ -13,9 +13,9 @@ import InfinitaryLogic.Methods.LocalEMTruthLemma
 import InfinitaryLogic.Methods.LocalEMTemplateRealization
 -- The Conditional-facing Ω-residual bridge (LocalEMOmegaExtraction → TailTemplateRealizable)
 import InfinitaryLogic.Methods.LocalEMOmegaResidual
--- The parameterized pair Erdős–Rado (color bound κ): the first hard chunk toward FiniteArityErdosRadoOmega1
+-- The parameterized pair Erdős–Rado (color bound κ): chunk 1 toward bounded finite-arity ER
 import InfinitaryLogic.Combinatorics.PairErdosRadoGeneral
--- The finite-arity ER induction scaffold: cardinal ladder + validated API + easy arities 0/1/2
+-- The finite-arity induction: ladder + bounded theorem + Marker-stage supply (chunk 2b)
 import InfinitaryLogic.Combinatorics.FiniteArityErdosRadoInduction
 -- The arity-general end-homogenization engine (EHMR with tuple-typed nodes): ER hard chunk 2a
 import InfinitaryLogic.Combinatorics.EndHomogeneousErdosRado
