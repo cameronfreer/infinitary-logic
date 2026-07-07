@@ -17,6 +17,8 @@ import InfinitaryLogic.Methods.LocalEMOmegaResidual
 import InfinitaryLogic.Combinatorics.PairErdosRadoGeneral
 -- The finite-arity ER induction scaffold: cardinal ladder + validated API + easy arities 0/1/2
 import InfinitaryLogic.Combinatorics.FiniteArityErdosRadoInduction
+-- The arity-general end-homogenization engine (EHMR with tuple-typed nodes): ER hard chunk 2a
+import InfinitaryLogic.Combinatorics.EndHomogeneousErdosRado
 
 /-!
 # WIP: the work-in-progress frontier bundle
