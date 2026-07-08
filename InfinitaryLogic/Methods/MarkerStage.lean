@@ -8,6 +8,7 @@ import Mathlib.SetTheory.Cardinal.Regular
 import InfinitaryLogic.Combinatorics.FiniteArityErdosRadoInduction
 import InfinitaryLogic.Lomega1omega.Theory
 import InfinitaryLogic.Methods.GeneratedSublanguage
+import InfinitaryLogic.Methods.Henkin.Construction
 
 /-!
 # The Marker stage: finite-fragment support extraction and Erdős–Rado certification
@@ -756,6 +757,126 @@ theorem realizeWith_congr {σ σ' : J → M} {h h' : ℕ → M} {α : Type} {n :
 
 end RealizeWith
 
+/-! ### Structural lemmas for `functionsIn` (relabel / castLE / subst / openBounds)
+
+The mentioned function symbols are stable under variable renamings and grow only by the
+substituted terms' symbols under substitution — the syntactic facts behind the Henkin
+witness's constant support (Layer 5c). Generic over the language. -/
+
+section FunctionsIn
+
+variable {L : Language.{0, 0}} {α β : Type}
+
+theorem Term.functionsIn_relabel (g : α → β) (t : L.Term α) :
+    (t.relabel g).functionsIn = t.functionsIn := by
+  induction t with
+  | var x => rfl
+  | func f ts ih => simp only [Term.relabel, Term.functionsIn, ih]
+
+theorem Term.functionsIn_subst (tf : α → L.Term β) (t : L.Term α) :
+    (t.subst tf).functionsIn ⊆ t.functionsIn ∪ ⋃ a, (tf a).functionsIn := by
+  induction t with
+  | var x =>
+    simp only [Term.subst, Term.functionsIn, Set.empty_union]
+    exact Set.subset_iUnion (fun a => (tf a).functionsIn) x
+  | func f ts ih =>
+    simp only [Term.subst, Term.functionsIn]
+    rw [Set.insert_subset_iff]
+    refine ⟨Set.mem_union_left _ (Set.mem_insert _ _), Set.iUnion_subset fun i => ?_⟩
+    exact (ih i).trans (Set.union_subset_union
+      ((Set.subset_iUnion (fun i => (ts i).functionsIn) i).trans (Set.subset_insert _ _)) subset_rfl)
+
+theorem BoundedFormulaω.functionsIn_castLE {m n : ℕ} (h : m ≤ n)
+    (φ : L.BoundedFormulaω α m) : (φ.castLE h).functionsIn = φ.functionsIn := by
+  induction φ generalizing n with
+  | falsum => rfl
+  | equal t₁ t₂ => simp only [BoundedFormulaω.castLE, BoundedFormulaω.functionsIn,
+      Term.functionsIn_relabel]
+  | rel R ts => simp only [BoundedFormulaω.castLE, BoundedFormulaω.functionsIn,
+      Term.functionsIn_relabel]
+  | imp φ ψ ihφ ihψ => simp only [BoundedFormulaω.castLE, BoundedFormulaω.functionsIn, ihφ, ihψ]
+  | all φ ih => simp only [BoundedFormulaω.castLE, BoundedFormulaω.functionsIn, ih]
+  | iSup φs ih => simp only [BoundedFormulaω.castLE, BoundedFormulaω.functionsIn, ih]
+  | iInf φs ih => simp only [BoundedFormulaω.castLE, BoundedFormulaω.functionsIn, ih]
+
+theorem BoundedFormulaω.functionsIn_relabel {n : ℕ} (g : α → β ⊕ Fin n) :
+    ∀ {k : ℕ} (φ : L.BoundedFormulaω α k), (φ.relabel g).functionsIn = φ.functionsIn := by
+  intro k φ
+  induction φ with
+  | falsum => rfl
+  | equal t₁ t₂ => simp only [BoundedFormulaω.relabel, BoundedFormulaω.functionsIn,
+      Term.functionsIn_relabel]
+  | rel R ts => simp only [BoundedFormulaω.relabel, BoundedFormulaω.functionsIn,
+      Term.functionsIn_relabel]
+  | imp φ ψ ihφ ihψ => simp only [BoundedFormulaω.relabel, BoundedFormulaω.functionsIn, ihφ, ihψ]
+  | all φ ih => simp only [BoundedFormulaω.relabel, BoundedFormulaω.functionsIn,
+      BoundedFormulaω.functionsIn_castLE, ih]
+  | iSup φs ih => simp only [BoundedFormulaω.relabel, BoundedFormulaω.functionsIn, ih]
+  | iInf φs ih => simp only [BoundedFormulaω.relabel, BoundedFormulaω.functionsIn, ih]
+
+theorem BoundedFormulaω.functionsIn_subst (tf : α → L.Term β) :
+    ∀ {k : ℕ} (φ : L.BoundedFormulaω α k),
+      (φ.subst tf).functionsIn ⊆ φ.functionsIn ∪ ⋃ a, (tf a).functionsIn := by
+  intro k φ
+  induction φ with
+  | falsum => simp only [BoundedFormulaω.subst, BoundedFormulaω.functionsIn]; exact Set.empty_subset _
+  | equal t₁ t₂ =>
+    simp only [BoundedFormulaω.subst, BoundedFormulaω.functionsIn]
+    refine Set.union_subset ?_ ?_ <;>
+      · refine (Term.functionsIn_subst _ _).trans (Set.union_subset_union ?_ ?_)
+        · first
+          | exact Set.subset_union_left
+          | exact Set.subset_union_right
+        · refine Set.iUnion_subset fun x => ?_
+          rcases x with a | i
+          · simpa only [Sum.elim_inl, Function.comp_apply, Term.functionsIn_relabel] using
+              Set.subset_iUnion (fun a => (tf a).functionsIn) a
+          · simp only [Sum.elim_inr, Function.comp_apply, Term.functionsIn]
+            exact Set.empty_subset _
+  | rel R ts =>
+    simp only [BoundedFormulaω.subst, BoundedFormulaω.functionsIn]
+    refine Set.iUnion_subset fun i => (Term.functionsIn_subst _ _).trans
+      (Set.union_subset_union (Set.subset_iUnion (fun i => (ts i).functionsIn) i)
+        (Set.iUnion_subset fun x => ?_))
+    rcases x with a | j
+    · simpa only [Sum.elim_inl, Function.comp_apply, Term.functionsIn_relabel] using
+        Set.subset_iUnion (fun a => (tf a).functionsIn) a
+    · simp only [Sum.elim_inr, Function.comp_apply, Term.functionsIn]
+      exact Set.empty_subset _
+  | imp φ ψ ihφ ihψ =>
+    simp only [BoundedFormulaω.subst, BoundedFormulaω.functionsIn]
+    exact Set.union_subset
+      (ihφ.trans (Set.union_subset_union_left _ Set.subset_union_left))
+      (ihψ.trans (Set.union_subset_union_left _ Set.subset_union_right))
+  | all φ ih => simpa only [BoundedFormulaω.subst, BoundedFormulaω.functionsIn] using ih
+  | iSup φs ih =>
+    simp only [BoundedFormulaω.subst, BoundedFormulaω.functionsIn]
+    exact Set.iUnion_subset fun i => (ih i).trans
+      (Set.union_subset_union_left _ (Set.subset_iUnion (fun i => (φs i).functionsIn) i))
+  | iInf φs ih =>
+    simp only [BoundedFormulaω.subst, BoundedFormulaω.functionsIn]
+    exact Set.iUnion_subset fun i => (ih i).trans
+      (Set.union_subset_union_left _ (Set.subset_iUnion (fun i => (φs i).functionsIn) i))
+
+theorem BoundedFormulaω.functionsIn_openBounds :
+    ∀ {n : ℕ} (φ : L.BoundedFormulaω Empty n),
+      (φ.openBounds).functionsIn = φ.functionsIn := by
+  intro n φ
+  induction φ with
+  | falsum => rfl
+  | equal t₁ t₂ => simp only [BoundedFormulaω.openBounds, BoundedFormulaω.functionsIn,
+      Term.functionsIn_relabel]
+  | rel R ts => simp only [BoundedFormulaω.openBounds, BoundedFormulaω.functionsIn,
+      Term.functionsIn_relabel]
+  | imp φ ψ ihφ ihψ => simp only [BoundedFormulaω.openBounds, BoundedFormulaω.functionsIn,
+      ihφ, ihψ]
+  | all φ ih => simp only [BoundedFormulaω.openBounds, BoundedFormulaω.functionsIn,
+      BoundedFormulaω.functionsIn_relabel, ih]
+  | iSup φs ih => simp only [BoundedFormulaω.openBounds, BoundedFormulaω.functionsIn, ih]
+  | iInf φs ih => simp only [BoundedFormulaω.openBounds, BoundedFormulaω.functionsIn, ih]
+
+end FunctionsIn
+
 /-! ## Layer 5: the finite Henkin closure calculus
 
 **The freshness audit gate (settled by strengthening the predicate):** `henkinConstsIn` is
@@ -1301,6 +1422,144 @@ theorem MarkerHenkinConsistent.imp_choice
   cases b
   · exact Or.inl hb
   · exact Or.inr hb
+
+/-! ### Layer 5c: the Henkin witness rule (C7)
+
+The one closure rule of a different shape: no re-homogenization, but a fresh Henkin constant.
+From `∃x φ(x) ∈ F`, pick a witness index `n` outside the finite Henkin support `H`, update the
+Henkin interpretation at `n` to the existential witness (per skeleton interpretation), and
+adjoin the instance `φ(dₙ)`. The finite-support invariant is what makes "fresh `n`" available. -/
+
+/-- The Henkin witness instance of an existential: `φ` with its last bound variable filled by
+the `n`-th Henkin constant. -/
+noncomputable def witnessSentence
+    (φ : ((L''[[J]])[[ℕ]]).BoundedFormulaω Empty 1) (n : ℕ) : ((L''[[J]])[[ℕ]]).Sentenceω :=
+  (φ.openBounds).subst (fun _ => henkinConst n)
+
+omit [LinearOrder J] in
+/-- `∃` does not change the mentioned function symbols. -/
+theorem functionsIn_ex {α : Type} {m : ℕ}
+    (φ : ((L''[[J]])[[ℕ]]).BoundedFormulaω α (m + 1)) :
+    BoundedFormulaω.functionsIn φ.ex = BoundedFormulaω.functionsIn φ := by
+  simp [BoundedFormulaω.functionsIn]
+
+omit [LinearOrder J] in
+theorem expJConstsIn_ex (φ : ((L''[[J]])[[ℕ]]).BoundedFormulaω Empty 1) :
+    expJConstsIn (L'' := L'') φ.ex = expJConstsIn (L'' := L'') φ := by
+  simp only [expJConstsIn, functionsIn_ex]
+
+omit [LinearOrder J] in
+theorem henkinConstsIn_ex (φ : ((L''[[J]])[[ℕ]]).BoundedFormulaω Empty 1) :
+    henkinConstsIn (L'' := L'') φ.ex = henkinConstsIn (L'' := L'') φ := by
+  simp only [henkinConstsIn, sentenceJConsts, functionsIn_ex]
+
+omit [LinearOrder J] in
+/-- The witness constant `dₙ`'s only mentioned symbol is the `n`-th Henkin constant. -/
+theorem functionsIn_henkinConst (n : ℕ) :
+    (henkinConst (L := L''[[J]]) n).functionsIn ⊆
+      {(⟨0, Sum.inr n⟩ : Σ l, ((L''[[J]])[[ℕ]]).Functions l)} := by
+  intro s hs
+  simp only [henkinConst, Term.functionsIn] at hs
+  rcases Set.mem_insert_iff.mp hs with h | h
+  · exact h
+  · rw [Set.mem_iUnion] at h; obtain ⟨i, _⟩ := h; exact i.elim0
+
+omit [LinearOrder J] in
+/-- The witness sentence adds no new function symbol beyond `φ`'s and the fresh constant `dₙ`. -/
+theorem functionsIn_witnessSentence (φ : ((L''[[J]])[[ℕ]]).BoundedFormulaω Empty 1) (n : ℕ) :
+    BoundedFormulaω.functionsIn (witnessSentence φ n) ⊆
+      BoundedFormulaω.functionsIn φ ∪ {(⟨0, Sum.inr n⟩ : Σ l, ((L''[[J]])[[ℕ]]).Functions l)} := by
+  refine (BoundedFormulaω.functionsIn_subst _ _).trans ?_
+  rw [BoundedFormulaω.functionsIn_openBounds]
+  exact Set.union_subset_union_right _
+    (Set.iUnion_subset fun _ => functionsIn_henkinConst n)
+
+omit [LinearOrder J] in
+theorem expJConstsIn_witnessSentence (φ : ((L''[[J]])[[ℕ]]).BoundedFormulaω Empty 1) (n : ℕ) :
+    expJConstsIn (L'' := L'') (witnessSentence φ n) ⊆ expJConstsIn (L'' := L'') φ := by
+  intro j hj
+  rcases (functionsIn_witnessSentence φ n) hj with h | h
+  · exact h
+  · exact absurd (Set.mem_singleton_iff.mp h) (by simp)
+
+omit [LinearOrder J] in
+theorem henkinConstsIn_witnessSentence (φ : ((L''[[J]])[[ℕ]]).BoundedFormulaω Empty 1) (n : ℕ) :
+    henkinConstsIn (L'' := L'') (witnessSentence φ n) ⊆
+      insert n (henkinConstsIn (L'' := L'') φ) := by
+  intro m hm
+  rcases (functionsIn_witnessSentence φ n) hm with h | h
+  · exact Set.mem_insert_of_mem _ h
+  · have heq : (⟨0, Sum.inr m⟩ : Σ l, ((L''[[J]])[[ℕ]]).Functions l) = ⟨0, Sum.inr n⟩ :=
+      Set.mem_singleton_iff.mp h
+    simp only [Sigma.mk.injEq, heq_eq_eq, true_and] at heq
+    exact Set.mem_insert_iff.mpr (Or.inl (Sum.inr_injective heq))
+
+omit [LinearOrder J] [LinearOrder M] in
+/-- **The semantic bridge**: realizing the witness sentence is realizing `φ` with the last
+bound variable set to the Henkin interpretation of `dₙ`. -/
+theorem realizeWith_witness (σ : J → M) (h : ℕ → M)
+    (φ : ((L''[[J]])[[ℕ]]).BoundedFormulaω Empty 1) (n : ℕ) :
+    realizeWith σ h (witnessSentence φ n) (Empty.elim : Empty → M) Fin.elim0 ↔
+      realizeWith σ h φ (Empty.elim : Empty → M) (Fin.snoc Fin.elim0 (h n)) := by
+  letI : (constantsOn J).Structure M := constantsOn.structure σ
+  letI : (constantsOn ℕ).Structure M := constantsOn.structure h
+  show ((φ.openBounds).subst (fun _ => henkinConst n)).Realize (Empty.elim : Empty → M) Fin.elim0 ↔
+    φ.Realize (Empty.elim : Empty → M) (Fin.snoc Fin.elim0 (h n))
+  rw [BoundedFormulaω.realize_subst]
+  refine (realize_openBounds φ _).trans (iff_of_eq ?_)
+  congr 1
+
+/-- **Body-level `C7`**: from `∃x φ(x) ∈ F` and a Henkin index `n` fresh for `F`, the witness
+instance can be adjoined — update the Henkin interpretation at `n` to the existential witness;
+`n`'s freshness leaves every old member unchanged (`realizeWith_congr`). -/
+theorem MarkerHenkinBody.witness {α : Ordinal.{0}} {S : Finset J}
+    {F : Set ((L''[[J]])[[ℕ]].Sentenceω)} (hb : MarkerHenkinBody M α S F)
+    {φ : ((L''[[J]])[[ℕ]]).BoundedFormulaω Empty 1} (hmem : φ.ex ∈ F) (n : ℕ)
+    (hn : ∀ τ ∈ F, n ∉ henkinConstsIn (L'' := L'') τ) :
+    MarkerHenkinBody M α S (insert (witnessSentence φ n) F) := by
+  obtain ⟨e, hsat⟩ := hb
+  refine ⟨e, fun σ hσmono hσrange => ?_⟩
+  obtain ⟨h, hh⟩ := hsat σ hσmono hσrange
+  have hex := hh φ.ex hmem
+  rw [realizeWith_ex] at hex
+  obtain ⟨x, hx⟩ := hex
+  have hnφ : n ∉ henkinConstsIn (L'' := L'') φ := by
+    rw [← henkinConstsIn_ex]; exact hn φ.ex hmem
+  refine ⟨Function.update h n x, ?_⟩
+  rintro τ (rfl | hτ)
+  · rw [realizeWith_witness, Function.update_self]
+    exact (realizeWith_congr φ (fun _ _ => rfl)
+      (fun m hm => Function.update_of_ne (ne_of_mem_of_not_mem hm hnφ) x h) _ _).mpr hx
+  · exact (realizeWith_congr τ (fun _ _ => rfl)
+      (fun m hm => Function.update_of_ne (ne_of_mem_of_not_mem hm (hn τ hτ)) x h) _ _).mpr
+      (hh τ hτ)
+
+open scoped Classical in
+/-- **`C7` (existential witness)**: `∃x φ(x) ∈ F` yields a fresh Henkin index `n` with
+`insert (witnessSentence φ n) F` consistent — the new Henkin support is `insert n H`. -/
+theorem MarkerHenkinConsistent.ex_witness
+    {F : Finset ((L''[[J]])[[ℕ]].Sentenceω)} (h : MarkerHenkinConsistent M F)
+    {φ : ((L''[[J]])[[ℕ]]).BoundedFormulaω Empty 1} (hmem : φ.ex ∈ F) :
+    ∃ n, MarkerHenkinConsistent M (insert (witnessSentence φ n) F) := by
+  obtain ⟨S, H, hS, hH, hcof⟩ := h
+  obtain ⟨n, hnH⟩ := Infinite.exists_notMem_finset H
+  have hmem' : φ.ex ∈ (↑F : Set ((L''[[J]])[[ℕ]].Sentenceω)) := Finset.mem_coe.mpr hmem
+  have hfresh : ∀ τ ∈ (↑F : Set ((L''[[J]])[[ℕ]].Sentenceω)), n ∉ henkinConstsIn (L'' := L'') τ :=
+    fun τ hτ hnmem => hnH (Finset.mem_coe.mp (hH τ hτ hnmem))
+  refine ⟨n, S, insert n H, ?_, ?_, fun β hβ => ?_⟩
+  · rw [Finset.coe_insert]; rintro τ (rfl | hτ)
+    · exact (expJConstsIn_witnessSentence φ n).trans
+        ((expJConstsIn_ex φ) ▸ hS φ.ex hmem')
+    · exact hS τ hτ
+  · rw [Finset.coe_insert]; rintro τ (rfl | hτ)
+    · refine (henkinConstsIn_witnessSentence φ n).trans ?_
+      rw [Finset.coe_insert]
+      exact Set.insert_subset_insert ((henkinConstsIn_ex φ) ▸ hH φ.ex hmem')
+    · exact (hH τ hτ).trans (by rw [Finset.coe_insert]; exact Set.subset_insert _ _)
+  · obtain ⟨α, hβα, hα, hbody⟩ := hcof β hβ
+    refine ⟨α, hβα, hα, ?_⟩
+    rw [Finset.coe_insert]
+    exact hbody.witness hmem' n hfresh
 
 end Rehomogenize
 
