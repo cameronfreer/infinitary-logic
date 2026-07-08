@@ -848,47 +848,84 @@ theorem henkinConstsIn_imp_right {α : Type} {n : ℕ}
 
 variable [LinearOrder J] (M : Type) [L''.Structure M] [LinearOrder M]
 
+/-- **The certificate body at an explicit skeleton support `S`**: a `(ℶ_α)⁺`-suborder `e` of
+the source, and — for EVERY skeleton interpretation increasing on `S` into `e`'s range —
+SOME Henkin interpretation making every member true. The skeleton side stays universal (the
+EM tuples); the witness side is existential per interpretation, because quantifier witnesses
+vary with the tuple. The support-tracking conjuncts live in the wrapping predicates. -/
+def MarkerHenkinBody (α : Ordinal.{0}) (S : Finset J)
+    (F : Set ((L''[[J]])[[ℕ]].Sentenceω)) : Prop :=
+  ∃ e : (Order.succ (Cardinal.beth α)).ord.ToType ↪o M,
+    ∀ σ : J → M, StrictMonoOn σ ↑S → (∀ j ∈ S, σ j ∈ Set.range e) →
+      ∃ h : ℕ → M, ∀ τ ∈ F, realizeWith σ h τ (Empty.elim : Empty → M) Fin.elim0
+
 /-- **The per-level Henkin–Marker certification of a finite fragment** over the expansion
-`(L''[[J]])[[ℕ]]`: a common finite skeleton support `S`, a common finite Henkin support `H`
-(the freshness invariant), a `(ℶ_α)⁺`-suborder `e` of the source, and — for EVERY skeleton
-interpretation increasing on `S` into `e`'s range — SOME Henkin interpretation making every
-member true. The skeleton side stays universal (the EM tuples); the witness side is
-existential per interpretation, because quantifier witnesses vary with the tuple. -/
+`(L''[[J]])[[ℕ]]`: a finite skeleton support `S`, a finite Henkin support `H` (the freshness
+invariant), and a body at `S`. -/
 def MarkerHenkinCert (α : Ordinal.{0}) (F : Set ((L''[[J]])[[ℕ]].Sentenceω)) : Prop :=
   ∃ (S : Finset J) (H : Finset ℕ),
     (∀ τ ∈ F, expJConstsIn (L'' := L'') τ ⊆ ↑S) ∧
     (∀ τ ∈ F, henkinConstsIn (L'' := L'') τ ⊆ ↑H) ∧
-    ∃ e : (Order.succ (Cardinal.beth α)).ord.ToType ↪o M,
-      ∀ σ : J → M, StrictMonoOn σ ↑S → (∀ j ∈ S, σ j ∈ Set.range e) →
-        ∃ h : ℕ → M, ∀ τ ∈ F, realizeWith σ h τ (Empty.elim : Empty → M) Fin.elim0
+    MarkerHenkinBody M α S F
 
-/-- **The finite-member consistency predicate**: certification at cofinally many levels
-below `ω₁`, over FINITE fragments only. The arbitrary-set `extension` field and the global
-`C4` uniformization of the ambient `ConsistencyPropertyEq` API are deliberately avoided:
-the Henkin construction consumes finite members along its enumeration, choosing disjuncts
-and witnesses per member (the classical Marker/Keisler shape). -/
+/-- **The finite-member consistency predicate**: a UNIFORM finite support `(S, H)` (fixed
+across all levels — this is what the re-homogenization room lemma needs, and what the base
+case `markerStage_homogeneous` naturally provides) together with certification bodies at
+cofinally many levels below `ω₁`. The arbitrary-set `extension` field and the global `C4`
+uniformization of the ambient `ConsistencyPropertyEq` API are deliberately avoided: the
+Henkin construction consumes finite members along its enumeration, choosing disjuncts and
+witnesses per member (the classical Marker/Keisler shape). -/
 def MarkerHenkinConsistent (F : Finset ((L''[[J]])[[ℕ]].Sentenceω)) : Prop :=
-  ∀ β, β < Ordinal.omega 1 →
-    ∃ α, β ≤ α ∧ α < Ordinal.omega 1 ∧
-      MarkerHenkinCert M α (↑F : Set ((L''[[J]])[[ℕ]].Sentenceω))
+  ∃ (S : Finset J) (H : Finset ℕ),
+    (∀ τ ∈ (↑F : Set ((L''[[J]])[[ℕ]].Sentenceω)), expJConstsIn (L'' := L'') τ ⊆ ↑S) ∧
+    (∀ τ ∈ (↑F : Set ((L''[[J]])[[ℕ]].Sentenceω)), henkinConstsIn (L'' := L'') τ ⊆ ↑H) ∧
+    ∀ β, β < Ordinal.omega 1 →
+      ∃ α, β ≤ α ∧ α < Ordinal.omega 1 ∧
+        MarkerHenkinBody M α S (↑F : Set ((L''[[J]])[[ℕ]].Sentenceω))
 
 variable {M}
+
+/-- The body is monotone (downward-closed) in the fragment, at fixed support. -/
+theorem MarkerHenkinBody.mono {α : Ordinal.{0}} {S : Finset J}
+    {F F' : Set ((L''[[J]])[[ℕ]].Sentenceω)} (hFF : F' ⊆ F)
+    (hb : MarkerHenkinBody M α S F) : MarkerHenkinBody M α S F' := by
+  obtain ⟨e, hsat⟩ := hb
+  refine ⟨e, fun σ h1 h2 => ?_⟩
+  obtain ⟨h, hh⟩ := hsat σ h1 h2
+  exact ⟨h, fun τ hτ => hh τ (hFF hτ)⟩
+
+/-- **Body-level semantic insertion**: if a `trigger` member semantically entails a `new`
+sentence under every interpretation pair, adjoining `new` preserves the body (same suborder,
+same witnesses). -/
+theorem MarkerHenkinBody.insert_of_semantic {α : Ordinal.{0}} {S : Finset J}
+    {F : Set ((L''[[J]])[[ℕ]].Sentenceω)} (hb : MarkerHenkinBody M α S F)
+    {trigger new : (L''[[J]])[[ℕ]].Sentenceω} (hmem : trigger ∈ F)
+    (hder : ∀ (σ : J → M) (h : ℕ → M),
+      realizeWith σ h trigger (Empty.elim : Empty → M) Fin.elim0 →
+      realizeWith σ h new (Empty.elim : Empty → M) Fin.elim0) :
+    MarkerHenkinBody M α S (insert new F) := by
+  obtain ⟨e, hsat⟩ := hb
+  refine ⟨e, fun σ h1 h2 => ?_⟩
+  obtain ⟨h, hh⟩ := hsat σ h1 h2
+  refine ⟨h, ?_⟩
+  rintro τ (rfl | hτ)
+  · exact hder σ h (hh trigger hmem)
+  · exact hh τ hτ
 
 /-- Certification is monotone (downward-closed) in the fragment. -/
 theorem MarkerHenkinCert.mono {α : Ordinal.{0}} {F F' : Set ((L''[[J]])[[ℕ]].Sentenceω)}
     (hFF : F' ⊆ F) (hc : MarkerHenkinCert M α F) : MarkerHenkinCert M α F' := by
-  obtain ⟨S, H, hS, hH, e, hsat⟩ := hc
-  refine ⟨S, H, fun τ hτ => hS τ (hFF hτ), fun τ hτ => hH τ (hFF hτ), e, ?_⟩
-  intro σ h1 h2
-  obtain ⟨h, hh⟩ := hsat σ h1 h2
-  exact ⟨h, fun τ hτ => hh τ (hFF hτ)⟩
+  obtain ⟨S, H, hS, hH, hb⟩ := hc
+  exact ⟨S, H, fun τ hτ => hS τ (hFF hτ), fun τ hτ => hH τ (hFF hτ), hb.mono hFF⟩
 
 /-- Finite-member consistency is monotone (downward-closed). -/
 theorem MarkerHenkinConsistent.mono {F F' : Finset ((L''[[J]])[[ℕ]].Sentenceω)}
     (hFF : F' ⊆ F) (h : MarkerHenkinConsistent M F) : MarkerHenkinConsistent M F' := by
-  intro β hβ
-  obtain ⟨α, hβα, hα, hc⟩ := h β hβ
-  exact ⟨α, hβα, hα, hc.mono (Finset.coe_subset.mpr hFF)⟩
+  obtain ⟨S, H, hS, hH, hcof⟩ := h
+  have hFF' : (↑F' : Set ((L''[[J]])[[ℕ]].Sentenceω)) ⊆ ↑F := Finset.coe_subset.mpr hFF
+  refine ⟨S, H, fun τ hτ => hS τ (hFF' hτ), fun τ hτ => hH τ (hFF' hτ), fun β hβ => ?_⟩
+  obtain ⟨α, hβα, hα, hb⟩ := hcof β hβ
+  exact ⟨α, hβα, hα, hb.mono hFF'⟩
 
 /-- **The semantic insertion scheme** behind the choice-free closure rules: if a `trigger`
 member semantically entails a `new` sentence under every interpretation pair, and neither
@@ -903,20 +940,14 @@ theorem MarkerHenkinCert.insert_of_semantic {α : Ordinal.{0}}
       realizeWith σ h trigger (Empty.elim : Empty → M) Fin.elim0 →
       realizeWith σ h new (Empty.elim : Empty → M) Fin.elim0) :
     MarkerHenkinCert M α (insert new F) := by
-  obtain ⟨S, H, hS, hH, e, hsat⟩ := hc
-  refine ⟨S, H, ?_, ?_, e, ?_⟩
+  obtain ⟨S, H, hS, hH, hb⟩ := hc
+  refine ⟨S, H, ?_, ?_, hb.insert_of_semantic hmem hder⟩
   · rintro τ (rfl | hτ)
     · exact hJ.trans (hS trigger hmem)
     · exact hS τ hτ
   · rintro τ (rfl | hτ)
     · exact hN.trans (hH trigger hmem)
     · exact hH τ hτ
-  · intro σ h1 h2
-    obtain ⟨h, hh⟩ := hsat σ h1 h2
-    refine ⟨h, ?_⟩
-    rintro τ (rfl | hτ)
-    · exact hder σ h (hh trigger hmem)
-    · exact hh τ hτ
 
 /-- **`C0` (no falsum)**: a certified fragment cannot contain `⊥`. -/
 theorem MarkerHenkinCert.falsum_notMem {α : Ordinal.{0}}
@@ -940,7 +971,7 @@ theorem MarkerHenkinCert.not_mem_and_not_mem {α : Ordinal.{0}}
   exact (realizeWith_not σ h τ _ _).mp (hh _ h2) (hh _ h1)
 
 open scoped Classical in
-/-- The finite-member insertion scheme at the consistency level. -/
+/-- The finite-member insertion scheme at the consistency level (uniform support preserved). -/
 theorem MarkerHenkinConsistent.insert_of_semantic
     {F : Finset ((L''[[J]])[[ℕ]].Sentenceω)} (h : MarkerHenkinConsistent M F)
     {trigger new : (L''[[J]])[[ℕ]].Sentenceω} (hmem : trigger ∈ F)
@@ -950,11 +981,19 @@ theorem MarkerHenkinConsistent.insert_of_semantic
       realizeWith σ hk trigger (Empty.elim : Empty → M) Fin.elim0 →
       realizeWith σ hk new (Empty.elim : Empty → M) Fin.elim0) :
     MarkerHenkinConsistent M (insert new F) := by
-  intro β hβ
-  obtain ⟨α, hβα, hα, hc⟩ := h β hβ
-  refine ⟨α, hβα, hα, ?_⟩
-  rw [Finset.coe_insert]
-  exact hc.insert_of_semantic (Finset.mem_coe.mpr hmem) hJ hN hder
+  obtain ⟨S, H, hS, hH, hcof⟩ := h
+  have hmem' : trigger ∈ (↑F : Set ((L''[[J]])[[ℕ]].Sentenceω)) := Finset.mem_coe.mpr hmem
+  refine ⟨S, H, ?_, ?_, fun β hβ => ?_⟩
+  · rw [Finset.coe_insert]; rintro τ (rfl | hτ)
+    · exact hJ.trans (hS trigger hmem')
+    · exact hS τ hτ
+  · rw [Finset.coe_insert]; rintro τ (rfl | hτ)
+    · exact hN.trans (hH trigger hmem')
+    · exact hH τ hτ
+  · obtain ⟨α, hβα, hα, hb⟩ := hcof β hβ
+    refine ⟨α, hβα, hα, ?_⟩
+    rw [Finset.coe_insert]
+    exact hb.insert_of_semantic hmem' hder
 
 open scoped Classical in
 /-- **`C2` (double negation)**: `¬¬φ ∈ F` allows adjoining `φ`. -/
