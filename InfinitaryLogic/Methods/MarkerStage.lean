@@ -1057,6 +1057,160 @@ theorem MarkerHenkinConsistent.neg_imp_right
       (realizeWith_not σ hk (φ.imp ψ) _ _).mp hreal
         ((realizeWith_imp σ hk φ ψ _ _).mpr fun _ => hψ)
 
+/-! ### Layer 5b engine: re-homogenization
+
+The reusable machinery for the branch/index choice rules (`C1`, `C3'`, `C4`): color the
+support tuples of a high-level certificate body by the branch a realizing interpretation
+selects, re-homogenize inside the existing suborder via `finiteArityHomogeneousUpTo_beth_stage`
+at a level lower by the finite ladder cost `2·|S|+2`, and read off a uniform branch. -/
+
+section Rehomogenize
+
+open Cardinal
+
+variable {D : Type} [LinearOrder D]
+
+/-- The skeleton interpretation determined by a source tuple `t : Fin S.card → D` and a
+suborder `e : D ↪o M`: the `i`-th element of `S` maps to `e (t i)`, off `S` to a default. -/
+noncomputable def tupleInterp (S : Finset J) (e : D ↪o M) (t : Fin S.card → D) (dflt : M) :
+    J → M :=
+  fun j => if h : j ∈ S then e (t ((S.orderIsoOfFin rfl).symm ⟨j, h⟩)) else dflt
+
+theorem tupleInterp_orderEmbOfFin (S : Finset J) (e : D ↪o M) (t : Fin S.card → D) (dflt : M)
+    (i : Fin S.card) : tupleInterp S e t dflt (S.orderEmbOfFin rfl i) = e (t i) := by
+  have hmem : S.orderEmbOfFin rfl i ∈ S := S.orderEmbOfFin_mem rfl i
+  rw [tupleInterp, dif_pos hmem]
+  congr 2
+  have hcoe : (⟨S.orderEmbOfFin rfl i, hmem⟩ : ↑S) = S.orderIsoOfFin rfl i :=
+    Subtype.ext (S.coe_orderIsoOfFin_apply rfl i).symm
+  rw [hcoe, OrderIso.symm_apply_apply]
+
+theorem strictMonoOn_tupleInterp (S : Finset J) (e : D ↪o M) {t : Fin S.card → D}
+    (ht : StrictMono t) (dflt : M) : StrictMonoOn (tupleInterp S e t dflt) ↑S := by
+  intro j hj j' hj' hlt
+  simp only [tupleInterp]
+  rw [dif_pos (Finset.mem_coe.mp hj), dif_pos (Finset.mem_coe.mp hj')]
+  exact e.strictMono (ht ((S.orderIsoOfFin rfl).symm.strictMono (Subtype.mk_lt_mk.mpr hlt)))
+
+theorem tupleInterp_mem_range (S : Finset J) (e : D ↪o M) (t : Fin S.card → D) (dflt : M) :
+    ∀ j ∈ S, tupleInterp S e t dflt j ∈ Set.range e := by
+  intro j hj
+  rw [tupleInterp, dif_pos hj]
+  exact ⟨_, rfl⟩
+
+/-- On the support, `tupleInterp` agrees with any `σ` matching it index-by-index. -/
+theorem tupleInterp_eqOn (S : Finset J) (e : D ↪o M) (t : Fin S.card → D) (dflt : M)
+    {σ : J → M} (h : ∀ i, e (t i) = σ (S.orderEmbOfFin rfl i)) :
+    ∀ j ∈ S, tupleInterp S e t dflt j = σ j := by
+  intro j hj
+  have : j ∈ Set.range (S.orderEmbOfFin rfl) := by
+    rw [S.range_orderEmbOfFin rfl]; exact hj
+  obtain ⟨i, rfl⟩ := this
+  rw [tupleInterp_orderEmbOfFin, h i]
+
+/-- A finite tuple order-embedding into any infinite linear order exists. -/
+theorem exists_orderEmb_fin {D : Type} [LinearOrder D] [Infinite D] (m : ℕ) :
+    Nonempty (Fin m ↪o D) := by
+  obtain ⟨s, -, hcard⟩ := (Set.infinite_univ (α := D)).exists_subset_card_eq m
+  exact ⟨s.orderEmbOfFin hcard⟩
+
+/-- **Support-tuple factoring**: an admissible `σ` for the composite suborder `e'.trans e`
+factors through the support into a source tuple `t` landing in `Set.range e'` and matching
+`σ` on `S` index-by-index. -/
+theorem exists_factor_tuple {D₀ D : Type} [LinearOrder D₀] [LinearOrder D]
+    (S : Finset J) (e : D ↪o M) (e' : D₀ ↪o D) {σ : J → M}
+    (hmono : StrictMonoOn σ ↑S) (hrange : ∀ j ∈ S, σ j ∈ Set.range (e'.trans e)) :
+    ∃ t : Fin S.card → D, StrictMono t ∧ (∀ i, t i ∈ Set.range e') ∧
+      (∀ i, e (t i) = σ (S.orderEmbOfFin rfl i)) := by
+  have hw : StrictMono (fun i => σ (S.orderEmbOfFin rfl i)) := fun i i' hii =>
+    hmono (Finset.mem_coe.mpr (S.orderEmbOfFin_mem rfl i))
+      (Finset.mem_coe.mpr (S.orderEmbOfFin_mem rfl i')) ((S.orderEmbOfFin rfl).strictMono hii)
+  have hwrange : ∀ i, (OrderEmbedding.ofStrictMono _ hw) i ∈ Set.range (e'.trans e) :=
+    fun i => hrange _ (S.orderEmbOfFin_mem rfl i)
+  obtain ⟨s, hs⟩ := exists_orderEmbedding_factor (e'.trans e) (OrderEmbedding.ofStrictMono _ hw)
+    hwrange
+  refine ⟨fun i => e' (s i), e'.strictMono.comp s.strictMono, fun i => ⟨s i, rfl⟩, fun i => ?_⟩
+  have hi := DFunLike.congr_fun hs i
+  simpa [RelEmbedding.trans_apply] using hi
+
+/-- **The re-homogenization engine.** From a certificate body of `F` at a level `α` exceeding
+the target `α₀` by the finite ladder cost `2·|S|+2`, a covering branch family whose members
+have skeleton support inside `S`, produce ONE branch `k` and a body of `insert (branch k) F`
+at the target level `α₀`. The branch is uniform on the support tuples of the output suborder
+(read off `finiteArityHomogeneousUpTo_beth_stage`); every admissible interpretation of the
+output suborder factors through a support tuple, whose realizing interpretation selects
+`branch k`, and constant-agreement congruence transfers realization back. -/
+theorem MarkerHenkinBody.branch_choice
+    {α₀ α : Ordinal.{0}} {S : Finset J} {F : Set ((L''[[J]])[[ℕ]].Sentenceω)}
+    (hroom : α₀ + ((2 * S.card + 2 : ℕ) : Ordinal) ≤ α)
+    (hb : MarkerHenkinBody M α S F)
+    (hFsupp : ∀ τ ∈ F, expJConstsIn (L'' := L'') τ ⊆ ↑S)
+    {K : Type} [Countable K] (branch : K → ((L''[[J]])[[ℕ]]).Sentenceω)
+    (hbranchSupp : ∀ k, expJConstsIn (L'' := L'') (branch k) ⊆ ↑S)
+    (hcover : ∀ (σ : J → M) (h : ℕ → M),
+      (∀ τ ∈ F, realizeWith σ h τ (Empty.elim : Empty → M) Fin.elim0) →
+      ∃ k, realizeWith σ h (branch k) (Empty.elim : Empty → M) Fin.elim0) :
+    ∃ k, MarkerHenkinBody M α₀ S (insert (branch k) F) := by
+  classical
+  obtain ⟨e, hsat⟩ := hb
+  -- The source order of the input suborder, and its infiniteness.
+  set D := (Order.succ (Cardinal.beth α)).ord.ToType with hD
+  have hDinf : Infinite D := by
+    rw [hD, Cardinal.infinite_iff, Cardinal.mk_ord_toType]
+    exact (Cardinal.aleph0_le_beth α).trans (Order.le_succ _)
+  let dflt : M := e (Classical.arbitrary D)
+  -- Every source tuple gives an admissible interpretation, hence a realizing `h` and a branch.
+  have hadm : ∀ t : Fin S.card ↪o D, StrictMonoOn (tupleInterp S e ⇑t dflt) ↑S ∧
+      ∀ j ∈ S, tupleInterp S e ⇑t dflt j ∈ Set.range e := fun t =>
+    ⟨strictMonoOn_tupleInterp S e t.strictMono dflt, tupleInterp_mem_range S e ⇑t dflt⟩
+  choose hOf hOf_spec using fun t : Fin S.card ↪o D =>
+    hsat (tupleInterp S e ⇑t dflt) (hadm t).1 (hadm t).2
+  choose colorFn colorFn_spec using fun t : Fin S.card ↪o D =>
+    hcover (tupleInterp S e ⇑t dflt) (hOf t) (hOf_spec t)
+  -- A canonical support tuple through the (soon-to-be) output suborder gives the uniform value.
+  have hCK : Cardinal.mk K ≤ Cardinal.beth α₀ :=
+    Cardinal.mk_le_aleph0.trans (Cardinal.aleph0_le_beth α₀)
+  have hI : Cardinal.beth (α₀ + ((2 * S.card + 2 : ℕ) : Ordinal)) ≤ Cardinal.mk D := by
+    rw [hD, Cardinal.mk_ord_toType]
+    exact (Cardinal.beth_le_beth.mpr hroom).trans (Order.le_succ _)
+  obtain ⟨k₀t⟩ := exists_orderEmb_fin (D := D) S.card
+  obtain ⟨e', he'⟩ := finiteArityHomogeneousUpTo_beth_stage α₀ S.card hI (fun _ => K)
+    (fun _ => hCK) (Function.update (fun _ _ => colorFn k₀t) S.card colorFn)
+  -- The uniform branch: the colour of any support tuple through `e'`.
+  have hD0inf : Infinite (Order.succ (Cardinal.beth α₀)).ord.ToType := by
+    rw [Cardinal.infinite_iff, Cardinal.mk_ord_toType]
+    exact (Cardinal.aleph0_le_beth α₀).trans (Order.le_succ _)
+  obtain ⟨tcan₀⟩ := exists_orderEmb_fin (D := (Order.succ (Cardinal.beth α₀)).ord.ToType) S.card
+  set tcan : Fin S.card ↪o D := tcan₀.trans e' with htcan
+  have hcupd : (Function.update (fun _ _ => colorFn k₀t) S.card colorFn) S.card = colorFn :=
+    Function.update_self _ _ _
+  refine ⟨colorFn tcan, e'.trans e, fun σ hσmono hσrange => ?_⟩
+  -- Factor `σ` through `e'.trans e` into a source tuple `t` landing in `Set.range e'`.
+  obtain ⟨tf, htf_mono, htf_range, htf_eq⟩ := exists_factor_tuple S e e' hσmono hσrange
+  set t : Fin S.card ↪o D := OrderEmbedding.ofStrictMono tf htf_mono with ht
+  have ht_range : ∀ i, t i ∈ Set.range e' := htf_range
+  have htcan_range : ∀ i, tcan i ∈ Set.range e' := fun i => ⟨tcan₀ i, rfl⟩
+  -- Homogeneity: the branch of `t` equals the branch of the canonical tuple.
+  have hcol : colorFn t = colorFn tcan := by
+    have h := he' S.card le_rfl t tcan ht_range htcan_range
+    simpa only [Function.update_self] using h
+  -- The realizing `h` for `t`, transferred from `tupleInterp` to `σ` by congruence.
+  refine ⟨hOf t, ?_⟩
+  have hagree : ∀ j ∈ S, tupleInterp S e ⇑t dflt j = σ j :=
+    tupleInterp_eqOn S e ⇑t dflt fun i => htf_eq i
+  rintro τ (rfl | hτ)
+  · -- The new sentence `branch (colorFn tcan)`.
+    rw [← hcol]
+    exact (realizeWith_congr (branch (colorFn t))
+      (fun c hc => hagree c (Finset.mem_coe.mp (hbranchSupp (colorFn t) hc)))
+      (fun _ _ => rfl) _ _).mp (colorFn_spec t)
+  · -- An old member `τ ∈ F`.
+    exact (realizeWith_congr τ
+      (fun c hc => hagree c (Finset.mem_coe.mp (hFsupp τ hτ hc)))
+      (fun _ _ => rfl) _ _).mp (hOf_spec t τ hτ)
+
+end Rehomogenize
+
 end FiniteClosure
 
 end FirstOrder.Language
