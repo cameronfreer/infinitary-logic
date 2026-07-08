@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.SchemaOmegaWitness
+import InfinitaryLogic.Methods.MarkerStage
 
 /-!
 # Layer 7b, checkpoint 1: the countable schema sentence universe
@@ -73,5 +74,42 @@ theorem schemaSentenceUniverse_nonempty : (schemaSentenceUniverse s₀).Nonempty
   obtain ⟨mφ, hmφ⟩ := ΓEMlocal_nonempty s₀
   exact ⟨Lomega1omegaTemplate.templateSentence mφ.2 (stdTuple mφ.1),
     Set.mem_biUnion hmφ ⟨stdTuple mφ.1, rfl⟩⟩
+
+/-! ## Checkpoint 2, step 1: the template-realization bridge
+
+Connects MarkerStage's `realizeWith` (over the double Henkin expansion `((L''[[J]])[[ℕ]])`) to the
+`templateSentence` semantics: the schema sentence `templateSentence ψ t`, lifted into the Marker
+language along the Henkin inclusion, is `realizeWith`-true under a skeleton interpretation `σ`
+exactly when `ψ` holds on the `σ`-images `i ↦ σ (t i)` of its constants. The Henkin layer is inert
+(no Henkin constants occur). This is the semantic content the base certification (step 3) and the
+seed agreement (7c) both consume. Stated generically in `L''`/`J`, so the two `constantsOn`
+instances of `realizeWith` stay unambiguous (as at its definition site). -/
+
+section TemplateBridge
+
+variable {L'' : Language.{0, 0}} {J : Type} [LinearOrder J] {M : Type} [L''.Structure M]
+
+/-- **The template-realization bridge.** `templateSentence ψ t` (over `L''[[J]]`), lifted into the
+Marker double expansion `((L''[[J]])[[ℕ]])` along the Henkin inclusion, realizes under a skeleton
+interpretation `σ : J → M` and any Henkin interpretation `h : ℕ → M` iff `ψ` holds on the tuple
+`i ↦ σ (t i)`. Composes `sentenceRealize_iff_realizeWith`, `realize_mapLanguage` (the Henkin
+inclusion is an expansion, `withConstants_expansion`), and the existing `realize_templateSentence`. -/
+theorem realizeWith_templateSentence (σ : J → M) (h : ℕ → M)
+    {n : ℕ} (ψ : L''.BoundedFormulaω Empty n) (t : Fin n ↪o J) :
+    realizeWith σ h
+        ((Lomega1omegaTemplate.templateSentence ψ t).mapLanguage
+          ((L''[[J]]).lhomWithConstants ℕ))
+        (Empty.elim : Empty → M) Fin.elim0
+      ↔ ψ.Realize (Empty.elim : Empty → M) (fun i => σ (t i)) := by
+  letI : (constantsOn J).Structure M := constantsOn.structure σ
+  letI : (constantsOn ℕ).Structure M := constantsOn.structure h
+  rw [← sentenceRealize_iff_realizeWith]
+  show Sentenceω.Realize _ M ↔ _
+  rw [Sentenceω.Realize]
+  rw [BoundedFormulaω.realize_mapLanguage ((L''[[J]]).lhomWithConstants ℕ)
+    (Lomega1omegaTemplate.templateSentence ψ t)]
+  exact realize_templateSentence σ ψ t
+
+end TemplateBridge
 
 end FirstOrder.Language
