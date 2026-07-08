@@ -145,4 +145,167 @@ theorem markerHenkinConsistent_empty
 
 end EmptyBase
 
+/-! ## Checkpoint 3a: the lifted universe and its `FSentence` membership
+
+The ω-stage completion runs over `((localColim s₀)[[ℕ]])[[ℕ]]` (`FSentence`), so the universe must
+be lifted along the same Henkin inclusion as the bridge. Two `functionsIn`-under-`mapLanguage`
+facts (absent from the existing `relabel`/`subst`/`openBounds` API) drive the constant-support
+computation: lifting sends every function symbol to its `Sum.inl` image, so it produces **no**
+Henkin constants and preserves the skeleton-constant support. A lifted `templateSentence ψ t` then
+has finite constant support `image t` (and empty Henkin support) — regardless of how many base
+function symbols the (possibly `iSup`-branching) `ψ` uses, because `HasFiniteConstSupport` bounds
+only the *constant* symbols, never all of `functionsIn`. -/
+
+section FunctionsInMapLanguage
+
+variable {L L' : Language.{0, 0}} (g : L →ᴸ L')
+
+/-- `functionsIn` of a language-mapped term is the image of the term's `functionsIn` under the
+symbol map `⟨n, f⟩ ↦ ⟨n, g.onFunction f⟩`. -/
+theorem Term.functionsIn_onTerm {α : Type} (t : L.Term α) :
+    (g.onTerm t).functionsIn =
+      (fun p : Σ n, L.Functions n => ⟨p.1, g.onFunction p.2⟩) '' t.functionsIn := by
+  induction t with
+  | var x => simp [LHom.onTerm, Term.functionsIn]
+  | func f ts ih =>
+    simp only [LHom.onTerm, Term.functionsIn, Set.image_insert_eq, Set.image_iUnion, ih]
+
+/-- `functionsIn` of a language-mapped formula is the image of the formula's `functionsIn` under
+the symbol map `⟨n, f⟩ ↦ ⟨n, g.onFunction f⟩`. -/
+theorem BoundedFormulaω.functionsIn_mapLanguage {α : Type} {n : ℕ}
+    (φ : L.BoundedFormulaω α n) :
+    (φ.mapLanguage g).functionsIn =
+      (fun p : Σ n, L.Functions n => ⟨p.1, g.onFunction p.2⟩) '' φ.functionsIn := by
+  induction φ with
+  | falsum => simp [BoundedFormulaω.mapLanguage, BoundedFormulaω.functionsIn]
+  | equal t u =>
+    simp [BoundedFormulaω.mapLanguage, BoundedFormulaω.functionsIn, Term.functionsIn_onTerm,
+      Set.image_union]
+  | rel R ts =>
+    simp [BoundedFormulaω.mapLanguage, BoundedFormulaω.functionsIn, Term.functionsIn_onTerm,
+      Set.image_iUnion]
+  | imp φ ψ ihφ ihψ =>
+    simp [BoundedFormulaω.mapLanguage, BoundedFormulaω.functionsIn, ihφ, ihψ, Set.image_union]
+  | all φ ih => simp [BoundedFormulaω.mapLanguage, BoundedFormulaω.functionsIn, ih]
+  | iSup φs ih =>
+    simp [BoundedFormulaω.mapLanguage, BoundedFormulaω.functionsIn, ih, Set.image_iUnion]
+  | iInf φs ih =>
+    simp [BoundedFormulaω.mapLanguage, BoundedFormulaω.functionsIn, ih, Set.image_iUnion]
+
+end FunctionsInMapLanguage
+
+section HenkinLiftSupport
+
+variable {L'' : Language.{0, 0}} {J : Type}
+
+/-- The Henkin inclusion `(L''[[J]]) →ᴸ ((L''[[J]])[[ℕ]])` sends every function symbol to its
+`Sum.inl` image; hence a lifted formula has **no** Henkin constants. -/
+theorem henkinConstsIn_mapLanguage {α : Type} {n : ℕ} (τ : (L''[[J]]).BoundedFormulaω α n) :
+    henkinConstsIn (L'' := L'') (τ.mapLanguage ((L''[[J]]).lhomWithConstants ℕ)) = ∅ := by
+  ext m
+  simp only [henkinConstsIn, sentenceJConsts, Set.mem_setOf_eq,
+    BoundedFormulaω.functionsIn_mapLanguage, Set.mem_image, Set.mem_empty_iff_false, iff_false,
+    not_exists, not_and]
+  rintro ⟨k, f⟩ _ heq
+  rw [Sigma.mk.injEq] at heq
+  obtain ⟨rfl, heq2⟩ := heq
+  rw [heq_eq_eq] at heq2
+  simp at heq2
+
+/-- The Henkin inclusion preserves the skeleton (`J`) constant support: the expansion `J`-constants
+of a lifted formula are exactly the `J`-constants of the original. -/
+theorem expJConstsIn_mapLanguage {α : Type} {n : ℕ} (τ : (L''[[J]]).BoundedFormulaω α n) :
+    expJConstsIn (L'' := L'') (τ.mapLanguage ((L''[[J]]).lhomWithConstants ℕ)) =
+      sentenceJConsts (L' := L'') (J := J) τ := by
+  ext j
+  simp only [expJConstsIn, sentenceJConsts, Set.mem_setOf_eq,
+    BoundedFormulaω.functionsIn_mapLanguage, Set.mem_image]
+  constructor
+  · rintro ⟨⟨k, f⟩, hf, heq⟩
+    rw [Sigma.mk.injEq] at heq
+    obtain ⟨rfl, heq2⟩ := heq
+    rw [heq_eq_eq] at heq2
+    have hf2 : f = Sum.inr j := Sum.inl_injective heq2
+    exact hf2 ▸ hf
+  · intro hj
+    exact ⟨⟨0, Sum.inr j⟩, hj, rfl⟩
+
+end HenkinLiftSupport
+
+section TemplateSupport
+
+variable {L'' : Language.{0, 0}} {J : Type} [LinearOrder J]
+
+/-- The only `J`-constants of a `templateSentence ψ t` are the tuple's constants: substitution
+introduces exactly `{t 0, …, t (n-1)}` and the `mapLanguage`d body contributes only base
+(`Sum.inl`) symbols. -/
+theorem sentenceJConsts_templateSentence {n : ℕ} (ψ : L''.BoundedFormulaω Empty n)
+    (t : Fin n ↪o J) :
+    sentenceJConsts (L' := L'') (J := J) (Lomega1omegaTemplate.templateSentence ψ t)
+      ⊆ Set.range (⇑t) := by
+  intro j hj
+  simp only [sentenceJConsts, Set.mem_setOf_eq, Lomega1omegaTemplate.templateSentence] at hj
+  have hsub := BoundedFormulaω.functionsIn_subst
+    (fun i => Term.func (Sum.inr (t i) : (L''[[J]]).Functions 0) Fin.elim0)
+    ((ψ.mapLanguage (L''.lhomWithConstants J)).openBounds) hj
+  rw [BoundedFormulaω.functionsIn_openBounds] at hsub
+  rcases hsub with hbody | hconst
+  · rw [BoundedFormulaω.functionsIn_mapLanguage] at hbody
+    obtain ⟨⟨k, f⟩, -, heq⟩ := hbody
+    rw [Sigma.mk.injEq] at heq
+    obtain ⟨rfl, heq2⟩ := heq
+    rw [heq_eq_eq] at heq2
+    exact absurd heq2 (by simp)
+  · simp only [Set.mem_iUnion, Term.functionsIn, Set.iUnion_of_empty,
+      Set.mem_insert_iff, Set.mem_empty_iff_false, or_false] at hconst
+    obtain ⟨i, hi⟩ := hconst
+    rw [Sigma.mk.injEq] at hi
+    obtain ⟨-, hi2⟩ := hi
+    rw [heq_eq_eq] at hi2
+    exact ⟨i, (Sum.inr_injective hi2).symm⟩
+
+/-- **Every lifted `templateSentence` is an `FSentence`.** Its expansion `J`-support is the finite
+tuple image `image t`, and its Henkin support is empty. -/
+theorem hasFiniteConstSupport_mapLanguage_templateSentence {n : ℕ}
+    (ψ : L''.BoundedFormulaω Empty n) (t : Fin n ↪o J) :
+    HasFiniteConstSupport (L'' := L'')
+      ((Lomega1omegaTemplate.templateSentence ψ t).mapLanguage
+        ((L''[[J]]).lhomWithConstants ℕ)) := by
+  refine ⟨Finset.image (⇑t) Finset.univ, ∅, ?_, ?_⟩
+  · rw [expJConstsIn_mapLanguage]
+    intro j hj
+    obtain ⟨i, hi⟩ := sentenceJConsts_templateSentence ψ t hj
+    exact Finset.mem_coe.mpr (Finset.mem_image.mpr ⟨i, Finset.mem_univ i, hi⟩)
+  · rw [henkinConstsIn_mapLanguage]; exact Set.empty_subset _
+
+end TemplateSupport
+
+section LiftedUniverse
+
+variable {s₀ : LocalStage}
+
+/-- **The lifted schema universe**, as a set of `FSentence`s over the Marker language
+`((localColim s₀)[[ℕ]])[[ℕ]]`: each schema sentence `templateSentence ψ t` (`⟨m, ψ⟩ ∈ ΓEMlocal`),
+lifted along the Henkin inclusion and packaged with its finite-support proof. This is the
+enumeration domain the ω-stage completion (checkpoint 3b) decides. -/
+def schemaFSentenceUniverse (s₀ : LocalStage) :
+    Set (FSentence (L'' := localColim s₀) (J := ℕ)) :=
+  ⋃ (mφ ∈ ΓEMlocal s₀), Set.range fun t : Fin mφ.1 ↪o ℕ =>
+    (⟨(Lomega1omegaTemplate.templateSentence mφ.2 t).mapLanguage
+        (((localColim s₀)[[ℕ]]).lhomWithConstants ℕ),
+      hasFiniteConstSupport_mapLanguage_templateSentence mφ.2 t⟩ :
+      FSentence (L'' := localColim s₀) (J := ℕ))
+
+/-- **Checkpoint 3a.** The lifted schema `FSentence` universe is countable — the enumeration the
+completion needs exists. -/
+theorem schemaFSentenceUniverse_countable : (schemaFSentenceUniverse s₀).Countable :=
+  (ΓEMlocal_countable s₀).biUnion fun _ _ => Set.countable_range _
+
+/-- The lifted schema `FSentence` universe is nonempty (base point for the enumeration). -/
+theorem schemaFSentenceUniverse_nonempty : (schemaFSentenceUniverse s₀).Nonempty := by
+  obtain ⟨mφ, hmφ⟩ := ΓEMlocal_nonempty s₀
+  exact ⟨_, Set.mem_biUnion hmφ ⟨stdTuple mφ.1, rfl⟩⟩
+
+end LiftedUniverse
+
 end FirstOrder.Language
