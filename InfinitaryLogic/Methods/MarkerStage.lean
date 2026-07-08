@@ -525,4 +525,243 @@ def MarkerHenkinConsistent (F : Finset ((L''[[J]])[[ℕ]].Sentenceω)) : Prop :=
 
 end HenkinSubstrate
 
+/-! ## Layer 4: the `realizeWith` evaluation API and the constant-agreement congruence
+
+All structure instances are confined to the two wrapper definitions; every lemma statement
+mentions only the wrappers, so no local-instance synthesis ever leaks into downstream
+theorem statements. All later Marker closure rules are to be stated through this API. -/
+
+section RealizeWith
+
+variable {L'' : Language.{0, 0}} {J : Type} {M : Type} [L''.Structure M]
+
+/-- Evaluation of an expansion term under a skeleton interpretation `σ : J → M` and a
+Henkin interpretation `h : ℕ → M`. -/
+def termValueWith (σ : J → M) (h : ℕ → M) {β : Type}
+    (t : ((L''[[J]])[[ℕ]]).Term β) (v : β → M) : M :=
+  letI : (constantsOn J).Structure M := constantsOn.structure σ
+  letI : (constantsOn ℕ).Structure M := constantsOn.structure h
+  t.realize v
+
+/-- Realization of an expansion formula under a skeleton interpretation `σ : J → M` and a
+Henkin interpretation `h : ℕ → M`. -/
+def realizeWith (σ : J → M) (h : ℕ → M) {α : Type} {n : ℕ}
+    (φ : ((L''[[J]])[[ℕ]]).BoundedFormulaω α n) (v : α → M) (xs : Fin n → M) : Prop :=
+  letI : (constantsOn J).Structure M := constantsOn.structure σ
+  letI : (constantsOn ℕ).Structure M := constantsOn.structure h
+  φ.Realize v xs
+
+/-! ### Constructor unfolds (term level) -/
+
+@[simp] theorem termValueWith_var (σ : J → M) (h : ℕ → M) {β : Type} (x : β) (v : β → M) :
+    termValueWith (L'' := L'') σ h (Term.var x) v = v x := rfl
+
+@[simp] theorem termValueWith_base (σ : J → M) (h : ℕ → M) {β : Type} {l : ℕ}
+    (f : L''.Functions l) (ts : Fin l → ((L''[[J]])[[ℕ]]).Term β) (v : β → M) :
+    termValueWith σ h (Term.func (Sum.inl (Sum.inl f)) ts) v =
+      Structure.funMap f (fun i => termValueWith σ h (ts i) v) := rfl
+
+@[simp] theorem termValueWith_skeleton (σ : J → M) (h : ℕ → M) {β : Type} (j : J)
+    (ts : Fin 0 → ((L''[[J]])[[ℕ]]).Term β) (v : β → M) :
+    termValueWith σ h
+      (Term.func (Sum.inl (Sum.inr j) : ((L''[[J]])[[ℕ]]).Functions 0) ts) v = σ j := rfl
+
+@[simp] theorem termValueWith_henkin (σ : J → M) (h : ℕ → M) {β : Type} (m : ℕ)
+    (ts : Fin 0 → ((L''[[J]])[[ℕ]]).Term β) (v : β → M) :
+    termValueWith σ h
+      (Term.func (Sum.inr m : ((L''[[J]])[[ℕ]]).Functions 0) ts) v = h m := rfl
+
+@[simp] theorem termValueWith_henkinConst (σ : J → M) (h : ℕ → M) (m : ℕ)
+    (v : Empty → M) :
+    termValueWith σ h (henkinConst (L := L''[[J]]) m) v = h m := rfl
+
+/-! ### Constructor unfolds (formula level) -/
+
+/-- The base relation symbol behind an expansion relation symbol (the constant layers add
+no relations). -/
+def baseRel {l : ℕ} : ((L''[[J]])[[ℕ]]).Relations l → L''.Relations l
+  | Sum.inl (Sum.inl R) => R
+  | Sum.inl (Sum.inr e) => e.elim
+  | Sum.inr e => e.elim
+
+@[simp] theorem realizeWith_falsum (σ : J → M) (h : ℕ → M) {α : Type} {n : ℕ}
+    (v : α → M) (xs : Fin n → M) :
+    realizeWith (L'' := L'') σ h BoundedFormulaω.falsum v xs ↔ False := Iff.rfl
+
+@[simp] theorem realizeWith_equal (σ : J → M) (h : ℕ → M) {α : Type} {n : ℕ}
+    (t₁ t₂ : ((L''[[J]])[[ℕ]]).Term (α ⊕ Fin n)) (v : α → M) (xs : Fin n → M) :
+    realizeWith σ h (BoundedFormulaω.equal t₁ t₂) v xs ↔
+      termValueWith σ h t₁ (Sum.elim v xs) = termValueWith σ h t₂ (Sum.elim v xs) :=
+  Iff.rfl
+
+@[simp] theorem realizeWith_rel (σ : J → M) (h : ℕ → M) {α : Type} {n l : ℕ}
+    (R : ((L''[[J]])[[ℕ]]).Relations l) (ts : Fin l → ((L''[[J]])[[ℕ]]).Term (α ⊕ Fin n))
+    (v : α → M) (xs : Fin n → M) :
+    realizeWith σ h (BoundedFormulaω.rel R ts) v xs ↔
+      Structure.RelMap (baseRel (L'' := L'') R)
+        (fun i => termValueWith σ h (ts i) (Sum.elim v xs)) := by
+  rcases R with (R | e) | e
+  · exact Iff.rfl
+  · exact e.elim
+  · exact e.elim
+
+@[simp] theorem realizeWith_imp (σ : J → M) (h : ℕ → M) {α : Type} {n : ℕ}
+    (φ ψ : ((L''[[J]])[[ℕ]]).BoundedFormulaω α n) (v : α → M) (xs : Fin n → M) :
+    realizeWith σ h (φ.imp ψ) v xs ↔ (realizeWith σ h φ v xs → realizeWith σ h ψ v xs) :=
+  Iff.rfl
+
+@[simp] theorem realizeWith_all (σ : J → M) (h : ℕ → M) {α : Type} {n : ℕ}
+    (φ : ((L''[[J]])[[ℕ]]).BoundedFormulaω α (n + 1)) (v : α → M) (xs : Fin n → M) :
+    realizeWith σ h φ.all v xs ↔ ∀ x, realizeWith σ h φ v (Fin.snoc xs x) := Iff.rfl
+
+@[simp] theorem realizeWith_iSup (σ : J → M) (h : ℕ → M) {α : Type} {n : ℕ}
+    (φs : ℕ → ((L''[[J]])[[ℕ]]).BoundedFormulaω α n) (v : α → M) (xs : Fin n → M) :
+    realizeWith σ h (BoundedFormulaω.iSup φs) v xs ↔
+      ∃ i, realizeWith σ h (φs i) v xs := Iff.rfl
+
+@[simp] theorem realizeWith_iInf (σ : J → M) (h : ℕ → M) {α : Type} {n : ℕ}
+    (φs : ℕ → ((L''[[J]])[[ℕ]]).BoundedFormulaω α n) (v : α → M) (xs : Fin n → M) :
+    realizeWith σ h (BoundedFormulaω.iInf φs) v xs ↔
+      ∀ i, realizeWith σ h (φs i) v xs := Iff.rfl
+
+@[simp] theorem realizeWith_not (σ : J → M) (h : ℕ → M) {α : Type} {n : ℕ}
+    (φ : ((L''[[J]])[[ℕ]]).BoundedFormulaω α n) (v : α → M) (xs : Fin n → M) :
+    realizeWith σ h φ.not v xs ↔ ¬realizeWith σ h φ v xs := Iff.rfl
+
+@[simp] theorem realizeWith_ex (σ : J → M) (h : ℕ → M) {α : Type} {n : ℕ}
+    (φ : ((L''[[J]])[[ℕ]]).BoundedFormulaω α (n + 1)) (v : α → M) (xs : Fin n → M) :
+    realizeWith σ h φ.ex v xs ↔ ∃ x, realizeWith σ h φ v (Fin.snoc xs x) := by
+  letI : (constantsOn J).Structure M := constantsOn.structure σ
+  letI : (constantsOn ℕ).Structure M := constantsOn.structure h
+  exact BoundedFormulaω.realize_ex φ
+
+/-- Bridge to the raw sentence satisfaction used by `MarkerHenkinCert`. -/
+theorem sentenceRealize_iff_realizeWith (σ : J → M) (h : ℕ → M)
+    (τ : ((L''[[J]])[[ℕ]]).Sentenceω) :
+    (letI : (constantsOn J).Structure M := constantsOn.structure σ
+     letI : (constantsOn ℕ).Structure M := constantsOn.structure h
+     Sentenceω.Realize τ M) ↔
+    realizeWith σ h τ (Empty.elim : Empty → M) Fin.elim0 := Iff.rfl
+
+/-! ### The constant-agreement congruence -/
+
+/-- **Term congruence**: two skeleton interpretations agreeing on the occurring skeleton
+constants and two Henkin interpretations agreeing on the occurring witness constants give
+every term the same value. -/
+theorem termValueWith_congr {σ σ' : J → M} {h h' : ℕ → M} {β : Type}
+    (t : ((L''[[J]])[[ℕ]]).Term β)
+    (hσ : ∀ j : J, (⟨0, (Sum.inl (Sum.inr j) : ((L''[[J]])[[ℕ]]).Functions 0)⟩ :
+        Σ l, ((L''[[J]])[[ℕ]]).Functions l) ∈ Term.functionsIn t → σ j = σ' j)
+    (hh : ∀ m : ℕ, (⟨0, (Sum.inr m : ((L''[[J]])[[ℕ]]).Functions 0)⟩ :
+        Σ l, ((L''[[J]])[[ℕ]]).Functions l) ∈ Term.functionsIn t → h m = h' m)
+    (v : β → M) :
+    termValueWith σ h t v = termValueWith σ' h' t v := by
+  induction t with
+  | var x => rfl
+  | @func l f ts ih =>
+    have hmem : ∀ (i : Fin l) (s : Σ l, ((L''[[J]])[[ℕ]]).Functions l),
+        s ∈ Term.functionsIn (ts i) → s ∈ Term.functionsIn (Term.func f ts) := by
+      intro i s hs
+      simp only [Term.functionsIn]
+      exact Set.mem_insert_iff.mpr (Or.inr (Set.mem_iUnion.mpr ⟨i, hs⟩))
+    have hhead : (⟨l, f⟩ : Σ l, ((L''[[J]])[[ℕ]]).Functions l) ∈
+        Term.functionsIn (Term.func f ts) := by
+      simp only [Term.functionsIn]
+      exact Set.mem_insert _ _
+    have hargs : ∀ i, termValueWith σ h (ts i) v = termValueWith σ' h' (ts i) v :=
+      fun i => ih i (fun j hj => hσ j (hmem i _ hj)) (fun m hm => hh m (hmem i _ hm))
+    rcases f with (f | c) | c
+    · rw [termValueWith_base, termValueWith_base]
+      exact congrArg _ (funext hargs)
+    · cases l with
+      | zero => rw [termValueWith_skeleton, termValueWith_skeleton]; exact hσ c hhead
+      | succ l => exact c.elim
+    · cases l with
+      | zero => rw [termValueWith_henkin, termValueWith_henkin]; exact hh c hhead
+      | succ l => exact c.elim
+
+/-- **Formula congruence** — the semantic-support engine of the Marker construction:
+agreement on the occurring skeleton constants (`expJConstsIn`) and witness constants
+(`henkinConstsIn`) gives identical realization. This is what makes tuple-canonical
+colorings well-defined (`C4` re-homogenization) and fresh witness indices harmless
+(`C7`). -/
+theorem realizeWith_congr {σ σ' : J → M} {h h' : ℕ → M} {α : Type} {n : ℕ}
+    (φ : ((L''[[J]])[[ℕ]]).BoundedFormulaω α n)
+    (hσ : ∀ j ∈ expJConstsIn (L'' := L'') φ, σ j = σ' j)
+    (hh : ∀ m ∈ henkinConstsIn (L'' := L'') φ, h m = h' m)
+    (v : α → M) (xs : Fin n → M) :
+    realizeWith σ h φ v xs ↔ realizeWith σ' h' φ v xs := by
+  induction φ with
+  | falsum => exact Iff.rfl
+  | equal t₁ t₂ =>
+    rw [realizeWith_equal, realizeWith_equal,
+      termValueWith_congr t₁
+        (fun j hj => hσ j (by
+          simp only [expJConstsIn, Set.mem_setOf_eq, BoundedFormulaω.functionsIn]
+          exact Set.mem_union_left _ hj))
+        (fun m hm => hh m (by
+          simp only [henkinConstsIn, sentenceJConsts, Set.mem_setOf_eq,
+            BoundedFormulaω.functionsIn]
+          exact Set.mem_union_left _ hm)) _,
+      termValueWith_congr t₂
+        (fun j hj => hσ j (by
+          simp only [expJConstsIn, Set.mem_setOf_eq, BoundedFormulaω.functionsIn]
+          exact Set.mem_union_right _ hj))
+        (fun m hm => hh m (by
+          simp only [henkinConstsIn, sentenceJConsts, Set.mem_setOf_eq,
+            BoundedFormulaω.functionsIn]
+          exact Set.mem_union_right _ hm)) _]
+  | rel R ts =>
+    rw [realizeWith_rel, realizeWith_rel]
+    exact iff_of_eq (congrArg _ (funext fun i =>
+      termValueWith_congr (ts i)
+        (fun j hj => hσ j (by
+          simp only [expJConstsIn, Set.mem_setOf_eq, BoundedFormulaω.functionsIn]
+          exact Set.mem_iUnion.mpr ⟨i, hj⟩))
+        (fun m hm => hh m (by
+          simp only [henkinConstsIn, sentenceJConsts, Set.mem_setOf_eq,
+            BoundedFormulaω.functionsIn]
+          exact Set.mem_iUnion.mpr ⟨i, hm⟩)) _))
+  | imp φ ψ ihφ ihψ =>
+    rw [realizeWith_imp, realizeWith_imp,
+      ihφ (fun j hj => hσ j (by
+          simp only [expJConstsIn, Set.mem_setOf_eq, BoundedFormulaω.functionsIn] at hj ⊢
+          exact Set.mem_union_left _ hj))
+        (fun m hm => hh m (by
+          simp only [henkinConstsIn, sentenceJConsts, Set.mem_setOf_eq,
+            BoundedFormulaω.functionsIn] at hm ⊢
+          exact Set.mem_union_left _ hm)),
+      ihψ (fun j hj => hσ j (by
+          simp only [expJConstsIn, Set.mem_setOf_eq, BoundedFormulaω.functionsIn] at hj ⊢
+          exact Set.mem_union_right _ hj))
+        (fun m hm => hh m (by
+          simp only [henkinConstsIn, sentenceJConsts, Set.mem_setOf_eq,
+            BoundedFormulaω.functionsIn] at hm ⊢
+          exact Set.mem_union_right _ hm))]
+  | all φ ih =>
+    rw [realizeWith_all, realizeWith_all]
+    exact forall_congr' fun x => ih hσ hh (Fin.snoc xs x)
+  | iSup φs ih =>
+    rw [realizeWith_iSup, realizeWith_iSup]
+    exact exists_congr fun i =>
+      ih i (fun j hj => hσ j (by
+          simp only [expJConstsIn, Set.mem_setOf_eq, BoundedFormulaω.functionsIn] at hj ⊢
+          exact Set.mem_iUnion.mpr ⟨i, hj⟩))
+        (fun m hm => hh m (by
+          simp only [henkinConstsIn, sentenceJConsts, Set.mem_setOf_eq,
+            BoundedFormulaω.functionsIn] at hm ⊢
+          exact Set.mem_iUnion.mpr ⟨i, hm⟩)) xs
+  | iInf φs ih =>
+    rw [realizeWith_iInf, realizeWith_iInf]
+    exact forall_congr' fun i =>
+      ih i (fun j hj => hσ j (by
+          simp only [expJConstsIn, Set.mem_setOf_eq, BoundedFormulaω.functionsIn] at hj ⊢
+          exact Set.mem_iUnion.mpr ⟨i, hj⟩))
+        (fun m hm => hh m (by
+          simp only [henkinConstsIn, sentenceJConsts, Set.mem_setOf_eq,
+            BoundedFormulaω.functionsIn] at hm ⊢
+          exact Set.mem_iUnion.mpr ⟨i, hm⟩)) xs
+
+end RealizeWith
+
 end FirstOrder.Language
