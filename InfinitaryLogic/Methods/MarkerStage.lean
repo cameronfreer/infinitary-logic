@@ -1980,6 +1980,29 @@ theorem MarkerConsistentFamily.mem_of_insert_consistent
         (fun heq => hnew (heq ▸ Finset.mem_coe.mp hx)))
   exact hmax.2 hcons (Set.subset_insert new m) (Set.mem_insert new m)
 
+open scoped Classical in
+/-- **The membership-closure engine**: a fragment-level closure rule (adjoining `new` to any
+consistent fragment containing the trigger stays consistent) lifts, given `trigger ∈ m`, to
+`new ∈ m`. Every named closure membership rule below is a one-line instance. -/
+theorem MarkerConsistentFamily.mem_of_trigger {m : Set (FSentence (L'' := L'') (J := J))}
+    (hmax : Maximal (MarkerConsistentFamily M) m) {trigger : FSentence (L'' := L'') (J := J)}
+    (htrig : trigger ∈ m) (new : FSentence (L'' := L'') (J := J))
+    (rule : ∀ (G : Finset ((L''[[J]])[[ℕ]].Sentenceω)), trigger.val ∈ G →
+      MarkerHenkinConsistent M G → MarkerHenkinConsistent M (insert new.val G)) : new ∈ m := by
+  refine MarkerConsistentFamily.mem_of_insert_consistent hmax new (fun F hF => ?_)
+  have hsub : (↑(insert trigger F) : Set _) ⊆ m := by
+    rw [Finset.coe_insert]; exact Set.insert_subset_iff.mpr ⟨htrig, hF⟩
+  have hGcon : MarkerHenkinConsistent M ((insert trigger F).image Subtype.val) := hmax.1 _ hsub
+  rw [Finset.image_insert] at hGcon
+  exact (rule _ (Finset.mem_insert_self trigger.val (F.image Subtype.val)) hGcon).mono
+    (Finset.insert_subset_insert _ (Finset.subset_insert _ _))
+
+/-- **`C2` in membership form**: `¬¬φ ∈ m` implies `φ ∈ m`. -/
+theorem MarkerConsistentFamily.mem_not_not {m : Set (FSentence (L'' := L'') (J := J))}
+    (hmax : Maximal (MarkerConsistentFamily M) m) {φ : FSentence (L'' := L'') (J := J)}
+    (hmem : FSentence.not (FSentence.not φ) ∈ m) : φ ∈ m :=
+  MarkerConsistentFamily.mem_of_trigger hmax hmem φ (fun _ htg hG => hG.not_not htg)
+
 end FiniteClosure
 
 end FirstOrder.Language
