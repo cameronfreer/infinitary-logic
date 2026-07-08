@@ -875,6 +875,33 @@ theorem BoundedFormulaω.functionsIn_openBounds :
   | iSup φs ih => simp only [BoundedFormulaω.openBounds, BoundedFormulaω.functionsIn, ih]
   | iInf φs ih => simp only [BoundedFormulaω.openBounds, BoundedFormulaω.functionsIn, ih]
 
+/-- A term mentions only finitely many function symbols (it is a finite tree). -/
+theorem Term.functionsIn_finite (t : L.Term α) : t.functionsIn.Finite := by
+  induction t with
+  | var x => simp [Term.functionsIn]
+  | func f ts ih => exact (Set.finite_iUnion ih).insert _
+
+/-- Substitution only adds symbols: `φ`'s own symbols survive (only variables are replaced). -/
+theorem Term.functionsIn_subset_subst (tf : α → L.Term β) (t : L.Term α) :
+    t.functionsIn ⊆ (t.subst tf).functionsIn := by
+  induction t with
+  | var x => simp [Term.functionsIn]
+  | func f ts ih => exact Set.insert_subset_insert (Set.iUnion_mono ih)
+
+theorem BoundedFormulaω.functionsIn_subset_subst (tf : α → L.Term β) :
+    ∀ {k : ℕ} (φ : L.BoundedFormulaω α k), φ.functionsIn ⊆ (φ.subst tf).functionsIn := by
+  intro k φ
+  induction φ with
+  | falsum => simp [BoundedFormulaω.functionsIn]
+  | equal t₁ t₂ =>
+    exact Set.union_subset_union (Term.functionsIn_subset_subst _ _)
+      (Term.functionsIn_subset_subst _ _)
+  | rel R ts => exact Set.iUnion_mono fun i => Term.functionsIn_subset_subst _ _
+  | imp φ ψ ihφ ihψ => exact Set.union_subset_union ihφ ihψ
+  | all φ ih => exact ih
+  | iSup φs ih => exact Set.iUnion_mono ih
+  | iInf φs ih => exact Set.iUnion_mono ih
+
 end FunctionsIn
 
 /-! ## Layer 5: the finite Henkin closure calculus
@@ -1658,6 +1685,159 @@ theorem MarkerHenkinConsistent.extension
   cases b
   · exact Or.inl hcons
   · exact Or.inr hcons
+
+/-! ## Layer 6b: the equality closure rules (C5/C6)
+
+The equality rules the term-model quotient and truth lemma will need on the restricted
+maximal theory. Both are proved semantically (certification is realizability in `M`, whose
+equality is genuine) via unconditional/entailed insertion, with finite constant support
+tracked through the syntactic support API. -/
+
+omit [LinearOrder J] in
+/-- A sentence mentioning only finitely many function symbols has finite constant support:
+`expJConstsIn`/`henkinConstsIn` are preimages of `functionsIn` under injective maps. -/
+theorem HasFiniteConstSupport_of_functionsIn_finite {τ : ((L''[[J]])[[ℕ]]).Sentenceω}
+    (hfin : (BoundedFormulaω.functionsIn τ).Finite) : HasFiniteConstSupport (L'' := L'') τ := by
+  have hgexp : Function.Injective
+      (fun j : J => (⟨0, Sum.inl (Sum.inr j)⟩ : Σ l, ((L''[[J]])[[ℕ]]).Functions l)) := by
+    intro a b hab; injection hab with _ h2; exact Sum.inr_injective (Sum.inl_injective h2)
+  have hghen : Function.Injective
+      (fun m : ℕ => (⟨0, Sum.inr m⟩ : Σ l, ((L''[[J]])[[ℕ]]).Functions l)) := by
+    intro a b hab; injection hab with _ h2; exact Sum.inr_injective h2
+  refine ⟨(hfin.preimage hgexp.injOn).toFinset, (hfin.preimage hghen.injOn).toFinset, ?_, ?_⟩
+  · rw [Set.Finite.coe_toFinset]; exact subset_rfl
+  · rw [Set.Finite.coe_toFinset]; exact subset_rfl
+
+/-- **Body-level entailed insertion**: if the members of `F` semantically entail `new` under
+every interpretation, adjoining `new` preserves the body (same suborder, same witnesses). -/
+theorem MarkerHenkinBody.insert_of_entailed {α : Ordinal.{0}} {S : Finset J}
+    {F : Set ((L''[[J]])[[ℕ]].Sentenceω)} (hb : MarkerHenkinBody M α S F)
+    (new : ((L''[[J]])[[ℕ]]).Sentenceω)
+    (hent : ∀ (σ : J → M) (hk : ℕ → M),
+      (∀ ρ ∈ F, realizeWith σ hk ρ (Empty.elim : Empty → M) Fin.elim0) →
+      realizeWith σ hk new (Empty.elim : Empty → M) Fin.elim0) :
+    MarkerHenkinBody M α S (insert new F) := by
+  obtain ⟨e, hsat⟩ := hb
+  refine ⟨e, fun σ hm hr => ?_⟩
+  obtain ⟨h, hh⟩ := hsat σ hm hr
+  refine ⟨h, ?_⟩
+  rintro ρ (rfl | hρ)
+  · exact hent σ h hh
+  · exact hh ρ hρ
+
+open scoped Classical in
+/-- **Consistency-level entailed insertion**: a finite-support sentence entailed by `F` (under
+every interpretation) can be adjoined; the uniform support grows by the new sentence's finite
+supports. No re-homogenization (the entailment is unconditional over the branch). -/
+theorem MarkerHenkinConsistent.insert_entailed
+    {F : Finset ((L''[[J]])[[ℕ]].Sentenceω)} (h : MarkerHenkinConsistent M F)
+    (new : ((L''[[J]])[[ℕ]]).Sentenceω) (hnew : HasFiniteConstSupport (L'' := L'') new)
+    (hent : ∀ (σ : J → M) (hk : ℕ → M),
+      (∀ ρ ∈ (↑F : Set ((L''[[J]])[[ℕ]].Sentenceω)), realizeWith σ hk ρ
+        (Empty.elim : Empty → M) Fin.elim0) →
+      realizeWith σ hk new (Empty.elim : Empty → M) Fin.elim0) :
+    MarkerHenkinConsistent M (insert new F) := by
+  obtain ⟨S, H, hS, hH, hcof⟩ := h
+  obtain ⟨Snew, Hnew, hSnew, hHnew⟩ := hnew
+  refine ⟨S ∪ Snew, H ∪ Hnew, ?_, ?_, fun β hβ => ?_⟩
+  · rw [Finset.coe_insert]; rintro ρ (rfl | hρ)
+    · exact hSnew.trans (Finset.coe_subset.mpr Finset.subset_union_right)
+    · exact (hS ρ hρ).trans (Finset.coe_subset.mpr Finset.subset_union_left)
+  · rw [Finset.coe_insert]; rintro ρ (rfl | hρ)
+    · exact hHnew.trans (Finset.coe_subset.mpr Finset.subset_union_right)
+    · exact (hH ρ hρ).trans (Finset.coe_subset.mpr Finset.subset_union_left)
+  · obtain ⟨α, hβα, hα, hbody⟩ := hcof β hβ
+    refine ⟨α, hβα, hα, ?_⟩
+    rw [Finset.coe_insert]
+    exact (hbody.enlarge_support Finset.subset_union_left).insert_of_entailed new hent
+
+open scoped Classical in
+/-- **`C5` (equality reflexivity)**: `t = t` can always be adjoined — it is valid, so any
+realizing interpretation realizes it too. -/
+theorem MarkerHenkinConsistent.eq_refl
+    {F : Finset ((L''[[J]])[[ℕ]].Sentenceω)} (h : MarkerHenkinConsistent M F)
+    (t : ((L''[[J]])[[ℕ]]).Term (Empty ⊕ Fin 0)) :
+    MarkerHenkinConsistent M (insert (BoundedFormulaω.equal t t) F) := by
+  refine h.insert_entailed (BoundedFormulaω.equal t t) ?_ (fun σ hk _ => ?_)
+  · exact HasFiniteConstSupport_of_functionsIn_finite
+      ((Term.functionsIn_finite t).union (Term.functionsIn_finite t))
+  · rw [realizeWith_equal]
+
+omit [LinearOrder J] [LinearOrder M] in
+/-- The `C6` substitution instance mentions no symbol beyond the old instance `φ(t₁)` and the
+equality sentence — the syntactic support bound behind `eq_subst`'s finite support. -/
+theorem functionsIn_eq_subst_subset (t₁ t₂ : ((L''[[J]])[[ℕ]]).Term Empty)
+    (φ : ((L''[[J]])[[ℕ]]).BoundedFormulaω (Fin 1) 0) :
+    BoundedFormulaω.functionsIn (φ.subst (fun _ => t₂)) ⊆
+      BoundedFormulaω.functionsIn (φ.subst (fun _ => t₁)) ∪
+        BoundedFormulaω.functionsIn (BoundedFormulaω.equal
+          (t₁.relabel (Sum.inl : Empty → Empty ⊕ Fin 0))
+          (t₂.relabel (Sum.inl : Empty → Empty ⊕ Fin 0))) := by
+  refine (BoundedFormulaω.functionsIn_subst (fun _ => t₂) φ).trans (Set.union_subset ?_ ?_)
+  · exact (BoundedFormulaω.functionsIn_subset_subst (fun _ => t₁) φ).trans Set.subset_union_left
+  · refine Set.iUnion_subset fun _ => ?_
+    rw [← Term.functionsIn_relabel (Sum.inl : Empty → Empty ⊕ Fin 0) t₂]
+    exact Set.subset_union_of_subset_right Set.subset_union_right _
+
+omit [LinearOrder J] [LinearOrder M] in
+/-- Realizing a relabel of a closed term is realizing the term (the extra bound slot is
+vacuous). -/
+theorem termValueWith_relabel_inl (σ : J → M) (hk : ℕ → M)
+    (t : ((L''[[J]])[[ℕ]]).Term Empty) :
+    termValueWith σ hk (t.relabel Sum.inl) (Sum.elim (Empty.elim : Empty → M) Fin.elim0)
+      = termValueWith σ hk t (Empty.elim : Empty → M) := by
+  letI : (constantsOn J).Structure M := constantsOn.structure σ
+  letI : (constantsOn ℕ).Structure M := constantsOn.structure hk
+  show (t.relabel Sum.inl).realize (Sum.elim Empty.elim Fin.elim0) = t.realize Empty.elim
+  rw [Term.realize_relabel]
+  exact congrArg (fun v => Term.realize v t) (Subsingleton.elim _ _)
+
+omit [LinearOrder J] [LinearOrder M] in
+/-- The substitution-of-a-closed-term bridge: realizing `φ(t)` is realizing `φ` with its bound
+variable set to the value of `t`. -/
+theorem realizeWith_subst_const (σ : J → M) (hk : ℕ → M)
+    (φ : ((L''[[J]])[[ℕ]]).BoundedFormulaω (Fin 1) 0) (t : ((L''[[J]])[[ℕ]]).Term Empty) :
+    realizeWith σ hk (φ.subst (fun _ => t)) (Empty.elim : Empty → M) Fin.elim0 ↔
+      realizeWith σ hk φ (fun _ => termValueWith σ hk t (Empty.elim : Empty → M)) Fin.elim0 := by
+  letI : (constantsOn J).Structure M := constantsOn.structure σ
+  letI : (constantsOn ℕ).Structure M := constantsOn.structure hk
+  show (φ.subst (fun _ => t)).Realize Empty.elim Fin.elim0 ↔
+    φ.Realize (fun _ => t.realize Empty.elim) Fin.elim0
+  rw [BoundedFormulaω.realize_subst]
+
+open scoped Classical in
+/-- **`C6` (equality substitution)**: from `t₁ = t₂ ∈ F` and `φ(t₁) ∈ F`, the instance `φ(t₂)`
+can be adjoined — the equality forces equal term values, and `realizeWith_subst_const`
+transports `φ`. The support of `φ(t₂)` stays inside `F`'s uniform support
+(`functionsIn_eq_subst_subset`). -/
+theorem MarkerHenkinConsistent.eq_subst
+    {F : Finset ((L''[[J]])[[ℕ]].Sentenceω)} (h : MarkerHenkinConsistent M F)
+    (t₁ t₂ : ((L''[[J]])[[ℕ]]).Term Empty) (φ : ((L''[[J]])[[ℕ]]).BoundedFormulaω (Fin 1) 0)
+    (hmem_eq : BoundedFormulaω.equal (t₁.relabel (Sum.inl : Empty → Empty ⊕ Fin 0))
+      (t₂.relabel (Sum.inl : Empty → Empty ⊕ Fin 0)) ∈ F)
+    (hmem_φ : φ.subst (fun _ => t₁) ∈ F) :
+    MarkerHenkinConsistent M (insert (φ.subst (fun _ => t₂)) F) := by
+  have hmem_eq' : BoundedFormulaω.equal (t₁.relabel (Sum.inl : Empty → Empty ⊕ Fin 0))
+      (t₂.relabel (Sum.inl : Empty → Empty ⊕ Fin 0)) ∈
+      (↑F : Set ((L''[[J]])[[ℕ]].Sentenceω)) := Finset.mem_coe.mpr hmem_eq
+  have hmem_φ' : φ.subst (fun _ => t₁) ∈ (↑F : Set ((L''[[J]])[[ℕ]].Sentenceω)) :=
+    Finset.mem_coe.mpr hmem_φ
+  have hnew : HasFiniteConstSupport (L'' := L'') (φ.subst (fun _ => t₂)) := by
+    obtain ⟨S, H, hS, hH, -⟩ := h
+    refine ⟨S, H, fun j hj => ?_, fun m hm => ?_⟩
+    · rcases functionsIn_eq_subst_subset t₁ t₂ φ hj with h1 | h2
+      · exact hS _ hmem_φ' h1
+      · exact hS _ hmem_eq' h2
+    · rcases functionsIn_eq_subst_subset t₁ t₂ φ hm with h1 | h2
+      · exact hH _ hmem_φ' h1
+      · exact hH _ hmem_eq' h2
+  refine h.insert_entailed (φ.subst (fun _ => t₂)) hnew (fun σ hk hF => ?_)
+  have heq := hF _ hmem_eq'
+  have hφ1 := hF _ hmem_φ'
+  rw [realizeWith_equal, termValueWith_relabel_inl, termValueWith_relabel_inl] at heq
+  rw [realizeWith_subst_const] at hφ1 ⊢
+  rw [← heq]
+  exact hφ1
 
 end FiniteClosure
 
