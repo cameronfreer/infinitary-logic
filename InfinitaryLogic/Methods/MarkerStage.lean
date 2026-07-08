@@ -1608,7 +1608,7 @@ def HasFiniteConstSupport (τ : ((L''[[J]])[[ℕ]]).Sentenceω) : Prop :=
 
 /-- The subtype of finite-constant-support sentences — the universe of the maximal
 finite-support theory. -/
-def FSentence := {τ : ((L''[[J]])[[ℕ]]).Sentenceω // HasFiniteConstSupport (L'' := L'') τ}
+abbrev FSentence := {τ : ((L''[[J]])[[ℕ]]).Sentenceω // HasFiniteConstSupport (L'' := L'') τ}
 
 omit [LinearOrder J] in
 /-- Negation preserves finite constant support. -/
@@ -1908,6 +1908,77 @@ theorem exists_maximal_markerConsistent (X₀ : Set (FSentence (L'' := L'') (J :
     X₀ hX₀
   exact ⟨⋃₀ 𝒞, MarkerConsistentFamily.sUnion_chain (fun Y hY => h𝒞S hY) hchain hne,
     fun s hs => Set.subset_sUnion_of_mem hs⟩
+
+/-! ### Membership calculus of the maximal theory -/
+
+open scoped Classical in
+/-- A sentence outside a maximal theory is refuted by some finite fragment: adjoining it to
+that fragment breaks consistency. -/
+theorem not_mem_of_maximal {m : Set (FSentence (L'' := L'') (J := J))}
+    (hmax : Maximal (MarkerConsistentFamily M) m) {τ : FSentence (L'' := L'') (J := J)}
+    (hτ : τ ∉ m) :
+    ∃ F : Finset (FSentence (L'' := L'') (J := J)), ↑F ⊆ m ∧
+      ¬ MarkerHenkinConsistent M (insert τ.val (F.image Subtype.val)) := by
+  have h1 : ¬ MarkerConsistentFamily M (insert τ m) := fun hc =>
+    hτ (hmax.2 hc (Set.subset_insert τ m) (Set.mem_insert τ m))
+  simp only [MarkerConsistentFamily, not_forall] at h1
+  obtain ⟨F, hFsub, hFncon⟩ := h1
+  by_cases hτF : τ ∈ F
+  · refine ⟨F.erase τ, ?_, ?_⟩
+    · intro x hx
+      obtain ⟨hxτ, hxF⟩ := Finset.mem_erase.mp (Finset.mem_coe.mp hx)
+      exact (Set.mem_insert_iff.mp (hFsub (Finset.mem_coe.mpr hxF))).resolve_left hxτ
+    · have heq : F.image Subtype.val = insert τ.val ((F.erase τ).image Subtype.val) := by
+        rw [← Finset.image_insert, Finset.insert_erase hτF]
+      rw [heq] at hFncon; exact hFncon
+  · exact absurd (hmax.1 F (fun x hx => (Set.mem_insert_iff.mp (hFsub hx)).resolve_left
+      (fun heq => hτF (heq ▸ Finset.mem_coe.mp hx)))) hFncon
+
+open scoped Classical in
+/-- **Restricted completeness**: a maximal finite-support theory decides every finite-support
+sentence. From maximality, `insert τ m` and `insert τ.not m` are both inconsistent as families
+when `τ, τ.not ∉ m`; combining the two refuting fragments and applying the extension rule
+yields a contradiction. -/
+theorem MarkerConsistentFamily.mem_or_not_mem {m : Set (FSentence (L'' := L'') (J := J))}
+    (hmax : Maximal (MarkerConsistentFamily M) m) (τ : FSentence (L'' := L'') (J := J)) :
+    τ ∈ m ∨ FSentence.not τ ∈ m := by
+  by_contra hcon
+  rw [not_or] at hcon
+  obtain ⟨hτ, hτn⟩ := hcon
+  obtain ⟨F₁, hF₁sub, hF₁ncon⟩ := not_mem_of_maximal hmax hτ
+  obtain ⟨F₂, hF₂sub, hF₂ncon⟩ := not_mem_of_maximal hmax hτn
+  have hGsub : (↑(F₁ ∪ F₂) : Set _) ⊆ m := by
+    rw [Finset.coe_union]; exact Set.union_subset hF₁sub hF₂sub
+  have hGcon : MarkerHenkinConsistent M ((F₁ ∪ F₂).image Subtype.val) := hmax.1 _ hGsub
+  have h₁ : (F₁.image Subtype.val) ⊆ (F₁ ∪ F₂).image Subtype.val :=
+    Finset.image_subset_image Finset.subset_union_left
+  have h₂ : (F₂.image Subtype.val) ⊆ (F₁ ∪ F₂).image Subtype.val :=
+    Finset.image_subset_image Finset.subset_union_right
+  rcases hGcon.extension τ.val τ.2 with hc | hc
+  · exact hF₁ncon (hc.mono (Finset.insert_subset_insert _ h₁))
+  · exact hF₂ncon (hc.mono (Finset.insert_subset_insert _ h₂))
+
+open scoped Classical in
+/-- **The membership-insertion principle** for the maximal theory: a finite-support sentence
+whose adjunction to every fragment of `m` stays consistent is a member of `m`. This turns each
+fragment-level closure rule into a membership rule. -/
+theorem MarkerConsistentFamily.mem_of_insert_consistent
+    {m : Set (FSentence (L'' := L'') (J := J))}
+    (hmax : Maximal (MarkerConsistentFamily M) m) (new : FSentence (L'' := L'') (J := J))
+    (hins : ∀ F : Finset (FSentence (L'' := L'') (J := J)), ↑F ⊆ m →
+      MarkerHenkinConsistent M (insert new.val (F.image Subtype.val))) : new ∈ m := by
+  have hcons : MarkerConsistentFamily M (insert new m) := by
+    intro F hF
+    by_cases hnew : new ∈ F
+    · have heq : F.image Subtype.val = insert new.val ((F.erase new).image Subtype.val) := by
+        rw [← Finset.image_insert, Finset.insert_erase hnew]
+      rw [heq]
+      refine hins (F.erase new) (fun x hx => ?_)
+      obtain ⟨hxnew, hxF⟩ := Finset.mem_erase.mp (Finset.mem_coe.mp hx)
+      exact (Set.mem_insert_iff.mp (hF (Finset.mem_coe.mpr hxF))).resolve_left hxnew
+    · exact hmax.1 F (fun x hx => (Set.mem_insert_iff.mp (hF hx)).resolve_left
+        (fun heq => hnew (heq ▸ Finset.mem_coe.mp hx)))
+  exact hmax.2 hcons (Set.subset_insert new m) (Set.mem_insert new m)
 
 end FiniteClosure
 
