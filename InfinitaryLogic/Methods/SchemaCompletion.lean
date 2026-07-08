@@ -112,4 +112,37 @@ theorem realizeWith_templateSentence (σ : J → M) (h : ℕ → M)
 
 end TemplateBridge
 
+/-! ## Checkpoint 2: the empty base is Marker-consistent
+
+The ω-stage completion (checkpoint 3) starts from the empty theory and decides every schema
+sentence's sign via the already-proved `MarkerHenkinConsistent.extension` (which internally
+homogenizes through `markerStage_homogeneous`). Since `schemaSentenceUniverse` is a *decision
+list* — its canonical atoms include both true and false instances (e.g. `x₀ = x₁`) — the base is
+NOT "all universe sentences are true"; it is the trivially-realizable empty fragment. The Morley
+seed `{φ, x₀ ≠ x₁}` needs no explicit seeding: `extension` is forced to pick `φ` (its negation is
+incompatible with `M ⊨ φ`) and distinctness (its negation is incompatible with the strictly
+increasing skeleton interpretations). -/
+
+section EmptyBase
+
+variable {L'' : Language.{0, 0}} {J : Type} [LinearOrder J]
+  {M : Type} [L''.Structure M] [LinearOrder M] [WellFoundedLT M]
+
+/-- **Checkpoint 2.** The empty fragment is `MarkerHenkinConsistent M` for any source `M` of size
+`≥ ℶ_ω₁`: at every level `β < ω₁` the body is the trivial certificate over the `(ℶ_β)⁺`-suborder
+`e` supplied by `markerStage_homogeneous` at empty arity, with no members to realize. This is the
+starting point the ω-stage `extension`/`iSup_choice` chain builds on. -/
+theorem markerHenkinConsistent_empty
+    (hM : Cardinal.beth (Ordinal.omega 1) ≤ Cardinal.mk M) :
+    MarkerHenkinConsistent M (∅ : Finset (((L''[[J]])[[ℕ]]).Sentenceω)) := by
+  haveI : Nonempty M := Cardinal.mk_ne_zero_iff.mp
+    (((lt_of_lt_of_le Cardinal.aleph0_pos (Cardinal.aleph0_le_beth _)).trans_le hM).ne')
+  refine ⟨∅, ∅, fun τ hτ => by simp at hτ, fun τ hτ => by simp at hτ, fun β hβ => ?_⟩
+  obtain ⟨_, _, _, _, _, e, _⟩ :=
+    markerStage_homogeneous (L' := L'') M hM β hβ (J := J)
+      (m := 0) (ar := Fin.elim0) (fun p => p.elim0) (fun p => p.elim0)
+  exact ⟨β, le_refl β, hβ, e, fun σ _ _ => ⟨fun _ => Classical.arbitrary M, fun τ hτ => by simp at hτ⟩⟩
+
+end EmptyBase
+
 end FirstOrder.Language
