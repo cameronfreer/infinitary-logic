@@ -1839,6 +1839,76 @@ theorem MarkerHenkinConsistent.eq_subst
   rw [← heq]
   exact hφ1
 
+/-! ## Layer 6c: the maximal finite-support theory (Zorn)
+
+The finite closure calculus (C0–C7) is turned into a complete theory over the finite-support
+universe by a finite-character Zorn argument, mirroring `ConsistencyProperty.chain_closure`
+but with completeness only for finite-support sentences — exactly what the restricted truth
+lemma will need. Parameterized by a consistent seed (the base consistency hook is a separate
+cross-file integration; the abstract machinery here fixes the shape it must feed). -/
+
+/-- Negation on the finite-support universe. -/
+def FSentence.not (τ : FSentence (L'' := L'') (J := J)) : FSentence (L'' := L'') (J := J) :=
+  ⟨τ.1.not, τ.2.not⟩
+
+variable (M)
+
+open scoped Classical in
+/-- **Finite-character Marker consistency** of a set of finite-support sentences: every finite
+subset is Marker–Henkin consistent. This is the family Zorn runs over. -/
+def MarkerConsistentFamily (X : Set (FSentence (L'' := L'') (J := J))) : Prop :=
+  ∀ F : Finset (FSentence (L'' := L'') (J := J)), ↑F ⊆ X →
+    MarkerHenkinConsistent M (F.image Subtype.val)
+
+variable {M}
+
+/-- Finite-character consistency is downward-closed in the set. -/
+theorem MarkerConsistentFamily.mono {X X' : Set (FSentence (L'' := L'') (J := J))}
+    (hXX : X' ⊆ X) (h : MarkerConsistentFamily M X) : MarkerConsistentFamily M X' :=
+  fun F hF => h F (hF.trans hXX)
+
+open scoped Classical in
+/-- **Chain closure**: the union of a nonempty `⊆`-chain of finite-character-consistent sets is
+finite-character consistent — a finite subset of the union lies in one chain member. -/
+theorem MarkerConsistentFamily.sUnion_chain
+    {𝒞 : Set (Set (FSentence (L'' := L'') (J := J)))}
+    (h𝒞 : ∀ Y ∈ 𝒞, MarkerConsistentFamily M Y) (hchain : IsChain (· ⊆ ·) 𝒞)
+    (hne : 𝒞.Nonempty) : MarkerConsistentFamily M (⋃₀ 𝒞) := by
+  have key : ∀ F : Finset (FSentence (L'' := L'') (J := J)),
+      (↑F : Set _) ⊆ ⋃₀ 𝒞 → ∃ Y ∈ 𝒞, (↑F : Set _) ⊆ Y := by
+    intro F
+    induction F using Finset.induction with
+    | empty => intro _; obtain ⟨Y, hY⟩ := hne; exact ⟨Y, hY, by simp⟩
+    | insert a s ha ih =>
+      intro hsub
+      have hsub' : (↑s : Set _) ⊆ ⋃₀ 𝒞 :=
+        (Finset.coe_subset.mpr (Finset.subset_insert a s)).trans hsub
+      obtain ⟨Y₁, hY₁, hsY₁⟩ := ih hsub'
+      have haU : a ∈ ⋃₀ 𝒞 := hsub (by simp)
+      obtain ⟨Y₂, hY₂, haY₂⟩ := haU
+      rcases eq_or_ne Y₁ Y₂ with rfl | hne12
+      · refine ⟨Y₁, hY₁, ?_⟩
+        rw [Finset.coe_insert, Set.insert_subset_iff]; exact ⟨haY₂, hsY₁⟩
+      · rcases hchain.total hY₁ hY₂ with h12 | h21
+        · refine ⟨Y₂, hY₂, ?_⟩
+          rw [Finset.coe_insert, Set.insert_subset_iff]; exact ⟨haY₂, hsY₁.trans h12⟩
+        · refine ⟨Y₁, hY₁, ?_⟩
+          rw [Finset.coe_insert, Set.insert_subset_iff]; exact ⟨h21 haY₂, hsY₁⟩
+  intro F hF
+  obtain ⟨Y, hYmem, hFY⟩ := key F hF
+  exact h𝒞 Y hYmem F hFY
+
+open scoped Classical in
+/-- **The maximal finite-support theory**: any finite-character-consistent seed extends to a
+maximal one (Zorn, chain closure supplying the upper bounds). -/
+theorem exists_maximal_markerConsistent (X₀ : Set (FSentence (L'' := L'') (J := J)))
+    (hX₀ : MarkerConsistentFamily M X₀) :
+    ∃ m, X₀ ⊆ m ∧ Maximal (MarkerConsistentFamily M) m := by
+  refine zorn_subset_nonempty {X | MarkerConsistentFamily M X} (fun 𝒞 h𝒞S hchain hne => ?_)
+    X₀ hX₀
+  exact ⟨⋃₀ 𝒞, MarkerConsistentFamily.sUnion_chain (fun Y hY => h𝒞S hY) hchain hne,
+    fun s hs => Set.subset_sUnion_of_mem hs⟩
+
 end FiniteClosure
 
 end FirstOrder.Language
