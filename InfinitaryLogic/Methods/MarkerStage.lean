@@ -76,13 +76,15 @@ order-position that an arbitrary linear `J` need not offer, so witnesses live in
 layer `(L'[[J]])[[ℕ]]` instead (`henkinConst`, `henkinConstsIn`, `expJConstsIn`), with the
 reduct lemma (`Theoryω.model_reduct_of_expansion`) returning the final model to `L'[[J]]`.
 The finite-member predicates over the expansion (`MarkerHenkinCert`,
-`MarkerHenkinConsistent`) avoid the arbitrary-set `extension` field and the global `C4`
-uniformization entirely — the Henkin construction consumes finite members along its
-enumeration, per the classical Marker/Keisler shape. Next: the finite closure rules
-(per-member `C4` disjunct choice by re-homogenization inside the certificate, `C7` via a
-fresh witness index — both need the constant-agreement congruence engine, to be built as a
-`realizeWith` API to avoid dual-instance `letI` juggling), then the Henkin
-construction/model-existence adapter decision.
+`MarkerHenkinConsistent`, Layer 5) avoid the arbitrary-set `extension` field and the global
+`C4` uniformization entirely — the Henkin construction consumes finite members along its
+enumeration, per the classical Marker/Keisler shape. The `realizeWith` API (Layer 4)
+confines all structure instances to two definition bodies; every closure rule is stated
+through it. The choice-free closure rules (`C0`/`C1'`/`C2`/`C3`/`C4'`) are proved in
+Layer 5; remaining: the re-homogenization rules (`C1`, `C3'`, `C4` — per-member
+branch/index choice by coloring support tuples inside the certificate), `C7` via a fresh
+witness index (enabled by the finite-Henkin-support invariant — see the Layer 5 audit
+note), then the Henkin construction/model-existence adapter decision.
 -/
 
 universe u
@@ -211,6 +213,20 @@ theorem sentenceJConsts_component_iSup {α : Type} {n : ℕ}
   intro j hj
   simp only [sentenceJConsts, Set.mem_setOf_eq, BoundedFormulaω.functionsIn] at hj ⊢
   exact Set.mem_iUnion.mpr ⟨k, hj⟩
+
+/-- An implication's antecedent support is contained in the implication's. -/
+theorem sentenceJConsts_imp_left {α : Type} {n : ℕ} (φ ψ : L'[[J]].BoundedFormulaω α n) :
+    sentenceJConsts (L' := L') φ ⊆ sentenceJConsts (L' := L') (φ.imp ψ) := by
+  intro j hj
+  simp only [sentenceJConsts, Set.mem_setOf_eq, BoundedFormulaω.functionsIn] at hj ⊢
+  exact Set.mem_union_left _ hj
+
+/-- An implication's consequent support is contained in the implication's. -/
+theorem sentenceJConsts_imp_right {α : Type} {n : ℕ} (φ ψ : L'[[J]].BoundedFormulaω α n) :
+    sentenceJConsts (L' := L') ψ ⊆ sentenceJConsts (L' := L') (φ.imp ψ) := by
+  intro j hj
+  simp only [sentenceJConsts, Set.mem_setOf_eq, BoundedFormulaω.functionsIn] at hj ⊢
+  exact Set.mem_union_right _ hj
 
 
 variable [LinearOrder J] (M : Type) [L'.Structure M] [LinearOrder M]
@@ -496,32 +512,8 @@ theorem Theoryω.model_reduct_of_model_image {L : Language.{0, 0}} {γ : Type} (
     Theoryω.Model T N :=
   Theoryω.model_reduct_of_expansion T fun _ hτ => h _ (Set.mem_image_of_mem _ hτ)
 
-variable [LinearOrder J] (M : Type) [L''.Structure M] [LinearOrder M]
-
-/-- **The per-level Henkin–Marker certification of a finite fragment** over the expansion
-`(L''[[J]])[[ℕ]]`: a common finite `J`-support `S`, a `(ℶ_α)⁺`-suborder `e` of the source,
-and — for EVERY skeleton interpretation increasing on `S` into `e`'s range — SOME
-Henkin-witness interpretation making every member true. The skeleton side stays universal
-(the EM tuples); the witness side is existential per interpretation, because quantifier
-witnesses vary with the tuple. -/
-def MarkerHenkinCert (α : Ordinal.{0}) (F : Set ((L''[[J]])[[ℕ]].Sentenceω)) : Prop :=
-  ∃ S : Finset J, (∀ τ ∈ F, expJConstsIn (L'' := L'') τ ⊆ ↑S) ∧
-    ∃ e : (Order.succ (Cardinal.beth α)).ord.ToType ↪o M,
-      ∀ σ : J → M, StrictMonoOn σ ↑S → (∀ j ∈ S, σ j ∈ Set.range e) →
-        ∃ h : ℕ → M,
-          letI : (constantsOn J).Structure M := constantsOn.structure σ
-          letI : (constantsOn ℕ).Structure M := constantsOn.structure h
-          ∀ τ ∈ F, Sentenceω.Realize τ M
-
-/-- **The finite-member consistency predicate**: certification at cofinally many levels
-below `ω₁`, over FINITE fragments only. The arbitrary-set `extension` field and the global
-`C4` uniformization of the ambient `ConsistencyPropertyEq` API are deliberately avoided:
-the Henkin construction consumes finite members along its enumeration, choosing disjuncts
-and witnesses per member (the classical Marker/Keisler shape). -/
-def MarkerHenkinConsistent (F : Finset ((L''[[J]])[[ℕ]].Sentenceω)) : Prop :=
-  ∀ β, β < Ordinal.omega 1 →
-    ∃ α, β ≤ α ∧ α < Ordinal.omega 1 ∧
-      MarkerHenkinCert M α (↑F : Set ((L''[[J]])[[ℕ]].Sentenceω))
+-- (The finite-member predicates `MarkerHenkinCert`/`MarkerHenkinConsistent` live in
+-- Layer 5 below, stated through the `realizeWith` API of Layer 4.)
 
 end HenkinSubstrate
 
@@ -763,5 +755,269 @@ theorem realizeWith_congr {σ σ' : J → M} {h h' : ℕ → M} {α : Type} {n :
           exact Set.mem_iUnion.mpr ⟨i, hm⟩)) xs
 
 end RealizeWith
+
+/-! ## Layer 5: the finite Henkin closure calculus
+
+**The freshness audit gate (settled by strengthening the predicate):** `henkinConstsIn` is
+not automatically finite for an arbitrary `Lω₁ω` sentence — `iSup`/`iInf` can mention
+countably many witness constants (e.g. `⋁ₙ (dₙ = dₙ)` has Henkin support all of `ℕ`) — so
+"pick a fresh witness index outside the fragment's Henkin support" needs an invariant.
+`MarkerHenkinCert` therefore carries a finite Henkin support `H : Finset ℕ` alongside the
+skeleton support `S : Finset J`. The invariant is self-maintaining and non-restrictive:
+the construction's seed sentences are `mapLanguage`-images of `L'[[J]]`-sentences (Henkin
+support `∅`), and every closure operation shrinks the support (components, negations,
+implication branches) or grows it by finitely many constants (substitution instances) —
+an infinite-support sentence never enters a member of the Henkin enumeration. -/
+
+section FiniteClosure
+
+variable {L'' : Language.{0, 0}} {J : Type}
+
+/-! ### Support lemmas for the expansion's skeleton constants -/
+
+/-- Negation does not change the skeleton-constant support. -/
+theorem expJConstsIn_not {α : Type} {n : ℕ} (φ : ((L''[[J]])[[ℕ]]).BoundedFormulaω α n) :
+    expJConstsIn (L'' := L'') φ.not = expJConstsIn (L'' := L'') φ := by
+  ext j
+  simp [expJConstsIn, BoundedFormulaω.functionsIn]
+
+/-- A conjunction component's skeleton support is contained in the conjunction's. -/
+theorem expJConstsIn_component_iInf {α : Type} {n : ℕ}
+    (φs : ℕ → ((L''[[J]])[[ℕ]]).BoundedFormulaω α n) (k : ℕ) :
+    expJConstsIn (L'' := L'') (φs k) ⊆
+      expJConstsIn (L'' := L'') (BoundedFormulaω.iInf φs) := by
+  intro j hj
+  simp only [expJConstsIn, Set.mem_setOf_eq, BoundedFormulaω.functionsIn] at hj ⊢
+  exact Set.mem_iUnion.mpr ⟨k, hj⟩
+
+/-- A disjunction component's skeleton support is contained in the disjunction's. -/
+theorem expJConstsIn_component_iSup {α : Type} {n : ℕ}
+    (φs : ℕ → ((L''[[J]])[[ℕ]]).BoundedFormulaω α n) (k : ℕ) :
+    expJConstsIn (L'' := L'') (φs k) ⊆
+      expJConstsIn (L'' := L'') (BoundedFormulaω.iSup φs) := by
+  intro j hj
+  simp only [expJConstsIn, Set.mem_setOf_eq, BoundedFormulaω.functionsIn] at hj ⊢
+  exact Set.mem_iUnion.mpr ⟨k, hj⟩
+
+/-- An implication's antecedent skeleton support is contained in the implication's. -/
+theorem expJConstsIn_imp_left {α : Type} {n : ℕ}
+    (φ ψ : ((L''[[J]])[[ℕ]]).BoundedFormulaω α n) :
+    expJConstsIn (L'' := L'') φ ⊆ expJConstsIn (L'' := L'') (φ.imp ψ) := by
+  intro j hj
+  simp only [expJConstsIn, Set.mem_setOf_eq, BoundedFormulaω.functionsIn] at hj ⊢
+  exact Set.mem_union_left _ hj
+
+/-- An implication's consequent skeleton support is contained in the implication's. -/
+theorem expJConstsIn_imp_right {α : Type} {n : ℕ}
+    (φ ψ : ((L''[[J]])[[ℕ]]).BoundedFormulaω α n) :
+    expJConstsIn (L'' := L'') ψ ⊆ expJConstsIn (L'' := L'') (φ.imp ψ) := by
+  intro j hj
+  simp only [expJConstsIn, Set.mem_setOf_eq, BoundedFormulaω.functionsIn] at hj ⊢
+  exact Set.mem_union_right _ hj
+
+/-! ### Support lemmas for the expansion's Henkin constants (wrappers around the generic
+`sentenceJConsts` family, restated so `rw` matches the `henkinConstsIn` spelling) -/
+
+theorem henkinConstsIn_not {α : Type} {n : ℕ} (φ : ((L''[[J]])[[ℕ]]).BoundedFormulaω α n) :
+    henkinConstsIn (L'' := L'') φ.not = henkinConstsIn (L'' := L'') φ :=
+  sentenceJConsts_not φ
+
+theorem henkinConstsIn_component_iInf {α : Type} {n : ℕ}
+    (φs : ℕ → ((L''[[J]])[[ℕ]]).BoundedFormulaω α n) (k : ℕ) :
+    henkinConstsIn (L'' := L'') (φs k) ⊆
+      henkinConstsIn (L'' := L'') (BoundedFormulaω.iInf φs) :=
+  sentenceJConsts_component_iInf φs k
+
+theorem henkinConstsIn_component_iSup {α : Type} {n : ℕ}
+    (φs : ℕ → ((L''[[J]])[[ℕ]]).BoundedFormulaω α n) (k : ℕ) :
+    henkinConstsIn (L'' := L'') (φs k) ⊆
+      henkinConstsIn (L'' := L'') (BoundedFormulaω.iSup φs) :=
+  sentenceJConsts_component_iSup φs k
+
+theorem henkinConstsIn_imp_left {α : Type} {n : ℕ}
+    (φ ψ : ((L''[[J]])[[ℕ]]).BoundedFormulaω α n) :
+    henkinConstsIn (L'' := L'') φ ⊆ henkinConstsIn (L'' := L'') (φ.imp ψ) :=
+  sentenceJConsts_imp_left φ ψ
+
+theorem henkinConstsIn_imp_right {α : Type} {n : ℕ}
+    (φ ψ : ((L''[[J]])[[ℕ]]).BoundedFormulaω α n) :
+    henkinConstsIn (L'' := L'') ψ ⊆ henkinConstsIn (L'' := L'') (φ.imp ψ) :=
+  sentenceJConsts_imp_right φ ψ
+
+/-! ### The finite-member predicates -/
+
+variable [LinearOrder J] (M : Type) [L''.Structure M] [LinearOrder M]
+
+/-- **The per-level Henkin–Marker certification of a finite fragment** over the expansion
+`(L''[[J]])[[ℕ]]`: a common finite skeleton support `S`, a common finite Henkin support `H`
+(the freshness invariant), a `(ℶ_α)⁺`-suborder `e` of the source, and — for EVERY skeleton
+interpretation increasing on `S` into `e`'s range — SOME Henkin interpretation making every
+member true. The skeleton side stays universal (the EM tuples); the witness side is
+existential per interpretation, because quantifier witnesses vary with the tuple. -/
+def MarkerHenkinCert (α : Ordinal.{0}) (F : Set ((L''[[J]])[[ℕ]].Sentenceω)) : Prop :=
+  ∃ (S : Finset J) (H : Finset ℕ),
+    (∀ τ ∈ F, expJConstsIn (L'' := L'') τ ⊆ ↑S) ∧
+    (∀ τ ∈ F, henkinConstsIn (L'' := L'') τ ⊆ ↑H) ∧
+    ∃ e : (Order.succ (Cardinal.beth α)).ord.ToType ↪o M,
+      ∀ σ : J → M, StrictMonoOn σ ↑S → (∀ j ∈ S, σ j ∈ Set.range e) →
+        ∃ h : ℕ → M, ∀ τ ∈ F, realizeWith σ h τ (Empty.elim : Empty → M) Fin.elim0
+
+/-- **The finite-member consistency predicate**: certification at cofinally many levels
+below `ω₁`, over FINITE fragments only. The arbitrary-set `extension` field and the global
+`C4` uniformization of the ambient `ConsistencyPropertyEq` API are deliberately avoided:
+the Henkin construction consumes finite members along its enumeration, choosing disjuncts
+and witnesses per member (the classical Marker/Keisler shape). -/
+def MarkerHenkinConsistent (F : Finset ((L''[[J]])[[ℕ]].Sentenceω)) : Prop :=
+  ∀ β, β < Ordinal.omega 1 →
+    ∃ α, β ≤ α ∧ α < Ordinal.omega 1 ∧
+      MarkerHenkinCert M α (↑F : Set ((L''[[J]])[[ℕ]].Sentenceω))
+
+variable {M}
+
+/-- Certification is monotone (downward-closed) in the fragment. -/
+theorem MarkerHenkinCert.mono {α : Ordinal.{0}} {F F' : Set ((L''[[J]])[[ℕ]].Sentenceω)}
+    (hFF : F' ⊆ F) (hc : MarkerHenkinCert M α F) : MarkerHenkinCert M α F' := by
+  obtain ⟨S, H, hS, hH, e, hsat⟩ := hc
+  refine ⟨S, H, fun τ hτ => hS τ (hFF hτ), fun τ hτ => hH τ (hFF hτ), e, ?_⟩
+  intro σ h1 h2
+  obtain ⟨h, hh⟩ := hsat σ h1 h2
+  exact ⟨h, fun τ hτ => hh τ (hFF hτ)⟩
+
+/-- Finite-member consistency is monotone (downward-closed). -/
+theorem MarkerHenkinConsistent.mono {F F' : Finset ((L''[[J]])[[ℕ]].Sentenceω)}
+    (hFF : F' ⊆ F) (h : MarkerHenkinConsistent M F) : MarkerHenkinConsistent M F' := by
+  intro β hβ
+  obtain ⟨α, hβα, hα, hc⟩ := h β hβ
+  exact ⟨α, hβα, hα, hc.mono (Finset.coe_subset.mpr hFF)⟩
+
+/-- **The semantic insertion scheme** behind the choice-free closure rules: if a `trigger`
+member semantically entails a `new` sentence under every interpretation pair, and neither
+constant support grows, then adjoining `new` preserves certification — same supports, same
+suborder, same witnesses. -/
+theorem MarkerHenkinCert.insert_of_semantic {α : Ordinal.{0}}
+    {F : Set ((L''[[J]])[[ℕ]].Sentenceω)} (hc : MarkerHenkinCert M α F)
+    {trigger new : (L''[[J]])[[ℕ]].Sentenceω} (hmem : trigger ∈ F)
+    (hJ : expJConstsIn (L'' := L'') new ⊆ expJConstsIn (L'' := L'') trigger)
+    (hN : henkinConstsIn (L'' := L'') new ⊆ henkinConstsIn (L'' := L'') trigger)
+    (hder : ∀ (σ : J → M) (h : ℕ → M),
+      realizeWith σ h trigger (Empty.elim : Empty → M) Fin.elim0 →
+      realizeWith σ h new (Empty.elim : Empty → M) Fin.elim0) :
+    MarkerHenkinCert M α (insert new F) := by
+  obtain ⟨S, H, hS, hH, e, hsat⟩ := hc
+  refine ⟨S, H, ?_, ?_, e, ?_⟩
+  · rintro τ (rfl | hτ)
+    · exact hJ.trans (hS trigger hmem)
+    · exact hS τ hτ
+  · rintro τ (rfl | hτ)
+    · exact hN.trans (hH trigger hmem)
+    · exact hH τ hτ
+  · intro σ h1 h2
+    obtain ⟨h, hh⟩ := hsat σ h1 h2
+    refine ⟨h, ?_⟩
+    rintro τ (rfl | hτ)
+    · exact hder σ h (hh trigger hmem)
+    · exact hh τ hτ
+
+/-- **`C0` (no falsum)**: a certified fragment cannot contain `⊥`. -/
+theorem MarkerHenkinCert.falsum_notMem {α : Ordinal.{0}}
+    {F : Set ((L''[[J]])[[ℕ]].Sentenceω)} (hc : MarkerHenkinCert M α F) :
+    (BoundedFormulaω.falsum : (L''[[J]])[[ℕ]].Sentenceω) ∉ F := by
+  intro hmem
+  obtain ⟨S, H, hS, hH, e, hsat⟩ := hc
+  obtain ⟨σ, hmono, hrange⟩ := exists_strictMonoOn_interp e S
+  obtain ⟨h, hh⟩ := hsat σ hmono hrange
+  exact (realizeWith_falsum σ h _ _).mp (hh _ hmem)
+
+/-- **`C0` (no contradiction)**: a certified fragment cannot contain both a sentence and
+its negation. -/
+theorem MarkerHenkinCert.not_mem_and_not_mem {α : Ordinal.{0}}
+    {F : Set ((L''[[J]])[[ℕ]].Sentenceω)} (hc : MarkerHenkinCert M α F)
+    (τ : (L''[[J]])[[ℕ]].Sentenceω) : ¬(τ ∈ F ∧ τ.not ∈ F) := by
+  rintro ⟨h1, h2⟩
+  obtain ⟨S, H, hS, hH, e, hsat⟩ := hc
+  obtain ⟨σ, hmono, hrange⟩ := exists_strictMonoOn_interp e S
+  obtain ⟨h, hh⟩ := hsat σ hmono hrange
+  exact (realizeWith_not σ h τ _ _).mp (hh _ h2) (hh _ h1)
+
+open scoped Classical in
+/-- The finite-member insertion scheme at the consistency level. -/
+theorem MarkerHenkinConsistent.insert_of_semantic
+    {F : Finset ((L''[[J]])[[ℕ]].Sentenceω)} (h : MarkerHenkinConsistent M F)
+    {trigger new : (L''[[J]])[[ℕ]].Sentenceω} (hmem : trigger ∈ F)
+    (hJ : expJConstsIn (L'' := L'') new ⊆ expJConstsIn (L'' := L'') trigger)
+    (hN : henkinConstsIn (L'' := L'') new ⊆ henkinConstsIn (L'' := L'') trigger)
+    (hder : ∀ (σ : J → M) (hk : ℕ → M),
+      realizeWith σ hk trigger (Empty.elim : Empty → M) Fin.elim0 →
+      realizeWith σ hk new (Empty.elim : Empty → M) Fin.elim0) :
+    MarkerHenkinConsistent M (insert new F) := by
+  intro β hβ
+  obtain ⟨α, hβα, hα, hc⟩ := h β hβ
+  refine ⟨α, hβα, hα, ?_⟩
+  rw [Finset.coe_insert]
+  exact hc.insert_of_semantic (Finset.mem_coe.mpr hmem) hJ hN hder
+
+open scoped Classical in
+/-- **`C2` (double negation)**: `¬¬φ ∈ F` allows adjoining `φ`. -/
+theorem MarkerHenkinConsistent.not_not
+    {F : Finset ((L''[[J]])[[ℕ]].Sentenceω)} (h : MarkerHenkinConsistent M F)
+    {φ : (L''[[J]])[[ℕ]].Sentenceω} (hmem : φ.not.not ∈ F) :
+    MarkerHenkinConsistent M (insert φ F) :=
+  h.insert_of_semantic hmem
+    (by simp [expJConstsIn_not]) (by simp [sentenceJConsts_not])
+    fun σ hk hreal => of_not_not fun hn =>
+      (realizeWith_not σ hk φ.not _ _).mp hreal ((realizeWith_not σ hk φ _ _).mpr hn)
+
+open scoped Classical in
+/-- **`C3` (conjunction components)**: `⋀ᵢ φᵢ ∈ F` allows adjoining every component. -/
+theorem MarkerHenkinConsistent.iInf_component
+    {F : Finset ((L''[[J]])[[ℕ]].Sentenceω)} (h : MarkerHenkinConsistent M F)
+    {φs : ℕ → (L''[[J]])[[ℕ]].Sentenceω} (hmem : BoundedFormulaω.iInf φs ∈ F) (k : ℕ) :
+    MarkerHenkinConsistent M (insert (φs k) F) :=
+  h.insert_of_semantic hmem
+    (expJConstsIn_component_iInf φs k) (sentenceJConsts_component_iInf φs k)
+    fun σ hk hreal => (realizeWith_iInf σ hk φs _ _).mp hreal k
+
+open scoped Classical in
+/-- **`C4'` (negated-disjunction components)**: `¬⋁ᵢ φᵢ ∈ F` allows adjoining every
+negated component. -/
+theorem MarkerHenkinConsistent.neg_iSup_component
+    {F : Finset ((L''[[J]])[[ℕ]].Sentenceω)} (h : MarkerHenkinConsistent M F)
+    {φs : ℕ → (L''[[J]])[[ℕ]].Sentenceω} (hmem : (BoundedFormulaω.iSup φs).not ∈ F)
+    (k : ℕ) : MarkerHenkinConsistent M (insert (φs k).not F) :=
+  h.insert_of_semantic hmem
+    (by rw [expJConstsIn_not, expJConstsIn_not]; exact expJConstsIn_component_iSup φs k)
+    (by rw [henkinConstsIn_not, henkinConstsIn_not]
+        exact henkinConstsIn_component_iSup φs k)
+    fun σ hk hreal => (realizeWith_not σ hk (φs k) _ _).mpr fun hkk =>
+      (realizeWith_not σ hk _ _ _).mp hreal ((realizeWith_iSup σ hk φs _ _).mpr ⟨k, hkk⟩)
+
+open scoped Classical in
+/-- **`C1'` (negated implication, antecedent)**: `¬(φ → ψ) ∈ F` allows adjoining `φ`. -/
+theorem MarkerHenkinConsistent.neg_imp_left
+    {F : Finset ((L''[[J]])[[ℕ]].Sentenceω)} (h : MarkerHenkinConsistent M F)
+    {φ ψ : (L''[[J]])[[ℕ]].Sentenceω} (hmem : (φ.imp ψ).not ∈ F) :
+    MarkerHenkinConsistent M (insert φ F) :=
+  h.insert_of_semantic hmem
+    (by rw [expJConstsIn_not]; exact expJConstsIn_imp_left φ ψ)
+    (by rw [henkinConstsIn_not]; exact henkinConstsIn_imp_left φ ψ)
+    fun σ hk hreal => of_not_not fun hφ =>
+      (realizeWith_not σ hk (φ.imp ψ) _ _).mp hreal
+        ((realizeWith_imp σ hk φ ψ _ _).mpr fun hp => absurd hp hφ)
+
+open scoped Classical in
+/-- **`C1'` (negated implication, consequent)**: `¬(φ → ψ) ∈ F` allows adjoining `¬ψ`. -/
+theorem MarkerHenkinConsistent.neg_imp_right
+    {F : Finset ((L''[[J]])[[ℕ]].Sentenceω)} (h : MarkerHenkinConsistent M F)
+    {φ ψ : (L''[[J]])[[ℕ]].Sentenceω} (hmem : (φ.imp ψ).not ∈ F) :
+    MarkerHenkinConsistent M (insert ψ.not F) :=
+  h.insert_of_semantic hmem
+    (by rw [expJConstsIn_not, expJConstsIn_not]; exact expJConstsIn_imp_right φ ψ)
+    (by rw [henkinConstsIn_not, henkinConstsIn_not]
+        exact henkinConstsIn_imp_right φ ψ)
+    fun σ hk hreal => (realizeWith_not σ hk ψ _ _).mpr fun hψ =>
+      (realizeWith_not σ hk (φ.imp ψ) _ _).mp hreal
+        ((realizeWith_imp σ hk φ ψ _ _).mpr fun _ => hψ)
+
+end FiniteClosure
 
 end FirstOrder.Language
