@@ -1209,6 +1209,99 @@ theorem MarkerHenkinBody.branch_choice
       (fun c hc => hagree c (Finset.mem_coe.mp (hFsupp τ hτ hc)))
       (fun _ _ => rfl) _ _).mp (hOf_spec t τ hτ)
 
+/-! ### Layer 5b-2: the branch/index choice rules -/
+
+open scoped Classical in
+/-- **Consistency-level branch choice** (re-homogenization + the `ω₁`-pigeonhole assembly):
+a covering branch family for a `trigger ∈ F`, whose members' constant supports lie inside the
+trigger's, yields ONE branch `k` with `insert (branch k) F` consistent. Per target level the
+body comes from `MarkerHenkinBody.branch_choice` (asked at the ladder-cost-offset level, kept
+below `ω₁` by `add_natCast_lt_omega_one`); the single uniform `k` comes from
+`exists_uniform_of_cofinal_countable` (`ω₁` is regular). Uniform support `(S, H)` is preserved. -/
+theorem MarkerHenkinConsistent.branch_choice
+    {F : Finset ((L''[[J]])[[ℕ]].Sentenceω)} (h : MarkerHenkinConsistent M F)
+    {K : Type} [Countable K] (branch : K → (L''[[J]])[[ℕ]].Sentenceω)
+    {trigger : (L''[[J]])[[ℕ]].Sentenceω} (hmem : trigger ∈ F)
+    (hbJ : ∀ k, expJConstsIn (L'' := L'') (branch k) ⊆ expJConstsIn (L'' := L'') trigger)
+    (hbN : ∀ k, henkinConstsIn (L'' := L'') (branch k) ⊆ henkinConstsIn (L'' := L'') trigger)
+    (hcover : ∀ (σ : J → M) (hk : ℕ → M),
+      realizeWith σ hk trigger (Empty.elim : Empty → M) Fin.elim0 →
+      ∃ k, realizeWith σ hk (branch k) (Empty.elim : Empty → M) Fin.elim0) :
+    ∃ k, MarkerHenkinConsistent M (insert (branch k) F) := by
+  obtain ⟨S, H, hS, hH, hcof⟩ := h
+  have hmem' : trigger ∈ (↑F : Set ((L''[[J]])[[ℕ]].Sentenceω)) := Finset.mem_coe.mpr hmem
+  have hbranchS : ∀ k, expJConstsIn (L'' := L'') (branch k) ⊆ ↑S :=
+    fun k => (hbJ k).trans (hS trigger hmem')
+  have hstep : ∀ β, β < Ordinal.omega 1 →
+      ∃ α, β ≤ α ∧ α < Ordinal.omega 1 ∧
+        ∃ k, MarkerHenkinBody M α S (↑(insert (branch k) F) : Set ((L''[[J]])[[ℕ]].Sentenceω)) := by
+    intro β hβ
+    obtain ⟨α', hβ'α', hα', hbody⟩ :=
+      hcof (β + ((2 * S.card + 2 : ℕ) : Ordinal)) (add_natCast_lt_omega_one hβ (2 * S.card + 2))
+    obtain ⟨k, hk⟩ := hbody.branch_choice hβ'α' hS branch hbranchS
+      (fun σ hσ hF => hcover σ hσ (hF trigger hmem'))
+    exact ⟨β, le_rfl, hβ, k, by rwa [Finset.coe_insert]⟩
+  obtain ⟨k, hk⟩ := exists_uniform_of_cofinal_countable
+    (fun α k => MarkerHenkinBody M α S (↑(insert (branch k) F) : Set ((L''[[J]])[[ℕ]].Sentenceω)))
+    hstep
+  refine ⟨k, S, H, ?_, ?_, hk⟩
+  · rw [Finset.coe_insert]; rintro τ (rfl | hτ)
+    · exact (hbJ k).trans (hS trigger hmem')
+    · exact hS τ hτ
+  · rw [Finset.coe_insert]; rintro τ (rfl | hτ)
+    · exact (hbN k).trans (hH trigger hmem')
+    · exact hH τ hτ
+
+open scoped Classical in
+/-- **`C4` (disjunction witness)**: `⋁ᵢ φᵢ ∈ F` yields a uniform disjunct `k` with
+`insert (φs k) F` consistent. -/
+theorem MarkerHenkinConsistent.iSup_choice
+    {F : Finset ((L''[[J]])[[ℕ]].Sentenceω)} (h : MarkerHenkinConsistent M F)
+    {φs : ℕ → (L''[[J]])[[ℕ]].Sentenceω} (hmem : BoundedFormulaω.iSup φs ∈ F) :
+    ∃ k, MarkerHenkinConsistent M (insert (φs k) F) :=
+  h.branch_choice φs hmem (fun k => expJConstsIn_component_iSup φs k)
+    (fun k => henkinConstsIn_component_iSup φs k)
+    (fun σ hk hreal => (realizeWith_iSup σ hk φs _ _).mp hreal)
+
+open scoped Classical in
+/-- **`C3'` (negated-conjunction witness)**: `¬⋀ᵢ φᵢ ∈ F` yields a uniform index `k` with
+`insert (φs k).not F` consistent. -/
+theorem MarkerHenkinConsistent.neg_iInf_choice
+    {F : Finset ((L''[[J]])[[ℕ]].Sentenceω)} (h : MarkerHenkinConsistent M F)
+    {φs : ℕ → (L''[[J]])[[ℕ]].Sentenceω} (hmem : (BoundedFormulaω.iInf φs).not ∈ F) :
+    ∃ k, MarkerHenkinConsistent M (insert (φs k).not F) := by
+  refine h.branch_choice (fun k => (φs k).not) hmem
+    (fun k => by rw [expJConstsIn_not, expJConstsIn_not]; exact expJConstsIn_component_iInf φs k)
+    (fun k => by
+      rw [henkinConstsIn_not, henkinConstsIn_not]; exact henkinConstsIn_component_iInf φs k)
+    (fun σ hk hreal => ?_)
+  rw [realizeWith_not, realizeWith_iInf, not_forall] at hreal
+  obtain ⟨i, hi⟩ := hreal
+  exact ⟨i, (realizeWith_not σ hk (φs i) _ _).mpr hi⟩
+
+open scoped Classical in
+/-- **`C1` (implication)**: `φ → ψ ∈ F` — one of `insert φ.not F`, `insert ψ F` is
+consistent (the branch is chosen uniformly over the support tuples). -/
+theorem MarkerHenkinConsistent.imp_choice
+    {F : Finset ((L''[[J]])[[ℕ]].Sentenceω)} (h : MarkerHenkinConsistent M F)
+    {φ ψ : (L''[[J]])[[ℕ]].Sentenceω} (hmem : φ.imp ψ ∈ F) :
+    MarkerHenkinConsistent M (insert φ.not F) ∨ MarkerHenkinConsistent M (insert ψ F) := by
+  obtain ⟨b, hb⟩ := h.branch_choice (fun b => cond b ψ φ.not) hmem
+    (fun b => by cases b
+                 · simpa only [cond_false, expJConstsIn_not] using expJConstsIn_imp_left φ ψ
+                 · simpa only [cond_true] using expJConstsIn_imp_right φ ψ)
+    (fun b => by cases b
+                 · simpa only [cond_false, henkinConstsIn_not] using henkinConstsIn_imp_left φ ψ
+                 · simpa only [cond_true] using henkinConstsIn_imp_right φ ψ)
+    (fun σ hk hreal => by
+      rw [realizeWith_imp] at hreal
+      by_cases hφ : realizeWith σ hk φ (Empty.elim : Empty → M) Fin.elim0
+      · exact ⟨true, hreal hφ⟩
+      · exact ⟨false, (realizeWith_not σ hk φ _ _).mpr hφ⟩)
+  cases b
+  · exact Or.inl hb
+  · exact Or.inr hb
+
 end Rehomogenize
 
 end FiniteClosure
