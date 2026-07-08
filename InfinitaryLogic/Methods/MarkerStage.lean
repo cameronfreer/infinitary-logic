@@ -1563,6 +1563,102 @@ theorem MarkerHenkinConsistent.ex_witness
 
 end Rehomogenize
 
+/-! ## Layer 6a: the finite-support universe and the restricted extension rule
+
+The bespoke finite-Henkin adapter avoids the ambient `ConsistencyPropertyEq` (whose
+`extension` field quantifies over ARBITRARY sentences, which Marker consistency cannot
+supply at infinite constant-support). Instead it works over the sentences of finite constant
+support — exactly the sentences the Marker recursion from the template seed ever produces —
+and replaces the arbitrary-sentence `extension` field with a restricted extension rule proved
+by the same Layer-5b re-homogenization engine (branch over `Bool`, colour support tuples by
+whether `τ` is realized). -/
+
+/-- A sentence of finite constant support: finitely many `J`-constants and finitely many
+Henkin constants. The restricted universe the adapter decides over. -/
+def HasFiniteConstSupport (τ : ((L''[[J]])[[ℕ]]).Sentenceω) : Prop :=
+  ∃ (S : Finset J) (H : Finset ℕ),
+    expJConstsIn (L'' := L'') τ ⊆ ↑S ∧ henkinConstsIn (L'' := L'') τ ⊆ ↑H
+
+/-- The subtype of finite-constant-support sentences — the universe of the maximal
+finite-support theory. -/
+def FSentence := {τ : ((L''[[J]])[[ℕ]]).Sentenceω // HasFiniteConstSupport (L'' := L'') τ}
+
+omit [LinearOrder J] in
+/-- Negation preserves finite constant support. -/
+theorem HasFiniteConstSupport.not {τ : ((L''[[J]])[[ℕ]]).Sentenceω}
+    (hτ : HasFiniteConstSupport (L'' := L'') τ) : HasFiniteConstSupport (L'' := L'') τ.not := by
+  obtain ⟨S, H, hS, hH⟩ := hτ
+  exact ⟨S, H, by rw [expJConstsIn_not]; exact hS, by rw [henkinConstsIn_not]; exact hH⟩
+
+/-- A body over `S` is a body over any larger support (fewer admissible interpretations). -/
+theorem MarkerHenkinBody.enlarge_support {α : Ordinal.{0}} {S S' : Finset J}
+    {F : Set ((L''[[J]])[[ℕ]].Sentenceω)} (hSS : S ⊆ S') (hb : MarkerHenkinBody M α S F) :
+    MarkerHenkinBody M α S' F := by
+  obtain ⟨e, hsat⟩ := hb
+  have hSS' : (↑S : Set J) ⊆ ↑S' := Finset.coe_subset.mpr hSS
+  exact ⟨e, fun σ hσmono hσrange => hsat σ
+    (fun a ha b hb hab => hσmono (hSS' ha) (hSS' hb) hab) (fun j hj => hσrange j (hSS hj))⟩
+
+open scoped Classical in
+/-- **The restricted extension rule** (the replacement for the ambient `extension` field):
+any finite-constant-support sentence `τ` can be decided — one of `insert τ F`, `insert τ.not F`
+is Marker-consistent. Enlarge the uniform support by `τ`'s finite supports, re-homogenize the
+Boolean "is `τ` realized" colouring of the support tuples (`MarkerHenkinBody.branch_choice`,
+covering is the unconditional tautology `τ ∨ ¬τ`), and uniformize the branch over the cofinal
+`α`-schedule. -/
+theorem MarkerHenkinConsistent.extension
+    {F : Finset ((L''[[J]])[[ℕ]].Sentenceω)} (h : MarkerHenkinConsistent M F)
+    (τ : ((L''[[J]])[[ℕ]]).Sentenceω) (hτ : HasFiniteConstSupport (L'' := L'') τ) :
+    MarkerHenkinConsistent M (insert τ F) ∨ MarkerHenkinConsistent M (insert τ.not F) := by
+  obtain ⟨S, H, hS, hH, hcof⟩ := h
+  obtain ⟨Sτ, Hτ, hSτ, hHτ⟩ := hτ
+  set S' : Finset J := S ∪ Sτ with hS'def
+  set H' : Finset ℕ := H ∪ Hτ with hH'def
+  have hSS' : (↑S : Set J) ⊆ ↑S' := by rw [hS'def, Finset.coe_union]; exact Set.subset_union_left
+  have hSτS' : (↑Sτ : Set J) ⊆ ↑S' := by rw [hS'def, Finset.coe_union]; exact Set.subset_union_right
+  have hHH' : (↑H : Set ℕ) ⊆ ↑H' := by rw [hH'def, Finset.coe_union]; exact Set.subset_union_left
+  have hHτH' : (↑Hτ : Set ℕ) ⊆ ↑H' := by rw [hH'def, Finset.coe_union]; exact Set.subset_union_right
+  -- Branch support: both `τ` and `τ.not` are supported by `Sτ`.
+  have hbJ : ∀ b : Bool, expJConstsIn (L'' := L'') (cond b τ.not τ) ⊆ ↑S' := by
+    intro b; cases b
+    · exact hSτ.trans hSτS'
+    · rw [cond_true, expJConstsIn_not]; exact hSτ.trans hSτS'
+  have hbH : ∀ b : Bool, henkinConstsIn (L'' := L'') (cond b τ.not τ) ⊆ ↑H' := by
+    intro b; cases b
+    · exact hHτ.trans hHτH'
+    · rw [cond_true, henkinConstsIn_not]; exact hHτ.trans hHτH'
+  -- The uniform choice over `Bool`, per target level via re-homogenization.
+  have hstep : ∀ β, β < Ordinal.omega 1 →
+      ∃ α, β ≤ α ∧ α < Ordinal.omega 1 ∧
+        ∃ b : Bool, MarkerHenkinBody M α S'
+          (↑(insert (cond b τ.not τ) F) : Set ((L''[[J]])[[ℕ]]).Sentenceω) := by
+    intro β hβ
+    obtain ⟨α', hβ'α', hα', hbody⟩ :=
+      hcof (β + ((2 * S'.card + 2 : ℕ) : Ordinal)) (add_natCast_lt_omega_one hβ (2 * S'.card + 2))
+    have hbody' : MarkerHenkinBody M α' S' (↑F : Set ((L''[[J]])[[ℕ]]).Sentenceω) :=
+      hbody.enlarge_support (Finset.subset_union_left)
+    obtain ⟨b, hb⟩ := hbody'.branch_choice hβ'α'
+      (fun ρ hρ => (hS ρ hρ).trans hSS') (fun b => cond b τ.not τ) hbJ
+      (fun σ hk _ => by
+        by_cases hτr : realizeWith σ hk τ (Empty.elim : Empty → M) Fin.elim0
+        · exact ⟨false, hτr⟩
+        · exact ⟨true, (realizeWith_not σ hk τ _ _).mpr hτr⟩)
+    exact ⟨β, le_rfl, hβ, b, by rwa [Finset.coe_insert]⟩
+  obtain ⟨b, hb⟩ := exists_uniform_of_cofinal_countable
+    (fun α b => MarkerHenkinBody M α S'
+      (↑(insert (cond b τ.not τ) F) : Set ((L''[[J]])[[ℕ]]).Sentenceω)) hstep
+  have hcons : MarkerHenkinConsistent M (insert (cond b τ.not τ) F) := by
+    refine ⟨S', H', ?_, ?_, hb⟩
+    · rw [Finset.coe_insert]; rintro ρ (rfl | hρ)
+      · exact hbJ b
+      · exact (hS ρ hρ).trans hSS'
+    · rw [Finset.coe_insert]; rintro ρ (rfl | hρ)
+      · exact hbH b
+      · exact (hH ρ hρ).trans hHH'
+  cases b
+  · exact Or.inl hcons
+  · exact Or.inr hcons
+
 end FiniteClosure
 
 end FirstOrder.Language
