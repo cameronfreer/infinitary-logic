@@ -21,6 +21,8 @@ import InfinitaryLogic.Combinatorics.FiniteArityErdosRadoInduction
 import InfinitaryLogic.Combinatorics.EndHomogeneousErdosRado
 -- The Marker stage: finite-fragment support extraction + ER certification (reshape layer 1)
 import InfinitaryLogic.Methods.MarkerStage
+-- Layer 7a: the schema-template Ω-witness bridge (TailTemplateOmegaWitnessed → OmegaCompleteForColim)
+import InfinitaryLogic.Methods.SchemaOmegaWitness
 
 /-!
 # WIP: the work-in-progress frontier bundle
