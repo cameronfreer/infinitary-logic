@@ -23,6 +23,8 @@ import InfinitaryLogic.Combinatorics.EndHomogeneousErdosRado
 import InfinitaryLogic.Methods.MarkerStage
 -- Layer 7a: the schema-template Ω-witness bridge (TailTemplateOmegaWitnessed → OmegaCompleteForColim)
 import InfinitaryLogic.Methods.SchemaOmegaWitness
+-- Layer 7b checkpoint 1: the countable schema sentence universe (completion decision list)
+import InfinitaryLogic.Methods.SchemaCompletion
 
 /-!
 # WIP: the work-in-progress frontier bundle
