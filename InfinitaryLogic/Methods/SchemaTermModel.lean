@@ -314,4 +314,91 @@ theorem schemaTermRel_congr {l : ℕ} (R : (localColim s₀).Relations l)
         = fun i => Term.realize (Empty.elim : Empty → M) (ts i) from (funext hi).symm]
     exact ha
 
+/-! ### The quotient term model -/
+
+/-- The setoid on closed schema terms induced by the completed theory. -/
+def schemaTermSetoid : Setoid ((localColim s₀)[[ℕ]].Term Empty) where
+  r := SchemaTermEq hM
+  iseqv := ⟨schemaTermEq_refl hM, schemaTermEq_symm hM, schemaTermEq_trans hM⟩
+
+/-- **The schema term-model carrier**: closed `(localColim s₀)[[ℕ]]` terms quotiented by the
+completed theory's equality. An `abbrev`, so `Quotient` lemmas and dot-notation apply
+transparently (the `FSentence` precedent). -/
+abbrev SchemaTermCarrier : Type := Quotient (schemaTermSetoid (s₀ := s₀) (M := M) hM)
+
+/-- The class of a closed schema term. -/
+abbrev SchemaTermCarrier.mk (t : (localColim s₀)[[ℕ]].Term Empty) :
+    SchemaTermCarrier (s₀ := s₀) (M := M) hM :=
+  Quotient.mk (schemaTermSetoid hM) t
+
+/-- The carrier is inhabited (class of the first sequence constant `d₀`). -/
+instance : Nonempty (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+  ⟨SchemaTermCarrier.mk hM (henkinConst (L := localColim s₀) 0)⟩
+
+/-- Two terms have the same class iff the completed theory contains their equality sentence. -/
+theorem SchemaTermCarrier.mk_eq_mk_iff {t u : (localColim s₀)[[ℕ]].Term Empty} :
+    SchemaTermCarrier.mk hM t = SchemaTermCarrier.mk hM u ↔ SchemaTermEq hM t u := by
+  rw [SchemaTermCarrier.mk, SchemaTermCarrier.mk, Quotient.eq]
+  rfl
+
+/-- The representative of a class is equivalent to the term that formed it. -/
+theorem SchemaTermCarrier.mk_out_eq (t : (localColim s₀)[[ℕ]].Term Empty) :
+    SchemaTermEq hM (SchemaTermCarrier.mk hM t).out t :=
+  Quotient.exact (Quotient.out_eq (SchemaTermCarrier.mk hM t))
+
+/-- **The `(localColim s₀)[[ℕ]]`-structure on the carrier**: `funMap` by term formation on
+`Quotient.out` representatives; `RelMap` (the constant layer adds no relations) by the completed
+theory's relation membership on representatives. Well-definedness on classes is exposed by the
+atomic API below (via `schemaTermEq_func`/`schemaTermRel_congr`), not baked into the definition. -/
+@[reducible] noncomputable def schemaTermStructure :
+    (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) where
+  funMap f xs := SchemaTermCarrier.mk hM (Term.func f fun i => (xs i).out)
+  RelMap R xs :=
+    match R with
+    | Sum.inl R => SchemaTermRel hM R fun i => (xs i).out
+    | Sum.inr e => e.elim
+
+/-- **Atomic API, function symbols**: `funMap` computes on classes — applying an interpreted symbol
+to classes gives the class of the function term (well-definedness via `schemaTermEq_func`). -/
+theorem schemaTerm_funMap_mk {n : ℕ} (f : (localColim s₀)[[ℕ]].Functions n)
+    (ts : Fin n → (localColim s₀)[[ℕ]].Term Empty) :
+    @Structure.funMap _ _ (schemaTermStructure (s₀ := s₀) (M := M) hM) n f
+        (fun i => SchemaTermCarrier.mk hM (ts i)) = SchemaTermCarrier.mk hM (Term.func f ts) := by
+  apply Quotient.sound
+  apply schemaTermEq_func hM f
+  exact fun i => SchemaTermCarrier.mk_out_eq hM (ts i)
+
+/-- **Atomic API, terms**: every closed term realizes in the term model to its own class. -/
+theorem schemaTerm_realize_eq_mk (t : (localColim s₀)[[ℕ]].Term Empty) :
+    letI := schemaTermStructure (s₀ := s₀) (M := M) hM
+    t.realize (Empty.elim : Empty → SchemaTermCarrier (s₀ := s₀) (M := M) hM)
+      = SchemaTermCarrier.mk hM t := by
+  letI := schemaTermStructure (s₀ := s₀) (M := M) hM
+  induction t with
+  | var x => exact x.elim
+  | func f ts ih =>
+    show Structure.funMap f (fun i => (ts i).realize Empty.elim) = _
+    rw [funext ih]
+    exact schemaTerm_funMap_mk hM f ts
+
+/-- **Atomic API, relations**: a base relation holds in the term model on classes iff the completed
+theory contains the relation sentence (well-definedness via `schemaTermRel_congr`). -/
+theorem schemaTerm_relMap_mk_iff {l : ℕ} (R : (localColim s₀).Relations l)
+    (ts : Fin l → (localColim s₀)[[ℕ]].Term Empty) :
+    @Structure.RelMap _ _ (schemaTermStructure (s₀ := s₀) (M := M) hM) l
+        (Sum.inl R : (localColim s₀)[[ℕ]].Relations l)
+        (fun i => SchemaTermCarrier.mk hM (ts i)) ↔
+      SchemaTermRel hM R ts := by
+  show SchemaTermRel hM R (fun i => (SchemaTermCarrier.mk hM (ts i)).out) ↔ _
+  constructor
+  · exact schemaTermRel_congr hM R fun i => SchemaTermCarrier.mk_out_eq hM (ts i)
+  · exact schemaTermRel_congr hM R fun i =>
+      schemaTermEq_symm hM (SchemaTermCarrier.mk_out_eq hM (ts i))
+
+/-- **The canonical schema sequence** in the term model: the classes of the sequence constants
+`d₀, d₁, …`. This is the sequence the witnessed template (`TailTemplateOmegaWitnessed`) will be
+established for. -/
+noncomputable def schemaSeq (n : ℕ) : SchemaTermCarrier (s₀ := s₀) (M := M) hM :=
+  SchemaTermCarrier.mk hM (henkinConst (L := localColim s₀) n)
+
 end FirstOrder.Language
