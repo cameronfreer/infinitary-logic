@@ -80,6 +80,43 @@ theorem locDeEqAtom_self_realize {S : Finset ℕ} (t : (localColim s₀)[[ℕ]].
     (locDeEqAtom (localColim s₀) ℕ S t t ht ht).Realize (Empty.elim : Empty → M) w := by
   rw [locDeEqAtom, canonEqAtom, BoundedFormulaω.realize_equal]
 
+omit [LinearOrder M] [WellFoundedLT M] in
+/-- **The σ-generalization of `locDeTermFin_realize`** (specialized to `J := ℕ`): the de-substituted
+term, realized on the tuple of `σ`-values of its support, equals the closed term realized under the
+`σ`-constant interpretation. Unlike `locDeTermFin_realize`, the interpretation `σ` is arbitrary (not
+a deep `a`-tuple) — exactly what the body from `exists_body_of_subset` supplies. Adapts the
+`locDeTermFin_realize_superset` pattern (`restrictVar` + `constantsToVars` +
+`realize_eq_of_eq_on_varFinset` + `orderEmbOfFin_deepRank`). -/
+theorem locDeTermFin_realize_constInterp_nat (σ : ℕ → M) {S : Finset ℕ}
+    (t : (localColim s₀)[[ℕ]].Term Empty) (hsub : locJSupport (localColim s₀) ℕ t ⊆ S) :
+    (locDeTermFin (localColim s₀) ℕ S t hsub).realize
+        (fun i : Fin S.card => σ (S.orderEmbOfFin rfl i))
+      = letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+        t.realize (Empty.elim : Empty → M) := by
+  classical
+  letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+  have hRHS : t.realize (Empty.elim : Empty → M)
+      = t.constantsToVars.realize (Sum.elim σ (Empty.elim : Empty → M)) :=
+    (Term.realize_constantsToVars (t := t) (v := Empty.elim)).symm
+  have hLHS : (locDeTermFin (localColim s₀) ℕ S t hsub).realize
+        (fun i : Fin S.card => σ (S.orderEmbOfFin rfl i))
+      = (locDeTermPos (localColim s₀) ℕ S t).realize
+        (fun n => if h : n < S.card then σ (S.orderEmbOfFin rfl ⟨n, h⟩) else σ 0) := by
+    rw [locDeTermFin]
+    refine Term.realize_restrictVar
+      (fun n => if h : n < S.card then σ (S.orderEmbOfFin rfl ⟨n, h⟩) else σ 0) (fun x => ?_)
+    simp only [dif_pos (Finset.mem_range.mp
+      (locDeTermPos_varFinset_subset (Λ := localColim s₀) (J := ℕ) hsub x.2))]
+  rw [hRHS, hLHS, locDeTermPos, Term.realize_relabel]
+  apply Term.realize_eq_of_eq_on_varFinset
+  intro x hx
+  obtain ⟨j, hj, rfl⟩ := Finset.mem_image.mp
+    (locConstantsToVars_varFinset_subset (localColim s₀) ℕ t hx)
+  have hjS : j ∈ S := hsub hj
+  have hlt : deepRank ℕ S j < S.card := deepRank_lt_card (J := ℕ) hjS
+  simp only [Function.comp_apply, Sum.elim_inl, dif_pos hlt]
+  rw [orderEmbOfFin_deepRank ℕ S rfl hjS hlt]
+
 /-- **Reflexivity.** `t ≈ t`: the theory decides `schemaEqSentence t t`; the negative sign is
 impossible because any source body would have to realize `¬(t = t)`. -/
 theorem schemaTermEq_refl (t : (localColim s₀)[[ℕ]].Term Empty) : SchemaTermEq hM t t := by
@@ -94,5 +131,187 @@ theorem schemaTermEq_refl (t : (localColim s₀)[[ℕ]].Term Empty) : SchemaTerm
     exact hneg' (by
       rw [schemaEqSentence, realizeWith_templateSentence]
       exact locDeEqAtom_self_realize t Finset.subset_union_left _)
+
+omit [LinearOrder M] [WellFoundedLT M] in
+/-- **The exported equality bridge.** Under a body interpretation `(σ, h)`, `schemaEqSentence t u`
+is realized iff `t` and `u` have the same `σ`-value — the semantically meaningful form every
+equality law consumes. -/
+theorem realize_schemaEqSentence_iff (σ h : ℕ → M) (t u : (localColim s₀)[[ℕ]].Term Empty) :
+    realizeWith σ h (schemaEqSentence t u) (Empty.elim : Empty → M) Fin.elim0 ↔
+      letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+      t.realize (Empty.elim : Empty → M) = u.realize (Empty.elim : Empty → M) := by
+  rw [schemaEqSentence, realizeWith_templateSentence, locDeEqAtom, canonEqAtom,
+    BoundedFormulaω.realize_equal, Term.realize_relabel, Term.realize_relabel, Sum.elim_comp_inr,
+    locDeTermFin_realize_constInterp_nat, locDeTermFin_realize_constInterp_nat]
+
+/-- **Symmetry.** `t ≈ u → u ≈ t`: a body realizing `t = u` and `¬(u = t)` contradicts `Eq.symm`. -/
+theorem schemaTermEq_symm {t u : (localColim s₀)[[ℕ]].Term Empty} (h : SchemaTermEq hM t u) :
+    SchemaTermEq hM u t := by
+  rcases (schemaCompletionTheorySpec hM).complete_on_universe _ (schemaEqSentence_mem_universe u t)
+    with hpos | hneg
+  · exact hpos
+  · exfalso
+    classical
+    obtain ⟨σ, hh, hbody⟩ := exists_body_of_subset hM
+      {schemaEqSentence t u, (schemaEqSentence u t).not} (fun τ hτ => by
+        rw [Finset.mem_insert, Finset.mem_singleton] at hτ
+        rcases hτ with rfl | rfl
+        · exact h
+        · exact hneg)
+    have h1 := hbody (schemaEqSentence t u) (Finset.mem_insert_self _ _)
+    have h2 := hbody (schemaEqSentence u t).not
+      (by rw [Finset.mem_insert]; exact Or.inr (Finset.mem_singleton_self _))
+    rw [realize_schemaEqSentence_iff] at h1
+    rw [realizeWith_not, realize_schemaEqSentence_iff] at h2
+    exact h2 h1.symm
+
+/-- **Transitivity.** `t ≈ u → u ≈ v → t ≈ v`: a body realizing `t = u`, `u = v`, `¬(t = v)`
+contradicts `Eq.trans`. -/
+theorem schemaTermEq_trans {t u v : (localColim s₀)[[ℕ]].Term Empty}
+    (h1 : SchemaTermEq hM t u) (h2 : SchemaTermEq hM u v) : SchemaTermEq hM t v := by
+  rcases (schemaCompletionTheorySpec hM).complete_on_universe _ (schemaEqSentence_mem_universe t v)
+    with hpos | hneg
+  · exact hpos
+  · exfalso
+    classical
+    obtain ⟨σ, hh, hbody⟩ := exists_body_of_subset hM
+      {schemaEqSentence t u, schemaEqSentence u v, (schemaEqSentence t v).not} (fun τ hτ => by
+        rw [Finset.mem_insert, Finset.mem_insert, Finset.mem_singleton] at hτ
+        rcases hτ with rfl | rfl | rfl
+        · exact h1
+        · exact h2
+        · exact hneg)
+    have ha := hbody (schemaEqSentence t u) (Finset.mem_insert_self _ _)
+    have hb := hbody (schemaEqSentence u v)
+      (by rw [Finset.mem_insert]; exact Or.inr (Finset.mem_insert_self _ _))
+    have hc := hbody (schemaEqSentence t v).not (by
+      rw [Finset.mem_insert, Finset.mem_insert]; exact Or.inr (Or.inr (Finset.mem_singleton_self _)))
+    rw [realize_schemaEqSentence_iff] at ha hb
+    rw [realizeWith_not, realize_schemaEqSentence_iff] at hc
+    exact hc (ha.trans hb)
+
+/-- **Function congruence.** If `ts i ≈ us i` for every argument, then `f ts ≈ f us`: a body
+realizing all the argument equalities and `¬(f ts = f us)` contradicts the function interpretation
+respecting equal arguments. This makes the quotient's `funMap` well-defined. -/
+theorem schemaTermEq_func {n : ℕ} (f : (localColim s₀)[[ℕ]].Functions n)
+    (ts us : Fin n → (localColim s₀)[[ℕ]].Term Empty)
+    (h : ∀ i, SchemaTermEq hM (ts i) (us i)) :
+    SchemaTermEq hM (Term.func f ts) (Term.func f us) := by
+  rcases (schemaCompletionTheorySpec hM).complete_on_universe _
+    (schemaEqSentence_mem_universe (Term.func f ts) (Term.func f us)) with hpos | hneg
+  · exact hpos
+  · exfalso
+    classical
+    obtain ⟨σ, hh, hbody⟩ := exists_body_of_subset hM
+      (insert (schemaEqSentence (Term.func f ts) (Term.func f us)).not
+        (Finset.image (fun i => schemaEqSentence (ts i) (us i)) Finset.univ))
+      (fun τ hτ => by
+        rw [Finset.mem_insert, Finset.mem_image] at hτ
+        rcases hτ with rfl | ⟨i, _, rfl⟩
+        · exact hneg
+        · exact h i)
+    have hc := hbody (schemaEqSentence (Term.func f ts) (Term.func f us)).not
+      (Finset.mem_insert_self _ _)
+    rw [realizeWith_not, realize_schemaEqSentence_iff] at hc
+    refine hc ?_
+    have hi : ∀ i, letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+        (ts i).realize (Empty.elim : Empty → M) = (us i).realize Empty.elim := fun i => by
+      have := hbody (schemaEqSentence (ts i) (us i))
+        (Finset.mem_insert_of_mem (Finset.mem_image_of_mem _ (Finset.mem_univ i)))
+      rwa [realize_schemaEqSentence_iff] at this
+    simp only [Term.realize_func]
+    exact congrArg _ (funext hi)
+
+/-! ### The relation interface (`schemaRelSentence` + well-definedness) -/
+
+/-- The canonical finite support of a relation atom over a tuple of closed schema terms. -/
+def schemaRelSupport {l : ℕ} (ts : Fin l → (localColim s₀)[[ℕ]].Term Empty) : Finset ℕ :=
+  Finset.univ.biUnion fun i => locJSupport (localColim s₀) ℕ (ts i)
+
+omit [(localColim s₀).Structure M] [LinearOrder M] [WellFoundedLT M] in
+theorem locJSupport_subset_schemaRelSupport {l : ℕ}
+    (ts : Fin l → (localColim s₀)[[ℕ]].Term Empty) (i : Fin l) :
+    locJSupport (localColim s₀) ℕ (ts i) ⊆ schemaRelSupport ts := fun _ hj =>
+  Finset.mem_biUnion.mpr ⟨i, Finset.mem_univ i, hj⟩
+
+/-- The lifted `templateSentence` of the de-substituted relation atom `locDeRelAtom` at the
+canonical support — the schema-universe sentence that encodes "`R ts`". -/
+def schemaRelSentence {l : ℕ} (R : (localColim s₀).Relations l)
+    (ts : Fin l → (localColim s₀)[[ℕ]].Term Empty) :
+    ((localColim s₀)[[ℕ]])[[ℕ]].Sentenceω :=
+  (Lomega1omegaTemplate.templateSentence
+      (locDeRelAtom (localColim s₀) ℕ (schemaRelSupport ts) R ts
+        (locJSupport_subset_schemaRelSupport ts))
+      ((schemaRelSupport ts).orderEmbOfFin rfl)).mapLanguage
+    (((localColim s₀)[[ℕ]]).lhomWithConstants ℕ)
+
+/-- `schemaRelSentence R ts` is a schema-universe member. -/
+theorem schemaRelSentence_mem_universe {l : ℕ} (R : (localColim s₀).Relations l)
+    (ts : Fin l → (localColim s₀)[[ℕ]].Term Empty) :
+    (⟨schemaRelSentence R ts, hasFiniteConstSupport_mapLanguage_templateSentence _ _⟩ :
+      FSentence (L'' := localColim s₀) (J := ℕ)) ∈ schemaFSentenceUniverse s₀ :=
+  Set.mem_biUnion
+    (locDeRelAtom_mem_ΓEMlocal (J := ℕ) (s₀ := s₀) (S := schemaRelSupport ts) R ts
+      (locJSupport_subset_schemaRelSupport ts))
+    ⟨(schemaRelSupport ts).orderEmbOfFin rfl, rfl⟩
+
+omit [LinearOrder M] [WellFoundedLT M] in
+/-- **The exported relation bridge.** Under a body interpretation `(σ, h)`, `schemaRelSentence R ts`
+is realized iff `R` holds in `M` on the `σ`-values of the terms. -/
+theorem realize_schemaRelSentence_iff (σ h : ℕ → M) {l : ℕ} (R : (localColim s₀).Relations l)
+    (ts : Fin l → (localColim s₀)[[ℕ]].Term Empty) :
+    realizeWith σ h (schemaRelSentence R ts) (Empty.elim : Empty → M) Fin.elim0 ↔
+      letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+      Structure.RelMap R fun i => (ts i).realize (Empty.elim : Empty → M) := by
+  letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+  rw [schemaRelSentence, realizeWith_templateSentence, locDeRelAtom, canonRelAtom,
+    BoundedFormulaω.realize_rel]
+  apply Iff.of_eq
+  congr 1
+  funext i
+  rw [Term.realize_relabel, Sum.elim_comp_inr, locDeTermFin_realize_constInterp_nat]
+
+/-- **Canonical-support schema relation membership** on tuples of closed schema terms. -/
+def SchemaTermRel {l : ℕ} (R : (localColim s₀).Relations l)
+    (ts : Fin l → (localColim s₀)[[ℕ]].Term Empty) : Prop :=
+  schemaRelSentence R ts ∈ schemaCompletionTheory (schemaEnumeration s₀) hM
+
+/-- **Relation well-definedness.** Argument-wise `SchemaTermEq` preserves `SchemaTermRel`: a body
+realizing `R ts`, all argument equalities, and `¬(R us)` contradicts `M`'s `RelMap` respecting
+equal arguments. This makes the quotient's `RelMap` well-defined. -/
+theorem schemaTermRel_congr {l : ℕ} (R : (localColim s₀).Relations l)
+    {ts us : Fin l → (localColim s₀)[[ℕ]].Term Empty}
+    (h : ∀ i, SchemaTermEq hM (ts i) (us i)) (hR : SchemaTermRel hM R ts) :
+    SchemaTermRel hM R us := by
+  rcases (schemaCompletionTheorySpec hM).complete_on_universe _
+    (schemaRelSentence_mem_universe R us) with hpos | hneg
+  · exact hpos
+  · exfalso
+    classical
+    obtain ⟨σ, hh, hbody⟩ := exists_body_of_subset hM
+      (insert (schemaRelSentence R ts) (insert (schemaRelSentence R us).not
+        (Finset.image (fun i => schemaEqSentence (ts i) (us i)) Finset.univ)))
+      (fun τ hτ => by
+        rw [Finset.mem_insert, Finset.mem_insert, Finset.mem_image] at hτ
+        rcases hτ with rfl | rfl | ⟨i, _, rfl⟩
+        · exact hR
+        · exact hneg
+        · exact h i)
+    have ha := hbody (schemaRelSentence R ts) (Finset.mem_insert_self _ _)
+    have hc := hbody (schemaRelSentence R us).not
+      (Finset.mem_insert_of_mem (Finset.mem_insert_self _ _))
+    rw [realize_schemaRelSentence_iff] at ha
+    rw [realizeWith_not, realize_schemaRelSentence_iff] at hc
+    refine hc ?_
+    have hi : ∀ i, letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+        (ts i).realize (Empty.elim : Empty → M) = (us i).realize Empty.elim := fun i => by
+      have := hbody (schemaEqSentence (ts i) (us i))
+        (Finset.mem_insert_of_mem (Finset.mem_insert_of_mem
+          (Finset.mem_image_of_mem _ (Finset.mem_univ i))))
+      rwa [realize_schemaEqSentence_iff] at this
+    letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+    rw [show (fun i => Term.realize (Empty.elim : Empty → M) (us i))
+        = fun i => Term.realize (Empty.elim : Empty → M) (ts i) from (funext hi).symm]
+    exact ha
 
 end FirstOrder.Language
