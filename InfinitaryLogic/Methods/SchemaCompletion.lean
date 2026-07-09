@@ -422,4 +422,71 @@ theorem schemaCompletionStage_witness (n : ℕ) {φs : ℕ → ((localColim s₀
 
 end Completion
 
+/-! ## Checkpoint 3c: the union theory
+
+The completed theory `T = ⋃ₙ (schemaCompletionStage ρ hM n).1`, kept as a raw set of Marker
+sentences. Finite-character consistency (a finite subset lands in one stage), completeness on the
+universe (each `ρ n` decided at its stage), and — the `iSup`-witness closure — will bundle into
+`SchemaCompletionTheorySpec`. -/
+
+section Union
+
+variable {s₀ : LocalStage} {M : Type} [(localColim s₀).Structure M] [LinearOrder M]
+  [WellFoundedLT M]
+
+/-- **The canonical enumeration** of the schema universe (from countable + nonempty). -/
+noncomputable def schemaEnumeration (s₀ : LocalStage) :
+    ℕ → FSentence (L'' := localColim s₀) (J := ℕ) :=
+  ((schemaFSentenceUniverse_countable (s₀ := s₀)).exists_eq_range
+    schemaFSentenceUniverse_nonempty).choose
+
+theorem schemaEnumeration_range :
+    Set.range (schemaEnumeration s₀) = schemaFSentenceUniverse s₀ :=
+  (((schemaFSentenceUniverse_countable (s₀ := s₀)).exists_eq_range
+    schemaFSentenceUniverse_nonempty).choose_spec).symm
+
+variable (ρ : ℕ → FSentence (L'' := localColim s₀) (J := ℕ))
+  (hM : Cardinal.beth (Ordinal.omega 1) ≤ Cardinal.mk M)
+
+/-- **The completed theory** (raw set of Marker sentences), the union of the completion stages. -/
+def schemaCompletionTheory : Set (((localColim s₀)[[ℕ]])[[ℕ]].Sentenceω) :=
+  {τ | ∃ n, τ ∈ (schemaCompletionStage ρ hM n).1}
+
+/-- **Step 2.** A finite subset of the completed theory lands in a single stage. -/
+theorem finite_subset_stage (F : Finset (((localColim s₀)[[ℕ]])[[ℕ]].Sentenceω)) :
+    (∀ τ ∈ F, τ ∈ schemaCompletionTheory ρ hM) →
+      ∃ N, F ⊆ (schemaCompletionStage ρ hM N).1 := by
+  classical
+  induction F using Finset.induction with
+  | empty => exact fun _ => ⟨0, Finset.empty_subset _⟩
+  | @insert a s ha ih =>
+    intro hF
+    obtain ⟨N₂, hN₂⟩ := hF a (Finset.mem_insert_self a s)
+    obtain ⟨N₁, hN₁⟩ := ih (fun τ hτ => hF τ (Finset.mem_insert_of_mem hτ))
+    exact ⟨max N₁ N₂, Finset.insert_subset
+      (schemaCompletionStage_mono ρ hM (le_max_right N₁ N₂) hN₂)
+      (hN₁.trans (schemaCompletionStage_mono ρ hM (le_max_left N₁ N₂)))⟩
+
+/-- **Finite-character consistency**: every finite subset of the completed theory is
+`MarkerHenkinConsistent`. -/
+theorem schemaCompletionTheory_finite_consistent
+    (F : Finset (((localColim s₀)[[ℕ]])[[ℕ]].Sentenceω))
+    (hF : ∀ τ ∈ F, τ ∈ schemaCompletionTheory ρ hM) : MarkerHenkinConsistent M F :=
+  (schemaCompletionStage_consistent ρ hM (finite_subset_stage ρ hM F hF).choose).mono
+    (finite_subset_stage ρ hM F hF).choose_spec
+
+/-- **Step 3 — completeness on the universe**: every schema-universe sentence is decided by the
+completed theory (using `range ρ = universe`). -/
+theorem schemaCompletionTheory_complete
+    (hρrange : Set.range ρ = schemaFSentenceUniverse s₀)
+    (τ : FSentence (L'' := localColim s₀) (J := ℕ)) (hτ : τ ∈ schemaFSentenceUniverse s₀) :
+    τ.1 ∈ schemaCompletionTheory ρ hM ∨ τ.1.not ∈ schemaCompletionTheory ρ hM := by
+  rw [← hρrange] at hτ
+  obtain ⟨n, hn⟩ := hτ
+  rcases schemaCompletionStage_decides ρ hM n with h | h
+  · exact Or.inl ⟨n + 1, hn ▸ h⟩
+  · exact Or.inr ⟨n + 1, hn ▸ h⟩
+
+end Union
+
 end FirstOrder.Language
