@@ -25,6 +25,8 @@ import InfinitaryLogic.Methods.MarkerStage
 import InfinitaryLogic.Methods.SchemaOmegaWitness
 -- Layer 7b checkpoint 1: the countable schema sentence universe (completion decision list)
 import InfinitaryLogic.Methods.SchemaCompletion
+-- Layer 7b checkpoint 5a: the schema term-model equality interface (locDeEqAtom setoid)
+import InfinitaryLogic.Methods.SchemaTermModel
 
 /-!
 # WIP: the work-in-progress frontier bundle
