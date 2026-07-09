@@ -487,6 +487,93 @@ theorem schemaCompletionTheory_complete
   · exact Or.inl ⟨n + 1, hn ▸ h⟩
   · exact Or.inr ⟨n + 1, hn ▸ h⟩
 
+/-- **Step 4/5 — the restricted `iSup`-witness closure.** For a `ΓlocalColim` disjunction
+`⟨m, iSup φs⟩` and any tuple `t`, if the lifted `templateSentence (iSup φs) t` is in the completed
+theory (over the canonical enumeration), then some component's lifted `templateSentence (φs k) t`
+is too. This is exactly the clause `TailTemplateOmegaWitnessed`/R1 consumes — no full `ΓEMlocal`
+component closure, no deForm case. The lifted `templateSentence` distributes over `iSup` (`rfl`);
+the sentence is a universe member (via `ΓlocalColim ⊆ ΓEMlocal`), so it is some `ρ j`, decided at
+stage `j` — positively (a negative decision would put both it and its negation in a common later
+stage, contradicting `markerHenkinConsistent_not_mem_and_not_mem`); `schemaCompletionStage_witness`
+then supplies the component. -/
+theorem schemaCompletionTheory_iSup_witness_localColim
+    {m : ℕ} {φs : ℕ → (localColim s₀).BoundedFormulaω Empty m}
+    (hmem : (⟨m, BoundedFormulaω.iSup φs⟩ : Σ n, (localColim s₀).BoundedFormulaω Empty n)
+      ∈ ΓlocalColim s₀)
+    (t : Fin m ↪o ℕ)
+    (hT : (Lomega1omegaTemplate.templateSentence (BoundedFormulaω.iSup φs) t).mapLanguage
+        (((localColim s₀)[[ℕ]]).lhomWithConstants ℕ)
+      ∈ schemaCompletionTheory (schemaEnumeration s₀) hM) :
+    ∃ k, (Lomega1omegaTemplate.templateSentence (φs k) t).mapLanguage
+        (((localColim s₀)[[ℕ]]).lhomWithConstants ℕ)
+      ∈ schemaCompletionTheory (schemaEnumeration s₀) hM := by
+  have hdist : (Lomega1omegaTemplate.templateSentence (BoundedFormulaω.iSup φs) t).mapLanguage
+        (((localColim s₀)[[ℕ]]).lhomWithConstants ℕ)
+      = BoundedFormulaω.iSup (fun k => (Lomega1omegaTemplate.templateSentence (φs k) t).mapLanguage
+        (((localColim s₀)[[ℕ]]).lhomWithConstants ℕ)) := rfl
+  have hmemEM : (⟨m, BoundedFormulaω.iSup φs⟩ : Σ n, (localColim s₀).BoundedFormulaω Empty n)
+      ∈ ΓEMlocal s₀ := Set.mem_union_left _ (Set.mem_union_left _ (Set.mem_union_left _ hmem))
+  have huniv : (⟨(Lomega1omegaTemplate.templateSentence (BoundedFormulaω.iSup φs) t).mapLanguage
+        (((localColim s₀)[[ℕ]]).lhomWithConstants ℕ),
+      hasFiniteConstSupport_mapLanguage_templateSentence (BoundedFormulaω.iSup φs) t⟩ :
+      FSentence (L'' := localColim s₀) (J := ℕ)) ∈ schemaFSentenceUniverse s₀ :=
+    Set.mem_biUnion hmemEM ⟨t, rfl⟩
+  rw [← schemaEnumeration_range] at huniv
+  obtain ⟨j, hj⟩ := huniv
+  have hj1 : (schemaEnumeration s₀ j).1 =
+      (Lomega1omegaTemplate.templateSentence (BoundedFormulaω.iSup φs) t).mapLanguage
+        (((localColim s₀)[[ℕ]]).lhomWithConstants ℕ) := congrArg Subtype.val hj
+  have hjT : (schemaEnumeration s₀ j).1 ∈ schemaCompletionTheory (schemaEnumeration s₀) hM := by
+    rw [hj1]; exact hT
+  rcases schemaCompletionStage_decides (schemaEnumeration s₀) hM j with hpos | hneg
+  · have hiSup : (schemaEnumeration s₀ j).1 =
+        BoundedFormulaω.iSup (fun k => (Lomega1omegaTemplate.templateSentence (φs k) t).mapLanguage
+          (((localColim s₀)[[ℕ]]).lhomWithConstants ℕ)) := hj1.trans hdist
+    obtain ⟨k, hk⟩ := schemaCompletionStage_witness (schemaEnumeration s₀) hM j hiSup hpos
+    exact ⟨k, ⟨j + 1, hk⟩⟩
+  · exfalso
+    obtain ⟨jn, hjn⟩ := hjT
+    exact markerHenkinConsistent_not_mem_and_not_mem
+      (schemaCompletionStage_consistent (schemaEnumeration s₀) hM (max jn (j + 1)))
+      (schemaEnumeration s₀ j).1
+      ⟨schemaCompletionStage_mono (schemaEnumeration s₀) hM (le_max_left jn (j + 1)) hjn,
+        schemaCompletionStage_mono (schemaEnumeration s₀) hM (le_max_right jn (j + 1)) hneg⟩
+
+/-- **Checkpoint 3c bundle.** The three properties of the completed schema theory over the
+canonical enumeration `schemaEnumeration s₀`: finite-character consistency, completeness on the
+schema universe, and the `ΓlocalColim`-restricted `iSup`-witness closure. Bundling keeps
+checkpoints 4/5 from re-threading `ρ`, the range fact, and monotonicity. -/
+structure SchemaCompletionTheorySpec (hM : Cardinal.beth (Ordinal.omega 1) ≤ Cardinal.mk M) :
+    Prop where
+  /-- Every finite subset of the completed theory is `MarkerHenkinConsistent`. -/
+  finite_consistent : ∀ F : Finset (((localColim s₀)[[ℕ]])[[ℕ]].Sentenceω),
+    (∀ τ ∈ F, τ ∈ schemaCompletionTheory (schemaEnumeration s₀) hM) → MarkerHenkinConsistent M F
+  /-- Every schema-universe sentence is decided by the completed theory. -/
+  complete_on_universe : ∀ τ : FSentence (L'' := localColim s₀) (J := ℕ),
+    τ ∈ schemaFSentenceUniverse s₀ →
+      τ.1 ∈ schemaCompletionTheory (schemaEnumeration s₀) hM ∨
+        τ.1.not ∈ schemaCompletionTheory (schemaEnumeration s₀) hM
+  /-- A `ΓlocalColim` disjunction present in the theory has a component present. -/
+  iSup_witness_localColim : ∀ {m : ℕ} {φs : ℕ → (localColim s₀).BoundedFormulaω Empty m},
+    (⟨m, BoundedFormulaω.iSup φs⟩ : Σ n, (localColim s₀).BoundedFormulaω Empty n) ∈ ΓlocalColim s₀ →
+      ∀ t : Fin m ↪o ℕ,
+        (Lomega1omegaTemplate.templateSentence (BoundedFormulaω.iSup φs) t).mapLanguage
+            (((localColim s₀)[[ℕ]]).lhomWithConstants ℕ) ∈
+          schemaCompletionTheory (schemaEnumeration s₀) hM →
+        ∃ k, (Lomega1omegaTemplate.templateSentence (φs k) t).mapLanguage
+            (((localColim s₀)[[ℕ]]).lhomWithConstants ℕ) ∈
+          schemaCompletionTheory (schemaEnumeration s₀) hM
+
+/-- **Checkpoint 3c complete**: the completed schema theory over `schemaEnumeration s₀` satisfies
+the bundle — the witnessed schema object the extraction (checkpoint 5) consumes. -/
+theorem schemaCompletionTheorySpec (hM : Cardinal.beth (Ordinal.omega 1) ≤ Cardinal.mk M) :
+    SchemaCompletionTheorySpec (s₀ := s₀) (M := M) hM where
+  finite_consistent := schemaCompletionTheory_finite_consistent (schemaEnumeration s₀) hM
+  complete_on_universe :=
+    schemaCompletionTheory_complete (schemaEnumeration s₀) hM schemaEnumeration_range
+  iSup_witness_localColim := fun hmem t hT =>
+    schemaCompletionTheory_iSup_witness_localColim hM hmem t hT
+
 end Union
 
 end FirstOrder.Language
