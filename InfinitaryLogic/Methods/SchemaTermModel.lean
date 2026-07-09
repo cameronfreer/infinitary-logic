@@ -6,7 +6,7 @@ Authors: Cameron Freer
 import InfinitaryLogic.Methods.SchemaCompletion
 
 /-!
-# Layer 7b checkpoint 5a: the schema term-model substrate (equality interface)
+# Layer 7b checkpoint 5a: the schema term-model substrate
 
 The completed schema theory `Tσ = schemaCompletionTheory (schemaEnumeration s₀) hM` is complete on
 the schema universe, `iSup`-witnessed, and finite-character consistent — but NOT a maximal
@@ -18,9 +18,14 @@ transitivity, congruence, relation well-definedness) is proved by the **same sou
 contradiction**: if the wrong sign were in `Tσ`, `finite_consistent` yields a source-model body
 realizing an impossible equality situation in `M`.
 
-This file is the equality interface (the first 5a unit): the canonical-support equality relation
-`SchemaTermEq`, the shared body-extraction engine `exists_body_of_subset`, and the equivalence /
-congruence laws. The quotient model itself is the next unit.
+The file delivers checkpoint 5a in full: the canonical-support equality relation `SchemaTermEq`
+and the shared body-extraction engine `exists_body_of_subset`; the exported semantic bridges
+`realize_schemaEqSentence_iff`/`realize_schemaRelSentence_iff` (via the σ-generalization
+`locDeTermFin_realize_constInterp_nat`); the equivalence/congruence laws; and the quotient model —
+`SchemaTermCarrier` with its `(localColim s₀)[[ℕ]]`-structure, the atomic API
+(`schemaTerm_funMap_mk`/`schemaTerm_realize_eq_mk`/`schemaTerm_relMap_mk_iff`), and the canonical
+sequence `schemaSeq` (the classes of the `d`-constants). No `iSup`, `all`, or truth lemma here —
+that is checkpoint 5b.
 -/
 
 namespace FirstOrder.Language
