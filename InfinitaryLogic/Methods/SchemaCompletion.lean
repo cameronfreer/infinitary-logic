@@ -308,4 +308,118 @@ theorem schemaFSentenceUniverse_nonempty : (schemaFSentenceUniverse s₀).Nonemp
 
 end LiftedUniverse
 
+/-! ## Checkpoint 3b: the ω-stage completion (subtype recursion)
+
+A constructive Henkin enumeration over `ρ : ℕ → FSentence`. Each `stageStep` decides `ρ n` via
+`extension` (branching on decidable consistency of the positive insert — `extension`'s `∨` is a
+`Prop` and cannot eliminate into the `Subtype`), and, opportunistically and locally, if the
+positive branch is `iSup`-shaped adjoins a witness via `iSup_choice`. The step carries a clean
+disjunction `(positive ∧ iSup-witnessed) ∨ negative`, so the per-stage facts 3c consumes are
+projections — no global classifier, no "φ ∉ F" discharge. -/
+
+section Completion
+
+variable {s₀ : LocalStage} {M : Type} [(localColim s₀).Structure M] [LinearOrder M]
+  [WellFoundedLT M] (ρ : ℕ → FSentence (L'' := localColim s₀) (J := ℕ))
+
+/-- **The stage step.** Given a consistent finite stage `Fp`, decide `ρ n` and (locally) witness a
+positive `iSup`. Returns the next stage with consistency, monotonicity, and the decision record
+`(positive ∧ iSup-witnessed) ∨ negative`. -/
+noncomputable def stageStep
+    (Fp : {F : Finset (((localColim s₀)[[ℕ]])[[ℕ]].Sentenceω) // MarkerHenkinConsistent M F})
+    (n : ℕ) :
+    {G : Finset (((localColim s₀)[[ℕ]])[[ℕ]].Sentenceω) //
+      MarkerHenkinConsistent M G ∧ Fp.1 ⊆ G ∧
+      (((ρ n).1 ∈ G ∧ ∀ φs, (ρ n).1 = BoundedFormulaω.iSup φs → ∃ k, φs k ∈ G) ∨
+        (ρ n).1.not ∈ G)} := by
+  classical
+  by_cases hpos : MarkerHenkinConsistent M (insert (ρ n).1 Fp.1)
+  · by_cases hSup : ∃ φs, (ρ n).1 = BoundedFormulaω.iSup φs
+    · have hφs : (ρ n).1 = BoundedFormulaω.iSup (Classical.choose hSup) :=
+        Classical.choose_spec hSup
+      have hmem : BoundedFormulaω.iSup (Classical.choose hSup) ∈ insert (ρ n).1 Fp.1 :=
+        hφs ▸ Finset.mem_insert_self _ _
+      have hk := Classical.choose_spec (MarkerHenkinConsistent.iSup_choice hpos hmem)
+      set k := Classical.choose (MarkerHenkinConsistent.iSup_choice hpos hmem)
+      refine ⟨insert (Classical.choose hSup k) (insert (ρ n).1 Fp.1), hk,
+        (Finset.subset_insert _ _).trans (Finset.subset_insert _ _),
+        Or.inl ⟨Finset.mem_insert_of_mem (Finset.mem_insert_self _ _), fun φs' hφs' => ?_⟩⟩
+      have hφeq : Classical.choose hSup = φs' := by
+        have h := hφs.symm.trans hφs'
+        rwa [BoundedFormulaω.iSup.injEq] at h
+      exact ⟨k, by rw [← congrFun hφeq k]; exact Finset.mem_insert_self _ _⟩
+    · refine ⟨insert (ρ n).1 Fp.1, hpos, Finset.subset_insert _ _,
+        Or.inl ⟨Finset.mem_insert_self _ _, fun φs' hφs' => ?_⟩⟩
+      exact absurd ⟨φs', hφs'⟩ hSup
+  · have hneg := (MarkerHenkinConsistent.extension Fp.2 (ρ n).1 (ρ n).2).resolve_left hpos
+    exact ⟨insert (ρ n).1.not Fp.1, hneg, Finset.subset_insert _ _,
+      Or.inr (Finset.mem_insert_self _ _)⟩
+
+/-- **The completion stages.** `T 0 = ∅`; `T (n+1)` is the `stageStep` of `T n`. -/
+noncomputable def schemaCompletionStage
+    (hM : Cardinal.beth (Ordinal.omega 1) ≤ Cardinal.mk M) :
+    ℕ → {F : Finset (((localColim s₀)[[ℕ]])[[ℕ]].Sentenceω) // MarkerHenkinConsistent M F}
+  | 0 => ⟨∅, markerHenkinConsistent_empty hM⟩
+  | n + 1 =>
+    ⟨(stageStep ρ (schemaCompletionStage hM n) n).1,
+      (stageStep ρ (schemaCompletionStage hM n) n).2.1⟩
+
+omit [WellFoundedLT M] in
+/-- **`C0` at the consistency level**: a `MarkerHenkinConsistent` fragment contains no sentence
+together with its negation (a body at some level realizes both, contradicting `realizeWith_not`). -/
+theorem markerHenkinConsistent_not_mem_and_not_mem
+    {F : Finset (((localColim s₀)[[ℕ]])[[ℕ]].Sentenceω)} (h : MarkerHenkinConsistent M F)
+    (τ : ((localColim s₀)[[ℕ]])[[ℕ]].Sentenceω) : ¬(τ ∈ F ∧ τ.not ∈ F) := by
+  rintro ⟨h1, h2⟩
+  obtain ⟨S, H, hS, hH, hcof⟩ := h
+  obtain ⟨α, -, -, e, hsat⟩ := hcof 0 (Ordinal.omega_pos 1)
+  obtain ⟨σ, hmono, hrange⟩ := exists_strictMonoOn_interp e S
+  obtain ⟨hval, hh⟩ := hsat σ hmono hrange
+  exact (realizeWith_not σ hval τ _ _).mp
+    (hh τ.not (Finset.mem_coe.mpr h2)) (hh τ (Finset.mem_coe.mpr h1))
+
+variable (hM : Cardinal.beth (Ordinal.omega 1) ≤ Cardinal.mk M)
+
+/-- Each stage is `MarkerHenkinConsistent` (built into the subtype). -/
+theorem schemaCompletionStage_consistent (n : ℕ) :
+    MarkerHenkinConsistent M (schemaCompletionStage ρ hM n).1 :=
+  (schemaCompletionStage ρ hM n).2
+
+/-- One-step monotonicity: a stage is contained in its successor. -/
+theorem schemaCompletionStage_subset_succ (n : ℕ) :
+    (schemaCompletionStage ρ hM n).1 ⊆ (schemaCompletionStage ρ hM (n + 1)).1 :=
+  (stageStep ρ (schemaCompletionStage ρ hM n) n).2.2.1
+
+/-- Monotonicity of the completion chain. -/
+theorem schemaCompletionStage_mono {m n : ℕ} (h : m ≤ n) :
+    (schemaCompletionStage ρ hM m).1 ⊆ (schemaCompletionStage ρ hM n).1 := by
+  induction n with
+  | zero => rw [Nat.le_zero.mp h]
+  | succ n ih =>
+    rcases Nat.lt_succ_iff_lt_or_eq.mp (Nat.lt_succ_of_le h) with h' | rfl
+    · exact (ih (Nat.lt_succ_iff.mp h')).trans (schemaCompletionStage_subset_succ ρ hM n)
+    · exact subset_rfl
+
+/-- **Stage `n` decides `ρ n`**: after stage `n+1`, either `(ρ n).1` or its negation is present. -/
+theorem schemaCompletionStage_decides (n : ℕ) :
+    (ρ n).1 ∈ (schemaCompletionStage ρ hM (n + 1)).1 ∨
+      (ρ n).1.not ∈ (schemaCompletionStage ρ hM (n + 1)).1 := by
+  rcases (stageStep ρ (schemaCompletionStage ρ hM n) n).2.2.2 with ⟨hmem, -⟩ | hneg
+  · exact Or.inl hmem
+  · exact Or.inr hneg
+
+/-- **Stage `n` witnesses a positive `iSup`**: if `(ρ n).1` is `iSup φs` and lands positively in
+stage `n+1`, some component `φs k` is present too. -/
+theorem schemaCompletionStage_witness (n : ℕ) {φs : ℕ → ((localColim s₀)[[ℕ]])[[ℕ]].Sentenceω}
+    (hiSup : (ρ n).1 = BoundedFormulaω.iSup φs)
+    (hpos : (ρ n).1 ∈ (schemaCompletionStage ρ hM (n + 1)).1) :
+    ∃ k, φs k ∈ (schemaCompletionStage ρ hM (n + 1)).1 := by
+  rcases (stageStep ρ (schemaCompletionStage ρ hM n) n).2.2.2 with ⟨-, hwit⟩ | hneg
+  · exact hwit φs hiSup
+  · exact absurd ⟨hpos, hneg⟩
+      (markerHenkinConsistent_not_mem_and_not_mem
+        (schemaCompletionStage_consistent ρ hM (n + 1)) (ρ n).1)
+
+end Completion
+
 end FirstOrder.Language
