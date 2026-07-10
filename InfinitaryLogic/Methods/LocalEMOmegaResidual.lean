@@ -173,41 +173,6 @@ theorem realize_templateSentence_expand {L : Language.{0, 0}} {F : Set (Σ n, L.
   rw [htup]
   exact BoundedFormulaω.realize_mapLanguage (funSublangIncl F) ψ₀ (Empty.elim : Empty → N) _
 
-/-- **The `IsEmpty J` degenerate case**: over an empty target order, the Morley-seed template
-theory contains only the arity-`0` (sentence) members, and the source model `M` itself realizes
-them — no EM construction needed. -/
-theorem morleySeed_theory_model_of_isEmptyJ {L' : Language.{0, 0}} {M : Type}
-    [L'.Structure M] (φ : L'.Sentenceω) (a : ℕ → M) (J : Type) [LinearOrder J]
-    [IsEmpty J] (hφreal : Sentenceω.Realize φ M) :
-    ∃ (N : Type) (_ : L'[[J]].Structure N),
-      Theoryω.Model
-        ((tailTemplateOfSeq (L := L') a).templateTheoryOfSeq (morleySeed φ) J) N := by
-  letI : (constantsOn J).Structure M := constantsOn.structure fun j => isEmptyElim j
-  refine ⟨M, inferInstance, ?_⟩
-  rintro σ ⟨n, ψ, t, ⟨k, hk⟩, hcase⟩
-  match k, hk with
-  | 1, hk =>
-    cases hk
-    exact isEmptyElim (t 0)
-  | 0, hk =>
-    cases hk
-    rcases hcase with ⟨_, rfl⟩ | ⟨hnot, _⟩
-    · refine (realize_templateSentence_of_structure (L := L') (J := J) (N := M) φ t).mpr ?_
-      rw [show (fun i : Fin 0 => (Term.func (Sum.inr (t i) : L'[[J]].Functions 0)
-          Fin.elim0 : L'[[J]].Term Empty).realize (Empty.elim : Empty → M))
-        = Fin.elim0 from funext fun i => i.elim0]
-      exact hφreal
-    · exact absurd ((tailTemplateOfSeq_truth_sentence_iff a φ).mpr hφreal) hnot
-  | k + 2, hk =>
-    cases hk
-    rcases hcase with ⟨_, rfl⟩ | ⟨hnot, _⟩
-    · refine (realize_templateSentence_of_structure (L := L') (J := J) (N := M) φ t).mpr ?_
-      rw [show (fun i : Fin 0 => (Term.func (Sum.inr (t i) : L'[[J]].Functions 0)
-          Fin.elim0 : L'[[J]].Term Empty).realize (Empty.elim : Empty → M))
-        = Fin.elim0 from funext fun i => i.elim0]
-      exact hφreal
-    · exact absurd ((tailTemplateOfSeq_truth_sentence_iff a φ).mpr hφreal) hnot
-
 /-- **Morley-seed tail-template realizability from the classical extraction** — with NO
 function-symbol countability assumption on `L'` (only the ambient countable relations, matching
 `MorleySeedTailTemplateRealizable` itself): the construction runs in the **generated

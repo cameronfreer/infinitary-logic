@@ -24,12 +24,12 @@ existence theorem and the Morley-Hanf bound.
 ## Main Results
 
 - `hanf_existence`: Every Lω₁ω sentence has a Hanf number.
+- The universal property of `HanfNumber`: `hanfNumber_isHanfBound`,
+  `hanfNumber_le_of_isHanfBound`, `hanfNumber_le_iff_isHanfBound`, `IsHanfBound.mono`.
 
-The conditional Morley-Hanf bound is in `Conditional/MorleyHanfTransfer.lean`:
-the original `morley_hanf_of_transfer` taking the bundled `MorleyHanfTransfer`
-hypothesis, plus the Phase-2 refactor `hasArbLargeModels_of_restricted_extraction`
-— a **proved** bridge taking a smaller residual `MorleyHanfExtraction` (source-side
-only) plus a per-target compactness oracle.
+The Morley-Hanf bound itself — `morley_hanf : IsHanfBound φ (ℶ_ω₁)`, unconditional over an
+arbitrary language — is proved in `Conditional/MorleyHanfSchemaDischarge.lean` and exposed
+(with its `HanfNumber` corollaries) through `ModelTheory/MorleyHanf.lean`.
 
 ## References
 
@@ -97,8 +97,29 @@ theorem hanf_existence (φ : L.Sentenceω) : ∃ κ, IsHanfBound φ κ := by
     push_neg at hκ₀
     exact ⟨κ₀, fun ⟨M, hStr, hM, hge⟩ => absurd hge (not_le.mpr (hκ₀ M hStr hM))⟩
 
--- MorleyHanfTransfer and morley_hanf_of_transfer have been moved to
--- Conditional/MorleyHanfTransfer.lean to isolate the external hypothesis.
+/-! ## The universal property of the Hanf number -/
+
+/-- A Hanf bound stays a bound at every larger cardinal — the premise only weakens. -/
+theorem IsHanfBound.mono {φ : L.Sentenceω} {κ μ : Cardinal}
+    (hκ : IsHanfBound φ κ) (hκμ : κ ≤ μ) : IsHanfBound φ μ :=
+  fun ⟨M, hStr, hφ, hge⟩ => hκ ⟨M, hStr, hφ, le_trans hκμ hge⟩
+
+/-- **The Hanf number is itself a Hanf bound**: the set of bounds is nonempty
+(`hanf_existence`), and an infimum of cardinals is attained. -/
+theorem hanfNumber_isHanfBound (φ : L.Sentenceω) : IsHanfBound φ (HanfNumber φ) :=
+  show HanfNumber φ ∈ {κ : Cardinal | IsHanfBound φ κ} from
+    csInf_mem ⟨(hanf_existence φ).choose, (hanf_existence φ).choose_spec⟩
+
+/-- The Hanf number is the least Hanf bound. -/
+theorem hanfNumber_le_of_isHanfBound {φ : L.Sentenceω} {κ : Cardinal}
+    (hκ : IsHanfBound φ κ) : HanfNumber φ ≤ κ :=
+  csInf_le' hκ
+
+/-- The universal property: `HanfNumber φ ≤ κ` exactly when `κ` is a Hanf bound (bounds are
+upward closed and the Hanf number is the least one). -/
+theorem hanfNumber_le_iff_isHanfBound {φ : L.Sentenceω} {κ : Cardinal} :
+    HanfNumber φ ≤ κ ↔ IsHanfBound φ κ :=
+  ⟨fun h => (hanfNumber_isHanfBound φ).mono h, hanfNumber_le_of_isHanfBound⟩
 
 end Language
 

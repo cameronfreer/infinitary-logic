@@ -5,7 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Conditional.MorleyHanfTransfer
 import InfinitaryLogic.Methods.SchemaLocalEMSource
-import InfinitaryLogic.Methods.LocalEMOmegaResidual
+import InfinitaryLogic.Methods.GeneratedSublanguage
 
 /-!
 # The Morley–Hanf theorem, discharged
