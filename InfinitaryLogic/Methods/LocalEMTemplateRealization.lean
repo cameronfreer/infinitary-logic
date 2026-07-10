@@ -252,6 +252,164 @@ theorem IsLomega1omegaIndiscernibleOnTail.seedOfΓEMlocal (s₀ : LocalStage) {M
   have hiff := hN u v hu hv hud hvd
   rwa [realize_map_LlocalInclusion, realize_map_LlocalInclusion] at hiff
 
+/-- **Seed restriction of tail indiscernibility, generic core**: over ANY `localColim` structure,
+the seed-language reduct transports tail indiscernibility on a family containing `ΓEMlocal s₀`
+down to the seed family — the second canonical-structure dependency of the realization chain,
+generalized. For the canonical structure this reduct is definitionally the original seed
+structure. -/
+theorem IsLomega1omegaIndiscernibleOnTail.seedOfΓEMlocal_of_reduct (s₀ : LocalStage) {M : Type}
+    [(localColim s₀).Structure M] {a' : ℕ → M}
+    {Γ : Set (Σ n, (localColim s₀).BoundedFormulaω Empty n)} (hΓ : ΓEMlocal s₀ ⊆ Γ)
+    (h : IsLomega1omegaIndiscernibleOnTail (L := localColim s₀) a' Γ) :
+    letI : (Llocal s₀ 0).Structure M := (LlocalInclusion s₀ 0).reduct M
+    IsLomega1omegaIndiscernibleOnTail (L := Llocal s₀ 0) a' (Γlocal s₀ 0) := by
+  letI : (Llocal s₀ 0).Structure M := (LlocalInclusion s₀ 0).reduct M
+  haveI : (LlocalInclusion s₀ 0).IsExpansionOn M := LHom.isExpansionOn_reduct _ _
+  intro n φ hφ
+  obtain ⟨N, hN⟩ := h (hΓ (ΓlocalColim_subset_ΓEMlocal s₀
+    (toLocalColimFormula_mem_ΓlocalColim s₀ (k := 0) hφ)))
+  refine ⟨N, fun u v hu hv hud hvd => ?_⟩
+  have hiff := hN u v hu hv hud hvd
+  exact ((BoundedFormulaω.realize_mapLanguage (LlocalInclusion s₀ 0) φ Empty.elim
+      (a' ∘ u)).symm.trans
+    (hiff.trans (BoundedFormulaω.realize_mapLanguage (LlocalInclusion s₀ 0) φ Empty.elim
+      (a' ∘ v))))
+
+/-- **The key realization equivalence, generic core**: over ANY `localColim` source structure
+satisfying the Skolem-universality mixin, with the source's seed semantics read through the
+seed-language reduct. Same chain as the canonical version below, fed by the generic staged truth
+lemma and the generic seed restriction. -/
+theorem realize_templateSentence_localEM_iff_of_skolemUniversal (s₀ : LocalStage) (J : Type)
+    [LinearOrder J] {M : Type} [(localColim s₀).Structure M]
+    (hsk : LocalSkolemUniversalForColim s₀ (M := M)) :
+    letI : s₀.Lang.Structure M := (LlocalInclusion s₀ 0).reduct M
+    ∀ (ctx : LocalEMContext (localColim s₀) J (M := M)),
+      ΓEMlocal s₀ ⊆ ctx.Γ → LocalEMContext.OmegaCompleteForColim s₀ J ctx →
+      ∀ {n : ℕ} (φ : s₀.Lang.BoundedFormulaω Empty n),
+        (⟨n, φ⟩ : Σ n, s₀.Lang.BoundedFormulaω Empty n) ∈ Γlocal s₀ 0 →
+        ∀ (t : Fin n ↪o J),
+          letI : (localColim s₀)[[J]].Structure ctx.Carrier := ctx.structure
+          letI : (s₀.Lang)[[J]].Structure ctx.Carrier :=
+            ((LlocalInclusion s₀ 0).addConstants J).reduct ctx.Carrier
+          (Sentenceω.Realize (Lomega1omegaTemplate.templateSentence φ t) ctx.Carrier ↔
+            (tailTemplateOfSeq (L := s₀.Lang) ctx.a).truth φ) := by
+  letI : s₀.Lang.Structure M := (LlocalInclusion s₀ 0).reduct M
+  letI : (Llocal s₀ 0).Structure M := (inferInstance : s₀.Lang.Structure M)
+  haveI : (LlocalInclusion s₀ 0).IsExpansionOn M := LHom.isExpansionOn_reduct _ _
+  intro ctx hΓ hc n φ hmem t
+  letI : (localColim s₀)[[J]].Structure ctx.Carrier := ctx.structure
+  letI : (s₀.Lang)[[J]].Structure ctx.Carrier :=
+    ((LlocalInclusion s₀ 0).addConstants J).reduct ctx.Carrier
+  -- the closed skeleton-constant argument terms and their common support
+  set ts : Fin n → (localColim s₀)[[J]].Term Empty :=
+    fun i => Term.func (Sum.inr (t i) : (localColim s₀)[[J]].Functions 0) Fin.elim0 with hts
+  set S : Finset J := Finset.univ.image (fun i => t i) with hSdef
+  have htmem : ∀ i, t i ∈ S := by
+    intro i; rw [hSdef]; exact Finset.mem_image_of_mem _ (Finset.mem_univ i)
+  have hsub : ∀ i, locJSupport (localColim s₀) J (ts i) ⊆ S := by
+    intro i
+    rw [hts]
+    rw [locJSupport_constTerm (localColim s₀) J (t i), Finset.singleton_subset_iff]
+    exact htmem i
+  -- the generic truth lemma at the seed stage
+  have hclosed := LocalEMContext.deFormClosedForColim_of_ΓEMlocal_subset s₀ J ctx hΓ
+  have hready := LocalEMContext.TLReadyStage_of_Γlocal s₀ J ctx (k := 0) hclosed φ hmem ts S hsub
+  have hTL := LocalEMContext.truthLemmaStage_of_mem_of_skolemUniversal s₀ J hsk ctx hc 0 φ hmem
+    ts S hsub hready
+  refine Iff.trans ?_ (Iff.trans hTL ?_)
+  · -- sentence realization ↔ carrier realization on the term classes
+    have hbase := realize_templateSentence_of_structure (L := s₀.Lang) (J := J)
+      (N := ctx.Carrier) φ t
+    have hbt : (fun i => (Term.func (Sum.inr (t i) : (s₀.Lang)[[J]].Functions 0)
+          Fin.elim0 : (s₀.Lang)[[J]].Term Empty).realize (Empty.elim : Empty → ctx.Carrier))
+        = fun i => ctx.mkClass (t := ts i) := by
+      funext i
+      show @Structure.funMap ((localColim s₀)[[J]]) ctx.Carrier ctx.structure 0
+          (Sum.inr (t i))
+          (fun k => ((Fin.elim0 : Fin 0 → (s₀.Lang)[[J]].Term Empty) k).realize
+            (Empty.elim : Empty → ctx.Carrier)) = _
+      rw [show (fun k : Fin 0 => ((Fin.elim0 : Fin 0 → (s₀.Lang)[[J]].Term Empty) k).realize
+          (Empty.elim : Empty → ctx.Carrier)) = (Fin.elim0 : Fin 0 → ctx.Carrier)
+        from funext fun k => k.elim0]
+      exact LocalEMContext.constMap_mkClass (Λ := localColim s₀) (J := J) ctx (Sum.inr (t i))
+    rw [hbt] at hbase
+    -- peel the two language maps off the truth-lemma side
+    letI : (localColim s₀).Structure ctx.Carrier := ctx.structureBase
+    haveI : (lhomWithConstants (localColim s₀) J).IsExpansionOn ctx.Carrier :=
+      ctx.lhomWithConstants_isExpansionOn
+    letI : (Llocal s₀ 0).Structure ctx.Carrier := (LlocalInclusion s₀ 0).reduct ctx.Carrier
+    exact hbase.trans
+      ((BoundedFormulaω.realize_mapLanguage (lhomWithConstants (localColim s₀) J)
+          (φ.mapLanguage (LlocalInclusion s₀ 0)) Empty.elim
+          (fun i => ctx.mkClass (t := ts i))).trans
+        (BoundedFormulaω.realize_mapLanguage (LlocalInclusion s₀ 0) φ Empty.elim
+          (fun i => ctx.mkClass (t := ts i)))).symm
+  · -- eventual deep truth ↔ tail-template truth of `ctx.a`
+    have hTail0 : IsLomega1omegaIndiscernibleOnTail (L := s₀.Lang) ctx.a (Γlocal s₀ 0) :=
+      IsLomega1omegaIndiscernibleOnTail.seedOfΓEMlocal_of_reduct s₀ hΓ ctx.hind
+    obtain ⟨N, hN⟩ := hTail0.tailTemplateOfSeq_truth_iff hmem
+    have htmono : ∀ d : ℕ, StrictMono fun i : Fin n => d + deepRank J S (t i) := by
+      intro d i i' hii'
+      exact Nat.add_lt_add_left
+        (deepRank_lt_of_lt (J := J) (htmem i) (t.strictMono hii')) d
+    have hED : LocalEMContext.eventualDeepTruth (Λ := localColim s₀) (J := J) ctx
+        (φ.mapLanguage (LlocalInclusion s₀ 0)) ts S ↔
+        ∀ᶠ d in Filter.atTop, φ.Realize (Empty.elim : Empty → M)
+          (ctx.a ∘ fun i => d + deepRank J S (t i)) := by
+      rw [LocalEMContext.eventualDeepTruth]
+      refine Filter.eventually_congr (Filter.Eventually.of_forall fun d => ?_)
+      have hassign : (fun i => locDeepInterp (localColim s₀) J ctx.a d S (ts i))
+          = ctx.a ∘ fun i => d + deepRank J S (t i) := by
+        funext i
+        rw [hts]
+        exact locDeepInterp_constTerm (localColim s₀) J ctx.a d S (t i)
+      rw [hassign]
+      exact BoundedFormulaω.realize_mapLanguage (LlocalInclusion s₀ 0) φ
+        (Empty.elim : Empty → M) (ctx.a ∘ fun i => d + deepRank J S (t i))
+    rw [hED]
+    constructor
+    · intro hev
+      rw [Filter.eventually_atTop] at hev
+      obtain ⟨d₀, hd₀⟩ := hev
+      exact (hN (fun i => max N d₀ + deepRank J S (t i)) (htmono _)
+        (fun k => le_trans (le_max_left _ _) (Nat.le_add_right _ _))).mpr
+        (hd₀ (max N d₀) (le_max_right _ _))
+    · intro htruth
+      rw [Filter.eventually_atTop]
+      exact ⟨N, fun d hd => (hN (fun i => d + deepRank J S (t i)) (htmono d)
+        (fun k => le_trans hd (Nat.le_add_right _ _))).mp htruth⟩
+
+/-- **The parameterized EM model theorem, generic core**: the quotient model satisfies the seed
+template theory of `ctx.a`, over any mixin-satisfying source with seed semantics through the
+reduct. -/
+theorem LocalEMContext.templateTheoryOn_seed_model_of_skolemUniversal (s₀ : LocalStage) (J : Type)
+    [LinearOrder J] {M : Type} [(localColim s₀).Structure M]
+    (hsk : LocalSkolemUniversalForColim s₀ (M := M)) :
+    letI : s₀.Lang.Structure M := (LlocalInclusion s₀ 0).reduct M
+    ∀ (ctx : LocalEMContext (localColim s₀) J (M := M)),
+      ΓEMlocal s₀ ⊆ ctx.Γ → LocalEMContext.OmegaCompleteForColim s₀ J ctx →
+      letI : (localColim s₀)[[J]].Structure ctx.Carrier := ctx.structure
+      letI : (s₀.Lang)[[J]].Structure ctx.Carrier :=
+        ((LlocalInclusion s₀ 0).addConstants J).reduct ctx.Carrier
+      Theoryω.Model
+        ((tailTemplateOfSeq (L := s₀.Lang) ctx.a).templateTheoryOn (Γlocal s₀ 0) J)
+        ctx.Carrier := by
+  letI : s₀.Lang.Structure M := (LlocalInclusion s₀ 0).reduct M
+  intro ctx hΓ hc
+  letI : (localColim s₀)[[J]].Structure ctx.Carrier := ctx.structure
+  letI : (s₀.Lang)[[J]].Structure ctx.Carrier :=
+    ((LlocalInclusion s₀ 0).addConstants J).reduct ctx.Carrier
+  rintro τ ⟨n, φ, t, hmem, hcase⟩
+  have hkey := realize_templateSentence_localEM_iff_of_skolemUniversal s₀ J hsk ctx hΓ hc
+    φ hmem t
+  rcases hcase with ⟨htruth, rfl⟩ | ⟨htruth, rfl⟩
+  · exact hkey.mpr htruth
+  · show BoundedFormulaω.Realize
+      ((Lomega1omegaTemplate.templateSentence φ t).not : (s₀.Lang)[[J]].Sentenceω)
+      (Empty.elim : Empty → ctx.Carrier) Fin.elim0
+    rw [BoundedFormulaω.realize_not]
+    exact fun hreal => htruth (hkey.mp hreal)
+
 /-- **The key realization equivalence**: in the local EM term model (over any context with
 `ΓEMlocal`-closure and `OmegaComplete`), a template sentence over the seed language holds iff
 the eventually-form template of `ctx.a` declares its formula true. The chain: constant terms
@@ -576,6 +734,41 @@ theorem tailTemplateRealizable_of_localEMContext {L' : Language.{0, 0}}
   letI : L'[[J]].Structure ctx.Carrier :=
     ((LlocalInclusion (LocalStage.ofSeq L' s) 0).addConstants J).reduct ctx.Carrier
   have hmodel := LocalEMContext.templateTheoryOn_seed_model (LocalStage.ofSeq L' s) J ctx hΓ hc
+  refine ⟨ctx.Carrier, inferInstance, ?_⟩
+  rw [show ((tailTemplateOfSeq (L := L') a).templateTheoryOfSeq s J)
+      = ((tailTemplateOfSeq (L := L') ctx.a).templateTheoryOn (Set.range s) J) from
+    (Lomega1omegaTemplate.templateTheoryOn_congr hagree J).symm]
+  exact hmodel
+
+/-- **Cross-source acceptance**: the context-generic acceptance with the context's source carrier
+separated from the input sequence's carrier — `ctx.a` lives in a mixin-satisfying `Source` (the
+schema term model), while the input `a` lives in an arbitrary `L'`-structure `A` (the large
+model). The template agreement hypothesis is the cross-model Morley-seed agreement's shape. The
+source's seed semantics are read through the seed-language reduct; no `Nonempty Source` is
+needed. -/
+theorem tailTemplateRealizable_of_localEMContext_cross {L' : Language.{0, 0}}
+    [Countable (Σ n, L'.Functions n)] [Countable (Σ n, L'.Relations n)]
+    (s : ℕ → Σ n, L'.BoundedFormulaω Empty n)
+    {A : Type} [L'.Structure A] (a : ℕ → A)
+    (Source : Type) [(localColim (LocalStage.ofSeq L' s)).Structure Source]
+    (hsk : LocalSkolemUniversalForColim (LocalStage.ofSeq L' s) (M := Source))
+    (J : Type) [LinearOrder J] :
+    letI : L'.Structure Source := (LlocalInclusion (LocalStage.ofSeq L' s) 0).reduct Source
+    ∀ (ctx : LocalEMContext (localColim (LocalStage.ofSeq L' s)) J (M := Source)),
+      ΓEMlocal (LocalStage.ofSeq L' s) ⊆ ctx.Γ →
+      LocalEMContext.OmegaCompleteForColim (LocalStage.ofSeq L' s) J ctx →
+      (∀ (n : ℕ) (ψ : L'.BoundedFormulaω Empty n), ⟨n, ψ⟩ ∈ Set.range s →
+        ((tailTemplateOfSeq (L := L') ctx.a).truth ψ ↔
+          (tailTemplateOfSeq (L := L') a).truth ψ)) →
+      ∃ (N : Type) (_ : L'[[J]].Structure N),
+        Theoryω.Model ((tailTemplateOfSeq (L := L') a).templateTheoryOfSeq s J) N := by
+  letI : L'.Structure Source := (LlocalInclusion (LocalStage.ofSeq L' s) 0).reduct Source
+  intro ctx hΓ hc hagree
+  letI : (localColim (LocalStage.ofSeq L' s))[[J]].Structure ctx.Carrier := ctx.structure
+  letI : L'[[J]].Structure ctx.Carrier :=
+    ((LlocalInclusion (LocalStage.ofSeq L' s) 0).addConstants J).reduct ctx.Carrier
+  have hmodel := LocalEMContext.templateTheoryOn_seed_model_of_skolemUniversal
+    (LocalStage.ofSeq L' s) J hsk ctx hΓ hc
   refine ⟨ctx.Carrier, inferInstance, ?_⟩
   rw [show ((tailTemplateOfSeq (L := L') a).templateTheoryOfSeq s J)
       = ((tailTemplateOfSeq (L := L') ctx.a).templateTheoryOn (Set.range s) J) from
