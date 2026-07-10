@@ -312,26 +312,32 @@ end LiftedUniverse
 
 A constructive Henkin enumeration over `ρ : ℕ → FSentence`. Each `stageStep` decides `ρ n` via
 `extension` (branching on decidable consistency of the positive insert — `extension`'s `∨` is a
-`Prop` and cannot eliminate into the `Subtype`), and, opportunistically and locally, if the
-positive branch is `iSup`-shaped adjoins a witness via `iSup_choice`. The step carries a clean
-disjunction `(positive ∧ iSup-witnessed) ∨ negative`, so the per-stage facts 3c consumes are
-projections — no global classifier, no "φ ∉ F" discharge. -/
+`Prop` and cannot eliminate into the `Subtype`), and, opportunistically and locally, adjoins the
+connective witness of the decided sign: a positive `iSup` gets a disjunct via `iSup_choice`, a
+negative `iInf` gets a refuted conjunct via `neg_iInf_choice`. The step carries the balanced
+disjunction `(positive ∧ iSup-witnessed) ∨ (negative ∧ neg-iInf-witnessed)`, so the per-stage
+facts 3c consumes are projections — no global classifier, no "φ ∉ F" discharge. The negative
+witness is NOT recoverable from finite consistency after the theory is formed (a finite
+fragment's body can falsify a component the fragment does not mention, so the failing component
+drifts with the body); it must be pinned here, at decision time. -/
 
 section Completion
 
 variable {s₀ : LocalStage} {M : Type} [(localColim s₀).Structure M] [LinearOrder M]
   [WellFoundedLT M] (ρ : ℕ → FSentence (L'' := localColim s₀) (J := ℕ))
 
-/-- **The stage step.** Given a consistent finite stage `Fp`, decide `ρ n` and (locally) witness a
-positive `iSup`. Returns the next stage with consistency, monotonicity, and the decision record
-`(positive ∧ iSup-witnessed) ∨ negative`. -/
+/-- **The stage step.** Given a consistent finite stage `Fp`, decide `ρ n` and (locally) witness
+the decided sign's connective: a positive `iSup` gets a disjunct, a negative `iInf` a refuted
+conjunct. Returns the next stage with consistency, monotonicity, and the balanced decision record
+`(positive ∧ iSup-witnessed) ∨ (negative ∧ neg-iInf-witnessed)`. -/
 noncomputable def stageStep
     (Fp : {F : Finset (((localColim s₀)[[ℕ]])[[ℕ]].Sentenceω) // MarkerHenkinConsistent M F})
     (n : ℕ) :
     {G : Finset (((localColim s₀)[[ℕ]])[[ℕ]].Sentenceω) //
       MarkerHenkinConsistent M G ∧ Fp.1 ⊆ G ∧
       (((ρ n).1 ∈ G ∧ ∀ φs, (ρ n).1 = BoundedFormulaω.iSup φs → ∃ k, φs k ∈ G) ∨
-        (ρ n).1.not ∈ G)} := by
+        ((ρ n).1.not ∈ G ∧
+          ∀ φs, (ρ n).1 = BoundedFormulaω.iInf φs → ∃ k, (φs k).not ∈ G))} := by
   classical
   by_cases hpos : MarkerHenkinConsistent M (insert (ρ n).1 Fp.1)
   · by_cases hSup : ∃ φs, (ρ n).1 = BoundedFormulaω.iSup φs
@@ -352,8 +358,24 @@ noncomputable def stageStep
         Or.inl ⟨Finset.mem_insert_self _ _, fun φs' hφs' => ?_⟩⟩
       exact absurd ⟨φs', hφs'⟩ hSup
   · have hneg := (MarkerHenkinConsistent.extension Fp.2 (ρ n).1 (ρ n).2).resolve_left hpos
-    exact ⟨insert (ρ n).1.not Fp.1, hneg, Finset.subset_insert _ _,
-      Or.inr (Finset.mem_insert_self _ _)⟩
+    by_cases hInf : ∃ φs, (ρ n).1 = BoundedFormulaω.iInf φs
+    · have hφs : (ρ n).1 = BoundedFormulaω.iInf (Classical.choose hInf) :=
+        Classical.choose_spec hInf
+      have hmem : (BoundedFormulaω.iInf (Classical.choose hInf)).not ∈
+          insert (ρ n).1.not Fp.1 := by
+        rw [← hφs]; exact Finset.mem_insert_self _ _
+      have hk := Classical.choose_spec (MarkerHenkinConsistent.neg_iInf_choice hneg hmem)
+      set k := Classical.choose (MarkerHenkinConsistent.neg_iInf_choice hneg hmem)
+      refine ⟨insert (Classical.choose hInf k).not (insert (ρ n).1.not Fp.1), hk,
+        (Finset.subset_insert _ _).trans (Finset.subset_insert _ _),
+        Or.inr ⟨Finset.mem_insert_of_mem (Finset.mem_insert_self _ _), fun φs' hφs' => ?_⟩⟩
+      have hφeq : Classical.choose hInf = φs' := by
+        have h := hφs.symm.trans hφs'
+        rwa [BoundedFormulaω.iInf.injEq] at h
+      exact ⟨k, by rw [← congrFun hφeq k]; exact Finset.mem_insert_self _ _⟩
+    · refine ⟨insert (ρ n).1.not Fp.1, hneg, Finset.subset_insert _ _,
+        Or.inr ⟨Finset.mem_insert_self _ _, fun φs' hφs' => ?_⟩⟩
+      exact absurd ⟨φs', hφs'⟩ hInf
 
 /-- **The completion stages.** `T 0 = ∅`; `T (n+1)` is the `stageStep` of `T n`. -/
 noncomputable def schemaCompletionStage
@@ -404,7 +426,7 @@ theorem schemaCompletionStage_mono {m n : ℕ} (h : m ≤ n) :
 theorem schemaCompletionStage_decides (n : ℕ) :
     (ρ n).1 ∈ (schemaCompletionStage ρ hM (n + 1)).1 ∨
       (ρ n).1.not ∈ (schemaCompletionStage ρ hM (n + 1)).1 := by
-  rcases (stageStep ρ (schemaCompletionStage ρ hM n) n).2.2.2 with ⟨hmem, -⟩ | hneg
+  rcases (stageStep ρ (schemaCompletionStage ρ hM n) n).2.2.2 with ⟨hmem, -⟩ | ⟨hneg, -⟩
   · exact Or.inl hmem
   · exact Or.inr hneg
 
@@ -414,11 +436,25 @@ theorem schemaCompletionStage_witness (n : ℕ) {φs : ℕ → ((localColim s₀
     (hiSup : (ρ n).1 = BoundedFormulaω.iSup φs)
     (hpos : (ρ n).1 ∈ (schemaCompletionStage ρ hM (n + 1)).1) :
     ∃ k, φs k ∈ (schemaCompletionStage ρ hM (n + 1)).1 := by
-  rcases (stageStep ρ (schemaCompletionStage ρ hM n) n).2.2.2 with ⟨-, hwit⟩ | hneg
+  rcases (stageStep ρ (schemaCompletionStage ρ hM n) n).2.2.2 with ⟨-, hwit⟩ | ⟨hneg, -⟩
   · exact hwit φs hiSup
   · exact absurd ⟨hpos, hneg⟩
       (markerHenkinConsistent_not_mem_and_not_mem
         (schemaCompletionStage_consistent ρ hM (n + 1)) (ρ n).1)
+
+/-- **Stage `n` witnesses a negative `iInf`**: if `(ρ n).1` is `iInf φs` and its negation lands in
+stage `n+1`, some refuted component `(φs k).not` is present too. The mirror of
+`schemaCompletionStage_witness`, projecting the negative half of the balanced decision record. -/
+theorem schemaCompletionStage_neg_iInf_witness (n : ℕ)
+    {φs : ℕ → ((localColim s₀)[[ℕ]])[[ℕ]].Sentenceω}
+    (hiInf : (ρ n).1 = BoundedFormulaω.iInf φs)
+    (hneg : (ρ n).1.not ∈ (schemaCompletionStage ρ hM (n + 1)).1) :
+    ∃ k, (φs k).not ∈ (schemaCompletionStage ρ hM (n + 1)).1 := by
+  rcases (stageStep ρ (schemaCompletionStage ρ hM n) n).2.2.2 with ⟨hpos, -⟩ | ⟨-, hwit⟩
+  · exact absurd ⟨hpos, hneg⟩
+      (markerHenkinConsistent_not_mem_and_not_mem
+        (schemaCompletionStage_consistent ρ hM (n + 1)) (ρ n).1)
+  · exact hwit φs hiInf
 
 end Completion
 
@@ -538,6 +574,35 @@ theorem schemaCompletionTheory_iSup_witness_localColim
       (schemaEnumeration s₀ j).1
       ⟨schemaCompletionStage_mono (schemaEnumeration s₀) hM (le_max_left jn (j + 1)) hjn,
         schemaCompletionStage_mono (schemaEnumeration s₀) hM (le_max_right jn (j + 1)) hneg⟩
+
+/-- **The negative `iInf`-witness closure on the universe.** For a universe member `τ` of `iInf`
+shape whose negation is in the completed theory (over the canonical enumeration), some refuted
+component `(φs k).not` is in the theory too. This is the direction the restricted truth lemma's
+`iInf` case needs (`(∀ k, ⊨ φs k) → ⊨ iInf φs`, contrapositively), and it is NOT derivable from
+finite consistency after the theory is formed — the failing component would drift with the
+certificate body. It is read off the stage that decided `τ`, exactly as in
+`schemaCompletionTheory_iSup_witness_localColim`. -/
+theorem schemaCompletionTheory_neg_iInf_witness_of_universe
+    (τ : FSentence (L'' := localColim s₀) (J := ℕ)) (hτ : τ ∈ schemaFSentenceUniverse s₀)
+    {φs : ℕ → ((localColim s₀)[[ℕ]])[[ℕ]].Sentenceω}
+    (hiInf : τ.1 = BoundedFormulaω.iInf φs)
+    (hneg : τ.1.not ∈ schemaCompletionTheory (schemaEnumeration s₀) hM) :
+    ∃ k, (φs k).not ∈ schemaCompletionTheory (schemaEnumeration s₀) hM := by
+  rw [← schemaEnumeration_range] at hτ
+  obtain ⟨j, hj⟩ := hτ
+  have hj1 : (schemaEnumeration s₀ j).1 = τ.1 := congrArg Subtype.val hj
+  rcases schemaCompletionStage_decides (schemaEnumeration s₀) hM j with hpos | hnegstage
+  · exfalso
+    obtain ⟨jn, hjn⟩ := hneg
+    exact markerHenkinConsistent_not_mem_and_not_mem
+      (schemaCompletionStage_consistent (schemaEnumeration s₀) hM (max (j + 1) jn))
+      (schemaEnumeration s₀ j).1
+      ⟨schemaCompletionStage_mono (schemaEnumeration s₀) hM (le_max_left (j + 1) jn) hpos,
+        schemaCompletionStage_mono (schemaEnumeration s₀) hM (le_max_right (j + 1) jn)
+          (by rw [hj1]; exact hjn)⟩
+  · obtain ⟨k, hk⟩ := schemaCompletionStage_neg_iInf_witness (schemaEnumeration s₀) hM j
+      (hj1.trans hiInf) hnegstage
+    exact ⟨k, ⟨j + 1, hk⟩⟩
 
 /-- **Checkpoint 3c bundle.** The three properties of the completed schema theory over the
 canonical enumeration `schemaEnumeration s₀`: finite-character consistency, completeness on the
