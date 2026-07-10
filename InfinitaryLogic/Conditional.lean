@@ -37,6 +37,7 @@ intermediates and historical statement shapes.
   `gandy_harrington_for_relation`, `silver_core_polish`, `silverBurgessDichotomy`
   all report axioms exactly `[propext, Classical.choice, Quot.sound]`.
 
-The only remaining `sorry` anywhere in the project is legacy, off-chain material in
-`InfinitaryLogic/Combinatorics/ErdosRado.lean`.
+There are no sorries anywhere in the project; the historical sorry-bearing
+`Combinatorics/ErdosRado.lean` exploration is preserved on the
+`archive/legacy-erdos-rado` branch, not in the tree.
 -/

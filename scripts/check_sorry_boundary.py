@@ -1,13 +1,8 @@
 #!/usr/bin/env python3
-"""Verify no syntactic `sorry` (or `sorryAx`) appears in Lean code outside
-the configured exempt regions.
-
-Exempt regions are paths where sorries are allowed:
-- `InfinitaryLogic/Conditional/`: conditional results stratum.
-- `InfinitaryLogic/Combinatorics/ErdosRado.lean`: legacy/off-path exempt
-  region (Erdős–Rado scaffolding, off the build path since 2026-07-02;
-  reachable via `Everything` only — see `scripts/check_import_boundary.sh`
-  for the guard keeping it off the default surface).
+"""Verify no syntactic `sorry` (or `sorryAx`) appears anywhere in the Lean
+tree. There are no exempt regions: the whole repository is sorry-free (the
+historical sorry-bearing `Combinatorics/ErdosRado.lean` is preserved only on
+the `archive/legacy-erdos-rado` branch).
 
 Strips Lean comments (line `--` and block `/- ... -/`, including the docstring
 variants `/-- ... -/` and `/-! ... -/`) before searching, so docstring and
@@ -23,10 +18,7 @@ import sys
 ROOTS = ["InfinitaryLogic.lean", "InfinitaryLogic"]
 # Paths exempt from the sorry-boundary check. Directories end with `/`;
 # bare filenames match exactly.
-EXCLUDE_PATHS = (
-    "InfinitaryLogic/Conditional/",
-    "InfinitaryLogic/Combinatorics/ErdosRado.lean",
-)
+EXCLUDE_PATHS: tuple = ()
 
 BLOCK_COMMENT = re.compile(r"/-.*?-/", re.DOTALL)
 LINE_COMMENT = re.compile(r"--.*?$", re.MULTILINE)
@@ -85,8 +77,7 @@ def main() -> int:
             print(f"  {excl}")
         return 1
 
-    print("OK: no 'sorry' in non-exempt code (exempt: "
-          + ", ".join(EXCLUDE_PATHS) + ")")
+    print("OK: no 'sorry' anywhere in the Lean tree (no exempt regions).")
     return 0
 
 

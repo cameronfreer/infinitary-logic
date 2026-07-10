@@ -10,8 +10,8 @@ import InfinitaryLogic.ModelTheory.MorleyHanf
 The default import surface, sorry-free, including the headline results: the Morley–Hanf
 theorem (`morley_hanf`, exposed through the `ModelTheory/MorleyHanf.lean` facade — proved,
 no hypotheses) and the Silver/Morley-counting chain. Excluded are only the legacy off-path
-modules (`Scott/Code.lean`, `Combinatorics/ErdosRado.lean`) — use
-`InfinitaryLogic.Everything` for those — and the WIP frontier target.
+`Scott/Code.lean` (use `InfinitaryLogic.Everything` for it) and the WIP
+frontier target.
 
 ## Targeted imports
 

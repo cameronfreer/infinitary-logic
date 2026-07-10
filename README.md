@@ -60,7 +60,7 @@ import InfinitaryLogic.Conditional  -- Silver chain + Morley-Hanf theorem (both 
 import InfinitaryLogic.Everything   -- everything including Conditional and legacy off-path modules
 ```
 
-`import InfinitaryLogic` now loads the sorry-free surface (`InfinitaryLogic.All`); use `import InfinitaryLogic.Everything` if you want `Conditional/` and the legacy off-path modules (`Scott/Code.lean`, the sorry-bearing `Combinatorics/ErdosRado.lean` scaffolding) included — work-in-progress frontier modules under `Methods/` are excluded and live in the separate non-default `InfinitaryLogicWIP` target. `InfinitaryLogic/Basic.lean` is a deprecated redirect to `All`.
+`import InfinitaryLogic` loads the default surface (`InfinitaryLogic.All`), which includes the headline `morley_hanf`; use `import InfinitaryLogic.Everything` for the rest of `Conditional/` and the legacy off-path `Scott/Code.lean` — work-in-progress frontier modules under `Methods/` live in the separate non-default `InfinitaryLogicWIP` target. **The entire tree is sorry-free** (the historical sorry-bearing Erdős–Rado exploration is preserved on the [`archive/legacy-erdos-rado`](https://github.com/cameronfreer/infinitary-logic/tree/archive/legacy-erdos-rado) branch, not in the tree; the load-bearing bounded Erdős–Rado chain is `Combinatorics/PairErdosRadoGeneral.lean`, `Combinatorics/EndHomogeneousErdosRado.lean`, `Combinatorics/FiniteArityErdosRadoInduction.lean`). `InfinitaryLogic/Basic.lean` is a deprecated redirect to `All`.
 
 ### Key Declarations
 

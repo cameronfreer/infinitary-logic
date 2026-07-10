@@ -127,9 +127,9 @@ For narrower entry points:
 
 ### Combinatorics (Combinatorics/)
 - `Combinatorics/InfiniteRamsey.lean`: n-ary infinite Ramsey on ℕ (`infinite_ramsey_nat_arity`)
-- `Combinatorics/InfiniteRamseyFamily.lean`: family/diagonal version (`infinite_ramsey_nat_family`), consumed by the Morley–Hanf tail extraction
-- `Combinatorics/ErdosRado.lean`: LEGACY Erdős–Rado scaffolding — off the build path (sorry-bearing,
-  exempt in the sorry-boundary check), reachable via `Everything` only
+- `Combinatorics/InfiniteRamseyFamily.lean`: family/diagonal version (`infinite_ramsey_nat_family`) — a finished reusable result; no longer on the `morley_hanf` route (injective sequences are already seed-indiscernible)
+- `Combinatorics/PairErdosRadoGeneral.lean`, `Combinatorics/EndHomogeneousErdosRado.lean`, `Combinatorics/FiniteArityErdosRadoInduction.lean`: the bounded finite-arity Erdős–Rado chain (`finiteArityHomogeneousUpTo_beth_stage`) — the combinatorial engine of `morley_hanf`'s Marker certification (on the `InfinitaryLogicWIP` target and the endpoint's dependency cone)
+- the exploratory all-arities ladder `Combinatorics/ErdosRado.lean` (false target in ZFC) is preserved on the `archive/legacy-erdos-rado` branch, not in the tree
 
 ### Conditional (Conditional/)
 - `Conditional/MorleyHanfTransfer.lean`: the Morley–Hanf reduction chain (historical conditional forms; extraction side discharged by `morleyHanfExtractionTail_holds`)
