@@ -70,12 +70,35 @@ theorem Lomega1omegaHanfNumber_le_of_isHanfBound {κ : Cardinal}
   csInf_le' hκ
 
 /-- The universal property of the global Hanf number: `Lomega1omegaHanfNumber ≤ κ` exactly when
-`κ` is a global Hanf bound. The `←` direction is how every sharpness witness will be consumed:
-a bounded-spectrum sentence at `κ` refutes `IsLomega1omegaHanfBound κ`, hence
-`κ < Lomega1omegaHanfNumber`. -/
+`κ` is a global Hanf bound. The strict dual `κ < H ↔ ¬IsBound κ` below is the bounded-spectrum
+witness-consumption interface. -/
 theorem Lomega1omegaHanfNumber_le_iff_isHanfBound {κ : Cardinal} :
     Lomega1omegaHanfNumber ≤ κ ↔ IsLomega1omegaHanfBound κ :=
   ⟨fun h => Lomega1omegaHanfNumber_isHanfBound.mono h, Lomega1omegaHanfNumber_le_of_isHanfBound⟩
+
+/-- The strict dual of the universal property — the bounded-spectrum witness-consumption
+interface: refuting the global bound at `κ` is exactly the strict lower bound
+`κ < Lomega1omegaHanfNumber`. -/
+theorem lt_Lomega1omegaHanfNumber_iff_not_isHanfBound {κ : Cardinal} :
+    κ < Lomega1omegaHanfNumber ↔ ¬IsLomega1omegaHanfBound κ := by
+  rw [← not_le, Lomega1omegaHanfNumber_le_iff_isHanfBound]
+
+/-- **The generic bounded-spectrum argument**: a sentence with a model of size `≥ κ` whose every
+model has size `≤ κ` is not arbitrarily large, so `κ` is not a global Hanf bound and
+`κ < Lomega1omegaHanfNumber`. The common endpoint for the countable witness, the powerset
+witness, and every stage of the Marker `ℶ_{α+1}` ladder. -/
+theorem lt_Lomega1omegaHanfNumber_of_maximal_model
+    {L : Language.{0, 0}} {φ : L.Sentenceω} {κ : Cardinal}
+    (hmodel : ∃ (M : Type) (_ : L.Structure M),
+      Sentenceω.Realize φ M ∧ κ ≤ Cardinal.mk M)
+    (hupper : ∀ (M : Type) (_ : L.Structure M),
+      Sentenceω.Realize φ M → Cardinal.mk M ≤ κ) :
+    κ < Lomega1omegaHanfNumber := by
+  rw [lt_Lomega1omegaHanfNumber_iff_not_isHanfBound]
+  intro h
+  obtain ⟨M, instM, hφM, hκM⟩ := hmodel
+  obtain ⟨N, instN, hφN, hN⟩ := h L φ ⟨M, instM, hφM, hκM⟩ (Order.succ κ)
+  exact absurd (le_trans hN (hupper N instN hφN)) (not_le.mpr (Order.lt_succ κ))
 
 /-- **The Hanf number of `L_{ω₁ω}` is at most `ℶ_{ω₁}`** — the upper half of the classical
 `Hanf(L_{ω₁ω}) = ℶ_{ω₁}`; the lower bound (sharpness) is future work. -/

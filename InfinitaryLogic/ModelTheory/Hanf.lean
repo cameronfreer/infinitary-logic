@@ -121,6 +121,12 @@ theorem hanfNumber_le_iff_isHanfBound {φ : L.Sentenceω} {κ : Cardinal} :
     HanfNumber φ ≤ κ ↔ IsHanfBound φ κ :=
   ⟨fun h => (hanfNumber_isHanfBound φ).mono h, hanfNumber_le_of_isHanfBound⟩
 
+/-- The strict dual of the universal property — the bounded-spectrum witness-consumption
+interface: refuting the bound at `κ` is exactly the strict lower bound `κ < HanfNumber φ`. -/
+theorem lt_hanfNumber_iff_not_isHanfBound {φ : L.Sentenceω} {κ : Cardinal} :
+    κ < HanfNumber φ ↔ ¬IsHanfBound φ κ := by
+  rw [← not_le, hanfNumber_le_iff_isHanfBound]
+
 end Language
 
 end FirstOrder
