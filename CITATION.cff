@@ -7,3 +7,5 @@ authors:
     given-names: Cameron
 license: Apache-2.0
 repository-code: https://github.com/cameronfreer/infinitary-logic
+version: "1.0.0"
+date-released: "2026-07-10"
