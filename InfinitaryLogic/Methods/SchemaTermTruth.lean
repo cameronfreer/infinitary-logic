@@ -565,4 +565,76 @@ theorem schemaTruthLemmaStage_of_mem :
 
 end StagedTruthLemma
 
+/-! ## The ΓEMlocal sequence-realization bridge, layer 1: closing terms along the sequence
+
+The exported bridge (below) is narrowly scoped to the distinguished sequence: realization of a
+`ΓEMlocal` member on `schemaSeq ∘ t` in the base-language reduct of the term model, iff the
+lifted template sentence is in `Tσ`. This layer supplies the term plumbing: closing an open
+`Fin m`-variable base term along an increasing tuple of sequence constants, its value under a
+certificate-body interpretation (`σ (t i)` at the variables), and its class in the term model
+(the class of the closed instance). Plus the neutral restatement of the canonical-deForm
+realization lemma (the residual file's copy is Conditional-facing and not imported here). -/
+
+section ClosingTerms
+
+/-- Realization of a canonical deForm in any structure: substituting the `Fin p`-variable terms
+`g` for the bound variables and rebinding realizes as `φ` on the term values. Neutral twin of the
+residual-file `realize_canonDeForm`. -/
+theorem canonDeForm_realize_iff {Λ : Language.{0, 0}} {N : Type} [Λ.Structure N] {n p : ℕ}
+    (φ : Λ.BoundedFormulaω Empty n) (g : Fin n → Λ.Term (Fin p)) (xs : Fin p → N) :
+    (canonDeForm Λ φ g).Realize (Empty.elim : Empty → N) xs ↔
+      φ.Realize (Empty.elim : Empty → N) (fun i => (g i).realize xs) := by
+  rw [canonDeForm, BoundedFormulaω.realize_relabel_sumInr_zero]
+  simp only [Formulaω.Realize, BoundedFormulaω.realize_subst]
+  exact realize_openBounds φ _
+
+variable {s₀ : LocalStage}
+
+/-- **Closing a term along the sequence**: an open `Fin m`-variable base-language term, mapped
+into the constant expansion and its variables substituted by the sequence constants `d_{t i}`. -/
+def schemaCloseTerm {m : ℕ} (u : (localColim s₀).Term (Fin m)) (t : Fin m ↪o ℕ) :
+    (localColim s₀)[[ℕ]].Term Empty :=
+  ((lhomWithConstants (localColim s₀) ℕ).onTerm u).subst fun i => henkinConst (t i)
+
+variable {M : Type} [(localColim s₀).Structure M] [LinearOrder M] [WellFoundedLT M]
+  (hM : Cardinal.beth (Ordinal.omega 1) ≤ Cardinal.mk M)
+
+omit [LinearOrder M] [WellFoundedLT M] in
+/-- A sequence constant realizes to its interpretation. -/
+theorem realize_henkinConst (σ : ℕ → M) (j : ℕ) :
+    letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+    (henkinConst (L := localColim s₀) j).realize (Empty.elim : Empty → M) = σ j :=
+  rfl
+
+omit [LinearOrder M] [WellFoundedLT M] in
+/-- **The body value of a closed instance**: under a certificate-body interpretation `σ`, the
+closed instance realizes to the open term realized at the `σ`-values of the tuple. -/
+theorem realize_schemaCloseTerm (σ : ℕ → M) {m : ℕ}
+    (u : (localColim s₀).Term (Fin m)) (t : Fin m ↪o ℕ) :
+    letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+    (schemaCloseTerm u t).realize (Empty.elim : Empty → M)
+      = u.realize fun i => σ (t i) := by
+  letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+  rw [schemaCloseTerm, Term.realize_subst,
+    LHom.realize_onTerm (lhomWithConstants (localColim s₀) ℕ)]
+  rfl
+
+/-- **The class of a closed instance**: in the schema term model, the expansion image of an open
+term realized on the sequence classes `schemaSeq ∘ t` is the class of its closed instance. -/
+theorem schemaCloseTerm_realize_mk {m : ℕ}
+    (u : (localColim s₀).Term (Fin m)) (t : Fin m ↪o ℕ) :
+    letI := schemaTermStructure (s₀ := s₀) (M := M) hM
+    ((lhomWithConstants (localColim s₀) ℕ).onTerm u).realize
+        (fun i => schemaSeq (s₀ := s₀) (M := M) hM (t i))
+      = SchemaTermCarrier.mk hM (schemaCloseTerm u t) := by
+  letI := schemaTermStructure (s₀ := s₀) (M := M) hM
+  rw [show (fun i => schemaSeq (s₀ := s₀) (M := M) hM (t i))
+      = fun i => (henkinConst (L := localColim s₀) (t i)).realize
+          (Empty.elim : Empty → SchemaTermCarrier (s₀ := s₀) (M := M) hM) from
+    funext fun i => (schemaTerm_realize_eq_mk hM _).symm,
+    ← Term.realize_subst]
+  exact schemaTerm_realize_eq_mk hM _
+
+end ClosingTerms
+
 end FirstOrder.Language
