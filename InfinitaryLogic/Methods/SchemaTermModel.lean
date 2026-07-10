@@ -406,4 +406,115 @@ established for. -/
 noncomputable def schemaSeq (n : ℕ) : SchemaTermCarrier (s₀ := s₀) (M := M) hM :=
   SchemaTermCarrier.mk hM (henkinConst (L := localColim s₀) n)
 
+/-! ### The general schema-formula interface and semantic sign transport (5b-3 substrate)
+
+The restricted truth lemma treats equality/relation sentences as special cases of ONE
+formula-application encoding: `schemaFormulaSentence φ ts`, the lifted template of the general
+de-substituted formula `locDeForm` at the canonical support `schemaRelSupport ts`. Its
+source-semantics bridge `realize_schemaFormulaSentence_iff` is the semantic engine of the truth
+lemma. The sign-transport lemmas then move theory membership across ANY semantic equivalence of
+universe sentences (support changes, canonical deForms, normalization to the atomic API) by one
+body extraction — never by re-running quotient inductions: if the two sentences carried opposite
+signs, `exists_body_of_subset` would realize both the source and the negated target under one
+interpretation pair, contradicting the equivalence. -/
+
+/-- The lifted `templateSentence` of the general de-substituted formula `locDeForm` at the
+canonical support — the schema-universe sentence that encodes "`φ` holds on the closed terms
+`ts`". `schemaEqSentence`/`schemaRelSentence` are the atomic special cases of this shape. -/
+def schemaFormulaSentence {n : ℕ} (φ : (localColim s₀).BoundedFormulaω Empty n)
+    (ts : Fin n → (localColim s₀)[[ℕ]].Term Empty) :
+    ((localColim s₀)[[ℕ]])[[ℕ]].Sentenceω :=
+  (Lomega1omegaTemplate.templateSentence
+      (locDeForm (localColim s₀) ℕ (schemaRelSupport ts) φ ts
+        (locJSupport_subset_schemaRelSupport ts))
+      ((schemaRelSupport ts).orderEmbOfFin rfl)).mapLanguage
+    (((localColim s₀)[[ℕ]]).lhomWithConstants ℕ)
+
+/-- `schemaFormulaSentence φ ts` of a colimit-family member is a schema-universe member (its
+de-substituted formula is in the `canonDeForms` component of `ΓEMlocal`). -/
+theorem schemaFormulaSentence_mem_universe {n : ℕ}
+    {φ : (localColim s₀).BoundedFormulaω Empty n}
+    (hφ : (⟨n, φ⟩ : Σ n, (localColim s₀).BoundedFormulaω Empty n) ∈ ΓlocalColim s₀)
+    (ts : Fin n → (localColim s₀)[[ℕ]].Term Empty) :
+    (⟨schemaFormulaSentence φ ts,
+        hasFiniteConstSupport_mapLanguage_templateSentence _ _⟩ :
+      FSentence (L'' := localColim s₀) (J := ℕ)) ∈ schemaFSentenceUniverse s₀ := by
+  apply Set.mem_biUnion
+    (locDeForm_mem_ΓEMlocal ℕ s₀ (schemaRelSupport ts) hφ ts
+      (locJSupport_subset_schemaRelSupport ts))
+  exact ⟨(schemaRelSupport ts).orderEmbOfFin rfl, rfl⟩
+
+omit [LinearOrder M] [WellFoundedLT M] in
+/-- **The exported formula bridge — the truth lemma's semantic engine.** Under a body
+interpretation `(σ, h)`, `schemaFormulaSentence φ ts` is realized iff `φ` holds in `M` on the
+`σ`-values of the closed terms. Generalizes `realize_schemaEqSentence_iff`/
+`realize_schemaRelSentence_iff` to arbitrary formulas via the same σ-generalized term bridge. -/
+theorem realize_schemaFormulaSentence_iff (σ h : ℕ → M) {n : ℕ}
+    (φ : (localColim s₀).BoundedFormulaω Empty n)
+    (ts : Fin n → (localColim s₀)[[ℕ]].Term Empty) :
+    realizeWith σ h (schemaFormulaSentence φ ts) (Empty.elim : Empty → M) Fin.elim0 ↔
+      letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+      φ.Realize (Empty.elim : Empty → M)
+        (fun i => (ts i).realize (Empty.elim : Empty → M)) := by
+  letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+  rw [schemaFormulaSentence, realizeWith_templateSentence, locDeForm, canonDeForm,
+    BoundedFormulaω.realize_relabel_sumInr_zero]
+  simp only [Formulaω.Realize, BoundedFormulaω.realize_subst]
+  refine (realize_openBounds φ _).trans ?_
+  apply iff_of_eq
+  congr 1
+  funext i
+  exact locDeTermFin_realize_constInterp_nat σ (ts i)
+    (locJSupport_subset_schemaRelSupport ts i)
+
+/-- **Directional semantic sign transport.** If every body interpretation realizing
+`schemaLift ψ t` also realizes `schemaLift χ u`, then theory membership transfers — only the
+TARGET's universe membership is needed (to ask for its sign). If the target were negative, one
+body would realize the source and the negated target, contradicting the implication. -/
+theorem schemaLift_mem_of_semantic_imp {m : ℕ}
+    {ψ : (localColim s₀).BoundedFormulaω Empty m} (t : Fin m ↪o ℕ)
+    {n : ℕ} {χ : (localColim s₀).BoundedFormulaω Empty n}
+    (hχ : (⟨n, χ⟩ : Σ n, (localColim s₀).BoundedFormulaω Empty n) ∈ ΓEMlocal s₀)
+    (u : Fin n ↪o ℕ)
+    (hsem : ∀ σ h : ℕ → M,
+      realizeWith σ h (schemaLift ψ t) (Empty.elim : Empty → M) Fin.elim0 →
+        realizeWith σ h (schemaLift χ u) (Empty.elim : Empty → M) Fin.elim0)
+    (hmem : schemaLift ψ t ∈ schemaCompletionTheory (schemaEnumeration s₀) hM) :
+    schemaLift χ u ∈ schemaCompletionTheory (schemaEnumeration s₀) hM := by
+  rcases (schemaCompletionTheorySpec hM).complete_on_universe _
+    (schemaLift_mem_universe hχ u) with hv | hnv
+  · exact hv
+  · exfalso
+    classical
+    obtain ⟨σ, w, hbody⟩ := exists_body_of_subset hM
+      {schemaLift ψ t, (schemaLift χ u).not} (fun τ hτ => by
+        rw [Finset.mem_insert, Finset.mem_singleton] at hτ
+        rcases hτ with rfl | rfl
+        · exact hmem
+        · exact hnv)
+    have h1 := hbody (schemaLift ψ t) (Finset.mem_insert_self _ _)
+    have h2 := hbody (schemaLift χ u).not
+      (by rw [Finset.mem_insert]; exact Or.inr (Finset.mem_singleton_self _))
+    rw [realizeWith_not] at h2
+    exact h2 (hsem σ w h1)
+
+/-- **Semantic sign transport.** Two universe sentences semantically equivalent under every body
+interpretation receive the same sign from the completed theory. The workhorse for normalizing
+between `schemaFormulaSentence`, the atomic sentences, and canonical deForms in the truth
+lemma — one body extraction per equivalence, no quotient induction. -/
+theorem schema_mem_iff_of_semantic_iff {m : ℕ}
+    {ψ : (localColim s₀).BoundedFormulaω Empty m}
+    (hψ : (⟨m, ψ⟩ : Σ n, (localColim s₀).BoundedFormulaω Empty n) ∈ ΓEMlocal s₀)
+    (t : Fin m ↪o ℕ)
+    {n : ℕ} {χ : (localColim s₀).BoundedFormulaω Empty n}
+    (hχ : (⟨n, χ⟩ : Σ n, (localColim s₀).BoundedFormulaω Empty n) ∈ ΓEMlocal s₀)
+    (u : Fin n ↪o ℕ)
+    (hsem : ∀ σ h : ℕ → M,
+      realizeWith σ h (schemaLift ψ t) (Empty.elim : Empty → M) Fin.elim0 ↔
+        realizeWith σ h (schemaLift χ u) (Empty.elim : Empty → M) Fin.elim0) :
+    schemaLift ψ t ∈ schemaCompletionTheory (schemaEnumeration s₀) hM ↔
+      schemaLift χ u ∈ schemaCompletionTheory (schemaEnumeration s₀) hM :=
+  ⟨schemaLift_mem_of_semantic_imp hM t hχ u (fun σ h => (hsem σ h).mp),
+    schemaLift_mem_of_semantic_imp hM u hψ t (fun σ h => (hsem σ h).mpr)⟩
+
 end FirstOrder.Language
