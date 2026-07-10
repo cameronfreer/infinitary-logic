@@ -70,4 +70,76 @@ theorem locSkWitness_universal_constInterp_nat
     BoundedFormulaω.realize_not] at hspec
   exact hspec hψw
 
+/-! ## The truth-lemma helper layer
+
+Three small bridges the induction consumes at every case: the sign flip on universe members
+(negation membership ↔ non-membership), the carrier term bridge (open terms realized at classes
+are classes of closed substitution instances), and the substitution/valuation exchange for closed
+instances in an arbitrary structure. -/
+
+section Helpers
+
+variable {s₀ : LocalStage} {M : Type} [(localColim s₀).Structure M] [LinearOrder M]
+  [WellFoundedLT M] (hM : Cardinal.beth (Ordinal.omega 1) ≤ Cardinal.mk M)
+
+/-- **Sign flip on the universe.** For a universe member, the completed theory contains its
+negation iff it does not contain the sentence itself (forward: a two-element fragment of `Tσ`
+would be a consistent set containing a sentence and its negation; backward: completeness). -/
+theorem schemaCompletionTheory_not_mem_iff
+    (τ : FSentence (L'' := localColim s₀) (J := ℕ)) (hτ : τ ∈ schemaFSentenceUniverse s₀) :
+    τ.1.not ∈ schemaCompletionTheory (schemaEnumeration s₀) hM ↔
+      τ.1 ∉ schemaCompletionTheory (schemaEnumeration s₀) hM := by
+  classical
+  constructor
+  · intro hneg hpos
+    refine markerHenkinConsistent_not_mem_and_not_mem
+      ((schemaCompletionTheorySpec hM).finite_consistent {τ.1, τ.1.not} fun τ' hτ' => ?_) τ.1
+      ⟨Finset.mem_insert_self _ _, by
+        rw [Finset.mem_insert]; exact Or.inr (Finset.mem_singleton_self _)⟩
+    rw [Finset.mem_insert, Finset.mem_singleton] at hτ'
+    rcases hτ' with rfl | rfl
+    · exact hpos
+    · exact hneg
+  · intro hnot
+    rcases (schemaCompletionTheorySpec hM).complete_on_universe τ hτ with hpos | hneg
+    · exact absurd hpos hnot
+    · exact hneg
+
+/-- **The carrier term bridge**: an open `(localColim s₀)[[ℕ]]`-term realized in the schema term
+model at class-valued variables is the class of its closed substitution instance. -/
+theorem schemaTerm_realize_sumElim_mk {n : ℕ}
+    (u : (localColim s₀)[[ℕ]].Term (Empty ⊕ Fin n))
+    (ts : Fin n → (localColim s₀)[[ℕ]].Term Empty) :
+    letI := schemaTermStructure (s₀ := s₀) (M := M) hM
+    u.realize (Sum.elim (Empty.elim : Empty → SchemaTermCarrier (s₀ := s₀) (M := M) hM)
+        fun i => SchemaTermCarrier.mk hM (ts i))
+      = SchemaTermCarrier.mk hM (u.subst (Sum.elim (fun e => e.elim) ts)) := by
+  letI := schemaTermStructure (s₀ := s₀) (M := M) hM
+  induction u with
+  | var x =>
+    rcases x with e | i
+    · exact e.elim
+    · rfl
+  | func f us ih =>
+    show Structure.funMap f _ = _
+    rw [funext ih]
+    exact schemaTerm_funMap_mk hM f _
+
+omit [(localColim s₀).Structure M] [LinearOrder M] [WellFoundedLT M] in
+/-- **Substitution/valuation exchange**: a closed substitution instance realizes (in any
+structure) to the open term realized at the values of the substituted terms. -/
+theorem realize_subst_sumElim {N : Type} [(localColim s₀)[[ℕ]].Structure N] {n : ℕ}
+    (u : (localColim s₀)[[ℕ]].Term (Empty ⊕ Fin n))
+    (ts : Fin n → (localColim s₀)[[ℕ]].Term Empty) :
+    (u.subst (Sum.elim (fun e => e.elim) ts)).realize (Empty.elim : Empty → N)
+      = u.realize (Sum.elim (Empty.elim : Empty → N) fun i => (ts i).realize Empty.elim) := by
+  rw [Term.realize_subst]
+  congr 1
+  funext x
+  rcases x with e | i
+  · exact e.elim
+  · rfl
+
+end Helpers
+
 end FirstOrder.Language
