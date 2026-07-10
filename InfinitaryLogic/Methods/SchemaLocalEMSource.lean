@@ -166,4 +166,110 @@ theorem schemaTerm_localSkolemUniversalForColim
   rw [hxs] at hx
   exact hx
 
+/-! ## The arbitrary-order local-EM context over the schema term model
+
+Section-9 scaffolding: for ANY target linear order `J`, the schema term model carries a
+`LocalEMContext` whose sequence is `schemaSeq`, whose family is `ΓEMlocal`, and whose
+Ω-completeness is exactly the discharged `TailTemplateOmegaWitnessed` — plus the seed-sentence
+realization the Morley-seed agreement consumes. -/
+
+/-- **The schema local-EM context** over an arbitrary target order `J`: sequence `schemaSeq`,
+family `ΓEMlocal`, tail indiscernibility from the full (cutoff-`0`) indiscernibility, atoms by
+the `ΓEMlocal` dischargers. -/
+noncomputable def schemaTermLocalEMContext
+    (hM : Cardinal.beth (Ordinal.omega 1) ≤ Cardinal.mk M) (J : Type) [LinearOrder J] :
+    letI : (localColim s₀).Structure M := localColimStructure s₀
+    letI : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+      schemaTermStructure hM
+    letI : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+      (lhomWithConstants (localColim s₀) ℕ).reduct _
+    LocalEMContext (localColim s₀) J (M := SchemaTermCarrier (s₀ := s₀) (M := M) hM) := by
+  letI : (localColim s₀).Structure M := localColimStructure s₀
+  letI : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+    schemaTermStructure hM
+  letI : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+    (lhomWithConstants (localColim s₀) ℕ).reduct _
+  exact {
+    a := schemaSeq hM
+    Γ := ΓEMlocal s₀
+    hind := IsLomega1omegaIndiscernibleOn.isLomega1omegaIndiscernibleOnTail
+      (schemaSeq_indiscernibleOn (s₀ := s₀) (M := M) hM)
+    atom_mem := locDeEqAtom_mem_ΓEMlocal J s₀
+    rel_mem := locDeRelAtom_mem_ΓEMlocal J s₀
+  }
+
+/-- **The schema context is Ω-complete** — the discharged `TailTemplateOmegaWitnessed`
+(the completion's pinned `iSup`/negative-`iInf` witnesses) converted through the Layer-7a
+bridge. -/
+theorem schemaTermLocalEMContext_omegaCompleteForColim
+    (hM : Cardinal.beth (Ordinal.omega 1) ≤ Cardinal.mk M) (J : Type) [LinearOrder J] :
+    letI : (localColim s₀).Structure M := localColimStructure s₀
+    letI : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+      schemaTermStructure hM
+    letI : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+      (lhomWithConstants (localColim s₀) ℕ).reduct _
+    LocalEMContext.OmegaCompleteForColim s₀ J
+      (schemaTermLocalEMContext (s₀ := s₀) (M := M) hM J) := by
+  letI : (localColim s₀).Structure M := localColimStructure s₀
+  letI : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+    schemaTermStructure hM
+  letI : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+    (lhomWithConstants (localColim s₀) ℕ).reduct _
+  exact (schemaSeq_tailTemplateOmegaWitnessed (s₀ := s₀) (M := M) hM)
+    |>.omegaCompleteForColim (schemaTermLocalEMContext (s₀ := s₀) (M := M) hM J).hind
+      (schemaTermLocalEMContext (s₀ := s₀) (M := M) hM J) rfl
+
+set_option maxHeartbeats 500000 in
+/-- **Seed-sentence realization**: a stage-`0` family sentence true in the source `M` is realized
+by the schema term model (in its seed-language reduct). The route: validity of its lifted
+template under every body interpretation forces the positive sign; the sequence-realization
+bridge reads it into the quotient; the seed reduct peels off `LlocalInclusion`. -/
+theorem schemaTerm_realizes_stage0_sentence
+    (hM : Cardinal.beth (Ordinal.omega 1) ≤ Cardinal.mk M)
+    (φ : s₀.Lang.Sentenceω)
+    (hmem : (⟨0, φ⟩ : Σ n, (Llocal s₀ 0).BoundedFormulaω Empty n) ∈ Γlocal s₀ 0)
+    (hreal : letI : (localColim s₀).Structure M := localColimStructure s₀
+      Sentenceω.Realize φ M) :
+    letI : (localColim s₀).Structure M := localColimStructure s₀
+    letI : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+      schemaTermStructure hM
+    letI : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+      (lhomWithConstants (localColim s₀) ℕ).reduct _
+    letI : s₀.Lang.Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+      (LlocalInclusion s₀ 0).reduct _
+    Sentenceω.Realize φ (SchemaTermCarrier (s₀ := s₀) (M := M) hM) := by
+  letI : (localColim s₀).Structure M := localColimStructure s₀
+  letI : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+    schemaTermStructure hM
+  letI : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+    (lhomWithConstants (localColim s₀) ℕ).reduct _
+  letI : s₀.Lang.Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+    (LlocalInclusion s₀ 0).reduct _
+  letI : (Llocal s₀ 0).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+    (inferInstance : s₀.Lang.Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM))
+  haveI : (LlocalInclusion s₀ 0).IsExpansionOn (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+    LHom.isExpansionOn_reduct _ _
+  let ψ : (localColim s₀).Sentenceω := φ.mapLanguage (LlocalInclusion s₀ 0)
+  have hψ : (⟨0, ψ⟩ : Σ n, (localColim s₀).BoundedFormulaω Empty n) ∈ ΓEMlocal s₀ :=
+    ΓlocalColim_subset_ΓEMlocal s₀ (toLocalColimFormula_mem_ΓlocalColim s₀ (k := 0) hmem)
+  have hT : schemaLift ψ (stdTuple 0) ∈ schemaCompletionTheory (schemaEnumeration s₀) hM := by
+    apply schemaLift_mem_of_valid hM hψ (stdTuple 0)
+    intro σ w
+    rw [schemaLift, realizeWith_templateSentence]
+    have hv := (realize_map_LlocalInclusion s₀ 0 φ Empty.elim Fin.elim0).mpr hreal
+    change BoundedFormulaω.Realize ψ Empty.elim (fun i => σ (stdTuple 0 i))
+    change BoundedFormulaω.Realize ψ Empty.elim Fin.elim0 at hv
+    convert hv using 1
+  have hcolim : BoundedFormulaω.Realize ψ
+      (Empty.elim : Empty → SchemaTermCarrier (s₀ := s₀) (M := M) hM)
+      (fun i => schemaSeq (s₀ := s₀) (M := M) hM (stdTuple 0 i)) :=
+    (schemaSeq_realize_iff_schemaLift_mem (s₀ := s₀) (M := M) hM ψ hψ (stdTuple 0)).mpr hT
+  have hcolim' : (φ.mapLanguage (LlocalInclusion s₀ 0)).Realize
+      (Empty.elim : Empty → SchemaTermCarrier (s₀ := s₀) (M := M) hM)
+      (Fin.elim0 : Fin 0 → SchemaTermCarrier (s₀ := s₀) (M := M) hM) := by
+    change BoundedFormulaω.Realize ψ Empty.elim Fin.elim0
+    convert hcolim using 1
+  exact (BoundedFormulaω.realize_mapLanguage (LlocalInclusion s₀ 0) φ
+    Empty.elim Fin.elim0).mp hcolim'
+
 end FirstOrder.Language
