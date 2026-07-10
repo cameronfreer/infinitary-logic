@@ -1,4 +1,5 @@
 import InfinitaryLogic.Conditional.MorleyHanfTransfer
+import InfinitaryLogic.Conditional.MorleyHanfSchemaDischarge
 import InfinitaryLogic.Conditional.SilverBurgess
 import InfinitaryLogic.Conditional.GandyHarrington
 import InfinitaryLogic.Conditional.SilverCategoryRoute
