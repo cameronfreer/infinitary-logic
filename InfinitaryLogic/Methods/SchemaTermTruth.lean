@@ -539,6 +539,30 @@ theorem schemaTruthLemmaStage :
         rw [realizeWith_not, realize_schemaFormulaSentence_iff] at h2
         exact h2 (h1 j)
 
+/-- **Stage-agnostic lift corollary**: the staged schema truth lemma for an *original* stage-`k`
+family member, at any stage including the raw seed stage `0`. Lifts the member one stage (along
+`LlocalHom`, via `liftGamma_mem_Γlocal_succ`) where subformula closure is available, then rewrites
+the colimit image back down with the cocone coherence `mapLanguage_LlocalInclusion_lift`. -/
+theorem schemaTruthLemmaStage_of_mem :
+    letI : (localColim s₀).Structure M := localColimStructure s₀
+    ∀ (hM : Cardinal.beth (Ordinal.omega 1) ≤ Cardinal.mk M)
+      (k : ℕ) {n : ℕ} (ψ : (Llocal s₀ k).BoundedFormulaω Empty n),
+      (⟨n, ψ⟩ : Σ n, (Llocal s₀ k).BoundedFormulaω Empty n) ∈ Γlocal s₀ k →
+      ∀ ts : Fin n → (localColim s₀)[[ℕ]].Term Empty,
+        (@BoundedFormulaω.Realize ((localColim s₀)[[ℕ]])
+            (SchemaTermCarrier (s₀ := s₀) (M := M) hM) (schemaTermStructure hM) Empty n
+            ((ψ.mapLanguage (LlocalInclusion s₀ k)).mapLanguage
+              (lhomWithConstants (localColim s₀) ℕ))
+            (Empty.elim : Empty → SchemaTermCarrier (s₀ := s₀) (M := M) hM)
+            (fun i => SchemaTermCarrier.mk hM (ts i)) ↔
+          schemaFormulaSentence (ψ.mapLanguage (LlocalInclusion s₀ k)) ts
+            ∈ schemaCompletionTheory (schemaEnumeration s₀) hM) := by
+  letI : (localColim s₀).Structure M := localColimStructure s₀
+  intro hM k n ψ hmem ts
+  have h := schemaTruthLemmaStage hM k (ψ.mapLanguage (LlocalHom s₀ k))
+    (liftGamma_mem_Γlocal_succ s₀ hmem) ts
+  rwa [mapLanguage_LlocalInclusion_lift] at h
+
 end StagedTruthLemma
 
 end FirstOrder.Language
