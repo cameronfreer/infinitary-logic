@@ -29,7 +29,7 @@ jobs:
         uses: leanprover/lean-action@c544e89643240c6b398f14a431bcdc6309e36b3e
         with:
           build: true
-          build-args: "InfinitaryLogic :blueprint :blueprintJson InfinitaryLogicWIP"
+          build-args: "InfinitaryLogic InfinitaryLogic.Everything :blueprint :blueprintJson InfinitaryLogicWIP"
           use-github-cache: true
           use-mathlib-cache: true
 
