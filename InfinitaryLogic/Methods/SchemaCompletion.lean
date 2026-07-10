@@ -575,6 +575,32 @@ theorem schemaCompletionTheory_iSup_witness_localColim
       ⟨schemaCompletionStage_mono (schemaEnumeration s₀) hM (le_max_left jn (j + 1)) hjn,
         schemaCompletionStage_mono (schemaEnumeration s₀) hM (le_max_right jn (j + 1)) hneg⟩
 
+/-- **The `iSup`-witness closure on the universe.** For a universe member `τ` of `iSup` shape
+present in the completed theory (over the canonical enumeration), some component is present too —
+read off the stage that decided `τ`, as in `schemaCompletionTheory_iSup_witness_localColim` but
+generic in the universe member (the canonical-deForm closure in 5b-2 instantiates it). -/
+theorem schemaCompletionTheory_iSup_witness_of_universe
+    (τ : FSentence (L'' := localColim s₀) (J := ℕ)) (hτ : τ ∈ schemaFSentenceUniverse s₀)
+    {φs : ℕ → ((localColim s₀)[[ℕ]])[[ℕ]].Sentenceω}
+    (hiSup : τ.1 = BoundedFormulaω.iSup φs)
+    (hpos : τ.1 ∈ schemaCompletionTheory (schemaEnumeration s₀) hM) :
+    ∃ k, φs k ∈ schemaCompletionTheory (schemaEnumeration s₀) hM := by
+  rw [← schemaEnumeration_range] at hτ
+  obtain ⟨j, hj⟩ := hτ
+  have hj1 : (schemaEnumeration s₀ j).1 = τ.1 := congrArg Subtype.val hj
+  rcases schemaCompletionStage_decides (schemaEnumeration s₀) hM j with hposstage | hnegstage
+  · obtain ⟨k, hk⟩ := schemaCompletionStage_witness (schemaEnumeration s₀) hM j
+      (hj1.trans hiSup) hposstage
+    exact ⟨k, ⟨j + 1, hk⟩⟩
+  · exfalso
+    obtain ⟨jn, hjn⟩ := hpos
+    exact markerHenkinConsistent_not_mem_and_not_mem
+      (schemaCompletionStage_consistent (schemaEnumeration s₀) hM (max jn (j + 1)))
+      (schemaEnumeration s₀ j).1
+      ⟨schemaCompletionStage_mono (schemaEnumeration s₀) hM (le_max_left jn (j + 1))
+          (by rw [hj1]; exact hjn),
+        schemaCompletionStage_mono (schemaEnumeration s₀) hM (le_max_right jn (j + 1)) hnegstage⟩
+
 /-- **The negative `iInf`-witness closure on the universe.** For a universe member `τ` of `iInf`
 shape whose negation is in the completed theory (over the canonical enumeration), some refuted
 component `(φs k).not` is in the theory too. This is the direction the restricted truth lemma's
@@ -879,5 +905,57 @@ theorem schemaCompletionTheory_tuple_uniform
   exact ⟨transfer t t', transfer t' t⟩
 
 end TupleUniform
+
+/-! ## Checkpoint 5b-2: connective witnesses for canonical deForms
+
+`TailTemplateOmegaWitnessed` — the 5b-3 target — is stated on `canonDeForm (localColim s₀) φ g`,
+not on the raw `ΓlocalColim` connectives, so the completed theory's witness closures must be
+exposed in exactly those terms. Both directions are corollaries of the universe-level closures:
+`canonDeForm` and `schemaLift` each distribute over `iSup`/`iInf` definitionally, and
+`canonDeForm_mem_ΓEMlocal` puts the deForm in the universe. The negative direction is the whole
+point of the completion repair: the fixed refuted conjunct was pinned at decision time and is
+simply read off here. -/
+
+section CanonDeFormWitness
+
+variable {M : Type} [(localColim s₀).Structure M] [LinearOrder M]
+  [WellFoundedLT M] (hM : Cardinal.beth (Ordinal.omega 1) ≤ Cardinal.mk M)
+
+/-- **Positive `iSup` witness, canonical-deForm form.** If the lifted template sentence of a
+`ΓlocalColim` disjunction's deForm is in the completed theory, so is some component's. -/
+theorem schemaCompletionTheory_iSup_witness_canonDeForm
+    {m : ℕ} {φs : ℕ → (localColim s₀).BoundedFormulaω Empty m}
+    (hmem : (⟨m, BoundedFormulaω.iSup φs⟩ : Σ n, (localColim s₀).BoundedFormulaω Empty n)
+      ∈ ΓlocalColim s₀)
+    {p : ℕ} (g : Fin m → (localColim s₀).Term (Fin p)) (t : Fin p ↪o ℕ)
+    (hT : schemaLift (canonDeForm (localColim s₀) (BoundedFormulaω.iSup φs) g) t
+      ∈ schemaCompletionTheory (schemaEnumeration s₀) hM) :
+    ∃ k, schemaLift (canonDeForm (localColim s₀) (φs k) g) t
+      ∈ schemaCompletionTheory (schemaEnumeration s₀) hM :=
+  schemaCompletionTheory_iSup_witness_of_universe hM
+    ⟨schemaLift (canonDeForm (localColim s₀) (BoundedFormulaω.iSup φs) g) t,
+      hasFiniteConstSupport_mapLanguage_templateSentence _ _⟩
+    (schemaLift_mem_universe (canonDeForm_mem_ΓEMlocal hmem g) t)
+    (φs := fun k => schemaLift (canonDeForm (localColim s₀) (φs k) g) t) rfl hT
+
+/-- **Negative `iInf` witness, canonical-deForm form.** If the negation of the lifted template
+sentence of a `ΓlocalColim` conjunction's deForm is in the completed theory, some component's
+negation is too — the fixed refuted conjunct the restricted truth lemma's `iInf` case consumes. -/
+theorem schemaCompletionTheory_neg_iInf_witness_canonDeForm
+    {m : ℕ} {φs : ℕ → (localColim s₀).BoundedFormulaω Empty m}
+    (hmem : (⟨m, BoundedFormulaω.iInf φs⟩ : Σ n, (localColim s₀).BoundedFormulaω Empty n)
+      ∈ ΓlocalColim s₀)
+    {p : ℕ} (g : Fin m → (localColim s₀).Term (Fin p)) (t : Fin p ↪o ℕ)
+    (hneg : (schemaLift (canonDeForm (localColim s₀) (BoundedFormulaω.iInf φs) g) t).not
+      ∈ schemaCompletionTheory (schemaEnumeration s₀) hM) :
+    ∃ k, (schemaLift (canonDeForm (localColim s₀) (φs k) g) t).not
+      ∈ schemaCompletionTheory (schemaEnumeration s₀) hM :=
+  schemaCompletionTheory_neg_iInf_witness_of_universe hM
+    ⟨schemaLift (canonDeForm (localColim s₀) (BoundedFormulaω.iInf φs) g) t,
+      hasFiniteConstSupport_mapLanguage_templateSentence _ _⟩
+    (schemaLift_mem_universe (canonDeForm_mem_ΓEMlocal hmem g) t)
+    (φs := fun k => schemaLift (canonDeForm (localColim s₀) (φs k) g) t) rfl hneg
+
+end CanonDeFormWitness
 
 end FirstOrder.Language
