@@ -272,4 +272,66 @@ theorem schemaTerm_realizes_stage0_sentence
   exact (BoundedFormulaω.realize_mapLanguage (LlocalInclusion s₀ 0) φ
     Empty.elim Fin.elim0).mp hcolim'
 
+/-! ## The Morley-seed tail-template model (the section-9 assembly)
+
+The schema route's endpoint: for a sentence `φ` true in a source of size `≥ ℶ_{ω₁}` and ANY
+target linear order `J`, the Morley-seed tail-template theory of any pairwise-distinct source
+sequence has a model — the schema term model's quotient, through the cross-source acceptance.
+No tail indiscernibility of the input sequence is consumed: the seed's template values are
+absolute (`morleySeed_template_agreement_cross`), so the input sequence only contributes its
+pairwise distinctness. This discharges the honest residual
+`MorleySeedTailTemplateRealizable` (the source facts it carries are exactly these). -/
+
+/-- **The Morley-seed tail-template theory has a model over every target order** — assembled
+from: a well-ordering of the source (`exists_wellOrder`), the schema completion over
+`LocalStage.ofSeq L' (morleySeed φ)`, the schema context and its Ω-completeness, the seed
+realization + pairwise distinctness feeding the cross-model seed agreement, and the cross-source
+acceptance with the schema term model's Skolem-universality mixin. -/
+theorem morleySeed_tailTemplate_model_of_schemaSource {L' : Language.{0, 0}}
+    [Countable (Σ n, L'.Functions n)] [Countable (Σ n, L'.Relations n)]
+    (φ : L'.Sentenceω) (M : Type) [L'.Structure M] (a : ℕ → M) (J : Type) [LinearOrder J]
+    (hSize : Cardinal.mk M ≥ Cardinal.beth (Ordinal.omega 1))
+    (hφ : Sentenceω.Realize φ M)
+    (ha : ∀ i j : ℕ, i ≠ j → a i ≠ a j) :
+    ∃ (N : Type) (_ : L'[[J]].Structure N),
+      Theoryω.Model
+        ((tailTemplateOfSeq a : Lomega1omegaTemplate L').templateTheoryOfSeq
+          (morleySeed φ) J) N := by
+  obtain ⟨instLO, instWF⟩ := exists_wellOrder M
+  letI : LinearOrder M := instLO
+  haveI : WellFoundedLT M := instWF
+  haveI : Nonempty M := Cardinal.mk_ne_zero_iff.mp
+    (((lt_of_lt_of_le Cardinal.aleph0_pos (Cardinal.aleph0_le_beth _)).trans_le hSize).ne')
+  have hM : Cardinal.beth (Ordinal.omega 1) ≤ Cardinal.mk M := hSize
+  letI : (localColim (LocalStage.ofSeq L' (morleySeed φ))).Structure M :=
+    localColimStructure (LocalStage.ofSeq L' (morleySeed φ))
+  letI : (localColim (LocalStage.ofSeq L' (morleySeed φ)))[[ℕ]].Structure
+      (SchemaTermCarrier (s₀ := LocalStage.ofSeq L' (morleySeed φ)) (M := M) hM) :=
+    schemaTermStructure hM
+  letI : (localColim (LocalStage.ofSeq L' (morleySeed φ))).Structure
+      (SchemaTermCarrier (s₀ := LocalStage.ofSeq L' (morleySeed φ)) (M := M) hM) :=
+    (lhomWithConstants (localColim (LocalStage.ofSeq L' (morleySeed φ))) ℕ).reduct _
+  letI : L'.Structure
+      (SchemaTermCarrier (s₀ := LocalStage.ofSeq L' (morleySeed φ)) (M := M) hM) :=
+    (LlocalInclusion (LocalStage.ofSeq L' (morleySeed φ)) 0).reduct _
+  have hmem : (⟨0, φ⟩ : Σ n,
+      (Llocal (LocalStage.ofSeq L' (morleySeed φ)) 0).BoundedFormulaω Empty n)
+      ∈ Γlocal (LocalStage.ofSeq L' (morleySeed φ)) 0 := ⟨0, rfl⟩
+  have hφN : Sentenceω.Realize φ
+      (SchemaTermCarrier (s₀ := LocalStage.ofSeq L' (morleySeed φ)) (M := M) hM) :=
+    schemaTerm_realizes_stage0_sentence (s₀ := LocalStage.ofSeq L' (morleySeed φ)) (M := M)
+      hM φ hmem hφ
+  have hb : ∀ i j : ℕ, i ≠ j →
+      schemaSeq (s₀ := LocalStage.ofSeq L' (morleySeed φ)) (M := M) hM i ≠
+        schemaSeq (s₀ := LocalStage.ofSeq L' (morleySeed φ)) (M := M) hM j :=
+    fun _ _ hij => schemaSeq_pairwise_ne hM hij
+  exact tailTemplateRealizable_of_localEMContext_cross (morleySeed φ) a
+    (SchemaTermCarrier (s₀ := LocalStage.ofSeq L' (morleySeed φ)) (M := M) hM)
+    (schemaTerm_localSkolemUniversalForColim hM) J
+    (schemaTermLocalEMContext (s₀ := LocalStage.ofSeq L' (morleySeed φ)) (M := M) hM J)
+    subset_rfl
+    (schemaTermLocalEMContext_omegaCompleteForColim
+      (s₀ := LocalStage.ofSeq L' (morleySeed φ)) (M := M) hM J)
+    (morleySeed_template_agreement_cross φ hφ hφN ha hb)
+
 end FirstOrder.Language
