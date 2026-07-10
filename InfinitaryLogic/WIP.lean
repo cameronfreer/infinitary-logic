@@ -132,9 +132,13 @@ these imports transitively cover:
   fragment's index data, factor every tuple through it) and `markerStage_homogeneous`
   (pull the fragment back to one arity-`k` truth-vector coloring over the source and apply
   the Marker-stage supply: for every `α < ω₁`, a `(ℶ_α)⁺`-suborder on which the whole
-  fragment's truth vector is tuple-independent). Next: the Marker consistency property
-  (`ConsistencyPropertyEq L'[[J]]`, C4 via re-homogenization + the cofinal `α`-pigeonhole),
-  then `model_existence_uncountable_language`, then `MorleySeedTailTemplateRealizable`.
+  fragment's truth vector is tuple-independent). **This program is COMPLETE** (2026-07-10):
+  the schema route (`Methods/SchemaCompletion`, `Methods/SchemaTermModel`,
+  `Methods/SchemaTermTruth`, `Methods/LocalSkolemUniversal`, `Methods/SchemaLocalEMSource`)
+  proved `MorleySeedTailTemplateRealizable`, and the unconditional `morley_hanf` endpoint
+  lives in `Conditional/MorleyHanfSchemaDischarge.lean`. The schema files are therefore now
+  ALSO part of the `Everything` closure (through the discharge); they remain listed here
+  while their docstring narrative is being stabilized.
 
 These modules are deliberately NOT part of `InfinitaryLogic.All` or
 `InfinitaryLogic.Everything` — they are under active construction. This target exists

@@ -20,11 +20,10 @@ The Silver chain in `Conditional/` is **sorry-free** (Silver's theorem
 `gandy_harrington_for_relation` and the Silver–Burgess dichotomy
 `silverBurgessDichotomy` are proved via the classical `G₀`-dichotomy
 category route, with axioms exactly `[propext, Classical.choice,
-Quot.sound]`). The remaining conditional content is the Morley–Hanf
-transfer, now reduced to the single residual
-`MorleySeedTailTemplateRealizable` (consumed by
-`morley_hanf_of_tail_realizable`; the extraction side is discharged by
-`morleyHanfExtractionTail_holds`).
+Quot.sound]`). The Morley–Hanf theorem is likewise **unconditional**:
+`morley_hanf` (`Conditional/MorleyHanfSchemaDischarge.lean`) — the residual
+`MorleySeedTailTemplateRealizable` is proved by the schema-completion
+construction, and the extraction side by `morleyHanfExtractionTail_holds`.
 
 `InfinitaryLogic.All` remains the sorry-free bundle without `Conditional/`
 or the legacy modules.

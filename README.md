@@ -16,6 +16,7 @@ A Lean 4 formalization of infinitary logic (L∞ω and Lω₁ω), Scott sentence
 - **Model existence** — Every countable consistent set of Lω₁ω sentences in a countable language has a countable model (Henkin-style construction, omitting types, Karp completeness).
 - **Silver's theorem & the Silver–Burgess dichotomy** — A Borel equivalence relation on a Polish space has countably many classes or a perfect set of pairwise-inequivalent points (`gandy_harrington_for_relation`); on a standard Borel space the quotient is ≤ ℵ₀ or exactly 2^ℵ₀ (`silverBurgessDichotomy`). Proved via Miller's classical category route: the Kechris–Solecki–Todorcevic G₀-dichotomy (positivity ideals, Lusin separation, fusion), Miller's G_S independence lemma, Kuratowski–Ulam, and Mycielski's theorem — all formalized here.
 - **Morley counting** — The number of isomorphism classes of countable models of an Lω₁ω sentence is ≤ ℵ₁ or exactly 2^ℵ₀ (`morley_counting`, parametrized by the dichotomy; unconditional via `silverBurgessDichotomy`).
+- **The Morley–Hanf theorem** — ℶ_ω₁ is a Hanf bound for every Lω₁ω sentence, over an arbitrary language with no side hypotheses (`morley_hanf`): a sentence with a model of size ≥ ℶ_ω₁ has models of arbitrarily large cardinality. Tail extraction is countable Ramsey on the Morley seed; the Ehrenfeucht–Mostowski tail-template theory of the seed is realized by a Henkin-style ω-stage completion of the countable *schema* sentence universe (pinning a disjunct for every positive countable disjunction and a refuted conjunct for every negative countable conjunction), whose quotient term model carries a fully indiscernible sequence of Henkin constants; symbol countability is discharged by the sentence's own generated sublanguage. Axioms exactly `[propext, Classical.choice, Quot.sound]`.
 
 ## Scope and Boundaries
 
@@ -25,7 +26,7 @@ The formalization currently covers L∞ω and Lω₁ω syntax and semantics, Sco
 
 and the endpoints `gandy_harrington_for_relation`, `silverBurgessDichotomy`, and the `morley_counting` instantiation all have axioms exactly `[propext, Classical.choice, Quot.sound]`.
 
-Some results carry explicit hypotheses packaging external content not yet formalized. For Morley–Hanf, two forms coexist: the original `morley_hanf_of_transfer` is conditional on the single opaque `MorleyHanfTransfer` hypothesis (bundling Erdős–Rado extraction and EM stretching), while the proved bridge `hasArbLargeModels_of_restricted_extraction` takes a smaller residual `MorleyHanfExtraction` (source-side only: pairwise-distinct ℕ-indexed sequence restricted-indiscernible on a countable formula family) plus a per-target compactness oracle — the EM stretching side is now fully formalized in `Methods/EM/FragmentAdapter.lean`.
+The Morley–Hanf theorem is now **unconditional** (`morley_hanf`, `Conditional/MorleyHanfSchemaDischarge.lean`). The historical conditional forms are retained for the record: the original `morley_hanf_of_transfer` (bundled `MorleyHanfTransfer` hypothesis) and the split bridges through `MorleyHanfExtraction` — a residual since shown to be false in ZFC (the Erdős cardinal κ(ω) is inaccessible, so full-indiscernibility extraction at ℶ_ω₁ is unavailable), which is precisely why the proved route runs through the *tail* extraction and a constructed schema term model instead.
 
 ## Repository Guide
 
@@ -38,7 +39,7 @@ Some results carry explicit hypotheses packaging external content not yet formal
 - `InfinitaryLogic/ModelTheory/` — Löwenheim–Skolem, Hanf numbers, counting models
 - `InfinitaryLogic/Admissible/` — Admissible fragments (`Fragment/Core`, `Fragment/Compact`), Barwise compactness, literature-faithful interface (`Barwise/Data`), proof system, Nadel bound
 - `InfinitaryLogic/Descriptive/` — Borel complexity of the structure space, satisfaction, isomorphism; counting dichotomy, finite-carrier analysis; and a reusable DST library: Cantor-antichain extraction (`CantorAntichain`), Mycielski (`Mycielski`), Kuratowski–Ulam (`KuratowskiUlam`), the `G_S` graphs (`GSGraph`), and the classical G₀-dichotomy machinery (`G0Dichotomy`, `G0Fusion`)
-- `InfinitaryLogic/Conditional/` — The Silver chain (`SilverBurgess`, `SilverCategoryRoute`, `GandyHarrington` — now sorry-free) and `MorleyHanfTransfer`, the one remaining genuinely conditional result (original bundled `MorleyHanfTransfer` hypothesis + split residual `MorleyHanfExtraction` with proved `hasArbLargeModels_of_restricted_extraction` bridge)
+- `InfinitaryLogic/Conditional/` — The Silver chain (`SilverBurgess`, `SilverCategoryRoute`, `GandyHarrington` — sorry-free) and the Morley–Hanf chain: `MorleyHanfTransfer` (the historical conditional forms and bridges) and `MorleyHanfSchemaDischarge` (the unconditional `morley_hanf` endpoint)
 
 ## Getting Started
 
@@ -55,7 +56,7 @@ import InfinitaryLogic.Countable    -- model existence, LS, Hanf, EM chain
 import InfinitaryLogic.Admissible   -- admissible fragments, Barwise compactness
 import InfinitaryLogic.Descriptive  -- descriptive set theory of model classes
 import InfinitaryLogic.All          -- all of the above (sorry-free)
-import InfinitaryLogic.Conditional  -- Silver chain (sorry-free) + Morley-Hanf transfer hypotheses
+import InfinitaryLogic.Conditional  -- Silver chain + Morley-Hanf theorem (both proved)
 import InfinitaryLogic.Everything   -- everything including Conditional and legacy off-path modules
 ```
 

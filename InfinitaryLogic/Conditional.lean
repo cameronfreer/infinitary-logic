@@ -5,25 +5,27 @@ import InfinitaryLogic.Conditional.GandyHarrington
 import InfinitaryLogic.Conditional.SilverCategoryRoute
 
 /-!
-# Conditional: theorems depending on external hypotheses or sorries
+# Conditional: historically hypothesis-relative results, now discharged
 
 This bundle historically isolated results relying on external hypotheses or
-sorries. The Silver chain here is now **sorry-free**; the directory remains
-for the Morley–Hanf transfer hypotheses, the only genuinely conditional
-content left.
+sorries. Both chains here are now **proved**: the Silver chain is sorry-free,
+and the Morley–Hanf theorem is unconditional (`morley_hanf` in
+`MorleyHanfSchemaDischarge.lean`). The directory name is retained for
+stability; its hypothesis-relative theorems remain as transparent
+intermediates and historical statement shapes.
 
 ## Contents
 
-- `MorleyHanfTransfer.lean`: two forms of the Morley–Hanf bound.
-  - Original bundled form: `MorleyHanfTransfer` hypothesis (Erdős-Rado +
-    EM stretching, opaque) consumed by `morley_hanf_of_transfer`.
-  - Split form (Phase 2 refactor): `MorleyHanfExtraction` (source-side
-    residual — pairwise-distinct ℕ-indexed sequence restricted-indiscernible
-    on a countable formula family) plus a per-target compactness oracle,
-    joined by the **proved** bridge `hasArbLargeModels_of_restricted_extraction`.
-    The EM stretching side is now fully formalized in
-    `Methods/EM/FragmentAdapter.lean`, so only the extraction residual
-    remains conditional.
+- `MorleyHanfTransfer.lean`: the Morley–Hanf reduction chain — the historical
+  bundled form (`MorleyHanfTransfer` hypothesis, `morley_hanf_of_transfer`),
+  the split bridges through `MorleyHanfExtraction` (a residual since shown
+  false in ZFC) and its proved tail weakening `morleyHanfExtractionTail_holds`,
+  and the realizability-relative endpoints over
+  `MorleySeedTailTemplateRealizable`.
+- `MorleyHanfSchemaDischarge.lean`: `MorleySeedTailTemplateRealizable` is
+  **PROVED** via the schema-completion construction, and the definitive
+  endpoint **`morley_hanf`** — `ℶ_ω₁` is a Hanf bound for every `L_ω₁ω`
+  sentence, over an arbitrary language, with no hypotheses.
 - `SilverBurgess.lean`: Silver-Burgess splitting lemmas and `silver_core_closed`
   (sorry-free).
 - `SilverCategoryRoute.lean`: Miller's classical category route, now **complete**:

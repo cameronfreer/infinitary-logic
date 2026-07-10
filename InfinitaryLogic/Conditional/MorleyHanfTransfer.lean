@@ -57,20 +57,19 @@ def MorleyHanfTransfer (L : Language.{u, v}) [Countable (Σ l, L.Relations l)] :
     Sentenceω.Realize φ M → Cardinal.mk M ≥ Cardinal.beth (Ordinal.omega 1) →
     HasArbLargeModels φ
 
-/-- **Morley-Hanf Theorem** (conditional on transfer hypothesis).
+/-- **Morley-Hanf Theorem** (historical form, conditional on the transfer hypothesis).
 
 For a countable language, the Hanf number of any Lω₁ω sentence is bounded
 by ℶ_ω₁ (the ω₁-th beth number), assuming the deep combinatorial transfer
 principle `MorleyHanfTransfer`.
 
-The unconditional version requires formalizing Erdős-Rado partition calculus
-and Ehrenfeucht-Mostowski functors for Lω₁ω, which are not currently available
-in Lean or Mathlib.
-
-**Boundary**: The hypothesis `htransfer` captures exactly the deep
-set-theoretic/model-theoretic transfer step. All other reasoning is formalized. -/
-@[blueprint "thm:morley-hanf"
-  (title := /-- Morley-Hanf bound -/)
+**Superseded**: the unconditional theorem is `morley_hanf`
+(`Conditional/MorleyHanfSchemaDischarge.lean`), with no hypotheses at all — the transfer content
+was discharged by the tail extraction (`morleyHanfExtractionTail_holds`) plus the schema-route
+seed-template realizability (`morleySeedTailTemplateRealizable_holds`). This form is retained as
+the historical statement shape. -/
+@[blueprint "thm:morley-hanf-transfer"
+  (title := /-- Morley-Hanf bound (historical, via transfer hypothesis) -/)
   (statement := /-- Conditional on the Morley-Hanf transfer hypothesis,
     $\beth_{\omegaone}$ is a Hanf bound for every $\Lomegaone$ sentence. -/)
   (proof := /-- Given a model of size $\geq \beth_{\omegaone}$, the transfer
@@ -388,8 +387,12 @@ model of size `≥ κ`" — without the cardinality premise this would assert th
 infinite model has arbitrarily large models, false for Scott sentences of bounded Hanf number.
 Unlike the broad `TailTemplateRealizable` (false-shaped: see its docstring), the seed family has
 no countable connectives beyond those inside `φ` itself, and the classical proof is the
-Ehrenfeucht–Mostowski / Skolem-hull construction over `J` — the genuine remaining non-formal
-content of this bridge. -/
+Ehrenfeucht–Mostowski / Skolem-hull construction over `J`.
+
+**Now PROVED** (`morleySeedTailTemplateRealizable_holds`,
+`Conditional/MorleyHanfSchemaDischarge.lean`) via the schema-completion construction — in fact
+without consuming the sequence's tail indiscernibility. Kept as a named `Prop` because the
+bridge theorems below are stated against it. -/
 def MorleySeedTailTemplateRealizable : Prop :=
   ∀ (φ : L'.Sentenceω) (M : Type) [L'.Structure M] (a : ℕ → M) (J : Type) [LinearOrder J],
     Cardinal.mk M ≥ Cardinal.beth (Ordinal.omega 1) →
@@ -797,14 +800,15 @@ theorem morley_hanf_of_pureColoring_and_compact
 The tail-weakened source extraction is now **formalized** (`morleyHanfExtractionTail_holds`,
 proved from `infinite_ramsey_nat_family` — countable Ramsey on `ℕ`, not an `ℶ_{ω₁}` Erdős–Rado
 schedule). Composing it with `hasArbLargeModels_of_tail_realizability` discharges the
-combinatorial hypothesis entirely: the headline below takes **only** the honest residual
+combinatorial hypothesis entirely: the theorems below take **only** the honest residual
 `MorleySeedTailTemplateRealizable` (realizability of the EM tail-template theory of the Morley
-seed `{φ, x₀ ≠ x₁}`, with the source facts). So for this bridge the sole remaining non-formal
-content is that seed-template realizability — whose honest proof is the classical
-Ehrenfeucht–Mostowski / Skolem-hull construction — **not** source extraction, **not** the beth
-partition calculus, **not** full `L_{ω₁ω}` compactness, and **not** the broad (false-shaped)
-`TailTemplateRealizable` over arbitrary sequences. The `*_compact` wrappers are retained as
-legacy; their oracle is strictly stronger than needed. -/
+seed `{φ, x₀ ≠ x₁}`, with the source facts).
+
+**That residual is itself now PROVED** (`morleySeedTailTemplateRealizable_holds`,
+`Conditional/MorleyHanfSchemaDischarge.lean` — the schema-completion construction), so the
+unconditional endpoint `morley_hanf` there has no hypotheses at all. The `hRealize`-relative
+forms below remain the transparent intermediates; the `*_compact` wrappers are retained as
+legacy — their oracle is strictly stronger than needed. -/
 
 /-- **Morley–Hanf reduction (realizability-only, extraction discharged)**: assuming only the
 honest residual `MorleySeedTailTemplateRealizable`, any sentence satisfied in a model of size
@@ -820,9 +824,9 @@ theorem hasArbLargeModels_of_tail_realizable
   hasArbLargeModels_of_tail_realizability (morleyHanfExtractionTail_holds (L' := L')) hRealize φ hφ
 
 /-- **Morley–Hanf bound (realizability-only, extraction discharged)**: `ℶ_ω₁` is a Hanf bound for
-every Lω₁ω sentence, assuming only `MorleySeedTailTemplateRealizable`. This is the project's
-tightest Morley–Hanf endpoint — the only non-formal input is realizing the EM tail-template
-theory of the Morley seed. -/
+every Lω₁ω sentence, assuming only `MorleySeedTailTemplateRealizable` — which is itself proved
+(`morleySeedTailTemplateRealizable_holds`); see `morley_hanf` in
+`Conditional/MorleyHanfSchemaDischarge.lean` for the hypothesis-free endpoint. -/
 theorem morley_hanf_of_tail_realizable
     {L' : Language.{0, 0}}
     (hRealize : MorleySeedTailTemplateRealizable (L' := L'))

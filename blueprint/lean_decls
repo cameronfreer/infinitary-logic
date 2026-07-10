@@ -29,6 +29,7 @@ FirstOrder.Language.IsHanfBound
 FirstOrder.Language.HanfNumber
 FirstOrder.Language.hanf_existence
 FirstOrder.Language.morley_hanf_of_transfer
+FirstOrder.Language.morley_hanf
 FirstOrder.Language.stabilization_bound_iso_eq_BFEquiv
 FirstOrder.Language.bounded_scottHeight_iso_eq_BFEquiv
 FirstOrder.Language.Derivable

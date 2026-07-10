@@ -27,7 +27,8 @@ For narrower entry points:
 - `InfinitaryLogic.Countable`: model existence, Löwenheim-Skolem, Hanf, counting, EM chain
 - `InfinitaryLogic.Admissible`: admissible fragments, Barwise compactness, proof system
 - `InfinitaryLogic.Descriptive`: descriptive set theory of model classes
-- `InfinitaryLogic.Conditional`: results with external hypotheses
+- `InfinitaryLogic.Conditional`: the Silver chain and the Morley–Hanf chain (both proved;
+  the directory name is historical)
 - `InfinitaryLogic.Everything`: everything including `Conditional/` and the
   legacy off-path modules (not sorry-free)
 
@@ -90,7 +91,7 @@ For narrower entry points:
 
 ### Model theory (ModelTheory/)
 - `ModelTheory/LowenheimSkolem.lean`: Downward Löwenheim-Skolem for Lω₁ω
-- `ModelTheory/Hanf.lean`: Hanf numbers and Morley-Hanf bound
+- `ModelTheory/Hanf.lean`: Hanf numbers; the Morley-Hanf bound itself is `morley_hanf` in `Conditional/MorleyHanfSchemaDischarge.lean`
 - `ModelTheory/CountingModels.lean`: Scott rank and model counting
 - `ModelTheory/CountingCountable.lean`: Counting theorem for all countable models
 - `ModelTheory/MorleyCounting.lean`: Morley's counting theorem (≤ ℵ₁ or 2^ℵ₀)
@@ -131,7 +132,8 @@ For narrower entry points:
   exempt in the sorry-boundary check), reachable via `Everything` only
 
 ### Conditional (Conditional/)
-- `Conditional/MorleyHanfTransfer.lean`: Morley–Hanf transfer, reduced to the single residual `TailTemplateRealizable` (extraction side discharged by `morleyHanfExtractionTail_holds`; tightest theorem `morley_hanf_of_tail_realizable`)
+- `Conditional/MorleyHanfTransfer.lean`: the Morley–Hanf reduction chain (historical conditional forms; extraction side discharged by `morleyHanfExtractionTail_holds`)
+- `Conditional/MorleyHanfSchemaDischarge.lean`: `MorleySeedTailTemplateRealizable` proved via the schema completion; the unconditional endpoint `morley_hanf`
 - `Conditional/SilverBurgess.lean`: Silver–Burgess dichotomy (sorry-free)
 - `Conditional/GandyHarrington.lean`: Silver-for-Borel via Gandy–Harrington-style core (`gandy_harrington_for_relation`, sorry-free, axiom-clean)
 - `Conditional/SilverCategoryRoute.lean`: Silver's theorem via Miller's classical category route (Mycielski + KU + G₀ fusion)
