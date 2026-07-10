@@ -52,11 +52,36 @@ theorem beth_omega1_isLomega1omegaHanfBound :
     IsLomega1omegaHanfBound (Cardinal.beth (Ordinal.omega 1)) :=
   fun _ φ => morley_hanf φ
 
+/-- A global Hanf bound stays a bound at every larger cardinal. -/
+theorem IsLomega1omegaHanfBound.mono {κ μ : Cardinal}
+    (hκ : IsLomega1omegaHanfBound κ) (hκμ : κ ≤ μ) : IsLomega1omegaHanfBound μ :=
+  fun L' φ => (hκ L' φ).mono hκμ
+
+/-- **The global Hanf number is itself a global Hanf bound**: the set of bounds is nonempty
+(`beth_omega1_isLomega1omegaHanfBound`), and an infimum of cardinals is attained. -/
+theorem Lomega1omegaHanfNumber_isHanfBound :
+    IsLomega1omegaHanfBound Lomega1omegaHanfNumber :=
+  show Lomega1omegaHanfNumber ∈ {κ : Cardinal | IsLomega1omegaHanfBound κ} from
+    csInf_mem ⟨_, beth_omega1_isLomega1omegaHanfBound⟩
+
+/-- The global Hanf number is the least global Hanf bound. -/
+theorem Lomega1omegaHanfNumber_le_of_isHanfBound {κ : Cardinal}
+    (hκ : IsLomega1omegaHanfBound κ) : Lomega1omegaHanfNumber ≤ κ :=
+  csInf_le' hκ
+
+/-- The universal property of the global Hanf number: `Lomega1omegaHanfNumber ≤ κ` exactly when
+`κ` is a global Hanf bound. The `←` direction is how every sharpness witness will be consumed:
+a bounded-spectrum sentence at `κ` refutes `IsLomega1omegaHanfBound κ`, hence
+`κ < Lomega1omegaHanfNumber`. -/
+theorem Lomega1omegaHanfNumber_le_iff_isHanfBound {κ : Cardinal} :
+    Lomega1omegaHanfNumber ≤ κ ↔ IsLomega1omegaHanfBound κ :=
+  ⟨fun h => Lomega1omegaHanfNumber_isHanfBound.mono h, Lomega1omegaHanfNumber_le_of_isHanfBound⟩
+
 /-- **The Hanf number of `L_{ω₁ω}` is at most `ℶ_{ω₁}`** — the upper half of the classical
 `Hanf(L_{ω₁ω}) = ℶ_{ω₁}`; the lower bound (sharpness) is future work. -/
 theorem Lomega1omegaHanfNumber_le_beth_omega1 :
     Lomega1omegaHanfNumber ≤ Cardinal.beth (Ordinal.omega 1) :=
-  csInf_le' beth_omega1_isLomega1omegaHanfBound
+  Lomega1omegaHanfNumber_le_of_isHanfBound beth_omega1_isLomega1omegaHanfBound
 
 /-- **The Morley–Hanf theorem for countable theories**: every countable `L_{ω₁ω}`-theory with a
 model of size at least `ℶ_{ω₁}` has models of arbitrarily large cardinality — apply
