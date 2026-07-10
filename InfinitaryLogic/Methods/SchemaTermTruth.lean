@@ -879,6 +879,108 @@ theorem schemaSeq_realize_iff_schemaLift_mem :
         (fun j => SchemaTermCarrier.mk hM (schemaCloseTerm (g j) t))).symm.trans
       (schemaTruthLemma_colim hM hqΓ fun j => schemaCloseTerm (g j) t)
 
+/-! ### Full indiscernibility and the Ω-witnesses -/
+
+/-- **Full indiscernibility of the schema sequence** (cutoff `0`): in the base-language reduct of
+the schema term model, `schemaSeq` is `Lω₁ω`-indiscernible on all of `ΓEMlocal` — realization at
+any two strictly monotone tuples transports through the bridge to theory membership at the two
+lifted templates, which agree by tuple uniformity. -/
+theorem schemaSeq_indiscernibleOn :
+    letI : (localColim s₀).Structure M := localColimStructure s₀
+    ∀ hM : Cardinal.beth (Ordinal.omega 1) ≤ Cardinal.mk M,
+      letI : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+        schemaTermStructure hM
+      letI : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+        (lhomWithConstants (localColim s₀) ℕ).reduct _
+      IsLomega1omegaIndiscernibleOn (L := localColim s₀)
+        (schemaSeq (s₀ := s₀) (M := M) hM) (ΓEMlocal s₀) := by
+  letI : (localColim s₀).Structure M := localColimStructure s₀
+  intro hM
+  letI : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+    schemaTermStructure hM
+  letI : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+    (lhomWithConstants (localColim s₀) ℕ).reduct _
+  intro n φ hφ s t hs ht
+  exact (schemaSeq_realize_iff_schemaLift_mem hM φ hφ
+      (OrderEmbedding.ofStrictMono s hs)).trans
+    ((schemaCompletionTheory_tuple_uniform hM hφ (OrderEmbedding.ofStrictMono s hs)
+        (OrderEmbedding.ofStrictMono t ht)).trans
+      (schemaSeq_realize_iff_schemaLift_mem hM φ hφ
+        (OrderEmbedding.ofStrictMono t ht)).symm)
+
+/-- **The tail-template truth collapse to the standard tuple**: by full indiscernibility, the
+eventually-form template truth of a `ΓEMlocal` member equals theory membership of its lifted
+template at the standard tuple. -/
+theorem tailTemplate_schemaSeq_truth_iff :
+    letI : (localColim s₀).Structure M := localColimStructure s₀
+    ∀ hM : Cardinal.beth (Ordinal.omega 1) ≤ Cardinal.mk M,
+      letI : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+        schemaTermStructure hM
+      letI : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+        (lhomWithConstants (localColim s₀) ℕ).reduct _
+      ∀ {p : ℕ} {ψ : (localColim s₀).BoundedFormulaω Empty p},
+        (⟨p, ψ⟩ : Σ n, (localColim s₀).BoundedFormulaω Empty n) ∈ ΓEMlocal s₀ →
+        ((tailTemplateOfSeq (L := localColim s₀) (schemaSeq (s₀ := s₀) (M := M) hM)).truth ψ ↔
+          schemaLift ψ (stdTuple p) ∈ schemaCompletionTheory (schemaEnumeration s₀) hM) := by
+  letI : (localColim s₀).Structure M := localColimStructure s₀
+  intro hM
+  letI : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+    schemaTermStructure hM
+  letI : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+    (lhomWithConstants (localColim s₀) ℕ).reduct _
+  intro p ψ hψ
+  have hind : IsLomega1omegaIndiscernibleOn (L := localColim s₀)
+      (schemaSeq (s₀ := s₀) (M := M) hM) (ΓEMlocal s₀) := schemaSeq_indiscernibleOn hM
+  constructor
+  · rintro ⟨N, hN⟩
+    obtain ⟨s, hs, hdeep⟩ := exists_strictMono_of_le p N
+    exact (schemaSeq_realize_iff_schemaLift_mem hM ψ hψ (stdTuple p)).mp
+      ((hind hψ s (stdTuple p) hs (stdTuple p).strictMono).mp (hN s hs hdeep))
+  · intro hT
+    refine ⟨0, fun s hs _ => ?_⟩
+    exact (hind hψ (stdTuple p) s (stdTuple p).strictMono hs).mp
+      ((schemaSeq_realize_iff_schemaLift_mem hM ψ hψ (stdTuple p)).mpr hT)
+
+/-- **The schema-template Ω-witness property for the schema sequence** — the Layer-7a target,
+discharged by the completed theory: a disjunction's template truth yields a component's (the
+positive `iSup` witness pinned by the completion), and joint component truth yields the
+conjunction's (via the negative-`iInf` witness pinned by the completion repair: were the
+conjunction negative, its fixed refuted conjunct would contradict that component's truth). -/
+theorem schemaSeq_tailTemplateOmegaWitnessed :
+    letI : (localColim s₀).Structure M := localColimStructure s₀
+    ∀ hM : Cardinal.beth (Ordinal.omega 1) ≤ Cardinal.mk M,
+      letI : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+        schemaTermStructure hM
+      letI : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+        (lhomWithConstants (localColim s₀) ℕ).reduct _
+      TailTemplateOmegaWitnessed s₀ (schemaSeq (s₀ := s₀) (M := M) hM) := by
+  letI : (localColim s₀).Structure M := localColimStructure s₀
+  intro hM
+  letI : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+    schemaTermStructure hM
+  letI : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+    (lhomWithConstants (localColim s₀) ℕ).reduct _
+  constructor
+  · intro m φs hmem p g htruth
+    obtain ⟨k, hk⟩ := schemaCompletionTheory_iSup_witness_canonDeForm hM hmem g (stdTuple p)
+      ((tailTemplate_schemaSeq_truth_iff hM (canonDeForm_mem_ΓEMlocal hmem g)).mp htruth)
+    exact ⟨k, (tailTemplate_schemaSeq_truth_iff hM
+      (canonDeForm_mem_ΓEMlocal (iSup_component_mem_ΓlocalColim s₀ hmem k) g)).mpr hk⟩
+  · intro m φs hmem p g hall
+    refine (tailTemplate_schemaSeq_truth_iff hM (canonDeForm_mem_ΓEMlocal hmem g)).mpr ?_
+    rcases (schemaCompletionTheorySpec hM).complete_on_universe _
+      (schemaLift_mem_universe (canonDeForm_mem_ΓEMlocal hmem g) (stdTuple p))
+      with hpos | hneg
+    · exact hpos
+    · exfalso
+      obtain ⟨k, hk⟩ := schemaCompletionTheory_neg_iInf_witness_canonDeForm hM hmem g
+        (stdTuple p) hneg
+      exact (schemaCompletionTheory_not_mem_iff hM _
+          (schemaLift_mem_universe (canonDeForm_mem_ΓEMlocal
+            (iInf_component_mem_ΓlocalColim s₀ hmem k) g) (stdTuple p))).mp hk
+        ((tailTemplate_schemaSeq_truth_iff hM
+          (canonDeForm_mem_ΓEMlocal (iInf_component_mem_ΓlocalColim s₀ hmem k) g)).mp (hall k))
+
 end SequenceBridge
 
 end FirstOrder.Language
