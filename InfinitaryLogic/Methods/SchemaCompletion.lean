@@ -716,4 +716,103 @@ theorem exists_admissible_pair
 
 end Interpolation
 
+/-! ## Checkpoint 5b-1, part 2: tuple uniformity
+
+The completed schema theory decides a template sentence's sign **by its `ΓEMlocal` body alone**,
+uniformly across the instantiating tuples: `schemaLift ψ t ∈ Tσ ↔ schemaLift ψ t' ∈ Tσ`. This is
+the internal form of Marker §5.2's indiscernibility-equivalence axioms, and it is what makes the
+term model's canonical sequence genuinely indiscernible for the completed schema (5b-3).
+
+The proof is the honest two-interpretation argument: if `ψ t` is in and `ψ t'` is out, then (by
+completeness on the universe) `{schemaLift ψ u, (schemaLift ψ v).not}` is a finite subset of the
+theory, hence `MarkerHenkinConsistent`; its ONE certificate body is universal over admissible
+skeleton interpretations, so it applies separately to the `exists_admissible_pair` pair
+`σ₁, σ₂` — the first realizes `ψ` on `σ₁ ∘ t`, the second refutes `ψ` on `σ₂ ∘ t'`, and those
+tuples are EQUAL. No single interpretation is asked to equalize both tuples (strictness would
+forbid it); no Henkin witness dependence arises on this single-expansion path. -/
+
+section TupleUniform
+
+/-- **The schema lift**: a template sentence over `(localColim s₀)[[ℕ]]`, lifted along the Henkin
+inclusion into the Marker double expansion — the form in which the completed theory holds the
+schema universe. Public API: 5b-3's restricted truth lemma states its atomic clauses in exactly
+these terms. -/
+abbrev schemaLift {s₀ : LocalStage} {m : ℕ}
+    (ψ : (localColim s₀).BoundedFormulaω Empty m) (t : Fin m ↪o ℕ) :
+    ((localColim s₀)[[ℕ]])[[ℕ]].Sentenceω :=
+  (Lomega1omegaTemplate.templateSentence ψ t).mapLanguage
+    (((localColim s₀)[[ℕ]]).lhomWithConstants ℕ)
+
+/-- Every schema lift of a `ΓEMlocal` member is a universe member (with its canonical
+finite-support proof). -/
+theorem schemaLift_mem_universe {s₀ : LocalStage} {m : ℕ}
+    {ψ : (localColim s₀).BoundedFormulaω Empty m}
+    (hψ : (⟨m, ψ⟩ : Σ n, (localColim s₀).BoundedFormulaω Empty n) ∈ ΓEMlocal s₀)
+    (t : Fin m ↪o ℕ) :
+    (⟨schemaLift ψ t, hasFiniteConstSupport_mapLanguage_templateSentence _ _⟩ :
+      FSentence (L'' := localColim s₀) (J := ℕ)) ∈ schemaFSentenceUniverse s₀ :=
+  Set.mem_biUnion hψ ⟨t, rfl⟩
+
+variable {M : Type} [(localColim s₀).Structure M] [LinearOrder M]
+  [WellFoundedLT M] (hM : Cardinal.beth (Ordinal.omega 1) ≤ Cardinal.mk M)
+
+/-- **Checkpoint 5b-1 — tuple uniformity.** The completed schema theory gives every `ΓEMlocal`
+body a tuple-independent sign: for same-arity increasing tuples `t t'`, the lifted
+`templateSentence ψ t` is in the theory iff the lifted `templateSentence ψ t'` is. -/
+theorem schemaCompletionTheory_tuple_uniform
+    {m : ℕ} {ψ : (localColim s₀).BoundedFormulaω Empty m}
+    (hψ : (⟨m, ψ⟩ : Σ n, (localColim s₀).BoundedFormulaω Empty n) ∈ ΓEMlocal s₀)
+    (t t' : Fin m ↪o ℕ) :
+    schemaLift ψ t ∈ schemaCompletionTheory (schemaEnumeration s₀) hM ↔
+      schemaLift ψ t' ∈ schemaCompletionTheory (schemaEnumeration s₀) hM := by
+  classical
+  have transfer : ∀ (u v : Fin m ↪o ℕ),
+      schemaLift ψ u ∈ schemaCompletionTheory (schemaEnumeration s₀) hM →
+        schemaLift ψ v ∈ schemaCompletionTheory (schemaEnumeration s₀) hM := by
+    intro u v hu
+    rcases (schemaCompletionTheorySpec hM).complete_on_universe _
+      (schemaLift_mem_universe hψ v) with hv | hnv
+    · exact hv
+    · exfalso
+      let F : Finset (((localColim s₀)[[ℕ]])[[ℕ]].Sentenceω) :=
+        {schemaLift ψ u, (schemaLift ψ v).not}
+      have hF : ∀ τ ∈ F,
+          τ ∈ schemaCompletionTheory (schemaEnumeration s₀) hM := by
+        intro τ hτ
+        change τ ∈ {schemaLift ψ u, (schemaLift ψ v).not} at hτ
+        simp only [Finset.mem_insert, Finset.mem_singleton] at hτ
+        rcases hτ with rfl | rfl
+        · exact hu
+        · exact hnv
+      obtain ⟨S, H, hS, hH, hcof⟩ :=
+        (schemaCompletionTheorySpec hM).finite_consistent F hF
+      obtain ⟨α, hα0, hα1, hbody⟩ := hcof 0 (Ordinal.omega_pos 1)
+      obtain ⟨e, hsat⟩ := hbody
+      let D := (Order.succ (Cardinal.beth α)).ord.ToType
+      haveI : Infinite D := by
+        rw [show D = (Order.succ (Cardinal.beth α)).ord.ToType from rfl,
+          Cardinal.infinite_iff, Cardinal.mk_ord_toType]
+        exact (Cardinal.aleph0_le_beth α).trans (Order.le_succ _)
+      let dflt : M := e (Classical.arbitrary D)
+      obtain ⟨σ₁, σ₂, hσ₁mono, hσ₁range, hσ₂mono, hσ₂range, heq⟩ :=
+        exists_admissible_pair S e u v dflt
+      obtain ⟨w₁, hw₁⟩ := hsat σ₁ hσ₁mono hσ₁range
+      obtain ⟨w₂, hw₂⟩ := hsat σ₂ hσ₂mono hσ₂range
+      have hpos := hw₁ (schemaLift ψ u) (by
+        rw [Finset.mem_coe]
+        exact Finset.mem_insert_self _ _)
+      have hneg := hw₂ (schemaLift ψ v).not (by
+        rw [Finset.mem_coe]
+        change (schemaLift ψ v).not ∈ {schemaLift ψ u, (schemaLift ψ v).not}
+        simp)
+      rw [schemaLift, realizeWith_templateSentence] at hpos
+      rw [realizeWith_not, schemaLift, realizeWith_templateSentence] at hneg
+      apply hneg
+      rw [show (fun i => σ₂ (v i)) = fun i => σ₁ (u i) from
+        funext fun i => (heq i).symm]
+      exact hpos
+  exact ⟨transfer t t', transfer t' t⟩
+
+end TupleUniform
+
 end FirstOrder.Language
