@@ -34,9 +34,10 @@ import InfinitaryLogic.Methods.SchemaLocalEMSource
 /-!
 # WIP: the work-in-progress frontier bundle
 
-Root of the **non-default** `InfinitaryLogicWIP` build target: the in-progress
-Ehrenfeucht–Mostowski / Skolem-hull realizability construction aimed at discharging
-the Morley–Hanf residual `TailTemplateRealizable`. The frontier has two disjoint roots —
+Root of the **non-default** `InfinitaryLogicWIP` build target: the Ehrenfeucht–Mostowski /
+Skolem-hull realizability construction that (as of 2026-07-10) **has discharged** the
+Morley–Hanf seed residual — the endpoint `morley_hanf` is on the default surface — plus the
+historical frontier it grew out of. The frontier has two disjoint roots —
 the old `skolemColim` track (`EMTermModel`) and the pure local stack, whose top is the
 extraction bridge (`LocalEMExtraction`, isolating the Conditional import); since
 `LocalEMExtraction` now imports `LocalEMContext`, that one root already pulls in the whole

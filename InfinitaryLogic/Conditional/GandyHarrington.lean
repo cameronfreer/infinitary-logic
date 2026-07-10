@@ -119,6 +119,14 @@ namespace FirstOrder.Language
 
 /-- The Silver-Burgess dichotomy for Borel equivalence relations on standard Borel
 spaces, derived from `silver_core_polish`. -/
+@[blueprint "thm:silver-burgess-proved"
+  (title := /-- Silver--Burgess dichotomy (proved) -/)
+  (statement := /-- A Borel equivalence relation on a standard Borel space has at most
+    $\aleph_0$ classes or exactly $2^{\aleph_0}$ — Silver's theorem, fully proved via
+    Miller's classical category route. -/)
+  (proof := /-- Upgrade to a Polish topology and apply the Polish-space core
+    (Kuratowski--Ulam, Mycielski, the $G_0$-dichotomy fusion). -/)
+  (uses := ["def:silver-burgess-dichotomy"])]
 theorem silverBurgessDichotomy : SilverBurgessDichotomy.{v} := by
   intro X _ _ r hr
   -- Upgrade the standard Borel space to a Polish topology

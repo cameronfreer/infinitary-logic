@@ -162,6 +162,15 @@ consume the canonical-deForm connective witnesses (5b-2) — the negative `iInf`
 exactly what the completion repair pinned; `all` runs the Skolem-witness argument against a
 certificate body. (The heartbeat bump is for the seven-case induction as a single elaboration
 unit; no individual step is deep.) -/
+@[blueprint "thm:schema-truth-lemma"
+  (title := /-- The restricted schema truth lemma -/)
+  (statement := /-- In the quotient term model of the completed schema theory, realization of a
+    staged-family formula on classes of closed terms is equivalent to membership of its lifted
+    template sentence in the completion. -/)
+  (proof := /-- Structural induction threading the family membership: atoms via the term-model
+    atomic interface and semantic sign transport; countable connectives via the completion's
+    pinned positive-disjunction and refuted-conjunct witnesses; universals via the
+    Skolem-witness argument against a Marker certificate body. -/)]
 theorem schemaTruthLemmaStage :
     letI : (localColim s₀).Structure M := localColimStructure s₀
     ∀ (hM : Cardinal.beth (Ordinal.omega 1) ≤ Cardinal.mk M)
@@ -885,6 +894,15 @@ theorem schemaSeq_realize_iff_schemaLift_mem :
 the schema term model, `schemaSeq` is `Lω₁ω`-indiscernible on all of `ΓEMlocal` — realization at
 any two strictly monotone tuples transports through the bridge to theory membership at the two
 lifted templates, which agree by tuple uniformity. -/
+@[blueprint "thm:schema-seq-indiscernible"
+  (title := /-- Full indiscernibility of the schema sequence -/)
+  (statement := /-- The sequence of Henkin-constant classes in the schema term model is fully
+    $\Lomegaone$-indiscernible on the countable schema family. -/)
+  (proof := /-- Realization at any two strictly monotone tuples transports through the
+    sequence-realization bridge to membership of the two lifted template sentences, which the
+    completion decides uniformly (tuple uniformity, by the two-interpretation Marker-body
+    argument). -/)
+  (uses := ["thm:schema-truth-lemma"])]
 theorem schemaSeq_indiscernibleOn :
     letI : (localColim s₀).Structure M := localColimStructure s₀
     ∀ hM : Cardinal.beth (Ordinal.omega 1) ≤ Cardinal.mk M,

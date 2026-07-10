@@ -14,7 +14,7 @@ disjunctions) where possible.
 
 \section{Main Results}
 
-The formalization establishes five headline theorems:
+The formalization establishes eight headline theorems:
 \begin{itemize}
   \item \textbf{Scott characterization.}
     Every countable structure is characterized up to isomorphism by
@@ -31,6 +31,18 @@ The formalization establishes five headline theorems:
   \item \textbf{Countable refinement hypothesis.}
     The back-and-forth hierarchy on any countable structure stabilizes
     in countably many steps (Theorem~\ref{thm:CRH}).
+  \item \textbf{Silver's theorem and the Silver--Burgess dichotomy.}
+    A Borel equivalence relation on a Polish space has countably many classes
+    or a perfect set of pairwise-inequivalent points; on a standard Borel space
+    the quotient has size $\leq\aleph_0$ or exactly $2^{\aleph_0}$
+    (Theorem~\ref{thm:silver-burgess-proved}).
+  \item \textbf{Morley counting.}
+    An $\Lomegaone$ sentence has $\leq\aleph_1$ or exactly $2^{\aleph_0}$
+    isomorphism classes of countable models (Theorem~\ref{thm:morley-counting}).
+  \item \textbf{The Morley--Hanf theorem.}
+    $\beth_{\omegaone}$ is a Hanf bound for every $\Lomegaone$ sentence,
+    over an arbitrary language with no side hypotheses
+    (Theorem~\ref{thm:morley-hanf}).
 \end{itemize}
 
 \section{Back-and-Forth Equivalence}
@@ -155,10 +167,11 @@ it has arbitrarily large models.
 \emph{Status: proved, unconditionally.}  The theorem \texttt{morley\_hanf}
 (\ref{thm:morley-hanf}) states that $\beth_{\omegaone}$ is a Hanf bound for
 every $\Lomegaone$ sentence, over an arbitrary language with no side
-hypotheses.  Its two inputs are both formalized: tail-restricted source
-extraction (\texttt{morleyHanfExtractionTail\_holds}, countable Ramsey on the
-Morley seed --- no Erd\H{o}s--Rado schedule is consumed), and realizability of
-the seed's Ehrenfeucht--Mostowski tail-template theory over every target order
+hypotheses.  No extraction is consumed at all: any injective
+$\mathbb{N}$-sequence of the source is already fully indiscernible on the
+Morley seed (\texttt{morleySeed\_indiscernibleOn}).  The single substantive
+input is realizability of the seed's Ehrenfeucht--Mostowski tail-template
+theory over every target order
 (\texttt{morleySeedTailTemplateRealizable\_holds}).  The latter is a
 Henkin-style construction in the spirit of Marker's presentation of Morley's
 omitting-types argument: an $\omega$-stage completion of the countable
@@ -178,6 +191,14 @@ bundled transfer hypothesis, and the split bridge
 full-indiscernibility extraction residual plus a compactness oracle.
 
 \inputleannode{thm:morley-hanf}
+
+The milestones of the schema construction behind the seed-realizability input:
+
+\inputleannode{thm:schema-truth-lemma}
+
+\inputleannode{thm:schema-seq-indiscernible}
+
+\inputleannode{thm:morley-seed-realizable}
 
 \inputleannode{thm:morley-hanf-transfer}
 
@@ -247,6 +268,8 @@ for coded $\mathbb{N}$-models with bounded Scott height.
 
 \inputleannode{def:silver-burgess-dichotomy}
 
+\inputleannode{thm:silver-burgess-proved}
+
 \inputleannode{def:iso-setoid}
 
 \inputleannode{thm:counting-dichotomy}
@@ -263,12 +286,12 @@ structures is Borel via the orbit of $\operatorname{Sym}(n)$).  Bridge theorems
 (\texttt{codeModel}, \texttt{iso\_of\_codeModel\_eq}, \texttt{codeModel\_surjective})
 establish that \texttt{AllCodedIsoClasses} faithfully represents all isomorphism
 classes of countable models.  The Silver--Burgess dichotomy
-(\texttt{silverBurgessDichotomy}) is proved modulo one sorry in
-\texttt{gandy\_harrington\_for\_relation} --- Silver's theorem for Borel
-equivalence relations on Polish spaces (a classical ZFC result, Silver 1980),
-whose proof requires descriptive-set-theory infrastructure not yet in Mathlib
-(Kuratowski--Ulam + Banach--Mazur games, or lightface Gandy--Harrington).  Once
-this is filled, \texttt{morley\_counting} becomes fully unconditional.
+(\texttt{silverBurgessDichotomy}) and Silver's theorem
+(\texttt{gandy\_harrington\_for\_relation}) are \emph{fully proved}, via
+Miller's classical category route (Kuratowski--Ulam, Mycielski, the
+Kechris--Solecki--Todorcevic $G_0$-dichotomy); \texttt{morley\_counting} is
+therefore unconditional, with axioms exactly
+\texttt{[propext, Classical.choice, Quot.sound]}.
 
 \bibliographystyle{amsalpha}
 \bibliography{refs}

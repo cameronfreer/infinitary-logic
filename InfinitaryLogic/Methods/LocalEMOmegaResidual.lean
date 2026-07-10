@@ -182,8 +182,10 @@ arbitrarily on the (nonempty, via the skeleton class of any `j : J`) carrier; th
 `IsEmpty J` case is served by `M` itself. The realizing model is the EM quotient of a **fresh**
 fully indiscernible extraction from `M` (`MorleyHanfExtraction`, where the `ℶ_{ω₁}` premise does
 real Erdős–Rado work) — not a subsequence of the input `a`; the input's template is matched on
-the seed by the absolute-value agreement. With this bridge the remaining non-formal content of
-the Morley–Hanf chain is exactly the genuine Erdős–Rado/Morley extraction. -/
+the seed by the absolute-value agreement. HISTORICAL: the extraction residual it consumes was
+later shown false in ZFC, and the Morley–Hanf chain is now fully proved by the schema route
+(`morleySeedTailTemplateRealizable_holds`); this bridge remains a valid implication and the
+record of the pre-schema architecture. -/
 theorem morleySeedTailTemplateRealizable_of_morleyHanfExtraction {L' : Language.{0, 0}}
     [Countable (Σ l, L'.Relations l)]
     (hExtract : ∀ (L'' : Language.{0, 0}) [Countable (Σ l, L''.Relations l)],

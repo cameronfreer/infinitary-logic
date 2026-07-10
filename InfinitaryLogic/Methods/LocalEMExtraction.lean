@@ -25,8 +25,9 @@ This file holds the extraction bridge together with the concrete-context assembl
 membership dischargers). It is isolated from the rest of the local stack because of its import: it
 consumes `Conditional/MorleyHanfTransfer.lean` — a deliberate, temporary inversion of the
 Core→Methods→Conditional axis. The consumed theorem `morleyHanfExtractionTail_holds` is *proved*
-(sorry-free, axiom-clean), not a conditional hypothesis; once the frontier stabilizes it should
-migrate out of `Conditional/` and this inversion disappears. The local context machinery itself
+(sorry-free, axiom-clean), not a conditional hypothesis; with the Morley–Hanf endpoint now on
+the default surface (`ModelTheory/MorleyHanf.lean`), `Conditional/` is a historical directory
+name and this inversion is harmless. The local context machinery itself
 (deep interpretation, realize bridges, quotient, structure, truth lemma) lives in the pure
 `LocalEMContext.lean`, which imports only the Methods-side local stack.
 -/

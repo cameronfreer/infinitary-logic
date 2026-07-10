@@ -44,3 +44,6 @@ jobs:
 
       - name: Check blueprint declarations
         run: lake exe checkdecls blueprint/lean_decls
+
+      - name: Verify headline declarations (default-import smoke + standard axioms)
+        run: bash scripts/check_headline_axioms.sh
