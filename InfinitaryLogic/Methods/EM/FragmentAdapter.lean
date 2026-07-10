@@ -429,6 +429,40 @@ def morleySeed (φ : L.Sentenceω) : ℕ → Σ n, L.BoundedFormulaω Empty n :=
 @[simp] theorem morleySeed_one (φ : L.Sentenceω) :
     morleySeed φ 1 = ⟨2, (disEqFormula : L.BoundedFormulaω Empty 2)⟩ := rfl
 
+/-- **The Morley seed needs no extraction**: ANY pairwise-distinct sequence is fully
+`Lω₁ω`-indiscernible on `Set.range (morleySeed φ)` — the arity-`0` members ignore their tuples,
+and the disequality is true on every strictly monotone pair of a pairwise-distinct sequence.
+This is why the definitive Morley–Hanf route consumes no Ramsey/Erdős–Rado extraction at all:
+`Infinite.natEmbedding` already supplies a seed-indiscernible sequence. -/
+theorem morleySeed_indiscernibleOn {M : Type*} [L.Structure M] (φ : L.Sentenceω) {a : ℕ → M}
+    (ha : ∀ i j : ℕ, i ≠ j → a i ≠ a j) :
+    IsLomega1omegaIndiscernibleOn (L := L) a (Set.range (morleySeed φ)) := by
+  rintro n ψ ⟨k, hk⟩ s t hs ht
+  match k, hk with
+  | 0, hk =>
+    cases hk
+    rw [show (a ∘ s : Fin 0 → M) = Fin.elim0 from funext fun p => p.elim0,
+      show (a ∘ t : Fin 0 → M) = Fin.elim0 from funext fun p => p.elim0]
+  | 1, hk =>
+    cases hk
+    exact iff_of_true
+      (by
+        simp only [disEqFormula, BoundedFormulaω.realize_not, BoundedFormulaω.realize_equal,
+          Term.realize_var]
+        intro heq
+        exact ha (s 0) (s 1) (ne_of_lt (hs (show (0 : Fin 2) < 1 by decide)))
+          (by simpa using heq))
+      (by
+        simp only [disEqFormula, BoundedFormulaω.realize_not, BoundedFormulaω.realize_equal,
+          Term.realize_var]
+        intro heq
+        exact ha (t 0) (t 1) (ne_of_lt (ht (show (0 : Fin 2) < 1 by decide)))
+          (by simpa using heq))
+  | k + 2, hk =>
+    cases hk
+    rw [show (a ∘ s : Fin 0 → M) = Fin.elim0 from funext fun p => p.elim0,
+      show (a ∘ t : Fin 0 → M) = Fin.elim0 from funext fun p => p.elim0]
+
 /-- **Injectivity of the stretched sequence.**
 
 If the source sequence `a : I → M` is pairwise distinct on its index set and

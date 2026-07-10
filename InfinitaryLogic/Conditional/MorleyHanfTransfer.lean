@@ -427,25 +427,25 @@ theorem tailTemplateRealizable_of_compact
     (Order.lt_succ (Ordinal.omega0 : Ordinal.{0})) (hCompact J)
 
 omit [Countable (Σ l, L'.Relations l)] in
-/-- **Morley–Hanf via tail extraction + seed-template realizability** (proved).
-
-The honest tail bridge: the residual extraction produces a pairwise-distinct tail-indiscernible
-sequence, and the EM template theory of the **Morley seed** `{φ, x₀ ≠ x₁}` it generates is
-realized via the weakest-honest residual `MorleySeedTailTemplateRealizable` — NOT the broad
-(false-shaped) `TailTemplateRealizable` over arbitrary sequences, and NOT a compactness oracle.
-Same proof shape, through the model-form stretching of `Methods/EM/TailAdapter.lean`. -/
-@[blueprint "thm:morley-hanf-tail"
-  (title := /-- Morley-Hanf via tail extraction -/)
-  (statement := /-- Assuming tail-restricted source-side extraction and realizability of the
-    EM tail-template theory, every Lω₁ω sentence satisfied in a model of size
-    $\geq \beth_{\omegaone}$ has arbitrarily large models. -/)
-  (proof := /-- Extract a pairwise-distinct ℕ-indexed sequence tail-indiscernible on the
-    family $\{\varphi, x_0 \neq x_1\}$, stretch along an ordinal of the target cardinality
-    through the eventually-form template realized by the residual, and read off $\varphi$
-    preservation and injectivity from the sequence-form equivalence. -/)
+/-- **Morley–Hanf via seed-template realizability alone — no extraction** (the definitive
+bridge). `morleySeed_indiscernibleOn` makes any extraction hypothesis unnecessary: an injective
+`ℕ`-sequence of the (infinite) source is already FULLY indiscernible on the Morley seed — the
+arity-`0` members ignore their tuples and the disequality is absolute for injective sequences —
+so `Infinite.natEmbedding` supplies the sequence directly. No countable Ramsey, no Erdős–Rado.
+The EM template theory of the seed is realized via `MorleySeedTailTemplateRealizable`, and the
+model-form stretching of `Methods/EM/TailAdapter.lean` reads off `φ`-preservation and size. -/
+@[blueprint "thm:morley-hanf-seed"
+  (title := /-- Morley-Hanf via seed realizability -/)
+  (statement := /-- Assuming realizability of the EM tail-template theory of the Morley seed,
+    every Lω₁ω sentence satisfied in a model of size $\geq \beth_{\omegaone}$ has arbitrarily
+    large models — with no extraction hypothesis: an injective sequence is already fully
+    indiscernible on the seed. -/)
+  (proof := /-- Take any injective ℕ-indexed sequence of the source (it is fully indiscernible
+    on the family $\{\varphi, x_0 \neq x_1\}$), stretch along an ordinal of the target
+    cardinality through the eventually-form template realized by the residual, and read off
+    $\varphi$ preservation and injectivity from the sequence-form equivalence. -/)
   (uses := ["def:arb-large-models"])]
-theorem hasArbLargeModels_of_tail_realizability
-    (hExtract : MorleyHanfExtractionTail (L' := L'))
+theorem hasArbLargeModels_of_seed_realizability
     (hRealize : MorleySeedTailTemplateRealizable (L' := L'))
     (φ : L'.Sentenceω)
     (hφ : ∃ (M : Type) (_ : L'.Structure M), Sentenceω.Realize φ M ∧
@@ -456,7 +456,15 @@ theorem hasArbLargeModels_of_tail_realizability
   let s : ℕ → Σ n, L'.BoundedFormulaω Empty n := morleySeed φ
   have hs0 : s 0 = ⟨0, φ⟩ := rfl
   have hs1 : s 1 = ⟨2, disEqFormula⟩ := rfl
-  obtain ⟨a, hPairwise, hIndisc⟩ := hExtract s M hSizeM
+  haveI : Infinite M := by
+    rw [Cardinal.infinite_iff]
+    exact le_trans (Cardinal.aleph0_le_beth _) hSizeM
+  set a : ℕ → M := fun n => (Infinite.natEmbedding M) n with ha_def
+  have hPairwise : ∀ i j : ℕ, i ≠ j → a i ≠ a j :=
+    fun i j hij h => hij ((Infinite.natEmbedding M).injective h)
+  have hIndisc : IsLomega1omegaIndiscernibleOnTail (L := L') a (Set.range s) :=
+    IsLomega1omegaIndiscernibleOn.isLomega1omegaIndiscernibleOnTail
+      (morleySeed_indiscernibleOn φ hPairwise)
   intro κ
   let J : Type := (Cardinal.ord κ).ToType
   haveI : LinearOrder J := linearOrder_toType _
@@ -522,6 +530,29 @@ theorem hasArbLargeModels_of_tail_realizability
       · exact helper hlt hbjj'.symm
     calc Cardinal.mk N ≥ Cardinal.mk J := Cardinal.mk_le_of_injective hbInj
       _ = κ := hJ_card
+
+omit [Countable (Σ l, L'.Relations l)] in
+/-- **Morley–Hanf via tail extraction + seed-template realizability** (historical form). The
+extraction hypothesis is SUBSUMED: `morleySeed_indiscernibleOn` shows an injective sequence is
+already fully indiscernible on the Morley seed, so the proof delegates to
+`hasArbLargeModels_of_seed_realizability` and does not consume `hExtract`. Kept as the
+historical statement shape from when the tail extraction was thought necessary. -/
+@[blueprint "thm:morley-hanf-tail"
+  (title := /-- Morley-Hanf via tail extraction (historical) -/)
+  (statement := /-- Assuming tail-restricted source-side extraction and realizability of the
+    EM tail-template theory, every Lω₁ω sentence satisfied in a model of size
+    $\geq \beth_{\omegaone}$ has arbitrarily large models. The extraction hypothesis is
+    subsumed by seed indiscernibility of injective sequences. -/)
+  (proof := /-- Delegate to the extraction-free bridge, discarding the extraction. -/)
+  (uses := ["def:arb-large-models"])]
+theorem hasArbLargeModels_of_tail_realizability
+    (_hExtract : MorleyHanfExtractionTail (L' := L'))
+    (hRealize : MorleySeedTailTemplateRealizable (L' := L'))
+    (φ : L'.Sentenceω)
+    (hφ : ∃ (M : Type) (_ : L'.Structure M), Sentenceω.Realize φ M ∧
+      Cardinal.mk M ≥ Cardinal.beth (Ordinal.omega 1)) :
+    HasArbLargeModels φ :=
+  hasArbLargeModels_of_seed_realizability hRealize φ hφ
 
 omit [Countable (Σ l, L'.Relations l)] in
 /-- **Legacy: Morley–Hanf via tail extraction + a broad compactness oracle.** Kept for
@@ -810,10 +841,11 @@ unconditional endpoint `morley_hanf` there has no hypotheses at all. The `hReali
 forms below remain the transparent intermediates; the `*_compact` wrappers are retained as
 legacy — their oracle is strictly stronger than needed. -/
 
-/-- **Morley–Hanf reduction (realizability-only, extraction discharged)**: assuming only the
-honest residual `MorleySeedTailTemplateRealizable`, any sentence satisfied in a model of size
-≥ ℶ_ω₁ has arbitrarily large models. Source extraction is the proved
-`morleyHanfExtractionTail_holds`; no combinatorial hypothesis, no compactness oracle. -/
+/-- **Morley–Hanf reduction (realizability-only)**: assuming only the honest residual
+`MorleySeedTailTemplateRealizable`, any sentence satisfied in a model of size ≥ ℶ_ω₁ has
+arbitrarily large models. No combinatorial hypothesis at all — not even the (proved) tail
+extraction: an injective sequence is already seed-indiscernible
+(`hasArbLargeModels_of_seed_realizability`). -/
 theorem hasArbLargeModels_of_tail_realizable
     {L' : Language.{0, 0}}
     (hRealize : MorleySeedTailTemplateRealizable (L' := L'))
@@ -821,19 +853,29 @@ theorem hasArbLargeModels_of_tail_realizable
     (hφ : ∃ (M : Type) (_ : L'.Structure M), Sentenceω.Realize φ M ∧
       Cardinal.mk M ≥ Cardinal.beth (Ordinal.omega 1)) :
     HasArbLargeModels φ :=
-  hasArbLargeModels_of_tail_realizability (morleyHanfExtractionTail_holds (L' := L')) hRealize φ hφ
+  hasArbLargeModels_of_seed_realizability hRealize φ hφ
 
-/-- **Morley–Hanf bound (realizability-only, extraction discharged)**: `ℶ_ω₁` is a Hanf bound for
-every Lω₁ω sentence, assuming only `MorleySeedTailTemplateRealizable` — which is itself proved
+/-- **Morley–Hanf bound (realizability-only)**: `ℶ_ω₁` is a Hanf bound for every Lω₁ω sentence,
+assuming only `MorleySeedTailTemplateRealizable` — which is itself proved
 (`morleySeedTailTemplateRealizable_holds`); see `morley_hanf` in
-`Conditional/MorleyHanfSchemaDischarge.lean` for the hypothesis-free endpoint. -/
-theorem morley_hanf_of_tail_realizable
+`Conditional/MorleyHanfSchemaDischarge.lean` for the hypothesis-free endpoint. Consumes no
+extraction: the route is `hasArbLargeModels_of_seed_realizability`. -/
+theorem morley_hanf_of_seed_realizable
     {L' : Language.{0, 0}}
     (hRealize : MorleySeedTailTemplateRealizable (L' := L'))
     (φ : L'.Sentenceω) :
     IsHanfBound φ (Cardinal.beth (Ordinal.omega 1)) := by
   intro ⟨M, hStr, hRealizeφ, hSize⟩
-  exact hasArbLargeModels_of_tail_realizable hRealize φ ⟨M, hStr, hRealizeφ, hSize⟩
+  exact hasArbLargeModels_of_seed_realizability hRealize φ ⟨M, hStr, hRealizeφ, hSize⟩
+
+/-- Historical alias of `morley_hanf_of_seed_realizable` (from when the route consumed the tail
+extraction). -/
+theorem morley_hanf_of_tail_realizable
+    {L' : Language.{0, 0}}
+    (hRealize : MorleySeedTailTemplateRealizable (L' := L'))
+    (φ : L'.Sentenceω) :
+    IsHanfBound φ (Cardinal.beth (Ordinal.omega 1)) :=
+  morley_hanf_of_seed_realizable hRealize φ
 
 /-- **Legacy (compact-only): Morley–Hanf reduction via a broad compactness oracle.** Retained for
 compatibility; the per-target compactness oracle is strictly stronger than the honest residual
