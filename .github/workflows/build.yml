@@ -47,3 +47,6 @@ jobs:
 
       - name: Verify headline declarations (default-import smoke + standard axioms)
         run: bash scripts/check_headline_axioms.sh
+
+      - name: Verify morley_hanf dependency cone (bounded ER yes, infinite Ramsey / legacy ladder no)
+        run: lake env lean scripts/check_morley_hanf_deps.lean
