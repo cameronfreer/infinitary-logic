@@ -576,4 +576,144 @@ theorem schemaCompletionTheorySpec (hM : Cardinal.beth (Ordinal.omega 1) ≤ Car
 
 end Union
 
+/-! ## Checkpoint 5b-1, part 1: the finite interpolation engine
+
+Tuple uniformity (part 2) needs, for two length-`m` increasing tuples `t t'` into `ℕ` and ONE
+certificate body, two admissible skeleton interpretations `σ₁ σ₂` whose tuple images agree:
+`σ₁ ∘ t = σ₂ ∘ t'`. The engine is a global equalizer on `ℕ`: strictly monotone `q q' : ℕ → ℕ`
+sending the anchors `p i`/`p' i` to the common value `p i + p' i` — `q` shifts by the largest
+passed `p'`-anchor (a `Finset.sup` over a filter), so no piecewise case analysis is needed.
+`exists_admissible_pair` threads the equalized values through a `Fin K`-suborder of the
+(infinite) certificate domain. Crucially, `MarkerHenkinBody` constrains `σ` only ON the support
+`S`, so the tuples need not lie in `S`: they enter only the auxiliary bounding set that picks
+`K` — the Marker support itself is never enlarged. -/
+
+section Interpolation
+
+/-- The equalizer shift: the largest `p'`-anchor whose `p`-anchor has been passed. -/
+private def equalizerShift {m : ℕ} (p' : Fin m → ℕ) (p : Fin m → ℕ) (x : ℕ) : ℕ :=
+  (Finset.univ.filter fun i => p i ≤ x).sup p'
+
+private theorem equalizerShift_mono {m : ℕ} (p' : Fin m → ℕ) (p : Fin m → ℕ) :
+    Monotone (equalizerShift p' p) := by
+  intro x y hxy
+  apply Finset.sup_mono
+  intro i hi
+  rw [Finset.mem_filter] at hi ⊢
+  exact ⟨hi.1, hi.2.trans hxy⟩
+
+private theorem equalizerShift_anchor {m : ℕ} {p p' : Fin m → ℕ}
+    (hp : StrictMono p) (hp' : StrictMono p') (i : Fin m) :
+    equalizerShift p' p (p i) = p' i := by
+  apply le_antisymm
+  · apply Finset.sup_le
+    intro j hj
+    rw [Finset.mem_filter] at hj
+    exact hp'.monotone ((hp.le_iff_le).mp hj.2)
+  · apply Finset.le_sup
+    rw [Finset.mem_filter]
+    exact ⟨Finset.mem_univ i, le_rfl⟩
+
+/-- **The global equalizer.** Two strictly monotone tuples `p p' : Fin m → ℕ` are equalized by
+strictly monotone `q q' : ℕ → ℕ`: `q (p i) = q' (p' i)` (both anchors land at `p i + p' i`). -/
+theorem exists_strictMono_equalizer {m : ℕ} (p p' : Fin m → ℕ)
+    (hp : StrictMono p) (hp' : StrictMono p') :
+    ∃ q q' : ℕ → ℕ, StrictMono q ∧ StrictMono q' ∧
+      ∀ i, q (p i) = q' (p' i) := by
+  let q : ℕ → ℕ := fun x => x + equalizerShift p' p x
+  let q' : ℕ → ℕ := fun x => equalizerShift p p' x + x
+  have hq : StrictMono q := by
+    intro x y hxy
+    exact Nat.add_lt_add_of_lt_of_le hxy (equalizerShift_mono p' p hxy.le)
+  have hq' : StrictMono q' := by
+    intro x y hxy
+    exact Nat.add_lt_add_of_le_of_lt (equalizerShift_mono p p' hxy.le) hxy
+  refine ⟨q, q', hq, hq', fun i => ?_⟩
+  rw [show q (p i) = p i + equalizerShift p' p (p i) from rfl,
+    show q' (p' i) = equalizerShift p p' (p' i) + p' i from rfl,
+    equalizerShift_anchor hp hp' i, equalizerShift_anchor hp' hp i,
+    Nat.add_comm]
+
+/-- **The admissible pair.** For a finite support `S`, a suborder `e : D ↪o M` with infinite
+domain, and two increasing tuples `t t' : Fin m ↪o ℕ`, there are skeleton interpretations
+`σ₁ σ₂ : ℕ → M` — each strictly monotone on `S` with `S`-values in `range e` (the
+`MarkerHenkinBody` admissibility) — whose tuple images agree: `σ₁ ∘ t = σ₂ ∘ t'`. This is what
+lets ONE certificate body be applied twice, once per tuple, in tuple uniformity. -/
+theorem exists_admissible_pair
+    {M D : Type} [LinearOrder M] [LinearOrder D] [Infinite D]
+    {m : ℕ} (S : Finset ℕ) (e : D ↪o M)
+    (t t' : Fin m ↪o ℕ) (dflt : M) :
+    ∃ σ₁ σ₂ : ℕ → M,
+      StrictMonoOn σ₁ ↑S ∧ (∀ j ∈ S, σ₁ j ∈ Set.range e) ∧
+      StrictMonoOn σ₂ ↑S ∧ (∀ j ∈ S, σ₂ j ∈ Set.range e) ∧
+      ∀ i, σ₁ (t i) = σ₂ (t' i) := by
+  classical
+  obtain ⟨q, q', hq, hq', heq⟩ :=
+    exists_strictMono_equalizer t t' t.strictMono t'.strictMono
+  let A : Finset ℕ := (S ∪ Finset.univ.image t) ∪ Finset.univ.image t'
+  let B : ℕ := A.sup id
+  let K : ℕ := max (q B) (q' B) + 1
+  let dEmb : Fin K ↪o D := Classical.choice (exists_orderEmb_fin K)
+  have hbound_q {j : ℕ} (hj : j ∈ A) : q j < K := by
+    have hjB : j ≤ B := by
+      dsimp only [B]
+      exact Finset.le_sup (f := id) hj
+    calc
+      q j ≤ q B := hq.monotone hjB
+      _ ≤ max (q B) (q' B) := le_max_left _ _
+      _ < max (q B) (q' B) + 1 := Nat.lt_succ_self _
+  have hbound_q' {j : ℕ} (hj : j ∈ A) : q' j < K := by
+    have hjB : j ≤ B := by
+      dsimp only [B]
+      exact Finset.le_sup (f := id) hj
+    calc
+      q' j ≤ q' B := hq'.monotone hjB
+      _ ≤ max (q B) (q' B) := le_max_right _ _
+      _ < max (q B) (q' B) + 1 := Nat.lt_succ_self _
+  let σ₁ : ℕ → M := fun j =>
+    if hj : q j < K then e (dEmb ⟨q j, hj⟩) else dflt
+  let σ₂ : ℕ → M := fun j =>
+    if hj : q' j < K then e (dEmb ⟨q' j, hj⟩) else dflt
+  have hSA {j : ℕ} (hj : j ∈ S) : j ∈ A := by
+    simp only [A, Finset.mem_union]
+    exact Or.inl (Or.inl hj)
+  have htA (i : Fin m) : t i ∈ A := by
+    simp only [A, Finset.mem_union]
+    exact Or.inl (Or.inr (Finset.mem_image_of_mem t (Finset.mem_univ i)))
+  have htA' (i : Fin m) : t' i ∈ A := by
+    simp only [A, Finset.mem_union]
+    exact Or.inr (Finset.mem_image_of_mem t' (Finset.mem_univ i))
+  refine ⟨σ₁, σ₂, ?_, ?_, ?_, ?_, fun i => ?_⟩
+  · intro a ha b hb hab
+    rw [show σ₁ a = if h : q a < K then e (dEmb ⟨q a, h⟩) else dflt from rfl,
+      show σ₁ b = if h : q b < K then e (dEmb ⟨q b, h⟩) else dflt from rfl,
+      dif_pos (hbound_q (hSA (Finset.mem_coe.mp ha))),
+      dif_pos (hbound_q (hSA (Finset.mem_coe.mp hb)))]
+    exact e.strictMono (dEmb.strictMono (hq hab))
+  · intro j hj
+    rw [show σ₁ j = if h : q j < K then e (dEmb ⟨q j, h⟩) else dflt from rfl,
+      dif_pos (hbound_q (hSA hj))]
+    exact ⟨dEmb ⟨q j, hbound_q (hSA hj)⟩, rfl⟩
+  · intro a ha b hb hab
+    rw [show σ₂ a = if h : q' a < K then e (dEmb ⟨q' a, h⟩) else dflt from rfl,
+      show σ₂ b = if h : q' b < K then e (dEmb ⟨q' b, h⟩) else dflt from rfl,
+      dif_pos (hbound_q' (hSA (Finset.mem_coe.mp ha))),
+      dif_pos (hbound_q' (hSA (Finset.mem_coe.mp hb)))]
+    exact e.strictMono (dEmb.strictMono (hq' hab))
+  · intro j hj
+    rw [show σ₂ j = if h : q' j < K then e (dEmb ⟨q' j, h⟩) else dflt from rfl,
+      dif_pos (hbound_q' (hSA hj))]
+    exact ⟨dEmb ⟨q' j, hbound_q' (hSA hj)⟩, rfl⟩
+  · rw [show σ₁ (t i) =
+        if h : q (t i) < K then e (dEmb ⟨q (t i), h⟩) else dflt from rfl,
+      show σ₂ (t' i) =
+        if h : q' (t' i) < K then e (dEmb ⟨q' (t' i), h⟩) else dflt from rfl,
+      dif_pos (hbound_q (htA i)), dif_pos (hbound_q' (htA' i))]
+    apply congrArg e
+    apply congrArg dEmb
+    apply Fin.ext
+    exact heq i
+
+end Interpolation
+
 end FirstOrder.Language
