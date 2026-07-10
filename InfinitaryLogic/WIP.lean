@@ -29,6 +29,7 @@ import InfinitaryLogic.Methods.SchemaCompletion
 import InfinitaryLogic.Methods.SchemaTermModel
 import InfinitaryLogic.Methods.SchemaTermTruth
 import InfinitaryLogic.Methods.LocalSkolemUniversal
+import InfinitaryLogic.Methods.SchemaLocalEMSource
 
 /-!
 # WIP: the work-in-progress frontier bundle
