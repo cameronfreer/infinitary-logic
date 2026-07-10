@@ -522,6 +522,31 @@ theorem morleySeed_template_agreement {L' : Language.{0, 0}} {M : Type} [L'.Stru
     cases hk
     rw [tailTemplateOfSeq_truth_sentence_iff, tailTemplateOfSeq_truth_sentence_iff]
 
+/-- **Cross-model Morley-seed template agreement**: the seed construction does not require the two
+sequences to live in the same model — the tail templates of pairwise-distinct sequences in any two
+models both realizing the seed sentence agree on `Set.range (morleySeed φ)`. This is the form the
+schema term model consumes (its sequence lives in the constructed quotient, not in the source). -/
+theorem morleySeed_template_agreement_cross {L' : Language.{0, 0}} {M N : Type}
+    [L'.Structure M] [L'.Structure N]
+    (φ : L'.Sentenceω) {a : ℕ → M} {b : ℕ → N}
+    (hφM : Sentenceω.Realize φ M) (hφN : Sentenceω.Realize φ N)
+    (ha : ∀ i j : ℕ, i ≠ j → a i ≠ a j) (hb : ∀ i j : ℕ, i ≠ j → b i ≠ b j) :
+    ∀ (n : ℕ) (ψ : L'.BoundedFormulaω Empty n), ⟨n, ψ⟩ ∈ Set.range (morleySeed φ) →
+      ((tailTemplateOfSeq (L := L') b).truth ψ ↔ (tailTemplateOfSeq (L := L') a).truth ψ) := by
+  rintro n ψ ⟨k, hk⟩
+  match k, hk with
+  | 0, hk =>
+    cases hk
+    rw [tailTemplateOfSeq_truth_sentence_iff, tailTemplateOfSeq_truth_sentence_iff]
+    exact iff_of_true hφN hφM
+  | 1, hk =>
+    cases hk
+    exact iff_of_true (tailTemplateOfSeq_truth_disEq hb) (tailTemplateOfSeq_truth_disEq ha)
+  | k + 2, hk =>
+    cases hk
+    rw [tailTemplateOfSeq_truth_sentence_iff, tailTemplateOfSeq_truth_sentence_iff]
+    exact iff_of_true hφN hφM
+
 /-! ## Acceptance: tail-template realizability from the local EM model -/
 
 /-- **Context-generic acceptance**: any local EM context over the seed stage with

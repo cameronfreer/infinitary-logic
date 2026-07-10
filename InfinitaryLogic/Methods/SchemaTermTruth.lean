@@ -983,4 +983,74 @@ theorem schemaSeq_tailTemplateOmegaWitnessed :
 
 end SequenceBridge
 
+/-! ## Checkpoint 5c substrate: validity positivity and pairwise distinctness
+
+The two term-model facts the Morley-seed agreement (`morleySeed_template_agreement_cross`)
+consumes: a universe sentence valid under every body interpretation gets the positive sign (the
+route to seed-sentence realization), and the schema sequence is pairwise distinct (a body for the
+equality sentence, evaluated on a support enlarged to both indices, would violate the strictness
+of its skeleton interpretation). -/
+
+section SeedFacts
+
+variable {s₀ : LocalStage} {M : Type} [(localColim s₀).Structure M] [LinearOrder M]
+  [WellFoundedLT M] (hM : Cardinal.beth (Ordinal.omega 1) ≤ Cardinal.mk M)
+
+/-- **Validity forces the positive sign**: a universe sentence realized under EVERY body
+interpretation pair cannot be decided negatively — the body of its singleton negation would
+refute itself. -/
+theorem schemaLift_mem_of_valid {m : ℕ}
+    {ψ : (localColim s₀).BoundedFormulaω Empty m}
+    (hψ : (⟨m, ψ⟩ : Σ n, (localColim s₀).BoundedFormulaω Empty n) ∈ ΓEMlocal s₀)
+    (t : Fin m ↪o ℕ)
+    (hvalid : ∀ σ h : ℕ → M,
+      realizeWith σ h (schemaLift ψ t) (Empty.elim : Empty → M) Fin.elim0) :
+    schemaLift ψ t ∈ schemaCompletionTheory (schemaEnumeration s₀) hM := by
+  rcases (schemaCompletionTheorySpec hM).complete_on_universe _
+    (schemaLift_mem_universe hψ t) with hpos | hneg
+  · exact hpos
+  · exfalso
+    obtain ⟨σ, w, hbody⟩ := exists_body_of_subset hM {(schemaLift ψ t).not}
+      (fun τ hτ => by
+        rw [Finset.mem_singleton] at hτ
+        exact hτ ▸ hneg)
+    have hn := hbody (schemaLift ψ t).not (Finset.mem_singleton_self _)
+    rw [realizeWith_not] at hn
+    exact hn (hvalid σ w)
+
+/-- **The schema sequence is pairwise distinct**: if two sequence classes were equal, the
+completed theory would contain their equality sentence; a certificate body for it, evaluated on a
+support enlarged to contain both indices, would equate two values of a strictly monotone skeleton
+interpretation. -/
+theorem schemaSeq_pairwise_ne {i j : ℕ} (hij : i ≠ j) :
+    schemaSeq (s₀ := s₀) (M := M) hM i ≠ schemaSeq (s₀ := s₀) (M := M) hM j := by
+  intro heq
+  have hEqT : SchemaTermEq hM (henkinConst (L := localColim s₀) i)
+      (henkinConst (L := localColim s₀) j) :=
+    (SchemaTermCarrier.mk_eq_mk_iff hM).mp heq
+  obtain ⟨S, H, hS, hH, hcof⟩ := (schemaCompletionTheorySpec hM).finite_consistent
+    {schemaEqSentence (henkinConst (L := localColim s₀) i)
+      (henkinConst (L := localColim s₀) j)}
+    (fun τ' hτ' => by
+      rw [Finset.mem_singleton] at hτ'
+      exact hτ' ▸ hEqT)
+  obtain ⟨α, hα0, hα1, hb⟩ := hcof 0 (Ordinal.omega_pos 1)
+  have hSS' : S ⊆ insert i (insert j S) := fun x hx =>
+    Finset.mem_insert_of_mem (Finset.mem_insert_of_mem hx)
+  obtain ⟨e, hsat⟩ := hb.enlarge_support hSS'
+  obtain ⟨σ, hmono, hrange⟩ := exists_strictMonoOn_interp e (insert i (insert j S))
+  obtain ⟨w, hw⟩ := hsat σ hmono hrange
+  have hreal := hw (schemaEqSentence (henkinConst (L := localColim s₀) i)
+      (henkinConst (L := localColim s₀) j))
+    (by rw [Finset.mem_coe]; exact Finset.mem_singleton_self _)
+  rw [realize_schemaEqSentence_iff] at hreal
+  have hiS' : i ∈ insert i (insert j S) := Finset.mem_insert_self _ _
+  have hjS' : j ∈ insert i (insert j S) :=
+    Finset.mem_insert_of_mem (Finset.mem_insert_self _ _)
+  rcases lt_or_gt_of_ne hij with hijlt | hjilt
+  · exact (hmono (Finset.mem_coe.mpr hiS') (Finset.mem_coe.mpr hjS') hijlt).ne hreal
+  · exact (hmono (Finset.mem_coe.mpr hjS') (Finset.mem_coe.mpr hiS') hjilt).ne hreal.symm
+
+end SeedFacts
+
 end FirstOrder.Language
