@@ -635,6 +635,250 @@ theorem schemaCloseTerm_realize_mk {m : ℕ}
     ← Term.realize_subst]
   exact schemaTerm_realize_eq_mk hM _
 
+/-- **The reduct value of a closed instance**: in the base-language reduct of the schema term
+model, an open term realized on the sequence classes is the class of its closed instance. -/
+theorem schemaCloseTerm_reduct_realize {m : ℕ}
+    (u : (localColim s₀).Term (Fin m)) (t : Fin m ↪o ℕ) :
+    letI : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+      schemaTermStructure hM
+    letI : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+      (lhomWithConstants (localColim s₀) ℕ).reduct _
+    u.realize (fun i => schemaSeq (s₀ := s₀) (M := M) hM (t i))
+      = SchemaTermCarrier.mk hM (schemaCloseTerm u t) := by
+  letI : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+    schemaTermStructure hM
+  letI : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+    (lhomWithConstants (localColim s₀) ℕ).reduct _
+  haveI : (lhomWithConstants (localColim s₀) ℕ).IsExpansionOn
+      (SchemaTermCarrier (s₀ := s₀) (M := M) hM) := LHom.isExpansionOn_reduct _ _
+  exact (LHom.realize_onTerm (lhomWithConstants (localColim s₀) ℕ) u _).symm.trans
+    (schemaCloseTerm_realize_mk hM u t)
+
+/-! ### The three sign transports (semantic equivalence of universe sentences) -/
+
+/-- **Colimit-member transport**: the formula sentence at the sequence constants and the lifted
+template sentence at the tuple receive the same sign — under every body interpretation both say
+"`φ` on `σ ∘ t`". -/
+theorem schemaFormulaSentence_henkin_mem_iff_schemaLift {m : ℕ}
+    {φ : (localColim s₀).BoundedFormulaω Empty m}
+    (hφ : (⟨m, φ⟩ : Σ n, (localColim s₀).BoundedFormulaω Empty n) ∈ ΓlocalColim s₀)
+    (t : Fin m ↪o ℕ) :
+    schemaFormulaSentence φ (fun i => henkinConst (t i))
+        ∈ schemaCompletionTheory (schemaEnumeration s₀) hM ↔
+      schemaLift φ t ∈ schemaCompletionTheory (schemaEnumeration s₀) hM :=
+  schema_mem_iff_of_semantic_iff hM
+    (locDeForm_mem_ΓEMlocal ℕ s₀ _ hφ _ (locJSupport_subset_schemaRelSupport _))
+    ((schemaRelSupport fun i => henkinConst (t i)).orderEmbOfFin rfl)
+    (ΓlocalColim_subset_ΓEMlocal s₀ hφ) t
+    (fun σ w => by
+      letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+      exact (realize_schemaFormulaSentence_iff σ w φ (fun i => henkinConst (t i))).trans
+        (realizeWith_templateSentence (L'' := localColim s₀) σ w φ t).symm)
+
+/-- **Equality-atom transport**: the closed-instance equality sentence and the lifted canonical
+equality atom receive the same sign. -/
+theorem schemaEqSentence_close_mem_iff_schemaLift {m : ℕ}
+    (u₁ u₂ : (localColim s₀).Term (Fin m)) (t : Fin m ↪o ℕ) :
+    schemaEqSentence (schemaCloseTerm u₁ t) (schemaCloseTerm u₂ t)
+        ∈ schemaCompletionTheory (schemaEnumeration s₀) hM ↔
+      schemaLift (canonEqAtom (localColim s₀) u₁ u₂) t
+        ∈ schemaCompletionTheory (schemaEnumeration s₀) hM :=
+  schema_mem_iff_of_semantic_iff hM
+    (locDeEqAtom_mem_ΓEMlocal (J := ℕ) (s₀ := s₀) (S := schemaSupport _ _) _ _
+      Finset.subset_union_left Finset.subset_union_right)
+    ((schemaSupport (schemaCloseTerm u₁ t) (schemaCloseTerm u₂ t)).orderEmbOfFin rfl)
+    (Or.inl (Or.inl (Or.inr ⟨⟨m, (u₁, u₂)⟩, rfl⟩))) t
+    (fun σ w => by
+      letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+      have h1 := realize_schemaEqSentence_iff σ w (schemaCloseTerm u₁ t) (schemaCloseTerm u₂ t)
+      have h2 := realizeWith_templateSentence (L'' := localColim s₀) σ w
+        (canonEqAtom (localColim s₀) u₁ u₂) t
+      refine h1.trans (Iff.trans ?_ h2.symm)
+      show ((schemaCloseTerm u₁ t).realize (Empty.elim : Empty → M)
+            = (schemaCloseTerm u₂ t).realize Empty.elim)
+          ↔ (canonEqAtom (localColim s₀) u₁ u₂).Realize (Empty.elim : Empty → M)
+            (fun i => σ (t i))
+      rw [realize_schemaCloseTerm σ u₁ t, realize_schemaCloseTerm σ u₂ t, canonEqAtom,
+        BoundedFormulaω.realize_equal, Term.realize_relabel, Term.realize_relabel]
+      rfl)
+
+/-- **Relation-atom transport**: the closed-instance relation sentence and the lifted canonical
+relation atom receive the same sign. -/
+theorem schemaRelSentence_close_mem_iff_schemaLift {m l : ℕ}
+    (R : (localColim s₀).Relations l) (us : Fin l → (localColim s₀).Term (Fin m))
+    (t : Fin m ↪o ℕ) :
+    schemaRelSentence R (fun i => schemaCloseTerm (us i) t)
+        ∈ schemaCompletionTheory (schemaEnumeration s₀) hM ↔
+      schemaLift (canonRelAtom (localColim s₀) R us) t
+        ∈ schemaCompletionTheory (schemaEnumeration s₀) hM :=
+  schema_mem_iff_of_semantic_iff hM
+    (locDeRelAtom_mem_ΓEMlocal (J := ℕ) (s₀ := s₀) (S := schemaRelSupport _) R _
+      (locJSupport_subset_schemaRelSupport _))
+    ((schemaRelSupport fun i => schemaCloseTerm (us i) t).orderEmbOfFin rfl)
+    (Or.inl (Or.inr ⟨⟨m, l, (R, us)⟩, rfl⟩)) t
+    (fun σ w => by
+      letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+      have h1 := realize_schemaRelSentence_iff σ w R (fun i => schemaCloseTerm (us i) t)
+      have h2 := realizeWith_templateSentence (L'' := localColim s₀) σ w
+        (canonRelAtom (localColim s₀) R us) t
+      refine h1.trans (Iff.trans ?_ h2.symm)
+      show (Structure.RelMap R fun i => (schemaCloseTerm (us i) t).realize
+            (Empty.elim : Empty → M))
+          ↔ (canonRelAtom (localColim s₀) R us).Realize (Empty.elim : Empty → M)
+            (fun i => σ (t i))
+      rw [canonRelAtom, BoundedFormulaω.realize_rel]
+      apply Iff.of_eq
+      congr 1
+      funext i
+      rw [realize_schemaCloseTerm σ (us i) t, Term.realize_relabel]
+      rfl)
+
+/-- **Canonical-deForm transport**: the formula sentence of the base member at the closed
+instances of `g` and the lifted template of the deForm receive the same sign. -/
+theorem schemaFormulaSentence_close_mem_iff_schemaLift_canonDeForm {q m : ℕ}
+    {φ : (localColim s₀).BoundedFormulaω Empty q}
+    (hφ : (⟨q, φ⟩ : Σ n, (localColim s₀).BoundedFormulaω Empty n) ∈ ΓlocalColim s₀)
+    (g : Fin q → (localColim s₀).Term (Fin m)) (t : Fin m ↪o ℕ) :
+    schemaFormulaSentence φ (fun j => schemaCloseTerm (g j) t)
+        ∈ schemaCompletionTheory (schemaEnumeration s₀) hM ↔
+      schemaLift (canonDeForm (localColim s₀) φ g) t
+        ∈ schemaCompletionTheory (schemaEnumeration s₀) hM :=
+  schema_mem_iff_of_semantic_iff hM
+    (locDeForm_mem_ΓEMlocal ℕ s₀ _ hφ _ (locJSupport_subset_schemaRelSupport _))
+    ((schemaRelSupport fun j => schemaCloseTerm (g j) t).orderEmbOfFin rfl)
+    (canonDeForm_mem_ΓEMlocal hφ g) t
+    (fun σ w => by
+      letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+      have h1 := realize_schemaFormulaSentence_iff σ w φ (fun j => schemaCloseTerm (g j) t)
+      have h2 := realizeWith_templateSentence (L'' := localColim s₀) σ w
+        (canonDeForm (localColim s₀) φ g) t
+      refine h1.trans (Iff.trans ?_ h2.symm)
+      show (φ.Realize (Empty.elim : Empty → M)
+            fun j => (schemaCloseTerm (g j) t).realize Empty.elim)
+          ↔ (canonDeForm (localColim s₀) φ g).Realize (Empty.elim : Empty → M)
+            (fun i => σ (t i))
+      rw [canonDeForm_realize_iff]
+      apply Iff.of_eq
+      congr 1
+      funext j
+      exact realize_schemaCloseTerm σ (g j) t)
+
 end ClosingTerms
+
+/-! ## The ΓEMlocal sequence-realization bridge -/
+
+section SequenceBridge
+
+variable {s₀ : LocalStage} {M : Type} [s₀.Lang.Structure M] [Nonempty M] [LinearOrder M]
+  [WellFoundedLT M]
+
+/-- **The colimit-family truth lemma**: the staged truth lemma at the colimit level, unpacking a
+`ΓlocalColim` membership into its stage representation. -/
+theorem schemaTruthLemma_colim :
+    letI : (localColim s₀).Structure M := localColimStructure s₀
+    ∀ (hM : Cardinal.beth (Ordinal.omega 1) ≤ Cardinal.mk M)
+      {m : ℕ} {φ : (localColim s₀).BoundedFormulaω Empty m},
+      (⟨m, φ⟩ : Σ n, (localColim s₀).BoundedFormulaω Empty n) ∈ ΓlocalColim s₀ →
+      ∀ ts : Fin m → (localColim s₀)[[ℕ]].Term Empty,
+        (@BoundedFormulaω.Realize ((localColim s₀)[[ℕ]])
+            (SchemaTermCarrier (s₀ := s₀) (M := M) hM) (schemaTermStructure hM) Empty m
+            (φ.mapLanguage (lhomWithConstants (localColim s₀) ℕ))
+            (Empty.elim : Empty → SchemaTermCarrier (s₀ := s₀) (M := M) hM)
+            (fun i => SchemaTermCarrier.mk hM (ts i)) ↔
+          schemaFormulaSentence φ ts ∈ schemaCompletionTheory (schemaEnumeration s₀) hM) := by
+  letI : (localColim s₀).Structure M := localColimStructure s₀
+  intro hM m φ hφ ts
+  obtain ⟨k, hk⟩ := Set.mem_iUnion.mp hφ
+  obtain ⟨⟨m', ψ₀⟩, hmem, heq⟩ := hk
+  rw [toLocalColimFormula, Sigma.mk.injEq] at heq
+  obtain ⟨rfl, heq2⟩ := heq
+  rw [heq_eq_eq] at heq2
+  subst heq2
+  exact schemaTruthLemmaStage_of_mem hM k ψ₀ hmem ts
+
+/-- **The ΓEMlocal sequence-realization bridge** (the exported statement, narrowly scoped to the
+distinguished sequence): a `ΓEMlocal` member realized on `schemaSeq ∘ t` in the base-language
+reduct of the schema term model, iff its lifted template sentence at `t` is in the completed
+theory. Four summands: colimit members through the staged truth lemma; canonical equality and
+relation atoms through the 5a atomic API on closed instances; canonical deForms by closing the
+substituted terms along `t` and reducing to the base member. Every case ends in the matching
+sign transport. -/
+theorem schemaSeq_realize_iff_schemaLift_mem :
+    letI : (localColim s₀).Structure M := localColimStructure s₀
+    ∀ (hM : Cardinal.beth (Ordinal.omega 1) ≤ Cardinal.mk M)
+      {m : ℕ} (ψ : (localColim s₀).BoundedFormulaω Empty m),
+      (⟨m, ψ⟩ : Σ n, (localColim s₀).BoundedFormulaω Empty n) ∈ ΓEMlocal s₀ →
+      ∀ t : Fin m ↪o ℕ,
+        letI : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+          schemaTermStructure hM
+        letI : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+          (lhomWithConstants (localColim s₀) ℕ).reduct _
+        (ψ.Realize (Empty.elim : Empty → SchemaTermCarrier (s₀ := s₀) (M := M) hM)
+            (fun i => schemaSeq hM (t i)) ↔
+          schemaLift ψ t ∈ schemaCompletionTheory (schemaEnumeration s₀) hM) := by
+  letI : (localColim s₀).Structure M := localColimStructure s₀
+  intro hM m ψ hψ t
+  letI : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+    schemaTermStructure hM
+  letI : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+    (lhomWithConstants (localColim s₀) ℕ).reduct _
+  haveI : (lhomWithConstants (localColim s₀) ℕ).IsExpansionOn
+      (SchemaTermCarrier (s₀ := s₀) (M := M) hM) := LHom.isExpansionOn_reduct _ _
+  show ψ.Realize (Empty.elim : Empty → SchemaTermCarrier (s₀ := s₀) (M := M) hM)
+      (fun i => schemaSeq hM (t i)) ↔
+    schemaLift ψ t ∈ schemaCompletionTheory (schemaEnumeration s₀) hM
+  rcases hψ with ((hcolim | heqm) | hrelm) | hdem
+  · -- colimit members
+    exact (BoundedFormulaω.realize_mapLanguage (lhomWithConstants (localColim s₀) ℕ) ψ
+        (Empty.elim : Empty → SchemaTermCarrier (s₀ := s₀) (M := M) hM)
+        (fun i => schemaSeq hM (t i))).symm.trans
+      ((schemaTruthLemma_colim hM hcolim (fun i => henkinConst (t i))).trans
+        (schemaFormulaSentence_henkin_mem_iff_schemaLift hM hcolim t))
+  · -- canonical equality atoms
+    obtain ⟨⟨m', u₁, u₂⟩, heq⟩ := heqm
+    rw [Sigma.mk.injEq] at heq
+    obtain ⟨rfl, heq2⟩ := heq
+    rw [heq_eq_eq] at heq2
+    subst heq2
+    refine Iff.trans ?_ (schemaEqSentence_close_mem_iff_schemaLift hM u₁ u₂ t)
+    rw [canonEqAtom, BoundedFormulaω.realize_equal, Term.realize_relabel, Term.realize_relabel]
+    show (u₁.realize (fun i => schemaSeq (s₀ := s₀) (M := M) hM (t i))
+          = u₂.realize (fun i => schemaSeq hM (t i))) ↔ _
+    rw [schemaCloseTerm_reduct_realize hM u₁ t, schemaCloseTerm_reduct_realize hM u₂ t]
+    exact SchemaTermCarrier.mk_eq_mk_iff hM
+  · -- canonical relation atoms
+    obtain ⟨⟨m', l, R, us⟩, heq⟩ := hrelm
+    rw [Sigma.mk.injEq] at heq
+    obtain ⟨rfl, heq2⟩ := heq
+    rw [heq_eq_eq] at heq2
+    subst heq2
+    refine Iff.trans ?_ (schemaRelSentence_close_mem_iff_schemaLift hM R us t)
+    rw [canonRelAtom, BoundedFormulaω.realize_rel,
+      show (fun i => ((us i).relabel Sum.inr).realize
+          (Sum.elim (Empty.elim : Empty → SchemaTermCarrier (s₀ := s₀) (M := M) hM)
+            fun i => schemaSeq hM (t i)))
+        = fun i => SchemaTermCarrier.mk hM (schemaCloseTerm (us i) t) from
+      funext fun i => by
+        rw [Term.realize_relabel]
+        exact schemaCloseTerm_reduct_realize hM (us i) t]
+    exact schemaTerm_relMap_mk_iff hM R fun i => schemaCloseTerm (us i) t
+  · -- canonical deForms
+    simp only [canonDeForms, Set.mem_iUnion] at hdem
+    obtain ⟨⟨q, φ⟩, hqΓ, ⟨p', g⟩, heq⟩ := hdem
+    rw [Sigma.mk.injEq] at heq
+    obtain ⟨rfl, heq2⟩ := heq
+    rw [heq_eq_eq] at heq2
+    subst heq2
+    refine Iff.trans ?_ (schemaFormulaSentence_close_mem_iff_schemaLift_canonDeForm hM hqΓ g t)
+    rw [canonDeForm_realize_iff,
+      show (fun j => (g j).realize (fun i => schemaSeq (s₀ := s₀) (M := M) hM (t i)))
+        = fun j => SchemaTermCarrier.mk hM (schemaCloseTerm (g j) t) from
+      funext fun j => schemaCloseTerm_reduct_realize hM (g j) t]
+    exact (BoundedFormulaω.realize_mapLanguage (lhomWithConstants (localColim s₀) ℕ) φ
+        (Empty.elim : Empty → SchemaTermCarrier (s₀ := s₀) (M := M) hM)
+        (fun j => SchemaTermCarrier.mk hM (schemaCloseTerm (g j) t))).symm.trans
+      (schemaTruthLemma_colim hM hqΓ fun j => schemaCloseTerm (g j) t)
+
+end SequenceBridge
 
 end FirstOrder.Language
