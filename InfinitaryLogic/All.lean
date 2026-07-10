@@ -3,6 +3,7 @@ import InfinitaryLogic.Countable
 import InfinitaryLogic.Admissible
 import InfinitaryLogic.Descriptive
 import InfinitaryLogic.ModelTheory.MorleyHanf
+import InfinitaryLogic.ModelTheory.HanfSpectrum
 
 /-!
 # All: the sorry-free library surface
