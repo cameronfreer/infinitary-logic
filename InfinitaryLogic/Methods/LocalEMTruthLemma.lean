@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.LocalEMTruth
+import InfinitaryLogic.Methods.LocalSkolemUniversal
 
 /-!
 # The local EM truth lemma, layer 2: readiness + the staged truth lemma
@@ -554,24 +555,27 @@ and is **not** used or imported here. -/
 
 section StagedTruthLemma
 
-variable (s₀ : LocalStage) (J : Type) [LinearOrder J] {M : Type} [s₀.Lang.Structure M] [Nonempty M]
+variable (s₀ : LocalStage) (J : Type) [LinearOrder J] {M : Type} [(localColim s₀).Structure M]
 
-/-- **The staged local truth lemma** (the load-bearing endpoint): for a **successor-stage** family
-formula `ψ ∈ Γlocal s₀ (k + 1)`, realizing its colimit image in the local EM term model on
-term-classes is equivalent to its eventual deep truth. Structural induction on `ψ` threading the
-family membership (each case derives its subformulas' memberships via
+/-- **The staged local truth lemma, generic core**: over ANY `localColim` structure on the source
+satisfying the Skolem-universality mixin `LocalSkolemUniversalForColim` — the schema term model
+supplies a non-canonical instance. For a **successor-stage** family formula
+`ψ ∈ Γlocal s₀ (k + 1)`, realizing its colimit image in the local EM term model on term-classes
+is equivalent to its eventual deep truth. Structural induction on `ψ` threading the family
+membership (each case derives its subformulas' memberships via
 `bfSubformulas_subset_Γlocal_succ`): atoms/connectives via the layer-1 kernel (`mapLanguage`
 distributes definitionally), `iSup`/`iInf` via `hc : ctx.OmegaComplete`, and the `all` case via
 the Skolem-witness transport — the witness `locSkWitnessTerm` is keyed by the `.all` membership
 `hmem` itself, has support `⊆ S`, and support-uniform readiness supplies the body's readiness at
-every enlarged support. No separate Skolem obligation is assumed; the Skolem step is discharged
-inline by `locSkWitness_universal`. Local analogue of `EMContext.truthLemmaStage`.
+every enlarged support. The Skolem step is discharged by the mixin
+(`locSkWitness_universal_of_mixin`); the canonical wrapper below restores the original inline
+form. Local analogue of `EMContext.truthLemmaStage`.
 
 The completeness input is the **restricted** `OmegaCompleteForColim`: the `iSup`/`iInf` cases
 consume it only at the colimit images of family members, whose memberships the induction
 threads (global `OmegaComplete` users go through `OmegaComplete.toOmegaCompleteOn`). -/
-theorem LocalEMContext.truthLemmaStage :
-    letI : (localColim s₀).Structure M := localColimStructure s₀
+theorem LocalEMContext.truthLemmaStage_of_skolemUniversal
+    (hsk : LocalSkolemUniversalForColim s₀ (M := M)) :
     ∀ (ctx : LocalEMContext (localColim s₀) J (M := M)),
       LocalEMContext.OmegaCompleteForColim s₀ J ctx →
       ∀ (k : ℕ) {n : ℕ} (ψ : (Llocal s₀ (k + 1)).BoundedFormulaω Empty n),
@@ -585,7 +589,6 @@ theorem LocalEMContext.truthLemmaStage :
               Empty.elim (fun i => ctx.mkClass (t := ts i)) ↔
             LocalEMContext.eventualDeepTruth (Λ := localColim s₀) (J := J) ctx
               (ψ.mapLanguage (LlocalInclusion s₀ (k + 1))) ts S) := by
-  letI : (localColim s₀).Structure M := localColimStructure s₀
   intro ctx hc k
   letI : (localColim s₀)[[J]].Structure ctx.Carrier := ctx.structure
   intro n ψ
@@ -715,7 +718,7 @@ theorem LocalEMContext.truthLemmaStage :
       rw [LocalEMContext.eventualDeepTruth, LocalEMContext.eventualDeepTruth]
       refine Filter.eventually_congr (Filter.Eventually.of_forall fun d => ?_)
       rw [BoundedFormulaω.realize_all, locDeepInterp_snoc]
-      exact ⟨fun hd => locSkWitness_universal s₀ J ctx.a d T hmem ts hd,
+      exact ⟨fun hd => locSkWitness_universal_of_mixin s₀ J hsk ctx.a d T hmem ts hd,
         fun hd => hd (locDeepInterp (localColim s₀) J ctx.a d T (locSkWitnessTerm s₀ J hmem ts))⟩
     have hinst : ∀ (T : Finset J) (u : (localColim s₀)[[J]].Term Empty),
         LocalEMContext.eventualDeepTruth (Λ := localColim s₀) (J := J) ctx
@@ -763,10 +766,67 @@ theorem LocalEMContext.truthLemmaStage :
       exact (ih hbodymem (Fin.snoc ts u) (S ∪ locJSupport (localColim s₀) J u) (hsnoc u)
         (hbody u)).mpr (hinst (S ∪ locJSupport (localColim s₀) J u) u hwT)
 
-/-- **Stage-agnostic lift corollary**: the staged truth lemma for an *original* stage-`k` family
-member, at any stage including the raw seed stage `0`. Lifts the member one stage (along
-`LlocalHom`, via `liftGamma_mem_Γlocal_succ`) where subformula closure is available, then rewrites
-the colimit image back down with the cocone coherence `mapLanguage_LlocalInclusion_lift`. -/
+/-- **Stage-agnostic lift corollary, generic core**: the staged truth lemma for an *original*
+stage-`k` family member, at any stage including the raw seed stage `0`, over any mixin-satisfying
+structure. Lifts the member one stage (along `LlocalHom`, via `liftGamma_mem_Γlocal_succ`) where
+subformula closure is available, then rewrites the colimit image back down with the cocone
+coherence `mapLanguage_LlocalInclusion_lift`. -/
+theorem LocalEMContext.truthLemmaStage_of_mem_of_skolemUniversal
+    (hsk : LocalSkolemUniversalForColim s₀ (M := M)) :
+    ∀ (ctx : LocalEMContext (localColim s₀) J (M := M)),
+      LocalEMContext.OmegaCompleteForColim s₀ J ctx →
+      ∀ (k : ℕ) {n : ℕ} (ψ : (Llocal s₀ k).BoundedFormulaω Empty n),
+        (⟨n, ψ⟩ : Σ n, (Llocal s₀ k).BoundedFormulaω Empty n) ∈ Γlocal s₀ k →
+        ∀ (ts : Fin n → (localColim s₀)[[J]].Term Empty) (S : Finset J),
+          (∀ i, locJSupport (localColim s₀) J (ts i) ⊆ S) →
+          LocalEMContext.TLReadyStage s₀ J ctx k ψ ts S →
+          (@BoundedFormulaω.Realize ((localColim s₀)[[J]]) ctx.Carrier ctx.structure Empty n
+              ((ψ.mapLanguage (LlocalInclusion s₀ k)).mapLanguage
+                (lhomWithConstants (localColim s₀) J))
+              Empty.elim (fun i => ctx.mkClass (t := ts i)) ↔
+            LocalEMContext.eventualDeepTruth (Λ := localColim s₀) (J := J) ctx
+              (ψ.mapLanguage (LlocalInclusion s₀ k)) ts S) := by
+  intro ctx hc k n ψ hmem ts S hsub hready
+  have hready' : LocalEMContext.TLReadyStage s₀ J ctx (k + 1)
+      (ψ.mapLanguage (LlocalHom s₀ k)) ts S := by
+    intro T hT
+    rw [mapLanguage_LlocalInclusion_lift]
+    exact hready T hT
+  have h := LocalEMContext.truthLemmaStage_of_skolemUniversal s₀ J hsk ctx hc k
+    (ψ.mapLanguage (LlocalHom s₀ k)) (liftGamma_mem_Γlocal_succ s₀ hmem) ts S hsub hready'
+  rwa [mapLanguage_LlocalInclusion_lift] at h
+
+end StagedTruthLemma
+
+/-! ### Canonical wrappers (the original theorem names, over `localColimStructure`) -/
+
+section StagedTruthLemmaCanonical
+
+variable (s₀ : LocalStage) (J : Type) [LinearOrder J] {M : Type} [s₀.Lang.Structure M] [Nonempty M]
+
+/-- **The staged local truth lemma** over the canonical `localColimStructure` — the original
+endpoint, now a wrapper supplying `localSkolemUniversalForColim_canonical` to the generic core. -/
+theorem LocalEMContext.truthLemmaStage :
+    letI : (localColim s₀).Structure M := localColimStructure s₀
+    ∀ (ctx : LocalEMContext (localColim s₀) J (M := M)),
+      LocalEMContext.OmegaCompleteForColim s₀ J ctx →
+      ∀ (k : ℕ) {n : ℕ} (ψ : (Llocal s₀ (k + 1)).BoundedFormulaω Empty n),
+        (⟨n, ψ⟩ : Σ n, (Llocal s₀ (k + 1)).BoundedFormulaω Empty n) ∈ Γlocal s₀ (k + 1) →
+        ∀ (ts : Fin n → (localColim s₀)[[J]].Term Empty) (S : Finset J),
+          (∀ i, locJSupport (localColim s₀) J (ts i) ⊆ S) →
+          LocalEMContext.TLReadyStage s₀ J ctx (k + 1) ψ ts S →
+          (@BoundedFormulaω.Realize ((localColim s₀)[[J]]) ctx.Carrier ctx.structure Empty n
+              ((ψ.mapLanguage (LlocalInclusion s₀ (k + 1))).mapLanguage
+                (lhomWithConstants (localColim s₀) J))
+              Empty.elim (fun i => ctx.mkClass (t := ts i)) ↔
+            LocalEMContext.eventualDeepTruth (Λ := localColim s₀) (J := J) ctx
+              (ψ.mapLanguage (LlocalInclusion s₀ (k + 1))) ts S) := by
+  letI : (localColim s₀).Structure M := localColimStructure s₀
+  exact LocalEMContext.truthLemmaStage_of_skolemUniversal s₀ J
+    (localSkolemUniversalForColim_canonical s₀)
+
+/-- **Stage-agnostic lift corollary** over the canonical `localColimStructure` — the original
+endpoint, now a wrapper around the generic core. -/
 theorem LocalEMContext.truthLemmaStage_of_mem :
     letI : (localColim s₀).Structure M := localColimStructure s₀
     ∀ (ctx : LocalEMContext (localColim s₀) J (M := M)),
@@ -783,16 +843,9 @@ theorem LocalEMContext.truthLemmaStage_of_mem :
             LocalEMContext.eventualDeepTruth (Λ := localColim s₀) (J := J) ctx
               (ψ.mapLanguage (LlocalInclusion s₀ k)) ts S) := by
   letI : (localColim s₀).Structure M := localColimStructure s₀
-  intro ctx hc k n ψ hmem ts S hsub hready
-  have hready' : LocalEMContext.TLReadyStage s₀ J ctx (k + 1)
-      (ψ.mapLanguage (LlocalHom s₀ k)) ts S := by
-    intro T hT
-    rw [mapLanguage_LlocalInclusion_lift]
-    exact hready T hT
-  have h := LocalEMContext.truthLemmaStage s₀ J ctx hc k (ψ.mapLanguage (LlocalHom s₀ k))
-    (liftGamma_mem_Γlocal_succ s₀ hmem) ts S hsub hready'
-  rwa [mapLanguage_LlocalInclusion_lift] at h
+  exact LocalEMContext.truthLemmaStage_of_mem_of_skolemUniversal s₀ J
+    (localSkolemUniversalForColim_canonical s₀)
 
-end StagedTruthLemma
+end StagedTruthLemmaCanonical
 
 end FirstOrder.Language
