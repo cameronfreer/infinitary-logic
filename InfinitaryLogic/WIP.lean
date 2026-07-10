@@ -27,6 +27,7 @@ import InfinitaryLogic.Methods.SchemaOmegaWitness
 import InfinitaryLogic.Methods.SchemaCompletion
 -- Layer 7b checkpoint 5a: the schema term-model equality interface (locDeEqAtom setoid)
 import InfinitaryLogic.Methods.SchemaTermModel
+import InfinitaryLogic.Methods.SchemaTermTruth
 
 /-!
 # WIP: the work-in-progress frontier bundle
