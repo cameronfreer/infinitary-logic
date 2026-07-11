@@ -8,6 +8,7 @@ import Mathlib.SetTheory.Cardinal.Regular
 import InfinitaryLogic.Combinatorics.FiniteArityErdosRadoInduction
 import InfinitaryLogic.Lomega1omega.Theory
 import InfinitaryLogic.Methods.GeneratedSublanguage
+import InfinitaryLogic.Methods.ConstantSupport
 import InfinitaryLogic.Methods.Henkin.Construction
 
 /-!
@@ -182,53 +183,10 @@ section Certification
 
 variable {L' : Language.{0, 0}} {J : Type}
 
-/-- The syntactic constant support of an `L'[[J]]`-formula: the added constants (arity-0
-`Sum.inr` function symbols) among its mentioned symbols. Only countable in general
-(`functionsIn_countable` — countably-branching connectives); the certification predicates
-below *demand* containment in a finite set rather than computing one. Generic in the base
-language, so it also serves the Henkin layer (`L := L'[[J]]`, constants `ℕ`). -/
-def sentenceJConsts {α : Type} {n : ℕ} (φ : L'[[J]].BoundedFormulaω α n) : Set J :=
-  {j | (⟨0, (Sum.inr j : L'[[J]].Functions 0)⟩ : Σ n, L'[[J]].Functions n) ∈
-    BoundedFormulaω.functionsIn φ}
-
-/-- Negation does not change the constant support (`not` is `imp · falsum`). -/
-theorem sentenceJConsts_not {α : Type} {n : ℕ} (φ : L'[[J]].BoundedFormulaω α n) :
-    sentenceJConsts (L' := L') φ.not = sentenceJConsts (L' := L') φ := by
-  ext j
-  simp [sentenceJConsts, BoundedFormulaω.functionsIn]
-
-/-- A conjunction component's constant support is contained in the conjunction's. -/
-theorem sentenceJConsts_component_iInf {α : Type} {n : ℕ}
-    (φs : ℕ → L'[[J]].BoundedFormulaω α n) (k : ℕ) :
-    sentenceJConsts (L' := L') (φs k) ⊆
-      sentenceJConsts (L' := L') (BoundedFormulaω.iInf φs) := by
-  intro j hj
-  simp only [sentenceJConsts, Set.mem_setOf_eq, BoundedFormulaω.functionsIn] at hj ⊢
-  exact Set.mem_iUnion.mpr ⟨k, hj⟩
-
-/-- A disjunction component's constant support is contained in the disjunction's. -/
-theorem sentenceJConsts_component_iSup {α : Type} {n : ℕ}
-    (φs : ℕ → L'[[J]].BoundedFormulaω α n) (k : ℕ) :
-    sentenceJConsts (L' := L') (φs k) ⊆
-      sentenceJConsts (L' := L') (BoundedFormulaω.iSup φs) := by
-  intro j hj
-  simp only [sentenceJConsts, Set.mem_setOf_eq, BoundedFormulaω.functionsIn] at hj ⊢
-  exact Set.mem_iUnion.mpr ⟨k, hj⟩
-
-/-- An implication's antecedent support is contained in the implication's. -/
-theorem sentenceJConsts_imp_left {α : Type} {n : ℕ} (φ ψ : L'[[J]].BoundedFormulaω α n) :
-    sentenceJConsts (L' := L') φ ⊆ sentenceJConsts (L' := L') (φ.imp ψ) := by
-  intro j hj
-  simp only [sentenceJConsts, Set.mem_setOf_eq, BoundedFormulaω.functionsIn] at hj ⊢
-  exact Set.mem_union_left _ hj
-
-/-- An implication's consequent support is contained in the implication's. -/
-theorem sentenceJConsts_imp_right {α : Type} {n : ℕ} (φ ψ : L'[[J]].BoundedFormulaω α n) :
-    sentenceJConsts (L' := L') ψ ⊆ sentenceJConsts (L' := L') (φ.imp ψ) := by
-  intro j hj
-  simp only [sentenceJConsts, Set.mem_setOf_eq, BoundedFormulaω.functionsIn] at hj ⊢
-  exact Set.mem_union_right _ hj
-
+-- `sentenceJConsts` and its monotonicity calculus (`_not`, `_component_iInf`,
+-- `_component_iSup`, `_imp_left`, `_imp_right`) now live in `Methods/ConstantSupport.lean`,
+-- the neutral home of the constant-support calculus (imported above). This section consumes
+-- them unchanged.
 
 variable [LinearOrder J] (M : Type) [L'.Structure M] [LinearOrder M]
 
@@ -757,152 +715,9 @@ theorem realizeWith_congr {σ σ' : J → M} {h h' : ℕ → M} {α : Type} {n :
 
 end RealizeWith
 
-/-! ### Structural lemmas for `functionsIn` (relabel / castLE / subst / openBounds)
-
-The mentioned function symbols are stable under variable renamings and grow only by the
-substituted terms' symbols under substitution — the syntactic facts behind the Henkin
-witness's constant support (Layer 5c). Generic over the language. -/
-
-section FunctionsIn
-
-variable {L : Language.{0, 0}} {α β : Type}
-
-theorem Term.functionsIn_relabel (g : α → β) (t : L.Term α) :
-    (t.relabel g).functionsIn = t.functionsIn := by
-  induction t with
-  | var x => rfl
-  | func f ts ih => simp only [Term.relabel, Term.functionsIn, ih]
-
-theorem Term.functionsIn_subst (tf : α → L.Term β) (t : L.Term α) :
-    (t.subst tf).functionsIn ⊆ t.functionsIn ∪ ⋃ a, (tf a).functionsIn := by
-  induction t with
-  | var x =>
-    simp only [Term.subst, Term.functionsIn, Set.empty_union]
-    exact Set.subset_iUnion (fun a => (tf a).functionsIn) x
-  | func f ts ih =>
-    simp only [Term.subst, Term.functionsIn]
-    rw [Set.insert_subset_iff]
-    refine ⟨Set.mem_union_left _ (Set.mem_insert _ _), Set.iUnion_subset fun i => ?_⟩
-    exact (ih i).trans (Set.union_subset_union
-      ((Set.subset_iUnion (fun i => (ts i).functionsIn) i).trans (Set.subset_insert _ _)) subset_rfl)
-
-theorem BoundedFormulaω.functionsIn_castLE {m n : ℕ} (h : m ≤ n)
-    (φ : L.BoundedFormulaω α m) : (φ.castLE h).functionsIn = φ.functionsIn := by
-  induction φ generalizing n with
-  | falsum => rfl
-  | equal t₁ t₂ => simp only [BoundedFormulaω.castLE, BoundedFormulaω.functionsIn,
-      Term.functionsIn_relabel]
-  | rel R ts => simp only [BoundedFormulaω.castLE, BoundedFormulaω.functionsIn,
-      Term.functionsIn_relabel]
-  | imp φ ψ ihφ ihψ => simp only [BoundedFormulaω.castLE, BoundedFormulaω.functionsIn, ihφ, ihψ]
-  | all φ ih => simp only [BoundedFormulaω.castLE, BoundedFormulaω.functionsIn, ih]
-  | iSup φs ih => simp only [BoundedFormulaω.castLE, BoundedFormulaω.functionsIn, ih]
-  | iInf φs ih => simp only [BoundedFormulaω.castLE, BoundedFormulaω.functionsIn, ih]
-
-theorem BoundedFormulaω.functionsIn_relabel {n : ℕ} (g : α → β ⊕ Fin n) :
-    ∀ {k : ℕ} (φ : L.BoundedFormulaω α k), (φ.relabel g).functionsIn = φ.functionsIn := by
-  intro k φ
-  induction φ with
-  | falsum => rfl
-  | equal t₁ t₂ => simp only [BoundedFormulaω.relabel, BoundedFormulaω.functionsIn,
-      Term.functionsIn_relabel]
-  | rel R ts => simp only [BoundedFormulaω.relabel, BoundedFormulaω.functionsIn,
-      Term.functionsIn_relabel]
-  | imp φ ψ ihφ ihψ => simp only [BoundedFormulaω.relabel, BoundedFormulaω.functionsIn, ihφ, ihψ]
-  | all φ ih => simp only [BoundedFormulaω.relabel, BoundedFormulaω.functionsIn,
-      BoundedFormulaω.functionsIn_castLE, ih]
-  | iSup φs ih => simp only [BoundedFormulaω.relabel, BoundedFormulaω.functionsIn, ih]
-  | iInf φs ih => simp only [BoundedFormulaω.relabel, BoundedFormulaω.functionsIn, ih]
-
-theorem BoundedFormulaω.functionsIn_subst (tf : α → L.Term β) :
-    ∀ {k : ℕ} (φ : L.BoundedFormulaω α k),
-      (φ.subst tf).functionsIn ⊆ φ.functionsIn ∪ ⋃ a, (tf a).functionsIn := by
-  intro k φ
-  induction φ with
-  | falsum => simp only [BoundedFormulaω.subst, BoundedFormulaω.functionsIn]; exact Set.empty_subset _
-  | equal t₁ t₂ =>
-    simp only [BoundedFormulaω.subst, BoundedFormulaω.functionsIn]
-    refine Set.union_subset ?_ ?_ <;>
-      · refine (Term.functionsIn_subst _ _).trans (Set.union_subset_union ?_ ?_)
-        · first
-          | exact Set.subset_union_left
-          | exact Set.subset_union_right
-        · refine Set.iUnion_subset fun x => ?_
-          rcases x with a | i
-          · simpa only [Sum.elim_inl, Function.comp_apply, Term.functionsIn_relabel] using
-              Set.subset_iUnion (fun a => (tf a).functionsIn) a
-          · simp only [Sum.elim_inr, Function.comp_apply, Term.functionsIn]
-            exact Set.empty_subset _
-  | rel R ts =>
-    simp only [BoundedFormulaω.subst, BoundedFormulaω.functionsIn]
-    refine Set.iUnion_subset fun i => (Term.functionsIn_subst _ _).trans
-      (Set.union_subset_union (Set.subset_iUnion (fun i => (ts i).functionsIn) i)
-        (Set.iUnion_subset fun x => ?_))
-    rcases x with a | j
-    · simpa only [Sum.elim_inl, Function.comp_apply, Term.functionsIn_relabel] using
-        Set.subset_iUnion (fun a => (tf a).functionsIn) a
-    · simp only [Sum.elim_inr, Function.comp_apply, Term.functionsIn]
-      exact Set.empty_subset _
-  | imp φ ψ ihφ ihψ =>
-    simp only [BoundedFormulaω.subst, BoundedFormulaω.functionsIn]
-    exact Set.union_subset
-      (ihφ.trans (Set.union_subset_union_left _ Set.subset_union_left))
-      (ihψ.trans (Set.union_subset_union_left _ Set.subset_union_right))
-  | all φ ih => simpa only [BoundedFormulaω.subst, BoundedFormulaω.functionsIn] using ih
-  | iSup φs ih =>
-    simp only [BoundedFormulaω.subst, BoundedFormulaω.functionsIn]
-    exact Set.iUnion_subset fun i => (ih i).trans
-      (Set.union_subset_union_left _ (Set.subset_iUnion (fun i => (φs i).functionsIn) i))
-  | iInf φs ih =>
-    simp only [BoundedFormulaω.subst, BoundedFormulaω.functionsIn]
-    exact Set.iUnion_subset fun i => (ih i).trans
-      (Set.union_subset_union_left _ (Set.subset_iUnion (fun i => (φs i).functionsIn) i))
-
-theorem BoundedFormulaω.functionsIn_openBounds :
-    ∀ {n : ℕ} (φ : L.BoundedFormulaω Empty n),
-      (φ.openBounds).functionsIn = φ.functionsIn := by
-  intro n φ
-  induction φ with
-  | falsum => rfl
-  | equal t₁ t₂ => simp only [BoundedFormulaω.openBounds, BoundedFormulaω.functionsIn,
-      Term.functionsIn_relabel]
-  | rel R ts => simp only [BoundedFormulaω.openBounds, BoundedFormulaω.functionsIn,
-      Term.functionsIn_relabel]
-  | imp φ ψ ihφ ihψ => simp only [BoundedFormulaω.openBounds, BoundedFormulaω.functionsIn,
-      ihφ, ihψ]
-  | all φ ih => simp only [BoundedFormulaω.openBounds, BoundedFormulaω.functionsIn,
-      BoundedFormulaω.functionsIn_relabel, ih]
-  | iSup φs ih => simp only [BoundedFormulaω.openBounds, BoundedFormulaω.functionsIn, ih]
-  | iInf φs ih => simp only [BoundedFormulaω.openBounds, BoundedFormulaω.functionsIn, ih]
-
-/-- A term mentions only finitely many function symbols (it is a finite tree). -/
-theorem Term.functionsIn_finite (t : L.Term α) : t.functionsIn.Finite := by
-  induction t with
-  | var x => simp [Term.functionsIn]
-  | func f ts ih => exact (Set.finite_iUnion ih).insert _
-
-/-- Substitution only adds symbols: `φ`'s own symbols survive (only variables are replaced). -/
-theorem Term.functionsIn_subset_subst (tf : α → L.Term β) (t : L.Term α) :
-    t.functionsIn ⊆ (t.subst tf).functionsIn := by
-  induction t with
-  | var x => simp [Term.functionsIn]
-  | func f ts ih => exact Set.insert_subset_insert (Set.iUnion_mono ih)
-
-theorem BoundedFormulaω.functionsIn_subset_subst (tf : α → L.Term β) :
-    ∀ {k : ℕ} (φ : L.BoundedFormulaω α k), φ.functionsIn ⊆ (φ.subst tf).functionsIn := by
-  intro k φ
-  induction φ with
-  | falsum => simp [BoundedFormulaω.functionsIn]
-  | equal t₁ t₂ =>
-    exact Set.union_subset_union (Term.functionsIn_subset_subst _ _)
-      (Term.functionsIn_subset_subst _ _)
-  | rel R ts => exact Set.iUnion_mono fun i => Term.functionsIn_subset_subst _ _
-  | imp φ ψ ihφ ihψ => exact Set.union_subset_union ihφ ihψ
-  | all φ ih => exact ih
-  | iSup φs ih => exact Set.iUnion_mono ih
-  | iInf φs ih => exact Set.iUnion_mono ih
-
-end FunctionsIn
+-- The generic `functionsIn` structural calculus (relabel / castLE / subst / openBounds /
+-- finiteness / subset-under-subst) now lives in `Methods/ConstantSupport.lean` (imported
+-- above), the neutral home of the constant-support calculus. Consumed here unchanged.
 
 /-! ## Layer 5: the finite Henkin closure calculus
 
