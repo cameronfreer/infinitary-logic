@@ -6,6 +6,7 @@ Authors: Cameron Freer
 import InfinitaryLogic.ModelTheory.HanfSpectrum.Countable
 import InfinitaryLogic.ModelTheory.HanfSpectrum.LadderSyntax
 import InfinitaryLogic.ModelTheory.HanfSpectrum.CardinalBounds
+import InfinitaryLogic.ModelTheory.HanfSpectrum.IndexOrder
 import InfinitaryLogic.ModelTheory.HanfSpectrum.Powerset
 
 /-!
@@ -23,7 +24,9 @@ spectra are BOUNDED, each consumed through the generic endpoint
   sigma/union bounds, powerset-injection bound, and `⨆_{α<ω₁} ℶ_{α+1} = ℶ_{ω₁}`.
 * `HanfSpectrum/Powerset.lean` — the α = 0 instance: maximal model `Set ℕ`,
   `beth_one_lt_Lomega1omegaHanfNumber`.
+* `HanfSpectrum/IndexOrder.lean` — the deferred `typein` layer: `idxVal`/`idxOf`, endpoint
+  values, `⋖`/limit transfers, and `Countable (Index α)` for `α < ω₁`.
 * (next) `HanfSpectrum/BethLadder.lean` — the general stage: for each `α < ω₁` a maximal model
-  of size `ℶ_{α+1}` (ZFSet set-level recursion + Shrink transport), then the supremum
+  of size `ℶ_{α+1}` (the von Neumann levels `V_{ω+β}` + Shrink transport), then the supremum
   `⨆_{α<ω₁} ℶ_{α+1} = ℶ_{ω₁}` (`CardinalBounds.lean`) gives `Lomega1omegaHanfNumber = ℶ_{ω₁}`.
 -/
