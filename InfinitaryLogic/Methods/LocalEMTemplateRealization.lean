@@ -650,6 +650,44 @@ theorem tailTemplateOfSeq_truth_sentence_iff {L : Language.{u, v}} {M : Type*} [
     rw [show (c ∘ u : Fin 0 → M) = Fin.elim0 from funext fun p => p.elim0]
     exact h
 
+/-- **Stage-0 sentence satisfaction transfers to the carrier** — the consumer-shaped bridge for
+the small-model assembly (issue #11 unit 7a): a stage-0 sentence of `Γlocal s₀ 0` true in the
+source is true in the seed-language reduct of the context's carrier. Arity zero of the
+realization equivalence: `tailTemplateOfSeq_truth_sentence_iff` turns source truth into
+template truth, `realize_templateSentence_localEM_iff_of_skolemUniversal` transfers it to the
+carrier, and `realize_templateSentence_of_structure` removes the vacuous skeleton constants. -/
+theorem LocalEMContext.realizes_stage0_sentence_of_skolemUniversal (s₀ : LocalStage)
+    (J : Type) [LinearOrder J] {M : Type} [(localColim s₀).Structure M]
+    (hsk : LocalSkolemUniversalForColim s₀ (M := M))
+    (ctx : LocalEMContext (localColim s₀) J (M := M))
+    (hΓ : ΓEMlocal s₀ ⊆ ctx.Γ) (hc : LocalEMContext.OmegaCompleteForColim s₀ J ctx)
+    (φ : s₀.Lang.Sentenceω)
+    (hmem : (⟨0, φ⟩ : Σ n, s₀.Lang.BoundedFormulaω Empty n) ∈ Γlocal s₀ 0)
+    (hφ : (letI : s₀.Lang.Structure M := (LlocalInclusion s₀ 0).reduct M
+      Sentenceω.Realize φ M)) :
+    letI : (localColim s₀)[[J]].Structure ctx.Carrier := ctx.structure
+    letI : (s₀.Lang)[[J]].Structure ctx.Carrier :=
+      ((LlocalInclusion s₀ 0).addConstants J).reduct ctx.Carrier
+    letI : s₀.Lang.Structure ctx.Carrier :=
+      (s₀.Lang.lhomWithConstants J).reduct ctx.Carrier
+    Sentenceω.Realize φ ctx.Carrier := by
+  letI : s₀.Lang.Structure M := (LlocalInclusion s₀ 0).reduct M
+  letI : (localColim s₀)[[J]].Structure ctx.Carrier := ctx.structure
+  letI : (s₀.Lang)[[J]].Structure ctx.Carrier :=
+    ((LlocalInclusion s₀ 0).addConstants J).reduct ctx.Carrier
+  letI : s₀.Lang.Structure ctx.Carrier :=
+    (s₀.Lang.lhomWithConstants J).reduct ctx.Carrier
+  let t0 : Fin 0 ↪o J := ⟨⟨Fin.elim0, fun a => a.elim0⟩, fun {a} => a.elim0⟩
+  have hiff := realize_templateSentence_localEM_iff_of_skolemUniversal s₀ J hsk ctx hΓ hc
+    φ hmem t0
+  have htruth : (tailTemplateOfSeq (L := s₀.Lang) ctx.a).truth φ :=
+    (tailTemplateOfSeq_truth_sentence_iff ctx.a φ).mpr hφ
+  have hbase := (realize_templateSentence_of_structure (L := s₀.Lang) (J := J)
+    (N := ctx.Carrier) φ t0).mp (hiff.mpr htruth)
+  rwa [show (fun i : Fin 0 => (Term.func (Sum.inr (t0 i) : (s₀.Lang)[[J]].Functions 0)
+      Fin.elim0 : (s₀.Lang)[[J]].Term Empty).realize (Empty.elim : Empty → ctx.Carrier))
+      = (Fin.elim0 : Fin 0 → ctx.Carrier) from funext fun i => i.elim0] at hbase
+
 /-- The tail template of any **pairwise distinct** sequence declares the disequality true. -/
 theorem tailTemplateOfSeq_truth_disEq {L : Language.{u, v}} {M : Type*} [L.Structure M]
     {c : ℕ → M} (hc : ∀ i j : ℕ, i ≠ j → c i ≠ c j) :
