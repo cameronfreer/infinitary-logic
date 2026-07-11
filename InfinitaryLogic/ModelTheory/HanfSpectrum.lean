@@ -8,6 +8,7 @@ import InfinitaryLogic.ModelTheory.HanfSpectrum.LadderSyntax
 import InfinitaryLogic.ModelTheory.HanfSpectrum.CardinalBounds
 import InfinitaryLogic.ModelTheory.HanfSpectrum.IndexOrder
 import InfinitaryLogic.ModelTheory.HanfSpectrum.Powerset
+import InfinitaryLogic.ModelTheory.HanfSpectrum.VonNeumannModel
 
 /-!
 # Bounded-spectrum witnesses: lower bounds for the `L_{ω₁ω}` Hanf number
