@@ -84,6 +84,30 @@ theorem BoundedFormulaω.functionsIn_relabel {n : ℕ} (g : α → β ⊕ Fin n)
   | iSup φs ih => simp only [BoundedFormulaω.relabel, BoundedFormulaω.functionsIn, ih]
   | iInf φs ih => simp only [BoundedFormulaω.relabel, BoundedFormulaω.functionsIn, ih]
 
+theorem BoundedFormulaω.relationsIn_castLE {m n : ℕ} (h : m ≤ n)
+    (φ : L.BoundedFormulaω α m) : (φ.castLE h).relationsIn = φ.relationsIn := by
+  induction φ generalizing n with
+  | falsum => rfl
+  | equal t₁ t₂ => rfl
+  | rel R ts => rfl
+  | imp φ ψ ihφ ihψ => simp only [BoundedFormulaω.castLE, BoundedFormulaω.relationsIn, ihφ, ihψ]
+  | all φ ih => simp only [BoundedFormulaω.castLE, BoundedFormulaω.relationsIn, ih]
+  | iSup φs ih => simp only [BoundedFormulaω.castLE, BoundedFormulaω.relationsIn, ih]
+  | iInf φs ih => simp only [BoundedFormulaω.castLE, BoundedFormulaω.relationsIn, ih]
+
+theorem BoundedFormulaω.relationsIn_relabel {n : ℕ} (g : α → β ⊕ Fin n) :
+    ∀ {k : ℕ} (φ : L.BoundedFormulaω α k), (φ.relabel g).relationsIn = φ.relationsIn := by
+  intro k φ
+  induction φ with
+  | falsum => rfl
+  | equal t₁ t₂ => rfl
+  | rel R ts => rfl
+  | imp φ ψ ihφ ihψ => simp only [BoundedFormulaω.relabel, BoundedFormulaω.relationsIn, ihφ, ihψ]
+  | all φ ih => simp only [BoundedFormulaω.relabel, BoundedFormulaω.relationsIn,
+      BoundedFormulaω.relationsIn_castLE, ih]
+  | iSup φs ih => simp only [BoundedFormulaω.relabel, BoundedFormulaω.relationsIn, ih]
+  | iInf φs ih => simp only [BoundedFormulaω.relabel, BoundedFormulaω.relationsIn, ih]
+
 theorem BoundedFormulaω.functionsIn_subst (tf : α → L.Term β) :
     ∀ {k : ℕ} (φ : L.BoundedFormulaω α k),
       (φ.subst tf).functionsIn ⊆ φ.functionsIn ∪ ⋃ a, (tf a).functionsIn := by

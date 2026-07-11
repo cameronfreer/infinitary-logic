@@ -63,6 +63,36 @@ theorem notMem_sentenceJConsts_genEx (j : ℕ) (ρ : L[[ℕ]].Sentenceω) :
   rw [h2] at hmem
   exact BoundedFormulaω.notMem_sentenceJConsts_abstractConst j ρ hmem
 
+/-! ## Occurrence facts for `genEx` -/
+
+/-- `genEx` preserves the relation symbols. -/
+theorem relationsIn_genEx (j : ℕ) (ρ : L[[ℕ]].Sentenceω) :
+    (genEx j ρ).relationsIn = ρ.relationsIn := by
+  rw [genEx, BoundedFormulaω.relationsIn_ex, BoundedFormulaω.relationsIn_relabel,
+    BoundedFormulaω.relationsIn_abstractConst]
+
+/-- `genEx` adds no function symbols. -/
+theorem functionsIn_genEx_subset (j : ℕ) (ρ : L[[ℕ]].Sentenceω) :
+    (genEx j ρ).functionsIn ⊆ ρ.functionsIn := by
+  rw [genEx, BoundedFormulaω.functionsIn_ex, BoundedFormulaω.functionsIn_relabel]
+  exact BoundedFormulaω.functionsIn_abstractConst_subset j ρ
+
+/-- `genEx` adds no base function symbols. -/
+theorem baseFunctionsIn_genEx_subset (j : ℕ) (ρ : L[[ℕ]].Sentenceω) :
+    (genEx j ρ).baseFunctionsIn ⊆ ρ.baseFunctionsIn :=
+  fun _ hs => functionsIn_genEx_subset j ρ hs
+
+/-- `genEx` preserves the base relation symbols. -/
+theorem baseRelationsIn_genEx (j : ℕ) (ρ : L[[ℕ]].Sentenceω) :
+    (genEx j ρ).baseRelationsIn = ρ.baseRelationsIn := by
+  unfold BoundedFormulaω.baseRelationsIn
+  rw [relationsIn_genEx]
+
+/-- `genEx` adds no constants. -/
+theorem sentenceJConsts_genEx_subset (j : ℕ) (ρ : L[[ℕ]].Sentenceω) :
+    sentenceJConsts (L' := L) (J := ℕ) (genEx j ρ) ⊆ sentenceJConsts (L' := L) (J := ℕ) ρ :=
+  fun _ hs => functionsIn_genEx_subset j ρ hs
+
 /-! ## The acceptance lemmas -/
 
 variable {j : ℕ} {φc σc : L[[ℕ]].Sentenceω} {Γ Δ : Set L[[ℕ]].Sentenceω}

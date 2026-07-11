@@ -443,6 +443,25 @@ theorem BoundedFormulaω.notMem_functionsIn_abstractConst (j : ℕ) :
     obtain ⟨_, ⟨i, rfl⟩, hmem⟩ := hs
     exact ih i hmem
 
+/-- Abstraction preserves the relation symbols exactly. -/
+theorem BoundedFormulaω.relationsIn_abstractConst (j : ℕ) :
+    ∀ {n : ℕ} (φ : L[[ℕ]].BoundedFormulaω Empty n),
+      (φ.abstractConst j).relationsIn = φ.relationsIn := by
+  intro n φ
+  induction φ with
+  | falsum => rfl
+  | equal t u => rfl
+  | rel R ts => rfl
+  | imp φ ψ ihφ ihψ =>
+    simp only [BoundedFormulaω.abstractConst, BoundedFormulaω.relationsIn, ihφ, ihψ]
+  | all φ ih => simp only [BoundedFormulaω.abstractConst, BoundedFormulaω.relationsIn, ih]
+  | iSup φs ih =>
+    simp only [BoundedFormulaω.abstractConst, BoundedFormulaω.relationsIn]
+    exact congrArg _ (funext ih)
+  | iInf φs ih =>
+    simp only [BoundedFormulaω.abstractConst, BoundedFormulaω.relationsIn]
+    exact congrArg _ (funext ih)
+
 /-- `c_j` is not in the constant support of the abstracted formula. -/
 theorem BoundedFormulaω.notMem_sentenceJConsts_abstractConst (j : ℕ) {n : ℕ}
     (φ : L[[ℕ]].BoundedFormulaω Empty n) :
