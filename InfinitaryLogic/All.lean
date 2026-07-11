@@ -13,6 +13,7 @@ import InfinitaryLogic.ModelTheory.TypeIsolation
 import InfinitaryLogic.ModelTheory.CountableCompanion
 import InfinitaryLogic.ModelTheory.TypePreservingBF
 import InfinitaryLogic.ModelTheory.ArbitraryStabilization
+import InfinitaryLogic.ModelTheory.ScottCompletion
 
 /-!
 # All: the sorry-free library surface

@@ -89,6 +89,7 @@ noncomputable def scottFragment (N : Type) [L.Structure N] [Countable N] (α : O
     Fragment L :=
   Fragment.generated (scottSeed N α)
 
+omit [L.IsRelational] in
 theorem scottFragment_countable (α : Ordinal) :
     (scottFragment (L := L) N α).toSet.Countable :=
   Fragment.generated_countable (scottSeed_countable α)
@@ -99,6 +100,7 @@ theorem closedScott_mem_scottFragment (α : Ordinal) {m : ℕ} (a : Fin m → N)
       Σ n, L.BoundedFormulaω Empty n) ∈ (scottFragment (L := L) N α).toSet :=
   Fragment.subset_generated _ (Set.mem_iUnion.mpr ⟨m, Set.mem_image_of_mem _ (Set.mem_univ a)⟩)
 
+omit [L.IsRelational] in
 /-- The closed Scott formula realizes exactly as the open one. -/
 theorem realize_closedScott_iff {P : Type} [L.Structure P] (α : Ordinal) {m : ℕ}
     (a : Fin m → N) (b : Fin m → P) :
@@ -115,11 +117,14 @@ theorem realize_closedScott_iff {P : Type} [L.Structure P] (α : Ordinal) {m : �
 
 variable {P : Type} [L.Structure P]
 
-private theorem countable_functions_of_isRelational :
+omit [Countable (Σ l, L.Relations l)] in
+/-- Relational languages have (vacuously) countably many function symbols. -/
+theorem countable_functions_of_isRelational :
     Countable (Σ n, L.Functions n) := by
   haveI : ∀ n, IsEmpty (L.Functions n) := ‹L.IsRelational›
   exact inferInstance
 
+omit [L.IsRelational] in
 /-- BFEquiv transfers between the arbitrary target and a fragment-elementary substructure,
 through the closed Scott formulas. -/
 theorem bfEquiv_iff_of_scottFragment_aElementary {α : Ordinal} (hα : α < Ordinal.omega 1)
