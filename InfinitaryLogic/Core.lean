@@ -16,6 +16,7 @@ import InfinitaryLogic.Lomega1omega.Fragment
 import InfinitaryLogic.Lomega1omega.Operations
 import InfinitaryLogic.Lomega1omega.Embedding
 import InfinitaryLogic.Lomega1omega.Theory
+import InfinitaryLogic.Lomega1omega.Entailment
 import InfinitaryLogic.Lomega1omega.QuantifierRank
 
 -- Scott sentences and ranks
