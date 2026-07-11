@@ -323,4 +323,138 @@ theorem BoundedFormulaω.realize_abstractConst (base : L.Structure M) (h : ℕ �
     intro xs
     exact forall_congr' fun i => ih i xs
 
+/-! ## Occurrence deletion: abstraction removes `c_j` and adds no new constants -/
+
+/-- Abstraction adds no new function symbols to a term. -/
+theorem Term.functionsIn_abstractConst_subset (j : ℕ) {n : ℕ} :
+    ∀ (t : L[[ℕ]].Term (Empty ⊕ Fin n)),
+      (t.abstractConst j).functionsIn ⊆ t.functionsIn := by
+  intro t
+  induction t with
+  | var x =>
+    rcases x with e | i
+    · exact e.elim
+    · intro s hs; exact absurd hs (Set.notMem_empty s)
+  | @func l f ts ih =>
+    rcases f with f | k
+    · intro s hs
+      simp only [Term.abstractConst, Term.functionsIn] at hs ⊢
+      rcases Set.mem_insert_iff.mp hs with rfl | hs
+      · exact Set.mem_insert _ _
+      · obtain ⟨_, ⟨i, rfl⟩, hmem⟩ := hs
+        exact Set.mem_insert_of_mem _ (Set.mem_iUnion.mpr ⟨i, ih i hmem⟩)
+    · match l, k with
+      | 0, k =>
+        by_cases hk : (k : ℕ) = j
+        · have hred : (Term.func (Sum.inr k) ts).abstractConst j
+              = (Term.var (Sum.inl 0) : L[[ℕ]].Term (Fin 1 ⊕ Fin n)) := by
+            simp only [Term.abstractConst]; rw [if_pos hk]
+          rw [hred]; intro s hs; exact absurd hs (Set.notMem_empty s)
+        · have hred : (Term.func (Sum.inr k) ts).abstractConst j
+              = (Term.func (Sum.inr k) Fin.elim0 : L[[ℕ]].Term (Fin 1 ⊕ Fin n)) := by
+            simp only [Term.abstractConst]; rw [if_neg hk]
+          rw [hred]; intro s hs
+          simp only [Term.functionsIn, Set.iUnion_of_empty,
+            Set.mem_insert_iff, Set.mem_empty_iff_false, or_false] at hs ⊢
+          exact hs
+      | (l + 1), k => exact nomatch k
+
+/-- The constant `c_j` does not occur in the abstracted term. -/
+theorem Term.notMem_functionsIn_abstractConst (j : ℕ) {n : ℕ} :
+    ∀ (t : L[[ℕ]].Term (Empty ⊕ Fin n)),
+      (⟨0, (Sum.inr j : L[[ℕ]].Functions 0)⟩ : Σ l, L[[ℕ]].Functions l)
+        ∉ (t.abstractConst j).functionsIn := by
+  intro t
+  induction t with
+  | var x =>
+    rcases x with e | i
+    · exact e.elim
+    · exact Set.notMem_empty _
+  | @func l f ts ih =>
+    rcases f with f | k
+    · intro hs
+      simp only [Term.abstractConst, Term.functionsIn] at hs
+      rcases Set.mem_insert_iff.mp hs with heq | hs
+      · simp only [Sigma.mk.injEq] at heq; obtain ⟨rfl, h2⟩ := heq; simp at h2
+      · obtain ⟨_, ⟨i, rfl⟩, hmem⟩ := hs
+        exact ih i hmem
+    · match l, k with
+      | 0, k =>
+        by_cases hk : (k : ℕ) = j
+        · have hred : (Term.func (Sum.inr k) ts).abstractConst j
+              = (Term.var (Sum.inl 0) : L[[ℕ]].Term (Fin 1 ⊕ Fin n)) := by
+            simp only [Term.abstractConst]; rw [if_pos hk]
+          rw [hred]; exact Set.notMem_empty _
+        · have hred : (Term.func (Sum.inr k) ts).abstractConst j
+              = (Term.func (Sum.inr k) Fin.elim0 : L[[ℕ]].Term (Fin 1 ⊕ Fin n)) := by
+            simp only [Term.abstractConst]; rw [if_neg hk]
+          rw [hred]; intro hs
+          simp only [Term.functionsIn, Set.iUnion_of_empty,
+            Set.mem_insert_iff, Set.mem_empty_iff_false, or_false] at hs
+          simp only [Sigma.mk.injEq, heq_eq_eq, true_and] at hs
+          exact hk (Sum.inr.inj hs).symm
+      | (l + 1), k => exact nomatch k
+
+/-- Abstraction adds no new function symbols to a formula. -/
+theorem BoundedFormulaω.functionsIn_abstractConst_subset (j : ℕ) :
+    ∀ {n : ℕ} (φ : L[[ℕ]].BoundedFormulaω Empty n),
+      (φ.abstractConst j).functionsIn ⊆ φ.functionsIn := by
+  intro n φ
+  induction φ with
+  | falsum => exact subset_rfl
+  | equal t u =>
+    exact Set.union_subset_union (Term.functionsIn_abstractConst_subset j t)
+      (Term.functionsIn_abstractConst_subset j u)
+  | rel R ts => exact Set.iUnion_mono fun i => Term.functionsIn_abstractConst_subset j (ts i)
+  | imp φ ψ ihφ ihψ => exact Set.union_subset_union ihφ ihψ
+  | all φ ih => exact ih
+  | iSup φs ih => exact Set.iUnion_mono ih
+  | iInf φs ih => exact Set.iUnion_mono ih
+
+/-- The constant `c_j` does not occur in the abstracted formula. -/
+theorem BoundedFormulaω.notMem_functionsIn_abstractConst (j : ℕ) :
+    ∀ {n : ℕ} (φ : L[[ℕ]].BoundedFormulaω Empty n),
+      (⟨0, (Sum.inr j : L[[ℕ]].Functions 0)⟩ : Σ l, L[[ℕ]].Functions l)
+        ∉ (φ.abstractConst j).functionsIn := by
+  intro n φ
+  induction φ with
+  | falsum => exact Set.notMem_empty _
+  | equal t u =>
+    intro hs
+    rcases hs with hs | hs
+    · exact Term.notMem_functionsIn_abstractConst j t hs
+    · exact Term.notMem_functionsIn_abstractConst j u hs
+  | rel R ts =>
+    intro hs
+    obtain ⟨_, ⟨i, rfl⟩, hmem⟩ := hs
+    exact Term.notMem_functionsIn_abstractConst j (ts i) hmem
+  | imp φ ψ ihφ ihψ =>
+    intro hs
+    rcases hs with hs | hs
+    · exact ihφ hs
+    · exact ihψ hs
+  | all φ ih => exact ih
+  | iSup φs ih =>
+    intro hs
+    obtain ⟨_, ⟨i, rfl⟩, hmem⟩ := hs
+    exact ih i hmem
+  | iInf φs ih =>
+    intro hs
+    obtain ⟨_, ⟨i, rfl⟩, hmem⟩ := hs
+    exact ih i hmem
+
+/-- `c_j` is not in the constant support of the abstracted formula. -/
+theorem BoundedFormulaω.notMem_sentenceJConsts_abstractConst (j : ℕ) {n : ℕ}
+    (φ : L[[ℕ]].BoundedFormulaω Empty n) :
+    j ∉ sentenceJConsts (L' := L) (J := ℕ) (φ.abstractConst j) :=
+  BoundedFormulaω.notMem_functionsIn_abstractConst j φ
+
+/-- The constant support of the abstracted formula is contained in that of the original. -/
+theorem BoundedFormulaω.sentenceJConsts_abstractConst_subset (j : ℕ) {n : ℕ}
+    (φ : L[[ℕ]].BoundedFormulaω Empty n) :
+    sentenceJConsts (L' := L) (J := ℕ) (φ.abstractConst j)
+      ⊆ sentenceJConsts (L' := L) (J := ℕ) φ :=
+  fun _ hm => BoundedFormulaω.functionsIn_abstractConst_subset j φ hm
+
 end FirstOrder.Language
+
