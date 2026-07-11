@@ -8,6 +8,7 @@ import InfinitaryLogic.ModelTheory.InfinitaryTypes
 import InfinitaryLogic.ModelTheory.SmallModels
 import InfinitaryLogic.ModelTheory.AElementary
 import InfinitaryLogic.ModelTheory.FragmentLowenheimSkolem
+import InfinitaryLogic.ModelTheory.AElementaryChains
 
 /-!
 # All: the sorry-free library surface
