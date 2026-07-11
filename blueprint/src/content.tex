@@ -14,7 +14,7 @@ disjunctions) where possible.
 
 \section{Main Results}
 
-The formalization establishes eight headline theorems:
+The formalization establishes nine headline theorems:
 \begin{itemize}
   \item \textbf{Scott characterization.}
     Every countable structure is characterized up to isomorphism by
@@ -43,6 +43,10 @@ The formalization establishes eight headline theorems:
     $\beth_{\omegaone}$ is a Hanf bound for every $\Lomegaone$ sentence,
     over an arbitrary language with no side hypotheses
     (Theorem~\ref{thm:morley-hanf}).
+  \item \textbf{The exact Hanf number.}
+    $\mathrm{Hanf}(\Lomegaone) = \beth_{\omegaone}$: the Morley--Hanf bound is
+    sharp, by Marker's Exercise~5.3 beth ladder over the von Neumann hierarchy
+    (Theorem~\ref{thm:hanf-exact}).
 \end{itemize}
 
 \section{Back-and-Forth Equivalence}
@@ -203,6 +207,33 @@ The milestones of the schema construction behind the seed-realizability input:
 \inputleannode{thm:morley-hanf-transfer}
 
 \inputleannode{thm:morley-hanf-restricted}
+
+\section{Sharpness: the Exact Hanf Number}
+
+\emph{Status: proved.}  The Morley--Hanf bound is exact:
+$\mathrm{Hanf}(\Lomegaone) = \beth_{\omegaone}$
+(\texttt{Lomega1omegaHanfNumber\_eq\_beth\_omega1}, \ref{thm:hanf-exact}).
+The upper half (\ref{thm:hanf-upper-global}) is immediate from the Morley--Hanf
+theorem.  The lower half (\ref{thm:hanf-lower-global}) is Marker's
+Exercise~5.3: for each $\alpha < \omegaone$ a single $\Lomegaone$ sentence
+over countably many constants, unary levels indexed by the well order
+$\alpha+2$, and one binary extensional edge relation has models of size
+exactly $\beth_{\alpha+1}$ at the maximum (\ref{thm:hanf-ladder-stage}).
+The maximal model is the von Neumann hierarchy: the levels are interpreted as
+the stages $V_{\omega+\beta}$, whose cardinalities Mathlib already computes,
+shrunk to a $\mathrm{Type}$-$0$ carrier; the upper bound is a well-founded
+induction on the level order with powerset steps at successors and countable
+unions at limits.  The successor-cofinal supremum
+$\sup_{\alpha<\omegaone}\beth_{\alpha+1} = \beth_{\omegaone}$ closes the
+argument.
+
+\inputleannode{thm:hanf-upper-global}
+
+\inputleannode{thm:hanf-ladder-stage}
+
+\inputleannode{thm:hanf-lower-global}
+
+\inputleannode{thm:hanf-exact}
 
 \chapter{Counting Models}
 

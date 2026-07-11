@@ -19,9 +19,10 @@ together with the corollaries packaged here:
 * `hanfNumber_le_beth_omega1` — the per-sentence Hanf number is at most `ℶ_{ω₁}`;
 * `IsLomega1omegaHanfBound` / `Lomega1omegaHanfNumber` — the GLOBAL Hanf bound/number of the
   logic `L_{ω₁ω}` (over all languages and sentences), with
-  `beth_omega1_isLomega1omegaHanfBound` and `Lomega1omegaHanfNumber_le_beth_omega1`. These give
-  the upper half of the classical `Hanf(L_{ω₁ω}) = ℶ_{ω₁}`; the lower bound (sharpness) is
-  future work;
+  `beth_omega1_isLomega1omegaHanfBound` and `Lomega1omegaHanfNumber_le_beth_omega1`. This is
+  the upper half of the classical `Hanf(L_{ω₁ω}) = ℶ_{ω₁}`; the matching lower half and the
+  exact equality `Lomega1omegaHanfNumber_eq_beth_omega1` are proved by the beth-ladder
+  spectrum witnesses in `HanfSpectrum/BethLadder.lean`;
 * `morley_hanf_theory` — every countable `L_{ω₁ω}`-theory with a model of size `≥ ℶ_{ω₁}` has
   arbitrarily large models (via `Theoryω.conjunction`).
 -/
@@ -101,7 +102,16 @@ theorem lt_Lomega1omegaHanfNumber_of_maximal_model
   exact absurd (le_trans hN (hupper N instN hφN)) (not_le.mpr (Order.lt_succ κ))
 
 /-- **The Hanf number of `L_{ω₁ω}` is at most `ℶ_{ω₁}`** — the upper half of the classical
-`Hanf(L_{ω₁ω}) = ℶ_{ω₁}`; the lower bound (sharpness) is future work. -/
+`Hanf(L_{ω₁ω}) = ℶ_{ω₁}`; the matching lower half and the exact equality
+`Lomega1omegaHanfNumber_eq_beth_omega1` are proved in `HanfSpectrum/BethLadder.lean`. -/
+@[blueprint "thm:hanf-upper-global"
+  (title := /-- Global Hanf upper bound -/)
+  (statement := /-- $\mathrm{Hanf}(\Lomegaone) \le \beth_{\omegaone}$: the global Hanf number
+    of $\Lomegaone$, over all languages and sentences, is at most $\beth_{\omegaone}$. -/)
+  (proof := /-- Immediate from the Morley--Hanf theorem: $\beth_{\omegaone}$ is a Hanf bound
+    for every sentence, so it is a global Hanf bound, and the global Hanf number is the least
+    such. -/)
+  (uses := ["thm:morley-hanf"])]
 theorem Lomega1omegaHanfNumber_le_beth_omega1 :
     Lomega1omegaHanfNumber ≤ Cardinal.beth (Ordinal.omega 1) :=
   Lomega1omegaHanfNumber_le_of_isHanfBound beth_omega1_isLomega1omegaHanfBound

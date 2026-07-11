@@ -8,7 +8,7 @@ import InfinitaryLogic.ModelTheory.MorleyHanf
 /-!
 # The countable-spectrum witness
 
-The first bounded-spectrum sentence of the sharpness pilot: over `constantsOn ℕ`, the constants
+The first bounded-spectrum sentence of the sharpness chain: over `constantsOn ℕ`, the constants
 are pairwise distinct and every element is a constant. The spectrum is EXACTLY `{ℵ₀}`
 (`mk_eq_aleph0_of_models_countableSpectrumSentence` — the constant interpretation is a
 bijection `ℕ ≃ M`), so through the generic bounded-spectrum endpoint
@@ -17,7 +17,8 @@ bijection `ℕ ≃ M`), so through the generic bounded-spectrum endpoint
 * `aleph0_lt_Lomega1omegaHanfNumber` — `ℵ₀ < Hanf(L_{ω₁ω})`.
 
 Reference: Marker, *Lectures on Infinitary Model Theory*, Ch. 1. The powerset witness (ladder
-stage `α = 0`) and the Marker Exercise 5.3 `ℶ_{α+1}` ladder continue the pilot in sibling files.
+stage `α = 0`) and the Marker Exercise 5.3 `ℶ_{α+1}` ladder complete the chain in sibling files
+(endpoint: `Lomega1omegaHanfNumber_eq_beth_omega1`, `HanfSpectrum/BethLadder.lean`).
 Implementation helpers live in the `CountableSpectrum` namespace; only the sentence and the
 headline spectrum theorems are top-level.
 -/

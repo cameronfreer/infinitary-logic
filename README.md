@@ -17,6 +17,7 @@ A Lean 4 formalization of infinitary logic (L∞ω and Lω₁ω), Scott sentence
 - **Silver's theorem & the Silver–Burgess dichotomy** — A Borel equivalence relation on a Polish space has countably many classes or a perfect set of pairwise-inequivalent points (`gandy_harrington_for_relation`); on a standard Borel space the quotient is ≤ ℵ₀ or exactly 2^ℵ₀ (`silverBurgessDichotomy`). Proved via Miller's classical category route: the Kechris–Solecki–Todorcevic G₀-dichotomy (positivity ideals, Lusin separation, fusion), Miller's G_S independence lemma, Kuratowski–Ulam, and Mycielski's theorem — all formalized here.
 - **Morley counting** — The number of isomorphism classes of countable models of an Lω₁ω sentence is ≤ ℵ₁ or exactly 2^ℵ₀ (`morley_counting`, parametrized by the dichotomy; unconditional via `silverBurgessDichotomy`).
 - **The Morley–Hanf theorem** — ℶ_ω₁ is a Hanf bound for every Lω₁ω sentence, over an arbitrary language with no side hypotheses (`morley_hanf`): a sentence with a model of size ≥ ℶ_ω₁ has models of arbitrarily large cardinality. No extraction is consumed (an injective sequence is already indiscernible on the Morley seed); the Ehrenfeucht–Mostowski tail-template theory of the seed is realized by a Henkin-style ω-stage completion of the countable *schema* sentence universe (pinning a disjunct for every positive countable disjunction and a refuted conjunct for every negative countable conjunction), whose quotient term model carries a fully indiscernible sequence of Henkin constants; symbol countability is discharged by the sentence's own generated sublanguage. Axioms exactly `[propext, Classical.choice, Quot.sound]`.
+- **The exact Hanf number** — Hanf(Lω₁ω) = ℶ_ω₁ (`Lomega1omegaHanfNumber_eq_beth_omega1`): the Morley–Hanf bound is sharp. The upper half is `morley_hanf` (bounded Erdős–Rado → Marker/schema completion); the lower half is Marker's Exercise 5.3 beth ladder (countable-index syntax → von Neumann hierarchy witnesses `V_{ω+β}` with Mathlib's cardinality computation → a bounded spectrum with maximum exactly ℶ_{α+1} at every stage α < ω₁ → the successor-cofinal supremum). Axioms exactly `[propext, Classical.choice, Quot.sound]`.
 
 ## Scope and Boundaries
 
@@ -75,7 +76,8 @@ import InfinitaryLogic.Everything   -- everything including Conditional and lega
 - `morley_counting` — Morley's counting theorem: ≤ ℵ₁ or 2^ℵ₀ iso classes of countable models (parametrized by `SilverBurgessDichotomy`; unconditional via `silverBurgessDichotomy`)
 - `iso_borel_of_bounded_scottHeight` — Isomorphism is Borel under bounded Scott height
 - `morley_hanf` — The Morley–Hanf theorem: ℶ_ω₁ is a Hanf bound for every Lω₁ω sentence (proved, no hypotheses)
-- `hanfNumber_le_beth_omega1` / `Lomega1omegaHanfNumber_le_beth_omega1` — Per-sentence and global Hanf-number bounds
+- `Lomega1omegaHanfNumber_eq_beth_omega1` — **The exact Hanf number**: Hanf(Lω₁ω) = ℶ_ω₁ (proved; upper half `morley_hanf`, lower half the Exercise 5.3 beth ladder over the von Neumann hierarchy)
+- `hanfNumber_le_beth_omega1` / `Lomega1omegaHanfNumber_le_beth_omega1` — Per-sentence and global Hanf-number upper bounds
 - `morley_hanf_theory` — The Morley–Hanf theorem for countable Lω₁ω-theories
 
 ## References

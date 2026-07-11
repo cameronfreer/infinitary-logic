@@ -31,6 +31,19 @@ open HanfLadder
 
 /-- **The per-stage sharpness step**: for every `α < ω₁`, the ladder sentence has maximal
 model size exactly `ℶ_{α+1}`, so `ℶ_{α+1} < Lomega1omegaHanfNumber`. -/
+@[blueprint "thm:hanf-ladder-stage"
+  (title := /-- Beth-ladder stage witnesses -/)
+  (statement := /-- For every $\alpha < \omegaone$ there is an $\Lomegaone$ sentence whose
+    models have size exactly $\beth_{\alpha+1}$ at the maximum, so
+    $\beth_{\alpha+1} < \mathrm{Hanf}(\Lomegaone)$. -/)
+  (proof := /-- Marker's Exercise 5.3 ladder sentence over the level order $(\alpha+2)$:
+    countably many constants enumerate the base level, adjacent levels descend along an
+    extensional edge relation, and limit levels are covered. The von Neumann stages
+    $V_{\omega+\beta}$ (with Mathlib's $|V_o| = \beth^{\mathrm{pre}}_o$) give a model of
+    size exactly $\beth_{\alpha+1}$ after `Shrink` transport; conversely a well-founded
+    induction on the level order bounds every level of every model by powerset and
+    countable-union steps. -/)
+  (uses := ["def:arb-large-models", "def:hanf-bound"])]
 theorem beth_add_one_lt_Lomega1omegaHanfNumber {α : Ordinal.{0}}
     (hα : α < Ordinal.omega 1) :
     Cardinal.beth (α + 1) < Lomega1omegaHanfNumber := by
@@ -43,6 +56,13 @@ theorem beth_add_one_lt_Lomega1omegaHanfNumber {α : Ordinal.{0}}
 
 /-- The lower half of the Hanf-number computation: `ℶ_{ω₁} ≤ Lomega1omegaHanfNumber`, by the
 successor-cofinal supremum over the ladder stages. -/
+@[blueprint "thm:hanf-lower-global"
+  (title := /-- Global Hanf lower bound -/)
+  (statement := /-- $\beth_{\omegaone} \le \mathrm{Hanf}(\Lomegaone)$. -/)
+  (proof := /-- The successor ordinals are cofinal in $\omegaone$, so
+    $\beth_{\omegaone} = \sup_{\alpha<\omegaone} \beth_{\alpha+1}$, and each
+    $\beth_{\alpha+1}$ is a strict lower bound by the ladder-stage witnesses. -/)
+  (uses := ["thm:hanf-ladder-stage"])]
 theorem beth_omega1_le_Lomega1omegaHanfNumber :
     Cardinal.beth (Ordinal.omega 1) ≤ Lomega1omegaHanfNumber := by
   rw [← FirstOrder.HanfLadder.iSup_beth_add_one_omega1]
@@ -50,6 +70,15 @@ theorem beth_omega1_le_Lomega1omegaHanfNumber :
 
 /-- **The Hanf number of `L_{ω₁ω}` is exactly `ℶ_{ω₁}`** (Morley; Marker, Theorem 5.4): the
 Morley–Hanf upper bound `morley_hanf` is sharp. -/
+@[blueprint "thm:hanf-exact"
+  (title := /-- The exact Hanf number of L-omega1-omega -/)
+  (statement := /-- $\mathrm{Hanf}(\Lomegaone) = \beth_{\omegaone}$: the global Hanf number
+    of $\Lomegaone$ over $\mathrm{Type}$-$0$ languages is exactly $\beth_{\omegaone}$. -/)
+  (proof := /-- Antisymmetry of the global upper bound (the Morley--Hanf theorem, via bounded
+    Erd\H{o}s--Rado and the Marker/schema completion) and the global lower bound (the beth
+    ladder: countable-index syntax, von Neumann hierarchy witnesses, bounded spectra at every
+    beth successor, and the cofinal supremum). -/)
+  (uses := ["thm:hanf-upper-global", "thm:hanf-lower-global"])]
 theorem Lomega1omegaHanfNumber_eq_beth_omega1 :
     Lomega1omegaHanfNumber = Cardinal.beth (Ordinal.omega 1) :=
   le_antisymm Lomega1omegaHanfNumber_le_beth_omega1 beth_omega1_le_Lomega1omegaHanfNumber
