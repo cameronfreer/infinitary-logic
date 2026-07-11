@@ -11,6 +11,7 @@ import InfinitaryLogic.Linf.QuantifierRank
 -- Lω₁ω (countable infinitary logic)
 import InfinitaryLogic.Lomega1omega.Syntax
 import InfinitaryLogic.Lomega1omega.Semantics
+import InfinitaryLogic.Lomega1omega.CountableIndex
 import InfinitaryLogic.Lomega1omega.Operations
 import InfinitaryLogic.Lomega1omega.Embedding
 import InfinitaryLogic.Lomega1omega.Theory

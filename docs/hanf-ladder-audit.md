@@ -161,19 +161,31 @@ particular `ℶ_{α+1} ≤ H` for every `α < ω₁`. Then:
   `α+1`) with spectrum bounded by (and attaining) `ℶ_{α+1}`; the `+1`s in Marker's statement and
   Mathlib's `beth` line up without adjustment.
 
-## Implementation plan (in commit order)
+## Implementation plan (in commit order — REVISED per review 2026-07-11)
 
-1. `ciInf`/`ciSup` over countable index types + realize lemmas (`Lomega1omega/Operations`-level,
-   reusable; models `Theoryω.conjunction`).
-2. Cardinal ladder lemmas (§3 items 1–3, plus §5's supremum lemma) — no syntax.
-3. `HanfSpectrum/Powerset.lean`: the α = 0 model on `Set ℕ` and
-   `beth_one_lt_Lomega1omegaHanfNumber` (can use a hand-rolled 2-level sentence OR the general
-   `ladderLang` instantiated; prefer `ladderLang` if item 4 is imminent, hand-rolled if the
-   spike takes priority).
-4. `ZFSet` cardinality bridge (the risk item — timebox it; on failure invoke the contingency).
-5. `HanfSpectrum/BethLadder.lean`: `ladderLang α`, the sentence, the `ZFSet` maximal model +
-   `Shrink`, the upper-bound induction, the per-stage witness, the supremum, and
-   `Lomega1omegaHanfNumber_eq_beth_omega1`.
+1. `ciInf`/`ciSup` over countable index types + realize lemmas. Two-layer API: an
+   explicit-surjection core `ciInfOfSurjective e φs` (realization proof trivial) and the
+   `[Countable ι]` wrapper isolating the noncomputable enumeration choice. Only
+   `realize_ciInf`/`realize_ciSup` + empty/nonempty handling; NO syntactic naturality API until
+   a consumer needs it (noncanonical enumerations make definitional commutation unpleasant).
+2. `HanfSpectrum/LadderSyntax.lean`: `ladderLang`, the clause families, `ladderSentence` — the
+   COMMON sentence, so the α = 0 witness is syntactically part of the ladder (no hand-rolled
+   powerset sentence needing later reconciliation).
+3. Cardinal ladder lemmas (§3 items 1–3, plus §5's supremum lemma) — no syntax.
+4. `HanfSpectrum/Powerset.lean`: prove the COMMON sentence at α = 0 has maximal model `Set ℕ`;
+   land `beth_one_lt_Lomega1omegaHanfNumber`.
+5. `ZFSet` cardinality bridge (the risk item — timebox it; on failure invoke the contingency).
+   Promote the recursion invariants to EXPLICIT lemmas up front:
+   - monotonicity: `Y β ⊆ Y γ` for `β ≤ γ`;
+   - transitivity of every `Y β` — doing two jobs: (a) `x ∈ Y (β+1) → y ∈ x → y ∈ Y β`-style
+     downward membership for clause (iv), and (b) carrier-relative predecessor equality implies
+     genuine ZF extensionality (every member of a carrier element is again in the carrier);
+   - `mk {x // x ∈ Y β} = lift (beth β)`.
+6. `HanfSpectrum/BethLadder.lean`: the `ZFSet` maximal model + `Shrink`, the upper-bound
+   induction, the per-stage witness, the supremum, and `Lomega1omegaHanfNumber_eq_beth_omega1`.
+
+Universe note (confirmed): `(α + 2).toType` keeps `ladderLang α : Language.{0,0}`; the `Shrink`
+work is needed only for the general `ZFSet` carrier, never for the symbol family.
 
 ## Bonus capture (for #12)
 
@@ -181,6 +193,7 @@ Page 54 of the same PDF has the exact statement this audit's fetch surfaced: **C
 — τ countable with binary `<`, `M ⊨ φ` with `<` of order type ω₁, then there is `N ⊨ φ` of
 cardinality ℵ₁ with an order-preserving embedding of (ℚ, <) — proved from Theorem 4.30
 (A-elementary end extensions via omitting types) + Corollary 4.31 (ℵ₁-chains) + Theorem 4.26.
-So #12's actual dependency chain in Marker runs through **end extensions and elementary chains**
-(i.e., issue #13 material), not just the bare consistency property; #12 should be updated when
-work starts on it.
+Correction on review: this does NOT change #12's dependencies. Theorem 4.26 — the actual #12
+target — and its boundedness corollary use the dedicated consistency property directly;
+Corollary 4.34 is a LATER STRENGTHENING through end extensions and chains (#13 material). Treat
+4.34 as a follow-up milestone of #12, not a dependency of it.
