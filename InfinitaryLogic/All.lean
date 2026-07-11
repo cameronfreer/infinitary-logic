@@ -10,6 +10,7 @@ import InfinitaryLogic.ModelTheory.AElementary
 import InfinitaryLogic.ModelTheory.FragmentLowenheimSkolem
 import InfinitaryLogic.ModelTheory.AElementaryChains
 import InfinitaryLogic.ModelTheory.TypeIsolation
+import InfinitaryLogic.ModelTheory.CountableCompanion
 
 /-!
 # All: the sorry-free library surface
