@@ -9,11 +9,14 @@ import InfinitaryLogic.ModelTheory.HanfSpectrum.CardinalBounds
 import InfinitaryLogic.ModelTheory.HanfSpectrum.IndexOrder
 import InfinitaryLogic.ModelTheory.HanfSpectrum.Powerset
 import InfinitaryLogic.ModelTheory.HanfSpectrum.VonNeumannModel
+import InfinitaryLogic.ModelTheory.HanfSpectrum.LadderBound
+import InfinitaryLogic.ModelTheory.HanfSpectrum.BethLadder
 
 /-!
 # Bounded-spectrum witnesses: lower bounds for the `L_{ω₁ω}` Hanf number
 
-Facade for the sharpness pilot (toward `Hanf(L_{ω₁ω}) = ℶ_{ω₁}`): concrete sentences whose model
+Facade for the sharpness half of `Hanf(L_{ω₁ω}) = ℶ_{ω₁}`
+(`Lomega1omegaHanfNumber_eq_beth_omega1`, `BethLadder.lean`): concrete sentences whose model
 spectra are BOUNDED, each consumed through the generic endpoint
 `lt_Lomega1omegaHanfNumber_of_maximal_model` (`ModelTheory/MorleyHanf.lean`).
 
@@ -27,7 +30,9 @@ spectra are BOUNDED, each consumed through the generic endpoint
   `beth_one_lt_Lomega1omegaHanfNumber`.
 * `HanfSpectrum/IndexOrder.lean` — the deferred `typein` layer: `idxVal`/`idxOf`, endpoint
   values, `⋖`/limit transfers, and `Countable (Index α)` for `α < ω₁`.
-* (next) `HanfSpectrum/BethLadder.lean` — the general stage: for each `α < ω₁` a maximal model
-  of size `ℶ_{α+1}` (the von Neumann levels `V_{ω+β}` + Shrink transport), then the supremum
-  `⨆_{α<ω₁} ℶ_{α+1} = ℶ_{ω₁}` (`CardinalBounds.lean`) gives `Lomega1omegaHanfNumber = ℶ_{ω₁}`.
+* `HanfSpectrum/VonNeumannModel.lean` / `LadderBound.lean` — the general stage: the maximal
+  model of size exactly `ℶ_{α+1}` (von Neumann levels `V_{ω+β}` + Shrink transport) and the
+  matching upper bound for every model.
+* `HanfSpectrum/BethLadder.lean` — the assembly: `beth_add_one_lt_Lomega1omegaHanfNumber` for
+  each `α < ω₁`, the supremum, and **`Lomega1omegaHanfNumber_eq_beth_omega1`**.
 -/

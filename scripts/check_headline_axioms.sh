@@ -17,6 +17,7 @@ import InfinitaryLogic
 #print axioms FirstOrder.Language.morleySeedTailTemplateRealizable_holds
 #print axioms FirstOrder.Language.hanfNumber_le_beth_omega1
 #print axioms FirstOrder.Language.Lomega1omegaHanfNumber_le_beth_omega1
+#print axioms FirstOrder.Language.Lomega1omegaHanfNumber_eq_beth_omega1
 #print axioms FirstOrder.Language.morley_hanf_theory
 #print axioms FirstOrder.Language.karp_theorem_w
 #print axioms FirstOrder.Language.model_existence
