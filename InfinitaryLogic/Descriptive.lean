@@ -6,6 +6,7 @@ import InfinitaryLogic.Descriptive.Polish
 
 -- Satisfaction and equivalence Borel complexity
 import InfinitaryLogic.Descriptive.SatisfactionBorel
+import InfinitaryLogic.Descriptive.LopezEscobarEasy
 import InfinitaryLogic.Descriptive.SatisfactionBorelOn
 import InfinitaryLogic.Descriptive.BFEquivBorel
 import InfinitaryLogic.Descriptive.IsomorphismBorel
