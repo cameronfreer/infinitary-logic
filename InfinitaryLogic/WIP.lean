@@ -1,5 +1,7 @@
 -- The old skolemColim EM term model (kept CI-checked; no longer imported by the local stack)
 import InfinitaryLogic.Methods.EMTermModel
+-- Issue #8 (Craig interpolation) constant-abstraction kernel (CI-checked here during development)
+import InfinitaryLogic.Methods.ConstantAbstraction
 -- The local EM extraction bridge (its Conditional/MorleyHanfTransfer import stays isolated here)
 import InfinitaryLogic.Methods.LocalEMExtraction
 -- The pure local stack: semantic layer onward (LocalEMFamily -> LocalColimit -> LocalTower ->
