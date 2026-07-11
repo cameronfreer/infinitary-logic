@@ -23,6 +23,8 @@ import InfinitaryLogic.Methods.LocalEMCardinality
 -- The issue #11 order-existence: ordered fields are highly transitive; every infinite cardinal
 import InfinitaryLogic.Methods.HighlyTransitiveField
 import InfinitaryLogic.Methods.HighlyTransitiveExistence
+-- The issue #11 countable-symbol core: small models of every infinite size
+import InfinitaryLogic.Methods.LocalEMSmallModel
 -- The local EM truth lemma layer 2: readiness + the staged truth lemma (imports LocalEMTruth)
 import InfinitaryLogic.Methods.LocalEMTruthLemma
 -- The template-realization bridge (imports the EM-side template machinery; Conditional-free)
