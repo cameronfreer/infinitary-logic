@@ -12,6 +12,8 @@ import InfinitaryLogic.Methods.LocalEMTruth
 import InfinitaryLogic.Methods.LocalEMEquivariance
 -- The issue #11 order-theoretic interface: highly order-transitive linear orders
 import InfinitaryLogic.Methods.HighlyOrderTransitive
+-- The issue #11 compression layer: finite-support term codes (imports LocalEMEquivariance)
+import InfinitaryLogic.Methods.LocalEMCompression
 -- The local EM truth lemma layer 2: readiness + the staged truth lemma (imports LocalEMTruth)
 import InfinitaryLogic.Methods.LocalEMTruthLemma
 -- The template-realization bridge (imports the EM-side template machinery; Conditional-free)
