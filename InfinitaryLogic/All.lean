@@ -5,6 +5,7 @@ import InfinitaryLogic.Descriptive
 import InfinitaryLogic.ModelTheory.MorleyHanf
 import InfinitaryLogic.ModelTheory.HanfSpectrum
 import InfinitaryLogic.ModelTheory.InfinitaryTypes
+import InfinitaryLogic.ModelTheory.SmallModels
 
 /-!
 # All: the sorry-free library surface

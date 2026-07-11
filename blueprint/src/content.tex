@@ -14,7 +14,7 @@ disjunctions) where possible.
 
 \section{Main Results}
 
-The formalization establishes nine headline theorems:
+The formalization establishes ten headline theorems:
 \begin{itemize}
   \item \textbf{Scott characterization.}
     Every countable structure is characterized up to isomorphism by
@@ -47,6 +47,10 @@ The formalization establishes nine headline theorems:
     $\mathrm{Hanf}(\Lomegaone) = \beth_{\omegaone}$: the Morley--Hanf bound is
     sharp, by Marker's Exercise~5.3 beth ladder over the von Neumann hierarchy
     (Theorem~\ref{thm:hanf-exact}).
+  \item \textbf{Small models of every infinite size.}
+    A sentence with arbitrarily large models has, at every infinite $\kappa$, a
+    model of size exactly $\kappa$ realizing only countably many complete
+    $\Lomegaone$-types (Theorem~\ref{thm:small-models}).
 \end{itemize}
 
 \section{Back-and-Forth Equivalence}
@@ -234,6 +238,20 @@ argument.
 \inputleannode{thm:hanf-lower-global}
 
 \inputleannode{thm:hanf-exact}
+
+\section{Small Models}
+
+\emph{Status: proved.}  Marker's Theorem~11.2
+(\texttt{exists\_small\_model\_of\_hasArbLargeModels}, \ref{thm:small-models}): a sentence
+with arbitrarily large models has models of every infinite size realizing only countably many
+complete $\Lomegaone$-types.  The witnesses are the local Ehrenfeucht--Mostowski quotients of
+the Morley-seed schema source over highly order-transitive skeletons (linear ordered fields,
+supplied at every infinite cardinality by lexicographic Hahn-series subfields); the quotient is
+equivariant under order automorphisms of the skeleton, tuples are classified by countably many
+compressed term codes, and located term codes compute the carrier cardinality exactly.
+Arbitrary languages reduce along a uniform collapsing hom.
+
+\inputleannode{thm:small-models}
 
 \chapter{Counting Models}
 

@@ -176,6 +176,22 @@ only countably many complete `L_{ω₁ω}`-types. The final structure is literal
 the countable-language small model along `uniformCollapse φ`, so satisfaction is generic
 (`realize_mapLanguage`) and smallness descends (`Lomega1omegaSmall.of_expansion`); the carrier
 and hence its cardinality are unchanged. -/
+@[blueprint "thm:small-models"
+  (title := /-- Small models of every infinite size -/)
+  (statement := /-- A sentence of $\Lomegaone$ with arbitrarily large models has, at every
+    infinite cardinal $\kappa$, a model of cardinality exactly $\kappa$ realizing only
+    countably many complete $\Lomegaone$-types over the empty set, across all finite
+    arities (Marker, Theorem~11.2). -/)
+  (proof := /-- The schema term source of the Morley seed over a highly order-transitive
+    skeleton of size $\kappa$ (every linear ordered field is highly order-transitive, by cut
+    dilations; lexicographic Hahn-series subfields realize every infinite cardinality). The
+    local EM quotient is equivariant under order automorphisms of the skeleton, so tuples are
+    classified up to structure automorphism by countably many compressed term codes and each
+    code fiber of realized types is a subsingleton; located term codes give carrier
+    cardinality exactly $\max(\aleph_0,\kappa)$. An arbitrary language is handled by taking
+    the final structure to be a reduct along the uniform collapsing hom into the sentence's
+    generated sublanguage plus dummies, so smallness descends along the reduct. -/)
+  (uses := ["def:arb-large-models"])]
 theorem exists_small_model_of_hasArbLargeModels {φ : L.Sentenceω}
     (hφarb : HasArbLargeModels φ) {κ : Cardinal.{0}} (hκ : Cardinal.aleph0 ≤ κ) :
     ∃ (N : Type) (_ : L.Structure N),

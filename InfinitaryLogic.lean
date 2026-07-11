@@ -93,6 +93,7 @@ For narrower entry points:
 - `ModelTheory/LowenheimSkolem.lean`: Downward Löwenheim-Skolem for Lω₁ω
 - `ModelTheory/Hanf.lean`: Hanf numbers; the Morley-Hanf bound itself is `morley_hanf` in `Conditional/MorleyHanfSchemaDischarge.lean`
 - `ModelTheory/HanfSpectrum.lean` (+ `HanfSpectrum/`): the sharpness half — bounded-spectrum witnesses (countable spectrum, powerset, the Exercise 5.3 beth ladder over the von Neumann hierarchy) and the exact Hanf number `Lomega1omegaHanfNumber_eq_beth_omega1`
+- `ModelTheory/InfinitaryTypes.lean` / `ModelTheory/SmallModels.lean`: complete infinitary types, smallness, and the small-model theorem `exists_small_model_of_hasArbLargeModels` (Marker Thm 11.2; engine in `Methods/LocalEM*`, `Methods/HighlyTransitive*`, `Methods/UniformCollapse.lean`)
 - `ModelTheory/CountingModels.lean`: Scott rank and model counting
 - `ModelTheory/CountingCountable.lean`: Counting theorem for all countable models
 - `ModelTheory/MorleyCounting.lean`: Morley's counting theorem (≤ ℵ₁ or 2^ℵ₀)
