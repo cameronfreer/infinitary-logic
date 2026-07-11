@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.ModelTheory.CountableCompanion
 import InfinitaryLogic.Scott.BackAndForth
+import InfinitaryLogic.Karp.Theorem
 
 /-!
 # The type-preserving back-and-forth (issue #17 chunk 3)
@@ -143,6 +144,38 @@ theorem bfEquiv_all_of_typeAgree {N : L.Substructure M}
     intro n a b hab
     rw [BFEquiv.limit β hβ]
     exact fun γ hγ => ih γ hγ a b hab
+
+/-! ## The semantic countable-companion theorem (chunk 4) -/
+
+/-- **Back-and-forth equivalence with a given companion** (identity-keeping form): any
+countable companion from chunk 2 is `BFEquiv` at every ordinal with the ambient structure. -/
+theorem bfEquiv_all_of_companion {hsmall : Lomega1omegaSmall (L := L) M}
+    {N : L.Substructure M} (hAe : AElementary (isolatorFragment hsmall) N.subtype)
+    (α : Ordinal) :
+    BFEquiv (L := L) α 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) :=
+  bfEquiv_all_of_typeAgree (fun _ _ hab a' => hab.forth hAe a')
+    (fun _ _ hab b' => hab.back hsmall b') α Fin.elim0 Fin.elim0 (typeAgree_elim0 N)
+
+/-- **The semantic countable-companion theorem** (issue #17 chunk 4 endpoint): a small
+structure over countably many function symbols has a countable model back-and-forth
+equivalent to it at every ordinal. -/
+theorem exists_countable_bfEquiv_of_lomega1omegaSmall [Countable (Σ n, L.Functions n)]
+    (hsmall : Lomega1omegaSmall (L := L) M) :
+    ∃ (N : Type) (_ : L.Structure N), Countable N ∧
+      ∀ α : Ordinal, BFEquiv (L := L) α 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) := by
+  obtain ⟨N, hcnt, hAe⟩ := exists_countable_companion hsmall
+  exact ⟨N, inferInstance, hcnt, bfEquiv_all_of_companion hAe⟩
+
+/-- **All-`L_∞ω`-formula agreement** with a companion — the relational packaging boundary
+(`BFEquiv_implies_agreeQR`). -/
+theorem realize_inf_iff_of_companion [L.IsRelational]
+    {hsmall : Lomega1omegaSmall (L := L) M} {N : L.Substructure M}
+    (hAe : AElementary (isolatorFragment hsmall) N.subtype)
+    (φ : BoundedFormulaInf.{0, 0, 0, 0} L (Fin 0) 0) :
+    FormulaInf.Realize φ (Fin.elim0 : Fin 0 → M)
+      ↔ FormulaInf.Realize φ (Fin.elim0 : Fin 0 → N) :=
+  BFEquiv_implies_agreeQR φ.qrank Fin.elim0 Fin.elim0
+    (bfEquiv_all_of_companion hAe φ.qrank) φ le_rfl
 
 end Language
 
