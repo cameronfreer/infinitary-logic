@@ -7,9 +7,11 @@ import InfinitaryLogic.Methods.LocalEMExtraction
 import InfinitaryLogic.Methods.LocalEMContext
 -- The local EM truth lemma layer 1: Skolem-witness transport (imports LocalEMContext)
 import InfinitaryLogic.Methods.LocalEMTruth
--- The issue #11 equivariance spike: the local EM setoid is preserved/reflected by skeleton
--- renaming along order automorphisms of J (imports LocalEMContext)
+-- The issue #11 equivariance spike + packaging: the local EM setoid is preserved/reflected by
+-- skeleton renaming; descended base-reduct automorphism (imports LocalEMContext)
 import InfinitaryLogic.Methods.LocalEMEquivariance
+-- The issue #11 order-theoretic interface: highly order-transitive linear orders
+import InfinitaryLogic.Methods.HighlyOrderTransitive
 -- The local EM truth lemma layer 2: readiness + the staged truth lemma (imports LocalEMTruth)
 import InfinitaryLogic.Methods.LocalEMTruthLemma
 -- The template-realization bridge (imports the EM-side template machinery; Conditional-free)
