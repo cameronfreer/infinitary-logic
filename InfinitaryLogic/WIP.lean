@@ -14,6 +14,8 @@ import InfinitaryLogic.Methods.LocalEMEquivariance
 import InfinitaryLogic.Methods.HighlyOrderTransitive
 -- The issue #11 compression layer: finite-support term codes (imports LocalEMEquivariance)
 import InfinitaryLogic.Methods.LocalEMCompression
+-- The issue #11 orbit classification: tuple codes; equal code => same automorphism orbit
+import InfinitaryLogic.Methods.LocalEMTupleOrbit
 -- The local EM truth lemma layer 2: readiness + the staged truth lemma (imports LocalEMTruth)
 import InfinitaryLogic.Methods.LocalEMTruthLemma
 -- The template-realization bridge (imports the EM-side template machinery; Conditional-free)
