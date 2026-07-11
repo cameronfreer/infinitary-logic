@@ -19,6 +19,8 @@ import InfinitaryLogic
 #print axioms FirstOrder.Language.Lomega1omegaHanfNumber_le_beth_omega1
 #print axioms FirstOrder.Language.Lomega1omegaHanfNumber_eq_beth_omega1
 #print axioms FirstOrder.Language.exists_small_model_of_hasArbLargeModels
+#print axioms FirstOrder.Language.exists_complete_sentence_of_lomega1omegaSmall
+#print axioms FirstOrder.Language.exists_complete_kCategorical_of_hasArbLargeModels
 #print axioms FirstOrder.Language.morley_hanf_theory
 #print axioms FirstOrder.Language.karp_theorem_w
 #print axioms FirstOrder.Language.model_existence

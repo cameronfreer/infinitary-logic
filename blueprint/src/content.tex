@@ -14,7 +14,7 @@ disjunctions) where possible.
 
 \section{Main Results}
 
-The formalization establishes ten headline theorems:
+The formalization establishes eleven headline theorems:
 \begin{itemize}
   \item \textbf{Scott characterization.}
     Every countable structure is characterized up to isomorphism by
@@ -51,6 +51,12 @@ The formalization establishes ten headline theorems:
     A sentence with arbitrarily large models has, at every infinite $\kappa$, a
     model of size exactly $\kappa$ realizing only countably many complete
     $\Lomegaone$-types (Theorem~\ref{thm:small-models}).
+  \item \textbf{Complete sentences and categoricity.}
+    Every small model of $\varphi$ satisfies a complete sentence entailing
+    $\varphi$; a $\kappa$-categorical $\varphi$ with arbitrarily large models
+    has a complete completion with a $\kappa$-sized model, itself
+    $\kappa$-categorical (Theorems~\ref{thm:complete-subclass},
+    \ref{thm:categorical-complete}).
 \end{itemize}
 
 \section{Back-and-Forth Equivalence}
@@ -294,6 +300,22 @@ on the coding space for countable structures.
 \inputleannode{thm:satisfaction-borel}
 
 \inputleannode{thm:lopez-escobar-easy}
+
+\section{Complete Sentences and Categoricity}
+
+\emph{Status: proved.}  The payoff of the small-model theorem (Marker, Theorem~11.2
+applications): a small model's countable companion — built from realized-type isolators, one
+countable controlling fragment, and the genuine fragment L\"owenheim--Skolem theorem — is
+back-and-forth equivalent to it at every ordinal, and the companion's canonical Scott sentence
+characterizes ARBITRARY models up to all-ordinal back-and-forth equivalence (the
+arbitrary-target stabilization kernel, where the fragment machinery upgrades countable-target
+Scott stabilization).  Hence every small model of $\varphi$ lies in a complete subclass of
+$\mathrm{Mod}(\varphi)$, and $\kappa$-categorical sentences have $\kappa$-categorical
+complete completions.
+
+\inputleannode{thm:complete-subclass}
+
+\inputleannode{thm:categorical-complete}
 
 \inputleannode{thm:bfequiv-borel}
 

@@ -155,6 +155,17 @@ theorem canonicalScottSentenceω_entails {φ : L.Sentenceω}
 /-- **The unconditional complete-subclass intermediate** (issue #17 chunk 5 endpoint): every
 small model of `φ` satisfies a complete sentence entailing `φ` — its own countable companion's
 canonical Scott sentence. -/
+@[blueprint "thm:complete-subclass"
+  (title := /-- Small models lie in complete subclasses -/)
+  (statement := /-- Over a countable relational vocabulary, every model of $\varphi$ realizing
+    only countably many complete $\Lomegaone$-types satisfies a COMPLETE
+    $\Lomegaone$-sentence entailing $\varphi$. -/)
+  (proof := /-- The model's countable companion (type isolators, the controlling fragment,
+    fragment L\"owenheim--Skolem) is back-and-forth equivalent to it at every ordinal; the
+    companion's canonical Scott sentence characterizes its arbitrary models up to
+    all-ordinal back-and-forth equivalence (arbitrary-target stabilization), so any two of
+    its models are $L_{\infty\omega}$-equivalent — completeness and entailment follow. -/)
+  (uses := ["thm:scottFormula-iff", "def:BFEquiv"])]
 theorem exists_complete_sentence_of_lomega1omegaSmall {M : Type} [L.Structure M]
     (hsmall : Lomega1omegaSmall (L := L) M) {φ : L.Sentenceω}
     (hφ : Sentenceω.Realize φ M) :
@@ -187,6 +198,17 @@ def KCategorical (φ : L.Sentenceω) (κ : Cardinal.{0}) : Prop :=
 /-- **The categoricity payoff** (issue #17 chunk 6): a `κ`-categorical sentence with
 arbitrarily large models admits a COMPLETE sentence entailing it, with a model of size exactly
 `κ` — and the complete sentence is itself `κ`-categorical. -/
+@[blueprint "thm:categorical-complete"
+  (title := /-- Complete completions of categorical sentences -/)
+  (statement := /-- If $\varphi$ has arbitrarily large models and is $\kappa$-categorical
+    ($\kappa$ infinite), there is a complete $\psi \models \varphi$ with a model of
+    cardinality exactly $\kappa$, and $\psi$ is itself $\kappa$-categorical
+    (Marker, Theorem 11.2 applications). -/)
+  (proof := /-- The small-model theorem supplies a $\kappa$-sized model of $\varphi$
+    realizing countably many types; the complete-subclass intermediate provides its complete
+    Scott completion; categoricity of $\varphi$ transfers to $\psi$ since every
+    $\kappa$-model of $\psi$ is a $\kappa$-model of $\varphi$. -/)
+  (uses := ["thm:complete-subclass", "thm:small-models"])]
 theorem exists_complete_kCategorical_of_hasArbLargeModels {φ : L.Sentenceω}
     (hφarb : HasArbLargeModels φ) {κ : Cardinal.{0}} (hκ : Cardinal.aleph0 ≤ κ)
     (hcat : KCategorical φ κ) :
