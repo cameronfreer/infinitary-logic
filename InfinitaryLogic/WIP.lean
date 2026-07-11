@@ -16,6 +16,8 @@ import InfinitaryLogic.Methods.HighlyOrderTransitive
 import InfinitaryLogic.Methods.LocalEMCompression
 -- The issue #11 orbit classification: tuple codes; equal code => same automorphism orbit
 import InfinitaryLogic.Methods.LocalEMTupleOrbit
+-- The issue #11 conditional smallness theorem: countably many types via subsingleton code fibers
+import InfinitaryLogic.Methods.LocalEMSmall
 -- The local EM truth lemma layer 2: readiness + the staged truth lemma (imports LocalEMTruth)
 import InfinitaryLogic.Methods.LocalEMTruthLemma
 -- The template-realization bridge (imports the EM-side template machinery; Conditional-free)
