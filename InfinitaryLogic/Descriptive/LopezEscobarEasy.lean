@@ -9,16 +9,20 @@ import InfinitaryLogic.Lomega1omega.Theory
 /-!
 # López-Escobar, the easy direction
 
-Every `L_ω₁ω`-sentence defines an ISOMORPHISM-INVARIANT BOREL class of coded countable
-structures. Both halves were already in the tree — Borel-ness is `modelsOf_measurableSet`
-(formula induction on the standard Borel `StructureSpace L`), and invariance is a corollary of
-`BoundedFormulaω.realize_equiv` read through the decoding — this file packages them as the
-named literature statement (`lopezEscobar_easy`). Invariance is stated in the
-isomorphism-closed form (an `L`-isomorphism of the decoded structures transports membership),
-which for this purpose is equivalent to invariance under the logic action.
+For arbitrary relational vocabularies the model class of an `L_ω₁ω`-sentence is
+PRODUCT-MEASURABLE and ISOMORPHISM-INVARIANT (`modelsOf_measurable_invariant`); for countable
+relational vocabularies — where the repository's `BorelSpace`/`StandardBorelSpace
+(StructureSpace L)` instances apply — this is an invariant BOREL subset of the standard Borel
+structure space (`lopezEscobar_easy`, the literature statement).
 
-The hard converse — every isomorphism-invariant Borel class is `L_ω₁ω`-definable, via Vaught
-transforms — is issue #10.
+Invariance is the named isomorphism-closed predicate `IsomorphismInvariant` (an
+`L`-isomorphism of the decoded structures transports membership) — equivalent, for this
+purpose, to invariance under the logic action; an `Equiv.Perm ℕ`-action formulation can be
+added later as an optional descriptive-set-theoretic lemma, and is not needed by the planned
+proof of the converse.
+
+The hard converse — every isomorphism-invariant Borel class is `L_ω₁ω`-definable, by Marker's
+route through Craig interpolation and PC-separation — is issue #10.
 -/
 
 namespace FirstOrder
@@ -26,6 +30,12 @@ namespace FirstOrder
 namespace Language
 
 variable {L : Language.{u, v}} [L.IsRelational]
+
+/-- **Isomorphism invariance** of a class of coded structures, in isomorphism-closed form: an
+`L`-isomorphism of the decoded structures transports membership. -/
+def IsomorphismInvariant (B : Set (StructureSpace L)) : Prop :=
+  ∀ c d : StructureSpace L,
+    Nonempty (@Language.Equiv L ℕ ℕ c.toStructure d.toStructure) → (c ∈ B ↔ d ∈ B)
 
 /-- Membership in a sentence's model class is isomorphism-invariant: an `L`-isomorphism of the
 decoded structures transports satisfaction. -/
@@ -40,15 +50,36 @@ theorem modelsOf_mem_iff_of_equiv (φ : L.Sentenceω) {c d : StructureSpace L}
   rwa [show (⇑e ∘ Empty.elim : Empty → ℕ) = Empty.elim from funext fun x => x.elim,
     show (⇑e ∘ Fin.elim0 : Fin 0 → ℕ) = Fin.elim0 from funext fun i => i.elim0] at h
 
-/-- **López-Escobar, easy direction**: every `L_ω₁ω`-sentence defines an
-isomorphism-invariant Borel class of coded countable structures. (The converse — invariant
-Borel classes are `L_ω₁ω`-definable — is the López-Escobar theorem proper, issue #10.) -/
+theorem isomorphismInvariant_modelsOf (φ : L.Sentenceω) :
+    IsomorphismInvariant (ModelsOf φ) :=
+  fun _ _ ⟨e⟩ => modelsOf_mem_iff_of_equiv φ e
+
+/-- **The general form** (arbitrary relational vocabularies): the model class of a sentence is
+product-measurable and isomorphism-invariant. -/
+theorem modelsOf_measurable_invariant (φ : L.Sentenceω) :
+    MeasurableSet (ModelsOf φ) ∧ IsomorphismInvariant (ModelsOf φ) :=
+  ⟨modelsOf_measurableSet φ, isomorphismInvariant_modelsOf φ⟩
+
+variable [Countable (Σ l, L.Relations l)]
+
+set_option linter.unusedSectionVars false in
+/-- **López-Escobar, easy direction** (countable relational vocabularies): every
+`L_ω₁ω`-sentence defines an isomorphism-invariant BOREL class of coded countable structures —
+here `MeasurableSet` is Borel for the Polish topology, by the `BorelSpace (StructureSpace L)`
+instance, which is what the countable-relations hypothesis activates. (The converse —
+invariant Borel classes are `L_ω₁ω`-definable — is issue #10.) -/
+@[blueprint "thm:lopez-escobar-easy"
+  (title := /-- López-Escobar, easy direction -/)
+  (statement := /-- Over a countable relational vocabulary, the class of coded countable
+    models of an $\Lomegaone$-sentence is an isomorphism-invariant Borel subset of the
+    standard Borel space of structures. -/)
+  (proof := /-- Measurability is formula induction on the standard Borel structure space
+    (the satisfaction-measurability theorem); invariance is transport of realization along an
+    isomorphism of the decoded structures. -/)
+  (uses := ["thm:satisfaction-borel"])]
 theorem lopezEscobar_easy (φ : L.Sentenceω) :
-    MeasurableSet (ModelsOf φ) ∧
-      ∀ c d : StructureSpace L,
-        Nonempty (@Language.Equiv L ℕ ℕ c.toStructure d.toStructure) →
-        (c ∈ ModelsOf φ ↔ d ∈ ModelsOf φ) :=
-  ⟨modelsOf_measurableSet φ, fun _ _ ⟨e⟩ => modelsOf_mem_iff_of_equiv φ e⟩
+    MeasurableSet (ModelsOf φ) ∧ IsomorphismInvariant (ModelsOf φ) :=
+  modelsOf_measurable_invariant φ
 
 end Language
 
