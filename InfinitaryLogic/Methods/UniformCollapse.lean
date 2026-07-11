@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.GeneratedSublanguage
+import InfinitaryLogic.Methods.LocalEMSmallModel
 import InfinitaryLogic.ModelTheory.Hanf
 import InfinitaryLogic.ModelTheory.InfinitaryTypes
 
@@ -168,6 +169,28 @@ theorem hasArbLargeModels_mapLanguage_uniformCollapse {φ : L.Sentenceω}
   show BoundedFormulaω.Realize (φ.mapLanguage (uniformCollapse φ)) Empty.elim Fin.elim0
   rw [BoundedFormulaω.mapLanguage_uniformCollapse_eq φ (subset_refl _) (subset_refl _)]
   exact (BoundedFormulaω.realize_mapLanguage LHom.sumInl _ Empty.elim Fin.elim0).mpr h0
+
+/-- **The small-model theorem** (Marker, Theorem 11.2), over an ARBITRARY language: a sentence
+with arbitrarily large models has, at every infinite `κ`, a model of size exactly `κ` realizing
+only countably many complete `L_{ω₁ω}`-types. The final structure is literally the reduct of
+the countable-language small model along `uniformCollapse φ`, so satisfaction is generic
+(`realize_mapLanguage`) and smallness descends (`Lomega1omegaSmall.of_expansion`); the carrier
+and hence its cardinality are unchanged. -/
+theorem exists_small_model_of_hasArbLargeModels {φ : L.Sentenceω}
+    (hφarb : HasArbLargeModels φ) {κ : Cardinal.{0}} (hκ : Cardinal.aleph0 ≤ κ) :
+    ∃ (N : Type) (_ : L.Structure N),
+      Sentenceω.Realize φ N ∧ Cardinal.mk N = κ ∧ Lomega1omegaSmall (L := L) N := by
+  haveI := countable_sigma_functions_uniformLanguage φ
+  haveI := countable_sigma_relations_uniformLanguage φ
+  obtain ⟨N, instN, hφ'N, hNcard, hNsmall⟩ :=
+    exists_small_model_of_hasArbLargeModels_countable_symbols
+      (hasArbLargeModels_mapLanguage_uniformCollapse hφarb) hκ
+  letI : L.Structure N := (uniformCollapse φ).reduct N
+  haveI : (uniformCollapse φ).IsExpansionOn N := LHom.isExpansionOn_reduct _ _
+  refine ⟨N, inferInstance, ?_, hNcard,
+    Lomega1omegaSmall.of_expansion (uniformCollapse φ) hNsmall⟩
+  exact (BoundedFormulaω.realize_mapLanguage (uniformCollapse φ) φ
+    (Empty.elim : Empty → N) Fin.elim0).mp hφ'N
 
 end Language
 
