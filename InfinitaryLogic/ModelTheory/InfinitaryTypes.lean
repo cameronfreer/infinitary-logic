@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Lomega1omega.Operations
+import InfinitaryLogic.Lomega1omega.Theory
 
 /-!
 # Complete infinitary types and small models
@@ -44,6 +45,32 @@ def Lomega1omegaSmall (M : Type w) [L.Structure M] : Prop :=
 theorem infinitaryType_mem_realizedInfinitaryTypes (M : Type w) [L.Structure M] {n : ℕ}
     (a : Fin n → M) : infinitaryType M a ∈ RealizedInfinitaryTypes (L := L) M n :=
   ⟨a, rfl⟩
+
+/-- **Isomorphism transport for types**: an `L`-isomorphism carries the complete type of a
+tuple to the complete type of its image. -/
+theorem infinitaryType_equiv {M N : Type w} [L.Structure M] [L.Structure N] (e : M ≃[L] N)
+    {n : ℕ} (a : Fin n → M) :
+    infinitaryType (L := L) M a = infinitaryType (L := L) N (fun i => e (a i)) := by
+  ext ψ
+  have h := BoundedFormulaω.realize_equiv e ψ Empty.elim a
+  rwa [show (⇑e ∘ Empty.elim : Empty → N) = Empty.elim from funext fun x => x.elim] at h
+
+/-- **Smallness is invariant under structure isomorphism.** -/
+theorem Lomega1omegaSmall.of_equiv {M N : Type w} [L.Structure M] [L.Structure N]
+    (e : M ≃[L] N) (h : Lomega1omegaSmall (L := L) M) : Lomega1omegaSmall (L := L) N := by
+  intro n
+  have himg : RealizedInfinitaryTypes (L := L) N n = RealizedInfinitaryTypes (L := L) M n := by
+    ext p
+    constructor
+    · rintro ⟨b, rfl⟩
+      refine ⟨fun i => e.symm (b i), (infinitaryType_equiv e _).trans ?_⟩
+      congr 1
+      funext i
+      exact e.apply_symm_apply (b i)
+    · rintro ⟨a, rfl⟩
+      exact ⟨fun i => e (a i), (infinitaryType_equiv e a).symm⟩
+  rw [himg]
+  exact h n
 
 /-- **Smallness descends along reducts**: if `M` is small as an `L'`-structure and `g : L →ᴸ L'`
 is an expansion on `M`, then `M` is small as an `L`-structure. (The converse FAILS for
