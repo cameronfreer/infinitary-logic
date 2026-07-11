@@ -12,6 +12,7 @@ import InfinitaryLogic.Linf.QuantifierRank
 import InfinitaryLogic.Lomega1omega.Syntax
 import InfinitaryLogic.Lomega1omega.Semantics
 import InfinitaryLogic.Lomega1omega.CountableIndex
+import InfinitaryLogic.Lomega1omega.Fragment
 import InfinitaryLogic.Lomega1omega.Operations
 import InfinitaryLogic.Lomega1omega.Embedding
 import InfinitaryLogic.Lomega1omega.Theory
