@@ -16,8 +16,8 @@ each link is A-elementary in the union (`aElementary_inclusion_iSup`, via two-ou
 The linearly-ordered chain corollary (`aElementary_iSup_of_monotone`) covers both the ω- and
 ω₁-chain forms that #16 consumes; abstract direct limits are deliberately deferred.
 
-The finite-arity `OmitsType` API (unit 7): omission passes down to A-elementary substructures
-(`OmitsType.of_aElementary`) and through directed unions (`OmitsType.iSup`) when the type's
+The finite-arity `OmitsFiniteType` API (unit 7): omission passes down to A-elementary substructures
+(`OmitsFiniteType.of_aElementary`) and through directed unions (`OmitsFiniteType.iSup`) when the type's
 formulas lie in the fragment.
 -/
 
@@ -94,15 +94,15 @@ theorem aElementary_iSup_of_monotone {ι : Type*} [Nonempty ι] [LinearOrder ι]
 /-! ## Omitting types (unit 7) -/
 
 /-- **Finite-arity type omission**: no tuple realizes every formula of `p`. -/
-def OmitsType (M : Type w) [L.Structure M] {n : ℕ}
+def OmitsFiniteType (M : Type w) [L.Structure M] {n : ℕ}
     (p : Set (L.BoundedFormulaω Empty n)) : Prop :=
   ∀ a : Fin n → M, ∃ φ ∈ p, ¬φ.Realize Empty.elim a
 
 /-- Omission passes down to A-elementary substructures when the type lies in the fragment. -/
-theorem OmitsType.of_aElementary {n : ℕ} {p : Set (L.BoundedFormulaω Empty n)}
+theorem OmitsFiniteType.of_aElementary {n : ℕ} {p : Set (L.BoundedFormulaω Empty n)}
     {N : L.Substructure M} (hAe : AElementary A N.subtype)
     (hp : ∀ φ ∈ p, (⟨n, φ⟩ : Σ n, L.BoundedFormulaω Empty n) ∈ A.toSet)
-    (h : OmitsType M p) : OmitsType (↥N) p := by
+    (h : OmitsFiniteType M p) : OmitsFiniteType (↥N) p := by
   intro a
   obtain ⟨φ, hφp, hφ⟩ := h (⇑N.subtype ∘ a)
   exact ⟨φ, hφp, fun hr => hφ ((hAe φ (hp φ hφp) a).mpr hr)⟩
@@ -110,11 +110,11 @@ theorem OmitsType.of_aElementary {n : ℕ} {p : Set (L.BoundedFormulaω Empty n)
 /-- Omission passes through directed unions of A-elementary links when the type lies in the
 fragment: a union tuple lives in one link, which omits, and the link's A-elementarity in the
 union transports the failure. -/
-theorem OmitsType.iSup (hdir : Directed (· ≤ ·) S)
+theorem OmitsFiniteType.iSup (hdir : Directed (· ≤ ·) S)
     (hS : ∀ i, AElementary A (S i).subtype) {n : ℕ}
     {p : Set (L.BoundedFormulaω Empty n)}
     (hp : ∀ φ ∈ p, (⟨n, φ⟩ : Σ n, L.BoundedFormulaω Empty n) ∈ A.toSet)
-    (h : ∀ i, OmitsType (↥(S i)) p) : OmitsType (↥(⨆ i, S i)) p := by
+    (h : ∀ i, OmitsFiniteType (↥(S i)) p) : OmitsFiniteType (↥(⨆ i, S i)) p := by
   classical
   intro a
   have hmem : ∀ i, ∃ k, (a i : M) ∈ S k := fun i =>
