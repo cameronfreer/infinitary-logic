@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.ModelTheory.HanfSpectrum.Countable
 import InfinitaryLogic.ModelTheory.HanfSpectrum.LadderSyntax
+import InfinitaryLogic.ModelTheory.HanfSpectrum.CardinalBounds
 
 /-!
 # Bounded-spectrum witnesses: lower bounds for the `L_{ω₁ω}` Hanf number
@@ -17,6 +18,8 @@ spectra are BOUNDED, each consumed through the generic endpoint
   `aleph0_lt_Lomega1omegaHanfNumber`.
 * `HanfSpectrum/LadderSyntax.lean` — the common ladder language and sentence (Marker,
   Exercise 5.3) with the semantic packaging `realize_ladderSentence_iff`/`IsLadderModel`.
+* `HanfSpectrum/CardinalBounds.lean` — the consumer-shaped cardinal arithmetic: countable
+  sigma/union bounds, powerset-injection bound, and `⨆_{α<ω₁} ℶ_{α+1} = ℶ_{ω₁}`.
 * (next) `HanfSpectrum/Powerset.lean` — the α = 0 instance: maximal model `Set ℕ`, `ℶ_1 < H`.
 * (later) `HanfSpectrum/BethLadder.lean` — the Marker Exercise 5.3 ladder: for each `α < ω₁` a
   sentence of maximal model size `ℶ_{α+1}`, then `sup_{α<ω₁} ℶ_{α+1} = ℶ_{ω₁} ≤ H` — gated on a
