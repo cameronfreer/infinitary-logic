@@ -1,9 +1,11 @@
-# Craig interpolation (#8): statement-and-interface audit
+# Craig interpolation (#8): statement-and-interface audit (v2)
 
-Pre-implementation audit for issue #8, in the pattern of `docs/fragments-audit.md`. No Lean is
-written here; the deliverable is a frozen headline statement, a field-by-field verdict on the
-existing Henkin interface, the two genuinely new prerequisites the issue does not anticipate,
-and the decision points that need review before proof construction.
+Pre-implementation audit for issue #8, in the pattern of `docs/fragments-audit.md`. Revision 2,
+after review: four load-bearing corrections (countable generated `U`, the finite-support
+invariant with `InsepAt`, the strengthened abstraction acceptance lemmas, dropping the witness
+supply `T` in the relational core) and the nonempty entailment convention. The Zorn diagnosis
+(Finding 1) stands. Sequencing is now kernel-first: the constant-support/abstraction mechanism
+is built and gated BEFORE the Henkin interface.
 
 Sources: Marker, *Lectures on Infinitary Model Theory*, Theorem 4.20 (§4.3); Keisler, *Model
 Theory for Infinitary Logic*, Chapter 3 (consistency properties over pairs, inseparability).
@@ -38,32 +40,28 @@ froze them. Notes on the conclusion:
 - **No ambient countability hypothesis** on `L` in the headline: each sentence mentions only
   countably many symbols (`functionsIn_countable`, `relationsIn_countable`), and the proof runs
   inside `symbSublang (φ₁.functionsIn ∪ φ₂.functionsIn) (φ₁.relationsIn ∪ φ₂.relationsIn)`,
-  transported back by `mapLanguage_restrictSymbols` + `realize_mapLanguage_of_injective`
+  transported back by `mapLanguage_restrictSymbols` + `realize_mapLanguage`
   (issue milestone 2). The countable core theorem carries the countability instances.
 
-### D1 — the entailment definition (new; nothing in the tree defines ⊨ between sentences)
-
-Recommended freeze:
+### D1 (frozen) — nonempty entailment
 
 ```
-def Sentenceω.Entails (φ ψ : L.Sentenceω) : Prop :=
-  ∀ (M : Type) [L.Structure M], Sentenceω.Realize φ M → Sentenceω.Realize ψ M
+def Theoryω.Entails (T : L.Theoryω) (ψ : L.Sentenceω) : Prop :=
+  ∀ (M : Type) [L.Structure M] [Nonempty M], T.Model M → Sentenceω.Realize ψ M
+
+def Sentenceω.Entails (φ ψ : L.Sentenceω) : Prop := Theoryω.Entails {φ} ψ
 ```
 
-- **Carriers at `Type 0`**, matching the `ScottCompletion.lean` precedent
-  (`Lomega1omegaComplete` quantifies `Type` carriers) and matching where the contradiction
-  model lives (the Henkin term model over a `{0,0}` language is a `Type 0` quotient; the
-  symbSublang expansion `expandSymbStructure` keeps the same carrier). A `Type 0`-carrier
-  hypothesis is the weakest usable hypothesis, and the produced entailments are proved
-  semantically step-by-step, so nothing stronger comes out; universe generalization (via
-  `ULift` + `realize_equiv` transfer) is a later cosmetic layer if ever wanted, not part of
-  this arc.
-- **Empty carriers allowed** (no `Nonempty M`). The contradiction step only consumes the
-  hypothesis at the (nonempty) term model, so admitting empty carriers weakens the hypothesis
-  for free. Risk is confined to the closure-lemma entailment facts; each is verified as it is
-  proved, and if a base case genuinely breaks over the empty structure, `Nonempty` is added
-  uniformly to `Entails` — a one-line change at the definition, flagged now so it is a known
-  fallback rather than a mid-proof surprise.
+- **Set-level entailment is the primitive** — the inseparability closure lemmas are about
+  `Γ ⊨ σ` with Γ a set; the sentence form is the derived headline convention.
+- **Carriers at `Type 0`**, matching the `ScottCompletion.lean` precedent and matching where
+  the contradiction model lives; universe generalization is later cosmetics, not this arc.
+- **`[Nonempty M]` is part of the convention** (standard model theory). This is forced, not
+  cosmetic: the constant-elimination arguments expand a base `L`-structure by interpretations
+  of the fresh constants, which is impossible over an empty carrier — so entailments produced
+  through the fresh-constant machinery cannot be certified for empty base structures. An
+  empty-carrier wrapper (via the symbol-free sentence `∃x x = x`) can be layered on later if
+  ever wanted; the core convention is nonempty.
 
 ## 3. Symbol-occurrence API inventory — COMPLETE, no gaps
 
@@ -78,27 +76,58 @@ everything the statement and the milestone-2 reduction need:
 | sublanguage countability | `symbSublang_fun_countable`, `symbSublang_rel_countable` |
 | restriction | `Term.restrictSymbols`, `BoundedFormulaω.restrictSymbols` |
 | round-trip | `mapLanguage_restrictSymbols`, `onTerm_restrictSymbols` |
-| realization transfer | `realize_mapLanguage_of_injective` (Operations.lean:652), `expandSymbStructure` (MorleyHanfSchemaDischarge.lean:63 — should be MOVED to a Methods/ file when consumed here; `Conditional/` is the wrong home for a dependency of an unconditional headline) |
+| realization transfer | `realize_mapLanguage` (Operations.lean:649, via `IsExpansionOn`), `expandSymbStructure` (MorleyHanfSchemaDischarge.lean:63 — should be MOVED to a Methods/ file when consumed here; `Conditional/` is the wrong home for a dependency of an unconditional headline) |
 
-The only new occurrence-level lemma needed: `functionsIn`/`relationsIn` of the *constructed*
-interpolant, which is handled structurally — the closure lemmas carry the separator's
-occurrence bound as an invariant (§7), so no posthoc occurrence computation is required.
+Additionally the **constant-support calculus** exists in prototype: MarkerStage.lean already
+hit the finite-support problem (its Layer-5 header, `MarkerStage.lean:906` region: arbitrary
+`L_ω₁ω` formulas have infinite constant support — `⋁ₙ (dₙ = dₙ)` mentions every constant — so
+freshness needs a carried finite-support invariant, exactly as here), and its `sentenceJConsts`
++ monotonicity lemmas (`MarkerStage.lean:190–232`) are already generic in a single expansion
+`L'[[J]]`. Its Layer-4 `realizeWith` congruence (`realizeWith_congr`) is the
+constant-interpretation surgery engine, specialized to the double expansion. Kernel step 2
+moves/generalizes this calculus into a neutral module for the single expansion `L[[J]]`.
 
 ## 4. The Marker/Keisler route mapped to the repository
 
-Fix `L₁ = symbols of φ₁`, `L₂ = symbols of φ₂`, `L₀ = L₁ ∩ L₂` (as occurrence-set pairs, not
-new `Language` values, until the final symbSublang packaging). Add fresh constants: work in
-`L' = (symbSublang (F₁ ∪ F₂) (R₁ ∪ R₂))[[ℕ]]` with `Sent₁ = sentences whose symbols lie in
-L₁ + constants`, `Sent₂` likewise for `L₂`, `Sent₀` for `L₀`.
+Fix the occurrence pairs `F₁ = φ₁.functionsIn`, `R₁ = φ₁.relationsIn` (side 1), likewise
+`F₂, R₂` (side 2), and `F₀ = F₁ ∩ F₂`, `R₀ = R₁ ∩ R₂` (shared). Work in `L[[ℕ]]` (after the
+milestone-2 symbSublang reduction, over the countable joint sublanguage). Three DISTINCT roles,
+kept separate:
 
-1. `Insep Γ Δ` : no σ with symbols in `L₀` + constants such that `Γ ⊨ σ` and every model of
-   `Δ` refutes σ. (Pairs `Γ ⊆ Sent₁`, `Δ ⊆ Sent₂`.)
-2. If φ₁ has no interpolant, `({φ₁}, {¬φ₂})` is inseparable *with constant-free separators*;
-   a preliminary lemma upgrades this to inseparability with constant-allowing separators
-   (constants can be generalized away — §6).
-3. The inseparable pairs form a fragment-relative consistency property on
-   `U = Sent₁ ∪ Sent₂` (the closure lemmas, §7).
-4. Fragment-relative model existence (§5) yields `M ⊨ φ₁ ∧ ¬φ₂`, contradicting `φ₁ ⊨ φ₂`.
+- **Side/symbol predicates** `Sent₁, Sent₂, Sent₀`: sentences of `L[[ℕ]]` whose base symbols
+  lie in the respective occurrence pair, **with finite constant support**. These are
+  *unrestricted* predicates (each is a proper class-sized set of syntax — even over a countable
+  language the type of `L_ω₁ω` sentences is uncountable: `ℕ → Formula` functions already give
+  continuum many conjunctions). They classify pairs and separators; nothing enumerates them.
+- **The countable enumeration domain `U`**: the *inductively generated* closure of the two
+  root sentences `{φ₁', (φ₂').not}` under components, polarity operations, and constant
+  instantiation (§8). `U` is countable by construction, every member has finite constant
+  support (the generators do, and every operation preserves it — the MarkerStage Layer-5
+  observation), and `U ⊆ Sent₁ ∪ Sent₂`. Only the Henkin construction runs through `U`.
+  **Separators are NOT confined to `U`** — they live in `Sent₀` with support in the pair's
+  allowed `Finset`.
+- **Finite pairs**: the consistency-property members are `S = Γ ∪ Δ` with `Γ, Δ` FINITE
+  (`Set.Finite`, or `Finset`-valued at the interface — decided in the next tranche), `Γ ⊆
+  Sent₁ ∩ U`, `Δ ⊆ Sent₂ ∩ U`. Finiteness is what makes the allowed-support `Finset` exist
+  and makes C7 freshness a triviality. The enumeration's stages are finite; only the limit
+  `S*` is countably infinite, and the truth lemma consumes `S*` through `HenkinComplete`, not
+  through membership in the property (Finding 1).
+
+The route:
+
+1. `InsepAt A Γ Δ` (§7): no separator with base symbols in `(F₀, R₀)` and **constant support
+   inside the finite allowed set `A : Finset ℕ`**, entailed by Γ and refuted on Δ.
+2. **Root gate (A = ∅)**: if φ₁ has no interpolant over `L`, then
+   `InsepAt ∅ {φ₁'} {(φ₂').not}` — at `A = ∅` separators are automatically constant-free, and
+   a constant-free separator strips to an `L`-interpolant (`stripConsts`, §6). No "upgrade
+   over countably many constants" is needed anywhere; this was the point of parameterizing by
+   `A`.
+3. The inseparable finite pairs (each carrying `A` = the constants occurring in `Γ ∪ Δ`) form
+   the fragment-relative consistency property on `U` (closure lemmas, §7); C7 steps
+   temporarily pass to `insert c A` for a fresh `c` and the abstraction theorem transports
+   separators back down to `A`.
+4. Fragment-relative model existence (enumeration through `U`, §5–6) yields `M ⊨ φ₁ ∧ ¬φ₂`
+   with `M` nonempty, contradicting `Sentenceω.Entails φ₁ φ₂`.
 
 ## 5. Field-by-field audit of `ConsistencyPropertyEq` — and the load-bearing finding
 
@@ -108,14 +137,13 @@ Verdicts against `Methods/Henkin/ConsistencyProperty.lean`, for the inseparabili
 |---|---|---|
 | `C0_no_falsum`, `C0_no_contradiction` | members only (C0b's ∀φ is negative) | **fragment-safe as stated** |
 | `C1`, `C1'`, `C2`, `C3`, `C3'`, `C4`, `C4'` | decompose members | **fragment-safe as stated** — components of a `U`-sentence stay in `U` |
-| `extension` | **∀ φ : Sentenceω** | **BROKEN** (the issue's "hidden prerequisite"): mixed sentences with private symbols from both sides can be added to neither coordinate. Restriction to `∀ φ ∈ U` is provable for inseparability (θ₁ ∨ θ₂ combination) — but see D5: the forward-only truth lemma may not need it at all. |
-| `chain_closure` | arbitrary ⊆-chains | **FALSE for inseparability — see Finding 1.** Must be dropped from the interface, not restricted. |
-| `C5_eq_refl` | **∀ t : closed L-term** | **BROKEN**: closed terms over the joint language mix private function symbols from both sides; `t = t` for a mixed `t` is in neither `Sent₁` nor `Sent₂`. Restrict to a designated witness-term supply `T` (§8). |
-| `C6_eq_subst` | ∀ t₁ t₂ closed, **∀ φ : Formulaω (Fin 1)** | **BROKEN twice**: terms as in C5, and the substitution template φ must have its instances in `U`. Restrict both. |
-| `C7_quantifier`, `C7_neg_all` (∃-witness forms) | witness `∃ t` | safe if the interface *produces* witnesses in `T` — for the instance the witnesses are the fresh constants, which are shared, so `φ(c)` stays on φ's side. Strengthen the conclusion to `∃ t ∈ T`. |
-| `C7_all`, `C7_neg_ex`, `C7_all_bound`, `C7_neg_all_bound` | **∀ t closed** | **BROKEN** as in C5: restrict to `∀ t ∈ T`. |
+| `extension` | **∀ φ : Sentenceω** | **BROKEN** (the issue's "hidden prerequisite"): mixed sentences with private symbols from both sides can be added to neither coordinate. And per D5 the forward-only truth lemma does not need it: dropped, not restricted. |
+| `chain_closure` | arbitrary ⊆-chains | **FALSE for inseparability — see Finding 1.** Dropped, not restricted. |
+| `C5_eq_refl`, `C7_all`, `C7_neg_ex`, `C7_all_bound`, `C7_neg_all_bound` | **∀ t : closed L-term** | **BROKEN** over a joint language with function symbols (mixed terms). In the **relational core** (§9) the only closed terms of `L[[ℕ]]` are the constants, all shared, so the fields are stated over closed terms verbatim and are fragment-safe. No witness-supply parameter `T` (correction 4): a designated `T` would need function-application closure to support a term-model structure, which is machinery the relational core doesn't need — the ordinary closed-term quotient works. If a generic `T` is ever wanted (it isn't, before relationalization), it must be packaged with `∀ f args, (∀ i, args i ∈ T) → Term.func f args ∈ T`. |
+| `C6_eq_subst` | ∀ t₁ t₂ closed, ∀ φ : Formulaω (Fin 1) | as above for terms; the substitution template is constrained by the conclusion's membership in the property (instances land in `U` for the instance built in the next tranche) |
+| `C7_quantifier`, `C7_neg_all` (∃-witness forms) | witness `∃ t` | safe in the relational core: witnesses are constants; the instance supplies FRESH constants (outside the pair's `A`), which the finite-support invariant makes available. |
 
-### Finding 1 (load-bearing): `chain_closure` is false for inseparability, so the Zorn route is unusable
+### Finding 1 (load-bearing, CONFIRMED): `chain_closure` is false for inseparability, so the Zorn route is unusable
 
 `L_ω₁ω` entailment is not compact, and separability of a union does not descend to a chain
 stage. Concrete refutation, entirely inside a common vocabulary `{0, S, c}` (so it applies to
@@ -127,151 +155,123 @@ any fragment-relative generalization, not just an unlucky side-split):
 - The union pair `(⋃ₙ Γₙ, Δ)` is separated by `σ = θ` itself.
 
 Consequently `ConsistencyProperty.exists_maximal` (Zorn over `chain_closure`,
-`Construction.lean:63`) cannot be instantiated, and the entire existing pipeline
-`exists_maximal → MaximalConsistent → truthLemma` is unavailable *as a pipeline*. This is why
-Keisler's model existence theorem hypothesizes a **countable** starting set and only one-step
-closure conditions: the correct construction is a countable **enumeration** (Henkin priority
-argument), not a maximality argument. The issue's phrase "adapting the existing Henkin
-construction" therefore means: re-host `TermModel` + `truthLemma` on a new completion
-predicate, and build that predicate by enumeration. Refactor plan in §6.
+`Construction.lean:63`) cannot be instantiated, and the existing pipeline
+`exists_maximal → MaximalConsistent → truthLemma` is unavailable *as a pipeline*. The correct
+construction is a countable **enumeration** (Henkin priority argument) through `U`; the limit
+`S*` satisfies a completion predicate (`HenkinComplete`) because each pair of relevant members
+cohabits some finite stage — never because `S*` is in the property. Refactor plan in §6b.
 
-## 6. Construction refactor plan (milestone 1) and Finding 2
+## 6. The two-tranche plan
 
-### 6a. Re-hosting the term model and truth lemma
+### 6a. Tranche 1 — the constant-support/abstraction kernel (CURRENT; gate before any Henkin work)
 
-Introduce a predicate capturing exactly what `truthLemma` consumes — the per-connective
-membership-closure properties currently derived from `MaximalConsistent` at
-`Construction.lean:90–176` — relative to `U` and `T`:
+The genuinely uncertain mechanism is syntax/freshness, so it is built and tested first, in
+neutral modules with no interpolation-specific commitments beyond `InsepAt`:
 
-```
-structure HenkinComplete (U : Set L.Sentenceω) (T : Set (L.Term Empty)) (S : Set L.Sentenceω)
-```
+1. **Entailment** (D1): `Theoryω.Entails` / `Sentenceω.Entails`, nonempty, `Type 0`; basic
+   monotonicity/weakening lemmas.
+2. **Constant-support calculus**, moved/generalized from MarkerStage into a neutral module,
+   for the single expansion `L[[J]]`: `constsIn` (terms/formulas) with the monotonicity
+   calculus (not, imp components, iInf/iSup components, all/ex, openBounds, subst),
+   finiteness transport, base-symbol projections (`baseFunctionsIn`, `baseRelationsIn`), the
+   instance-confined realization wrappers with constructor simps, the **constant-agreement
+   congruence** (surgery engine), invariance of realization outside the updated support, and
+   the bridge between an arbitrary `L[[J]].Structure` instance and its base+constants
+   decomposition.
+3. **`abstractConstant`**: constant withdrawal into a fresh FREE variable (`… α n → … (α ⊕
+   Fin 1) n` — free variables don't shift under binders, so the recursion crosses `all`
+   cleanly; the single leaf-level relabel shuffle is confined to atomic cases), with the
+   realization engine lemma (evaluating the abstracted formula at `a` ≡ evaluating the
+   original with the constant reinterpreted to `a`), the substitution round-trip, and
+   **constant-support deletion** (`constsIn (abstract j φ) ⊆ constsIn φ \ {j}`, other
+   occurrence sets preserved).
+4. **The acceptance pair** (correction 3 — these, not `Γ ⊨ σ(c) ⇒ Γ ⊨ ∃xσ`, are the actual
+   C7 consumers), under freshness of `c` outside Γ resp. Δ:
 
-with fields: S ⊆ U; no falsum; no contradiction pair; if `φ.imp ψ ∈ S` then `φ.not ∈ S ∨ ψ ∈ S`
-(and the dual); iInf/iSup component membership (and duals); `t = t ∈ S` for `t ∈ T`;
-C6-substitution closure over `T`; ∃-members have a witness instance in `S` at some `t ∈ T`
-(and the three dual/universal forms over `T`).
+   ```
+   Γ, φ(c) ⊨ σ(c)   ⟹   Γ, ∃x φ(x) ⊨ ∃x σ(x)          (c fresh for Γ, φ, σ-support tracked)
+   Δ ⊨ ¬σ(c)        ⟹   Δ ⊨ ¬∃x σ(x)                    (c fresh for Δ)
+   ```
 
-- `TermModel` is rebuilt with carrier `T / ∼` (quotient of the designated supply, not of all
-  closed terms — in the relational core `T` = the fresh-constant terms, so the carrier is
-  countable by construction and function symbols never produce mixed terms).
-- `truthLemma` becomes **forward-only, both polarities, simultaneously**:
-  `φ ∈ S → M ⊨ φ` and `φ.not ∈ S → ¬ M ⊨ φ`, by the existing Ordinal-`depth` termination
-  measure (the `not = imp falsum` wrinkle is already solved there). Forward-only is all that
-  model existence needs (`{φ₁, ¬φ₂} ⊆ S ⊆ S*`), and it is what drops `extension` (D5).
-- The existing endpoints (`model_existence`, `model_existence_uncountable_language`) are
-  preserved untouched by a bridge lemma `MaximalConsistent → HenkinComplete Univ Univ` — the
-  old Zorn route keeps serving the old consumers; nothing downstream moves.
+   Both by reinterpretation of `c` (the congruence + engine lemma). Together they transport a
+   separator from support `insert c A` back to support `A`.
+5. **`InsepAt (A : Finset ℕ) Γ Δ`** + the separator abstraction theorem (C7 transport:
+   `InsepAt A (Γ ∪ {∃xφ}) Δ → InsepAt (insert c A) (Γ ∪ {φ(c)}) Δ` for fresh `c`,
+   contrapositive of the acceptance pair) + the **A = ∅ root gate** (constant-free separators
+   strip to `L`-interpolants: `stripConsts` + `realize_mapLanguage` transfer + occurrence
+   transport; needs `[Nonempty]` to expand base structures by constant interpretations —
+   the reason D1 is nonempty).
+6. **Toy C7 test**: the exact closure argument exercised end-to-end on a concrete pair
+   (the #11-spike pattern), certifying the interfaces compose before the Henkin tranche
+   commits to them.
 
-### 6b. The enumeration construction
+### 6b. Tranche 2 — the Henkin interface (only after the tranche-1 gate)
 
-`henkinComplete_of_consistencyPropertyEqOn`: given `ConsistencyPropertyEqOn U T` (§8), `U`
-countable, `T` countable, `S₀ ∈ sets` countable, produce `S* ⊇ S₀` with
-`HenkinComplete U T S*`. One ω-recursion over a surjection `ℕ → (tasks)`, where the task list
-schedules, each infinitely often: decompose-if-member for each `U`-sentence, add `t = t` for
-each `t ∈ T`, C6 instances, and witness extraction for ∃-members. Every stage stays in `sets`;
-the union satisfies `HenkinComplete` because each pair of offending members already cohabits
-some stage (directedness), never because the union is in `sets` — that is exactly the property
-Finding 1 kills, and it is not needed.
+- The countable generated `U` (components + polarity + constant instantiation over the roots;
+  finite-support invariant proved once for the generators and preserved by each operation).
+- Finite inseparable pairs as the `ConsistencyPropertyEqOn` instance (§5's field list; no
+  `extension`, no `chain_closure`, relational core, closed-term fields verbatim).
+- `HenkinComplete` (the truth-lemma-facing completion predicate), the bridge
+  `MaximalConsistent → HenkinComplete` (existing endpoints untouched), the fair enumeration
+  through `U`, and the **forward-only two-polarity** relational term-model truth lemma
+  (`φ ∈ S* → M ⊨ φ` and `φ.not ∈ S* → ¬ M ⊨ φ` simultaneously, by the existing
+  Ordinal-`depth` measure); model existence for the relational core.
+- Then: closure lemmas assembled into the instance, the endpoint chain (§9–10).
 
-### Finding 2: constant abstraction is a missing syntactic operation
+## 7. The inseparability closure lemmas
 
-The C7 inseparability-closure lemma turns a separator `σ(c)` of `(Γ ∪ {φ(c)}, Δ)` into the
-separator `∃x σ(x)` of `(Γ ∪ {∃x φ}, Δ)` — one fresh constant is *withdrawn into a quantifier*.
-The tree has substitution (`subst`, var → term) but **no inverse**: no operation replaces a
-constant symbol by a variable anywhere in `InfinitaryLogic/`. Needed, on `L[[ℕ]]` (constants =
-`Sum.inr` nullary functions):
-
-```
-def BoundedFormulaω.abstractConstant (j : ℕ) :
-    L[[ℕ]].BoundedFormulaω α n → L[[ℕ]].BoundedFormulaω (α ⊕ Fin 1) n
-```
-
-(term-level recursion replacing `func (Sum.inr j) ![]` by the new free variable, other
-constants kept), with the realize lemma (`realize (abstractConstant j φ) v[x := cᴹ] ↔ realize
-φ v`), the round-trip against `subst`, an occurrence lemma (`(abstractConstant j φ).functionsIn
-⊆ φ.functionsIn \ {c_j}` in the appropriate sense), and the semantic generalization lemma:
-if `Γ ⊨ σ(c)` and `c` does not occur in Γ, then `Γ ⊨ ∃x σ(x)` — proved by reinterpreting `c`
-(a structure-surgery argument: modify only the constant's interpretation, realize of
-constant-free sentences unchanged). This is the subtlest genuinely new syntax-level unit of
-the arc; it also yields, iterated, the step-2 preliminary lemma of §4 (constant-free
-inseparability upgrades to constant-allowing inseparability at the root pair, since φ₁, ¬φ₂
-are constant-free).
-
-## 7. The inseparability closure lemmas (user step 3)
-
-One lemma per interface field, each with the *separator-combination* content:
+`InsepAt (A : Finset ℕ) (Γ Δ : Set (L[[ℕ]].Sentenceω)) : Prop` — no σ with base symbols in
+`(F₀, R₀)`, `constsIn σ ⊆ A`, `Γ ⊨ σ`, and `Δ ⊨ σ.not`. Normally `A` = the constants
+occurring in `Γ ∪ Δ` (finite, since pairs are finite with finite-support members), but the
+parameter is what makes the C7 step and the root gate compositional. One closure lemma per
+interface field, each with the *separator-combination* content:
 
 | Field | separator combination |
 |---|---|
 | C1/C1'/C2 dichotomies | `σ₁ ∨ σ₂` (side 1) / `σ₁ ∧ σ₂` (side 2) |
 | C3, C4' (∀-shaped, per-k) | separator unchanged |
-| C3', C4 (∃-shaped: some k) | `⋁ₖ σₖ` resp. `⋀ₖ σₖ` — **the essential `L_ω₁ω` step**: countably many per-disjunct separators recombine by a countable connective. This is where interpolation is true for `L_ω₁ω` and false for finitary logic relative to infinitary classes. |
-| C5/C6 | separator unchanged (equality steps happen within one side; `T`-terms are common-vocabulary) |
-| C7 family | `∃x σ(x)` via `abstractConstant` (Finding 2) |
-| extension-on-U (if kept, D5) | `σ₁ ∨ σ₂` |
+| C3', C4 (∃-shaped: some k) | `⋁ₖ σₖ` resp. `⋀ₖ σₖ` — **the essential `L_ω₁ω` step**: countably many per-disjunct separators recombine by a countable connective. All σₖ share the same finite allowed support `A` — this is what the finite-support invariant buys; without it the combined separator could have infinite constant support and the root gate would be unreachable. |
+| C5/C6 | separator unchanged (equality steps happen within one side; constants are common-vocabulary) |
+| C7 family | `∃x σ(x)` via the abstraction theorem: pass to `insert c A`, abstract the fresh `c` back out (§6a.4–5) |
 
-**D4 — dualization.** `Insep` is symmetric under `(Γ, Δ) ↦ (Δ, Γ)` with `σ ↦ σ.not` (up to a
-double-negation realize lemma). Freeze: prove each closure lemma for side 1 only and derive
-side 2 through the swap lemma — halves the connective-by-connective work and keeps the
-side-2 statements from drifting.
+**D4 — dualization.** `InsepAt` is symmetric under `(Γ, Δ) ↦ (Δ, Γ)` with `σ ↦ σ.not` (up to
+a double-negation realize lemma). Freeze: prove each closure lemma for side 1 only and derive
+side 2 through the swap lemma — halves the connective-by-connective work and keeps the side-2
+statements from drifting.
 
-The occurrence bound on the final interpolant is carried by `Insep`'s definition itself
-(separators are quantified over `Sent₀`-sentences), so the headline's `functionsIn/relationsIn`
-conclusions need no separate bookkeeping — only the root-pair upgrade of §6's generalization
-lemma (constants out) and the symbSublang round-trip (milestone 2) touch the occurrence sets.
+The occurrence bound on the final interpolant is carried by `InsepAt`'s definition itself
+(base symbols in `(F₀, R₀)`, constants in `A`), so the headline's occurrence conclusions need
+no separate bookkeeping — the root gate (`A = ∅`) and the symbSublang round-trip (milestone 2)
+are the only places occurrence sets are transported.
 
-## 8. The frozen interface (user step 2, principal correctness gate)
+## 8. The countable enumeration domain `U` (tranche 2; frozen shape)
 
-```
-structure ConsistencyPropertyEqOn (U : Set L.Sentenceω) (T : Set (L.Term Empty)) where
-  sets : Set (Set L.Sentenceω)
-  subset_U : ∀ S ∈ sets, S ⊆ U
-  -- C0a, C0b, C1, C1', C2, C3, C3', C4, C4' verbatim from ConsistencyProperty
-  -- C5, C6, C7_all, C7_neg_ex, C7_all_bound, C7_neg_all_bound: term quantification ∀ t ∈ T
-  -- C6: substitution templates restricted to instances-in-U
-  -- C7_quantifier, C7_neg_all(_bound): conclusion strengthened to ∃ t ∈ T
-  -- NO extension field (D5), NO chain_closure field (Finding 1)
-```
+`U` is NOT `Sent₁ ∪ Sent₂` (uncountable — §4). It is the least set of `L[[ℕ]]`-sentences
+containing `φ₁'` and `(φ₂').not` and closed under: components of members (imp/iInf/iSup
+projections), the polarity operations the C-fields add (`.not` of components, double-negation
+targets), and constant instantiation of members' quantifier bodies (`(φ.openBounds).subst
+(fun _ => (L.con m).term)` and the negated forms, for all `m : ℕ`). Countability by the
+`List`-path-encoding technique of `Fragment.generated_countable` in spirit (the #13 `Fragment`
+structure itself is NOT the host: it deliberately excludes substitution closure —
+`Fragment.lean:17` — and lives at `BoundedFormulaω Empty n` across arities). Finite constant
+support: the roots are constant-free `mapLanguage`-images, every closure operation preserves
+finite support (components/negations shrink it, instantiation adds one constant) — the
+MarkerStage Layer-5 invariant argument verbatim. Side membership: `U ⊆ Sent₁ ∪ Sent₂` since
+each operation stays within the member's own side.
 
-No separate `U`-closure structure: each field's conclusion `S ∪ {x} ∈ sets` forces `x ∈ U`
-through `subset_U`, so closure of `U` is a *consequence of instantiability*, checked once when
-the inseparability instance is built (where `U = Sent₁ ∪ Sent₂` is closed under components,
-negations of components, and `T`-instantiation by inspection of the occurrence sets).
+## 9. Relationalization boundary
 
-**D5 — drop `extension` entirely (recommended).** The forward-only truth lemma (§6a) never
-needs `S*` to decide anything: negative information flows through the dual fields and C0.
-Marker's θ₁∨θ₂ extension lemma is real mathematics, but nothing in this arc consumes it; if a
-later consumer (e.g. a fragment-relative completeness statement) wants deciding completions,
-extension-on-U can be added then, together with its closure lemma. Leaner gate now.
-
-**D3 — pair representation (recommended: existential-pair form).**
-`sets = { S | ∃ Γ Δ, S = Γ ∪ Δ ∧ Γ ⊆ Sent₁ ∧ Δ ⊆ Sent₂ ∧ Insep Γ Δ }`. The canonical-split
-alternative (`Insep (S ∩ Sent₁) (S ∩ Sent₂)`) is *strictly stronger* on the overlap (`Sent₀`
-sentences from Δ migrate into the first coordinate, enlarging the entailment premises), so the
-field verifications would prove statements Marker's lemmas don't give. Every field only needs
-to exhibit *some* witness split for the output set, which the existential form does natively.
-
-**Countability of `U`.** For the instance, `U` is generated from `{φ₁, ¬φ₂}` by components,
-negation, and `T`-instantiation. Components of an `L_ω₁ω`-formula form a countable set
-(countably-branching well-founded tree — same argument as `functionsIn_countable`), and
-`T ≃ ℕ`, so `U` is countable. Reuse the `List`-path-encoding countability technique of
-`Fragment.generated_countable` in spirit; the #13 `Fragment` structure itself is NOT the host
-(it deliberately excludes substitution closure — `Fragment.lean:17` — and lives at
-`BoundedFormulaω Empty n` across arities, while `U` is a sentence set over `L[[ℕ]]`).
-
-## 9. Relationalization boundary (user step 6)
-
-The core runs with `T` = fresh-constant terms only, which is fully general **only for
-relational `L₁, L₂`** (no mixed terms exist, and the term-model carrier `T/∼` interprets no
-function symbols). Freeze: the core theorem is
-`craig_interpolation_relational : [(symbSublang …).IsRelational-style hypotheses] → …` at
-countable symbol sets, then milestone 2 removes ambient countability via symbSublang, and
-**relationalization is a separate final layer** translating function symbols to graph
-relations (a new, self-contained syntactic translation with a realize bridge — not started
-until the relational core is stable, per direction). Note: the headline as frozen in §2 (with
-`functionsIn` in the conclusion) is delivered only after this layer; the intermediate
-relational endpoint is the arc's first publishable theorem and gets the blueprint node.
+The core runs over relational `L₁, L₂` sides: after adjoining constants to a relational
+language, every closed `L[[ℕ]]`-term is a constant, all common-vocabulary — so the term
+fields hold verbatim, the term model is the ordinary closed-term quotient (= constants/∼),
+and no witness-supply parameter exists (correction 4). Freeze: the core theorem is
+`craig_interpolation_relational` at countable symbol sets; milestone 2 removes ambient
+countability via symbSublang; **relationalization is a separate final layer** translating
+function symbols to graph relations (a new, self-contained syntactic translation with a
+realize bridge — not started until the relational core is stable). Note: the headline as
+frozen in §2 (with `functionsIn` in the conclusion) is delivered only after this layer; the
+intermediate relational endpoint is the arc's first publishable theorem and gets the
+blueprint node.
 
 ## 10. PC-separation corollary (kept in #8; consumed by #10)
 
@@ -286,32 +286,18 @@ which owns the PC-class representation):
 Derivation: apply interpolation to `ψ₁ ⊨ ¬ψ₂` in the joint vocabulary; θ's symbols land in
 the intersection; restrict by `restrictSymbols` + transfer by `expandSymbStructure`. The only
 #8-side commitment this makes: the corollary is stated over the two-sorted `symbSublang`
-representation of "shared vocabulary" — consistent with the milestone-2 machinery and with
-what `MorleyHanfSchemaDischarge` already does; #10 can re-package.
+representation of "shared vocabulary" — consistent with the milestone-2 machinery; #10 can
+re-package.
 
-## 11. Unit sequencing (maps to the six agreed steps)
+## 11. Decision points (all frozen at review)
 
-1. **Statement layer**: `Sentenceω.Entails` (D1) + `docs` this audit; move
-   `expandSymbStructure` out of `Conditional/`.
-2. **Interface**: `ConsistencyPropertyEqOn U T` + `HenkinComplete` + bridge from
-   `MaximalConsistent` (old endpoints untouched) + re-hosted `TermModel`/forward truth lemma
-   (§6a) + enumeration construction (§6b). *Gate: fragment-relative model existence proved.*
-3. **Syntax unit**: `abstractConstant` + realize/occurrence/round-trip + semantic
-   generalization lemma (Finding 2).
-4. **Inseparability**: definition, swap lemma (D4), closure lemmas connective-by-connective
-   (§7), the instance of the §8 interface.
-5. **Endpoints**: relational-countable core → symbSublang generalization → headline
-   `craig_interpolation` (relational) + PC-separation corollary.
-6. **Relationalization layer** (separate, last).
-
-## 12. Decision points for review
-
-| # | Decision | Recommendation |
+| # | Decision | Frozen |
 |---|---|---|
-| D1 | `Entails` carriers | `Type 0`, no `Nonempty` (fallback flagged) |
-| D2 | universe scope | pin `Language.{0,0}` for the whole arc (GeneratedSublanguage already is) |
-| D3 | pair representation in `sets` | existential-pair form |
-| D4 | side-2 closure lemmas | via the `Insep`-swap lemma, not re-proved |
-| D5 | `extension` field | dropped; forward-only truth lemma |
-| F1 | Zorn/`chain_closure` | unusable (refuted §5); enumeration construction |
-| F2 | `abstractConstant` | new syntax unit, scheduled before the closure lemmas |
+| D1 | entailment | set-level primitive, `Type 0` carriers, **`[Nonempty M]`** |
+| D2 | universe scope | `Language.{0,0}` for the whole arc |
+| D3 | pair representation | existential-pair form, **finite** coordinates, allowed-support `Finset` carried by `InsepAt`'s parameter |
+| D4 | side-2 closure lemmas | via the `InsepAt`-swap lemma, not re-proved |
+| D5 | `extension` field | dropped; forward-only two-polarity truth lemma |
+| F1 | Zorn/`chain_closure` | unusable (refuted §5); fair enumeration through countable `U` |
+| F2 | abstraction kernel | tranche 1, gated by the toy C7 test before any Henkin work |
+| C1–C4 | review corrections | `U` = countable generated closure (not `Sent₁ ∪ Sent₂`); finite-support invariant + `InsepAt A` (root `A = ∅` replaces the root-pair upgrade); acceptance pair = fresh-constant elimination sequents; no witness supply `T` (relational core, ordinary closed-term quotient) |
