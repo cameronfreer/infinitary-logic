@@ -12,6 +12,7 @@ import InfinitaryLogic.ModelTheory.AElementaryChains
 import InfinitaryLogic.ModelTheory.TypeIsolation
 import InfinitaryLogic.ModelTheory.CountableCompanion
 import InfinitaryLogic.ModelTheory.TypePreservingBF
+import InfinitaryLogic.ModelTheory.ArbitraryStabilization
 
 /-!
 # All: the sorry-free library surface
