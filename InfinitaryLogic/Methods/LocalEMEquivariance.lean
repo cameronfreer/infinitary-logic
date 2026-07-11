@@ -23,8 +23,16 @@ Consequently `LocalEMEq_locJRename_iff`: the setoid is preserved AND reflected b
 the two `∀ᶠ` propositions are pointwise equal, so the critical gate of the spike holds with no
 reconstruction of semantic truth outside the quotient's defining fragment. The verdict is that
 the existing quotient (`LocalEMContext.Carrier`) is the correct vehicle for the induced
-automorphisms; the descended carrier equivalence, the equivariant structure isomorphism
-(`F(c_j) = c_{e j}`), and the base-reduct automorphism are the follow-on packaging.
+automorphisms.
+
+The packaging (issue #11 step 3) follows in the same file: functoriality of the renaming action
+(`locJRename_refl`/`_trans`/inverses), the descended carrier equivalence
+(`LocalEMContext.carrierEquiv`, computing on classes and sending `[c_j]` to `[c_{e j}]`), the
+targeted expanded-language equivariance (`carrierEquiv_funMap` under the renamed symbol,
+`carrierEquiv_relMap` for base relations), the acceptance theorem
+`LocalEMContext.baseAutomorphism : Carrier ≃[Λ] Carrier` over the base reduct
+`structureBase`, and the semantic endpoint `realize_carrierEquiv`: every base-language
+infinitary formula is invariant under the induced automorphism.
 -/
 
 namespace FirstOrder
@@ -137,6 +145,151 @@ theorem LocalEMContext.setoid_locJRename_iff {M : Type} [Λ.Structure M]
     (ctx : LocalEMContext Λ J (M := M)) (e : J ≃o J) (t u : Λ[[J]].Term Empty) :
     ctx.setoid.r (locJRename Λ J e t) (locJRename Λ J e u) ↔ ctx.setoid.r t u :=
   LocalEMEq_locJRename_iff Λ J ctx.a e t u
+
+variable {Λ} {J}
+
+/-! ## Functoriality of the renaming action -/
+
+theorem locJRename_refl {α : Type} (t : Λ[[J]].Term α) :
+    locJRename Λ J (OrderIso.refl J) t = t := by
+  induction t with
+  | var x => rfl
+  | @func l f ts ih =>
+    have harg : (fun i => locJRename Λ J (OrderIso.refl J) (ts i)) = ts := funext ih
+    rcases l with _ | l
+    · rcases f with f' | j
+      · exact congrArg _ harg
+      · exact congrArg _ harg
+    · rcases f with f' | c
+      · exact congrArg _ harg
+      · exact c.elim
+
+theorem locJRename_trans (e₁ e₂ : J ≃o J) {α : Type} (t : Λ[[J]].Term α) :
+    locJRename Λ J e₂ (locJRename Λ J e₁ t) = locJRename Λ J (e₁.trans e₂) t := by
+  induction t with
+  | var x => rfl
+  | @func l f ts ih =>
+    have harg : (fun i => locJRename Λ J e₂ (locJRename Λ J e₁ (ts i)))
+        = fun i => locJRename Λ J (e₁.trans e₂) (ts i) := funext ih
+    rcases l with _ | l
+    · rcases f with f' | j
+      · exact congrArg _ harg
+      · exact congrArg _ harg
+    · rcases f with f' | c
+      · exact congrArg _ harg
+      · exact c.elim
+
+theorem locJRename_symm_locJRename (e : J ≃o J) {α : Type} (t : Λ[[J]].Term α) :
+    locJRename Λ J e.symm (locJRename Λ J e t) = t := by
+  rw [locJRename_trans, OrderIso.self_trans_symm]
+  exact locJRename_refl t
+
+theorem locJRename_locJRename_symm (e : J ≃o J) {α : Type} (t : Λ[[J]].Term α) :
+    locJRename Λ J e (locJRename Λ J e.symm t) = t := by
+  rw [locJRename_trans, OrderIso.symm_trans_self]
+  exact locJRename_refl t
+
+/-- The renaming action as an equivalence of closed terms. -/
+def locJRenameEquiv (e : J ≃o J) : Λ[[J]].Term Empty ≃ Λ[[J]].Term Empty where
+  toFun := locJRename Λ J e
+  invFun := locJRename Λ J e.symm
+  left_inv t := locJRename_symm_locJRename e t
+  right_inv t := locJRename_locJRename_symm e t
+
+/-! ## The descended automorphism of the local EM quotient -/
+
+variable {M : Type} [Λ.Structure M]
+
+/-- **The descended carrier equivalence**: an order automorphism of the skeleton acts on the
+local EM quotient by renaming representatives — well-defined by the equivariance gate. -/
+noncomputable def LocalEMContext.carrierEquiv (ctx : LocalEMContext Λ J (M := M))
+    (e : J ≃o J) : ctx.Carrier ≃ ctx.Carrier :=
+  Quotient.congr (locJRenameEquiv e) fun t u =>
+    (LocalEMContext.setoid_locJRename_iff Λ J ctx e t u).symm
+
+theorem LocalEMContext.carrierEquiv_mkClass (ctx : LocalEMContext Λ J (M := M))
+    (e : J ≃o J) (t : Λ[[J]].Term Empty) :
+    ctx.carrierEquiv e (ctx.mkClass (t := t)) = ctx.mkClass (t := locJRename Λ J e t) :=
+  rfl
+
+/-- **The skeleton-class equation**: the descended automorphism sends the class of the skeleton
+constant `c_j` to the class of `c_{e j}`. -/
+theorem LocalEMContext.carrierEquiv_const (ctx : LocalEMContext Λ J (M := M))
+    (e : J ≃o J) (j : J) :
+    ctx.carrierEquiv e
+        (ctx.mkClass (t := Term.func (Sum.inr j : Λ[[J]].Functions 0) Fin.elim0))
+      = ctx.mkClass (t := Term.func (Sum.inr (e j) : Λ[[J]].Functions 0) Fin.elim0) := by
+  rw [ctx.carrierEquiv_mkClass]
+  exact congrArg (fun t => ctx.mkClass (t := t)) (congrArg _ (funext fun i => i.elim0))
+
+/-- Equivariance of function interpretation under the language renaming induced by `e`: the
+targeted expanded-language fact (the base-reduct automorphism consumes its `Sum.inl` case). -/
+theorem LocalEMContext.carrierEquiv_funMap (ctx : LocalEMContext Λ J (M := M))
+    (e : J ≃o J) {n : ℕ} (f : Λ[[J]].Functions n) (xs : Fin n → ctx.Carrier) :
+    ctx.carrierEquiv e (@Structure.funMap (Λ[[J]]) ctx.Carrier ctx.structure n f xs)
+      = @Structure.funMap (Λ[[J]]) ctx.Carrier ctx.structure n
+          ((Λ.lhomWithConstantsMap (e : J → J)).onFunction f)
+          (fun i => ctx.carrierEquiv e (xs i)) := by
+  have hxs : xs = fun i => ctx.mkClass (t := Quotient.out (xs i)) :=
+    funext fun i => (Quotient.out_eq (xs i)).symm
+  rw [hxs, ctx.funMap_mkClass, ctx.carrierEquiv_mkClass,
+    show (fun i => ctx.carrierEquiv e (ctx.mkClass (t := Quotient.out (xs i))))
+        = fun i => ctx.mkClass (t := locJRename Λ J e (Quotient.out (xs i))) from
+      funext fun i => ctx.carrierEquiv_mkClass e (Quotient.out (xs i)),
+    ctx.funMap_mkClass]
+  rfl
+
+/-- Equivariance of base-relation interpretation: the descended map preserves and reflects
+every base relation — via the pointwise deep-interpretation equality over the image support. -/
+theorem LocalEMContext.carrierEquiv_relMap (ctx : LocalEMContext Λ J (M := M))
+    (e : J ≃o J) {n : ℕ} (R : Λ.Relations n) (xs : Fin n → ctx.Carrier) :
+    (@Structure.RelMap (Λ[[J]]) ctx.Carrier ctx.structure n (Sum.inl R)
+        (fun i => ctx.carrierEquiv e (xs i))
+      ↔ @Structure.RelMap (Λ[[J]]) ctx.Carrier ctx.structure n (Sum.inl R) xs) := by
+  set rep : Fin n → Λ[[J]].Term Empty := fun i => Quotient.out (xs i) with hrep
+  set S : Finset J := Finset.univ.biUnion fun i => locJSupport Λ J (rep i) with hS
+  have hxs : xs = fun i => ctx.mkClass (t := rep i) :=
+    funext fun i => (Quotient.out_eq (xs i)).symm
+  have hFxs : (fun i => ctx.carrierEquiv e (xs i))
+      = fun i => ctx.mkClass (t := locJRename Λ J e (rep i)) := by
+    funext i
+    rw [hxs]
+    exact ctx.carrierEquiv_mkClass e (rep i)
+  have hsubS : (Finset.univ.biUnion fun i => locJSupport Λ J (rep i)) ⊆ S := subset_refl S
+  have hsubS' : (Finset.univ.biUnion fun i => locJSupport Λ J (locJRename Λ J e (rep i)))
+      ⊆ S.image e := by
+    refine Finset.biUnion_subset.mpr fun i _ => ?_
+    rw [locJSupport_locJRename]
+    exact Finset.image_subset_image
+      (Finset.subset_biUnion_of_mem (fun i => locJSupport Λ J (rep i)) (Finset.mem_univ i))
+  rw [hFxs, hxs,
+    LocalEMContext.relMap_mkClass_iff Λ J ctx R rep hsubS,
+    LocalEMContext.relMap_mkClass_iff Λ J ctx R (fun i => locJRename Λ J e (rep i)) hsubS']
+  exact Filter.eventually_congr (Filter.Eventually.of_forall fun d => Iff.of_eq (congrArg _
+    (funext fun i => locDeepInterp_locJRename Λ J ctx.a e d S (rep i))))
+
+/-- **The acceptance theorem**: the descended equivalence is a genuine automorphism of the
+base-language (`Λ`-reduct) structure on the local EM carrier — every order automorphism of the
+skeleton induces a structure automorphism sending `[c_j]` to `[c_{e j}]`
+(`carrierEquiv_const`). -/
+noncomputable def LocalEMContext.baseAutomorphism (ctx : LocalEMContext Λ J (M := M))
+    (e : J ≃o J) :
+    letI := ctx.structureBase
+    ctx.Carrier ≃[Λ] ctx.Carrier :=
+  letI := ctx.structureBase
+  { toEquiv := ctx.carrierEquiv e
+    map_fun' := fun f xs => ctx.carrierEquiv_funMap e (Sum.inl f) xs
+    map_rel' := fun R xs => ctx.carrierEquiv_relMap e R xs }
+
+/-- **The semantic endpoint of the packaging**: every base-language infinitary formula is
+invariant under the induced automorphism. -/
+theorem LocalEMContext.realize_carrierEquiv (ctx : LocalEMContext Λ J (M := M))
+    (e : J ≃o J) {α : Type} {n : ℕ} (φ : Λ.BoundedFormulaω α n)
+    (v : α → ctx.Carrier) (xs : Fin n → ctx.Carrier) :
+    letI := ctx.structureBase
+    (φ.Realize v xs ↔ φ.Realize (ctx.carrierEquiv e ∘ v) (ctx.carrierEquiv e ∘ xs)) := by
+  letI := ctx.structureBase
+  exact BoundedFormulaω.realize_equiv (ctx.baseAutomorphism e) φ v xs
 
 end Language
 
