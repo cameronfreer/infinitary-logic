@@ -13,6 +13,7 @@ import InfinitaryLogic.Methods.Interpolation.HenkinCompat
 import InfinitaryLogic.Methods.Interpolation.FairEnumeration
 import InfinitaryLogic.Methods.Interpolation.InseparableConsistency
 import InfinitaryLogic.Methods.Interpolation.QuotientTermModel
+import InfinitaryLogic.Methods.Interpolation.QuotientTruthLemma
 -- The local EM extraction bridge (its Conditional/MorleyHanfTransfer import stays isolated here)
 import InfinitaryLogic.Methods.LocalEMExtraction
 -- The pure local stack: semantic layer onward (LocalEMFamily -> LocalColimit -> LocalTower ->
