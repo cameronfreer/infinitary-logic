@@ -34,6 +34,9 @@ import InfinitaryLogic.Descriptive.LogicAction
 -- The jointly-continuous Polish S∞-action on the structure space (issue #27)
 import InfinitaryLogic.Descriptive.PolishAction
 
+-- The invariant σ-algebras on the structure space (issue #28)
+import InfinitaryLogic.Descriptive.InvariantMeasurableSpace
+
 -- Counting theorems (depend on descriptive results)
 import InfinitaryLogic.ModelTheory.CountingCountable
 import InfinitaryLogic.ModelTheory.MorleyCounting
