@@ -47,3 +47,6 @@ jobs:
 
       - name: Verify morley_hanf dependency cone (bounded ER yes, infinite Ramsey / legacy ladder no)
         run: lake env lean scripts/check_morley_hanf_deps.lean
+
+      - name: Verify #8 truth-lemma cone (Henkin closure yes, maximal consistency no)
+        run: lake env lean scripts/check_truth_lemma_cone.lean
