@@ -18,8 +18,14 @@ Branching / witness rules make a classical choice at the moment the request fire
 triggering sentence stays present, so re-processing is harmless. The union `S*` is never claimed
 to be in `C.sets` (Finding 1) — only that each closure target cohabits a later stage.
 
-Named structural lemmas (`stage_mono`, `stage_mem_sets`, `subset_stage`, `stage_subset_U`) are
-exposed for the inseparable-pair instance.
+Named lemmas exposed for the inseparable-pair instance and the limit proof: the schedule
+(`stage_mono`, `subset_stage`, `stage_subset_U`; stage-in-`C.sets` is automatic via the `SetIn`
+subtype), the firing API (`request_fires_after` — every request fires in a sweep after any given
+stage, via `beforeRequest`/`process_beforeRequest_eq_sweep`/`sweep_mono`), and finite-stage
+preservation (`finite_stage`).
+
+The remaining piece (the `HenkinComplete Sstar` acceptance theorem) is the per-field limit proof;
+it consumes `request_fires_after` plus per-request "what `process` adds" facts.
 -/
 
 namespace FirstOrder.Language
@@ -204,5 +210,74 @@ theorem Sstar_subset_U (S₀ : SetIn P) : Sstar e S₀ ⊆ U :=
 
 theorem mem_Sstar_iff (S₀ : SetIn P) {x : L[[ℕ]].Sentenceω} :
     x ∈ Sstar e S₀ ↔ ∃ n, x ∈ (stage e S₀ n).1 := Set.mem_iUnion
+
+/-! ## The firing API -/
+
+/-- The accumulated set just before request `e k` is processed in a sweep from `S`. -/
+noncomputable def beforeRequest (S : SetIn P) : ℕ → SetIn P
+  | 0 => S
+  | (k + 1) => sweep e S k
+
+theorem subset_beforeRequest (S : SetIn P) (k : ℕ) : S.1 ⊆ (beforeRequest e S k).1 := by
+  cases k with
+  | zero => exact subset_rfl
+  | succ k => exact subset_sweep e S k
+
+/-- Processing `e k` at its accumulated point advances the sweep by one — nearly definitional. -/
+theorem process_beforeRequest_eq_sweep (S : SetIn P) (k : ℕ) :
+    process (beforeRequest e S k) (e k) = sweep e S k := by
+  cases k <;> rfl
+
+/-- Sweeps are monotone in the number of requests processed. -/
+theorem sweep_mono (S : SetIn P) {k n : ℕ} (h : k ≤ n) : (sweep e S k).1 ⊆ (sweep e S n).1 := by
+  induction n with
+  | zero => rw [Nat.le_zero.mp h]
+  | succ n ih =>
+    rcases Nat.lt_succ_iff_lt_or_eq.mp (Nat.lt_succ_of_le h) with h' | rfl
+    · exact (ih (Nat.lt_succ_iff.mp h')).trans (subset_process (sweep e S n) (e (n + 1)))
+    · exact subset_rfl
+
+/-- **The firing consumer lemma** (fairness): for a surjective schedule, every request fires in
+some sweep after any given stage `m` — the pre-accumulator contains `stage m`, and the process
+output at the firing lands inside `stage (n+1)`. -/
+theorem request_fires_after (he : Function.Surjective e) (S₀ : SetIn P) (r : Request U) (m : ℕ) :
+    ∃ n, m ≤ n ∧ ∃ acc : SetIn P,
+      (stage e S₀ m).1 ⊆ acc.1 ∧ (process acc r).1 ⊆ (stage e S₀ (n + 1)).1 := by
+  obtain ⟨k, rfl⟩ := he r
+  refine ⟨max m k, le_max_left m k, beforeRequest e (stage e S₀ (max m k)) k,
+    (stage_mono e S₀ (le_max_left m k)).trans (subset_beforeRequest e _ k), ?_⟩
+  rw [process_beforeRequest_eq_sweep]
+  exact sweep_mono e (stage e S₀ (max m k)) (le_max_right m k)
+
+/-! ## Finite-stage preservation -/
+
+theorem finite_processDecompose {S : SetIn P} (t : U) (idx : ℕ) (hS : S.1.Finite) :
+    (processDecompose S t idx).1.Finite := by
+  unfold processDecompose
+  split
+  · split <;> (try split) <;>
+      first | exact hS.union (Set.finite_singleton _) | exact hS
+  · exact hS
+
+theorem finite_process {S : SetIn P} (r : Request U) (hS : S.1.Finite) : (process S r).1.Finite := by
+  cases r with
+  | decompose t idx => exact finite_processDecompose t idx hS
+  | eqRefl c => exact hS.union (Set.finite_singleton _)
+  | eqSymm a b => simp only [process]; split_ifs <;> first | exact hS.union (Set.finite_singleton _) | exact hS
+  | eqTrans a b d => simp only [process]; split_ifs <;> first | exact hS.union (Set.finite_singleton _) | exact hS
+  | relCongr l R g i b =>
+    simp only [process]; split_ifs <;> first | exact hS.union (Set.finite_singleton _) | exact hS
+
+theorem finite_sweep {S : SetIn P} (hS : S.1.Finite) (n : ℕ) : (sweep e S n).1.Finite := by
+  induction n with
+  | zero => exact finite_process (e 0) hS
+  | succ n ih => exact finite_process (e (n + 1)) ih
+
+/-- **Finite-stage preservation**: from a finite initial set, every stage is finite (documenting
+that the construction stays inside the finite-pair instance). -/
+theorem finite_stage {S₀ : SetIn P} (hS₀ : S₀.1.Finite) (n : ℕ) : (stage e S₀ n).1.Finite := by
+  induction n with
+  | zero => exact hS₀
+  | succ n ih => exact finite_sweep e ih n
 
 end FirstOrder.Language
