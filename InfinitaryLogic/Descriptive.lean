@@ -24,6 +24,9 @@ import InfinitaryLogic.Descriptive.G0Fusion
 import InfinitaryLogic.Descriptive.CountingDichotomy
 import InfinitaryLogic.Descriptive.FiniteCarrier
 
+-- The S∞ = Equiv.Perm ℕ action on the structure space (algebraic layer, issue #27)
+import InfinitaryLogic.Descriptive.LogicAction
+
 -- Counting theorems (depend on descriptive results)
 import InfinitaryLogic.ModelTheory.CountingCountable
 import InfinitaryLogic.ModelTheory.MorleyCounting
