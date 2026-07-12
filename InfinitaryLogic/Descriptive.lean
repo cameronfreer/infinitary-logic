@@ -31,6 +31,9 @@ import InfinitaryLogic.Descriptive.PermPolishGroup
 -- The S∞ = Equiv.Perm ℕ action on the structure space (algebraic layer, issue #27)
 import InfinitaryLogic.Descriptive.LogicAction
 
+-- The jointly-continuous Polish S∞-action on the structure space (issue #27)
+import InfinitaryLogic.Descriptive.PolishAction
+
 -- Counting theorems (depend on descriptive results)
 import InfinitaryLogic.ModelTheory.CountingCountable
 import InfinitaryLogic.ModelTheory.MorleyCounting
