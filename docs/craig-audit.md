@@ -140,7 +140,7 @@ Verdicts against `Methods/Henkin/ConsistencyProperty.lean`, for the inseparabili
 | `extension` | **∀ φ : Sentenceω** | **BROKEN** (the issue's "hidden prerequisite"): mixed sentences with private symbols from both sides can be added to neither coordinate. And per D5 the forward-only truth lemma does not need it: dropped, not restricted. |
 | `chain_closure` | arbitrary ⊆-chains | **FALSE for inseparability — see Finding 1.** Dropped, not restricted. |
 | `C5_eq_refl`, `C7_all`, `C7_neg_ex`, `C7_all_bound`, `C7_neg_all_bound` | **∀ t : closed L-term** | **BROKEN** over a joint language with function symbols (mixed terms). In the **relational core** (§9) the only closed terms of `L[[ℕ]]` are the constants, all shared, so the fields are stated over closed terms verbatim and are fragment-safe. No witness-supply parameter `T` (correction 4): a designated `T` would need function-application closure to support a term-model structure, which is machinery the relational core doesn't need — the ordinary closed-term quotient works. If a generic `T` is ever wanted (it isn't, before relationalization), it must be packaged with `∀ f args, (∀ i, args i ∈ T) → Term.func f args ∈ T`. |
-| `C6_eq_subst` | ∀ t₁ t₂ closed, ∀ φ : Formulaω (Fin 1) | as above for terms; the substitution template is constrained by the conclusion's membership in the property (instances land in `U` for the instance built in the next tranche) |
+| `C6_eq_subst` | ∀ t₁ t₂ closed, ∀ φ : Formulaω (Fin 1) | **DO NOT retain as unrestricted C6** — a countable `U` cannot be closed under arbitrary one-variable substitution templates (continuum-many one-hole presentations; see §6b C6-correction). Replace with the atomic congruence API: equality refl/symm/trans + relation congruence under one-argument replacement. |
 | `C7_quantifier`, `C7_neg_all` (∃-witness forms) | witness `∃ t` | safe in the relational core: witnesses are constants; the instance supplies FRESH constants (outside the pair's `A`), which the finite-support invariant makes available. |
 
 ### Finding 1 (load-bearing, CONFIRMED): `chain_closure` is false for inseparability, so the Zorn route is unusable
@@ -163,10 +163,17 @@ cohabits some finite stage — never because `S*` is in the property. Refactor p
 
 ## 6. The two-tranche plan
 
-### 6a. Tranche 1 — the constant-support/abstraction kernel (CURRENT; gate before any Henkin work)
+### 6a. Tranche 1 — the constant-support/abstraction kernel — **COMPLETE + GATED**
 
 The genuinely uncertain mechanism is syntax/freshness, so it is built and tested first, in
-neutral modules with no interpolation-specific commitments beyond `InsepAt`:
+neutral modules with no interpolation-specific commitments beyond `InsepAt`. All landed
+axiom-clean in the WIP target: `Lomega1omega/Entailment.lean`, `Methods/ConstantSupport.lean`,
+`Methods/ConstantAbstraction.lean`, `Methods/Interpolation/{ConstantElimination, Inseparability}.lean`.
+**Tranche 1.5** (post-review bridges) also landed: `Methods/Interpolation/QuantifierRoundTrip.lean`
+(the substitution round-trip `genEx c (instConst c ψ) ≡ ψ.ex` + the arbitrary-syntax C7
+consumers for `ψ.ex` and `(ψ.all).not`) and `Methods/Interpolation/RootGate.lean` (the semantic
+root gate — an empty-support separator strips to a genuine base interpolant, via the
+cross-language entailment bridge `entails_reduct_of_entails_map`).
 
 1. **Entailment** (D1): `Theoryω.Entails` / `Sentenceω.Entails`, nonempty, `Type 0`; basic
    monotonicity/weakening lemmas.
@@ -207,16 +214,35 @@ neutral modules with no interpolation-specific commitments beyond `InsepAt`:
 
 ### 6b. Tranche 2 — the Henkin interface (only after the tranche-1 gate)
 
-- The countable generated `U` (components + polarity + constant instantiation over the roots;
-  finite-support invariant proved once for the generators and preserved by each operation).
-- Finite inseparable pairs as the `ConsistencyPropertyEqOn` instance (§5's field list; no
-  `extension`, no `chain_closure`, relational core, closed-term fields verbatim).
-- `HenkinComplete` (the truth-lemma-facing completion predicate), the bridge
-  `MaximalConsistent → HenkinComplete` (existing endpoints untouched), the fair enumeration
-  through `U`, and the **forward-only two-polarity** relational term-model truth lemma
-  (`φ ∈ S* → M ⊨ φ` and `φ.not ∈ S* → ¬ M ⊨ φ` simultaneously, by the existing
-  Ordinal-`depth` measure); model existence for the relational core.
-- Then: closure lemmas assembled into the instance, the endpoint chain (§9–10).
+Recommended five-step split (post-review):
+
+1. **Generated universe.** Define `U` with explicit constructors for: root formulas and
+   connective components; polarity targets; constant quantifier instances (`instConst`);
+   **all constant equalities needed by reflexivity/symmetry/transitivity**; and **atomic
+   relation instances with their one-coordinate replacements**. Prove countability, finite
+   constant support, and preservation of side membership.
+2. **Rule interfaces.** Define `ConsistencyPropertyEqOn U` and `HenkinComplete U S` using the
+   **atomic equality/congruence fields** (§C6-correction below) and the forward two-polarity
+   connective fields; add the `MaximalConsistent → HenkinComplete` compatibility bridge
+   (existing `model_existence` endpoints untouched).
+3. **Fair enumeration.** A countable request type, every request repeated infinitely often,
+   every stage finite and in the consistency family, and the union proved `HenkinComplete`
+   **without** claiming it belongs to the family (Finding 1).
+4. **Inseparable-pair instance.** Members witness finite `Γ`, finite `Δ`, a finite support `A`,
+   support containment, side membership, and `InsepAt F R A Γ Δ`. Prove the closure rules,
+   using the tranche-1 C7 theorem (`insepAt_instConst_of_insepAt_ex`) for fresh witnesses.
+5. **Relational term model.** Quotient ordinary closed terms, prove the forward positive/negative
+   truth lemma, then model existence; then the endpoint chain (§9–10).
+
+**C6 correction (load-bearing — do NOT retain unrestricted C6).** A countable `U` cannot be
+closed under arbitrary one-variable substitution templates: one infinitary sentence with
+countably many occurrences of `c₀` admits continuum-many one-hole presentations (choose
+independently which occurrences came from the variable), so substituting `c₁` yields
+continuum-many C6 conclusions. The relational term model consumes only **atomic** closure:
+equality reflexivity, symmetry, transitivity, and **relation congruence under replacement of
+one argument**. Use those atomic fields directly — they are countable and sufficient, and the
+`MaximalConsistent` bridge derives them from its existing C5/C6. (A guarded C6 requiring the
+target instance already in `U` is a fallback, but the atomic API is cleaner.)
 
 ## 7. The inseparability closure lemmas
 
@@ -231,18 +257,18 @@ interface field, each with the *separator-combination* content:
 | C1/C1'/C2 dichotomies | `σ₁ ∨ σ₂` (side 1) / `σ₁ ∧ σ₂` (side 2) |
 | C3, C4' (∀-shaped, per-k) | separator unchanged |
 | C3', C4 (∃-shaped: some k) | `⋁ₖ σₖ` resp. `⋀ₖ σₖ` — **the essential `L_ω₁ω` step**: countably many per-disjunct separators recombine by a countable connective. All σₖ share the same finite allowed support `A` — this is what the finite-support invariant buys; without it the combined separator could have infinite constant support and the root gate would be unreachable. |
-| C5/C6 | separator unchanged (equality steps happen within one side; constants are common-vocabulary) |
-| C7 family | `∃x σ(x)` via the abstraction theorem: pass to `insert c A`, abstract the fresh `c` back out (§6a.4–5) |
+| C5 / atomic equality congruence | separator unchanged (equality steps happen within one side; constants are common-vocabulary) |
+| C7 family | `∃x σ(x)` via the abstraction theorem: pass to `insert c A`, abstract the fresh `c` back out (§6a.4–5). Exposed for arbitrary existential / negated-universal parents by `insepAt_instConst_of_insepAt_ex` / `insepAt_not_instConst_of_insepAt_not_all` (tranche 1.5). |
 
 **D4 — dualization.** `InsepAt` is symmetric under `(Γ, Δ) ↦ (Δ, Γ)` with `σ ↦ σ.not` (up to
 a double-negation realize lemma). Freeze: prove each closure lemma for side 1 only and derive
 side 2 through the swap lemma — halves the connective-by-connective work and keeps the side-2
 statements from drifting.
 
-The occurrence bound on the final interpolant is carried by `InsepAt`'s definition itself
-(base symbols in `(F₀, R₀)`, constants in `A`), so the headline's occurrence conclusions need
-no separate bookkeeping — the root gate (`A = ∅`) and the symbSublang round-trip (milestone 2)
-are the only places occurrence sets are transported.
+`InsepAt`'s definition carries the occurrence bound (base symbols in `(F₀, R₀)`, constants in
+`A`), so the headline's occurrence conclusions need no separate bookkeeping: occurrence sets are
+transported only at the root gate (`A = ∅`, now `base_interpolant_of_empty_support_separator`)
+and the symbSublang round-trip (milestone 2).
 
 ## 8. The countable enumeration domain `U` (tranche 2; frozen shape)
 
