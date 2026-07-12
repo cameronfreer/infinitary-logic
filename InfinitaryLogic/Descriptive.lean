@@ -36,6 +36,7 @@ import InfinitaryLogic.Descriptive.PolishAction
 
 -- The invariant σ-algebras on the structure space (issue #28)
 import InfinitaryLogic.Descriptive.InvariantMeasurableSpace
+import InfinitaryLogic.Descriptive.InvariantMeasurableModels
 
 -- Counting theorems (depend on descriptive results)
 import InfinitaryLogic.ModelTheory.CountingCountable
