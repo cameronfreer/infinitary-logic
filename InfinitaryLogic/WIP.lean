@@ -4,6 +4,7 @@ import InfinitaryLogic.Methods.EMTermModel
 import InfinitaryLogic.Methods.ConstantAbstraction
 import InfinitaryLogic.Methods.Interpolation.ConstantElimination
 import InfinitaryLogic.Methods.Interpolation.Inseparability
+import InfinitaryLogic.Methods.Interpolation.QuantifierRoundTrip
 -- The local EM extraction bridge (its Conditional/MorleyHanfTransfer import stays isolated here)
 import InfinitaryLogic.Methods.LocalEMExtraction
 -- The pure local stack: semantic layer onward (LocalEMFamily -> LocalColimit -> LocalTower ->
