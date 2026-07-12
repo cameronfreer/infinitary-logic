@@ -28,7 +28,7 @@ variable {L : Language.{0, 0}} {M : Type}
 
 /-- The constant instance `ψ(c)`: open the bound variable of `ψ` and substitute the constant
 `c_c`. -/
-noncomputable def instConst (c : ℕ) (ψ : L[[ℕ]].BoundedFormulaω Empty 1) : L[[ℕ]].Sentenceω :=
+def instConst (c : ℕ) (ψ : L[[ℕ]].BoundedFormulaω Empty 1) : L[[ℕ]].Sentenceω :=
   (ψ.openBounds).subst (fun _ => constTerm c)
 
 /-- The constant `c_c` realizes to its interpretation `h c`. -/
