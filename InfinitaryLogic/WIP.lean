@@ -7,6 +7,7 @@ import InfinitaryLogic.Methods.Interpolation.Inseparability
 import InfinitaryLogic.Methods.Interpolation.QuantifierRoundTrip
 import InfinitaryLogic.Methods.Interpolation.RootGate
 import InfinitaryLogic.Methods.Interpolation.GeneratedUniverse
+import InfinitaryLogic.Methods.Interpolation.InseparablePairFamily
 import InfinitaryLogic.Methods.Interpolation.ConsistencyPropertyEqOn
 import InfinitaryLogic.Methods.Interpolation.HenkinCompat
 import InfinitaryLogic.Methods.Interpolation.FairEnumeration
