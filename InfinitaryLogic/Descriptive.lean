@@ -26,6 +26,7 @@ import InfinitaryLogic.Descriptive.FiniteCarrier
 
 -- The pointwise-convergence topology on S∞ = Equiv.Perm ℕ (issue #27)
 import InfinitaryLogic.Descriptive.PermTopology
+import InfinitaryLogic.Descriptive.PermPolishGroup
 
 -- The S∞ = Equiv.Perm ℕ action on the structure space (algebraic layer, issue #27)
 import InfinitaryLogic.Descriptive.LogicAction
