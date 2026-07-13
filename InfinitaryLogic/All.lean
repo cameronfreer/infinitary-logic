@@ -14,6 +14,7 @@ import InfinitaryLogic.ModelTheory.CountableCompanion
 import InfinitaryLogic.ModelTheory.TypePreservingBF
 import InfinitaryLogic.ModelTheory.ArbitraryStabilization
 import InfinitaryLogic.ModelTheory.ScottCompletion
+import InfinitaryLogic.ModelTheory.CraigInterpolation
 
 /-!
 # All: the sorry-free library surface
