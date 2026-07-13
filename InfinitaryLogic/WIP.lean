@@ -16,6 +16,7 @@ import InfinitaryLogic.Methods.Interpolation.QuotientTermModel
 import InfinitaryLogic.Methods.Interpolation.QuotientTruthLemma
 import InfinitaryLogic.Methods.Interpolation.PairedInseparability
 import InfinitaryLogic.Methods.Interpolation.PairedInsepFamily
+import InfinitaryLogic.Methods.Interpolation.CraigRelational
 -- The local EM extraction bridge (its Conditional/MorleyHanfTransfer import stays isolated here)
 import InfinitaryLogic.Methods.LocalEMExtraction
 -- The pure local stack: semantic layer onward (LocalEMFamily -> LocalColimit -> LocalTower ->

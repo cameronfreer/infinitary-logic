@@ -7,6 +7,18 @@ supply `T` in the relational core) and the nonempty entailment convention. The Z
 (Finding 1) stands. Sequencing is now kernel-first: the constant-support/abstraction mechanism
 is built and gated BEFORE the Henkin interface.
 
+## Post-implementation correction (coverage)
+
+Coverage — "every ambient relation symbol belongs to side 1 or side 2" — was required by the
+originally planned global invariant `GenU ⊆ Sent₁ ∪ Sent₂`. The implemented paired family
+(`PairedInsepFamily.lean`) instead carries **coordinatewise** side bounds `Γ ⊆ SentBnd F₁ R₁`,
+`Δ ⊆ SentBnd F₂ R₂` and proves their preservation **field-by-field**: every refinement rule keeps
+the added sentence in the side of the trigger. Since no rule ever introduces an uncovered relation
+atom (the seed's dormant atomic instances in `GenU` are never enumerated into `S*`), coverage is
+unnecessary — the countable relational endpoint `craig_interpolation_relational_countable`
+(`CraigRelational.lean`) has **no** coverage or side-bound hypothesis, only relation-symbol
+countability. This is a positive simplification, not interface drift.
+
 Sources: Marker, *Lectures on Infinitary Model Theory*, Theorem 4.20 (§4.3); Keisler, *Model
 Theory for Infinitary Logic*, Chapter 3 (consistency properties over pairs, inseparability).
 
