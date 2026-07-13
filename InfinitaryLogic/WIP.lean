@@ -17,6 +17,8 @@ import InfinitaryLogic.Methods.Interpolation.QuotientTruthLemma
 import InfinitaryLogic.Methods.Interpolation.PairedInseparability
 import InfinitaryLogic.Methods.Interpolation.PairedInsepFamily
 import InfinitaryLogic.Methods.Interpolation.CraigRelational
+-- The neutral semantic-expansion prerequisite for the generated-sublanguage Craig wrapper (Layer 2)
+import InfinitaryLogic.Methods.SymbSublangExpansion
 -- The local EM extraction bridge (its Conditional/MorleyHanfTransfer import stays isolated here)
 import InfinitaryLogic.Methods.LocalEMExtraction
 -- The pure local stack: semantic layer onward (LocalEMFamily -> LocalColimit -> LocalTower ->
