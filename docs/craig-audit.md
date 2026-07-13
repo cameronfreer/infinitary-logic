@@ -311,6 +311,60 @@ frozen in §2 (with `functionsIn` in the conclusion) is delivered only after thi
 intermediate relational endpoint is the arc's first publishable theorem and gets the
 blueprint node.
 
+### 9a. Relational endpoint — CONSOLIDATED (this milestone)
+
+The relational core is stable and consolidated as a publishable result (no release cut yet —
+the full theorem is the release boundary):
+
+* Layer 1 `craig_interpolation_relational_countable` (`CraigRelational.lean`) — relational +
+  countable relation symbols;
+* neutral prerequisite `SymbSublangExpansion.lean` — `expandSymbStructureBase` + reduct/realize/
+  entailment transport for the two-sorted `symbSublang`;
+* Layer 2 `craig_interpolation_relational` (`CraigSublanguage.lean`) — relational, **no** ambient
+  countability (pass to `symbSublang` of the roots' countable symbol sets, apply Layer 1, map
+  back); blueprint node `thm:craig-relational`;
+* PC-separation `craig_pcSeparation_relational` (`CraigSeparation.lean`, audit §10) — the
+  shared-vocabulary `symbSublang` packaging consumed by #10;
+* public facade `ModelTheory/CraigInterpolation.lean`, wired into `InfinitaryLogic.All`
+  (`import InfinitaryLogic` exposes both theorems), axiom-clean.
+
+### 9b. Relationalization design — FROZEN (standard graph construction)
+
+The final layer (arbitrary language → relational core) uses the standard graph construction —
+**not** the constants-only path, which dodges the real difficulty (finite auxiliary-variable
+binding and nested terms) and would produce a throwaway API. The relationalized language keeps
+base relations and function graphs disjoint *by construction*, which simplifies the occurrence
+proofs:
+
+```
+inductive GraphRelation (L : Language) : ℕ → Type
+  | base  : L.Relations n → GraphRelation L n
+  | graph : L.Functions n → GraphRelation L (n + 1)
+```
+
+The relationalized language has **no** function symbols. Build in gated units:
+
+1. **Graph language and structures** — the graph expansion of an `L`-structure; base/graph
+   relation realization lemmas; occurrence projections back to the original relations/functions.
+2. **Finite existential block** — a neutral helper binding a finite tuple of auxiliary variables,
+   with its realization theorem (the real syntax prerequisite for arbitrary arities). A pilot, if
+   wanted, is an **arbitrary-arity** nested-term `termGraph` theorem — never a zero-arity case.
+3. **Term graph** — `termGraph t y` with the acceptance theorem
+   `Realize (termGraph t y) ↔ (realize y = Term.realize t)` for arbitrary nested terms and
+   arbitrary function arities.
+4. **Formula translation** — equality/relation atoms flattened through term graphs; `imp`/`all`/
+   `iInf`/`iSup` translated structurally; full realization bridge in graph expansions; exact
+   occurrence bounds.
+5. **Graph axioms** — for a countable set `F` of function symbols: totality; functionality; the
+   countable conjunction `graphAxioms F`; reconstruction of an `L`-structure from a relational
+   model of these axioms; realization bridge for formulas using only functions from `F`.
+6. **Back-translation** — base relations unchanged; `graph f (x⃗,y) ↦ f(x⃗) = y`; structural
+   through every connective; realization and occurrence theorems.
+7. **Craig assembly** — apply relational interpolation to
+   `Ax(F₁) ∧ r₁ʳᵉˡ ⊨ Ax(F₂) → r₂ʳᵉˡ`. The intersection of the two relational vocabularies is
+   exactly {base relations shared by `(r₁,r₂)`} ∪ {graph relations for functions shared by
+   `(r₁,r₂)`}, so back-translation gives the sharp function- and relation-occurrence bounds.
+
 ## 10. PC-separation corollary (kept in #8; consumed by #10)
 
 Shape to deliver (exact `Language`-inclusion packaging to be frozen in the #10 reconnaissance,
