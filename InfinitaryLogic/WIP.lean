@@ -21,6 +21,8 @@ import InfinitaryLogic.Methods.Interpolation.CraigRelational
 import InfinitaryLogic.Methods.SymbSublangExpansion
 -- Layer 2: the relational Craig theorem without a global relation-symbol countability hypothesis
 import InfinitaryLogic.Methods.Interpolation.CraigSublanguage
+-- Layer 3 Unit 1: the relationalized graph language, its expansion, and the shared-vocab identity
+import InfinitaryLogic.Methods.Interpolation.GraphLanguage
 -- The local EM extraction bridge (its Conditional/MorleyHanfTransfer import stays isolated here)
 import InfinitaryLogic.Methods.LocalEMExtraction
 -- The pure local stack: semantic layer onward (LocalEMFamily -> LocalColimit -> LocalTower ->
