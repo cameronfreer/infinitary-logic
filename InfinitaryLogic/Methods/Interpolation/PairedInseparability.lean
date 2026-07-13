@@ -108,4 +108,52 @@ theorem insepAt_insert_of_shared_entails {σ φ : L[[ℕ]].Sentenceω}
       Classical.not_imp] at hσ hρn ⊢
     exact ⟨hσ, hρn⟩
 
+/-! ## The allowed-support budget: variance and fresh growth
+
+The paired family carries the invariant `support Γ ∪ support Δ ⊆ ↑A` — `A` is an allowed-support
+*budget*, not an exact support. Shrinking the budget is free; growing it by a **fresh** constant
+(supplied by the invariant whenever `c ∉ A`) is the one non-trivial move, and it is exactly
+constant abstraction. -/
+
+/-- **Variance (shrink the budget).** A smaller allowed support makes inseparability easier: every
+separator allowed at `A` is allowed at `B ⊇ A`. -/
+theorem insepAt_mono_support {B : Finset ℕ} (hAB : A ⊆ B)
+    (h : InsepAt F R B Γ Δ) : InsepAt F R A Γ Δ := by
+  rintro ⟨σ, hbf, hbr, hsupp, hΓσ, hΔσ⟩
+  exact h ⟨σ, hbf, hbr, hsupp.trans (Finset.coe_subset.mpr hAB), hΓσ, hΔσ⟩
+
+/-- Plain `Γ`-side abstraction (**freshness-free**: `∃`-introduction is weakening). `Γ ⊨ σ`
+upgrades to `Γ ⊨ ∃x σ(x)`; the witness is the constant's own interpretation. -/
+theorem entails_genEx_of_entails_plain (j : ℕ) (σc : L[[ℕ]].Sentenceω)
+    (hyp : Theoryω.Entails Γ σc) : Theoryω.Entails Γ (genEx j σc) := by
+  intro M instM _ hmodel
+  set base := (L.lhomWithConstants ℕ).reduct M with hbase
+  set h := ambientConstMap (L := L) M with hh
+  have bridge : ∀ (ψ : L[[ℕ]].Sentenceω),
+      @Sentenceω.Realize L[[ℕ]] ψ M instM
+        ↔ @BoundedFormulaω.Realize L[[ℕ]] M (wc base h) Empty 0 ψ Empty.elim Fin.elim0 :=
+    fun ψ => ambient_realize_iff_wc (S := instM) ψ Empty.elim Fin.elim0
+  have hσ : @BoundedFormulaω.Realize L[[ℕ]] M (wc base h) Empty 0 σc Empty.elim Fin.elim0 :=
+    (bridge _).mp (hyp M hmodel)
+  refine (bridge _).mpr ((realize_genEx base h j σc).mpr ⟨h j, ?_⟩)
+  rw [Function.update_eq_self]; exact hσ
+
+/-- **Fresh growth.** Enlarging the allowed-support budget by a constant `c` fresh for `Δ` preserves
+inseparability: a separator using `c` abstracts to `genEx c σ`, whose support lies back in `A`. Only
+the `Δ`-side (∀-generalization) needs the freshness; the `Γ`-side is `∃`-weakening. Under the family
+invariant, `c ∉ A` already gives `c ∉ support Δ`. -/
+theorem insepAt_grow_fresh (c : ℕ)
+    (hcΔ : ∀ δ ∈ Δ, c ∉ sentenceJConsts (L' := L) (J := ℕ) δ)
+    (h : InsepAt F R A Γ Δ) : InsepAt F R (insert c A) Γ Δ := by
+  rintro ⟨σ, hbf, hbr, hsupp, hΓσ, hΔσ⟩
+  refine h ⟨genEx c σ, (baseFunctionsIn_genEx_subset c σ).trans hbf, ?_, ?_, ?_, ?_⟩
+  · rw [baseRelationsIn_genEx]; exact hbr
+  · intro k hk
+    have hk2 : k ≠ c := fun heq => notMem_sentenceJConsts_genEx c σ (heq ▸ hk)
+    have hmem := hsupp (sentenceJConsts_genEx_subset c σ hk)
+    simp only [Finset.coe_insert, Set.mem_insert_iff] at hmem
+    exact hmem.resolve_left hk2
+  · exact entails_genEx_of_entails_plain c σ hΓσ
+  · exact entails_not_genEx_of_entails_not hcΔ hΔσ
+
 end FirstOrder.Language
