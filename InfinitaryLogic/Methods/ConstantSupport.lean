@@ -253,6 +253,67 @@ theorem BoundedFormulaω.relationsIn_forallBlock {n : ℕ} :
   | 0, _ => rfl
   | _ + 1, φ => relationsIn_forallBlock φ.all
 
+/-- The true formula mentions no function symbols. -/
+theorem BoundedFormulaω.functionsIn_top {n : ℕ} :
+    (⊤ : L.BoundedFormulaω α n).functionsIn = ∅ :=
+  Set.union_empty ∅
+
+/-- The true formula mentions no relation symbols. -/
+theorem BoundedFormulaω.relationsIn_top {n : ℕ} :
+    (⊤ : L.BoundedFormulaω α n).relationsIn = ∅ :=
+  Set.union_empty ∅
+
+/-- Binary conjunction collects both sides' function symbols. -/
+theorem BoundedFormulaω.functionsIn_and {n : ℕ} (φ ψ : L.BoundedFormulaω α n) :
+    (φ.and ψ).functionsIn = φ.functionsIn ∪ ψ.functionsIn := by
+  show ((φ.imp ψ.not).not).functionsIn = _
+  rw [BoundedFormulaω.functionsIn_not]
+  show φ.functionsIn ∪ (ψ.not).functionsIn = _
+  rw [BoundedFormulaω.functionsIn_not]
+
+/-- Binary conjunction collects both sides' relation symbols. -/
+theorem BoundedFormulaω.relationsIn_and {n : ℕ} (φ ψ : L.BoundedFormulaω α n) :
+    (φ.and ψ).relationsIn = φ.relationsIn ∪ ψ.relationsIn := by
+  show ((φ.imp ψ.not).not).relationsIn = _
+  rw [BoundedFormulaω.relationsIn_not]
+  show φ.relationsIn ∪ (ψ.not).relationsIn = _
+  rw [BoundedFormulaω.relationsIn_not]
+
+/-- An `Encodable`-indexed conjunction collects the branches' function symbols (the `⊤` padding
+of undecodable indices contributes nothing). -/
+theorem BoundedFormulaω.functionsIn_einf {ι : Type*} [Encodable ι] {n : ℕ}
+    (φs : ι → L.BoundedFormulaω α n) :
+    (BoundedFormulaω.einf φs).functionsIn = ⋃ i, (φs i).functionsIn := by
+  ext x
+  simp only [BoundedFormulaω.einf, BoundedFormulaω.functionsIn, Set.mem_iUnion]
+  constructor
+  · rintro ⟨k, hk⟩
+    cases hd : Encodable.decode (α := ι) k with
+    | none => rw [hd, BoundedFormulaω.functionsIn_top] at hk; exact absurd hk (Set.notMem_empty x)
+    | some i => rw [hd] at hk; exact ⟨i, hk⟩
+  · rintro ⟨i, hi⟩
+    exact ⟨Encodable.encode i, by rw [Encodable.encodek]; exact hi⟩
+
+/-- An `Encodable`-indexed conjunction collects the branches' relation symbols. -/
+theorem BoundedFormulaω.relationsIn_einf {ι : Type*} [Encodable ι] {n : ℕ}
+    (φs : ι → L.BoundedFormulaω α n) :
+    (BoundedFormulaω.einf φs).relationsIn = ⋃ i, (φs i).relationsIn := by
+  ext x
+  simp only [BoundedFormulaω.einf, BoundedFormulaω.relationsIn, Set.mem_iUnion]
+  constructor
+  · rintro ⟨k, hk⟩
+    cases hd : Encodable.decode (α := ι) k with
+    | none => rw [hd, BoundedFormulaω.relationsIn_top] at hk; exact absurd hk (Set.notMem_empty x)
+    | some i => rw [hd] at hk; exact ⟨i, hk⟩
+  · rintro ⟨i, hi⟩
+    exact ⟨Encodable.encode i, by rw [Encodable.encodek]; exact hi⟩
+
+/-- In a relational language no formula mentions a function symbol. -/
+theorem BoundedFormulaω.functionsIn_of_isRelational {L' : Language.{0, 0}} [L'.IsRelational]
+    {α : Type} {n : ℕ} (φ : L'.BoundedFormulaω α n) : φ.functionsIn = ∅ := by
+  rw [Set.eq_empty_iff_forall_notMem]
+  exact fun p _ => IsEmpty.false p.2
+
 end FunctionsIn
 
 /-! ## Constant support of a constant-expansion formula -/

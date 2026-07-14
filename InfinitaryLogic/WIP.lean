@@ -23,6 +23,8 @@ import InfinitaryLogic.Methods.SymbSublangExpansion
 import InfinitaryLogic.Methods.Interpolation.CraigSublanguage
 -- Layer 3 Unit 1: the relationalized graph language, its expansion, and the shared-vocab identity
 import InfinitaryLogic.Methods.Interpolation.GraphLanguage
+-- Layer 3 Unit 3: term graphs (context-polymorphic flattening of nested terms) + occurrence identities
+import InfinitaryLogic.Methods.Interpolation.TermGraph
 -- The local EM extraction bridge (its Conditional/MorleyHanfTransfer import stays isolated here)
 import InfinitaryLogic.Methods.LocalEMExtraction
 -- The pure local stack: semantic layer onward (LocalEMFamily -> LocalColimit -> LocalTower ->
