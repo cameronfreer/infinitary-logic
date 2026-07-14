@@ -3,6 +3,7 @@ Copyright (c) 2026 Cameron Freer. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
+import InfinitaryLogic.Lomega1omega.FiniteQuantification
 import InfinitaryLogic.Methods.GeneratedSublanguage
 import Mathlib.Data.Set.Finite.Lattice
 
@@ -223,6 +224,34 @@ theorem BoundedFormulaω.relationsIn_ex {n : ℕ} (φ : L.BoundedFormulaω α (n
   rw [BoundedFormulaω.relationsIn_not]
   show (φ.not).relationsIn = _
   rw [BoundedFormulaω.relationsIn_not]
+
+/-- A finite existential block does not change the mentioned function symbols. -/
+theorem BoundedFormulaω.functionsIn_existsBlock {n : ℕ} :
+    ∀ {k : ℕ} (φ : L.BoundedFormulaω α (n + k)),
+      (φ.existsBlock).functionsIn = φ.functionsIn
+  | 0, _ => rfl
+  | _ + 1, φ => (functionsIn_existsBlock φ.ex).trans (BoundedFormulaω.functionsIn_ex φ)
+
+/-- A finite existential block does not change the mentioned relation symbols. -/
+theorem BoundedFormulaω.relationsIn_existsBlock {n : ℕ} :
+    ∀ {k : ℕ} (φ : L.BoundedFormulaω α (n + k)),
+      (φ.existsBlock).relationsIn = φ.relationsIn
+  | 0, _ => rfl
+  | _ + 1, φ => (relationsIn_existsBlock φ.ex).trans (BoundedFormulaω.relationsIn_ex φ)
+
+/-- A finite universal block does not change the mentioned function symbols. -/
+theorem BoundedFormulaω.functionsIn_forallBlock {n : ℕ} :
+    ∀ {k : ℕ} (φ : L.BoundedFormulaω α (n + k)),
+      (φ.forallBlock).functionsIn = φ.functionsIn
+  | 0, _ => rfl
+  | _ + 1, φ => functionsIn_forallBlock φ.all
+
+/-- A finite universal block does not change the mentioned relation symbols. -/
+theorem BoundedFormulaω.relationsIn_forallBlock {n : ℕ} :
+    ∀ {k : ℕ} (φ : L.BoundedFormulaω α (n + k)),
+      (φ.forallBlock).relationsIn = φ.relationsIn
+  | 0, _ => rfl
+  | _ + 1, φ => relationsIn_forallBlock φ.all
 
 end FunctionsIn
 

@@ -18,6 +18,7 @@ import InfinitaryLogic.Lomega1omega.Embedding
 import InfinitaryLogic.Lomega1omega.Theory
 import InfinitaryLogic.Lomega1omega.Entailment
 import InfinitaryLogic.Lomega1omega.QuantifierRank
+import InfinitaryLogic.Lomega1omega.FiniteQuantification
 
 -- Scott sentences and ranks
 import InfinitaryLogic.Scott.AtomicDiagram
