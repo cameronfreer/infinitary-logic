@@ -29,6 +29,8 @@ import InfinitaryLogic.Methods.Interpolation.TermGraph
 import InfinitaryLogic.Methods.Interpolation.Relationalize
 -- Layer 3 Unit 5a: graph axioms (totality + functionality) with semantic gates + occurrence identity
 import InfinitaryLogic.Methods.Interpolation.GraphAxioms
+-- Layer 3 Unit 5b: structure reconstruction from a model of the graph axioms + localized round-trips
+import InfinitaryLogic.Methods.Interpolation.GraphReconstruction
 -- The local EM extraction bridge (its Conditional/MorleyHanfTransfer import stays isolated here)
 import InfinitaryLogic.Methods.LocalEMExtraction
 -- The pure local stack: semantic layer onward (LocalEMFamily -> LocalColimit -> LocalTower ->

@@ -314,6 +314,65 @@ theorem BoundedFormulaω.functionsIn_of_isRelational {L' : Language.{0, 0}} [L'.
   rw [Set.eq_empty_iff_forall_notMem]
   exact fun p _ => IsEmpty.false p.2
 
+/-- **Occurrence-aware term-realization congruence**: two structure instances agreeing on the
+function symbols occurring in `t` realize `t` identically. -/
+theorem Term.realize_congr_functionsIn {M : Type} (S S' : L.Structure M) {γ : Type} :
+    ∀ (t : L.Term γ)
+      (_ : ∀ p ∈ t.functionsIn, ∀ x : Fin p.1 → M,
+        @Structure.funMap L M S p.1 p.2 x = @Structure.funMap L M S' p.1 p.2 x)
+      (v : γ → M),
+      @Term.realize L M S γ v t = @Term.realize L M S' γ v t
+  | .var _, _, _ => rfl
+  | .func f ts, hf, v => by
+    show @Structure.funMap L M S _ f _ = @Structure.funMap L M S' _ f _
+    rw [hf ⟨_, f⟩ (Set.mem_insert _ _)]
+    exact congrArg _ (funext fun i => Term.realize_congr_functionsIn S S' (ts i)
+      (fun p hp x => hf p (Set.mem_insert_of_mem _ (Set.mem_iUnion.mpr ⟨i, hp⟩)) x) v)
+
+/-- **Occurrence-aware realization congruence**: two structure instances agreeing on the
+symbols occurring in `φ` realize `φ` identically. The tool that localizes semantic transport
+to a formula's own vocabulary. -/
+theorem BoundedFormulaω.realize_congr_symbolsIn {M : Type} (S S' : L.Structure M) :
+    ∀ {n : ℕ} (φ : L.BoundedFormulaω α n)
+      (_ : ∀ p ∈ φ.functionsIn, ∀ x : Fin p.1 → M,
+        @Structure.funMap L M S p.1 p.2 x = @Structure.funMap L M S' p.1 p.2 x)
+      (_ : ∀ p ∈ φ.relationsIn, ∀ x : Fin p.1 → M,
+        (@Structure.RelMap L M S p.1 p.2 x ↔ @Structure.RelMap L M S' p.1 p.2 x))
+      (v : α → M) (xs : Fin n → M),
+      @BoundedFormulaω.Realize L M S α n φ v xs ↔ @BoundedFormulaω.Realize L M S' α n φ v xs
+  | _, .falsum, _, _, _, _ => Iff.rfl
+  | _, .equal t₁ t₂, hf, _, v, xs => by
+    show @Term.realize L M S _ _ t₁ = @Term.realize L M S _ _ t₂
+      ↔ @Term.realize L M S' _ _ t₁ = @Term.realize L M S' _ _ t₂
+    rw [Term.realize_congr_functionsIn S S' t₁ (fun p hp => hf p (Set.mem_union_left _ hp)),
+      Term.realize_congr_functionsIn S S' t₂ (fun p hp => hf p (Set.mem_union_right _ hp))]
+  | _, .rel R ts, hf, hr, v, xs => by
+    show @Structure.RelMap L M S _ R _ ↔ @Structure.RelMap L M S' _ R _
+    rw [show (fun i => @Term.realize L M S _ _ (ts i))
+        = (fun i => @Term.realize L M S' _ _ (ts i)) from funext fun i =>
+          Term.realize_congr_functionsIn S S' (ts i)
+            (fun p hp => hf p (Set.mem_iUnion.mpr ⟨i, hp⟩)) _]
+    exact hr ⟨_, R⟩ rfl _
+  | _, .imp φ ψ, hf, hr, v, xs => by
+    show (_ → _) ↔ (_ → _)
+    rw [BoundedFormulaω.realize_congr_symbolsIn S S' φ
+        (fun p hp => hf p (Set.mem_union_left _ hp))
+        (fun p hp => hr p (Set.mem_union_left _ hp)) v xs,
+      BoundedFormulaω.realize_congr_symbolsIn S S' ψ
+        (fun p hp => hf p (Set.mem_union_right _ hp))
+        (fun p hp => hr p (Set.mem_union_right _ hp)) v xs]
+  | _, .all φ, hf, hr, v, xs =>
+    forall_congr' fun x =>
+      BoundedFormulaω.realize_congr_symbolsIn S S' φ hf hr v (Fin.snoc xs x)
+  | _, .iSup φs, hf, hr, v, xs =>
+    exists_congr fun i => BoundedFormulaω.realize_congr_symbolsIn S S' (φs i)
+      (fun p hp => hf p (Set.mem_iUnion.mpr ⟨i, hp⟩))
+      (fun p hp => hr p (Set.mem_iUnion.mpr ⟨i, hp⟩)) v xs
+  | _, .iInf φs, hf, hr, v, xs =>
+    forall_congr' fun i => BoundedFormulaω.realize_congr_symbolsIn S S' (φs i)
+      (fun p hp => hf p (Set.mem_iUnion.mpr ⟨i, hp⟩))
+      (fun p hp => hr p (Set.mem_iUnion.mpr ⟨i, hp⟩)) v xs
+
 end FunctionsIn
 
 /-! ## Constant support of a constant-expansion formula -/
