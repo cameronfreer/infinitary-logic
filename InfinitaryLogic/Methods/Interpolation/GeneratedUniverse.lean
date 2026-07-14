@@ -337,12 +337,12 @@ theorem genU_finite_support (hr₁ : (sentenceJConsts (L' := L) (J := ℕ) r₁)
     rw [sentenceJConsts_not] at ih ⊢
     exact (ih.union (Set.finite_singleton c)).subset (sentenceJConsts_instConst_subset c _)
 
-/-! ## Minimality (the side-membership tool)
+/-! ## Minimality
 
-`GenU` is the smallest set containing the seed and closed under the unary rules. Instantiating
-`P` with a base-symbol-bounded side predicate `Sent₁ ∪ Sent₂` (closed under every unary rule,
-since components shrink the base symbols and `instConst` adds only a constant) yields "every
-member belongs to a side". -/
+`GenU` is the smallest set containing the seed and closed under the unary rules: the generic
+induction principle for the generated universe. (The current paired construction carries its
+side-membership bound as an explicit invariant instead of instantiating this principle, so
+`genU_le` presently has no in-tree consumer; it is the library-level minimality statement.) -/
 theorem genU_le {P : Set L[[ℕ]].Sentenceω} (hseed : seed r₁ r₂ ⊆ P)
     (himp_negleft : ∀ {φ ψ : L[[ℕ]].Sentenceω}, φ.imp ψ ∈ P → φ.not ∈ P)
     (himp_right : ∀ {φ ψ : L[[ℕ]].Sentenceω}, φ.imp ψ ∈ P → ψ ∈ P)

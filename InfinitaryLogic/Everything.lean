@@ -3,6 +3,8 @@ import InfinitaryLogic.Conditional
 -- Legacy off-path modules (not reachable from the `All`/`Conditional` roots):
 -- legacy FormulaCode API, superseded by the decoupled Scott pipeline
 import InfinitaryLogic.Scott.Code
+-- published backward-compatibility redirect (kept until a major release; built here so CI covers it)
+import InfinitaryLogic.Basic
 
 /-!
 # Everything: the full library including conditional results and legacy modules

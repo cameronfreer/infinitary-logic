@@ -9,6 +9,13 @@ import InfinitaryLogic.Methods.Interpolation.FairEnumeration
 /-!
 # The inseparable-pair consistency property and its Henkin completion (issue #8, commit 4b)
 
+**Status: the correct one-sided predecessor, superseded for Craig assembly.** The Craig
+endpoint is assembled from the *paired* construction (`PairedInsepFamily.lean`:
+`pairedInsepConsistencyProperty` / `exists_paired_model`), which tracks both coordinates of the
+inseparable pair through the completion. This file's single-root completion
+(`exists_henkinComplete_of_root`) remains the mathematically correct one-sided statement and is
+kept (WIP target only) as the simpler reference form of the argument.
+
 Packaging step: the family-closure lemmas of `InseparablePairFamily.lean` are exactly the fields of
 a `ConsistencyPropertyEqOn (GenU r₁ r₂)`, so the finite inseparable-pair family *is* a consistency
 property over the generated universe. Feeding it (and the root inseparable pair `{r₁}`) to the fair

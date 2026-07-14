@@ -9,6 +9,13 @@ import InfinitaryLogic.Methods.Henkin.Construction
 /-!
 # Compatibility: maximal consistent sets are Henkin-complete (issue #8 tranche 2, commit 2b)
 
+**Status: compatibility adapter, intentionally off the definitive truth-lemma path.** The
+production Craig route builds its `HenkinComplete` set via the paired fair-enumeration
+construction (`FairEnumeration.lean` → `PairedInsepFamily.lean`), never through maximality —
+indeed `scripts/check_truth_lemma_cone.lean` *forbids* `MaximalConsistent` in the truth-lemma
+cone. This adapter is kept (WIP target only) because it is the correct bridge for any future
+consumer arriving from the pre-existing maximal-consistency Henkin API; it is not obsolete.
+
 The bridge from the pre-existing Henkin API: a maximal consistent set `S` of a
 `ConsistencyPropertyEq` over `L[[ℕ]]` (relational base) satisfies `HenkinComplete Set.univ S`.
 The completion is stated on `Set.univ`, not an arbitrary generated `U` — a maximal set decides
