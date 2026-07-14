@@ -25,6 +25,8 @@ import InfinitaryLogic.Methods.Interpolation.CraigSublanguage
 import InfinitaryLogic.Methods.Interpolation.GraphLanguage
 -- Layer 3 Unit 3: term graphs (context-polymorphic flattening of nested terms) + occurrence identities
 import InfinitaryLogic.Methods.Interpolation.TermGraph
+-- Layer 3 Unit 4: formula relationalization - realize bridge + the exact relSym occurrence identity
+import InfinitaryLogic.Methods.Interpolation.Relationalize
 -- The local EM extraction bridge (its Conditional/MorleyHanfTransfer import stays isolated here)
 import InfinitaryLogic.Methods.LocalEMExtraction
 -- The pure local stack: semantic layer onward (LocalEMFamily -> LocalColimit -> LocalTower ->

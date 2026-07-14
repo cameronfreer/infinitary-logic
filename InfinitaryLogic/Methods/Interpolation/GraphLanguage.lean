@@ -148,4 +148,22 @@ theorem relSym_inter (F₁ : Set (Σ n, L.Functions n)) (R₁ : Set (Σ n, L.Rel
     Set.union_empty, Set.empty_union,
     ← Set.image_inter baseRelSym_injective, ← Set.image_inter graphRelSym_injective]
 
+@[simp] theorem relSym_empty : relSym L ∅ ∅ = ∅ := by
+  simp [relSym]
+
+/-- `relSym` turns unions of symbol sets into unions — the algebra the exact occurrence
+identity of the formula translation steps through at binary connectives. -/
+theorem relSym_union (F₁ F₂ : Set (Σ n, L.Functions n)) (R₁ R₂ : Set (Σ n, L.Relations n)) :
+    relSym L (F₁ ∪ F₂) (R₁ ∪ R₂) = relSym L F₁ R₁ ∪ relSym L F₂ R₂ := by
+  simp only [relSym, Set.image_union]
+  exact Set.union_union_union_comm _ _ _ _
+
+/-- `relSym` commutes with indexed unions — the countable-connective step of the exact
+occurrence identity. -/
+theorem relSym_iUnion {ι : Sort*} (F : ι → Set (Σ n, L.Functions n))
+    (R : ι → Set (Σ n, L.Relations n)) :
+    relSym L (⋃ i, F i) (⋃ i, R i) = ⋃ i, relSym L (F i) (R i) := by
+  simp only [relSym, Set.image_iUnion]
+  exact (Set.iUnion_union_distrib _ _).symm
+
 end FirstOrder.Language
