@@ -119,6 +119,31 @@ theorem baseRelSym_ne_graphRelSym (p : Σ n, L.Relations n) (q : Σ n, L.Functio
   rw [heq_eq_eq] at h2
   simp at h2
 
+/-! Singleton preimages of the two embeddings — the Sigma-free interface the back-translation
+occurrence calculus computes with. -/
+
+theorem baseRelSym_preimage_base_singleton (p : Σ n, L.Relations n) :
+    baseRelSym L ⁻¹' {baseRelSym L p} = {p} := by
+  ext q
+  simp [baseRelSym_injective.eq_iff]
+
+theorem graphRelSym_preimage_graph_singleton (q : Σ n, L.Functions n) :
+    graphRelSym L ⁻¹' {graphRelSym L q} = {q} := by
+  ext p
+  simp [graphRelSym_injective.eq_iff]
+
+theorem graphRelSym_preimage_base_singleton (p : Σ n, L.Relations n) :
+    graphRelSym L ⁻¹' {baseRelSym L p} = ∅ := by
+  rw [Set.eq_empty_iff_forall_notMem]
+  intro q hq
+  exact baseRelSym_ne_graphRelSym p q (Set.mem_singleton_iff.mp hq).symm
+
+theorem baseRelSym_preimage_graph_singleton (q : Σ n, L.Functions n) :
+    baseRelSym L ⁻¹' {graphRelSym L q} = ∅ := by
+  rw [Set.eq_empty_iff_forall_notMem]
+  intro p hp
+  exact baseRelSym_ne_graphRelSym p q (Set.mem_singleton_iff.mp hp)
+
 /-! ## The relation-symbol set of the relationalization, and its intersection identity -/
 
 /-- The relation symbols of the relationalization coming from a function-symbol set `F` and a
