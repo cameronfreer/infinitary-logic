@@ -38,29 +38,6 @@ open FirstOrder Structure
 
 variable {L : Language.{0, 0}}
 
-/-- `constTerm c` relabelled into a sentence's term context is `constTermS c`. -/
-theorem constTerm_relabel_eq (c : ℕ) :
-    (constTerm (L' := L) (J := ℕ) c).relabel (Sum.inl : Empty → Empty ⊕ Fin 0)
-      = constTermS c := by
-  simp only [constTerm, constTermS, Term.relabel]
-  congr 1
-  funext i
-  exact i.elim0
-
-/-- Substituting a closed term into a variable-free term (in the `Fin 1` free context) reduces
-to the plain relabel — a local copy of the analogous private lemma in `Construction`. -/
-private theorem term_subst_empty_aux (t t' : L[[ℕ]].Term Empty) :
-    (t.relabel (Sum.inl ∘ Empty.elim : Empty → Fin 1 ⊕ Fin 0)).subst
-      (Sum.elim (Term.relabel Sum.inl ∘ fun (_ : Fin 1) => t') (Term.var ∘ Sum.inr)) =
-    t.relabel (Sum.inl : Empty → Empty ⊕ Fin 0) := by
-  induction t with
-  | var e => exact Empty.elim e
-  | func f ts ih =>
-    simp only [Term.relabel, Term.subst]
-    congr 1
-    funext i
-    exact ih i
-
 variable {C : ConsistencyPropertyEq L[[ℕ]]} {S : Set L[[ℕ]].Sentenceω}
   (hmax : C.toConsistencyProperty.MaximalConsistent S)
 
@@ -68,7 +45,7 @@ variable {C : ConsistencyPropertyEq L[[ℕ]]} {S : Set L[[ℕ]].Sentenceω}
 theorem constEq_mem_iff_termEquiv (c d : ℕ) :
     constEq c d ∈ S ↔ termEquiv C S hmax (constTerm c) (constTerm d) := by
   unfold termEquiv constEq
-  rw [constTerm_relabel_eq, constTerm_relabel_eq]
+  rw [constTerm_relabel_inl, constTerm_relabel_inl]
 
 include hmax in
 /-- The atomic relation congruence, re-derived from `C6_eq_subst`. -/
@@ -104,8 +81,8 @@ theorem rel_congr_of_maximal {l : ℕ} (R : L.Relations l) (g : Fin l → ℕ) (
     congr 1
     funext j
     by_cases hj : j = i
-    · subst hj; rw [if_pos rfl, Function.update_self, constTerm_relabel_eq]
-    · rw [if_neg hj, Function.update_of_ne hj, constTerm_relabel_eq]
+    · subst hj; rw [if_pos rfl, Function.update_self, constTerm_relabel_inl]
+    · rw [if_neg hj, Function.update_of_ne hj, constTerm_relabel_inl]
   -- φ(c_{g i}) = R(g) ∈ S.
   have hφ_ai : φ.subst (fun _ => constTerm (g i)) ∈ S := by
     rw [hφ_subst, hinst, Function.update_eq_self_iff.mpr rfl]; exact hrel
@@ -113,7 +90,7 @@ theorem rel_congr_of_maximal {l : ℕ} (R : L.Relations l) (g : Fin l → ℕ) (
   have heq' : BoundedFormulaω.equal
       ((constTerm (g i)).relabel (Sum.inl : Empty → Empty ⊕ Fin 0))
       ((constTerm b).relabel (Sum.inl : Empty → Empty ⊕ Fin 0)) ∈ S := by
-    rw [constTerm_relabel_eq, constTerm_relabel_eq]; exact heq
+    rw [constTerm_relabel_inl, constTerm_relabel_inl]; exact heq
   have hc6 := C.C6_eq_subst S hmax.consistent (constTerm (g i)) (constTerm b) φ heq' hφ_ai
   rw [hφ_subst, hinst] at hc6
   exact hmax.mem_of_union_consistent hc6

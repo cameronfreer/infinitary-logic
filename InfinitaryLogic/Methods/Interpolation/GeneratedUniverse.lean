@@ -56,6 +56,16 @@ theorem exists_eq_constTerm [L.IsRelational] (t : L[[ℕ]].Term Empty) :
 def constTermS (c : ℕ) : L[[ℕ]].Term (Empty ⊕ Fin 0) :=
   Term.func (Sum.inr c : L[[ℕ]].Functions 0) Fin.elim0
 
+/-- The closed constant `constTerm a`, relabeled into the sentence-term context, is
+`constTermS a`. -/
+theorem constTerm_relabel_inl (a : ℕ) :
+    (constTerm (L' := L) (J := ℕ) a).relabel (Sum.inl : Empty → Empty ⊕ Fin 0) =
+      constTermS a := by
+  simp only [constTerm, constTermS, Term.relabel]
+  congr 1
+  funext i
+  exact i.elim0
+
 /-- The constant equality `c_a = c_b`. -/
 def constEq (a b : ℕ) : L[[ℕ]].Sentenceω :=
   BoundedFormulaω.equal (constTermS a) (constTermS b)

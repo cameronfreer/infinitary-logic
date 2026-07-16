@@ -82,15 +82,6 @@ theorem Term.realize_toGround {M : Type*} [L[[ℕ]].Structure M]
              · exact i.elim0
   | func f ts ih => simp only [Term.toGround, Term.realize]; congr 1; funext i; exact ih i
 
-omit [L.IsRelational] in
-/-- The closed constant `constTerm a`, relabeled into the sentence-term context, is `constTermS a`. -/
-theorem constTerm_relabel_inl (a : ℕ) :
-    (constTerm (L' := L) (J := ℕ) a).relabel (Sum.inl : Empty → Empty ⊕ Fin 0) = constTermS a := by
-  simp only [constTerm, constTermS, Term.relabel]
-  congr 1
-  funext i
-  exact i.elim0
-
 /-! ## `closeBy` and its realization (validated commit-5b foundation) -/
 
 /-- The closing substitution of a bounded formula by constants. -/
@@ -130,104 +121,13 @@ theorem qmk_surjective (hsc : HenkinComplete U S) (x : QModel hsc) :
   obtain ⟨c, rfl⟩ := exists_eq_constTerm t
   exact ⟨c, ht.symm⟩
 
-/-! ## Ordinal depth: preservation and strict-decrease facts
+/-! ## Ordinal depth: strict decrease for the constant instance
 
-`BoundedFormulaω.depth` (from `Methods/Henkin/Construction.lean`) is the well-founded measure for the
-quantifier recursion.  Its preservation/strict-decrease lemmas there are `private`, so we re-derive
-the ones we consume. -/
+The generic preservation/strict-decrease calculus for `BoundedFormulaω.depth` now lives in the
+neutral `Lomega1omega/Depth.lean` (shared with `Methods/Henkin/Construction.lean`); only the
+`instConst` combination is derived here. -/
 
 omit [L.IsRelational]
-
-private theorem depth_lt_imp_left {α : Type} {n : ℕ}
-    {φ ψ : L[[ℕ]].BoundedFormulaω α n} : φ.depth < (φ.imp ψ).depth := by
-  simp only [BoundedFormulaω.depth]
-  exact lt_of_le_of_lt (le_max_left _ _) (Order.lt_succ _)
-
-private theorem depth_lt_imp_right {α : Type} {n : ℕ}
-    {φ ψ : L[[ℕ]].BoundedFormulaω α n} : ψ.depth < (φ.imp ψ).depth := by
-  simp only [BoundedFormulaω.depth]
-  exact lt_of_le_of_lt (le_max_right _ _) (Order.lt_succ _)
-
-private theorem depth_lt_iSup {α : Type} {n : ℕ}
-    {φs : ℕ → L[[ℕ]].BoundedFormulaω α n} (k : ℕ) :
-    (φs k).depth < (BoundedFormulaω.iSup φs).depth := by
-  simp only [BoundedFormulaω.depth]
-  exact lt_of_le_of_lt (Ordinal.le_iSup _ k) (Order.lt_succ _)
-
-private theorem depth_lt_iInf {α : Type} {n : ℕ}
-    {φs : ℕ → L[[ℕ]].BoundedFormulaω α n} (k : ℕ) :
-    (φs k).depth < (BoundedFormulaω.iInf φs).depth := by
-  simp only [BoundedFormulaω.depth]
-  exact lt_of_le_of_lt (Ordinal.le_iSup _ k) (Order.lt_succ _)
-
-private theorem depth_lt_all {α : Type} {n : ℕ} {φ : L[[ℕ]].BoundedFormulaω α (n + 1)} :
-    φ.depth < (BoundedFormulaω.all φ).depth := by
-  simp only [BoundedFormulaω.depth]
-  exact Order.lt_succ _
-
-private theorem depth_castLE {α : Type} {m n : ℕ} (h : m ≤ n) (φ : L[[ℕ]].BoundedFormulaω α m) :
-    (φ.castLE h).depth = φ.depth := by
-  induction φ generalizing n with
-  | falsum => rfl
-  | equal _ _ => rfl
-  | rel _ _ => rfl
-  | imp φ ψ ihφ ihψ => simp only [BoundedFormulaω.castLE, BoundedFormulaω.depth, ihφ h, ihψ h]
-  | all φ ih => simp only [BoundedFormulaω.castLE, BoundedFormulaω.depth]; rw [ih (Nat.succ_le_succ h)]
-  | iSup φs ih =>
-      simp only [BoundedFormulaω.castLE, BoundedFormulaω.depth]
-      congr 1; exact iSup_congr (fun k => ih k h)
-  | iInf φs ih =>
-      simp only [BoundedFormulaω.castLE, BoundedFormulaω.depth]
-      congr 1; exact iSup_congr (fun k => ih k h)
-
-private theorem depth_relabel {α β : Type} {n p : ℕ} (g : α → β ⊕ Fin p)
-    (φ : L[[ℕ]].BoundedFormulaω α n) : (φ.relabel g).depth = φ.depth := by
-  induction φ with
-  | falsum => rfl
-  | equal _ _ => rfl
-  | rel _ _ => rfl
-  | imp φ ψ ihφ ihψ => simp only [BoundedFormulaω.relabel, BoundedFormulaω.depth, ihφ, ihψ]
-  | all φ ih =>
-      simp only [BoundedFormulaω.relabel, BoundedFormulaω.depth]
-      rw [depth_castLE, ih]
-  | iSup φs ih =>
-      simp only [BoundedFormulaω.relabel, BoundedFormulaω.depth]
-      congr 1; exact iSup_congr (fun k => ih k)
-  | iInf φs ih =>
-      simp only [BoundedFormulaω.relabel, BoundedFormulaω.depth]
-      congr 1; exact iSup_congr (fun k => ih k)
-
-private theorem depth_openBounds {n : ℕ} (φ : L[[ℕ]].BoundedFormulaω Empty n) :
-    φ.openBounds.depth = φ.depth := by
-  induction φ with
-  | falsum => rfl
-  | equal _ _ => rfl
-  | rel _ _ => rfl
-  | imp φ ψ ihφ ihψ => simp only [BoundedFormulaω.openBounds, BoundedFormulaω.depth, ihφ, ihψ]
-  | all φ ih =>
-      simp only [BoundedFormulaω.openBounds, BoundedFormulaω.depth]
-      rw [depth_relabel]; exact congr_arg (· + 1) ih
-  | iSup φs ih =>
-      simp only [BoundedFormulaω.openBounds, BoundedFormulaω.depth]
-      congr 1; exact iSup_congr (fun k => ih k)
-  | iInf φs ih =>
-      simp only [BoundedFormulaω.openBounds, BoundedFormulaω.depth]
-      congr 1; exact iSup_congr (fun k => ih k)
-
-private theorem depth_subst {α β : Type} {n : ℕ} (φ : L[[ℕ]].BoundedFormulaω α n)
-    (tf : α → L[[ℕ]].Term β) : (φ.subst tf).depth = φ.depth := by
-  induction φ with
-  | falsum => rfl
-  | equal _ _ => rfl
-  | rel _ _ => rfl
-  | imp φ ψ ihφ ihψ => simp only [BoundedFormulaω.subst, BoundedFormulaω.depth, ihφ, ihψ]
-  | all φ ih => simp only [BoundedFormulaω.subst, BoundedFormulaω.depth, ih]
-  | iSup φs ih =>
-      simp only [BoundedFormulaω.subst, BoundedFormulaω.depth]
-      congr 1; exact iSup_congr (fun k => ih k)
-  | iInf φs ih =>
-      simp only [BoundedFormulaω.subst, BoundedFormulaω.depth]
-      congr 1; exact iSup_congr (fun k => ih k)
 
 /-- The constant instance of `body` has strictly smaller depth than `all body`. -/
 private theorem depth_instConst_lt (body : L[[ℕ]].BoundedFormulaω Empty 1) (c : ℕ) :
