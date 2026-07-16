@@ -1,8 +1,11 @@
-# Undefinability of well-ordering (#12): statement-and-interface audit (v1)
+# Undefinability of well-ordering (#12): statement-and-interface audit (v2)
 
 Pre-implementation audit for issue #12, in the pattern of `docs/craig-audit.md` /
 `docs/fragments-audit.md`. Source: Marker, *Math 512 lecture notes* §4.4 (pp. 49–50), checked
-against the actual text on 2026-07-16. Status: **awaiting review; nothing frozen.**
+against the actual text on 2026-07-16. Revision 2 after review: **D4 and D6 frozen** (countable
+members over the literal base diagram; terminal gap margin), plus the precision edits of §2 and
+the reviewed implementation order (§7). Remaining pre-code step: a small Lean probe of the
+ordinal-position representation (§5.3) before freezing its exact API.
 
 ## 1. Source statements (verified against the PDF)
 
@@ -60,11 +63,15 @@ slightly weaker: the term model gives `f : ℚ → N` with `q < r → f q <^N f 
 `q < r`, picking `s ∈ (q,r)` yields only a `<^N`-2-cycle, contradictory only when `<^N` is a
 strict order). Proposal:
 
-* state the core theorem with the raw conclusion `∀ q r, q < r → f q <^N f r`;
-* add the injectivity corollary under the hypothesis that `<^N` is (or `φ` entails) a strict
-  partial order — and note injectivity is automatic in the boundedness corollary 4.27, where
-  `<^M` is well-ordered. A full induced-substructure/relational-embedding strengthening stays
-  out (per the issue: it is not what the displayed proof gives).
+* state the core theorem with the raw conclusion: a **positive relation-preserving map**
+  `f : ℚ → N`, `∀ q r, q < r → f q <^N f r`;
+* under **irreflexivity** it is automatically injective — if `q < r` and `f q = f r`,
+  preservation gives `<^N (f q) (f q)` directly (no intermediate rational or two-cycle
+  argument needed);
+* the **boundedness corollary uses the raw map directly**: a well-founded relation cannot
+  contain the descending chain `f 0, f (-1), f (-2), …` — no injectivity detour. A full
+  induced-substructure/relational-embedding strengthening stays out (per the issue: it is not
+  what the displayed proof gives).
 
 ## 3. Target Lean statements (draft — for review, names provisional)
 
@@ -107,28 +114,33 @@ exactly the well-ordered `<`-models of unbounded countable type — e.g. no `φ`
   (`Cardinal.isRegular_aleph_one` for the C4 pigeonhole) — all exercised by the
   HanfSpectrum/Scott work. Ordinal gap arithmetic (`b + α`) is Mathlib-native.
 * **ℚ**: Mathlib's `ℚ` is a countable dense `LinearOrder`, `Encodable` — nothing needed.
-* **Constants**: the kernel's constants are `ℕ`-indexed (`L[[ℕ]]`, `constTerm : ℕ → _`).
+* **Constants**: the kernel's constants are `ℕ`-indexed (`L[[ℕ]]`, `constTerm : ℕ → _`);
+  coding frozen (D3): rational constants at `2 * Encodable.encode q`, Henkin constants at
+  `2 * n + 1` — no arbitrary `ℚ ≃ ℕ` is chosen.
 
 ## 5. Gaps and risks (ranked)
 
-1. **Member shape (the one real interface question).** Marker's `Σ`-members are *countable*
-   sets — every member contains the full infinite positive diagram `{d_q < d_r : q < r}` plus
-   `{φ}`. The Craig instantiation of the kernel used finite-condition families over a
-   generated universe with finite roots. Audit question to resolve before coding: does
-   `ConsistencyPropertyEqOn`/`exists_henkinComplete` already tolerate (a) countable members
-   and (b) a countable *root* set (we need `S* ⊇ {φ} ∪ diagram`), or do we relativize — treat
-   `{φ} ∪ {d_q < d_r}` as a fixed base theory carried inside the (*)-condition, with members =
-   finite `σ₀` only, and fold the base into the roots by fair-enumeration requests? The second
-   mirrors the Craig pattern and is the expected answer; the first would be a small kernel
-   generalization. **This is the analogue of Craig's D3 and must be frozen first.**
+1. **Member shape — FROZEN at review (D4): genuinely countable members over the literal
+   base.** With `Bφ = {φ} ∪ {d_q < d_r : q < r}`, members are `S = Bφ ∪ Γ` with `Γ` finite —
+   membership stated as `Bφ ⊆ S ∧ (S \ Bφ).Finite`, plus the universe and gap conditions.
+   The full positive rational diagram **literally belongs to every member**, exactly as in
+   Marker — not delivered through requests and not bundled into a conjunction. **No kernel
+   extension is needed**: the fair-enumeration construction accepts an infinite initial
+   member, and `GenU` already contains every constant relation atom.
 2. **Exercise 4.28.** Only C4 and C7c have source proofs; every other closure condition
    (C0–C3, the equality conditions, the remaining quantifier cases) is ours. The (*)-invariant
    must be shown stable under each decomposition — expect the same kind of per-field grind as
    `InsepFamilyMem`, with the α-gap bookkeeping in place of finite support.
-3. **The (*) representation (D6).** "b̄ ∈ A well-ordered with α-gaps" needs a Lean shape:
-   proposal — an order-embedding `g : (α·m + …).toType ↪` … no; cleaner: carry the tuple
-   positions abstractly as `∃ (β̄ : Fin m → Ordinal)` with `α ≤ β₁`, `βᵢ + α ≤ βᵢ₊₁` and an
-   order-embedding of `(β_m + 1).toType` into `<^M` sending `βᵢ` to `bᵢ`. Freeze at review.
+3. **The (*) representation — margins FROZEN at review (D6), exact Lean API pending a
+   probe.** The gap invariant carries **three** margins: an *initial* gap ≥ α, *internal*
+   gaps ≥ α, and a **terminal gap ≥ α** above the last mentioned constant. The terminal
+   margin is a **harmless strengthening of Marker's printed sketch** (which states only the
+   initial and internal gaps): the repository's request schedule may introduce a rational
+   constant above every rational currently mentioned, and the terminal margin makes insertion
+   below / between / above / into-empty-support **one uniform lemma**. (Downward closure and
+   the `σ₀ = ∅` base case absorb the strengthening — an α-chain of length `β > α·(m+2)`-ish
+   supplies all margins.) The exact ordinal-position API (ranks-in-`γ.toType` vs composed
+   embeddings) is to be frozen only after a small Lean probe of the candidates.
 4. **Two constant families on an `ℕ`-indexed kernel.** `C ∪ D ↪ ℕ` by parity coding
    (`D = {d_q}` on evens via an enumeration `ℚ ≃ ℕ`, fresh `C` on odds). Bookkeeping only,
    but it leaks into freshness arguments (C7c needs "c not yet used") — the Craig
@@ -148,24 +160,26 @@ exactly the well-ordered `<`-models of unbounded countable type — e.g. no `φ`
 |---|---|---|
 | D1 | hypothesis form | `∀ α : Ordinal, α < ω₁ → ∃ M …, Realize φ M ∧ ∃ e : α.toType → M` strictly `lt`-monotone; `Type 0` carriers, `[Nonempty M]`, matching the entailment convention |
 | D2 | conclusion form | raw positive `q < r → RelMap lt ![f q, f r]`; injectivity corollary under strict-order hypothesis; well-order corollary gets it free |
-| D3 | constants | parity coding `C ⊕ D ↪ ℕ` over the existing `L[[ℕ]]` kernel; `D`-indexing via a fixed `ℚ ≃ ℕ` |
-| D4 | member shape | finite `σ₀`-conditions relative to the base `{φ} ∪ positive diagram` (Craig-style), base delivered through roots/requests — pending the §5.1 kernel check |
+| D3 | constants | **FROZEN**: rational constants at `2 * Encodable.encode q`, Henkin constants at `2 * n + 1` (no arbitrary `ℚ ≃ ℕ`) |
+| D4 | member shape | **FROZEN**: countable members `S = Bφ ∪ Γ`, `Γ` finite — `Bφ ⊆ S ∧ (S \ Bφ).Finite`; the diagram literally in every member; existing kernel sufficient |
 | D5 | language scope | relational core first on the kernel; arbitrary-`L` endpoint via the Layer 3 relationalization |
-| D6 | (*) gap representation | ordinal-position form of §5.3 |
+| D6 | (*) gap representation | **margins FROZEN**: initial + internal + **terminal** gaps ≥ α (documented strengthening of the printed sketch); exact ordinal-position API after the Lean probe |
 | D7 | scope split | 4.26 + 4.27 (+ undefinability reading) = #12; **Corollary 4.34 deferred** to a future elementary-end-extensions arc (Keisler 4.30/4.31, omitting-types iteration — new issue) |
 
-## 7. Proposed unit sequence (gated, Craig-style)
+## 7. Implementation order (reviewed and frozen)
 
-1. **U1 — statement layer**: `HasWellOrderedChains`, the (*) predicate with the gap invariant,
-   downward closure, and the `σ₀ = ∅` instance from the hypothesis. Pure statements + easy
-   lemmas; freezes D1/D6 in code.
-2. **U2 — kernel-interface resolution** (D4): either the base-theory-relativized family or the
-   countable-members generalization; acceptance = `Σ` typechecks as a
-   `ConsistencyPropertyEqOn`-style family with the two source-verified fields (C4 via `ω₁`
-   pigeonhole, C7c via gap insertion) proved.
-3. **U3 — Exercise 4.28**: the remaining closure fields.
-4. **U4 — model extraction**: fair enumeration + term model → relational
-   `exists_rational_chain_of_wellOrderedChains`.
-5. **U5 — corollaries**: boundedness 4.27 (well-order hypothesis → injectivity free →
-   contradiction with unbounded types), undefinability packaging, injectivity corollary.
-6. **U6 — arbitrary-language lift** (D5) + facade/blueprint/guard/docs sweep.
+1. ~~Revise the audit and issue statement with the finite-over-base member shape and terminal
+   margin~~ — this revision.
+2. **U1 — definitions**: rational/Henkin constants (D3 coding), the positive base diagram
+   `Bφ`, the raw preservation predicate, and the gap-witness representation (after the
+   ordinal-position Lean probe).
+3. **U2 — the two risky engines first**: the `ω₁` cofinal-fiber lemma (countable partition of
+   `ω₁` has an unbounded fiber) and the **four-case gap insertion** (below / between / above /
+   empty — one uniform lemma via the terminal margin).
+4. **U3 — closure packaging**: all consistency-property fields (Exercise 4.28), branching
+   fields through the fiber lemma, witness fields through gap insertion.
+5. **U4 — model extraction**: start from the infinite base member, apply the existing fair
+   completion and quotient model; relational `exists_rational_chain_of_wellOrderedChains`.
+6. **U5 — corollaries**: injectivity under irreflexivity (one-liner), strict-order form,
+   boundedness 4.27 via the descending chain `f 0, f (-1), …`, undefinability packaging.
+7. **U6 — arbitrary-language lift** (D5) + public facade/blueprint/guard/docs sweep.
