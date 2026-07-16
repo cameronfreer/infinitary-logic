@@ -91,23 +91,7 @@ private def atomicFormulaInf (idx : L.AtomicIdx n) :
   | .eq i j => .equal (.var (.inl i)) (.var (.inl j))
   | .rel R f => .rel R (fun k => .var (.inl (f k)))
 
-omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-private theorem qrank_atomicFormulaInf (idx : L.AtomicIdx n) :
-    (atomicFormulaInf (L := L) idx).qrank = 0 := by
-  cases idx <;> rfl
 
-omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-private theorem realize_atomicFormulaInf {M : Type*} [L.Structure M]
-    (idx : L.AtomicIdx n) (v : Fin n → M) :
-    FormulaInf.Realize (atomicFormulaInf (L := L) idx) v ↔ idx.holds v := by
-  cases idx with
-  | eq i j =>
-    simp only [atomicFormulaInf, FormulaInf.Realize, BoundedFormulaInf.realize_equal,
-      Term.realize, Sum.elim_inl, AtomicIdx.holds]
-  | rel R f =>
-    simp only [atomicFormulaInf, FormulaInf.Realize, BoundedFormulaInf.realize_rel,
-      Term.realize, Sum.elim_inl, AtomicIdx.holds]
-    constructor <;> intro h <;> convert h using 1 <;> rfl
 
 omit [Countable (Σ l, L.Relations l)] in
 /-- The forward direction of the Karp lemma, generalized to handle bound variables.

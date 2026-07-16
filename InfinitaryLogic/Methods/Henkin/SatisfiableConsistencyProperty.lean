@@ -152,13 +152,6 @@ private theorem realize_subst_name (ι : NamingFunction L M) (φ : L.Formulaω (
     exact ι.sound m
   rw [this]
 
-/-- openBounds.subst at a named element equals Realize at that element. -/
-private theorem realize_openBounds_subst_name (ι : NamingFunction L M)
-    (φ : L.BoundedFormulaω Empty 1) (m : M) :
-    Sentenceω.Realize ((φ.openBounds).subst (fun _ => ι.name m)) M ↔
-    φ.Realize Empty.elim (fun _ => m) := by
-  rw [realize_subst_name ι]
-  exact realize_openBounds φ (fun _ => m)
 
 /-- For `Fin 1`, `Fin.snoc Fin.elim0 m = fun _ => m`. -/
 private theorem snoc_elim0_eq_const (m : M) :

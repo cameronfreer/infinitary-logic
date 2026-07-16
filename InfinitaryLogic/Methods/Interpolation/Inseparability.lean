@@ -61,12 +61,5 @@ theorem insepAt_witness_of_insepAt_genEx (c : ℕ) (φc : L[[ℕ]].Sentenceω)
   · exact entails_genEx_of_entails hcΓ hΓσ
   · exact entails_not_genEx_of_entails_not hcΔ hΔσ
 
-/-- **The root observation** (`A = ∅`): any separator at the empty allowed support is
-constant-free. This is the hook for the root gate — a constant-free separator strips to a
-base-language interpolant (`stripConsts`), completing the interpolation argument in tranche 2. -/
-theorem sentenceJConsts_eq_empty_of_insepAt_empty_separator
-    {σ : L[[ℕ]].Sentenceω} (hsupp : sentenceJConsts (L' := L) (J := ℕ) σ ⊆ (↑(∅ : Finset ℕ) : Set ℕ)) :
-    sentenceJConsts (L' := L) (J := ℕ) σ = ∅ :=
-  Set.subset_empty_iff.mp (by simpa using hsupp)
 
 end FirstOrder.Language

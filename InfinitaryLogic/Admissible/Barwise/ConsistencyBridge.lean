@@ -71,9 +71,6 @@ structure FullBarwiseFragment (L : Language.{u, v}) extends BarwiseFragment L wh
 def consistentSets (A : FiniteCompactFragment L) : Set (Set L.Sentenceω) :=
   {S | S ⊆ A.formulas ∧ AConsistent A S}
 
-private theorem mem_consistentSets_iff {A : FiniteCompactFragment L} {S : Set L.Sentenceω} :
-    S ∈ consistentSets A ↔ S ⊆ A.formulas ∧ AConsistent A S :=
-  Iff.rfl
 
 /-- Extract inconsistency from non-membership in consistentSets, given subset condition. -/
 private theorem not_AConsistent_of_not_mem_consistentSets {A : FiniteCompactFragment L}

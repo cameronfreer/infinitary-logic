@@ -399,17 +399,6 @@ private theorem term_roundtrip_comp (n k : ℕ) :
   · simp [relabelAux, Equiv.sumAssoc, finSumFinEquiv, Fin.castAdd]
   · simp [relabelAux, Equiv.sumAssoc, finSumFinEquiv, Fin.castAdd]
 
-/-- Term-level roundtrip for k=0: relabeling a term by `relabelAux Sum.inr 0` then by
-`Sum.elim Empty.elim Sum.inl` recovers the original term. -/
-private theorem term_roundtrip_zero (n : ℕ) (t : L.Term (Fin n ⊕ Fin 0)) :
-    (t.relabel (relabelAux (Sum.inr : Fin n → Empty ⊕ Fin n) 0)).relabel
-      (Sum.elim Empty.elim Sum.inl : Empty ⊕ Fin n → Fin n ⊕ Fin 0) = t := by
-  rw [Term.relabel_relabel]
-  convert Term.relabel_id t using 2
-  funext x
-  rcases x with ⟨i, hi⟩ | ⟨j, hj⟩
-  · simp [relabelAux, Equiv.sumAssoc, finSumFinEquiv, Fin.castAdd]
-  · exact absurd hj (Nat.not_lt_zero _)
 
 private theorem term_roundtrip_full (n k : ℕ) (t : L.Term (Fin n ⊕ Fin k)) :
     ((t.relabel (relabelAux (Sum.inr : Fin n → Empty ⊕ Fin n) k)).relabel
