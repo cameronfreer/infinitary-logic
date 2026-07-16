@@ -24,6 +24,7 @@ import InfinitaryLogic
 #print axioms FirstOrder.Language.morley_hanf_theory
 #print axioms FirstOrder.Language.karp_theorem_w
 #print axioms FirstOrder.Language.model_existence
+#print axioms FirstOrder.Language.craig_interpolation
 EOF
 
 # Headline declarations that live in the Everything closure.

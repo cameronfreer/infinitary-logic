@@ -1,5 +1,20 @@
 # Craig interpolation (#8): statement-and-interface audit (v2)
 
+> **STATUS: COMPLETE (2026-07-16).** The arbitrary-language headline `craig_interpolation`
+> (no hypotheses on `L`) is proved in `Methods/Interpolation/CraigArbitrary.lean` (blueprint
+> node `thm:craig`), with the PC-separation form `craig_pcSeparation`; both are exposed on the
+> default surface via `ModelTheory/CraigInterpolation.lean` and guarded by
+> `scripts/check_headline_axioms.sh`. The §9b relationalization landed as gated Units 1–7:
+> `GraphLanguage` (graph relations + shared-vocab identity `relSym_inter`),
+> `Lomega1omega/FiniteQuantification` (existsBlock/forallBlock), `TermGraph`
+> (context-polymorphic term flattening), `Relationalize` (formula translation + exact `relSym`
+> occurrence identity), `GraphAxioms`/`GraphReconstruction` (totality+functionality, localized
+> structure reconstruction), `BackTranslate` (graph atoms → function equations + preimage
+> occurrence calculus), `CraigArbitrary` (algebraic assembly; reconstruction only in
+> `entails_graphTranslation`). The relational core `craig_interpolation_relational`
+> (`thm:craig-relational`) and `craig_pcSeparation_relational` remain as the internal core and
+> the #10 deliverable respectively. Theorem-landing tag: `craig-interpolation`.
+
 Pre-implementation audit for issue #8, in the pattern of `docs/fragments-audit.md`. Revision 2,
 after review: four load-bearing corrections (countable generated `U`, the finite-support
 invariant with `InsepAt`, the strengthened abstraction acceptance lemmas, dropping the witness

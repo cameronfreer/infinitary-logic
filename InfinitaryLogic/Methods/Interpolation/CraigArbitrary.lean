@@ -6,6 +6,7 @@ Authors: Cameron Freer
 import InfinitaryLogic.Methods.Interpolation.CraigSublanguage
 import InfinitaryLogic.Methods.Interpolation.GraphReconstruction
 import InfinitaryLogic.Methods.Interpolation.BackTranslate
+import Architect
 
 /-!
 # Craig interpolation for `L_ω₁ω` over an arbitrary language (Craig Layer 3, Unit 7a)
@@ -94,6 +95,25 @@ theorem entails_graphTranslation (r₁ r₂ : L.Sentenceω) (h : Sentenceω.Enta
 /-- **Craig interpolation for `L_ω₁ω`, arbitrary language.** An `L_ω₁ω`-entailment `r₁ ⊨ r₂`
 over *any* language has an interpolant `θ` whose function and relation symbols each lie in the
 intersection of the two roots' occurrence sets, with `r₁ ⊨ θ` and `θ ⊨ r₂`. -/
+@[blueprint "thm:craig"
+  (title := /-- Craig interpolation ($\Lomegaone$) -/)
+  (statement := /-- Over an arbitrary language, an $\Lomegaone$-entailment $r_1 \models r_2$
+    has an interpolant $\theta$ whose function and relation symbols each lie in the
+    intersection of the two roots' occurrence sets, with $r_1 \models \theta$ and
+    $\theta \models r_2$.  No hypotheses on the language. -/)
+  (proof := /-- Relationalize: replace each $n$-ary function symbol $f$ by an $(n{+}1)$-ary
+    graph relation $G_f$, each term by its existentially-flattened graph formula, and add the
+    totality/functionality axioms $\mathrm{Ax}(F)$ of the mentioned function symbols.  The
+    entailment translates to $\mathrm{Ax}(F_1) \wedge r_1^{\mathrm{rel}} \models
+    \mathrm{Ax}(F_2) \to r_2^{\mathrm{rel}}$ — a model of the left side satisfying
+    $\mathrm{Ax}(F_2)$ carries the graph axioms of $F_1 \cup F_2$, so it reconstructs to an
+    $L$-structure where $r_1 \models r_2$ applies.  The relational core then yields a graph
+    interpolant $\theta_g$; its vocabulary bound passes through the exact occurrence
+    identities and the shared-vocabulary identity $\mathrm{relSym}(F_1,R_1) \cap
+    \mathrm{relSym}(F_2,R_2) = \mathrm{relSym}(F_1 \cap F_2, R_1 \cap R_2)$; back-translating
+    $G_f(\bar x, y) \mapsto f(\bar x){=}y$ lands $\theta$ in $L$ with the sharp bounds, and
+    both entailments transport through graph expansions. -/)
+  (uses := ["thm:craig-relational"])]
 theorem craig_interpolation (r₁ r₂ : L.Sentenceω) (h : Sentenceω.Entails r₁ r₂) :
     ∃ θ : L.Sentenceω,
       θ.functionsIn ⊆ r₁.functionsIn ∩ r₂.functionsIn ∧
