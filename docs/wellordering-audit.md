@@ -183,3 +183,44 @@ exactly the well-ordered `<`-models of unbounded countable type — e.g. no `φ`
 6. **U5 — corollaries**: injectivity under irreflexivity (one-liner), strict-order form,
    boundedness 4.27 via the descending chain `f 0, f (-1), …`, undefinability packaging.
 7. **U6 — arbitrary-language lift** (D5) + public facade/blueprint/guard/docs sweep.
+
+## 8. Lean probe results: the ordinal-position representation (2026-07-16)
+
+A scratch probe of the rank-based candidate compiled cleanly against the v4.32.0 toolchain.
+Proposed API to freeze (names provisional):
+
+```
+def RelChain (lt : L.Relations 2) (γ : Ordinal.{0}) (w : γ.ToType → M) : Prop :=
+  ∀ x y : γ.ToType, x < y → RelMap lt ![w x, w y]
+
+structure GapWitness (lt : L.Relations 2) (α : Ordinal.{0}) {m : ℕ} (b : Fin m → M) where
+  γ        : Ordinal.{0}
+  w        : γ.ToType → M
+  chain    : RelChain lt γ w
+  rank     : Fin m → Ordinal.{0}
+  rank_lt  : ∀ i, rank i < γ
+  initial  : ∀ i, α ≤ rank i
+  gaps     : ∀ i j, i < j → rank i + α ≤ rank j
+  terminal : ∀ i, rank i + α ≤ γ            -- the D6 terminal margin
+  marks    : ∀ i, b i = w (Ordinal.ToType.mk ⟨rank i, rank_lt i⟩)
+```
+
+Probe findings:
+* **Mathlib migration**: `Ordinal.toType`/`enumIsoToType` are deprecated on this toolchain —
+  the current API is `Ordinal.ToType o` (a `LinearOrder`) with the order-iso
+  `Ordinal.ToType.mk : Set.Iio o ≃o o.ToType` (element-at-rank; `ToType.toOrd` inverts), and
+  `Ordinal.initialSegToType : α ≤ β → α.ToType ≤i β.ToType` — the latter is exactly the
+  transport the `σ₀ = ∅` base case wants (the hypothesis chain restricted along an initial
+  segment).
+* Rank order transports through the iso by `ToType.mk.lt_iff_lt`.
+* **Downward closure in `α`** (needed for the C4 fiber argument) is three one-liners on this
+  representation; the **insertion arithmetic core** (`(r + α) + α ≤ r + β` from `α + α ≤ β`)
+  is a three-line `calc` via `add_assoc`.
+* Naming gotcha: on this toolchain the ordinal left-addition monotonicity
+  `c + a ≤ c + b` from `a ≤ b` is provided by the *generic* `add_le_add_right h _` (the
+  `AddLeftMono Ordinal` instance is present; `Ordinal.add_le_add_left` does not exist and the
+  generic `add_le_add_left` has the other shape).
+
+Recommendation: freeze the rank-based `GapWitness` above (Candidate A). The alternative
+(composed order-embeddings of pattern ordinals) makes the four-case insertion re-build
+embeddings instead of doing rank arithmetic, and has no compensating advantage.
