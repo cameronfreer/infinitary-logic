@@ -35,6 +35,8 @@ import InfinitaryLogic.Methods.Interpolation.GraphReconstruction
 import InfinitaryLogic.Methods.Interpolation.BackTranslate
 -- Layer 3 Unit 7a: THE ARBITRARY-LANGUAGE CRAIG INTERPOLATION THEOREM + PC-separation wrapper
 import InfinitaryLogic.Methods.Interpolation.CraigArbitrary
+-- Issue #12 (undefinability of well-ordering) commit 1: rational/Henkin constant coding
+import InfinitaryLogic.Methods.WellOrdering.Constants
 -- The local EM extraction bridge (its Conditional/MorleyHanfTransfer import stays isolated here)
 import InfinitaryLogic.Methods.LocalEMExtraction
 -- The pure local stack: semantic layer onward (LocalEMFamily -> LocalColimit -> LocalTower ->
