@@ -37,6 +37,8 @@ import InfinitaryLogic.Methods.Interpolation.BackTranslate
 import InfinitaryLogic.Methods.Interpolation.CraigArbitrary
 -- Issue #12 (undefinability of well-ordering) commit 1: rational/Henkin constant coding
 import InfinitaryLogic.Methods.WellOrdering.Constants
+-- Issue #12 commit 2: base diagram + raw positive predicates + the frozen rank-based GapWitness
+import InfinitaryLogic.Methods.WellOrdering.GapWitness
 -- The local EM extraction bridge (its Conditional/MorleyHanfTransfer import stays isolated here)
 import InfinitaryLogic.Methods.LocalEMExtraction
 -- The pure local stack: semantic layer onward (LocalEMFamily -> LocalColimit -> LocalTower ->
