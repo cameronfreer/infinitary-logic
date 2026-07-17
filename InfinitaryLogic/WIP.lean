@@ -46,6 +46,8 @@ import InfinitaryLogic.Methods.WellOrdering.GapInsertion
 import InfinitaryLogic.Methods.WellOrdering.StarCondition
 -- Issue #12 commit 4b part 1: the C0 helper + repointing invariant + lift/support facts
 import InfinitaryLogic.Methods.WellOrdering.WORealization
+-- Issue #12 commit 4b part 2: the range-based constant split + slot lemma + marking extension
+import InfinitaryLogic.Methods.WellOrdering.MarkExtension
 -- The local EM extraction bridge (its Conditional/MorleyHanfTransfer import stays isolated here)
 import InfinitaryLogic.Methods.LocalEMExtraction
 -- The pure local stack: semantic layer onward (LocalEMFamily -> LocalColimit -> LocalTower ->
