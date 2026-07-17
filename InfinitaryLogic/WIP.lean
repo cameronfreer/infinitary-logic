@@ -44,6 +44,8 @@ import InfinitaryLogic.Methods.WellOrdering.CofinalFiber
 import InfinitaryLogic.Methods.WellOrdering.GapInsertion
 -- Issue #12 commit 4a: the semantic gap condition (*), derived diagram, and the member predicate
 import InfinitaryLogic.Methods.WellOrdering.StarCondition
+-- Issue #12 commit 4b part 1: the C0 helper + repointing invariant + lift/support facts
+import InfinitaryLogic.Methods.WellOrdering.WORealization
 -- The local EM extraction bridge (its Conditional/MorleyHanfTransfer import stays isolated here)
 import InfinitaryLogic.Methods.LocalEMExtraction
 -- The pure local stack: semantic layer onward (LocalEMFamily -> LocalColimit -> LocalTower ->
