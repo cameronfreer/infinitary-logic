@@ -39,6 +39,9 @@ import InfinitaryLogic.Methods.Interpolation.CraigArbitrary
 import InfinitaryLogic.Methods.WellOrdering.Constants
 -- Issue #12 commit 2: base diagram + raw positive predicates + the frozen rank-based GapWitness
 import InfinitaryLogic.Methods.WellOrdering.GapWitness
+-- Issue #12 commit 3, the two risky engines: omega_1 cofinal fiber + four-case gap insertion
+import InfinitaryLogic.Methods.WellOrdering.CofinalFiber
+import InfinitaryLogic.Methods.WellOrdering.GapInsertion
 -- The local EM extraction bridge (its Conditional/MorleyHanfTransfer import stays isolated here)
 import InfinitaryLogic.Methods.LocalEMExtraction
 -- The pure local stack: semantic layer onward (LocalEMFamily -> LocalColimit -> LocalTower ->
