@@ -558,7 +558,7 @@ theorem WOMem.eq_refl {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S) (c : �
   by_cases hcr : c ∈ Set.range ratConstIdx
   · obtain ⟨q₀, rfl⟩ := hcr
     obtain ⟨W⟩ := hS.star _ (add_one_lt_omega1 (add_lt_omega1 hα hα))
-    obtain ⟨W', hq₀⟩ := W.mark_rat (lt_add_one _) q₀
+    obtain ⟨W', hq₀, -⟩ := W.mark_rat (lt_add_one _) q₀
     refine ⟨W'.add_sentence
       ((realize_constEq_wc (base := W'.inst) (h := W'.h) _ _).mpr rfl) ?_⟩
     intro q hq
@@ -618,7 +618,7 @@ theorem WOMem.all_inst {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S)
     by_cases hcr : c ∈ Set.range ratConstIdx
     · obtain ⟨q₀, hq₀c⟩ := hcr
       obtain ⟨W⟩ := hS.star _ (add_one_lt_omega1 (add_lt_omega1 hα hα))
-      obtain ⟨W', hq₀⟩ := W.mark_rat (lt_add_one _) q₀
+      obtain ⟨W', hq₀, -⟩ := W.mark_rat (lt_add_one _) q₀
       refine ⟨W'.add_sentence (hforce W' hsrcloc) (hsupp W' hsrcloc ?_)⟩
       intro q hq
       have : q = q₀ := ratConstIdx_injective (hq.trans hq₀c.symm)
@@ -703,5 +703,133 @@ theorem WOMem.neg_all_witness {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S)
           rw [hloc, sentenceJConsts_lift_eq_empty] at h2
           exact absurd h2 (Set.notMem_empty _)
       · exact absurd ⟨q, h⟩ hcr
+
+/-- A relation instance with an inhabited coordinate that lies in the base diagram is a
+positive diagram atom: the lifted-root alternative is eliminated by constant support (the
+instance mentions `g i`, the root mentions nothing). -/
+theorem relInst_mem_baseDiagram_of_nonempty {l : ℕ} {R : L.Relations l} {g : Fin l → ℕ}
+    (i : Fin l) (hb : relInst R g ∈ baseDiagram φ lt) :
+    ∃ q r : ℚ, q < r ∧ relInst R g = ratLtAtom lt q r := by
+  rcases mem_baseDiagram_elim hb with heq | h
+  · have hsupp := sentenceJConsts_lift_eq_empty (L := L) φ
+    rw [← heq, sentenceJConsts_relInst_eq] at hsupp
+    have : g i ∈ Set.range g := ⟨i, rfl⟩
+    rw [hsupp] at this
+    exact absurd this (Set.notMem_empty _)
+  · exact h
+
+/-- **Relation congruence** (the fifteenth field): one-coordinate replacement along a
+remainder equality.  Remainder/root sources use ordinary equality congruence in the
+approximating model; a diagram-atom source first marks both endpoints at a positive level,
+obtains the atom through the chain, and descends. -/
+theorem WOMem.rel_congr {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S) (l : ℕ)
+    (R : L.Relations l) (g : Fin l → ℕ) (i : Fin l) (b : ℕ)
+    (hσ : relInst R g ∈ S) (heq : constEq (g i) b ∈ S) :
+    WOMem φ lt (S ∪ {relInst R (Function.update g i b)}) := by
+  classical
+  by_cases hbb : relInst R (Function.update g i b) ∈ baseDiagram φ lt
+  · exact hS.union_of_mem_base hbb
+  have heqrem := hS.constEq_mem_rem heq
+  refine hS.extend hbb (relInst_mem R _) ?_ ?_
+  · -- finite support: coordinates from the source, the replacement from the equality
+    rw [sentenceJConsts_relInst_eq]
+    refine Set.Finite.subset ((hS.jConsts_finite_of_mem hσ).union
+      (hS.jConsts_finite_of_mem heq)) ?_
+    rintro c ⟨j, rfl⟩
+    by_cases hji : j = i
+    · subst hji
+      rw [Function.update_self]
+      exact Or.inr (mem_sentenceJConsts_constEq_right _ _)
+    · rw [Function.update_of_ne hji]
+      exact Or.inl (by rw [sentenceJConsts_relInst_eq]; exact ⟨j, rfl⟩)
+  · intro α hα
+    by_cases hbrel : relInst R g ∈ baseDiagram φ lt
+    · -- diagram-atom source: mark both endpoints at a positive level, then descend
+      obtain ⟨q, r, hqr, hatom⟩ := relInst_mem_baseDiagram_of_nonempty i hbrel
+      have hβ₁lt : (α + 1) + (α + 1) + 1 < (Cardinal.aleph 1).ord :=
+        add_one_lt_omega1 (add_lt_omega1 (add_one_lt_omega1 hα) (add_one_lt_omega1 hα))
+      obtain ⟨W₀⟩ := hS.star _ (add_one_lt_omega1 (add_lt_omega1 hβ₁lt hβ₁lt))
+      obtain ⟨W₁, hq₁, -⟩ := W₀.mark_rat (lt_add_one _) q
+      obtain ⟨W₂, hr₂, hsub₂⟩ := W₁.mark_rat (lt_add_one _) r
+      have hq₂ : q ∈ Set.range W₂.mark := hsub₂ hq₁
+      obtain ⟨iq, hiq⟩ := hq₂
+      obtain ⟨ir, hir⟩ := hr₂
+      have hij : iq < ir := by
+        rw [← W₂.mark_mono.lt_iff_lt, hiq, hir]
+        exact hqr
+      have hpos : (0 : Ordinal.{0}) < α + 1 := lt_of_lt_of_le zero_lt_one le_add_self
+      have hatomreal := W₂.realize_marked_atom hpos hij
+      rw [hiq, hir] at hatomreal
+      have hsrcreal : @Sentenceω.Realize L[[ℕ]] (relInst R g) W₂.M (wc W₂.inst W₂.h) := by
+        rw [hatom]
+        exact hatomreal
+      have heqval : W₂.h (g i) = W₂.h b :=
+        (realize_constEq_wc (base := W₂.inst) (h := W₂.h) _ _).mp (W₂.rem_realize _ heqrem)
+      have htup : (fun j => W₂.h (Function.update g i b j)) = fun j => W₂.h (g j) := by
+        funext j
+        by_cases hji : j = i
+        · subst hji
+          rw [Function.update_self]
+          exact heqval.symm
+        · rw [Function.update_of_ne hji]
+      have htgt : @Sentenceω.Realize L[[ℕ]] (relInst R (Function.update g i b)) W₂.M
+          (wc W₂.inst W₂.h) := by
+        refine (realize_relInst_wc (base := W₂.inst) (h := W₂.h) R _).mpr ?_
+        rw [htup]
+        exact (realize_relInst_wc (base := W₂.inst) (h := W₂.h) R g).mp hsrcreal
+      have hcov : ∀ q' : ℚ, ratConstIdx q' ∈
+          sentenceJConsts (L' := L) (J := ℕ) (relInst R (Function.update g i b)) →
+          q' ∈ Set.range W₂.mark := by
+        intro q' hq'
+        rw [sentenceJConsts_relInst_eq] at hq'
+        obtain ⟨j, hj⟩ := hq'
+        by_cases hji : j = i
+        · subst hji
+          rw [Function.update_self] at hj
+          refine W₂.mark_cover ⟨_, heqrem, ?_⟩
+          rw [← hj]
+          exact mem_sentenceJConsts_constEq_right _ _
+        · rw [Function.update_of_ne hji] at hj
+          have hmem : ratConstIdx q' ∈
+              sentenceJConsts (L' := L) (J := ℕ) (relInst R g) := by
+            rw [sentenceJConsts_relInst_eq]
+            exact ⟨j, hj⟩
+          rw [hatom, sentenceJConsts_ratLtAtom] at hmem
+          rcases hmem with h' | h'
+          · exact (ratConstIdx_injective h') ▸ ⟨iq, hiq⟩
+          · exact (ratConstIdx_injective h') ▸ ⟨ir, hir⟩
+      exact StarCondition.mono le_self_add ⟨W₂.add_sentence htgt hcov⟩
+    · -- remainder source: ordinary equality congruence at the same witness
+      have hrel : relInst R g ∈ (S \ baseDiagram φ lt) := ⟨hσ, hbrel⟩
+      obtain ⟨W⟩ := hS.star α hα
+      have hsrcreal := W.rem_realize _ hrel
+      have heqval : W.h (g i) = W.h b :=
+        (realize_constEq_wc (base := W.inst) (h := W.h) _ _).mp (W.rem_realize _ heqrem)
+      have htup : (fun j => W.h (Function.update g i b j)) = fun j => W.h (g j) := by
+        funext j
+        by_cases hji : j = i
+        · subst hji
+          rw [Function.update_self]
+          exact heqval.symm
+        · rw [Function.update_of_ne hji]
+      have htgt : @Sentenceω.Realize L[[ℕ]] (relInst R (Function.update g i b)) W.M
+          (wc W.inst W.h) := by
+        refine (realize_relInst_wc (base := W.inst) (h := W.h) R _).mpr ?_
+        rw [htup]
+        exact (realize_relInst_wc (base := W.inst) (h := W.h) R g).mp hsrcreal
+      refine ⟨W.add_sentence htgt ?_⟩
+      intro q' hq'
+      rw [sentenceJConsts_relInst_eq] at hq'
+      obtain ⟨j, hj⟩ := hq'
+      by_cases hji : j = i
+      · subst hji
+        rw [Function.update_self] at hj
+        refine W.mark_cover ⟨_, heqrem, ?_⟩
+        rw [← hj]
+        exact mem_sentenceJConsts_constEq_right _ _
+      · rw [Function.update_of_ne hji] at hj
+        refine W.mark_cover ⟨_, hrel, ?_⟩
+        rw [sentenceJConsts_relInst_eq]
+        exact ⟨j, hj⟩
 
 end FirstOrder.Language

@@ -191,14 +191,15 @@ strict-monotonicity slot. -/
 theorem StarWitness.mark_rat {φ : L.Sentenceω} {lt : L.Relations 2}
     {Γ : Set L[[ℕ]].Sentenceω} {α β : Ordinal.{0}} (W : StarWitness φ lt Γ β)
     (hβ : α + α < β) (q₀ : ℚ) :
-    ∃ W' : StarWitness φ lt Γ α, q₀ ∈ Set.range W'.mark := by
+    ∃ W' : StarWitness φ lt Γ α, q₀ ∈ Set.range W'.mark ∧
+      Set.range W.mark ⊆ Set.range W'.mark := by
   have hαβ : α ≤ β := le_of_lt (lt_of_le_of_lt le_self_add hβ)
   by_cases hmarked : q₀ ∈ Set.range W.mark
   · -- already marked: downward closure only
     obtain ⟨W'⟩ := StarCondition.mono hαβ ⟨W⟩
     -- `mono` preserves the marking data definitionally, but re-establish via the witness
     exact ⟨{ W with witness := @GapWitness.mono L W.M W.inst lt β α hαβ _ _ W.witness },
-      hmarked⟩
+      hmarked, subset_rfl⟩
   · -- unmarked: automatically fresh for the remainder
     have hfresh : ∀ χ ∈ Γ, ratConstIdx q₀ ∉ sentenceJConsts (L' := L) (J := ℕ) χ :=
       fun χ hχ hc => hmarked (W.mark_cover ⟨χ, hχ, hc⟩)
@@ -217,7 +218,7 @@ theorem StarWitness.mark_rat {φ : L.Sentenceω} {lt : L.Relations 2}
       mark := Fin.insertNth s q₀ W.mark
       mark_mono := hs
       mark_cover := ?_
-      witness := ?_ }, ?_⟩
+      witness := ?_ }, ?_, ?_⟩
     · refine le_trans W.mark_cover ?_
       rw [range_insertNth]
       exact Set.subset_insert _ _
@@ -239,5 +240,7 @@ theorem StarWitness.mark_rat {φ : L.Sentenceω} {lt : L.Relations 2}
       exact Wg
     · rw [range_insertNth]
       exact Set.mem_insert _ _
+    · rw [range_insertNth]
+      exact Set.subset_insert _ _
 
 end FirstOrder.Language
