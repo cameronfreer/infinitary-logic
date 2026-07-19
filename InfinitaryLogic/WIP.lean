@@ -52,6 +52,8 @@ import InfinitaryLogic.Methods.WellOrdering.MarkExtension
 import InfinitaryLogic.Methods.WellOrdering.ClosureFields
 -- Issue #12: the initial-member gate - B_phi in P from HasWellOrderedChains alone
 import InfinitaryLogic.Methods.WellOrdering.BaseMember
+-- Issue #12: the bundled consistency property + the fair-completion endpoint
+import InfinitaryLogic.Methods.WellOrdering.WOConsistency
 -- The local EM extraction bridge (its Conditional/MorleyHanfTransfer import stays isolated here)
 import InfinitaryLogic.Methods.LocalEMExtraction
 -- The pure local stack: semantic layer onward (LocalEMFamily -> LocalColimit -> LocalTower ->
