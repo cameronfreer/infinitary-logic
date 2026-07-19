@@ -48,8 +48,10 @@ import InfinitaryLogic.Methods.WellOrdering.StarCondition
 import InfinitaryLogic.Methods.WellOrdering.WORealization
 -- Issue #12 commit 4b part 2: the range-based constant split + slot lemma + marking extension
 import InfinitaryLogic.Methods.WellOrdering.MarkExtension
--- Issue #12 commit 4b part 3: the closure fields (Exercise 4.28) - 14 of 15, rel_congr pending
+-- Issue #12 commit 4b part 3: the closure fields (Exercise 4.28) - all fifteen proved
 import InfinitaryLogic.Methods.WellOrdering.ClosureFields
+-- Issue #12: the initial-member gate - B_phi in P from HasWellOrderedChains alone
+import InfinitaryLogic.Methods.WellOrdering.BaseMember
 -- The local EM extraction bridge (its Conditional/MorleyHanfTransfer import stays isolated here)
 import InfinitaryLogic.Methods.LocalEMExtraction
 -- The pure local stack: semantic layer onward (LocalEMFamily -> LocalColimit -> LocalTower ->
