@@ -56,6 +56,8 @@ import InfinitaryLogic.Methods.WellOrdering.BaseMember
 import InfinitaryLogic.Methods.WellOrdering.WOConsistency
 -- Issue #12 step 5: relational/countable model extraction + the rational map endpoint
 import InfinitaryLogic.Methods.WellOrdering.ModelExtraction
+-- Issue #12 step 6 layer 1: generic relation lemmas (injectivity, descent, well-foundedness)
+import InfinitaryLogic.Methods.WellOrdering.Descent
 -- The local EM extraction bridge (its Conditional/MorleyHanfTransfer import stays isolated here)
 import InfinitaryLogic.Methods.LocalEMExtraction
 -- The pure local stack: semantic layer onward (LocalEMFamily -> LocalColimit -> LocalTower ->
