@@ -18,9 +18,14 @@ This guard inspects the transitive proof-term cone instead:
    `HenkinComplete.all_inst` compile to `Expr.proj` and are NOT cone-visible; their
    consumption is verified by proof read, not here.)
 
+The issue #12 step-5 endpoint `exists_model_relPreserving_relational` is guarded too: its
+model comes from the same quotient term model, so its cone must satisfy the identical
+no-maximality / Henkin-interface-consumed discipline.
+
 Run with: lake env lean scripts/check_truth_lemma_cone.lean
 -/
 import InfinitaryLogic.Methods.Interpolation.QuotientTruthLemma
+import InfinitaryLogic.Methods.WellOrdering.ModelExtraction
 
 open Lean
 
@@ -71,7 +76,8 @@ def requiredWitness : List Name :=
 
 def guardedRoots : List Name :=
   [`FirstOrder.Language.truth_both, `FirstOrder.Language.truth_pos,
-   `FirstOrder.Language.truth_neg, `FirstOrder.Language.exists_model_of_henkinComplete]
+   `FirstOrder.Language.truth_neg, `FirstOrder.Language.exists_model_of_henkinComplete,
+   `FirstOrder.Language.exists_model_relPreserving_relational]
 
 run_cmd do
   let env ← getEnv
