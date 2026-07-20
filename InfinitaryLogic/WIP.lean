@@ -64,6 +64,8 @@ import InfinitaryLogic.Methods.WellOrdering.Boundedness
 import InfinitaryLogic.Methods.WellOrdering.Undefinability
 -- Issue #12: symbol-countability removal via the two-sorted sublanguage wrapper
 import InfinitaryLogic.Methods.WellOrdering.SymbolCountability
+-- Issue #12: the arbitrary-language graph translation - THE FOUR PUBLIC ENDPOINTS
+import InfinitaryLogic.Methods.WellOrdering.GraphTranslation
 -- The local EM extraction bridge (its Conditional/MorleyHanfTransfer import stays isolated here)
 import InfinitaryLogic.Methods.LocalEMExtraction
 -- The pure local stack: semantic layer onward (LocalEMFamily -> LocalColimit -> LocalTower ->
