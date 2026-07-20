@@ -62,6 +62,8 @@ import InfinitaryLogic.Methods.WellOrdering.Descent
 import InfinitaryLogic.Methods.WellOrdering.Boundedness
 -- Issue #12 step 6 layer 3: undefinability packaging (weak form; Borel form stays in #33)
 import InfinitaryLogic.Methods.WellOrdering.Undefinability
+-- Issue #12: symbol-countability removal via the two-sorted sublanguage wrapper
+import InfinitaryLogic.Methods.WellOrdering.SymbolCountability
 -- The local EM extraction bridge (its Conditional/MorleyHanfTransfer import stays isolated here)
 import InfinitaryLogic.Methods.LocalEMExtraction
 -- The pure local stack: semantic layer onward (LocalEMFamily -> LocalColimit -> LocalTower ->
