@@ -54,6 +54,8 @@ import InfinitaryLogic.Methods.WellOrdering.ClosureFields
 import InfinitaryLogic.Methods.WellOrdering.BaseMember
 -- Issue #12: the bundled consistency property + the fair-completion endpoint
 import InfinitaryLogic.Methods.WellOrdering.WOConsistency
+-- Issue #12 step 5: relational/countable model extraction + the rational map endpoint
+import InfinitaryLogic.Methods.WellOrdering.ModelExtraction
 -- The local EM extraction bridge (its Conditional/MorleyHanfTransfer import stays isolated here)
 import InfinitaryLogic.Methods.LocalEMExtraction
 -- The pure local stack: semantic layer onward (LocalEMFamily -> LocalColimit -> LocalTower ->
