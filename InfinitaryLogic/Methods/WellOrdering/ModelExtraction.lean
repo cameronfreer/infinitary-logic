@@ -38,4 +38,60 @@ theorem exists_model_baseDiagram [L.IsRelational] [Countable (Σ l, L.Relations 
   obtain ⟨M, instM, hne, hpos, -⟩ := exists_model_of_henkinComplete hcomp
   exact ⟨M, instM, hne, fun χ hχ => hpos χ (hsub hχ)⟩
 
+/-! ## The rational map through the interpreted constants -/
+
+/-- **The rational map** of an `L[[ℕ]]`-structure: `q ↦ d_q^M`, the interpretation of the
+rational constant.  Step 5's `f : ℚ → M`. -/
+def ratConstMap (M : Type) [L[[ℕ]].Structure M] (q : ℚ) : M :=
+  (ratConstTerm (L := L) q).realize (Empty.elim : Empty → M)
+
+/-- The sentence-context constant term realizes to the interpretation of the closed
+constant, under any (vacuous) assignment. -/
+theorem realize_constTermS_eq_constTerm {M : Type} [L[[ℕ]].Structure M] (c : ℕ)
+    (v : Empty ⊕ Fin 0 → M) :
+    Term.realize v (constTermS (L := L) c) =
+      Term.realize (Empty.elim : Empty → M) (constTerm (L' := L) (J := ℕ) c) := by
+  simp only [constTermS, constTerm, Term.realize_func]
+  congr 1
+  funext i
+  exact i.elim0
+
+/-- A positive diagram atom realizes as the expansion relation at the mapped rationals. -/
+theorem realize_ratLtAtom {M : Type} [inst : L[[ℕ]].Structure M] (q r : ℚ) :
+    Sentenceω.Realize (ratLtAtom lt q r) M ↔
+      @RelMap L[[ℕ]] M inst 2 (Sum.inl lt)
+        ![ratConstMap (L := L) M q, ratConstMap (L := L) M r] := by
+  have hfun : (fun i => Term.realize (Sum.elim (Empty.elim : Empty → M) (Fin.elim0 : Fin 0 → M))
+        (constTermS (L := L) (![ratConstIdx q, ratConstIdx r] i)))
+      = ![ratConstMap (L := L) M q, ratConstMap (L := L) M r] := by
+    funext i
+    rw [realize_constTermS_eq_constTerm]
+    induction i using Fin.cases <;>
+      simp [ratConstMap, ratConstTerm, Matrix.cons_val_zero, Matrix.cons_val_succ,
+        Matrix.cons_val_fin_one]
+  show @RelMap L[[ℕ]] M inst 2 (Sum.inl lt)
+      (fun i => Term.realize (Sum.elim (Empty.elim : Empty → M) (Fin.elim0 : Fin 0 → M))
+        (constTermS (![ratConstIdx q, ratConstIdx r] i))) ↔ _
+  rw [hfun]
+
+/-! ## The step-5 endpoint (relational/countable form) -/
+
+/-- **Step 5 endpoint, relational/countable form** (Marker, Theorem 4.26 at a relational
+language with countable relational core): under the well-ordered-chains hypothesis, some
+nonempty model of `φ` carries a relation-preserving map `f : ℚ → M` — the rational map of
+the extracted expansion, through its reduct `L`-structure.  The raw positive conclusion
+(D2): no injectivity, no order-embedding packaging; those are derived corollaries tracked
+for subsequent commits, and the arbitrary-language form is the later transport step. -/
+theorem exists_model_relPreserving_relational [L.IsRelational]
+    [Countable (Σ l, L.Relations l)] (h : HasWellOrderedChains φ lt) :
+    ∃ (M : Type) (_ : L.Structure M) (_ : Nonempty M) (f : ℚ → M),
+      Sentenceω.Realize φ M ∧ RelPreserving lt f := by
+  obtain ⟨M, instM, hne, hall⟩ := exists_model_baseDiagram φ lt h
+  letI instL : L.Structure M := (L.lhomWithConstants ℕ).reduct M
+  haveI : (L.lhomWithConstants ℕ).IsExpansionOn M := LHom.isExpansionOn_reduct _ _
+  refine ⟨M, instL, hne, ratConstMap (L := L) M, ?_, fun q r hqr => ?_⟩
+  · exact (BoundedFormulaω.realize_mapLanguage (L.lhomWithConstants ℕ) φ
+      (Empty.elim : Empty → M) Fin.elim0).mp (hall _ (mapLanguage_mem_baseDiagram φ lt))
+  · exact (realize_ratLtAtom lt q r).mp (hall _ (ratLtAtom_mem_baseDiagram φ lt hqr))
+
 end FirstOrder.Language
