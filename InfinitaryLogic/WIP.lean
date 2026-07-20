@@ -58,6 +58,8 @@ import InfinitaryLogic.Methods.WellOrdering.WOConsistency
 import InfinitaryLogic.Methods.WellOrdering.ModelExtraction
 -- Issue #12 step 6 layer 1: generic relation lemmas (injectivity, descent, well-foundedness)
 import InfinitaryLogic.Methods.WellOrdering.Descent
+-- Issue #12 step 6 layer 2: boundedness (Cor 4.27) - no-chain ordinal + uniform order-type bound
+import InfinitaryLogic.Methods.WellOrdering.Boundedness
 -- The local EM extraction bridge (its Conditional/MorleyHanfTransfer import stays isolated here)
 import InfinitaryLogic.Methods.LocalEMExtraction
 -- The pure local stack: semantic layer onward (LocalEMFamily -> LocalColimit -> LocalTower ->
