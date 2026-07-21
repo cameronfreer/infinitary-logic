@@ -89,6 +89,13 @@ theorem exists_large_fiber_of_small_codomain
   exact Cardinal.infinite_pigeonhole_card f (Order.succ μ)
     hθ_le_α hθ_ge_aleph0 hcof
 
+/-- Project-local replacement for the deprecated `Ordinal.initialSegToType` (deprecated in
+favor of `Ordinal.type_le_iff`, from which this is extracted): the initial segment
+embedding of `α.ToType` into `β.ToType` from `α ≤ β`. -/
+noncomputable def initialSegOfLe {α β : Ordinal.{u}} (h : α ≤ β) : α.ToType ≤i β.ToType := by
+  apply Classical.choice (Ordinal.type_le_iff.mp _)
+  rwa [Ordinal.type_toType, Ordinal.type_toType]
+
 /-- A well-ordered source of cardinality at least `c` admits an order-embedding from the
 initial-ordinal well-order of cardinality `c`. Used by the abstract-source wrapper
 `pairErdosRado_general_of_large` to pull the coloring back to `Source κ`. -/
@@ -102,7 +109,7 @@ theorem exists_ordToType_embedding_of_card_ge
   have hord_le : c.ord ≤ β := by
     rw [Cardinal.ord_le, hβ_card]; exact hI
   -- Initial-segment embedding `c.ord.ToType ≤i β.ToType`.
-  have seg : c.ord.ToType ≤i β.ToType := Ordinal.initialSegToType hord_le
+  have seg : c.ord.ToType ≤i β.ToType := initialSegOfLe hord_le
   -- `β.ToType` ≃o `I` via `type_toType β = β = type (<_I)`.
   have htype : @Ordinal.type β.ToType (· < ·) _ =
       @Ordinal.type I (· < ·) _ := by
@@ -152,25 +159,25 @@ theorem ordIso_ordToType_of_card_ge {c : Cardinal.{0}}
       (· < · : c.ord.ToType → c.ord.ToType → Prop)))
   exact ⟨OrderIso.ofRelIsoLT r⟩
 
-/-- Composition of `initialSegToType` via `InitialSeg.eq` uniqueness on well-orders.
+/-- Composition of `initialSegOfLe` via `InitialSeg.eq` uniqueness on well-orders.
 Two initial segments from `α.ToType` to `γ.ToType` (both well-ordered) agree
-pointwise. -/
-private lemma initialSegToType_compose
+pointwise.  (Shared with `EndHomogER`, which previously carried a private copy.) -/
+lemma initialSegOfLe_compose
     {α β γ : Ordinal.{0}} (h_αβ : α ≤ β) (h_βγ : β ≤ γ) (x : α.ToType) :
     haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
     haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
     haveI : IsWellOrder γ.ToType (· < ·) := isWellOrder_lt
-    (Ordinal.initialSegToType h_βγ).toOrderEmbedding
-        ((Ordinal.initialSegToType h_αβ).toOrderEmbedding x) =
-      (Ordinal.initialSegToType (h_αβ.trans h_βγ)).toOrderEmbedding x := by
+    (initialSegOfLe h_βγ).toOrderEmbedding
+        ((initialSegOfLe h_αβ).toOrderEmbedding x) =
+      (initialSegOfLe (h_αβ.trans h_βγ)).toOrderEmbedding x := by
   haveI : IsWellOrder γ.ToType (· < ·) := isWellOrder_lt
   rw [InitialSeg.toOrderEmbedding_apply, InitialSeg.toOrderEmbedding_apply,
       InitialSeg.toOrderEmbedding_apply,
-      ← InitialSeg.trans_apply (Ordinal.initialSegToType h_αβ)
-        (Ordinal.initialSegToType h_βγ) x]
-  exact ((Ordinal.initialSegToType h_αβ).trans
-    (Ordinal.initialSegToType h_βγ)).eq
-    (Ordinal.initialSegToType (h_αβ.trans h_βγ)) x
+      ← InitialSeg.trans_apply (initialSegOfLe h_αβ)
+        (initialSegOfLe h_βγ) x]
+  exact ((initialSegOfLe h_αβ).trans
+    (initialSegOfLe h_βγ)).eq
+    (initialSegOfLe (h_αβ.trans h_βγ)) x
 
 end Toolbox
 
@@ -305,7 +312,7 @@ structure CoherentMajorityBranch (cR : (Fin 2 ↪o Source κ) → C) where
     (x : β.ToType),
     haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
     haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
-    prefixAt α hα ((Ordinal.initialSegToType hβα).toOrderEmbedding x) =
+    prefixAt α hα ((initialSegOfLe hβα).toOrderEmbedding x) =
       prefixAt β hβ x
   /-- Branch coherence: branch at α restricted to β-level equals
   branch at β. -/
@@ -314,7 +321,7 @@ structure CoherentMajorityBranch (cR : (Fin 2 ↪o Source κ) → C) where
     (x : β.ToType),
     haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
     haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
-    branch α hα ((Ordinal.initialSegToType hβα).toOrderEmbedding x) =
+    branch α hα ((initialSegOfLe hβα).toOrderEmbedding x) =
       branch β hβ x
   /-- **Chain extension**: the value at the top of `(succ γ).ToType` is in the
   `validFiber` for the lower-level chain at γ. This is the within-chain pair-color
@@ -360,7 +367,7 @@ noncomputable def EHMRNodeAt.restrict {C : Type} {β : Ordinal.{0}} (h : EHMRNod
     {δ : Ordinal.{0}} (hδβ : δ ≤ β) : EHMRNodeAt C δ :=
   haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
   haveI : IsWellOrder δ.ToType (· < ·) := isWellOrder_lt
-  fun x => h ((Ordinal.initialSegToType hδβ).toOrderEmbedding x)
+  fun x => h ((initialSegOfLe hδβ).toOrderEmbedding x)
 
 variable {κ : Cardinal.{0}} {C : Type}
 
@@ -569,9 +576,9 @@ theorem yNode_restrict (cR : (Fin 2 ↪o Source κ) → C) (y : Source κ)
   haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
   haveI : IsWellOrder δ.ToType (· < ·) := isWellOrder_lt
   funext x'
-  have htx : Ordinal.typein (· < ·) ((Ordinal.initialSegToType hδ).toOrderEmbedding x')
-      = Ordinal.typein (· < ·) x' := Ordinal.typein_apply (Ordinal.initialSegToType hδ) x'
-  show yNode cR y β ((Ordinal.initialSegToType hδ).toOrderEmbedding x') = yNode cR y δ x'
+  have htx : Ordinal.typein (· < ·) ((initialSegOfLe hδ).toOrderEmbedding x')
+      = Ordinal.typein (· < ·) x' := Ordinal.typein_apply (initialSegOfLe hδ) x'
+  show yNode cR y β ((initialSegOfLe hδ).toOrderEmbedding x') = yNode cR y δ x'
   simp only [yNode, htx]
 
 /-- The reps of `yNode cR y β` are exactly `yRep cR y (typein x)`. (The `IsWellOrder`
@@ -691,10 +698,10 @@ theorem EHMRNodeAt.restrict_trans {β : Ordinal.{0}} (h : EHMRNodeAt C β)
   haveI : IsWellOrder δ.ToType (· < ·) := isWellOrder_lt
   haveI : IsWellOrder ε.ToType (· < ·) := isWellOrder_lt
   funext z
-  show h ((Ordinal.initialSegToType hδ).toOrderEmbedding
-        ((Ordinal.initialSegToType hε).toOrderEmbedding z))
-     = h ((Ordinal.initialSegToType (hε.trans hδ)).toOrderEmbedding z)
-  rw [initialSegToType_compose]
+  show h ((initialSegOfLe hδ).toOrderEmbedding
+        ((initialSegOfLe hε).toOrderEmbedding z))
+     = h ((initialSegOfLe (hε.trans hδ)).toOrderEmbedding z)
+  rw [initialSegOfLe_compose]
 
 /-- `EHMRNodeAt.restrict` at heterogeneously-equal lengths. -/
 theorem EHMRNodeAt.restrict_heq {β : Ordinal.{0}} (h : EHMRNodeAt C β)
@@ -706,13 +713,13 @@ theorem EHMRNodeAt.restrict_heq {β : Ordinal.{0}} (h : EHMRNodeAt C β)
 theorem ehmrRep_restrict (cR : (Fin 2 ↪o Source κ) → C) {β : Ordinal.{0}}
     (h : EHMRNodeAt C β) {δ : Ordinal.{0}} (hδ : δ ≤ β) (x : δ.ToType) :
     ehmrRep cR (h.restrict hδ) x =
-      ehmrRep cR h ((Ordinal.initialSegToType hδ).toOrderEmbedding x) := by
+      ehmrRep cR h ((initialSegOfLe hδ).toOrderEmbedding x) := by
   classical
   haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
   haveI : IsWellOrder δ.ToType (· < ·) := isWellOrder_lt
-  set lx := (Ordinal.initialSegToType hδ).toOrderEmbedding x with hlx_def
+  set lx := (initialSegOfLe hδ).toOrderEmbedding x with hlx_def
   have htx : Ordinal.typein (· < ·) lx = Ordinal.typein (· < ·) x := by
-    rw [hlx_def]; exact Ordinal.typein_apply (Ordinal.initialSegToType hδ) x
+    rw [hlx_def]; exact Ordinal.typein_apply (initialSegOfLe hδ) x
   have hx_lt : Ordinal.typein (· < ·) x < δ :=
     lt_of_lt_of_eq (Ordinal.typein_lt_type (· < ·) x) (Ordinal.type_toType δ)
   have hlx_lt : Ordinal.typein (· < ·) lx < β :=
@@ -734,7 +741,7 @@ theorem ehmrLive_restrict (cR : (Fin 2 ↪o Source κ) → C) {β : Ordinal.{0}}
   obtain ⟨y, hy⟩ := hlive
   refine ⟨y, ?_⟩
   intro x
-  obtain ⟨hlt, hcol⟩ := hy ((Ordinal.initialSegToType hδ).toOrderEmbedding x)
+  obtain ⟨hlt, hcol⟩ := hy ((initialSegOfLe hδ).toOrderEmbedding x)
   rw [ehmrRep_restrict cR h hδ x]
   exact ⟨hlt, hcol⟩
 
@@ -764,12 +771,12 @@ theorem ehmrRep_strictMono (cR : (Fin 2 ↪o Source κ) → C) {β : Ordinal.{0}
         (Ordinal.typein (· < ·) x₂).ToType → Prop) := by
     rw [Ordinal.type_toType]; exact (Ordinal.typein_lt_typein (· < ·)).mpr hx
   set z₁ := Ordinal.enum (· < ·) ⟨Ordinal.typein (· < ·) x₁, hx₁ty⟩ with hz₁_def
-  have hlift : (Ordinal.initialSegToType (le_of_lt hx₂lt)).toOrderEmbedding z₁ = x₁ := by
+  have hlift : (initialSegOfLe (le_of_lt hx₂lt)).toOrderEmbedding z₁ = x₁ := by
     refine (Ordinal.typein_inj (· < ·)).mp ?_
     have e1 : Ordinal.typein (· < ·)
-          ((Ordinal.initialSegToType (le_of_lt hx₂lt)).toOrderEmbedding z₁) =
+          ((initialSegOfLe (le_of_lt hx₂lt)).toOrderEmbedding z₁) =
         Ordinal.typein (· < ·) z₁ :=
-      Ordinal.typein_apply (Ordinal.initialSegToType (le_of_lt hx₂lt)) z₁
+      Ordinal.typein_apply (initialSegOfLe (le_of_lt hx₂lt)) z₁
     have e2 : Ordinal.typein (· < ·) z₁ = Ordinal.typein (· < ·) x₁ := by
       rw [hz₁_def]; exact Ordinal.typein_enum (· < ·) _
     rw [e1, e2]
@@ -795,12 +802,12 @@ theorem ehmr_fact8 (cR : (Fin 2 ↪o Source κ) → C) {β : Ordinal.{0}}
         (Ordinal.typein (· < ·) x₂).ToType → Prop) := by
     rw [Ordinal.type_toType]; exact (Ordinal.typein_lt_typein (· < ·)).mpr hx
   set z₁ := Ordinal.enum (· < ·) ⟨Ordinal.typein (· < ·) x₁, hx₁ty⟩ with hz₁_def
-  have hlift : (Ordinal.initialSegToType (le_of_lt hx₂lt)).toOrderEmbedding z₁ = x₁ := by
+  have hlift : (initialSegOfLe (le_of_lt hx₂lt)).toOrderEmbedding z₁ = x₁ := by
     refine (Ordinal.typein_inj (· < ·)).mp ?_
     have e1 : Ordinal.typein (· < ·)
-          ((Ordinal.initialSegToType (le_of_lt hx₂lt)).toOrderEmbedding z₁) =
+          ((initialSegOfLe (le_of_lt hx₂lt)).toOrderEmbedding z₁) =
         Ordinal.typein (· < ·) z₁ :=
-      Ordinal.typein_apply (Ordinal.initialSegToType (le_of_lt hx₂lt)) z₁
+      Ordinal.typein_apply (initialSegOfLe (le_of_lt hx₂lt)) z₁
     have e2 : Ordinal.typein (· < ·) z₁ = Ordinal.typein (· < ·) x₁ := by
       rw [hz₁_def]; exact Ordinal.typein_enum (· < ·) _
     rw [e1, e2]
@@ -808,7 +815,7 @@ theorem ehmr_fact8 (cR : (Fin 2 ↪o Source κ) → C) {β : Ordinal.{0}}
   have hrep_z : ehmrRep cR (h.restrict (le_of_lt hx₂lt)) z₁ = ehmrRep cR h x₁ := by
     rw [ehmrRep_restrict cR h (le_of_lt hx₂lt) z₁, hlift]
   have hcol_z : (h.restrict (le_of_lt hx₂lt)) z₁ = h x₁ := by
-    show h ((Ordinal.initialSegToType (le_of_lt hx₂lt)).toOrderEmbedding z₁) = h x₁
+    show h ((initialSegOfLe (le_of_lt hx₂lt)).toOrderEmbedding z₁) = h x₁
     rw [hlift]
   rw [← hcol_z, ← hcol]
   exact cR_pairEmbed_congr cR hrep_z.symm rfl (ehmrRep_strictMono cR hlive hx) hlt
@@ -1091,18 +1098,18 @@ lemma treeCommitOfBranch_strictMono
   -- Now both sides are B.prefixAt (succ δ₂) hsδ₂ applied at two
   -- elements of (succ δ₂).ToType; apply OrderEmbedding strict-mono.
   apply (B.prefixAt (Order.succ δ₂) hsδ₂).strictMono
-  -- Compare typein values: initialSegToType ⊤_(succ δ₁) has typein δ₁;
+  -- Compare typein values: initialSegOfLe ⊤_(succ δ₁) has typein δ₁;
   -- ⊤_(succ δ₂) has typein δ₂. Since δ₁ < δ₂, < holds.
   have h_typein_init :
       Ordinal.typein (α := (Order.succ δ₂).ToType) (· < ·)
-        ((Ordinal.initialSegToType hsδ₁_le_sδ₂).toOrderEmbedding
+        ((initialSegOfLe hsδ₁_le_sδ₂).toOrderEmbedding
           (⊤ : (Order.succ δ₁).ToType)) = δ₁ := by
     rw [show Ordinal.typein (α := (Order.succ δ₂).ToType) (· < ·)
-          ((Ordinal.initialSegToType hsδ₁_le_sδ₂).toOrderEmbedding
+          ((initialSegOfLe hsδ₁_le_sδ₂).toOrderEmbedding
             (⊤ : (Order.succ δ₁).ToType)) =
         Ordinal.typein (α := (Order.succ δ₁).ToType) (· < ·)
           (⊤ : (Order.succ δ₁).ToType) from
-      Ordinal.typein_apply (Ordinal.initialSegToType hsδ₁_le_sδ₂) _]
+      Ordinal.typein_apply (initialSegOfLe hsδ₁_le_sδ₂) _]
     rw [show (⊤ : (Order.succ δ₁).ToType) =
         Ordinal.enum (α := (Order.succ δ₁).ToType) (· < ·)
           ⟨δ₁, (Ordinal.type_toType _).symm ▸ Order.lt_succ δ₁⟩ from
@@ -1193,20 +1200,20 @@ theorem treeChain_pair_homogeneous_ofBranch
     Ordinal.enum (α := η.ToType) (· < ·)
       ⟨δ, (Ordinal.type_toType η).symm ▸ hδη⟩
   obtain ⟨h_lt, h_col⟩ := h_top_in x_η
-  -- Helper: x_η = initialSegToType (⊤ : (succ δ).ToType).
+  -- Helper: x_η = initialSegOfLe (⊤ : (succ δ).ToType).
   have h_x_η_eq :
-      (Ordinal.initialSegToType hsδ_le_η).toOrderEmbedding
+      (initialSegOfLe hsδ_le_η).toOrderEmbedding
           (⊤ : (Order.succ δ).ToType) = x_η := by
     have h_typein_init :
         Ordinal.typein (α := η.ToType) (· < ·)
-          ((Ordinal.initialSegToType hsδ_le_η).toOrderEmbedding
+          ((initialSegOfLe hsδ_le_η).toOrderEmbedding
             (⊤ : (Order.succ δ).ToType)) = δ := by
       rw [show Ordinal.typein (α := η.ToType) (· < ·)
-            ((Ordinal.initialSegToType hsδ_le_η).toOrderEmbedding
+            ((initialSegOfLe hsδ_le_η).toOrderEmbedding
               (⊤ : (Order.succ δ).ToType)) =
           Ordinal.typein (α := (Order.succ δ).ToType) (· < ·)
             (⊤ : (Order.succ δ).ToType) from
-        Ordinal.typein_apply (Ordinal.initialSegToType hsδ_le_η) _]
+        Ordinal.typein_apply (initialSegOfLe hsδ_le_η) _]
       rw [show (⊤ : (Order.succ δ).ToType) =
           Ordinal.enum (α := (Order.succ δ).ToType) (· < ·)
             ⟨δ, (Ordinal.type_toType _).symm ▸ Order.lt_succ δ⟩ from
@@ -1214,7 +1221,7 @@ theorem treeChain_pair_homogeneous_ofBranch
       exact Ordinal.typein_enum _ _
     rw [← Ordinal.enum_typein
         (· < · : η.ToType → η.ToType → Prop)
-        ((Ordinal.initialSegToType hsδ_le_η).toOrderEmbedding
+        ((initialSegOfLe hsδ_le_η).toOrderEmbedding
           (⊤ : (Order.succ δ).ToType))]
     congr 1
     apply Subtype.ext

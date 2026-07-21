@@ -116,7 +116,7 @@ theorem realize_sup (φ ψ : L.BoundedFormulaω α n) :
 theorem realize_ex (φ : L.BoundedFormulaω α (n + 1)) :
     φ.ex.Realize v xs ↔ ∃ x : M, φ.Realize v (snoc xs x) := by
   simp only [BoundedFormulaω.ex, realize_not, realize_all]
-  push_neg
+  push Not
   rfl
 
 @[simp]

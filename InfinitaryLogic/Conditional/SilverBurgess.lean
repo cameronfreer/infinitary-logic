@@ -130,7 +130,7 @@ theorem exists_classCondensationPt_of_uncountable {α : Type u}
   -- By contradiction: if no condensation point, every class in U is covered
   -- by a countable-basis element witnessing countability, giving a contradiction.
   by_contra h_no_cond
-  push_neg at h_no_cond
+  push Not at h_no_cond
   -- h_no_cond : ∀ x, ¬IsClassCondensationPt r U x
   -- i.e., ∀ x, x ∉ U ∨ ∃ V, IsOpen V ∧ x ∈ V ∧ Countable {q | ∃ y ∈ U ∩ V, ⟦y⟧ = q}
   simp only [IsClassCondensationPt, not_and_or, not_forall, not_not] at h_no_cond

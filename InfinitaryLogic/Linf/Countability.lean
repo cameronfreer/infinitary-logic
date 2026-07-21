@@ -148,7 +148,7 @@ theorem isKappa_succ_indexBound (φ : L.BoundedFormulaInf α n) :
       apply (ih i).mono
       apply Order.succ_le_succ
       apply le_trans _ (le_max_right _ _)
-      exact le_ciSup (Cardinal.bddAbove_range _) i
+      exact le_ciSup Cardinal.bddAbove_of_small i
   | iInf φs ih =>
     simp only [indexBound]
     apply IsKappa.iInf
@@ -157,7 +157,7 @@ theorem isKappa_succ_indexBound (φ : L.BoundedFormulaInf α n) :
       apply (ih i).mono
       apply Order.succ_le_succ
       apply le_trans _ (le_max_right _ _)
-      exact le_ciSup (Cardinal.bddAbove_range _) i
+      exact le_ciSup Cardinal.bddAbove_of_small i
 
 /-- Every L∞ω formula belongs to some Lκω. This establishes L∞ω as the union of all Lκω. -/
 theorem exists_isKappa (φ : L.BoundedFormulaInf α n) : ∃ κ : Cardinal, IsKappa κ φ :=

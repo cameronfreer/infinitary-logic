@@ -209,7 +209,7 @@ theorem countableRefinementHypothesis : CountableRefinementHypothesis.{u, v, w} 
   apply Set.Countable.mono (s₂ := Set.Iio γ) _ (countable_Iio_of_lt_omega1 γ hγ_lt)
   intro ε ⟨_, N, instN, instCN, b, hBF, hNot⟩
   simp only [Set.mem_Iio]
-  by_contra hge; push_neg at hge
+  by_contra hge; push Not at hge
   exact hNot (BFEquiv_of_all_finite_levels hstab
     (fun k => BFEquiv.monotone (le_trans (le_ciSup hBdd k) hge) hBF)
     (Order.succ ε))

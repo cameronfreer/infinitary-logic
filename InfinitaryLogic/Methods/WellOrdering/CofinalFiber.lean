@@ -33,7 +33,7 @@ theorem exists_unbounded_fiber {ι : Type} [Countable ι] [Nonempty ι]
       ∃ α : Ordinal.{0}, β ≤ α ∧ α < (Cardinal.aleph 1).ord ∧ f α = i := by
   simp only [Cardinal.ord_aleph]
   by_contra hcon
-  push_neg at hcon
+  push Not at hcon
   -- each label `i` has a bound `bnd i < ω₁` beyond which the fiber of `i` is empty
   choose bnd hbnd hmiss using hcon
   -- the countable supremum of the bounds stays below `ω₁`

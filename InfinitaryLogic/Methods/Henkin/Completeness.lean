@@ -100,7 +100,7 @@ theorem omitting_types [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Rel
   -- Show each type in Γ is omitted by the term model
   intro p hp m
   by_contra h_all
-  push_neg at h_all
+  push Not at h_all
   -- h_all : ∀ φ ∈ p, Formulaω.Realize φ (fun _ => m)
   -- Build a NamingFunction for the term model
   have hNF : NamingFunction L (TermModel C S' hmax) :=

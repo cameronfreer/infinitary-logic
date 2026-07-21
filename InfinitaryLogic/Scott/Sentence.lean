@@ -270,7 +270,7 @@ theorem exists_complete_self_stabilization (M : Type w) [L.Structure M] [Countab
       exact ⟨fun h => absurd h (fun hBF => hCP (BFEquiv.monotone hα hBF)),
              fun h => absurd h (fun hBF => hCP (BFEquiv.monotone hα (BFEquiv.of_succ hBF)))⟩
     · -- BFEquiv holds at all levels < ω₁
-      push_neg at hFail
+      push Not at hFail
       use 0
       refine ⟨Ordinal.omega_pos 1, ?_⟩
       intro α _ hα_lt hsucc_lt
@@ -339,7 +339,7 @@ private theorem BFEquiv_all_countable_ordinals_implies_all
     · -- Forth: for each m : M, ∃ n' : N, BFEquiv β (n+1) (snoc a m) (snoc b n')
       intro m
       by_contra h_no
-      push_neg at h_no
+      push Not at h_no
       -- If N is empty, BFEquiv at succ level requires forth, giving ∃ n' : N which is False
       by_cases hN : IsEmpty N
       · have hsucc0_lt : Order.succ 0 < Ordinal.omega 1 :=
@@ -348,7 +348,7 @@ private theorem BFEquiv_all_countable_ordinals_implies_all
       · rw [not_isEmpty_iff] at hN; haveI := hN
         choose αbad hαbad_lt hαbad_fail using show ∀ n' : N, ∃ γ < (Ordinal.omega 1 : Ordinal.{0}),
             ¬BFEquiv (L := L) γ (n + 1) (Fin.snoc a m) (Fin.snoc b n') from
-          fun n' => by_contra fun hall => h_no n' (ih (fun γ hγ => by push_neg at hall; exact hall γ hγ))
+          fun n' => by_contra fun hall => h_no n' (ih (fun γ hγ => by push Not at hall; exact hall γ hγ))
         obtain ⟨enum, henum⟩ := exists_surjective_nat N
         let αbad_seq := αbad ∘ enum
         have hbdd : BddAbove (Set.range αbad_seq) :=
@@ -361,14 +361,14 @@ private theorem BFEquiv_all_countable_ordinals_implies_all
           (let ⟨k, hk⟩ := henum n'₀; hk ▸ le_ciSup hbdd k) hn'₀)
     · intro n'
       by_contra h_no
-      push_neg at h_no
+      push Not at h_no
       by_cases hM : IsEmpty M
       · exact hM.false (BFEquiv.back (h _ (Order.IsSuccLimit.succ_lt
           (Cardinal.isSuccLimit_omega 1) (Ordinal.omega_pos 1))) n').choose
       · rw [not_isEmpty_iff] at hM; haveI := hM
         choose αbad hαbad_lt hαbad_fail using show ∀ m : M, ∃ γ < (Ordinal.omega 1 : Ordinal.{0}),
             ¬BFEquiv (L := L) γ (n + 1) (Fin.snoc a m) (Fin.snoc b n') from
-          fun m => by_contra fun hall => h_no m (ih (fun γ hγ => by push_neg at hall; exact hall γ hγ))
+          fun m => by_contra fun hall => h_no m (ih (fun γ hγ => by push Not at hall; exact hall γ hγ))
         obtain ⟨enum, henum⟩ := exists_surjective_nat M
         let αbad_seq := αbad ∘ enum
         have hbdd : BddAbove (Set.range αbad_seq) :=
@@ -410,7 +410,7 @@ theorem nonempty_iInter_of_antitone_of_nonempty {X : Type*} [Countable X]
   have hAllDepart : ∀ x ∈ S 0, ∃ α < (Ordinal.omega 1 : Ordinal.{0}), x ∉ S α := by
     intro x hx0
     by_contra hall
-    push_neg at hall
+    push Not at hall
     -- x ∈ S α for all α < ω₁
     have hxmem : x ∈ ⋂ α ∈ Set.Iio (Ordinal.omega 1 : Ordinal.{0}), S α := by
       simp only [Set.mem_iInter, Set.mem_Iio]
@@ -592,7 +592,7 @@ private theorem BFEquiv_upgrade_from_iff
     intro δ hδ
     by_cases hge : γ ≤ δ
     · exact ih δ hδ hge (lt_trans hδ hβ_lt)
-    · push_neg at hge
+    · push Not at hge
       exact BFEquiv.monotone (le_of_lt hge) hBF
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
@@ -680,7 +680,7 @@ theorem refinement_descent_succ
       BFEquiv (L := L) δ (n + 1) (Fin.snoc a m) (Fin.snoc b n') ∧
       ¬BFEquiv (L := L) (Order.succ δ) (n + 1) (Fin.snoc a m) (Fin.snoc b n') := by
   by_contra h
-  push_neg at h
+  push Not at h
   apply hNotBF
   rw [BFEquiv.succ]
   refine ⟨hBF, ?_, ?_⟩
@@ -764,14 +764,14 @@ theorem refinement_descent_limit
     BFEquiv.monotone (Order.succ_le_of_lt hα_pos) hBF
   rcases hFB with hNotForth | hNotBack
   · -- Forth fails: ∃ m₀, ∀ n', ¬BFEquiv α (n+1) (snoc a m₀) (snoc b n')
-    push_neg at hNotForth
+    push Not at hNotForth
     obtain ⟨m₀, hm₀⟩ := hNotForth
     obtain ⟨n'₀, hn'₀⟩ := BFEquiv.forth hBFsucc0 m₀
     obtain ⟨ε, _, hε_lt, hBFε, hNotBFε⟩ :=
       exists_refinement_between hα_pos hn'₀ (hm₀ n'₀)
     exact ⟨m₀, n'₀, ε, hε_lt, hBFε, hNotBFε⟩
   · -- Back fails: ∃ n'₀, ∀ m, ¬BFEquiv α (n+1) (snoc a m) (snoc b n'₀)
-    push_neg at hNotBack
+    push Not at hNotBack
     obtain ⟨n'₀, hn'₀⟩ := hNotBack
     obtain ⟨m₀, hm₀⟩ := BFEquiv.back hBFsucc0 n'₀
     obtain ⟨ε, _, hε_lt, hBFε, hNotBFε⟩ :=
@@ -853,7 +853,7 @@ theorem per_tuple_stabilization_below_omega1_of
         BFEquiv (L := L) β n a b
   · exact ⟨0, Ordinal.omega_pos 1, fun α _ hα_lt hsucc_lt N instN instCN b =>
       ⟨fun _ => hAllHold (Order.succ α) hsucc_lt N instN instCN b, BFEquiv.of_succ⟩⟩
-  · push_neg at hAllHold
+  · push Not at hAllHold
     obtain ⟨β₀, hβ₀_lt, N₀, instN₀, instCN₀, b₀, hβ₀_fail⟩ := hAllHold
     have hR := hcount M n a
     by_cases hRne : ({α : Ordinal.{0} | α < Ordinal.omega 1 ∧

@@ -258,7 +258,7 @@ theorem allCodedIsoClasses_dichotomy
             self_le_add_left _ _
   · -- No tier = continuum → all ≤ ℵ₀ → total ≤ ℵ₀
     left
-    push_neg at hc
+    push Not at hc
     obtain ⟨hcA, hcFin⟩ := hc
     have hA_le : #(Quotient (isoSetoid φ)) ≤ ℵ₀ := hN.resolve_right hcA
     have hFin_le : ∀ n, #(Quotient (isoSetoidOn φ n)) ≤ ℵ₀ :=

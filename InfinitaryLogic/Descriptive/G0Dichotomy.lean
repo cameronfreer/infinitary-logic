@@ -190,7 +190,7 @@ theorem exists_not_smallFam_inter {G : Set (α × α)} {ι : Type*} {Φ : Set (�
     (hΦ : ¬ SmallFam G Φ) {Ψ : ℕ → Set (ι → α)} (hcov : Φ ⊆ ⋃ n, Ψ n) :
     ∃ n, ¬ SmallFam G (Φ ∩ Ψ n) := by
   by_contra h
-  push_neg at h
+  push Not at h
   apply hΦ
   have hΦeq : Φ = ⋃ n, Φ ∩ Ψ n := by
     ext φ
@@ -358,7 +358,7 @@ theorem not_smallFam_comb_cross [Countable ι] (hG : AnalyticSet G)
       intro φ hφ
       by_cases h : ∀ u, φ u ∉ B
       · exact Or.inl ⟨hφ, h⟩
-      · push_neg at h
+      · push Not at h
         exact Or.inr h
     refine SmallFam.mono hsub (hsmall.union ⟨C, hC, ?_⟩)
     rintro φ ⟨u, hu⟩

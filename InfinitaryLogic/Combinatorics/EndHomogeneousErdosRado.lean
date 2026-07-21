@@ -219,26 +219,7 @@ noncomputable def NodeAt.restrict {C : Type} {n : ℕ} {β : Ordinal.{0}} (h : N
     {δ : Ordinal.{0}} (hδβ : δ ≤ β) : NodeAt C n δ :=
   haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
   haveI : IsWellOrder δ.ToType (· < ·) := isWellOrder_lt
-  fun τ => h (τ.trans (Ordinal.initialSegToType hδβ).toOrderEmbedding)
-
-/-- Composition of `initialSegToType` via `InitialSeg.eq` uniqueness on well-orders (local
-copy of the `PairERGen`-private lemma). -/
-private lemma initialSegToType_compose
-    {α β γ : Ordinal.{0}} (h_αβ : α ≤ β) (h_βγ : β ≤ γ) (x : α.ToType) :
-    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
-    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
-    haveI : IsWellOrder γ.ToType (· < ·) := isWellOrder_lt
-    (Ordinal.initialSegToType h_βγ).toOrderEmbedding
-        ((Ordinal.initialSegToType h_αβ).toOrderEmbedding x) =
-      (Ordinal.initialSegToType (h_αβ.trans h_βγ)).toOrderEmbedding x := by
-  haveI : IsWellOrder γ.ToType (· < ·) := isWellOrder_lt
-  rw [InitialSeg.toOrderEmbedding_apply, InitialSeg.toOrderEmbedding_apply,
-      InitialSeg.toOrderEmbedding_apply,
-      ← InitialSeg.trans_apply (Ordinal.initialSegToType h_αβ)
-        (Ordinal.initialSegToType h_βγ) x]
-  exact ((Ordinal.initialSegToType h_αβ).trans
-    (Ordinal.initialSegToType h_βγ)).eq
-    (Ordinal.initialSegToType (h_αβ.trans h_βγ)) x
+  fun τ => h (τ.trans (initialSegOfLe hδβ).toOrderEmbedding)
 
 variable {lam : Cardinal.{0}} {C : Type} {n : ℕ}
 
@@ -250,11 +231,11 @@ theorem NodeAt.restrict_trans {β : Ordinal.{0}} (h : NodeAt C n β)
   haveI : IsWellOrder δ.ToType (· < ·) := isWellOrder_lt
   haveI : IsWellOrder ε.ToType (· < ·) := isWellOrder_lt
   funext τ
-  show h ((τ.trans (Ordinal.initialSegToType hε).toOrderEmbedding).trans
-        (Ordinal.initialSegToType hδ).toOrderEmbedding)
-     = h (τ.trans (Ordinal.initialSegToType (hε.trans hδ)).toOrderEmbedding)
+  show h ((τ.trans (initialSegOfLe hε).toOrderEmbedding).trans
+        (initialSegOfLe hδ).toOrderEmbedding)
+     = h (τ.trans (initialSegOfLe (hε.trans hδ)).toOrderEmbedding)
   refine congrArg h (DFunLike.ext _ _ fun k => ?_)
-  exact initialSegToType_compose hε hδ (τ k)
+  exact initialSegOfLe_compose hε hδ (τ k)
 
 /-- `NodeAt.restrict` at heterogeneously-equal lengths. -/
 theorem NodeAt.restrict_heq {β : Ordinal.{0}} (h : NodeAt C n β)
@@ -457,10 +438,10 @@ theorem yNode_restrict (G : (Fin (n + 2) ↪o Source lam) → C) (y : Source lam
   haveI : IsWellOrder δ.ToType (· < ·) := isWellOrder_lt
   funext τ
   show colorAbove G y (fun k => yRep G y (Ordinal.typein (· < ·)
-        ((τ.trans (Ordinal.initialSegToType hδ).toOrderEmbedding) k)))
+        ((τ.trans (initialSegOfLe hδ).toOrderEmbedding) k)))
      = colorAbove G y (fun k => yRep G y (Ordinal.typein (· < ·) (τ k)))
   refine congrArg (colorAbove G y) (funext fun k => ?_)
-  exact congrArg (yRep G y) (Ordinal.typein_apply (Ordinal.initialSegToType hδ) (τ k))
+  exact congrArg (yRep G y) (Ordinal.typein_apply (initialSegOfLe hδ) (τ k))
 
 /-- The reps of `yNode G y β` are exactly `yRep G y (typein x)`. -/
 theorem nodeRep_yNode (G : (Fin (n + 2) ↪o Source lam) → C) (y : Source lam)
@@ -564,13 +545,13 @@ variable {lam : Cardinal.{0}} {C : Type} {n : ℕ} [Nonempty C]
 theorem nodeRep_restrict (G : (Fin (n + 2) ↪o Source lam) → C) {β : Ordinal.{0}}
     (h : NodeAt C n β) {δ : Ordinal.{0}} (hδ : δ ≤ β) (x : δ.ToType) :
     nodeRep G (h.restrict hδ) x =
-      nodeRep G h ((Ordinal.initialSegToType hδ).toOrderEmbedding x) := by
+      nodeRep G h ((initialSegOfLe hδ).toOrderEmbedding x) := by
   classical
   haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
   haveI : IsWellOrder δ.ToType (· < ·) := isWellOrder_lt
-  set lx := (Ordinal.initialSegToType hδ).toOrderEmbedding x with hlx_def
+  set lx := (initialSegOfLe hδ).toOrderEmbedding x with hlx_def
   have htx : Ordinal.typein (· < ·) lx = Ordinal.typein (· < ·) x := by
-    rw [hlx_def]; exact Ordinal.typein_apply (Ordinal.initialSegToType hδ) x
+    rw [hlx_def]; exact Ordinal.typein_apply (initialSegOfLe hδ) x
   have hx_lt : Ordinal.typein (· < ·) x < δ :=
     lt_of_lt_of_eq (Ordinal.typein_lt_type (· < ·) x) (Ordinal.type_toType δ)
   have hlx_lt : Ordinal.typein (· < ·) lx < β :=
@@ -597,16 +578,16 @@ theorem nodeLive_restrict (G : (Fin (n + 2) ↪o Source lam) → C) {β : Ordina
   · intro τ
     have hfun : (fun k => nodeRep G (h.restrict hδ) (τ k))
         = fun k => nodeRep G h
-            ((τ.trans (Ordinal.initialSegToType hδ).toOrderEmbedding) k) :=
+            ((τ.trans (initialSegOfLe hδ).toOrderEmbedding) k) :=
       funext fun k => nodeRep_restrict G h hδ (τ k)
     rw [hfun]
-    exact hy2 (τ.trans (Ordinal.initialSegToType hδ).toOrderEmbedding)
+    exact hy2 (τ.trans (initialSegOfLe hδ).toOrderEmbedding)
 
 /-- Lift a point strictly below `x₂` into the initial segment of length `typein x₂`. -/
 private lemma exists_seg_preimage {β : Ordinal.{0}} [IsWellOrder β.ToType (· < ·)]
     {x₁ x₂ : β.ToType} (hx : x₁ < x₂) (hx₂lt : Ordinal.typein (· < ·) x₂ < β) :
     ∃ z : (Ordinal.typein (· < ·) x₂).ToType,
-      (Ordinal.initialSegToType (le_of_lt hx₂lt)).toOrderEmbedding z = x₁ := by
+      (initialSegOfLe (le_of_lt hx₂lt)).toOrderEmbedding z = x₁ := by
   haveI : IsWellOrder (Ordinal.typein (· < · : β.ToType → β.ToType → Prop) x₂).ToType
       (· < ·) := isWellOrder_lt
   have hx₁ty : Ordinal.typein (· < ·) x₁ <
@@ -617,9 +598,9 @@ private lemma exists_seg_preimage {β : Ordinal.{0}} [IsWellOrder β.ToType (· 
   set z := Ordinal.enum (· < ·) ⟨Ordinal.typein (· < ·) x₁, hx₁ty⟩ with hz_def
   refine ⟨z, (Ordinal.typein_inj (· < ·)).mp ?_⟩
   have e1 : Ordinal.typein (· < ·)
-        ((Ordinal.initialSegToType (le_of_lt hx₂lt)).toOrderEmbedding z) =
+        ((initialSegOfLe (le_of_lt hx₂lt)).toOrderEmbedding z) =
       Ordinal.typein (· < ·) z :=
-    Ordinal.typein_apply (Ordinal.initialSegToType (le_of_lt hx₂lt)) z
+    Ordinal.typein_apply (initialSegOfLe (le_of_lt hx₂lt)) z
   have e2 : Ordinal.typein (· < ·) z = Ordinal.typein (· < ·) x₁ := by
     rw [hz_def]; exact Ordinal.typein_enum (· < ·) _
   rw [e1, e2]
@@ -629,13 +610,13 @@ private lemma exists_seg_tuple {β : Ordinal.{0}} [IsWellOrder β.ToType (· < �
     (τ : Fin (n + 1) ↪o β.ToType) {x₂ : β.ToType} (hx : ∀ k, τ k < x₂)
     (hx₂lt : Ordinal.typein (· < ·) x₂ < β) :
     ∃ σ : Fin (n + 1) ↪o (Ordinal.typein (· < ·) x₂).ToType,
-      ∀ k, (Ordinal.initialSegToType (le_of_lt hx₂lt)).toOrderEmbedding (σ k) = τ k := by
+      ∀ k, (initialSegOfLe (le_of_lt hx₂lt)).toOrderEmbedding (σ k) = τ k := by
   choose z hz using fun k => exists_seg_preimage (hx k) hx₂lt
   have hmono : StrictMono z := by
     intro a b hab
     have hτ : τ a < τ b := τ.strictMono hab
     rw [← hz a, ← hz b] at hτ
-    exact (Ordinal.initialSegToType (le_of_lt hx₂lt)).toOrderEmbedding.lt_iff_lt.mp hτ
+    exact (initialSegOfLe (le_of_lt hx₂lt)).toOrderEmbedding.lt_iff_lt.mp hτ
   exact ⟨OrderEmbedding.ofStrictMono z hmono, hz⟩
 
 /-- **End-homogeneity, strict monotonicity.** On a live node the chosen reps strictly
@@ -674,7 +655,7 @@ theorem node_fact8 (G : (Fin (n + 2) ↪o Source lam) → C) {β : Ordinal.{0}}
     funext k
     rw [nodeRep_restrict G h (le_of_lt hx₂lt) (σ k), hσ k]
   have hcolval : (h.restrict (le_of_lt hx₂lt)) σ = h τ := by
-    show h (σ.trans (Ordinal.initialSegToType (le_of_lt hx₂lt)).toOrderEmbedding) = h τ
+    show h (σ.trans (initialSegOfLe (le_of_lt hx₂lt)).toOrderEmbedding) = h τ
     exact congrArg h (DFunLike.ext _ _ hσ)
   rw [hreps, hcolval] at hcol
   exact hcol
@@ -716,15 +697,15 @@ noncomputable def branchOfLive (G : (Fin (n + 2) ↪o Source lam) → C) {β : O
     Branch G :=
   haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
   haveI : IsWellOrder (Order.succ lam).ord.ToType (· < ·) := isWellOrder_lt
-  { rep := fun z => nodeRep G h ((Ordinal.initialSegToType hβ).toOrderEmbedding z)
+  { rep := fun z => nodeRep G h ((initialSegOfLe hβ).toOrderEmbedding z)
     rep_strictMono := fun a b hab => nodeRep_strictMono G hlive
-      ((Ordinal.initialSegToType hβ).toOrderEmbedding.strictMono hab)
-    nodeFn := fun τ => h (τ.trans (Ordinal.initialSegToType hβ).toOrderEmbedding)
+      ((initialSegOfLe hβ).toOrderEmbedding.strictMono hab)
+    nodeFn := fun τ => h (τ.trans (initialSegOfLe hβ).toOrderEmbedding)
     coloring := fun τ q hq =>
       node_fact8 G hlive
-        (τ := τ.trans (Ordinal.initialSegToType hβ).toOrderEmbedding)
-        (x₂ := (Ordinal.initialSegToType hβ).toOrderEmbedding q)
-        (fun k => (Ordinal.initialSegToType hβ).toOrderEmbedding.strictMono (hq k)) }
+        (τ := τ.trans (initialSegOfLe hβ).toOrderEmbedding)
+        (x₂ := (initialSegOfLe hβ).toOrderEmbedding q)
+        (fun k => (initialSegOfLe hβ).toOrderEmbedding.strictMono (hq k)) }
 
 /-- **[THE COUNTING CORE]** Some live node has length `≥ (succ lam).ord`. Otherwise the
 coverage map injects `Source lam` (size `succ (2 ^ lam)`) into the index

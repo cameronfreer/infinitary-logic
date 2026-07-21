@@ -161,9 +161,9 @@ theorem AConsistent.extension_of_mem_formulas {A : FiniteCompactFragment L}
     {S : Set L.Sentenceω} (_hSA : S ⊆ A.formulas) (hc : AConsistent A S)
     (hφA : φ ∈ A.formulas) :
     AConsistent A (S ∪ {φ}) ∨ AConsistent A (S ∪ {φ.not}) := by
-  by_contra h; push_neg at h
+  by_contra h; push Not at h
   obtain ⟨h₁, h₂⟩ := h
-  unfold AConsistent at h₁ h₂; push_neg at h₁ h₂
+  unfold AConsistent at h₁ h₂; push Not at h₁ h₂
   exact hc (.inconsistent_of_both_extensions hφA h₁ h₂)
 
 end Language

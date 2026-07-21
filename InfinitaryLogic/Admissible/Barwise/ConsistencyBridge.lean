@@ -109,12 +109,12 @@ noncomputable def consistencyPropertyOfFullFragment (B : FullBarwiseFragment L) 
       exact hc (.neg_elim (.assumption hφ (hS hφ)) (.assumption hφn (hS hφn)))
     C1_imp := by
       intro S ⟨hS, hc⟩ φ ψ himp
-      by_contra h; push_neg at h
+      by_contra h; push Not at h
       have hSA₁ := union_singleton_subset_of_complete B hS φ.not
       have hSA₂ := union_singleton_subset_of_complete B hS ψ
       have hinc₁ := not_AConsistent_of_not_mem_consistentSets hSA₁ h.1
       have hinc₂ := not_AConsistent_of_not_mem_consistentSets hSA₂ h.2
-      unfold AConsistent at hinc₁ hinc₂; push_neg at hinc₁ hinc₂
+      unfold AConsistent at hinc₁ hinc₂; push Not at hinc₁ hinc₂
       have hφ_deriv := Derivable.not_not_elim (.neg_intro (B.complete _) hinc₁)
       have hψn := Derivable.neg_intro (B.complete _) hinc₂
       exact hc (.neg_elim (.imp_elim (.assumption himp (hS himp)) hφ_deriv) hψn)
@@ -155,23 +155,23 @@ noncomputable def consistencyPropertyOfFullFragment (B : FullBarwiseFragment L) 
       exact hc (.neg_elim (.iInf_elim k (.assumption hinf (hS hinf))) h_neg)
     C3_neg_iInf := by
       intro S ⟨hS, hc⟩ φs hninf
-      by_contra h; push_neg at h
+      by_contra h; push Not at h
       have hall : ∀ k, Derivable B.toFiniteCompactFragment S (φs k) := by
         intro k
         have hSAk := union_singleton_subset_of_complete B hS (φs k).not
         have := not_AConsistent_of_not_mem_consistentSets hSAk (h k)
-        unfold AConsistent at this; push_neg at this
+        unfold AConsistent at this; push Not at this
         exact .not_not_elim (.neg_intro (B.complete _) this)
       have hinf_deriv := Derivable.iInf_intro hall (B.complete _)
       exact hc (.neg_elim hinf_deriv (.assumption hninf (hS hninf)))
     C4_iSup := by
       intro S ⟨hS, hc⟩ φs hsup
-      by_contra h; push_neg at h
+      by_contra h; push Not at h
       have hnegs : ∀ k, Derivable B.toFiniteCompactFragment S (φs k).not := by
         intro k
         have hSAk := union_singleton_subset_of_complete B hS (φs k)
         have := not_AConsistent_of_not_mem_consistentSets hSAk (h k)
-        unfold AConsistent at this; push_neg at this
+        unfold AConsistent at this; push Not at this
         exact .neg_intro (B.complete _) this
       apply hc
       apply Derivable.iSup_elim (.assumption hsup (hS hsup))
@@ -228,13 +228,13 @@ noncomputable def consistencyPropertyOfFullFragment (B : FullBarwiseFragment L) 
   C7_neg_all := by
     -- ¬(φ.relabel Sum.inr).all ∈ S → ∃ t, S ∪ {¬(φ.subst t)} consistent
     intro S ⟨hS, hc⟩ φ hnall
-    by_contra h; push_neg at h
+    by_contra h; push Not at h
     -- For all t, S ∪ {(φ.subst t).not} is not in sets
     have hderiv : ∀ t, Derivable B.toFiniteCompactFragment S (φ.subst (fun _ => t)) := by
       intro t
       have hSAt := union_singleton_subset_of_complete B hS (φ.subst (fun _ => t)).not
       have := not_AConsistent_of_not_mem_consistentSets hSAt (h t)
-      unfold AConsistent at this; push_neg at this
+      unfold AConsistent at this; push Not at this
       exact .not_not_elim (.neg_intro (B.complete _) this)
     -- For all t, S ⊢ φ.subst t. By bridge: φ.subst t = (φ.relabel Sum.inr).openBounds.subst t
     -- So for all t, S ⊢ (φ.relabel Sum.inr).openBounds.subst t
@@ -268,12 +268,12 @@ noncomputable def consistencyPropertyOfFullFragment (B : FullBarwiseFragment L) 
     -- ∃x.φ(x) ∈ S → ∃ t, S ∪ {φ.subst t} consistent
     -- Since ex = not.all.not, hex is ¬(∀x.¬φ(x)) ∈ S
     intro S ⟨hS, hc⟩ φ hex
-    by_contra h; push_neg at h
+    by_contra h; push Not at h
     have hnegs : ∀ t, Derivable B.toFiniteCompactFragment S (φ.subst (fun _ => t)).not := by
       intro t
       have hSAt := union_singleton_subset_of_complete B hS (φ.subst (fun _ => t))
       have := not_AConsistent_of_not_mem_consistentSets hSAt (h t)
-      unfold AConsistent at this; push_neg at this
+      unfold AConsistent at this; push Not at this
       exact .neg_intro (B.complete _) this
     -- By bridge + all_intro on (φ.relabel Sum.inr).not: S ⊢ (φ.relabel Sum.inr).not.all
     have hall_intro : Derivable B.toFiniteCompactFragment S (φ.relabel Sum.inr).not.all := by
@@ -298,14 +298,14 @@ noncomputable def consistencyPropertyOfFullFragment (B : FullBarwiseFragment L) 
   C7_neg_all_bound := by
     -- ¬(ψ.all) ∈ S → ∃ t, S ∪ {(ψ.openBounds.subst t).not} consistent
     intro S ⟨hS, hc⟩ ψ hnall
-    by_contra h; push_neg at h
+    by_contra h; push Not at h
     -- For all t, S ∪ {(ψ.openBounds.subst t).not} is not in sets
     -- So for all t, S ⊢ ψ.openBounds.subst t
     have hderiv : ∀ t, Derivable B.toFiniteCompactFragment S (ψ.openBounds.subst (fun _ => t)) := by
       intro t
       have hSAt := union_singleton_subset_of_complete B hS (ψ.openBounds.subst (fun _ => t)).not
       have := not_AConsistent_of_not_mem_consistentSets hSAt (h t)
-      unfold AConsistent at this; push_neg at this
+      unfold AConsistent at this; push Not at this
       exact .not_not_elim (.neg_intro (B.complete _) this)
     -- By all_intro: S ⊢ ψ.all
     have hall_intro := Derivable.all_intro ψ hderiv (B.complete _)

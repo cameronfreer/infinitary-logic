@@ -82,7 +82,7 @@ theorem exists_antichain_map {α : Type u} [PseudoMetricSpace α]
     intro s t hst
     have hdiff : ∃ n, s n ≠ t n := by
       by_contra h
-      push_neg at h
+      push Not at h
       exact hst (funext h)
     have hn₀ : s (Nat.find hdiff) ≠ t (Nat.find hdiff) := Nat.find_spec hdiff
     have hres_eq : PiNat.res s (Nat.find hdiff) = PiNat.res t (Nat.find hdiff) := by

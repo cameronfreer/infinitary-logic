@@ -335,7 +335,7 @@ theorem LinfEquivW_implies_potentialIso (h : LinfEquivW L M N) :
     intro ⟨n, a, b⟩ hfamily m
     simp only [Set.mem_setOf_eq] at hfamily ⊢
     by_contra h_no
-    push_neg at h_no
+    push Not at h_no
     -- For each n' : N, choose a separating formula
     choose φ_bad h_bad using h_no
     -- For each n', get a formula true for (snoc a m) but false for (snoc b n')
@@ -370,7 +370,7 @@ theorem LinfEquivW_implies_potentialIso (h : LinfEquivW L M N) :
     intro ⟨n, a, b⟩ hfamily n'
     simp only [Set.mem_setOf_eq] at hfamily ⊢
     by_contra h_no
-    push_neg at h_no
+    push Not at h_no
     choose φ_bad h_bad using h_no
     have h_sep : ∀ m : M, ∃ ψ : BoundedFormulaInf.{u, v, 0, w} L (Fin (n + 1)) 0,
         FormulaInf.Realize ψ (Fin.snoc b n') ∧ ¬ FormulaInf.Realize ψ (Fin.snoc a m) := by

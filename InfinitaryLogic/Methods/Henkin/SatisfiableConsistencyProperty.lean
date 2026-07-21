@@ -92,7 +92,7 @@ def trueInModelConsistencyProperty (M : Type w) [L.Structure M] :
     intro S hS φ ψ hmem
     have hsat : Sentenceω.Realize (φ.imp ψ).not M := hS hmem
     simp only [Sentenceω.Realize, realize_not, realize_imp] at hsat
-    push_neg at hsat
+    push Not at hsat
     obtain ⟨hφ, hψ⟩ := hsat
     exact ⟨union_subset_trueInModel hS hφ,
            union_subset_trueInModel hS
@@ -102,7 +102,7 @@ def trueInModelConsistencyProperty (M : Type w) [L.Structure M] :
     intro S hS φ hmem
     have hsat : Sentenceω.Realize φ.not.not M := hS hmem
     simp only [Sentenceω.Realize, realize_not] at hsat
-    exact union_subset_trueInModel hS (by push_neg at hsat; exact hsat)
+    exact union_subset_trueInModel hS (by push Not at hsat; exact hsat)
   C3_iInf := by
     intro S hS φs hmem k
     have hsat : Sentenceω.Realize (iInf φs) M := hS hmem
@@ -112,7 +112,7 @@ def trueInModelConsistencyProperty (M : Type w) [L.Structure M] :
     intro S hS φs hmem
     have hsat : Sentenceω.Realize (iInf φs).not M := hS hmem
     simp only [Sentenceω.Realize, realize_not, realize_iInf] at hsat
-    push_neg at hsat
+    push Not at hsat
     obtain ⟨k, hk⟩ := hsat
     exact ⟨k, union_subset_trueInModel hS
       (show Sentenceω.Realize (φs k).not M by
@@ -127,7 +127,7 @@ def trueInModelConsistencyProperty (M : Type w) [L.Structure M] :
     intro S hS φs hmem k
     have hsat : Sentenceω.Realize (iSup φs).not M := hS hmem
     simp only [Sentenceω.Realize, realize_not, realize_iSup] at hsat
-    push_neg at hsat
+    push Not at hsat
     exact union_subset_trueInModel hS
       (show Sentenceω.Realize (φs k).not M by
         simp only [Sentenceω.Realize, realize_not]; exact hsat k)
@@ -205,7 +205,7 @@ noncomputable def trueInModelConsistencyPropertyEq
     intro S hS φ hmem
     have hsat := hS hmem
     simp only [trueInModel, Set.mem_setOf_eq, Sentenceω.Realize, realize_not, realize_all] at hsat
-    push_neg at hsat
+    push Not at hsat
     obtain ⟨m, hm⟩ := hsat
     rw [snoc_elim0_eq_const, realize_relabel_sumInr_zero] at hm
     refine ⟨ι.name m, union_subset_trueInModel hS ?_⟩
@@ -217,7 +217,7 @@ noncomputable def trueInModelConsistencyPropertyEq
     intro S hS φ hmem t
     have hsat := hS hmem
     simp only [trueInModel, Set.mem_setOf_eq, Sentenceω.Realize, realize_not, realize_ex] at hsat
-    push_neg at hsat
+    push Not at hsat
     have hm := hsat (t.realize (Empty.elim : Empty → M))
     rw [snoc_elim0_eq_const, realize_relabel_sumInr_zero] at hm
     exact union_subset_trueInModel hS (by
@@ -239,7 +239,7 @@ noncomputable def trueInModelConsistencyPropertyEq
     have hsat := hS hmem
     simp only [trueInModel, Set.mem_setOf_eq, Sentenceω.Realize, realize_not,
                realize_all] at hsat
-    push_neg at hsat
+    push Not at hsat
     obtain ⟨m, hm⟩ := hsat
     rw [snoc_elim0_eq_const] at hm
     refine ⟨ι.name m, union_subset_trueInModel hS ?_⟩

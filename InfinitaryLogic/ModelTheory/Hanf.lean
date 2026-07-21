@@ -94,7 +94,7 @@ theorem hanf_existence (φ : L.Sentenceω) : ∃ κ, IsHanfBound φ κ := by
   · -- ¬HasArbLargeModels: ∃ κ₀ with no model of size ≥ κ₀, so premise is vacuously false
     simp only [HasArbLargeModels, not_forall] at h
     obtain ⟨κ₀, hκ₀⟩ := h
-    push_neg at hκ₀
+    push Not at hκ₀
     exact ⟨κ₀, fun ⟨M, hStr, hM, hge⟩ => absurd hge (not_le.mpr (hκ₀ M hStr hM))⟩
 
 /-! ## The universal property of the Hanf number -/

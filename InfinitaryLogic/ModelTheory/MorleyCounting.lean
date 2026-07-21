@@ -179,7 +179,7 @@ theorem morley_counting_coded (silver : SilverBurgessDichotomy.{v}) (φ : L.Sent
         _ ≤ #(Quotient (isoSetoid φ)) := bfEquiv_classes_le_iso_classes φ α
   · -- Case 2: All BFEquiv_α have ≤ ℵ₀ classes → iso has ≤ ℵ₁ classes
     left
-    push_neg at hc
+    push Not at hc
     -- Every BFEquiv_α with α < ω₁ has ≤ ℵ₀ classes
     have hle : ∀ α, α < Ordinal.omega 1 →
         #(Quotient (bfEquivSetoid φ α)) ≤ ℵ₀ := by
@@ -330,7 +330,7 @@ theorem morley_counting (silver : SilverBurgessDichotomy.{v}) (φ : L.Sentenceω
             self_le_add_left _ _
   · -- No tier = continuum → ℕ-tier ≤ ℵ₁, Fin-tiers ≤ ℵ₀ → total ≤ ℵ₁
     left
-    push_neg at hc
+    push Not at hc
     obtain ⟨hcA, hcFin⟩ := hc
     have hA_le : #(Quotient (isoSetoid φ)) ≤ Cardinal.aleph 1 := hN.resolve_right hcA
     have hFin_le : ∀ n, #(Quotient (isoSetoidOn φ n)) ≤ ℵ₀ :=

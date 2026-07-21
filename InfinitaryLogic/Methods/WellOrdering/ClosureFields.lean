@@ -367,7 +367,7 @@ theorem WOMem.C4_iSup {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S)
   by_cases hb : ∃ k, φs k ∈ baseDiagram φ lt
   · obtain ⟨k, hk⟩ := hb
     exact ⟨k, hS.union_of_mem_base hk⟩
-  push_neg at hb
+  push Not at hb
   have hsrcloc : BoundedFormulaω.iSup φs ∈ (S \ baseDiagram φ lt) ∨
       BoundedFormulaω.iSup φs = φ.mapLanguage (L.lhomWithConstants ℕ) := by
     rcases hS.mem_cases hσ with h | h | ⟨q, r, _, h⟩
@@ -400,7 +400,7 @@ theorem WOMem.C3_neg_iInf {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S)
   by_cases hb : ∃ k, (φs k).not ∈ baseDiagram φ lt
   · obtain ⟨k, hk⟩ := hb
     exact ⟨k, hS.union_of_mem_base hk⟩
-  push_neg at hb
+  push Not at hb
   have hsrcloc : (BoundedFormulaω.iInf φs).not ∈ (S \ baseDiagram φ lt) ∨
       (BoundedFormulaω.iInf φs).not = φ.mapLanguage (L.lhomWithConstants ℕ) := by
     rcases hS.mem_cases hσ with h | h | ⟨q, r, _, h⟩
@@ -415,7 +415,7 @@ theorem WOMem.C3_neg_iInf {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S)
     have hreal := W.realize_source hsrcloc
     have h1 := (BoundedFormulaω.realize_not _).mp hreal
     rw [BoundedFormulaω.realize_iInf] at h1
-    push_neg at h1
+    push Not at h1
     obtain ⟨k, hk⟩ := h1
     refine ⟨k, ⟨W.add_sentence ((BoundedFormulaω.realize_not (φs k)).mpr hk) ?_⟩⟩
     intro q hq
@@ -534,7 +534,7 @@ def StarWitness.update_nonrat {Γ : Set L[[ℕ]].Sentenceω} {α : Ordinal.{0}}
 theorem exists_fresh_henkin {F : Set ℕ} (hF : F.Finite) :
     ∃ n : ℕ, henkinConstIdx n ∉ F := by
   by_contra h
-  push_neg at h
+  push Not at h
   exact Set.infinite_range_of_injective henkinConstIdx_injective
     (hF.subset (Set.range_subset_iff.mpr h))
 
@@ -671,7 +671,7 @@ theorem WOMem.neg_all_witness {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S)
     have hsrc := W.realize_source hsrcloc
     have h1 := (BoundedFormulaω.realize_not _).mp hsrc
     rw [BoundedFormulaω.realize_all] at h1
-    push_neg at h1
+    push Not at h1
     obtain ⟨v, hv⟩ := h1
     rw [snoc_elim0_eq_const] at hv
     refine ⟨(W.update_nonrat hcr hcΓ v).add_sentence ?_ ?_⟩

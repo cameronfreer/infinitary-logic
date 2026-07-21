@@ -384,7 +384,7 @@ theorem insertLastBound_eq_finSumFinEquiv_symm (n : ℕ) :
   split
   · simp
   · next h =>
-    push_neg at h
+    push Not at h
     have : i = n := Nat.le_antisymm (Nat.lt_succ_iff.mp hi) h
     subst this; simp
 
@@ -492,7 +492,7 @@ private theorem relabelAux_insertLastBound_finSumFinEquiv (n k l : ℕ) (x : Fin
           simp only [Fin.subNat]
           simp [Sum.elim, Fin.castLT]
     · -- i ≥ n+k (i.e., i = n+k)
-      push_neg at h1
+      push Not at h1
       have h_eq : i = n + k := Nat.le_antisymm (by omega) h1
       subst h_eq
       split <;> rename_i h2

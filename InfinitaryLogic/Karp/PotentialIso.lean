@@ -358,7 +358,7 @@ for every ordinal `α`, and verifies the forth and back properties by a supremum
 contradiction argument.
 
 **Universe constraint**: The proof requires the ordinal universe to match the type universe
-`w` (via `Ordinal.bddAbove_range`). This is because the contradiction argument takes a
+`w` (via `Ordinal.bddAbove_of_small`). This is because the contradiction argument takes a
 supremum of ordinals indexed by `N : Type w`, which requires `Ordinal.{w}`. The forward
 direction (`PotentialIso.implies_BFEquiv_all`) is fully universe-polymorphic. -/
 theorem BFEquiv_all_implies_potentialIso [Countable (Σ l, L.Relations l)]
@@ -383,11 +383,11 @@ theorem BFEquiv_all_implies_potentialIso [Countable (Σ l, L.Relations l)]
     intro ⟨n, a, b⟩ hfamily m
     simp only [Set.mem_setOf_eq] at hfamily ⊢
     by_contra h_no
-    push_neg at h_no
+    push Not at h_no
     -- For each n' : N, choose an ordinal where BFEquiv fails
     choose αbad hbad using h_no
     -- The supremum exists because N : Type w and ordinals are in Ordinal.{w}
-    have hbdd : BddAbove (Set.range αbad) := Ordinal.bddAbove_range αbad
+    have hbdd : BddAbove (Set.range αbad) := Ordinal.bddAbove_of_small
     -- At Order.succ of the supremum, BFEquiv.forth gives a witness
     obtain ⟨n'₀, hn'₀⟩ := BFEquiv.forth (hfamily (Order.succ (⨆ n', αbad n'))) m
     -- But αbad n'₀ ≤ ⨆, so by monotonicity BFEquiv holds at αbad n'₀, contradiction
@@ -396,9 +396,9 @@ theorem BFEquiv_all_implies_potentialIso [Countable (Σ l, L.Relations l)]
     intro ⟨n, a, b⟩ hfamily n'
     simp only [Set.mem_setOf_eq] at hfamily ⊢
     by_contra h_no
-    push_neg at h_no
+    push Not at h_no
     choose αbad hbad using h_no
-    have hbdd : BddAbove (Set.range αbad) := Ordinal.bddAbove_range αbad
+    have hbdd : BddAbove (Set.range αbad) := Ordinal.bddAbove_of_small
     obtain ⟨m₀, hm₀⟩ := BFEquiv.back (hfamily (Order.succ (⨆ m, αbad m))) n'
     exact hbad m₀ (BFEquiv.monotone (le_ciSup hbdd m₀) hm₀)
 
