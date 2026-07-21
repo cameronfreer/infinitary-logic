@@ -5,9 +5,9 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.Interpolation.PairedInseparability
 import InfinitaryLogic.Methods.Interpolation.InseparablePairFamily
-import InfinitaryLogic.Methods.Interpolation.ConsistencyPropertyEqOn
-import InfinitaryLogic.Methods.Interpolation.FairEnumeration
-import InfinitaryLogic.Methods.Interpolation.QuotientTruthLemma
+import InfinitaryLogic.Methods.Henkin.CountableCompletion.ConsistencyPropertyEqOn
+import InfinitaryLogic.Methods.Henkin.CountableCompletion.FairEnumeration
+import InfinitaryLogic.Methods.Henkin.CountableCompletion.QuotientTruthLemma
 
 /-!
 # The paired inseparable-pair consistency family and its model (issue #8, commit 4c part 2)

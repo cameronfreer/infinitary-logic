@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.Interpolation.QuantifierRoundTrip
-import InfinitaryLogic.Methods.Interpolation.GeneratedUniverse
+import InfinitaryLogic.Methods.Henkin.CountableCompletion.GeneratedUniverse
 
 /-!
 # The finite inseparable-pair consistency family and its structural lemmas (issue #8, commit 4a)

@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.Interpolation.InseparablePairFamily
-import InfinitaryLogic.Methods.Interpolation.FairEnumeration
+import InfinitaryLogic.Methods.Henkin.CountableCompletion.FairEnumeration
 
 /-!
 # The inseparable-pair consistency property and its Henkin completion (issue #8, commit 4b)

@@ -5,6 +5,13 @@ import InfinitaryLogic.Conditional
 import InfinitaryLogic.Scott.Code
 -- published backward-compatibility redirect (kept until a major release; built here so CI covers it)
 import InfinitaryLogic.Basic
+-- deprecated re-export shims for the issue #34 Henkin-kernel rehoming (kept for at least one
+-- release; built here so CI covers them — the deprecation warnings below are intentional)
+import InfinitaryLogic.Methods.Interpolation.GeneratedUniverse
+import InfinitaryLogic.Methods.Interpolation.ConsistencyPropertyEqOn
+import InfinitaryLogic.Methods.Interpolation.FairEnumeration
+import InfinitaryLogic.Methods.Interpolation.QuotientTermModel
+import InfinitaryLogic.Methods.Interpolation.QuotientTruthLemma
 
 /-!
 # Everything: the full library including conditional results and legacy modules

@@ -25,7 +25,7 @@ no-maximality / Henkin-interface-consumed discipline.
 
 Run with: lake env lean scripts/check_truth_lemma_cone.lean
 -/
-import InfinitaryLogic.Methods.Interpolation.QuotientTruthLemma
+import InfinitaryLogic.Methods.Henkin.CountableCompletion.QuotientTruthLemma
 import InfinitaryLogic.Methods.WellOrdering.ModelExtraction
 import InfinitaryLogic.Methods.WellOrdering.GraphTranslation
 

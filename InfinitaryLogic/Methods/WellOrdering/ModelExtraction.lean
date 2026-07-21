@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.WellOrdering.WOConsistency
-import InfinitaryLogic.Methods.Interpolation.QuotientTruthLemma
+import InfinitaryLogic.Methods.Henkin.CountableCompletion.QuotientTruthLemma
 
 /-!
 # Model extraction from the completed well-ordering set (issue #12, step 5)
