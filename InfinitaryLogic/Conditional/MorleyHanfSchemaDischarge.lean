@@ -143,6 +143,20 @@ theorem realize_templateSentence_expandSymb {L : Language.{0, 0}}
 construction runs in the simultaneous symbol-generated sublanguage of `φ` (both sorts countable,
 proved not assumed) at an injective `ℕ`-sequence of the source, and its model expands back to
 `L'[[J]]`; the degenerate `IsEmpty J` case is served by the source model itself. -/
+@[blueprint "thm:morley-seed-realizable"
+  (title := /-- Seed realizability holds -/)
+  (statement := /-- The Ehrenfeucht--Mostowski tail-template theory of the Morley seed is
+    realizable: for every $\Lomegaone$-sentence $\varphi$ with a model of size
+    $\geq \beth_{\omegaone}$ and every countable linear order $J$, some model realizes the
+    seed's template theory along a $J$-indexed sequence.  No symbol-countability
+    assumptions. -/)
+  (proof := /-- The schema completion runs in the simultaneous symbol-generated sublanguage
+    of $\varphi$ (both sorts countable, proved not assumed) at an injective
+    $\mathbb{N}$-sequence of the source model; the completed schema universe's quotient term
+    model carries a fully indiscernible sequence of Henkin constants satisfying the
+    restricted truth lemma, and the model expands back to the full constants-expanded
+    language.  The degenerate empty-$J$ case is served by the source model itself. -/)
+  (uses := ["thm:schema-truth-lemma", "thm:schema-seq-indiscernible"])]
 theorem morleySeedTailTemplateRealizable_holds {L' : Language.{0, 0}} :
     MorleySeedTailTemplateRealizable (L' := L') := by
   intro φ M instM a J instJ hSize hφreal hPair _hTail
