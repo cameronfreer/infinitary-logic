@@ -65,3 +65,6 @@ FirstOrder.Language.allCodedIsoClasses_dichotomy
 FirstOrder.Language.morley_counting
 FirstOrder.Language.craig_interpolation
 FirstOrder.Language.craig_interpolation_relational
+FirstOrder.Language.exists_model_relPreserving
+FirstOrder.Language.wellOrder_type_boundedness
+FirstOrder.Language.wellOrdering_undefinable

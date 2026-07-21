@@ -396,5 +396,37 @@ shared-vocabulary packaging consumed by the projective-class work.
 
 \inputleannode{thm:craig-relational}
 
+\chapter{Undefinability of Well-Ordering}
+
+Marker's consistency-property construction (Theorem~4.26 and Corollary~4.27
+of~\cite{marker2016}): an $\Lomegaone$-sentence whose models
+contain well-ordered chains of every countable length has a model embedding the rationals
+positively into the distinguished relation.  Consequently the well-ordered models of any
+sentence have uniformly bounded order type, and no sentence of $\Lomegaone$ defines the
+class of well-orders.
+
+All three nodes hold over an \emph{arbitrary} language.  The engine is a dedicated
+consistency property over the constants-expanded relational core, whose members carry the
+positive rational diagram $\{d_q < d_r : q < r\}$ together with a finite remainder whose
+mentioned rational constants sit, at every level $\alpha < \omega_1$, on a chain with
+$\alpha$-sized margins in an approximating model (Marker's gap condition~$(*)$); the
+fifteen closure fields are Exercise~4.28.  The fair Henkin enumeration and the quotient
+term model shared with the Craig kernel realize the completed diagram, and $q \mapsto
+d_q^M$ is the rational map.  Symbol countability is removed by the two-sorted generated
+sublanguage, and function symbols by the Craig relationalization layer, under which the
+distinguished base relation is preserved definitionally.
+
+The three public results are deliberately separate in strength: the raw positive map (no
+injectivity claimed — that is a corollary under irreflexivity), the uniform order-type
+bound (the strong form), and undefinability (the weak form).  The stronger induced-copy
+conclusion and the Borel-coded form of undefinability are tracked separately and are not
+claimed by these nodes.
+
+\inputleannode{thm:wellordering-map}
+
+\inputleannode{thm:wellordering-boundedness}
+
+\inputleannode{thm:wellordering-undefinable}
+
 \bibliographystyle{amsalpha}
 \bibliography{refs}

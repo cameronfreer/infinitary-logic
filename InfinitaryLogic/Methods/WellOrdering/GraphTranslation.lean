@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.WellOrdering.SymbolCountability
 import InfinitaryLogic.Methods.Interpolation.GraphReconstruction
+import Architect
 
 /-!
 # The arbitrary-language graph translation (issue #12, the final transport)
@@ -36,6 +37,24 @@ variable {L : Language.{0, 0}}
 every countable length, then some nonempty model of `φ` carries a relation-preserving map
 `f : ℚ → M` — the raw positive conclusion; injectivity is a corollary under irreflexivity
 (`RelPreserving.injective_of_irreflexive`). -/
+@[blueprint "thm:wellordering-map"
+  (title := /-- Rational embedding from long chains (Marker 4.26) -/)
+  (statement := /-- Let $\varphi$ be an $\Lomegaone$-sentence over an arbitrary language
+    with a distinguished binary relation symbol $<$.  If for every $\alpha < \omega_1$ some
+    model of $\varphi$ contains a strictly $<$-increasing chain of length $\alpha$, then
+    some nonempty model $M \models \varphi$ carries a map $f : \mathbb{Q} \to M$ with
+    $f(q) < f(r)$ whenever $q < r$ — the raw positive relation-preserving conclusion (no
+    injectivity is claimed; it is a corollary under irreflexivity). -/)
+  (proof := /-- A dedicated consistency property over the constants-expanded relational
+    core: members are the base diagram $\{\hat\varphi\} \cup \{d_q < d_r : q < r\}$ plus a
+    finite remainder whose mentioned rational constants sit, for every $\alpha < \omega_1$,
+    on a chain with $\alpha$-margins in an approximating model (the gap condition~$(*)$).
+    The fifteen closure fields are Marker's Exercise~4.28; the fair Henkin enumeration
+    completes the base diagram; the quotient term model realizes it, and $q \mapsto d_q^M$
+    is the map.  Symbol countability is removed by the two-sorted generated sublanguage,
+    and function symbols by the Craig relationalization layer (graph relations, totality/
+    functionality axioms, structure reconstruction), under which the distinguished base
+    relation is preserved definitionally. -/)]
 theorem exists_model_relPreserving (φ : L.Sentenceω) (lt : L.Relations 2)
     (h : HasWellOrderedChains φ lt) :
     ∃ (M : Type) (_ : L.Structure M) (_ : Nonempty M) (f : ℚ → M),
@@ -91,6 +110,17 @@ theorem wellFounded_boundedness (φ : L.Sentenceω) (lt : L.Relations 2)
 /-- **Boundedness, order-type form (Marker Corollary 4.27, arbitrary language)**: if every
 model of `φ` interprets `lt` as a well-order, some countable ordinal strictly bounds every
 model's order type. -/
+@[blueprint "thm:wellordering-boundedness"
+  (title := /-- Boundedness of well-ordered models (Marker 4.27) -/)
+  (statement := /-- If every model of an $\Lomegaone$-sentence $\varphi$ interprets the
+    distinguished relation $<$ as a well-order, then there is a single countable ordinal
+    $\alpha$ strictly bounding the order type of every model's interpreted relation. -/)
+  (proof := /-- Contrapositive of the rational-embedding theorem: were the order types
+    unbounded below $\omega_1$, every countable chain length would be realized, so some
+    model of $\varphi$ would embed $\mathbb{Q}$ positively — and the negative rationals
+    would descend strictly, contradicting well-foundedness.  An order type $\geq \alpha$
+    would re-embed the missing $\alpha$-chain via the order-type calculus. -/)
+  (uses := ["thm:wellordering-map"])]
 theorem wellOrder_type_boundedness (φ : L.Sentenceω) (lt : L.Relations 2)
     (hwo : ∀ (M : Type) (_ : L.Structure M), Sentenceω.Realize φ M →
       IsWellOrder M fun x y : M => RelMap lt ![x, y]) :
@@ -126,6 +156,17 @@ theorem ordinalStructureFull_relMap (L : Language.{0, 0}) (α : Ordinal.{0})
 models exactly the structures whose interpreted relation is a well-order.  The comparison
 structure on `α + 1` (nonempty, so functions can be interpreted) violates the uniform
 order-type bound `α`. -/
+@[blueprint "thm:wellordering-undefinable"
+  (title := /-- Undefinability of well-ordering -/)
+  (statement := /-- For any language with a distinguished binary relation symbol $<$, no
+    $\Lomegaone$-sentence has as models exactly the structures whose interpretation of $<$
+    is a well-order. -/)
+  (proof := /-- Such a sentence would satisfy the boundedness hypothesis, yielding a
+    uniform countable bound $\alpha$ on order types; but the comparison structure on
+    $\alpha + 1$ (every binary symbol the ordinal order, functions interpreted arbitrarily
+    on the nonempty carrier) is itself a well-order of type $\alpha + 1 \geq \alpha$ and
+    would be a model, violating the bound. -/)
+  (uses := ["thm:wellordering-boundedness"])]
 theorem wellOrdering_undefinable (lt : L.Relations 2) :
     ¬ ∃ φ : L.Sentenceω, ∀ (M : Type) (_ : L.Structure M),
         (Sentenceω.Realize φ M ↔ IsWellOrder M fun x y : M => RelMap lt ![x, y]) := by

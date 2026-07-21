@@ -15,6 +15,7 @@ import InfinitaryLogic.ModelTheory.TypePreservingBF
 import InfinitaryLogic.ModelTheory.ArbitraryStabilization
 import InfinitaryLogic.ModelTheory.ScottCompletion
 import InfinitaryLogic.ModelTheory.CraigInterpolation
+import InfinitaryLogic.ModelTheory.WellOrdering
 
 /-!
 # All: the sorry-free library surface
@@ -32,6 +33,8 @@ frontier target.
 - `InfinitaryLogic.Admissible`: admissible fragments, Barwise compactness
 - `InfinitaryLogic.Descriptive`: descriptive set theory of model classes
 - `InfinitaryLogic.ModelTheory.MorleyHanf`: the Morley–Hanf theorem and its corollaries
+- `InfinitaryLogic.ModelTheory.WellOrdering`: boundedness and undefinability of
+  well-ordering (Marker 4.26/4.27)
 - `InfinitaryLogic.Everything`: all of the above plus the rest of `Conditional/` and the
   legacy off-path modules; WIP frontier modules under `Methods/` are excluded
   (see the `InfinitaryLogicWIP` target)
