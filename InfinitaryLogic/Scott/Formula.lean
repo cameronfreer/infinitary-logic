@@ -227,9 +227,9 @@ noncomputable def scottFormula {n : ℕ} (a : Fin n → M) (α : Ordinal) : L.Fo
             rw [← Cardinal.mk_le_aleph0_iff]
             rw [Cardinal.mk_toType]
             have h_card : _β.card < Cardinal.aleph 1 := Cardinal.lt_omega_iff_card_lt.mp h_lt
-            have h1 : Cardinal.aleph 1 = Cardinal.aleph (Order.succ 0) := by
-              congr 1; exact Ordinal.succ_zero.symm
-            rw [h1, Cardinal.aleph_succ, Cardinal.aleph_zero] at h_card
+            have h1 : Cardinal.aleph 1 = Order.succ (Cardinal.aleph 0) := by
+              rw [Cardinal.succ_aleph, zero_add]
+            rw [h1, Cardinal.aleph_zero] at h_card
             exact Order.lt_succ_iff.mp h_card
           -- Use equivalence Set.Iio β ≃ β.ToType
           exact Countable.of_equiv _β.ToType (Ordinal.ToType.mk).symm.toEquiv

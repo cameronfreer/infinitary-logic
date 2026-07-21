@@ -617,9 +617,9 @@ theorem morleyHanfExtraction_of_indiscernibleSequence
     (hSeq : IndiscernibleSequenceHypothesis (L' := L')) :
     MorleyHanfExtraction (L' := L') := by
   intro s M _ hSize
-  -- Equip `M` with a canonical well-ordering via `exists_wellOrder`,
+  -- Equip `M` with a canonical well-ordering via `exists_wellFoundedLT`,
   -- which provides both a `LinearOrder` and `WellFoundedLT` on `M`.
-  obtain ⟨instLO, instWF⟩ := exists_wellOrder M
+  obtain ⟨instLO, instWF⟩ := exists_wellFoundedLT M
   letI : LinearOrder M := instLO
   obtain ⟨f, hfMono, hfInd⟩ := hSeq s M instLO instWF hSize
   refine ⟨f, ?_, ?_⟩

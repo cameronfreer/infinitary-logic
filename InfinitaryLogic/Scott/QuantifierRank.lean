@@ -106,13 +106,13 @@ theorem scottFormula_qrank_le {M : Type w} [L.Structure M] [Countable M]
       · -- einf (fun m => existsLastVar (scottFormula (snoc a m) β))
         -- qrank = sup_m (qrank(scottFormula(snoc a m) β) + 1)
         simp only [qrank_einf, qrank_existsLastVar]
-        rw [← Ordinal.add_one_eq_succ]
+        rw [Order.succ_eq_add_one]
         apply Ordinal.iSup_le; intro m
         exact add_le_add_left (ih (Fin.snoc a m) hβ) 1
     · -- forallLastVar (esup (fun m => scottFormula (snoc a m) β))
       -- qrank = qrank(esup ...) + 1 = (sup_m qrank(scottFormula(snoc a m) β)) + 1
       simp only [qrank_forallLastVar, qrank_esup]
-      rw [← Ordinal.add_one_eq_succ]
+      rw [Order.succ_eq_add_one]
       exact add_le_add_left (Ordinal.iSup_le fun m => ih (Fin.snoc a m) hβ) 1
   | limit β hβlimit ih =>
     unfold scottFormula

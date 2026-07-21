@@ -67,7 +67,7 @@ private theorem countable_Iio_of_lt_omega1 (β : Ordinal.{0}) (hβ : β < Ordina
   -- #(Set.Iio β) = lift β.card ≤ lift ℵ₀ = ℵ₀
   rw [← Cardinal.mk_le_aleph0_iff]
   calc #(Set.Iio β)
-      = Cardinal.lift.{1, 0} β.card := Ordinal.mk_Iio_ordinal β
+      = Cardinal.lift.{1, 0} β.card := Cardinal.mk_Iio_ordinal β
     _ ≤ Cardinal.lift.{1, 0} ℵ₀ := Cardinal.lift_le.mpr hle
     _ = ℵ₀ := Cardinal.lift_aleph0
 

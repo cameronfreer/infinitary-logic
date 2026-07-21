@@ -283,7 +283,7 @@ pairwise distinctness. This discharges the honest residual
 `MorleySeedTailTemplateRealizable` (the source facts it carries are exactly these). -/
 
 /-- **The Morley-seed tail-template theory has a model over every target order** — assembled
-from: a well-ordering of the source (`exists_wellOrder`), the schema completion over
+from: a well-ordering of the source (`exists_wellFoundedLT`), the schema completion over
 `LocalStage.ofSeq L' (morleySeed φ)`, the schema context and its Ω-completeness, the seed
 realization + pairwise distinctness feeding the cross-model seed agreement, and the cross-source
 acceptance with the schema term model's Skolem-universality mixin. -/
@@ -297,7 +297,7 @@ theorem morleySeed_tailTemplate_model_of_schemaSource {L' : Language.{0, 0}}
       Theoryω.Model
         ((tailTemplateOfSeq a : Lomega1omegaTemplate L').templateTheoryOfSeq
           (morleySeed φ) J) N := by
-  obtain ⟨instLO, instWF⟩ := exists_wellOrder M
+  obtain ⟨instLO, instWF⟩ := exists_wellFoundedLT M
   letI : LinearOrder M := instLO
   haveI : WellFoundedLT M := instWF
   haveI : Nonempty M := Cardinal.mk_ne_zero_iff.mp

@@ -51,9 +51,9 @@ private theorem countable_Iio_of_lt_omega1 (β : Ordinal.{0}) (hβ : β < Ordina
   have h_card : β.card < Cardinal.aleph 1 := Cardinal.lt_omega_iff_card_lt.mp hβ
   -- Therefore β.card ≤ ℵ₀
   have h_card_le : β.card ≤ Cardinal.aleph0 := by
-    have h1 : Cardinal.aleph 1 = Cardinal.aleph (Order.succ 0) := by
-      congr 1; exact Ordinal.succ_zero.symm
-    rw [h1, Cardinal.aleph_succ, Cardinal.aleph_zero] at h_card
+    have h1 : Cardinal.aleph 1 = Order.succ (Cardinal.aleph 0) := by
+      rw [Cardinal.succ_aleph, zero_add]
+    rw [h1, Cardinal.aleph_zero] at h_card
     exact Order.lt_succ_iff.mp h_card
   -- β.ToType is countable since β.card ≤ ℵ₀
   haveI : Countable β.ToType := by

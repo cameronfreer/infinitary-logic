@@ -231,7 +231,7 @@ theorem WOMem.C1_neg_imp {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S)
         letI : L[[ℕ]].Structure M := wc inst h
         have h1 := (BoundedFormulaω.realize_not _).mp hr
         rw [BoundedFormulaω.realize_imp] at h1
-        exact (_root_.not_imp.mp h1).1
+        exact (Classical.not_imp.mp h1).1
   · by_cases hb : ψ₂.not ∈ baseDiagram φ lt
     · exact hS.union_of_mem_base hb
     · refine hS.extend_det hσ
@@ -243,7 +243,7 @@ theorem WOMem.C1_neg_imp {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S)
         letI : L[[ℕ]].Structure M := wc inst h
         have h1 := (BoundedFormulaω.realize_not _).mp hr
         rw [BoundedFormulaω.realize_imp] at h1
-        exact (BoundedFormulaω.realize_not ψ₂).mpr (_root_.not_imp.mp h1).2
+        exact (BoundedFormulaω.realize_not ψ₂).mpr (Classical.not_imp.mp h1).2
 
 /-- (C3) Countable conjunction: every component. -/
 theorem WOMem.C3_iInf {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S)

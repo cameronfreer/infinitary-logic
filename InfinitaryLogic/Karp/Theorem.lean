@@ -136,7 +136,7 @@ private theorem BFEquiv_implies_agree_aux {M N : Type w} [L.Structure M] [L.Stru
       (ihψ α (le_of_max_le_right hφ) xs ys hBF)
   | all φ ih =>
     simp only [BoundedFormulaInf.realize_all, BoundedFormulaInf.qrank_all] at hφ ⊢
-    have hSucc : Order.succ φ.qrank ≤ α := by rwa [Ordinal.add_one_eq_succ] at hφ
+    have hSucc : Order.succ φ.qrank ≤ α := by rwa [← Order.succ_eq_add_one] at hφ
     have hBF' := BFEquiv.monotone hSucc hBF
     constructor
     · intro hAll y

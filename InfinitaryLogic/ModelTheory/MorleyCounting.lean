@@ -243,7 +243,7 @@ theorem morley_counting_coded (silver : SilverBurgessDichotomy.{v}) (φ : L.Sent
       _ ≤ Cardinal.aleph 1 * ℵ₀ := by
           apply mul_le_mul'
           · -- lift.{v,1} #(Iio ω₁) = aleph 1
-            rw [Ordinal.mk_Iio_ordinal, Cardinal.lift_lift, Ordinal.card_omega,
+            rw [Cardinal.mk_Iio_ordinal, Cardinal.lift_lift, Ordinal.card_omega,
               Cardinal.lift_aleph, Ordinal.lift_one]
           · -- ⨆ i, lift #(fiber i) ≤ ℵ₀
             haveI : Nonempty (Set.Iio (Ordinal.omega 1 : Ordinal.{0})) :=

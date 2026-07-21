@@ -153,7 +153,7 @@ theorem BFEquiv.succ (α : Ordinal) (a : Fin n → M) (b : Fin n → N) :
       BFEquiv (L := L) α n a b ∧
       (∀ m : M, ∃ n' : N, BFEquiv (L := L) α (n + 1) (snoc a m) (snoc b n')) ∧
       (∀ n' : N, ∃ m : M, BFEquiv (L := L) α (n + 1) (snoc a m) (snoc b n')) := by
-  simp only [BFEquiv, Ordinal.limitRecOn_succ]
+  simp only [BFEquiv, Order.succ_eq_add_one, Ordinal.limitRecOn_add_one]
 
 omit [L.IsRelational] in
 theorem BFEquiv.limit (α : Ordinal) (hα : Order.IsSuccLimit α) (a : Fin n → M) (b : Fin n → N) :
@@ -312,7 +312,7 @@ theorem BFStrategyT_implies_BFEquiv {n : ℕ} {a : Fin n → M} {b : Fin n → N
     exact strat.property
   | succ k ih =>
     have hsucc : ((k + 1 : ℕ) : Ordinal.{0}) = Order.succ (k : Ordinal.{0}) := by
-      rw [← Ordinal.add_one_eq_succ]; norm_cast
+      rw [Order.succ_eq_add_one]; norm_cast
     rw [hsucc, BFEquiv.succ]
     obtain ⟨strat_k, forth, back⟩ := strat
     refine ⟨ih strat_k, ?_, ?_⟩

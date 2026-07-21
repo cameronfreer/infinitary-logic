@@ -926,7 +926,7 @@ theorem exists_complete_stabilization_of
         constructor
         · intro hBF
           have h1eq : (1 : Ordinal) = Order.succ 0 := by
-            rw [← Ordinal.add_one_eq_succ]; simp
+            rw [Order.succ_eq_add_one]; simp
           rw [h1eq] at hBF ⊢
           rw [BFEquiv.succ] at hBF
           rw [BFEquiv.succ]
