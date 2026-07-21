@@ -55,7 +55,7 @@ namespace MycielskiCantor
 
 /-- The `PiNat` metric on Cantor space; its uniformity (hence topology) is definitionally
 the product one. -/
-private noncomputable def cantorMetricSpace : MetricSpace (ℕ → Bool) :=
+@[reducible] private noncomputable def cantorMetricSpace : MetricSpace (ℕ → Bool) :=
   PiNat.metricSpaceOfDiscreteUniformity fun _ => rfl
 
 attribute [local instance] cantorMetricSpace

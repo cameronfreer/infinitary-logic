@@ -81,7 +81,7 @@ variable {α : Type*}
 
 /-- Decode a code into an L-structure on carrier α.
 Relations are determined by the code; functions are eliminated by `IsRelational`. -/
-noncomputable def toStructure [L.IsRelational]
+@[reducible] noncomputable def toStructure [L.IsRelational]
     (c : StructureSpaceOn L α) : L.Structure α where
   funMap := fun f => isEmptyElim f
   RelMap := fun {_} R v => c ⟨⟨_, R⟩, v⟩ = true
@@ -119,7 +119,7 @@ end StructureSpaceOn
 namespace StructureSpace
 
 /-- Decode a code into an L-structure on ℕ. -/
-noncomputable def toStructure [L.IsRelational]
+@[reducible] noncomputable def toStructure [L.IsRelational]
     (c : StructureSpace L) : L.Structure ℕ :=
   StructureSpaceOn.toStructure c
 

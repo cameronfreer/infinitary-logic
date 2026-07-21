@@ -140,7 +140,7 @@ theorem isoSetoidOn_measurableSet (φ : L.Sentenceω) (n : ℕ) :
     ⋃ σ : Equiv.Perm (Fin n),
       {p | σ • p.1.1 = p.2.1} := by
     ext ⟨⟨c₁, hc₁⟩, ⟨c₂, hc₂⟩⟩
-    simp only [Set.mem_setOf_eq, Set.mem_iUnion, isoSetoidOn]
+    simp only [Set.mem_setOf_eq, Set.mem_iUnion]
     exact iso_iff_orbit n c₁ c₂
   rw [hset]
   -- Step 2: Finite union of measurable sets is measurable
@@ -357,8 +357,8 @@ private theorem compose_encoded_iso
   simp only [Equiv.inducedStructure_RelMap, Function.comp_def, Equiv.trans_apply, Equiv.toFun_as_coe]
   simp_rw [eN.symm_apply_apply]
   constructor
-  · intro h; exact (e.map_rel' R (⇑eM.symm ∘ v)).mp (by convert h using 2 <;> rfl)
-  · intro h; convert (e.map_rel' R (⇑eM.symm ∘ v)).mpr h using 2 <;> rfl
+  · intro h; exact (e.map_rel' R (⇑eM.symm ∘ v)).mp (by convert h using 2; rfl)
+  · intro h; convert (e.map_rel' R (⇑eM.symm ∘ v)).mpr h using 2; rfl
 
 omit [Countable ((l : ℕ) × L.Relations l)] in
 /-- L-isomorphic countable models map to the same coded class. -/

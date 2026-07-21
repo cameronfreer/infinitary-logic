@@ -698,7 +698,7 @@ noncomputable def branchOfLive (G : (Fin (n + 2) ↪o Source lam) → C) {β : O
   haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
   haveI : IsWellOrder (Order.succ lam).ord.ToType (· < ·) := isWellOrder_lt
   { rep := fun z => nodeRep G h ((initialSegOfLe hβ).toOrderEmbedding z)
-    rep_strictMono := fun a b hab => nodeRep_strictMono G hlive
+    rep_strictMono := fun _ _ hab => nodeRep_strictMono G hlive
       ((initialSegOfLe hβ).toOrderEmbedding.strictMono hab)
     nodeFn := fun τ => h (τ.trans (initialSegOfLe hβ).toOrderEmbedding)
     coloring := fun τ q hq =>

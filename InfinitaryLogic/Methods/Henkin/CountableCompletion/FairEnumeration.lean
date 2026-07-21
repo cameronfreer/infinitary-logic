@@ -227,7 +227,7 @@ theorem stage_subset_U (S₀ : SetIn P) (n : ℕ) : (stage e S₀ n).1 ⊆ U :=
 noncomputable def Sstar (S₀ : SetIn P) : Set L[[ℕ]].Sentenceω := ⋃ n, (stage e S₀ n).1
 
 theorem subset_Sstar (S₀ : SetIn P) : S₀.1 ⊆ Sstar e S₀ :=
-  fun x hx => Set.mem_iUnion.mpr ⟨0, hx⟩
+  fun _ hx => Set.mem_iUnion.mpr ⟨0, hx⟩
 
 theorem Sstar_subset_U (S₀ : SetIn P) : Sstar e S₀ ⊆ U :=
   Set.iUnion_subset fun n => stage_subset_U e S₀ n

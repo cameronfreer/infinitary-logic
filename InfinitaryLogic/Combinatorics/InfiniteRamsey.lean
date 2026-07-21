@@ -47,7 +47,7 @@ private def consOEmb {n : ℕ} (a : ℕ) (w : Fin n ↪o ℕ) (h : ∀ k, a < w 
       | zero => exact absurd hpq (lt_irrefl _)
       | succ j => simpa only [Fin.cons_zero, Fin.cons_succ] using h j
     | succ i => induction q using Fin.cases with
-      | zero => exact absurd hpq (by simp [Fin.not_lt_zero])
+      | zero => exact absurd hpq (by simp)
       | succ j =>
         simp only [Fin.cons_succ]; rw [w.lt_iff_lt]; exact (Fin.succ_lt_succ_iff).mp hpq)
 

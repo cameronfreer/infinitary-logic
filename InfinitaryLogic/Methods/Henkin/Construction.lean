@@ -805,7 +805,7 @@ Cases:
 - (C5, C6) for `equal`: uses term model quotient structure.
 - Term model structure for `rel`: uses definition of RelMap on term model.
 - (C7, C7_all) for `all`: uses openBounds roundtrip. -/
-noncomputable def truthLemma :
+theorem truthLemma :
     (σ : L.Sentenceω) → (σ ∈ S ↔ Sentenceω.Realize σ (TermModel C S hmax))
   | .falsum => by
     constructor

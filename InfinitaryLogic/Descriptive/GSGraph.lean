@@ -215,7 +215,7 @@ theorem le_canonicalLen (n : ℕ) : (wordEnum n).length ≤ canonicalLen n := by
   | succ _ => exact le_max_left _ _
 
 theorem canonicalLen_strictMono : StrictMono canonicalLen :=
-  strictMono_nat_of_lt_succ fun n =>
+  strictMono_nat_of_lt_succ fun _ =>
     lt_of_lt_of_le (Nat.lt_succ_self _) (le_max_right _ _)
 
 /-- The `n`-th canonical word: the `n`-th word of the enumeration, padded to the `n`-th

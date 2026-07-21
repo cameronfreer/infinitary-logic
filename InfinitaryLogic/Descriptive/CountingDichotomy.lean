@@ -90,7 +90,7 @@ private theorem isoSetoid_measurableSet
       (fun p : ↥(ModelsOf φ) × ↥(ModelsOf φ) => (p.1.1, p.2.1)) ⁻¹'
         (IsoSet L ∩ (ModelsOf φ ×ˢ ModelsOf φ)) := by
     ext ⟨⟨c₁, hc₁⟩, ⟨c₂, hc₂⟩⟩
-    simp only [Set.mem_setOf_eq, isoSetoid, Set.mem_preimage, Set.mem_inter_iff,
+    simp only [Set.mem_setOf_eq, Set.mem_preimage, Set.mem_inter_iff,
       Set.mem_prod, IsoSet]
     exact ⟨fun h => ⟨h, hc₁, hc₂⟩, fun ⟨h, _, _⟩ => h⟩
   rw [hset]
