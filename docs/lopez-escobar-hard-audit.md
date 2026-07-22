@@ -1,10 +1,13 @@
-# López–Escobar, hard direction (#10): statement-and-interface audit (v1)
+# López–Escobar, hard direction (#10): statement-and-interface audit (v2)
 
 Pre-implementation audit for issue #10, in the pattern of `docs/wellordering-audit.md` /
 `docs/craig-audit.md`. Source: Marker, *Math 512 lecture notes*, Corollary 4.22, Lemma 4.23,
 Corollary 4.24, Theorem 4.25 (pp. 47–49), checked against the actual text on 2026-07-21.
-Status: **v1, awaiting review — nothing frozen yet, no Lean before the D-points are signed
-off.** Per the roadmap, #10 is the sole active proof arc; #30 stays audit-only.
+Status: **v2, FROZEN per review 2026-07-22**: D1 revised to `IsExpansionOn` (not instance
+equality), D3 extended with the `queryCode` closed-embedding gate, D4 reversed to
+graph-translation-first (hand-rolled relational vocabulary demoted to fallback), D5/D6
+refined, and the unit order restructured with Unit 0 as the stop/go gate. Per the roadmap,
+#10 is the sole active proof arc; #30 stays audit-only.
 
 ## 1. Source statements (verified against the PDF)
 
@@ -47,21 +50,23 @@ alternatively restrict all models of the PC classes to be countable from the sta
 
 ## 2. The ten decision points
 
-### D1 — the PC-class predicate: same-carrier expansions
+### D1 — the PC-class predicate: same-carrier expansions via `IsExpansionOn` [FROZEN, v2]
 
 Marker's `PC` class is "the class of `τ`-reducts of models of `φ'`", i.e. membership of a
 `τ`-structure `M` is *∃ an expansion of `M` itself* — **same carrier** — to a `τ'`-structure
-modeling `φ'`. Corollary 4.22's disjointness step quantifies over expansions of one common
-`M`. **Proposed freeze:** the abstract predicate is
+modeling `φ'`; same-carrier is already enforced by the types. Corollary 4.22's disjointness
+step quantifies over expansions of one common `M`. **Frozen:**
 
-    PCMem (Θ : L'.Sentenceω) (incl : L →ᴸ L') (M) [L.Structure M] : Prop :=
-      ∃ inst' : L'.Structure M, (incl.reduct-compatibility with the given L-structure) ∧
-        Sentenceω.Realize Θ M (w.r.t. inst')
+    def PCMem (Θ : L'.Sentenceω) (incl : L →ᴸ L')
+        (M : Type) [L.Structure M] : Prop :=
+      ∃ inst' : L'.Structure M,
+        @incl.IsExpansionOn M _ inst' ∧
+        @Sentenceω.Realize L' Θ M inst'
 
-with reduct-compatibility stated as `incl.reduct M (inst') = inst` (`Structure.ext`-style
-equality of instances, as in `reduct_expandSymbStructureBase`), **not** `IsExpansionOn`
-alone. Arbitrary-countable-expansion variants are *not* introduced. Flag for review: whether
-to package `PCMem` as a structure carrying `inst'` (data) or keep it propositional.
+`IsExpansionOn` agrees on every base symbol — exactly the needed reduct condition; equality
+of structure instances is stronger, awkward under typeclass elaboration, and unnecessary.
+`PCMem` stays **propositional** (a data-bearing structure would complicate set membership
+without helping consumers). Arbitrary-countable-expansion variants are *not* introduced.
 
 ### D2 — reduct-class semantics on `StructureSpace L`
 
@@ -78,8 +83,8 @@ Two levels, with a compatibility lemma:
   it. This needs decode/encode round-trips on `StructureSpaceOn L' ℕ` — check what
   `Descriptive/StructureSpace.lean` already provides before writing new ones.
 
-**Proposed freeze:** both levels as above; the hard theorem is stated and proved at code
-level, `PCMem` appears only inside the disjointness lemma.
+**Frozen (approved with D1's revised `PCMem`):** both levels as above; the hard theorem is
+stated and proved at code level, `PCMem` appears only inside the disjointness lemma.
 
 ### D3 — the analytic representation Mathlib supplies
 
@@ -98,41 +103,62 @@ in-project**, in two steps:
    `T := {(finite condition pair) | its cylinder meets C}`; then branches of `T` = closure
    of `C` = `C`.
 
-**Proposed freeze:** exactly this chain, as a standalone reusable Descriptive lemma
-("analytic-with-tree normal form"), stated for `StructureSpace L` first (generalization to
-zero-dimensional Polish products is *not* required for #10). No lightface/effective content
-anywhere — `Θ` is built *classically* from `T` (the Gandy–Harrington lightface obstruction
-from the Silver arc does **not** apply here). Flag for review: whether the tree's nodes are
-indexed by `ℕ`-length initial segments after fixing an enumeration `e : RelQuery L → ℕ`
-(needed anyway for D4's numeral coding — see below), or kept as finite partial functions.
-Recommendation: index through `e` immediately; one coding, used twice.
+**Frozen (v2), with the query-code closed-embedding gate added before the cylinder tree.**
+An injection `RelQuery L → ℕ` alone is not enough: a branch of a tree over raw bit
+sequences need not determine an actual structure code (unused coordinates could be
+inconsistent). Expose first, via `Encodable.encode` with harmless defaults at numbers that
+decode no query:
 
-### D4 — witness codes as added relations (relational recoding of `τ*`)
+    queryCode : StructureSpace L → (ℕ → Bool)
+
+and prove: (i) `queryCode` is continuous and injective; (ii) its **range is closed**;
+(iii) every query is recovered at its encoded coordinate; (iv) range membership is
+characterized by the default/decoding consistency conditions. Then build the cylinder tree
+in `(ℕ → Bool) × (ℕ → ℕ)`. The consumer-shaped normal form is approximately
+
+    c ∈ B ↔ ∃ g : ℕ → ℕ, ∀ n, (prefix (queryCode c) n, prefix g n) ∈ T n
+
+with the empty analytic set served by a tree with no positive-length branch. This whole
+package — `queryCode` gate + tree normal form — is **Unit 0, the actual stop/go gate**
+(D10). Standalone reusable Descriptive lemmas, stated for `StructureSpace L` first
+(zero-dimensional Polish generality is *not* required). No lightface/effective content
+anywhere — `Θ` is built *classically* from `T` (the Gandy–Harrington lightface obstruction
+from the Silver arc does **not** apply here).
+
+### D4 — witness language: graph translation FIRST, hand-rolled relational fallback [REVERSED, v2]
 
 Marker's `τ*` has unary *functions* `s, f, g` and a *constant* `c`; the project's
-`StructureSpace` and `craig_pcSeparation_relational` are relational. **Proposed freeze:**
-hand-roll a small fixed relational PC vocabulary — do *not* route through the
-`graphLanguage` machinery (that relationalizes an arbitrary language's own functions and
-drags the term-graph calculus; here the extra symbols are a fixed finite-plus-`S_n` family
-independent of `L`):
+`StructureSpace` and `craig_pcSeparation_relational` are relational. **Frozen (reversing
+v1's recommendation): Marker's functional language is precisely what the completed Craig
+Layer 3 was built to relationalize — try the existing graph translation first.**
 
-    PCLang : Language := { relations := C¹ (zero), S² (successor graph), F² (f-graph),
-                            G² (g-graph), Sₙ^{2n} (n ≥ 1) }
-    L* := L.sum PCLang
+1. A small **functional witness language** `W` with `c, s, f, g` and relational `Sₙ`
+   (`2n`-ary).
+2. **Actual numeral terms** `sⁱ(c)` — `Θ` becomes almost verbatim Marker.
+3. A common tagged language `K := L.sum (W₀.sum W₁)` (two tagged witness copies, D8).
+4. Each functional PC sentence maps into `K`.
+5. Apply `relationalizeFormula` plus `graphAxioms` for the functions used by that side.
 
-`Θ`'s bullets translate with totality/functionality axioms for `S, F, G` and uniqueness for
-`C` (finitary, in the pattern of the #8 graph axioms but written directly), and Marker's
-numeral terms `sⁱ(c)` become inductively defined **numeral formulas** `Numᵢ(x)`
-(`∃`-chains through `S` from the `C`-element). Bullet 3 generalizes from `τ = {R}` to
-arbitrary countable relational `L` through the query enumeration `e : RelQuery L → ℕ`
-(injective suffices; `Encodable` from the existing `Countable (RelQuery L)` instance): the
-conjunction ranges over queries `q = (R, v)`, relating `RelMap R` at the numerals of `v` to
-the `F`-value at numeral `e q`. Bullet 1 forces the carrier to be infinite — recorded
-explicitly, consumed by D6. All conjunctions are countable (`2^{<ω} × ω^{<ω}`-indexed at
-each length, queries, `n`). Flag for review: `Sₙ` arity bookkeeping (`2n`-ary relations mean
-the `PCLang` relation family is `ℕ`-indexed at unbounded arities — check
-`Countable (Σ l, PCLang.Relations l)` comes out by construction; it does, but the instance
-must be written).
+Existing files already provide nested-term flattening, graph axioms, reconstruction, exact
+occurrence identities, and back-translation: `Methods/Interpolation/Relationalize.lean`,
+`GraphAxioms.lean`, `GraphReconstruction.lean`, `BackTranslate.lean`. With tagged witness
+copies, the occurrence intersection should contain only the graph-language images of base
+`L`-relations — exactly the sharp-intersection calculation already solved during Craig.
+
+**Timeboxed spike (Unit 1):** define `W` and the numeral terms; map the two copies into
+`K`; relationalize bullet 1; prove the intersection of the two translated occurrence sets
+contains no witness symbols. **If the spike fails on dependent language bookkeeping**, fall
+back to v1's hand-rolled relational vocabulary (fixed `PCLang` with graph relations
+`C¹/S²/F²/G²/Sₙ^{2n}`, totality/functionality axioms, inductively defined numeral
+*formulas*) — but fresh numeral-formula and graph-functionality machinery is **not** the
+first choice.
+
+Independent of the branch taken: bullet 3 generalizes from `τ = {R}` to arbitrary countable
+relational `L` through the same `Encodable` query coding as D3's `queryCode` (one coding,
+used twice); bullet 1 forces the carrier to be infinite — recorded explicitly, consumed by
+D6; all conjunctions are countable (`2^{<ω} × ω^{<ω}`-indexed at each length, queries,
+`n`); and the `Countable (Σ l, W.Relations l)` / functions instances must be written for
+the `ℕ`-indexed unbounded-arity `Sₙ` family.
 
 ### D5 — where isomorphism invariance is consumed
 
@@ -141,9 +167,10 @@ D8): from a carrier-`ℕ` model of `Θ` one reads off a path, builds the coded s
 from the path's `f̂`, and the `S`-chain provides a `Language.Equiv` between `N` and the
 `τ`-reduct; `IsomorphismInvariant B` (the existing predicate, `LopezEscobarEasy.lean`)
 transports `N ∈ B` to the reduct's code. Nowhere else: the separation step and the LS step
-never mention invariance. **Proposed freeze:** invariance enters only through the lemma
-"`pcClass Θ_B` has as carrier-`ℕ` models exactly the codes of `B`" (one direction analytic
-representation, the other direction invariance).
+never mention invariance. **Frozen (refined):** invariance enters only through **one
+generic converse lemma** — "`pcClass Θ` has as carrier-`ℕ` models exactly the codes of the
+represented set" (one direction analytic representation, the other direction invariance) —
+**instantiated twice** (at `B` and at `Bᶜ`), never re-proved.
 
 ### D6 — the countable-to-arbitrary bridge (#13)
 
@@ -154,12 +181,12 @@ expansions modeling both `Θ₀` and `Θ₁` — equivalently one `L**`-structur
 subformulas of `Θ₀ ⊓ Θ₁` and a countable fragment-elementary substructure (#13, closed:
 `exists_countable_aElementary_substructure`), which still models `Θ₀ ⊓ Θ₁`; bullet 1 of
 either `Θ` forces it infinite; transport along a bijection to carrier `ℕ`; its `L`-reduct
-code then lies in `B ∩ (univ ∖ B)` by D5's lemma — contradiction. **Proposed freeze:** the
+code then lies in `B ∩ (univ ∖ B)` by D5's lemma — contradiction. **Frozen (refined):** the
 bridge is one dedicated lemma (`pc_disjoint_of_no_countable_common_model`-shaped), the only
-consumer of #13 in the arc; the carrier transport reuses whatever
-`Descriptive`/`CountingModels` renaming plumbing exists (check before writing — flag: locate
-the existing "transport a countable structure to carrier ℕ" lemma; the Scott/counting files
-have one).
+consumer of #13 in the arc. The carrier transport needs **no new framework**: Mathlib's
+`nonempty_equiv_of_countable` (instance, `Logic/Denumerable.lean`; `Countable` + `Infinite`
+on both sides) supplies the bijection, and the repository's `BoundedFormulaω.realize_equiv`
+(`Lomega1omega/Theory.lean`) transports realization along it.
 
 ### D7 — orientation of `craig_pcSeparation_relational`
 
@@ -176,7 +203,7 @@ inside the `L`-summand by construction (the two `PCLang` copies are disjoint sum
 `θ₀` lives over a sublanguage of `L`-symbols; a final `mapLanguage` along
 `symbSublangIncl`-then-`Sum.inl` returns it to `L.Sentenceω`, and the two bullets become
 `B ⊆ ModelsOf θ` and `ModelsOf θ ∩ Bᶜ = ∅` at code level through D2's compatibility.
-**Proposed freeze:** consume the relational form exactly as stated (no re-derivation from
+**Frozen (approved):** consume the relational form exactly as stated (no re-derivation from
 `craig_interpolation`); the `Nonempty` side conditions are discharged by bullet 1
 (infinite carriers). Flag for review: the `θ₀`-transport composite
 (sublanguage → `L`) needs one realization-transfer lemma of the
@@ -188,52 +215,57 @@ the needed direction before writing a new one.
 `B` invariant Borel ⇒ `B` and `Bᶜ` invariant analytic (`IsomorphismInvariant.compl` exists,
 `Descriptive/InvariantMeasurableSpace.lean`; `MeasurableSet.compl` + `MeasurableSet.analyticSet`
 supply the rest). Apply D3+D4 twice:
-`Θ₀` for `B` and `Θ₁` for `Bᶜ`, over *disjoint tagged copies* of `PCLang` in
-`L** = L.sum PCLang.sum PCLang` (`Θ₀` through `Sum.inl ∘ Sum.inr`-style symbol injections,
-`Θ₁` through the other; both reduct to the same `L`). **Proposed freeze:** the presentation
-is a single reusable construction `pcSentence (analytic-rep data) : L*.Sentenceω`
-instantiated twice via the two tagged inclusions — not two hand-written variants.
+`Θ₀` for `B` and `Θ₁` for `Bᶜ`, over the *disjoint tagged witness copies* of D4's common
+language `K = L.sum (W₀.sum W₁)` (both reduct to the same `L`). **Frozen (approved):** the
+presentation is a single reusable construction `pcSentence (analytic-rep data)` instantiated
+twice via the two tagged inclusions — not two hand-written variants.
 
-### D9 — the coding pilot (before the general theorem)
+### D9 — the two gating spikes (before the general theorem)
 
-A compile-gated pilot **before** committing to the full analytic-to-PC unit:
+Two compile-gated spikes, in order, **before** committing to the full analytic-to-PC unit:
 
-1. `PCLang`, the tagged inclusions, and the countability instances;
-2. bullet-1 axioms and numeral formulas `Numᵢ`, with the two realization lemmas in the
-   standard model on `ℕ` (`C ↦ {0}`, `S ↦ succ-graph`): `Numᵢ(x) ↔ x = i`, and "every model
-   of bullet 1 is infinite with a canonical `(ℕ, 0, succ)`-labeling";
-3. the D3 tree lemma on `StructureSpace L` (branch characterization through cylinders).
+* **Unit 0 (the stop/go gate)** — D3's `queryCode` closed embedding (continuity,
+  injectivity, closed range, coordinate recovery, range characterization) and the analytic
+  tree normal form `c ∈ B ↔ ∃ g, ∀ n, (prefix (queryCode c) n, prefix g n) ∈ T n`, with the
+  empty set served by a branchless tree.
+* **Unit 1 (the D4 spike, timeboxed)** — the functional witness language `W` with numeral
+  terms; the two tagged copies mapped into `K = L.sum (W₀.sum W₁)`; bullet 1
+  relationalized through the Craig Layer-3 files; and the proof that the intersection of
+  the two translated occurrence sets contains no witness symbols. Failure on dependent
+  language bookkeeping ⇒ fall back to the hand-rolled relational vocabulary (D4).
 
-Acceptance: all three compile axiom-clean with no statement changes to existing files. The
-pilot deliberately excludes `S_n`/path bullets — those are mechanical once 2 and 3 stand.
+Acceptance: both compile axiom-clean with no statement changes to existing files. The
+spikes deliberately exclude the `Sₙ`/path bullets — those are mechanical once both stand.
 
-### D10 — compile-gated units and the stop/go criterion
+### D10 — compile-gated units and the stop/go criterion [revised order, v2]
 
 Unit order (each a commit, later units untouched if an earlier one stalls):
 
-1. pilot (D9);
-2. `pcSentence` + the two directions of D5's lemma (analytic rep ⇄ carrier-`ℕ` models);
-3. D6 disjointness bridge (the only #13 consumer);
-4. separation + transport (D7) and the endpoint `lopez_escobar`;
-5. the packaged `lopezEscobar_iff` (reverse = existing `lopezEscobar_easy`);
-6. only afterward: facade/blueprint/guard sweep, and the `lopezEscobar_action_iff` wrapper
-   *only if* #27's `ActionInvariant ↔ IsomorphismInvariant` is already available.
+0. **`queryCode` closed embedding + analytic tree normal form — the actual stop/go gate**;
+1. functional witness language + the graph-relationalization intersection spike (D4);
+2. the full functional `Θ` and its relationalized PC sentence (`pcSentence`, D8);
+3. carrier-`ℕ` correctness — D5's generic converse lemma, invariance only in the converse;
+4. abstract `PCMem` (D1) and the #13 disjointness bridge (D6);
+5. Craig separation, transport back to `L` (D7), and the endpoint `lopez_escobar`;
+6. both packaged equivalences — `lopezEscobar_iff` (reverse = existing `lopezEscobar_easy`)
+   and `lopezEscobar_action_iff` (the #27 wrapper `actionInvariant_iff_isomorphismInvariant`
+   already exists, `Descriptive/LogicAction.lean`);
+7. facade, blueprint, guards, and publication sweep.
 
-**The crucial gate is D3/D9.3** — the analytic-to-tree normal form against Mathlib's
-continuous-image definition — *not* Craig or downward LS (both consumers are ready).
-**Stop/go:** if the branch-characterization lemma resists a bounded effort (two focused
-sessions), stop and rework the representation layer *before* touching units 2–5; fallback
-options, in order: (a) prove the tree normal form as a standalone lemma for countable
-products of discrete spaces (still boldface, no effectivity); (b) restate the hard
-direction against an explicit closed-projection witness and add the Mathlib-facing
+**Stop/go (Unit 0):** if the `queryCode`/branch-characterization package resists a bounded
+effort (two focused sessions), stop and rework the representation layer *before* touching
+units 1–6; fallback options, in order: (a) prove the tree normal form as a standalone lemma
+for countable products of discrete spaces (still boldface, no effectivity); (b) restate the
+hard direction against an explicit closed-projection witness and add the Mathlib-facing
 `AnalyticSet → projection` step as its own unit. Abandoning Marker's route for a
 Vaught-transform route is **not** on the table at this stage (the issue's route note
 stands: the logic-action layer and ∗-transform calculus would be new central pieces).
 
 ## 3. Non-goals (recorded to prevent scope creep)
 
-* No `Equiv.Perm ℕ` action layer (#27) and no invariant-σ-algebra packaging (#28) on this
-  path; `lopezEscobar_action_iff` is a thin post-#27 corollary.
+* No new `Equiv.Perm ℕ` action work (#27) and no invariant-σ-algebra packaging (#28) on
+  this path; `lopezEscobar_action_iff` only composes the endpoint with the existing
+  `actionInvariant_iff_isomorphismInvariant`.
 * No general-language / non-relational wrappers before the countable relational endpoint.
 * No Borel-hierarchy induction anywhere (it does not preserve invariance — the route is
   Marker's, through analytic representations).
