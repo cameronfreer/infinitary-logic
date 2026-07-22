@@ -54,7 +54,20 @@ jobs:
         uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9 # v1.6.3
         with:
           packages: graphviz libgraphviz-dev texlive-binaries texlive-bibtex-extra texlive-latex-extra texlive-xetex texlive-fonts-recommended texlive-fonts-extra latexmk
-          version: 1.1
+          # bumped 1.1 -> 1.2 on 2026-07-22: a restored 1.1 cache lacked the bibtex binary
+          # (two consecutive failures), so force a fresh cache build
+          version: 1.2
+
+      # The cached restore has delivered incomplete texlive payloads before (missing bibtex
+      # despite a cache hit) - verify the binaries the pipeline actually invokes, and fall
+      # back to a real install if any are absent.
+      - name: Verify TeX binaries (post-cache check)
+        run: |
+          command -v bibtex && command -v pdflatex && command -v latexmk || {
+            echo "cached apt restore incomplete - installing directly"
+            sudo apt-get update
+            sudo apt-get install -y texlive-binaries texlive-bibtex-extra texlive-latex-extra latexmk
+          }
 
       - name: Install leanblueprint
         run: pip install leanblueprint
