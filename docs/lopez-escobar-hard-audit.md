@@ -145,13 +145,18 @@ occurrence identities, and back-translation: `Methods/Interpolation/Relationaliz
 copies, the occurrence intersection should contain only the graph-language images of base
 `L`-relations — exactly the sharp-intersection calculation already solved during Craig.
 
-**Timeboxed spike (Unit 1):** define `W` and the numeral terms; map the two copies into
-`K`; relationalize bullet 1; prove the intersection of the two translated occurrence sets
-contains no witness symbols. **If the spike fails on dependent language bookkeeping**, fall
-back to v1's hand-rolled relational vocabulary (fixed `PCLang` with graph relations
+**Spike outcome (2026-07-22): PASSED — the graph-language route is FROZEN.** Unit 1 landed
+`Methods/LopezEscobar/WitnessLang.lean` (the language with `tree 0` included, countability
+instances, numeral terms with map-language/occurrence/realization lemmas, `KLang` with
+named embeddings, all tagged-image disjointness lemmas) and
+`Methods/LopezEscobar/RelationalizeSpike.lean` (the micro-pilot `pilot_realize` /
+`pilot_graphAxioms` and the decisive `occurrence_intersection_base`: the intersection of
+the two sides' complete relationalized symbol sets, graph axioms included, contains only
+graph-language images of base-`L` symbols).  *Historical fallback note (retired from the
+active plan):* had the spike failed on dependent language bookkeeping, the alternative was
+a hand-rolled relational vocabulary — fixed `PCLang` with graph relations
 `C¹/S²/F²/G²/Sₙ^{2n}`, totality/functionality axioms, inductively defined numeral
-*formulas*) — but fresh numeral-formula and graph-functionality machinery is **not** the
-first choice.
+*formulas*.
 
 Independent of the branch taken: bullet 3 generalizes from `τ = {R}` to arbitrary countable
 relational `L` through the same `Encodable` query coding as D3's `queryCode` (one coding,

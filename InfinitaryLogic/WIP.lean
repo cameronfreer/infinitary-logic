@@ -68,6 +68,8 @@ import InfinitaryLogic.Methods.WellOrdering.SymbolCountability
 import InfinitaryLogic.Methods.WellOrdering.GraphTranslation
 -- Issue #10 Unit 1: the functional witness language (Marker tau*), numeral terms, tagged KLang
 import InfinitaryLogic.Methods.LopezEscobar.WitnessLang
+-- Issue #10 Unit 1 part 2: the graph-relationalization spike - micro-pilot + THE OCCURRENCE GATE
+import InfinitaryLogic.Methods.LopezEscobar.RelationalizeSpike
 -- The local EM extraction bridge (its Conditional/MorleyHanfTransfer import stays isolated here)
 import InfinitaryLogic.Methods.LocalEMExtraction
 -- The pure local stack: semantic layer onward (LocalEMFamily -> LocalColimit -> LocalTower ->
