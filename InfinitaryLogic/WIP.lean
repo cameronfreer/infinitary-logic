@@ -72,6 +72,8 @@ import InfinitaryLogic.Methods.LopezEscobar.WitnessLang
 import InfinitaryLogic.Methods.LopezEscobar.RelationalizeSpike
 -- Issue #10 Unit 2a: the functional Theta over MidLang - six clauses + realization lemmas
 import InfinitaryLogic.Methods.LopezEscobar.FunctionalTheta
+-- Issue #10 Unit 2b: side-parametric assembly + the relationalized pcSentence + all five gates
+import InfinitaryLogic.Methods.LopezEscobar.PCSentence
 -- The local EM extraction bridge (its Conditional/MorleyHanfTransfer import stays isolated here)
 import InfinitaryLogic.Methods.LocalEMExtraction
 -- The pure local stack: semantic layer onward (LocalEMFamily -> LocalColimit -> LocalTower ->
