@@ -41,6 +41,9 @@ import InfinitaryLogic.Descriptive.PolishAction
 import InfinitaryLogic.Descriptive.InvariantMeasurableSpace
 import InfinitaryLogic.Descriptive.InvariantMeasurableModels
 
+-- The coded class of countable well-orders and its order-type supply (issue #33)
+import InfinitaryLogic.Descriptive.WellOrderClass
+
 -- THE LÓPEZ–ESCOBAR THEOREM: both packaged equivalences and the collection equality (issue #10)
 import InfinitaryLogic.Descriptive.LopezEscobar
 
