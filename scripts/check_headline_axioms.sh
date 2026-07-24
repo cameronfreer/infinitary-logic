@@ -31,6 +31,7 @@ import InfinitaryLogic
 #print axioms FirstOrder.Language.lopez_escobar
 #print axioms FirstOrder.Language.lopezEscobar_iff
 #print axioms FirstOrder.Language.lopezEscobar_action_iff
+#print axioms FirstOrder.Language.wellOrderClass_not_measurableSet
 EOF
 
 # Headline declarations that live in the Everything closure.

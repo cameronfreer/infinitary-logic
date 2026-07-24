@@ -73,3 +73,4 @@ FirstOrder.Language.craig_interpolation_relational
 FirstOrder.Language.exists_model_relPreserving
 FirstOrder.Language.wellOrder_type_boundedness
 FirstOrder.Language.wellOrdering_undefinable
+FirstOrder.Language.wellOrderClass_not_measurableSet

@@ -142,6 +142,24 @@ theorem isWellOrder_of_realize (lt : L.Relations 2) {φ : L.Sentenceω}
 
 /-- **The countable well-order class is not Borel** (issue #33): no Borel set of codes consists
 exactly of the well-ordered ones. -/
+@[blueprint "thm:wellordering-nonborel"
+  (title := /-- Non-Borelness of the countable well-order class -/)
+  (statement := /-- Over a countable relational vocabulary with a distinguished binary
+    relation, the class of codes whose relation well-orders the carrier is **not** Borel in the
+    logic space. -/)
+  (proof := /-- If it were Borel, López--Escobar would present it as $\mathrm{ModelsOf}\
+    \varphi$ — but only over coded structures, whose carrier is $\mathbb{N}$.  Conjoin the
+    $\Lomegaone$ infiniteness axiom, so that no finite model escapes, and let $M$ be any model
+    of the conjunction whose relation is not a well-order.  A well-order here is trichotomy
+    plus well-foundedness, so the failure is witnessed either by two incomparable unequal
+    elements or by an infinite descending chain; seed a countable fragment-elementary
+    substructure with those witnesses and the failure survives, while the added conjunct keeps
+    the substructure infinite, so it transports to a code lying in the class without being a
+    well-order — a contradiction.  Hence every model of the conjunction is well-ordered, and
+    Marker's Corollary 4.27 bounds all their order types by one countable $\alpha$; the
+    comparison structure of type $\alpha + \omega$ transported to $\mathbb{N}$ is a code of the
+    class exceeding that bound. -/)
+  (uses := ["thm:lopez-escobar", "thm:wellordering-boundedness"])]
 theorem wellOrderClass_not_measurableSet (lt : L.Relations 2) :
     ¬ MeasurableSet (wellOrderClass lt) := by
   intro hB
