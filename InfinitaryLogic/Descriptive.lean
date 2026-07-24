@@ -3,6 +3,7 @@ import InfinitaryLogic.Descriptive.StructureSpace
 import InfinitaryLogic.Descriptive.Measurable
 import InfinitaryLogic.Descriptive.Topology
 import InfinitaryLogic.Descriptive.Polish
+import InfinitaryLogic.Descriptive.CodeTransport
 
 -- Satisfaction and equivalence Borel complexity
 import InfinitaryLogic.Descriptive.SatisfactionBorel

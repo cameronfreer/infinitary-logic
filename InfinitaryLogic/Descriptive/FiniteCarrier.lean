@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Descriptive.SatisfactionBorelOn
 import InfinitaryLogic.Descriptive.CountingDichotomy
+import InfinitaryLogic.Descriptive.CodeTransport
 import Mathlib.GroupTheory.Perm.Basic
 import Architect
 
@@ -278,48 +279,11 @@ attribute [local instance] Classical.dec
 
 variable {φ : L.Sentenceω}
 
-/-- Helper: Transport a structure along an equivalence and encode it. The resulting
-code decodes to a structure L-isomorphic to the original. -/
-private noncomputable def encodeViaEquiv {M : Type} [L.Structure M] {α : Type}
-    (e : M ≃ α) : StructureSpaceOn L α :=
-  StructureSpaceOn.ofStructure (@Equiv.inducedStructure L M α _ e)
-
-omit [Countable ((l : ℕ) × L.Relations l)] in
-/-- The decoded structure from `encodeViaEquiv` equals the induced structure. -/
-private theorem toStructure_encodeViaEquiv_eq {M : Type} [L.Structure M] {α : Type}
-    (e : M ≃ α) :
-    StructureSpaceOn.toStructure (encodeViaEquiv e) = @Equiv.inducedStructure L M α _ e := by
-  have hR := ‹L.IsRelational›
-  ext n
-  · -- funMap case: L.Functions n is empty
-    exact (hR n).elim ‹_›
-  · -- RelMap case: round-trip preserves relations
-    constructor
-    · intro h
-      rw [StructureSpaceOn.relMap_toStructure, encodeViaEquiv, StructureSpaceOn.ofStructure] at h
-      simp [decide_eq_true_eq] at h
-      rwa [Equiv.inducedStructure_RelMap]
-    · intro h
-      rw [Equiv.inducedStructure_RelMap] at h
-      rw [StructureSpaceOn.relMap_toStructure, encodeViaEquiv, StructureSpaceOn.ofStructure]
-      simp [h]
-
-omit [Countable ((l : ℕ) × L.Relations l)] in
-/-- The encoded structure via an equivalence satisfies the same sentences. -/
-private theorem encodeViaEquiv_models {M : Type} [L.Structure M] {α : Type}
-    [Countable α] (e : M ≃ α) (hφ : Sentenceω.Realize φ M) :
-    @Sentenceω.Realize L φ α (StructureSpaceOn.toStructure (encodeViaEquiv e)) := by
-  rw [toStructure_encodeViaEquiv_eq]
-  letI : L.Structure α := Equiv.inducedStructure e
-  exact (LomegaEquiv.of_equiv (Equiv.inducedStructureEquiv e) φ).mp hφ
-
-omit [Countable ((l : ℕ) × L.Relations l)] in
-/-- The encoded structure is L-isomorphic to the original via the equivalence. -/
-private theorem encodeViaEquiv_iso {M : Type} [L.Structure M] {α : Type}
-    (e : M ≃ α) :
-    Nonempty (@Language.Equiv L M α ‹_› (StructureSpaceOn.toStructure (encodeViaEquiv e))) := by
-  rw [toStructure_encodeViaEquiv_eq]
-  exact ⟨Equiv.inducedStructureEquiv e⟩
+-- The generic transport API `encodeViaEquiv` and its lemmas (`toStructure_encodeViaEquiv_eq`,
+-- `encodeViaEquiv_models`, `encodeViaEquiv_iso`) were promoted to
+-- `Descriptive/CodeTransport.lean` (`StructureSpaceOn` namespace); this section consumes them.
+open StructureSpaceOn (encodeViaEquiv encodeViaEquiv_models encodeViaEquiv_iso
+  toStructure_encodeViaEquiv_eq)
 
 /-- Map a countable model of φ to its coded iso class.
 Uses `finite_or_infinite` to dispatch to the ℕ or `Fin n` tier. -/
