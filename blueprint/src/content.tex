@@ -303,6 +303,32 @@ on the coding space for countable structures.
 
 \inputleannode{thm:lopez-escobar-easy}
 
+\section{L\'opez--Escobar}
+
+\emph{Status: proved, both directions.}  The hard direction follows Marker's
+route (Theorem~4.25 of~\cite{marker2016}) rather than an induction on the Borel
+hierarchy, which would not preserve isomorphism invariance.  An invariant Borel
+class and its complement are analytic, hence branch projections of cylinder
+trees along the query code; each tree is coded as a projective ($PC$) class over
+the base language expanded by two \emph{disjoint tagged copies} of a functional
+witness vocabulary, relationalized through the graph translation of the Craig
+layer.  The base reducts of the coded class are exactly the original class ---
+this converse is the sole consumer of isomorphism invariance --- and the two
+tagged presentations have no common model, since gluing two expansions of a
+shared base model and passing to a countable fragment-elementary substructure
+would place a single code in a class and in its complement.  Craig separation
+then produces a sentence of the shared vocabulary, which by the occurrence
+calculus contains only graph images of base relation symbols and therefore
+decodes back to an $\Lomegaone$-sentence over the base language.  Both final
+inclusions use only the invariance-free forward presentation, so the whole
+theorem's use of invariance stays concentrated in the disjointness lemma.
+
+\inputleannode{thm:lopez-escobar}
+
+\inputleannode{thm:lopez-escobar-iff}
+
+\inputleannode{thm:lopez-escobar-action-iff}
+
 \section{Complete Sentences and Categoricity}
 
 \emph{Status: proved.}  The payoff of the small-model theorem (Marker, Theorem~11.2

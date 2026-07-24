@@ -9,6 +9,32 @@ graph-translation-first (hand-rolled relational vocabulary demoted to fallback),
 refined, and the unit order restructured with Unit 0 as the stop/go gate. Per the roadmap,
 #10 is the sole active proof arc; #30 stays audit-only.
 
+## STATUS: COMPLETE (2026-07-24)
+
+All units of the frozen order (§D10) landed, each compile-gated and axiom-clean:
+
+| Unit | Files | Endpoint |
+|---|---|---|
+| 0 | `Descriptive/QueryCode`, `Descriptive/AnalyticTree` | `queryCode_isClosedEmbedding`, `exists_tree_of_analyticSet` |
+| 1 | `LopezEscobar/WitnessLang`, `RelationalizeSpike` | `occurrence_intersection_base` (graph route frozen) |
+| 2 | `LopezEscobar/FunctionalTheta`, `PCSentence` | `fBit_eq_queryCode`, `pcSentence_relationsIn_inter` |
+| 3 | `LopezEscobar/StandardModel`, `CodeClass` | `subset_pcClass` (invariance-free), `pcClass_eq` |
+| 4 | `ModelTheory/PCClass`, `LopezEscobar/PCMem`, `TaggedGlue`, `Disjoint` | `pcMem_disjoint`, `pcSentences_entails_not` |
+| 5 | `LopezEscobar/SharedDecoder`, `Separation` | `realize_sharedToBase`, **`lopez_escobar`** |
+| 6 | `Descriptive/LopezEscobar` | `lopezEscobar_iff`, `lopezEscobar_action_iff`, `invariantMeasurableSets_eq_range_modelsOf` (#28 target 7) |
+| 7 | facade / blueprint / guards / docs | default surface, `thm:lopez-escobar*` nodes, headline axiom guard |
+
+Two audit predictions to record against the outcome. The D3 stop/go gate (the `queryCode`
+closed embedding and the tree normal form) was indeed the hard gate and passed without any
+fallback. The D7 flag — that the `θ₀`-transport composite might need a new
+`restrictSymbols`/`mapLanguage` transfer lemma — did **not** materialize: because the D4
+occurrence theorem pins the shared vocabulary to graph images of base relations, the
+separator decodes through a single `LHom` (`sharedToBase`) and one `IsExpansionOn` instance,
+with no new transfer lemma and no `backTranslateFormula` round trip. D5 held exactly:
+`IsomorphismInvariant` is consumed only in the Unit-3b converse (hence, downstream, only
+inside `pcSentences_entails_not`), and `FragmentLowenheimSkolem` is imported by exactly one
+file (`Disjoint.lean`).
+
 ## 1. Source statements (verified against the PDF)
 
 **Corollary 4.22 (PC separation).** Suppose `K₀` and `K₁` are disjoint `PC_ω₁ω`-classes of

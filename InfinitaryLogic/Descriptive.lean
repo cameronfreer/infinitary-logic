@@ -41,6 +41,9 @@ import InfinitaryLogic.Descriptive.PolishAction
 import InfinitaryLogic.Descriptive.InvariantMeasurableSpace
 import InfinitaryLogic.Descriptive.InvariantMeasurableModels
 
+-- THE LÓPEZ–ESCOBAR THEOREM: both packaged equivalences and the collection equality (issue #10)
+import InfinitaryLogic.Descriptive.LopezEscobar
+
 -- Counting theorems (depend on descriptive results)
 import InfinitaryLogic.ModelTheory.CountingCountable
 import InfinitaryLogic.ModelTheory.MorleyCounting

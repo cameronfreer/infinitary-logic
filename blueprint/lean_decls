@@ -51,6 +51,9 @@ FirstOrder.Language.barwise_completeness_II_syntactic_full
 FirstOrder.Language.StructureSpace
 FirstOrder.Language.modelsOf_measurableSet
 FirstOrder.Language.lopezEscobar_easy
+FirstOrder.Language.lopez_escobar
+FirstOrder.Language.lopezEscobar_iff
+FirstOrder.Language.lopezEscobar_action_iff
 FirstOrder.Language.exists_complete_sentence_of_lomega1omegaSmall
 FirstOrder.Language.exists_complete_kCategorical_of_hasArbLargeModels
 FirstOrder.Language.bfEquivSet_measurableSet

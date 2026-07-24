@@ -28,6 +28,9 @@ import InfinitaryLogic
 #print axioms FirstOrder.Language.exists_model_relPreserving
 #print axioms FirstOrder.Language.wellOrder_type_boundedness
 #print axioms FirstOrder.Language.wellOrdering_undefinable
+#print axioms FirstOrder.Language.lopez_escobar
+#print axioms FirstOrder.Language.lopezEscobar_iff
+#print axioms FirstOrder.Language.lopezEscobar_action_iff
 EOF
 
 # Headline declarations that live in the Everything closure.

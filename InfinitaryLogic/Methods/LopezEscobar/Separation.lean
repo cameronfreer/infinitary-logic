@@ -38,6 +38,25 @@ variable {L : Language.{0, 0}} [L.IsRelational] [Countable (Σ l, L.Relations l)
 
 /-- **López–Escobar, hard direction**: an isomorphism-invariant Borel class of coded
 countable `L`-structures is the model class of a single `L_ω₁ω`-sentence. -/
+@[blueprint "thm:lopez-escobar"
+  (title := /-- López-Escobar, hard direction -/)
+  (statement := /-- Over a countable relational vocabulary, every isomorphism-invariant Borel
+    class $B$ of coded countable structures is the model class of a single
+    $\Lomegaone$-sentence. -/)
+  (proof := /-- Marker's route (Theorem~4.25).  $B$ and its complement are Borel, hence
+    analytic, so each is the branch projection of a cylinder tree along the query code.  Each
+    tree is coded by a sentence $\Theta$ over the base language expanded by two disjoint
+    tagged copies of a functional witness vocabulary (a constant, the successor, the code and
+    branch functions, and a tree relation at every level), relationalized through the graph
+    translation; the base reducts of $\Theta$'s models are exactly $B$, the converse inclusion
+    being where isomorphism invariance is consumed.  The two presentations have no common
+    model: gluing two tagged expansions of a common base model and passing to a countable
+    fragment-elementary substructure would place one code in both $B$ and its complement.
+    Craig separation therefore yields a sentence of the shared vocabulary separating them,
+    and that vocabulary consists only of graph images of base relation symbols, so the
+    separator decodes to an $\Lomegaone$-sentence over the base language.  Both inclusions
+    then follow from the invariance-free forward presentation. -/)
+  (uses := ["thm:craig-relational"])]
 theorem lopez_escobar {B : Set (StructureSpace L)}
     (hB : MeasurableSet B) (hinv : IsomorphismInvariant B) :
     ∃ φ : L.Sentenceω, B = ModelsOf φ := by

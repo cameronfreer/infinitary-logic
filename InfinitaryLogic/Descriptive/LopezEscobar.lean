@@ -38,6 +38,14 @@ variable {L : Language.{0, 0}} [L.IsRelational] [Countable (Σ l, L.Relations l)
 countable structures is Borel and isomorphism-invariant exactly when it is the class of models
 of a single `L_ω₁ω`-sentence.  The forward direction is the hard theorem of issue #10
 (`lopez_escobar`); the reverse is `lopezEscobar_easy`. -/
+@[blueprint "thm:lopez-escobar-iff"
+  (title := /-- López-Escobar -/)
+  (statement := /-- Over a countable relational vocabulary, a class of coded countable
+    structures is Borel and isomorphism-invariant if and only if it is the class of models of
+    a single $\Lomegaone$-sentence. -/)
+  (proof := /-- The forward direction is the hard theorem; the reverse is the easy
+    direction. -/)
+  (uses := ["thm:lopez-escobar", "thm:lopez-escobar-easy"])]
 theorem lopezEscobar_iff {B : Set (StructureSpace L)} :
     (MeasurableSet B ∧ IsomorphismInvariant B) ↔ ∃ φ : L.Sentenceω, B = ModelsOf φ := by
   constructor
@@ -49,6 +57,15 @@ theorem lopezEscobar_iff {B : Set (StructureSpace L)} :
 /-- **The López–Escobar theorem, action form**: invariance under the logic action of
 `S∞ = Equiv.Perm ℕ` may replace isomorphism invariance, by the orbit = isomorphism identity
 `actionInvariant_iff_isomorphismInvariant` (#27). -/
+@[blueprint "thm:lopez-escobar-action-iff"
+  (title := /-- López-Escobar, action form -/)
+  (statement := /-- Over a countable relational vocabulary, a class of coded countable
+    structures is Borel and invariant under the logic action of $S_\infty$ if and only if it
+    is the class of models of a single $\Lomegaone$-sentence; equivalently, the Borel
+    invariant classes are exactly the range of $\mathrm{ModelsOf}$. -/)
+  (proof := /-- Rewrite action invariance as isomorphism invariance by the orbit-equals-
+    isomorphism identity, then apply the previous equivalence. -/)
+  (uses := ["thm:lopez-escobar-iff"])]
 theorem lopezEscobar_action_iff {B : Set (StructureSpace L)} :
     (MeasurableSet B ∧ ActionInvariant B) ↔ ∃ φ : L.Sentenceω, B = ModelsOf φ := by
   rw [actionInvariant_iff_isomorphismInvariant, lopezEscobar_iff]
