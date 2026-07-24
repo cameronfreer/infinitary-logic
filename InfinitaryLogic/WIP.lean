@@ -76,6 +76,8 @@ import InfinitaryLogic.Methods.LopezEscobar.FunctionalTheta
 import InfinitaryLogic.Methods.LopezEscobar.PCSentence
 -- Issue #10 Unit 3a: the code reduct + standard functional model + the forward presentation
 import InfinitaryLogic.Methods.LopezEscobar.StandardModel
+-- Issue #10 Unit 3b: reconstruction + the code-class equality (invariance only in the converse)
+import InfinitaryLogic.Methods.LopezEscobar.CodeClass
 -- The local EM extraction bridge (its Conditional/MorleyHanfTransfer import stays isolated here)
 import InfinitaryLogic.Methods.LocalEMExtraction
 -- The pure local stack: semantic layer onward (LocalEMFamily -> LocalColimit -> LocalTower ->

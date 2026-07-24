@@ -417,6 +417,15 @@ noncomputable def pulledCode (M : Type) [inst : (MidLang L).Structure M] :
     if @Structure.RelMap (MidLang L) M inst q.1.1 (Sum.inl q.1.2)
         (fun i => numMap L M (q.2 i)) then true else false
 
+theorem pulledCode_eq_true (M : Type) [inst : (MidLang L).Structure M] (q : RelQuery L) :
+    pulledCode L M q = true ↔
+      @Structure.RelMap (MidLang L) M inst q.1.1 (Sum.inl q.1.2)
+        (fun i => numMap L M (q.2 i)) := by
+  classical
+  rw [pulledCode]
+  by_cases h : @Structure.RelMap (MidLang L) M inst q.1.1 (Sum.inl q.1.2)
+      (fun i => numMap L M (q.2 i)) <;> simp [h]
+
 /-- **The bit-sequence identification** (clauses 1, 3, 4): the `f`-bit at numeral `n` is
 `1` exactly when `queryCode` of the pulled-back base code is `true` at `n`. -/
 theorem fBit_eq_queryCode [Countable (Σ l, L.Relations l)]
