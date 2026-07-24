@@ -47,6 +47,9 @@ import InfinitaryLogic.Descriptive.WellOrderClass
 -- THE LÓPEZ–ESCOBAR THEOREM: both packaged equivalences and the collection equality (issue #10)
 import InfinitaryLogic.Descriptive.LopezEscobar
 
+-- Non-Borelness of the countable well-order class (issue #33; consumes López–Escobar + #12 + #13)
+import InfinitaryLogic.Descriptive.WellOrderNonBorel
+
 -- Counting theorems (depend on descriptive results)
 import InfinitaryLogic.ModelTheory.CountingCountable
 import InfinitaryLogic.ModelTheory.MorleyCounting
