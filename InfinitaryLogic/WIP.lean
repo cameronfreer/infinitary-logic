@@ -86,6 +86,8 @@ import InfinitaryLogic.Methods.LopezEscobar.TaggedGlue
 import InfinitaryLogic.Methods.LopezEscobar.Disjoint
 -- Issue #10 Unit 5a: the shared-symbol decoder + the semantic square back to the base code
 import InfinitaryLogic.Methods.LopezEscobar.SharedDecoder
+-- Issue #10 Unit 5b: THE HARD LOPEZ-ESCOBAR THEOREM - Craig separation + the decoded endpoint
+import InfinitaryLogic.Methods.LopezEscobar.Separation
 -- The local EM extraction bridge (its Conditional/MorleyHanfTransfer import stays isolated here)
 import InfinitaryLogic.Methods.LocalEMExtraction
 -- The pure local stack: semantic layer onward (LocalEMFamily -> LocalColimit -> LocalTower ->
