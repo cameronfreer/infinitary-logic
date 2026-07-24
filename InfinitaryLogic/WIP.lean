@@ -74,6 +74,8 @@ import InfinitaryLogic.Methods.LopezEscobar.RelationalizeSpike
 import InfinitaryLogic.Methods.LopezEscobar.FunctionalTheta
 -- Issue #10 Unit 2b: side-parametric assembly + the relationalized pcSentence + all five gates
 import InfinitaryLogic.Methods.LopezEscobar.PCSentence
+-- Issue #10 Unit 3a: the code reduct + standard functional model + the forward presentation
+import InfinitaryLogic.Methods.LopezEscobar.StandardModel
 -- The local EM extraction bridge (its Conditional/MorleyHanfTransfer import stays isolated here)
 import InfinitaryLogic.Methods.LocalEMExtraction
 -- The pure local stack: semantic layer onward (LocalEMFamily -> LocalColimit -> LocalTower ->
