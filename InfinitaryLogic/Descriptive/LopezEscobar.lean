@@ -17,7 +17,12 @@ two-directional equivalences.
   structures is Borel and isomorphism-invariant **iff** it is the model class of a single
   `L_ω₁ω`-sentence;
 * `lopezEscobar_action_iff` — the same with invariance under the logic action of
-  `S∞ = Equiv.Perm ℕ`, a rewrite by `actionInvariant_iff_isomorphismInvariant` (#27).
+  `S∞ = Equiv.Perm ℕ`, a rewrite by `actionInvariant_iff_isomorphismInvariant` (#27);
+* `invariantMeasurableSets_eq_range_modelsOf` (and its isomorphism-invariant twin) — issue
+  #28's post-#10 target 7, the collection equality
+  `{B | MeasurableSet B ∧ ActionInvariant B} = Set.range ModelsOf`.  It lives here, in the
+  López–Escobar facade, rather than in `Descriptive/InvariantMeasurableModels.lean`, so that
+  the σ-algebra files stay below the hard theorem in the import order.
 
 Only the hard direction is new; the reverse of each is the easy direction, and the action form
 adds no mathematical content beyond the orbit = isomorphism identification.
@@ -47,5 +52,29 @@ theorem lopezEscobar_iff {B : Set (StructureSpace L)} :
 theorem lopezEscobar_action_iff {B : Set (StructureSpace L)} :
     (MeasurableSet B ∧ ActionInvariant B) ↔ ∃ φ : L.Sentenceω, B = ModelsOf φ := by
   rw [actionInvariant_iff_isomorphismInvariant, lopezEscobar_iff]
+
+/-! ## The collection equality (issue #28, target 7) -/
+
+variable (L) in
+/-- **The invariant Borel events are exactly the definable ones** (issue #28's post-#10
+target 7): the collection of Borel, action-invariant classes is the range of `ModelsOf`.  No
+closure operation is involved — this is the collection form of `lopezEscobar_action_iff`,
+with the two membership statements differing only in the orientation of the equality. -/
+theorem invariantMeasurableSets_eq_range_modelsOf :
+    {B : Set (StructureSpace L) | MeasurableSet B ∧ ActionInvariant B} =
+      Set.range (ModelsOf (L := L)) := by
+  ext B
+  rw [Set.mem_setOf_eq, lopezEscobar_action_iff, Set.mem_range]
+  exact ⟨fun ⟨φ, hφ⟩ => ⟨φ, hφ.symm⟩, fun ⟨φ, hφ⟩ => ⟨φ, hφ.symm⟩⟩
+
+variable (L) in
+/-- The same collection equality with isomorphism invariance in place of action invariance
+(the two invariant σ-algebras agree — `actionInvariantMeasurableSpace_eq_isoInvariantMeasurableSpace`). -/
+theorem isoInvariantMeasurableSets_eq_range_modelsOf :
+    {B : Set (StructureSpace L) | MeasurableSet B ∧ IsomorphismInvariant B} =
+      Set.range (ModelsOf (L := L)) := by
+  ext B
+  rw [Set.mem_setOf_eq, lopezEscobar_iff, Set.mem_range]
+  exact ⟨fun ⟨φ, hφ⟩ => ⟨φ, hφ.symm⟩, fun ⟨φ, hφ⟩ => ⟨φ, hφ.symm⟩⟩
 
 end FirstOrder.Language
