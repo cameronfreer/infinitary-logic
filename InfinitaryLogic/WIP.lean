@@ -78,6 +78,8 @@ import InfinitaryLogic.Methods.LopezEscobar.PCSentence
 import InfinitaryLogic.Methods.LopezEscobar.StandardModel
 -- Issue #10 Unit 3b: reconstruction + the code-class equality (invariance only in the converse)
 import InfinitaryLogic.Methods.LopezEscobar.CodeClass
+-- Issue #10 Unit 4 commit 1: the abstract PCMem interface + baseGraphEmb + code compatibility
+import InfinitaryLogic.Methods.LopezEscobar.PCMem
 -- The local EM extraction bridge (its Conditional/MorleyHanfTransfer import stays isolated here)
 import InfinitaryLogic.Methods.LocalEMExtraction
 -- The pure local stack: semantic layer onward (LocalEMFamily -> LocalColimit -> LocalTower ->
