@@ -88,6 +88,8 @@ import InfinitaryLogic.Methods.LopezEscobar.Disjoint
 import InfinitaryLogic.Methods.LopezEscobar.SharedDecoder
 -- Issue #10 Unit 5b: THE HARD LOPEZ-ESCOBAR THEOREM - Craig separation + the decoded endpoint
 import InfinitaryLogic.Methods.LopezEscobar.Separation
+-- Issue #10 Unit 6: the public facade - both packaged equivalences
+import InfinitaryLogic.Descriptive.LopezEscobar
 -- The local EM extraction bridge (its Conditional/MorleyHanfTransfer import stays isolated here)
 import InfinitaryLogic.Methods.LocalEMExtraction
 -- The pure local stack: semantic layer onward (LocalEMFamily -> LocalColimit -> LocalTower ->
