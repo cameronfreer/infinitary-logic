@@ -82,6 +82,8 @@ import InfinitaryLogic.Methods.LopezEscobar.CodeClass
 import InfinitaryLogic.Methods.LopezEscobar.PCMem
 -- Issue #10 Unit 4 commit 2: tagged-expansion gluing of two PCMem witnesses on a common base
 import InfinitaryLogic.Methods.LopezEscobar.TaggedGlue
+-- Issue #10 Unit 4 commit 3: the sole downward-LS consumer - PC disjointness + entailment endpoint
+import InfinitaryLogic.Methods.LopezEscobar.Disjoint
 -- The local EM extraction bridge (its Conditional/MorleyHanfTransfer import stays isolated here)
 import InfinitaryLogic.Methods.LocalEMExtraction
 -- The pure local stack: semantic layer onward (LocalEMFamily -> LocalColimit -> LocalTower ->
