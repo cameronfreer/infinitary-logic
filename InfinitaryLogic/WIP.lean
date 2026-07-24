@@ -80,6 +80,8 @@ import InfinitaryLogic.Methods.LopezEscobar.StandardModel
 import InfinitaryLogic.Methods.LopezEscobar.CodeClass
 -- Issue #10 Unit 4 commit 1: the abstract PCMem interface + baseGraphEmb + code compatibility
 import InfinitaryLogic.Methods.LopezEscobar.PCMem
+-- Issue #10 Unit 4 commit 2: tagged-expansion gluing of two PCMem witnesses on a common base
+import InfinitaryLogic.Methods.LopezEscobar.TaggedGlue
 -- The local EM extraction bridge (its Conditional/MorleyHanfTransfer import stays isolated here)
 import InfinitaryLogic.Methods.LocalEMExtraction
 -- The pure local stack: semantic layer onward (LocalEMFamily -> LocalColimit -> LocalTower ->
