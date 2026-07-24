@@ -20,6 +20,7 @@ import InfinitaryLogic.Lomega1omega.Entailment
 import InfinitaryLogic.Lomega1omega.QuantifierRank
 import InfinitaryLogic.Lomega1omega.FiniteQuantification
 import InfinitaryLogic.Lomega1omega.Depth
+import InfinitaryLogic.Lomega1omega.InfiniteAxiom
 
 -- Scott sentences and ranks
 import InfinitaryLogic.Scott.AtomicDiagram
