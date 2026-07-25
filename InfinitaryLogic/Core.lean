@@ -22,6 +22,7 @@ import InfinitaryLogic.Lomega1omega.FiniteQuantification
 import InfinitaryLogic.Lomega1omega.Depth
 import InfinitaryLogic.Lomega1omega.InfiniteAxiom
 import InfinitaryLogic.Lomega1omega.Polarity
+import InfinitaryLogic.Lomega1omega.PolaritySemantics
 
 -- Scott sentences and ranks
 import InfinitaryLogic.Scott.AtomicDiagram
