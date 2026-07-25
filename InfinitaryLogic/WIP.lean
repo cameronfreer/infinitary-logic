@@ -98,6 +98,8 @@ import InfinitaryLogic.Methods.Interpolation.LyndonPairedCP
 import InfinitaryLogic.Methods.Interpolation.LyndonRootGate
 -- Issue #14 Unit 5 commit 2: the countable relational core (root class equation cited)
 import InfinitaryLogic.Methods.Interpolation.LyndonRelational
+-- Issue #14 Unit 5 commit 3: THE PUBLIC RELATIONAL LYNDON THEOREM + the Craig-recovery consumer
+import InfinitaryLogic.Methods.Interpolation.LyndonSublanguage
 -- Issue #10 Unit 5a: the shared-symbol decoder + the semantic square back to the base code
 import InfinitaryLogic.Methods.LopezEscobar.SharedDecoder
 -- Issue #10 Unit 5b: THE HARD LOPEZ-ESCOBAR THEOREM - Craig separation + the decoded endpoint

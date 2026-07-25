@@ -39,11 +39,15 @@ instance symbSublang_isRelational [h : L.IsRelational] (F : Set (Σ n, L.Functio
     (R : Set (Σ n, L.Relations n)) : (symbSublang (L := L) F R).IsRelational :=
   fun n => ⟨fun f => (h n).false f.1⟩
 
-/-! ## Mapping a sublanguage interpolant back to `L`: entailment and occurrence transport -/
+/-! ## Mapping a sublanguage interpolant back to `L`: entailment and occurrence transport
+
+These four transports are generic in the sublanguage inclusion — nothing about them is specific to
+Craig — so they are exported for the Lyndon refinement (issue #14, Unit 5), which needs the same
+entailment and function-occurrence transports alongside its own *signed* relation transport. -/
 
 /-- Left entailment transport: a sublanguage entailment `r₁.restrictSymbols ⊨ θ'` lifts, along the
 inclusion, to `r₁ ⊨ θ'.mapLanguage incl` in `L` (via the sublanguage reduct of an `L`-model). -/
-private theorem entails_mapLanguage_restrictSymbols_left (F : Set (Σ n, L.Functions n))
+theorem entails_mapLanguage_restrictSymbols_left (F : Set (Σ n, L.Functions n))
     (R : Set (Σ n, L.Relations n)) (r : L.Sentenceω) (hF : r.functionsIn ⊆ F)
     (hR : r.relationsIn ⊆ R) (θ' : (symbSublang (L := L) F R).Sentenceω)
     (hE : Sentenceω.Entails (r.restrictSymbols hF hR) θ') :
@@ -63,7 +67,7 @@ private theorem entails_mapLanguage_restrictSymbols_left (F : Set (Σ n, L.Funct
 
 /-- Right entailment transport: a sublanguage entailment `θ' ⊨ r₂.restrictSymbols` lifts to
 `θ'.mapLanguage incl ⊨ r₂` in `L`. -/
-private theorem entails_mapLanguage_restrictSymbols_right (F : Set (Σ n, L.Functions n))
+theorem entails_mapLanguage_restrictSymbols_right (F : Set (Σ n, L.Functions n))
     (R : Set (Σ n, L.Relations n)) (r : L.Sentenceω) (hF : r.functionsIn ⊆ F)
     (hR : r.relationsIn ⊆ R) (θ' : (symbSublang (L := L) F R).Sentenceω)
     (hE : Sentenceω.Entails θ' (r.restrictSymbols hF hR)) :
@@ -81,7 +85,7 @@ private theorem entails_mapLanguage_restrictSymbols_right (F : Set (Σ n, L.Func
 
 /-- Function-occurrence transport: the mapped interpolant's functions stay within `r`'s functions,
 given the sublanguage bound against the restriction. -/
-private theorem functionsIn_mapLanguage_incl_subset (F : Set (Σ n, L.Functions n))
+theorem functionsIn_mapLanguage_incl_subset (F : Set (Σ n, L.Functions n))
     (R : Set (Σ n, L.Relations n)) (r : L.Sentenceω) (hF : r.functionsIn ⊆ F)
     (hR : r.relationsIn ⊆ R) (θ' : (symbSublang (L := L) F R).Sentenceω)
     (hsub : θ'.functionsIn ⊆ (r.restrictSymbols hF hR).functionsIn) :
@@ -91,7 +95,7 @@ private theorem functionsIn_mapLanguage_incl_subset (F : Set (Σ n, L.Functions 
   exact Set.image_mono hsub
 
 /-- Relation-occurrence transport (companion of the above for relation symbols). -/
-private theorem relationsIn_mapLanguage_incl_subset (F : Set (Σ n, L.Functions n))
+theorem relationsIn_mapLanguage_incl_subset (F : Set (Σ n, L.Functions n))
     (R : Set (Σ n, L.Relations n)) (r : L.Sentenceω) (hF : r.functionsIn ⊆ F)
     (hR : r.relationsIn ⊆ R) (θ' : (symbSublang (L := L) F R).Sentenceω)
     (hsub : θ'.relationsIn ⊆ (r.restrictSymbols hF hR).relationsIn) :
