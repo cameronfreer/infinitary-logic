@@ -274,6 +274,14 @@ theorem baseRelationsInSigned_not {n : ℕ} (s : Bool) (φ : L'[[J]].BoundedForm
     baseRelationsInSigned s φ.not = baseRelationsInSigned (!s) φ := by
   ext p; simp [baseRelationsInSigned]
 
+/-- Alias gate: positive base occurrences of `¬φ` are the negative ones of `φ`. -/
+theorem basePositiveRelations_not {n : ℕ} (φ : L'[[J]].BoundedFormulaω α n) :
+    basePositiveRelations φ.not = baseNegativeRelations φ := baseRelationsInSigned_not true φ
+
+/-- Alias gate: negative base occurrences of `¬φ` are the positive ones of `φ`. -/
+theorem baseNegativeRelations_not {n : ℕ} (φ : L'[[J]].BoundedFormulaω α n) :
+    baseNegativeRelations φ.not = basePositiveRelations φ := baseRelationsInSigned_not false φ
+
 theorem baseRelationsInSigned_imp_left {s : Bool} {φ ψ : L'[[J]].BoundedFormulaω α n} :
     baseRelationsInSigned (!s) φ ⊆ baseRelationsInSigned s (φ.imp ψ) := by
   intro p hp

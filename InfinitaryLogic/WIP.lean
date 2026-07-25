@@ -86,6 +86,8 @@ import InfinitaryLogic.Methods.LopezEscobar.TaggedGlue
 import InfinitaryLogic.Methods.LopezEscobar.Disjoint
 -- Issue #14 Unit 0 layer 2: the Methods-level signed occurrence calculus (Lyndon groundwork)
 import InfinitaryLogic.Methods.PolarityCalculus
+-- Issue #14 Unit 2: polarity-refined inseparability + the three mixed gates (the stop/go gate)
+import InfinitaryLogic.Methods.Interpolation.LyndonInseparability
 -- Issue #10 Unit 5a: the shared-symbol decoder + the semantic square back to the base code
 import InfinitaryLogic.Methods.LopezEscobar.SharedDecoder
 -- Issue #10 Unit 5b: THE HARD LOPEZ-ESCOBAR THEOREM - Craig separation + the decoded endpoint
