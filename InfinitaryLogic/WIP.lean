@@ -90,6 +90,8 @@ import InfinitaryLogic.Methods.PolarityCalculus
 import InfinitaryLogic.Methods.Interpolation.LyndonInseparability
 -- Issue #14 Unit 3: SentBndPol (negation EXCHANGES the classes) + the one-sided closures
 import InfinitaryLogic.Methods.Interpolation.LyndonClosures
+-- Issue #14 Unit 4a: the polarity-refined paired family + the signed cross gates
+import InfinitaryLogic.Methods.Interpolation.LyndonPairedFamily
 -- Issue #10 Unit 5a: the shared-symbol decoder + the semantic square back to the base code
 import InfinitaryLogic.Methods.LopezEscobar.SharedDecoder
 -- Issue #10 Unit 5b: THE HARD LOPEZ-ESCOBAR THEOREM - Craig separation + the decoded endpoint
