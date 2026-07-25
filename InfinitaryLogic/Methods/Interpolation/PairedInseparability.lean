@@ -122,22 +122,6 @@ theorem insepAt_mono_support {B : Finset ℕ} (hAB : A ⊆ B)
   rintro ⟨σ, hbf, hbr, hsupp, hΓσ, hΔσ⟩
   exact h ⟨σ, hbf, hbr, hsupp.trans (Finset.coe_subset.mpr hAB), hΓσ, hΔσ⟩
 
-/-- Plain `Γ`-side abstraction (**freshness-free**: `∃`-introduction is weakening). `Γ ⊨ σ`
-upgrades to `Γ ⊨ ∃x σ(x)`; the witness is the constant's own interpretation. -/
-theorem entails_genEx_of_entails_plain (j : ℕ) (σc : L[[ℕ]].Sentenceω)
-    (hyp : Theoryω.Entails Γ σc) : Theoryω.Entails Γ (genEx j σc) := by
-  intro M instM _ hmodel
-  set base := (L.lhomWithConstants ℕ).reduct M with hbase
-  set h := ambientConstMap (L := L) M with hh
-  have bridge : ∀ (ψ : L[[ℕ]].Sentenceω),
-      @Sentenceω.Realize L[[ℕ]] ψ M instM
-        ↔ @BoundedFormulaω.Realize L[[ℕ]] M (wc base h) Empty 0 ψ Empty.elim Fin.elim0 :=
-    fun ψ => ambient_realize_iff_wc (S := instM) ψ Empty.elim Fin.elim0
-  have hσ : @BoundedFormulaω.Realize L[[ℕ]] M (wc base h) Empty 0 σc Empty.elim Fin.elim0 :=
-    (bridge _).mp (hyp M hmodel)
-  refine (bridge _).mpr ((realize_genEx base h j σc).mpr ⟨h j, ?_⟩)
-  rw [Function.update_eq_self]; exact hσ
-
 /-- **Fresh growth.** Enlarging the allowed-support budget by a constant `c` fresh for `Δ` preserves
 inseparability: a separator using `c` abstracts to `genEx c σ`, whose support lies back in `A`. Only
 the `Δ`-side (∀-generalization) needs the freshness; the `Γ`-side is `∃`-weakening. Under the family

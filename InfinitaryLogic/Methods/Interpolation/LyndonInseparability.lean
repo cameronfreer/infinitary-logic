@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.PolarityCalculus
 import InfinitaryLogic.Methods.Interpolation.InseparablePairFamily
+import InfinitaryLogic.Methods.Interpolation.BaseOccurrenceProjections
 
 /-!
 # Polarity-refined inseparability and the mixed closures (issue #14, Unit 2 — the stop/go gate)
@@ -167,18 +168,6 @@ theorem lyndonInsepAt_insert_of_shared_entails {σ φ : L[[ℕ]].Sentenceω}
       Classical.not_imp] at hσ hρn ⊢
     exact ⟨hσ, hρn⟩
 
-/-- A constant equality mentions no base function symbol (only the two tagged constants).  Proved
-here rather than imported so that Unit 2 stays below the paired-family layer, which is where the
-unsigned twin of this fact lives. -/
-private theorem baseFunctionsIn_constEq' (a b : ℕ) :
-    (constEq (L := L) a b).baseFunctionsIn = ∅ := by
-  ext s
-  obtain ⟨n, f⟩ := s
-  simp only [constEq, constTermS, BoundedFormulaω.baseFunctionsIn, BoundedFormulaω.functionsIn,
-    Term.functionsIn, Set.mem_setOf_eq, Set.mem_union, Set.iUnion_of_empty,
-    Set.mem_insert_iff, Set.mem_empty_iff_false, or_false, Sigma.mk.injEq, iff_false, not_or]
-  refine ⟨?_, ?_⟩ <;> rintro ⟨rfl, h⟩ <;> exact (Sum.inl_ne_inr (eq_of_heq h))
-
 /-- **The equality specialization** — the form the kernel's four cross-coordinate transfers
 actually consume.  A constant equality has empty base polarity sets in both signs, so the
 swapped-class hypotheses of the general gate are discharged outright: this is exactly where
@@ -189,7 +178,7 @@ theorem lyndonInsepAt_insert_of_shared_constEq_entails {φ : L[[ℕ]].Sentenceω
     (hcons : Theoryω.Entails (insert (constEq (L := L) a b) Γ) φ)
     (h : LyndonInsepAt F P N A Γ Δ) : LyndonInsepAt F P N A (insert φ Γ) Δ :=
   lyndonInsepAt_insert_of_shared_entails
-    (by rw [baseFunctionsIn_constEq']; exact Set.empty_subset _)
+    (by rw [baseFunctionsIn_constEq]; exact Set.empty_subset _)
     (by simp [BoundedFormulaω.basePositiveRelations])
     (by simp [BoundedFormulaω.baseNegativeRelations])
     hσA hΔσ hcons h

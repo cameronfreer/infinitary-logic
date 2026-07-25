@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.Interpolation.LyndonInseparability
-import InfinitaryLogic.Methods.Interpolation.PairedInsepFamily
+import InfinitaryLogic.Methods.Interpolation.BaseOccurrenceProjections
 
 /-!
 # The polarity side bound and the one-sided closures (issue #14, Unit 3)
@@ -37,9 +37,11 @@ quantifier round-trip steps (separator `genEx c σ`) — every one of them polar
 signed calculus.
 
 Not here (Unit 4+): the paired-family predicate, the cross-coordinate `C0` and relation-congruence
-assembly, the `ConsistencyPropertyEqOn` instance, and any Henkin invocation.  The import of
-`PairedInsepFamily` is used **only** for its unsigned base-*function* projections (`baseFunctionsIn_
-imp_left/right`, `_component_iInf/iSup`, `_instConst_subset`), which carry no polarity content.
+assembly, the `ConsistencyPropertyEqOn` instance, and any Henkin invocation — and, as of the
+Unit-3 layering cleanup, **not in the dependency cone either**: the unsigned base-symbol
+projections this file consumes now live in the neutral
+`Methods/Interpolation/BaseOccurrenceProjections.lean`, whose own cone stops at the generated
+universe.
 -/
 
 namespace FirstOrder.Language
