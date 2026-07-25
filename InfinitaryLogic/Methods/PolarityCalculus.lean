@@ -353,6 +353,21 @@ theorem basePositiveRelations_relInst {l : ℕ} (R : L.Relations l) (g g' : Fin 
     basePositiveRelations (relInst R g) = basePositiveRelations (relInst R g') := by
   ext p; simp [baseRelationsInSigned, relInst]
 
+/-- An atomic relation instance's base **positive** set is exactly its own symbol. -/
+theorem basePositiveRelations_relInst_eq {l : ℕ} (R : L.Relations l) (g : Fin l → ℕ) :
+    basePositiveRelations (relInst R g) = {(⟨l, R⟩ : Σ n, L.Relations n)} := by
+  ext p
+  obtain ⟨n, r⟩ := p
+  simp only [baseRelationsInSigned, relInst, Set.mem_setOf_eq, relationsInSigned_rel,
+    if_true, Set.mem_singleton_iff, Sigma.mk.injEq]
+  constructor
+  · rintro ⟨rfl, h2⟩
+    rw [heq_eq_eq] at h2
+    exact ⟨rfl, heq_of_eq (Sum.inl_injective h2)⟩
+  · rintro ⟨rfl, h2⟩
+    rw [heq_eq_eq] at h2
+    exact ⟨rfl, heq_of_eq (congrArg Sum.inl h2)⟩
+
 @[simp] theorem baseNegativeRelations_relInst {l : ℕ} (R : L.Relations l) (g : Fin l → ℕ) :
     baseNegativeRelations (relInst R g) = ∅ := by
   ext p; simp [baseRelationsInSigned, relInst]
