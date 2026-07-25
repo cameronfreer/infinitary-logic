@@ -84,6 +84,8 @@ import InfinitaryLogic.Methods.LopezEscobar.PCMem
 import InfinitaryLogic.Methods.LopezEscobar.TaggedGlue
 -- Issue #10 Unit 4 commit 3: the sole downward-LS consumer - PC disjointness + entailment endpoint
 import InfinitaryLogic.Methods.LopezEscobar.Disjoint
+-- Issue #14 Unit 0 layer 2: the Methods-level signed occurrence calculus (Lyndon groundwork)
+import InfinitaryLogic.Methods.PolarityCalculus
 -- Issue #10 Unit 5a: the shared-symbol decoder + the semantic square back to the base code
 import InfinitaryLogic.Methods.LopezEscobar.SharedDecoder
 -- Issue #10 Unit 5b: THE HARD LOPEZ-ESCOBAR THEOREM - Craig separation + the decoded endpoint
