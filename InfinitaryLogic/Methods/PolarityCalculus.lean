@@ -404,6 +404,19 @@ theorem baseRelationsInSigned_mapLanguage_withConstants (s : Bool) (r : L.Senten
     relationsInSigned_mapLanguage (L.lhomWithConstants ℕ)]
   exact tag_inl_rel_inj.mem_set_image
 
+/-- Alias form of the constant-expansion image law, positive sign (matches the `abbrev` shape, so
+`rw` fires on goals stated with `basePositiveRelations`). -/
+theorem basePositiveRelations_mapLanguage_withConstants (r : L.Sentenceω) :
+    (BoundedFormulaω.mapLanguage (L.lhomWithConstants ℕ) r).basePositiveRelations =
+      r.positiveRelationsIn :=
+  baseRelationsInSigned_mapLanguage_withConstants true r
+
+/-- Alias form of the constant-expansion image law, negative sign. -/
+theorem baseNegativeRelations_mapLanguage_withConstants (r : L.Sentenceω) :
+    (BoundedFormulaω.mapLanguage (L.lhomWithConstants ℕ) r).baseNegativeRelations =
+      r.negativeRelationsIn :=
+  baseRelationsInSigned_mapLanguage_withConstants false r
+
 /-- Stripping a constant-free formula keeps the signed occurrences inside the base signed set. -/
 theorem relationsInSigned_stripConsts (s : Bool) :
     ∀ {n : ℕ} (φ : L[[ℕ]].BoundedFormulaω α n) (h : sentenceJConsts (L' := L) φ ⊆ ∅),

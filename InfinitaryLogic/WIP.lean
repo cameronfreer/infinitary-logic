@@ -96,6 +96,8 @@ import InfinitaryLogic.Methods.Interpolation.LyndonPairedFamily
 import InfinitaryLogic.Methods.Interpolation.LyndonPairedCP
 -- Issue #14 Unit 5 commit 1: the signed root gate (all three occurrence bounds)
 import InfinitaryLogic.Methods.Interpolation.LyndonRootGate
+-- Issue #14 Unit 5 commit 2: the countable relational core (root class equation cited)
+import InfinitaryLogic.Methods.Interpolation.LyndonRelational
 -- Issue #10 Unit 5a: the shared-symbol decoder + the semantic square back to the base code
 import InfinitaryLogic.Methods.LopezEscobar.SharedDecoder
 -- Issue #10 Unit 5b: THE HARD LOPEZ-ESCOBAR THEOREM - Craig separation + the decoded endpoint
