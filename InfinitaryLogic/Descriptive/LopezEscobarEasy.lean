@@ -16,13 +16,13 @@ relational vocabularies — where the repository's `BorelSpace`/`StandardBorelSp
 structure space (`lopezEscobar_easy`, the literature statement).
 
 Invariance is the named isomorphism-closed predicate `IsomorphismInvariant` (an
-`L`-isomorphism of the decoded structures transports membership) — equivalent, for this
-purpose, to invariance under the logic action; an `Equiv.Perm ℕ`-action formulation can be
-added later as an optional descriptive-set-theoretic lemma, and is not needed by the planned
-proof of the converse.
+`L`-isomorphism of the decoded structures transports membership) — equivalent to invariance
+under the logic action (`actionInvariant_iff_isomorphismInvariant`, `Descriptive/LogicAction.lean`).
 
 The hard converse — every isomorphism-invariant Borel class is `L_ω₁ω`-definable, by Marker's
-route through Craig interpolation and PC-separation — is issue #10.
+route through Craig interpolation and PC-separation — is **proved**: `lopez_escobar`
+(`Methods/LopezEscobar/Separation.lean`), packaged with this direction as `lopezEscobar_iff`
+in `Descriptive/LopezEscobar.lean`.
 -/
 
 namespace FirstOrder
@@ -66,8 +66,9 @@ set_option linter.unusedSectionVars false in
 /-- **López-Escobar, easy direction** (countable relational vocabularies): every
 `L_ω₁ω`-sentence defines an isomorphism-invariant BOREL class of coded countable structures —
 here `MeasurableSet` is Borel for the Polish topology, by the `BorelSpace (StructureSpace L)`
-instance, which is what the countable-relations hypothesis activates. (The converse —
-invariant Borel classes are `L_ω₁ω`-definable — is issue #10.) -/
+instance, which is what the countable-relations hypothesis activates. (The converse — invariant
+Borel classes are `L_ω₁ω`-definable — is `lopez_escobar`; the two directions are packaged as
+`lopezEscobar_iff`.) -/
 @[blueprint "thm:lopez-escobar-easy"
   (title := /-- López-Escobar, easy direction -/)
   (statement := /-- Over a countable relational vocabulary, the class of coded countable
