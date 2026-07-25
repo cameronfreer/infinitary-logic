@@ -7,6 +7,18 @@ members over the literal base diagram; terminal gap margin), plus the precision 
 the reviewed implementation order (§7). Remaining pre-code step: a small Lean probe of the
 ordinal-position representation (§5.3) before freezing its exact API.
 
+## STATUS: COMPLETE (issue #12 closed; released in v1.5.0)
+
+All four public endpoints are proved over **arbitrary** languages and sit on the default import
+surface through `ModelTheory/WellOrdering.lean`: `exists_model_relPreserving` (Marker 4.26, raw
+positive form), `RelPreserving.injective_of_irreflexive`, `wellFounded_boundedness`,
+`wellOrder_type_boundedness` (Cor 4.27), and `wellOrdering_undefinable`; blueprint nodes
+`thm:wellordering-map` / `-boundedness` / `-undefinable`, all in the headline axiom guard.
+The Borel-coded form of undefinability, deferred here as issue #33, is **also proved** —
+`wellOrderClass_not_measurableSet` (`Descriptive/WellOrderNonBorel.lean`, v1.6.1), via
+López–Escobar plus a fragment-elementary-substructure bridge. Still not claimed: the
+induced-copy strengthening (#31) and the Corollary 4.34 end-extension machine (#32).
+
 ## 1. Source statements (verified against the PDF)
 
 Throughout §4.4, `τ = {<, …}` — a countable vocabulary containing a distinguished binary
