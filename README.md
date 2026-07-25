@@ -105,6 +105,7 @@ import InfinitaryLogic.Everything   -- everything including Conditional and lega
 - Karp, C. R. (1964). *Languages with Expressions of Infinite Length*. North-Holland.
 - Karp, C. R. (1965). Finite-Quantifier Equivalence. In *The Theory of Models*, 407–412.
 - Keisler, H. J. (1971). *Model Theory for Infinitary Logic*. North-Holland.
+- López-Escobar, E. G. K. (1965). An interpolation theorem for denumerably long formulas. *Fundamenta Mathematicae*, 57, 253–272.
 - Keisler, H. J. & Knight, J. F. (2004). Barwise: Infinitary Logic and Admissible Sets. *Bulletin of Symbolic Logic*, 10(1), 4–36.
 - Marker, D. (2016). *Lectures on Infinitary Model Theory*. Cambridge University Press.
 - Nadel, M. E. (1974). Scott sentences and admissible sets. *Annals of Mathematical Logic*, 7(2–3), 267–294.
