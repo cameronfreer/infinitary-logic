@@ -92,6 +92,8 @@ import InfinitaryLogic.Methods.Interpolation.LyndonInseparability
 import InfinitaryLogic.Methods.Interpolation.LyndonClosures
 -- Issue #14 Unit 4a: the polarity-refined paired family + the signed cross gates
 import InfinitaryLogic.Methods.Interpolation.LyndonPairedFamily
+-- Issue #14 Unit 4b: the sixteen CP fields, the Henkin completion, and the paired model endpoint
+import InfinitaryLogic.Methods.Interpolation.LyndonPairedCP
 -- Issue #10 Unit 5a: the shared-symbol decoder + the semantic square back to the base code
 import InfinitaryLogic.Methods.LopezEscobar.SharedDecoder
 -- Issue #10 Unit 5b: THE HARD LOPEZ-ESCOBAR THEOREM - Craig separation + the decoded endpoint

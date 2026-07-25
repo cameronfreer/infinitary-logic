@@ -18,6 +18,11 @@ This guard inspects the transitive proof-term cone instead:
    `HenkinComplete.all_inst` compile to `Expr.proj` and are NOT cone-visible; their
    consumption is verified by proof read, not here.)
 
+The issue #14 paired endpoint `exists_lyndon_paired_model_neg` is guarded on the same terms: the
+polarity-refined family is a NEW consumer of the countable-completion kernel, and the point of the
+guard is to machine-check that it consumes `HenkinComplete` and the quotient truth lemma while
+importing no maximal-consistency machinery.
+
 The issue #12 endpoints are guarded too — the step-5 core `exists_model_relPreserving_relational`
 and the assembled arbitrary-language `exists_model_relPreserving` / `wellOrdering_undefinable`:
 their models come from the same quotient term model, so their cones must satisfy the identical
@@ -28,6 +33,7 @@ Run with: lake env lean scripts/check_truth_lemma_cone.lean
 import InfinitaryLogic.Methods.Henkin.CountableCompletion.QuotientTruthLemma
 import InfinitaryLogic.Methods.WellOrdering.ModelExtraction
 import InfinitaryLogic.Methods.WellOrdering.GraphTranslation
+import InfinitaryLogic.Methods.Interpolation.LyndonPairedCP
 
 open Lean
 
@@ -81,7 +87,8 @@ def guardedRoots : List Name :=
    `FirstOrder.Language.truth_neg, `FirstOrder.Language.exists_model_of_henkinComplete,
    `FirstOrder.Language.exists_model_relPreserving_relational,
    `FirstOrder.Language.exists_model_relPreserving,
-   `FirstOrder.Language.wellOrdering_undefinable]
+   `FirstOrder.Language.wellOrdering_undefinable,
+   `FirstOrder.Language.exists_lyndon_paired_model_neg]
 
 run_cmd do
   let env ← getEnv
