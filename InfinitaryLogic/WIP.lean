@@ -102,6 +102,8 @@ import InfinitaryLogic.Methods.Interpolation.LyndonRelational
 import InfinitaryLogic.Methods.Interpolation.LyndonSublanguage
 -- Issue #14 Unit 6: signed occurrences through the relationalization layer (the D6 gate)
 import InfinitaryLogic.Methods.Interpolation.LyndonRelationalize
+-- Issue #14 Unit 7: THE ARBITRARY-LANGUAGE LYNDON INTERPOLATION THEOREM
+import InfinitaryLogic.Methods.Interpolation.LyndonArbitrary
 -- Issue #10 Unit 5a: the shared-symbol decoder + the semantic square back to the base code
 import InfinitaryLogic.Methods.LopezEscobar.SharedDecoder
 -- Issue #10 Unit 5b: THE HARD LOPEZ-ESCOBAR THEOREM - Craig separation + the decoded endpoint

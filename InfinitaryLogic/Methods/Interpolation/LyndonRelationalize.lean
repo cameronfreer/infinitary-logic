@@ -387,4 +387,38 @@ theorem relationsInSigned_graphImp_inter_base (s : Bool) (F : Set (Σ n, L.Funct
     relationsInSigned_graphAxioms_inter_base (!s) F, Set.empty_union,
     relationsInSigned_relationalizeFormula_inter_base s φ]
 
+/-- Preimage form of the graph-antecedent identity — the shape the endpoint consumes, so that no
+`Sigma`/definitional-equality friction leaks into the assembly. -/
+theorem preimage_baseRelSym_graphAnd (s : Bool) (F : Set (Σ n, L.Functions n)) [Countable ↥F]
+    (φ : L.Sentenceω) :
+    baseRelSym L ⁻¹' relationsInSigned s ((graphAxioms F).and (relationalizeFormula φ)) =
+      relationsInSigned s φ := by
+  rw [relationsInSigned_and]
+  ext p
+  constructor
+  · rintro (h | h)
+    · have h1 : p ∈ baseRelSym L ⁻¹' relationsInSigned s (graphAxioms F) := h
+      rw [preimage_baseRelSym_relationsInSigned_graphAxioms s F] at h1
+      exact absurd h1 (Set.notMem_empty p)
+    · exact (mem_relationsInSigned_relationalizeFormula s p φ).mp h
+  · intro hp
+    exact Or.inr ((mem_relationsInSigned_relationalizeFormula s p φ).mpr hp)
+
+/-- Preimage form of the graph-consequent identity: the axioms sit in an antecedent, so the
+implication flips their sign — and they still contribute nothing to the base part. -/
+theorem preimage_baseRelSym_graphImp (s : Bool) (F : Set (Σ n, L.Functions n)) [Countable ↥F]
+    (φ : L.Sentenceω) :
+    baseRelSym L ⁻¹' relationsInSigned s ((graphAxioms F).imp (relationalizeFormula φ)) =
+      relationsInSigned s φ := by
+  rw [relationsInSigned_imp]
+  ext p
+  constructor
+  · rintro (h | h)
+    · have h1 : p ∈ baseRelSym L ⁻¹' relationsInSigned (!s) (graphAxioms F) := h
+      rw [preimage_baseRelSym_relationsInSigned_graphAxioms (!s) F] at h1
+      exact absurd h1 (Set.notMem_empty p)
+    · exact (mem_relationsInSigned_relationalizeFormula s p φ).mp h
+  · intro hp
+    exact Or.inr ((mem_relationsInSigned_relationalizeFormula s p φ).mpr hp)
+
 end FirstOrder.Language
