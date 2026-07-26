@@ -245,9 +245,48 @@ theorem entails_of_entails_insert_witness (hpar : genEx c φc ∈ T)
 which is `entails_genEx_of_entails`'s reinterpretation argument with the conclusion left alone
 instead of generalized — the separator's constant-freeness is what lets it be pulled back unchanged.
 
-**Recommended order for Unit 3** (review): (1) canonical side projections; (2) the shared-overlap/C0
-toy theorem; (3) the projection-aware left *and* right C7 identity theorems; (4) only then audit the
-remaining consistency fields.
+**A deliberate weakening from Feferman, recorded.**  His separation relation tracks the sort budgets
+`Un′`/`Ex′` and *permits* `C*`-constants in the separator, charged into both.  `FefermanInsep` asks
+only for a **constant-free universal** separator.  That is exactly sufficient for Malitz 4.5 — for
+universal `ψ` the budget collapses to precisely this condition — but it is the **single-sorted,
+theorem-oriented specialization, not Feferman's invariant verbatim**.  Any many-sorted use, the
+preservation route included, must reinstate the budgets.
+
+**The four pre-assembly gates (review), and their outcomes.**
+
+1. **Coverage restored.**  `Covered F₁ R₁ F₂ R₂ S := S ⊆ side F₁ R₁ S ∪ side F₂ R₂ S`, with
+   `covered_iff_eq` (the `⊇` half is automatic), `covered_of_forall_mem_sentBnd` — coverage *is* a
+   joint-language condition — and `covered_insert`.  It does **not** come for free as in the paired
+   construction.  Recorded caveat: `GenU` seeds *all* ambient relation atoms, so an ambient symbol in
+   neither side breaks coverage; the joint `symbSublang` wrapper is what discharges it later.
+2. **C0 generalized, two-sided.**  `not_fefermanInsep_of_contradiction` derives the kernel's
+   `no_contradiction` from coverage alone: left projection inconsistent ⟹ separator `⊥`; right
+   ⟹ separator `⊤`.  A third case — the contradiction split across the two projections — **cannot
+   occur**, because `SentBnd` membership is negation-invariant (`mem_side_not_iff`), so `σ` and `σ.not`
+   always lie in exactly the same projections.  The earlier shared-only lemma is retained but is
+   superseded for discharging the field.
+3. **The genuine `neg_all_witness` consumer, proved directly.**  The field starts from `(φ.all).not ∈ S`
+   and inserts `(instConst c φ).not`.  Routing through a semantic congruence is *not* available here:
+   such a step would have to move **projection membership** as well as truth, and `SentBnd` is not
+   invariant under semantic equivalence.  So `entails_of_entails_insert_negInstConst` produces the
+   witness directly from `¬∀x φ` and pulls the constant-free separator back unchanged, and
+   `fefermanInsep_insert_negInstConst` is the gate.  Its two `hb` hypotheses are exactly the
+   projection-membership obligations; they are **discharged unconditionally in the relational scope**
+   (`…_of_isRelational`, using `baseRelationsIn_instConst` — an equality, newly extracted — and the
+   emptiness of base function symbols), which is #15's frozen scope for interpolation (§D6).  In
+   general they need `baseFunctionsIn (all φ) ⊆ baseFunctionsIn (instConst c φ)`, which the repository
+   has only in the `⊆` direction: a recorded residual, not on the relational path.
+4. **The weakening is documented** — item above, and in the module docstring.
+
+**Field-audit order (review, for step 4).**  Family shell, finiteness, universe membership and
+projection coverage; C0 via the `⊥`/`⊤` two-side split; finite and countable branching, especially the
+implication dichotomy; `all_inst` and the negated-universal witness gate; equality and relation
+congruence; only then package `ConsistencyPropertyEqOn`.
+
+The implication separator looks unproblematic: if both branch separators are universal then
+`(σ₁.not).imp σ₂` is universal by the signed recursion (`isUniversal_imp` plus `isUniversal_not`), and
+constant-freeness and shared vocabulary are both preserved by `.not`/`.imp`.  Countable conjunctions
+and disjunctions do not change the quantifier class (`universalSigned_iInf`/`_iSup`).
 
 **Reusable from Units 0–2**: `universalSigned` (Unit 0) is the right primitive and generalizes to
 the sorted `Un`/`Ex`; `realize_of_embedding_signed` (Unit 1) is what the two-sorted `EXT` encoding
