@@ -5,6 +5,35 @@ Pre-implementation audit for issue #14, in the pattern of `docs/craig-audit.md`,
 directly (scans, EuDML/matwbn): E. G. K. López-Escobar, *An interpolation theorem for denumerably
 long formulas*, Fund. Math. **57** (1965) 253–272 — hereafter **LE65** — checked 2026-07-25.
 
+## STATUS: COMPLETE (2026-07-26)
+
+All eight units landed, each compile-gated and axiom-clean; endpoint `lyndon_interpolation`
+(arbitrary language, no hypotheses) on the default surface.
+
+| Unit | Files | Outcome |
+|---|---|---|
+| 0 | `Lomega1omega/Polarity`, `Methods/PolarityCalculus` | signed traversal + full occurrence/base calculus; **no NNF anywhere** |
+| 1 | `Lomega1omega/PolaritySemantics` | `realize_mono_of_signed` — the semantic gate **passed**; the `imp` case closes through the swapped structure pair |
+| 2 | `Interpolation/LyndonInseparability` | `LyndonInsepAt` + the three mixed gates; the C1 separator `(σ₁.not).imp σ₂` is polarity-clean by double-flip cancellation; `lyndon_root_class_eq` |
+| 3 | `Interpolation/LyndonClosures` | `SentBndPol` with the **directional** rules (negation *exchanges* the classes) + the one-sided closures; `relInst` positive-only as an iff |
+| 4 | `Interpolation/LyndonPairedFamily`, `LyndonPairedCP` | the flipped-class paired invariant, mixed `C0`, the sixteen CP fields, `exists_lyndon_paired_model_neg` |
+| 5 | `Interpolation/LyndonRootGate`, `LyndonRelational`, `LyndonSublanguage` | signed root gate; countable core (root-class equation **cited**, load-bearing); `lyndon_interpolation_relational` |
+| 6 | `Interpolation/LyndonRelationalize` | the D6 gate: base-polarity preserved on the nose; graph atoms back-translate into **equalities**, so arbitrary graph polarity vanishes |
+| 7 | `Interpolation/LyndonArbitrary` | `lyndon_interpolation` + `craig_of_lyndon_interpolation` |
+| 8 | facade / blueprint / docs / release | `ModelTheory/LyndonInterpolation`, nodes `thm:lyndon{,-relational}`, headline + cone guards, v1.7.0 |
+
+Predictions vs outcome. **D2 held**: the signed traversal supported every consumer and no
+negation-normal form was ever needed — the engine only ever adds *subformulas*, which is exactly
+what a sign-tracked traversal computes. **D4c held and mattered**: the flipped-antecedent gate is
+the only one needing swapped-class hypotheses, and its four call sites all transfer *equality*
+atoms, whose polarity sets are empty — so equality-as-logical is load-bearing, not cosmetic.
+**D6 held**: base-relation polarity is preserved exactly, and the graph relations' arbitrary
+polarity is harmless because back-translation turns them into equalities. Two things the audit did
+not foresee: the `neg_all_witness` field needs three further signed C7 consumers (`insert_congr`,
+`instConst_of_ex`, `not_instConst_of_not_all`), and the whole relationalization gate had to be
+proved in **membership** form, because `relationsInSigned` and `baseRelSym` land in definitionally
+equal but syntactically distinct `Sigma` types that block `rw` on the set-algebra lemmas.
+
 Status: **v2, FROZEN per review 2026-07-25.** Changes from v1: the endpoint is named the
 *relation-polarity / logical-equality form* of LE65 Theorem 4.1 rather than the theorem as printed
 (§D1); the root orientation is now an **acceptance equation** (§D4a); the flipped-antecedent gate
