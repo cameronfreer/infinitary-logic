@@ -1,4 +1,4 @@
-# Malitz universal interpolation and relative preservation (#15): statement-and-interface audit (v2, FROZEN)
+# Malitz universal interpolation and relative preservation (#15): statement-and-interface audit (v3)
 
 Pre-implementation audit for issue #15, in the pattern of `docs/craig-audit.md`,
 `docs/wellordering-audit.md`, `docs/lopez-escobar-hard-audit.md`, and `docs/lyndon-audit.md`.
@@ -12,7 +12,9 @@ languages*, Duke Math. J. 36 (1969) 621–630) and note that the relative form a
 [Kei71].  **Malitz 1969 and Keisler 1971 themselves are not verified here** — see D1 for exactly
 what that costs.
 
-Status: **v2, FROZEN per review 2026-07-26.**  Changes from v1, all load-bearing: the preservation
+Status: **v3, 2026-07-26** — §D4 is now RESOLVED by the Unit-2 spike (see below); all other D-points remain frozen as in v2.
+
+Status (v2): **FROZEN per review 2026-07-26.**  Changes from v1, all load-bearing: the preservation
 statements are aligned with the repository's **nonempty** semantics and `EquivModulo` is pinned
 (§D1); the Unit-1 acceptance gate is **valuation-aware**, over bounded formulas and tuples, with
 sentence preservation a corollary (§D2); the Unit-2 candidate invariants are corrected — "left
@@ -187,11 +189,10 @@ Three separate questions, to be answered independently rather than by analogy wi
    languages is D5's business, and the answer differs for the two theorems — which is exactly what
    the source's asymmetry (4.5 function-free, 4.6 any `τ`) predicts.
 
-### D4 — does only the separator class change?  [**to be decided by the two-sided C7 spike**]
+### D4 — does only the separator class change?  [**RESOLVED by the two-sided C7 spike**]
 
 The hope, by analogy with #14: restrict the *separating* sentences to **universal** common-symbol
-sentences and leave the consistency-property/Henkin kernel untouched.  What the audit can settle now,
-and what it cannot:
+sentences and leave the consistency-property/Henkin kernel untouched.
 
 **Settled — the class is directional, exactly like polarity.**  `IsUniversal` is not closed under
 subformulas but *is* closed under the **sign-tracked** ones: from `φ.imp ψ` universal one gets `ψ`
@@ -201,35 +202,72 @@ C1/C1′/C2/C3′/C4′ should port with the directional rules already worked ou
 
 **Settled — "left universal" is impossible.**  In the interpolation argument the left root *is* the
 arbitrary antecedent `φ`, on which the theorem assumes nothing; only the right root `ψ` is universal
-(and enters as `ψ.not`, hence existential).  So `Γ` can never be universally restricted.  The viable
-candidate invariants are therefore:
+(and enters as `ψ.not`, hence existential).  So `Γ` can never be universally restricted.  The
+candidate invariants were therefore:
 
 1. `Γ` **unrestricted**, `Δ` existential, separator universal;
 2. a restriction on the **separator only**, with both sides unrestricted;
-3. a richer asymmetric or two-class invariant (e.g. tracking a universal *and* an existential bound
-   per coordinate).
+3. a richer asymmetric or two-class invariant.
 
-**Not settled — and this is the decisive gate.**  The obstruction is sharper than v1 said, and it
-lives in the **fresh-witness (C7) machinery**, not in C1:
+**The spike, and what it measured.**  Unit 2 is the two C7 fresh-witness gates and nothing else —
+`InfinitaryLogic/Methods/Interpolation/MalitzC7Spike.lean`, over
+`MalitzInsepAt F R A Γ Δ` = `InsepAt` with the separator additionally `IsUniversal`.
 
-* the existing **left**-coordinate C7 abstracts the separator with `genEx` (`insepAt_witness_of_
-  insepAt_genEx`, `lyndonInsepAt_witness_of_genEx`): it replaces `σ` by `∃x σ(x)`, which turns a
-  **universal separator into an existential one** — i.e. it destroys exactly the property the
-  separator class is supposed to have;
-* the **right**-coordinate direction may instead admit a *new* **universal** abstraction using a
-  `genAll` (∀-generalisation of a fresh constant), because the freshness hypothesis is available on
-  the opposite side.  The project has `genEx` (`ConstantElimination.lean`) but **no `genAll`**, so
-  this is new work: `genAll j ρ := ((ρ.abstractConst j).relabel …).all`, with its own realization
-  lemma and support/occurrence calculus.
+*Right trigger (witness on the `Δ` side) — **clean, unconditional**.*  `genAll`, the
+`∀`-generalization of a fresh constant, is new machinery (the project had only `genEx`).  It is
+class-preserving —
 
-**Unit 2 is therefore the two C7 toy gates and nothing else** — prove (or refute) the left-coordinate
-universal-separator abstraction and the right-coordinate `genAll` abstraction, *before* C1 and before
-any family assembly.  If the left gate fails, that failure is precisely the proof that candidate 2
-(separator-only closure) cannot work, and it selects candidate 1 or 3 on evidence rather than by
-analogy.  Only after that does the side-bound suite (Unit 3) have a determinate shape.
+```lean
+isUniversal_genAll : IsUniversal (genAll j ρ) ↔ IsUniversal ρ
+```
 
-Until this gate reports, "only the separator class changes" remains a **hypothesis**; #14's
-experience is evidence for it, not proof.
+— because `all` is admissible at the universal sign, and constant abstraction and `relabel` do not
+move the class.  With its two acceptance sequents (`entails_genAll_of_entails`, which unlike
+`genEx`'s `Γ`-side sequent genuinely needs freshness because `∀`-introduction is not weakening, and
+`entails_not_genAll_of_entails_not`), `malitzInsepAt_witness_of_genAll` holds with **no side
+conditions beyond freshness** — exactly the shape of the existing Craig/Lyndon gates.
+
+*Left trigger (witness on the `Γ` side) — the `genEx` route fails **syntactically**, and the
+replacement closes only outside the shared vocabulary.*  `genEx c σ` is `∃x σ(x)`, hence `Σ2` for
+universal `σ`; `not_isUniversal_genEx` records this as a fact about the **construction**, not as a
+failure of the closure.  The replacement is the finite-existential-side conjunction: with `Δ`
+existential (and countable), `δΔ := ⋀ Δ` is existential, so `¬δΔ` is universal, `Δ ⊨ ¬¬δΔ` is
+trivial, and `Γ, ∃x φ(x) ⊨ ¬δΔ` because a model of both would reinterpret the fresh `c` at the
+existential witness, keeping `Γ` and `Δ` standing and producing `σ(c)` and `¬σ(c)` at once.  This is
+formalized as `malitzInsepAt_witness_of_existentialDelta` and it **compiles** — but with three
+hypotheses about `Δ`:
+
+```
+hΔA : ∀ δ ∈ Δ, sentenceJConsts δ ⊆ ↑A       -- free: PairedInsepFamilyMem already carries it
+hΔF : ∀ δ ∈ Δ, δ.baseFunctionsIn ⊆ F        -- NOT available
+hΔR : ∀ δ ∈ Δ, δ.baseRelationsIn ⊆ R        -- NOT available
+```
+
+The two symbol bounds are the obstruction.  In the interpolation family the separator budget is the
+**shared** vocabulary `(F₁ ∩ F₂, R₁ ∩ R₂)` while `Δ ⊆ SentBnd F₂ R₂`, so `¬δΔ` is a legal separator
+only when `F₂ ⊆ F₁` and `R₂ ⊆ R₁`.  That is not a formalization artifact: a separator built out of
+`Δ` itself is exactly what the shared-vocabulary condition forbids, and forbidding it is what makes
+interpolation a theorem rather than a triviality.
+
+**Verdict.**  Candidate 1's *semantic* content is confirmed on both sides — `Γ` unrestricted, `Δ`
+existential, separator universal is the right asymmetry, and it matches the source theorem's own
+shape (arbitrary antecedent, universal consequent).  But it is **provable only where the separator
+carries no symbol condition**.  That is precisely the line between the two source theorems:
+
+* **Theorem 4.6 (relative preservation)** demands an existential `θ` with `σ ⊨ φ ↔ θ` and imposes
+  **no symbol condition at all**.  Instantiating `F`, `R` at the full symbol sets discharges `hΔF`
+  and `hΔR` outright, so **both** C7 gates are available and the candidate-1 side-bound suite can be
+  built as planned.
+* **Theorem 4.5 (interpolation)** demands the shared-occurrence condition, and the left C7 gate is
+  blocked under it.  Candidate 2 (separator-only closure with both sides unrestricted) is thereby
+  **refuted**: it is the left gate that fails, not merely the `genEx` construction.
+
+**Consequence for the unit order (supersedes v2):** #15 discharges **D7's relative endpoint first**,
+on candidate 1 with the full-symbol instantiation, and only then returns to interpolation — where
+the open question is narrowed to a single one: *is there a shared-vocabulary universal separator for
+the left C7 step, or does Malitz 4.5 need a different architecture (a `∀`-consequence/embedding
+argument) rather than a restricted paired family?*  That question is now the sole remaining D4
+unknown, and it is a question about candidate 3.
 
 ### D5 — relationalization is a stop/go gate, NEGATIVE for interpolation [FROZEN]
 
@@ -294,13 +332,16 @@ theorem as the case `σ = ⊤`:
 1. `Lomega1omega/QuantifierSemantics.lean` — the embedding-transfer gate (universal ⇒ preserved
    under substructures, existential ⇒ under extensions), the **first** acceptance gate, and the one
    piece the project does not already have in any form;
-2. **stop/go — the two C7 toy gates only** (D4): the left-coordinate universal-separator
-   abstraction (expected to fail) and the right-coordinate `genAll` abstraction (new machinery),
-   before C1 and before any family assembly;
-3. the restricted side bounds and one-sided closures;
-4. the paired family and consistency property;
-5. `malitz_interpolation` for relational languages (D6);
-6. `malitz_relative_preservation` (mod σ) + the absolute and dual corollaries (D7);
+2. **stop/go — the two C7 gates only** (D4): `genAll` plus the right-coordinate abstraction, and
+   the left-coordinate finite-existential-side conjunction, before C1 and before any family
+   assembly.  **DONE**, verdict in D4;
+3. the restricted side bounds and one-sided closures, on candidate 1 at the **full** symbol
+   budget (the instantiation D4's verdict permits);
+4. the paired family and consistency property, likewise;
+5. `malitz_relative_preservation` (mod σ) + the absolute and dual corollaries (D7) — **now first**,
+   since it is the endpoint whose separator carries no symbol condition;
+6. `malitz_interpolation` for relational languages (D6) — conditional on resolving D4's remaining
+   question about a shared-vocabulary left C7 step;
 7. the arbitrary-signature preservation wrapper — **candidate only**, and only if all four
    obligations of D5's square close;
 8. facade, blueprint, guards, docs, release.
