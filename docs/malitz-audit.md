@@ -1,4 +1,4 @@
-# Malitz universal interpolation and relative preservation (#15): statement-and-interface audit (v5)
+# Malitz universal interpolation and relative preservation (#15): statement-and-interface audit (v6)
 
 Pre-implementation audit for issue #15, in the pattern of `docs/craig-audit.md`,
 `docs/wellordering-audit.md`, `docs/lopez-escobar-hard-audit.md`, and `docs/lyndon-audit.md`.
@@ -11,6 +11,11 @@ arXiv 2209.05615), §2 for the `∀n`/`∃n` hierarchy and §4.2.2 for Theorems 
 languages*, Duke Math. J. 36 (1969) 621–630) and note that the relative form appears in Keisler
 [Kei71].  **Malitz 1969 and Keisler 1971 themselves are not verified here** — see D1 for exactly
 what that costs.
+
+Status: **v6, 2026-07-26.**  Amends v5 with the next session's deliverable contract (§D8: the
+source-reconstruction document must pin the fresh-witness invariant *and* the root residue-removal
+mechanism; no C0–C6 work until both are explicit) and records in §1 exactly what the
+Harrison-Trainor–Kretschmer paper does and does not supply.
 
 Status: **v5, 2026-07-26.**  §D4 is resolved *for the existing C7 strategies* by the Unit-2 spike;
 §D4.5 records the root-to-embedding consumer gate, which **fails**, so the source unit order is
@@ -50,6 +55,18 @@ occurring in `θ` occurs in both `φ` and `ψ`**."
 
 Note the symbol condition is the plain **Craig** one — shared occurrence, *not* polarity-refined.
 #15 is therefore orthogonal to #14: it refines the *quantifier* shape, not the *sign*.
+
+**What this source is, and is not, for #15.**  The paper's own theorem is that infinitary logic has
+no expressive efficiency over finitary logic — roughly, a finitary formula equivalent modulo a
+finitary theory to an infinitary formula with `n` quantifier alternations is already equivalent to a
+finitary formula with `n` alternations.  Theorems 4.5 and 4.6 enter it as **cited ingredients**, not
+as results it proves.  So the paper is authoritative for exactly three things: it fixes the
+statements and their scopes (function-free for 4.5, arbitrary signature for 4.6); it confirms the
+`∀1`/`∃1` counting we formalized in Unit 0, in which infinite conjunctions and disjunctions are not
+quantifiers; and it fixes the dependency direction, presenting 4.6 as a consequence of 4.5.  It
+supplies **no proof**, hence nothing about the candidate-3 construction — for the shared-vocabulary
+C7 architecture the sources are Malitz's original, Keisler's presentation, or a new proof tailored
+to this repository (§D8).
 
 **Theorem 4.6 (Malitz [Mal69]; relative version in Keisler [Kei71]), which "applies to any
 signature `τ`".**  For sentences `φ, σ` of `L_ω₁ω`, TFAE:
@@ -403,6 +420,18 @@ not reproduce the proof.  Read Malitz [Mal69] itself, or Keisler's Malitz-interp
 dissertation, which may expose the original construction.  Until one of these is read, every claim
 below about "the proof" is a hypothesis.
 
+**The next session's only deliverable is a source-reconstruction document**, and its decisive content
+is **not a broad proof summary**.  Two things must come out explicit, and nothing downstream starts
+until both do:
+
+1. **the exact invariant maintained at the fresh-witness step** — what the proof carries across the
+   step that our `MalitzInsepAt` could not; and
+2. **the mechanism that removes all nonshared residue at the root** — how the final object is forced
+   into the shared vocabulary.
+
+These are the two halves of the acceptance question below, in the order the proof must answer them.
+A reconstruction that describes the argument's shape without pinning both is not a passing gate.
+
 **Task 2 — freeze the replacement for `MalitzInsepAt`, in full, before coding.**  Four items, none
 of them optional:
 
@@ -413,7 +442,8 @@ of them optional:
 4. the **root-to-interpolant equation** — how a support-`∅` certificate becomes the interpolant.
 
 **Task 3 — the left-C7 toy theorem must compile before any of C0–C6 is ported.**  This is the same
-discipline that made Unit 2 informative: the known-hard step first, in isolation.
+discipline that made Unit 2 informative: the known-hard step first, in isolation.  **No C0–C6 work
+begins while either half of Task 1's deliverable is still implicit.**
 
 **Task 4 — an explicit abandonment clause.**  If the source proof turns out to run on universal
 consequences, diagrams, embeddings, or tableaux rather than a two-sided inseparability family, then
