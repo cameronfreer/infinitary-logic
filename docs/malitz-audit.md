@@ -1,15 +1,25 @@
-# Malitz universal interpolation and relative preservation (#15): statement-and-interface audit (v1)
+# Malitz universal interpolation and relative preservation (#15): statement-and-interface audit (v2, FROZEN)
 
 Pre-implementation audit for issue #15, in the pattern of `docs/craig-audit.md`,
 `docs/wellordering-audit.md`, `docs/lopez-escobar-hard-audit.md`, and `docs/lyndon-audit.md`.
 **No Lean before the D-points are signed off.**
 
-Primary source read directly: *Infinitary Logic Has No Expressive Efficiency Over Finitary Logic*
-(the "expressive-efficiency notes", arXiv 2209.05615), §2 for the `∀n`/`∃n` hierarchy and §4.2.2 for
-Theorems 4.5–4.7, checked 2026-07-26.  These state and attribute Malitz's results
-([Mal69] = *Universal classes in infinitary languages*, Duke Math. J. 36 (1969) 621–630) and note
-that the relative form appears in Keisler [Kei71].  **Malitz 1969 and Keisler 1971 themselves are
-not verified here** — see D1 for exactly what that costs.
+Primary source read directly: Harrison-Trainor and Kretschmer, *Infinitary Logic Has No Expressive
+Efficiency Over Finitary Logic* ([notes](https://homepages.math.uic.edu/~mht/papers/expressive-efficiency.pdf),
+arXiv 2209.05615), §2 for the `∀n`/`∃n` hierarchy and §4.2.2 for Theorems 4.5–4.7, checked
+2026-07-26.  These state and attribute Malitz's results ([Mal69] = *Universal classes in infinitary
+languages*, Duke Math. J. 36 (1969) 621–630) and note that the relative form appears in Keisler
+[Kei71].  **Malitz 1969 and Keisler 1971 themselves are not verified here** — see D1 for exactly
+what that costs.
+
+Status: **v2, FROZEN per review 2026-07-26.**  Changes from v1, all load-bearing: the preservation
+statements are aligned with the repository's **nonempty** semantics and `EquivModulo` is pinned
+(§D1); the Unit-1 acceptance gate is **valuation-aware**, over bounded formulas and tuples, with
+sentence preservation a corollary (§D2); the Unit-2 candidate invariants are corrected — "left
+universal" is **impossible**, since the left root is the arbitrary antecedent — and the decisive
+spike becomes the **two-sided C7 gate**, before C1 and before any family assembly (§D4); and the
+Unit-7 wrapper gate is strengthened to a four-obligation square, with the wrapper described as a
+**candidate** deliverable rather than an expected consequence (§D5).
 
 ## 1. Source statements (verified against the notes)
 
@@ -58,16 +68,25 @@ signature `τ`".**  For sentences `φ, σ` of `L_ω₁ω`, TFAE:
 
 ## 2. Decision points
 
-### D1 — freeze the statements before any Lean predicate [proposed]
+### D1 — freeze the statements before any Lean predicate [FROZEN]
 
-Two endpoints, in this order (D7):
+Two endpoints, in this order (D7), stated over the repository's model class — `Type`-level carriers
+that are **nonempty**, matching `Sentenceω.Entails`, which quantifies over `[Nonempty M]`.  Getting
+this wrong would have the two sides of the equivalence range over different model classes:
 
 ```lean
+/-- Equivalence of two sentences in all (nonempty) models of a background sentence. -/
+def EquivModulo (σ φ θ : L.Sentenceω) : Prop :=
+  ∀ (M : Type) [L.Structure M] [Nonempty M],
+    Sentenceω.Realize σ M → (Sentenceω.Realize φ M ↔ Sentenceω.Realize θ M)
+
+/-- Preservation upward along substructure embeddings, among models of `σ`. -/
+def PreservedUnderExtensions (σ φ : L.Sentenceω) : Prop :=
+  ∀ (A B : Type) [L.Structure A] [Nonempty A] [L.Structure B] [Nonempty B] (e : A ↪[L] B),
+    Sentenceω.Realize σ A → Sentenceω.Realize σ B → Sentenceω.Realize φ A → Sentenceω.Realize φ B
+
 theorem malitz_relative_preservation (σ φ : L.Sentenceω) :
-    (∀ (A B : Type) [L.Structure A] [L.Structure B] (e : A ↪[L] B),
-        Sentenceω.Realize σ A → Sentenceω.Realize σ B → Sentenceω.Realize φ A →
-        Sentenceω.Realize φ B)
-      ↔ ∃ θ : L.Sentenceω, IsExistential θ ∧ EquivModulo σ φ θ
+    PreservedUnderExtensions σ φ ↔ ∃ θ : L.Sentenceω, IsExistential θ ∧ EquivModulo σ φ θ
 
 theorem malitz_interpolation [L.IsRelational] (φ ψ : L.Sentenceω)
     (hψ : IsUniversal ψ) (h : Sentenceω.Entails φ ψ) :
@@ -79,50 +98,80 @@ theorem malitz_interpolation [L.IsRelational] (φ ψ : L.Sentenceω)
 
 Naming discipline, learned from #14's D1: because Malitz 1969 and Keisler 1971 are **not** verified
 here, every statement, docstring, blueprint node, and release note must attribute these as *"Malitz's
-interpolation theorem / relative preservation theorem, as stated in the expressive-efficiency notes,
-Theorems 4.5/4.6"* — not as "Malitz 1969, Theorem N".  If the primary sources are obtained later, the
-attribution can be sharpened; the mathematical content does not depend on it.  Also to freeze: `A ⊂ B`
-in 4.6(1) is **substructure** (`↪[L]`, not elementary), and `σ ⊨ φ ↔ θ` is equivalence *in all models
-of `σ`*, which needs its own definition (`EquivModulo`).
+interpolation / relative preservation theorem, as stated in Harrison-Trainor–Kretschmer, Theorems
+4.5/4.6"* — not as "Malitz 1969, Theorem N".  If the primary sources are obtained later the
+attribution can be sharpened; the mathematical content does not depend on it.  Also frozen: `A ⊂ B`
+in 4.6(1) is **substructure** (`↪[L]`, not elementary), and `σ ⊨ φ ↔ θ` is `EquivModulo` above.
 
-### D2 — the syntax classes: signed quantifier traversal, in a neutral module [proposed]
+### D2 — the syntax classes and the valuation-aware semantic gate [FROZEN]
 
 The source's `∀1`/`∃1` translate directly into the #14 pattern.  In our syntax the only primitive
 quantifier is `all`, with `ex φ = (φ.not.all).not`, so an **existential quantifier is exactly an
-`all` occurring negatively**.  Hence, with a sign-tracked traversal counting `all`-occurrences:
+`all` occurring negatively**.  One `Bool`-parameterised recursion carries both classes, so the
+mutual dependence (negation exchanges them) is definitional rather than an extra induction:
 
 ```lean
-def quantifiersSigned : Bool → BoundedFormulaω L α n → Prop   -- "some `all` occurs with this sign"
-IsUniversal φ   := ¬ quantifiersSigned false φ                -- no existential quantifier
-IsExistential φ := ¬ quantifiersSigned true φ                 -- no universal quantifier
+/-- `universalSigned true` is "is universal", `universalSigned false` is "is existential". -/
+def universalSigned : Bool → L.BoundedFormulaω α n → Prop
+  | _, .falsum    => True
+  | _, .equal _ _ => True
+  | _, .rel _ _   => True
+  | s, .imp φ ψ   => universalSigned (!s) φ ∧ universalSigned s ψ   -- antecedent flips
+  | s, .all φ     => s = true ∧ universalSigned s φ                 -- a `∀` is universal only
+  | s, .iSup φs   => ∀ i, universalSigned s (φs i)                  -- not counted (clause 3)
+  | s, .iInf φs   => ∀ i, universalSigned s (φs i)
+
+abbrev IsUniversal   (φ) := universalSigned true φ
+abbrev IsExistential (φ) := universalSigned false φ
 ```
 
-This matches all five source clauses: atomic ⇒ both classes (no `all` at all); negation exchanges
-them (clause 2 — the sign flips); `iInf`/`iSup` preserve them and are *not* counted (clause 3 —
-exactly our traversal, which recurses into components without touching the sign); `all` at positive
-sign is universal, at negative sign existential (clauses 4/5 at `n = 1`).  **No negation-normal form
-anywhere**, as in #14.
+This matches all five source clauses: atomic ⇒ both classes; negation exchanges them (clause 2, via
+the `imp` flip and `not = imp _ ⊥`); `iInf`/`iSup` preserve them and are **not** counted (clause 3);
+`all` is universal-only (clauses 4/5 at `n = 1`).  **No negation-normal form anywhere**, as in #14.
 
-Placement, per the review and issue #15's own design note: a **neutral** module
-`Lomega1omega/QuantifierClass.lean` (syntax) + `Lomega1omega/QuantifierSemantics.lean`
+**Unit-0 acceptance equations** (each must be a stated lemma, not left to unfolding):
+
+```lean
+IsUniversal (φ.imp ψ)   ↔ IsExistential φ ∧ IsUniversal ψ
+IsExistential (φ.imp ψ) ↔ IsUniversal φ ∧ IsExistential ψ
+IsUniversal φ.not       ↔ IsExistential φ
+IsExistential φ.not     ↔ IsUniversal φ
+IsUniversal φ.all       ↔ IsUniversal φ
+¬ IsExistential φ.all
+```
+
+plus the `iInf`/`iSup` componentwise equations, `⊤`/`⊥`/atoms in both classes, and the
+substitution/`instConst`/`relabel`/`castLE` calculus (the quantifier analogue of Unit 0 in #14).
+
+**Unit-1 acceptance gate — valuation-aware.**  The gate must be stated for **bounded** formulas and
+tuples, transported along the embedding, with sentence preservation a corollary rather than the
+primitive:
+
+```lean
+theorem realize_of_embedding_signed (e : A ↪[L] B) :
+    ∀ {n : ℕ} (φ : L.BoundedFormulaω α n) (v : α → A) (xs : Fin n → A),
+      (IsUniversal φ   → φ.Realize (e ∘ v) (e ∘ xs) → φ.Realize v xs) ∧
+      (IsExistential φ → φ.Realize v xs → φ.Realize (e ∘ v) (e ∘ xs))
+```
+
+One induction, both directions at once (the `imp` case needs the other direction, exactly as #14's
+monotonicity gate needed the swapped structure pair — here "swap the structures" becomes "swap the
+direction of transport").  The `all` case is where the two directions differ: downward transport
+instantiates at `e x`, upward transport is **blocked** for a positive `∀`, which is precisely why
+`IsExistential (φ.all)` is false.  Corollaries: universal sentences pass to substructures,
+existential sentences to extensions, both with the `[Nonempty]` hypotheses of D1.
+
+**What exists and what must be built** (audited, not assumed): the project has
+`BoundedFormulaω.realize_equiv` (isomorphism transport) and `realize_congr_symbolsIn` (same carrier,
+two structures) — and **nothing for embeddings**.  So Unit 1 is genuinely new work.
+
+Placement, per the review and issue #15's own design note: neutral modules
+`Lomega1omega/QuantifierClass.lean` (syntax) and `Lomega1omega/QuantifierSemantics.lean`
 (preservation), beside `Polarity.lean`/`PolaritySemantics.lean`, depending only on `Syntax`/
 `Semantics` — reusable by #16 (end extensions) and any future preservation theorem, and *not* inside
 the interpolation development.
 
-**What exists and what must be built** (audited, not assumed): the project has
-`BoundedFormulaω.realize_equiv` (isomorphism transport) and `realize_congr_symbolsIn` (same carrier,
-two structures) — and **nothing for embeddings**.  So milestone 2 owes a genuinely new lemma, the
-quantifier analogue of #14's `realize_mono_of_signed`:
-
-```lean
--- universal sentences pass to substructures; existential ones to extensions
-realize_of_embedding_signed (e : A ↪[L] B) (φ) : (IsUniversal φ → Realize φ B → Realize φ A) ∧ …
-```
-proved by one induction with the **embedding fixed and the formula generalized**, the `imp` case
-appealing to the dual direction — structurally the same trick as #14's ordered-pair generalization,
-with "swap the structures" replaced by "swap the direction of transport".
-
-### D3 — equality and function symbols, audited separately [proposed]
+### D3 — equality and function symbols, audited separately [FROZEN]
 
 The source's scope for 4.5 is function-free, so **nothing about function symbols is inherited**.
 Three separate questions, to be answered independently rather than by analogy with #14:
@@ -138,32 +187,51 @@ Three separate questions, to be answered independently rather than by analogy wi
    languages is D5's business, and the answer differs for the two theorems — which is exactly what
    the source's asymmetry (4.5 function-free, 4.6 any `τ`) predicts.
 
-### D4 — does only the separator class change?  [**to be verified, not assumed**]
+### D4 — does only the separator class change?  [**to be decided by the two-sided C7 spike**]
 
-The hope, by analogy with #14: restrict the separating sentences to **universal** common-symbol
-sentences and leave the consistency-property/Henkin kernel untouched.  Two things must be checked
-*before* any assembly, and one of them is a genuine risk:
+The hope, by analogy with #14: restrict the *separating* sentences to **universal** common-symbol
+sentences and leave the consistency-property/Henkin kernel untouched.  What the audit can settle now,
+and what it cannot:
 
-* **Good sign — the class is directional, exactly like polarity.**  `IsUniversal` is *not* closed
-  under subformulas, but it is closed under the **sign-tracked** ones: if `φ.imp ψ` is universal then
-  `ψ` is universal and `φ` is *existential*, so `φ.not` is universal.  That is precisely the shape of
-  #14's `sentBndPol_imp_neg_left`/`sentBndPol_imp_right`, so the C1/C1′/C2/C3′/C4′ fields should port
-  with the directional discipline already worked out — negation **exchanges** `IsUniversal` and
-  `IsExistential`, and the right coordinate is the conjugate.
-* **Genuine risk — the existential witness rule.**  The CP's `neg_all_witness` field fires on
-  `φ.all.not ∈ S` and adds `(instConst c φ).not`.  But `φ.all.not` is *existential*, not universal:
-  a side restricted to universal sentences cannot contain it, and dually a side restricted to
-  existential sentences is where witnesses are needed.  So the universal restriction is **not**
-  symmetric between the two coordinates, and the correct invariant is likely "left side universal,
-  right side existential" (or a restriction imposed only on the *separator*, never on the sides).
-  **Deciding which of those three shapes is correct is the Unit-2 stop/go gate**, and it must be
-  settled by writing the C1 + witness fields for a candidate invariant *before* the 16-field
-  assembly, exactly as #14's D7 did.
+**Settled — the class is directional, exactly like polarity.**  `IsUniversal` is not closed under
+subformulas but *is* closed under the **sign-tracked** ones: from `φ.imp ψ` universal one gets `ψ`
+universal and `φ` **existential**, hence `φ.not` universal.  That is #14's
+`sentBndPol_imp_neg_left`/`_imp_right` discipline verbatim, so if a side restriction is used at all,
+C1/C1′/C2/C3′/C4′ should port with the directional rules already worked out.
 
-Until that gate passes, the claim "only the separator class changes" is a **hypothesis**, not a
-finding.  #14's experience is evidence for it, not proof.
+**Settled — "left universal" is impossible.**  In the interpolation argument the left root *is* the
+arbitrary antecedent `φ`, on which the theorem assumes nothing; only the right root `ψ` is universal
+(and enters as `ψ.not`, hence existential).  So `Γ` can never be universally restricted.  The viable
+candidate invariants are therefore:
 
-### D5 — relationalization is a stop/go gate, and it looks NEGATIVE for interpolation [proposed]
+1. `Γ` **unrestricted**, `Δ` existential, separator universal;
+2. a restriction on the **separator only**, with both sides unrestricted;
+3. a richer asymmetric or two-class invariant (e.g. tracking a universal *and* an existential bound
+   per coordinate).
+
+**Not settled — and this is the decisive gate.**  The obstruction is sharper than v1 said, and it
+lives in the **fresh-witness (C7) machinery**, not in C1:
+
+* the existing **left**-coordinate C7 abstracts the separator with `genEx` (`insepAt_witness_of_
+  insepAt_genEx`, `lyndonInsepAt_witness_of_genEx`): it replaces `σ` by `∃x σ(x)`, which turns a
+  **universal separator into an existential one** — i.e. it destroys exactly the property the
+  separator class is supposed to have;
+* the **right**-coordinate direction may instead admit a *new* **universal** abstraction using a
+  `genAll` (∀-generalisation of a fresh constant), because the freshness hypothesis is available on
+  the opposite side.  The project has `genEx` (`ConstantElimination.lean`) but **no `genAll`**, so
+  this is new work: `genAll j ρ := ((ρ.abstractConst j).relabel …).all`, with its own realization
+  lemma and support/occurrence calculus.
+
+**Unit 2 is therefore the two C7 toy gates and nothing else** — prove (or refute) the left-coordinate
+universal-separator abstraction and the right-coordinate `genAll` abstraction, *before* C1 and before
+any family assembly.  If the left gate fails, that failure is precisely the proof that candidate 2
+(separator-only closure) cannot work, and it selects candidate 1 or 3 on evidence rather than by
+analogy.  Only after that does the side-bound suite (Unit 3) have a determinate shape.
+
+Until this gate reports, "only the separator class changes" remains a **hypothesis**; #14's
+experience is evidence for it, not proof.
+
+### D5 — relationalization is a stop/go gate, NEGATIVE for interpolation [FROZEN]
 
 This is the audit's main new finding, and it must not be papered over by #14's success.
 
@@ -178,25 +246,37 @@ Malitz interpolation theorem**, and do not spend a unit attempting the wrapper.
 
 **Back-translation, by contrast, preserves the quantifier class.**  `G_f(x⃗, y) ↦ f(x⃗) = y` is
 quantifier-free, and back-translation is otherwise structural, so it maps `∃1` to `∃1` and `∀1` to
-`∀1` (the signed twin of #14's Gate 3, and provable the same way).  That asymmetry is exactly what
-the source's Theorem 4.6 "applies to any signature" needs: a *preservation* statement can be moved
-to an arbitrary signature by relationalizing the **semantic** side (substructures and extensions
-correspond under graph expansion) and back-translating the **syntactic** witness, whose existential
-form survives.  So:
+`∀1` (the signed twin of #14's Gate 3, provable the same way).  That asymmetry is what the source's
+"applies to any signature `τ`" needs for Theorem 4.6.
 
-* arbitrary-signature **preservation** (Theorem 4.6): plausibly reachable — gate it on the
-  back-translation quantifier-class lemma plus a substructure/extension correspondence for graph
-  expansions;
-* arbitrary-signature **interpolation** (Theorem 4.5): expected **unreachable** by this route, and
-  not claimed.
+**But quantifier-class preservation is necessary, not sufficient.**  Before any arbitrary-signature
+*preservation* result is promised, four further obligations must be audited **and compile-gated**,
+because the wrapper has to move a *semantic* hypothesis (preservation along embeddings) between the
+two languages, not just a syntactic witness:
 
-### D6 — relational core first [proposed]
+1. **Reconstruction of the function structure** — from a graph-language model satisfying `Ax(F)`,
+   recover an `L`-structure (this exists: `reconstructStructure`, used by Craig), and know exactly
+   which `F` is needed for the sentences at hand;
+2. **Correspondence of substructures/embeddings** through graph expansion *and* reconstruction: an
+   `L`-embedding `A ↪[L] B` must give a graph-language embedding of the expansions, and conversely a
+   graph-language embedding between models of `Ax(F)` must reconstruct to an `L`-embedding.  Neither
+   direction exists in the project today;
+3. **Transport of the background theory** — both `A ⊨ σ` and `B ⊨ σ` must move to the graph side and
+   back, for the *same* `σʳᵉˡ`, which interacts with obligation 1's choice of `F`;
+4. **Transport of the existential witness sentence** back to `L`, with its `IsExistential` shape
+   intact (this is the benign direction, by the back-translation class lemma).
+
+Until that square closes, the arbitrary-signature preservation wrapper is a **candidate deliverable,
+not an expected consequence**, and it is scheduled as Unit 7 *conditional* on the gate.  The
+arbitrary-signature **interpolation** statement remains not claimed at all (see above).
+
+### D6 — relational core first [FROZEN]
 
 Prove `malitz_interpolation` for `[L.IsRelational]` (the source's own scope) and only then consider
 any wrapper, and only for the preservation endpoint (D5).  No arbitrary-language interpolation
 statement is to be written, even as a `sorry`-free-but-hypothetical shape.
 
-### D7 — relative first, absolute derived [proposed]
+### D7 — relative first, absolute derived [FROZEN]
 
 State `malitz_relative_preservation` in the **mod-σ** form and derive the absolute Łoś–Tarski-style
 theorem as the case `σ = ⊤`:
@@ -214,13 +294,15 @@ theorem as the case `σ = ⊤`:
 1. `Lomega1omega/QuantifierSemantics.lean` — the embedding-transfer gate (universal ⇒ preserved
    under substructures, existential ⇒ under extensions), the **first** acceptance gate, and the one
    piece the project does not already have in any form;
-2. **stop/go**: the candidate universal-restricted separator/side invariant, with the C1 field and
-   the `neg_all_witness` field only (D4);
+2. **stop/go — the two C7 toy gates only** (D4): the left-coordinate universal-separator
+   abstraction (expected to fail) and the right-coordinate `genAll` abstraction (new machinery),
+   before C1 and before any family assembly;
 3. the restricted side bounds and one-sided closures;
 4. the paired family and consistency property;
 5. `malitz_interpolation` for relational languages (D6);
 6. `malitz_relative_preservation` (mod σ) + the absolute and dual corollaries (D7);
-7. the arbitrary-signature preservation wrapper — **only** if D5's back-translation gate passes;
+7. the arbitrary-signature preservation wrapper — **candidate only**, and only if all four
+   obligations of D5's square close;
 8. facade, blueprint, guards, docs, release.
 
 ## 3. Non-goals (recorded to prevent scope creep)
