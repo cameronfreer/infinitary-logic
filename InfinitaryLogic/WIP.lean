@@ -6,6 +6,7 @@ import InfinitaryLogic.Methods.Interpolation.ConstantElimination
 import InfinitaryLogic.Methods.Interpolation.Inseparability
 import InfinitaryLogic.Methods.Interpolation.ConstantGeneralization
 import InfinitaryLogic.Methods.Interpolation.MalitzC7Spike
+import InfinitaryLogic.Methods.Interpolation.FefermanProjection
 import InfinitaryLogic.Methods.Interpolation.QuantifierRoundTrip
 import InfinitaryLogic.Methods.Interpolation.RootGate
 import InfinitaryLogic.Methods.Henkin.CountableCompletion.GeneratedUniverse
