@@ -3,8 +3,8 @@ Copyright (c) 2026 Cameron Freer. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
-import InfinitaryLogic.Methods.Interpolation.LyndonPairedCP
 import InfinitaryLogic.Methods.Interpolation.RootGate
+import InfinitaryLogic.Methods.PolarityCalculus
 
 /-!
 # The signed root gate (issue #14, Unit 5, commit 1)
@@ -17,6 +17,10 @@ relation bounds included.
 No new semantics: the entailment transport is the existing `entails_reduct_of_entails_map`, and the
 signed bound is the Unit-0 calculus lemma `relationsInSigned_stripConsts`.  Nothing here inducts
 over formulas.
+
+The file is deliberately **neutral**: it imports only the unsigned root gate and the signed
+occurrence calculus, so the paired/countable-completion machinery enters the Lyndon development
+only at the countable core (`LyndonRelational.lean`), which is its first semantic consumer.
 -/
 
 namespace FirstOrder.Language

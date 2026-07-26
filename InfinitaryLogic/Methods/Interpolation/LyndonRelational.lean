@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.Interpolation.LyndonRootGate
+import InfinitaryLogic.Methods.Interpolation.LyndonPairedCP
 import InfinitaryLogic.Methods.Interpolation.CraigRelational
 
 /-!
