@@ -1,4 +1,4 @@
-# Malitz universal interpolation and relative preservation (#15): statement-and-interface audit (v3)
+# Malitz universal interpolation and relative preservation (#15): statement-and-interface audit (v4)
 
 Pre-implementation audit for issue #15, in the pattern of `docs/craig-audit.md`,
 `docs/wellordering-audit.md`, `docs/lopez-escobar-hard-audit.md`, and `docs/lyndon-audit.md`.
@@ -12,7 +12,10 @@ languages*, Duke Math. J. 36 (1969) 621–630) and note that the relative form a
 [Kei71].  **Malitz 1969 and Keisler 1971 themselves are not verified here** — see D1 for exactly
 what that costs.
 
-Status: **v3, 2026-07-26** — §D4 is now RESOLVED by the Unit-2 spike (see below); all other D-points remain frozen as in v2.
+Status: **v4, 2026-07-26.**  §D4 is resolved *for the existing C7 strategies* by the Unit-2 spike;
+the new §D4.5 records the root-to-embedding consumer gate, which **fails**; the source unit order is
+therefore restored, with candidate 3 as the gating research unit.  All other D-points remain frozen
+as in v2.
 
 Status (v2): **FROZEN per review 2026-07-26.**  Changes from v1, all load-bearing: the preservation
 statements are aligned with the repository's **nonempty** semantics and `EquivModulo` is pinned
@@ -189,7 +192,7 @@ Three separate questions, to be answered independently rather than by analogy wi
    languages is D5's business, and the answer differs for the two theorems — which is exactly what
    the source's asymmetry (4.5 function-free, 4.6 any `τ`) predicts.
 
-### D4 — does only the separator class change?  [**RESOLVED by the two-sided C7 spike**]
+### D4 — does only the separator class change?  [**resolved for the existing C7 strategies**; candidate 3 open]
 
 The hope, by analogy with #14: restrict the *separating* sentences to **universal** common-symbol
 sentences and leave the consistency-property/Henkin kernel untouched.
@@ -249,25 +252,88 @@ only when `F₂ ⊆ F₁` and `R₂ ⊆ R₁`.  That is not a formalization arti
 `Δ` itself is exactly what the shared-vocabulary condition forbids, and forbidding it is what makes
 interpolation a theorem rather than a triviality.
 
-**Verdict.**  Candidate 1's *semantic* content is confirmed on both sides — `Γ` unrestricted, `Δ`
-existential, separator universal is the right asymmetry, and it matches the source theorem's own
-shape (arbitrary antecedent, universal consequent).  But it is **provable only where the separator
-carries no symbol condition**.  That is precisely the line between the two source theorems:
+**Verdict, at its actual scope.**  Candidate 1's *semantic* content is confirmed on both sides —
+`Γ` unrestricted, `Δ` existential, separator universal is the right asymmetry, and it matches the
+source theorem's own shape (arbitrary antecedent, universal consequent).  What is settled is:
 
-* **Theorem 4.6 (relative preservation)** demands an existential `θ` with `σ ⊨ φ ↔ θ` and imposes
-  **no symbol condition at all**.  Instantiating `F`, `R` at the full symbol sets discharges `hΔF`
-  and `hΔR` outright, so **both** C7 gates are available and the candidate-1 side-bound suite can be
-  built as planned.
-* **Theorem 4.5 (interpolation)** demands the shared-occurrence condition, and the left C7 gate is
-  blocked under it.  Candidate 2 (separator-only closure with both sides unrestricted) is thereby
-  **refuted**: it is the left gate that fails, not merely the `genEx` construction.
+* the **right** C7 gate holds unconditionally, and `genAll` is permanent, architecture-independent
+  infrastructure;
+* the **left** C7 gate holds only when the separator's symbol budget already contains `Δ`;
+* consequently **candidate 2 is ruled out for this paired-family closure argument** — it is the
+  gate, not merely the `genEx` construction, that fails.  This is not a mathematical refutation of a
+  separator-only restriction in every possible architecture.
 
-**Consequence for the unit order (supersedes v2):** #15 discharges **D7's relative endpoint first**,
-on candidate 1 with the full-symbol instantiation, and only then returns to interpolation — where
-the open question is narrowed to a single one: *is there a shared-vocabulary universal separator for
-the left C7 step, or does Malitz 4.5 need a different architecture (a `∀`-consequence/embedding
-argument) rather than a restricted paired family?*  That question is now the sole remaining D4
-unknown, and it is a question about candidate 3.
+D4 is therefore resolved **for the existing C7 strategies**.  Candidate 3 — a richer asymmetric or
+two-class invariant, or a different architecture altogether — is untouched by the spike and remains
+the live option for Theorem 4.5.
+
+Whether the residual `hΔF`/`hΔR` obligation can be met by a *different consumer* rather than a
+different invariant is the subject of §D4.5.
+
+### D4.5 — the root-to-embedding consumer gate [**FAILS; source order restored**]
+
+Unit 2 established that candidate 1 closes when `Δ` already lies inside the separator's symbol
+budget.  Before any closure suite is built on that, the audit owes an account of a *consumer* that
+supplies that budget without destroying the theorem's content.  Two things make this non-optional:
+
+* widening `F`, `R` to the full symbol sets makes the C7 bounds trivial but removes **all**
+  interpolation content, so it is not by itself a justification for anything;
+* the repository's Henkin/quotient endpoint produces **one** model.  `exists_lyndon_paired_model`
+  (and its Craig twin) has the shape `∃ (M : Type) (_ : L[[ℕ]].Structure M) (_ : Nonempty M),
+  Realize rL M ∧ Realize rR M`.  But failure of `PreservedUnderExtensions σ φ` needs **two**
+  structures and an embedding.
+
+**The acceptance statement** (the consumer obligation, recorded verbatim so it cannot be quietly
+weakened):
+
+```lean
+theorem exists_extension_counterexample_of_no_existential_equiv
+    (hno : ¬ ∃ θ, IsExistential θ ∧ EquivModulo σ φ θ) :
+    ∃ A B (_ : L.Structure A) (_ : L.Structure B)
+      (_ : Nonempty A) (_ : Nonempty B) (e : A ↪[L] B),
+      Realize σ A ∧ Realize σ B ∧ Realize φ A ∧ ¬ Realize φ B
+```
+
+**The five questions, answered for the only encoding the machinery admits.**
+
+1. *Language.*  Since completion yields a single model, the pair must be **tagged inside it**:
+   `L⁺ := L` plus one fresh unary relation symbol `U`.  No two-model or amalgamation endpoint exists
+   anywhere in the tree.
+2. *Roots.*  `rL := Ax(U) ∧ (σ ∧ φ)^U` — the `U`-relativization of the substructure's theory,
+   together with the axioms making `U` carve out an `L`-substructure — and `rR := σ ∧ ¬φ`.
+3. *Where `A`, `B`, `e` live.*  `B` is the produced model's `L`-reduct, `A` is the substructure
+   carried by `U^M`, and `e` is `Substructure.subtype`.
+4. *One tagged model or two quotient models.*  **One tagged model.**  The quotient term model is
+   built once; the pair is read off it.
+5. *Which theorem extracts the embedding.*  **None exists.**  It would require, all new: the
+   one-predicate expansion; a relativization operator `φ ↦ φ^U` on `BoundedFormulaω` with its
+   semantic lemma (`Realize (φ^U) M ↔ Realize φ (U^M)`); the closure axioms `Ax(U)` — nonemptiness
+   only in the relational case, but `∀x⃗ ∃y G_f(x⃗,y)`-style totality otherwise, which is `∀2`, the
+   same obstruction D5 found; and the extraction theorem itself.
+
+**Why the square does not close — and it is not the missing machinery.**  The encoding above
+*does* supply the vocabulary hypothesis: with the relativized root on the `Γ` coordinate,
+`F₂ = L ⊆ F₁ = L ∪ {U}`, so `hΔF`/`hΔR` hold, and the budget `F₁ ∩ F₂ = L` is a genuine restriction
+(it is exactly "the separator does not mention `U`"), not a full budget.  But candidate 1 also needs
+`hΔex`: **`Δ` existential**.  In this encoding the `Δ` root is `σ ∧ ¬φ` for arbitrary `σ`, `φ` —
+whichever way the two roots are assigned to the coordinates, the plain root is an arbitrary sentence
+— so `hΔex` fails at the root, before any closure step runs.
+
+The two hypotheses are supplied by **disjoint settings**:
+
+| setting | `hΔex` (`Δ` existential) | `hΔF`/`hΔR` (`Δ` inside the budget) |
+| --- | --- | --- |
+| Theorem 4.5, interpolation | ✅ — the right root is `ψ.not`, existential *because* `ψ` is universal | ❌ — the budget is the genuinely shared `F₁ ∩ F₂` |
+| relativized preservation | ❌ — the right root is an arbitrary `σ ∧ ¬φ` | ✅ — `F₂ = L ⊆ F₁ = L ∪ {U}` |
+
+`hΔex` is not incidental: it *is* Theorem 4.5's universality hypothesis on `ψ`, which is why the
+one setting that provides it is the one with a real shared-vocabulary condition.
+
+**Decision.**  The square cannot be frozen, so the source order is **restored**: solve the
+shared-vocabulary candidate-3 architecture for Theorem 4.5, then derive Theorem 4.6 from it as the
+source does (Harrison-Trainor–Kretschmer present 4.6 as a consequence of 4.5, not as an independent
+application of a Henkin family).  The relativization encoding above is *not* discarded — it is the
+natural consumer for 4.6 once 4.5 exists, and §D4.5 is the specification it must meet.
 
 ### D5 — relationalization is a stop/go gate, NEGATIVE for interpolation [FROZEN]
 
@@ -335,16 +401,18 @@ theorem as the case `σ = ⊤`:
 2. **stop/go — the two C7 gates only** (D4): `genAll` plus the right-coordinate abstraction, and
    the left-coordinate finite-existential-side conjunction, before C1 and before any family
    assembly.  **DONE**, verdict in D4;
-3. the restricted side bounds and one-sided closures, on candidate 1 at the **full** symbol
-   budget (the instantiation D4's verdict permits);
-4. the paired family and consistency property, likewise;
-5. `malitz_relative_preservation` (mod σ) + the absolute and dual corollaries (D7) — **now first**,
-   since it is the endpoint whose separator carries no symbol condition;
-6. `malitz_interpolation` for relational languages (D6) — conditional on resolving D4's remaining
-   question about a shared-vocabulary left C7 step;
-7. the arbitrary-signature preservation wrapper — **candidate only**, and only if all four
+3. **candidate 3** — a shared-vocabulary architecture for the left C7 step (or a demonstration that
+   the paired family cannot have one).  This is now the gating research unit; §D4.5 shows it cannot
+   be bypassed by attacking the relative endpoint first;
+4. the restricted side bounds and one-sided closures, once candidate 3 fixes the invariant;
+5. the paired family and consistency property;
+6. `malitz_interpolation` for relational languages (D6);
+7. `malitz_relative_preservation` (mod σ) + the absolute and dual corollaries (D7), **derived from
+   the interpolation theorem as in the source**, with §D4.5's relativization encoding as the
+   consumer;
+8. the arbitrary-signature preservation wrapper — **candidate only**, and only if all four
    obligations of D5's square close;
-8. facade, blueprint, guards, docs, release.
+9. facade, blueprint, guards, docs, release.
 
 ## 3. Non-goals (recorded to prevent scope creep)
 
