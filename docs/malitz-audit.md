@@ -429,7 +429,32 @@ separator to be universal **and constant-free at every stage**, so both C7 steps
 and the constant-abstraction apparatus is unused.  The abandonment clause below is **not** triggered
 — the construction is a consistency-property argument of the shape this repository already supports.
 
-Tasks 2–4 remain open; the reconstruction proposes a certificate and a toy theorem for them.
+**Task 2 frozen by review (2026-07-26): the single-set / canonical-projection invariant.**  Väänänen's
+`S₁`, `S₂` are the *side-language projections of one finite set* `S`, so a shared sentence lies in
+**both**; an arbitrary pair `(Γ, Δ)` is not a faithful substitute, and dropping a constant-free
+separator class into the old pair shell **breaks C0** (`Γ = {P(c)}`, `Δ = {¬P(c)}` with `P` shared has
+no constant-free universal separator, while in the projection representation each projection is
+inconsistent and `⊥` separates).  The frozen family is
+
+```lean
+side F R S      := S ∩ SentBnd F R
+FefermanMem S   := S.Finite ∧ S ⊆ GenU … ∧ S = side F₁ R₁ S ∪ side F₂ R₂ S
+                     ∧ no constant-free universal separator of side F₁ R₁ S and side F₂ R₂ S
+```
+
+with the support parameter `A` **gone**, replaced by `sentenceJConsts σ = ∅`.  Both C7
+transformations are the identity on the separator, and the root-to-interpolant equation is trivial.
+
+**Unit 3's order, frozen:** (1) canonical side projections; (2) the shared-overlap/C0 toy theorem;
+(3) the projection-aware left **and** right C7 identity theorems; (4) only then audit the remaining
+consistency fields.  The C7 gates are stated by extending `S`, not `Γ`.
+
+Two precision corrections carried into the reconstruction: the Craig/Feferman contrast is **not** an
+inverted flow — both start at the root and extend a consistency condition downward; the difference is
+that Feferman never permits separator support, whereas Craig permits budgeted support and discharges
+it at the empty root budget.  And Väänänen's Theorem 23 is the **absolute** submodel/universal
+preservation theorem, not the relative mod-`σ` Theorem 4.6; its `EXT` encoding also uses cross-sort
+equality with no repository representation, so preservation is a **later** gate with its own audit.
 
 ---
 

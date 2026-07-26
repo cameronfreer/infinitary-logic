@@ -41,9 +41,17 @@ quantified in `φ`; `Ex(φ)` dually; both extended to sets of formulas.
 > 3. `Un(θ) ⊆ Un(φ)` and `Ex(θ) ⊆ Ex(ψ)`.
 
 **Proof shape** (survey, condensed).  Assume no such `θ`.  Introduce, for each sort `s`, new
-constants `Cˢ = {cˢₙ}`, and let `C* = ⋃ₛ Cˢ`.  For a set `S` of sentences, `S₁` is the set of
-`τ₁ ∪ C*`-sentences of `S` using only finitely many `C*`-constants, and `S₂` the `τ₂ ∪ C*`-ones.
-Define
+constants `Cˢ = {cˢₙ}`, and let `C* = ⋃ₛ Cˢ`.  Now the decisive structural point, which is **not** a
+pair of independent theories:
+
+> Given a set `S` of sentences, `S₁` consists of all `τ₁ ∪ C*`-sentences in `S` with only finitely
+> many constants from `C*`, and `S₂` consists of all `τ₂ ∪ C*`-sentences in `S` with only finitely
+> many constants from `C*`.
+
+`S₁` and `S₂` are **canonical side-language projections of one finite set `S`**, and `Δ` consists of
+the finite `S` with `S = S₁ ∪ S₂` satisfying (⋆).  A **shared**-vocabulary sentence therefore lies in
+**both** projections.  §6 explains why that overlap is load-bearing and why an arbitrary pair
+`(Γ, Δ)` is not a faithful substitute.  Define
 
 > `θ` **separates** `S′` and `S″` iff
 > 1. `S′ ⊨ θ`, 2. `S″ ⊨ ¬θ`, 3. `Un′(θ) ⊆ Un(S′)`, 4. `Ex′(θ) ⊆ Un(S″)`,
@@ -118,21 +126,29 @@ Consequently, in the Malitz case:
 
 ## 4. §D8 item 2 — the residue-elimination mechanism at the root
 
-**There is none, because the flow is inverted.**  Our Craig engine grows a finite constant support
-`A`, allows the separator to use it, and strips constants at the root (`A = ∅`, `stripConsts`).
-Feferman's proof runs the other way: the root pair `{φ, ¬ψ}` is where the argument *starts*, it is
-constant-free, so `Un′ = Un` and `Ex′ = Ex` there, and the theorem's clauses 2–3 are literally the
-root instance of the separation relation.  The consistency property then propagates (⋆) **downward**
-to a model, and the contradiction closes the proof.
+**There is none, because the separator is never allowed support in the first place.**
 
-So residue never has to be removed: the invariant is a hypothesis at the root, not a conclusion at
-the end.  The answer to the frozen acceptance question is therefore:
+Both arguments in fact start at the root and extend a consistency condition downward — that much is
+common to Craig and to Feferman, and an earlier draft of this document overstated the contrast as an
+"inverted flow".  The real difference is narrower and sharper:
 
-> **Yes** — a certificate retains a shared core while carrying nonshared residue, the residue being
-> the `C*`-constants, charged into both budgets.  And **the residue never has to disappear at the
-> root, because the root is the starting point, not the terminus.**  In the single-sorted Malitz
-> specialization the residue is moreover *never admitted at all*: the empty existential budget
-> forbids constants in the separator outright.
+* our Craig engine **permits budgeted separator support** `A`, grows it as witnesses are added, and
+  relies on the empty root budget (`A = ∅`, `stripConsts`) to deliver a constant-free interpolant at
+  the end;
+* Feferman's separation relation **never permits separator support at all** in the case that matters
+  here — the constant charge makes `Ex′(θ) = ∅` incompatible with any `C*`-constant in `θ` — so there
+  is no support to discharge and no stripping phase.
+
+The root pair `{φ, ¬ψ}` is constant-free, so `Un′ = Un` and `Ex′ = Ex` there, and clauses 2–3 of the
+theorem are literally the root instance of the separation relation.  The answer to the frozen
+acceptance question is therefore:
+
+> **Yes** — in the many-sorted theorem a certificate retains a shared core while carrying nonshared
+> residue, the residue being the `C*`-constants, charged into both budgets.  And there is **no
+> residue-removal phase**: the charge is what pays for generalization, and the root instance is
+> constant-free by construction.  In the single-sorted Malitz specialization the residue is moreover
+> **never admitted at all** — the empty existential budget forbids constants in the separator
+> outright, at every stage.
 
 ## 5. Theorem 22 ⟹ Theorem 4.5, and the route to 4.6
 
@@ -158,6 +174,13 @@ theorem**, not to a bare Henkin family, and with **sorts** doing the work of the
 That is why D4.5 failed and this does not: the quantifier budget is carried by the sort, so the
 encoding constrains the interpolant's quantifiers instead of merely constraining its vocabulary.
 
+**Two limits on this half, recorded so it is not over-promised.**  Väänänen's Theorem 23 is the
+**absolute** submodel/universal preservation theorem, *not* the relative mod-`σ` Theorem 4.6 — the
+relative version is Keisler's and is still unread.  And the `EXT` encoding uses **cross-sort
+equality** (`∀x¹∃x⁰(x⁰ = x¹)`, i.e. overlapping sorts), for which this repository has no
+representation at all.  Preservation is therefore a **later gate**, after interpolation, and it needs
+its own audit; nothing in §6 depends on it.
+
 ## 6. Consequences for the repository
 
 **Diagnosis of Unit 2, in these terms.**  Candidate 1 restricted the separator's class absolutely
@@ -165,34 +188,66 @@ and kept Craig's support parameter.  Feferman's certificate does the opposite: i
 class *relative to the two sides' own quantifier content*, and prices the support into that
 restriction.  Our left-C7 failure was not a missing lemma; it was the wrong certificate.
 
-**Proposed candidate-3 certificate** (single-sorted, the only form #15 needs — to be frozen by
-review before any Lean):
+**Proposed candidate-3 certificate** — the **single-set / canonical-projection** invariant, frozen by
+review.  Faithfulness to Väänänen's `S₁`/`S₂` is not cosmetic: dropping a constant-free separator
+class into the old *pair* shell **breaks C0**.  Witness, with `P` shared:
 
 ```
-MalitzSepAt F R Γ Δ  :=  ¬ ∃ σ,  IsUniversal σ
-                            ∧ σ.baseFunctionsIn ⊆ F ∧ σ.baseRelationsIn ⊆ R
-                            ∧ sentenceJConsts σ = ∅          -- constant-free, NOT support-⊆ A
-                            ∧ Theoryω.Entails Γ σ ∧ Theoryω.Entails Δ σ.not
+Γ = {P(c)}      Δ = {¬P(c)}
 ```
 
-Note what changed: the finite support parameter `A` **disappears**, replaced by outright
-constant-freeness.  The audit's four Task-2 items are then answered as: certificate = a universal
-constant-free separator; shared-symbol invariant = unchanged `(F₁ ∩ F₂, R₁ ∩ R₂)`; both C7
-transformations = **the identity**; root-to-interpolant equation = trivial, the separator already is
-the interpolant.
+The union is inconsistent, yet there need be **no constant-free universal separator** of the pair —
+any separator has to mention `c`.  In Feferman's representation both sentences are shared, so each
+occurs in **both** canonical projections; each projection is then inconsistent, and the constant-free
+universal `⊥` separates them.  That overlap is exactly how C0 survives constant-freeness.
 
-**The left-C7 toy theorem to compile first** (§D8 Task 3), now genuinely small:
+```lean
+def side (F : Set (Σ n, L.Functions n)) (R : Set (Σ n, L.Relations n))
+    (S : Set L[[ℕ]].Sentenceω) : Set L[[ℕ]].Sentenceω := S ∩ SentBnd F R
 
+def FefermanInsep (F₁ R₁ F₂ R₂ …) (S : Set L[[ℕ]].Sentenceω) : Prop :=
+  ¬ ∃ σ, IsUniversal σ ∧ σ ∈ SentBnd (F₁ ∩ F₂) (R₁ ∩ R₂) ∧ sentenceJConsts σ = ∅ ∧
+      Theoryω.Entails (side F₁ R₁ S) σ ∧ Theoryω.Entails (side F₂ R₂ S) σ.not
+
+def FefermanMem … (S) : Prop :=
+  S.Finite ∧ S ⊆ GenU … ∧ S = side F₁ R₁ S ∪ side F₂ R₂ S ∧ FefermanInsep … S
 ```
-theorem malitzSepAt_witness (c : ℕ) (φc : L[[ℕ]].Sentenceω)
-    (hcΓ : ∀ γ ∈ Γ, c ∉ sentenceJConsts γ)
-    (h : MalitzSepAt F R (insert (genEx c φc) Γ) Δ) :
-    MalitzSepAt F R (insert φc Γ) Δ
+
+Equivalently: a pair representation is admissible only if it **enforces that every shared sentence
+occurs in both coordinates**, not merely in their union.  The support parameter `A` disappears
+entirely, replaced by `sentenceJConsts σ = ∅`.
+
+The audit's four Task-2 items are answered as: certificate = a constant-free universal separator of
+the two canonical projections; shared-symbol invariant = unchanged `(F₁ ∩ F₂, R₁ ∩ R₂)`; both C7
+transformations = **the identity on the separator**; root-to-interpolant equation = trivial, the
+separator already *is* the interpolant.
+
+**The C7 toy gates (§D8 Task 3), stated through the projections.**  Not "extend `Γ`" — extend `S`,
+and let the projections fall out:
+
+```lean
+theorem fefermanInsep_witness (c : ℕ) (φc : L[[ℕ]].Sentenceω)
+    (hpar : genEx c φc ∈ S) (hcS : ∀ γ ∈ S, c ∉ sentenceJConsts γ)
+    (h : FefermanInsep … S) : FefermanInsep … (insert φc S)
 ```
 
-— no support arithmetic, and the separator is transported unchanged; only the entailment moves, by
-the reinterpretation argument already used in `entails_genEx_of_entails`.  The right-hand twin is
-the same statement on `Δ`.
+If the witness instance is shared it enters **both** sides — but then its existential parent is
+shared too (`genEx` does not add base symbols), so *both* entailment transfers can remove the fresh
+constant with the separator unchanged.  The single load-bearing lemma is the constant-free freshness
+transfer
+
+```lean
+theorem entails_of_entails_insert_witness (hpar : genEx c φc ∈ T)
+    (hcT : ∀ γ ∈ T, c ∉ sentenceJConsts γ) (hcσ : sentenceJConsts σ = ∅)
+    (h : Theoryω.Entails (insert φc T) σ) : Theoryω.Entails T σ
+```
+
+which is `entails_genEx_of_entails`'s reinterpretation argument with the conclusion left alone
+instead of generalized — the separator's constant-freeness is what lets it be pulled back unchanged.
+
+**Recommended order for Unit 3** (review): (1) canonical side projections; (2) the shared-overlap/C0
+toy theorem; (3) the projection-aware left *and* right C7 identity theorems; (4) only then audit the
+remaining consistency fields.
 
 **Reusable from Units 0–2**: `universalSigned` (Unit 0) is the right primitive and generalizes to
 the sorted `Un`/`Ex`; `realize_of_embedding_signed` (Unit 1) is what the two-sorted `EXT` encoding
