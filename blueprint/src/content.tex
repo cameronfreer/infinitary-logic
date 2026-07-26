@@ -62,6 +62,11 @@ Headline results include:
     language has an interpolant whose function and relation symbols each lie in
     the intersection of the two sides' occurrence sets
     (Theorem~\ref{thm:craig}).
+  \item \textbf{Lyndon interpolation.}
+    The polarity refinement, in the relation-polarity / logical-equality form:
+    the interpolant's positively (negatively) occurring relation symbols lie in
+    the intersection of the two sides' positive (negative) occurrences, with
+    equality logical and unconstrained (Theorem~\ref{thm:lyndon}).
   \item \textbf{Boundedness and undefinability of well-ordering.}
     Chains of every countable length force a model with a relation-preserving
     map from $\mathbb{Q}$; hence the order types of well-ordered models are
@@ -443,6 +448,36 @@ form, \texttt{craig\_pcSeparation\_relational}, is retained in exactly the
 shared-vocabulary packaging consumed by the projective-class work.
 
 \inputleannode{thm:craig-relational}
+
+\section{Lyndon Interpolation}
+
+\emph{Status: proved, arbitrary languages.}  The polarity refinement of Craig: an
+interpolant may be required to respect the \emph{sign} of every relation
+occurrence.  What is proved here is the \textbf{relation-polarity /
+logical-equality form} of L\'opez--Escobar's Theorem~4.1: relation symbols
+satisfy his clause~(.4) in full --- a symbol occurring positively (negatively) in
+the interpolant occurs positively (negatively) in \emph{both} roots --- while
+equality is treated as a \emph{logical} symbol, belonging to neither polarity
+class, so his clause~(.3), which additionally constrains where equality may
+occur, is deliberately not claimed.  Nor is any theory-level form claimed: for
+$\Lomegaone$ that is false (L\'opez--Escobar's Theorem~6.3 exhibits disjoint
+$PC_\Delta$ classes inseparable by an elementary class), so the sentence-level
+statement is sharp.
+
+Polarity is tracked by a signed occurrence traversal on the existing syntax ---
+antecedents flip the sign, quantifiers and the countable connectives preserve it,
+equality contributes nothing --- so no negation-normal form is constructed.  Its
+semantic content is that growing the positively-occurring relations and shrinking
+the negatively-occurring ones preserves truth.  The proof \emph{refines} the
+Craig engine rather than repeating it: only the separator class changes, and the
+countable-completion kernel is consumed unchanged.  The arbitrary-language step
+reuses Craig's relationalization layer verbatim, the key point being that the
+graph relations $G_f$, which may occur with either polarity, back-translate into
+\emph{equalities} and so vanish from the polarity bookkeeping.
+
+\inputleannode{thm:lyndon}
+
+\inputleannode{thm:lyndon-relational}
 
 \chapter{Undefinability of Well-Ordering}
 

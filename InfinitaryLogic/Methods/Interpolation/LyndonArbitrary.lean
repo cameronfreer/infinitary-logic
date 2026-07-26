@@ -49,6 +49,28 @@ occurrences.
 
 The relation-polarity / logical-equality form of López–Escobar 1965, Theorem 4.1: clause (.4) in
 full, with clause (.3)'s equality-occurrence condition deliberately not claimed. -/
+@[blueprint "thm:lyndon"
+  (title := /-- Lyndon interpolation, relation-polarity / logical-equality form ($\Lomegaone$) -/)
+  (statement := /-- Over an arbitrary language (no hypotheses whatsoever), an
+    $\Lomegaone$-entailment $r_1 \models r_2$ has an interpolant $\theta$ whose function symbols
+    lie in the intersection of the roots' function occurrences, whose \emph{positively} occurring
+    relation symbols lie in the intersection of the roots' positive occurrences, and whose
+    \emph{negatively} occurring ones lie in the intersection of the roots' negative occurrences.
+    This is the \emph{relation-polarity / logical-equality form} of L\'opez--Escobar's
+    Theorem~4.1: relation symbols satisfy the full polarity condition (his clause~(.4)), while
+    equality is a logical symbol belonging to neither polarity class, so his clause~(.3) --- the
+    equality-occurrence condition --- is not claimed.  No theory-level form is claimed either; it
+    is false for $\Lomegaone$. -/)
+  (proof := /-- Relationalize as for Craig and reuse the same semantic gate, then apply the
+    relational Lyndon core in the graph language.  The function-symbol bound comes from the
+    unsigned graph bound, recovered from the two signed bounds and Craig's exact occurrence
+    identities with $\mathrm{relSym}$-intersection.  The signed base-relation bounds come from two
+    polarity facts about the translation: relationalization preserves base-relation polarity on the
+    nose, and although the graph relations $G_f$ may occur with either polarity (the functionality
+    axioms use them negatively), back-translation sends $G_f(\bar x, y)$ to the \emph{equality}
+    $f(\bar x) = y$, which is polarity-free --- so they vanish harmlessly.  Both entailments are
+    Craig's graph-expansion arguments unchanged. -/)
+  (uses := ["thm:lyndon-relational", "thm:craig"])]
 theorem lyndon_interpolation (r₁ r₂ : L.Sentenceω) (h : Sentenceω.Entails r₁ r₂) :
     ∃ θ : L.Sentenceω,
       θ.functionsIn ⊆ r₁.functionsIn ∩ r₂.functionsIn ∧
