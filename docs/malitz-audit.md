@@ -1,4 +1,4 @@
-# Malitz universal interpolation and relative preservation (#15): statement-and-interface audit (v4)
+# Malitz universal interpolation and relative preservation (#15): statement-and-interface audit (v5)
 
 Pre-implementation audit for issue #15, in the pattern of `docs/craig-audit.md`,
 `docs/wellordering-audit.md`, `docs/lopez-escobar-hard-audit.md`, and `docs/lyndon-audit.md`.
@@ -12,10 +12,11 @@ languages*, Duke Math. J. 36 (1969) 621–630) and note that the relative form a
 [Kei71].  **Malitz 1969 and Keisler 1971 themselves are not verified here** — see D1 for exactly
 what that costs.
 
-Status: **v4, 2026-07-26.**  §D4 is resolved *for the existing C7 strategies* by the Unit-2 spike;
-the new §D4.5 records the root-to-embedding consumer gate, which **fails**; the source unit order is
-therefore restored, with candidate 3 as the gating research unit.  All other D-points remain frozen
-as in v2.
+Status: **v5, 2026-07-26.**  §D4 is resolved *for the existing C7 strategies* by the Unit-2 spike;
+§D4.5 records the root-to-embedding consumer gate, which **fails**, so the source unit order is
+restored; **Units 0–2 are frozen COMPLETE** and §D8 makes Unit 3 an *audit* gate — source
+reconstruction and a frozen certificate design before any Lean.  All other D-points remain frozen as
+in v2.
 
 Status (v2): **FROZEN per review 2026-07-26.**  Changes from v1, all load-bearing: the preservation
 statements are aligned with the repository's **nonempty** semantics and `EquivModulo` is pinned
@@ -390,6 +391,59 @@ theorem as the case `σ = ⊤`:
   obtainable from the relative theorem applied to `φ.not` by the negation exchange of D2, so it
   costs one lemma, not a second development.
 
+### D8 — candidate 3: the Unit-3 **audit** gate [OPEN — source reconstruction first]
+
+Unit 3 is **not a Lean unit**.  §D4.5 established that the paired-family route cannot be rescued by
+choosing a different consumer, so the next step is to find out what Malitz's proof actually does
+before any invariant is designed to fit our machinery.
+
+**Task 1 — read the source construction.**  Harrison-Trainor–Kretschmer state and attribute; they do
+not reproduce the proof.  Read Malitz [Mal69] itself, or Keisler's Malitz-interpolation chapter
+[Kei71].  The Berkeley Logic Library (<https://logic-library.berkeley.edu/>) lists Malitz's
+dissertation, which may expose the original construction.  Until one of these is read, every claim
+below about "the proof" is a hypothesis.
+
+**Task 2 — freeze the replacement for `MalitzInsepAt`, in full, before coding.**  Four items, none
+of them optional:
+
+1. the **certificate shape** — what a separator *is* under candidate 3 (a single sentence, a pair, a
+   sentence plus a side-language residue, …);
+2. the **shared-symbol invariant** it carries;
+3. **both** C7 transformations, left and right, stated on that certificate;
+4. the **root-to-interpolant equation** — how a support-`∅` certificate becomes the interpolant.
+
+**Task 3 — the left-C7 toy theorem must compile before any of C0–C6 is ported.**  This is the same
+discipline that made Unit 2 informative: the known-hard step first, in isolation.
+
+**Task 4 — an explicit abandonment clause.**  If the source proof turns out to run on universal
+consequences, diagrams, embeddings, or tableaux rather than a two-sided inseparability family, then
+**abandon the paired-family route** and build that argument instead.  Do not force the source's
+proof through a richer predicate merely because the Craig/Lyndon machinery exists.
+
+**The acceptance question for candidate 3** (frozen wording):
+
+> Can a separator certificate retain a **shared universal core** while carrying **nonshared
+> existential residue**, and does the residue **disappear at the root**?
+
+Both halves are required.  Preserving such a certificate through C7 is *not* sufficient: the root
+gate must extract an actual shared universal sentence, with **no residual side-language formula**
+left over.  A candidate-3 design that answers only the first half is a failed design, and this
+audit's Unit-2 experience is the reason to say so in advance — the left C7 step is exactly where a
+residue would be introduced, and the root is exactly where it must be gone.
+
+### Status of Units 0–2 [**COMPLETE, frozen 2026-07-26**]
+
+| unit | deliverable | commit | outcome |
+| --- | --- | --- | --- |
+| 0 | `Lomega1omega/QuantifierClass.lean` — signed `∀₁`/`∃₁` traversal, six acceptance equations, `castLE`/`relabel`/`subst` calculus | `9150019` | complete |
+| 1 | `Lomega1omega/QuantifierSemantics.lean` — `realize_of_embedding_signed`, valuation-aware, both directions in one induction, sentence corollaries | `212663f` | complete |
+| 2 | `Methods/Interpolation/MalitzC7Spike.lean` — `MalitzInsepAt` + the two C7 gates | `50c0627` | **stop/go reported**; see §D4/§D4.5 |
+| 2 (cleanup) | `Methods/Interpolation/ConstantGeneralization.lean` — neutral `genAll` layer, class of constant abstraction, `Theoryω.conjunction` bounds | `86efb2c` | complete, reusable by #16 |
+
+Units 0, 1 and the `ConstantGeneralization` layer are **architecture-independent**: they survive any
+candidate-3 design unchanged.  `MalitzC7Spike.lean` is retained as the record of what was measured,
+not as a foundation to build on.
+
 ### Unit order (each a compile-gated commit)
 
 0. `Lomega1omega/QuantifierClass.lean` — the signed quantifier traversal, `IsUniversal`,
@@ -401,9 +455,9 @@ theorem as the case `σ = ⊤`:
 2. **stop/go — the two C7 gates only** (D4): `genAll` plus the right-coordinate abstraction, and
    the left-coordinate finite-existential-side conjunction, before C1 and before any family
    assembly.  **DONE**, verdict in D4;
-3. **candidate 3** — a shared-vocabulary architecture for the left C7 step (or a demonstration that
-   the paired family cannot have one).  This is now the gating research unit; §D4.5 shows it cannot
-   be bypassed by attacking the relative endpoint first;
+3. **candidate 3 — an AUDIT gate, not a Lean unit** (§D8): source reconstruction, then a frozen
+   certificate design, then the left-C7 toy theorem in isolation, with an explicit clause for
+   abandoning the paired-family route if the source proof is not of that shape;
 4. the restricted side bounds and one-sided closures, once candidate 3 fixes the invariant;
 5. the paired family and consistency property;
 6. `malitz_interpolation` for relational languages (D6);
