@@ -485,4 +485,161 @@ theorem fefermanInsep_insert_negInstConst_of_isRelational [L.IsRelational]
     rwa [baseRelationsIn_not, baseRelationsIn_instConst, ← baseRelationsIn_not] at this
   exact fefermanInsep_insert_negInstConst c φ hpar hcS (hb _ _) (hb _ _) h
 
+
+/-! ## The family shell
+
+`FefermanMem` is the membership predicate of Väänänen's `Δ`, specialized as above: a finite set inside
+the generated universe, **covered** by its two canonical projections, admitting no constant-free
+universal separator of them. -/
+
+/-- The family shell.  Kept as a structure so the four components can be discharged independently by
+the field audit. -/
+structure FefermanMem (r₁ r₂ : L[[ℕ]].Sentenceω)
+    (F₁ : Set (Σ n, L.Functions n)) (R₁ : Set (Σ n, L.Relations n))
+    (F₂ : Set (Σ n, L.Functions n)) (R₂ : Set (Σ n, L.Relations n))
+    (S : Set L[[ℕ]].Sentenceω) : Prop where
+  /-- Finitely many sentences, as the consistency property requires. -/
+  finite : S.Finite
+  /-- Inside the generated enumeration universe. -/
+  subset_genU : S ⊆ GenU r₁ r₂
+  /-- Every member fits at least one side vocabulary. -/
+  covered : Covered F₁ R₁ F₂ R₂ S
+  /-- No constant-free universal separator of the two projections. -/
+  insep : FefermanInsep F₁ R₁ F₂ R₂ S
+
+/-! ## C1 — implication branching, and the projection-leakage obstruction
+
+The gate review asked for first.  In the **no-leakage** case — the branch sentences fit only the side
+that already holds the implication — C1 goes through, in both orientations, with the expected
+separators `τ₁ ∨ τ₂` and `τ₁ ∧ τ₂`.
+
+When a branch sentence **leaks** into the other projection the situation changes, and it is not a
+missing lemma.  Take `φ.imp ψ ∈ side₁ S` with `φ` shared (so `φ` enters `side₂` as well) and
+`ψ` outside the second side.  Then
+
+```
+side₁ S ∪ {φ.not} ⊨ τ₁    side₂ S ∪ {φ.not} ⊨ ¬τ₁
+side₁ S ∪ {ψ}     ⊨ τ₂    side₂ S            ⊨ ¬τ₂
+```
+
+and `τ₁ ∨ τ₂` no longer works: `side₂ S ⊨ ¬τ₁` is not available, only `side₂ S ⊨ φ ∨ ¬τ₁`.  The
+separator that *does* work semantically is
+
+```
+(φ.not.imp τ₁).and (φ.imp τ₂)
+```
+
+which is legally **shared** — `φ` is shared exactly in the leakage case — but is in general **neither
+universal nor constant-free**, since `φ` is an arbitrary member of `S`.  So the strengthened invariant
+of `FefermanInsep` is *not* closed under C1; what pays for that separator is Feferman's **dynamic**
+budget, where the leaked `φ` raises `Un(S₂)` and thereby licenses the quantifiers and constants the
+combined separator needs.  See `docs/malitz-source-reconstruction.md` §3 for the corrected claim. -/
+
+/-- **C1, left orientation, no leakage.**  Separator `τ₁ ∨ τ₂`, written `(τ₁.not).imp τ₂`, which the
+signed recursion keeps universal. -/
+theorem fefermanInsep_imp_dichotomy_left (φ ψ : L[[ℕ]].Sentenceω)
+    (hmem : φ.imp ψ ∈ side F₁ R₁ S)
+    (hφ₂ : φ ∉ SentBnd (L := L) F₂ R₂) (hψ₂ : ψ ∉ SentBnd (L := L) F₂ R₂)
+    (h : FefermanInsep F₁ R₁ F₂ R₂ S) :
+    FefermanInsep F₁ R₁ F₂ R₂ (insert φ.not S) ∨ FefermanInsep F₁ R₁ F₂ R₂ (insert ψ S) := by
+  by_contra hcon
+  rw [not_or] at hcon
+  obtain ⟨h1, h2⟩ := hcon
+  simp only [FefermanInsep, not_not] at h1 h2
+  obtain ⟨τ₁, hu₁, hb₁, hc₁, hL₁, hR₁⟩ := h1
+  obtain ⟨τ₂, hu₂, hb₂, hc₂, hL₂, hR₂⟩ := h2
+  have hφ₁ : φ.not ∈ SentBnd (L := L) F₁ R₁ := sentBnd_not_iff.mpr (sentBnd_imp_left hmem.2)
+  have hψ₁ : ψ ∈ SentBnd (L := L) F₁ R₁ := sentBnd_imp_right hmem.2
+  have hφ₂' : φ.not ∉ SentBnd (L := L) F₂ R₂ := fun hb => hφ₂ (sentBnd_not_iff.mp hb)
+  rw [side_insert_of_mem hφ₁] at hL₁
+  rw [side_insert_of_notMem hφ₂'] at hR₁
+  rw [side_insert_of_mem hψ₁] at hL₂
+  rw [side_insert_of_notMem hψ₂] at hR₂
+  refine h ⟨(τ₁.not).imp τ₂, ?_, ?_, ?_, ?_, ?_⟩
+  · exact (isUniversal_imp _ _).mpr ⟨(isExistential_not _).mpr hu₁, hu₂⟩
+  · exact ⟨baseFunctionsIn_imp_subset (by rw [baseFunctionsIn_not]; exact hb₁.1) hb₂.1,
+      baseRelationsIn_imp_subset (by rw [baseRelationsIn_not]; exact hb₁.2) hb₂.2⟩
+  · refine Set.subset_empty_iff.mp (sentenceJConsts_imp_subset ?_ (hc₂ ▸ subset_rfl))
+    rw [sentenceJConsts_not, hc₁]
+  -- `side₁ S ⊨ τ₁ ∨ τ₂`, by cases on the implication member
+  · intro N instN neN hmodel
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_imp, BoundedFormulaω.realize_not]
+    intro hnτ₁
+    have hφtrue : @Sentenceω.Realize L[[ℕ]] φ N instN := by
+      by_contra hnφ
+      refine hnτ₁ (@hL₁ N instN neN fun ρ hρ => ?_)
+      rcases Set.mem_insert_iff.mp hρ with rfl | hρ
+      · rw [Sentenceω.Realize, BoundedFormulaω.realize_not]; exact hnφ
+      · exact hmodel ρ hρ
+    have himp := hmodel _ hmem
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_imp] at himp
+    refine @hL₂ N instN neN fun ρ hρ => ?_
+    rcases Set.mem_insert_iff.mp hρ with rfl | hρ
+    · exact himp hφtrue
+    · exact hmodel ρ hρ
+  · intro N instN neN hmodel
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_imp,
+      BoundedFormulaω.realize_not]
+    intro hcon
+    have hn₁ := @hR₁ N instN neN hmodel
+    have hn₂ := @hR₂ N instN neN hmodel
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not] at hn₁ hn₂
+    exact hn₂ (hcon hn₁)
+
+/-- **C1, right orientation, no leakage.**  Separator `τ₁ ∧ τ₂`, universal by
+`universalSigned_and`. -/
+theorem fefermanInsep_imp_dichotomy_right (φ ψ : L[[ℕ]].Sentenceω)
+    (hmem : φ.imp ψ ∈ side F₂ R₂ S)
+    (hφ₁ : φ ∉ SentBnd (L := L) F₁ R₁) (hψ₁ : ψ ∉ SentBnd (L := L) F₁ R₁)
+    (h : FefermanInsep F₁ R₁ F₂ R₂ S) :
+    FefermanInsep F₁ R₁ F₂ R₂ (insert φ.not S) ∨ FefermanInsep F₁ R₁ F₂ R₂ (insert ψ S) := by
+  by_contra hcon
+  rw [not_or] at hcon
+  obtain ⟨h1, h2⟩ := hcon
+  simp only [FefermanInsep, not_not] at h1 h2
+  obtain ⟨τ₁, hu₁, hb₁, hc₁, hL₁, hR₁⟩ := h1
+  obtain ⟨τ₂, hu₂, hb₂, hc₂, hL₂, hR₂⟩ := h2
+  have hφ₂ : φ.not ∈ SentBnd (L := L) F₂ R₂ := sentBnd_not_iff.mpr (sentBnd_imp_left hmem.2)
+  have hψ₂ : ψ ∈ SentBnd (L := L) F₂ R₂ := sentBnd_imp_right hmem.2
+  have hφ₁' : φ.not ∉ SentBnd (L := L) F₁ R₁ := fun hb => hφ₁ (sentBnd_not_iff.mp hb)
+  rw [side_insert_of_notMem hφ₁'] at hL₁
+  rw [side_insert_of_mem hφ₂] at hR₁
+  rw [side_insert_of_notMem hψ₁] at hL₂
+  rw [side_insert_of_mem hψ₂] at hR₂
+  refine h ⟨τ₁.and τ₂, ?_, ?_, ?_, ?_, ?_⟩
+  · rw [show IsUniversal (τ₁.and τ₂) = universalSigned true (τ₁.and τ₂) from rfl,
+      universalSigned_and]
+    exact ⟨hu₁, hu₂⟩
+  · refine ⟨?_, ?_⟩
+    · rw [show (τ₁.and τ₂).baseFunctionsIn = ((τ₁.imp τ₂.not).not).baseFunctionsIn from rfl,
+        baseFunctionsIn_not]
+      exact baseFunctionsIn_imp_subset hb₁.1 (by rw [baseFunctionsIn_not]; exact hb₂.1)
+    · rw [show (τ₁.and τ₂).baseRelationsIn = ((τ₁.imp τ₂.not).not).baseRelationsIn from rfl,
+        baseRelationsIn_not]
+      exact baseRelationsIn_imp_subset hb₁.2 (by rw [baseRelationsIn_not]; exact hb₂.2)
+  · rw [show sentenceJConsts (L' := L) (J := ℕ) (τ₁.and τ₂)
+      = sentenceJConsts (L' := L) (J := ℕ) ((τ₁.imp τ₂.not).not) from rfl, sentenceJConsts_not]
+    refine Set.subset_empty_iff.mp (sentenceJConsts_imp_subset (hc₁ ▸ subset_rfl) ?_)
+    rw [sentenceJConsts_not, hc₂]
+  · intro N instN neN hmodel
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_and]
+    exact ⟨@hL₁ N instN neN hmodel, @hL₂ N instN neN hmodel⟩
+  · intro N instN neN hmodel
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_and]
+    have himp := hmodel _ hmem
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_imp] at himp
+    by_cases hφtrue : @Sentenceω.Realize L[[ℕ]] φ N instN
+    · have := @hR₂ N instN neN fun ρ hρ => by
+        rcases Set.mem_insert_iff.mp hρ with rfl | hρ
+        · exact himp hφtrue
+        · exact hmodel ρ hρ
+      rw [Sentenceω.Realize, BoundedFormulaω.realize_not] at this
+      exact fun hand => this hand.2
+    · have := @hR₁ N instN neN fun ρ hρ => by
+        rcases Set.mem_insert_iff.mp hρ with rfl | hρ
+        · rw [Sentenceω.Realize, BoundedFormulaω.realize_not]; exact hφtrue
+        · exact hmodel ρ hρ
+      rw [Sentenceω.Realize, BoundedFormulaω.realize_not] at this
+      exact fun hand => this hand.1
+
 end FirstOrder.Language

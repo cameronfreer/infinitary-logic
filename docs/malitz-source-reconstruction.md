@@ -112,8 +112,15 @@ Un(S₂) = Un({¬ψ}) = Ex(ψ) = ∅        hence      Ex′(θ) = ∅
 ```
 
 and `Ex′(θ) = ∅` says two things at once: **`θ` has no existential quantifier, and `θ` contains no
-`C*`-constant at all.**  The budget stays empty for the whole construction: every sentence added to
-`S₂` is a substitution instance of a subformula of a member of `S₂`, so `Un(S₂)` never grows.
+`C*`-constant at all.**
+
+**Correction (Unit-3 step 4 testing).**  An earlier draft asserted that the budget "stays empty for
+the whole construction, because every sentence added to `S₂` is a substitution instance of a
+subformula of a member of `S₂`".  That is **false in the projection representation**: `S₂` is a
+projection of the *shared* set `S`, so decomposing a member of `S₁` can put a **shared** component
+into `S₂` as well, and if that component carries universal quantifiers it raises `Un(S₂)`.  The budget
+is genuinely **dynamic**, and §6's constant-free specialization is correspondingly **not** closed under
+every consistency rule — see the C1 finding there.
 
 Consequently, in the Malitz case:
 
@@ -277,6 +284,46 @@ preservation route included, must reinstate the budgets.
    general they need `baseFunctionsIn (all φ) ⊆ baseFunctionsIn (instConst c φ)`, which the repository
    has only in the `⊆` direction: a recorded residual, not on the relational path.
 4. **The weakening is documented** — item above, and in the module docstring.
+
+**C1 finding — the strengthened invariant is not closed under implication branching.**  Tested first,
+as review directed, and it fails exactly where projection *leakage* occurs.
+
+*No leakage* (the branch sentences fit only the side already holding the implication): C1 goes through
+in both orientations, with separators `τ₁ ∨ τ₂` and `τ₁ ∧ τ₂`, universal by the signed recursion,
+constant-free and shared.  Landed as `fefermanInsep_imp_dichotomy_left` / `_right`.
+
+*Leakage.*  Take `φ.imp ψ ∈ side₁ S` with `φ` **shared**, so `φ` also enters `side₂`, and `ψ` outside
+the second side.  Then
+
+```
+side₁ S ∪ {φ.not} ⊨ τ₁      side₂ S ∪ {φ.not} ⊨ ¬τ₁
+side₁ S ∪ {ψ}     ⊨ τ₂      side₂ S           ⊨ ¬τ₂
+```
+
+`τ₁ ∨ τ₂` no longer separates: `side₂ S ⊨ ¬τ₁` is unavailable — only `side₂ S ⊨ φ ∨ ¬τ₁`.  The
+separator that *does* work is
+
+```
+(φ.not.imp τ₁).and (φ.imp τ₂)
+```
+
+legally **shared**, since `φ` is shared exactly in the leakage case, but in general **neither universal
+nor constant-free**, `φ` being an arbitrary member of `S`.
+
+**Diagnosis.**  This is precisely the gap review flagged: `FefermanInsep` is *stronger* than Feferman's
+dynamic invariant, and the source does not claim the stronger form is closed under the rules.  What
+pays for the leakage separator is the dynamic budget — the leaked `φ` enters `S₂`, raising `Un(S₂)`,
+which licenses exactly the quantifiers and constants `(φ.not.imp τ₁).and (φ.imp τ₂)` needs.  So the
+constant-free specialization is a **root-level reading of the conclusion, not an invariant**: the
+`Un′`/`Ex′` budgets have to be carried through the construction, and only at the root does
+`Ex(ψ) = ∅` collapse them to "universal and constant-free".
+
+**Consequence for step 4.**  Bulk assembly on `FefermanInsep` is *not* viable.  The next design step is
+to reinstate the budgets — in the single-sorted setting, two Booleans per projection tracking whether
+the separator may quantify universally / existentially, with constants charged into both, so that
+`sentenceJConsts σ = ∅` becomes a *derived* root fact rather than a standing hypothesis.  The three
+landed C7 gates and the two no-leakage dichotomies port to that predicate unchanged in shape, since
+none of them touches the budget; C0 and coverage are budget-independent already.
 
 **Field-audit order (review, for step 4).**  Family shell, finiteness, universe membership and
 projection coverage; C0 via the `⊥`/`⊤` two-side split; finite and countable branching, especially the
