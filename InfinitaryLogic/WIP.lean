@@ -4,6 +4,7 @@ import InfinitaryLogic.Methods.EMTermModel
 import InfinitaryLogic.Methods.ConstantAbstraction
 import InfinitaryLogic.Methods.Interpolation.ConstantElimination
 import InfinitaryLogic.Methods.Interpolation.Inseparability
+import InfinitaryLogic.Methods.Interpolation.ConstantGeneralization
 import InfinitaryLogic.Methods.Interpolation.MalitzC7Spike
 import InfinitaryLogic.Methods.Interpolation.QuantifierRoundTrip
 import InfinitaryLogic.Methods.Interpolation.RootGate
