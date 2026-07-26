@@ -408,7 +408,32 @@ theorem as the case `σ = ⊤`:
   obtainable from the relative theorem applied to `φ.not` by the negation exchange of D2, so it
   costs one lemma, not a second development.
 
-### D8 — candidate 3: the Unit-3 **audit** gate [OPEN — source reconstruction first]
+### D8 — candidate 3: the Unit-3 **audit** gate [**Task 1 DONE** — see `docs/malitz-source-reconstruction.md`]
+
+**Outcome (2026-07-26).**  The construction was found: Feferman's *many-sorted* interpolation
+theorem, presented with a full consistency-property proof in Väänänen, *Interpolation in model
+theory* ([arXiv 2507.19097](https://arxiv.org/pdf/2507.19097)), which specializes to Theorem 4.5 and
+from which Malitz's preservation theorem is derived by a two-sorted `EXT` encoding.  Both §D8
+deliverables are identified:
+
+* **fresh-witness invariant** — the separator may mention Henkin constants, and each constant's sort
+  is charged into **both** the universal and the existential budget, so existentially generalizing a
+  witness constant is budget-neutral.  Our `MalitzInsepAt` restricted the class *absolutely* and
+  charged nothing, which is exactly why `genEx` could not be paid for;
+* **root residue elimination** — **none is needed**: the flow is inverted.  The root pair `{φ, ¬ψ}`
+  is where the argument starts and is constant-free; (⋆) is a hypothesis at the root propagated
+  downward to a model, not a conclusion extracted at the end.
+
+In the single-sorted Malitz case the budget collapses: `Ex′(θ) ⊆ Un({¬ψ}) = Ex(ψ) = ∅` forces the
+separator to be universal **and constant-free at every stage**, so both C7 steps become the identity
+and the constant-abstraction apparatus is unused.  The abandonment clause below is **not** triggered
+— the construction is a consistency-property argument of the shape this repository already supports.
+
+Tasks 2–4 remain open; the reconstruction proposes a certificate and a toy theorem for them.
+
+---
+
+The gate as originally frozen:
 
 Unit 3 is **not a Lean unit**.  §D4.5 established that the paired-family route cannot be rescued by
 choosing a different consumer, so the next step is to find out what Malitz's proof actually does
