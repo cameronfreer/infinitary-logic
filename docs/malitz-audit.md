@@ -429,7 +429,18 @@ separator to be universal **and constant-free at every stage**, so both C7 steps
 and the constant-abstraction apparatus is unused.  The abandonment clause below is **not** triggered
 — the construction is a consistency-property argument of the shape this repository already supports.
 
-**STATUS 2026-07-27: FROZEN pending a second source document.**  The canonical-projection route was
+**STATUS 2026-07-27b: UNFROZEN — architecture decided.**  The second source document
+(`docs/malitz-source-reconstruction-2.md`) reports: Feferman's Theorem 4.3 is a **split-sequent**
+(side-labelled) construction along a cut-free derivation, formulas are **retained on their
+derivational side** (no reprojection, hence no leakage), the branching rule assigns `θ₁ ∨ θ₂` /
+`θ₁ ∧ θ₂` exactly as our two landed dichotomies do, and quantifiers enter the interpolant **only as
+forced by the shared-free-variable condition**, which is what *produces* the `Un`/`Ex` conditions.
+The predetermined outcome **"formulas remain side-labelled"** is therefore selected: restart from a
+budgeted labelled-pair certificate, retire canonical `FefermanMem`/`side`/`Covered`, and **cancel**
+the nullary-tag plan (with labelled sides the root split is exact by construction).  `FefermanAllowed`
+survives with its constant clause *derived* rather than assumed.
+
+**STATUS 2026-07-27a (superseded): FROZEN pending a second source document.**  The canonical-projection route was
 implemented through its C1 gate and **failed**, and the failure exposed an internal inconsistency in
 the only accessible presentation: Väänänen defines the two sides by canonical projection but extends
 only one side in the fresh-witness step.  Feferman's own retrospective, moreover, describes his
