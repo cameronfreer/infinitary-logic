@@ -397,6 +397,70 @@ Feferman's branching separator differs from both candidates, or the family carri
 that keeps shared components out of the other projection.  Gate 5 (porting the remaining fields) should
 not start until that is known.
 
+## 6b. FROZEN — the survey's sketch is internally inconsistent, and Feferman's original is proof-theoretic
+
+**Finding 1: Väänänen's presentation does not supply the closure argument it needs.**  It defines
+`S₁`/`S₂` canonically, by language projection of a single `S`.  But the fresh-witness example extends
+**only one side** (verified against the text: "Consider `S ∈ Δ` and `∃xˢ φ(xˢ) ∈ S₁` … now the sets
+`S₁ ∪ {φ(c₀)}` and `S₂` satisfy (⋆).  On the other hand, consider `S ∈ Δ` and `∃xˢ φ(xˢ) ∈ S₂` … now
+the sets `S₁` and `S₂ ∪ {φ(c₀)}` satisfy (⋆)").  If `φ(c₀)` is shared, canonical reprojection of
+`S ∪ {φ(c₀)}` would add it to **both** sides — the same leakage the C1 test exposes.  The two readings
+are not interchangeable, and the survey never reconciles them.  The Lean countercalculation of §6a
+pinpoints the omitted obligation rather than a defect in the formalization.
+
+**Finding 2: Feferman's original architecture is very likely *not* canonical projection.**  Feferman
+describes his Theorem 4.3 as **proof-theoretic**: the interpolant is constructed along a **cut-free
+derivation**, with quantifiers introduced to maintain the variable conditions — not from projections
+of one semantic finite set (Feferman, *"Ah, Chu!"*, pp. 2–3,
+<https://festschriften.illc.uva.nl/j50/contribs/feferman/feferman.pdf>).  The target is specifically
+Theorem 4.3, pp. 56–62 of *Lectures on Proof Theory*
+(<https://link.springer.com/chapter/10.1007/BFb0079094>).
+
+**Revised architectural hypothesis.**  If the invariant is **side-labelled** — a sequent or an
+explicit pair — then:
+
+* there is **no leakage**, because a rule extends the *designated* side;
+* the dynamic `Un′`/`Ex′` budgets attach to the two labelled parts;
+* root projections are exact **without** nullary tags, so gate 3's tagging becomes unnecessary;
+* the original pair representation was **not inherently wrong** — what was wrong was its
+  *universal-only* separator restriction, which §6a already retired.
+
+**Status: FROZEN.**  No further budget enlargement, no gate 3, no gate 5, and no new invariant until
+the source decides the architecture.
+
+### The next source document: charter
+
+It answers **only** these five questions.
+
+1. What is the exact **sequent invariant** in Feferman's Theorem 4.3?
+2. In the branching rule corresponding to C1, **what interpolant is assigned to the parent** from the
+   child interpolants?
+3. Are shared formulas **duplicated across both sides**, or retained on their derivational side?
+4. How are **constants / free variables charged** through that rule?
+5. Is there an explicitly stated **semantic consistency-property dual**, or is Väänänen's presentation
+   an informal compression of the cut-free proof?
+
+### Predetermined outcomes
+
+* **Formulas remain side-labelled** ⟹ restart from a *budgeted labelled-pair* certificate and retire
+  canonical `FefermanMem`.
+* **Feferman genuinely reprojects canonically** ⟹ extract the exact missing C1 transformation *before*
+  any further Lean.
+* **The construction essentially requires the cut-free calculus** ⟹ invoke the audit's §D8 abandonment
+  clause and reassess whether building that calculus is proportionate for #15.
+
+### What survives either way
+
+| artifact | status |
+| --- | --- |
+| `Lomega1omega/QuantifierClass.lean`, `QuantifierSemantics.lean` | architecture-independent |
+| `Lomega1omega/QuantifierOccurrence.lean` | architecture-independent |
+| `FefermanAllowed` + root collapse | likely survives, with budgets attached to **labelled** sides |
+| `Methods/Interpolation/ConstantGeneralization.lean` | neutral; consumed by #16 regardless |
+| `side` / `Covered` / `FefermanMem` / `FefermanInsep` and its gates | **experimental**, pending the source |
+| the nullary-tag plan (gate 3) | **experimental**; unnecessary if the invariant is side-labelled |
+| the failed universal-only C1 theorem + the budgeted no-leakage dichotomy | retained as evidence |
+
 **Field-audit order (review, for step 4).**  Family shell, finiteness, universe membership and
 projection coverage; C0 via the `⊥`/`⊤` two-side split; finite and countable branching, especially the
 implication dichotomy; `all_inst` and the negated-universal witness gate; equality and relation

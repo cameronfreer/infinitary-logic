@@ -429,7 +429,16 @@ separator to be universal **and constant-free at every stage**, so both C7 steps
 and the constant-abstraction apparatus is unused.  The abandonment clause below is **not** triggered
 — the construction is a consistency-property argument of the shape this repository already supports.
 
-**Task 2 frozen by review (2026-07-26): the single-set / canonical-projection invariant.**  Väänänen's
+**STATUS 2026-07-27: FROZEN pending a second source document.**  The canonical-projection route was
+implemented through its C1 gate and **failed**, and the failure exposed an internal inconsistency in
+the only accessible presentation: Väänänen defines the two sides by canonical projection but extends
+only one side in the fresh-witness step.  Feferman's own retrospective, moreover, describes his
+Theorem 4.3 as a **cut-free proof-theoretic** construction rather than a semantic
+consistency-property one.  The next deliverable is a second source-reconstruction document answering
+five questions about Theorem 4.3, with three predetermined outcomes — see
+`docs/malitz-source-reconstruction.md` §6b.  No Lean until it reports.
+
+**Task 2 (superseded by the above): the single-set / canonical-projection invariant.**  Väänänen's
 `S₁`, `S₂` are the *side-language projections of one finite set* `S`, so a shared sentence lies in
 **both**; an arbitrary pair `(Γ, Δ)` is not a faithful substitute, and dropping a constant-free
 separator class into the old pair shell **breaks C0** (`Γ = {P(c)}`, `Δ = {¬P(c)}` with `P` shared has

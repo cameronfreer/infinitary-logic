@@ -9,6 +9,22 @@ import InfinitaryLogic.Lomega1omega.QuantifierOccurrence
 /-!
 # The canonical side projections and the constant-free separator (issue #15, Unit 3, steps 1–3)
 
+> **EXPERIMENTAL — the architecture of this file is not decided.**  The canonical-projection route
+> was implemented through its C1 gate and failed (see the leakage finding below), and the failure
+> exposed an internal inconsistency in the only accessible presentation of the source: Väänänen
+> defines the two sides by canonical projection but extends **only one side** in the fresh-witness
+> step.  Feferman's own retrospective describes his Theorem 4.3 as a **cut-free proof-theoretic**
+> construction, which suggests a **side-labelled** invariant — under which there is no leakage at all
+> and the tag plan is unnecessary.  `docs/malitz-source-reconstruction.md` §6b holds the charter for
+> the source document that will decide this.
+>
+> Architecture-independent, and safe to depend on: `Lomega1omega/QuantifierClass.lean`,
+> `QuantifierSemantics.lean`, `QuantifierOccurrence.lean`, and
+> `Methods/Interpolation/ConstantGeneralization.lean`.  `FefermanAllowed` and the root collapse are
+> expected to survive with their budgets attached to labelled sides.  Everything else here —
+> `side`, `Covered`, `FefermanMem`, `FefermanInsep` and its gates — is experimental.  The failed
+> universal-only C1 theorem and the budgeted no-leakage dichotomy are retained as evidence.
+
 The certificate frozen in `docs/malitz-source-reconstruction.md` §6 and `docs/malitz-audit.md` §D8,
 reconstructed from Feferman's many-sorted interpolation theorem as presented in Väänänen,
 *Interpolation in model theory* (arXiv 2507.19097), Theorem 22.
