@@ -169,6 +169,37 @@ The **predetermined outcome "formulas remain side-labelled" is selected.**
 `BudgetedPairInsep`, then C1, then both C7 directions, then the root equation — and only then any
 other field.
 
+## 5. The restart, as landed
+
+`Methods/Interpolation/BudgetedPair.lean`.  Per review, the old `FefermanAllowed` constant clause is
+**not** retained as a stage assumption; the shared-constant condition is primary and the two
+permissions are separate:
+
+```lean
+BudgetedPairSeparates F₁ R₁ F₂ R₂ Γ Δ θ :=
+  Theoryω.Entails Γ θ ∧ Theoryω.Entails Δ θ.not ∧
+  θ ∈ SentBnd (F₁ ∩ F₂) (R₁ ∩ R₂) ∧
+  sentenceJConsts θ ⊆ theoryJConsts Γ ∩ theoryJConsts Δ ∧
+  (hasQuantSigned true  θ → Theoryω.HasQuantSigned true Γ) ∧
+  (hasQuantSigned false θ → Theoryω.HasQuantSigned true Δ)
+```
+
+| gate | declaration | outcome |
+| --- | --- | --- |
+| certificate | `BudgetedPairSeparates`, `BudgetedPairInsep` | landed |
+| constant calculus | `theoryJConsts` + `_insert`, `_insert_of_subset`, `_mono`, `notMem_theoryJConsts_iff` | landed |
+| C1 left / right | `budgetedPairInsep_imp_left` (`τ₁ ∨ τ₂`) / `_right` (`τ₁ ∧ τ₂`) | landed |
+| fresh witness left / right | `budgetedPairInsep_witness_left` / `_right` | landed, **separator transported unchanged** |
+| root collapse | `isUniversal_of_budgetedPairSeparates`, `sentenceJConsts_eq_empty_of_…` | landed |
+| root equation | `exists_universal_interpolant_of_not_budgetedPairInsep` | landed |
+| mixed C0 | `not_budgetedPairInsep_of_mixed` | landed, `σ` itself is the separator |
+
+The witness rules use `entails_of_entails_insert_negInstConst_of_fresh`, which needs only
+`c ∉ sentenceJConsts θ` — supplied by opposite-side freshness through the shared-constant condition.
+No `genEx`, `genAll`, support parameter, projection coverage, or root tag appears anywhere in the
+file, and a `run_cmd` cone probe confirms neither `FefermanProjection` nor `MalitzC7Spike` is in its
+import cone.
+
 **Remaining source leads, in priority order.**  (a) Stern's JSL paper — the model-theoretic forcing
 version *with constants*, closest to this repository, and the one that also carries the Lyndon
 conditions (relevant to #14's finished polarity layer).  (b) Feferman [F1] §4 itself, for the verbatim

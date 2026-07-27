@@ -152,6 +152,27 @@ theorem hasQuantSigned_subst (s : Bool) {n : ℕ} (φ : L.BoundedFormulaω α n)
   rw [Bool.not_not] at h1 h2
   rw [← not_iff_not, ← h1, ← h2, universalSigned_subst]
 
+theorem hasQuantSigned_openBounds (s : Bool) :
+    ∀ {n : ℕ} (φ : L.BoundedFormulaω Empty n),
+      hasQuantSigned s (φ.openBounds) ↔ hasQuantSigned s φ
+  | _, .falsum => Iff.rfl
+  | _, .equal _ _ => Iff.rfl
+  | _, .rel _ _ => Iff.rfl
+  | _, .imp φ ψ => by
+    show hasQuantSigned (!s) (φ.openBounds) ∨ hasQuantSigned s (ψ.openBounds) ↔ _
+    rw [hasQuantSigned_openBounds _ φ, hasQuantSigned_openBounds s ψ]
+    exact Iff.rfl
+  | _, .all φ => by
+    show s = true ∨ hasQuantSigned s ((φ.openBounds).relabel insertLastBound) ↔ _
+    rw [hasQuantSigned_relabel, hasQuantSigned_openBounds s φ]
+    exact Iff.rfl
+  | _, .iSup φs => by
+    show (∃ i, hasQuantSigned s ((φs i).openBounds)) ↔ _
+    exact exists_congr fun i => hasQuantSigned_openBounds s (φs i)
+  | _, .iInf φs => by
+    show (∃ i, hasQuantSigned s ((φs i).openBounds)) ↔ _
+    exact exists_congr fun i => hasQuantSigned_openBounds s (φs i)
+
 end BoundedFormulaω
 
 /-! ## Set-level occurrence: the budget sources -/
