@@ -1064,7 +1064,268 @@ theorem budgetedPairInsep_neg_iSup_component_right (hmem : (BoundedFormulaω.iSu
 
 end Deterministic
 
+
+/-! ## Countable branching — the last isolated gate
+
+The `⋁`-style fields, where the consumer must *choose* a component.  Each is proved by
+contraposition: assume every component extension is separable, choose its separator `θₙ`, combine
+with `iSup` or `iInf` according to the label, and check the five conditions **componentwise**.
+
+Three things are worth watching, and all three come out clean:
+
+* the combined separator's constant support is the **union** of the component supports, and each
+  component support already lies in both theory supports — because inserting a component does not
+  enlarge the receiving side's support, the parent already carrying its constants;
+* `hasQuantSigned` on `iSup`/`iInf` **exposes one offending component**, so the permission flows from
+  that component's separator and then from the parent formula, again by non-growth;
+* no label projection and no support enlargement appears anywhere.
+-/
+
+section CountableBranching
+
+variable {φs : ℕ → L[[ℕ]].Sentenceω}
+
+/-- The `iInf`-analogues of the `iSup` union bounds. -/
+private theorem baseFunctionsIn_iInf_subset {A : Set (Σ n, L.Functions n)}
+    (τ : ℕ → L[[ℕ]].Sentenceω) (hτ : ∀ k, (τ k).baseFunctionsIn ⊆ A) :
+    (BoundedFormulaω.iInf τ).baseFunctionsIn ⊆ A := by
+  intro s hs
+  simp only [BoundedFormulaω.baseFunctionsIn, BoundedFormulaω.functionsIn, Set.mem_setOf_eq,
+    Set.mem_iUnion] at hs
+  obtain ⟨k, hk⟩ := hs
+  exact hτ k hk
+
+private theorem baseRelationsIn_iInf_subset {A : Set (Σ n, L.Relations n)}
+    (τ : ℕ → L[[ℕ]].Sentenceω) (hτ : ∀ k, (τ k).baseRelationsIn ⊆ A) :
+    (BoundedFormulaω.iInf τ).baseRelationsIn ⊆ A := by
+  intro s hs
+  simp only [BoundedFormulaω.baseRelationsIn, BoundedFormulaω.relationsIn, Set.mem_setOf_eq,
+    Set.mem_iUnion] at hs
+  obtain ⟨k, hk⟩ := hs
+  exact hτ k hk
+
+private theorem sentenceJConsts_iInf_subset {A : Set ℕ} (τ : ℕ → L[[ℕ]].Sentenceω)
+    (hτ : ∀ k, sentenceJConsts (L' := L) (J := ℕ) (τ k) ⊆ A) :
+    sentenceJConsts (L' := L) (J := ℕ) (BoundedFormulaω.iInf τ) ⊆ A := by
+  intro j hj
+  simp only [sentenceJConsts, BoundedFormulaω.functionsIn, Set.mem_setOf_eq, Set.mem_iUnion] at hj
+  obtain ⟨k, hk⟩ := hj
+  exact hτ k hk
+
+/-- **C4, left: countable disjunction.**  Separator `⋁ₙ θₙ`. -/
+theorem budgetedPairInsep_iSup_left (hmem : BoundedFormulaω.iSup φs ∈ Γ)
+    (h : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ) :
+    ∃ k, BudgetedPairInsep F₁ R₁ F₂ R₂ (insert (φs k) Γ) Δ := by
+  by_contra hcon
+  push Not at hcon
+  simp only [BudgetedPairInsep, not_not] at hcon
+  choose θ hsep using hcon
+  have hcΓ : ∀ n, theoryJConsts (L := L) (insert (φs n) Γ) = theoryJConsts Γ := fun n =>
+    theoryJConsts_insert_of_subset
+      ((sentenceJConsts_component_iSup φs n).trans (sentenceJConsts_subset_theoryJConsts hmem))
+  have huΓ : ∀ n, Theoryω.HasQuantSigned true (insert (φs n) Γ)
+      ↔ Theoryω.HasQuantSigned true Γ := fun n =>
+    Theoryω.hasQuantSigned_insert_of_le fun hq =>
+      Theoryω.hasQuantSigned_of_mem hmem ((hasQuantSigned_iSup true φs).mpr ⟨n, hq⟩)
+  refine h ⟨BoundedFormulaω.iSup θ, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · intro N instN neN hmodel
+    have hiSup := hmodel _ hmem
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_iSup] at hiSup
+    obtain ⟨n, hn⟩ := hiSup
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_iSup]
+    have hEn := (hsep n).1
+    exact ⟨n, @hEn N instN neN fun ρ hρ => by
+      rcases Set.mem_insert_iff.mp hρ with rfl | hρ
+      · exact hn
+      · exact hmodel ρ hρ⟩
+  · intro N instN neN hmodel
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iSup, not_exists]
+    intro n hn
+    have hNn := (hsep n).2.1
+    have := @hNn N instN neN hmodel
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not] at this
+    exact this hn
+  · exact ⟨baseFunctionsIn_iSup_subset θ fun n => (hsep n).2.2.1.1,
+      baseRelationsIn_iSup_subset θ fun n => (hsep n).2.2.1.2⟩
+  · refine sentenceJConsts_iSup_subset θ fun n => ?_
+    have := (hsep n).2.2.2.1
+    rwa [hcΓ n] at this
+  · intro hq
+    replace hq : hasQuantSigned true (BoundedFormulaω.iSup θ) := hq
+    rw [hasQuantSigned_iSup] at hq
+    obtain ⟨n, hn⟩ := hq
+    exact (huΓ n).mp ((hsep n).2.2.2.2.1 hn)
+  · intro hq
+    replace hq : hasQuantSigned false (BoundedFormulaω.iSup θ) := hq
+    rw [hasQuantSigned_iSup] at hq
+    obtain ⟨n, hn⟩ := hq
+    exact (hsep n).2.2.2.2.2 hn
+
+/-- **C4, right: countable disjunction.**  Separator `⋀ₙ θₙ`. -/
+theorem budgetedPairInsep_iSup_right (hmem : BoundedFormulaω.iSup φs ∈ Δ)
+    (h : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ) :
+    ∃ k, BudgetedPairInsep F₁ R₁ F₂ R₂ Γ (insert (φs k) Δ) := by
+  by_contra hcon
+  push Not at hcon
+  simp only [BudgetedPairInsep, not_not] at hcon
+  choose θ hsep using hcon
+  have hcΔ : ∀ n, theoryJConsts (L := L) (insert (φs n) Δ) = theoryJConsts Δ := fun n =>
+    theoryJConsts_insert_of_subset
+      ((sentenceJConsts_component_iSup φs n).trans (sentenceJConsts_subset_theoryJConsts hmem))
+  have huΔ : ∀ n, Theoryω.HasQuantSigned true (insert (φs n) Δ)
+      ↔ Theoryω.HasQuantSigned true Δ := fun n =>
+    Theoryω.hasQuantSigned_insert_of_le fun hq =>
+      Theoryω.hasQuantSigned_of_mem hmem ((hasQuantSigned_iSup true φs).mpr ⟨n, hq⟩)
+  refine h ⟨BoundedFormulaω.iInf θ, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · intro N instN neN hmodel
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_iInf]
+    intro n
+    have hEn := (hsep n).1
+    exact @hEn N instN neN hmodel
+  · intro N instN neN hmodel
+    have hiSup := hmodel _ hmem
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_iSup] at hiSup
+    obtain ⟨n, hn⟩ := hiSup
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iInf, not_forall]
+    have hNn := (hsep n).2.1
+    have := @hNn N instN neN fun ρ hρ => by
+      rcases Set.mem_insert_iff.mp hρ with rfl | hρ
+      · exact hn
+      · exact hmodel ρ hρ
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not] at this
+    exact ⟨n, this⟩
+  · exact ⟨baseFunctionsIn_iInf_subset θ fun n => (hsep n).2.2.1.1,
+      baseRelationsIn_iInf_subset θ fun n => (hsep n).2.2.1.2⟩
+  · refine sentenceJConsts_iInf_subset θ fun n => ?_
+    have := (hsep n).2.2.2.1
+    rwa [hcΔ n] at this
+  · intro hq
+    replace hq : hasQuantSigned true (BoundedFormulaω.iInf θ) := hq
+    rw [hasQuantSigned_iInf] at hq
+    obtain ⟨n, hn⟩ := hq
+    exact (hsep n).2.2.2.2.1 hn
+  · intro hq
+    replace hq : hasQuantSigned false (BoundedFormulaω.iInf θ) := hq
+    rw [hasQuantSigned_iInf] at hq
+    obtain ⟨n, hn⟩ := hq
+    exact (huΔ n).mp ((hsep n).2.2.2.2.2 hn)
+
+/-- **C3′, left: negated countable conjunction.**  Separator `⋁ₙ θₙ`. -/
+theorem budgetedPairInsep_neg_iInf_left (hmem : (BoundedFormulaω.iInf φs).not ∈ Γ)
+    (h : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ) :
+    ∃ k, BudgetedPairInsep F₁ R₁ F₂ R₂ (insert (φs k).not Γ) Δ := by
+  by_contra hcon
+  push Not at hcon
+  simp only [BudgetedPairInsep, not_not] at hcon
+  choose θ hsep using hcon
+  have hcΓ : ∀ n, theoryJConsts (L := L) (insert (φs n).not Γ) = theoryJConsts Γ := fun n =>
+    theoryJConsts_insert_of_subset (by
+      rw [sentenceJConsts_not]
+      refine (sentenceJConsts_component_iInf φs n).trans ?_
+      rw [← sentenceJConsts_not (L' := L) (BoundedFormulaω.iInf φs)]
+      exact sentenceJConsts_subset_theoryJConsts hmem)
+  have huΓ : ∀ n, Theoryω.HasQuantSigned true (insert (φs n).not Γ)
+      ↔ Theoryω.HasQuantSigned true Γ := fun n =>
+    Theoryω.hasQuantSigned_insert_of_le fun hq => by
+      refine Theoryω.hasQuantSigned_of_mem hmem ?_
+      rw [hasQuantSigned_not, hasQuantSigned_iInf]
+      rw [hasQuantSigned_not] at hq
+      exact ⟨n, hq⟩
+  refine h ⟨BoundedFormulaω.iSup θ, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · intro N instN neN hmodel
+    have hneg := hmodel _ hmem
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iInf,
+      not_forall] at hneg
+    obtain ⟨n, hn⟩ := hneg
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_iSup]
+    have hEn := (hsep n).1
+    exact ⟨n, @hEn N instN neN fun ρ hρ => by
+      rcases Set.mem_insert_iff.mp hρ with rfl | hρ
+      · rw [Sentenceω.Realize, BoundedFormulaω.realize_not]; exact hn
+      · exact hmodel ρ hρ⟩
+  · intro N instN neN hmodel
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iSup, not_exists]
+    intro n hn
+    have hNn := (hsep n).2.1
+    have := @hNn N instN neN hmodel
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not] at this
+    exact this hn
+  · exact ⟨baseFunctionsIn_iSup_subset θ fun n => (hsep n).2.2.1.1,
+      baseRelationsIn_iSup_subset θ fun n => (hsep n).2.2.1.2⟩
+  · refine sentenceJConsts_iSup_subset θ fun n => ?_
+    have := (hsep n).2.2.2.1
+    rwa [hcΓ n] at this
+  · intro hq
+    replace hq : hasQuantSigned true (BoundedFormulaω.iSup θ) := hq
+    rw [hasQuantSigned_iSup] at hq
+    obtain ⟨n, hn⟩ := hq
+    exact (huΓ n).mp ((hsep n).2.2.2.2.1 hn)
+  · intro hq
+    replace hq : hasQuantSigned false (BoundedFormulaω.iSup θ) := hq
+    rw [hasQuantSigned_iSup] at hq
+    obtain ⟨n, hn⟩ := hq
+    exact (hsep n).2.2.2.2.2 hn
+
+/-- **C3′, right: negated countable conjunction.**  Separator `⋀ₙ θₙ`. -/
+theorem budgetedPairInsep_neg_iInf_right (hmem : (BoundedFormulaω.iInf φs).not ∈ Δ)
+    (h : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ) :
+    ∃ k, BudgetedPairInsep F₁ R₁ F₂ R₂ Γ (insert (φs k).not Δ) := by
+  by_contra hcon
+  push Not at hcon
+  simp only [BudgetedPairInsep, not_not] at hcon
+  choose θ hsep using hcon
+  have hcΔ : ∀ n, theoryJConsts (L := L) (insert (φs n).not Δ) = theoryJConsts Δ := fun n =>
+    theoryJConsts_insert_of_subset (by
+      rw [sentenceJConsts_not]
+      refine (sentenceJConsts_component_iInf φs n).trans ?_
+      rw [← sentenceJConsts_not (L' := L) (BoundedFormulaω.iInf φs)]
+      exact sentenceJConsts_subset_theoryJConsts hmem)
+  have huΔ : ∀ n, Theoryω.HasQuantSigned true (insert (φs n).not Δ)
+      ↔ Theoryω.HasQuantSigned true Δ := fun n =>
+    Theoryω.hasQuantSigned_insert_of_le fun hq => by
+      refine Theoryω.hasQuantSigned_of_mem hmem ?_
+      rw [hasQuantSigned_not, hasQuantSigned_iInf]
+      rw [hasQuantSigned_not] at hq
+      exact ⟨n, hq⟩
+  refine h ⟨BoundedFormulaω.iInf θ, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · intro N instN neN hmodel
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_iInf]
+    intro n
+    have hEn := (hsep n).1
+    exact @hEn N instN neN hmodel
+  · intro N instN neN hmodel
+    have hneg := hmodel _ hmem
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iInf,
+      not_forall] at hneg
+    obtain ⟨n, hn⟩ := hneg
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iInf, not_forall]
+    have hNn := (hsep n).2.1
+    have := @hNn N instN neN fun ρ hρ => by
+      rcases Set.mem_insert_iff.mp hρ with rfl | hρ
+      · rw [Sentenceω.Realize, BoundedFormulaω.realize_not]; exact hn
+      · exact hmodel ρ hρ
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not] at this
+    exact ⟨n, this⟩
+  · exact ⟨baseFunctionsIn_iInf_subset θ fun n => (hsep n).2.2.1.1,
+      baseRelationsIn_iInf_subset θ fun n => (hsep n).2.2.1.2⟩
+  · refine sentenceJConsts_iInf_subset θ fun n => ?_
+    have := (hsep n).2.2.2.1
+    rwa [hcΔ n] at this
+  · intro hq
+    replace hq : hasQuantSigned true (BoundedFormulaω.iInf θ) := hq
+    rw [hasQuantSigned_iInf] at hq
+    obtain ⟨n, hn⟩ := hq
+    exact (hsep n).2.2.2.2.1 hn
+  · intro hq
+    replace hq : hasQuantSigned false (BoundedFormulaω.iInf θ) := hq
+    rw [hasQuantSigned_iInf] at hq
+    obtain ⟨n, hn⟩ := hq
+    exact (huΔ n).mp ((hsep n).2.2.2.2.2 hn)
+
+end CountableBranching
+
 end FirstOrder.Language
+
 
 
 
