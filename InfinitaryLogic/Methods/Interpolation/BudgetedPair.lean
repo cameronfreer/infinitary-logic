@@ -3,7 +3,7 @@ Copyright (c) 2026 Cameron Freer. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
-import InfinitaryLogic.Methods.Interpolation.QuantifierRoundTrip
+import InfinitaryLogic.Methods.ConstantSurgery
 import InfinitaryLogic.Methods.Interpolation.PairedInsepFamily
 import InfinitaryLogic.Lomega1omega.QuantifierOccurrence
 
@@ -716,113 +716,6 @@ theorem budgetedPairInsep_insert_shared_right (hσΓ : σ ∈ Γ)
     exact hqθ.elim (fun hh => absurd hh (hq false)) hx
 
 
-/-! ## Constant-for-constant substitution
-
-The machinery the **cross-label** equality/relation transfers need, and the reason they are the
-riskiest gate: when the relation atom and the equality atom sit on *different* labels, the derived
-atom is entailed by neither side alone, and the separator of the extended pair may legitimately
-mention a constant that only the *other* side carries.  Feferman's condition (iii) then forces that
-constant out of the separator — and the operation that does it is substitution of the shared partner,
-not quantification.
-
-`substConst b a ρ` replaces the constant `c_b` by `c_a` throughout `ρ`, built from the existing
-abstraction/instantiation pair. -/
-
-/-- Replace the constant `c_b` by `c_a`: abstract `b` into the free variable, then instantiate at
-`a`. -/
-noncomputable def substConst (b a : ℕ) (ρ : L[[ℕ]].Sentenceω) : L[[ℕ]].Sentenceω :=
-  instConst a ((ρ.abstractConst b).relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1))
-
-/-- Realizing the substitution is realizing the original with `b` reinterpreted at `a`'s value. -/
-theorem realize_substConst (base : L.Structure M) (h : ℕ → M) (b a : ℕ) (ρ : L[[ℕ]].Sentenceω) :
-    @BoundedFormulaω.Realize L[[ℕ]] M (wc base h) Empty 0 (substConst b a ρ) Empty.elim Fin.elim0
-      ↔ @BoundedFormulaω.Realize L[[ℕ]] M (wc base (Function.update h b (h a))) Empty 0 ρ
-          Empty.elim Fin.elim0 := by
-  letI : L[[ℕ]].Structure M := wc base h
-  rw [substConst, realize_instConst base h a _,
-    BoundedFormulaω.realize_relabel_sumInr_zero (ρ.abstractConst b) (fun _ : Fin 1 => h a)]
-  exact BoundedFormulaω.realize_abstractConst base h b (h a) ρ Fin.elim0
-
-theorem baseFunctionsIn_substConst_subset (b a : ℕ) (ρ : L[[ℕ]].Sentenceω) :
-    (substConst b a ρ).baseFunctionsIn ⊆ ρ.baseFunctionsIn := by
-  refine (baseFunctionsIn_instConst_subset a _).trans ?_
-  intro s hs
-  simp only [BoundedFormulaω.baseFunctionsIn, Set.mem_setOf_eq] at hs ⊢
-  rw [show (BoundedFormulaω.all ((ρ.abstractConst b).relabel
-      (Sum.inr : Fin 1 → Empty ⊕ Fin 1))).functionsIn
-    = ((ρ.abstractConst b).relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).functionsIn from rfl,
-    BoundedFormulaω.functionsIn_relabel] at hs
-  exact BoundedFormulaω.functionsIn_abstractConst_subset b ρ hs
-
-theorem baseRelationsIn_substConst (b a : ℕ) (ρ : L[[ℕ]].Sentenceω) :
-    (substConst b a ρ).baseRelationsIn ⊆ ρ.baseRelationsIn := by
-  refine (baseRelationsIn_instConst_subset a _).trans ?_
-  intro s hs
-  simp only [BoundedFormulaω.baseRelationsIn, Set.mem_setOf_eq] at hs ⊢
-  rw [show (BoundedFormulaω.all ((ρ.abstractConst b).relabel
-      (Sum.inr : Fin 1 → Empty ⊕ Fin 1))).relationsIn
-    = ((ρ.abstractConst b).relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).relationsIn from rfl,
-    BoundedFormulaω.relationsIn_relabel, BoundedFormulaω.relationsIn_abstractConst] at hs
-  exact hs
-
-theorem sentenceJConsts_substConst_subset (b a : ℕ) (ρ : L[[ℕ]].Sentenceω) :
-    sentenceJConsts (L' := L) (J := ℕ) (substConst b a ρ)
-      ⊆ sentenceJConsts (L' := L) (J := ℕ) ρ ∪ {a} := by
-  refine (sentenceJConsts_instConst_subset a _).trans ?_
-  refine Set.union_subset_union_left _ ?_
-  intro k hk
-  unfold sentenceJConsts at hk ⊢
-  rw [show (BoundedFormulaω.all ((ρ.abstractConst b).relabel
-      (Sum.inr : Fin 1 → Empty ⊕ Fin 1))).functionsIn
-    = ((ρ.abstractConst b).relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).functionsIn from rfl,
-    BoundedFormulaω.functionsIn_relabel] at hk
-  exact BoundedFormulaω.functionsIn_abstractConst_subset b ρ hk
-
-/-- The substituted constant is gone, provided it was not the substitute. -/
-theorem notMem_sentenceJConsts_substConst (b a : ℕ) (hne : b ≠ a) (ρ : L[[ℕ]].Sentenceω) :
-    b ∉ sentenceJConsts (L' := L) (J := ℕ) (substConst b a ρ) := by
-  intro hk
-  rcases sentenceJConsts_instConst_subset a _ hk with hk | hk
-  · unfold sentenceJConsts at hk
-    rw [show (BoundedFormulaω.all ((ρ.abstractConst b).relabel
-        (Sum.inr : Fin 1 → Empty ⊕ Fin 1))).functionsIn
-      = ((ρ.abstractConst b).relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).functionsIn from rfl,
-      BoundedFormulaω.functionsIn_relabel] at hk
-    exact BoundedFormulaω.notMem_sentenceJConsts_abstractConst b ρ hk
-  · exact hne (Set.mem_singleton_iff.mp hk)
-
-/-- Constant abstraction does not move the signed quantifier occurrences. -/
-theorem hasQuantSigned_abstractConst (j : ℕ) (s : Bool) :
-    ∀ {n : ℕ} (φ : L[[ℕ]].BoundedFormulaω Empty n),
-      hasQuantSigned s (φ.abstractConst j) ↔ hasQuantSigned s φ := by
-  intro n φ
-  induction φ generalizing s with
-  | falsum => exact Iff.rfl
-  | equal t u => exact Iff.rfl
-  | rel R ts => exact Iff.rfl
-  | imp φ ψ ihφ ihψ =>
-    show hasQuantSigned (!s) (φ.abstractConst j) ∨ hasQuantSigned s (ψ.abstractConst j) ↔ _
-    exact or_congr (ihφ (!s)) (ihψ s)
-  | all φ ih =>
-    show s = true ∨ hasQuantSigned s (φ.abstractConst j) ↔ _
-    exact or_congr_right (ih s)
-  | iSup φs ih =>
-    show (∃ i, hasQuantSigned s ((φs i).abstractConst j)) ↔ _
-    exact exists_congr fun i => ih i s
-  | iInf φs ih =>
-    show (∃ i, hasQuantSigned s ((φs i).abstractConst j)) ↔ _
-    exact exists_congr fun i => ih i s
-
-/-- Substitution does not move the signed quantifier occurrences: the budgets are untouched. -/
-theorem hasQuantSigned_substConst (b a : ℕ) (s : Bool) (ρ : L[[ℕ]].Sentenceω) :
-    hasQuantSigned s (substConst b a ρ) ↔ hasQuantSigned s ρ := by
-  rw [substConst, instConst,
-    show ∀ ψ : L[[ℕ]].BoundedFormulaω Empty 1,
-      hasQuantSigned s ((ψ.openBounds).subst (fun _ => constTerm a))
-        ↔ hasQuantSigned s ψ from fun ψ => by
-      rw [hasQuantSigned_subst, hasQuantSigned_openBounds],
-    hasQuantSigned_relabel, hasQuantSigned_abstractConst]
-
 /-! ## Cross-label equality and relation transfer
 
 The mixed `rel_congr` case, which was load-bearing in Craig's paired construction and is the
@@ -943,6 +836,235 @@ theorem budgetedPairInsep_relCongr_mixed {l : ℕ} (R : L.Relations l) (g : Fin 
   · intro hq
     exact hx ((hasQuantSigned_substConst b (g i) false θ).mp hq)
 
+
+/-! ## Generic insertion drivers
+
+Every deterministic field is an instance of the same statement: the new sentence is **entailed** by
+the side that receives it, and both its constants and its positive quantifier occurrences are already
+carried there.  The three obligations stay separate on purpose — the proof's content is which label
+received the formula. -/
+
+/-- **Left driver.** -/
+theorem budgetedPairInsep_insert_entailed_left (hent : Theoryω.Entails Γ σ)
+    (hcσ : sentenceJConsts (L' := L) (J := ℕ) σ ⊆ theoryJConsts Γ)
+    (hqσ : hasQuantSigned true σ → Theoryω.HasQuantSigned true Γ)
+    (h : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ) :
+    BudgetedPairInsep F₁ R₁ F₂ R₂ (insert σ Γ) Δ := by
+  rintro ⟨θ, hE, hN, hbnd, hc, hu, hx⟩
+  rw [theoryJConsts_insert_of_subset hcσ] at hc
+  rw [Theoryω.hasQuantSigned_insert_of_le hqσ] at hu
+  refine h ⟨θ, ?_, hN, hbnd, hc, hu, hx⟩
+  intro N instN neN hmodel
+  refine @hE N instN neN fun ρ hρ => ?_
+  rcases Set.mem_insert_iff.mp hρ with rfl | hρ
+  · exact @hent N instN neN hmodel
+  · exact hmodel ρ hρ
+
+/-- **Right driver.** -/
+theorem budgetedPairInsep_insert_entailed_right (hent : Theoryω.Entails Δ σ)
+    (hcσ : sentenceJConsts (L' := L) (J := ℕ) σ ⊆ theoryJConsts Δ)
+    (hqσ : hasQuantSigned true σ → Theoryω.HasQuantSigned true Δ)
+    (h : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ) :
+    BudgetedPairInsep F₁ R₁ F₂ R₂ Γ (insert σ Δ) := by
+  rintro ⟨θ, hE, hN, hbnd, hc, hu, hx⟩
+  rw [theoryJConsts_insert_of_subset hcσ] at hc
+  rw [Theoryω.hasQuantSigned_insert_of_le hqσ] at hx
+  refine h ⟨θ, hE, ?_, hbnd, hc, hu, hx⟩
+  intro N instN neN hmodel
+  refine @hN N instN neN fun ρ hρ => ?_
+  rcases Set.mem_insert_iff.mp hρ with rfl | hρ
+  · exact @hent N instN neN hmodel
+  · exact hmodel ρ hρ
+
+/-- The recurring shape: the new sentence is licensed by a **member** `ρ` of the side. -/
+theorem budgetedPairInsep_insert_of_member_left {ρ : L[[ℕ]].Sentenceω} (hρ : ρ ∈ Γ)
+    (hent : Theoryω.Entails Γ σ)
+    (hc : sentenceJConsts (L' := L) (J := ℕ) σ ⊆ sentenceJConsts (L' := L) (J := ℕ) ρ)
+    (hq : hasQuantSigned true σ → hasQuantSigned true ρ)
+    (h : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ) :
+    BudgetedPairInsep F₁ R₁ F₂ R₂ (insert σ Γ) Δ :=
+  budgetedPairInsep_insert_entailed_left hent
+    (hc.trans (sentenceJConsts_subset_theoryJConsts hρ))
+    (fun hqσ => Theoryω.hasQuantSigned_of_mem hρ (hq hqσ)) h
+
+theorem budgetedPairInsep_insert_of_member_right {ρ : L[[ℕ]].Sentenceω} (hρ : ρ ∈ Δ)
+    (hent : Theoryω.Entails Δ σ)
+    (hc : sentenceJConsts (L' := L) (J := ℕ) σ ⊆ sentenceJConsts (L' := L) (J := ℕ) ρ)
+    (hq : hasQuantSigned true σ → hasQuantSigned true ρ)
+    (h : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ) :
+    BudgetedPairInsep F₁ R₁ F₂ R₂ Γ (insert σ Δ) :=
+  budgetedPairInsep_insert_entailed_right hent
+    (hc.trans (sentenceJConsts_subset_theoryJConsts hρ))
+    (fun hqσ => Theoryω.hasQuantSigned_of_mem hρ (hq hqσ)) h
+
+/-! ## The deterministic connective fields
+
+C2 (double negation), C1′ (negated implication, both components), C3 (conjunction component) and C4′
+(negated-disjunction component), on each label.  Each is three obligations against the parent. -/
+
+section Deterministic
+
+variable {φ ψ : L[[ℕ]].Sentenceω} {φs : ℕ → L[[ℕ]].Sentenceω} {k : ℕ}
+
+/-- C2, left. -/
+theorem budgetedPairInsep_not_not_left (hmem : φ.not.not ∈ Γ)
+    (h : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ) :
+    BudgetedPairInsep F₁ R₁ F₂ R₂ (insert φ Γ) Δ := by
+  refine budgetedPairInsep_insert_of_member_left hmem ?_ ?_ ?_ h
+  · intro N instN _ hmodel
+    have := hmodel _ hmem
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_not,
+      not_not] at this
+    exact this
+  · rw [sentenceJConsts_not, sentenceJConsts_not]
+  · intro hq
+    rw [hasQuantSigned_not, hasQuantSigned_not]
+    exact hq
+
+/-- C2, right. -/
+theorem budgetedPairInsep_not_not_right (hmem : φ.not.not ∈ Δ)
+    (h : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ) :
+    BudgetedPairInsep F₁ R₁ F₂ R₂ Γ (insert φ Δ) := by
+  refine budgetedPairInsep_insert_of_member_right hmem ?_ ?_ ?_ h
+  · intro N instN _ hmodel
+    have := hmodel _ hmem
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_not,
+      not_not] at this
+    exact this
+  · rw [sentenceJConsts_not, sentenceJConsts_not]
+  · intro hq
+    rw [hasQuantSigned_not, hasQuantSigned_not]
+    exact hq
+
+/-- C1′ antecedent, left. -/
+theorem budgetedPairInsep_neg_imp_left₁ (hmem : (φ.imp ψ).not ∈ Γ)
+    (h : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ) :
+    BudgetedPairInsep F₁ R₁ F₂ R₂ (insert φ Γ) Δ := by
+  refine budgetedPairInsep_insert_of_member_left hmem ?_ ?_ ?_ h
+  · intro N instN _ hmodel
+    have := hmodel _ hmem
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_imp,
+      Classical.not_imp] at this
+    exact this.1
+  · rw [sentenceJConsts_not]; exact sentenceJConsts_imp_left φ ψ
+  · intro hq
+    rw [hasQuantSigned_not, hasQuantSigned_imp]
+    exact Or.inl hq
+
+/-- C1′ consequent, left. -/
+theorem budgetedPairInsep_neg_imp_left₂ (hmem : (φ.imp ψ).not ∈ Γ)
+    (h : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ) :
+    BudgetedPairInsep F₁ R₁ F₂ R₂ (insert ψ.not Γ) Δ := by
+  refine budgetedPairInsep_insert_of_member_left hmem ?_ ?_ ?_ h
+  · intro N instN _ hmodel
+    have := hmodel _ hmem
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_imp,
+      Classical.not_imp] at this
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not]
+    exact this.2
+  · rw [sentenceJConsts_not, sentenceJConsts_not]; exact sentenceJConsts_imp_right φ ψ
+  · intro hq
+    rw [hasQuantSigned_not, hasQuantSigned_imp]
+    rw [hasQuantSigned_not] at hq
+    exact Or.inr hq
+
+/-- C1′ antecedent, right. -/
+theorem budgetedPairInsep_neg_imp_right₁ (hmem : (φ.imp ψ).not ∈ Δ)
+    (h : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ) :
+    BudgetedPairInsep F₁ R₁ F₂ R₂ Γ (insert φ Δ) := by
+  refine budgetedPairInsep_insert_of_member_right hmem ?_ ?_ ?_ h
+  · intro N instN _ hmodel
+    have := hmodel _ hmem
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_imp,
+      Classical.not_imp] at this
+    exact this.1
+  · rw [sentenceJConsts_not]; exact sentenceJConsts_imp_left φ ψ
+  · intro hq
+    rw [hasQuantSigned_not, hasQuantSigned_imp]
+    exact Or.inl hq
+
+/-- C1′ consequent, right. -/
+theorem budgetedPairInsep_neg_imp_right₂ (hmem : (φ.imp ψ).not ∈ Δ)
+    (h : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ) :
+    BudgetedPairInsep F₁ R₁ F₂ R₂ Γ (insert ψ.not Δ) := by
+  refine budgetedPairInsep_insert_of_member_right hmem ?_ ?_ ?_ h
+  · intro N instN _ hmodel
+    have := hmodel _ hmem
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_imp,
+      Classical.not_imp] at this
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not]
+    exact this.2
+  · rw [sentenceJConsts_not, sentenceJConsts_not]; exact sentenceJConsts_imp_right φ ψ
+  · intro hq
+    rw [hasQuantSigned_not, hasQuantSigned_imp]
+    rw [hasQuantSigned_not] at hq
+    exact Or.inr hq
+
+/-- C3, left: a conjunction component. -/
+theorem budgetedPairInsep_iInf_component_left (hmem : BoundedFormulaω.iInf φs ∈ Γ)
+    (h : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ) :
+    BudgetedPairInsep F₁ R₁ F₂ R₂ (insert (φs k) Γ) Δ := by
+  refine budgetedPairInsep_insert_of_member_left hmem ?_ (sentenceJConsts_component_iInf φs k) ?_ h
+  · intro N instN _ hmodel
+    have := hmodel _ hmem
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_iInf] at this
+    exact this k
+  · intro hq
+    rw [hasQuantSigned_iInf]
+    exact ⟨k, hq⟩
+
+/-- C3, right. -/
+theorem budgetedPairInsep_iInf_component_right (hmem : BoundedFormulaω.iInf φs ∈ Δ)
+    (h : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ) :
+    BudgetedPairInsep F₁ R₁ F₂ R₂ Γ (insert (φs k) Δ) := by
+  refine budgetedPairInsep_insert_of_member_right hmem ?_ (sentenceJConsts_component_iInf φs k) ?_ h
+  · intro N instN _ hmodel
+    have := hmodel _ hmem
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_iInf] at this
+    exact this k
+  · intro hq
+    rw [hasQuantSigned_iInf]
+    exact ⟨k, hq⟩
+
+/-- C4′, left: a negated-disjunction component. -/
+theorem budgetedPairInsep_neg_iSup_component_left (hmem : (BoundedFormulaω.iSup φs).not ∈ Γ)
+    (h : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ) :
+    BudgetedPairInsep F₁ R₁ F₂ R₂ (insert (φs k).not Γ) Δ := by
+  refine budgetedPairInsep_insert_of_member_left hmem ?_ ?_ ?_ h
+  · intro N instN _ hmodel
+    have := hmodel _ hmem
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iSup,
+      not_exists] at this
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not]
+    exact this k
+  · rw [sentenceJConsts_not, sentenceJConsts_not]
+    exact sentenceJConsts_component_iSup φs k
+  · intro hq
+    rw [hasQuantSigned_not, hasQuantSigned_iSup]
+    rw [hasQuantSigned_not] at hq
+    exact ⟨k, hq⟩
+
+/-- C4′, right. -/
+theorem budgetedPairInsep_neg_iSup_component_right (hmem : (BoundedFormulaω.iSup φs).not ∈ Δ)
+    (h : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ) :
+    BudgetedPairInsep F₁ R₁ F₂ R₂ Γ (insert (φs k).not Δ) := by
+  refine budgetedPairInsep_insert_of_member_right hmem ?_ ?_ ?_ h
+  · intro N instN _ hmodel
+    have := hmodel _ hmem
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iSup,
+      not_exists] at this
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not]
+    exact this k
+  · rw [sentenceJConsts_not, sentenceJConsts_not]
+    exact sentenceJConsts_component_iSup φs k
+  · intro hq
+    rw [hasQuantSigned_not, hasQuantSigned_iSup]
+    rw [hasQuantSigned_not] at hq
+    exact ⟨k, hq⟩
+
+end Deterministic
+
 end FirstOrder.Language
+
 
 

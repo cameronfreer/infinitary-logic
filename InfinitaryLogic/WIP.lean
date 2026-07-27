@@ -7,6 +7,7 @@ import InfinitaryLogic.Methods.Interpolation.Inseparability
 import InfinitaryLogic.Methods.Interpolation.ConstantGeneralization
 import InfinitaryLogic.Methods.Interpolation.MalitzC7Spike
 import InfinitaryLogic.Methods.Interpolation.FefermanProjection
+import InfinitaryLogic.Methods.ConstantSurgery
 import InfinitaryLogic.Methods.Interpolation.BudgetedPair
 import InfinitaryLogic.Methods.Interpolation.QuantifierRoundTrip
 import InfinitaryLogic.Methods.Interpolation.RootGate
