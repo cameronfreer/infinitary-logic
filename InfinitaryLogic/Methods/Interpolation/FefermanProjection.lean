@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.Interpolation.PairedInsepFamily
-import InfinitaryLogic.Lomega1omega.QuantifierClass
+import InfinitaryLogic.Lomega1omega.QuantifierOccurrence
 
 /-!
 # The canonical side projections and the constant-free separator (issue #15, Unit 3, steps 1–3)
@@ -641,5 +641,144 @@ theorem fefermanInsep_imp_dichotomy_right (φ ψ : L[[ℕ]].Sentenceω)
         · exact hmodel ρ hρ
       rw [Sentenceω.Realize, BoundedFormulaω.realize_not] at this
       exact fun hand => this hand.1
+
+
+/-! ## The budgeted invariant (gate 2)
+
+`FefermanInsep` is **retired as the stage invariant** — see the C1 finding above.  It is kept as the
+root-facing specialization and as a regression test.  The invariant that the construction actually
+maintains carries Feferman's two permissions, in their single-sorted form:
+
+* a **universal** occurrence in the separator is licensed by a universal occurrence in the **left**
+  projection;
+* an **existential** occurrence is licensed by a universal occurrence in the **right** projection;
+* any Henkin constant is charged to **both** permissions.
+
+That is `Un′(θ) ⊆ Un(S₁)` and `Ex′(θ) ⊆ Un(S₂)` of Theorem 22, read at one sort. -/
+
+/-- **Feferman's separator permissions**, single-sorted. -/
+def FefermanAllowed (S₁ S₂ : Set L[[ℕ]].Sentenceω) (θ : L[[ℕ]].Sentenceω) : Prop :=
+  (BoundedFormulaω.HasUniversal θ → Theoryω.HasUniversal S₁) ∧
+  (BoundedFormulaω.HasExistential θ → Theoryω.HasUniversal S₂) ∧
+  ((sentenceJConsts (L' := L) (J := ℕ) θ).Nonempty →
+    Theoryω.HasUniversal S₁ ∧ Theoryω.HasUniversal S₂)
+
+/-- **The budgeted invariant**: no separator of the two canonical projections that the budgets allow.
+Unlike `FefermanInsep`, constant-freeness and universality are *consequences at the root*, not
+standing requirements. -/
+def BudgetedInsep (F₁ : Set (Σ n, L.Functions n)) (R₁ : Set (Σ n, L.Relations n))
+    (F₂ : Set (Σ n, L.Functions n)) (R₂ : Set (Σ n, L.Relations n))
+    (S : Set L[[ℕ]].Sentenceω) : Prop :=
+  ¬ ∃ θ : L[[ℕ]].Sentenceω,
+    θ ∈ SentBnd (F₁ ∩ F₂) (R₁ ∩ R₂) ∧
+    FefermanAllowed (side F₁ R₁ S) (side F₂ R₂ S) θ ∧
+    Theoryω.Entails (side F₁ R₁ S) θ ∧ Theoryω.Entails (side F₂ R₂ S) θ.not
+
+/-! ### The root collapse
+
+When the **right** projection has no universal occurrence — the root situation for a universal `ψ`,
+since `Un({ψ.not}) = Ex(ψ) = ∅` — the permissions force exactly the conclusion Malitz 4.5 wants. -/
+
+/-- **Root collapse.**  An allowed separator against an existentially-unlicensed right projection is
+universal and constant-free. -/
+theorem isUniversal_and_constantFree_of_allowed {S₁ S₂ : Set L[[ℕ]].Sentenceω}
+    {θ : L[[ℕ]].Sentenceω} (h : FefermanAllowed S₁ S₂ θ) (h2 : ¬ Theoryω.HasUniversal S₂) :
+    BoundedFormulaω.IsUniversal θ ∧ sentenceJConsts (L' := L) (J := ℕ) θ = ∅ := by
+  refine ⟨(BoundedFormulaω.isUniversal_iff_not_hasExistential θ).mpr fun hq => h2 (h.2.1 hq), ?_⟩
+  rw [← Set.not_nonempty_iff_eq_empty]
+  exact fun hne => h2 (h.2.2 hne).2
+
+/-- The converse direction used to feed the budgeted predicate: a universal, constant-free separator
+whose universal occurrences are licensed on the left is allowed. -/
+theorem fefermanAllowed_of_isUniversal {S₁ S₂ : Set L[[ℕ]].Sentenceω} {θ : L[[ℕ]].Sentenceω}
+    (hu : BoundedFormulaω.IsUniversal θ) (hc : sentenceJConsts (L' := L) (J := ℕ) θ = ∅)
+    (hleft : BoundedFormulaω.HasUniversal θ → Theoryω.HasUniversal S₁) :
+    FefermanAllowed S₁ S₂ θ := by
+  refine ⟨hleft, fun hq => absurd hq ((BoundedFormulaω.isUniversal_iff_not_hasExistential θ).mp hu),
+    fun hne => ?_⟩
+  rw [hc] at hne
+  exact absurd hne (by simp)
+
+/-! ### C1 branching under the budgets, no leakage
+
+The same two orientations as before, now with the permissions carried.  The bookkeeping is the
+**non-growth** fact `Theoryω.hasQuantSigned_insert_of_le`: a branch sentence's universal occurrences
+are already licensed by its parent, since `hasQuantSigned true (φ.imp ψ)` covers both
+`hasQuantSigned false φ` and `hasQuantSigned true ψ`. -/
+
+theorem budgetedInsep_imp_dichotomy_left (φ ψ : L[[ℕ]].Sentenceω)
+    (hmem : φ.imp ψ ∈ side F₁ R₁ S)
+    (hφ₂ : φ ∉ SentBnd (L := L) F₂ R₂) (hψ₂ : ψ ∉ SentBnd (L := L) F₂ R₂)
+    (h : BudgetedInsep F₁ R₁ F₂ R₂ S) :
+    BudgetedInsep F₁ R₁ F₂ R₂ (insert φ.not S) ∨ BudgetedInsep F₁ R₁ F₂ R₂ (insert ψ S) := by
+  by_contra hcon
+  rw [not_or] at hcon
+  obtain ⟨h1, h2⟩ := hcon
+  simp only [BudgetedInsep, not_not] at h1 h2
+  obtain ⟨τ₁, hb₁, ha₁, hL₁, hR₁⟩ := h1
+  obtain ⟨τ₂, hb₂, ha₂, hL₂, hR₂⟩ := h2
+  have hφ₁ : φ.not ∈ SentBnd (L := L) F₁ R₁ := sentBnd_not_iff.mpr (sentBnd_imp_left hmem.2)
+  have hψ₁ : ψ ∈ SentBnd (L := L) F₁ R₁ := sentBnd_imp_right hmem.2
+  have hφ₂' : φ.not ∉ SentBnd (L := L) F₂ R₂ := fun hb => hφ₂ (sentBnd_not_iff.mp hb)
+  -- the branch sentences do not enlarge the left budget: the parent already licenses them
+  have hgrowφ : Theoryω.HasUniversal (insert φ.not (side F₁ R₁ S))
+      ↔ Theoryω.HasUniversal (side F₁ R₁ S) := by
+    refine Theoryω.hasQuantSigned_insert_of_le fun hq => ?_
+    rw [BoundedFormulaω.hasQuantSigned_not] at hq
+    exact Theoryω.hasQuantSigned_of_mem hmem (Or.inl hq)
+  have hgrowψ : Theoryω.HasUniversal (insert ψ (side F₁ R₁ S))
+      ↔ Theoryω.HasUniversal (side F₁ R₁ S) :=
+    Theoryω.hasQuantSigned_insert_of_le fun hq => Theoryω.hasQuantSigned_of_mem hmem (Or.inr hq)
+  rw [side_insert_of_mem hφ₁] at hL₁ ha₁
+  rw [side_insert_of_notMem hφ₂'] at hR₁ ha₁
+  rw [side_insert_of_mem hψ₁] at hL₂ ha₂
+  rw [side_insert_of_notMem hψ₂] at hR₂ ha₂
+  rw [FefermanAllowed, hgrowφ] at ha₁
+  rw [FefermanAllowed, hgrowψ] at ha₂
+  refine h ⟨(τ₁.not).imp τ₂, ?_, ⟨?_, ?_, ?_⟩, ?_, ?_⟩
+  · exact ⟨baseFunctionsIn_imp_subset (by rw [baseFunctionsIn_not]; exact hb₁.1) hb₂.1,
+      baseRelationsIn_imp_subset (by rw [baseRelationsIn_not]; exact hb₁.2) hb₂.2⟩
+  -- universal occurrences: `HasUniversal τ₁ ∨ HasUniversal τ₂`, both licensed on the left
+  · intro hq
+    replace hq : BoundedFormulaω.hasQuantSigned true ((τ₁.not).imp τ₂) := hq
+    rw [BoundedFormulaω.hasQuantSigned_imp, BoundedFormulaω.hasQuantSigned_not] at hq
+    exact hq.elim (fun h => ha₁.1 h) (fun h => ha₂.1 h)
+  -- existential occurrences: `HasExistential τ₁ ∨ HasExistential τ₂`, both licensed on the right
+  · intro hq
+    replace hq : BoundedFormulaω.hasQuantSigned false ((τ₁.not).imp τ₂) := hq
+    rw [BoundedFormulaω.hasQuantSigned_imp, BoundedFormulaω.hasQuantSigned_not] at hq
+    exact hq.elim (fun h => ha₁.2.1 h) (fun h => ha₂.2.1 h)
+  -- constants are charged to both permissions
+  · rintro ⟨k, hk⟩
+    have hsub : sentenceJConsts (L' := L) (J := ℕ) ((τ₁.not).imp τ₂)
+        ⊆ sentenceJConsts (L' := L) (J := ℕ) τ₁ ∪ sentenceJConsts (L' := L) (J := ℕ) τ₂ := by
+      refine sentenceJConsts_imp_subset ?_ Set.subset_union_right
+      rw [sentenceJConsts_not]; exact Set.subset_union_left
+    rcases hsub hk with hk | hk
+    · exact ha₁.2.2 ⟨k, hk⟩
+    · exact ha₂.2.2 ⟨k, hk⟩
+  · intro N instN neN hmodel
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_imp, BoundedFormulaω.realize_not]
+    intro hnτ₁
+    have hφtrue : @Sentenceω.Realize L[[ℕ]] φ N instN := by
+      by_contra hnφ
+      refine hnτ₁ (@hL₁ N instN neN fun ρ hρ => ?_)
+      rcases Set.mem_insert_iff.mp hρ with rfl | hρ
+      · rw [Sentenceω.Realize, BoundedFormulaω.realize_not]; exact hnφ
+      · exact hmodel ρ hρ
+    have himp := hmodel _ hmem
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_imp] at himp
+    refine @hL₂ N instN neN fun ρ hρ => ?_
+    rcases Set.mem_insert_iff.mp hρ with rfl | hρ
+    · exact himp hφtrue
+    · exact hmodel ρ hρ
+  · intro N instN neN hmodel
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_imp,
+      BoundedFormulaω.realize_not]
+    intro hcon
+    have hn₁ := @hR₁ N instN neN hmodel
+    have hn₂ := @hR₂ N instN neN hmodel
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not] at hn₁ hn₂
+    exact hn₂ (hcon hn₁)
 
 end FirstOrder.Language

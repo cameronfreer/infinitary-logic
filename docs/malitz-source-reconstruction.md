@@ -325,6 +325,78 @@ the separator may quantify universally / existentially, with constants charged i
 landed C7 gates and the two no-leakage dichotomies port to that predicate unchanged in shape, since
 none of them touches the budget; C0 and coverage are budget-independent already.
 
+## 6a. The budgeted redesign, and where it stops
+
+`FefermanInsep` is **retired as the stage invariant** (kept as the root-facing specialization and a
+regression test).  The invariant carries Feferman's **two permissions**, not two per projection:
+
+* a **universal** occurrence in the separator is licensed by a universal occurrence in the **left**
+  projection;
+* an **existential** occurrence is licensed by a universal occurrence in the **right** projection;
+* any Henkin constant is charged to **both**.
+
+This is `Un′(θ) ⊆ Un(S₁)`, `Ex′(θ) ⊆ Un(S₂)` read at one sort.
+
+**Gate 1 — landed.**  `Lomega1omega/QuantifierOccurrence.lean`: a direct signed *occurrence*
+recursion `hasQuantSigned`, with exact constructor equations (including `not`, `and`, `or`, `ex`,
+`⊤`) and the exact bridge `universalSigned s φ ↔ ¬ hasQuantSigned (!s) φ`, hence
+`IsUniversal φ ↔ ¬ HasExistential φ` and `IsExistential φ ↔ ¬ HasUniversal φ`.  Set-level versions
+carry the budget sources, with the **non-growth** lemma `hasQuantSigned_insert_of_le` that every
+branch step needs.
+
+**Gate 2 — landed.**  `FefermanAllowed S₁ S₂ θ` exactly as specified, and `BudgetedInsep`.  Two
+consequences worth naming: `isUniversal_and_constantFree_of_allowed` — when the right projection has
+no universal occurrence, an allowed separator is universal **and** constant-free, which is the root
+collapse the interpolant needs — and `fefermanAllowed_of_isUniversal`, its converse feed.  The
+no-leakage C1 dichotomy ports unchanged in shape (`budgetedInsep_imp_dichotomy_left`), with the branch
+budgets discharged by non-growth: `hasQuantSigned true (φ.imp ψ)` covers both `hasQuantSigned false φ`
+and `hasQuantSigned true ψ`, so neither branch enlarges the left budget.
+
+**Gate 3 — designed, deferred.**  With canonical projections `{r₁, r₂.not}` need not project to the
+two singletons: a shared-vocabulary `r₁` also enters the right projection, which both enlarges the
+right budget and blocks `side₂ ⊨ θ.not` from yielding `θ ⊨ r₂`.  The repair is two fresh nullary
+relation tags, `rL := r₁ ∧ (Pₗ → Pₗ)` and `rR := r₂.not ∧ (Pᵣ → Pᵣ)`, with the left vocabulary the
+base symbols plus `Pₗ` and the right plus `Pᵣ`: the initial projections are then exactly `{rL}` and
+`{rR}`, their vocabulary intersection is exactly the original shared vocabulary, the tags add no
+quantifiers and no constants, the right root budget is empty when `r₂` is universal, and semantic
+untagging returns the interpolant.  **This is the final correction to the withdrawn "no root residue"
+claim: canonical-projection overlap does create root residue unless the roots are tagged.**  It is
+deferred only because it needs a language expansion by two nullary relations, which the repository
+does not have.
+
+**Gate 4 — attempted; the obstruction is *not* budget bookkeeping.**  Take the leaking C1 case again:
+`φ.imp ψ ∈ side₁ S` with `φ` shared and `ψ` outside the right vocabulary.  The budgets behave exactly
+as designed — the left budget does not grow, and the right budget grows by `HasExistential φ` in the
+`φ.not` branch, which is the dynamic licensing at work.  But every separator that works semantically
+must **case-split on `φ`**, and `φ` then occurs at *both* signs:
+
+```
+HasUniversal ((φ.not.imp τ₁).and (φ.imp τ₂))
+  ↔ HasUniversal φ ∨ HasUniversal τ₁ ∨ HasExistential φ ∨ HasUniversal τ₂
+```
+
+`HasExistential φ`, `HasUniversal τ₁`, `HasUniversal τ₂` are all licensed on the left.
+**`HasUniversal φ` is not**: `φ.imp ψ ∈ side₁ S` licenses only `HasExistential φ`, because the
+antecedent position flips the sign.  The alternative separator
+`(φ.not.and τ₁).or (φ.and τ₂)` has the same universal-occurrence set, and the obstruction is not an
+artifact of the `imp` presentation: for the survey's own `⋁` rule the combined separator
+`⋁ₙ (φₙ ∧ θₙ)` needs `HasExistential φₙ → Un(S₂)`, which is likewise unlicensed.
+
+So, uniformly across the branching rules: **the separator must mention the leaked component, and the
+leaked component's own quantifier content is licensed by neither budget.**  Nor does enlarging the
+budget sources to the signed-subformula closure of the members help — the offending occurrence sits at
+the *opposite* sign from the parent, so the closure does not contain it either.
+
+Gate 3 does not change this: tagging fixes the root projections, while the obstruction appears at the
+first branching step on a shared subformula.
+
+**Consequence.**  The single highest-value unread item is now **Feferman [17] itself** (*Lectures on
+proof theory*, Springer LNM 70, 1968, 1–107): two independent separator constructions fail at the same
+point, and Väänänen's presentation omits exactly this step ("most are almost trivial").  Either
+Feferman's branching separator differs from both candidates, or the family carries a further condition
+that keeps shared components out of the other projection.  Gate 5 (porting the remaining fields) should
+not start until that is known.
+
 **Field-audit order (review, for step 4).**  Family shell, finiteness, universe membership and
 projection coverage; C0 via the `⊥`/`⊤` two-side split; finite and countable branching, especially the
 implication dichotomy; `all_inst` and the negated-universal witness gate; equality and relation

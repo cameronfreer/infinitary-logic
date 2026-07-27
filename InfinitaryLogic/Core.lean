@@ -25,6 +25,7 @@ import InfinitaryLogic.Lomega1omega.Polarity
 import InfinitaryLogic.Lomega1omega.PolaritySemantics
 import InfinitaryLogic.Lomega1omega.QuantifierClass
 import InfinitaryLogic.Lomega1omega.QuantifierSemantics
+import InfinitaryLogic.Lomega1omega.QuantifierOccurrence
 
 -- Scott sentences and ranks
 import InfinitaryLogic.Scott.AtomicDiagram
