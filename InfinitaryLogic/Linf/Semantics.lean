@@ -22,7 +22,7 @@ This file defines the semantics of L∞ω formulas.
 - Simp lemmas for all connectives and quantifiers.
 -/
 
-universe u v w u'
+universe u v w u' uι
 
 namespace FirstOrder
 
@@ -74,12 +74,28 @@ theorem realize_all (φ : L.BoundedFormulaInf α (n + 1)) :
     (all φ).Realize v xs ↔ ∀ x : M, φ.Realize v (snoc xs x) := by rfl
 
 @[simp]
-theorem realize_iSup {ι : Type} (φs : ι → L.BoundedFormulaInf α n) :
+theorem realize_iSup {ι : Type uι} (φs : ι → L.BoundedFormulaInf α n) :
     (iSup φs).Realize v xs ↔ ∃ i, (φs i).Realize v xs := by rfl
 
 @[simp]
-theorem realize_iInf {ι : Type} (φs : ι → L.BoundedFormulaInf α n) :
+theorem realize_iInf {ι : Type uι} (φs : ι → L.BoundedFormulaInf α n) :
     (iInf φs).Realize v xs ↔ ∀ i, (φs i).Realize v xs := by rfl
+
+/-! ### Index-universe regressions
+
+`realize_iSup`/`realize_iInf` quantify over `ι : Type uι`, not `ι : Type`.  This example and its
+formula-level companion at the end of the `FormulaInf` section are permanent regressions locking
+that in, one per namespace.
+
+Both pin a *literal* nonzero index universe, which is the case that motivates the signature: Karp's
+backward direction branches over a structure's own carrier, which need not live in `Type 0`.  Both
+must close by `simp only`: `Realize` computes on the constructors, so a bare `simp` — or any tactic
+that unfolds — would still succeed with the lemma pinned back to `Type`, and the generalization
+would be lost silently. -/
+
+example {ι : Type 1} (φs : ι → L.BoundedFormulaInf.{u, v, u', 1} α n) :
+    (iInf φs).Realize v xs ↔ ∀ i, (φs i).Realize v xs := by
+  simp only [realize_iInf]
 
 @[simp]
 theorem realize_top : (⊤ : L.BoundedFormulaInf α n).Realize v xs ↔ True := by
@@ -164,14 +180,23 @@ theorem realize_sup (φ ψ : L.FormulaInf α) :
     Realize (φ ⊔ ψ) v ↔ Realize φ v ∨ Realize ψ v := BoundedFormulaInf.realize_sup φ ψ
 
 @[simp]
-theorem realize_iSup {ι : Type} (φs : ι → L.FormulaInf α) :
+theorem realize_iSup {ι : Type uι} (φs : ι → L.FormulaInf α) :
     Realize (BoundedFormulaInf.iSup φs) v ↔ ∃ i, Realize (φs i) v :=
   BoundedFormulaInf.realize_iSup φs
 
 @[simp]
-theorem realize_iInf {ι : Type} (φs : ι → L.FormulaInf α) :
+theorem realize_iInf {ι : Type uι} (φs : ι → L.FormulaInf α) :
     Realize (BoundedFormulaInf.iInf φs) v ↔ ∀ i, Realize (φs i) v :=
   BoundedFormulaInf.realize_iInf φs
+
+/-! ### Index-universe regression, formula level
+
+Companion to the bounded-formula regression above: the formula-level twin must also apply at a
+nonzero index universe.  Permanent — see the note beside `BoundedFormulaInf.realize_iInf`. -/
+
+example {ι : Type 1} (φs : ι → L.FormulaInf.{u, v, u', 1} α) :
+    Realize (BoundedFormulaInf.iSup φs) v ↔ ∃ i, Realize (φs i) v := by
+  simp only [realize_iSup]
 
 end FormulaInf
 
