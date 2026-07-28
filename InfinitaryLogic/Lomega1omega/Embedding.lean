@@ -23,7 +23,7 @@ infinitary logic).
 - `realize_ofCountable`: Semantics preserved by ofCountable conversion
 -/
 
-universe u v u' w
+universe u v u' w uι
 
 namespace FirstOrder
 
@@ -33,21 +33,54 @@ variable {L : Language.{u, v}} {α : Type u'} {n : ℕ}
 
 namespace BoundedFormulaω
 
-/-- Embeds a Lω₁ω formula into L∞ω (uses ℕ as index type). -/
-def toLinf : ∀ {n}, L.BoundedFormulaω α n → L.BoundedFormulaInf α n
+/-- Embeds a Lω₁ω formula into L∞ω **at an arbitrary target index universe** `uι`.
+
+The Lω₁ω infinitary nodes branch over `ℕ : Type 0`, so hitting a target in `Type uι` requires a
+branch type in that universe: `ULift.{uι} ℕ`.  Writing the target as `L.BoundedFormulaInf α n` and
+branching on `ℕ` directly — as this definition used to — silently forces `uι = 0`, which is exactly
+the restriction Karp's backward direction cannot live with. -/
+def toLinf : ∀ {n}, L.BoundedFormulaω α n → L.BoundedFormulaInf.{u, v, u', uι} α n
   | _, falsum => .falsum
   | _, equal t₁ t₂ => .equal t₁ t₂
   | _, rel R ts => .rel R ts
   | _, imp φ ψ => .imp (toLinf φ) (toLinf ψ)
   | _, all φ => .all (toLinf φ)
-  | _, iSup φs => .iSup (fun i : ℕ => toLinf (φs i))
-  | _, iInf φs => .iInf (fun i : ℕ => toLinf (φs i))
+  | _, iSup φs => .iSup (fun i : ULift.{uι} ℕ => toLinf (φs i.down))
+  | _, iInf φs => .iInf (fun i : ULift.{uι} ℕ => toLinf (φs i.down))
+
+/-! ### Constructor equations
+
+The infinitary equations are the ones with content: they name `ULift.{uι} ℕ` as the branch type, so
+a downstream `simp` can see through the embedding at a nonzero target universe. -/
+
+@[simp] theorem toLinf_falsum :
+    (falsum : L.BoundedFormulaω α n).toLinf = (.falsum : L.BoundedFormulaInf.{u, v, u', uι} α n) :=
+  rfl
+
+@[simp] theorem toLinf_imp (φ ψ : L.BoundedFormulaω α n) :
+    (φ.imp ψ).toLinf = (.imp φ.toLinf ψ.toLinf : L.BoundedFormulaInf.{u, v, u', uι} α n) := rfl
+
+@[simp] theorem toLinf_all (φ : L.BoundedFormulaω α (n + 1)) :
+    φ.all.toLinf = (.all φ.toLinf : L.BoundedFormulaInf.{u, v, u', uι} α n) := rfl
+
+@[simp] theorem toLinf_iSup (φs : ℕ → L.BoundedFormulaω α n) :
+    (BoundedFormulaω.iSup φs).toLinf
+      = (.iSup fun i : ULift.{uι} ℕ => (φs i.down).toLinf :
+          L.BoundedFormulaInf.{u, v, u', uι} α n) := rfl
+
+@[simp] theorem toLinf_iInf (φs : ℕ → L.BoundedFormulaω α n) :
+    (BoundedFormulaω.iInf φs).toLinf
+      = (.iInf fun i : ULift.{uι} ℕ => (φs i.down).toLinf :
+          L.BoundedFormulaInf.{u, v, u', uι} α n) := rfl
 
 variable {M : Type w} [L.Structure M] {v : α → M} {xs : Fin n → M}
 
+/-- Realization is preserved at **every** target index universe.  The infinitary cases are no longer
+an index-preserving `exists_congr`/`forall_congr'`: the quantifier on the left ranges over
+`ULift.{uι} ℕ` and on the right over `ℕ`, so the witness must be transported across the lift. -/
 @[simp]
 theorem realize_toLinf (φ : L.BoundedFormulaω α n) :
-    (toLinf φ).Realize v xs ↔ φ.Realize v xs := by
+    (toLinf.{u, v, u', uι} φ).Realize v xs ↔ φ.Realize v xs := by
   induction φ with
   | falsum => rfl
   | equal => rfl
@@ -58,49 +91,132 @@ theorem realize_toLinf (φ : L.BoundedFormulaω α n) :
     simp only [toLinf, BoundedFormulaInf.realize_all, BoundedFormulaω.realize_all]
     exact forall_congr' fun x => ih
   | iSup φs ih =>
-    simp only [toLinf, BoundedFormulaInf.realize_iSup, BoundedFormulaω.realize_iSup]
+    simp only [toLinf, BoundedFormulaInf.realize_iSup, BoundedFormulaω.realize_iSup, ULift.exists]
     exact exists_congr fun i => ih i
   | iInf φs ih =>
-    simp only [toLinf, BoundedFormulaInf.realize_iInf, BoundedFormulaω.realize_iInf]
+    simp only [toLinf, BoundedFormulaInf.realize_iInf, BoundedFormulaω.realize_iInf, ULift.forall]
     exact forall_congr' fun i => ih i
 
-/-- toLinf preserves the countable property. -/
-theorem toLinf_isCountable (φ : L.BoundedFormulaω α n) : (toLinf φ).IsCountable := by
+/-- `toLinf` preserves the countable property.
+
+**Explicitly at `uι = 0`.**  `IsCountable` is itself pinned to index universe zero — its `iSup`/`iInf`
+constructors take `ι : Type` — so this statement cannot be generalized along with `toLinf` until that
+predicate is redesigned.  That redesign is deliberately out of scope here. -/
+theorem toLinf_isCountable (φ : L.BoundedFormulaω α n) : (toLinf.{u, v, u', 0} φ).IsCountable := by
   induction φ with
   | falsum => exact .falsum
   | equal t₁ t₂ => exact .equal t₁ t₂
   | rel R ts => exact .rel R ts
   | imp _ _ ih₁ ih₂ => exact .imp ih₁ ih₂
   | all _ ih => exact .all ih
-  | iSup φs ih => exact .iSup ih
-  | iInf φs ih => exact .iInf ih
+  -- the branch type is now `ULift.{0} ℕ`, so the induction hypothesis is reindexed through `down`
+  | iSup φs ih => exact .iSup fun i => ih i.down
+  | iInf φs ih => exact .iInf fun i => ih i.down
 
 end BoundedFormulaω
 
 namespace Formulaω
 
-/-- Embeds a Lω₁ω formula into L∞ω. -/
-def toLinf (φ : L.Formulaω α) : L.FormulaInf α := BoundedFormulaω.toLinf φ
+/-- Embeds a Lω₁ω formula into L∞ω at an arbitrary target index universe. -/
+def toLinf (φ : L.Formulaω α) : L.FormulaInf.{u, v, u', uι} α := BoundedFormulaω.toLinf φ
 
 @[simp]
 theorem realize_toLinf {M : Type w} [L.Structure M] {v : α → M} (φ : L.Formulaω α) :
-    FormulaInf.Realize φ.toLinf v ↔ Formulaω.Realize φ v :=
+    FormulaInf.Realize (toLinf.{u, v, u', uι} φ) v ↔ Formulaω.Realize φ v :=
   BoundedFormulaω.realize_toLinf φ
 
 end Formulaω
 
 namespace Sentenceω
 
-/-- Embeds a Lω₁ω sentence into L∞ω. -/
-def toLinf (φ : L.Sentenceω) : L.SentenceInf := Formulaω.toLinf φ
+/-- Embeds a Lω₁ω sentence into L∞ω at an arbitrary target index universe. -/
+def toLinf (φ : L.Sentenceω) : L.SentenceInf.{u, v, uι} := Formulaω.toLinf φ
 
 @[simp]
 theorem realize_toLinf {M : Type w} [L.Structure M] (φ : L.Sentenceω) :
-    SentenceInf.Realize φ.toLinf M ↔ Sentenceω.Realize φ M := by
+    SentenceInf.Realize (toLinf.{u, v, uι} φ) M ↔ Sentenceω.Realize φ M := by
   simp only [SentenceInf.Realize, Sentenceω.Realize, toLinf, Formulaω.toLinf]
   exact BoundedFormulaω.realize_toLinf φ
 
 end Sentenceω
+
+/-! ## The embedding triangle
+
+A first-order formula reaches L∞ω two ways: directly by `BoundedFormula.toLinf`, or through Lω₁ω by
+`BoundedFormula.toLω` followed by `BoundedFormulaω.toLinf`.  They agree, **at every target index
+universe** — and the agreement is syntactic, not merely semantic, because a finitary formula has no
+infinitary node for the two routes to disagree at.  `BoundedFormula.toLinf` was already
+universe-polymorphic for that same reason: with no `iSup`/`iInf` clause, nothing pinned its target. -/
+
+namespace BoundedFormula
+
+@[simp]
+theorem toLω_toLinf (φ : L.BoundedFormula α n) :
+    (φ.toLω.toLinf : L.BoundedFormulaInf.{u, v, u', uι} α n) = φ.toLinf := by
+  induction φ with
+  | falsum => rfl
+  | equal => rfl
+  | rel => rfl
+  | imp _ _ ih₁ ih₂ => simp only [toLω, BoundedFormulaω.toLinf, toLinf, ih₁, ih₂]
+  | all _ ih => simp only [toLω, BoundedFormulaω.toLinf, toLinf, ih]
+
+end BoundedFormula
+
+namespace Formula
+
+@[simp]
+theorem toLω_toLinf (φ : L.Formula α) :
+    (φ.toLω.toLinf : L.FormulaInf.{u, v, u', uι} α) = φ.toLinf :=
+  BoundedFormula.toLω_toLinf φ
+
+end Formula
+
+namespace Sentence
+
+@[simp]
+theorem toLω_toLinf (φ : L.Sentence) :
+    (φ.toLω.toLinf : L.SentenceInf.{u, v, uι}) = φ.toLinf :=
+  BoundedFormula.toLω_toLinf φ
+
+end Sentence
+
+/-! ## Nonzero-universe acceptance probes
+
+Permanent regressions for the target-universe generalization, at a *literal* `Type 1`.  They belong
+in this file rather than a scratch file for two reasons: a scratch file is not built by any target,
+and — more sharply — elaborating a probe against stale `.olean`s silently reports the *pre-edit*
+behaviour, so a probe that lives outside the changed module can pass while testing nothing. -/
+
+section Probes
+
+variable {M : Type w} [L.Structure M] {v : α → M} {xs : Fin n → M}
+
+/-- The triangle at a nonzero target universe.  Starts from a *finitary* formula, so it never visits
+an infinitary node. -/
+example (φ : L.BoundedFormula α n) :
+    (φ.toLω.toLinf : L.BoundedFormulaInf.{u, v, u', 1} α n) = φ.toLinf :=
+  BoundedFormula.toLω_toLinf φ
+
+/-- The case the triangle cannot reach: an *infinitary* Lω₁ω formula translated at a nonzero target
+universe.  This is what exercises the `ULift.{1} ℕ` branch type. -/
+example (φ : L.BoundedFormulaω α n) :
+    (BoundedFormulaω.toLinf.{u, v, u', 1} φ).Realize v xs ↔ φ.Realize v xs :=
+  BoundedFormulaω.realize_toLinf φ
+
+/-- The constructor equation at that target, naming the lifted branch type explicitly. -/
+example (φs : ℕ → L.BoundedFormulaω α n) :
+    (BoundedFormulaω.iSup φs).toLinf
+      = (.iSup fun i : ULift.{1} ℕ => (φs i.down).toLinf :
+          L.BoundedFormulaInf.{u, v, u', 1} α n) :=
+  BoundedFormulaω.toLinf_iSup φs
+
+/-- Karp-shaped: the branch type is a structure's own carrier universe, which is the reason the
+target universe had to become a parameter at all. -/
+example (φs : M → L.BoundedFormulaInf.{u, v, u', w} α n) :
+    L.BoundedFormulaInf.{u, v, u', w} α n :=
+  .iInf φs
+
+end Probes
 
 namespace BoundedFormulaInf
 
@@ -151,7 +267,12 @@ theorem iInf_forall {ι : Type} {φs : ι → L.BoundedFormulaInf α n}
 end IsCountable
 
 /-- Converts a countable L∞ω formula back to Lω₁ω.
-Recurses on the IsCountable proof to extract Countable instances at iSup/iInf nodes. -/
+Recurses on the IsCountable proof to extract Countable instances at iSup/iInf nodes.
+
+**Index universe zero.**  Unlike the forward `toLinf`, this reverse direction is *not* generalized:
+its argument carries an `IsCountable` proof, and that predicate pins `uι = 0` (its `iSup`/`iInf`
+constructors take `ι : Type`).  The pinning is therefore forced by the signature rather than chosen
+here.  Generalizing it means redesigning `IsCountable`, which is out of scope. -/
 noncomputable def ofCountable : ∀ {n} {φ : L.BoundedFormulaInf α n}, φ.IsCountable → L.BoundedFormulaω α n
   | _, .falsum, _ => .falsum
   | _, .equal t₁ t₂, _ => .equal t₁ t₂

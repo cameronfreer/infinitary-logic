@@ -135,12 +135,14 @@ private theorem toLinf_qrank {α : Type*} {n : ℕ} (φ : L.BoundedFormulaω α 
       ih₁, ih₂]
   | all φ ih =>
     simp only [BoundedFormulaω.toLinf, BoundedFormulaInf.qrank_all, BoundedFormulaω.qrank_all, ih]
+  -- `toLinf` branches on `ULift ℕ`, so the two suprema are no longer over the same index type:
+  -- rewrite by the induction hypothesis, then collapse the lift along the surjection `down`.
   | iSup φs ih =>
-    simp only [BoundedFormulaω.toLinf, BoundedFormulaInf.qrank_iSup, BoundedFormulaω.qrank_iSup]
-    congr 1; funext i; exact ih i
+    simp only [BoundedFormulaω.toLinf, BoundedFormulaInf.qrank_iSup, BoundedFormulaω.qrank_iSup, ih]
+    exact ULift.down_surjective.iSup_comp fun k => (φs k).qrank
   | iInf φs ih =>
-    simp only [BoundedFormulaω.toLinf, BoundedFormulaInf.qrank_iInf, BoundedFormulaω.qrank_iInf]
-    congr 1; funext i; exact ih i
+    simp only [BoundedFormulaω.toLinf, BoundedFormulaInf.qrank_iInf, BoundedFormulaω.qrank_iInf, ih]
+    exact ULift.down_surjective.iSup_comp fun k => (φs k).qrank
 
 omit [Countable (Σ l, L.Relations l)] in
 /-- BF-equivalence at level α implies agreement on Lω₁ω formulas of quantifier rank ≤ α.
