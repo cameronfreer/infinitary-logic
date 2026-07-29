@@ -156,6 +156,17 @@ theorem hasQuantSigned_genAll (j : ℕ) (s : Bool) (ρ : L[[ℕ]].Sentenceω) :
   rw [Bool.not_not] at h1 h2
   rw [← not_iff_not, ← h1, ← h2, BoundedFormulaω.universalSigned_abstractConst]
 
+/-- **The exact signed-occurrence equation for `genEx`**, the dual of `hasQuantSigned_genAll`:
+existential generalization adds one negative occurrence and moves nothing else. -/
+theorem hasQuantSigned_genEx (j : ℕ) (s : Bool) (ρ : L[[ℕ]].Sentenceω) :
+    hasQuantSigned s (genEx j ρ) ↔ (s = false ∨ hasQuantSigned s ρ) := by
+  rw [genEx, BoundedFormulaω.hasQuantSigned_ex, BoundedFormulaω.hasQuantSigned_relabel]
+  refine or_congr_right ?_
+  have h1 := BoundedFormulaω.universalSigned_iff_not_hasQuantSigned (!s) (ρ.abstractConst j)
+  have h2 := BoundedFormulaω.universalSigned_iff_not_hasQuantSigned (!s) ρ
+  rw [Bool.not_not] at h1 h2
+  rw [← not_iff_not, ← h1, ← h2, BoundedFormulaω.universalSigned_abstractConst]
+
 /-- **`genEx` is not class-preserving**, recorded separately: `genEx j ρ` is never universal, since
 it is a negatively-occurring `all`.  This is a fact about the *construction*, and is not by itself a
 failure of the left closure (see `malitzInsepAt_witness_of_existentialDelta`). -/

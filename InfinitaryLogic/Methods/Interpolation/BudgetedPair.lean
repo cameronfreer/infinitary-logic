@@ -1719,6 +1719,98 @@ theorem budgetedPairInsep_all_inst_left {φ : L[[ℕ]].BoundedFormulaω Empty 1}
       rw [hasQuantSigned_genAll] at hq
       exact hx (hq.resolve_left (by simp))
 
+/-- `genEx` keeps a sentence inside a side's vocabulary bound. -/
+theorem sentBnd_genEx {F : Set (Σ n, L.Functions n)} {R : Set (Σ n, L.Relations n)} (c : ℕ)
+    {θ : L[[ℕ]].Sentenceω} (h : θ ∈ SentBnd F R) : genEx c θ ∈ SentBnd F R :=
+  ⟨(baseFunctionsIn_genEx_subset c θ).trans h.1,
+    (baseRelationsIn_genEx c θ).subset.trans h.2⟩
+
+/-- **The right gate's semantic core.**  If `Δ` together with the instance `φ(c)` refutes `θ`, and
+`c` is fresh for `Δ` while the universal parent `φ.all` sits in `Δ`, then `Δ` alone refutes
+`∃x θ(x)`.
+
+Given a witness `x` for `genEx c θ`, reinterpret `c` as `x`: freshness preserves every member of
+`Δ`, the parent `φ.all ∈ Δ` re-supplies the instance under that reinterpretation, and the hypothesis
+then refutes the corresponding instance of `θ`.
+
+Neutral in content — belongs in the eventual `#39` constant-surgery consolidation rather than here. -/
+theorem entails_not_genEx_of_all_inst_entails_not {φ : L[[ℕ]].BoundedFormulaω Empty 1} {c : ℕ}
+    {θ : L[[ℕ]].Sentenceω}
+    (hfresh : ∀ δ ∈ Δ, c ∉ sentenceJConsts (L' := L) (J := ℕ) δ) (hmem : φ.all ∈ Δ)
+    (hyp : Theoryω.Entails (insert (instConst c φ) Δ) θ.not) :
+    Theoryω.Entails Δ (genEx c θ).not := by
+  intro M instM neM hmodel
+  set base := (L.lhomWithConstants ℕ).reduct M with hbase
+  set h := ambientConstMap (L := L) M with hh
+  have bridge : ∀ (ψ : L[[ℕ]].Sentenceω),
+      @Sentenceω.Realize L[[ℕ]] ψ M instM
+        ↔ @BoundedFormulaω.Realize L[[ℕ]] M (wc base h) Empty 0 ψ Empty.elim Fin.elim0 :=
+    fun ψ => ambient_realize_iff_wc (S := instM) ψ Empty.elim Fin.elim0
+  show @Sentenceω.Realize L[[ℕ]] (genEx c θ).not M instM
+  rw [Sentenceω.Realize, BoundedFormulaω.realize_not]
+  intro hcon
+  obtain ⟨x, hx⟩ := (realize_genEx base h c θ).mp ((bridge _).mp hcon)
+  -- freshness transports every member of `Δ` across the reinterpretation `c := x`
+  have hΔ : ∀ δ ∈ Δ,
+      @BoundedFormulaω.Realize L[[ℕ]] M (wc base (Function.update h c x)) Empty 0 δ
+        Empty.elim Fin.elim0 := by
+    intro δ hδ
+    have hg : @BoundedFormulaω.Realize L[[ℕ]] M (wc base h) Empty 0 δ Empty.elim Fin.elim0 :=
+      (bridge _).mp (hmodel _ hδ)
+    have hcongr : ∀ k ∈ sentenceJConsts (L' := L) (J := ℕ) δ, h k = Function.update h c x k := by
+      intro k hk
+      have hkc : (k : ℕ) ≠ c := fun heq => hfresh δ hδ (heq ▸ hk)
+      exact (Function.update_of_ne (α := ℕ) hkc x h).symm
+    rwa [BoundedFormulaω.realize_congr_const base δ hcongr Empty.elim Fin.elim0] at hg
+  -- the parent re-supplies the instance under the reinterpretation
+  have hinst : @BoundedFormulaω.Realize L[[ℕ]] M (wc base (Function.update h c x)) Empty 0
+      (instConst c φ) Empty.elim Fin.elim0 :=
+    @all_entails_instConst L c φ M (wc base (Function.update h c x)) neM
+      (fun ρ hρ => (Set.mem_singleton_iff.mp hρ) ▸ hΔ _ hmem)
+  exact (@hyp M (wc base (Function.update h c x)) neM (fun ρ hρ => by
+    rcases Set.mem_insert_iff.mp hρ with rfl | hρ
+    · exact hinst
+    · exact hΔ ρ hρ)) hx
+
+/-- **`all_inst`, right.**  The mirror of `budgetedPairInsep_all_inst_left`, with `genEx` in place of
+`genAll`.
+
+The asymmetry is only in which side abstracts: here `Γ ⊨ genEx c θ` is freshness-free
+(`∃`-introduction is weakening), and the work moves to `Δ`, where the fresh-case hypothesis is
+exactly what `entails_not_genEx_of_all_inst_entails_not` consumes.  The new *existential* occurrence
+is paid outright by `φ.all ∈ Δ`, which witnesses a universal budget on the receiving side. -/
+theorem budgetedPairInsep_all_inst_right {φ : L[[ℕ]].BoundedFormulaω Empty 1} (c : ℕ)
+    (hmem : φ.all ∈ Δ) (h : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ) :
+    BudgetedPairInsep F₁ R₁ F₂ R₂ Γ (insert (instConst c φ) Δ) := by
+  have hentΔ : Theoryω.Entails Δ (instConst c φ) :=
+    entails_of_mem_of_entails hmem (all_entails_instConst c φ)
+  by_cases hcΔ : c ∈ theoryJConsts (L := L) Δ
+  · refine budgetedPairInsep_insert_entailed_right hentΔ ?_
+      (fun _ => hasQuantSigned_true_of_all_mem hmem) h
+    intro k hk
+    rcases sentenceJConsts_instConst_subset c φ hk with hk | hk
+    · exact sentenceJConsts_subset_theoryJConsts hmem hk
+    · exact Set.mem_singleton_iff.mp hk ▸ hcΔ
+  · rintro ⟨θ, hE, hN, hbnd, hc, hu, hx⟩
+    have hfresh : ∀ δ ∈ Δ, c ∉ sentenceJConsts (L' := L) (J := ℕ) δ :=
+      notMem_theoryJConsts_iff.mp hcΔ
+    refine h ⟨genEx c θ, entails_genEx_of_entails_plain c θ hE,
+      entails_not_genEx_of_all_inst_entails_not hfresh hmem hN, sentBnd_genEx c hbnd, ?_, ?_, ?_⟩
+    · intro k hk
+      have hkθ : k ∈ sentenceJConsts (L' := L) (J := ℕ) θ := sentenceJConsts_genEx_subset c θ hk
+      have hkc : k ≠ c := fun hEq => notMem_sentenceJConsts_genEx c θ (hEq ▸ hk)
+      refine ⟨(hc hkθ).1, ?_⟩
+      rcases theoryJConsts_insert_instConst_subset (Γ := Δ) hmem (hc hkθ).2 with hk' | hk'
+      · exact absurd hk' hkc
+      · exact hk'
+    · -- `genEx` adds no positive occurrence, so the left permission passes through
+      intro hq
+      rw [hasQuantSigned_genEx] at hq
+      exact hu (hq.resolve_left (by simp))
+    · -- the new existential occurrence is paid by the universal parent on the right
+      intro _
+      exact hasQuantSigned_true_of_all_mem hmem
+
 end AllInst
 
 
