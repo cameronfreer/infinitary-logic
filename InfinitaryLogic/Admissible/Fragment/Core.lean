@@ -81,10 +81,13 @@ structure AdmissibleFragmentCore (L : Language.{u, v}) where
   closed_iSup_component : ∀ (φs : ℕ → L.Sentenceω) (k : ℕ),
     BoundedFormulaω.iSup φs ∈ formulas → φs k ∈ formulas
 
-/-- The HF (hereditarily finite sets) admissible fragment: `formulas = Set.univ`,
-`height = ω`. This is the structurally important base case where A-finite = finite
-and L_A = first-order logic. Serves as a smoke test that `AdmissibleFragmentCore`
-admits the HF case (which it should, since `height_gt_omega` was removed from Core). -/
+/-- **LEGACY PLACEHOLDER — not the HF fragment.**  Its formula set is `Set.univ`, i.e. all of
+`Lω₁ω`, whereas the HF fragment should be `L_ωω` (finitary first-order syntax).  It survives only as
+a smoke test that `AdmissibleFragmentCore` admits *some* height-ω instance.
+
+Do not read this as "the HF case is covered".  The honest finitary specialization — with
+`A`-finite = finite and compactness *derived* from Mathlib's first-order compactness — is issue
+\#18.  See also the `finitaryFragment` design sketched there. -/
 def AdmissibleFragmentCore.hf : AdmissibleFragmentCore L where
   formulas := Set.univ
   height := Ordinal.omega0

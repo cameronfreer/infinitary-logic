@@ -85,7 +85,7 @@ the statement text and dependency metadata from each annotated declaration.
 - `thm:morley-hanf` — Morley-Hanf bound
 - `thm:downward-ls` — Downward Löwenheim-Skolem
 - `thm:downward-ls-theory` — Downward Löwenheim-Skolem for theories
-- `thm:barwise-compactness` — Barwise compactness
+- `thm:barwise-compactness` — conditional compactness interface (projects a structure field; see #18)
 - `thm:barwise-completeness-ii` — Barwise completeness II
 - `thm:proof-system-soundness` — Proof system soundness
 - `thm:consistency-property-full-fragment` — Consistency property for full fragment

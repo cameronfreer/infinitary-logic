@@ -84,7 +84,7 @@ A Lean 4 formalization of infinitary logic (L∞ω and Lω₁ω), Scott sentence
 
 ## Scope and Boundaries
 
-The formalization currently covers L∞ω and Lω₁ω syntax and semantics, Scott analysis (atomic diagrams, back-and-forth equivalence, Scott formulas/sentences, height and rank), Karp's theorem and corollaries, model existence via consistency properties, downward Löwenheim–Skolem for Lω₁ω, Hanf numbers, admissible-fragment results (Barwise compactness, Nadel bound), descriptive set theory of the space of countable structures (Borel complexity of satisfaction, BF-equivalence, and isomorphism; counting dichotomy), and Silver's theorem with the Silver–Burgess dichotomy, **fully proved** via Miller's classical category route: Mycielski's theorem (`Descriptive/Mycielski.lean`), Kuratowski–Ulam (`Descriptive/KuratowskiUlam.lean`), the `G_S` graphs with Miller's independence lemma (`Descriptive/GSGraph.lean`), the KST separation core and positivity ideals (`Descriptive/G0Dichotomy.lean`), and the G₀-dichotomy fusion (`Descriptive/G0Fusion.lean`). The proof route is
+The formalization currently covers L∞ω and Lω₁ω syntax and semantics, Scott analysis (atomic diagrams, back-and-forth equivalence, Scott formulas/sentences, height and rank), Karp's theorem and corollaries, model existence via consistency properties, downward Löwenheim–Skolem for Lω₁ω, Hanf numbers, conditional admissible-fragment interfaces (compactness and the Nadel bound are carried as **structure fields / typeclass hypotheses**, not proved — see #18–#20), descriptive set theory of the space of countable structures (Borel complexity of satisfaction, BF-equivalence, and isomorphism; counting dichotomy), and Silver's theorem with the Silver–Burgess dichotomy, **fully proved** via Miller's classical category route: Mycielski's theorem (`Descriptive/Mycielski.lean`), Kuratowski–Ulam (`Descriptive/KuratowskiUlam.lean`), the `G_S` graphs with Miller's independence lemma (`Descriptive/GSGraph.lean`), the KST separation core and positivity ideals (`Descriptive/G0Dichotomy.lean`), and the G₀-dichotomy fusion (`Descriptive/G0Fusion.lean`). The proof route is
 
 > G₀ homomorphism → meager pullback sections → Kuratowski–Ulam → Mycielski → Silver → Silver–Burgess → Morley counting,
 
@@ -104,7 +104,7 @@ The Morley–Hanf theorem is now **unconditional** (`morley_hanf`, `Conditional/
 - `InfinitaryLogic/Methods/LopezEscobar/` — The issue #10 arc: the functional witness language and numeral terms, the functional Θ and its relationalized PC sentence, the standard model and code class, the PC-membership interface with tagged gluing and the disjointness lemma (the sole downward Löwenheim–Skolem consumer), and the shared-symbol decoder with the hard theorem
 - `InfinitaryLogic/Methods/EM/` — Indiscernible sequences, EM templates, EM realization
 - `InfinitaryLogic/ModelTheory/` — Löwenheim–Skolem, Hanf numbers, counting models
-- `InfinitaryLogic/Admissible/` — Admissible fragments (`Fragment/Core`, `Fragment/Compact`), Barwise compactness, literature-faithful interface (`Barwise/Data`), proof system, Nadel bound
+- `InfinitaryLogic/Admissible/` — Admissible-fragment **scaffolding** (`Fragment/Core`, `Fragment/Compact`), conditional compactness interfaces, literature-faithful interface (`Barwise/Data`), an externally sound proof system, and the conditional Nadel interface. The honest foundations are tracked in [#18](https://github.com/cameronfreer/infinitary-logic/issues/18)–[#20](https://github.com/cameronfreer/infinitary-logic/issues/20).
 - `InfinitaryLogic/Descriptive/` — Borel complexity of the structure space, satisfaction, isomorphism; counting dichotomy, finite-carrier analysis; and a reusable DST library: Cantor-antichain extraction (`CantorAntichain`), Mycielski (`Mycielski`), Kuratowski–Ulam (`KuratowskiUlam`), the `G_S` graphs (`GSGraph`), and the classical G₀-dichotomy machinery (`G0Dichotomy`, `G0Fusion`); the query-code closed embedding and analytic tree normal form (`QueryCode`, `AnalyticTree`) and the López–Escobar facade (`LopezEscobar`)
 - `InfinitaryLogic/Conditional/` — The Silver chain (`SilverBurgess`, `SilverCategoryRoute`, `GandyHarrington` — sorry-free) and the Morley–Hanf chain: `MorleyHanfTransfer` (the historical conditional forms and bridges) and `MorleyHanfSchemaDischarge` (the unconditional `morley_hanf` endpoint)
 
@@ -120,7 +120,7 @@ To use in your own project, add the dependency to your `lakefile` and import a b
 ```lean
 import InfinitaryLogic.Core         -- syntax, semantics, Scott, Karp
 import InfinitaryLogic.Countable    -- model existence, LS, Hanf, EM chain
-import InfinitaryLogic.Admissible   -- admissible fragments, Barwise compactness
+import InfinitaryLogic.Admissible   -- admissible-fragment interfaces (conditional)
 import InfinitaryLogic.Descriptive  -- descriptive set theory of model classes
 import InfinitaryLogic.All          -- all of the above (sorry-free)
 import InfinitaryLogic.Conditional  -- Silver chain + Morley-Hanf theorem (both proved)

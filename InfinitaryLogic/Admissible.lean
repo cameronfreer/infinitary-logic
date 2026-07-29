@@ -10,9 +10,9 @@ import InfinitaryLogic.Methods.EM.FragmentAdapter
 import InfinitaryLogic.Methods.EM.TailAdapter
 
 /-!
-# Admissible: admissible fragments, Barwise compactness, proof system
+# Admissible: admissible fragments, conditional compactness interfaces, proof system
 
-Import this bundle for the admissible-fragment interface, Barwise compactness
+Import this bundle for the admissible-fragment interface, the conditional compactness interfaces
 (both the project's HF-style axiom and the literature-faithful interface),
 proof system / derivability, soundness, and the consistency-property bridge.
 The EM adapter theorems (`Methods/EM/FragmentAdapter.lean` and the

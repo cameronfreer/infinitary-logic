@@ -31,7 +31,7 @@ frontier target.
 
 - `InfinitaryLogic.Core`: syntax, semantics, Scott analysis, Karp's theorem
 - `InfinitaryLogic.Countable`: model existence, LS, Hanf, counting, EM chain
-- `InfinitaryLogic.Admissible`: admissible fragments, Barwise compactness
+- `InfinitaryLogic.Admissible`: admissible fragments, conditional compactness interfaces
 - `InfinitaryLogic.Descriptive`: descriptive set theory of model classes
 - `InfinitaryLogic.ModelTheory.MorleyHanf`: the Morley–Hanf theorem and its corollaries
 - `InfinitaryLogic.ModelTheory.WellOrdering`: boundedness and undefinability of

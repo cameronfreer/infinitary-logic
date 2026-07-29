@@ -43,7 +43,12 @@ set-theoretic infrastructure (KP set theory, HYP(M), etc.).
 This is a typeclass so that instances can be provided for specific admissible sets
 (e.g., `HYP(M)` for countable structures). The real mathematical content lives in
 constructing instances; the `scottHeight_lt_height` field captures the conclusion
-of Nadel's theorem as the interface. -/
+of Nadel's theorem as the interface.
+
+**ORACLE PLACEHOLDER.**  That last point is the whole caveat: the field *is* the conclusion of
+Nadel's theorem, so any result "proved" by projecting it is conditional on the instance, and no
+instance is currently constructed.  A genuine coding predicate is issue #18; until then treat every
+`CodedIn` consumer as an interface, not a theorem. -/
 class FiniteCompactFragment.CodedIn (A : FiniteCompactFragment L)
     (M : Type w) [L.Structure M] [Countable M] : Prop where
   scottHeight_lt_height : scottHeight (L := L) M < A.height

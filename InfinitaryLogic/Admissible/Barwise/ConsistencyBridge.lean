@@ -56,10 +56,13 @@ structure BarwiseFragment (L : Language.{u, v}) extends FiniteCompactFragment L 
       IsChain (· ⊆ ·) chain → chain.Nonempty →
       AConsistent toFiniteCompactFragment (⋃₀ chain)
 
-/-- A full Barwise fragment: an admissible fragment containing ALL Lω₁ω sentences.
-This is a strong wrapper introduced to match the global Henkin/maximal-consistent
-API (ConsistencyProperty.extension requires deciding arbitrary sentences). We
-isolate this hypothesis here rather than modifying the global API. -/
+/-- **QUARANTINED COMPATIBILITY STRUCTURE.**  A "full Barwise fragment" contains *all* `Lω₁ω`
+sentences, so it is not an admissible fragment in Barwise's sense at all: it is a strong wrapper
+introduced only to match the global Henkin/maximal-consistent API (`ConsistencyProperty.extension`
+requires deciding arbitrary sentences).
+
+It must stay out of the #19 proof cone; anything proved from it is conditional on a hypothesis no
+genuine admissible fragment satisfies. -/
 @[blueprint "def:full-barwise-fragment"
   (title := /-- Full Barwise fragment -/)
   (statement := /-- A full Barwise fragment: an admissible fragment containing all $\Lomegaone$ sentences, equipped with the chain closure property for consistency. -/)
