@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.Interpolation.ConstantElimination
 import InfinitaryLogic.Lomega1omega.QuantifierClass
+import InfinitaryLogic.Lomega1omega.QuantifierOccurrence
 import InfinitaryLogic.Lomega1omega.Theory
 
 /-!
@@ -140,6 +141,21 @@ theorem isUniversal_genAll (j : ℕ) (ρ : L[[ℕ]].Sentenceω) :
   rw [BoundedFormulaω.universalSigned_relabel, BoundedFormulaω.universalSigned_abstractConst]
   exact and_iff_right rfl
 
+/-- **The exact signed-occurrence equation for `genAll`.**  Universal generalization adds one
+positive occurrence and moves nothing else: at sign `true` the right disjunct is absorbed, and at
+sign `false` the occurrences are exactly those of `ρ`.
+
+This is what lets a labelled budget absorb a generalization whose universal parent already sits on
+the same side. -/
+theorem hasQuantSigned_genAll (j : ℕ) (s : Bool) (ρ : L[[ℕ]].Sentenceω) :
+    hasQuantSigned s (genAll j ρ) ↔ (s = true ∨ hasQuantSigned s ρ) := by
+  rw [genAll, BoundedFormulaω.hasQuantSigned_all, BoundedFormulaω.hasQuantSigned_relabel]
+  refine or_congr_right ?_
+  have h1 := BoundedFormulaω.universalSigned_iff_not_hasQuantSigned (!s) (ρ.abstractConst j)
+  have h2 := BoundedFormulaω.universalSigned_iff_not_hasQuantSigned (!s) ρ
+  rw [Bool.not_not] at h1 h2
+  rw [← not_iff_not, ← h1, ← h2, BoundedFormulaω.universalSigned_abstractConst]
+
 /-- **`genEx` is not class-preserving**, recorded separately: `genEx j ρ` is never universal, since
 it is a negatively-occurring `all`.  This is a fact about the *construction*, and is not by itself a
 failure of the left closure (see `malitzInsepAt_witness_of_existentialDelta`). -/
@@ -217,6 +233,35 @@ theorem entails_not_genAll_of_entails_not
       · exact hx
       · exact hΔ ψ hψ)
   exact hnot ((realize_genAll base h j σc).mp hcon' x)
+
+/-- **Negative acceptance without freshness.**  If `Δ` already refutes `σ(c)`, it refutes
+`∀x σ(x)` outright: the universal is instantiated at `c`'s *own* interpretation, so nothing has to
+be fresh for `Δ` and no witness is consumed.
+
+This is the shape a labelled pair needs when the separator is abstracted on the side that does not
+own `c`; `entails_not_genAll_of_entails_not` is the different, witness-passing sequent. -/
+theorem entails_not_genAll_of_entails_not_self
+    (hyp : Theoryω.Entails Δ σc.not) :
+    Theoryω.Entails Δ (genAll j σc).not := by
+  intro M instM neM hmodel
+  set base := (L.lhomWithConstants ℕ).reduct M with hbase
+  set h := ambientConstMap (L := L) M with hh
+  have bridge : ∀ (ψ : L[[ℕ]].Sentenceω),
+      @Sentenceω.Realize L[[ℕ]] ψ M instM
+        ↔ @BoundedFormulaω.Realize L[[ℕ]] M (wc base h) Empty 0 ψ Empty.elim Fin.elim0 :=
+    fun ψ => ambient_realize_iff_wc (S := instM) ψ Empty.elim Fin.elim0
+  show @Sentenceω.Realize L[[ℕ]] (genAll j σc).not M instM
+  rw [Sentenceω.Realize, BoundedFormulaω.realize_not]
+  intro hcon
+  have hcon' : @BoundedFormulaω.Realize L[[ℕ]] M (wc base h) Empty 0 (genAll j σc)
+      Empty.elim Fin.elim0 := (bridge _).mp hcon
+  -- instantiate the generalization at `c`'s own value: `Function.update h j (h j) = h`
+  have hinst := (realize_genAll base h j σc).mp hcon' (h j)
+  rw [Function.update_eq_self] at hinst
+  have hΔ : ∀ δ ∈ Δ,
+      @BoundedFormulaω.Realize L[[ℕ]] M (wc base h) Empty 0 δ Empty.elim Fin.elim0 :=
+    fun δ hδ => (bridge _).mp (hmodel _ hδ)
+  exact (@hyp M (wc base h) neM hΔ) hinst
 
 /-! ## Bounds for the countable conjunction of a theory -/
 

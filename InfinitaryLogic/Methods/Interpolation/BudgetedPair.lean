@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.ConstantSurgery
+import InfinitaryLogic.Methods.Interpolation.ConstantGeneralization
 import InfinitaryLogic.Methods.Interpolation.PairedInsepFamily
 import InfinitaryLogic.Lomega1omega.QuantifierOccurrence
 
@@ -1617,6 +1618,109 @@ theorem budgetedPairInsep_eq_trans_right (hab : constEq (L := L) a b ∈ Δ)
   · intro hq; exact absurd hq (hasQuantSigned_constEq_false true a d)
 
 end EqualityFields
+
+/-! ## Universal instantiation — the `all_inst` gate
+
+The first field whose new sentence can carry a constant the side does not yet own.  Two facts make
+it go through without strengthening the invariant:
+
+* the **quantifier budget collapses**: the inserted instance can only add occurrences that the
+  universal parent `φ.all`, already on the same side, pays for;
+* the **constant support grows by at most `{c}`**, so a separator that survives the insertion either
+  never mentioned `c` (and transports unchanged) or can be universally generalized over it.
+-/
+
+section AllInst
+
+variable {F₁ F₂ : Set (Σ n, L.Functions n)} {R₁ R₂ : Set (Σ n, L.Relations n)}
+  {Γ Δ : Set L[[ℕ]].Sentenceω}
+
+/-- `genAll` keeps a sentence inside a side's vocabulary bound: generalization removes a constant,
+it never introduces a base symbol. -/
+theorem sentBnd_genAll {F : Set (Σ n, L.Functions n)} {R : Set (Σ n, L.Relations n)} (c : ℕ)
+    {θ : L[[ℕ]].Sentenceω} (h : θ ∈ SentBnd F R) : genAll c θ ∈ SentBnd F R :=
+  ⟨(baseFunctionsIn_genAll_subset c θ).trans h.1,
+    (baseRelationsIn_genAll c θ).subset.trans h.2⟩
+
+/-- **Support growth of an instance.**  Inserting `instConst c φ` beside its universal parent
+enlarges the side's constant support by at most `{c}`. -/
+theorem theoryJConsts_insert_instConst_subset {φ : L[[ℕ]].BoundedFormulaω Empty 1} {c : ℕ}
+    (hmem : φ.all ∈ Γ) :
+    theoryJConsts (L := L) (insert (instConst c φ) Γ) ⊆ insert c (theoryJConsts Γ) := by
+  intro k hk
+  rw [theoryJConsts_insert] at hk
+  rcases hk with hk | hk
+  · rcases sentenceJConsts_instConst_subset c φ hk with hk | hk
+    · exact Set.mem_insert_of_mem _ (sentenceJConsts_subset_theoryJConsts hmem hk)
+    · exact Set.mem_insert_iff.mpr (Or.inl (Set.mem_singleton_iff.mp hk))
+  · exact Set.mem_insert_of_mem _ hk
+
+/-- **Quantifier-budget collapse.**  A side holding a universal sentence has a universal budget
+outright — `hasQuantSigned true φ.all` is `true = true ∨ _`, so the parent alone witnesses it.
+
+Stated unconditionally rather than as
+`HasQuantSigned true (insert (instConst c φ) Γ) → HasQuantSigned true Γ`: the implication is what the
+gate consumes, but it holds vacuously, because the conclusion never depended on the inserted
+instance.  Every universal permission demanded of the augmented left side is discharged by this. -/
+theorem hasQuantSigned_true_of_all_mem {φ : L[[ℕ]].BoundedFormulaω Empty 1}
+    (hmem : φ.all ∈ Γ) : Theoryω.HasQuantSigned true Γ :=
+  ⟨φ.all, hmem, Or.inl rfl⟩
+
+/-- **`all_inst`, left.**  A universal on the left admits *every* constant instance — including
+constants the left side does not yet carry, and constants already shared with a separator.  No
+freshness hypothesis is required.
+
+The proof splits on whether `Γ` already owns `c`.
+
+* If it does, the instance adds no constant and the separator transports unchanged
+  (`budgetedPairInsep_insert_entailed_left`).
+* If it does not, a separator of the augmented pair may mention `c`; universally generalizing it to
+  `genAll c θ` removes `c`, and freshness for `Γ` — which is exactly this branch's hypothesis —
+  licenses `∀`-introduction on the left.  The right side needs no freshness: it refutes `∀x θ(x)` by
+  instantiating at `c`'s own interpretation.
+
+Both branches pay the universal permission with `φ.all` itself, never with the instance. -/
+theorem budgetedPairInsep_all_inst_left {φ : L[[ℕ]].BoundedFormulaω Empty 1} (c : ℕ)
+    (hmem : φ.all ∈ Γ) (h : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ) :
+    BudgetedPairInsep F₁ R₁ F₂ R₂ (insert (instConst c φ) Γ) Δ := by
+  have hentΓ : Theoryω.Entails Γ (instConst c φ) :=
+    entails_of_mem_of_entails hmem (all_entails_instConst c φ)
+  by_cases hcΓ : c ∈ theoryJConsts (L := L) Γ
+  · -- the instance introduces nothing new: the deterministic driver applies verbatim
+    refine budgetedPairInsep_insert_entailed_left hentΓ ?_
+      (fun _ => hasQuantSigned_true_of_all_mem hmem) h
+    intro k hk
+    rcases sentenceJConsts_instConst_subset c φ hk with hk | hk
+    · exact sentenceJConsts_subset_theoryJConsts hmem hk
+    · exact Set.mem_singleton_iff.mp hk ▸ hcΓ
+  · -- `c` is fresh for `Γ`: abstract it out of the separator
+    rintro ⟨θ, hE, hN, hbnd, hc, hu, hx⟩
+    have hfresh : ∀ γ ∈ Γ, c ∉ sentenceJConsts (L' := L) (J := ℕ) γ :=
+      notMem_theoryJConsts_iff.mp hcΓ
+    have hEΓ : Theoryω.Entails Γ θ := by
+      intro N instN neN hmodel
+      refine @hE N instN neN fun ρ hρ => ?_
+      rcases Set.mem_insert_iff.mp hρ with rfl | hρ
+      · exact @hentΓ N instN neN hmodel
+      · exact hmodel ρ hρ
+    refine h ⟨genAll c θ, entails_genAll_of_entails hfresh hEΓ,
+      entails_not_genAll_of_entails_not_self hN, sentBnd_genAll c hbnd, ?_,
+      fun _ => hasQuantSigned_true_of_all_mem hmem, ?_⟩
+    · -- every surviving constant is not `c`, hence already on the left
+      intro k hk
+      have hkθ : k ∈ sentenceJConsts (L' := L) (J := ℕ) θ := sentenceJConsts_genAll_subset c θ hk
+      have hkc : k ≠ c := fun hEq => notMem_sentenceJConsts_genAll c θ (hEq ▸ hk)
+      refine ⟨?_, (hc hkθ).2⟩
+      rcases theoryJConsts_insert_instConst_subset hmem (hc hkθ).1 with hk' | hk'
+      · exact absurd hk' hkc
+      · exact hk'
+    · -- `genAll` adds no negative occurrence
+      intro hq
+      rw [hasQuantSigned_genAll] at hq
+      exact hx (hq.resolve_left (by simp))
+
+end AllInst
+
 
 end FirstOrder.Language
 
