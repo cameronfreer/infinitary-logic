@@ -1491,6 +1491,153 @@ theorem budgetedPairInsep_substCut_left (b c : ℕ) (ψ : L[[ℕ]].Sentenceω)
   · intro hq
     exact hx ((hasQuantSigned_substConst c b false θ).mp hq)
 
+/-- **Substitution cut, right.**  The mirror of `budgetedPairInsep_substCut_left`: `ψ` goes onto the
+right, mentioning a constant `c` that only the *left* side carries, and it is the left that proves
+`b = c`.  Same separator operation, sides exchanged. -/
+theorem budgetedPairInsep_substCut_right (b c : ℕ) (ψ : L[[ℕ]].Sentenceω)
+    (hcΔ : c ∉ theoryJConsts (L := L) Δ)
+    (hbΓ : b ∈ theoryJConsts (L := L) Γ) (hbΔ : b ∈ theoryJConsts (L := L) Δ)
+    (hΓeq : Theoryω.Entails Γ (constEq (L := L) b c))
+    (hcψ : sentenceJConsts (L' := L) (J := ℕ) ψ ⊆ insert c (theoryJConsts Δ))
+    (hqψ : ∀ s : Bool, ¬ hasQuantSigned s ψ)
+    (hΔψ : Theoryω.Entails Δ (substConst c b ψ))
+    (h : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ) :
+    BudgetedPairInsep F₁ R₁ F₂ R₂ Γ (insert ψ Δ) := by
+  have hcb : c ≠ b := fun hcb' => hcΔ (hcb' ▸ hbΔ)
+  rintro ⟨θ, hE, hN, hbnd, hc, hu, hx⟩
+  have hcτ : c ∉ sentenceJConsts (L' := L) (J := ℕ) (substConst c b θ) :=
+    notMem_sentenceJConsts_substConst c b hcb θ
+  refine h ⟨substConst c b θ, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · -- the left side proves `b = c`, so the reinterpretation is the identity there
+    intro N instN neN hmodel
+    set base := (L.lhomWithConstants ℕ).reduct N with hbase
+    set hm := ambientConstMap (L := L) N with hh
+    have bridge : ∀ (ρ : L[[ℕ]].Sentenceω),
+        @Sentenceω.Realize L[[ℕ]] ρ N instN
+          ↔ @BoundedFormulaω.Realize L[[ℕ]] N (wc base hm) Empty 0 ρ Empty.elim Fin.elim0 :=
+      fun ρ => ambient_realize_iff_wc (S := instN) ρ Empty.elim Fin.elim0
+    have hval : hm b = hm c := (bridge _).mp (@hΓeq N instN neN hmodel)
+    have hupd : Function.update hm c (hm b) = hm := by rw [hval, Function.update_eq_self]
+    have hθ : @BoundedFormulaω.Realize L[[ℕ]] N (wc base hm) Empty 0 θ Empty.elim Fin.elim0 :=
+      (bridge _).mp (@hE N instN neN hmodel)
+    refine (bridge _).mpr ((realize_substConst base hm c b θ).mpr ?_)
+    rw [hupd]; exact hθ
+  · -- the right side received `ψ`; reinterpret `c` at `b`'s value to rebuild its model
+    intro N instN neN hmodel
+    set base := (L.lhomWithConstants ℕ).reduct N with hbase
+    set hm := ambientConstMap (L := L) N with hh
+    have bridge : ∀ (ρ : L[[ℕ]].Sentenceω),
+        @Sentenceω.Realize L[[ℕ]] ρ N instN
+          ↔ @BoundedFormulaω.Realize L[[ℕ]] N (wc base hm) Empty 0 ρ Empty.elim Fin.elim0 :=
+      fun ρ => ambient_realize_iff_wc (S := instN) ρ Empty.elim Fin.elim0
+    have hΔ' : ∀ δ ∈ Δ,
+        @BoundedFormulaω.Realize L[[ℕ]] N (wc base (Function.update hm c (hm b))) Empty 0 δ
+          Empty.elim Fin.elim0 := by
+      intro δ hδ
+      have hg : @BoundedFormulaω.Realize L[[ℕ]] N (wc base hm) Empty 0 δ Empty.elim Fin.elim0 :=
+        (bridge _).mp (hmodel _ hδ)
+      have hcongr : ∀ k ∈ sentenceJConsts (L' := L) (J := ℕ) δ,
+          hm k = Function.update hm c (hm b) k := by
+        intro k hk
+        have hkc : (k : ℕ) ≠ c := fun heqk =>
+          hcΔ (heqk ▸ (sentenceJConsts_subset_theoryJConsts hδ) hk)
+        exact (Function.update_of_ne (α := ℕ) hkc _ hm).symm
+      rwa [BoundedFormulaω.realize_congr_const base δ hcongr Empty.elim Fin.elim0] at hg
+    have hψ' : @BoundedFormulaω.Realize L[[ℕ]] N (wc base (Function.update hm c (hm b))) Empty 0 ψ
+        Empty.elim Fin.elim0 :=
+      (realize_substConst base hm c b ψ).mp ((bridge _).mp (@hΔψ N instN neN hmodel))
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not]
+    intro hcontra
+    have hθ := (realize_substConst base hm c b θ).mp ((bridge _).mp hcontra)
+    exact (@hN N (wc base (Function.update hm c (hm b))) neN (fun ρ hρ => by
+      rcases Set.mem_insert_iff.mp hρ with rfl | hρ
+      · exact hψ'
+      · exact hΔ' ρ hρ)) hθ
+  · exact ⟨(baseFunctionsIn_substConst_subset c b θ).trans hbnd.1,
+      (baseRelationsIn_substConst c b θ).trans hbnd.2⟩
+  · intro k hk
+    rcases sentenceJConsts_substConst_subset c b θ hk with hk' | hk'
+    · have hkc : k ≠ c := fun heqk => hcτ (heqk ▸ hk)
+      refine ⟨(hc hk').1, ?_⟩
+      have hmem := (hc hk').2
+      rw [theoryJConsts_insert] at hmem
+      rcases hmem with hmem | hmem
+      · rcases hcψ hmem with hmem' | hmem'
+        · exact absurd hmem' hkc
+        · exact hmem'
+      · exact hmem
+    · rw [Set.mem_singleton_iff] at hk'
+      subst hk'
+      exact ⟨hbΓ, hbΔ⟩
+  · intro hq
+    exact hu ((hasQuantSigned_substConst c b true θ).mp hq)
+  · intro hq
+    have hqθ : hasQuantSigned false θ := (hasQuantSigned_substConst c b false θ).mp hq
+    rcases Theoryω.hasQuantSigned_insert.mp (hx hqθ) with hq' | hq'
+    · exact absurd hq' (hqψ true)
+    · exact hq'
+
+/-- Every atomic relation instance is quantifier-free at both signs. -/
+private theorem hasQuantSigned_relInst_false (s : Bool) {l : ℕ} (Rr : L.Relations l)
+    (g : Fin l → ℕ) : ¬ hasQuantSigned s (relInst Rr g) := fun hq => hq
+
+/-- Local restatement of the atomic realization equation (definitional; the WellOrdering arc has the
+same fact but is not in this file's import closure). -/
+private theorem realize_relInst_wc' {M : Type} (base : L.Structure M) (hm : ℕ → M)
+    {l : ℕ} (Rr : L.Relations l) (g : Fin l → ℕ) :
+    @BoundedFormulaω.Realize L[[ℕ]] M (wc base hm) Empty 0 (relInst Rr g) Empty.elim Fin.elim0
+      ↔ @Structure.RelMap L M base l Rr (fun j => hm (g j)) := Iff.rfl
+
+/-- The `b := g i` image of the congruent atom is the original atom, semantically: substituting the
+remote constant back at the pivot's value undoes the one-coordinate update. -/
+private theorem entails_substConst_relInst {l : ℕ} (Rr : L.Relations l) (g : Fin l → ℕ) (i : Fin l)
+    (b : ℕ) (hgb : ∀ j, g j ≠ b) (hmem : relInst Rr g ∈ Δ) :
+    Theoryω.Entails Δ (substConst b (g i) (relInst Rr (Function.update g i b))) := by
+  intro N instN neN hmodel
+  set base := (L.lhomWithConstants ℕ).reduct N with hbase
+  set hm := ambientConstMap (L := L) N with hh
+  have bridge : ∀ (ρ : L[[ℕ]].Sentenceω),
+      @Sentenceω.Realize L[[ℕ]] ρ N instN
+        ↔ @BoundedFormulaω.Realize L[[ℕ]] N (wc base hm) Empty 0 ρ Empty.elim Fin.elim0 :=
+    fun ρ => ambient_realize_iff_wc (S := instN) ρ Empty.elim Fin.elim0
+  have hr : @Structure.RelMap L N base l Rr (fun j => hm (g j)) :=
+    (realize_relInst_wc' base hm Rr g).mp ((bridge _).mp (hmodel _ hmem))
+  have key : ∀ j, Function.update hm b (hm (g i)) (Function.update g i b j) = hm (g j) := by
+    intro j
+    by_cases hj : j = i
+    · subst hj; rw [Function.update_self, Function.update_self]
+    · rw [Function.update_of_ne hj, Function.update_of_ne (hgb j)]
+  refine (bridge _).mpr ((realize_substConst base hm b (g i) _).mpr ?_)
+  refine (realize_relInst_wc' base (Function.update hm b (hm (g i))) Rr
+    (Function.update g i b)).mpr ?_
+  convert hr using 2 with j
+  exact key j
+
+/-- **Mixed relation congruence, reverse labels.**  The fourth `rel_congr` distribution: the atom on
+the right, the equation on the left.  A short application of the right substitution cut — the pivot
+is `g i` (shared: on the right by the atom, on the left by the equation) and the remote constant is
+the replacement `b`, which only the left carries. -/
+theorem budgetedPairInsep_relCongr_mixed_rev {l : ℕ} (Rr : L.Relations l) (g : Fin l → ℕ)
+    (i : Fin l) (b : ℕ) (hrel : relInst Rr g ∈ Δ) (heq : constEq (L := L) (g i) b ∈ Γ)
+    (hbΔ : b ∉ theoryJConsts (L := L) Δ)
+    (h : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ) :
+    BudgetedPairInsep F₁ R₁ F₂ R₂ Γ (insert (relInst Rr (Function.update g i b)) Δ) := by
+  have hgΔ : ∀ j, g j ∈ theoryJConsts (L := L) Δ := fun j =>
+    (sentenceJConsts_subset_theoryJConsts hrel)
+      (by rw [sentenceJConsts_relInst_eq]; exact Set.mem_range_self j)
+  have hgb : ∀ j, g j ≠ b := fun j hj => hbΔ (hj ▸ hgΔ j)
+  refine budgetedPairInsep_substCut_right (g i) b _ hbΔ ?_ (hgΔ i) ?_ ?_ ?_
+    (entails_substConst_relInst Rr g i b hgb hrel) h
+  · exact (sentenceJConsts_subset_theoryJConsts heq) (mem_sentenceJConsts_constEq_left (g i) b)
+  · exact Theoryω.entails_of_mem heq
+  · intro k hk
+    rw [sentenceJConsts_relInst_eq] at hk
+    obtain ⟨j, rfl⟩ := hk
+    by_cases hj : j = i
+    · subst hj; rw [Function.update_self]; exact Set.mem_insert _ _
+    · rw [Function.update_of_ne hj]; exact Set.mem_insert_of_mem _ (hgΔ j)
+  · intro s; exact hasQuantSigned_relInst_false s Rr _
+
 section Equality
 
 variable {a b d : ℕ}
@@ -1698,9 +1845,6 @@ section AtomicFields
 variable {F₁ F₂ : Set (Σ n, L.Functions n)} {R₁ R₂ : Set (Σ n, L.Relations n)}
   {Γ Δ : Set L[[ℕ]].Sentenceω} {c : ℕ}
 
-/-- Every atomic relation instance is quantifier-free at both signs. -/
-private theorem hasQuantSigned_relInst_false (s : Bool) {l : ℕ} (Rr : L.Relations l)
-    (g : Fin l → ℕ) : ¬ hasQuantSigned s (relInst Rr g) := fun hq => hq
 
 /-- `eq_refl`, right — the twin of `budgetedPairInsep_eq_refl_left`; together they cover every
 constant. -/
