@@ -1619,6 +1619,95 @@ theorem budgetedPairInsep_eq_trans_right (hab : constEq (L := L) a b ∈ Δ)
 
 end EqualityFields
 
+/-! ## Same-side relation congruence, and the right `eq_refl` twin
+
+The two remaining atomic fields.  Both are deterministic: the new sentence is entailed by the
+receiving side, its constants are already carried there, and being atomic it contributes no
+quantifier occurrence at either sign — so each is an instance of the corresponding driver. -/
+
+section AtomicFields
+
+variable {F₁ F₂ : Set (Σ n, L.Functions n)} {R₁ R₂ : Set (Σ n, L.Relations n)}
+  {Γ Δ : Set L[[ℕ]].Sentenceω} {c : ℕ}
+
+/-- Every atomic relation instance is quantifier-free at both signs. -/
+private theorem hasQuantSigned_relInst_false (s : Bool) {l : ℕ} (Rr : L.Relations l)
+    (g : Fin l → ℕ) : ¬ hasQuantSigned s (relInst Rr g) := fun hq => hq
+
+/-- `eq_refl`, right — the twin of `budgetedPairInsep_eq_refl_left`; together they cover every
+constant. -/
+theorem budgetedPairInsep_eq_refl_right
+    (hc : c ∈ theoryJConsts (L := L) Δ ∨ c ∉ theoryJConsts (L := L) Γ)
+    (h : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ) :
+    BudgetedPairInsep F₁ R₁ F₂ R₂ Γ (insert (constEq (L := L) c c) Δ) := by
+  rcases hc with hc | hc
+  · refine budgetedPairInsep_insert_entailed_right (entails_constEq_refl c) ?_ ?_ h
+    · exact (sentenceJConsts_constEq_subset c c).trans (by
+        intro k hk; rcases hk with hk | hk <;> exact hk ▸ hc)
+    · intro hq; exact absurd hq (hasQuantSigned_constEq_false true c c)
+  · rintro ⟨θ, hE, hN, hbnd, hcθ, hu, hx⟩
+    refine h ⟨θ, hE, ?_, hbnd, ?_, hu, ?_⟩
+    · intro N instN neN hmodel
+      refine @hN N instN neN fun ρ hρ => ?_
+      rcases Set.mem_insert_iff.mp hρ with rfl | hρ
+      · exact @entails_constEq_refl L Δ c N instN neN hmodel
+      · exact hmodel ρ hρ
+    · intro k hk
+      refine ⟨(hcθ hk).1, ?_⟩
+      have hkc : k ≠ c := fun heqk => hc (heqk ▸ (hcθ hk).1)
+      have hmem := (hcθ hk).2
+      rw [theoryJConsts_insert] at hmem
+      rcases hmem with hmem | hmem
+      · rcases sentenceJConsts_constEq_subset c c hmem with hmem' | hmem'
+        · exact absurd hmem' hkc
+        · exact absurd (Set.mem_singleton_iff.mp hmem') hkc
+      · exact hmem
+    · intro hq
+      rcases Theoryω.hasQuantSigned_insert.mp (hx hq) with hq' | hq'
+      · exact absurd hq' (hasQuantSigned_constEq_false true c c)
+      · exact hq'
+
+/-- **Same-side relation congruence, left.**  Both premises on `Γ`: the congruent atom is entailed
+there, and every constant it mentions — including the replacement `b` — is already carried, `b` by
+the equation `constEq (g i) b ∈ Γ` itself.  Contrast `budgetedPairInsep_relCongr_mixed`, where the
+equation sits on the opposite side and the separator must be substituted. -/
+theorem budgetedPairInsep_relCongr_left {l : ℕ} (Rr : L.Relations l) (g : Fin l → ℕ) (i : Fin l)
+    (b : ℕ) (hrel : relInst Rr g ∈ Γ) (heq : constEq (L := L) (g i) b ∈ Γ)
+    (h : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ) :
+    BudgetedPairInsep F₁ R₁ F₂ R₂ (insert (relInst Rr (Function.update g i b)) Γ) Δ := by
+  refine budgetedPairInsep_insert_entailed_left (entails_rel_congr Rr g i b hrel heq) ?_ ?_ h
+  · intro k hk
+    rw [sentenceJConsts_relInst_eq] at hk
+    obtain ⟨j, rfl⟩ := hk
+    by_cases hj : j = i
+    · subst hj
+      rw [Function.update_self]
+      exact (sentenceJConsts_subset_theoryJConsts heq) (mem_sentenceJConsts_constEq_right (g j) b)
+    · rw [Function.update_of_ne hj]
+      exact (sentenceJConsts_subset_theoryJConsts hrel)
+        (by rw [sentenceJConsts_relInst_eq]; exact Set.mem_range_self j)
+  · intro hq; exact absurd hq (hasQuantSigned_relInst_false true Rr _)
+
+/-- **Same-side relation congruence, right.** -/
+theorem budgetedPairInsep_relCongr_right {l : ℕ} (Rr : L.Relations l) (g : Fin l → ℕ) (i : Fin l)
+    (b : ℕ) (hrel : relInst Rr g ∈ Δ) (heq : constEq (L := L) (g i) b ∈ Δ)
+    (h : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ) :
+    BudgetedPairInsep F₁ R₁ F₂ R₂ Γ (insert (relInst Rr (Function.update g i b)) Δ) := by
+  refine budgetedPairInsep_insert_entailed_right (entails_rel_congr Rr g i b hrel heq) ?_ ?_ h
+  · intro k hk
+    rw [sentenceJConsts_relInst_eq] at hk
+    obtain ⟨j, rfl⟩ := hk
+    by_cases hj : j = i
+    · subst hj
+      rw [Function.update_self]
+      exact (sentenceJConsts_subset_theoryJConsts heq) (mem_sentenceJConsts_constEq_right (g j) b)
+    · rw [Function.update_of_ne hj]
+      exact (sentenceJConsts_subset_theoryJConsts hrel)
+        (by rw [sentenceJConsts_relInst_eq]; exact Set.mem_range_self j)
+  · intro hq; exact absurd hq (hasQuantSigned_relInst_false true Rr _)
+
+end AtomicFields
+
 /-! ## Universal instantiation — the `all_inst` gate
 
 The first field whose new sentence can carry a constant the side does not yet own.  Two facts make
