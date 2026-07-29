@@ -169,6 +169,46 @@ theorem not_budgetedPairInsep_of_left_contradiction (hσ : σ ∈ Γ) (hnσ : σ
   · exact fun hq => absurd hq (hasQuantSigned_falsum true)
   · exact fun hq => absurd hq (hasQuantSigned_falsum false)
 
+/-- **C0a, left.**  `⊥` on a side is its own separator: `Γ ⊨ ⊥` by membership, `Δ ⊨ ¬⊥` vacuously,
+and `⊥` carries no symbol, constant or quantifier. -/
+theorem not_budgetedPairInsep_of_falsum_left
+    (hmem : (BoundedFormulaω.falsum : L[[ℕ]].Sentenceω) ∈ Γ) :
+    ¬ BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ := by
+  intro h
+  refine h ⟨BoundedFormulaω.falsum, fun N instN _ hmodel => hmodel _ hmem, ?_, ?_, ?_, ?_, ?_⟩
+  · intro N instN _ _
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not]
+    exact fun hf => hf
+  · exact ⟨by rw [baseFunctionsIn_falsum]; exact Set.empty_subset _,
+      by rw [show (BoundedFormulaω.falsum : L[[ℕ]].Sentenceω).baseRelationsIn = ∅ from
+        baseRelationsIn_falsum]; exact Set.empty_subset _⟩
+  · rw [sentenceJConsts_falsum]; exact Set.empty_subset _
+  · exact fun hq => absurd hq (hasQuantSigned_falsum true)
+  · exact fun hq => absurd hq (hasQuantSigned_falsum false)
+
+/-- **C0a, right.**  Dual: `⊤` separates, since `Δ` holding `⊥` has no models at all. -/
+theorem not_budgetedPairInsep_of_falsum_right
+    (hmem : (BoundedFormulaω.falsum : L[[ℕ]].Sentenceω) ∈ Δ) :
+    ¬ BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ := by
+  intro h
+  refine h ⟨(BoundedFormulaω.falsum : L[[ℕ]].Sentenceω).not, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · intro N instN _ _
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not]
+    exact fun hf => hf
+  · intro N instN _ hmodel
+    exact absurd (hmodel _ hmem) (fun hf => hf)
+  · exact ⟨by rw [baseFunctionsIn_not, baseFunctionsIn_falsum]; exact Set.empty_subset _,
+      by rw [baseRelationsIn_not,
+        show (BoundedFormulaω.falsum : L[[ℕ]].Sentenceω).baseRelationsIn = ∅ from
+          baseRelationsIn_falsum]; exact Set.empty_subset _⟩
+  · rw [sentenceJConsts_not, sentenceJConsts_falsum]; exact Set.empty_subset _
+  · intro hq
+    rw [BoundedFormulaω.hasQuantSigned_not] at hq
+    exact absurd hq (hasQuantSigned_falsum false)
+  · intro hq
+    rw [BoundedFormulaω.hasQuantSigned_not] at hq
+    exact absurd hq (hasQuantSigned_falsum true)
+
 /-! ## C1 — implication branching
 
 The source's rule verbatim: disjunction when the principal formula is on the **left**, conjunction
