@@ -20,6 +20,22 @@ This file defines the semantics of L∞ω formulas.
 ## Main Results
 
 - Simp lemmas for all connectives and quantifiers.
+
+## Index universes
+
+`BoundedFormulaInf` carries a universe parameter `uι` for the index types of its `iSup`/`iInf`
+nodes, and the realization lemmas here quantify over `ι : Type uι` accordingly — *not* over
+`ι : Type`.
+
+This is not generality for its own sake. Karp's backward direction (`Karp/Theorem.lean`) forms a
+conjunction indexed by a structure's own carrier, `.iInf (ι := N)` for `N : Type w`; with index types
+confined to `Type 0` that construction cannot even be stated.
+
+The restriction is easy to reintroduce by accident and hard to notice, because every realization
+lemma below holds by `rfl`: a goal will close by definitional unfolding whether or not the typed
+lemma actually applied, so a `Type`-pinned lemma looks healthy until someone needs it at a higher
+universe. The regression examples in this file therefore close by `simp only` at a *literal*
+`Type 1`, which fails if the signature is narrowed again.
 -/
 
 universe u v w u' uι

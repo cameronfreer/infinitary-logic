@@ -14,13 +14,40 @@ infinitary logic).
 
 ## Main Definitions
 
-- `BoundedFormulaω.toLinf`: Embeds Lω₁ω into L∞ω (uses ℕ as index type)
+- `BoundedFormulaω.toLinf`: Embeds Lω₁ω into L∞ω at an arbitrary target index universe
 - `BoundedFormulaInf.ofCountable`: Converts countable L∞ω back to Lω₁ω via Encodable
 
 ## Main Results
 
-- `realize_toLinf`: Semantics preserved by toLinf embedding
+- `realize_toLinf`: Semantics preserved by toLinf embedding, at every target index universe
 - `realize_ofCountable`: Semantics preserved by ofCountable conversion
+- `BoundedFormula.toLω_toLinf`: the embedding triangle — a finitary formula reaches L∞ω the same way
+  directly as it does through Lω₁ω
+
+## Index universes
+
+The forward embedding is defined **at an arbitrary target index universe** `uι`, not at zero.
+
+Lω₁ω branches over `ℕ : Type 0`, so landing in a target whose index types live in `Type uι` requires
+a branch type in that universe: `ULift.{uι} ℕ`. Writing the target as `L.BoundedFormulaInf α n` and
+branching on `ℕ` directly — as this file used to — silently forces `uι = 0`, which is exactly the
+restriction Karp's backward direction cannot live with (it indexes a conjunction by a structure's own
+carrier).
+
+Two consequences that are easy to miss:
+
+- The infinitary cases of `realize_toLinf` are no longer an index-preserving `exists_congr` /
+  `forall_congr'`. The quantifier on one side ranges over `ULift.{uι} ℕ` and on the other over `ℕ`,
+  so the witness must be transported across the lift (`ULift.exists` / `ULift.forall`). The same
+  applies downstream to quantifier-rank preservation.
+- The **reverse** direction stays at `uι = 0`. `toLinf_isCountable` is pinned explicitly, and
+  `ofCountable` is pinned by its own signature: `IsCountable`'s `iSup`/`iInf` constructors take
+  `ι : Type`, so the fragment predicate lives at index universe zero until it is redesigned. That
+  pinning is forced, not chosen.
+
+The examples at the end of the file are permanent regressions at a *literal* `Type 1`; they live here
+rather than in a scratch file because a probe elaborated against stale `.olean`s reports the
+pre-edit behaviour and can pass while testing nothing.
 -/
 
 universe u v u' w uι
