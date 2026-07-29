@@ -148,6 +148,34 @@ theorem not_budgetedPairInsep_of_mixed (hΓ : Γ ⊆ SentBnd F₁ R₁) (hΔ : �
   · intro hq
     exact Theoryω.hasQuantSigned_of_mem hσΔ ((hasQuantSigned_not true σ).mpr hq)
 
+/-- **Mixed C0, reverse labels.**  The other cross combination: the negation on the left and the
+sentence itself on the right.  `σ.not` separates directly — no double-negation detour through
+`not_budgetedPairInsep_of_mixed`, which would need `σ.not.not ∈ Δ`.
+
+Both permissions flip with the sign: the *universal* occurrences of `σ.not` are paid by its own
+membership in `Γ`, and its *existential* occurrences are the universal occurrences of `σ`, paid by
+`σ ∈ Δ`. -/
+theorem not_budgetedPairInsep_of_mixed_rev (hΓ : Γ ⊆ SentBnd F₁ R₁) (hΔ : Δ ⊆ SentBnd F₂ R₂)
+    (hσΓ : σ.not ∈ Γ) (hσΔ : σ ∈ Δ) : ¬ BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ := by
+  intro h
+  have hb₁ : σ.not ∈ SentBnd (L := L) F₁ R₁ := hΓ hσΓ
+  have hb₂ : σ.not ∈ SentBnd (L := L) F₂ R₂ := sentBnd_not_iff.mpr (hΔ hσΔ)
+  refine h ⟨σ.not, Theoryω.entails_of_mem hσΓ, ?_,
+    ⟨Set.subset_inter hb₁.1 hb₂.1, Set.subset_inter hb₁.2 hb₂.2⟩, ?_, ?_, ?_⟩
+  · -- `Δ ⊨ ¬¬σ` by double-negation introduction from `σ ∈ Δ`
+    intro N instN neN hmodel
+    rw [Sentenceω.Realize, BoundedFormulaω.realize_not]
+    intro hcon
+    rw [BoundedFormulaω.realize_not] at hcon
+    exact hcon (hmodel _ hσΔ)
+  · refine Set.subset_inter (sentenceJConsts_subset_theoryJConsts hσΓ) ?_
+    rw [sentenceJConsts_not (L' := L) σ]
+    exact sentenceJConsts_subset_theoryJConsts hσΔ
+  · exact fun hq => Theoryω.hasQuantSigned_of_mem hσΓ hq
+  · intro hq
+    rw [hasQuantSigned_not] at hq
+    exact Theoryω.hasQuantSigned_of_mem hσΔ hq
+
 /-- **Same-side C0.**  A sentence and its negation on one side make it inconsistent, and the
 quantifier-free, constant-free `⊥` (resp. `⊤`) separates. -/
 theorem not_budgetedPairInsep_of_left_contradiction (hσ : σ ∈ Γ) (hnσ : σ.not ∈ Γ) :
