@@ -2548,6 +2548,32 @@ theorem budgetedPairMem_all_inst (hS : BudgetedPairMem r₁ r₂ F₁ R₁ F₂ 
         (all_inst_mem c (hΔU hΔ)) (sentBnd_instConst c (hΔb hΔ))
         (budgetedPairInsep_all_inst_right c hΔ hA)
 
+/-- **`neg_all_witness`.**  The only helper that constructs anything: the witness constant is chosen
+*before* the label dispatch, since both gates demand freshness for **both** supports and the
+requirement is symmetric.  This is also the only consumer of root-support finiteness, which is why
+those hypotheses appear here and nowhere else in the layer. -/
+theorem budgetedPairMem_neg_all_witness
+    (hr₁ : (sentenceJConsts (L' := L) (J := ℕ) r₁).Finite)
+    (hr₂ : (sentenceJConsts (L' := L) (J := ℕ) r₂).Finite)
+    (hS : BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ S)
+    (φ : L[[ℕ]].BoundedFormulaω Empty 1) (hmem : (BoundedFormulaω.all φ).not ∈ S) :
+    ∃ c, BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ (S ∪ {(instConst c φ).not}) := by
+  obtain ⟨Γ, Δ, hΓfin, hΔfin, hΓU, hΔU, hΓb, hΔb, hSeq, hA⟩ := hS
+  obtain ⟨c, hcΓ, hcΔ⟩ := exists_fresh_budgetedPair hr₁ hr₂ hΓfin hΔfin hΓU hΔU
+  refine ⟨c, ?_⟩
+  rw [hSeq] at hmem
+  rcases hmem with hΓ | hΔ
+  · simpa only [Set.union_singleton] using
+      budgetedPairMem_insert_left hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
+        (negall_inst_mem c (hΓU hΓ))
+        (sentBnd_not_iff.mpr (sentBnd_instConst c (sentBnd_not_iff.mp (hΓb hΓ))))
+        (budgetedPairInsep_witness_left c φ hΓ hcΓ hcΔ hA)
+  · simpa only [Set.union_singleton] using
+      budgetedPairMem_insert_right hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
+        (negall_inst_mem c (hΔU hΔ))
+        (sentBnd_not_iff.mpr (sentBnd_instConst c (sentBnd_not_iff.mp (hΔb hΔ))))
+        (budgetedPairInsep_witness_right c φ hΔ hcΓ hcΔ hA)
+
 end FamilyFields
 
 end FirstOrder.Language
