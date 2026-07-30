@@ -125,6 +125,38 @@ def BudgetedPairInsep (F₁ : Set (Σ n, L.Functions n)) (R₁ : Set (Σ n, L.Re
     (Γ Δ : Set L[[ℕ]].Sentenceω) : Prop :=
   ¬ ∃ θ, BudgetedPairSeparates F₁ R₁ F₂ R₂ Γ Δ θ
 
+/-! ## Order behaviour of the invariant
+
+Inseparability is **antitone**: a separator of a smaller labelled pair is still a separator of any
+larger one, because all five conditions weaken the right way — entailment survives adding premises,
+the constant condition survives enlarging the supports, and both permissions survive enlarging the
+sides.  Contrapositively, inseparability of the larger pair gives it for every sub-pair.
+
+This is what lets a discharge transfer a premise onto a side temporarily and then drop it again. -/
+
+/-- **Antitonicity in both labels.** -/
+theorem budgetedPairInsep_antitone {Γ' Δ' : Set L[[ℕ]].Sentenceω}
+    (hΓ : Γ ⊆ Γ') (hΔ : Δ ⊆ Δ')
+    (h : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ' Δ') :
+    BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ := by
+  rintro ⟨θ, hE, hN, hbnd, hc, hu, hx⟩
+  refine h ⟨θ, ?_, ?_, hbnd, ?_, ?_, ?_⟩
+  · exact fun N instN neN hmodel => @hE N instN neN fun ρ hρ => hmodel ρ (hΓ hρ)
+  · exact fun N instN neN hmodel => @hN N instN neN fun ρ hρ => hmodel ρ (hΔ hρ)
+  · exact fun k hk => ⟨theoryJConsts_mono hΓ (hc hk).1, theoryJConsts_mono hΔ (hc hk).2⟩
+  · exact fun hq => Theoryω.hasQuantSigned_mono hΓ (hu hq)
+  · exact fun hq => Theoryω.hasQuantSigned_mono hΔ (hx hq)
+
+/-- Antitonicity on the left alone — the form that drops a temporarily transferred premise. -/
+theorem budgetedPairInsep_antitone_left {Γ' : Set L[[ℕ]].Sentenceω} (hΓ : Γ ⊆ Γ')
+    (h : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ' Δ) : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ :=
+  budgetedPairInsep_antitone hΓ (subset_refl Δ) h
+
+/-- Antitonicity on the right alone. -/
+theorem budgetedPairInsep_antitone_right {Δ' : Set L[[ℕ]].Sentenceω} (hΔ : Δ ⊆ Δ')
+    (h : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ') : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ Δ :=
+  budgetedPairInsep_antitone (subset_refl Γ) hΔ h
+
 /-! ## C0 — the mixed contradiction gate
 
 The diagnostic case for the labelled architecture: a sentence on the left with its negation on the
