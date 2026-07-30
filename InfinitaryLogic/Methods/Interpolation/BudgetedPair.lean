@@ -654,6 +654,32 @@ theorem budgetedPairMem_insert_right {S : Set L[[ℕ]].Sentenceω}
   · exact Set.insert_subset hσb hΔb
   · rw [hS, Set.union_insert]
 
+/-! ### Fresh constants for a labelled pair
+
+`Γ.Finite` alone is **not** enough: a single infinitary sentence can mention infinitely many
+constants.  Finiteness of the *support* needs the `GenU` bound as well, via `genU_finite_support`,
+together with finite constant support of the two roots. -/
+
+/-- The constant support of a finite, `GenU`-bounded side is finite. -/
+theorem theoryJConsts_finite_of_subset_genU
+    (hr₁ : (sentenceJConsts (L' := L) (J := ℕ) r₁).Finite)
+    (hr₂ : (sentenceJConsts (L' := L) (J := ℕ) r₂).Finite)
+    (hΓfin : Γ.Finite) (hΓU : Γ ⊆ GenU r₁ r₂) :
+    (theoryJConsts (L := L) Γ).Finite :=
+  hΓfin.biUnion fun γ hγ => genU_finite_support hr₁ hr₂ γ (hΓU hγ)
+
+/-- **A constant fresh for both labels exists.**  Consumed only by the fresh-witness fields; the root
+finiteness hypotheses enter the package for this reason alone. -/
+theorem exists_fresh_budgetedPair
+    (hr₁ : (sentenceJConsts (L' := L) (J := ℕ) r₁).Finite)
+    (hr₂ : (sentenceJConsts (L' := L) (J := ℕ) r₂).Finite)
+    (hΓfin : Γ.Finite) (hΔfin : Δ.Finite)
+    (hΓU : Γ ⊆ GenU r₁ r₂) (hΔU : Δ ⊆ GenU r₁ r₂) :
+    ∃ c, c ∉ theoryJConsts (L := L) Γ ∧ c ∉ theoryJConsts (L := L) Δ := by
+  obtain ⟨c, hc⟩ := ((theoryJConsts_finite_of_subset_genU hr₁ hr₂ hΓfin hΓU).union
+    (theoryJConsts_finite_of_subset_genU hr₁ hr₂ hΔfin hΔU)).exists_notMem
+  exact ⟨c, fun hmem => hc (Or.inl hmem), fun hmem => hc (Or.inr hmem)⟩
+
 /-! ## C0, the remaining label combination -/
 
 /-- **Same-side C0, right.**  An inconsistent right side is separated by `⊤`, the mirror of the `⊥`
@@ -2114,6 +2140,50 @@ theorem budgetedPairInsep_all_inst_right {φ : L[[ℕ]].BoundedFormulaω Empty 1
 
 end AllInst
 
+
+/-! ## The family-level field helpers
+
+One helper per `ConsistencyPropertyEqOn` field, each stated in the structure's own `S ∪ {φ}` shape so
+that the final package is pure eta-application.  Every body follows the same four steps: unpack the
+labelled decomposition, dispatch on the label of the parent, apply **one** `BudgetedPairInsep` gate,
+and repackage with `budgetedPairMem_insert_left`/`_right`.  The `insert`-versus-union normalization is
+hidden here via `Set.union_singleton`.
+
+No semantic realization proof appears below; if one is ever needed, a gate is missing. -/
+
+section FamilyFields
+
+variable {F₁ F₂ : Set (Σ n, L.Functions n)} {R₁ R₂ : Set (Σ n, L.Relations n)}
+  {r₁ r₂ : L[[ℕ]].Sentenceω} {S : Set L[[ℕ]].Sentenceω}
+
+theorem budgetedPairMem_subset_U (hS : BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ S) :
+    S ⊆ GenU r₁ r₂ := by
+  obtain ⟨Γ, Δ, -, -, hΓU, hΔU, -, -, hSeq, -⟩ := hS
+  rw [hSeq]; exact Set.union_subset hΓU hΔU
+
+theorem budgetedPairMem_C0_no_falsum (hS : BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ S) :
+    (BoundedFormulaω.falsum : L[[ℕ]].Sentenceω) ∉ S := by
+  obtain ⟨Γ, Δ, -, -, -, -, -, -, hSeq, hA⟩ := hS
+  rw [hSeq]
+  rintro (hmem | hmem)
+  · exact not_budgetedPairInsep_of_falsum_left hmem hA
+  · exact not_budgetedPairInsep_of_falsum_right hmem hA
+
+/-- All four label combinations, visibly. -/
+theorem budgetedPairMem_C0_no_contradiction (hS : BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ S)
+    (φ : L[[ℕ]].Sentenceω) : ¬(φ ∈ S ∧ φ.not ∈ S) := by
+  obtain ⟨Γ, Δ, -, -, -, -, hΓb, hΔb, hSeq, hA⟩ := hS
+  rintro ⟨hφ, hφn⟩
+  rw [hSeq] at hφ hφn
+  rcases hφ with hφΓ | hφΔ
+  · rcases hφn with hφnΓ | hφnΔ
+    · exact not_budgetedPairInsep_of_left_contradiction hφΓ hφnΓ hA
+    · exact not_budgetedPairInsep_of_mixed hΓb hΔb hφΓ hφnΔ hA
+  · rcases hφn with hφnΓ | hφnΔ
+    · exact not_budgetedPairInsep_of_mixed_rev hΓb hΔb hφnΓ hφΔ hA
+    · exact not_budgetedPairInsep_of_right_contradiction hφΔ hφnΔ hA
+
+end FamilyFields
 
 end FirstOrder.Language
 
