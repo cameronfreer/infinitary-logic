@@ -2183,6 +2183,35 @@ theorem budgetedPairMem_C0_no_contradiction (hS : BudgetedPairMem r₁ r₂ F₁
     · exact not_budgetedPairInsep_of_mixed_rev hΓb hΔb hφnΓ hφΔ hA
     · exact not_budgetedPairInsep_of_right_contradiction hφΔ hφnΔ hA
 
+/-- **C1.**  The first field that builds a new member, so it is the one that exercises the whole
+repackaging path: label dispatch, the gate's own disjunction, and the `insert`-versus-union
+normalization — which is confined to the `simpa only [Set.union_singleton]` at each boundary. -/
+theorem budgetedPairMem_C1_imp (hS : BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ S)
+    (φ ψ : L[[ℕ]].Sentenceω) (hmem : φ.imp ψ ∈ S) :
+    BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ (S ∪ {φ.not}) ∨
+      BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ (S ∪ {ψ}) := by
+  obtain ⟨Γ, Δ, hΓfin, hΔfin, hΓU, hΔU, hΓb, hΔb, hSeq, hA⟩ := hS
+  rw [hSeq] at hmem
+  rcases hmem with hΓ | hΔ
+  · rcases budgetedPairInsep_imp_left φ ψ hΓ hA with h | h
+    · exact Or.inl (by
+        simpa only [Set.union_singleton] using
+          budgetedPairMem_insert_left hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
+            (imp_negleft_mem (hΓU hΓ)) (sentBnd_not_iff.mpr (sentBnd_imp_left (hΓb hΓ))) h)
+    · exact Or.inr (by
+        simpa only [Set.union_singleton] using
+          budgetedPairMem_insert_left hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
+            (imp_right_mem (hΓU hΓ)) (sentBnd_imp_right (hΓb hΓ)) h)
+  · rcases budgetedPairInsep_imp_right φ ψ hΔ hA with h | h
+    · exact Or.inl (by
+        simpa only [Set.union_singleton] using
+          budgetedPairMem_insert_right hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
+            (imp_negleft_mem (hΔU hΔ)) (sentBnd_not_iff.mpr (sentBnd_imp_left (hΔb hΔ))) h)
+    · exact Or.inr (by
+        simpa only [Set.union_singleton] using
+          budgetedPairMem_insert_right hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
+            (imp_right_mem (hΔU hΔ)) (sentBnd_imp_right (hΔb hΔ)) h)
+
 end FamilyFields
 
 end FirstOrder.Language
