@@ -2337,6 +2337,36 @@ theorem budgetedPairMem_C3_neg_iInf (hS : BudgetedPairMem r₁ r₂ F₁ R₁ F�
           (negiInf_comp_mem k (hΔU hΔ))
           (sentBnd_not_iff.mpr (sentBnd_component_iInf k (sentBnd_not_iff.mp (hΔb hΔ)))) hk⟩
 
+/-! ### The equality fields -/
+
+/-- **`eq_refl`.**  One case split suffices: if the left already carries `c`, insert there; otherwise
+`c ∉ theoryJConsts Γ` is exactly the right gate's second disjunct.  The right support is never
+inspected. -/
+theorem budgetedPairMem_eq_refl (hS : BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ S) (c : ℕ) :
+    BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ (S ∪ {constEq (L := L) c c}) := by
+  obtain ⟨Γ, Δ, hΓfin, hΔfin, hΓU, hΔU, hΓb, hΔb, hSeq, hA⟩ := hS
+  by_cases hcΓ : c ∈ theoryJConsts (L := L) Γ
+  · simpa only [Set.union_singleton] using
+      budgetedPairMem_insert_left hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
+        (eqRefl_mem c) (sentBnd_constEq c c) (budgetedPairInsep_eq_refl_left (Or.inl hcΓ) hA)
+  · simpa only [Set.union_singleton] using
+      budgetedPairMem_insert_right hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
+        (eqRefl_mem c) (sentBnd_constEq c c) (budgetedPairInsep_eq_refl_right (Or.inr hcΓ) hA)
+
+/-- **`eq_symm`.** -/
+theorem budgetedPairMem_eq_symm (hS : BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ S) (a b : ℕ)
+    (hmem : constEq (L := L) a b ∈ S) :
+    BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ (S ∪ {constEq (L := L) b a}) := by
+  obtain ⟨Γ, Δ, hΓfin, hΔfin, hΓU, hΔU, hΓb, hΔb, hSeq, hA⟩ := hS
+  rw [hSeq] at hmem
+  rcases hmem with hΓ | hΔ
+  · simpa only [Set.union_singleton] using
+      budgetedPairMem_insert_left hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
+        (constEq_mem b a) (sentBnd_constEq b a) (budgetedPairInsep_eq_symm_left hΓ hA)
+  · simpa only [Set.union_singleton] using
+      budgetedPairMem_insert_right hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
+        (constEq_mem b a) (sentBnd_constEq b a) (budgetedPairInsep_eq_symm_right hΔ hA)
+
 end FamilyFields
 
 end FirstOrder.Language
