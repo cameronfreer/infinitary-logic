@@ -2399,6 +2399,70 @@ theorem budgetedPairMem_eq_symm (hS : BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R
       budgetedPairMem_insert_right hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
         (constEq_mem b a) (sentBnd_constEq b a) (budgetedPairInsep_eq_symm_right hΔ hA)
 
+/-- **`eq_trans`.**  All four premise distributions, visibly.  Note both mixed gates *derive on `Γ`*
+by eliminating a `Γ`-fresh remote endpoint — they are not mirrors indexed by receiving side — so
+three of the four cases insert on the left.
+
+When the "remote" endpoint is not actually remote, the mixed gate does not apply: instead transfer
+the opposite side's equality onto `Γ` (legal, since it is quantifier-free and `Γ` already carries
+both its constants), apply the same-side gate, and drop the transferred premise with
+`budgetedPairInsep_antitone_left`. -/
+theorem budgetedPairMem_eq_trans (hS : BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ S) (a b d : ℕ)
+    (hab : constEq (L := L) a b ∈ S) (hbd : constEq (L := L) b d ∈ S) :
+    BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ (S ∪ {constEq (L := L) a d}) := by
+  obtain ⟨Γ, Δ, hΓfin, hΔfin, hΓU, hΔU, hΓb, hΔb, hSeq, hA⟩ := hS
+  rw [hSeq] at hab hbd
+  have mkL : ∀ {ρ : L[[ℕ]].Sentenceω}, ρ = constEq (L := L) a d →
+      BudgetedPairInsep F₁ R₁ F₂ R₂ (insert ρ Γ) Δ →
+      BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ (S ∪ {constEq (L := L) a d}) := by
+    rintro ρ rfl hins
+    simpa only [Set.union_singleton] using
+      budgetedPairMem_insert_left hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
+        (constEq_mem a d) (sentBnd_constEq a d) hins
+  rcases hab with habΓ | habΔ
+  · rcases hbd with hbdΓ | hbdΔ
+    · -- Γ/Γ
+      exact mkL rfl (budgetedPairInsep_eq_trans_left habΓ hbdΓ hA)
+    · -- Γ/Δ: remote endpoint `d`
+      by_cases hdΓ : d ∈ theoryJConsts (L := L) Γ
+      · -- not actually remote: transfer `b = d` left, then drop it
+        have htr : BudgetedPairInsep F₁ R₁ F₂ R₂ (insert (constEq (L := L) b d) Γ) Δ :=
+          budgetedPairInsep_insert_shared_left hbdΔ (sentBnd_constEq b d) (sentBnd_constEq b d)
+            (by
+              refine (sentenceJConsts_constEq_subset b d).trans ?_
+              intro k hk
+              rcases hk with hk | hk
+              · exact hk ▸ (sentenceJConsts_subset_theoryJConsts habΓ)
+                  (mem_sentenceJConsts_constEq_right a b)
+              · exact hk ▸ hdΓ)
+            (fun s => hasQuantSigned_constEq_false s b d) hA
+        exact mkL rfl (budgetedPairInsep_antitone_left (Set.insert_subset_insert (Set.subset_insert _ _))
+          (budgetedPairInsep_eq_trans_left (Set.mem_insert_of_mem _ habΓ)
+            (Set.mem_insert _ _) htr))
+      · exact mkL rfl (budgetedPairInsep_eq_trans_mixed_right habΓ hbdΔ hdΓ hA)
+  · rcases hbd with hbdΓ | hbdΔ
+    · -- Δ/Γ: remote endpoint `a`
+      by_cases haΓ : a ∈ theoryJConsts (L := L) Γ
+      · have htr : BudgetedPairInsep F₁ R₁ F₂ R₂ (insert (constEq (L := L) a b) Γ) Δ :=
+          budgetedPairInsep_insert_shared_left habΔ (sentBnd_constEq a b) (sentBnd_constEq a b)
+            (by
+              refine (sentenceJConsts_constEq_subset a b).trans ?_
+              intro k hk
+              rcases hk with hk | hk
+              · exact hk ▸ haΓ
+              · exact hk ▸ (sentenceJConsts_subset_theoryJConsts hbdΓ)
+                  (mem_sentenceJConsts_constEq_left b d))
+            (fun s => hasQuantSigned_constEq_false s a b) hA
+        exact mkL rfl (budgetedPairInsep_antitone_left (Set.insert_subset_insert (Set.subset_insert _ _))
+          (budgetedPairInsep_eq_trans_left (Set.mem_insert _ _)
+            (Set.mem_insert_of_mem _ hbdΓ) htr))
+      · exact mkL rfl (budgetedPairInsep_eq_trans_mixed_left habΔ hbdΓ haΓ hA)
+    · -- Δ/Δ
+      simpa only [Set.union_singleton] using
+        budgetedPairMem_insert_right hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
+          (constEq_mem a d) (sentBnd_constEq a d)
+          (budgetedPairInsep_eq_trans_right habΔ hbdΔ hA)
+
 end FamilyFields
 
 end FirstOrder.Language
