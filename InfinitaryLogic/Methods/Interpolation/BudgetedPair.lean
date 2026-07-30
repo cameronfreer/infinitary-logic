@@ -2463,6 +2463,91 @@ theorem budgetedPairMem_eq_trans (hS : BudgetedPairMem r₁ r₂ F₁ R₁ F₂ 
           (constEq_mem a d) (sentBnd_constEq a d)
           (budgetedPairInsep_eq_trans_right habΔ hbdΔ hA)
 
+/-- **`rel_congr`.**  Four distributions.  Same-side cases use the same-side gates; each mixed case
+splits on whether the replacement constant is fresh for the *receiving* side, and if it is not,
+transfers the equality across, applies the same-side gate, and drops the transferred premise with
+antitonicity.  The transfer is legal because the atom supplies the pivot `g i` and the non-fresh
+branch supplies `b`. -/
+theorem budgetedPairMem_rel_congr (hS : BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ S)
+    {l : ℕ} (Rr : L.Relations l) (g : Fin l → ℕ) (i : Fin l) (b : ℕ)
+    (hrel : relInst Rr g ∈ S) (heq : constEq (L := L) (g i) b ∈ S) :
+    BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ (S ∪ {relInst Rr (Function.update g i b)}) := by
+  obtain ⟨Γ, Δ, hΓfin, hΔfin, hΓU, hΔU, hΓb, hΔb, hSeq, hA⟩ := hS
+  rw [hSeq] at hrel heq
+  rcases hrel with hrΓ | hrΔ
+  · -- atom on the left
+    have hpivΓ : g i ∈ theoryJConsts (L := L) Γ :=
+      (sentenceJConsts_subset_theoryJConsts hrΓ)
+        (by rw [sentenceJConsts_relInst_eq]; exact Set.mem_range_self i)
+    have mk : BudgetedPairInsep F₁ R₁ F₂ R₂ (insert (relInst Rr (Function.update g i b)) Γ) Δ →
+        BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ (S ∪ {relInst Rr (Function.update g i b)}) := by
+      intro hins
+      simpa only [Set.union_singleton] using
+        budgetedPairMem_insert_left hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
+          (relInst_mem Rr (Function.update g i b))
+          (sentBnd_relInst_congr Rr (Function.update g i b) (hΓb hrΓ)) hins
+    rcases heq with heqΓ | heqΔ
+    · exact mk (budgetedPairInsep_relCongr_left Rr g i b hrΓ heqΓ hA)
+    · by_cases hbΓ : b ∈ theoryJConsts (L := L) Γ
+      · have htr : BudgetedPairInsep F₁ R₁ F₂ R₂ (insert (constEq (L := L) (g i) b) Γ) Δ :=
+          budgetedPairInsep_insert_shared_left heqΔ (sentBnd_constEq _ _) (sentBnd_constEq _ _)
+            (by
+              refine (sentenceJConsts_constEq_subset (g i) b).trans ?_
+              intro k hk
+              rcases hk with hk | hk
+              · exact hk ▸ hpivΓ
+              · exact hk ▸ hbΓ)
+            (fun s => hasQuantSigned_constEq_false s _ _) hA
+        exact mk (budgetedPairInsep_antitone_left
+          (Set.insert_subset_insert (Set.subset_insert _ _))
+          (budgetedPairInsep_relCongr_left Rr g i b (Set.mem_insert_of_mem _ hrΓ)
+            (Set.mem_insert _ _) htr))
+      · exact mk (budgetedPairInsep_relCongr_mixed Rr g i b hrΓ heqΔ hbΓ hA)
+  · -- atom on the right
+    have hpivΔ : g i ∈ theoryJConsts (L := L) Δ :=
+      (sentenceJConsts_subset_theoryJConsts hrΔ)
+        (by rw [sentenceJConsts_relInst_eq]; exact Set.mem_range_self i)
+    have mk : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ (insert (relInst Rr (Function.update g i b)) Δ) →
+        BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ (S ∪ {relInst Rr (Function.update g i b)}) := by
+      intro hins
+      simpa only [Set.union_singleton] using
+        budgetedPairMem_insert_right hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
+          (relInst_mem Rr (Function.update g i b))
+          (sentBnd_relInst_congr Rr (Function.update g i b) (hΔb hrΔ)) hins
+    rcases heq with heqΓ | heqΔ
+    · by_cases hbΔ : b ∈ theoryJConsts (L := L) Δ
+      · have htr : BudgetedPairInsep F₁ R₁ F₂ R₂ Γ (insert (constEq (L := L) (g i) b) Δ) :=
+          budgetedPairInsep_insert_shared_right heqΓ (sentBnd_constEq _ _) (sentBnd_constEq _ _)
+            (by
+              refine (sentenceJConsts_constEq_subset (g i) b).trans ?_
+              intro k hk
+              rcases hk with hk | hk
+              · exact hk ▸ hpivΔ
+              · exact hk ▸ hbΔ)
+            (fun s => hasQuantSigned_constEq_false s _ _) hA
+        exact mk (budgetedPairInsep_antitone_right
+          (Set.insert_subset_insert (Set.subset_insert _ _))
+          (budgetedPairInsep_relCongr_right Rr g i b (Set.mem_insert_of_mem _ hrΔ)
+            (Set.mem_insert _ _) htr))
+      · exact mk (budgetedPairInsep_relCongr_mixed_rev Rr g i b hrΔ heqΓ hbΔ hA)
+    · exact mk (budgetedPairInsep_relCongr_right Rr g i b hrΔ heqΔ hA)
+
+/-- **`all_inst`.**  Plain label dispatch: neither gate takes a freshness hypothesis. -/
+theorem budgetedPairMem_all_inst (hS : BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ S)
+    (φ : L[[ℕ]].BoundedFormulaω Empty 1) (hmem : BoundedFormulaω.all φ ∈ S) (c : ℕ) :
+    BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ (S ∪ {instConst c φ}) := by
+  obtain ⟨Γ, Δ, hΓfin, hΔfin, hΓU, hΔU, hΓb, hΔb, hSeq, hA⟩ := hS
+  rw [hSeq] at hmem
+  rcases hmem with hΓ | hΔ
+  · simpa only [Set.union_singleton] using
+      budgetedPairMem_insert_left hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
+        (all_inst_mem c (hΓU hΓ)) (sentBnd_instConst c (hΓb hΓ))
+        (budgetedPairInsep_all_inst_left c hΓ hA)
+  · simpa only [Set.union_singleton] using
+      budgetedPairMem_insert_right hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
+        (all_inst_mem c (hΔU hΔ)) (sentBnd_instConst c (hΔb hΔ))
+        (budgetedPairInsep_all_inst_right c hΔ hA)
+
 end FamilyFields
 
 end FirstOrder.Language
