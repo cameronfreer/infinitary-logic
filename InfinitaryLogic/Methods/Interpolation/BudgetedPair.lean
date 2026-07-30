@@ -2574,6 +2574,38 @@ theorem budgetedPairMem_neg_all_witness
         (sentBnd_not_iff.mpr (sentBnd_instConst c (sentBnd_not_iff.mp (hΔb hΔ))))
         (budgetedPairInsep_witness_right c φ hΔ hcΓ hcΔ hA)
 
+/-! ## The consistency property
+
+Pure wiring: every field is its named helper.  Nothing below reasons about separators, labels or
+supports — if a field ever needs more than an application, the corresponding helper is missing. -/
+
+/-- **The budgeted labelled-pair consistency property.**  The finite labelled family over the
+generated universe `GenU r₁ r₂`.  Root-support finiteness is consumed only by `neg_all_witness`. -/
+def budgetedPairConsistencyProperty
+    (F₁ : Set (Σ n, L.Functions n)) (R₁ : Set (Σ n, L.Relations n))
+    (F₂ : Set (Σ n, L.Functions n)) (R₂ : Set (Σ n, L.Relations n))
+    (r₁ r₂ : L[[ℕ]].Sentenceω)
+    (hr₁ : (sentenceJConsts (L' := L) (J := ℕ) r₁).Finite)
+    (hr₂ : (sentenceJConsts (L' := L) (J := ℕ) r₂).Finite) :
+    ConsistencyPropertyEqOn (GenU r₁ r₂) where
+  sets := {S | BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ S}
+  subset_U := fun _ hS => budgetedPairMem_subset_U hS
+  C0_no_falsum := fun _ hS => budgetedPairMem_C0_no_falsum hS
+  C0_no_contradiction := fun _ hS φ => budgetedPairMem_C0_no_contradiction hS φ
+  C1_imp := fun _ hS φ ψ hmem => budgetedPairMem_C1_imp hS φ ψ hmem
+  C1_neg_imp := fun _ hS φ ψ hmem => budgetedPairMem_C1_neg_imp hS φ ψ hmem
+  C2_not_not := fun _ hS φ hmem => budgetedPairMem_C2_not_not hS φ hmem
+  C3_iInf := fun _ hS φs hmem k => budgetedPairMem_C3_iInf hS φs hmem k
+  C3_neg_iInf := fun _ hS φs hmem => budgetedPairMem_C3_neg_iInf hS φs hmem
+  C4_iSup := fun _ hS φs hmem => budgetedPairMem_C4_iSup hS φs hmem
+  C4_neg_iSup := fun _ hS φs hmem k => budgetedPairMem_C4_neg_iSup hS φs hmem k
+  eq_refl := fun _ hS c => budgetedPairMem_eq_refl hS c
+  eq_symm := fun _ hS a b hmem => budgetedPairMem_eq_symm hS a b hmem
+  eq_trans := fun _ hS a b d hab hbd => budgetedPairMem_eq_trans hS a b d hab hbd
+  rel_congr := fun _ hS _ Rr g i b hrel heq => budgetedPairMem_rel_congr hS Rr g i b hrel heq
+  all_inst := fun _ hS φ hmem c => budgetedPairMem_all_inst hS φ hmem c
+  neg_all_witness := fun _ hS φ hmem => budgetedPairMem_neg_all_witness hr₁ hr₂ hS φ hmem
+
 end FamilyFields
 
 end FirstOrder.Language
