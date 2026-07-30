@@ -2212,6 +2212,131 @@ theorem budgetedPairMem_C1_imp (hS : BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R�
           budgetedPairMem_insert_right hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
             (imp_right_mem (hΔU hΔ)) (sentBnd_imp_right (hΔb hΔ)) h)
 
+/-- **C1′.**  A conjunction of two insertions per label, so four gate applications. -/
+theorem budgetedPairMem_C1_neg_imp (hS : BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ S)
+    (φ ψ : L[[ℕ]].Sentenceω) (hmem : (φ.imp ψ).not ∈ S) :
+    BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ (S ∪ {φ}) ∧
+      BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ (S ∪ {ψ.not}) := by
+  obtain ⟨Γ, Δ, hΓfin, hΔfin, hΓU, hΔU, hΓb, hΔb, hSeq, hA⟩ := hS
+  rw [hSeq] at hmem
+  rcases hmem with hΓ | hΔ
+  · refine ⟨by
+      simpa only [Set.union_singleton] using
+        budgetedPairMem_insert_left hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
+          (negimp_left_mem (hΓU hΓ)) (sentBnd_imp_left (sentBnd_not_iff.mp (hΓb hΓ)))
+          (budgetedPairInsep_neg_imp_left₁ hΓ hA), by
+      simpa only [Set.union_singleton] using
+        budgetedPairMem_insert_left hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
+          (negimp_right_mem (hΓU hΓ))
+          (sentBnd_not_iff.mpr (sentBnd_imp_right (sentBnd_not_iff.mp (hΓb hΓ))))
+          (budgetedPairInsep_neg_imp_left₂ hΓ hA)⟩
+  · refine ⟨by
+      simpa only [Set.union_singleton] using
+        budgetedPairMem_insert_right hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
+          (negimp_left_mem (hΔU hΔ)) (sentBnd_imp_left (sentBnd_not_iff.mp (hΔb hΔ)))
+          (budgetedPairInsep_neg_imp_right₁ hΔ hA), by
+      simpa only [Set.union_singleton] using
+        budgetedPairMem_insert_right hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
+          (negimp_right_mem (hΔU hΔ))
+          (sentBnd_not_iff.mpr (sentBnd_imp_right (sentBnd_not_iff.mp (hΔb hΔ))))
+          (budgetedPairInsep_neg_imp_right₂ hΔ hA)⟩
+
+/-- **C2.** -/
+theorem budgetedPairMem_C2_not_not (hS : BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ S)
+    (φ : L[[ℕ]].Sentenceω) (hmem : φ.not.not ∈ S) :
+    BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ (S ∪ {φ}) := by
+  obtain ⟨Γ, Δ, hΓfin, hΔfin, hΓU, hΔU, hΓb, hΔb, hSeq, hA⟩ := hS
+  rw [hSeq] at hmem
+  rcases hmem with hΓ | hΔ
+  · simpa only [Set.union_singleton] using
+      budgetedPairMem_insert_left hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
+        (negimp_left_mem (φ := φ) (ψ := (BoundedFormulaω.falsum : L[[ℕ]].Sentenceω)) (hΓU hΓ))
+        (sentBnd_not_iff.mp (sentBnd_not_iff.mp (hΓb hΓ)))
+        (budgetedPairInsep_not_not_left hΓ hA)
+  · simpa only [Set.union_singleton] using
+      budgetedPairMem_insert_right hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
+        (negimp_left_mem (φ := φ) (ψ := (BoundedFormulaω.falsum : L[[ℕ]].Sentenceω)) (hΔU hΔ))
+        (sentBnd_not_iff.mp (sentBnd_not_iff.mp (hΔb hΔ)))
+        (budgetedPairInsep_not_not_right hΔ hA)
+
+/-! ### The four countable-connective fields
+
+The two `∀ k` fields select the component up front; the two `∃ k` fields unpack the gate's witness
+and return the **same** `k`, so the `GenU`, `SentBnd` and insertion obligations visibly concern one
+component.  No witness is constructed here. -/
+
+/-- **C3.** -/
+theorem budgetedPairMem_C3_iInf (hS : BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ S)
+    (φs : ℕ → L[[ℕ]].Sentenceω) (hmem : BoundedFormulaω.iInf φs ∈ S) (k : ℕ) :
+    BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ (S ∪ {φs k}) := by
+  obtain ⟨Γ, Δ, hΓfin, hΔfin, hΓU, hΔU, hΓb, hΔb, hSeq, hA⟩ := hS
+  rw [hSeq] at hmem
+  rcases hmem with hΓ | hΔ
+  · simpa only [Set.union_singleton] using
+      budgetedPairMem_insert_left hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
+        (iInf_comp_mem k (hΓU hΓ)) (sentBnd_component_iInf k (hΓb hΓ))
+        (budgetedPairInsep_iInf_component_left (k := k) hΓ hA)
+  · simpa only [Set.union_singleton] using
+      budgetedPairMem_insert_right hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
+        (iInf_comp_mem k (hΔU hΔ)) (sentBnd_component_iInf k (hΔb hΔ))
+        (budgetedPairInsep_iInf_component_right (k := k) hΔ hA)
+
+/-- **C4′.** -/
+theorem budgetedPairMem_C4_neg_iSup (hS : BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ S)
+    (φs : ℕ → L[[ℕ]].Sentenceω) (hmem : (BoundedFormulaω.iSup φs).not ∈ S) (k : ℕ) :
+    BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ (S ∪ {(φs k).not}) := by
+  obtain ⟨Γ, Δ, hΓfin, hΔfin, hΓU, hΔU, hΓb, hΔb, hSeq, hA⟩ := hS
+  rw [hSeq] at hmem
+  rcases hmem with hΓ | hΔ
+  · simpa only [Set.union_singleton] using
+      budgetedPairMem_insert_left hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
+        (negiSup_comp_mem k (hΓU hΓ))
+        (sentBnd_not_iff.mpr (sentBnd_component_iSup k (sentBnd_not_iff.mp (hΓb hΓ))))
+        (budgetedPairInsep_neg_iSup_component_left (k := k) hΓ hA)
+  · simpa only [Set.union_singleton] using
+      budgetedPairMem_insert_right hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
+        (negiSup_comp_mem k (hΔU hΔ))
+        (sentBnd_not_iff.mpr (sentBnd_component_iSup k (sentBnd_not_iff.mp (hΔb hΔ))))
+        (budgetedPairInsep_neg_iSup_component_right (k := k) hΔ hA)
+
+/-- **C4.**  The gate's witness is returned unchanged. -/
+theorem budgetedPairMem_C4_iSup (hS : BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ S)
+    (φs : ℕ → L[[ℕ]].Sentenceω) (hmem : BoundedFormulaω.iSup φs ∈ S) :
+    ∃ k, BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ (S ∪ {φs k}) := by
+  obtain ⟨Γ, Δ, hΓfin, hΔfin, hΓU, hΔU, hΓb, hΔb, hSeq, hA⟩ := hS
+  rw [hSeq] at hmem
+  rcases hmem with hΓ | hΔ
+  · obtain ⟨k, hk⟩ := budgetedPairInsep_iSup_left hΓ hA
+    exact ⟨k, by
+      simpa only [Set.union_singleton] using
+        budgetedPairMem_insert_left hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
+          (iSup_comp_mem k (hΓU hΓ)) (sentBnd_component_iSup k (hΓb hΓ)) hk⟩
+  · obtain ⟨k, hk⟩ := budgetedPairInsep_iSup_right hΔ hA
+    exact ⟨k, by
+      simpa only [Set.union_singleton] using
+        budgetedPairMem_insert_right hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
+          (iSup_comp_mem k (hΔU hΔ)) (sentBnd_component_iSup k (hΔb hΔ)) hk⟩
+
+/-- **C3′.**  The gate's witness is returned unchanged. -/
+theorem budgetedPairMem_C3_neg_iInf (hS : BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ S)
+    (φs : ℕ → L[[ℕ]].Sentenceω) (hmem : (BoundedFormulaω.iInf φs).not ∈ S) :
+    ∃ k, BudgetedPairMem r₁ r₂ F₁ R₁ F₂ R₂ (S ∪ {(φs k).not}) := by
+  obtain ⟨Γ, Δ, hΓfin, hΔfin, hΓU, hΔU, hΓb, hΔb, hSeq, hA⟩ := hS
+  rw [hSeq] at hmem
+  rcases hmem with hΓ | hΔ
+  · obtain ⟨k, hk⟩ := budgetedPairInsep_neg_iInf_left hΓ hA
+    exact ⟨k, by
+      simpa only [Set.union_singleton] using
+        budgetedPairMem_insert_left hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
+          (negiInf_comp_mem k (hΓU hΓ))
+          (sentBnd_not_iff.mpr (sentBnd_component_iInf k (sentBnd_not_iff.mp (hΓb hΓ)))) hk⟩
+  · obtain ⟨k, hk⟩ := budgetedPairInsep_neg_iInf_right hΔ hA
+    exact ⟨k, by
+      simpa only [Set.union_singleton] using
+        budgetedPairMem_insert_right hΓfin hΔfin hΓU hΔU hΓb hΔb hSeq
+          (negiInf_comp_mem k (hΔU hΔ))
+          (sentBnd_not_iff.mpr (sentBnd_component_iInf k (sentBnd_not_iff.mp (hΔb hΔ)))) hk⟩
+
 end FamilyFields
 
 end FirstOrder.Language
