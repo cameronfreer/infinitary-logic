@@ -12,6 +12,7 @@ import InfinitaryLogic.Methods.Interpolation.BudgetedPair
 import InfinitaryLogic.Methods.Interpolation.BudgetedPairCompletion
 import InfinitaryLogic.Methods.Interpolation.BudgetedPairModel
 import InfinitaryLogic.Methods.Interpolation.MalitzRootGate
+import InfinitaryLogic.Methods.Interpolation.MalitzRelational
 import InfinitaryLogic.Methods.Interpolation.QuantifierRoundTrip
 import InfinitaryLogic.Methods.Interpolation.RootGate
 import InfinitaryLogic.Methods.Henkin.CountableCompletion.GeneratedUniverse
