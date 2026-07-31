@@ -108,6 +108,8 @@ The Morley–Hanf theorem is now **unconditional** (`morley_hanf`, `Conditional/
 - `InfinitaryLogic/Descriptive/` — Borel complexity of the structure space, satisfaction, isomorphism; counting dichotomy, finite-carrier analysis; and a reusable DST library: Cantor-antichain extraction (`CantorAntichain`), Mycielski (`Mycielski`), Kuratowski–Ulam (`KuratowskiUlam`), the `G_S` graphs (`GSGraph`), and the classical G₀-dichotomy machinery (`G0Dichotomy`, `G0Fusion`); the query-code closed embedding and analytic tree normal form (`QueryCode`, `AnalyticTree`) and the López–Escobar facade (`LopezEscobar`)
 - `InfinitaryLogic/Conditional/` — The Silver chain (`SilverBurgess`, `SilverCategoryRoute`, `GandyHarrington` — sorry-free) and the Morley–Hanf chain: `MorleyHanfTransfer` (the historical conditional forms and bridges) and `MorleyHanfSchemaDischarge` (the unconditional `morley_hanf` endpoint)
 
+Build and release operational notes — including why `lake env lean` is not a substitute for `lake build`, and why docs must be dispatched from `master` — are in [`docs/build-and-release-notes.md`](docs/build-and-release-notes.md).
+
 ## Getting Started
 
 ```bash
