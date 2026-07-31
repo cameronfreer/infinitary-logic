@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.Interpolation.PairedInsepFamily
+import InfinitaryLogic.Methods.LanguageMapOccurrence
 import InfinitaryLogic.Methods.Interpolation.RootGate
 import InfinitaryLogic.Methods.SchemaCompletion
 
@@ -42,23 +43,6 @@ open FirstOrder Structure
 
 variable {L : Language.{0, 0}}
 
-/-! ## `relationsIn` of a language-mapped formula (companion to `functionsIn_mapLanguage`) -/
-
-theorem BoundedFormulaω.relationsIn_mapLanguage {L L' : Language} (g : L →ᴸ L') {α : Type} {n : ℕ}
-    (φ : L.BoundedFormulaω α n) :
-    (φ.mapLanguage g).relationsIn =
-      (fun p : Σ n, L.Relations n => ⟨p.1, g.onRelation p.2⟩) '' φ.relationsIn := by
-  induction φ with
-  | falsum => simp [BoundedFormulaω.mapLanguage, BoundedFormulaω.relationsIn]
-  | equal t u => simp [BoundedFormulaω.mapLanguage, BoundedFormulaω.relationsIn]
-  | rel R ts => simp [BoundedFormulaω.mapLanguage, BoundedFormulaω.relationsIn]
-  | imp φ ψ ihφ ihψ =>
-    simp [BoundedFormulaω.mapLanguage, BoundedFormulaω.relationsIn, ihφ, ihψ, Set.image_union]
-  | all φ ih => simp [BoundedFormulaω.mapLanguage, BoundedFormulaω.relationsIn, ih]
-  | iSup φs ih =>
-    simp [BoundedFormulaω.mapLanguage, BoundedFormulaω.relationsIn, ih, Set.image_iUnion]
-  | iInf φs ih =>
-    simp [BoundedFormulaω.mapLanguage, BoundedFormulaω.relationsIn, ih, Set.image_iUnion]
 
 /-! ## The three constant-expansion transport equalities (the base-`L` ↔ `L[[ℕ]]` boundary) -/
 

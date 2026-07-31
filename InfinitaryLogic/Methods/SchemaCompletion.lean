@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.SchemaOmegaWitness
+import InfinitaryLogic.Methods.LanguageMapOccurrence
 import InfinitaryLogic.Methods.MarkerStage
 
 /-!
@@ -160,37 +161,6 @@ section FunctionsInMapLanguage
 
 variable {L L' : Language.{0, 0}} (g : L →ᴸ L')
 
-/-- `functionsIn` of a language-mapped term is the image of the term's `functionsIn` under the
-symbol map `⟨n, f⟩ ↦ ⟨n, g.onFunction f⟩`. -/
-theorem Term.functionsIn_onTerm {α : Type} (t : L.Term α) :
-    (g.onTerm t).functionsIn =
-      (fun p : Σ n, L.Functions n => ⟨p.1, g.onFunction p.2⟩) '' t.functionsIn := by
-  induction t with
-  | var x => simp [LHom.onTerm, Term.functionsIn]
-  | func f ts ih =>
-    simp only [LHom.onTerm, Term.functionsIn, Set.image_insert_eq, Set.image_iUnion, ih]
-
-/-- `functionsIn` of a language-mapped formula is the image of the formula's `functionsIn` under
-the symbol map `⟨n, f⟩ ↦ ⟨n, g.onFunction f⟩`. -/
-theorem BoundedFormulaω.functionsIn_mapLanguage {α : Type} {n : ℕ}
-    (φ : L.BoundedFormulaω α n) :
-    (φ.mapLanguage g).functionsIn =
-      (fun p : Σ n, L.Functions n => ⟨p.1, g.onFunction p.2⟩) '' φ.functionsIn := by
-  induction φ with
-  | falsum => simp [BoundedFormulaω.mapLanguage, BoundedFormulaω.functionsIn]
-  | equal t u =>
-    simp [BoundedFormulaω.mapLanguage, BoundedFormulaω.functionsIn, Term.functionsIn_onTerm,
-      Set.image_union]
-  | rel R ts =>
-    simp [BoundedFormulaω.mapLanguage, BoundedFormulaω.functionsIn, Term.functionsIn_onTerm,
-      Set.image_iUnion]
-  | imp φ ψ ihφ ihψ =>
-    simp [BoundedFormulaω.mapLanguage, BoundedFormulaω.functionsIn, ihφ, ihψ, Set.image_union]
-  | all φ ih => simp [BoundedFormulaω.mapLanguage, BoundedFormulaω.functionsIn, ih]
-  | iSup φs ih =>
-    simp [BoundedFormulaω.mapLanguage, BoundedFormulaω.functionsIn, ih, Set.image_iUnion]
-  | iInf φs ih =>
-    simp [BoundedFormulaω.mapLanguage, BoundedFormulaω.functionsIn, ih, Set.image_iUnion]
 
 end FunctionsInMapLanguage
 
