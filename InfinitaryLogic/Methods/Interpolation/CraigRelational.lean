@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.Interpolation.PairedInsepFamily
+import InfinitaryLogic.Methods.Interpolation.RootGate
 import InfinitaryLogic.Methods.Interpolation.BaseOccurrenceProjections
 import InfinitaryLogic.Methods.ConstantSupport
 import InfinitaryLogic.Methods.LanguageMapOccurrence
@@ -47,19 +48,6 @@ variable {L : Language.{0, 0}}
 
 
 
-/-! ## The semantic contraposition / singleton bridge -/
-
-/-- **Semantic contraposition (singleton form)**: `{r₂.not} ⊨ θ.not` is `{θ} ⊨ r₂`. -/
-theorem entails_singleton_of_neg_entails_neg {r₂ θ : L.Sentenceω}
-    (hE : Theoryω.Entails {r₂.not} θ.not) : Theoryω.Entails {θ} r₂ := by
-  intro M _ _ hmodel
-  by_contra hr₂
-  have hnr₂ : Theoryω.Model {r₂.not} M := by
-    intro ψ hψ; rw [Set.mem_singleton_iff] at hψ; subst hψ
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_not]; exact hr₂
-  have := hE M hnr₂
-  simp only [Sentenceω.Realize, BoundedFormulaω.realize_not] at this
-  exact this (hmodel θ (Set.mem_singleton _))
 
 /-! ## The countable relational Craig theorem -/
 

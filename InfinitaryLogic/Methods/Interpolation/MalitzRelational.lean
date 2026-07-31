@@ -5,7 +5,6 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.Interpolation.MalitzRootGate
 import InfinitaryLogic.Methods.Interpolation.BudgetedPairModel
-import InfinitaryLogic.Methods.Interpolation.CraigRelational
 
 /-!
 # Malitz interpolation, countable relational core (issue #15)
