@@ -16,6 +16,7 @@ import InfinitaryLogic.ModelTheory.ArbitraryStabilization
 import InfinitaryLogic.ModelTheory.ScottCompletion
 import InfinitaryLogic.ModelTheory.CraigInterpolation
 import InfinitaryLogic.ModelTheory.LyndonInterpolation
+import InfinitaryLogic.ModelTheory.MalitzInterpolation
 import InfinitaryLogic.ModelTheory.WellOrdering
 
 /-!

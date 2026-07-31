@@ -38,7 +38,7 @@ import InfinitaryLogic.Methods.Henkin.CountableCompletion.QuotientTruthLemma
 import InfinitaryLogic.Methods.WellOrdering.ModelExtraction
 import InfinitaryLogic.Methods.WellOrdering.GraphTranslation
 import InfinitaryLogic.Methods.Interpolation.LyndonArbitrary
-import InfinitaryLogic.Methods.Interpolation.BudgetedPairModel
+import InfinitaryLogic.Methods.Interpolation.MalitzSublanguage
 
 open Lean
 
@@ -95,7 +95,8 @@ def guardedRoots : List Name :=
    `FirstOrder.Language.wellOrdering_undefinable,
    `FirstOrder.Language.exists_lyndon_paired_model_neg,
    `FirstOrder.Language.lyndon_interpolation,
-   `FirstOrder.Language.exists_budgetedPair_model]
+   `FirstOrder.Language.exists_budgetedPair_model,
+   `FirstOrder.Language.malitz_interpolation]
 
 run_cmd do
   let env ← getEnv

@@ -26,6 +26,7 @@ import InfinitaryLogic
 #print axioms FirstOrder.Language.model_existence
 #print axioms FirstOrder.Language.craig_interpolation
 #print axioms FirstOrder.Language.lyndon_interpolation
+#print axioms FirstOrder.Language.malitz_interpolation
 #print axioms FirstOrder.Language.exists_model_relPreserving
 #print axioms FirstOrder.Language.wellOrder_type_boundedness
 #print axioms FirstOrder.Language.wellOrdering_undefinable
