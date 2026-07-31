@@ -72,6 +72,7 @@ FirstOrder.Language.craig_interpolation
 FirstOrder.Language.craig_interpolation_relational
 FirstOrder.Language.lyndon_interpolation
 FirstOrder.Language.lyndon_interpolation_relational
+FirstOrder.Language.malitz_interpolation
 FirstOrder.Language.exists_model_relPreserving
 FirstOrder.Language.wellOrder_type_boundedness
 FirstOrder.Language.wellOrdering_undefinable
