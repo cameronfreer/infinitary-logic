@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Lomega1omega.FiniteQuantification
+import InfinitaryLogic.Lomega1omega.QuantifierClass
 import InfinitaryLogic.Methods.GeneratedSublanguage
 import Mathlib.Data.Set.Finite.Lattice
 
@@ -562,6 +563,38 @@ def BoundedFormulaω.stripConsts {α : Type} :
     .iSup fun i => (φs i).stripConsts fun _ hj => h (Set.mem_iUnion.mpr ⟨i, hj⟩)
   | _, .iInf φs, h =>
     .iInf fun i => (φs i).stripConsts fun _ hj => h (Set.mem_iUnion.mpr ⟨i, hj⟩)
+
+/-- **Quantifier class is invariant under stripping constants.**  `stripConsts` rewrites only terms
+and the relation tag; it touches no quantifier node, so the signed universal class is exact. -/
+theorem BoundedFormulaω.universalSigned_stripConsts {α : Type} (s : Bool) :
+    ∀ {n : ℕ} (φ : L'[[J]].BoundedFormulaω α n)
+      (h : sentenceJConsts (L' := L') φ ⊆ ∅),
+      universalSigned s (φ.stripConsts h) ↔ universalSigned s φ := by
+  intro n φ
+  induction φ generalizing s with
+  | falsum => intro _; exact Iff.rfl
+  | equal t u => intro _; exact Iff.rfl
+  | rel R ts =>
+    intro h
+    match R with
+    | Sum.inl _ => exact Iff.rfl
+    | Sum.inr R => exact nomatch R
+  | imp φ ψ ihφ ihψ =>
+    intro h
+    show universalSigned (!s) _ ∧ universalSigned s _ ↔ _
+    exact and_congr (ihφ (!s) _) (ihψ s _)
+  | all φ ih =>
+    intro h
+    show s = true ∧ universalSigned s _ ↔ _
+    exact and_congr_right fun _ => ih s _
+  | iSup φs ih =>
+    intro h
+    show (∀ i, universalSigned s _) ↔ _
+    exact forall_congr' fun i => ih i s _
+  | iInf φs ih =>
+    intro h
+    show (∀ i, universalSigned s _) ↔ _
+    exact forall_congr' fun i => ih i s _
 
 /-- The `withConstants` inclusion is a left inverse of formula stripping. -/
 theorem BoundedFormulaω.mapLanguage_stripConsts {α : Type} :

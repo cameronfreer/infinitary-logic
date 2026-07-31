@@ -176,6 +176,29 @@ theorem universalSigned_castLE (s : Bool) :
     show (∀ i, universalSigned s ((φs i).castLE h)) ↔ _
     exact forall_congr' fun i => universalSigned_castLE s h (φs i)
 
+/-- **Quantifier class is invariant under language maps.**  `mapLanguage` rewrites terms and symbol
+tags only; every quantifier node is preserved, so the signed universal class is exact. -/
+theorem universalSigned_mapLanguage {L' : Language.{0, 0}} (g : L →ᴸ L') (s : Bool) :
+    ∀ {k : ℕ} (φ : L.BoundedFormulaω α k),
+      universalSigned s (φ.mapLanguage g) ↔ universalSigned s φ := by
+  intro k φ
+  induction φ generalizing s with
+  | falsum => exact Iff.rfl
+  | equal => exact Iff.rfl
+  | rel => exact Iff.rfl
+  | imp φ ψ ihφ ihψ =>
+    show universalSigned (!s) _ ∧ universalSigned s _ ↔ _
+    exact and_congr (ihφ (!s)) (ihψ s)
+  | all φ ih =>
+    show s = true ∧ universalSigned s _ ↔ _
+    exact and_congr_right fun _ => ih s
+  | iSup φs ih =>
+    show (∀ i, universalSigned s _) ↔ _
+    exact forall_congr' fun i => ih i s
+  | iInf φs ih =>
+    show (∀ i, universalSigned s _) ↔ _
+    exact forall_congr' fun i => ih i s
+
 theorem universalSigned_relabel (s : Bool) (g : α → β ⊕ Fin n) :
     ∀ {k : ℕ} (φ : L.BoundedFormulaω α k),
       universalSigned s (φ.relabel g) ↔ universalSigned s φ := by
