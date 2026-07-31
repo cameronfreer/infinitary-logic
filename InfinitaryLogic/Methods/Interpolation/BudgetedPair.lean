@@ -2574,6 +2574,46 @@ theorem budgetedPairMem_neg_all_witness
         (sentBnd_not_iff.mpr (sentBnd_instConst c (sentBnd_not_iff.mp (hΔb hΔ))))
         (budgetedPairInsep_witness_right c φ hΔ hcΓ hcΔ hA)
 
+/-! ## The initial family member
+
+Two named facts, deliberately separate.  The **structural** one is pure packaging: a labelled pair of
+singletons, with the generated universe instantiated at those very roots so both `GenU` obligations
+are literally `root₁_mem`/`root₂_mem`.  The **logical** one supplies its hypothesis, and is where the
+interpolation assumption enters — note the root pair is inseparable *because no admissible
+interpolant exists*, not because of the entailment `r₁ ⊨ r₂`, which is consumed only at the very end
+against the extracted model. -/
+
+/-- **Structural root member.**  Packaging only; no semantic content. -/
+theorem budgetedPairMem_root {ρ₁ ρ₂ : L[[ℕ]].Sentenceω}
+    (hb₁ : ρ₁ ∈ SentBnd (L := L) F₁ R₁) (hb₂ : ρ₂ ∈ SentBnd (L := L) F₂ R₂)
+    (h : BudgetedPairInsep F₁ R₁ F₂ R₂ {ρ₁} {ρ₂}) :
+    BudgetedPairMem ρ₁ ρ₂ F₁ R₁ F₂ R₂ ({ρ₁} ∪ {ρ₂}) :=
+  ⟨{ρ₁}, {ρ₂}, Set.finite_singleton _, Set.finite_singleton _,
+    Set.singleton_subset_iff.mpr root₁_mem, Set.singleton_subset_iff.mpr root₂_mem,
+    Set.singleton_subset_iff.mpr hb₁, Set.singleton_subset_iff.mpr hb₂, rfl, h⟩
+
+/-- **Root inseparability from failure of interpolation.**  The contrapositive of the root equation:
+if the labelled root pair were separable, the collapse would hand back exactly the admissible
+universal interpolant assumed not to exist. -/
+theorem budgetedPairInsep_root_of_no_interpolant {r₁ r₂ : L[[ℕ]].Sentenceω}
+    (hr₂ : ¬ hasQuantSigned false r₂) (hc₁ : sentenceJConsts (L' := L) (J := ℕ) r₁ = ∅)
+    (hno : ¬ ∃ θ : L[[ℕ]].Sentenceω, IsUniversal θ ∧ θ ∈ SentBnd (F₁ ∩ F₂) (R₁ ∩ R₂) ∧
+      sentenceJConsts (L' := L) (J := ℕ) θ = ∅ ∧
+      Sentenceω.Entails r₁ θ ∧ Sentenceω.Entails θ r₂) :
+    BudgetedPairInsep F₁ R₁ F₂ R₂ {r₁} {r₂.not} :=
+  not_not.mp fun hsep =>
+    hno (exists_universal_interpolant_of_not_budgetedPairInsep hr₂ hc₁ hsep)
+
+/-- The root member itself, assembled from the two facts above. -/
+theorem budgetedPairMem_root_of_no_interpolant {r₁ r₂ : L[[ℕ]].Sentenceω}
+    (hr₂ : ¬ hasQuantSigned false r₂) (hc₁ : sentenceJConsts (L' := L) (J := ℕ) r₁ = ∅)
+    (hb₁ : r₁ ∈ SentBnd (L := L) F₁ R₁) (hb₂ : r₂.not ∈ SentBnd (L := L) F₂ R₂)
+    (hno : ¬ ∃ θ : L[[ℕ]].Sentenceω, IsUniversal θ ∧ θ ∈ SentBnd (F₁ ∩ F₂) (R₁ ∩ R₂) ∧
+      sentenceJConsts (L' := L) (J := ℕ) θ = ∅ ∧
+      Sentenceω.Entails r₁ θ ∧ Sentenceω.Entails θ r₂) :
+    BudgetedPairMem r₁ r₂.not F₁ R₁ F₂ R₂ ({r₁} ∪ {r₂.not}) :=
+  budgetedPairMem_root hb₁ hb₂ (budgetedPairInsep_root_of_no_interpolant hr₂ hc₁ hno)
+
 /-! ## The consistency property
 
 Pure wiring: every field is its named helper.  Nothing below reasons about separators, labels or
