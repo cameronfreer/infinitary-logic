@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Lomega1omega.Operations
+import InfinitaryLogic.Lomega1omega.QuantifierClass
 import Mathlib.Data.Set.Countable
 
 /-!
@@ -318,5 +319,14 @@ theorem BoundedFormulaω.mapLanguage_restrictSymbols {α : Type} {F : Set (Σ n,
     intro hF hR
     simp only [BoundedFormulaω.restrictSymbols, BoundedFormulaω.mapLanguage]
     exact congrArg _ (funext fun i => ih i _ _)
+
+/-- **Restriction preserves the quantifier class.**  No new induction: restriction is inverted by
+the inclusion language map, and language maps transport the signed class exactly. -/
+theorem BoundedFormulaω.universalSigned_restrictSymbols {α : Type} {F : Set (Σ n, L.Functions n)}
+    {R : Set (Σ n, L.Relations n)} (s : Bool) {n : ℕ} (φ : L.BoundedFormulaω α n)
+    (hF : φ.functionsIn ⊆ F) (hR : φ.relationsIn ⊆ R) :
+    universalSigned s (φ.restrictSymbols hF hR) ↔ universalSigned s φ := by
+  conv_rhs => rw [← BoundedFormulaω.mapLanguage_restrictSymbols φ hF hR]
+  exact (universalSigned_mapLanguage (symbSublangIncl F R) s _).symm
 
 end FirstOrder.Language
