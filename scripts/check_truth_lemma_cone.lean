@@ -23,6 +23,10 @@ polarity-refined family is a NEW consumer of the countable-completion kernel) an
 `lyndon_interpolation`, whose cone transitively certifies the whole Lyndon route — it must consume
 `HenkinComplete` and the quotient truth lemma while importing no maximal-consistency machinery.
 
+The issue #15 model endpoint `exists_budgetedPair_model` is guarded on the same terms: the
+budgeted labelled pair is another new consumer of the countable-completion kernel, and its
+countermodel must come from the quotient term model rather than from any completeness shortcut.
+
 The issue #12 endpoints are guarded too — the step-5 core `exists_model_relPreserving_relational`
 and the assembled arbitrary-language `exists_model_relPreserving` / `wellOrdering_undefinable`:
 their models come from the same quotient term model, so their cones must satisfy the identical
@@ -34,6 +38,7 @@ import InfinitaryLogic.Methods.Henkin.CountableCompletion.QuotientTruthLemma
 import InfinitaryLogic.Methods.WellOrdering.ModelExtraction
 import InfinitaryLogic.Methods.WellOrdering.GraphTranslation
 import InfinitaryLogic.Methods.Interpolation.LyndonArbitrary
+import InfinitaryLogic.Methods.Interpolation.BudgetedPairModel
 
 open Lean
 
@@ -89,7 +94,8 @@ def guardedRoots : List Name :=
    `FirstOrder.Language.exists_model_relPreserving,
    `FirstOrder.Language.wellOrdering_undefinable,
    `FirstOrder.Language.exists_lyndon_paired_model_neg,
-   `FirstOrder.Language.lyndon_interpolation]
+   `FirstOrder.Language.lyndon_interpolation,
+   `FirstOrder.Language.exists_budgetedPair_model]
 
 run_cmd do
   let env ← getEnv
