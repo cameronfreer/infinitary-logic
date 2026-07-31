@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Lomega1omega.FiniteQuantification
 import InfinitaryLogic.Lomega1omega.QuantifierClass
+import InfinitaryLogic.Methods.LanguageMapOccurrence
 import InfinitaryLogic.Methods.GeneratedSublanguage
 import Mathlib.Data.Set.Finite.Lattice
 
@@ -691,5 +692,17 @@ theorem BoundedFormulaω.relationsIn_stripConsts {α : Type} :
     exact Set.mem_iUnion.mpr ⟨i, ih i _ hmem⟩
 
 end Strip
+
+/-- **A constant-expansion image carries no constants**: its constant support is empty. -/
+theorem sentenceJConsts_mapLanguage_withConstants (r : L.Sentenceω) :
+    sentenceJConsts (L' := L) (J := ℕ)
+      (BoundedFormulaω.mapLanguage (L.lhomWithConstants ℕ) r) = ∅ := by
+  ext j
+  simp only [sentenceJConsts, Set.mem_setOf_eq, BoundedFormulaω.functionsIn_mapLanguage,
+    Set.mem_image, Set.mem_empty_iff_false, iff_false, not_exists, not_and]
+  rintro ⟨p1, p2⟩ - hpe
+  obtain ⟨rfl, h2⟩ := Sigma.mk.inj_iff.mp hpe
+  rw [heq_eq_eq] at h2
+  exact absurd (show (Sum.inl p2 : L[[ℕ]].Functions 0) = Sum.inr j from h2) (by simp)
 
 end FirstOrder.Language

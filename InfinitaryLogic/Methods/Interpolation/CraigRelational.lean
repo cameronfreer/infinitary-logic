@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.Interpolation.PairedInsepFamily
+import InfinitaryLogic.Methods.Interpolation.BaseOccurrenceProjections
+import InfinitaryLogic.Methods.ConstantSupport
 import InfinitaryLogic.Methods.LanguageMapOccurrence
 import InfinitaryLogic.Methods.Interpolation.RootGate
 import InfinitaryLogic.Methods.SchemaCompletion
@@ -44,51 +46,6 @@ open FirstOrder Structure
 variable {L : Language.{0, 0}}
 
 
-/-! ## The three constant-expansion transport equalities (the base-`L` ↔ `L[[ℕ]]` boundary) -/
-
-private theorem tag_inl_fun_injective :
-    Function.Injective
-      (fun p : Σ n, L.Functions n => (⟨p.1, Sum.inl p.2⟩ : Σ n, L[[ℕ]].Functions n)) := by
-  rintro ⟨a1, a2⟩ ⟨b1, b2⟩ h
-  obtain ⟨rfl, h2⟩ := Sigma.mk.inj_iff.mp h
-  rw [heq_eq_eq] at h2
-  exact Sigma.ext rfl (heq_of_eq (Sum.inl_injective h2))
-
-private theorem tag_inl_rel_injective :
-    Function.Injective
-      (fun p : Σ n, L.Relations n => (⟨p.1, Sum.inl p.2⟩ : Σ n, L[[ℕ]].Relations n)) := by
-  rintro ⟨a1, a2⟩ ⟨b1, b2⟩ h
-  obtain ⟨rfl, h2⟩ := Sigma.mk.inj_iff.mp h
-  rw [heq_eq_eq] at h2
-  exact Sigma.ext rfl (heq_of_eq (Sum.inl_injective h2))
-
-/-- **Base functions of a constant-expansion image** are the sentence's own functions. -/
-theorem baseFunctionsIn_mapLanguage_withConstants (r : L.Sentenceω) :
-    (BoundedFormulaω.mapLanguage (L.lhomWithConstants ℕ) r).baseFunctionsIn = r.functionsIn := by
-  ext s
-  simp only [BoundedFormulaω.baseFunctionsIn, Set.mem_setOf_eq,
-    BoundedFormulaω.functionsIn_mapLanguage]
-  exact tag_inl_fun_injective.mem_set_image
-
-/-- **Base relations of a constant-expansion image** are the sentence's own relations. -/
-theorem baseRelationsIn_mapLanguage_withConstants (r : L.Sentenceω) :
-    (BoundedFormulaω.mapLanguage (L.lhomWithConstants ℕ) r).baseRelationsIn = r.relationsIn := by
-  ext s
-  simp only [BoundedFormulaω.baseRelationsIn, Set.mem_setOf_eq,
-    BoundedFormulaω.relationsIn_mapLanguage]
-  exact tag_inl_rel_injective.mem_set_image
-
-/-- **A constant-expansion image carries no constants**: its constant support is empty. -/
-theorem sentenceJConsts_mapLanguage_withConstants (r : L.Sentenceω) :
-    sentenceJConsts (L' := L) (J := ℕ)
-      (BoundedFormulaω.mapLanguage (L.lhomWithConstants ℕ) r) = ∅ := by
-  ext j
-  simp only [sentenceJConsts, Set.mem_setOf_eq, BoundedFormulaω.functionsIn_mapLanguage,
-    Set.mem_image, Set.mem_empty_iff_false, iff_false, not_exists, not_and]
-  rintro ⟨p1, p2⟩ - hpe
-  obtain ⟨rfl, h2⟩ := Sigma.mk.inj_iff.mp hpe
-  rw [heq_eq_eq] at h2
-  exact absurd (show (Sum.inl p2 : L[[ℕ]].Functions 0) = Sum.inr j from h2) (by simp)
 
 /-! ## The semantic contraposition / singleton bridge -/
 
