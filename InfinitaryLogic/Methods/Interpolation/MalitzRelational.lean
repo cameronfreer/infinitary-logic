@@ -82,12 +82,8 @@ theorem malitz_interpolation_relational_countable [L.IsRelational]
       (F₂ := r₂.functionsIn) (R₂ := r₂.relationsIn)
       (by rw [sentenceJConsts_mapLanguage_withConstants]; exact Set.finite_empty)
       (by rw [sentenceJConsts_mapLanguage_withConstants]; exact Set.finite_empty)
-      (budgetedPairMem_root
-        ⟨(baseFunctionsIn_mapLanguage_withConstants r₁).le,
-          (baseRelationsIn_mapLanguage_withConstants r₁).le⟩
-        ⟨((baseFunctionsIn_not _).trans (baseFunctionsIn_mapLanguage_withConstants r₂)).le,
-          ((baseRelationsIn_not _).trans (baseRelationsIn_mapLanguage_withConstants r₂)).le⟩
-        hroot)
+      (budgetedPairMem_root (mapLanguage_withConstants_mem_sentBnd r₁)
+        (mapLanguage_withConstants_not_mem_sentBnd r₂) hroot)
   -- the base reduct contradicts `r₁ ⊨ r₂`
   letI : L.Structure M := (L.lhomWithConstants ℕ).reduct M
   have hb1 : @Sentenceω.Realize L r₁ M _ :=

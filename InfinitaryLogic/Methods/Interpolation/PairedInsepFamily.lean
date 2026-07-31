@@ -74,6 +74,24 @@ theorem sentBnd_constEq (a b : ℕ) : constEq (L := L) a b ∈ SentBnd F R :=
   ⟨by rw [baseFunctionsIn_constEq]; exact Set.empty_subset _,
    by rw [baseRelationsIn_constEq]; exact Set.empty_subset _⟩
 
+/-! ### Constant-expansion roots as side-bounded sentences
+
+The two shapes every countable interpolation core needs of its labelled roots.  Each replaces a
+four-part tuple of base-occurrence and negation rewrites at the call site. -/
+
+/-- A constant-expansion image is bounded by its own base symbols. -/
+theorem mapLanguage_withConstants_mem_sentBnd (r : L.Sentenceω) :
+    BoundedFormulaω.mapLanguage (L.lhomWithConstants ℕ) r ∈ SentBnd r.functionsIn r.relationsIn :=
+  ⟨(baseFunctionsIn_mapLanguage_withConstants r).le,
+    (baseRelationsIn_mapLanguage_withConstants r).le⟩
+
+/-- …and so is its negation, `SentBnd` being negation-invariant. -/
+theorem mapLanguage_withConstants_not_mem_sentBnd (r : L.Sentenceω) :
+    (BoundedFormulaω.mapLanguage (L.lhomWithConstants ℕ) r).not
+      ∈ SentBnd r.functionsIn r.relationsIn :=
+  ⟨((baseFunctionsIn_not _).trans (baseFunctionsIn_mapLanguage_withConstants r)).le,
+    ((baseRelationsIn_not _).trans (baseRelationsIn_mapLanguage_withConstants r)).le⟩
+
 theorem sentBnd_relInst_congr {l : ℕ} (Rr : L.Relations l) {g : Fin l → ℕ} (g' : Fin l → ℕ)
     (h : relInst Rr g ∈ SentBnd F R) : relInst Rr g' ∈ SentBnd F R :=
   ⟨by rw [baseFunctionsIn_relInst]; exact Set.empty_subset _,
