@@ -82,10 +82,10 @@ which is not in the `toLω` image. The field is unsatisfiable for HF, not merely
 
 ```
 structure CodedFamily (A : AdmissiblePresentation) (L) (n : ℕ) where
-  code    : A.Code                      -- an element of the admissible set
-  arity   : ℕ
-  decode  : A.Index code → L.BoundedFormulaω Empty arity
-  -- laws: decode is determined by code (naturality/functionality)
+  code    : A.Code
+  decode  : A.Index code → L.BoundedFormulaω Empty n   -- lands in n; NO separate arity field
+  enc     : Encodable (A.Index code)                    -- needed to BUILD an iInf/iSup
+  isInf   : A.CodesInfFamily code                       -- the certificate; see below
 ```
 
 Three requirements, each with a reason:
@@ -103,8 +103,22 @@ Three requirements, each with a reason:
 
 **HF check (oracle condition 2).** For HF, `A.Index code` ranges over **finite** types.
 
-> **Frozen design decision.** For HF the coded-family relation for *primitive* `iInf`/`iSup` has
-> **no inhabitants at all**. Finite conjunctions remain available through ordinary first-order
+### Three Lean-level details, frozen
+
+1. **No independent arity.** `decode` lands directly in `BoundedFormulaω Empty n`, the `n` of the
+   structure. An extra `arity` field would permit a family whose arity disagrees with its use site.
+2. **`A.Index code` needs `Encodable` (or `Countable` + choice) as explicit data.** This repo's
+   `BoundedFormulaω.iInf` takes an **ℕ-indexed** family, so `codedIInf` cannot even be *defined*
+   without transporting `A.Index code` to `ℕ`. This is data, not a side condition — it must travel
+   in the structure.
+3. **`isInf` is load-bearing and was missing.** Without it, *any* `code` with a `decode` builds a
+   `CodedFamily`, so "HF's primitive coded families are empty" would be unstatable — HF has plenty
+   of codes and plenty of finite decodings. The certificate `A.CodesInfFamily code` (equivalently, a
+   separate relation) is what is **empty for HF**.
+   **Finiteness of `A.Index code` is not a substitute**: a finite index type is exactly what would
+   let someone build `iInf` over a padded sequence, which is the forbidden move below.
+
+> **Frozen design decision.** For HF, `A.CodesInfFamily` has **no inhabitants at all**. Finite conjunctions remain available through ordinary first-order
 > syntax (`⊓`, `⊔`), which stays inside the `toLω` image.
 >
 > **Do not encode a finite family as an infinite sequence padded with `⊤`/`⊥`.** That is
@@ -174,7 +188,17 @@ passes by *specialization*, not by a bridging lemma.
 | 3 | compactness is `finitaryFragment_compact` | ✅ by specialization of the external theorem, `AFinite` = finite |
 | 4 | no adapter widens to all of Lω₁ω | ✅ nothing in the three objects mentions `Set.univ`; upward closure is coded-only |
 
-**Verdict: the contract passes on paper. Implementation may begin.**
+**Verdict: the mathematics passes on paper.**  Implementation proceeds in this order, so that each
+step is compiler-checked against the one before:
+
+1. `hfFragment : Fragment L`, with its sentence slice proved equal to `finitaryFragment`.
+   Architecture-independent, and it makes the downward-closure argument *executable* rather than
+   asserted.
+2. A tiny `CodedFamily` **signature spike** resolving the three frozen details above — including an
+   actual definition of `codedIInf`, which is where the `Encodable` requirement bites.
+3. `AdmissibleFragment` over that tested signature.
+4. The honest HF instance, verifying the coded upward-closure fields are *genuinely* vacuous.
+5. Only then migrate the proof system.
 
 ---
 
