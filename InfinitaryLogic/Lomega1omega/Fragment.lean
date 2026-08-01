@@ -103,6 +103,38 @@ def generated (S : Set (Σ n, L.BoundedFormulaω Empty n)) : Fragment L where
 theorem subset_generated (S : Set (Σ n, L.BoundedFormulaω Empty n)) :
     S ⊆ (generated S).toSet := fun _ h => .base h
 
+/-! ### Set and order API
+
+Minimal by design: `SetLike`, extensionality, and the order the `generated`/`inter`/`top`
+constructions already induce.  **Not** a complete lattice — no consumer needs arbitrary suprema, and
+a speculative one would have to justify closure of unions, which fails. -/
+
+instance : SetLike (Fragment L) (Σ n, L.BoundedFormulaω Empty n) where
+  coe A := A.toSet
+  coe_injective := by
+    rintro ⟨s, _, _, _, _, _⟩ ⟨t, _, _, _, _, _⟩ h
+    congr
+
+@[ext] theorem ext {A B : Fragment L} (h : ∀ p, p ∈ A ↔ p ∈ B) : A = B := SetLike.ext h
+
+@[simp] theorem coe_toSet (A : Fragment L) : ((A : Set (Σ n, L.BoundedFormulaω Empty n))) = A.toSet :=
+  rfl
+
+instance : LE (Fragment L) := ⟨fun A B => A.toSet ⊆ B.toSet⟩
+
+theorem le_def {A B : Fragment L} : A ≤ B ↔ ∀ p, p ∈ A → p ∈ B := Iff.rfl
+
+instance : Top (Fragment L) := ⟨top⟩
+
+@[simp] theorem mem_top (p : Σ n, L.BoundedFormulaω Empty n) : p ∈ (⊤ : Fragment L) :=
+  Set.mem_univ p
+
+instance : Min (Fragment L) := ⟨inter⟩
+
+@[simp] theorem mem_inf {A B : Fragment L} {p : Σ n, L.BoundedFormulaω Empty n} :
+    p ∈ A ⊓ B ↔ p ∈ A ∧ p ∈ B := Iff.rfl
+
+
 /-- The generated fragment is the smallest one containing `S`. -/
 theorem generated_le {S : Set (Σ n, L.BoundedFormulaω Empty n)} {A : Fragment L}
     (hSA : S ⊆ A.toSet) : (generated S).toSet ⊆ A.toSet := by
@@ -114,6 +146,13 @@ theorem generated_le {S : Set (Σ n, L.BoundedFormulaω Empty n)} {A : Fragment 
   | all_body _ ih => exact A.all_mem ih
   | iInf_comp k _ ih => exact A.iInf_mem ih k
   | iSup_comp k _ ih => exact A.iSup_mem ih k
+
+/-- **The Galois-style characterization**: `generated` is left adjoint to the forgetful map to sets.
+This is the form consumers want — it replaces `subset_generated`/`generated_le` pairs at call
+sites. -/
+theorem generated_le_iff {S : Set (Σ n, L.BoundedFormulaω Empty n)} {A : Fragment L} :
+    generated S ≤ A ↔ S ⊆ A :=
+  ⟨fun h _ hp => h (subset_generated S hp), fun h _ hp => generated_le h hp⟩
 
 /-! ### Countability of generated fragments: the component-path encoding -/
 
