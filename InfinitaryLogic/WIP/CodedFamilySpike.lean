@@ -54,6 +54,15 @@ structure AdmissiblePresentation where
   /-- The decoding law: which family a code denotes. -/
   DecodesFamily : ∀ (L : Language.{0, 0}) (n : ℕ) (c : Code), (Index c → L.BoundedFormulaω Empty n) →
     Prop
+  /-- **Conditional functionality.**  An infinitary code determines its family.  Without this,
+  `DecodesFamily` is an arbitrary `Prop` and one code may admit many decodings, so `decoded_by_code`
+  would constrain nothing and `codedIInf` would not be a function of the code.
+
+  Conditioned on `CodesInfFamily` so HF discharges it **vacuously**; #19A fixes the fuller
+  naturality laws. -/
+  decodes_unique : ∀ {L : Language.{0, 0}} {n : ℕ} {c : Code}
+    {f g : Index c → L.BoundedFormulaω Empty n},
+    CodesInfFamily c → DecodesFamily L n c f → DecodesFamily L n c g → f = g
 
 /-- A **coded family**: a code, its infinitary certificate, its decoded family, and the law tying
 the two together. -/
@@ -110,6 +119,49 @@ theorem codedIInf_uses_presentation_encoding (F : CodedFamily A L n)
     codedIInf F = (letI : Encodable (A.Index F.code) := A.indexEncodable F.code
       BoundedFormulaω.einf F.decode) := rfl
 
+/-- **Gate 5 (functionality).**  The syntax built from a coded family is determined by the code:
+two coded families with the same code have the same decoding, hence the same `codedIInf`. -/
+theorem codedIInf_eq_of_code_eq {F G : CodedFamily A L n} (h : F.code = G.code) :
+    codedIInf F = codedIInf G := by
+  cases F with | mk c hinf f hf =>
+  cases G with | mk c' hinf' g hg =>
+  cases h
+  cases A.decodes_unique hinf hf hg
+  rfl
+
+/-! ## Universe probe
+
+The production structure will need `Language.{u, v}`; this spike fixes `Language.{0, 0}`.  The probe
+below records what that costs today: the constant-expansion `L[[J]]` stays inside `Language.{0, 0}`
+exactly when `J : Type 0`, which covers the `ℕ` used throughout the Henkin machinery — but an
+arbitrary parameter type would raise the language universe and not fit. -/
+
+section UniverseProbe
+
+variable {A : AdmissiblePresentation}
+
+/-- Fits: `L[[ℕ]]` is still `Language.{0, 0}`. -/
+example (L : Language.{0, 0}) (n : ℕ) : Type := CodedFamily A L[[ℕ]] n
+
+/-
+**Does NOT fit**, verified by probe:
+
+```
+example (L : Language.{0,0}) (J : Type w) (n : ℕ) : Type := CodedFamily A L[[J]] n
+--                                                                       ^ J : Type w
+-- Application type mismatch: J has type Type w … but is expected to have type Type
+```
+
+`withConstants` is `Language.{max u w', v}`, so an arbitrary parameter type raises the language
+universe out of `Language.{0, 0}`.
+
+**Finding for step 3.**  The production `AdmissiblePresentation` must be generalized to
+`Language.{u, v}` *before* the EM adapter is written — or the adapter must be constrained to
+`J : Type 0`.  Deferring this past step 3 would bake the restriction into `AdmissibleFragment`.
+-/
+
+end UniverseProbe
+
 /-! ## Gate 4 — the HF oracle
 
 For HF the certificate is empty, so `CodedFamily` is uninhabited and the upward-closure fields of
@@ -124,6 +176,8 @@ def hfPresentation : AdmissiblePresentation where
   indexEncodable := fun _ => inferInstance
   CodesInfFamily := fun _ => False
   DecodesFamily := fun _ _ _ _ => True
+  -- vacuous: no code is infinitary
+  decodes_unique := fun h _ _ => absurd h not_false
 
 /-- **Gate 4.**  `CodedFamily` over HF is uninhabited. -/
 theorem isEmpty_codedFamily_hf : IsEmpty (CodedFamily hfPresentation L n) :=
