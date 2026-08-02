@@ -84,13 +84,32 @@ A Lean 4 formalization of infinitary logic (L∞ω and Lω₁ω), Scott sentence
 
 ## Scope and Boundaries
 
-The formalization currently covers L∞ω and Lω₁ω syntax and semantics, Scott analysis (atomic diagrams, back-and-forth equivalence, Scott formulas/sentences, height and rank), Karp's theorem and corollaries, Craig, Lyndon and **Malitz universal** interpolation, model existence via consistency properties, downward Löwenheim–Skolem for Lω₁ω, Hanf numbers, conditional admissible-fragment interfaces (compactness and the Nadel bound are carried as **structure fields / typeclass hypotheses**, not proved — see #18–#20), descriptive set theory of the space of countable structures (Borel complexity of satisfaction, BF-equivalence, and isomorphism; counting dichotomy), and Silver's theorem with the Silver–Burgess dichotomy, **fully proved** via Miller's classical category route: Mycielski's theorem (`Descriptive/Mycielski.lean`), Kuratowski–Ulam (`Descriptive/KuratowskiUlam.lean`), the `G_S` graphs with Miller's independence lemma (`Descriptive/GSGraph.lean`), the KST separation core and positivity ideals (`Descriptive/G0Dichotomy.lean`), and the G₀-dichotomy fusion (`Descriptive/G0Fusion.lean`). The proof route is
+**Proved.** L∞ω and Lω₁ω syntax and semantics; Scott analysis and Karp's theorem; model existence
+via consistency properties and downward Löwenheim–Skolem; Hanf numbers, including
+`Hanf(Lω₁ω) = ℶ_ω₁`; Craig, Lyndon and Malitz interpolation; undefinability of well-ordering and
+non-Borelness of the well-order class; López–Escobar; the descriptive set theory of the space of
+countable structures, including Silver's theorem and the Silver–Burgess dichotomy.
 
-> G₀ homomorphism → meager pullback sections → Kuratowski–Ulam → Mycielski → Silver → Silver–Burgess → Morley counting,
+Section [Main Results](#main-results) names the endpoints; the
+[blueprint](https://cameronfreer.github.io/infinitary-logic/blueprint/) states them.
 
-and the endpoints `gandy_harrington_for_relation`, `silverBurgessDichotomy`, and the `morley_counting` instantiation all have axioms exactly `[propext, Classical.choice, Quot.sound]`.
+**Not proved, and not claimed.** Some interfaces are deliberately conditional — they package a
+hypothesis rather than discharge it. These are labelled as such at their definitions, and the
+outstanding work is tracked in the issues:
 
-The Morley–Hanf theorem is now **unconditional** (`morley_hanf`, `Conditional/MorleyHanfSchemaDischarge.lean`). The historical conditional forms are retained for the record: the original `morley_hanf_of_transfer` (bundled `MorleyHanfTransfer` hypothesis) and the split bridges through `MorleyHanfExtraction` — a residual since shown to be false in ZFC (the Erdős cardinal κ(ω) is inaccessible, so full-indiscernibility extraction at ℶ_ω₁ is unavailable), which is precisely why the proved route runs through the *tail* extraction and a constructed schema term model instead.
+| Interface | Status |
+|---|---|
+| Barwise compactness, Nadel bound | carried as a structure field / typeclass hypothesis; honest foundations tracked in [#18](https://github.com/cameronfreer/infinitary-logic/issues/18)–[#20](https://github.com/cameronfreer/infinitary-logic/issues/20) |
+| `AdmissibleFragmentCore.hf`, `FullBarwiseFragment`, `CodedIn` | legacy placeholders, marked in source, awaiting the replacement interface |
+| Malitz relative preservation (Thm 4.6) | out of scope for the interpolation arc; see [#41](https://github.com/cameronfreer/infinitary-logic/issues/41) |
+
+**Axioms.** Headline results depend only on `propext`, `Classical.choice` and `Quot.sound`; this is
+enforced in CI by `scripts/check_headline_axioms.sh`. Two dependency-cone guards additionally certify
+*logical strength* where an axiom scan cannot: that the Henkin route consumes no maximal-consistency
+machinery, and that the Morley–Hanf cone avoids the legacy Erdős–Rado ladder.
+
+**Theory-level forms.** Interpolation and preservation results here are **sentence-level**. The
+theory-level analogues are false for Lω₁ω and are never claimed.
 
 ## Repository Guide
 
@@ -106,7 +125,7 @@ The Morley–Hanf theorem is now **unconditional** (`morley_hanf`, `Conditional/
 - `InfinitaryLogic/ModelTheory/` — Löwenheim–Skolem, Hanf numbers, counting models
 - `InfinitaryLogic/Admissible/` — Admissible-fragment **scaffolding** (`Fragment/Core`, `Fragment/Compact`), conditional compactness interfaces, literature-faithful interface (`Barwise/Data`), an externally sound proof system, and the conditional Nadel interface. The honest foundations are tracked in [#18](https://github.com/cameronfreer/infinitary-logic/issues/18)–[#20](https://github.com/cameronfreer/infinitary-logic/issues/20).
 - `InfinitaryLogic/Descriptive/` — Borel complexity of the structure space, satisfaction, isomorphism; counting dichotomy, finite-carrier analysis; and a reusable DST library: Cantor-antichain extraction (`CantorAntichain`), Mycielski (`Mycielski`), Kuratowski–Ulam (`KuratowskiUlam`), the `G_S` graphs (`GSGraph`), and the classical G₀-dichotomy machinery (`G0Dichotomy`, `G0Fusion`); the query-code closed embedding and analytic tree normal form (`QueryCode`, `AnalyticTree`) and the López–Escobar facade (`LopezEscobar`)
-- `InfinitaryLogic/Conditional/` — The Silver chain (`SilverBurgess`, `SilverCategoryRoute`, `GandyHarrington` — sorry-free) and the Morley–Hanf chain: `MorleyHanfTransfer` (the historical conditional forms and bridges) and `MorleyHanfSchemaDischarge` (the unconditional `morley_hanf` endpoint)
+- `InfinitaryLogic/Conditional/` — the Silver chain and the Morley–Hanf chain, including the unconditional `morley_hanf` endpoint
 
 Build and release operational notes — including why `lake env lean` is not a substitute for `lake build`, and why docs must be dispatched from `master` — are in [`docs/build-and-release-notes.md`](docs/build-and-release-notes.md).
 
@@ -124,12 +143,19 @@ import InfinitaryLogic.Core         -- syntax, semantics, Scott, Karp
 import InfinitaryLogic.Countable    -- model existence, LS, Hanf, EM chain
 import InfinitaryLogic.Admissible   -- admissible-fragment interfaces (conditional)
 import InfinitaryLogic.Descriptive  -- descriptive set theory of model classes
-import InfinitaryLogic.All          -- all of the above (sorry-free)
+import InfinitaryLogic.All          -- all of the above
 import InfinitaryLogic.Conditional  -- Silver chain + Morley-Hanf theorem (both proved)
 import InfinitaryLogic.Everything   -- everything including Conditional and legacy off-path modules
 ```
 
-`import InfinitaryLogic` loads the default surface (`InfinitaryLogic.All`), which includes the headline `morley_hanf`; use `import InfinitaryLogic.Everything` for the rest of `Conditional/` and the legacy off-path `Scott/Code.lean` — work-in-progress frontier modules under `Methods/` live in the separate non-default `InfinitaryLogicWIP` target. **The entire tree is sorry-free** (the historical sorry-bearing Erdős–Rado exploration is preserved on the [`archive/legacy-erdos-rado`](https://github.com/cameronfreer/infinitary-logic/tree/archive/legacy-erdos-rado) branch, not in the tree; the load-bearing bounded Erdős–Rado chain is `Combinatorics/PairErdosRadoGeneral.lean`, `Combinatorics/EndHomogeneousErdosRado.lean`, `Combinatorics/FiniteArityErdosRadoInduction.lean`). `InfinitaryLogic/Basic.lean` is a deprecated redirect to `All`.
+`import InfinitaryLogic` loads the default surface (`InfinitaryLogic.All`). Use
+`InfinitaryLogic.Everything` for the remaining `Conditional/` modules; work-in-progress frontier
+modules live in the separate non-default `InfinitaryLogicWIP` target, so they never enter the
+default surface. `InfinitaryLogic/Basic.lean` is a deprecated redirect to `All`.
+
+Every target is checked in CI: the default build, `InfinitaryLogicConditional`, `InfinitaryLogicWIP`,
+the axiom and dependency-cone guards, and a blueprint declaration check. Operational notes on the
+build and release process are in [`docs/build-and-release-notes.md`](docs/build-and-release-notes.md).
 
 ### Key Declarations
 
