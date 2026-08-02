@@ -150,6 +150,16 @@ theorem realize_esup {ι : Type*} [Encodable ι] (φs : ι → L.BoundedFormula�
     use Encodable.encode i
     simp only [Encodable.encodek, hi]
 
+/-- Realization of `einfWith`: the supplied encoding does not affect the semantics. -/
+@[simp] theorem realize_einfWith {ι : Type*} (e : Encodable ι) (φs : ι → L.BoundedFormulaω α n) :
+    (einfWith e φs).Realize v xs ↔ ∀ i, (φs i).Realize v xs :=
+  @realize_einf L M _ α n v xs ι e φs
+
+/-- Realization of `esupWith`. -/
+@[simp] theorem realize_esupWith {ι : Type*} (e : Encodable ι) (φs : ι → L.BoundedFormulaω α n) :
+    (esupWith e φs).Realize v xs ↔ ∃ i, (φs i).Realize v xs :=
+  @realize_esup L M _ α n v xs ι e φs
+
 end BoundedFormulaω
 
 namespace Formulaω

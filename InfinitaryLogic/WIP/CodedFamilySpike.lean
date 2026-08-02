@@ -77,13 +77,11 @@ variable {L : Language.{u, v}} {A : AdmissiblePresentation.{u, v, uCode, uIndex}
 /-- The conjunction a coded family names.  The encoding is the **presentation's**, installed
 locally, so the resulting syntax depends on the code rather than on ambient instance search. -/
 def codedIInf (F : CodedFamily A n) : L.BoundedFormulaω Empty n :=
-  letI : Encodable (A.Index F.code) := A.indexEncodable F.code
-  BoundedFormulaω.einf F.decode
+  BoundedFormulaω.einfWith (A.indexEncodable F.code) F.decode
 
 /-- The disjunction a coded family names. -/
 def codedISup (F : CodedFamily A n) : L.BoundedFormulaω Empty n :=
-  letI : Encodable (A.Index F.code) := A.indexEncodable F.code
-  BoundedFormulaω.esup F.decode
+  BoundedFormulaω.esupWith (A.indexEncodable F.code) F.decode
 
 /-! ## Acceptance gates -/
 
@@ -93,15 +91,13 @@ variable {M : Type} [L.Structure M] {v : Empty → M} {xs : Fin n → M}
 
 /-- **Gate 1a.**  `codedIInf` realizes as a conjunction over `A.Index code`. -/
 theorem realize_codedIInf (F : CodedFamily A n) :
-    (codedIInf F).Realize v xs ↔ ∀ i, (F.decode i).Realize v xs := by
-  letI : Encodable (A.Index F.code) := A.indexEncodable F.code
-  exact BoundedFormulaω.realize_einf F.decode
+    (codedIInf F).Realize v xs ↔ ∀ i, (F.decode i).Realize v xs :=
+  BoundedFormulaω.realize_einfWith _ F.decode
 
 /-- **Gate 1b.**  …and `codedISup` as a disjunction. -/
 theorem realize_codedISup (F : CodedFamily A n) :
-    (codedISup F).Realize v xs ↔ ∃ i, (F.decode i).Realize v xs := by
-  letI : Encodable (A.Index F.code) := A.indexEncodable F.code
-  exact BoundedFormulaω.realize_esup F.decode
+    (codedISup F).Realize v xs ↔ ∃ i, (F.decode i).Realize v xs :=
+  BoundedFormulaω.realize_esupWith _ F.decode
 
 end Gates
 
@@ -116,8 +112,7 @@ statement still holds by `rfl`, which is exactly the claim — `codedIInf` never
 search, it reads `A.indexEncodable`. -/
 theorem codedIInf_uses_presentation_encoding (F : CodedFamily A n)
     (_e : Encodable (A.Index F.code)) :
-    codedIInf F = (letI : Encodable (A.Index F.code) := A.indexEncodable F.code
-      BoundedFormulaω.einf F.decode) := rfl
+    codedIInf F = BoundedFormulaω.einfWith (A.indexEncodable F.code) F.decode := rfl
 
 /-! ### Extensionality
 

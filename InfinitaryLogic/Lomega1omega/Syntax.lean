@@ -118,6 +118,31 @@ def esup {ι : Type*} [Encodable ι] (φs : ι → L.BoundedFormulaω α n) :
     | some i => φs i
     | none => ⊥
 
+/-! ### Explicit-encoding forms
+
+`einf`/`esup` take their encoding by instance search.  A consumer that must use a *specific*
+enumeration — one supplied as data rather than found — is otherwise forced into a local `letI`,
+which is fragile and makes the resulting syntax look instance-dependent when it is not.
+
+These are **thin wrappers**, deliberately: `einf`/`esup` are *not* redefined in terms of them.
+Reversing that dependency would disturb definitional reductions across many existing consumers. -/
+
+/-- `einf` along an explicitly supplied encoding. -/
+def einfWith {ι : Type*} (e : Encodable ι) (φs : ι → L.BoundedFormulaω α n) :
+    L.BoundedFormulaω α n :=
+  @einf L α n ι e φs
+
+/-- `esup` along an explicitly supplied encoding. -/
+def esupWith {ι : Type*} (e : Encodable ι) (φs : ι → L.BoundedFormulaω α n) :
+    L.BoundedFormulaω α n :=
+  @esup L α n ι e φs
+
+@[simp] theorem einfWith_eq {ι : Type*} (e : Encodable ι) (φs : ι → L.BoundedFormulaω α n) :
+    einfWith e φs = @einf L α n ι e φs := rfl
+
+@[simp] theorem esupWith_eq {ι : Type*} (e : Encodable ι) (φs : ι → L.BoundedFormulaω α n) :
+    esupWith e φs = @esup L α n ι e φs := rfl
+
 end BoundedFormulaω
 
 -- Notation
