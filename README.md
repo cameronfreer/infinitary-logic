@@ -57,6 +57,7 @@ A Lean 4 formalization of infinitary logic (L∞ω and Lω₁ω), Scott sentence
 
 ### Definability and undefinability
 
+- **Malitz universal interpolation** — the *quantifier-class* refinement, over a **relational** language of arbitrary cardinality (`malitz_interpolation`): if the consequent is universal (∀₁ — every quantifier occurrence a positive `∀`; countable conjunctions and disjunctions are not quantifiers), the interpolant may be taken universal too, with the ordinary shared-occurrence bounds. López-Escobar / Malitz Theorem 4.5, function-free case. *Non-claims*: the relative existential preservation theorem (4.6) is **not** proved (#41), nor any theory-level form.
 - **Boundedness and undefinability of well-ordering** — over an *arbitrary* language with a distinguished binary relation, if an Lω₁ω sentence φ has models with strictly increasing chains of every countable length, then some model of φ carries a **relation-preserving map from ℚ** (`exists_model_relPreserving`; Marker, Theorem 4.26). This is deliberately the *raw positive* conclusion — for all q < r, `RelMap lt ![f q, f r]` — with **no injectivity claimed**; injectivity is a separate corollary under irreflexivity of the interpreted relation (`RelPreserving.injective_of_irreflexive`), and it is automatic in the boundedness corollary, where the relation is well-ordered. The **strict-order corollaries**: if every model interprets the relation well-foundedly, some countable ordinal chains into no model (`wellFounded_boundedness`); if every model interprets it as a well-order, a single countable ordinal strictly bounds every model's order type (`wellOrder_type_boundedness`; Marker, Corollary 4.27); hence no sentence has as models exactly the well-orders (`wellOrdering_undefinable`).
   <details><summary>Proof route</summary>
 
@@ -86,7 +87,7 @@ A Lean 4 formalization of infinitary logic (L∞ω and Lω₁ω), Scott sentence
 
 **Proved.** L∞ω and Lω₁ω syntax and semantics; Scott analysis and Karp's theorem; model existence
 via consistency properties and downward Löwenheim–Skolem; Hanf numbers, including
-`Hanf(Lω₁ω) = ℶ_ω₁`; Craig, Lyndon and Malitz interpolation; undefinability of well-ordering and
+`Hanf(Lω₁ω) = ℶ_ω₁`; Craig and Lyndon interpolation, and Malitz universal interpolation for relational languages; undefinability of well-ordering and
 non-Borelness of the well-order class; López–Escobar; the descriptive set theory of the space of
 countable structures, including Silver's theorem and the Silver–Burgess dichotomy.
 
@@ -101,11 +102,11 @@ outstanding work is tracked in the issues:
 |---|---|
 | Barwise compactness, Nadel bound | carried as a structure field / typeclass hypothesis; honest foundations tracked in [#18](https://github.com/cameronfreer/infinitary-logic/issues/18)–[#20](https://github.com/cameronfreer/infinitary-logic/issues/20) |
 | `AdmissibleFragmentCore.hf`, `FullBarwiseFragment`, `CodedIn` | legacy placeholders, marked in source, awaiting the replacement interface |
-| Malitz relative preservation (Thm 4.6) | out of scope for the interpolation arc; see [#41](https://github.com/cameronfreer/infinitary-logic/issues/41) |
+| Malitz relative preservation (Thm 4.6) | not proved; tracked in [#41](https://github.com/cameronfreer/infinitary-logic/issues/41) |
 
 **Axioms.** Headline results depend only on `propext`, `Classical.choice` and `Quot.sound`; this is
 enforced in CI by `scripts/check_headline_axioms.sh`. Two dependency-cone guards additionally certify
-*logical strength* where an axiom scan cannot: that the Henkin route consumes no maximal-consistency
+*proof architecture* where an axiom scan cannot: that the Henkin route consumes no maximal-consistency
 machinery, and that the Morley–Hanf cone avoids the legacy Erdős–Rado ladder.
 
 **Theory-level forms.** Interpolation and preservation results here are **sentence-level**. The
@@ -126,8 +127,6 @@ theory-level analogues are false for Lω₁ω and are never claimed.
 - `InfinitaryLogic/Admissible/` — Admissible-fragment **scaffolding** (`Fragment/Core`, `Fragment/Compact`), conditional compactness interfaces, literature-faithful interface (`Barwise/Data`), an externally sound proof system, and the conditional Nadel interface. The honest foundations are tracked in [#18](https://github.com/cameronfreer/infinitary-logic/issues/18)–[#20](https://github.com/cameronfreer/infinitary-logic/issues/20).
 - `InfinitaryLogic/Descriptive/` — Borel complexity of the structure space, satisfaction, isomorphism; counting dichotomy, finite-carrier analysis; and a reusable DST library: Cantor-antichain extraction (`CantorAntichain`), Mycielski (`Mycielski`), Kuratowski–Ulam (`KuratowskiUlam`), the `G_S` graphs (`GSGraph`), and the classical G₀-dichotomy machinery (`G0Dichotomy`, `G0Fusion`); the query-code closed embedding and analytic tree normal form (`QueryCode`, `AnalyticTree`) and the López–Escobar facade (`LopezEscobar`)
 - `InfinitaryLogic/Conditional/` — the Silver chain and the Morley–Hanf chain, including the unconditional `morley_hanf` endpoint
-
-Build and release operational notes — including why `lake env lean` is not a substitute for `lake build`, and why docs must be dispatched from `master` — are in [`docs/build-and-release-notes.md`](docs/build-and-release-notes.md).
 
 ## Getting Started
 
@@ -153,8 +152,8 @@ import InfinitaryLogic.Everything   -- everything including Conditional and lega
 modules live in the separate non-default `InfinitaryLogicWIP` target, so they never enter the
 default surface. `InfinitaryLogic/Basic.lean` is a deprecated redirect to `All`.
 
-Every target is checked in CI: the default build, `InfinitaryLogicConditional`, `InfinitaryLogicWIP`,
-the axiom and dependency-cone guards, and a blueprint declaration check. Operational notes on the
+CI builds the public and frontier targets and runs the axiom, dependency-cone, and blueprint
+guards. Operational notes on the
 build and release process are in [`docs/build-and-release-notes.md`](docs/build-and-release-notes.md).
 
 ### Key Declarations
@@ -178,6 +177,7 @@ build and release process are in [`docs/build-and-release-notes.md`](docs/build-
 - `craig_interpolation` — **Craig interpolation**: sharp shared-vocabulary interpolants for Lω₁ω over arbitrary languages (proved, no hypotheses)
 - `craig_pcSeparation` / `craig_pcSeparation_relational` — The PC-separation (disjunction) forms
 - `lyndon_interpolation` / `lyndon_interpolation_relational` — **Lyndon interpolation**: polarity-refined interpolants (positive/negative occurrences separately bounded) over arbitrary languages; relation-polarity / logical-equality form, equality unconstrained
+- `malitz_interpolation` — **Malitz universal interpolation**: an entailment with universal consequent has a universal interpolant, over relational languages
 - `exists_model_relPreserving` — **Rational embedding from long chains** (Marker 4.26): chains of every countable length force a model with a relation-preserving map from ℚ (raw positive form; arbitrary languages)
 - `wellOrder_type_boundedness` — **Boundedness of well-ordered models** (Marker 4.27): a uniform countable bound on the order types of well-ordered models
 - `wellOrdering_undefinable` — **Undefinability of well-ordering**: no Lω₁ω sentence has as models exactly the well-orders
