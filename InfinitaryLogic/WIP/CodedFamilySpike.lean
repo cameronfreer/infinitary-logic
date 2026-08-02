@@ -36,7 +36,7 @@ closure fields are vacuous — and no padding argument ever arises.
 
 namespace FirstOrder.Language
 
-universe u v uCode uIndex
+universe u v w uCode uIndex
 
 set_option linter.checkUnivs false in
 /-- A **bare presentation signature**.  No admissible-set axioms yet — #19A fixes those.  What is
@@ -119,34 +119,37 @@ theorem codedIInf_uses_presentation_encoding (F : CodedFamily A n)
     codedIInf F = (letI : Encodable (A.Index F.code) := A.indexEncodable F.code
       BoundedFormulaω.einf F.decode) := rfl
 
-/-- **Gate 5 (functionality).**  The syntax built from a coded family is determined by the code:
-two coded families with the same code have the same decoding, hence the same `codedIInf`. -/
-theorem codedIInf_eq_of_code_eq {F G : CodedFamily A n} (h : F.code = G.code) :
-    codedIInf F = codedIInf G := by
+/-! ### Extensionality
+
+Conditional functionality (`decodes_unique`) is what makes a coded family *determined by its code*.
+Everything below is a consequence, and it is what keeps #19A's naturality layer from having to
+re-derive uniqueness at every step. -/
+
+/-- Equal codes force equal decodings. -/
+theorem decode_eq_of_code_eq {F G : CodedFamily A n} (h : F.code = G.code) :
+    F.decode = h ▸ G.decode := by
+  cases F with | mk c hinf f hf =>
+  cases G with | mk c' hinf' g hg =>
+  cases h
+  exact A.decodes_unique hinf hf hg
+
+/-- **Extensionality**: a coded family is its code.  The certificate and the decoding law are
+`Prop`s, and the decoding is determined by the code, so nothing else can differ. -/
+@[ext] theorem CodedFamily.ext {F G : CodedFamily A n} (h : F.code = G.code) : F = G := by
   cases F with | mk c hinf f hf =>
   cases G with | mk c' hinf' g hg =>
   cases h
   cases A.decodes_unique hinf hf hg
   rfl
 
-/-! ## Universe probe
+/-- **Gate 5 (functionality).**  The conjunction built from a coded family is determined by the
+code. -/
+theorem codedIInf_eq_of_code_eq {F G : CodedFamily A n} (h : F.code = G.code) :
+    codedIInf F = codedIInf G := by rw [CodedFamily.ext h]
 
-The structures are **language-indexed and universe-polymorphic**: `AdmissiblePresentation L` for
-`L : Language.{u, v}`, so `AdmissiblePresentation L[[J]]` is well-formed for an arbitrary parameter
-type `J`.  This is the generalization route, chosen over restricting the EM adapter to `J : Type 0`
-— that restriction would silently weaken the existing arbitrary-target-order EM surface and confuse
-a universe limitation with the later mathematical question of which template theories are genuinely
-coded.
-
-Note this does **not** claim a presentation for `L` lifts to one for `L[[J]]`; whether such a lift
-exists is genuine #19A coding content.  Only the *signature* is settled here.
-
-**Outstanding plumbing.**  A stand-alone probe `example … (B : AdmissiblePresentation Lb[[J]]) :
-Type := CodedFamily B m` does not yet elaborate: Lean defaults `CodedFamily`'s universe arguments to
-`0` instead of unifying them with the supplied presentation's, reporting
-`expected AdmissiblePresentation.{0,0,0,0} ?m`.  That is use-site plumbing — explicit `.{…}`
-application, or restructuring the binders — not a defect in the shape, since nothing here forces
-`Type 0`.  Resolve it when the interface is promoted out of `WIP`, **before** the EM adapter. -/
+/-- …and the disjunction likewise. -/
+theorem codedISup_eq_of_code_eq {F G : CodedFamily A n} (h : F.code = G.code) :
+    codedISup F = codedISup G := by rw [CodedFamily.ext h]
 
 /-! ## Gate 4 — the HF oracle
 
@@ -211,5 +214,36 @@ def hfAdmissibleFragment (L : Language.{0, 0}) : AdmissibleFragment (hfPresentat
 `Fragment` is exactly `hfFragment`, whose sentence slice is `finitaryFragment`. -/
 theorem hfAdmissibleFragment_toFragment (L : Language.{0, 0}) :
     (hfAdmissibleFragment L).toFragment = hfFragment L := rfl
+
+/-! ## Universe gate — CLOSED
+
+The structures are **language-indexed and universe-polymorphic**: `AdmissiblePresentation L` for
+`L : Language.{u, v}`, so `AdmissiblePresentation L[[J]]` is well-formed for an arbitrary parameter
+type `J`.  This is the generalization route, chosen over restricting the EM adapter to `J : Type 0`
+— that restriction would silently weaken the existing arbitrary-target-order EM surface and confuse
+a universe limitation with the later mathematical question of which template theories are genuinely
+coded.
+
+It does **not** claim a presentation for `L` lifts to one for `L[[J]]`; whether such a lift exists is
+genuine #19A coding content.  Only the *signature* is settled here.
+
+**Diagnosis of an earlier false alarm.**  A probe written with the result annotation `: Type` was
+reported as a universe-plumbing blocker.  It was a bug in the probe, not the API: bare `Type` means
+`Type 0`, and that result constraint propagates *backward*, forcing Lean to expect
+`AdmissiblePresentation.{0,0,0,0}` and producing a misleading error on the presentation argument.
+Explicit `.{…}` arguments cannot fix it, because the `Type 0` result constraint remains.  Writing
+`Type _` (or `Sort _`) lets the presentation universes be inferred and both probes compile. -/
+
+section UniverseGate
+
+/-- Arbitrary parameter type, arbitrary language universes: a coded family elaborates. -/
+example (Lb : Language.{u, v}) (J : Type w) (B : AdmissiblePresentation Lb[[J]]) (m : ℕ) : Type _ :=
+  CodedFamily B m
+
+/-- …and so does the fragment wrapper. -/
+example (Lb : Language.{u, v}) (J : Type w) (B : AdmissiblePresentation Lb[[J]]) : Type _ :=
+  AdmissibleFragment B
+
+end UniverseGate
 
 end FirstOrder.Language
