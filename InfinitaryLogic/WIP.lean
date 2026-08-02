@@ -13,9 +13,7 @@ import InfinitaryLogic.Methods.Interpolation.BudgetedPairCompletion
 import InfinitaryLogic.Methods.Interpolation.BudgetedPairModel
 import InfinitaryLogic.Methods.Interpolation.MalitzRootGate
 import InfinitaryLogic.Methods.Interpolation.MalitzRelational
-import InfinitaryLogic.WIP.HFSpike
-import InfinitaryLogic.WIP.HFFragment
-import InfinitaryLogic.WIP.CodedFamilySpike
+import InfinitaryLogic.Admissible.HF
 import InfinitaryLogic.Methods.Interpolation.QuantifierRoundTrip
 import InfinitaryLogic.Methods.Interpolation.RootGate
 import InfinitaryLogic.Methods.Henkin.CountableCompletion.GeneratedUniverse
