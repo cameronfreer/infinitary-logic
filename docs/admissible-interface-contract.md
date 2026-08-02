@@ -1,6 +1,19 @@
 # The admissible-fragment interface contract (issue #18)
 
-**Status: written contract, tested on paper against the HF oracle. No Lean yet.**
+**Status: implemented.** The contract below was written and tested on paper against the HF oracle
+first; it is now realized in `Admissible/CodedFamily.lean`, `Admissible/Fragment/Honest.lean` and
+`Admissible/HF.lean`, all on the `InfinitaryLogic.Admissible` bundle surface. Two departures from the
+text below were forced by implementation and are recorded here rather than silently absorbed:
+
+* **`height` was dropped from `AdmissibleFragment`** (§3 proposes it). Whether height belongs to the
+  presentation or is derived from it is unsettled, and a field on the fragment would permit a
+  fragment whose height disagreed with its presentation's. It returns with #19A.
+* **`CodedFamily` is indexed by the presentation alone**, `CodedFamily A n` — the language is
+  recovered from `A`, so the separate `L` parameter in §2's sketch does not appear.
+
+The oracle conditions in §5 are discharged in Lean: condition 1 by `sentence_slice_hfFragment`,
+condition 2 by `isEmpty_codedFamily_hf`, condition 3 by `finitaryFragment_compact`, and condition 4
+by `scripts/check_hf_compactness.lean`, which is enforced in CI.
 
 The invariant this document exists to protect:
 

@@ -10,123 +10,76 @@ A Lean 4 formalization of infinitary logic (L∞ω and Lω₁ω), Scott sentence
 - **[API docs](https://cameronfreer.github.io/infinitary-logic/docs/)** · **[Dependency graph](https://cameronfreer.github.io/infinitary-logic/blueprint/dep_graph_document.html)**
 - **[Releases](https://github.com/cameronfreer/infinitary-logic/releases)** · **[How to cite](CITATION.cff)**
 
-## Main Results
+## Results
+
+The [blueprint](https://cameronfreer.github.io/infinitary-logic/blueprint/) states these precisely and
+narrates their proofs; this table names the endpoints and the hypotheses that matter.
 
 ### Scott analysis and Karp's theorem
 
-- **Scott sentences** — Every countable structure in a countable relational language has a Scott sentence characterizing it up to isomorphism among countable structures.
-- **Scott rank < ω₁** — The Scott rank of any countable structure is a countable ordinal.
-- **Karp's theorem** — Back-and-forth equivalence at all ordinals characterizes L∞ω elementary equivalence.
+| Result | In Lean | Scope |
+|---|---|---|
+| Every countable structure has a Scott sentence characterizing it up to isomorphism among countable structures | `scottSentence` | countable relational language |
+| Scott rank is a countable ordinal | `scottRank` | |
+| Back-and-forth equivalence at all ordinals characterizes L∞ω-equivalence | `karp_theorem_w` | |
 
 ### Model theory of Lω₁ω
 
-- **Model existence** — Every countable consistent set of Lω₁ω sentences in a countable language has a countable model (Henkin-style construction, omitting types, Karp completeness).
-- **The Morley–Hanf theorem** — ℶ_ω₁ is a Hanf bound for every Lω₁ω sentence, over an arbitrary language with no side hypotheses (`morley_hanf`): a sentence with a model of size ≥ ℶ_ω₁ has models of arbitrarily large cardinality.
-  <details><summary>Proof route</summary>
-
-  No extraction is consumed (an injective sequence is already indiscernible on the Morley seed); the Ehrenfeucht–Mostowski tail-template theory of the seed is realized by a Henkin-style ω-stage completion of the countable *schema* sentence universe (pinning a disjunct for every positive countable disjunction and a refuted conjunct for every negative countable conjunction), whose quotient term model carries a fully indiscernible sequence of Henkin constants; symbol countability is discharged by the sentence's own generated sublanguage. Axioms exactly `[propext, Classical.choice, Quot.sound]`.
-  </details>
-- **The exact Hanf number** — Hanf(Lω₁ω) = ℶ_ω₁ (`Lomega1omegaHanfNumber_eq_beth_omega1`): the Morley–Hanf bound is sharp.
-  <details><summary>Proof route</summary>
-
-  The upper half is `morley_hanf` (bounded Erdős–Rado → Marker/schema completion); the lower half is Marker's Exercise 5.3 beth ladder (countable-index syntax → von Neumann hierarchy witnesses `V_{ω+β}` with Mathlib's cardinality computation → a bounded spectrum with maximum exactly ℶ_{α+1} at every stage α < ω₁ → the successor-cofinal supremum). Axioms exactly `[propext, Classical.choice, Quot.sound]`.
-  </details>
-- **Small models of every infinite size** — a sentence with arbitrarily large models has, at every infinite κ, a model of size exactly κ realizing only countably many complete Lω₁ω-types (`exists_small_model_of_hasArbLargeModels`; Marker, Theorem 11.2).
-  <details><summary>Proof route</summary>
-
-  The witnesses are local Ehrenfeucht–Mostowski quotients over highly order-transitive skeletons (ordered fields via cut dilations; every infinite cardinality via lexicographic Hahn-series subfields); the quotient is order-automorphism equivariant, tuples are classified by countably many compressed term codes, and arbitrary languages reduce along a uniform collapsing hom. Axioms exactly `[propext, Classical.choice, Quot.sound]`.
-  </details>
-- **Complete sentences and categoricity** — every small model of φ satisfies a complete Lω₁ω-sentence entailing φ (`exists_complete_sentence_of_lomega1omegaSmall`), and a κ-categorical φ with arbitrarily large models has a complete completion with a κ-sized model, itself κ-categorical (`exists_complete_kCategorical_of_hasArbLargeModels`) — over countable relational vocabularies.
-  <details><summary>Proof route</summary>
-
-  Route: realized-type isolators → one countable controlling fragment → the countable companion via genuine fragment Löwenheim–Skolem → type-preserving back-and-forth → the canonical Scott sentence characterizes arbitrary models at every ordinal (arbitrary-target stabilization). Axioms exactly `[propext, Classical.choice, Quot.sound]`.
-  </details>
+| Result | In Lean | Scope |
+|---|---|---|
+| Model existence for consistency properties, with omitting types and Karp completeness | `model_existence` | countable language |
+| ℶ_ω₁ is a Hanf bound for every Lω₁ω-sentence | `morley_hanf` | arbitrary language, no side hypotheses |
+| The bound is sharp: Hanf(Lω₁ω) = ℶ_ω₁ | `Lomega1omegaHanfNumber_eq_beth_omega1` | |
+| Models of every infinite size realizing only countably many complete types | `exists_small_model_of_hasArbLargeModels` | arbitrary languages |
+| Small models lie in complete subclasses; κ-categorical sentences have κ-categorical complete completions | `exists_complete_sentence_of_lomega1omegaSmall`, `exists_complete_kCategorical_of_hasArbLargeModels` | countable relational vocabulary |
 
 ### Interpolation
 
-- **Craig interpolation** — an Lω₁ω-entailment r₁ ⊨ r₂ over an *arbitrary* language (no hypotheses on L) has an interpolant θ whose function and relation symbols each lie in the intersection of the two roots' occurrence sets, with r₁ ⊨ θ and θ ⊨ r₂ (`craig_interpolation`), plus the PC-separation form (`craig_pcSeparation`).
-  <details><summary>Proof route</summary>
+All three are **sentence-level**. The theory-level analogues are false for Lω₁ω and are never claimed.
 
-  The relational core (`craig_interpolation_relational`) is an inseparability/finite-condition Henkin construction with no countability hypothesis; the arbitrary-language theorem composes it with a relationalization layer — function symbols become graph relations `G_f`, terms flatten to existential graph formulas, totality/functionality axioms translate the entailment via structure reconstruction, and back-translation `G_f(x⃗,y) ↦ f(x⃗)=y` returns the interpolant with the sharp occurrence bounds. Axioms exactly `[propext, Classical.choice, Quot.sound]`.
-  </details>
-- **Lyndon interpolation** — the polarity refinement of Craig, over an *arbitrary* language with no hypotheses (`lyndon_interpolation`): the interpolant's **positively** occurring relation symbols lie in the intersection of the two roots' positive occurrences, and its **negatively** occurring ones in the intersection of their negative occurrences (function symbols keep the ordinary shared-occurrence condition). This is the **relation-polarity / logical-equality form** of López-Escobar's Theorem 4.1 — his clause (.4) in full, while equality is treated as a *logical* symbol, belongs to neither polarity class, and is unconstrained in the interpolant, so his clause (.3) is **not** claimed.
-  <details><summary>Proof route</summary>
-
-  Polarity is a signed occurrence traversal on the existing syntax (antecedents flip, quantifiers and countable connectives preserve, equality contributes nothing) — **no negation-normal form is constructed anywhere** — whose semantic content is that growing positively-occurring relations and shrinking negatively-occurring ones preserves truth. The proof *refines* the Craig engine: only the separator class changes (base positives in `P`, negatives in `N`), the paired family maintains the flipped class `(F₁∩F₂, P₁∩N₂, N₁∩P₂)`, and the countable-completion kernel is consumed unchanged (enforced by the truth-lemma cone guard). The arbitrary-language step reuses Craig's relationalization verbatim: base-relation polarity is preserved on the nose, and the graph relations `G_f` — which may occur with either polarity — back-translate into *equalities* and so vanish. *Non-claims*: no equality-occurrence condition, and no theory/set-level Lyndon separation (false for Lω₁ω by López-Escobar's Theorem 6.3). Craig is recoverable from it (`craig_of_lyndon_interpolation`). Axioms exactly `[propext, Classical.choice, Quot.sound]`.
-  </details>
+| Result | In Lean | Scope |
+|---|---|---|
+| **Craig** — interpolants whose function and relation symbols each lie in the intersection of the two roots' occurrence sets; also the PC-separation form | `craig_interpolation`, `craig_pcSeparation` | arbitrary language, no hypotheses |
+| **Lyndon** — the polarity refinement: positively occurring relation symbols bounded by the roots' shared positive occurrences, negatively occurring ones by their shared negative occurrences | `lyndon_interpolation` | arbitrary language; **relation polarity, logical equality** — equality belongs to neither polarity class and is unconstrained, so López-Escobar's clause (.3) is *not* claimed |
+| **Malitz** — the quantifier-class refinement: an entailment with universal consequent has a universal interpolant | `malitz_interpolation` | **universal consequent, relational language** of arbitrary cardinality |
 
 ### Definability and undefinability
 
-- **Malitz universal interpolation** — the *quantifier-class* refinement, over a **relational** language of arbitrary cardinality (`malitz_interpolation`): if the consequent is universal (∀₁ — every quantifier occurrence a positive `∀`; countable conjunctions and disjunctions are not quantifiers), the interpolant may be taken universal too, with the ordinary shared-occurrence bounds. López-Escobar / Malitz Theorem 4.5, function-free case. *Non-claims*: the relative existential preservation theorem (4.6) is **not** proved (#41), nor any theory-level form.
-- **Boundedness and undefinability of well-ordering** — over an *arbitrary* language with a distinguished binary relation, if an Lω₁ω sentence φ has models with strictly increasing chains of every countable length, then some model of φ carries a **relation-preserving map from ℚ** (`exists_model_relPreserving`; Marker, Theorem 4.26). This is deliberately the *raw positive* conclusion — for all q < r, `RelMap lt ![f q, f r]` — with **no injectivity claimed**; injectivity is a separate corollary under irreflexivity of the interpreted relation (`RelPreserving.injective_of_irreflexive`), and it is automatic in the boundedness corollary, where the relation is well-ordered. The **strict-order corollaries**: if every model interprets the relation well-foundedly, some countable ordinal chains into no model (`wellFounded_boundedness`); if every model interprets it as a well-order, a single countable ordinal strictly bounds every model's order type (`wellOrder_type_boundedness`; Marker, Corollary 4.27); hence no sentence has as models exactly the well-orders (`wellOrdering_undefinable`).
-  <details><summary>Proof route</summary>
-
-  The engine is a dedicated consistency property forcing the positive rational diagram (base diagram + finite remainders with α-margin gap witnesses at every α < ω₁), completed and realized by the **same generated-universe Henkin kernel built for Craig interpolation** (fair enumeration + quotient term model, `Methods/Henkin/CountableCompletion/`), with symbol countability removed by the generated sublanguage and function symbols by the **Craig relationalization layer reused verbatim** (the distinguished relation survives both translations definitionally). *Non-claims*: the stronger induced-copy / relational-embedding conclusion (complete <-diagram, negative atoms included) is tracked separately as issue #31 and is not part of these theorems; the Keisler-style elementary-end-extension results around Corollary 4.34 are a different machine, tracked as issue #32. Axioms exactly `[propext, Classical.choice, Quot.sound]`.
-  </details>
-- **The López–Escobar theorem** — over a countable relational vocabulary, a class of coded countable structures is Borel and isomorphism-invariant **iff** it is the model class of a single Lω₁ω-sentence (`lopezEscobar_iff`; the hard direction is `lopez_escobar`, the easy one `lopezEscobar_easy`), equivalently with invariance under the logic action of S∞ = `Equiv.Perm ℕ` (`lopezEscobar_action_iff`), so the Borel invariant classes are exactly the range of `ModelsOf` (`invariantMeasurableSets_eq_range_modelsOf`, issue #28's collection equality).
-  <details><summary>Proof route</summary>
-
-  The hard direction is Marker's route (Theorem 4.25), *not* a Borel-hierarchy induction — which would not preserve invariance: the class and its complement are analytic, hence branch projections of cylinder trees along a query-code closed embedding; each tree is coded as a PC class over two **disjoint tagged copies** of a functional witness vocabulary, relationalized through the **Craig relationalization layer reused verbatim**; the two presentations have no common model (glue two tagged expansions of a shared base model, take a countable fragment-elementary substructure, and one code would lie in both the class and its complement); Craig PC-separation then yields a shared-vocabulary sentence which, by the occurrence calculus, mentions only graph images of base relations and so decodes back to Lω₁ω over the base language. Isomorphism invariance is consumed **exactly once** (the reduct-class converse, inside the disjointness lemma) and downward Löwenheim–Skolem exactly once; both final inclusions use only the invariance-free forward presentation. Axioms exactly `[propext, Classical.choice, Quot.sound]`.
-  </details>
-- **Non-Borelness of the countable well-order class** — the class WO of codes whose distinguished binary relation well-orders the carrier is **not Borel** in the logic space (`wellOrderClass_not_measurableSet`), the descriptive-set-theoretic payoff of Marker's Corollary 4.27.
-  <details><summary>Proof route</summary>
-
-  Were WO Borel, López–Escobar would present it as `ModelsOf φ` — but only over *coded* structures, whose carrier is ℕ, so the sentence is conjoined with the Lω₁ω infiniteness axiom (`infiniteAxiom`) to keep finite models from escaping. Any model of the conjunction whose relation fails to be a well-order fails by two incomparable unequal elements or by an infinite descending chain; seeding a countable fragment-elementary substructure with those witnesses preserves the failure and the added conjunct keeps the substructure infinite, so it transports to a code in WO that is not a well-order. Hence every model of the conjunction is well-ordered, Corollary 4.27 bounds all their order types by a single countable α, and the comparison structure of type α + ω transported to ℕ exceeds that bound. This is the cheap half of Π¹₁-completeness of WO; many-one hardness is not claimed. Axioms exactly `[propext, Classical.choice, Quot.sound]`.
-  </details>
+| Result | In Lean | Scope |
+|---|---|---|
+| Chains of every countable length force a model carrying a relation-preserving map from ℚ (Marker 4.26) | `exists_model_relPreserving` | arbitrary language; raw positive form, **no injectivity claimed** |
+| A uniform countable bound on the order types of well-ordered models (Marker 4.27) | `wellOrder_type_boundedness` | |
+| No Lω₁ω-sentence has as models exactly the well-orders | `wellOrdering_undefinable` | |
+| **López–Escobar** — a class of coded countable structures is Borel and isomorphism-invariant **iff** it is the model class of a single Lω₁ω-sentence; equivalently the invariant Borel classes are exactly the range of `ModelsOf` | `lopezEscobar_iff`, `lopezEscobar_action_iff` | **countable relational vocabulary** |
+| The coded well-order class WO is not Borel in the logic space | `wellOrderClass_not_measurableSet` | the cheap half of Π¹₁-completeness; many-one hardness not claimed |
 
 ### Descriptive set theory
 
-- **Silver's theorem & the Silver–Burgess dichotomy** — A Borel equivalence relation on a Polish space has countably many classes or a perfect set of pairwise-inequivalent points (`gandy_harrington_for_relation`); on a standard Borel space the quotient is ≤ ℵ₀ or exactly 2^ℵ₀ (`silverBurgessDichotomy`).
-  <details><summary>Proof route</summary>
+| Result | In Lean | Scope |
+|---|---|---|
+| **Silver's theorem** — a Borel equivalence relation on a Polish space has countably many classes or a perfect set of pairwise-inequivalent points | `gandy_harrington_for_relation` | via Miller's category route (G₀-dichotomy, Kuratowski–Ulam, Mycielski — all formalized here) |
+| **The Silver–Burgess dichotomy** — on a standard Borel space the quotient is ≤ ℵ₀ or exactly 2^ℵ₀ | `silverBurgessDichotomy` | |
+| **Morley counting** — countable models of an Lω₁ω-sentence number ≤ ℵ₁ or exactly 2^ℵ₀ | `morley_counting` | parametrized by the dichotomy, which this repository proves |
+| Isomorphism is Borel under bounded Scott height | `iso_borel_of_bounded_scottHeight` | |
 
-  Proved via Miller's classical category route: the Kechris–Solecki–Todorcevic G₀-dichotomy (positivity ideals, Lusin separation, fusion), Miller's G_S independence lemma, Kuratowski–Ulam, and Mycielski's theorem — all formalized here.
-  </details>
-- **Morley counting** — The number of isomorphism classes of countable models of an Lω₁ω sentence is ≤ ℵ₁ or exactly 2^ℵ₀ (`morley_counting`, parametrized by the dichotomy; unconditional via `silverBurgessDichotomy`).
+### Fragments and admissibility
 
-## Scope and Boundaries
+An honest coded-fragment interface, with the HF fragment as its regression instance.
 
-**Proved.** L∞ω and Lω₁ω syntax and semantics; Scott analysis and Karp's theorem; model existence
-via consistency properties and downward Löwenheim–Skolem; Hanf numbers, including
-`Hanf(Lω₁ω) = ℶ_ω₁`; Craig and Lyndon interpolation, and Malitz universal interpolation for relational languages; undefinability of well-ordering and
-non-Borelness of the well-order class; López–Escobar; the descriptive set theory of the space of
-countable structures, including Silver's theorem and the Silver–Burgess dichotomy.
+| Result | In Lean | Scope |
+|---|---|---|
+| **Coded-family presentations** — a family is a *code together with its decoding*, its index type supplied by the code and carrying an explicit `Encodable`, and its infinitary status a certificate the presentation grants | `AdmissiblePresentation`, `CodedFamily` | |
+| **Honest coded closure** — a `Fragment` closed upward under exactly the families a presentation certifies, and under nothing else. Deliberately carries **no compactness data**: compactness is a theorem with hypotheses, not a field | `AdmissibleFragment` | |
+| **The HF fragment** — the first-order image inside Lω₁ω, `L_HF = L_ωω`, as an instance with no adapter and no widening; its coded families are uninhabited, so both upward obligations are vacuous | `hfFragment`, `hfAdmissibleFragment` | sentence slice proved equal to `finitaryFragment` |
+| **HF compactness**, *derived* from Mathlib's first-order compactness rather than assumed | `finitaryFragment_compact` | the semantic step is at `Language.{0,0}`; the syntax layer is universe-polymorphic |
 
-Section [Main Results](#main-results) names the endpoints; the
-[blueprint](https://cameronfreer.github.io/infinitary-logic/blueprint/) states them.
-
-**Not proved, and not claimed.** Some interfaces are deliberately conditional — they package a
-hypothesis rather than discharge it. These are labelled as such at their definitions, and the
-outstanding work is tracked in the issues:
-
-| Interface | Status |
-|---|---|
-| Barwise compactness, Nadel bound | carried as a structure field / typeclass hypothesis; honest foundations tracked in [#18](https://github.com/cameronfreer/infinitary-logic/issues/18)–[#20](https://github.com/cameronfreer/infinitary-logic/issues/20) |
-| `AdmissibleFragmentCore.hf`, `FullBarwiseFragment`, `CodedIn` | legacy placeholders, marked in source, awaiting the replacement interface |
-| Malitz relative preservation (Thm 4.6) | not proved; tracked in [#41](https://github.com/cameronfreer/infinitary-logic/issues/41) |
-
-**Axioms.** Headline results depend only on `propext`, `Classical.choice` and `Quot.sound`; this is
-enforced in CI by `scripts/check_headline_axioms.sh`. Two dependency-cone guards additionally certify
-*proof architecture* where an axiom scan cannot: that the Henkin route consumes no maximal-consistency
-machinery, and that the Morley–Hanf cone avoids the legacy Erdős–Rado ladder.
-
-**Theory-level forms.** Interpolation and preservation results here are **sentence-level**. The
-theory-level analogues are false for Lω₁ω and are never claimed.
-
-## Repository Guide
-
-- `InfinitaryLogic/Linf/` — L∞ω syntax, semantics, operations, countability predicates, quantifier rank
-- `InfinitaryLogic/Lomega1omega/` — Lω₁ω syntax, semantics, operations, embedding into L∞ω, quantifier rank
-- `InfinitaryLogic/Scott/` — Atomic diagrams, back-and-forth equivalence, Scott formulas/sentences, rank, height (`Height/Defs`, `Height/CanonicalSentence`, `Height/RankBounds`)
-- `InfinitaryLogic/Karp/` — Karp's theorem and corollaries for countable structures
-- `InfinitaryLogic/Methods/Henkin/` — Consistency properties, Henkin construction, model existence, completeness, omitting types; `Henkin/CountableCompletion/` is the generated-universe completion kernel (fair enumeration + quotient term model) shared by Craig interpolation and the well-ordering arc
-- `InfinitaryLogic/Methods/Interpolation/` — Craig interpolation (inseparability engine, relationalization layer, PC separation) and its **Lyndon layer**: the polarity-refined separator class and side bounds, the paired family and consistency property, the signed root gate, and the relationalization polarity gates
-- `InfinitaryLogic/Methods/WellOrdering/` — The issue #12 arc: rational-constant coding, base diagram and gap witnesses, the fifteen closure fields, model extraction, and the boundedness/undefinability endpoints
-- `InfinitaryLogic/Methods/LopezEscobar/` — The issue #10 arc: the functional witness language and numeral terms, the functional Θ and its relationalized PC sentence, the standard model and code class, the PC-membership interface with tagged gluing and the disjointness lemma (the sole downward Löwenheim–Skolem consumer), and the shared-symbol decoder with the hard theorem
-- `InfinitaryLogic/Methods/EM/` — Indiscernible sequences, EM templates, EM realization
-- `InfinitaryLogic/ModelTheory/` — Löwenheim–Skolem, Hanf numbers, counting models
-- `InfinitaryLogic/Admissible/` — Admissible-fragment **scaffolding** (`Fragment/Core`, `Fragment/Compact`), conditional compactness interfaces, literature-faithful interface (`Barwise/Data`), an externally sound proof system, and the conditional Nadel interface. The honest foundations are tracked in [#18](https://github.com/cameronfreer/infinitary-logic/issues/18)–[#20](https://github.com/cameronfreer/infinitary-logic/issues/20).
-- `InfinitaryLogic/Descriptive/` — Borel complexity of the structure space, satisfaction, isomorphism; counting dichotomy, finite-carrier analysis; and a reusable DST library: Cantor-antichain extraction (`CantorAntichain`), Mycielski (`Mycielski`), Kuratowski–Ulam (`KuratowskiUlam`), the `G_S` graphs (`GSGraph`), and the classical G₀-dichotomy machinery (`G0Dichotomy`, `G0Fusion`); the query-code closed embedding and analytic tree normal form (`QueryCode`, `AnalyticTree`) and the López–Escobar facade (`LopezEscobar`)
-- `InfinitaryLogic/Conditional/` — the Silver chain and the Morley–Hanf chain, including the unconditional `morley_hanf` endpoint
+**Barwise compactness and the Nadel bound are not proved**, and are not claimed. The interfaces
+carrying them (`Admissible/Barwise/*`, `Admissible/Compactness.lean`, `Admissible/Nadel.lean`, and the
+placeholders `AdmissibleFragmentCore.hf`, `FullBarwiseFragment`, `FiniteCompactFragment.CodedIn`) package a hypothesis rather
+than discharging it, are labelled as such in source, and are being replaced by the interface above.
+Progress is tracked in [#18](https://github.com/cameronfreer/infinitary-logic/issues/18)–[#20](https://github.com/cameronfreer/infinitary-logic/issues/20).
+Malitz's relative preservation theorem (4.6) is likewise not proved
+([#41](https://github.com/cameronfreer/infinitary-logic/issues/41)).
 
 ## Getting Started
 
@@ -140,49 +93,42 @@ To use in your own project, add the dependency to your `lakefile` and import a b
 ```lean
 import InfinitaryLogic.Core         -- syntax, semantics, Scott, Karp
 import InfinitaryLogic.Countable    -- model existence, LS, Hanf, EM chain
-import InfinitaryLogic.Admissible   -- admissible-fragment interfaces (conditional)
+import InfinitaryLogic.Admissible   -- coded-fragment interface, HF; legacy conditional interfaces
 import InfinitaryLogic.Descriptive  -- descriptive set theory of model classes
 import InfinitaryLogic.All          -- all of the above
 import InfinitaryLogic.Conditional  -- Silver chain + Morley-Hanf theorem (both proved)
 import InfinitaryLogic.Everything   -- everything including Conditional and legacy off-path modules
 ```
 
-`import InfinitaryLogic` loads the default surface (`InfinitaryLogic.All`). Use
-`InfinitaryLogic.Everything` for the remaining `Conditional/` modules; work-in-progress frontier
-modules live in the separate non-default `InfinitaryLogicWIP` target, so they never enter the
-default surface. `InfinitaryLogic/Basic.lean` is a deprecated redirect to `All`.
+`import InfinitaryLogic` loads the default surface (`InfinitaryLogic.All`). Work-in-progress frontier
+modules live in the separate non-default `InfinitaryLogicWIP` target, so they never enter it.
 
-CI builds the public and frontier targets and runs the axiom, dependency-cone, and blueprint
-guards. Operational notes on the
-build and release process are in [`docs/build-and-release-notes.md`](docs/build-and-release-notes.md).
+## Repository Guide
 
-### Key Declarations
+| Directory | Contents |
+|---|---|
+| `Linf/`, `Lomega1omega/` | the two syntaxes — formulas, semantics, operations, the embedding between them, countability predicates, quantifier rank |
+| `Scott/`, `Karp/` | atomic diagrams, back-and-forth equivalence, Scott formulas and sentences, rank and height; Karp's theorem |
+| `Methods/` | the proof engines: the Henkin/consistency-property kernel, interpolation, the well-ordering machine, López–Escobar, Ehrenfeucht–Mostowski |
+| `ModelTheory/` | Löwenheim–Skolem, Hanf numbers and the Hanf spectrum, small models, counting |
+| `Admissible/` | the coded-fragment interface and HF (above), plus the legacy conditional scaffolding |
+| `Descriptive/` | the Borel structure space and a reusable descriptive-set-theory library — Cantor-antichain extraction, Mycielski, Kuratowski–Ulam, the G₀ dichotomy and fusion |
+| `Combinatorics/` | infinite Ramsey and the bounded finite-arity Erdős–Rado chain |
+| `Conditional/` | the Silver and Morley–Hanf chains, including the unconditional `morley_hanf` endpoint (the directory name is historical) |
 
-- `BFEquiv` — Back-and-forth equivalence between tuples, indexed by ordinals
-- `scottSentence` — The Scott sentence of a countable structure
-- `scottRank` — The Scott rank (ordinal measuring complexity of a structure)
-- `karp_theorem_w` — Karp's theorem (potential isomorphism ↔ L∞ω-equivalence)
-- `model_existence` — Model existence for Lω₁ω consistency properties
-- `gandy_harrington_for_relation` — Silver's theorem for Borel equivalence relations on Polish spaces (proved; classical G₀-dichotomy route)
-- `silverBurgessDichotomy` — The Silver–Burgess dichotomy on standard Borel spaces (proved)
-- `counting_coded_models_dichotomy` — Counting dichotomy for coded ℕ-models (parametrized by `SilverBurgessDichotomy`, which the repository proves)
-- `morley_counting` — Morley's counting theorem: ≤ ℵ₁ or 2^ℵ₀ iso classes of countable models (parametrized by `SilverBurgessDichotomy`; unconditional via `silverBurgessDichotomy`)
-- `iso_borel_of_bounded_scottHeight` — Isomorphism is Borel under bounded Scott height
-- `morley_hanf` — The Morley–Hanf theorem: ℶ_ω₁ is a Hanf bound for every Lω₁ω sentence (proved, no hypotheses)
-- `Lomega1omegaHanfNumber_eq_beth_omega1` — **The exact Hanf number**: Hanf(Lω₁ω) = ℶ_ω₁ (proved; upper half `morley_hanf`, lower half the Exercise 5.3 beth ladder over the von Neumann hierarchy)
-- `exists_small_model_of_hasArbLargeModels` — **Small models**: models of every infinite size realizing countably many complete types (proved, arbitrary languages)
-- `exists_complete_sentence_of_lomega1omegaSmall` / `exists_complete_kCategorical_of_hasArbLargeModels` — **Complete sentences and categoricity**: small models lie in complete subclasses; κ-categorical sentences have κ-categorical complete completions
-- `hanfNumber_le_beth_omega1` / `Lomega1omegaHanfNumber_le_beth_omega1` — Per-sentence and global Hanf-number upper bounds
-- `morley_hanf_theory` — The Morley–Hanf theorem for countable Lω₁ω-theories
-- `craig_interpolation` — **Craig interpolation**: sharp shared-vocabulary interpolants for Lω₁ω over arbitrary languages (proved, no hypotheses)
-- `craig_pcSeparation` / `craig_pcSeparation_relational` — The PC-separation (disjunction) forms
-- `lyndon_interpolation` / `lyndon_interpolation_relational` — **Lyndon interpolation**: polarity-refined interpolants (positive/negative occurrences separately bounded) over arbitrary languages; relation-polarity / logical-equality form, equality unconstrained
-- `malitz_interpolation` — **Malitz universal interpolation**: an entailment with universal consequent has a universal interpolant, over relational languages
-- `exists_model_relPreserving` — **Rational embedding from long chains** (Marker 4.26): chains of every countable length force a model with a relation-preserving map from ℚ (raw positive form; arbitrary languages)
-- `wellOrder_type_boundedness` — **Boundedness of well-ordered models** (Marker 4.27): a uniform countable bound on the order types of well-ordered models
-- `wellOrdering_undefinable` — **Undefinability of well-ordering**: no Lω₁ω sentence has as models exactly the well-orders
-- `lopez_escobar` / `lopezEscobar_iff` / `lopezEscobar_action_iff` — **López–Escobar**: invariant Borel classes of coded countable structures are exactly the Lω₁ω-definable ones (countable relational vocabularies)
-- `wellOrderClass_not_measurableSet` — **Non-Borelness of the countable well-order class**: WO is not Borel in the logic space
+## Verification
+
+The tree is sorry-free, and the headline results depend on exactly `propext`, `Classical.choice` and
+`Quot.sound`. CI builds the public and frontier targets and enforces both the proof boundary and the
+axiom boundary on every commit.
+
+Three dependency-cone guards additionally certify *proof architecture*, where an axiom scan cannot
+reach: that the Henkin route consumes no maximal-consistency machinery, that the Morley–Hanf cone
+avoids the legacy Erdős–Rado ladder, and that HF compactness genuinely consumes Mathlib's compactness
+theorem while touching none of the legacy admissible structures.
+
+Operational notes on building and releasing are in
+[`docs/build-and-release-notes.md`](docs/build-and-release-notes.md).
 
 ## References
 
