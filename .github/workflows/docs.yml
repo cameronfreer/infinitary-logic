@@ -103,6 +103,9 @@ jobs:
       - name: Build homepage
         run: |
           cd home_page
+          # Stamp the exact commit this deployment was built from, so the live page can be
+          # checked against the run's captured headSha without inferring it from content.
+          printf '\ndeployed_sha: "%s"\n' "$GITHUB_SHA" >> _config.yml
           bundle exec jekyll build --baseurl "/infinitary-logic" --destination ../_site
 
       - name: Assemble site

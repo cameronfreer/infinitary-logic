@@ -27,3 +27,6 @@ A Lean 4 formalization of **infinitary logic** (L<sub>&infin;&omega;</sub> and L
 - [Releases](https://github.com/cameronfreer/infinitary-logic/releases) &middot; [How to cite](https://github.com/cameronfreer/infinitary-logic/blob/master/CITATION.cff)
 
 *Hypotheses and directory layout are maintained in the README, proof narratives in the blueprint, so neither can drift out of sync here.*
+
+{% if site.deployed_sha %}<!-- deployed-source-sha: {{ site.deployed_sha }} -->
+<p><sub>Built from commit <a href="https://github.com/cameronfreer/infinitary-logic/commit/{{ site.deployed_sha }}"><code>{{ site.deployed_sha | slice: 0, 7 }}</code></a>.</sub></p>{% endif %}
