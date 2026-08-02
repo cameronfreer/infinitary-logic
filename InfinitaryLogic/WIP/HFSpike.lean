@@ -3,6 +3,7 @@ Copyright (c) 2026 Cameron Freer. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
+import InfinitaryLogic.WIP.HFFragment
 import InfinitaryLogic.Lomega1omega.Theory
 import InfinitaryLogic.Lomega1omega.Operations
 import Mathlib.ModelTheory.Satisfiability
@@ -31,14 +32,28 @@ rather than be mutated into something its fields cannot honestly support.
 
 namespace FirstOrder.Language
 
+universe u v
+
 variable {L : Language.{0, 0}}
 
 /-- **The finitary fragment**: the image of first-order syntax in `Lω₁ω`.  This is `L_HF = L_ωω`. -/
-def finitaryFragment (L : Language.{0, 0}) : Set L.Sentenceω :=
+def finitaryFragment (L : Language.{u, v}) : Set L.Sentenceω :=
   Set.range Sentence.toLω
 
-theorem mem_finitaryFragment_iff {φ : L.Sentenceω} :
+theorem mem_finitaryFragment_iff {L : Language.{u, v}} {φ : L.Sentenceω} :
     φ ∈ finitaryFragment L ↔ ∃ φ₀ : L.Sentence, φ₀.toLω = φ := Iff.rfl
+
+/-- **The oracle, condition 1.**  The sentence slice of `hfFragment` is exactly `finitaryFragment`.
+Any proposed `AdmissibleFragment` whose HF instance fails this is wrong.
+
+Both sides are now universe-general; only `finitaryFragment_compact` below stays at `{0, 0}`, and
+that restriction belongs to Mathlib's compactness theorem, not to the syntax. -/
+theorem sentence_slice_hfFragment (L : Language.{u, v}) :
+    {φ : L.Sentenceω | (⟨0, φ⟩ : Σ n, L.BoundedFormulaω Empty n) ∈ hfFragment L} =
+      finitaryFragment L := by
+  ext φ
+  simp only [Set.mem_setOf_eq, Fragment.mem_def, mem_finitaryFragment_iff]
+  exact Iff.rfl
 
 /-- The **full preimage theory** — every first-order sentence whose image lies in `T`, not one
 chosen representative per member.  Choosing representatives would need `Classical.choice` and would

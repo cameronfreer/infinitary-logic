@@ -3,7 +3,7 @@ Copyright (c) 2026 Cameron Freer. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
-import InfinitaryLogic.WIP.HFSpike
+import InfinitaryLogic.Lomega1omega.FirstOrderImage
 import InfinitaryLogic.Lomega1omega.Fragment
 
 /-!
@@ -30,70 +30,26 @@ that node is outside the image.  Unsatisfiable, not merely inconvenient.
 
 namespace FirstOrder.Language
 
-variable {L : Language.{0, 0}}
+universe u v
 
-/-- The all-arity `toLω`-image. -/
-def hfSet (L : Language.{0, 0}) : Set (Σ n, L.BoundedFormulaω Empty n) :=
-  Set.range fun p : Σ n, L.BoundedFormula Empty n => ⟨p.1, p.2.toLω⟩
+variable {L : Language.{u, v}}
 
-theorem mem_hfSet_iff {n : ℕ} {φ : L.BoundedFormulaω Empty n} :
-    (⟨n, φ⟩ : Σ n, L.BoundedFormulaω Empty n) ∈ hfSet L ↔
-      ∃ φ₀ : L.BoundedFormula Empty n, φ₀.toLω = φ := by
-  constructor
-  · rintro ⟨⟨m, φ₀⟩, hp⟩
-    obtain ⟨rfl, h⟩ := Sigma.mk.inj_iff.mp hp
-    exact ⟨φ₀, eq_of_heq h⟩
-  · rintro ⟨φ₀, rfl⟩
-    exact ⟨⟨n, φ₀⟩, rfl⟩
+/-- The all-arity first-order image: every formula containing no infinitary node. -/
+def hfSet (L : Language.{u, v}) : Set (Σ n, L.BoundedFormulaω Empty n) :=
+  {p | p.2.IsFirstOrder}
 
-/-- **The HF fragment.**  All five closure fields are discharged by inverting `toLω` on the
-constructor: three structurally, two vacuously. -/
-def hfFragment (L : Language.{0, 0}) : Fragment L where
+@[simp] theorem mem_hfSet_iff {n : ℕ} {φ : L.BoundedFormulaω Empty n} :
+    (⟨n, φ⟩ : Σ n, L.BoundedFormulaω Empty n) ∈ hfSet L ↔ φ.IsFirstOrder := Iff.rfl
+
+/-- **The HF fragment.**  Each field is now one appeal to the first-order-image API: three
+structural equations and the two negative facts.  Compare the five hand-rolled constructor
+inversions this replaces. -/
+def hfFragment (L : Language.{u, v}) : Fragment L where
   toSet := hfSet L
-  imp_left_mem := by
-    rintro n φ ψ h
-    obtain ⟨φ₀, hφ₀⟩ := mem_hfSet_iff.mp h
-    cases φ₀ with
-    | imp a b => exact mem_hfSet_iff.mpr ⟨a, by injection hφ₀⟩
-    | falsum => exact absurd hφ₀ (by simp [BoundedFormula.toLω])
-    | equal => exact absurd hφ₀ (by simp [BoundedFormula.toLω])
-    | rel => exact absurd hφ₀ (by simp [BoundedFormula.toLω])
-    | all => exact absurd hφ₀ (by simp [BoundedFormula.toLω])
-  imp_right_mem := by
-    rintro n φ ψ h
-    obtain ⟨φ₀, hφ₀⟩ := mem_hfSet_iff.mp h
-    cases φ₀ with
-    | imp a b => exact mem_hfSet_iff.mpr ⟨b, by injection hφ₀⟩
-    | falsum => exact absurd hφ₀ (by simp [BoundedFormula.toLω])
-    | equal => exact absurd hφ₀ (by simp [BoundedFormula.toLω])
-    | rel => exact absurd hφ₀ (by simp [BoundedFormula.toLω])
-    | all => exact absurd hφ₀ (by simp [BoundedFormula.toLω])
-  all_mem := by
-    rintro n φ h
-    obtain ⟨φ₀, hφ₀⟩ := mem_hfSet_iff.mp h
-    cases φ₀ with
-    | all a => exact mem_hfSet_iff.mpr ⟨a, by injection hφ₀⟩
-    | falsum => exact absurd hφ₀ (by simp [BoundedFormula.toLω])
-    | equal => exact absurd hφ₀ (by simp [BoundedFormula.toLω])
-    | rel => exact absurd hφ₀ (by simp [BoundedFormula.toLω])
-    | imp => exact absurd hφ₀ (by simp [BoundedFormula.toLω])
-  -- vacuous: `toLω` emits no infinitary constructor
-  iInf_mem := by
-    rintro n φs h
-    obtain ⟨φ₀, hφ₀⟩ := mem_hfSet_iff.mp h
-    cases φ₀ <;> exact absurd hφ₀ (by simp [BoundedFormula.toLω])
-  iSup_mem := by
-    rintro n φs h
-    obtain ⟨φ₀, hφ₀⟩ := mem_hfSet_iff.mp h
-    cases φ₀ <;> exact absurd hφ₀ (by simp [BoundedFormula.toLω])
-
-/-- **The oracle, condition 1.**  The sentence slice of `hfFragment` is exactly the spike's
-`finitaryFragment`.  Any proposed `AdmissibleFragment` whose HF instance fails this is wrong. -/
-theorem sentence_slice_hfFragment :
-    {φ : L.Sentenceω | (⟨0, φ⟩ : Σ n, L.BoundedFormulaω Empty n) ∈ hfFragment L} =
-      finitaryFragment L := by
-  ext φ
-  simp only [Set.mem_setOf_eq, Fragment.mem_def, mem_finitaryFragment_iff]
-  exact mem_hfSet_iff
+  imp_left_mem h := (BoundedFormulaω.isFirstOrder_imp_iff.mp h).1
+  imp_right_mem h := (BoundedFormulaω.isFirstOrder_imp_iff.mp h).2
+  all_mem h := BoundedFormulaω.isFirstOrder_all_iff.mp h
+  iInf_mem h := absurd h (BoundedFormulaω.not_isFirstOrder_iInf _)
+  iSup_mem h := absurd h (BoundedFormulaω.not_isFirstOrder_iSup _)
 
 end FirstOrder.Language
