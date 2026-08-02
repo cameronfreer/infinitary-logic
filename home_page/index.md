@@ -5,7 +5,7 @@ A Lean 4 formalization of **infinitary logic** (L<sub>&infin;&omega;</sub> and L
 
 ## Status
 
-**Sorry-free**, with every headline result depending on exactly the three standard axioms `propext`, `Classical.choice`, `Quot.sound`. Latest release: [**v1.7.0**](https://github.com/cameronfreer/infinitary-logic/releases/latest).
+**Sorry-free**, with every headline result depending on exactly the three standard axioms `propext`, `Classical.choice`, `Quot.sound`. See the [latest release](https://github.com/cameronfreer/infinitary-logic/releases/latest).
 
 ## Headline results
 
@@ -13,7 +13,7 @@ A Lean 4 formalization of **infinitary logic** (L<sub>&infin;&omega;</sub> and L
 - **Model existence and L&ouml;wenheim&ndash;Skolem** &mdash; consistency properties, the Henkin construction, omitting types, Karp completeness, and downward L&ouml;wenheim&ndash;Skolem in both the sentence and fragment-elementary forms.
 - **Hanf numbers** &mdash; &beth;<sub>&omega;<sub>1</sub></sub> is a Hanf bound for every L<sub>&omega;<sub>1</sub>&omega;</sub>-sentence over an arbitrary language, with no side hypotheses, and it is sharp: Hanf(L<sub>&omega;<sub>1</sub>&omega;</sub>) = &beth;<sub>&omega;<sub>1</sub></sub>.
 - **Small models, complete sentences, categoricity** &mdash; models of every infinite size realizing countably many types; small models lie in complete subclasses; &kappa;-categorical sentences have &kappa;-categorical complete completions.
-- **Craig and Lyndon interpolation** &mdash; sharp shared-vocabulary interpolants over **arbitrary** languages, with the PC-separation form; and their polarity refinement, in which the interpolant's positively (negatively) occurring relation symbols are bounded by the roots' positive (negative) occurrences, equality being logical and unconstrained.
+- **Craig, Lyndon and Malitz interpolation** &mdash; sharp shared-vocabulary interpolants over **arbitrary** languages, with the PC-separation form; and their polarity refinement, in which the interpolant's positively (negatively) occurring relation symbols are bounded by the roots' positive (negative) occurrences, equality being logical and unconstrained; and Malitz's quantifier-class refinement, in which an entailment with universal consequent has a universal interpolant.
 - **Well-ordering** &mdash; a uniform countable bound on the order types of well-ordered models (Marker 4.27); no sentence defines the class of well-orders; and the coded well-order class is **not Borel**.
 - **Descriptive set theory** &mdash; the standard Borel structure space, Silver's theorem and the Silver&ndash;Burgess dichotomy (via Miller's category route, formalized here), and Morley counting.
 - **The L&oacute;pez&ndash;Escobar theorem** &mdash; a class of coded countable structures is Borel and isomorphism-invariant **iff** it is the model class of a single L<sub>&omega;<sub>1</sub>&omega;</sub>-sentence; equivalently, the invariant Borel classes are exactly the range of `ModelsOf`.

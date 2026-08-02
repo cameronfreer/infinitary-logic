@@ -21,7 +21,7 @@ The unconditional API is recovered via `countableRefinementHypothesis` (proved i
 
 ## Import Bundles
 
-`import InfinitaryLogic` loads the sorry-free surface (`InfinitaryLogic.All`).
+`import InfinitaryLogic` loads the default surface (`InfinitaryLogic.All`).
 For narrower entry points:
 - `InfinitaryLogic.Core`: syntax, semantics, Scott analysis, Karp's theorem
 - `InfinitaryLogic.Countable`: model existence, Löwenheim-Skolem, Hanf, counting, EM chain
@@ -30,7 +30,7 @@ For narrower entry points:
 - `InfinitaryLogic.Conditional`: the Silver chain and the Morley–Hanf chain (both proved;
   the directory name is historical)
 - `InfinitaryLogic.Everything`: everything including `Conditional/` and the
-  legacy off-path modules (not sorry-free)
+  legacy off-path modules
 
 ## Organization
 
