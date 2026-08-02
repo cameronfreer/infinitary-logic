@@ -41,3 +41,26 @@ git rev-parse master v1.8.0    # should agree
 
 A docs-only redeploy cannot disturb a release: the tag is immutable, and the deployment publishes
 whatever commit the branch names.
+
+## Verifying a docs deployment
+
+The generated page already exposes the commit it was built from, in the Jekyll stylesheet cache key:
+
+```
+assets/css/style.css?v=<sha>
+```
+
+so no extra status artifact is needed to tell a stale deployment from stale search indexing.
+
+**The check, in order:**
+
+1. Confirm the workflow run's `headSha` — a run captures `master` when it *starts*, and `master`
+   may advance during the ~30-minute build.
+2. Wait for deployment success.
+3. Confirm the live stylesheet revision equals that `headSha`.
+4. Check the expected content actually appears.
+
+This catches the three real failure modes — a tag-ref dispatch whose deploy step is rejected, a
+scheduled deployment that has since fallen behind, and a redispatch that was never made — without
+inferring a deployment bug from a SHA mismatch that has an ordinary explanation. A live page older
+than `master` is normally just a page built before the newer commits landed.
