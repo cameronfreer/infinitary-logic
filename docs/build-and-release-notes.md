@@ -44,21 +44,40 @@ whatever commit the branch names.
 
 ## Verifying a docs deployment
 
-The generated page already exposes the commit it was built from, in the Jekyll stylesheet cache key:
+The homepage stamps the commit it was built from. `docs.yml` appends `deployed_sha` to the Jekyll
+config at build time, and the page renders it twice:
 
+```html
+<!-- deployed-source-sha: <sha> -->
+<p><sub>Built from commit <a href=".../commit/<sha>"><code>1c35d3d</code></a>.</sub></p>
 ```
-assets/css/style.css?v=<sha>
+
+(The Jekyll stylesheet cache key, `assets/css/style.css?v=<sha>`, carries the same information and
+remains a fallback.)
+
+**Publication is successful when all three hold:**
+
+1. **The workflow run succeeded** — both jobs. The run-level status flickers back to `queued` between
+   the build job and the Pages deploy job, so a single mid-run poll can be misleading; check the jobs,
+   or wait for the run to reach `completed`.
+2. **The live `deployed-source-sha` equals the run's captured `headSha`.** A run captures `master`
+   when it *starts*, and `master` may advance during the ~30-minute build — so compare against the
+   run's `headSha`, not against current `master`.
+3. **That commit contains the intended public changes.** A correct deployment of the wrong commit is
+   still a failed publication.
+
+One command for (1) and (2):
+
+```bash
+RUN=<run-id>
+gh run view "$RUN" --json status,conclusion,headSha \
+  --jq '"status=\(.status) conclusion=\(.conclusion) headSha=\(.headSha)"'
+curl -s https://cameronfreer.github.io/infinitary-logic/ | grep -o "deployed-source-sha: [0-9a-f]*"
 ```
 
-so no extra status artifact is needed to tell a stale deployment from stale search indexing.
-
-**The check, in order:**
-
-1. Confirm the workflow run's `headSha` — a run captures `master` when it *starts*, and `master`
-   may advance during the ~30-minute build.
-2. Wait for deployment success.
-3. Confirm the live stylesheet revision equals that `headSha`.
-4. Check the expected content actually appears.
+**The live fetch is deliberately not in CI.** Pages and CDN propagation are not synchronous with
+deployment success, so a post-deploy assertion would be flaky for reasons unrelated to the release.
+The marker plus this manual check is robust; an intermittently red pipeline would not be.
 
 This catches the three real failure modes — a tag-ref dispatch whose deploy step is rejected, a
 scheduled deployment that has since fallen behind, and a redispatch that was never made — without
