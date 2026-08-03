@@ -228,3 +228,73 @@ step is compiler-checked against the one before:
 `AdmissibleFragmentCore.hf := Set.univ` stays labelled a **legacy placeholder** until this interface
 lands. It is not to be mutated into something its fields cannot honestly support; it is to be
 *replaced*, and its consumers migrated.
+
+---
+
+## 8. Proof-system consumer audit — the §5 step-5 gate
+
+**Status: frozen, verified against source. No migration code written.**
+
+§5 ends "Only then migrate the proof system." This section is that gate: a consumer-by-consumer
+record of which legacy `FiniteCompactFragment` capabilities the proof system *actually* consumes.
+It is deliberately stated in terms of declaration and constructor names rather than line numbers, so
+it does not rot as the files move.
+
+### The finding that governs the migration
+
+**The proof system never consumes the fields that make the legacy record dishonest.** `Derivable`'s
+infinitary constructors take membership as a *hypothesis*:
+
+```lean
+| iInf_intro : (∀ k, Derivable A T (φs k)) → .iInf φs ∈ A.formulas → …
+| iSup_intro (k : ℕ) : Derivable A T (φs k) → .iSup φs ∈ A.formulas → …
+```
+
+`closed_iInf` and `closed_iSup` — the *upward* closure over arbitrary external ℕ-indexed families
+that §1 shows an honest HF fragment cannot satisfy — are never used by the proof system at all.
+The migration is therefore not a weakening of the proof system: it was already compatible with an
+honest carrier, and only its **parameter type** was not.
+
+### Consumer table
+
+| Consumer | What it actually consumes |
+|---|---|
+| `Derivable` constructors | `_ ∈ A.formulas` only, in `assumption`, `falsum_elim`, `imp_intro`, `iInf_intro`, `iSup_intro`, `all_intro`, `eq_refl`, `eq_subst`, `em`. No closure field, no `compact`, no `height` |
+| `AConsistent` | `Derivable` only |
+| `Derivable.sound` | **Nothing.** No field of `A` is accessed anywhere in its proof; `A` is a phantom parameter, present only to index `Derivable`. Corroborated by `AConsistent.of_has_model`, which already marks its fragment-containment hypothesis unused |
+| Basic consistency lemmas | `closed_neg`, at exactly two sites — `AConsistent.no_contradiction` and `Derivable.inconsistent_of_both_extensions` — both wanting the same thing, `φ.not ∈ permitted` |
+| `ConsistencyBridge` | Substantial legacy closure/completeness machinery. **Quarantine for #19B**; not part of this tranche |
+| EM `FragmentAdapter` | `A.formulas` only inside `⊆ A.formulas` containment hypotheses, plus `barwise_compactness`. Never touches a closure field — containment and compactness are already separate arguments, so this is a signature change, not a proof restructure |
+
+### Frozen conclusions
+
+- `Derivable` and `AConsistent` need only `P : Set L.Sentenceω`.
+- **No closure field and no distinguished-element field is required.**
+- The two `closed_neg` consumers receive `φ.not ∈ P` explicitly.
+- Soundness is completely independent of fragment structure.
+- An optional `falsum_mem` hypothesis belongs only on a later theorem that demonstrably needs it —
+  **not in the carrier API.**
+
+### One correction, recorded because it is easy to re-derive wrongly
+
+`Derivable` does **not** implicitly require `falsum_mem`. In
+
+```lean
+| falsum_elim : Derivable A T .falsum → φ ∈ A.formulas → Derivable A T φ
+```
+
+the membership premise concerns the arbitrary *conclusion* `φ`, not `.falsum`. Likewise
+`AConsistent P T := ¬ Derivable P T .falsum` is definable without `.falsum ∈ P`: derivability
+*targets* carry no blanket membership premise, and `imp_elim` — which has no membership premise at
+all — derives `.falsum` from `φ.imp .falsum` and `φ`.
+
+The tempting misreading is to treat the membership premise of `falsum_elim` as guarding its
+hypothesis rather than its conclusion, and conclude that the carrier must distinguish `.falsum`.
+It must not.
+
+**The structural reason.** Across the whole inductive, a membership premise appears exactly where a
+rule's *conclusion* is a formula not already known to be permitted — the introduction rules, plus
+`falsum_elim` and `em`, whose conclusions are arbitrary. The eliminations whose conclusion is a
+component of something already derived (`imp_elim`, `not_not_elim`, `iInf_elim`, `iSup_elim`,
+`all_elim`) carry none. So membership guards conclusions, never hypotheses — which is precisely why
+no distinguished element is needed in the carrier.
