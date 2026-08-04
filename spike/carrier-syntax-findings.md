@@ -106,16 +106,24 @@ this formulation. The spike's forward induction `all` case consumes `forth`/`bac
 - **Rank transport is NOT an obstacle** — proved. One Mathlib gap surfaced: `Ordinal.lift_iSup`
   does not exist (the `Cardinal` version does); the spike hand-proves `lift_iSup_ord` via
   `mem_range_lift_of_le`. Candidate small upstream lemma.
-- **Mixed-carrier formulas.** The old `BoundedFormulaInf` lets *each node* pick its own index
-  type; the new syntax fixes one carrier per formula. Karp/Scott/toOmega all fit, but the
-  migration audit must check whether any production consumer genuinely mixes index types inside
-  one formula (expected resolution: reindex into a sum or Σ-carrier; `Σ J : Type uι, J`
-  reproduces the old cost exactly and only there).
+- **Mixed-carrier formulas — audit COMPLETE (PR #43 comment).** The old `BoundedFormulaInf`
+  lets *each node* pick its own index type; the new syntax fixes one carrier per formula. The
+  sweep of every node-construction site found exactly ONE genuine mixed-carrier construction in
+  the tree: the old Karp backward proof itself, i.e. precisely the site the spike re-founded at
+  `M ⊕ N`. No current production consumer requires a `Σ`-type escape hatch.
 - **Operations layer unspiked**: `mapTermRel`/`relabel`/`subst`/`mapFreeVars` for the new type
   (mechanical — one extra `ι`-family case each, no new universe content expected).
-- **Fragments unspiked**: `IsCountable`/`IsKappa`/`indexBound` — likely largely subsumed by
-  carriers (`Encodable ι` IS countability of branching), but Scott's `FormulaCode` counting
-  route needs a look.
+- **Fragments unspiked — and formula-level countability stays formula-sensitive.** A fixed
+  carrier does not mean every formula contains an infinitary node: a finitary formula at an
+  uncountable carrier is still countable. So `indexBound` becomes simpler but not global — its
+  only possible infinitary contribution is `Cardinal.mk ι`, giving `0` for formulas with no
+  infinitary node and `Cardinal.mk ι` once one occurs — and `IsCountable`/`IsKappa` cannot be
+  replaced by carrier constraints alone. `toOmega` covers the uniform `[Encodable ι]` case; the
+  proof-directed `ofCountable` still needs a compatibility wrapper that recurses structurally,
+  obtaining `Countable ι` only when it actually reaches an infinitary node. When that layer is
+  ported, add a regression: `toInf` at an arbitrary (possibly uncountable) carrier is
+  `IsCountable` and converts to `BoundedFormulaω`. Scott's `FormulaCode` counting route also
+  needs a look.
 - **Deprecations to carry into any production port**: `push_neg` → `push Not`;
   `Ordinal.bddAbove_range` → `Ordinal.bddAbove_of_small` / `Ordinal.le_iSup` (+ `small_max`,
   which is deliberately not an instance — lean4#2297).
