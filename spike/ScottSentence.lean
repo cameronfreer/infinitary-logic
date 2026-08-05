@@ -140,10 +140,10 @@ noncomputable def bfStab
       ∃ α : Ordinal.{uι}, ¬BFEquiv (L := L) α x.1 x.2.1 x.2.2},
     sInf {α : Ordinal.{uι} | ¬BFEquiv (L := L) α x.1.1 x.1.2.1 x.1.2.2}
 
+omit [L.IsRelational] in
 /-- **Stabilization**: back-and-forth equivalence at the stabilization level already implies
 equivalence at every level. The equivalence hierarchy of an arbitrary pair of structures
 collapses at a set-sized ordinal. -/
-omit [L.IsRelational] in
 theorem bfEquiv_bfStab_iff_all
     [Small.{uι} ((n : ℕ) × ((Fin n → M) × (Fin n → N)))]
     {n : ℕ} {a : Fin n → M} {b : Fin n → N} :
@@ -165,10 +165,10 @@ theorem bfEquiv_bfStab_iff_all
   · intro h
     exact h _
 
+omit [L.IsRelational] in
 /-- Self-stability of `M` at its own stabilization ordinal: level-`bfStab` equivalence of two
 `M`-tuples propagates to the successor level. This is the hypothesis the backward direction
 of the Scott sentence needs. -/
-omit [L.IsRelational] in
 theorem bfEquiv_bfStab_succ [Small.{uι} ((n : ℕ) × ((Fin n → M) × (Fin n → M)))]
     {n : ℕ} {a a' : Fin n → M}
     (h : BFEquiv (L := L) (bfStab.{u, v, uι} L M M) n a a') :
