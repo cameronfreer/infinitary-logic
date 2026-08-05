@@ -169,6 +169,20 @@ Deliberately `Encodable`, not `Countable`: no choice in the coding itself. -/
 def ofEncodable (ι : Type uι) [Encodable ι] : IndexCoding ι ℕ :=
   ⟨Encodable.encode, Encodable.decode, Encodable.encodek⟩
 
+/-- Extensionality: the coherence proof is irrelevant. -/
+@[ext] theorem ext {c₁ c₂ : IndexCoding ι κ} (he : c₁.encode = c₂.encode)
+    (hd : c₁.decode = c₂.decode) : c₁ = c₂ := by
+  cases c₁; cases c₂; cases he; cases hd; rfl
+
+/-- The coding induced by an equivalence of carriers; `decode` is total. -/
+def ofEquiv (e : ι ≃ κ) : IndexCoding ι κ :=
+  ⟨e, fun k => some (e.symm k), fun i => by simp⟩
+
+@[simp] theorem ofEquiv_symm_comp (e : ι ≃ κ) :
+    (ofEquiv e.symm).comp (ofEquiv e) = IndexCoding.id ι := by
+  refine ext (funext fun i => ?_) (funext fun i => ?_) <;>
+    simp [comp, ofEquiv, IndexCoding.id]
+
 /-- Total extension of a family along a coding: decoded indices select a branch,
 undecodable ones get the default. -/
 def pad {β : Sort*} (c : IndexCoding ι κ) (default : β) (f : ι → β) : κ → β :=
@@ -369,6 +383,21 @@ theorem reindex_semanticallyEquivalent_iff {P : Type w} [L.Structure P] (c : Ind
       (φ.Realize v xs ↔ ψ.Realize v xs) := by
   rw [realize_reindex, realize_reindex]
 
+/-- Equivalence codings round-trip syntactically. -/
+@[simp] theorem reindex_ofEquiv_symm_reindex_ofEquiv (e : ι ≃ κ)
+    (φ : L.BoundedFormulaIdx ι α n) :
+    reindex (.ofEquiv e.symm) (reindex (.ofEquiv e) φ) = φ := by
+  rw [← reindex_comp, IndexCoding.ofEquiv_symm_comp, reindex_id]
+
+/-- **Carrier equivalences are actual syntax equivalences.** In particular
+`reindexEquiv Equiv.ulift.symm` is the universe-lift operation on formulas, with its exact
+syntactic inverse. -/
+def reindexEquiv (e : ι ≃ κ) : L.BoundedFormulaIdx ι α n ≃ L.BoundedFormulaIdx κ α n where
+  toFun := reindex (.ofEquiv e)
+  invFun := reindex (.ofEquiv e.symm)
+  left_inv φ := reindex_ofEquiv_symm_reindex_ofEquiv e φ
+  right_inv φ := by simpa using reindex_ofEquiv_symm_reindex_ofEquiv e.symm φ
+
 /-! ## Gate 4 — Karp padding, now THROUGH the generic coded constructors
 
 The bespoke `Sum.elim`-with-`⊤` definitions are gone: `iInfLeft`/`iInfRight` are wrappers
@@ -471,6 +500,14 @@ the syntax. Compare `LinfEquivW`, where it lives inside every `iSup`/`iInf` node
 def InfEquivW (L : Language.{u, v}) (M N : Type w) [L.Structure M] [L.Structure N] : Prop :=
   ∀ ι : Type w, InfEquivAt L ι M N
 
+/-- **Expressive strength is contravariant in carrier codings**: a larger carrier can express
+every smaller-carrier sentence, so agreement at the larger carrier implies agreement at the
+smaller. -/
+theorem InfEquivAt.of_reindex {M N : Type w} [L.Structure M] [L.Structure N]
+    (c : IndexCoding ι κ) (h : InfEquivAt L κ M N) : InfEquivAt L ι M N := fun φ =>
+  ((BoundedFormulaIdx.realize_reindex c φ _ _).symm.trans
+    (h (BoundedFormulaIdx.reindex c φ))).trans (BoundedFormulaIdx.realize_reindex c φ _ _)
+
 section KarpViaCoding
 
 open BoundedFormulaIdx
@@ -553,14 +590,16 @@ private theorem potentialIso_agree_aux (P : PotentialIso L M N) :
 theorem PotentialIso.infEquivAt (P : PotentialIso L M N) (ι : Type uι) : InfEquivAt L ι M N :=
   fun φ => potentialIso_agree_aux P φ Fin.elim0 Fin.elim0 P.empty_mem
 
-/-- **Backward direction at the sum carrier**: sentence equivalence at the single carrier
-`M ⊕ N` already yields a potential isomorphism. The separating conjunctions are
-`iInfRight`/`iInfLeft`, i.e. `codediInf` at the canonical sum codings. -/
-theorem infEquivAt_sum_implies_potentialIso (h : InfEquivAt L (M ⊕ N) M N) :
+/-- **Backward direction at ANY common carrier**: the sum carrier is canonical but not
+essential. Sentence equivalence at any single carrier `κ` admitting codings of BOTH
+structures already yields a potential isomorphism — the separating conjunctions are
+`codediInf` along the two given codings. -/
+theorem infEquivAt_implies_potentialIso (cM : IndexCoding M κ) (cN : IndexCoding N κ)
+    (h : InfEquivAt L κ M N) :
     Nonempty (PotentialIso L M N) := by
   refine ⟨{
     family := { p : Σ n : ℕ, (Fin n → M) × (Fin n → N) |
-      ∀ φ : L.BoundedFormulaIdx (M ⊕ N) Empty p.1,
+      ∀ φ : L.BoundedFormulaIdx κ Empty p.1,
         φ.Realize Empty.elim p.2.1 ↔ φ.Realize Empty.elim p.2.2 }
     empty_mem := fun φ => h φ
     compatible := ?_
@@ -570,10 +609,10 @@ theorem infEquivAt_sum_implies_potentialIso (h : InfEquivAt L (M ⊕ N) M N) :
     intro p hp idx
     exact (realize_atomicFormulaIdx idx p.2.1).symm.trans
       ((hp _).trans (realize_atomicFormulaIdx idx p.2.2))
-  · -- forth: contradiction via an N-indexed conjunction — `iInfRight`
+  · -- forth: contradiction via an N-indexed conjunction coded along `cN`
     rintro ⟨n, a, b⟩ hmem m
     by_contra h_no
-    have h_no' : ∀ n' : N, ∃ φ : L.BoundedFormulaIdx (M ⊕ N) Empty (n + 1),
+    have h_no' : ∀ n' : N, ∃ φ : L.BoundedFormulaIdx κ Empty (n + 1),
         ¬ (φ.Realize Empty.elim (Fin.snoc a m) ↔ φ.Realize Empty.elim (Fin.snoc b n')) := by
       intro n'
       by_contra hn
@@ -581,7 +620,7 @@ theorem infEquivAt_sum_implies_potentialIso (h : InfEquivAt L (M ⊕ N) M N) :
       by_contra hφ
       exact hn ⟨φ, hφ⟩
     choose φ_bad h_bad using h_no'
-    have h_sep : ∀ n' : N, ∃ ψ : L.BoundedFormulaIdx (M ⊕ N) Empty (n + 1),
+    have h_sep : ∀ n' : N, ∃ ψ : L.BoundedFormulaIdx κ Empty (n + 1),
         ψ.Realize Empty.elim (Fin.snoc a m) ∧ ¬ ψ.Realize Empty.elim (Fin.snoc b n') := by
       intro n'
       by_cases hA : (φ_bad n').Realize Empty.elim (Fin.snoc a m)
@@ -591,20 +630,20 @@ theorem infEquivAt_sum_implies_potentialIso (h : InfEquivAt L (M ⊕ N) M N) :
           exact h_bad n' (iff_of_false hA hB)
         exact ⟨(φ_bad n').not, (realize_not).mpr hA, fun hc => (realize_not).mp hc hB⟩
     choose ψ hψ using h_sep
-    set χ : L.BoundedFormulaIdx (M ⊕ N) Empty n := existsLast (iInfRight ψ) with hχ
+    set χ : L.BoundedFormulaIdx κ Empty n := existsLast (codediInf cN ψ) with hχ
     have hM : χ.Realize Empty.elim a := by
       rw [hχ, realize_existsLast]
-      exact ⟨m, by rw [realize_iInfRight]; exact fun n' => (hψ n').1⟩
+      exact ⟨m, by rw [realize_codediInf]; exact fun n' => (hψ n').1⟩
     have hN : ¬ χ.Realize Empty.elim b := by
       rw [hχ, realize_existsLast]
       rintro ⟨y, hy⟩
-      rw [realize_iInfRight] at hy
+      rw [realize_codediInf] at hy
       exact (hψ y).2 (hy y)
     exact hN ((hmem χ).mp hM)
-  · -- back: the mirror via an M-indexed conjunction — `iInfLeft`
+  · -- back: the mirror via an M-indexed conjunction coded along `cM`
     rintro ⟨n, a, b⟩ hmem n'
     by_contra h_no
-    have h_no' : ∀ m : M, ∃ φ : L.BoundedFormulaIdx (M ⊕ N) Empty (n + 1),
+    have h_no' : ∀ m : M, ∃ φ : L.BoundedFormulaIdx κ Empty (n + 1),
         ¬ (φ.Realize Empty.elim (Fin.snoc a m) ↔ φ.Realize Empty.elim (Fin.snoc b n')) := by
       intro m
       by_contra hn
@@ -612,7 +651,7 @@ theorem infEquivAt_sum_implies_potentialIso (h : InfEquivAt L (M ⊕ N) M N) :
       by_contra hφ
       exact hn ⟨φ, hφ⟩
     choose φ_bad h_bad using h_no'
-    have h_sep : ∀ m : M, ∃ ψ : L.BoundedFormulaIdx (M ⊕ N) Empty (n + 1),
+    have h_sep : ∀ m : M, ∃ ψ : L.BoundedFormulaIdx κ Empty (n + 1),
         ψ.Realize Empty.elim (Fin.snoc b n') ∧ ¬ ψ.Realize Empty.elim (Fin.snoc a m) := by
       intro m
       by_cases hB : (φ_bad m).Realize Empty.elim (Fin.snoc b n')
@@ -622,29 +661,36 @@ theorem infEquivAt_sum_implies_potentialIso (h : InfEquivAt L (M ⊕ N) M N) :
           exact h_bad m (iff_of_false hA hB)
         exact ⟨(φ_bad m).not, (realize_not).mpr hB, fun hc => (realize_not).mp hc hA⟩
     choose ψ hψ using h_sep
-    set χ : L.BoundedFormulaIdx (M ⊕ N) Empty n := existsLast (iInfLeft ψ) with hχ
+    set χ : L.BoundedFormulaIdx κ Empty n := existsLast (codediInf cM ψ) with hχ
     have hN : χ.Realize Empty.elim b := by
       rw [hχ, realize_existsLast]
-      exact ⟨n', by rw [realize_iInfLeft]; exact fun m => (hψ m).1⟩
+      exact ⟨n', by rw [realize_codediInf]; exact fun m => (hψ m).1⟩
     have hM : ¬ χ.Realize Empty.elim a := by
       rw [hχ, realize_existsLast]
       rintro ⟨x, hx⟩
-      rw [realize_iInfLeft] at hx
+      rw [realize_codediInf] at hx
       exact (hψ x).2 (hx x)
     exact hM ((hmem χ).mpr hN)
 
-/-- **Karp's theorem at the sum carrier** — the packaging gate. Same left-hand side as the
-production `karp_theorem_w`; the reverse direction needs only the ONE carrier `M ⊕ N`. -/
+/-- **Karp's theorem at any sufficiently large common carrier**: agreement in ONE carrier
+admitting codings of both structures already characterizes potential isomorphism. The sum
+carrier below is the canonical instance, not a mathematical necessity. -/
+theorem karp_theorem_at (cM : IndexCoding M κ) (cN : IndexCoding N κ) :
+    Nonempty (PotentialIso L M N) ↔ InfEquivAt L κ M N :=
+  ⟨fun ⟨P⟩ => P.infEquivAt _, infEquivAt_implies_potentialIso cM cN⟩
+
+/-- **Karp's theorem at the sum carrier** — the canonical instance of `karp_theorem_at`. -/
 theorem karp_theorem_on_sum :
     Nonempty (PotentialIso L M N) ↔ InfEquivAt L (M ⊕ N) M N :=
-  ⟨fun ⟨P⟩ => P.infEquivAt _, infEquivAt_sum_implies_potentialIso⟩
+  karp_theorem_at (.sumInl M N) (.sumInr M N)
 
 /-- **Karp's theorem, public packaging**: the universal quantification over index carriers
 belongs OUTSIDE the syntax. Forward instantiates the generic direction at each `ι`;
-backward specializes to `ι := M ⊕ N`. Pure packaging around `karp_theorem_on_sum`. -/
+backward specializes to `ι := M ⊕ N`. Pure packaging around `karp_theorem_at`. -/
 theorem karp_theorem_idx :
     Nonempty (PotentialIso L M N) ↔ InfEquivW L M N :=
-  ⟨fun ⟨P⟩ ι => P.infEquivAt ι, fun h => infEquivAt_sum_implies_potentialIso (h (M ⊕ N))⟩
+  ⟨fun ⟨P⟩ ι => P.infEquivAt ι,
+   fun h => infEquivAt_implies_potentialIso (.sumInl M N) (.sumInr M N) (h (M ⊕ N))⟩
 
 end KarpViaCoding
 
