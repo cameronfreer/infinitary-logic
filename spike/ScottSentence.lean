@@ -297,6 +297,23 @@ theorem realize_scottSentence_iff_potentialIso
    fun ⟨P⟩ => realize_scottSentenceAt_of_potentialIso cM cA cOrd cT P
      (fun _ _ _ h => bfEquiv_bfStab_succ h)⟩
 
+/-- **The closing corollary**: a single `L∞ω` formula axiomatizes the full
+`L∞ω`-elementary class of an arbitrary structure — satisfaction of `M`'s generalized Scott
+sentence is equivalent to `L∞ω`-equivalence with `M` at any common carrier. Chains the
+generalized Scott sentence with `karp_theorem_at`. -/
+theorem realize_scottSentence_iff_infEquivAt
+    [Small.{uι} ((n : ℕ) × ((Fin n → M) × (Fin n → M)))]
+    (cM : IndexCoding M ι) (cA : ∀ k : ℕ, IndexCoding (L.AtomicIdx k) ι)
+    (cOrd : ∀ β : Ordinal.{uι}, β ≤ bfStab.{u, v, uι} L M M + 1 →
+      IndexCoding {γ : Ordinal.{uι} // γ < β} ι)
+    (cT : IndexCoding ((n : ℕ) × (Fin n → M)) ι)
+    {N : Type w} [L.Structure N] {κ : Type uκ}
+    (cM' : IndexCoding M κ) (cN' : IndexCoding N κ) :
+    (scottSentenceAt (α := bfStab.{u, v, uι} L M M) cM cA cOrd cT).Realize
+        Empty.elim (Fin.elim0 : Fin 0 → N) ↔
+      InfEquivAt L κ M N :=
+  (realize_scottSentence_iff_potentialIso cM cA cOrd cT).trans (karp_theorem_at cM' cN')
+
 end Headline
 
 end FirstOrder.Language
