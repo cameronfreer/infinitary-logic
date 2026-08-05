@@ -533,13 +533,13 @@ private theorem term_eq_var {γ : Type*} (t : L.Term γ) : ∃ x, t = Term.var x
 
 /-- The atomic formula of an `AtomicIdx`, with the tuple in BOUND positions — generic in the
 carrier `ι`. -/
-private def atomicFormulaIdx (idx : L.AtomicIdx n) : L.BoundedFormulaIdx ι Empty n :=
+def atomicFormulaIdx (idx : L.AtomicIdx n) : L.BoundedFormulaIdx ι Empty n :=
   match idx with
   | .eq i j => .equal (.var (.inr i)) (.var (.inr j))
   | .rel R f => .rel R fun k => .var (.inr (f k))
 
 omit [L.IsRelational] in
-private theorem realize_atomicFormulaIdx {P : Type w} [L.Structure P] (idx : L.AtomicIdx n)
+theorem realize_atomicFormulaIdx {P : Type w} [L.Structure P] (idx : L.AtomicIdx n)
     (xs : Fin n → P) :
     (atomicFormulaIdx (ι := ι) idx).Realize Empty.elim xs ↔ idx.holds xs := by
   cases idx with

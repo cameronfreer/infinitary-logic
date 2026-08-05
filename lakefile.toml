@@ -34,3 +34,10 @@ globs = ["InfinitaryLogic.Conditional.*"]
 [[lean_lib]]
 name = "InfinitaryLogicWIP"
 roots = ["InfinitaryLogic.WIP"]
+
+# Non-default, non-CI target for the carrier-parameterized syntax spike (branch-local;
+# spike/ files are deliberately outside every CI build target).
+[[lean_lib]]
+name = "Spike"
+srcDir = "spike"
+roots = ["CarrierSyntax", "ScottMigration"]
