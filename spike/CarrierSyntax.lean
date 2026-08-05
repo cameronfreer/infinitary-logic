@@ -174,6 +174,17 @@ def ofEncodable (ι : Type uι) [Encodable ι] : IndexCoding ι ℕ :=
     (hd : c₁.decode = c₂.decode) : c₁ = c₂ := by
   cases c₁; cases c₂; cases he; cases hd; rfl
 
+/-- The canonical coding of one member of a family of carriers into their dependent sum — the
+escape hatch for heterogeneous carrier families. Recorded, not consumed: the theory-level
+audit found no production consumer needing heterogeneous carriers (`TheoryInf` has no
+consumers outside its defining file, and all working theory-level machinery is at the `ℕ`
+carrier), so `TheoryInf L ι` stays carrier-uniform and this coding waits for a real use. -/
+def sigmaIn {J : Type uκ} [DecidableEq J] (ιs : J → Type uι) (j : J) :
+    IndexCoding (ιs j) (Σ j, ιs j) where
+  encode i := ⟨j, i⟩
+  decode p := if h : p.1 = j then some (h ▸ p.2) else none
+  decode_encode i := by simp
+
 /-- The coding induced by an equivalence of carriers; `decode` is total. -/
 def ofEquiv (e : ι ≃ κ) : IndexCoding ι κ :=
   ⟨e, fun k => some (e.symm k), fun i => by simp⟩
