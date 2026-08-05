@@ -38,8 +38,8 @@ structure IndexCoding (ι : Type uι) (κ : Type uκ) where
 -- id, comp, sumInl, sumInr, ofEncodable (Encodable, no choice); pad (⊤/⊥-neutral extension)
 
 -- ι-indexed connectives at carrier κ, along a coding (padding is semantically neutral):
-def codediInf (c : IndexCoding ι κ) (φs : ι → L.BoundedFormulaIdx κ α n) : L.BoundedFormulaIdx κ α n
-def codediSup …    -- realize_codediInf / realize_codediSup: generic, one equation each
+def iInfAlong (c : IndexCoding ι κ) (φs : ι → L.BoundedFormulaIdx κ α n) : L.BoundedFormulaIdx κ α n
+def iSupAlong …    -- realize_iInfAlong / realize_iSupAlong: generic, one equation each
 
 -- Whole-formula transport (replaces liftUI and the embedding triangle):
 def reindex (c : IndexCoding ι κ) : L.BoundedFormulaIdx ι α n → L.BoundedFormulaIdx κ α n
@@ -73,7 +73,7 @@ theorem PotentialIso.infEquivAt (P : PotentialIso L M N) (ι : Type uι) : InfEq
 
 theorem infEquivAt_sum_implies_potentialIso :
     InfEquivAt L (M ⊕ N) M N → Nonempty (PotentialIso L M N)
-  -- backward: the ONE carrier M ⊕ N suffices; conjunctions are codediInf at sumInl/sumInr
+  -- backward: the ONE carrier M ⊕ N suffices; conjunctions are iInfAlong at sumInl/sumInr
 
 theorem karp_theorem_on_sum : Nonempty (PotentialIso L M N) ↔ InfEquivAt L (M ⊕ N) M N
 theorem karp_theorem_idx    : Nonempty (PotentialIso L M N) ↔ InfEquivW L M N   -- pure packaging
@@ -95,7 +95,7 @@ this formulation. The spike's forward induction `all` case consumes `forth`/`bac
 | `liftUI` (source universe 0 only, `Linf/Operations.lean:190`) | `reindex` along a coding | honest universes on both sides |
 | `toLω_toLinf` triangle (nonexistent; L2's goal) | `reindex_comp` | syntactic, choice-free |
 | `realize_liftUI` | `realize_reindex` | |
-| `einf`/`esup` Encodable adapters | `codediInf`/`codediSup` at `ofEncodable`, `toOmega` | choice only in the `Countable` corollary |
+| `einf`/`esup` Encodable adapters | `iInfAlong`/`iSupAlong` at `ofEncodable`, `toOmega` | choice only in the `Countable` corollary |
 | `LinfEquivW` (index types inside the syntax at `uι = w`) | `InfEquivW := ∀ ι : Type w, InfEquivAt ι` | quantifier moved outside the syntax |
 | `karp_theorem_w` | `karp_theorem_idx` (via `karp_theorem_on_sum`) | same `PotentialIso` LHS |
 | `existsLastVarInf` + `insertLastBoundInf` + support lemmas | bound-variable family + `existsLast` | *for the Karp proof*; a general free-var quantifier may still be wanted by other consumers |

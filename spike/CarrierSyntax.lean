@@ -223,12 +223,12 @@ A conjunction/disjunction genuinely indexed by `ι`, built at carrier `κ` throu
 unused branches are padded neutrally (`⊤` for `iInf`, `⊥` for `iSup`). -/
 
 /-- An `ι`-indexed conjunction at carrier `κ`, along a coding. -/
-def codediInf (c : IndexCoding ι κ) (φs : ι → L.BoundedFormulaIdx κ α n) :
+def iInfAlong (c : IndexCoding ι κ) (φs : ι → L.BoundedFormulaIdx κ α n) :
     L.BoundedFormulaIdx κ α n :=
   .iInf (c.pad ⊤ φs)
 
 /-- An `ι`-indexed disjunction at carrier `κ`, along a coding. -/
-def codediSup (c : IndexCoding ι κ) (φs : ι → L.BoundedFormulaIdx κ α n) :
+def iSupAlong (c : IndexCoding ι κ) (φs : ι → L.BoundedFormulaIdx κ α n) :
     L.BoundedFormulaIdx κ α n :=
   .iSup (c.pad ⊥ φs)
 
@@ -237,9 +237,9 @@ section CodedRealize
 variable {P : Type w} [L.Structure P] {v : α → P} {xs : Fin n → P}
 
 /-- **Padding is semantically neutral**, generically in the coding. -/
-@[simp] theorem realize_codediInf {c : IndexCoding ι κ} {φs : ι → L.BoundedFormulaIdx κ α n} :
-    (codediInf c φs).Realize v xs ↔ ∀ i, (φs i).Realize v xs := by
-  simp only [codediInf, realize_iInf]
+@[simp] theorem realize_iInfAlong {c : IndexCoding ι κ} {φs : ι → L.BoundedFormulaIdx κ α n} :
+    (iInfAlong c φs).Realize v xs ↔ ∀ i, (φs i).Realize v xs := by
+  simp only [iInfAlong, realize_iInf]
   constructor
   · intro h i
     have hi := h (c.encode i)
@@ -249,9 +249,9 @@ variable {P : Type w} [L.Structure P] {v : α → P} {xs : Fin n → P}
     · rw [c.pad_of_decode_none hd]; simp
     · rw [c.pad_of_decode_some hd]; exact h i
 
-@[simp] theorem realize_codediSup {c : IndexCoding ι κ} {φs : ι → L.BoundedFormulaIdx κ α n} :
-    (codediSup c φs).Realize v xs ↔ ∃ i, (φs i).Realize v xs := by
-  simp only [codediSup, realize_iSup]
+@[simp] theorem realize_iSupAlong {c : IndexCoding ι κ} {φs : ι → L.BoundedFormulaIdx κ α n} :
+    (iSupAlong c φs).Realize v xs ↔ ∃ i, (φs i).Realize v xs := by
+  simp only [iSupAlong, realize_iSup]
   constructor
   · rintro ⟨k, hk⟩
     rcases hd : c.decode k with _ | i
@@ -275,8 +275,8 @@ def reindex (c : IndexCoding ι κ) : ∀ {n}, L.BoundedFormulaIdx ι α n → L
   | _, .rel R ts => .rel R ts
   | _, .imp φ ψ => (reindex c φ).imp (reindex c ψ)
   | _, .all φ => (reindex c φ).all
-  | _, .iSup φs => codediSup c fun i => reindex c (φs i)
-  | _, .iInf φs => codediInf c fun i => reindex c (φs i)
+  | _, .iSup φs => iSupAlong c fun i => reindex c (φs i)
+  | _, .iInf φs => iInfAlong c fun i => reindex c (φs i)
 
 section ReindexEqs
 
@@ -292,9 +292,9 @@ variable (c : IndexCoding ι κ)
 @[simp] theorem reindex_all (φ : L.BoundedFormulaIdx ι α (n + 1)) :
     reindex c φ.all = (reindex c φ).all := rfl
 @[simp] theorem reindex_iInf (φs : ι → L.BoundedFormulaIdx ι α n) :
-    reindex c (.iInf φs) = codediInf c fun i => reindex c (φs i) := rfl
+    reindex c (.iInf φs) = iInfAlong c fun i => reindex c (φs i) := rfl
 @[simp] theorem reindex_iSup (φs : ι → L.BoundedFormulaIdx ι α n) :
-    reindex c (.iSup φs) = codediSup c fun i => reindex c (φs i) := rfl
+    reindex c (.iSup φs) = iSupAlong c fun i => reindex c (φs i) := rfl
 @[simp] theorem reindex_not (φ : L.BoundedFormulaIdx ι α n) :
     reindex c φ.not = (reindex c φ).not := rfl
 @[simp] theorem reindex_top : reindex c (⊤ : L.BoundedFormulaIdx ι α n) = ⊤ := rfl
@@ -321,11 +321,11 @@ end ReindexEqs
     exact forall_congr' fun y => ih v (Fin.snoc xs y)
   | iSup φs ih =>
     intro v xs
-    simp only [reindex_iSup, realize_codediSup]
+    simp only [reindex_iSup, realize_iSupAlong]
     exact exists_congr fun i => ih i v xs
   | iInf φs ih =>
     intro v xs
-    simp only [reindex_iInf, realize_codediInf]
+    simp only [reindex_iInf, realize_iInfAlong]
     exact forall_congr' fun i => ih i v xs
 
 /-- **Identity law**: reindexing along the identity coding is syntactically the identity. -/
@@ -412,31 +412,31 @@ def reindexEquiv (e : ι ≃ κ) : L.BoundedFormulaIdx ι α n ≃ L.BoundedForm
 /-! ## Gate 4 — Karp padding, now THROUGH the generic coded constructors
 
 The bespoke `Sum.elim`-with-`⊤` definitions are gone: `iInfLeft`/`iInfRight` are wrappers
-around `codediInf` at the canonical sum codings, and their realization lemmas are instances
+around `iInfAlong` at the canonical sum codings, and their realization lemmas are instances
 of the generic one. -/
 
 section SumCarrier
 
 variable {M N : Type w}
 
-/-- A conjunction really indexed by the right summand: `codediInf` at the `Sum.inr` coding. -/
+/-- A conjunction really indexed by the right summand: `iInfAlong` at the `Sum.inr` coding. -/
 def iInfRight (ψ : N → L.BoundedFormulaIdx (M ⊕ N) α n) : L.BoundedFormulaIdx (M ⊕ N) α n :=
-  codediInf (.sumInr M N) ψ
+  iInfAlong (.sumInr M N) ψ
 
-/-- A conjunction really indexed by the left summand: `codediInf` at the `Sum.inl` coding. -/
+/-- A conjunction really indexed by the left summand: `iInfAlong` at the `Sum.inl` coding. -/
 def iInfLeft (ψ : M → L.BoundedFormulaIdx (M ⊕ N) α n) : L.BoundedFormulaIdx (M ⊕ N) α n :=
-  codediInf (.sumInl M N) ψ
+  iInfAlong (.sumInl M N) ψ
 
 variable {P : Type w} [L.Structure P] {v : α → P} {xs : Fin n → P}
 
-/-- **Padding is semantically neutral** — an instance of `realize_codediInf`. -/
+/-- **Padding is semantically neutral** — an instance of `realize_iInfAlong`. -/
 @[simp] theorem realize_iInfRight {ψ : N → L.BoundedFormulaIdx (M ⊕ N) α n} :
     (iInfRight ψ).Realize v xs ↔ ∀ j : N, (ψ j).Realize v xs :=
-  realize_codediInf
+  realize_iInfAlong
 
 @[simp] theorem realize_iInfLeft {ψ : M → L.BoundedFormulaIdx (M ⊕ N) α n} :
     (iInfLeft ψ).Realize v xs ↔ ∀ i : M, (ψ i).Realize v xs :=
-  realize_codediInf
+  realize_iInfAlong
 
 end SumCarrier
 
@@ -604,7 +604,7 @@ theorem PotentialIso.infEquivAt (P : PotentialIso L M N) (ι : Type uι) : InfEq
 /-- **Backward direction at ANY common carrier**: the sum carrier is canonical but not
 essential. Sentence equivalence at any single carrier `κ` admitting codings of BOTH
 structures already yields a potential isomorphism — the separating conjunctions are
-`codediInf` along the two given codings. -/
+`iInfAlong` along the two given codings. -/
 theorem infEquivAt_implies_potentialIso (cM : IndexCoding M κ) (cN : IndexCoding N κ)
     (h : InfEquivAt L κ M N) :
     Nonempty (PotentialIso L M N) := by
@@ -641,14 +641,14 @@ theorem infEquivAt_implies_potentialIso (cM : IndexCoding M κ) (cN : IndexCodin
           exact h_bad n' (iff_of_false hA hB)
         exact ⟨(φ_bad n').not, (realize_not).mpr hA, fun hc => (realize_not).mp hc hB⟩
     choose ψ hψ using h_sep
-    set χ : L.BoundedFormulaIdx κ Empty n := existsLast (codediInf cN ψ) with hχ
+    set χ : L.BoundedFormulaIdx κ Empty n := existsLast (iInfAlong cN ψ) with hχ
     have hM : χ.Realize Empty.elim a := by
       rw [hχ, realize_existsLast]
-      exact ⟨m, by rw [realize_codediInf]; exact fun n' => (hψ n').1⟩
+      exact ⟨m, by rw [realize_iInfAlong]; exact fun n' => (hψ n').1⟩
     have hN : ¬ χ.Realize Empty.elim b := by
       rw [hχ, realize_existsLast]
       rintro ⟨y, hy⟩
-      rw [realize_codediInf] at hy
+      rw [realize_iInfAlong] at hy
       exact (hψ y).2 (hy y)
     exact hN ((hmem χ).mp hM)
   · -- back: the mirror via an M-indexed conjunction coded along `cM`
@@ -672,14 +672,14 @@ theorem infEquivAt_implies_potentialIso (cM : IndexCoding M κ) (cN : IndexCodin
           exact h_bad m (iff_of_false hA hB)
         exact ⟨(φ_bad m).not, (realize_not).mpr hB, fun hc => (realize_not).mp hc hA⟩
     choose ψ hψ using h_sep
-    set χ : L.BoundedFormulaIdx κ Empty n := existsLast (codediInf cM ψ) with hχ
+    set χ : L.BoundedFormulaIdx κ Empty n := existsLast (iInfAlong cM ψ) with hχ
     have hN : χ.Realize Empty.elim b := by
       rw [hχ, realize_existsLast]
-      exact ⟨n', by rw [realize_codediInf]; exact fun m => (hψ m).1⟩
+      exact ⟨n', by rw [realize_iInfAlong]; exact fun m => (hψ m).1⟩
     have hM : ¬ χ.Realize Empty.elim a := by
       rw [hχ, realize_existsLast]
       rintro ⟨x, hx⟩
-      rw [realize_codediInf] at hx
+      rw [realize_iInfAlong] at hx
       exact (hψ x).2 (hx x)
     exact hM ((hmem χ).mpr hN)
 
