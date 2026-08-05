@@ -40,4 +40,4 @@ roots = ["InfinitaryLogic.WIP"]
 [[lean_lib]]
 name = "Spike"
 srcDir = "spike"
-roots = ["CarrierSyntax", "ScottMigration"]
+roots = ["CarrierSyntax", "ScottMigration", "ScottSentence"]
