@@ -39,46 +39,7 @@ open BoundedFormulaIdx Fin
 
 variable {L : Language.{u, v}}
 
-/-! ## 1. Iterated universal closure on bound variables -/
-
-namespace BoundedFormulaIdx
-
-variable {ι : Type uι}
-
-/-- Universal closure of all bound variables. -/
-def alls : ∀ {n : ℕ}, L.BoundedFormulaIdx ι Empty n → L.BoundedFormulaIdx ι Empty 0
-  | 0, φ => φ
-  | _ + 1, φ => alls φ.all
-
-theorem realize_alls {N : Type w'} [L.Structure N] :
-    ∀ {n : ℕ} (φ : L.BoundedFormulaIdx ι Empty n),
-      (alls φ).Realize Empty.elim (Fin.elim0 : Fin 0 → N) ↔
-        ∀ b : Fin n → N, φ.Realize Empty.elim b := by
-  intro n
-  induction n with
-  | zero =>
-    intro φ
-    constructor
-    · intro h b
-      have hb : b = Fin.elim0 := funext fun i => i.elim0
-      rwa [hb]
-    · intro h
-      exact h _
-  | succ n ih =>
-    intro φ
-    rw [show (alls φ : L.BoundedFormulaIdx ι Empty 0) = alls φ.all from rfl, ih]
-    constructor
-    · intro h b
-      have hall := h (Fin.init b)
-      rw [realize_all] at hall
-      have h2 := hall (b (Fin.last n))
-      rwa [Fin.snoc_init_self] at h2
-    · intro h b
-      rw [realize_all]
-      intro y
-      exact h (Fin.snoc b y)
-
-end BoundedFormulaIdx
+/-! ## 1. Iterated universal closure — now the carrier-polymorphic `alls` from the core. -/
 
 /-! ## 2–3. Potential-isomorphism plumbing, countability-free -/
 
@@ -352,14 +313,14 @@ carrier with the canonical codings. -/
 noncomputable def scottSentence : L.BoundedFormulaIdx (ScottSentenceCarrier L M) Empty 0 :=
   scottSentenceAt (α := bfStabSelf L M)
     (IndexCoding.sumInl M _)
-    (fun k => (IndexCoding.sumInr M _).comp ((IndexCoding.sumInl (Σ k : ℕ, L.AtomicIdx k) _).comp
-      (IndexCoding.sigmaIn (fun k : ℕ => L.AtomicIdx k) k)))
-    (fun _β hβ => (IndexCoding.sumInr M _).comp ((IndexCoding.sumInr (Σ k : ℕ, L.AtomicIdx k) _).comp
-      ((IndexCoding.sumInl ((bfStabSelf L M + 1).ToType) _).comp
-        ((IndexCoding.ofEquiv (Ordinal.ToType.mk).toEquiv).comp
-          (IndexCoding.subtypeIioLe hβ)))))
-    ((IndexCoding.sumInr M _).comp ((IndexCoding.sumInr (Σ k : ℕ, L.AtomicIdx k) _).comp
-      (IndexCoding.sumInr ((bfStabSelf L M + 1).ToType) _)))
+    (fun k => ((IndexCoding.sigmaIn (fun k : ℕ => L.AtomicIdx k) k).trans
+      (IndexCoding.sumInl (Σ k : ℕ, L.AtomicIdx k) _)).trans (IndexCoding.sumInr M _))
+    (fun _β hβ => ((((IndexCoding.subtypeIioLe hβ).trans
+      (IndexCoding.ofEquiv (Ordinal.ToType.mk).toEquiv)).trans
+        (IndexCoding.sumInl ((bfStabSelf L M + 1).ToType) _)).trans
+          (IndexCoding.sumInr (Σ k : ℕ, L.AtomicIdx k) _)).trans (IndexCoding.sumInr M _))
+    (((IndexCoding.sumInr ((bfStabSelf L M + 1).ToType) _).trans
+      (IndexCoding.sumInr (Σ k : ℕ, L.AtomicIdx k) _)).trans (IndexCoding.sumInr M _))
 
 variable {L M} {N : Type w'} [L.Structure N]
 

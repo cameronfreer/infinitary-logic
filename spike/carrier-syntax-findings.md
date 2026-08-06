@@ -35,7 +35,10 @@ structure IndexCoding (ι : Type uι) (κ : Type uκ) where
   encode : ι → κ
   decode : κ → Option ι
   decode_encode : ∀ i, decode (encode i) = some i
--- id, comp, sumInl, sumInr, ofEncodable (Encodable, no choice); pad (⊤/⊥-neutral extension)
+-- id, trans (forward, Equiv.trans convention: id_trans/trans_id/trans_assoc), sumInl, sumInr,
+-- ofEncodableWith (explicit stored encoding) / ofEncodable, ofEquiv (+ syntactic round trip),
+-- encode_injective / toEmbedding; pad (⊤/⊥-neutral extension) with the generic laws
+-- pad_trans and comp_pad centralizing ALL decoder analysis
 
 -- ι-indexed connectives at carrier κ, along a coding (padding is semantically neutral):
 def iInfAlong (c : IndexCoding ι κ) (φs : ι → L.BoundedFormulaIdx κ α n) : L.BoundedFormulaIdx κ α n
@@ -45,7 +48,10 @@ def iSupAlong …    -- realize_iInfAlong / realize_iSupAlong: generic, one equa
 def reindex (c : IndexCoding ι κ) : L.BoundedFormulaIdx ι α n → L.BoundedFormulaIdx κ α n
 theorem realize_reindex   -- semantic preservation (hence equivalence transport, both ways)
 theorem reindex_id        -- syntactic identity law
-theorem reindex_comp      -- syntactic composition law (no choice axiom)
+theorem reindex_trans     -- syntactic composition law (no choice axiom; proved from the
+                          -- pad laws with zero decoder case splits)
+def alls / exs            -- bound-variable closures, with realize_alls/exs and the
+                          -- syntactic laws reindex_alls/exs
 
 def toOmega [Encodable ι] : L.BoundedFormulaIdx ι α n → L.BoundedFormulaOmega α n
   -- := reindex (.ofEncodable ι); Countable corollary via choice OUTSIDE the operation
@@ -93,7 +99,7 @@ this formulation. The spike's forward induction `all` case consumes `forth`/`bac
 | `BoundedFormulaω` + `BoundedFormulaInf` parallel inductives | one `BoundedFormulaIdx` + `abbrev` | universe-exact at `ι := ℕ` |
 | L1: `realize_iSup/iInf` pinned at `{ι : Type}` (`Linf/Semantics.lean:77,81`) | one generic equation per connective, `Iff.rfl` | the L1 tranche disappears |
 | `liftUI` (source universe 0 only, `Linf/Operations.lean:190`) | `reindex` along a coding | honest universes on both sides |
-| `toLω_toLinf` triangle (nonexistent; L2's goal) | `reindex_comp` | syntactic, choice-free |
+| `toLω_toLinf` triangle (nonexistent; L2's goal) | `reindex_trans` | syntactic, choice-free |
 | `realize_liftUI` | `realize_reindex` | |
 | `einf`/`esup` Encodable adapters | `iInfAlong`/`iSupAlong` at `ofEncodable`, `toOmega` | choice only in the `Countable` corollary |
 | `LinfEquivW` (index types inside the syntax at `uι = w`) | `InfEquivW := ∀ ι : Type w, InfEquivAt ι` | quantifier moved outside the syntax |

@@ -94,12 +94,6 @@ theorem qrank_iSupAlong_le {ι' : Type*} (c : IndexCoding ι' ι)
 
 end BoundedFormulaIdx
 
-/-- Explicit-data variant of `ofEncodable`: build the coding from a GIVEN encoding value,
-not instance search (mirrors the Mathlib prototype's `IndexCoding.ofEncodableWith`). -/
-def IndexCoding.ofEncodableWith {ι : Type uι} (e : Encodable ι) : IndexCoding ι ℕ :=
-  letI := e
-  ⟨Encodable.encode, Encodable.decode, Encodable.encodek⟩
-
 /-! ## The atomic diagram at an abstract carrier
 
 Tuple in BOUND positions, so this is a `BoundedFormulaIdx ι Empty k` — no free variables and
@@ -386,11 +380,11 @@ noncomputable def scottApprox (α β : Ordinal.{max u v w}) (hβ : β ≤ α) {k
     (a : Fin k → M) : L.BoundedFormulaIdx (ScottCarrier L M α) Empty k :=
   scottApproxAt
     (IndexCoding.sumInl M _)
-    (fun k => (IndexCoding.sumInr M _).comp ((IndexCoding.sumInr α.ToType _).comp
-      (IndexCoding.sigmaIn (fun k : ℕ => L.AtomicIdx k) k)))
-    (fun _β hβ => (IndexCoding.sumInr M _).comp ((IndexCoding.sumInl α.ToType _).comp
-      ((IndexCoding.ofEquiv (Ordinal.ToType.mk).toEquiv).comp
-        (IndexCoding.subtypeIioLe hβ))))
+    (fun k => ((IndexCoding.sigmaIn (fun k : ℕ => L.AtomicIdx k) k).trans
+      (IndexCoding.sumInr α.ToType _)).trans (IndexCoding.sumInr M _))
+    (fun _β hβ => (((IndexCoding.subtypeIioLe hβ).trans
+      (IndexCoding.ofEquiv (Ordinal.ToType.mk).toEquiv)).trans
+        (IndexCoding.sumInl α.ToType _)).trans (IndexCoding.sumInr M _))
     β hβ k a
 
 /-- The canonical-carrier characterization, unconditional in the ordinal. -/

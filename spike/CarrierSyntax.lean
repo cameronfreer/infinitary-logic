@@ -18,7 +18,7 @@ Temporary name `BoundedFormulaIdx` so nothing existing is shadowed.
 import InfinitaryLogic.Karp.PotentialIso
 import Mathlib.SetTheory.Ordinal.Arithmetic
 
-universe u v uι uκ uμ uα w
+universe u v uι uκ uμ uν uα w
 
 namespace FirstOrder.Language
 
@@ -126,6 +126,73 @@ def existsLast (φ : L.BoundedFormulaIdx ι α (n + 1)) : L.BoundedFormulaIdx ι
     (existsLast φ).Realize v xs ↔ ∃ y : M, φ.Realize v (Fin.snoc xs y) := by
   simp only [existsLast, realize_not, realize_all, not_forall, not_not]
 
+/-- Universal closure of all bound variables (mirrors the finitary `BoundedFormula.alls`). -/
+def alls : ∀ {n : ℕ}, L.BoundedFormulaIdx ι α n → L.FormulaIdx ι α
+  | 0, φ => φ
+  | _ + 1, φ => alls φ.all
+
+/-- Existential closure of all bound variables (mirrors the finitary `BoundedFormula.exs`). -/
+def exs : ∀ {n : ℕ}, L.BoundedFormulaIdx ι α n → L.FormulaIdx ι α
+  | 0, φ => φ
+  | _ + 1, φ => exs (existsLast φ)
+
+section AllsExs
+
+variable {M : Type w} [L.Structure M] {v : α → M}
+
+@[simp] theorem realize_alls : ∀ {n : ℕ} {φ : L.BoundedFormulaIdx ι α n},
+    (alls φ).Realize v Fin.elim0 ↔ ∀ xs : Fin n → M, φ.Realize v xs := by
+  intro n
+  induction n with
+  | zero =>
+    intro φ
+    constructor
+    · intro h xs
+      have hxs : xs = Fin.elim0 := funext fun i => i.elim0
+      rwa [hxs]
+    · intro h
+      exact h _
+  | succ n ih =>
+    intro φ
+    rw [show (alls φ : L.FormulaIdx ι α) = alls φ.all from rfl, ih]
+    constructor
+    · intro h xs
+      have hall := h (Fin.init xs)
+      rw [realize_all] at hall
+      have h2 := hall (xs (Fin.last n))
+      rwa [Fin.snoc_init_self] at h2
+    · intro h xs
+      rw [realize_all]
+      intro y
+      exact h (Fin.snoc xs y)
+
+@[simp] theorem realize_exs : ∀ {n : ℕ} {φ : L.BoundedFormulaIdx ι α n},
+    (exs φ).Realize v Fin.elim0 ↔ ∃ xs : Fin n → M, φ.Realize v xs := by
+  intro n
+  induction n with
+  | zero =>
+    intro φ
+    constructor
+    · intro h
+      exact ⟨Fin.elim0, h⟩
+    · rintro ⟨xs, h⟩
+      have hxs : xs = Fin.elim0 := funext fun i => i.elim0
+      rwa [hxs] at h
+  | succ n ih =>
+    intro φ
+    rw [show (exs φ : L.FormulaIdx ι α) = exs (existsLast φ) from rfl, ih]
+    constructor
+    · rintro ⟨xs, h⟩
+      rw [realize_existsLast] at h
+      obtain ⟨y, hy⟩ := h
+      exact ⟨Fin.snoc xs y, hy⟩
+    · rintro ⟨xs, h⟩
+      refine ⟨Fin.init xs, ?_⟩
+      rw [realize_existsLast]
+      exact ⟨xs (Fin.last n), by rwa [Fin.snoc_init_self]⟩
+
+end AllsExs
+
 end BoundedFormulaIdx
 
 /-! ## Gate 5a — `IndexCoding`: the reusable coding API
@@ -149,12 +216,21 @@ namespace IndexCoding
 /-- The identity coding. -/
 def id (ι : Type uι) : IndexCoding ι ι := ⟨fun i => i, some, fun _ => rfl⟩
 
-/-- Composition of codings. -/
-def comp (c₂ : IndexCoding κ μ) (c₁ : IndexCoding ι κ) : IndexCoding ι μ where
+/-- Forward composition of codings, in the `Equiv.trans` argument order: first `c₁ : ι → κ`,
+then `c₂ : κ → μ`. -/
+def trans (c₁ : IndexCoding ι κ) (c₂ : IndexCoding κ μ) : IndexCoding ι μ where
   encode := c₂.encode ∘ c₁.encode
   decode := fun m => (c₂.decode m).bind c₁.decode
   decode_encode := fun i => by
     simp [Function.comp, c₂.decode_encode, c₁.decode_encode]
+
+/-- `encode` is injective: `decode_encode` already provides a retraction. -/
+theorem encode_injective (c : IndexCoding ι κ) : Function.Injective c.encode := fun i j h =>
+  Option.some_injective ι (by rw [← c.decode_encode i, h, c.decode_encode])
+
+/-- The underlying embedding of a coding. -/
+def toEmbedding (c : IndexCoding ι κ) : ι ↪ κ :=
+  ⟨c.encode, c.encode_injective⟩
 
 /-- The canonical coding of the left summand. -/
 def sumInl (A : Type uι) (B : Type uκ) : IndexCoding A (A ⊕ B) :=
@@ -164,10 +240,16 @@ def sumInl (A : Type uι) (B : Type uκ) : IndexCoding A (A ⊕ B) :=
 def sumInr (A : Type uι) (B : Type uκ) : IndexCoding B (A ⊕ B) :=
   ⟨Sum.inr, Sum.getRight?, fun _ => rfl⟩
 
+/-- Explicit-data variant of `ofEncodable`: build the coding from a GIVEN encoding value,
+not instance search — the shape data-carrying coded presentations require. -/
+def ofEncodableWith (e : Encodable ι) : IndexCoding ι ℕ :=
+  letI := e
+  ⟨Encodable.encode, Encodable.decode, Encodable.encodek⟩
+
 /-- The canonical coding of an encodable type into `ℕ` — the bridge to `Lω₁ω`.
 Deliberately `Encodable`, not `Countable`: no choice in the coding itself. -/
 def ofEncodable (ι : Type uι) [Encodable ι] : IndexCoding ι ℕ :=
-  ⟨Encodable.encode, Encodable.decode, Encodable.encodek⟩
+  ofEncodableWith inferInstance
 
 /-- Extensionality: the coherence proof is irrelevant. -/
 @[ext] theorem ext {c₁ c₂ : IndexCoding ι κ} (he : c₁.encode = c₂.encode)
@@ -189,10 +271,34 @@ def sigmaIn {J : Type uκ} [DecidableEq J] (ιs : J → Type uι) (j : J) :
 def ofEquiv (e : ι ≃ κ) : IndexCoding ι κ :=
   ⟨e, fun k => some (e.symm k), fun i => by simp⟩
 
-@[simp] theorem ofEquiv_symm_comp (e : ι ≃ κ) :
-    (ofEquiv e.symm).comp (ofEquiv e) = IndexCoding.id ι := by
-  refine ext (funext fun i => ?_) (funext fun i => ?_) <;>
-    simp [comp, ofEquiv, IndexCoding.id]
+@[simp] theorem id_trans (c : IndexCoding ι κ) : (IndexCoding.id ι).trans c = c := by
+  refine ext rfl (funext fun k => ?_)
+  simp only [trans, IndexCoding.id]
+  rcases c.decode k with _ | i <;> rfl
+
+@[simp] theorem trans_id (c : IndexCoding ι κ) : c.trans (IndexCoding.id κ) = c :=
+  rfl
+
+theorem trans_assoc (c₁ : IndexCoding ι κ) (c₂ : IndexCoding κ μ) {ν : Type uν}
+    (c₃ : IndexCoding μ ν) : (c₁.trans c₂).trans c₃ = c₁.trans (c₂.trans c₃) := by
+  refine ext rfl (funext fun m => ?_)
+  simp only [trans]
+  rcases c₃.decode m with _ | k <;> rfl
+
+@[simp] theorem ofEquiv_refl : ofEquiv (_root_.Equiv.refl ι) = IndexCoding.id ι := by
+  refine ext rfl (funext fun i => ?_)
+  simp [ofEquiv, IndexCoding.id]
+
+/-- `ofEquiv` turns equivalence composition into coding composition. -/
+theorem ofEquiv_trans (e₁ : ι ≃ κ) (e₂ : κ ≃ μ) :
+    ofEquiv (e₁.trans e₂) = (ofEquiv e₁).trans (ofEquiv e₂) := by
+  refine ext rfl (funext fun m => ?_)
+  simp [ofEquiv, trans]
+
+/-- The two codings of an equivalence compose to the identity coding. -/
+@[simp] theorem ofEquiv_trans_ofEquiv_symm (e : ι ≃ κ) :
+    (ofEquiv e).trans (ofEquiv e.symm) = IndexCoding.id ι := by
+  rw [← ofEquiv_trans, _root_.Equiv.self_trans_symm, ofEquiv_refl]
 
 /-- Total extension of a family along a coding: decoded indices select a branch,
 undecodable ones get the default. -/
@@ -212,6 +318,21 @@ theorem pad_of_decode_some {β : Sort*} (c : IndexCoding ι κ) {default : β} {
   rw [pad, h]; rfl
 
 @[simp] theorem id_pad {β : Sort*} (default : β) (f : ι → β) : (id ι).pad default f = f := rfl
+
+/-- Padding along a composite coding is iterated padding: the decode analysis for a chain of
+codings happens HERE, once, not at every consumer. -/
+theorem pad_trans {β : Sort*} (c₁ : IndexCoding ι κ) (c₂ : IndexCoding κ μ) (default : β)
+    (f : ι → β) : (c₁.trans c₂).pad default f = c₂.pad default (c₁.pad default f) := by
+  funext m
+  simp only [pad, trans]
+  rcases c₂.decode m with _ | k <;> rfl
+
+/-- Mapping commutes with padding: the other half of the transport-coherence engine. -/
+theorem comp_pad {β γ : Sort*} (c : IndexCoding ι κ) (g : β → γ) (default : β) (f : ι → β) :
+    g ∘ c.pad default f = c.pad (g default) (g ∘ f) := by
+  funext k
+  simp only [Function.comp_apply, pad]
+  rcases c.decode k with _ | i <;> rfl
 
 end IndexCoding
 
@@ -346,11 +467,11 @@ theorem reindex_id : ∀ {n} (φ : L.BoundedFormulaIdx ι α n), reindex (.id ι
     show BoundedFormulaIdx.iInf _ = _
     exact congrArg _ (funext fun i => ih i)
 
-/-- **Composition law** — the replacement for the old embedding triangle, and syntactic,
-not merely semantic. -/
-theorem reindex_comp (c₂ : IndexCoding κ μ) (c₁ : IndexCoding ι κ) :
+/-- **Composition law** — the replacement for the old embedding triangle, syntactic, and
+proved from the generic pad laws with no decoder analysis. -/
+theorem reindex_trans (c₁ : IndexCoding ι κ) (c₂ : IndexCoding κ μ) :
     ∀ {n} (φ : L.BoundedFormulaIdx ι α n),
-      reindex (c₂.comp c₁) φ = reindex c₂ (reindex c₁ φ) := by
+      reindex (c₁.trans c₂) φ = reindex c₂ (reindex c₁ φ) := by
   intro n φ
   induction φ with
   | falsum => rfl
@@ -359,33 +480,27 @@ theorem reindex_comp (c₂ : IndexCoding κ μ) (c₁ : IndexCoding ι κ) :
   | imp φ ψ ihφ ihψ => rw [reindex_imp, reindex_imp, reindex_imp, ihφ, ihψ]
   | all φ ih => rw [reindex_all, reindex_all, reindex_all, ih]
   | iSup φs ih =>
-    show BoundedFormulaIdx.iSup _ = BoundedFormulaIdx.iSup _
-    refine congrArg _ (funext fun m => ?_)
-    show (c₂.comp c₁).pad ⊥ _ m = c₂.pad ⊥ _ m
-    rcases h₂ : c₂.decode m with _ | k
-    · have hc : (c₂.comp c₁).decode m = none := by simp [IndexCoding.comp, h₂]
-      rw [(c₂.comp c₁).pad_of_decode_none hc, c₂.pad_of_decode_none h₂]
-    · rcases h₁ : c₁.decode k with _ | i
-      · have hc : (c₂.comp c₁).decode m = none := by simp [IndexCoding.comp, h₂, h₁]
-        rw [(c₂.comp c₁).pad_of_decode_none hc,
-          c₂.pad_of_decode_some h₂, c₁.pad_of_decode_none h₁, reindex_bot]
-      · have hc : (c₂.comp c₁).decode m = some i := by simp [IndexCoding.comp, h₂, h₁]
-        rw [(c₂.comp c₁).pad_of_decode_some hc,
-          c₂.pad_of_decode_some h₂, c₁.pad_of_decode_some h₁, ih i]
+    have h : ((c₁.trans c₂).pad ⊥ fun i => reindex (c₁.trans c₂) (φs i)) =
+        c₂.pad ⊥ fun k => reindex c₂ (c₁.pad ⊥ (fun i => reindex c₁ (φs i)) k) :=
+      calc ((c₁.trans c₂).pad ⊥ fun i => reindex (c₁.trans c₂) (φs i))
+          = c₂.pad ⊥ (c₁.pad ⊥ (reindex c₂ ∘ fun i => reindex c₁ (φs i))) := by
+            rw [IndexCoding.pad_trans]
+            exact congrArg _ (congrArg _ (funext fun i => ih i))
+        _ = c₂.pad ⊥ (reindex c₂ ∘ c₁.pad ⊥ fun i => reindex c₁ (φs i)) := by
+            rw [IndexCoding.comp_pad, reindex_bot]
+        _ = c₂.pad ⊥ fun k => reindex c₂ (c₁.pad ⊥ (fun i => reindex c₁ (φs i)) k) := rfl
+    exact congrArg BoundedFormulaIdx.iSup h
   | iInf φs ih =>
-    show BoundedFormulaIdx.iInf _ = BoundedFormulaIdx.iInf _
-    refine congrArg _ (funext fun m => ?_)
-    show (c₂.comp c₁).pad ⊤ _ m = c₂.pad ⊤ _ m
-    rcases h₂ : c₂.decode m with _ | k
-    · have hc : (c₂.comp c₁).decode m = none := by simp [IndexCoding.comp, h₂]
-      rw [(c₂.comp c₁).pad_of_decode_none hc, c₂.pad_of_decode_none h₂]
-    · rcases h₁ : c₁.decode k with _ | i
-      · have hc : (c₂.comp c₁).decode m = none := by simp [IndexCoding.comp, h₂, h₁]
-        rw [(c₂.comp c₁).pad_of_decode_none hc,
-          c₂.pad_of_decode_some h₂, c₁.pad_of_decode_none h₁, reindex_top]
-      · have hc : (c₂.comp c₁).decode m = some i := by simp [IndexCoding.comp, h₂, h₁]
-        rw [(c₂.comp c₁).pad_of_decode_some hc,
-          c₂.pad_of_decode_some h₂, c₁.pad_of_decode_some h₁, ih i]
+    have h : ((c₁.trans c₂).pad ⊤ fun i => reindex (c₁.trans c₂) (φs i)) =
+        c₂.pad ⊤ fun k => reindex c₂ (c₁.pad ⊤ (fun i => reindex c₁ (φs i)) k) :=
+      calc ((c₁.trans c₂).pad ⊤ fun i => reindex (c₁.trans c₂) (φs i))
+          = c₂.pad ⊤ (c₁.pad ⊤ (reindex c₂ ∘ fun i => reindex c₁ (φs i))) := by
+            rw [IndexCoding.pad_trans]
+            exact congrArg _ (congrArg _ (funext fun i => ih i))
+        _ = c₂.pad ⊤ (reindex c₂ ∘ c₁.pad ⊤ fun i => reindex c₁ (φs i)) := by
+            rw [IndexCoding.comp_pad, reindex_top]
+        _ = c₂.pad ⊤ fun k => reindex c₂ (c₁.pad ⊤ (fun i => reindex c₁ (φs i)) k) := rfl
+    exact congrArg BoundedFormulaIdx.iInf h
 
 /-- Equivalence transport: reindexing preserves semantic equivalence, in both directions. -/
 theorem reindex_semanticallyEquivalent_iff {P : Type w} [L.Structure P] (c : IndexCoding ι κ)
@@ -398,7 +513,7 @@ theorem reindex_semanticallyEquivalent_iff {P : Type w} [L.Structure P] (c : Ind
 @[simp] theorem reindex_ofEquiv_symm_reindex_ofEquiv (e : ι ≃ κ)
     (φ : L.BoundedFormulaIdx ι α n) :
     reindex (.ofEquiv e.symm) (reindex (.ofEquiv e) φ) = φ := by
-  rw [← reindex_comp, IndexCoding.ofEquiv_symm_comp, reindex_id]
+  rw [← reindex_trans, IndexCoding.ofEquiv_trans_ofEquiv_symm, reindex_id]
 
 /-- **Carrier equivalences are actual syntax equivalences.** In particular
 `reindexEquiv Equiv.ulift.symm` is the universe-lift operation on formulas, with its exact
@@ -408,6 +523,28 @@ def reindexEquiv (e : ι ≃ κ) : L.BoundedFormulaIdx ι α n ≃ L.BoundedForm
   invFun := reindex (.ofEquiv e.symm)
   left_inv φ := reindex_ofEquiv_symm_reindex_ofEquiv e φ
   right_inv φ := by simpa using reindex_ofEquiv_symm_reindex_ofEquiv e.symm φ
+
+
+@[simp] theorem reindex_existsLast (c : IndexCoding ι κ)
+    (φ : L.BoundedFormulaIdx ι α (n + 1)) :
+    reindex c (existsLast φ) = existsLast (reindex c φ) := rfl
+
+/-- The bound-variable closures commute with carrier transport, syntactically. -/
+theorem reindex_alls (c : IndexCoding ι κ) : ∀ {n : ℕ} (φ : L.BoundedFormulaIdx ι α n),
+    reindex c (alls φ) = alls (reindex c φ)
+  | 0, _ => rfl
+  | n + 1, φ => by
+    rw [show (alls φ : L.FormulaIdx ι α) = alls φ.all from rfl, reindex_alls c φ.all,
+      reindex_all]
+    rfl
+
+theorem reindex_exs (c : IndexCoding ι κ) : ∀ {n : ℕ} (φ : L.BoundedFormulaIdx ι α n),
+    reindex c (exs φ) = exs (reindex c φ)
+  | 0, _ => rfl
+  | n + 1, φ => by
+    rw [show (exs φ : L.FormulaIdx ι α) = exs (existsLast φ) from rfl, reindex_exs c _,
+      reindex_existsLast]
+    rfl
 
 /-! ## Gate 4 — Karp padding, now THROUGH the generic coded constructors
 
