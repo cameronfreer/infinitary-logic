@@ -18,9 +18,14 @@ Built from the carrier-general Scott approximants (`ScottMigration`). The chain:
 7. Backward (`realize_scottSentenceAt_of_potentialIso`): under `M`-self-stability at `α`
    (which `α := bfStab L M M` provides), potential isomorphism implies satisfaction — via
    `exists_left`, `BFEquiv.symm`/`.trans`, and self-stability.
-8. **Headline** (`realize_scottSentence_iff_potentialIso`): at `α := bfStab L M M`,
+8. **Headline** (`realize_scottSentenceAt_iff_potentialIso`): at `α := bfStab L M M`,
    `N ⊨ σ_M ↔ Nonempty (PotentialIso L M N)` — for arbitrary structures, arbitrary
    languages, no countability anywhere.
+9. **Canonical packaging** (`scottSentence`, argument-free endpoints): the coding-parametric
+   core instantiated at the canonical carrier `ScottSentenceCarrier L M`, so that "every
+   structure has a generalized Scott sentence" is a definition plus two theorems, not a
+   statement about parameters. Precision fence: for arbitrary structures this characterizes
+   POTENTIAL isomorphism (equivalently, `InfEquivW`), not isomorphism.
 
 Build with:  lake build ScottSentence    (the Spike lib is not a CI target)
 -/
@@ -283,7 +288,7 @@ stabilization ordinal, satisfaction of the single sentence `scottSentenceAt` cha
 potential isomorphism with `M` — for arbitrary structures over arbitrary relational
 languages, with no countability hypotheses and no `ω₁` bound. Combined with
 `karp_theorem_at`, satisfaction of one formula characterizes full `L∞ω`-equivalence. -/
-theorem realize_scottSentence_iff_potentialIso
+theorem realize_scottSentenceAt_iff_potentialIso
     [Small.{uι} ((n : ℕ) × ((Fin n → M) × (Fin n → M)))]
     (cM : IndexCoding M ι) (cA : ∀ k : ℕ, IndexCoding (L.AtomicIdx k) ι)
     (cOrd : ∀ β : Ordinal.{uι}, β ≤ bfStab.{u, v, uι} L M M + 1 →
@@ -301,7 +306,7 @@ theorem realize_scottSentence_iff_potentialIso
 `L∞ω`-elementary class of an arbitrary structure — satisfaction of `M`'s generalized Scott
 sentence is equivalent to `L∞ω`-equivalence with `M` at any common carrier. Chains the
 generalized Scott sentence with `karp_theorem_at`. -/
-theorem realize_scottSentence_iff_infEquivAt
+theorem realize_scottSentenceAt_iff_infEquivAt
     [Small.{uι} ((n : ℕ) × ((Fin n → M) × (Fin n → M)))]
     (cM : IndexCoding M ι) (cA : ∀ k : ℕ, IndexCoding (L.AtomicIdx k) ι)
     (cOrd : ∀ β : Ordinal.{uι}, β ≤ bfStab.{u, v, uι} L M M + 1 →
@@ -312,8 +317,72 @@ theorem realize_scottSentence_iff_infEquivAt
     (scottSentenceAt (α := bfStab.{u, v, uι} L M M) cM cA cOrd cT).Realize
         Empty.elim (Fin.elim0 : Fin 0 → N) ↔
       InfEquivAt L κ M N :=
-  (realize_scottSentence_iff_potentialIso cM cA cOrd cT).trans (karp_theorem_at cM' cN')
+  (realize_scottSentenceAt_iff_potentialIso cM cA cOrd cT).trans (karp_theorem_at cM' cN')
 
 end Headline
+
+/-! ## 9. Canonical packaging: the argument-free generalized Scott sentence
+
+`scottSentenceAt` remains the reusable coding-parametric core; here the canonical witness is
+packaged so that "every structure has a generalized Scott sentence" is literally a
+definition. The ordinal component enters through the small `(bfStabSelf L M + 1).ToType`
+(the universe-bumped subtype of ordinals cannot sit inside the carrier), and the ordinal
+universe equals the carrier universe `max u v w`, as the rank discipline requires. -/
+
+section CanonicalSentence
+
+variable (L : Language.{u, v}) [L.IsRelational] (M : Type w) [L.Structure M]
+
+/-- The self-stabilization ordinal of `M` — `bfStab L M M` at the canonical universe, with
+the smallness instance discharged. (The production `scottHeight` is the countable-theory
+notion; this is its arbitrary-cardinality counterpart.) -/
+noncomputable def bfStabSelf : Ordinal.{max u v w} :=
+  letI : Small.{max u v w} ((n : ℕ) × ((Fin n → M) × (Fin n → M))) := small_max.{max u v} _
+  bfStab.{u, v, max u v w} L M M
+
+/-- The canonical carrier of the generalized Scott sentence of `M`: the structure itself,
+the atomic indices, the ordinal stages below `bfStabSelf L M + 1`, and the tuple family. -/
+abbrev ScottSentenceCarrier : Type (max u v w) :=
+  M ⊕ ((Σ k : ℕ, L.AtomicIdx k) ⊕
+    ((bfStabSelf L M + 1).ToType ⊕ (n : ℕ) × (Fin n → M)))
+
+/-- **The generalized Scott sentence of an arbitrary structure** — argument-free: the
+coding-parametric `scottSentenceAt` at level `bfStabSelf L M`, instantiated at the canonical
+carrier with the canonical codings. -/
+noncomputable def scottSentence : L.BoundedFormulaIdx (ScottSentenceCarrier L M) Empty 0 :=
+  scottSentenceAt (α := bfStabSelf L M)
+    (IndexCoding.sumInl M _)
+    (fun k => (IndexCoding.sumInr M _).comp ((IndexCoding.sumInl (Σ k : ℕ, L.AtomicIdx k) _).comp
+      (IndexCoding.sigmaIn (fun k : ℕ => L.AtomicIdx k) k)))
+    (fun _β hβ => (IndexCoding.sumInr M _).comp ((IndexCoding.sumInr (Σ k : ℕ, L.AtomicIdx k) _).comp
+      ((IndexCoding.sumInl ((bfStabSelf L M + 1).ToType) _).comp
+        ((IndexCoding.ofEquiv (Ordinal.ToType.mk).toEquiv).comp
+          (IndexCoding.subtypeIioLe hβ)))))
+    ((IndexCoding.sumInr M _).comp ((IndexCoding.sumInr (Σ k : ℕ, L.AtomicIdx k) _).comp
+      (IndexCoding.sumInr ((bfStabSelf L M + 1).ToType) _)))
+
+variable {L M} {N : Type w'} [L.Structure N]
+
+/-- **The argument-free endpoint**: `N` satisfies the generalized Scott sentence of `M` iff
+`M` and `N` are potentially isomorphic — for arbitrary structures over arbitrary relational
+languages. Precision fence: potential isomorphism, NOT isomorphism (orbit/definability
+consequences require the countable setting). -/
+theorem realize_scottSentence_iff_potentialIso :
+    (scottSentence L M).Realize Empty.elim (Fin.elim0 : Fin 0 → N) ↔
+      Nonempty (PotentialIso L M N) := by
+  letI : Small.{max u v w} ((n : ℕ) × ((Fin n → M) × (Fin n → M))) := small_max.{max u v} _
+  exact realize_scottSentenceAt_iff_potentialIso _ _ _ _
+
+/-- **The full-equivalence endpoint**: for `N` in the same universe, satisfaction of the
+generalized Scott sentence is equivalent to `InfEquivW` — agreement on all sentences at
+every carrier of the structures' universe. The `L∞ω`-elementary class of an arbitrary
+structure is axiomatized by one formula. -/
+theorem realize_scottSentence_iff_infEquivW {N : Type (max u v w)} [L.Structure N]
+    {M : Type (max u v w)} [L.Structure M] :
+    (scottSentence L M).Realize Empty.elim (Fin.elim0 : Fin 0 → N) ↔
+      InfEquivW L M N :=
+  realize_scottSentence_iff_potentialIso.trans karp_theorem_idx
+
+end CanonicalSentence
 
 end FirstOrder.Language
