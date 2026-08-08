@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Admissible.Barwise.Soundness
+import InfinitaryLogic.Admissible.Fragment
 import InfinitaryLogic.Methods.Henkin.ModelExistence
 import Architect
 
@@ -52,9 +53,9 @@ for proof-theoretic consistency. -/
 structure BarwiseFragment (L : Language.{u, v}) extends FiniteCompactFragment L where
   chain_closure_consistent :
     ∀ (chain : Set (Set L.Sentenceω)),
-      chain ⊆ {S | S ⊆ formulas ∧ AConsistent toFiniteCompactFragment S} →
+      chain ⊆ {S | S ⊆ formulas ∧ AConsistent formulas S} →
       IsChain (· ⊆ ·) chain → chain.Nonempty →
-      AConsistent toFiniteCompactFragment (⋃₀ chain)
+      AConsistent formulas (⋃₀ chain)
 
 /-- **QUARANTINED COMPATIBILITY STRUCTURE.**  A "full Barwise fragment" contains *all* `Lω₁ω`
 sentences, so it is not an admissible fragment in Barwise's sense at all: it is a strong wrapper
@@ -70,16 +71,15 @@ genuine admissible fragment satisfies. -/
 structure FullBarwiseFragment (L : Language.{u, v}) extends BarwiseFragment L where
   complete : ∀ φ : L.Sentenceω, φ ∈ formulas
 
-/-- The family of A-consistent subsets of the fragment's formulas. -/
-def consistentSets (A : FiniteCompactFragment L) : Set (Set L.Sentenceω) :=
-  {S | S ⊆ A.formulas ∧ AConsistent A S}
-
+/-- The family of consistent subsets of a permitted sentence set. -/
+def consistentSets (P : Set L.Sentenceω) : Set (Set L.Sentenceω) :=
+  {S | S ⊆ P ∧ AConsistent P S}
 
 /-- Extract inconsistency from non-membership in consistentSets, given subset condition. -/
-private theorem not_AConsistent_of_not_mem_consistentSets {A : FiniteCompactFragment L}
-    {S : Set L.Sentenceω} (hSA : S ⊆ A.formulas) (h : S ∉ consistentSets A) :
-    ¬AConsistent A S := by
-  intro hc; exact h ⟨hSA, hc⟩
+private theorem not_AConsistent_of_not_mem_consistentSets {P : Set L.Sentenceω}
+    {S : Set L.Sentenceω} (hSP : S ⊆ P) (h : S ∉ consistentSets P) :
+    ¬AConsistent P S := by
+  intro hc; exact h ⟨hSP, hc⟩
 
 /-- Any extension of a set by a formula in the full fragment stays within the fragment. -/
 private theorem union_singleton_subset_of_complete (B : FullBarwiseFragment L)
@@ -103,7 +103,7 @@ a contradiction with the original set's consistency via rules of `Derivable`. Th
 noncomputable def consistencyPropertyOfFullFragment (B : FullBarwiseFragment L) :
     ConsistencyPropertyEq L where
   toConsistencyProperty := {
-    sets := consistentSets B.toFiniteCompactFragment
+    sets := consistentSets B.formulas
     C0_no_falsum := by
       intro S ⟨hS, hc⟩ hf
       exact hc (.assumption hf (hS hf))
@@ -159,7 +159,7 @@ noncomputable def consistencyPropertyOfFullFragment (B : FullBarwiseFragment L) 
     C3_neg_iInf := by
       intro S ⟨hS, hc⟩ φs hninf
       by_contra h; push Not at h
-      have hall : ∀ k, Derivable B.toFiniteCompactFragment S (φs k) := by
+      have hall : ∀ k, Derivable B.formulas S (φs k) := by
         intro k
         have hSAk := union_singleton_subset_of_complete B hS (φs k).not
         have := not_AConsistent_of_not_mem_consistentSets hSAk (h k)
@@ -170,7 +170,7 @@ noncomputable def consistencyPropertyOfFullFragment (B : FullBarwiseFragment L) 
     C4_iSup := by
       intro S ⟨hS, hc⟩ φs hsup
       by_contra h; push Not at h
-      have hnegs : ∀ k, Derivable B.toFiniteCompactFragment S (φs k).not := by
+      have hnegs : ∀ k, Derivable B.formulas S (φs k).not := by
         intro k
         have hSAk := union_singleton_subset_of_complete B hS (φs k)
         have := not_AConsistent_of_not_mem_consistentSets hSAk (h k)
@@ -191,7 +191,8 @@ noncomputable def consistencyPropertyOfFullFragment (B : FullBarwiseFragment L) 
       exact hc (.neg_elim hsup_d (.assumption hnsup (hS hnsup)))
     extension := by
       intro S ⟨hS, hc⟩ φ
-      rcases AConsistent.extension_of_mem_formulas hS hc (B.complete φ) with h | h
+      rcases AConsistent.extension_of_mem_formulas hc (B.complete φ) (B.complete φ.not)
+        with h | h
       · exact Or.inl ⟨union_singleton_subset_of_complete B hS φ, h⟩
       · exact Or.inr ⟨union_singleton_subset_of_complete B hS φ.not, h⟩
     chain_closure := by
@@ -233,7 +234,7 @@ noncomputable def consistencyPropertyOfFullFragment (B : FullBarwiseFragment L) 
     intro S ⟨hS, hc⟩ φ hnall
     by_contra h; push Not at h
     -- For all t, S ∪ {(φ.subst t).not} is not in sets
-    have hderiv : ∀ t, Derivable B.toFiniteCompactFragment S (φ.subst (fun _ => t)) := by
+    have hderiv : ∀ t, Derivable B.formulas S (φ.subst (fun _ => t)) := by
       intro t
       have hSAt := union_singleton_subset_of_complete B hS (φ.subst (fun _ => t)).not
       have := not_AConsistent_of_not_mem_consistentSets hSAt (h t)
@@ -242,7 +243,7 @@ noncomputable def consistencyPropertyOfFullFragment (B : FullBarwiseFragment L) 
     -- For all t, S ⊢ φ.subst t. By bridge: φ.subst t = (φ.relabel Sum.inr).openBounds.subst t
     -- So for all t, S ⊢ (φ.relabel Sum.inr).openBounds.subst t
     -- By all_intro: S ⊢ (φ.relabel Sum.inr).all
-    have hall_intro : Derivable B.toFiniteCompactFragment S (φ.relabel Sum.inr).all := by
+    have hall_intro : Derivable B.formulas S (φ.relabel Sum.inr).all := by
       apply Derivable.all_intro
       · intro t
         have := hderiv t
@@ -272,14 +273,14 @@ noncomputable def consistencyPropertyOfFullFragment (B : FullBarwiseFragment L) 
     -- Since ex = not.all.not, hex is ¬(∀x.¬φ(x)) ∈ S
     intro S ⟨hS, hc⟩ φ hex
     by_contra h; push Not at h
-    have hnegs : ∀ t, Derivable B.toFiniteCompactFragment S (φ.subst (fun _ => t)).not := by
+    have hnegs : ∀ t, Derivable B.formulas S (φ.subst (fun _ => t)).not := by
       intro t
       have hSAt := union_singleton_subset_of_complete B hS (φ.subst (fun _ => t))
       have := not_AConsistent_of_not_mem_consistentSets hSAt (h t)
       unfold AConsistent at this; push Not at this
       exact .neg_intro (B.complete _) this
     -- By bridge + all_intro on (φ.relabel Sum.inr).not: S ⊢ (φ.relabel Sum.inr).not.all
-    have hall_intro : Derivable B.toFiniteCompactFragment S (φ.relabel Sum.inr).not.all := by
+    have hall_intro : Derivable B.formulas S (φ.relabel Sum.inr).not.all := by
       apply Derivable.all_intro
       · intro t
         have key : ((φ.relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).not.openBounds).subst (fun _ => t) =
@@ -304,7 +305,7 @@ noncomputable def consistencyPropertyOfFullFragment (B : FullBarwiseFragment L) 
     by_contra h; push Not at h
     -- For all t, S ∪ {(ψ.openBounds.subst t).not} is not in sets
     -- So for all t, S ⊢ ψ.openBounds.subst t
-    have hderiv : ∀ t, Derivable B.toFiniteCompactFragment S (ψ.openBounds.subst (fun _ => t)) := by
+    have hderiv : ∀ t, Derivable B.formulas S (ψ.openBounds.subst (fun _ => t)) := by
       intro t
       have hSAt := union_singleton_subset_of_complete B hS (ψ.openBounds.subst (fun _ => t)).not
       have := not_AConsistent_of_not_mem_consistentSets hSAt (h t)
@@ -327,7 +328,7 @@ theorem barwise_completeness_II_syntactic_full
     [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relations l)]
     (B : FullBarwiseFragment L)
     {T : Set L.Sentenceω} (hT : T ⊆ B.formulas) (hT_countable : T.Countable)
-    (hcons : AConsistent B.toFiniteCompactFragment T) :
+    (hcons : AConsistent B.formulas T) :
     ∃ (M : Type u) (_ : L.Structure M) (_ : Countable M),
       Theoryω.Model T M := by
   let hC := consistencyPropertyOfFullFragment B

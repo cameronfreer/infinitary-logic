@@ -15,7 +15,7 @@ sentences are true in all models equipped with a naming function.
 
 ## Main Results
 
-- `Derivable.sound`: If `Derivable A T φ`, then `φ` is true in any model of `T`
+- `Derivable.sound`: If `Derivable P T φ`, then `φ` is true in any model of `T`
   with a naming function.
 - `AConsistent.of_has_model`: A theory with a model (equipped with a naming function)
   is consistent.
@@ -42,17 +42,18 @@ variable {L : Language.{u, v}}
 
 open FirstOrder Structure BoundedFormulaω
 
-/-- **Soundness**: If `φ` is derivable from `T` in fragment `A`, then `φ` is true
-in any model of `T` equipped with a naming function. -/
+/-- **Soundness**: If `φ` is derivable from `T` over the permitted sentence set `P`, then
+`φ` is true in any model of `T` equipped with a naming function. The permission set plays no
+role in the proof: soundness is completely independent of it. -/
 @[blueprint "thm:proof-system-soundness"
   (title := /-- Soundness of the proof system -/)
-  (statement := /-- If $\varphi$ is derivable from $T$ in fragment $A$, then $\varphi$ is true in any model of $T$ equipped with a naming function. -/)
+  (statement := /-- If $\varphi$ is derivable from $T$ over the permitted sentence set $P$, then $\varphi$ is true in any model of $T$ equipped with a naming function. -/)
   (proof := /-- By induction on the derivation. The quantifier cases use the semantic roundtrip for \texttt{openBounds} and the naming function. -/)
   (uses := ["def:derivable"])
   (proofUses := ["def:derivable"])]
-theorem Derivable.sound {A : FiniteCompactFragment L}
+theorem Derivable.sound {P : Set L.Sentenceω}
     {T : Set L.Sentenceω} {φ : L.Sentenceω}
-    (hd : Derivable A T φ)
+    (hd : Derivable P T φ)
     {M : Type w} [L.Structure M]
     (hNF : NamingFunction L M)
     (hM : Theoryω.Model T M) :
@@ -145,13 +146,12 @@ theorem Derivable.sound {A : FiniteCompactFragment L}
     exact Classical.em _
 
 /-- A theory with a model (equipped with a naming function) is consistent. -/
-theorem AConsistent.of_has_model {A : FiniteCompactFragment L}
+theorem AConsistent.of_has_model {P : Set L.Sentenceω}
     {T : Set L.Sentenceω}
     {M : Type w} [L.Structure M]
     (hNF : NamingFunction L M)
-    (hM : Theoryω.Model T M)
-    (_hT : T ⊆ A.formulas) :
-    AConsistent A T := by
+    (hM : Theoryω.Model T M) :
+    AConsistent P T := by
   intro hd
   exact hd.sound hNF hM
 
