@@ -233,7 +233,15 @@ lands. It is not to be mutated into something its fields cannot honestly support
 
 ## 8. Proof-system consumer audit — the §5 step-5 gate
 
-**Status: frozen, verified against source. No migration code written.**
+**Status: proof-system core MIGRATED (2026-08-08).** `Derivable`, `AConsistent`, and
+`Derivable.sound` are parameterized by a raw `P : Set L.Sentenceω`; the two former
+`closed_neg` consumers take explicit `φ.not ∈ P` hypotheses; `AConsistent.of_has_model` and
+`extension_of_mem_formulas` dropped their unused containment arguments; `ConsistencyBridge`
+adapted mechanically (`B.formulas`, with `B.complete` discharging the explicit negation
+memberships) and remains quarantined for #19B. The boundary is CI-enforced by
+`scripts/check_proof_system_boundary.lean` (the Derivable/soundness cone cannot reach
+`FiniteCompactFragment`, `AdmissibleFragmentCore`, or `BarwiseFragment`). The audit below is
+the frozen record that authorized the migration.
 
 §5 ends "Only then migrate the proof system." This section is that gate: a consumer-by-consumer
 record of which legacy `FiniteCompactFragment` capabilities the proof system *actually* consumes.
