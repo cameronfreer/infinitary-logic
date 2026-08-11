@@ -10,14 +10,31 @@ Roots: `Derivable`, `AConsistent`, `Derivable.sound`, `AConsistent.of_has_model`
 Forbidden in their cones: `FiniteCompactFragment`, `AdmissibleFragmentCore`,
 `BarwiseFragment`.
 
+POSITIVE sanity checks certify that theorem proof bodies are genuinely traversed (a
+forbidden-root failure test alone cannot show this): `Derivable.sound`'s cone must contain
+`realize_openBounds` (the semantic roundtrip its quantifier cases use), and
+`AConsistent.of_has_model`'s cone must contain `Derivable.sound`.
+
 Run with: lake env lean scripts/check_proof_system_boundary.lean
 -/
 import InfinitaryLogic.Admissible.Barwise.Soundness
 
 open Lean
 
-/-- Transitive constants of a declaration, following both the TYPE (so an inductive's
-signature and constructors are covered) and the value. -/
+/-- `value?` returns `none` for THEOREMS (it only exposes `def` bodies); match `.thmInfo`
+explicitly, otherwise theorem proof bodies are silently skipped and a forbidden structure
+hidden in a proof would be MISSED. Same trap as documented in
+`check_truth_lemma_cone.lean`. -/
+def declValue? (ci : ConstantInfo) : Option Expr :=
+  match ci with
+  | .defnInfo v => some v.value
+  | .thmInfo v => some v.value
+  | .opaqueInfo v => some v.value
+  | _ => none
+
+/-- Transitive constants of a declaration, following the TYPE (so an inductive's signature
+is covered), the VALUE via `declValue?` (so theorem proof bodies are covered), and an
+inductive's constructors. -/
 partial def deps (env : Environment) (n : Name) : NameSet := go n {} where
   go (n : Name) (acc : NameSet) : NameSet :=
     if acc.contains n then acc else
@@ -25,7 +42,7 @@ partial def deps (env : Environment) (n : Name) : NameSet := go n {} where
       match env.find? n with
       | some ci =>
         let cs := ci.type.getUsedConstants ++
-          ((ci.value?.map (·.getUsedConstants)).getD #[])
+          ((declValue? ci).map (·.getUsedConstants)).getD #[]
         let cs := match ci with
           | .inductInfo ii => cs ++ ii.ctors.toArray
           | _ => cs
@@ -50,4 +67,13 @@ run_cmd do
       (c.toString.splitOn s).length ≠ 1
     unless hits.isEmpty do
       throwError "[FORBIDDEN] {root} reaches legacy fragment structures: {hits}"
-  logInfo "Proof-system boundary: OK (Derivable/AConsistent/soundness reach no legacy fragment structure)"
+  -- Positive checks: theorem bodies are genuinely traversed.
+  let dSound := deps env `FirstOrder.Language.Derivable.sound
+  unless dSound.contains `FirstOrder.Language.realize_openBounds do
+    throwError
+      "[MISSING] Derivable.sound's cone lacks realize_openBounds — theorem bodies not traversed?"
+  let dModel := deps env `FirstOrder.Language.AConsistent.of_has_model
+  unless dModel.contains `FirstOrder.Language.Derivable.sound do
+    throwError
+      "[MISSING] AConsistent.of_has_model's cone lacks Derivable.sound — theorem bodies not traversed?"
+  logInfo "Proof-system boundary: OK (theorem bodies traversed; no legacy fragment structure in any cone)"

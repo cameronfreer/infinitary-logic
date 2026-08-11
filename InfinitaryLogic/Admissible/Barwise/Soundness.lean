@@ -10,7 +10,7 @@ import Architect
 /-!
 # Soundness of the Proof System
 
-This file proves soundness of the proof system for admissible fragments: derivable
+This file proves soundness of the proof system over permitted sentence sets: derivable
 sentences are true in all models equipped with a naming function.
 
 ## Main Results
