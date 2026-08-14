@@ -30,6 +30,7 @@ import InfinitaryLogic.Lomega1omega.QuantifierOccurrence
 -- Scott sentences and ranks
 import InfinitaryLogic.Scott.AtomicDiagram
 import InfinitaryLogic.Scott.BackAndForth
+import InfinitaryLogic.Scott.Stabilization
 import InfinitaryLogic.Scott.Formula
 import InfinitaryLogic.Scott.Sentence
 import InfinitaryLogic.Scott.RefinementCount
