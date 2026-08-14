@@ -102,6 +102,32 @@ noncomputable def symm (p : PotentialIso L M N) : PotentialIso L N M where
   back := fun ⟨n, b, a⟩ hq m => by
     simpa [Set.mem_setOf_eq] using p.forth ⟨n, a, b⟩ (by simpa [Set.mem_setOf_eq] using hq) m
 
+/-- Every finite `N`-tuple is matched to an `M`-tuple through a potential isomorphism, by
+iterating `back` along the tuple. -/
+theorem exists_left (P : PotentialIso L M N) :
+    ∀ {n : ℕ} (b : Fin n → N),
+      ∃ a : Fin n → M, (⟨n, a, b⟩ : Σ n : ℕ, (Fin n → M) × (Fin n → N)) ∈ P.family := by
+  intro n
+  induction n with
+  | zero =>
+    intro b
+    refine ⟨Fin.elim0, ?_⟩
+    have hb : b = Fin.elim0 := funext fun i => i.elim0
+    rw [hb]
+    exact P.empty_mem
+  | succ n ih =>
+    intro b
+    obtain ⟨a', ha'⟩ := ih (Fin.init b)
+    obtain ⟨m, hm⟩ := P.back _ ha' (b (Fin.last n))
+    refine ⟨Fin.snoc a' m, ?_⟩
+    rwa [Fin.snoc_init_self] at hm
+
+/-- Every finite `M`-tuple is matched to an `N`-tuple through a potential isomorphism, by
+iterating `forth` along the tuple. -/
+theorem exists_right (P : PotentialIso L M N) {n : ℕ} (a : Fin n → M) :
+    ∃ b : Fin n → N, (⟨n, a, b⟩ : Σ n : ℕ, (Fin n → M) × (Fin n → N)) ∈ P.family :=
+  P.symm.exists_left a
+
 end PotentialIso
 
 /-! ### PotentialIso implies isomorphism for countable structures -/
