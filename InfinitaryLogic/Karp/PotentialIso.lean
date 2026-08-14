@@ -346,10 +346,14 @@ potential isomorphism characterization.
 
 The proof proceeds by ordinal induction: the zero case uses atomic type preservation,
 the successor case uses the forth/back extension properties, and the limit case
-follows from the induction hypothesis. -/
-theorem potentialIso_family_BFEquiv [Countable (Σ l, L.Relations l)]
+follows from the induction hypothesis.
+
+The structures may live in different universes, and no countability of the language is
+required: the induction consumes only the family's atomic-type compatibility and its two
+extension properties. -/
+theorem PotentialIso.family_bfEquiv
     {M : Type w} [L.Structure M]
-    {N : Type w} [L.Structure N]
+    {N : Type w'} [L.Structure N]
     (P : PotentialIso L M N) (α : Ordinal)
     {n : ℕ} {a : Fin n → M} {b : Fin n → N}
     (hab : ⟨n, a, b⟩ ∈ P.family) : BFEquiv (L := L) α n a b := by
@@ -369,13 +373,24 @@ theorem potentialIso_family_BFEquiv [Countable (Σ l, L.Relations l)]
     rw [BFEquiv.limit β hβ]
     exact fun γ hγ => ih γ hγ hab
 
-/-- A potential isomorphism implies BF-equivalence at all ordinals for the empty tuple. -/
-theorem PotentialIso.implies_BFEquiv_all [Countable (Σ l, L.Relations l)]
+/-- Compatibility alias for `PotentialIso.family_bfEquiv`, which is stated without the
+countable-language hypothesis and for structures in different universes. -/
+@[deprecated PotentialIso.family_bfEquiv (since := "2026-08-14")]
+theorem potentialIso_family_BFEquiv [Countable (Σ l, L.Relations l)]
     {M : Type w} [L.Structure M]
     {N : Type w} [L.Structure N]
+    (P : PotentialIso L M N) (α : Ordinal)
+    {n : ℕ} {a : Fin n → M} {b : Fin n → N}
+    (hab : ⟨n, a, b⟩ ∈ P.family) : BFEquiv (L := L) α n a b :=
+  P.family_bfEquiv α hab
+
+/-- A potential isomorphism implies BF-equivalence at all ordinals for the empty tuple. -/
+theorem PotentialIso.implies_BFEquiv_all
+    {M : Type w} [L.Structure M]
+    {N : Type w'} [L.Structure N]
     (P : PotentialIso L M N) (α : Ordinal) :
     BFEquiv (L := L) α 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) :=
-  potentialIso_family_BFEquiv P α P.empty_mem
+  P.family_bfEquiv α P.empty_mem
 
 /-- BF-equivalence at all ordinals implies potential isomorphism.
 
@@ -387,7 +402,7 @@ contradiction argument.
 `w` (via `Ordinal.bddAbove_of_small`). This is because the contradiction argument takes a
 supremum of ordinals indexed by `N : Type w`, which requires `Ordinal.{w}`. The forward
 direction (`PotentialIso.implies_BFEquiv_all`) is fully universe-polymorphic. -/
-theorem BFEquiv_all_implies_potentialIso [Countable (Σ l, L.Relations l)]
+theorem BFEquiv_all_implies_potentialIso
     {M : Type w} [L.Structure M]
     {N : Type w} [L.Structure N]
     (hBF : ∀ α : Ordinal.{w}, BFEquiv (L := L) α 0
@@ -434,7 +449,7 @@ for the empty tuple. This is the main characterization theorem for potential iso
 **Universe note**: The ordinal universe is constrained to match the type universe `w`
 by `BFEquiv_all_implies_potentialIso` (which uses a supremum over `N : Type w`).
 The forward direction is universe-polymorphic; the backward direction requires this match. -/
-theorem potentialIso_iff_BFEquiv_all [Countable (Σ l, L.Relations l)]
+theorem potentialIso_iff_BFEquiv_all
     {M : Type w} [L.Structure M]
     {N : Type w} [L.Structure N] :
     Nonempty (PotentialIso L M N) ↔
