@@ -113,23 +113,25 @@ theorem sentenceJConsts_genAll_subset (j : ℕ) (ρ : L[[ℕ]].Sentenceω) :
 /-- Constant abstraction does not move the quantifier class. -/
 theorem BoundedFormulaω.universalSigned_abstractConst (j : ℕ) (s : Bool) :
     ∀ {n : ℕ} (φ : L[[ℕ]].BoundedFormulaω Empty n),
-      universalSigned s (φ.abstractConst j) ↔ universalSigned s φ := by
+      universalSigned s (BoundedFormulaω.abstractConst j φ) ↔ universalSigned s φ := by
   intro n φ
   induction φ generalizing s with
   | falsum => exact Iff.rfl
   | equal t u => exact Iff.rfl
   | rel R ts => exact Iff.rfl
   | imp φ ψ ihφ ihψ =>
-    show universalSigned (!s) (φ.abstractConst j) ∧ universalSigned s (ψ.abstractConst j) ↔ _
+    -- induction-bound receivers carry the inductive type, so they need the qualified name
+    show universalSigned (!s) (BoundedFormulaω.abstractConst j φ) ∧
+        universalSigned s (BoundedFormulaω.abstractConst j ψ) ↔ _
     exact and_congr (ihφ (!s)) (ihψ s)
   | all φ ih =>
-    show s = true ∧ universalSigned s (φ.abstractConst j) ↔ _
+    show s = true ∧ universalSigned s (BoundedFormulaω.abstractConst j φ) ↔ _
     exact and_congr_right fun _ => ih s
   | iSup φs ih =>
-    show (∀ i, universalSigned s ((φs i).abstractConst j)) ↔ _
+    show (∀ i, universalSigned s (BoundedFormulaω.abstractConst j (φs i))) ↔ _
     exact forall_congr' fun i => ih i s
   | iInf φs ih =>
-    show (∀ i, universalSigned s ((φs i).abstractConst j)) ↔ _
+    show (∀ i, universalSigned s (BoundedFormulaω.abstractConst j (φs i))) ↔ _
     exact forall_congr' fun i => ih i s
 
 /-- **`genAll` is class-preserving**: universally generalizing a fresh constant out of a universal
@@ -219,7 +221,9 @@ theorem entails_not_genAll_of_entails_not
         ↔ @BoundedFormulaω.Realize L[[ℕ]] M (wc base h) Empty 0 ψ Empty.elim Fin.elim0 :=
     fun ψ => ambient_realize_iff_wc (S := instM) ψ Empty.elim Fin.elim0
   show @Sentenceω.Realize L[[ℕ]] (genAll j σc).not M instM
-  rw [Sentenceω.Realize, BoundedFormulaω.realize_not]
+  -- apply the negation lemma rather than unfolding: unfolding lands on the opaque
+  -- `SentenceInf.Realize`, which no bounded-formula lemma can be keyed against
+  refine (BoundedFormulaω.realize_not _).mpr ?_
   intro hcon
   have hcon' : @BoundedFormulaω.Realize L[[ℕ]] M (wc base h) Empty 0 (genAll j σc)
       Empty.elim Fin.elim0 := (bridge _).mp hcon
@@ -262,7 +266,9 @@ theorem entails_not_genAll_of_entails_not_self
         ↔ @BoundedFormulaω.Realize L[[ℕ]] M (wc base h) Empty 0 ψ Empty.elim Fin.elim0 :=
     fun ψ => ambient_realize_iff_wc (S := instM) ψ Empty.elim Fin.elim0
   show @Sentenceω.Realize L[[ℕ]] (genAll j σc).not M instM
-  rw [Sentenceω.Realize, BoundedFormulaω.realize_not]
+  -- apply the negation lemma rather than unfolding: unfolding lands on the opaque
+  -- `SentenceInf.Realize`, which no bounded-formula lemma can be keyed against
+  refine (BoundedFormulaω.realize_not _).mpr ?_
   intro hcon
   have hcon' : @BoundedFormulaω.Realize L[[ℕ]] M (wc base h) Empty 0 (genAll j σc)
       Empty.elim Fin.elim0 := (bridge _).mp hcon

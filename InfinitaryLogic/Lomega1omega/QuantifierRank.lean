@@ -106,12 +106,13 @@ theorem qrank_iInf (φs : ℕ → L.BoundedFormulaω α n) :
 /-- The top formula has rank 0. -/
 @[simp]
 theorem qrank_top : (⊤ : L.BoundedFormulaω α n).qrank = 0 := by
-  simp only [Top.top, BoundedFormulaω.top, qrank_imp, qrank_falsum, max_self]
+  simp only [Top.top, BoundedFormulaInf.verum, BoundedFormulaInf.not, qrank_imp,
+    qrank_falsum, max_self]
 
 /-- Negation preserves quantifier rank. -/
 @[simp]
 theorem qrank_not (φ : L.BoundedFormulaω α n) : φ.not.qrank = φ.qrank := by
-  simp [BoundedFormulaω.not, qrank_imp, qrank_bot]
+  simp [BoundedFormulaInf.not, qrank_imp, qrank_falsum]
 
 /-- Conjunction takes max of ranks. -/
 theorem qrank_and (φ ψ : L.BoundedFormulaω α n) :
@@ -126,7 +127,7 @@ theorem qrank_or (φ ψ : L.BoundedFormulaω α n) :
 /-- Existential quantification adds 1 to rank. -/
 theorem qrank_ex (φ : L.BoundedFormulaω α (n + 1)) :
     φ.ex.qrank = φ.qrank + 1 := by
-  simp only [BoundedFormulaω.ex, qrank_not, qrank_all]
+  simp only [BoundedFormulaInf.ex, qrank_not, qrank_all]
 
 /-- The quantifier rank of einf is the sup of the family's ranks.
 

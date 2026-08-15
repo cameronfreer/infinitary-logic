@@ -79,7 +79,9 @@ theorem realize_graphTotality {n : ℕ} (f : L.Functions n) :
       ∀ ws : Fin n → M, ∃ y : M, RelMap (L := graphLanguage L) (GraphRelation.graph f) (Fin.snoc ws y) := by
   have htuple : ∀ (ws : Fin n → M) (ys : Fin 1 → M),
       (fun i => Term.realize
-          (Sum.elim (Empty.elim : Empty → M) (Fin.append (Fin.append Fin.elim0 ws) ys))
+          -- the sentence semantics supplies the empty tuple as `default`; it is definitionally
+          -- `Fin.elim0`, but the statement has to be in the shape the goal actually carries
+          (Sum.elim (Empty.elim : Empty → M) (Fin.append (Fin.append default ws) ys))
           ((Fin.snoc (fun j => Term.var (Sum.inr (Fin.castAdd 1 (Fin.natAdd 0 j))))
             (Term.var (Sum.inr (Fin.natAdd (0 + n) 0))) :
             Fin (n + 1) → (graphLanguage L).Term (Empty ⊕ Fin (0 + n + 1))) i)) =
@@ -115,7 +117,8 @@ theorem realize_graphFunctionality {n : ℕ} (f : L.Functions n) :
         RelMap (L := graphLanguage L) (GraphRelation.graph f) (Fin.snoc ws z) → y = z := by
   have htuple : ∀ (us : Fin (n + 2) → M) (b : Fin 2),
       (fun i => Term.realize
-          (Sum.elim (Empty.elim : Empty → M) (Fin.append Fin.elim0 us))
+          -- `default`, not `Fin.elim0`: see the note in `realize_graphTotality`
+          (Sum.elim (Empty.elim : Empty → M) (Fin.append default us))
           ((Fin.snoc (fun j => Term.var (Sum.inr (Fin.natAdd 0 (Fin.castAdd 2 j))))
             (Term.var (Sum.inr (Fin.natAdd 0 (Fin.natAdd n b)))) :
             Fin (n + 1) → (graphLanguage L).Term (Empty ⊕ Fin (0 + (n + 2)))) i)) =
@@ -132,7 +135,7 @@ theorem realize_graphFunctionality {n : ℕ} (f : L.Functions n) :
       show Fin.append Fin.elim0 us (Fin.natAdd 0 (Fin.castAdd 2 j)) = us (Fin.castAdd 2 j)
       exact Fin.append_right _ _ _
   have hvar : ∀ (us : Fin (n + 2) → M) (b : Fin 2),
-      Term.realize (Sum.elim (Empty.elim : Empty → M) (Fin.append Fin.elim0 us))
+      Term.realize (Sum.elim (Empty.elim : Empty → M) (Fin.append default us))
         (Term.var (Sum.inr (Fin.natAdd 0 (Fin.natAdd n b))) :
           (graphLanguage L).Term (Empty ⊕ Fin (0 + (n + 2)))) = us (Fin.natAdd n b) := by
     intro us b

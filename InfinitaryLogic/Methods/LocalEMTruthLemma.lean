@@ -384,7 +384,7 @@ theorem LocalEMContext.TLReady_mapLang_of_Γlocal_succ
         ∈ Γlocal s₀ (k + 1) :=
       bfSubformulas_subset_Γlocal_succ s₀ hψ (Set.mem_insert_of_mem _ rfl)
     exact ⟨LocalEMContext.eventualDeepTruth_decided (Λ := localColim s₀) (J := J) ctx
-        (φ'.mapLanguage (LlocalInclusion s₀ (k + 1))) ts T hcov
+        (BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) φ') ts T hcov
         (hclosed.deForm_mem (toLocalColimFormula_mem_ΓlocalColim s₀ hφ'mem) ts T hcov),
       ihφ hφ'mem ts T hcov, ihψ hψ'mem ts T hcov⟩
   | iSup φs ih =>
@@ -438,11 +438,11 @@ theorem BoundedFormulaω.mapLanguage_eq_iSup {L₁ L₂ : Language.{0, 0}} {g : 
     {α : Type} {m : ℕ} {ψ : L₁.BoundedFormulaω α m} {φs : ℕ → L₂.BoundedFormulaω α m}
     (h : ψ.mapLanguage g = BoundedFormulaω.iSup φs) :
     ∃ ψs : ℕ → L₁.BoundedFormulaω α m,
-      ψ = BoundedFormulaω.iSup ψs ∧ ∀ i, φs i = (ψs i).mapLanguage g := by
+      ψ = BoundedFormulaω.iSup ψs ∧ ∀ i, φs i = BoundedFormulaω.mapLanguage g (ψs i) := by
   cases ψ with
   | iSup ψs =>
     refine ⟨ψs, rfl, fun i => ?_⟩
-    have h' : BoundedFormulaω.iSup (fun i => (ψs i).mapLanguage g)
+    have h' : BoundedFormulaω.iSup (fun i => BoundedFormulaω.mapLanguage g (ψs i))
         = BoundedFormulaω.iSup φs := h
     injection h' with h1 h2
     exact (congrFun h2 i).symm
@@ -458,11 +458,11 @@ theorem BoundedFormulaω.mapLanguage_eq_iInf {L₁ L₂ : Language.{0, 0}} {g : 
     {α : Type} {m : ℕ} {ψ : L₁.BoundedFormulaω α m} {φs : ℕ → L₂.BoundedFormulaω α m}
     (h : ψ.mapLanguage g = BoundedFormulaω.iInf φs) :
     ∃ ψs : ℕ → L₁.BoundedFormulaω α m,
-      ψ = BoundedFormulaω.iInf ψs ∧ ∀ i, φs i = (ψs i).mapLanguage g := by
+      ψ = BoundedFormulaω.iInf ψs ∧ ∀ i, φs i = BoundedFormulaω.mapLanguage g (ψs i) := by
   cases ψ with
   | iInf ψs =>
     refine ⟨ψs, rfl, fun i => ?_⟩
-    have h' : BoundedFormulaω.iInf (fun i => (ψs i).mapLanguage g)
+    have h' : BoundedFormulaω.iInf (fun i => BoundedFormulaω.mapLanguage g (ψs i))
         = BoundedFormulaω.iInf φs := h
     injection h' with h1 h2
     exact (congrFun h2 i).symm
@@ -629,7 +629,8 @@ theorem LocalEMContext.truthLemmaStage_of_skolemUniversal
     have hdec := (hready S (le_refl S)).1
     simp only [BoundedFormulaω.mapLanguage_imp]
     rw [LocalEMContext.eventualDeepTruth_imp_iff (Λ := localColim s₀) (J := J) ctx
-      (φ.mapLanguage (LlocalInclusion s₀ (k + 1))) (ψ.mapLanguage (LlocalInclusion s₀ (k + 1)))
+      (BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) φ)
+      (BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) ψ)
       ts S hdec, BoundedFormulaω.realize_imp]
     exact imp_congr (ihφ hφmem ts S hsub fun T hT => (hready T hT).2.1)
       (ihψ hψmem ts S hsub fun T hT => (hready T hT).2.2)
@@ -637,19 +638,19 @@ theorem LocalEMContext.truthLemmaStage_of_skolemUniversal
     intro hmem ts S hsub hready
     rw [show ((BoundedFormulaω.iSup φs).mapLanguage (LlocalInclusion s₀ (k + 1))).mapLanguage
           (lhomWithConstants (localColim s₀) J)
-        = BoundedFormulaω.iSup (fun i => ((φs i).mapLanguage
-            (LlocalInclusion s₀ (k + 1))).mapLanguage
+        = BoundedFormulaω.iSup (fun i => (BoundedFormulaω.mapLanguage
+            (LlocalInclusion s₀ (k + 1)) (φs i)).mapLanguage
               (lhomWithConstants (localColim s₀) J)) from rfl,
       BoundedFormulaω.realize_iSup]
     constructor
     · rintro ⟨i, hi⟩
       exact LocalEMContext.eventualDeepTruth_iSup_of_exists (Λ := localColim s₀) (J := J) ctx
-        (fun i => (φs i).mapLanguage (LlocalInclusion s₀ (k + 1))) ts S
+        (fun i => BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) (φs i)) ts S
         ⟨i, (ih i (bfSubformulas_subset_Γlocal_succ s₀ hmem (Set.mem_range_self i)) ts S hsub
           fun T hT => (hready T hT) i).mp hi⟩
     · intro h
       obtain ⟨i, hi⟩ := hc.iSup_complete
-        (fun i => (φs i).mapLanguage (LlocalInclusion s₀ (k + 1)))
+        (fun i => BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) (φs i))
         (toLocalColimFormula_mem_ΓlocalColim s₀ hmem) ts S hsub h
       exact ⟨i, (ih i (bfSubformulas_subset_Γlocal_succ s₀ hmem (Set.mem_range_self i)) ts S hsub
         fun T hT => (hready T hT) i).mpr hi⟩
@@ -657,13 +658,13 @@ theorem LocalEMContext.truthLemmaStage_of_skolemUniversal
     intro hmem ts S hsub hready
     rw [show ((BoundedFormulaω.iInf φs).mapLanguage (LlocalInclusion s₀ (k + 1))).mapLanguage
           (lhomWithConstants (localColim s₀) J)
-        = BoundedFormulaω.iInf (fun i => ((φs i).mapLanguage
-            (LlocalInclusion s₀ (k + 1))).mapLanguage
+        = BoundedFormulaω.iInf (fun i => (BoundedFormulaω.mapLanguage
+            (LlocalInclusion s₀ (k + 1)) (φs i)).mapLanguage
               (lhomWithConstants (localColim s₀) J)) from rfl,
       BoundedFormulaω.realize_iInf]
     constructor
     · intro h
-      exact hc.iInf_complete (fun i => (φs i).mapLanguage (LlocalInclusion s₀ (k + 1)))
+      exact hc.iInf_complete (fun i => BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) (φs i))
         (toLocalColimFormula_mem_ΓlocalColim s₀ hmem) ts S hsub
         fun i => (ih i (bfSubformulas_subset_Γlocal_succ s₀ hmem (Set.mem_range_self i)) ts S hsub
           fun T hT => (hready T hT) i).mp (h i)
@@ -671,10 +672,10 @@ theorem LocalEMContext.truthLemmaStage_of_skolemUniversal
       exact (ih i (bfSubformulas_subset_Γlocal_succ s₀ hmem (Set.mem_range_self i)) ts S hsub
         fun T hT => (hready T hT) i).mpr
         (LocalEMContext.eventualDeepTruth_iInf_forall (Λ := localColim s₀) (J := J) ctx
-          (fun i => (φs i).mapLanguage (LlocalInclusion s₀ (k + 1))) ts S h i)
+          (fun i => BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) (φs i)) ts S h i)
   | all ψ₀ ih =>
     intro hmem ts S hsub hready
-    set φ₀ := ψ₀.mapLanguage (LlocalInclusion s₀ (k + 1)) with hφ₀
+    set φ₀ := BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) ψ₀ with hφ₀
     -- the two membership uses: `hmem` (the `.all` member) keys the witness API; the body
     -- membership feeds the IH
     have hbodymem : (⟨_, ψ₀⟩ : Σ n, (Llocal s₀ (k + 1)).BoundedFormulaω Empty n)

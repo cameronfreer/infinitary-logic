@@ -79,7 +79,7 @@ theorem lyndonInsepAt_not_instConst_of_not_all (c : ℕ) (ψ : L[[ℕ]].BoundedF
   have hequiv : ∀ (M : Type) [L[[ℕ]].Structure M] [Nonempty M],
       Sentenceω.Realize (ψ.all).not M ↔ Sentenceω.Realize (ψ.not).ex M := by
     intro M _ _
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_all,
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_all,
       BoundedFormulaω.realize_ex, not_forall]
   have h' : LyndonInsepAt F P N A (insert (ψ.not).ex Γ) Δ :=
     (lyndonInsepAt_insert_congr (fun M _ _ => hequiv M)).mp h
@@ -532,7 +532,7 @@ theorem exists_lyndon_paired_model_neg [L.IsRelational] [Countable (Σ l, L.Rela
   obtain ⟨M, instM, neM, hr1, hr2not⟩ := exists_lyndon_paired_model F₁ P₁ N₁ F₂ P₂ N₂ r₁ r₂.not
     hr₁ (by rw [sentenceJConsts_not]; exact hr₂) hr₁sent hr₂sent A₀ hsupp hroot
   refine ⟨M, instM, neM, hr1, ?_⟩
-  simp only [Sentenceω.Realize, BoundedFormulaω.realize_not] at hr2not
+  simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not] at hr2not
   exact hr2not
 
 end FirstOrder.Language

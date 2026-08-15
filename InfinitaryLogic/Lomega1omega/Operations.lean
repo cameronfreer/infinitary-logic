@@ -249,11 +249,10 @@ theorem realize_relabel_sumInr_zero {n : ℕ} (φ : L.Formulaω (Fin n)) (xs : F
     (φ.relabel (Sum.inr : Fin n → Empty ⊕ Fin n)).Realize (Empty.elim : Empty → M) xs ↔
     Formulaω.Realize φ xs := by
   have h := realize_relabel_sumInr (k := 0) φ xs
-  simp only [Formulaω.Realize] at h ⊢
-  rw [h]
   have h1 : xs ∘ Fin.castAdd 0 = xs := by funext i; simp [Fin.castAdd]
   have h2 : (xs ∘ Fin.natAdd n : Fin 0 → M) = Fin.elim0 := Fin.eq_elim0 _
-  rw [h1, h2]
+  rw [h1, h2] at h
+  exact h
 
 /-- Substitutes the free variables in a bounded formula with terms. -/
 def subst : ∀ {n : ℕ}, L.BoundedFormulaω α n → (α → L.Term β) → L.BoundedFormulaω β n
@@ -560,7 +559,7 @@ private theorem roundtrip_general :
     -- Goal: (openBounds (ψ.relabel Sum.inr)).relabel insertLastBound |>.relabel fsfe = ψ
     -- Use the composition lemma at (n, m):
     have comp := relabel_insertLastBound_comp_finSumFinEquiv n m
-      (openBounds (ψ.relabel (Sum.inr : Fin n → Empty ⊕ Fin n)))
+      (openBounds (relabel (Sum.inr : Fin n → Empty ⊕ Fin n) ψ))
     simp only [castLE_self] at comp
     rw [comp]; exact ih
   | iSup _ ih =>
@@ -773,9 +772,10 @@ formula realizes with the `Fin.elim0` assignment. -/
 theorem realize_toSentenceω {M : Type*} [L.Structure M]
     (φ : L.Formulaω (Fin 0)) :
     Sentenceω.Realize φ.toSentenceω M ↔ Formulaω.Realize φ (Fin.elim0 : Fin 0 → M) := by
-  unfold toSentenceω Sentenceω.Realize Formulaω.Realize
-  rw [BoundedFormulaω.realize_mapFreeVars]
-  simp only [comp_fin_elim0]
+  have h := BoundedFormulaω.realize_mapFreeVars (Fin.elim0 : Fin 0 → Empty) φ
+    (Empty.elim : Empty → M) (Fin.elim0 : Fin 0 → M)
+  rw [comp_fin_elim0] at h
+  exact h
 
 end Formulaω
 
@@ -828,7 +828,7 @@ theorem realize_toLω {M : Type*} [L.Structure M] [Nonempty M] (φ : L.Sentence)
   -- M ⊨ φ uses `default : Empty → M`, while Sentenceω.Realize uses `Empty.elim`
   -- These are propositionally equal
   have h : (default : Empty → M) = (fun e : Empty => e.elim) := Empty.eq_elim default
-  simp only [Sentenceω.Realize, Sentence.Realize, Formula.Realize, toLω, Formula.toLω, h]
+  simp only [Sentenceω.realize_def, Sentence.Realize, Formula.Realize, toLω, Formula.toLω, h]
   exact BoundedFormula.realize_toLω φ
 
 end Sentence

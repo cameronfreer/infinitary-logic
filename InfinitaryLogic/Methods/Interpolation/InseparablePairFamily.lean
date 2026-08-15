@@ -146,35 +146,35 @@ theorem entails_of_mem_of_entails {Γ : Set L[[ℕ]].Sentenceω} {σ τ : L[[ℕ
 theorem negimp_entails_left (φ ψ : L[[ℕ]].Sentenceω) : Sentenceω.Entails (φ.imp ψ).not φ := by
   intro M _ _ hmodel
   have h := hmodel _ (Set.mem_singleton _)
-  simp only [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_imp,
+  simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_imp,
     Classical.not_imp] at h ⊢
   exact h.1
 
 theorem negimp_entails_right (φ ψ : L[[ℕ]].Sentenceω) : Sentenceω.Entails (φ.imp ψ).not ψ.not := by
   intro M _ _ hmodel
   have h := hmodel _ (Set.mem_singleton _)
-  simp only [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_imp,
+  simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_imp,
     Classical.not_imp] at h ⊢
   exact h.2
 
 theorem not_not_entails (φ : L[[ℕ]].Sentenceω) : Sentenceω.Entails φ.not.not φ := by
   intro M _ _ hmodel
   have h := hmodel _ (Set.mem_singleton _)
-  simp only [Sentenceω.Realize, BoundedFormulaω.realize_not, not_not] at h
+  simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not, not_not] at h
   exact h
 
 theorem iInf_entails_component (φs : ℕ → L[[ℕ]].Sentenceω) (k : ℕ) :
     Sentenceω.Entails (BoundedFormulaω.iInf φs) (φs k) := by
   intro M _ _ hmodel
   have h := hmodel _ (Set.mem_singleton _)
-  simp only [Sentenceω.Realize, BoundedFormulaω.realize_iInf] at h
+  simp only [Sentenceω.realize_def, BoundedFormulaω.realize_iInf] at h
   exact h k
 
 theorem neg_iSup_entails_neg_component (φs : ℕ → L[[ℕ]].Sentenceω) (k : ℕ) :
     Sentenceω.Entails (BoundedFormulaω.iSup φs).not (φs k).not := by
   intro M _ _ hmodel
   have h := hmodel _ (Set.mem_singleton _)
-  simp only [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iSup,
+  simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iSup,
     not_exists] at h ⊢
   exact h k
 
@@ -219,7 +219,7 @@ theorem entails_rel_congr {Γ : Set L[[ℕ]].Sentenceω} {l : ℕ} (Rr : L.Relat
   have hr := hmodel _ h1
   have he := hmodel _ h2
   rw [realize_constEq] at he
-  simp only [relInst, Sentenceω.Realize] at hr ⊢
+  simp only [relInst, Sentenceω.realize_def] at hr ⊢
   -- `BoundedFormulaω.realize_rel` no longer fires: the goal spells the symbol as `Sum.inl Rr`,
   -- typed `L.Relations l ⊕ (constantsOn ℕ).Relations l`, so it is not type-correct at `implicit`
   -- transparency. Supplying the symbol explicitly makes the congruence term-mode.
@@ -274,7 +274,7 @@ theorem insepAt_iSup_component {F : Set (Σ n, L.Functions n)} {R : Set (Σ n, L
     baseRelationsIn_iSup_subset σ hbr, sentenceJConsts_iSup_subset σ hsupp, ?_, ?_⟩
   · intro M _ _ hmodel
     have hsup := hmodel _ hmem
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_iSup] at hsup ⊢
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_iSup] at hsup ⊢
     obtain ⟨k, hk⟩ := hsup
     exact ⟨k, hΓσ k M (by
       intro ρ hρ
@@ -282,11 +282,11 @@ theorem insepAt_iSup_component {F : Set (Σ n, L.Functions n)} {R : Set (Σ n, L
       · exact hk
       · exact hmodel ρ hρ)⟩
   · intro M _ _ hmodel
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iSup,
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iSup,
       not_exists]
     intro k
     have hk := hΔσ k M hmodel
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_not] at hk
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not] at hk
     exact hk
 
 /-- **C3' (negated conjunction)**: a negated conjunction in `Γ` splits off a negated component. -/
@@ -302,21 +302,21 @@ theorem insepAt_neg_iInf_component {F : Set (Σ n, L.Functions n)} {R : Set (Σ 
     baseRelationsIn_iSup_subset σ hbr, sentenceJConsts_iSup_subset σ hsupp, ?_, ?_⟩
   · intro M _ _ hmodel
     have hnotinf := hmodel _ hmem
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iInf,
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iInf,
       not_forall] at hnotinf
     obtain ⟨k, hk⟩ := hnotinf
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_iSup]
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_iSup]
     exact ⟨k, hΓσ k M (by
       intro ρ hρ
       rcases Set.mem_insert_iff.mp hρ with rfl | hρ
-      · simp only [Sentenceω.Realize, BoundedFormulaω.realize_not]; exact hk
+      · simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not]; exact hk
       · exact hmodel ρ hρ)⟩
   · intro M _ _ hmodel
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iSup,
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iSup,
       not_exists]
     intro k
     have hk := hΔσ k M hmodel
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_not] at hk
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not] at hk
     exact hk
 
 /-- **C1 (implication)**: an implication in `Γ` yields one of the two possible refinements. -/
@@ -337,8 +337,8 @@ theorem insepAt_imp_dichotomy {F : Set (Σ n, L.Functions n)} {R : Set (Σ n, L.
   · exact sentenceJConsts_imp_subset (by rw [sentenceJConsts_not]; exact hsupp₁) hsupp₂
   · intro M _ _ hmodel
     have himp := hmodel _ hmem
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_imp] at himp
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_imp, BoundedFormulaω.realize_not]
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_imp] at himp
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_imp, BoundedFormulaω.realize_not]
     intro hnσ₁
     by_cases hφ : BoundedFormulaω.Realize φ (Empty.elim : Empty → M) Fin.elim0
     · exact hΓσ₂ M (by
@@ -349,12 +349,12 @@ theorem insepAt_imp_dichotomy {F : Set (Σ n, L.Functions n)} {R : Set (Σ n, L.
     · exact absurd (hΓσ₁ M (by
         intro ρ hρ
         rcases Set.mem_insert_iff.mp hρ with rfl | hρ
-        · simp only [Sentenceω.Realize, BoundedFormulaω.realize_not]; exact hφ
+        · simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not]; exact hφ
         · exact hmodel ρ hρ)) hnσ₁
   · intro M _ _ hmodel
     have h1' := hΔσ₁ M hmodel
     have h2' := hΔσ₂ M hmodel
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_imp]
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_imp]
       at h1' h2' ⊢
     intro hf
     exact h2' (hf h1')
@@ -370,7 +370,7 @@ theorem insepAt_falsum_absurd {F : Set (Σ n, L.Functions n)} {R : Set (Σ n, L.
   · rw [sentenceJConsts_falsum]; exact Set.empty_subset _
   · exact Theoryω.entails_of_mem hmem
   · intro M _ _ _
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_falsum,
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_falsum,
       not_false_eq_true]
 
 /-- A sentence and its negation both in `Γ` is incompatible with inseparability. -/
@@ -385,10 +385,10 @@ theorem insepAt_contradiction_absurd {F : Set (Σ n, L.Functions n)} {R : Set (�
   · intro M _ _ hmodel
     have hφ := hmodel _ h1
     have hnφ := hmodel _ h2
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_not] at hnφ
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not] at hnφ
     exact absurd hφ hnφ
   · intro M _ _ _
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_falsum,
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_falsum,
       not_false_eq_true]
 
 /-! ## The constant-instance negation identity

@@ -149,11 +149,11 @@ theorem BoundedFormulaω.functionsIn_subst (tf : α → L.Term β) :
   | iSup φs ih =>
     simp only [BoundedFormulaω.subst, BoundedFormulaω.functionsIn]
     exact Set.iUnion_subset fun i => (ih i).trans
-      (Set.union_subset_union_left _ (Set.subset_iUnion (fun i => (φs i).functionsIn) i))
+      (Set.union_subset_union_left _ (Set.subset_iUnion (fun i => BoundedFormulaω.functionsIn (φs i)) i))
   | iInf φs ih =>
     simp only [BoundedFormulaω.subst, BoundedFormulaω.functionsIn]
     exact Set.iUnion_subset fun i => (ih i).trans
-      (Set.union_subset_union_left _ (Set.subset_iUnion (fun i => (φs i).functionsIn) i))
+      (Set.union_subset_union_left _ (Set.subset_iUnion (fun i => BoundedFormulaω.functionsIn (φs i)) i))
 
 theorem BoundedFormulaω.functionsIn_openBounds :
     ∀ {n : ℕ} (φ : L.BoundedFormulaω Empty n),
@@ -355,14 +355,16 @@ theorem BoundedFormulaω.realize_congr_symbolsIn {M : Type} (S S' : L.Structure 
           Term.realize_congr_functionsIn S S' (ts i)
             (fun p hp => hf p (Set.mem_iUnion.mpr ⟨i, hp⟩)) _]
     exact hr ⟨_, R⟩ rfl _
-  | _, .imp φ ψ, hf, hr, v, xs => by
-    show (_ → _) ↔ (_ → _)
-    rw [BoundedFormulaω.realize_congr_symbolsIn S S' φ
+  | _, .imp φ ψ, hf, hr, v, xs =>
+    -- term mode: the lemma is stated through the reducible `BoundedFormulaω.Realize` alias,
+    -- so `rw` cannot key on it against a goal in `BoundedFormulaInf.Realize`
+    Iff.imp
+      (BoundedFormulaω.realize_congr_symbolsIn S S' φ
         (fun p hp => hf p (Set.mem_union_left _ hp))
-        (fun p hp => hr p (Set.mem_union_left _ hp)) v xs,
-      BoundedFormulaω.realize_congr_symbolsIn S S' ψ
+        (fun p hp => hr p (Set.mem_union_left _ hp)) v xs)
+      (BoundedFormulaω.realize_congr_symbolsIn S S' ψ
         (fun p hp => hf p (Set.mem_union_right _ hp))
-        (fun p hp => hr p (Set.mem_union_right _ hp)) v xs]
+        (fun p hp => hr p (Set.mem_union_right _ hp)) v xs)
   | _, .all φ, hf, hr, v, xs =>
     forall_congr' fun x =>
       BoundedFormulaω.realize_congr_symbolsIn S S' φ hf hr v (Fin.snoc xs x)

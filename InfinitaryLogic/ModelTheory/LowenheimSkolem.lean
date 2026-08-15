@@ -171,7 +171,7 @@ theorem downward_LS [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relati
   let φ' : L[[M]].Sentenceω := φ.mapLanguage (L.lhomWithConstants M)
   -- Step 3: φ' is true in M (by realize_mapLanguage with the expansion)
   have hM' : Sentenceω.Realize φ' M := by
-    simp only [φ', Sentenceω.Realize]
+    simp only [φ', Sentenceω.realize_def]
     rw [BoundedFormulaω.realize_mapLanguage]
     exact hM
   -- Step 4: Apply downward_LS_with_naming in L[[M]]
@@ -180,9 +180,9 @@ theorem downward_LS [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relati
   -- Step 5: Restrict N from L[[M]] back to L
   letI : L.Structure N := (L.lhomWithConstants M).reduct N
   exact ⟨N, inferInstance, hCountN, by
-    simp only [Sentenceω.Realize]
+    simp only [Sentenceω.realize_def]
     have := hNφ'
-    simp only [φ', Sentenceω.Realize] at this
+    simp only [φ', Sentenceω.realize_def] at this
     rwa [BoundedFormulaω.realize_mapLanguage] at this⟩
 
 /-- Downward LS for theories: any Lω₁ω theory in a countable language
@@ -211,7 +211,7 @@ theorem downward_LS_theory [Countable (Σ l, L.Functions l)] [Countable (Σ l, L
   -- All sentences in T' are true in M
   have hM' : ∀ σ' ∈ T', Sentenceω.Realize σ' M := by
     rintro _ ⟨σ, hσ, rfl⟩
-    simp only [Sentenceω.Realize]
+    simp only [Sentenceω.realize_def]
     rw [BoundedFormulaω.realize_mapLanguage]
     exact hM σ hσ
   -- Apply model_existence in L[[M]]
@@ -222,7 +222,7 @@ theorem downward_LS_theory [Countable (Σ l, L.Functions l)] [Countable (Σ l, L
   exact ⟨N, inferInstance, hCountN, by
     intro σ hσ
     have h := hModel' (σ.mapLanguage (L.lhomWithConstants M)) ⟨σ, hσ, rfl⟩
-    simp only [Sentenceω.Realize] at h ⊢
+    simp only [Sentenceω.realize_def] at h ⊢
     rwa [BoundedFormulaω.realize_mapLanguage] at h⟩
 
 end Language

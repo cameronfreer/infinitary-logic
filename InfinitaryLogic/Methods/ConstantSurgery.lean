@@ -108,23 +108,25 @@ theorem notMem_sentenceJConsts_substConst (b a : ℕ) (hne : b ≠ a) (ρ : L[[�
 /-- Constant abstraction does not move the signed quantifier occurrences. -/
 theorem hasQuantSigned_abstractConst (j : ℕ) (s : Bool) :
     ∀ {n : ℕ} (φ : L[[ℕ]].BoundedFormulaω Empty n),
-      hasQuantSigned s (φ.abstractConst j) ↔ hasQuantSigned s φ := by
+      hasQuantSigned s (BoundedFormulaω.abstractConst j φ) ↔ hasQuantSigned s φ := by
   intro n φ
   induction φ generalizing s with
   | falsum => exact Iff.rfl
   | equal t u => exact Iff.rfl
   | rel R ts => exact Iff.rfl
   | imp φ ψ ihφ ihψ =>
-    show hasQuantSigned (!s) (φ.abstractConst j) ∨ hasQuantSigned s (ψ.abstractConst j) ↔ _
+    -- induction-bound receivers carry the inductive type, so they need the qualified name
+    show hasQuantSigned (!s) (BoundedFormulaω.abstractConst j φ) ∨
+        hasQuantSigned s (BoundedFormulaω.abstractConst j ψ) ↔ _
     exact or_congr (ihφ (!s)) (ihψ s)
   | all φ ih =>
-    show s = true ∨ hasQuantSigned s (φ.abstractConst j) ↔ _
+    show s = true ∨ hasQuantSigned s (BoundedFormulaω.abstractConst j φ) ↔ _
     exact or_congr_right (ih s)
   | iSup φs ih =>
-    show (∃ i, hasQuantSigned s ((φs i).abstractConst j)) ↔ _
+    show (∃ i, hasQuantSigned s (BoundedFormulaω.abstractConst j (φs i))) ↔ _
     exact exists_congr fun i => ih i s
   | iInf φs ih =>
-    show (∃ i, hasQuantSigned s ((φs i).abstractConst j)) ↔ _
+    show (∃ i, hasQuantSigned s (BoundedFormulaω.abstractConst j (φs i))) ↔ _
     exact exists_congr fun i => ih i s
 
 /-- Substitution does not move the signed quantifier occurrences: the budgets are untouched. -/

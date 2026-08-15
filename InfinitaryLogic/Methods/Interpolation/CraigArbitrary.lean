@@ -192,7 +192,7 @@ theorem craig_pcSeparation (ψ₁ ψ₂ : L.Sentenceω) (h : Sentenceω.Entails 
       (θ.restrictSymbols hθF hθR) (Empty.elim : Empty → M) Fin.elim0
     rw [BoundedFormulaω.mapLanguage_restrictSymbols] at hiff
     have hMnot := (Sentenceω.entails_iff.mp hE2) M (hiff.mpr hcon)
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_not] at hMnot
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not] at hMnot
     exact hMnot hψ₂
 
 end FirstOrder.Language

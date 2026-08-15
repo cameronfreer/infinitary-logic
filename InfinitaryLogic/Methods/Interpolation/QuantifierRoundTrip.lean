@@ -136,7 +136,7 @@ theorem insepAt_not_instConst_of_insepAt_not_all (c : ℕ) (ψ : L[[ℕ]].Bounde
   have hequiv : ∀ (N : Type) [L[[ℕ]].Structure N] [Nonempty N],
       Sentenceω.Realize (ψ.all).not N ↔ Sentenceω.Realize (ψ.not).ex N := by
     intro N _ _
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_all,
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_all,
       BoundedFormulaω.realize_ex, not_forall]
   have h' : InsepAt F R A (insert (ψ.not).ex Γ) Δ :=
     (insepAt_insert_congr (fun N _ _ => hequiv N)).mp h

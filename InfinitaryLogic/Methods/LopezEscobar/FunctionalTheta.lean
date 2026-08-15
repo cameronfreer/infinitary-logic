@@ -244,16 +244,23 @@ theorem realize_bitAxiom {M : Type} [inst : (MidLang L).Structure M] :
       ∀ x : M, fMap L M x = numMap L M 0 ∨ fMap L M x = numMap L M 1 := by
   show BoundedFormulaω.Realize _ _ _ ↔ _
   rw [bitAxiom, BoundedFormulaω.realize_forallBlock]
+  -- the sentence semantics supplies the empty tuple as `default` rather than `Fin.elim0`; the two
+  -- are definitionally equal, so `realize_var_block` still proves the evaluation, but only after
+  -- the equality is stated in the shape the goal actually has
+  have hvar : ∀ ws : Fin 1 → M,
+      Term.realize (Sum.elim (Empty.elim : Empty → M) (Fin.append default ws))
+        (Term.var (Sum.inr (Fin.natAdd 0 0)) : (MidLang L).Term (Empty ⊕ Fin (0 + 1))) = ws 0 :=
+    fun ws => realize_var_block ws 0
   constructor
   · intro h x
     have hx := h ![x]
     rw [BoundedFormulaω.realize_sup, BoundedFormulaω.realize_equal,
       BoundedFormulaω.realize_equal] at hx
-    simpa only [realize_mF, realize_var_block, realize_mNum, Matrix.cons_val_zero] using hx
+    simpa only [realize_mF, hvar, realize_mNum, Matrix.cons_val_zero] using hx
   · intro h ws
     rw [BoundedFormulaω.realize_sup, BoundedFormulaω.realize_equal,
       BoundedFormulaω.realize_equal]
-    simpa only [realize_mF, realize_var_block, realize_mNum] using h (ws 0)
+    simpa only [realize_mF, hvar, realize_mNum] using h (ws 0)
 
 /-! ## Clauses 3 and 4: code and default -/
 

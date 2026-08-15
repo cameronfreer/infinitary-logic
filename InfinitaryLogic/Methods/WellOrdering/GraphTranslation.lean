@@ -77,9 +77,12 @@ theorem exists_model_relPreserving (φ : L.Sentenceω) (lt : L.Relations 2)
   letI := instNg
   haveI := neN
   obtain ⟨hrelφ, hAx⟩ := (BoundedFormulaω.realize_inf _ _).mp hrealψ
-  letI instN : L.Structure N := reconstructStructure φ.functionsIn hAx
+  -- re-ascribed at the sentence level: `SentenceInf.Realize` is a plain definition upstream, so
+  -- the consumers' implicit arguments cannot be solved against the unfolded form
+  have hAxS : Sentenceω.Realize (graphAxioms φ.functionsIn) N := hAx
+  letI instN : L.Structure N := reconstructStructure φ.functionsIn hAxS
   refine ⟨N, instN, neN, f, ?_, fun q r hqr => hf q r hqr⟩
-  exact (realize_relationalize_reconstruct hAx φ (subset_refl _)
+  exact (realize_relationalize_reconstruct hAxS φ (subset_refl _)
     Empty.elim Fin.elim0).mp hrelφ
 
 /-- **Boundedness, well-founded form (arbitrary language)**: if every model of `φ`

@@ -161,10 +161,10 @@ theorem skWitness_universal (d : ℕ) (S : Finset J) {k n : ℕ}
     (ψ₀ : (skolemStage L k).BoundedFormulaω Empty (n + 1))
     (ts : Fin n → (skolemColim L)[[J]].Term Empty) :
     letI : (skolemColim L).Structure M := skolemColimStructure L
-    (ψ₀.mapLanguage (skolemStageInclusion L k)).Realize (Empty.elim : Empty → M)
+    (BoundedFormulaω.mapLanguage (skolemStageInclusion L k) ψ₀).Realize (Empty.elim : Empty → M)
         (Fin.snoc (fun i => deepInterp L J a d S (ts i))
           (deepInterp L J a d S (skWitnessTerm L J ψ₀.not ts))) →
-      ∀ x : M, (ψ₀.mapLanguage (skolemStageInclusion L k)).Realize (Empty.elim : Empty → M)
+      ∀ x : M, (BoundedFormulaω.mapLanguage (skolemStageInclusion L k) ψ₀).Realize (Empty.elim : Empty → M)
           (Fin.snoc (fun i => deepInterp L J a d S (ts i)) x) := by
   letI : (skolemColim L).Structure M := skolemColimStructure L
   letI : (skolemStage L k).Structure M := skolemStageStructure L k
@@ -476,7 +476,7 @@ theorem realize_deForm (d : ℕ) (S : Finset J) {n : ℕ}
       = (fun i => deepInterp L J a d S (ts i)) :=
     funext fun i => (deepInterp_eq_realize_fin L J a d S (ts i) (hsub i)).symm
   rw [deForm, BoundedFormulaω.realize_relabel_sumInr_zero]
-  simp only [Formulaω.Realize, BoundedFormulaω.realize_subst]
+  simp only [Formulaω.realize_def, BoundedFormulaω.realize_subst]
   rw [hassign]
   exact realize_openBounds φ _
 
@@ -1139,7 +1139,7 @@ def EMContext.TLReadyStage (ctx : EMContext L J (M := M)) (k : ℕ) {n : ℕ}
     (ψ : (skolemStage L k).BoundedFormulaω Empty n)
     (ts : Fin n → (skolemColim L)[[J]].Term Empty) (S : Finset J) : Prop :=
   ∀ T : Finset J, S ⊆ T →
-    EMContext.TLReady (L := L) (J := J) ctx (ψ.mapLanguage (skolemStageInclusion L k)) ts T
+    EMContext.TLReady (L := L) (J := J) ctx (BoundedFormulaω.mapLanguage (skolemStageInclusion L k) ψ) ts T
 
 /-- **The staged Γ*-truth lemma** (the load-bearing endpoint): for a **staged** base-language formula
 `ψ : (skolemStage L k).BoundedFormulaω`, realizing its colimit image in the EM term model on term-classes
@@ -1153,10 +1153,10 @@ theorem EMContext.truthLemmaStage (ctx : EMContext L J (M := M)) (hc : ctx.Omega
       (ts : Fin n → (skolemColim L)[[J]].Term Empty) (S : Finset J),
       (∀ i, jSupport L J (ts i) ⊆ S) → EMContext.TLReadyStage (L := L) (J := J) ctx k ψ ts S →
       (@BoundedFormulaω.Realize ((skolemColim L)[[J]]) ctx.Carrier ctx.structure Empty n
-          ((ψ.mapLanguage (skolemStageInclusion L k)).mapLanguage (lhomWithConstants (skolemColim L) J))
+          ((BoundedFormulaω.mapLanguage (skolemStageInclusion L k) ψ).mapLanguage (lhomWithConstants (skolemColim L) J))
           Empty.elim (fun i => ctx.mkClass (t := ts i)) ↔
         EMContext.eventualDeepTruth (L := L) (J := J) ctx
-          (ψ.mapLanguage (skolemStageInclusion L k)) ts S) := by
+          (BoundedFormulaω.mapLanguage (skolemStageInclusion L k) ψ) ts S) := by
   letI : (skolemColim L)[[J]].Structure ctx.Carrier := ctx.structure
   intro n ψ
   induction ψ with
@@ -1187,7 +1187,7 @@ theorem EMContext.truthLemmaStage (ctx : EMContext L J (M := M)) (hc : ctx.Omega
     have hdec := (hready S (le_refl S)).1
     simp only [BoundedFormulaω.mapLanguage_imp]
     rw [EMContext.eventualDeepTruth_imp_iff (L := L) (J := J) ctx
-      (φ.mapLanguage (skolemStageInclusion L k)) (ψ.mapLanguage (skolemStageInclusion L k)) ts S hdec,
+      (BoundedFormulaω.mapLanguage (skolemStageInclusion L k) φ) (BoundedFormulaω.mapLanguage (skolemStageInclusion L k) ψ) ts S hdec,
       BoundedFormulaω.realize_imp]
     exact imp_congr (ihφ ts S hsub fun T hT => (hready T hT).2.1)
       (ihψ ts S hsub fun T hT => (hready T hT).2.2)
@@ -1195,36 +1195,36 @@ theorem EMContext.truthLemmaStage (ctx : EMContext L J (M := M)) (hc : ctx.Omega
     intro ts S hsub hready
     rw [show ((BoundedFormulaω.iSup φs).mapLanguage (skolemStageInclusion L k)).mapLanguage
           (lhomWithConstants (skolemColim L) J)
-        = BoundedFormulaω.iSup (fun i => ((φs i).mapLanguage (skolemStageInclusion L k)).mapLanguage
+        = BoundedFormulaω.iSup (fun i => (BoundedFormulaω.mapLanguage (skolemStageInclusion L k) (φs i)).mapLanguage
             (lhomWithConstants (skolemColim L) J)) from rfl,
       BoundedFormulaω.realize_iSup]
     constructor
     · rintro ⟨i, hi⟩
       exact EMContext.eventualDeepTruth_iSup_of_exists (L := L) (J := J) ctx
-        (fun i => (φs i).mapLanguage (skolemStageInclusion L k)) ts S
+        (fun i => BoundedFormulaω.mapLanguage (skolemStageInclusion L k) (φs i)) ts S
         ⟨i, (ih i ts S hsub fun T hT => (hready T hT) i).mp hi⟩
     · intro h
       obtain ⟨i, hi⟩ := hc.iSup_complete
-        (fun i => (φs i).mapLanguage (skolemStageInclusion L k)) ts S h
+        (fun i => BoundedFormulaω.mapLanguage (skolemStageInclusion L k) (φs i)) ts S h
       exact ⟨i, (ih i ts S hsub fun T hT => (hready T hT) i).mpr hi⟩
   | iInf φs ih =>
     intro ts S hsub hready
     rw [show ((BoundedFormulaω.iInf φs).mapLanguage (skolemStageInclusion L k)).mapLanguage
           (lhomWithConstants (skolemColim L) J)
-        = BoundedFormulaω.iInf (fun i => ((φs i).mapLanguage (skolemStageInclusion L k)).mapLanguage
+        = BoundedFormulaω.iInf (fun i => (BoundedFormulaω.mapLanguage (skolemStageInclusion L k) (φs i)).mapLanguage
             (lhomWithConstants (skolemColim L) J)) from rfl,
       BoundedFormulaω.realize_iInf]
     constructor
     · intro h
-      exact hc.iInf_complete (fun i => (φs i).mapLanguage (skolemStageInclusion L k)) ts S
+      exact hc.iInf_complete (fun i => BoundedFormulaω.mapLanguage (skolemStageInclusion L k) (φs i)) ts S
         fun i => (ih i ts S hsub fun T hT => (hready T hT) i).mp (h i)
     · intro h i
       exact (ih i ts S hsub fun T hT => (hready T hT) i).mpr
         (EMContext.eventualDeepTruth_iInf_forall (L := L) (J := J) ctx
-          (fun i => (φs i).mapLanguage (skolemStageInclusion L k)) ts S h i)
+          (fun i => BoundedFormulaω.mapLanguage (skolemStageInclusion L k) (φs i)) ts S h i)
   | all ψ₀ ih =>
     intro ts S hsub hready
-    set φ₀ := ψ₀.mapLanguage (skolemStageInclusion L k) with hφ₀
+    set φ₀ := BoundedFormulaω.mapLanguage (skolemStageInclusion L k) ψ₀ with hφ₀
     have hwS : jSupport L J (skWitnessTerm L J ψ₀.not ts) ⊆ S := by
       rw [jSupport_skWitnessTerm]; exact Finset.biUnion_subset.mpr fun i _ => hsub i
     have hsnoc : ∀ (u : (skolemColim L)[[J]].Term Empty) (i : Fin (_ + 1)),
@@ -1330,7 +1330,7 @@ structure EMContext.DeFormClosedForGammaStar (ctx : EMContext L J (M := M))
     (⟨k, n, φ⟩ : SkFormula L) ∈ Γstar L Γ₀ →
     ∀ (ts : Fin n → (skolemColim L)[[J]].Term Empty) (T : Finset J)
       (hcov : ∀ i, jSupport L J (ts i) ⊆ T),
-      (⟨T.card, deForm L J T (φ.mapLanguage (skolemStageInclusion L k)) ts hcov⟩ :
+      (⟨T.card, deForm L J T (BoundedFormulaω.mapLanguage (skolemStageInclusion L k) φ) ts hcov⟩ :
         Σ n, (skolemColim L).BoundedFormulaω Empty n) ∈ ctx.Γ
 
 /-- **Readiness (un-quantified support form)**: from the deForm-closure mixin, every `Γ*` formula `ψ`
@@ -1343,7 +1343,7 @@ theorem EMContext.TLReady_mapLang_of_GammaStar (ctx : EMContext L J (M := M)) {k
       ∀ (ts : Fin n → (skolemColim L)[[J]].Term Empty) (T : Finset J),
         (∀ i, jSupport L J (ts i) ⊆ T) →
         EMContext.TLReady (L := L) (J := J) ctx
-          (ψ.mapLanguage (skolemStageInclusion L k)) ts T := by
+          (BoundedFormulaω.mapLanguage (skolemStageInclusion L k) ψ) ts T := by
   intro n ψ
   induction ψ with
   | falsum => intro _ _ _ _; exact trivial
@@ -1356,7 +1356,7 @@ theorem EMContext.TLReady_mapLang_of_GammaStar (ctx : EMContext L J (M := M)) {k
     have hψ'mem : (⟨k, _, ψ'⟩ : SkFormula L) ∈ Γstar L Γ₀ :=
       skSubStep_subset_Γstar L hψ (Set.mem_image_of_mem _ (Set.mem_insert_of_mem _ rfl))
     exact ⟨EMContext.eventualDeepTruth_decided (L := L) (J := J) ctx
-        (φ'.mapLanguage (skolemStageInclusion L k)) ts T hcov (hclosed.deForm_mem hφ'mem ts T hcov),
+        (BoundedFormulaω.mapLanguage (skolemStageInclusion L k) φ') ts T hcov (hclosed.deForm_mem hφ'mem ts T hcov),
       ihφ hφ'mem ts T hcov, ihψ hψ'mem ts T hcov⟩
   | iSup φs ih =>
     intro hψ ts T hcov i

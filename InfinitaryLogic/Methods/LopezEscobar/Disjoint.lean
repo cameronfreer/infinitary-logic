@@ -58,8 +58,13 @@ theorem pcMem_disjoint {B : Set (StructureSpace L)}
       ((pcSentence L .left T₀).and (pcSentence L .right T₁)) ↥N _ :=
     (hAe.realize_sentence_iff (Fragment.mem_generatedSentence _)).mp
       ((BoundedFormulaω.realize_and _ _).mpr ⟨hSleft, hSright⟩)
-  have hNleft := ((BoundedFormulaω.realize_and _ _).mp hNand).1
-  have hNright := ((BoundedFormulaω.realize_and _ _).mp hNand).2
+  -- ascribed at the sentence level: `SentenceInf.Realize` is a plain definition upstream, so the
+  -- unifier cannot solve `realize_pcSentence_iff`'s implicit arguments against a goal that is
+  -- already unfolded to the bounded-formula level
+  have hNleft : @Sentenceω.Realize (graphLanguage (KLang L)) (pcSentence L .left T₀) ↥N _ :=
+    ((BoundedFormulaω.realize_and _ _).mp hNand).1
+  have hNright : @Sentenceω.Realize (graphLanguage (KLang L)) (pcSentence L .right T₁) ↥N _ :=
+    ((BoundedFormulaω.realize_and _ _).mp hNand).2
   obtain ⟨hAxN, hrelN⟩ := (realize_pcSentence_iff .left T₀).mp hNleft
   -- nonemptiness bootstrap from the graph-totality of the tagged zero-ary witness `c`
   haveI : Nonempty N := by

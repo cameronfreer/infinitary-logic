@@ -349,7 +349,7 @@ theorem realize_canonDeForm {Λ : Language.{0, 0}} {M : Type} [Λ.Structure M] {
     (canonDeForm Λ φ gt).Realize (Empty.elim : Empty → M) xs ↔
       φ.Realize (Empty.elim : Empty → M) (fun i => (gt i).realize xs) := by
   rw [canonDeForm, BoundedFormulaω.realize_relabel_sumInr_zero]
-  simp only [Formulaω.Realize, BoundedFormulaω.realize_subst]
+  simp only [Formulaω.realize_def, BoundedFormulaω.realize_subst]
   exact realize_openBounds φ _
 
 namespace HeightCex

@@ -46,6 +46,6 @@ theorem exists_budgetedPair_model {r₁ r₂ : L[[ℕ]].Sentenceω}
   have h₂ : r₂.not ∈ Sstar := hsub (Or.inr rfl)
   refine ⟨M, instM, neM, hpos _ h₁, ?_⟩
   have := hpos _ h₂
-  rwa [Sentenceω.Realize, BoundedFormulaω.realize_not] at this
+  rwa [Sentenceω.realize_def, BoundedFormulaω.realize_not] at this
 
 end FirstOrder.Language

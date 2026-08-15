@@ -698,7 +698,7 @@ theorem exists_paired_model_neg [L.IsRelational] [Countable (Σ l, L.Relations l
   obtain ⟨M, instM, neM, hr1, hr2not⟩ := exists_paired_model F₁ R₁ F₂ R₂ r₁ r₂.not hr₁
     (by rw [sentenceJConsts_not]; exact hr₂) hr₁sent hr₂sent A₀ hsupp hroot
   refine ⟨M, instM, neM, hr1, ?_⟩
-  simp only [Sentenceω.Realize, BoundedFormulaω.realize_not] at hr2not
+  simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not] at hr2not
   exact hr2not
 
 end FirstOrder.Language

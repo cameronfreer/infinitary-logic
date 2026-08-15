@@ -77,67 +77,67 @@ def trueInModelConsistencyProperty (M : Type w) [L.Structure M] :
     intro S hS φ ⟨hφ, hφn⟩
     have h1 : Sentenceω.Realize φ M := hS hφ
     have h2 : Sentenceω.Realize φ.not M := hS hφn
-    simp only [Sentenceω.Realize, realize_not] at h1 h2
+    simp only [Sentenceω.realize_def, realize_not] at h1 h2
     exact h2 h1
   C1_imp := by
     intro S hS φ ψ hmem
     have hsat : Sentenceω.Realize (φ.imp ψ) M := hS hmem
-    simp only [Sentenceω.Realize, realize_imp] at hsat
+    simp only [Sentenceω.realize_def, realize_imp] at hsat
     by_cases hφ : Sentenceω.Realize φ M
     · right; exact union_subset_trueInModel hS (hsat hφ)
     · left; exact union_subset_trueInModel hS
         (show Sentenceω.Realize φ.not M by
-          simp only [Sentenceω.Realize, realize_not]; exact hφ)
+          simp only [Sentenceω.realize_def, realize_not]; exact hφ)
   C1_neg_imp := by
     intro S hS φ ψ hmem
     have hsat : Sentenceω.Realize (φ.imp ψ).not M := hS hmem
-    simp only [Sentenceω.Realize, realize_not, realize_imp] at hsat
+    simp only [Sentenceω.realize_def, realize_not, realize_imp] at hsat
     push Not at hsat
     obtain ⟨hφ, hψ⟩ := hsat
     exact ⟨union_subset_trueInModel hS hφ,
            union_subset_trueInModel hS
              (show Sentenceω.Realize ψ.not M by
-              simp only [Sentenceω.Realize, realize_not]; exact hψ)⟩
+              simp only [Sentenceω.realize_def, realize_not]; exact hψ)⟩
   C2_not_not := by
     intro S hS φ hmem
     have hsat : Sentenceω.Realize φ.not.not M := hS hmem
-    simp only [Sentenceω.Realize, realize_not] at hsat
+    simp only [Sentenceω.realize_def, realize_not] at hsat
     exact union_subset_trueInModel hS (by push Not at hsat; exact hsat)
   C3_iInf := by
     intro S hS φs hmem k
     have hsat : Sentenceω.Realize (iInf φs) M := hS hmem
-    simp only [Sentenceω.Realize, realize_iInf] at hsat
+    simp only [Sentenceω.realize_def, realize_iInf] at hsat
     exact union_subset_trueInModel hS (hsat k)
   C3_neg_iInf := by
     intro S hS φs hmem
     have hsat : Sentenceω.Realize (iInf φs).not M := hS hmem
-    simp only [Sentenceω.Realize, realize_not, realize_iInf] at hsat
+    simp only [Sentenceω.realize_def, realize_not, realize_iInf] at hsat
     push Not at hsat
     obtain ⟨k, hk⟩ := hsat
     exact ⟨k, union_subset_trueInModel hS
       (show Sentenceω.Realize (φs k).not M by
-        simp only [Sentenceω.Realize, realize_not]; exact hk)⟩
+        simp only [Sentenceω.realize_def, realize_not]; exact hk)⟩
   C4_iSup := by
     intro S hS φs hmem
     have hsat : Sentenceω.Realize (iSup φs) M := hS hmem
-    simp only [Sentenceω.Realize, realize_iSup] at hsat
+    simp only [Sentenceω.realize_def, realize_iSup] at hsat
     obtain ⟨k, hk⟩ := hsat
     exact ⟨k, union_subset_trueInModel hS hk⟩
   C4_neg_iSup := by
     intro S hS φs hmem k
     have hsat : Sentenceω.Realize (iSup φs).not M := hS hmem
-    simp only [Sentenceω.Realize, realize_not, realize_iSup] at hsat
+    simp only [Sentenceω.realize_def, realize_not, realize_iSup] at hsat
     push Not at hsat
     exact union_subset_trueInModel hS
       (show Sentenceω.Realize (φs k).not M by
-        simp only [Sentenceω.Realize, realize_not]; exact hsat k)
+        simp only [Sentenceω.realize_def, realize_not]; exact hsat k)
   extension := by
     intro S hS φ
     by_cases hφ : Sentenceω.Realize φ M
     · left; exact union_subset_trueInModel hS hφ
     · right; exact union_subset_trueInModel hS
         (show Sentenceω.Realize φ.not M by
-          simp only [Sentenceω.Realize, realize_not]; exact hφ)
+          simp only [Sentenceω.realize_def, realize_not]; exact hφ)
   chain_closure := by
     intro chain hchain _hIsChain _hne σ hσ
     obtain ⟨S, hSmem, hσS⟩ := Set.mem_sUnion.mp hσ
@@ -146,7 +146,7 @@ def trueInModelConsistencyProperty (M : Type w) [L.Structure M] :
 /-- φ.subst at a named element equals φ.Realize at that element. -/
 private theorem realize_subst_name (ι : NamingFunction L M) (φ : L.Formulaω (Fin 1)) (m : M) :
     Sentenceω.Realize (φ.subst (fun _ => ι.name m)) M ↔ Formulaω.Realize φ (fun _ => m) := by
-  simp only [Sentenceω.Realize, realize_subst, Formulaω.Realize]
+  simp only [Sentenceω.realize_def, realize_subst, Formulaω.realize_def]
   have : (fun (a : Fin 1) => (ι.name m).realize (Empty.elim : Empty → M)) = (fun _ => m) := by
     funext ⟨i, hi⟩
     exact ι.sound m
@@ -170,17 +170,17 @@ noncomputable def trueInModelConsistencyPropertyEq
     intro S hS t
     exact union_subset_trueInModel hS
       (show Sentenceω.Realize (BoundedFormulaω.equal t t) M by
-        simp only [Sentenceω.Realize, realize_equal])
+        simp only [Sentenceω.realize_def, realize_equal])
   C6_eq_subst := by
     intro S hS t₁ t₂ φ heq hφt₁
     have h_eq : t₁.realize (Empty.elim : Empty → M) = t₂.realize (Empty.elim : Empty → M) := by
       have := hS heq
-      simp only [trueInModel, Set.mem_setOf_eq, Sentenceω.Realize, realize_equal,
+      simp only [trueInModel, Set.mem_setOf_eq, Sentenceω.realize_def, realize_equal,
                   Term.realize_relabel] at this
       simpa using this
     have h_φ : Sentenceω.Realize (φ.subst (fun _ => t₁)) M := hS hφt₁
     exact union_subset_trueInModel hS (by
-      simp only [Sentenceω.Realize, realize_subst] at h_φ ⊢
+      simp only [Sentenceω.realize_def, realize_subst] at h_φ ⊢
       have key : (fun (a : Fin 1) => (t₂).realize (Empty.elim : Empty → M)) =
                  (fun (a : Fin 1) => (t₁).realize (Empty.elim : Empty → M)) := by
         funext; exact h_eq.symm
@@ -188,62 +188,62 @@ noncomputable def trueInModelConsistencyPropertyEq
   C7_quantifier := by
     intro S hS φ hmem
     have hsat := hS hmem
-    simp only [trueInModel, Set.mem_setOf_eq, Sentenceω.Realize, realize_ex] at hsat
+    simp only [trueInModel, Set.mem_setOf_eq, Sentenceω.realize_def, realize_ex] at hsat
     obtain ⟨m, hm⟩ := hsat
     rw [snoc_elim0_eq_const, realize_relabel_sumInr_zero] at hm
     exact ⟨ι.name m, union_subset_trueInModel hS ((realize_subst_name ι φ m).mpr hm)⟩
   C7_all := by
     intro S hS φ hmem t
     have hsat := hS hmem
-    simp only [trueInModel, Set.mem_setOf_eq, Sentenceω.Realize, realize_all] at hsat
+    simp only [trueInModel, Set.mem_setOf_eq, Sentenceω.realize_def, realize_all] at hsat
     have hm := hsat (t.realize (Empty.elim : Empty → M))
     rw [snoc_elim0_eq_const, realize_relabel_sumInr_zero] at hm
     exact union_subset_trueInModel hS (by
-      simp only [Sentenceω.Realize, realize_subst]
+      simp only [Sentenceω.realize_def, realize_subst]
       exact hm)
   C7_neg_all := by
     intro S hS φ hmem
     have hsat := hS hmem
-    simp only [trueInModel, Set.mem_setOf_eq, Sentenceω.Realize, realize_not, realize_all] at hsat
+    simp only [trueInModel, Set.mem_setOf_eq, Sentenceω.realize_def, realize_not, realize_all] at hsat
     push Not at hsat
     obtain ⟨m, hm⟩ := hsat
     rw [snoc_elim0_eq_const, realize_relabel_sumInr_zero] at hm
     refine ⟨ι.name m, union_subset_trueInModel hS ?_⟩
     show Sentenceω.Realize (φ.subst (fun _ => ι.name m)).not M
-    simp only [Sentenceω.Realize, realize_not]
+    simp only [Sentenceω.realize_def, realize_not]
     intro h
     exact hm ((realize_subst_name ι φ m).mp h)
   C7_neg_ex := by
     intro S hS φ hmem t
     have hsat := hS hmem
-    simp only [trueInModel, Set.mem_setOf_eq, Sentenceω.Realize, realize_not, realize_ex] at hsat
+    simp only [trueInModel, Set.mem_setOf_eq, Sentenceω.realize_def, realize_not, realize_ex] at hsat
     push Not at hsat
     have hm := hsat (t.realize (Empty.elim : Empty → M))
     rw [snoc_elim0_eq_const, realize_relabel_sumInr_zero] at hm
     exact union_subset_trueInModel hS (by
-      simp only [Sentenceω.Realize, realize_not, realize_subst]
+      simp only [Sentenceω.realize_def, realize_not, realize_subst]
       intro h; apply hm
       exact h)
   C7_all_bound := by
     intro S hS φ hmem t
     have hsat := hS hmem
-    simp only [trueInModel, Set.mem_setOf_eq, Sentenceω.Realize, realize_all] at hsat
+    simp only [trueInModel, Set.mem_setOf_eq, Sentenceω.realize_def, realize_all] at hsat
     have h := hsat (t.realize (Empty.elim : Empty → M))
     rw [snoc_elim0_eq_const] at h
     exact union_subset_trueInModel hS (by
-      simp only [Sentenceω.Realize, realize_subst]
+      simp only [Sentenceω.realize_def, realize_subst]
       exact (realize_openBounds φ
         (fun _ => t.realize (Empty.elim : Empty → M))).mpr h)
   C7_neg_all_bound := by
     intro S hS φ hmem
     have hsat := hS hmem
-    simp only [trueInModel, Set.mem_setOf_eq, Sentenceω.Realize, realize_not,
+    simp only [trueInModel, Set.mem_setOf_eq, Sentenceω.realize_def, realize_not,
                realize_all] at hsat
     push Not at hsat
     obtain ⟨m, hm⟩ := hsat
     rw [snoc_elim0_eq_const] at hm
     refine ⟨ι.name m, union_subset_trueInModel hS ?_⟩
-    simp only [Sentenceω.Realize, realize_not, realize_subst]
+    simp only [Sentenceω.realize_def, realize_not, realize_subst]
     intro h
     have h' := (realize_openBounds φ
       (fun _ => (ι.name m).realize (Empty.elim : Empty → M))).mp h

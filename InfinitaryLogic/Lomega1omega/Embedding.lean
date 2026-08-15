@@ -97,7 +97,7 @@ def toLinf (φ : L.Sentenceω) : L.SentenceInfLegacy := Formulaω.toLinf φ
 @[simp]
 theorem realize_toLinf {M : Type w} [L.Structure M] (φ : L.Sentenceω) :
     SentenceInfLegacy.Realize φ.toLinf M ↔ Sentenceω.Realize φ M := by
-  simp only [SentenceInfLegacy.Realize, Sentenceω.Realize, toLinf, Formulaω.toLinf]
+  simp only [SentenceInfLegacy.Realize, Sentenceω.realize_def, toLinf, Formulaω.toLinf]
   exact BoundedFormulaω.realize_toLinf φ
 
 end Sentenceω
@@ -224,7 +224,7 @@ noncomputable def ofCountable {φ : L.SentenceInfLegacy} (h : φ.IsCountable) : 
 theorem realize_ofCountable {M : Type w} [L.Structure M]
     {φ : L.SentenceInfLegacy} (h : φ.IsCountable) :
     Sentenceω.Realize (ofCountable h) M ↔ SentenceInfLegacy.Realize φ M := by
-  simp only [Sentenceω.Realize, SentenceInfLegacy.Realize, ofCountable, FormulaInfLegacy.ofCountable]
+  simp only [Sentenceω.realize_def, SentenceInfLegacy.Realize, ofCountable, FormulaInfLegacy.ofCountable]
   exact BoundedFormulaInfLegacy.realize_ofCountable h
 
 /-- Encoding independence at the sentence level. -/

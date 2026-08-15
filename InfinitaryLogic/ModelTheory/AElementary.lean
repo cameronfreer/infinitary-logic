@@ -126,13 +126,17 @@ theorem aElementary_of_tarskiVaught {A : Fragment L} (f : N ↪[L] M)
     constructor
     · intro hM b
       have hMb := hM (f b)
-      rwa [hsnoc b, ih hbody (Fin.snoc a b)] at hMb
+      rw [hsnoc b] at hMb
+      -- apply the induction hypothesis rather than rewriting with it: it is stated through the
+      -- reducible `BoundedFormulaω.Realize` alias, which `rw` cannot key against a goal in
+      -- `BoundedFormulaInf.Realize`
+      exact (ih hbody (Fin.snoc a b)).mp hMb
     · intro hN m'
       by_contra hm
       obtain ⟨b, hb⟩ := hTV φ hmem a ⟨m', hm⟩
       refine hb ?_
-      rw [hsnoc b, ih hbody (Fin.snoc a b)]
-      exact hN b
+      rw [hsnoc b]
+      exact (ih hbody (Fin.snoc a b)).mpr (hN b)
   | iSup φs ih =>
     intro hmem a
     exact exists_congr fun k => ih k (A.iSup_mem hmem k) a

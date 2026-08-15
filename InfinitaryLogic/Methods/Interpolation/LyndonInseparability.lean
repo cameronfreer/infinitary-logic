@@ -73,7 +73,7 @@ theorem lyndonInsepAt_swap (h : LyndonInsepAt F P N A Γ Δ) : LyndonInsepAt F N
   · rw [sentenceJConsts_not]; exact hsupp
   · intro M _ _ hmodel
     have hσ := hΔσ M hmodel
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_not, not_not]
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not, not_not]
     exact hσ
 
 /-! ## Gate 2: the implication dichotomy (the polarity-clean mixed closure) -/
@@ -104,8 +104,8 @@ theorem lyndonInsepAt_imp_dichotomy {φ ψ : L[[ℕ]].Sentenceω} (hmem : φ.imp
   · exact sentenceJConsts_imp_subset (by rw [sentenceJConsts_not]; exact hsupp₁) hsupp₂
   · intro M _ _ hmodel
     have himp := hmodel _ hmem
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_imp] at himp
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_imp, BoundedFormulaω.realize_not]
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_imp] at himp
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_imp, BoundedFormulaω.realize_not]
     intro hnσ₁
     by_cases hφ : BoundedFormulaω.Realize φ (Empty.elim : Empty → M) Fin.elim0
     · exact hΓσ₂ M (by
@@ -116,12 +116,12 @@ theorem lyndonInsepAt_imp_dichotomy {φ ψ : L[[ℕ]].Sentenceω} (hmem : φ.imp
     · exact absurd (hΓσ₁ M (by
         intro ρ hρ
         rcases Set.mem_insert_iff.mp hρ with rfl | hρ
-        · simp only [Sentenceω.Realize, BoundedFormulaω.realize_not]; exact hφ
+        · simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not]; exact hφ
         · exact hmodel ρ hρ)) hnσ₁
   · intro M _ _ hmodel
     have h1' := hΔσ₁ M hmodel
     have h2' := hΔσ₂ M hmodel
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_imp]
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_imp]
       at h1' h2' ⊢
     intro hf
     exact h2' (hf h1')
@@ -149,7 +149,7 @@ theorem lyndonInsepAt_insert_of_shared_entails {σ φ : L[[ℕ]].Sentenceω}
   · exact baseRelationsInSigned_imp_subset hσN hbp
   · exact baseRelationsInSigned_imp_subset hσP hbn
   · intro M _ _ hmodel
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_imp]
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_imp]
     intro hσreal
     have hφreal : Sentenceω.Realize φ M := hcons M (by
       intro μ hμ
@@ -164,7 +164,7 @@ theorem lyndonInsepAt_insert_of_shared_entails {σ φ : L[[ℕ]].Sentenceω}
   · intro M _ _ hmodel
     have hσ := hΔσ M hmodel
     have hρn := hΔρnot M hmodel
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_imp,
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_imp,
       Classical.not_imp] at hσ hρn ⊢
     exact ⟨hσ, hρn⟩
 

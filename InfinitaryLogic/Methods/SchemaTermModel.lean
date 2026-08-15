@@ -471,7 +471,7 @@ theorem realize_schemaFormulaSentence_iff (σ h : ℕ → M) {n : ℕ}
   letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
   rw [schemaFormulaSentence, realizeWith_templateSentence, locDeForm, canonDeForm,
     BoundedFormulaω.realize_relabel_sumInr_zero]
-  simp only [Formulaω.Realize, BoundedFormulaω.realize_subst]
+  simp only [Formulaω.realize_def, BoundedFormulaω.realize_subst]
   refine (realize_openBounds φ _).trans ?_
   apply iff_of_eq
   congr 1
