@@ -18,8 +18,8 @@ rev = "3d425859e73fcfbef85b9638c2a91708ef4a22d4"
 # (e.g. batteries / Cli pulled in by LeanArchitect), per Mathlib's lake update guidance.
 [[require]]
 name = "mathlib"
-git = "https://github.com/leanprover-community/mathlib4"
-rev = "caa4dbde35c1f4f9fbc5268c5de0a5929f762645"
+git = "https://github.com/cameronfreer/mathlib4"
+rev = "35a60104c9"
 
 [[lean_lib]]
 name = "InfinitaryLogic"
