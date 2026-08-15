@@ -55,8 +55,8 @@ theorem sentenceJConsts_lift_eq_empty (φ : L.Sentenceω) :
   rw [sentenceJConsts, Set.mem_setOf_eq, BoundedFormulaω.functionsIn_mapLanguage] at hj
   obtain ⟨⟨l, f⟩, -, heq⟩ := hj
   obtain ⟨rfl, h2⟩ := Sigma.mk.inj_iff.mp heq
-  rw [heq_eq_eq] at h2
-  simp [Language.lhomWithConstants, LHom.sumInl] at h2
+  have h3 : (L.lhomWithConstants ℕ).onFunction f = Sum.inr j := eq_of_heq h2
+  simp [Language.lhomWithConstants, LHom.sumInl] at h3
 
 /-! ## Shape and support of base-diagram members -/
 

@@ -974,8 +974,9 @@ theorem exists_coherentMajorityBranch_of_ehmrBranch
     intro γ
     haveI : IsWellOrder (Order.succ γ).ToType (· < ·) := isWellOrder_lt
     rw [show (⊤ : (Order.succ γ).ToType) = Ordinal.enum (α := (Order.succ γ).ToType) (· < ·)
-          ⟨γ, (Ordinal.type_toType _).symm ▸ Order.lt_succ γ⟩ from Ordinal.enum_succ_eq_top.symm,
-      Ordinal.typein_enum]
+          ⟨γ, by simp only [Set.mem_Iio, Ordinal.type_toType]; exact Order.lt_succ γ⟩ from
+        Ordinal.enum_succ_eq_top.symm]
+    exact Ordinal.typein_enum _ _
   -- The assembled prefix embedding at each level.
   let pre : ∀ α : Ordinal.{0}, α < (Order.succ κ).ord → α.ToType ↪o Source κ :=
     fun α hα =>

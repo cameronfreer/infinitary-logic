@@ -89,7 +89,7 @@ theorem toZ_injective : Function.Injective (toZ α) := fun _ _ hxy =>
 theorem toZ_surjective {z : ZFSet.{0}} (hz : z ∈ ladderLevel (α + 1)) :
     ∃ x : VCarrier α, toZ α x = z := by
   refine ⟨equivShrink ↥(ladderLevel (α + 1)) ⟨z, hz⟩, ?_⟩
-  rw [toZ]
+  simp only [toZ]
   exact congrArg Subtype.val
     (_root_.Equiv.symm_apply_apply (equivShrink ↥(ladderLevel (α + 1))) ⟨z, hz⟩)
 

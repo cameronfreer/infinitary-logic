@@ -58,12 +58,15 @@ theorem constantsToVars_varFinset_subset (t : (skolemColim L)[[J]].Term Empty) :
       · simp [Term.constantsToVars, Term.varFinset]
       · simp only [Term.constantsToVars, jSupport, jConstOf, Term.varFinset]; rfl
     · rcases f with f' | c
-      · simp only [Term.constantsToVars, Term.varFinset, jSupport, jConstOf, Finset.union_empty]
+      · simp only [Term.constantsToVars, Term.varFinset, jSupport, jConstOf]
         intro x hx
         simp only [Finset.mem_biUnion, Finset.mem_univ, true_and] at hx
         obtain ⟨i, hxi⟩ := hx
         obtain ⟨y, hy, rfl⟩ := Finset.mem_image.mp (ih i hxi)
-        exact Finset.mem_image.mpr ⟨y, Finset.mem_biUnion.mpr ⟨i, Finset.mem_univ i, hy⟩, rfl⟩
+        -- `Finset.union_empty` no longer fires on the unreduced `jConstOf` match, so the
+        -- left-injection is supplied explicitly.
+        exact Finset.mem_image.mpr ⟨y, Finset.mem_union_left _
+          (Finset.mem_biUnion.mpr ⟨i, Finset.mem_univ i, hy⟩), rfl⟩
       · exact c.elim
 
 /-! ### Step 3: deep interpretation
@@ -309,8 +312,13 @@ theorem deTermFin_realize_superset (d : ℕ) (S T : Finset J) (w : (skolemColim 
   obtain ⟨j, hj, rfl⟩ := Finset.mem_image.mp (constantsToVars_varFinset_subset L J w hx)
   have hjS : j ∈ S := hw hj
   have hlt : deepRank J S j < S.card := deepRank_lt_card (J := J) hjS
-  simp only [Function.comp_apply, Sum.elim_inl, dif_pos hlt]
-  rw [orderEmbOfFin_deepRank J S rfl hjS hlt]
+  -- `dif_pos` synthesizes its own `Decidable` instance and no longer matches the goal's; the
+  -- branch selection is done in a standalone equation instead.
+  have hdite : (if h : deepRank J S j < S.card then
+      deepRank J T (S.orderEmbOfFin rfl ⟨deepRank J S j, h⟩) else 0) = deepRank J T j := by
+    rw [dite_eq_left hlt, orderEmbOfFin_deepRank J S rfl hjS hlt]
+  simp only [Function.comp_apply, Sum.elim_inl]
+  exact congrArg (fun m => a (d + m)) hdite
 
 /-- The **de-substituted equality atom** of two closed terms over a covering support `S`: an
 `L^Sk`-formula of arity `S.card` whose truth on the consecutive deep tuple is the deep equality of
@@ -368,8 +376,11 @@ theorem realize_deEqAtom_superset (d : ℕ) {S T : Finset J} (_hST : S ⊆ T)
     obtain ⟨j, hj, rfl⟩ := Finset.mem_image.mp (constantsToVars_varFinset_subset L J w hx)
     have hjS : j ∈ S := hw hj
     have hlt : deepRank J S j < S.card := deepRank_lt_card (J := J) hjS
-    simp only [Function.comp_apply, Sum.elim_inl, dif_pos hlt]
-    rw [orderEmbOfFin_deepRank J S rfl hjS hlt]
+    have hdite : (if h : deepRank J S j < S.card then
+        deepRank J T (S.orderEmbOfFin rfl ⟨deepRank J S j, h⟩) else 0) = deepRank J T j := by
+      rw [dite_eq_left hlt, orderEmbOfFin_deepRank J S rfl hjS hlt]
+    simp only [Function.comp_apply, Sum.elim_inl]
+    exact congrArg (fun m => a (d + m)) hdite
   rw [deEqAtom, BoundedFormulaω.realize_equal, Term.realize_relabel, Term.realize_relabel,
     Sum.elim_comp_inr, key t ht, key u hu]
 
@@ -934,7 +945,11 @@ theorem EMContext.eventualDeepTruth_rel_iff (ctx : EMContext L J (M := M)) {n l 
     rw [show (BoundedFormulaω.rel R args).mapLanguage (lhomWithConstants (skolemColim L) J)
         = BoundedFormulaω.rel (Sum.inl R)
             (fun i => (lhomWithConstants (skolemColim L) J).onTerm (args i)) from rfl,
-      BoundedFormulaω.realize_rel]
+      -- Both explicit arguments supplied: with `?R` open, `rw` must assign `Sum.inl R` to
+      -- `?R : ((skolemColim L)[[J]]).Relations l`, which fails at `implicit` transparency.
+      BoundedFormulaω.realize_rel
+        (Sum.inl R : ((skolemColim L)[[J]]).Relations l)
+        (fun i => (lhomWithConstants (skolemColim L) J).onTerm (args i))]
     apply Iff.of_eq
     congr 1
     funext i

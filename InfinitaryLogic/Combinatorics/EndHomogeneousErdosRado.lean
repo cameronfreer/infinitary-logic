@@ -933,8 +933,9 @@ theorem pairER_from_endHomogeneous (κ : Cardinal.{0}) (hκ : Cardinal.aleph0 �
       (f₀ (nxt (iso.symm x).val)) (f₀ (iso.symm y).val)
       (fun _ => ⟨(iso.symm x).val, rfl⟩) ⟨nxt (iso.symm x).val, rfl⟩ ⟨(iso.symm y).val, rfl⟩
       (fun _ => f₀.strictMono (hnxt (iso.symm x).val)) (fun _ => f₀.strictMono hpxy)
-  rw [appendLastOE_oneTupleOE (f₀.strictMono (hnxt (iso.symm x).val)),
-      appendLastOE_oneTupleOE (f₀.strictMono hpxy)] at hkey
+  rw [appendLastOE_oneTupleOE (f₀.strictMono (hnxt (iso.symm x).val))
+        (fun _ => f₀.strictMono (hnxt (iso.symm x).val)),
+      appendLastOE_oneTupleOE (f₀.strictMono hpxy) (fun _ => f₀.strictMono hpxy)] at hkey
   have hb_x : cR (pairEmbed (f₀.strictMono (hnxt (iso.symm x).val))) = b := (iso.symm x).2
   calc cR (pairEmbed ((OrderEmbedding.ofStrictMono _ hg).strictMono hxy))
       = cR (pairEmbed (f₀.strictMono hpxy)) := rfl

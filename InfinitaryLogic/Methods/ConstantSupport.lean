@@ -606,8 +606,8 @@ theorem BoundedFormulaω.mapLanguage_stripConsts {α : Type} :
   | falsum => intro h; rfl
   | equal t u =>
     intro h
-    simp only [BoundedFormulaω.stripConsts, BoundedFormulaω.mapLanguage,
-      Term.onTerm_stripConsts]
+    simp only [BoundedFormulaω.stripConsts, BoundedFormulaω.mapLanguage]
+    exact congrArg₂ _ (Term.onTerm_stripConsts _ _) (Term.onTerm_stripConsts _ _)
   | rel R ts =>
     rcases R with R | R
     · intro h
@@ -616,10 +616,12 @@ theorem BoundedFormulaω.mapLanguage_stripConsts {α : Type} :
     · exact nomatch R
   | imp φ ψ ihφ ihψ =>
     intro h
-    simp only [BoundedFormulaω.stripConsts, BoundedFormulaω.mapLanguage, ihφ, ihψ]
+    simp only [BoundedFormulaω.stripConsts, BoundedFormulaω.mapLanguage]
+    exact congrArg₂ _ (ihφ _) (ihψ _)
   | all φ ih =>
     intro h
-    simp only [BoundedFormulaω.stripConsts, BoundedFormulaω.mapLanguage, ih]
+    simp only [BoundedFormulaω.stripConsts, BoundedFormulaω.mapLanguage]
+    exact congrArg _ (ih _)
   | iSup φs ih =>
     intro h
     simp only [BoundedFormulaω.stripConsts, BoundedFormulaω.mapLanguage]
@@ -702,7 +704,6 @@ theorem sentenceJConsts_mapLanguage_withConstants (r : L.Sentenceω) :
     Set.mem_image, Set.mem_empty_iff_false, iff_false, not_exists, not_and]
   rintro ⟨p1, p2⟩ - hpe
   obtain ⟨rfl, h2⟩ := Sigma.mk.inj_iff.mp hpe
-  rw [heq_eq_eq] at h2
-  exact absurd (show (Sum.inl p2 : L[[ℕ]].Functions 0) = Sum.inr j from h2) (by simp)
+  exact absurd (show (Sum.inl p2 : L[[ℕ]].Functions 0) = Sum.inr j from eq_of_heq h2) (by simp)
 
 end FirstOrder.Language

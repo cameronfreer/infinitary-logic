@@ -115,7 +115,9 @@ theorem pcClass_subset {B : Set (StructureSpace L)} (side : PCSide)
       = pulledCode L ℕ := by
     funext q
     obtain ⟨⟨l, R⟩, v⟩ := q
-    rw [Bool.eq_iff_iff, pulledCode_eq_true,
+    -- The `MidLang L`-structure must be pinned to `Mstar`: left to instance synthesis it picks up
+    -- the `letI` above and the pattern no longer matches the goal's `pulledCode L ℕ`.
+    rw [Bool.eq_iff_iff, pulledCode_eq_true (inst := Mstar) ℕ ⟨⟨l, R⟩, v⟩,
       ← StructureSpaceOn.relMap_toStructure
         (StructureSpaceOn.encodeViaEquiv (L := L) νEquiv.symm) R v,
       StructureSpaceOn.toStructure_encodeViaEquiv_eq, Equiv.inducedStructure_RelMap, KEY]

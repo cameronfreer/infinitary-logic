@@ -291,8 +291,10 @@ theorem eq_appendLastOE {I : Type*} [LinearOrder I] {n : ℕ} (t : Fin (n + 2) �
       (fun k => t.strictMono (Fin.castSucc_lt_last k)) := by
   refine DFunLike.ext _ _ fun k => ?_
   refine Fin.lastCases ?_ (fun j => ?_) k
-  · rw [appendLastOE_last]
-  · rw [appendLastOE_castSucc]
+  · rw [appendLastOE_last (Fin.castSuccOrderEmb.trans t) (t (Fin.last (n + 1)))
+      (fun k => t.strictMono (Fin.castSucc_lt_last k))]
+  · rw [appendLastOE_castSucc (Fin.castSuccOrderEmb.trans t) (t (Fin.last (n + 1)))
+      (fun k => t.strictMono (Fin.castSucc_lt_last k))]
     rfl
 
 end Factoring
@@ -361,7 +363,7 @@ theorem finiteArityHomogeneousUpTo_two (κ : Cardinal.{0}) (hκ : Cardinal.aleph
     obtain ⟨x, hx⟩ := ht 0
     obtain ⟨y, hxy⟩ := exists_gt_succOrdToType hκ x
     have hcp := hb hxy
-    have h0 : pairEmbed (f.strictMono hxy) 0 = f x := by simp [pairEmbed]
+    have h0 : pairEmbed (f.strictMono hxy) 0 = f x := rfl
     rw [orderEmbedding_fin_one_eq t, ← hx, ← h0]
     exact congrArg Prod.snd hcp
   have key2 : ∀ t : Fin 2 ↪o I, (∀ k, t k ∈ Set.range f) → c 2 t = b.1 := by

@@ -246,7 +246,14 @@ theorem schemaTruthLemmaStage :
               ((localColim s₀)[[ℕ]]).Relations _)
             (fun i => (lhomWithConstants (localColim s₀) ℕ).onTerm
               ((LlocalInclusion s₀ (k + 1)).onTerm (args i))) from rfl,
-      BoundedFormulaω.realize_rel]
+      -- Both explicit arguments are supplied: leaving `?R` open makes `rw` try to assign
+      -- `Sum.inl _` to `?R : ((localColim s₀)[[ℕ]]).Relations _`, which fails at `implicit`
+      -- transparency.
+      BoundedFormulaω.realize_rel
+        (Sum.inl ((LlocalInclusion s₀ (k + 1)).onRelation R) :
+          ((localColim s₀)[[ℕ]]).Relations _)
+        (fun i => (lhomWithConstants (localColim s₀) ℕ).onTerm
+          ((LlocalInclusion s₀ (k + 1)).onTerm (args i)))]
     simp only [schemaTerm_realize_sumElim_mk hM]
     rw [schemaTerm_relMap_mk_iff hM]
     refine schema_mem_iff_of_semantic_iff hM

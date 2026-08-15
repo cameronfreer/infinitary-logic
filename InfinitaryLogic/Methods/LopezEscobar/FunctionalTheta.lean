@@ -98,6 +98,17 @@ private theorem realize_app1 {α : Type} (f : (MidLang L).Functions 1)
   rw [Fin.eq_zero i]
   simp only [Matrix.cons_val_zero]
 
+/-- Successor applications realize to `sMap`.
+
+Stated with the symbol `Sum.inr WitnessFun.s` baked in rather than via the generic
+`realize_app1`: the goal's copy of that symbol carries the type `L.Functions 1 ⊕
+WitnessLang.Functions 1`, which `rw`/`simp` cannot assign to `realize_app1`'s
+`?f : (MidLang L).Functions 1` at `implicit` transparency. Spelling it the same way here makes
+the match syntactic. -/
+private theorem realize_s_app {α : Type} (t : (MidLang L).Term α) (v : α → M) :
+    (Term.func (Sum.inr WitnessFun.s) ![t]).realize v = sMap L M (t.realize v) :=
+  realize_app1 _ t v
+
 /-- Numeral terms realize to the numeral map, under any assignment. -/
 @[simp] theorem realize_mNum {α : Type} (v : α → M) (n : ℕ) :
     (mNum L α n).realize v = numMap L M n := by
@@ -108,9 +119,7 @@ private theorem realize_app1 {α : Type} (f : (MidLang L).Functions 1)
     funext i
     exact i.elim0
   | succ n ih =>
-    show (Term.func (Sum.inr WitnessFun.s) ![mNum L α n]).realize v = _
-    rw [realize_app1, ih]
-    rfl
+    exact (realize_app1 _ _ _).trans (congrArg (fun x => sMap L M x) ih)
 
 @[simp] theorem realize_mF {α : Type} (t : (MidLang L).Term α) (v : α → M) :
     (mF L t).realize v = fMap L M (t.realize v) :=
@@ -169,12 +178,12 @@ theorem realize_omegaAxioms :
     · have h := hinj ![x, y]
       rw [BoundedFormulaω.realize_imp, BoundedFormulaω.realize_equal,
         BoundedFormulaω.realize_equal] at h
-      simp only [realize_app1, realize_var_block, Matrix.cons_val_zero,
+      simp only [realize_s_app, realize_var_block, Matrix.cons_val_zero,
         Matrix.cons_val_one] at h
       exact h hxy
     · have h := hne ![x]
       rw [BoundedFormulaω.realize_not, BoundedFormulaω.realize_equal] at h
-      simp only [realize_app1, realize_var_block, realize_mNum, Matrix.cons_val_zero] at h
+      simp only [realize_s_app, realize_var_block, realize_mNum, Matrix.cons_val_zero] at h
       exact h hx
     · have h := hsurj ![x]
       rw [BoundedFormulaω.realize_iSup] at h
@@ -186,10 +195,10 @@ theorem realize_omegaAxioms :
     refine ⟨fun ws => ?_, fun ws => ?_, fun ws => ?_⟩
     · rw [BoundedFormulaω.realize_imp, BoundedFormulaω.realize_equal,
         BoundedFormulaω.realize_equal]
-      simp only [realize_app1, realize_var_block]
+      simp only [realize_s_app, realize_var_block]
       exact fun h => hinj h
     · rw [BoundedFormulaω.realize_not, BoundedFormulaω.realize_equal]
-      simp only [realize_app1, realize_var_block, realize_mNum]
+      simp only [realize_s_app, realize_var_block, realize_mNum]
       exact hne (ws 0)
     · rw [BoundedFormulaω.realize_iSup]
       obtain ⟨i, hi⟩ := hsurj (ws 0)
@@ -269,9 +278,13 @@ theorem realize_codeAxiom [Countable (Σ l, L.Relations l)]
   show BoundedFormulaω.Realize _ _ _ ↔ _
   rw [codeAxiom, BoundedFormulaω.realize_einf]
   refine forall_congr' fun q => ?_
-  rw [BoundedFormulaω.realize_iff, BoundedFormulaω.realize_rel,
-    BoundedFormulaω.realize_equal]
-  simp only [realize_mNum, realize_mF]
+  rw [BoundedFormulaω.realize_iff]
+  refine iff_congr (Iff.of_eq (congrArg
+    (@Structure.RelMap (MidLang L) M inst q.1.1 (Sum.inl q.1.2)) ?_)) ?_
+  · funext i
+    exact realize_mNum _ _
+  · rw [BoundedFormulaω.realize_equal]
+    simp only [realize_mNum, realize_mF]
 
 variable (L) in
 /-- **Clause 4** (`defaultAxiom`, the audit's Unit-2 addition): `f(numeral n) = c` at every
@@ -325,8 +338,9 @@ theorem realize_treeAtom {M : Type} [inst : (MidLang L).Structure M] (n : ℕ)
       @Structure.RelMap (MidLang L) M inst (2 * n) (Sum.inr (WitnessRel.tree n))
         (treeTuple L M n σ τ) := by
   show BoundedFormulaω.Realize _ _ _ ↔ _
-  rw [treeAtom, BoundedFormulaω.realize_rel]
-  refine Iff.of_eq (congrArg _ ?_)
+  rw [treeAtom]
+  refine Iff.of_eq (congrArg
+    (@Structure.RelMap (MidLang L) M inst (2 * n) (Sum.inr (WitnessRel.tree n))) ?_)
   funext i
   by_cases h : (i : ℕ) < n
   · simp only [treeTuple, dif_pos h, realize_mNum]
@@ -398,8 +412,8 @@ theorem realize_pathAxiom {M : Type} [inst : (MidLang L).Structure M] :
   show BoundedFormulaω.Realize _ _ _ ↔ _
   rw [pathAxiom, BoundedFormulaω.realize_iInf]
   refine forall_congr' fun n => ?_
-  rw [BoundedFormulaω.realize_rel]
-  refine Iff.of_eq (congrArg _ ?_)
+  refine Iff.of_eq (congrArg
+    (@Structure.RelMap (MidLang L) M inst (2 * n) (Sum.inr (WitnessRel.tree n))) ?_)
   funext i
   by_cases h : (i : ℕ) < n
   · simp only [pathTuple, if_pos h, realize_mF, realize_mNum]
@@ -422,7 +436,7 @@ theorem pulledCode_eq_true (M : Type) [inst : (MidLang L).Structure M] (q : RelQ
       @Structure.RelMap (MidLang L) M inst q.1.1 (Sum.inl q.1.2)
         (fun i => numMap L M (q.2 i)) := by
   classical
-  rw [pulledCode]
+  simp only [pulledCode]
   by_cases h : @Structure.RelMap (MidLang L) M inst q.1.1 (Sum.inl q.1.2)
       (fun i => numMap L M (q.2 i)) <;> simp [h]
 
@@ -440,7 +454,8 @@ theorem fBit_eq_queryCode [Countable (Σ l, L.Relations l)]
   · obtain ⟨q, rfl⟩ := hn
     rw [queryCode_embedding]
     have hq := (realize_codeAxiom.mp hcode) q
-    rw [← hq, pulledCode]
+    rw [← hq]
+    simp only [pulledCode]
     by_cases hR : @Structure.RelMap (MidLang L) M inst q.1.1 (Sum.inl q.1.2)
         (fun i => numMap L M (q.2 i))
     · simp [hR]

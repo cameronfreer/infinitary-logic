@@ -282,7 +282,9 @@ theorem codeReduct_forwardCode :
   show (forwardCode c g T) ⟨⟨q.1.1, GraphRelation.base (Sum.inl q.1.2)⟩, q.2⟩ = true ↔ c q = true
   rw [← StructureSpace.relMap_toStructure (forwardCode c g T)
       (GraphRelation.base (Sum.inl q.1.2)) q.2,
-    forwardCode_toStructure, graphExpansion_relMap_base]
+    forwardCode_toStructure]
+  -- `graphExpansion_relMap_base` is itself `Iff.rfl` and its structure instance no longer matches
+  -- the one left by `forwardCode_toStructure`; the closing `Iff.rfl` covers it.
   exact Iff.rfl
 
 end LopezStd

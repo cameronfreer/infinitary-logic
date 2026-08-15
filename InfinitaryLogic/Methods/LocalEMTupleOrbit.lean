@@ -65,12 +65,21 @@ theorem LocalEMContext.exists_carrierEquiv_of_tupleCode_eq
     ((ctx.tupleSupport b).orderEmbOfFin hk.symm)
   refine ⟨e, fun i => ?_⟩
   -- expanding both codes along the SECOND support's enumeration agrees componentwise
-  have hexp := congrArg (fun c : LocalEMTupleCode Λ n =>
+  have hcode := congrArg (fun c : LocalEMTupleCode Λ n =>
     if hc : (ctx.tupleSupport b).card = c.1 then
       some (fun i => locJExpand Λ J ((ctx.tupleSupport b).orderEmbOfFin hc) (c.2 i))
     else none) h
-  simp only [LocalEMContext.tupleCode] at hexp
-  rw [dif_pos hk.symm] at hexp
+  -- Both `dite`s are discharged in term mode. `(ctx.tupleCode _).fst` projects out of a
+  -- semireducible `def`, so the branch conditions are not type-correct at `implicit`
+  -- transparency; neither `simp only [tupleCode]` nor `rw [dite_eq_left]` can act on them
+  -- in place, whereas `Eq.trans` elaborates at default transparency.
+  have hexp : (some fun i => locJExpand Λ J ((ctx.tupleSupport b).orderEmbOfFin hk.symm)
+        (locJCompress Λ J (ctx.tupleSupport a) (Quotient.out (a i))
+          (ctx.locJSupport_out_subset_tupleSupport a i)))
+      = some fun i => locJExpand Λ J ((ctx.tupleSupport b).orderEmbOfFin rfl)
+          (locJCompress Λ J (ctx.tupleSupport b) (Quotient.out (b i))
+            (ctx.locJSupport_out_subset_tupleSupport b i)) :=
+    (dite_eq_left hk.symm).symm.trans (hcode.trans (dite_eq_left rfl))
   have hcomp : locJExpand Λ J ((ctx.tupleSupport b).orderEmbOfFin hk.symm)
       (locJCompress Λ J (ctx.tupleSupport a) (Quotient.out (a i))
         (ctx.locJSupport_out_subset_tupleSupport a i))

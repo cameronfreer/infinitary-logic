@@ -429,7 +429,9 @@ theorem conj_mem_ΓlocalColim :
         (LlocalInclusion badStage 1)⟩ :
       Σ n, (localColim badStage).BoundedFormulaω Empty n) ∈ ΓlocalColim badStage :=
     toLocalColimFormula_mem_ΓlocalColim badStage conj_mem_Γlocal_one
-  rwa [mapLanguage_LlocalInclusion_lift badStage] at h
+  -- `k` is pinned: with it open, `rw` must match the pattern `LlocalInclusion badStage (?k + 1)`
+  -- against the numeral `1`, whose head is `OfNat.ofNat` rather than `HAdd.hAdd`.
+  rwa [mapLanguage_LlocalInclusion_lift badStage (k := 0) (ψ := conj)] at h
 
 /-- The de-substituted component computation: the canonical deForm of `Pᵢ`'s colimit image, along
 the identity tuple, holds on the consecutive `(a ∘ g)`-tuple at depth `d` iff `i ≤ g d`. -/

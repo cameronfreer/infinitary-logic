@@ -119,8 +119,13 @@ theorem locDeTermFin_realize_constInterp_nat (σ : ℕ → M) {S : Finset ℕ}
     (locConstantsToVars_varFinset_subset (localColim s₀) ℕ t hx)
   have hjS : j ∈ S := hsub hj
   have hlt : deepRank ℕ S j < S.card := deepRank_lt_card (J := ℕ) hjS
-  simp only [Function.comp_apply, Sum.elim_inl, dif_pos hlt]
-  rw [orderEmbOfFin_deepRank ℕ S rfl hjS hlt]
+  -- `dif_pos` synthesizes its own `Decidable` instance and no longer matches the one in the goal;
+  -- `dite_eq_left` takes it implicitly, so the branch selection happens in a standalone equation.
+  have hdite : (if h : deepRank ℕ S j < S.card then σ (S.orderEmbOfFin rfl ⟨deepRank ℕ S j, h⟩)
+      else σ 0) = σ j := by
+    rw [dite_eq_left hlt, orderEmbOfFin_deepRank ℕ S rfl hjS hlt]
+  simp only [Function.comp_apply, Sum.elim_inl]
+  exact hdite
 
 /-- **Reflexivity.** `t ≈ t`: the theory decides `schemaEqSentence t t`; the negative sign is
 impossible because any source body would have to realize `¬(t = t)`. -/
@@ -145,9 +150,16 @@ theorem realize_schemaEqSentence_iff (σ h : ℕ → M) (t u : (localColim s₀)
     realizeWith σ h (schemaEqSentence t u) (Empty.elim : Empty → M) Fin.elim0 ↔
       letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
       t.realize (Empty.elim : Empty → M) = u.realize (Empty.elim : Empty → M) := by
-  rw [schemaEqSentence, realizeWith_templateSentence, locDeEqAtom, canonEqAtom,
-    BoundedFormulaω.realize_equal, Term.realize_relabel, Term.realize_relabel, Sum.elim_comp_inr,
-    locDeTermFin_realize_constInterp_nat, locDeTermFin_realize_constInterp_nat]
+  rw [schemaEqSentence, realizeWith_templateSentence]
+  simp only [locDeEqAtom]
+  rw [canonEqAtom, BoundedFormulaω.realize_equal, Term.realize_relabel, Term.realize_relabel,
+    Sum.elim_comp_inr]
+  -- Term mode: the support proofs carried by `schemaEqSentence` are stated against
+  -- `locJSupport t ∪ locJSupport u`, while the goal spells the `Finset` as `schemaSupport t u`,
+  -- so the goal is not type-correct at `implicit` transparency and `rw` cannot fire.
+  exact iff_of_eq (congrArg₂ (· = ·)
+    (locDeTermFin_realize_constInterp_nat (S := schemaSupport t u) σ t Finset.subset_union_left)
+    (locDeTermFin_realize_constInterp_nat (S := schemaSupport t u) σ u Finset.subset_union_right))
 
 /-- **Symmetry.** `t ≈ u → u ≈ t`: a body realizing `t = u` and `¬(u = t)` contradicts `Eq.symm`. -/
 theorem schemaTermEq_symm {t u : (localColim s₀)[[ℕ]].Term Empty} (h : SchemaTermEq hM t u) :

@@ -61,13 +61,13 @@ theorem reduct_expandSymbStructureBase
     show (if h : (⟨m, f.1⟩ : Σ n, L.Functions n) ∈ F then
         Structure.funMap (L := symbSublang (L := L) F R) (⟨f.1, h⟩ : _) xs
       else Classical.arbitrary M) = Structure.funMap f xs
-    rw [dif_pos f.2, Subtype.coe_eta]
+    exact dite_eq_left f.2
   · funext m r xs
     show (expandSymbStructureBase F R).RelMap ((symbSublangIncl F R).onRelation r) xs = _
     show (if h : (⟨m, r.1⟩ : Σ n, L.Relations n) ∈ R then
         Structure.RelMap (L := symbSublang (L := L) F R) (⟨r.1, h⟩ : _) xs
       else False) = Structure.RelMap r xs
-    rw [dif_pos r.2, Subtype.coe_eta]
+    exact dite_eq_left r.2
 
 /-- **Realization transport**: realizing `φ.restrictSymbols` in the sublanguage structure is
 realizing `φ` in the base expansion. -/
@@ -86,12 +86,12 @@ theorem realize_restrictSymbols_expandSymbStructureBase
       show (if h : (⟨m, f.1⟩ : Σ n, L.Functions n) ∈ F then
           Structure.funMap (L := symbSublang (L := L) F R) (⟨f.1, h⟩ : _) xs
         else Classical.arbitrary M) = _
-      rw [dif_pos f.2, Subtype.coe_eta]
+      exact dite_eq_left f.2
     · intro m r xs
       show (if h : (⟨m, r.1⟩ : Σ n, L.Relations n) ∈ R then
           Structure.RelMap (L := symbSublang (L := L) F R) (⟨r.1, h⟩ : _) xs
         else False) = _
-      rw [dif_pos r.2, Subtype.coe_eta]
+      exact dite_eq_left r.2
   have h := BoundedFormulaω.realize_mapLanguage (M := M) (symbSublangIncl F R)
     (φ.restrictSymbols hF hR) v xs
   rw [BoundedFormulaω.mapLanguage_restrictSymbols] at h

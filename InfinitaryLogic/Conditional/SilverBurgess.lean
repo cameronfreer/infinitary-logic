@@ -361,8 +361,10 @@ theorem splitting_lemma_closed_small_diam {α : Type u}
     hU₀_unc, hU₁_unc, hU_cross⟩ :=
     splitting_lemma_closed r hclosed_r hE'_cl hE'_unc
   -- U₀, U₁ ⊆ E' ⊆ closedBall x₀ δ, so ediam ≤ 2δ ≤ ε
-  have hball_eq : Metric.closedBall x₀ δ = EMetric.closedBall x₀ (ENNReal.ofReal δ) :=
-    (Metric.emetric_closedBall hδ_pos.le).symm
+  -- `EMetric.closedBall` moved to `Metric.closedEBall` and `Metric.emetric_closedBall` was
+  -- renamed to `Metric.closedEBall_ofReal`.
+  have hball_eq : Metric.closedBall x₀ δ = Metric.closedEBall x₀ (ENNReal.ofReal δ) :=
+    (Metric.closedEBall_ofReal hδ_pos.le).symm
   have hball_diam : Metric.ediam (Metric.closedBall x₀ δ) ≤ 2 * ENNReal.ofReal δ := by
     rw [hball_eq]; exact Metric.ediam_closedEBall_le
   have hU₀_diam : Metric.ediam U₀ ≤ ε :=

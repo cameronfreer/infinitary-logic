@@ -46,6 +46,7 @@ instance : MulAction (Equiv.Perm ℕ) (StructureSpace L) where
     funext q
     show c ⟨q.1, ⇑(1 : Equiv.Perm ℕ)⁻¹ ∘ q.2⟩ = c q
     simp
+    rfl
   mul_smul σ τ c := by
     funext q
     show c ⟨q.1, ⇑(σ * τ)⁻¹ ∘ q.2⟩ = c ⟨q.1, ⇑τ⁻¹ ∘ ⇑σ⁻¹ ∘ q.2⟩

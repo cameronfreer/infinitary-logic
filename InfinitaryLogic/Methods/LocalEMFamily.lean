@@ -151,7 +151,8 @@ theorem locConstantsToVars_varFinset_subset (t : Λ[[J]].Term Empty) :
       · simp [Term.constantsToVars, Term.varFinset]
       · simp only [Term.constantsToVars, locJSupport, locJConstOf, Term.varFinset]; rfl
     · rcases f with f' | c
-      · simp only [Term.constantsToVars, Term.varFinset, locJSupport, locJConstOf,
+      · simp only [Term.constantsToVars, Term.varFinset, locJSupport,
+          show locJConstOf Λ J (Sum.inl f' : Λ[[J]].Functions (l + 1)) = ∅ from rfl,
           Finset.union_empty]
         intro x hx
         simp only [Finset.mem_biUnion, Finset.mem_univ, true_and] at hx

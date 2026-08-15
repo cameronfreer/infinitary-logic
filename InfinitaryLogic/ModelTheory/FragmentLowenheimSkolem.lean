@@ -137,7 +137,7 @@ theorem tvWitnessSet_subset_iUnion (Y : Set M) :
   rintro m ⟨n, φ, a, ⟨hφ, ha⟩, hex, rfl⟩
   refine Set.mem_iUnion.mpr ⟨n, ⟨⟨(φ, a), hφ, ha⟩, ?_⟩⟩
   show tvSliceWitness A Y n ⟨(φ, a), hφ, ha⟩ = some hex.choose
-  rw [tvSliceWitness, dif_pos hex]
+  exact dite_eq_left hex
 
 omit [L.Structure M] in
 theorem mk_tvSlice_le (Y : Set M) (n : ℕ) :
