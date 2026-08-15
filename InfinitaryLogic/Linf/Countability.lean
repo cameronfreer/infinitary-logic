@@ -14,9 +14,9 @@ cardinality-bounded fragments.
 
 ## Main Definitions
 
-- `BoundedFormulaInf.IsCountable`: A formula is countable if all index types in iSup/iInf
+- `BoundedFormulaInfLegacy.IsCountable`: A formula is countable if all index types in iSup/iInf
   constructors are countable. This characterizes membership in Lω₁ω.
-- `BoundedFormulaInf.IsKappa`: A formula has cardinality < κ if all index types have
+- `BoundedFormulaInfLegacy.IsKappa`: A formula has cardinality < κ if all index types have
   cardinality < κ. This characterizes membership in Lκω.
 -/
 
@@ -28,38 +28,38 @@ namespace Language
 
 variable {L : Language.{u, v}} {α : Type u'}
 
-namespace BoundedFormulaInf
+namespace BoundedFormulaInfLegacy
 
 /-- A formula is countable if all index types in iSup/iInf constructors are countable.
 This characterizes membership in Lω₁ω. -/
-inductive IsCountable : L.BoundedFormulaInf α n → Prop
+inductive IsCountable : L.BoundedFormulaInfLegacy α n → Prop
   | falsum : IsCountable falsum
   | equal (t₁ t₂ : L.Term (α ⊕ Fin n)) : IsCountable (equal t₁ t₂)
   | rel {l : ℕ} (R : L.Relations l) (ts : Fin l → L.Term (α ⊕ Fin n)) : IsCountable (rel R ts)
-  | imp {φ ψ : L.BoundedFormulaInf α n} : IsCountable φ → IsCountable ψ → IsCountable (imp φ ψ)
-  | all {φ : L.BoundedFormulaInf α (n + 1)} : IsCountable φ → IsCountable φ.all
-  | iSup {ι : Type} [Countable ι] {φs : ι → L.BoundedFormulaInf α n} :
+  | imp {φ ψ : L.BoundedFormulaInfLegacy α n} : IsCountable φ → IsCountable ψ → IsCountable (imp φ ψ)
+  | all {φ : L.BoundedFormulaInfLegacy α (n + 1)} : IsCountable φ → IsCountable φ.all
+  | iSup {ι : Type} [Countable ι] {φs : ι → L.BoundedFormulaInfLegacy α n} :
       (∀ i, IsCountable (φs i)) → IsCountable (iSup φs)
-  | iInf {ι : Type} [Countable ι] {φs : ι → L.BoundedFormulaInf α n} :
+  | iInf {ι : Type} [Countable ι] {φs : ι → L.BoundedFormulaInfLegacy α n} :
       (∀ i, IsCountable (φs i)) → IsCountable (iInf φs)
 
 /-- A formula has all index types with cardinality < κ.
 This characterizes membership in Lκω. -/
-inductive IsKappa (κ : Cardinal) : L.BoundedFormulaInf α n → Prop
+inductive IsKappa (κ : Cardinal) : L.BoundedFormulaInfLegacy α n → Prop
   | falsum : IsKappa κ falsum
   | equal (t₁ t₂ : L.Term (α ⊕ Fin n)) : IsKappa κ (equal t₁ t₂)
   | rel {l : ℕ} (R : L.Relations l) (ts : Fin l → L.Term (α ⊕ Fin n)) : IsKappa κ (rel R ts)
-  | imp {φ ψ : L.BoundedFormulaInf α n} : IsKappa κ φ → IsKappa κ ψ → IsKappa κ (imp φ ψ)
-  | all {φ : L.BoundedFormulaInf α (n + 1)} : IsKappa κ φ → IsKappa κ φ.all
-  | iSup {ι : Type} {φs : ι → L.BoundedFormulaInf α n} :
+  | imp {φ ψ : L.BoundedFormulaInfLegacy α n} : IsKappa κ φ → IsKappa κ ψ → IsKappa κ (imp φ ψ)
+  | all {φ : L.BoundedFormulaInfLegacy α (n + 1)} : IsKappa κ φ → IsKappa κ φ.all
+  | iSup {ι : Type} {φs : ι → L.BoundedFormulaInfLegacy α n} :
       Cardinal.mk ι < κ → (∀ i, IsKappa κ (φs i)) → IsKappa κ (iSup φs)
-  | iInf {ι : Type} {φs : ι → L.BoundedFormulaInf α n} :
+  | iInf {ι : Type} {φs : ι → L.BoundedFormulaInfLegacy α n} :
       Cardinal.mk ι < κ → (∀ i, IsKappa κ (φs i)) → IsKappa κ (iInf φs)
 
 variable {n : ℕ}
 
 /-- IsKappa is monotonic in κ. -/
-theorem IsKappa.mono {κ κ' : Cardinal} (hle : κ ≤ κ') {φ : L.BoundedFormulaInf α n}
+theorem IsKappa.mono {κ κ' : Cardinal} (hle : κ ≤ κ') {φ : L.BoundedFormulaInfLegacy α n}
     (h : IsKappa κ φ) : IsKappa κ' φ := by
   induction h with
   | falsum => exact IsKappa.falsum
@@ -82,7 +82,7 @@ theorem countable_of_mk_lt_aleph_one' {ι : Type} (h : Cardinal.mk ι < Cardinal
   exact Cardinal.mk_le_aleph0_iff.mp (Order.lt_succ_iff.mp h)
 
 /-- IsCountable implies IsKappa ℵ₁. -/
-theorem IsCountable.toIsKappa_aleph1 {φ : L.BoundedFormulaInf α n}
+theorem IsCountable.toIsKappa_aleph1 {φ : L.BoundedFormulaInfLegacy α n}
     (h : IsCountable φ) : IsKappa (Cardinal.aleph 1) φ := by
   induction h with
   | falsum => exact IsKappa.falsum
@@ -94,7 +94,7 @@ theorem IsCountable.toIsKappa_aleph1 {φ : L.BoundedFormulaInf α n}
   | iInf h ih => exact IsKappa.iInf mk_lt_aleph_one_of_countable' ih
 
 /-- IsKappa ℵ₁ implies IsCountable. -/
-theorem IsKappa.toIsCountable {φ : L.BoundedFormulaInf α n}
+theorem IsKappa.toIsCountable {φ : L.BoundedFormulaInfLegacy α n}
     (h : IsKappa (Cardinal.aleph 1) φ) : IsCountable φ := by
   induction h with
   | falsum => exact IsCountable.falsum
@@ -110,13 +110,13 @@ theorem IsKappa.toIsCountable {φ : L.BoundedFormulaInf α n}
     exact IsCountable.iInf ih
 
 /-- IsCountable is equivalent to IsKappa ℵ₁. -/
-theorem isCountable_iff_isKappa_aleph1 {φ : L.BoundedFormulaInf α n} :
+theorem isCountable_iff_isKappa_aleph1 {φ : L.BoundedFormulaInfLegacy α n} :
     IsCountable φ ↔ IsKappa (Cardinal.aleph 1) φ :=
   ⟨IsCountable.toIsKappa_aleph1, IsKappa.toIsCountable⟩
 
 /-- The supremum of cardinalities of all index types appearing in iSup/iInf constructors.
 This bounds the "size" of the formula's infinitary structure. -/
-noncomputable def indexBound : ∀ {n}, L.BoundedFormulaInf α n → Cardinal
+noncomputable def indexBound : ∀ {n}, L.BoundedFormulaInfLegacy α n → Cardinal
   | _, .falsum => 0
   | _, .equal _ _ => 0
   | _, .rel _ _ => 0
@@ -126,7 +126,7 @@ noncomputable def indexBound : ∀ {n}, L.BoundedFormulaInf α n → Cardinal
   | _, .iInf (ι := ι) φs => max (Cardinal.mk ι) (⨆ i, indexBound (φs i))
 
 /-- Every formula belongs to L_(indexBound φ + 1)ω. -/
-theorem isKappa_succ_indexBound (φ : L.BoundedFormulaInf α n) :
+theorem isKappa_succ_indexBound (φ : L.BoundedFormulaInfLegacy α n) :
     IsKappa (Order.succ (indexBound φ)) φ := by
   induction φ with
   | falsum => exact IsKappa.falsum
@@ -160,10 +160,10 @@ theorem isKappa_succ_indexBound (φ : L.BoundedFormulaInf α n) :
       exact le_ciSup Cardinal.bddAbove_of_small i
 
 /-- Every L∞ω formula belongs to some Lκω. This establishes L∞ω as the union of all Lκω. -/
-theorem exists_isKappa (φ : L.BoundedFormulaInf α n) : ∃ κ : Cardinal, IsKappa κ φ :=
+theorem exists_isKappa (φ : L.BoundedFormulaInfLegacy α n) : ∃ κ : Cardinal, IsKappa κ φ :=
   ⟨Order.succ (indexBound φ), isKappa_succ_indexBound φ⟩
 
-end BoundedFormulaInf
+end BoundedFormulaInfLegacy
 
 end Language
 

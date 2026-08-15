@@ -44,15 +44,15 @@ open FirstOrder Structure
 /-! ### Theories -/
 
 /-- A theory in L∞ω is a set of L∞ω sentences. -/
-abbrev TheoryInf (L : Language.{u, v}) := Set L.SentenceInf
+abbrev TheoryInf (L : Language.{u, v}) := Set L.SentenceInfLegacy
 
 namespace TheoryInf
 
-variable {T T' : L.TheoryInf} {φ : L.SentenceInf}
+variable {T T' : L.TheoryInf} {φ : L.SentenceInfLegacy}
 
 /-- A structure M is a model of theory T if it satisfies all sentences in T. -/
 def Model (T : L.TheoryInf) (M : Type w) [L.Structure M] : Prop :=
-  ∀ φ ∈ T, SentenceInf.Realize φ M
+  ∀ φ ∈ T, SentenceInfLegacy.Realize φ M
 
 /-- The empty theory has every structure as a model. -/
 theorem Model.empty (M : Type w) [L.Structure M] : Model (∅ : L.TheoryInf) M := by
@@ -64,7 +64,7 @@ theorem Model.mono (h : T ⊆ T') {M : Type w} [L.Structure M] (hM : T'.Model M)
   fun φ hφ => hM φ (h hφ)
 
 /-- Semantic entailment from the empty theory: valid sentences. -/
-def Valid (φ : L.SentenceInf) : Prop := ∀ (M : Type) [L.Structure M], SentenceInf.Realize φ M
+def Valid (φ : L.SentenceInfLegacy) : Prop := ∀ (M : Type) [L.Structure M], SentenceInfLegacy.Realize φ M
 
 end TheoryInf
 
@@ -74,27 +74,27 @@ end TheoryInf
 
 Given an isomorphism `e : M ≃[L] N`, a formula realized in M with variable assignments
 `v` and `xs` is also realized in N with the transported assignments `e ∘ v` and `e ∘ xs`. -/
-theorem BoundedFormulaInf.realize_equiv {M N : Type w} [L.Structure M] [L.Structure N]
-    (e : M ≃[L] N) {α : Type*} {n : ℕ} (φ : L.BoundedFormulaInf α n)
+theorem BoundedFormulaInfLegacy.realize_equiv {M N : Type w} [L.Structure M] [L.Structure N]
+    (e : M ≃[L] N) {α : Type*} {n : ℕ} (φ : L.BoundedFormulaInfLegacy α n)
     (v : α → M) (xs : Fin n → M) :
     φ.Realize v xs ↔ φ.Realize (e ∘ v) (e ∘ xs) := by
   have h_elim : ∀ {m : ℕ} (v' : α → M) (xs' : Fin m → M),
       Sum.elim (⇑e ∘ v') (⇑e ∘ xs') = ⇑e ∘ Sum.elim v' xs' := by
     intro m v' xs'; funext x; cases x <;> rfl
   induction φ with
-  | falsum => simp [BoundedFormulaInf.Realize]
+  | falsum => simp [BoundedFormulaInfLegacy.Realize]
   | equal t₁ t₂ =>
-    simp only [BoundedFormulaInf.Realize, h_elim, HomClass.realize_term e]
+    simp only [BoundedFormulaInfLegacy.Realize, h_elim, HomClass.realize_term e]
     exact e.injective.eq_iff.symm
   | rel R ts =>
-    simp only [BoundedFormulaInf.Realize]
+    simp only [BoundedFormulaInfLegacy.Realize]
     simp_rw [h_elim, HomClass.realize_term e]
     exact (StrongHomClass.map_rel e R _).symm
   | imp φ ψ ihφ ihψ =>
-    simp only [BoundedFormulaInf.Realize]
+    simp only [BoundedFormulaInfLegacy.Realize]
     exact Iff.imp (ihφ xs) (ihψ xs)
   | all φ ih =>
-    simp only [BoundedFormulaInf.Realize]
+    simp only [BoundedFormulaInfLegacy.Realize]
     constructor
     · intro h y
       have h1 := (ih (Fin.snoc xs (e.symm y))).mp (h (e.symm y))
@@ -104,23 +104,23 @@ theorem BoundedFormulaInf.realize_equiv {M N : Type w} [L.Structure M] [L.Struct
       rw [← Fin.comp_snoc] at h1
       exact (ih (Fin.snoc xs x)).mpr h1
   | iSup φs ih =>
-    simp only [BoundedFormulaInf.Realize]
+    simp only [BoundedFormulaInfLegacy.Realize]
     exact exists_congr fun i => ih i xs
   | iInf φs ih =>
-    simp only [BoundedFormulaInf.Realize]
+    simp only [BoundedFormulaInfLegacy.Realize]
     exact forall_congr' fun i => ih i xs
 
 /-! ### L∞ω Elementary Equivalence -/
 
 /-- Two structures are L∞ω-elementarily equivalent if they satisfy the same L∞ω sentences.
 
-The current definition quantifies over `BoundedFormulaInf.{u, v, 0, 0}`, pinning the
+The current definition quantifies over `BoundedFormulaInfLegacy.{u, v, 0, 0}`, pinning the
 free-variable universe (`u'`) and index-type universe (`uι`) to 0 for practicality.
 The `uι = 0` choice ensures compatibility with `qrank : Ordinal.{0}` (whose suprema
 at `iSup`/`iInf` nodes must live in a fixed universe) and suffices for all standard
 applications (any countable or `Type 0` index type falls within this definition). -/
 def LinfEquiv (L : Language.{u, v}) (M N : Type w) [L.Structure M] [L.Structure N] : Prop :=
-  ∀ φ : BoundedFormulaInf.{u, v, 0, 0} L Empty 0, SentenceInf.Realize φ M ↔ SentenceInf.Realize φ N
+  ∀ φ : BoundedFormulaInfLegacy.{u, v, 0, 0} L Empty 0, SentenceInfLegacy.Realize φ M ↔ SentenceInfLegacy.Realize φ N
 
 namespace LinfEquiv
 
@@ -142,11 +142,11 @@ theorem trans (h₁ : LinfEquiv L M N) (h₂ : LinfEquiv L N P) : LinfEquiv L M 
 /-- Isomorphic structures are L∞ω-equivalent.
 
 The proof transports variable assignments along the isomorphism using
-`BoundedFormulaInf.realize_equiv`, then observes that `e ∘ Empty.elim = Empty.elim`
+`BoundedFormulaInfLegacy.realize_equiv`, then observes that `e ∘ Empty.elim = Empty.elim`
 and `e ∘ Fin.elim0 = Fin.elim0` since both domains are empty. -/
 theorem of_equiv (e : M ≃[L] N) : LinfEquiv L M N := by
   intro φ
-  have h := BoundedFormulaInf.realize_equiv e φ (Empty.elim : Empty → M) (Fin.elim0 : Fin 0 → M)
+  have h := BoundedFormulaInfLegacy.realize_equiv e φ (Empty.elim : Empty → M) (Fin.elim0 : Fin 0 → M)
   rwa [comp_empty_elim e, comp_fin_elim0 e] at h
 
 end LinfEquiv
@@ -155,7 +155,7 @@ end LinfEquiv
 
 /-- L∞ω-elementary equivalence with index types matching the structure universe.
 
-Unlike `LinfEquiv` which pins `uι = 0`, this version uses `BoundedFormulaInf.{u, v, 0, w}`
+Unlike `LinfEquiv` which pins `uι = 0`, this version uses `BoundedFormulaInfLegacy.{u, v, 0, w}`
 so that index types for `iSup`/`iInf` may be any `Type w`. The backward direction of
 Karp's theorem constructs formulas with `iInf` indexed by `N : Type w`, which needs
 `uι = w`. -/
@@ -164,8 +164,8 @@ Karp's theorem constructs formulas with `iInf` indexed by `N : Type w`, which ne
   (statement := /-- $L_{\infty\omega}$-equivalence: $M$ and $N$ satisfy the same
     $L_{\infty\omega}^w$ sentences, where $w$ is the universe of the index types. -/)]
 def LinfEquivW (L : Language.{u, v}) (M N : Type w) [L.Structure M] [L.Structure N] : Prop :=
-  ∀ φ : BoundedFormulaInf.{u, v, 0, w} L Empty 0,
-    SentenceInf.Realize φ M ↔ SentenceInf.Realize φ N
+  ∀ φ : BoundedFormulaInfLegacy.{u, v, 0, w} L Empty 0,
+    SentenceInfLegacy.Realize φ M ↔ SentenceInfLegacy.Realize φ N
 
 namespace LinfEquivW
 
@@ -183,7 +183,7 @@ theorem trans (h₁ : LinfEquivW L M N) (h₂ : LinfEquivW L N P) : LinfEquivW L
 
 theorem of_equiv (e : M ≃[L] N) : LinfEquivW L M N := by
   intro φ
-  have h := BoundedFormulaInf.realize_equiv e φ (Empty.elim : Empty → M) (Fin.elim0 : Fin 0 → M)
+  have h := BoundedFormulaInfLegacy.realize_equiv e φ (Empty.elim : Empty → M) (Fin.elim0 : Fin 0 → M)
   rwa [comp_empty_elim e, comp_fin_elim0 e] at h
 
 end LinfEquivW
@@ -194,7 +194,7 @@ end LinfEquivW
 theorem TheoryInf.Model.of_equiv {T : L.TheoryInf} {M N : Type w} [L.Structure M]
     [L.Structure N] (hM : T.Model M) (e : M ≃[L] N) : T.Model N := by
   intro φ hφ
-  have h := BoundedFormulaInf.realize_equiv e φ (Empty.elim : Empty → M) (Fin.elim0 : Fin 0 → M)
+  have h := BoundedFormulaInfLegacy.realize_equiv e φ (Empty.elim : Empty → M) (Fin.elim0 : Fin 0 → M)
   rw [comp_empty_elim e, comp_fin_elim0 e] at h
   exact h.mp (hM φ hφ)
 

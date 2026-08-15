@@ -73,7 +73,7 @@ end FinArithmetic
 
 /-! ### Atomic formula helpers
 
-These relate `AtomicIdx` to `BoundedFormulaInf` atomic formulas. The term
+These relate `AtomicIdx` to `BoundedFormulaInfLegacy` atomic formulas. The term
 lemma needs its own `[L.IsRelational]` since it asserts all terms are variables. -/
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
@@ -86,7 +86,7 @@ private theorem Term.eq_var_of_isRelational [L.IsRelational] (t : L.Term α) :
 
 /-- Builds an L∞ω atomic formula from an `AtomicIdx`. -/
 private def atomicFormulaInf (idx : L.AtomicIdx n) :
-    BoundedFormulaInf.{u, v, 0, 0} L (Fin n) 0 :=
+    BoundedFormulaInfLegacy.{u, v, 0, 0} L (Fin n) 0 :=
   match idx with
   | .eq i j => .equal (.var (.inl i)) (.var (.inl j))
   | .rel R f => .rel R (fun k => .var (.inl (f k)))
@@ -98,7 +98,7 @@ omit [Countable (Σ l, L.Relations l)] in
 BFEquiv at level α implies agreement on formulas of rank ≤ α. -/
 private theorem BFEquiv_implies_agree_aux {M N : Type w} [L.Structure M] [L.Structure N]
     (α : Ordinal) {n k : ℕ}
-    (φ : BoundedFormulaInf.{u, v, 0, 0} L (Fin n) k) (hφ : φ.qrank ≤ α)
+    (φ : BoundedFormulaInfLegacy.{u, v, 0, 0} L (Fin n) k) (hφ : φ.qrank ≤ α)
     (v : Fin n → M) (w : Fin n → N) (xs : Fin k → M) (ys : Fin k → N)
     (hBF : BFEquiv (L := L) α (n + k) (Fin.append v xs) (Fin.append w ys)) :
     (φ.Realize v xs ↔ φ.Realize w ys) := by
@@ -107,14 +107,14 @@ private theorem BFEquiv_implies_agree_aux {M N : Type w} [L.Structure M] [L.Stru
   | equal t₁ t₂ =>
     obtain ⟨x₁, rfl⟩ := Term.eq_var_of_isRelational t₁
     obtain ⟨x₂, rfl⟩ := Term.eq_var_of_isRelational t₂
-    simp only [BoundedFormulaInf.realize_equal, Term.realize]
+    simp only [BoundedFormulaInfLegacy.realize_equal, Term.realize]
     have hSAT : SameAtomicType (L := L) (Fin.append v xs) (Fin.append w ys) :=
       (BFEquiv.zero _ _).mp (BFEquiv.monotone bot_le hBF)
     rw [sumElim_eq_append_comp v xs, sumElim_eq_append_comp w ys]
     simp only [Function.comp]
     exact hSAT (.eq (finSumFinEquiv x₁) (finSumFinEquiv x₂))
   | rel R ts =>
-    simp only [BoundedFormulaInf.realize_rel]
+    simp only [BoundedFormulaInfLegacy.realize_rel]
     have hSAT : SameAtomicType (L := L) (Fin.append v xs) (Fin.append w ys) :=
       (BFEquiv.zero _ _).mp (BFEquiv.monotone bot_le hBF)
     have hvars : ∀ i, ∃ x, ts i = Term.var x := fun i => Term.eq_var_of_isRelational (ts i)
@@ -130,12 +130,12 @@ private theorem BFEquiv_implies_agree_aux {M N : Type w} [L.Structure M] [L.Stru
     rw [hM, hN]
     exact hSAT (.rel R (fun i => finSumFinEquiv (ts_var i)))
   | imp φ ψ ihφ ihψ =>
-    simp only [BoundedFormulaInf.realize_imp, BoundedFormulaInf.qrank_imp] at hφ ⊢
+    simp only [BoundedFormulaInfLegacy.realize_imp, BoundedFormulaInfLegacy.qrank_imp] at hφ ⊢
     exact imp_congr
       (ihφ α (le_of_max_le_left hφ) xs ys hBF)
       (ihψ α (le_of_max_le_right hφ) xs ys hBF)
   | all φ ih =>
-    simp only [BoundedFormulaInf.realize_all, BoundedFormulaInf.qrank_all] at hφ ⊢
+    simp only [BoundedFormulaInfLegacy.realize_all, BoundedFormulaInfLegacy.qrank_all] at hφ ⊢
     have hSucc : Order.succ φ.qrank ≤ α := by rwa [← Order.succ_eq_add_one] at hφ
     have hBF' := BFEquiv.monotone hSucc hBF
     constructor
@@ -148,11 +148,11 @@ private theorem BFEquiv_implies_agree_aux {M N : Type w} [L.Structure M] [L.Stru
       rw [snoc_append_eq_append_snoc, snoc_append_eq_append_snoc] at hy
       exact (ih φ.qrank le_rfl (Fin.snoc xs x) (Fin.snoc ys y) hy).mpr (hAll y)
   | iSup φs ih =>
-    simp only [BoundedFormulaInf.realize_iSup, BoundedFormulaInf.qrank_iSup] at hφ ⊢
+    simp only [BoundedFormulaInfLegacy.realize_iSup, BoundedFormulaInfLegacy.qrank_iSup] at hφ ⊢
     exact exists_congr fun i =>
       ih i α (le_trans (Ordinal.le_iSup (fun i => (φs i).qrank) i) hφ) xs ys hBF
   | iInf φs ih =>
-    simp only [BoundedFormulaInf.realize_iInf, BoundedFormulaInf.qrank_iInf] at hφ ⊢
+    simp only [BoundedFormulaInfLegacy.realize_iInf, BoundedFormulaInfLegacy.qrank_iInf] at hφ ⊢
     exact forall_congr' fun i =>
       ih i α (le_trans (Ordinal.le_iSup (fun i => (φs i).qrank) i) hφ) xs ys hBF
 
@@ -165,8 +165,8 @@ This is a direct corollary of `BFEquiv_implies_agree_aux` with `k = 0` and
 theorem BFEquiv_implies_agreeQR {M N : Type w} [L.Structure M] [L.Structure N]
     (α : Ordinal) {n : ℕ} (a : Fin n → M) (b : Fin n → N)
     (h : BFEquiv (L := L) α n a b)
-    (φ : BoundedFormulaInf.{u, v, 0, 0} L (Fin n) 0) (hφ : φ.qrank ≤ α) :
-    (FormulaInf.Realize φ a ↔ FormulaInf.Realize φ b) := by
+    (φ : BoundedFormulaInfLegacy.{u, v, 0, 0} L (Fin n) 0) (hφ : φ.qrank ≤ α) :
+    (FormulaInfLegacy.Realize φ a ↔ FormulaInfLegacy.Realize φ b) := by
   have ha : Fin.append a (Fin.elim0 : Fin 0 → M) = a := by simp [Fin.append_elim0]
   have hb : Fin.append b (Fin.elim0 : Fin 0 → N) = b := by simp [Fin.append_elim0]
   exact BFEquiv_implies_agree_aux α φ hφ a b Fin.elim0 Fin.elim0 (by rwa [ha, hb])
@@ -184,32 +184,32 @@ variable {N : Type w} [L.Structure N]
 /-! #### Infrastructure for KarpW -/
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-/-- Bridge between `Empty` and `Fin 0` for `BoundedFormulaInf.{u,v,0,w}`. -/
+/-- Bridge between `Empty` and `Fin 0` for `BoundedFormulaInfLegacy.{u,v,0,w}`. -/
 private theorem sentenceInf_realize_iff_mapFreeVarsW
-    {M : Type*} [L.Structure M] (φ : BoundedFormulaInf.{u, v, 0, w} L Empty 0) :
-    SentenceInf.Realize φ M ↔
-    FormulaInf.Realize (φ.mapFreeVars (Empty.elim : Empty → Fin 0)) (Fin.elim0 : Fin 0 → M) := by
+    {M : Type*} [L.Structure M] (φ : BoundedFormulaInfLegacy.{u, v, 0, w} L Empty 0) :
+    SentenceInfLegacy.Realize φ M ↔
+    FormulaInfLegacy.Realize (φ.mapFreeVars (Empty.elim : Empty → Fin 0)) (Fin.elim0 : Fin 0 → M) := by
   show φ.Realize (Empty.elim : Empty → M) Fin.elim0 ↔
        (φ.mapFreeVars Empty.elim).Realize (Fin.elim0 : Fin 0 → M) Fin.elim0
-  rw [BoundedFormulaInf.realize_mapFreeVars]
+  rw [BoundedFormulaInfLegacy.realize_mapFreeVars]
   rw [comp_empty_elim Fin.elim0]
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-/-- Bridge between `FormulaInf.Realize (Fin 0)` and `SentenceInf.Realize`
-for `BoundedFormulaInf.{u,v,0,w}`. -/
+/-- Bridge between `FormulaInfLegacy.Realize (Fin 0)` and `SentenceInfLegacy.Realize`
+for `BoundedFormulaInfLegacy.{u,v,0,w}`. -/
 private theorem formulaInf_realize_iff_mapFreeVarsW
-    {M : Type*} [L.Structure M] (φ : BoundedFormulaInf.{u, v, 0, w} L (Fin 0) 0) :
-    FormulaInf.Realize φ (Fin.elim0 : Fin 0 → M) ↔
-    SentenceInf.Realize (φ.mapFreeVars (Fin.elim0 : Fin 0 → Empty)) M := by
+    {M : Type*} [L.Structure M] (φ : BoundedFormulaInfLegacy.{u, v, 0, w} L (Fin 0) 0) :
+    FormulaInfLegacy.Realize φ (Fin.elim0 : Fin 0 → M) ↔
+    SentenceInfLegacy.Realize (φ.mapFreeVars (Fin.elim0 : Fin 0 → Empty)) M := by
   show φ.Realize (Fin.elim0 : Fin 0 → M) Fin.elim0 ↔
        (φ.mapFreeVars Fin.elim0).Realize (Empty.elim : Empty → M) Fin.elim0
-  rw [BoundedFormulaInf.realize_mapFreeVars]
+  rw [BoundedFormulaInfLegacy.realize_mapFreeVars]
   rw [comp_fin_elim0 Empty.elim]
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- Builds an atomic formula from an `AtomicIdx` at universe `w`. -/
 private def atomicFormulaInfW (idx : L.AtomicIdx n) :
-    BoundedFormulaInf.{u, v, 0, w} L (Fin n) 0 :=
+    BoundedFormulaInfLegacy.{u, v, 0, w} L (Fin n) 0 :=
   match idx with
   | .eq i j => .equal (.var (.inl i)) (.var (.inl j))
   | .rel R f => .rel R (fun k => .var (.inl (f k)))
@@ -217,14 +217,14 @@ private def atomicFormulaInfW (idx : L.AtomicIdx n) :
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 private theorem realize_atomicFormulaInfW {M : Type*} [L.Structure M]
     (idx : L.AtomicIdx n) (v : Fin n → M) :
-    FormulaInf.Realize (atomicFormulaInfW (L := L) idx :
-      BoundedFormulaInf.{u, v, 0, w} L (Fin n) 0) v ↔ idx.holds v := by
+    FormulaInfLegacy.Realize (atomicFormulaInfW (L := L) idx :
+      BoundedFormulaInfLegacy.{u, v, 0, w} L (Fin n) 0) v ↔ idx.holds v := by
   cases idx with
   | eq i j =>
-    simp only [atomicFormulaInfW, FormulaInf.Realize, BoundedFormulaInf.Realize, Term.realize,
+    simp only [atomicFormulaInfW, FormulaInfLegacy.Realize, BoundedFormulaInfLegacy.Realize, Term.realize,
       Sum.elim_inl, AtomicIdx.holds]
   | rel R f =>
-    simp only [atomicFormulaInfW, FormulaInf.Realize, BoundedFormulaInf.Realize, Term.realize,
+    simp only [atomicFormulaInfW, FormulaInfLegacy.Realize, BoundedFormulaInfLegacy.Realize, Term.realize,
       Sum.elim_inl, AtomicIdx.holds]
     constructor <;> intro h <;> convert h using 1 <;> rfl
 
@@ -232,14 +232,14 @@ private theorem realize_atomicFormulaInfW {M : Type*} [L.Structure M]
 
 omit [Countable (Σ l, L.Relations l)] in
 /-- Forward Karp at universe w, generalized to tuples. If `(a, b)` is in the PotentialIso
-family, then they agree on all `BoundedFormulaInf.{u,v,0,w}` formulas.
+family, then they agree on all `BoundedFormulaInfLegacy.{u,v,0,w}` formulas.
 
 The proof is by structural induction on the formula. The key cases:
 - `all`: Use PotentialIso.forth/back to get witnesses for the universal quantifier.
 - `iSup`/`iInf`: Straightforward exists_congr/forall_congr with IH. -/
 private theorem PotentialIso_implies_agree_aux (P : PotentialIso L M N)
     {n k : ℕ} {a : Fin n → M} {b : Fin n → N} (hab : ⟨n, a, b⟩ ∈ P.family)
-    (φ : BoundedFormulaInf.{u, v, 0, w} L (Fin n) k)
+    (φ : BoundedFormulaInfLegacy.{u, v, 0, w} L (Fin n) k)
     (xs : Fin k → M) (ys : Fin k → N)
     (hext : ⟨n + k, Fin.append a xs, Fin.append b ys⟩ ∈ P.family) :
     (φ.Realize a xs ↔ φ.Realize b ys) := by
@@ -248,14 +248,14 @@ private theorem PotentialIso_implies_agree_aux (P : PotentialIso L M N)
   | equal t₁ t₂ =>
     obtain ⟨x₁, rfl⟩ := Term.eq_var_of_isRelational t₁
     obtain ⟨x₂, rfl⟩ := Term.eq_var_of_isRelational t₂
-    simp only [BoundedFormulaInf.realize_equal, Term.realize]
+    simp only [BoundedFormulaInfLegacy.realize_equal, Term.realize]
     have hSAT : SameAtomicType (L := L) (Fin.append a xs) (Fin.append b ys) :=
       P.compatible _ hext
     rw [sumElim_eq_append_comp a xs, sumElim_eq_append_comp b ys]
     simp only [Function.comp]
     exact hSAT (.eq (finSumFinEquiv x₁) (finSumFinEquiv x₂))
   | rel R ts =>
-    simp only [BoundedFormulaInf.realize_rel]
+    simp only [BoundedFormulaInfLegacy.realize_rel]
     have hSAT : SameAtomicType (L := L) (Fin.append a xs) (Fin.append b ys) :=
       P.compatible _ hext
     have hvars : ∀ i, ∃ x, ts i = Term.var x := fun i => Term.eq_var_of_isRelational (ts i)
@@ -271,10 +271,10 @@ private theorem PotentialIso_implies_agree_aux (P : PotentialIso L M N)
     rw [hM, hN]
     exact hSAT (.rel R (fun i => finSumFinEquiv (ts_var i)))
   | imp φ ψ ihφ ihψ =>
-    simp only [BoundedFormulaInf.realize_imp]
+    simp only [BoundedFormulaInfLegacy.realize_imp]
     exact imp_congr (ihφ hab xs ys hext) (ihψ hab xs ys hext)
   | all φ ih =>
-    simp only [BoundedFormulaInf.realize_all]
+    simp only [BoundedFormulaInfLegacy.realize_all]
     constructor
     · intro hAll y
       obtain ⟨m, hm⟩ := P.back _ hext y
@@ -309,14 +309,14 @@ omit [Countable (Σ l, L.Relations l)] in
 /-- Backward direction: LinfEquivW implies PotentialIso.
 
 The family consists of tuples `(n, a, b)` such that `a` and `b` agree on all
-`BoundedFormulaInf.{u,v,0,w}` formulas with `Fin n` free variables. The forth/back
+`BoundedFormulaInfLegacy.{u,v,0,w}` formulas with `Fin n` free variables. The forth/back
 properties use a contradiction argument: if no witness exists, we can build a separating
 formula using `iInf` indexed by `N : Type w` (which requires `uι = w`). -/
 theorem LinfEquivW_implies_potentialIso (h : LinfEquivW L M N) :
     Nonempty (PotentialIso L M N) := by
   refine ⟨{
-    family := { p | ∀ φ : BoundedFormulaInf.{u, v, 0, w} L (Fin p.1) 0,
-      FormulaInf.Realize φ p.2.1 ↔ FormulaInf.Realize φ p.2.2 }
+    family := { p | ∀ φ : BoundedFormulaInfLegacy.{u, v, 0, w} L (Fin p.1) 0,
+      FormulaInfLegacy.Realize φ p.2.1 ↔ FormulaInfLegacy.Realize φ p.2.2 }
     empty_mem := ?_
     compatible := ?_
     forth := ?_
@@ -340,29 +340,29 @@ theorem LinfEquivW_implies_potentialIso (h : LinfEquivW L M N) :
     choose φ_bad h_bad using h_no
     -- For each n', get a formula true for (snoc a m) but false for (snoc b n')
     -- (or vice versa). WLOG, choose the direction.
-    have h_sep : ∀ n' : N, ∃ ψ : BoundedFormulaInf.{u, v, 0, w} L (Fin (n + 1)) 0,
-        FormulaInf.Realize ψ (Fin.snoc a m) ∧ ¬ FormulaInf.Realize ψ (Fin.snoc b n') := by
+    have h_sep : ∀ n' : N, ∃ ψ : BoundedFormulaInfLegacy.{u, v, 0, w} L (Fin (n + 1)) 0,
+        FormulaInfLegacy.Realize ψ (Fin.snoc a m) ∧ ¬ FormulaInfLegacy.Realize ψ (Fin.snoc b n') := by
       intro n'
       -- h_bad n' : (Realize .. (snoc a m) ∧ ¬ Realize .. (snoc b n')) ∨
       --            (¬ Realize .. (snoc a m) ∧ Realize .. (snoc b n'))
       rcases h_bad n' with ⟨hM, hN⟩ | ⟨hM, hN⟩
       · exact ⟨φ_bad n', hM, hN⟩
       · -- Use negation: ¬Realize at (snoc a m), Realize at (snoc b n')
-        refine ⟨(φ_bad n').not, (BoundedFormulaInf.realize_not _).mpr hM, fun hc => ?_⟩
-        exact absurd hN ((BoundedFormulaInf.realize_not _).mp hc)
+        refine ⟨(φ_bad n').not, (BoundedFormulaInfLegacy.realize_not _).mpr hM, fun hc => ?_⟩
+        exact absurd hN ((BoundedFormulaInfLegacy.realize_not _).mp hc)
     choose ψ hψ using h_sep
     -- Build: χ := existsLastVarInf (iInf (fun n' : N => ψ n'))
     -- The iInf is indexed by N : Type w — this is why we need uι = w!
-    let conj : BoundedFormulaInf.{u, v, 0, w} L (Fin (n + 1)) 0 :=
+    let conj : BoundedFormulaInfLegacy.{u, v, 0, w} L (Fin (n + 1)) 0 :=
       .iInf (ι := N) ψ
-    let χ : BoundedFormulaInf.{u, v, 0, w} L (Fin n) 0 :=
-      BoundedFormulaInf.existsLastVarInf conj
+    let χ : BoundedFormulaInfLegacy.{u, v, 0, w} L (Fin n) 0 :=
+      BoundedFormulaInfLegacy.existsLastVarInf conj
     -- χ is true for a: witness m satisfies all ψ n'
-    have hM : FormulaInf.Realize χ a := by
-      rw [BoundedFormulaInf.realize_existsLastVarInf]
+    have hM : FormulaInfLegacy.Realize χ a := by
+      rw [BoundedFormulaInfLegacy.realize_existsLastVarInf]
       exact ⟨m, fun n' => (hψ n').1⟩
-    have hN : ¬ FormulaInf.Realize χ b := by
-      rw [BoundedFormulaInf.realize_existsLastVarInf]
+    have hN : ¬ FormulaInfLegacy.Realize χ b := by
+      rw [BoundedFormulaInfLegacy.realize_existsLastVarInf]
       rintro ⟨x, hx⟩
       exact (hψ x).2 (hx x)
     exact hN ((hfamily χ).mp hM)
@@ -372,28 +372,28 @@ theorem LinfEquivW_implies_potentialIso (h : LinfEquivW L M N) :
     by_contra h_no
     push Not at h_no
     choose φ_bad h_bad using h_no
-    have h_sep : ∀ m : M, ∃ ψ : BoundedFormulaInf.{u, v, 0, w} L (Fin (n + 1)) 0,
-        FormulaInf.Realize ψ (Fin.snoc b n') ∧ ¬ FormulaInf.Realize ψ (Fin.snoc a m) := by
+    have h_sep : ∀ m : M, ∃ ψ : BoundedFormulaInfLegacy.{u, v, 0, w} L (Fin (n + 1)) 0,
+        FormulaInfLegacy.Realize ψ (Fin.snoc b n') ∧ ¬ FormulaInfLegacy.Realize ψ (Fin.snoc a m) := by
       intro m
       -- h_bad m : (Realize .. (snoc a m) ∧ ¬ Realize .. (snoc b n')) ∨
       --           (¬ Realize .. (snoc a m) ∧ Realize .. (snoc b n'))
       rcases h_bad m with ⟨hM, hN⟩ | ⟨hM, hN⟩
       · -- Case: Realize (φ_bad m) (snoc a m) ∧ ¬ Realize (φ_bad m) (snoc b n')
         -- Use negation of φ_bad m: true at (snoc b n') and false at (snoc a m)
-        refine ⟨(φ_bad m).not, (BoundedFormulaInf.realize_not _).mpr hN, fun hc => ?_⟩
-        exact absurd hM ((BoundedFormulaInf.realize_not _).mp hc)
+        refine ⟨(φ_bad m).not, (BoundedFormulaInfLegacy.realize_not _).mpr hN, fun hc => ?_⟩
+        exact absurd hM ((BoundedFormulaInfLegacy.realize_not _).mp hc)
       · -- Case: ¬ Realize (φ_bad m) (snoc a m) ∧ Realize (φ_bad m) (snoc b n')
         exact ⟨φ_bad m, hN, hM⟩
     choose ψ hψ using h_sep
-    let conj : BoundedFormulaInf.{u, v, 0, w} L (Fin (n + 1)) 0 :=
+    let conj : BoundedFormulaInfLegacy.{u, v, 0, w} L (Fin (n + 1)) 0 :=
       .iInf (ι := M) ψ
-    let χ : BoundedFormulaInf.{u, v, 0, w} L (Fin n) 0 :=
-      BoundedFormulaInf.existsLastVarInf conj
-    have hN : FormulaInf.Realize χ b := by
-      rw [BoundedFormulaInf.realize_existsLastVarInf]
+    let χ : BoundedFormulaInfLegacy.{u, v, 0, w} L (Fin n) 0 :=
+      BoundedFormulaInfLegacy.existsLastVarInf conj
+    have hN : FormulaInfLegacy.Realize χ b := by
+      rw [BoundedFormulaInfLegacy.realize_existsLastVarInf]
       exact ⟨n', fun m => (hψ m).1⟩
-    have hM : ¬ FormulaInf.Realize χ a := by
-      rw [BoundedFormulaInf.realize_existsLastVarInf]
+    have hM : ¬ FormulaInfLegacy.Realize χ a := by
+      rw [BoundedFormulaInfLegacy.realize_existsLastVarInf]
       rintro ⟨x, hx⟩
       exact (hψ x).2 (hx x)
     exact hM ((hfamily χ).mpr hN)
@@ -423,21 +423,21 @@ theorem karp_theorem_w :
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- `LinfEquivW` implies `LinfEquiv`: universe-correct equivalence implies the standard one.
-This follows from `liftUI` which embeds `BoundedFormulaInf.{u,v,0,0}` into
-`BoundedFormulaInf.{u,v,0,w}`. -/
+This follows from `liftUI` which embeds `BoundedFormulaInfLegacy.{u,v,0,0}` into
+`BoundedFormulaInfLegacy.{u,v,0,w}`. -/
 theorem LinfEquivW_implies_LinfEquiv (h : LinfEquivW L M N) : LinfEquiv L M N := by
   intro φ
-  -- liftUI sends φ : BoundedFormulaInf.{u,v,0,0} to BoundedFormulaInf.{u,v,0,w}
-  let lφ : BoundedFormulaInf.{u, v, 0, w} L Empty 0 := BoundedFormulaInf.liftUI φ
-  -- SentenceInf.Realize unfolds to Realize Empty.elim Fin.elim0
+  -- liftUI sends φ : BoundedFormulaInfLegacy.{u,v,0,0} to BoundedFormulaInfLegacy.{u,v,0,w}
+  let lφ : BoundedFormulaInfLegacy.{u, v, 0, w} L Empty 0 := BoundedFormulaInfLegacy.liftUI φ
+  -- SentenceInfLegacy.Realize unfolds to Realize Empty.elim Fin.elim0
   show φ.Realize (Empty.elim : Empty → M) Fin.elim0 ↔
        φ.Realize (Empty.elim : Empty → N) Fin.elim0
   have hM : lφ.Realize (Empty.elim : Empty → M) Fin.elim0 ↔
             φ.Realize (Empty.elim : Empty → M) Fin.elim0 :=
-    BoundedFormulaInf.realize_liftUI φ _ _
+    BoundedFormulaInfLegacy.realize_liftUI φ _ _
   have hN : lφ.Realize (Empty.elim : Empty → N) Fin.elim0 ↔
             φ.Realize (Empty.elim : Empty → N) Fin.elim0 :=
-    BoundedFormulaInf.realize_liftUI φ _ _
+    BoundedFormulaInfLegacy.realize_liftUI φ _ _
   exact hM.symm.trans ((h lφ).trans hN)
 
 omit [Countable (Σ l, L.Relations l)] in
@@ -461,7 +461,7 @@ omit [Countable (Σ l, L.Relations l)] in
 /-- **Karp's Theorem at universe 0**.
 
 This is `karp_theorem_w` specialized to `M N : Type` (i.e., `Type 0`). At universe 0,
-`LinfEquivW` and `LinfEquiv` coincide (both use `BoundedFormulaInf.{u,v,0,0}`). -/
+`LinfEquivW` and `LinfEquiv` coincide (both use `BoundedFormulaInfLegacy.{u,v,0,0}`). -/
 theorem karp_theorem_universe0 {M N : Type} [L.Structure M] [L.Structure N] :
     Nonempty (PotentialIso L M N) ↔ LinfEquiv L M N :=
   karp_theorem_w

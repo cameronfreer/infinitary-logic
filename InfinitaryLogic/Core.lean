@@ -60,7 +60,7 @@ fundamental difference is the connective index type:
 - **Lomega1omega**: `iSup (φs : ℕ → ...)` — ℕ-indexed only
 
 This difference is baked into the inductive type constructors
-(`BoundedFormulaInf` vs `BoundedFormulaω`), so a shared abstract kernel
+(`BoundedFormulaInfLegacy` vs `BoundedFormulaω`), so a shared abstract kernel
 would require type-level parametrization over the index type — feasible
 but non-trivial. The current parallel structure trades ~1000 lines of
 duplication for clarity and type safety. The embedding

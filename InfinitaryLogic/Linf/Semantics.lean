@@ -13,9 +13,9 @@ This file defines the semantics of L∞ω formulas.
 
 ## Main Definitions
 
-- `FirstOrder.Language.BoundedFormulaInf.Realize`: Evaluation of a bounded formula in a structure.
-- `FirstOrder.Language.FormulaInf.Realize`: Evaluation of a formula with variable assignment.
-- `FirstOrder.Language.SentenceInf.Realize`: Truth of a sentence in a structure.
+- `FirstOrder.Language.BoundedFormulaInfLegacy.Realize`: Evaluation of a bounded formula in a structure.
+- `FirstOrder.Language.FormulaInfLegacy.Realize`: Evaluation of a formula with variable assignment.
+- `FirstOrder.Language.SentenceInfLegacy.Realize`: Truth of a sentence in a structure.
 
 ## Main Results
 
@@ -34,11 +34,11 @@ variable {α : Type u'} {n : ℕ}
 
 open FirstOrder Structure Fin
 
-namespace BoundedFormulaInf
+namespace BoundedFormulaInfLegacy
 
 /-- A bounded L∞ω formula can be evaluated as true or false by giving values to each
 free and bound variable. -/
-def Realize : {n : ℕ} → L.BoundedFormulaInf α n → (α → M) → (Fin n → M) → Prop
+def Realize : {n : ℕ} → L.BoundedFormulaInfLegacy α n → (α → M) → (Fin n → M) → Prop
   | _, falsum, _, _ => False
   | _, equal t₁ t₂, v, xs => t₁.realize (Sum.elim v xs) = t₂.realize (Sum.elim v xs)
   | _, rel R ts, v, xs => RelMap R fun i => (ts i).realize (Sum.elim v xs)
@@ -50,10 +50,10 @@ def Realize : {n : ℕ} → L.BoundedFormulaInf α n → (α → M) → (Fin n �
 variable {v : α → M} {xs : Fin n → M}
 
 @[simp]
-theorem realize_falsum : (falsum : L.BoundedFormulaInf α n).Realize v xs ↔ False := by rfl
+theorem realize_falsum : (falsum : L.BoundedFormulaInfLegacy α n).Realize v xs ↔ False := by rfl
 
 @[simp]
-theorem realize_bot : (⊥ : L.BoundedFormulaInf α n).Realize v xs ↔ False := by rfl
+theorem realize_bot : (⊥ : L.BoundedFormulaInfLegacy α n).Realize v xs ↔ False := by rfl
 
 @[simp]
 theorem realize_equal (t₁ t₂ : L.Term (α ⊕ Fin n)) :
@@ -66,125 +66,125 @@ theorem realize_rel {l : ℕ} (R : L.Relations l) (ts : Fin l → L.Term (α ⊕
   rfl
 
 @[simp]
-theorem realize_imp (φ ψ : L.BoundedFormulaInf α n) :
+theorem realize_imp (φ ψ : L.BoundedFormulaInfLegacy α n) :
     (imp φ ψ).Realize v xs ↔ (φ.Realize v xs → ψ.Realize v xs) := by rfl
 
 @[simp]
-theorem realize_all (φ : L.BoundedFormulaInf α (n + 1)) :
+theorem realize_all (φ : L.BoundedFormulaInfLegacy α (n + 1)) :
     (all φ).Realize v xs ↔ ∀ x : M, φ.Realize v (snoc xs x) := by rfl
 
 @[simp]
-theorem realize_iSup {ι : Type} (φs : ι → L.BoundedFormulaInf α n) :
+theorem realize_iSup {ι : Type} (φs : ι → L.BoundedFormulaInfLegacy α n) :
     (iSup φs).Realize v xs ↔ ∃ i, (φs i).Realize v xs := by rfl
 
 @[simp]
-theorem realize_iInf {ι : Type} (φs : ι → L.BoundedFormulaInf α n) :
+theorem realize_iInf {ι : Type} (φs : ι → L.BoundedFormulaInfLegacy α n) :
     (iInf φs).Realize v xs ↔ ∀ i, (φs i).Realize v xs := by rfl
 
 @[simp]
-theorem realize_top : (⊤ : L.BoundedFormulaInf α n).Realize v xs ↔ True := by
-  simp only [Top.top, BoundedFormulaInf.top, realize_imp, realize_falsum, false_implies]
+theorem realize_top : (⊤ : L.BoundedFormulaInfLegacy α n).Realize v xs ↔ True := by
+  simp only [Top.top, BoundedFormulaInfLegacy.top, realize_imp, realize_falsum, false_implies]
 
 @[simp]
-theorem realize_not (φ : L.BoundedFormulaInf α n) :
+theorem realize_not (φ : L.BoundedFormulaInfLegacy α n) :
     φ.not.Realize v xs ↔ ¬φ.Realize v xs := by
-  simp only [BoundedFormulaInf.not, realize_imp, realize_bot]
+  simp only [BoundedFormulaInfLegacy.not, realize_imp, realize_bot]
 
 @[simp]
-theorem realize_and (φ ψ : L.BoundedFormulaInf α n) :
+theorem realize_and (φ ψ : L.BoundedFormulaInfLegacy α n) :
     (φ.and ψ).Realize v xs ↔ φ.Realize v xs ∧ ψ.Realize v xs := by
-  simp only [BoundedFormulaInf.and, realize_not, realize_imp]
+  simp only [BoundedFormulaInfLegacy.and, realize_not, realize_imp]
   tauto
 
 @[simp]
-theorem realize_inf (φ ψ : L.BoundedFormulaInf α n) :
+theorem realize_inf (φ ψ : L.BoundedFormulaInfLegacy α n) :
     (φ ⊓ ψ).Realize v xs ↔ φ.Realize v xs ∧ ψ.Realize v xs :=
   realize_and φ ψ
 
 @[simp]
-theorem realize_or (φ ψ : L.BoundedFormulaInf α n) :
+theorem realize_or (φ ψ : L.BoundedFormulaInfLegacy α n) :
     (φ.or ψ).Realize v xs ↔ φ.Realize v xs ∨ ψ.Realize v xs := by
-  simp only [BoundedFormulaInf.or, realize_not, realize_imp]
+  simp only [BoundedFormulaInfLegacy.or, realize_not, realize_imp]
   tauto
 
 @[simp]
-theorem realize_sup (φ ψ : L.BoundedFormulaInf α n) :
+theorem realize_sup (φ ψ : L.BoundedFormulaInfLegacy α n) :
     (φ ⊔ ψ).Realize v xs ↔ φ.Realize v xs ∨ ψ.Realize v xs :=
   realize_or φ ψ
 
 @[simp]
-theorem realize_ex (φ : L.BoundedFormulaInf α (n + 1)) :
+theorem realize_ex (φ : L.BoundedFormulaInfLegacy α (n + 1)) :
     φ.ex.Realize v xs ↔ ∃ x : M, φ.Realize v (snoc xs x) := by
-  simp only [BoundedFormulaInf.ex, realize_not, realize_all]
+  simp only [BoundedFormulaInfLegacy.ex, realize_not, realize_all]
   push Not
   rfl
 
 @[simp]
-theorem realize_iff (φ ψ : L.BoundedFormulaInf α n) :
+theorem realize_iff (φ ψ : L.BoundedFormulaInfLegacy α n) :
     (φ.iff ψ).Realize v xs ↔ (φ.Realize v xs ↔ ψ.Realize v xs) := by
-  simp only [BoundedFormulaInf.iff, realize_inf, realize_imp, iff_def]
+  simp only [BoundedFormulaInfLegacy.iff, realize_inf, realize_imp, iff_def]
 
 @[simp]
-theorem realize_emptyiSup : (emptyiSup : L.BoundedFormulaInf α n).Realize v xs ↔ False := by
+theorem realize_emptyiSup : (emptyiSup : L.BoundedFormulaInfLegacy α n).Realize v xs ↔ False := by
   simp only [emptyiSup, realize_iSup, IsEmpty.exists_iff]
 
 @[simp]
-theorem realize_emptyiInf : (emptyiInf : L.BoundedFormulaInf α n).Realize v xs ↔ True := by
+theorem realize_emptyiInf : (emptyiInf : L.BoundedFormulaInfLegacy α n).Realize v xs ↔ True := by
   simp only [emptyiInf, realize_iInf, IsEmpty.forall_iff]
 
-end BoundedFormulaInf
+end BoundedFormulaInfLegacy
 
-namespace FormulaInf
+namespace FormulaInfLegacy
 
 /-- A formula can be evaluated by giving values to its free variables. -/
-def Realize (φ : L.FormulaInf α) (v : α → M) : Prop :=
-  BoundedFormulaInf.Realize φ v Fin.elim0
+def Realize (φ : L.FormulaInfLegacy α) (v : α → M) : Prop :=
+  BoundedFormulaInfLegacy.Realize φ v Fin.elim0
 
-variable {φ : L.FormulaInf α} {v : α → M}
-
-@[simp]
-theorem realize_not : Realize φ.not v ↔ ¬Realize φ v := BoundedFormulaInf.realize_not φ
+variable {φ : L.FormulaInfLegacy α} {v : α → M}
 
 @[simp]
-theorem realize_bot : Realize (⊥ : L.FormulaInf α) v ↔ False := BoundedFormulaInf.realize_bot
+theorem realize_not : Realize φ.not v ↔ ¬Realize φ v := BoundedFormulaInfLegacy.realize_not φ
 
 @[simp]
-theorem realize_top : Realize (⊤ : L.FormulaInf α) v ↔ True := BoundedFormulaInf.realize_top
+theorem realize_bot : Realize (⊥ : L.FormulaInfLegacy α) v ↔ False := BoundedFormulaInfLegacy.realize_bot
 
 @[simp]
-theorem realize_imp (φ ψ : L.FormulaInf α) :
-    Realize (φ.imp ψ) v ↔ (Realize φ v → Realize ψ v) := BoundedFormulaInf.realize_imp φ ψ
+theorem realize_top : Realize (⊤ : L.FormulaInfLegacy α) v ↔ True := BoundedFormulaInfLegacy.realize_top
 
 @[simp]
-theorem realize_inf (φ ψ : L.FormulaInf α) :
-    Realize (φ ⊓ ψ) v ↔ Realize φ v ∧ Realize ψ v := BoundedFormulaInf.realize_inf φ ψ
+theorem realize_imp (φ ψ : L.FormulaInfLegacy α) :
+    Realize (φ.imp ψ) v ↔ (Realize φ v → Realize ψ v) := BoundedFormulaInfLegacy.realize_imp φ ψ
 
 @[simp]
-theorem realize_sup (φ ψ : L.FormulaInf α) :
-    Realize (φ ⊔ ψ) v ↔ Realize φ v ∨ Realize ψ v := BoundedFormulaInf.realize_sup φ ψ
+theorem realize_inf (φ ψ : L.FormulaInfLegacy α) :
+    Realize (φ ⊓ ψ) v ↔ Realize φ v ∧ Realize ψ v := BoundedFormulaInfLegacy.realize_inf φ ψ
 
 @[simp]
-theorem realize_iSup {ι : Type} (φs : ι → L.FormulaInf α) :
-    Realize (BoundedFormulaInf.iSup φs) v ↔ ∃ i, Realize (φs i) v :=
-  BoundedFormulaInf.realize_iSup φs
+theorem realize_sup (φ ψ : L.FormulaInfLegacy α) :
+    Realize (φ ⊔ ψ) v ↔ Realize φ v ∨ Realize ψ v := BoundedFormulaInfLegacy.realize_sup φ ψ
 
 @[simp]
-theorem realize_iInf {ι : Type} (φs : ι → L.FormulaInf α) :
-    Realize (BoundedFormulaInf.iInf φs) v ↔ ∀ i, Realize (φs i) v :=
-  BoundedFormulaInf.realize_iInf φs
+theorem realize_iSup {ι : Type} (φs : ι → L.FormulaInfLegacy α) :
+    Realize (BoundedFormulaInfLegacy.iSup φs) v ↔ ∃ i, Realize (φs i) v :=
+  BoundedFormulaInfLegacy.realize_iSup φs
 
-end FormulaInf
+@[simp]
+theorem realize_iInf {ι : Type} (φs : ι → L.FormulaInfLegacy α) :
+    Realize (BoundedFormulaInfLegacy.iInf φs) v ↔ ∀ i, Realize (φs i) v :=
+  BoundedFormulaInfLegacy.realize_iInf φs
 
-namespace SentenceInf
+end FormulaInfLegacy
+
+namespace SentenceInfLegacy
 
 /-- A sentence can be evaluated in a structure. -/
-def Realize (φ : L.SentenceInf) (M : Type w) [L.Structure M] : Prop :=
-  BoundedFormulaInf.Realize φ (Empty.elim : Empty → M) Fin.elim0
+def Realize (φ : L.SentenceInfLegacy) (M : Type w) [L.Structure M] : Prop :=
+  BoundedFormulaInfLegacy.Realize φ (Empty.elim : Empty → M) Fin.elim0
 
 /-- Notation for a structure satisfying a sentence. -/
-scoped notation:51 M " ⊨∞ " φ:51 => SentenceInf.Realize φ M
+scoped notation:51 M " ⊨∞ " φ:51 => SentenceInfLegacy.Realize φ M
 
-end SentenceInf
+end SentenceInfLegacy
 
 end Language
 

@@ -171,9 +171,9 @@ theorem exists_countable_bfEquiv_of_lomega1omegaSmall [Countable (Σ n, L.Functi
 theorem realize_inf_iff_of_companion [L.IsRelational]
     {hsmall : Lomega1omegaSmall (L := L) M} {N : L.Substructure M}
     (hAe : AElementary (isolatorFragment hsmall) N.subtype)
-    (φ : BoundedFormulaInf.{0, 0, 0, 0} L (Fin 0) 0) :
-    FormulaInf.Realize φ (Fin.elim0 : Fin 0 → M)
-      ↔ FormulaInf.Realize φ (Fin.elim0 : Fin 0 → N) :=
+    (φ : BoundedFormulaInfLegacy.{0, 0, 0, 0} L (Fin 0) 0) :
+    FormulaInfLegacy.Realize φ (Fin.elim0 : Fin 0 → M)
+      ↔ FormulaInfLegacy.Realize φ (Fin.elim0 : Fin 0 → N) :=
   BFEquiv_implies_agreeQR φ.qrank Fin.elim0 Fin.elim0
     (bfEquiv_all_of_companion hAe φ.qrank) φ le_rfl
 

@@ -13,10 +13,10 @@ with arbitrary (possibly uncountable) conjunctions and disjunctions.
 
 ## Main Definitions
 
-- `FirstOrder.Language.BoundedFormulaInf`: The type of L∞ω formulas with free variables in `α`
+- `FirstOrder.Language.BoundedFormulaInfLegacy`: The type of L∞ω formulas with free variables in `α`
   and bound variables in `Fin n`. Allows arbitrary index types for iSup/iInf.
-- `FirstOrder.Language.FormulaInf`: Formulas with no bound variables.
-- `FirstOrder.Language.SentenceInf`: Sentences (formulas with no free variables).
+- `FirstOrder.Language.FormulaInfLegacy`: Formulas with no bound variables.
+- `FirstOrder.Language.SentenceInfLegacy`: Sentences (formulas with no free variables).
 
 ## Implementation Notes
 
@@ -38,88 +38,88 @@ namespace Language
 variable (L : Language.{u, v})
 
 /-- L∞ω bounded formulas: first-order formulas extended with arbitrary conjunctions and
-disjunctions. `BoundedFormulaInf L α n` has free variables indexed by `α` and `n` bound variables.
+disjunctions. `BoundedFormulaInfLegacy L α n` has free variables indexed by `α` and `n` bound variables.
 The index type `ι` for iSup/iInf lives in universe `uι`. -/
-inductive BoundedFormulaInf (α : Type u') : ℕ → Type max u v u' (uι + 1) where
+inductive BoundedFormulaInfLegacy (α : Type u') : ℕ → Type max u v u' (uι + 1) where
   /-- The false formula. -/
-  | falsum {n} : BoundedFormulaInf α n
+  | falsum {n} : BoundedFormulaInfLegacy α n
   /-- Equality of two terms. -/
-  | equal {n} (t₁ t₂ : L.Term (α ⊕ Fin n)) : BoundedFormulaInf α n
+  | equal {n} (t₁ t₂ : L.Term (α ⊕ Fin n)) : BoundedFormulaInfLegacy α n
   /-- A relation applied to terms. -/
-  | rel {n l : ℕ} (R : L.Relations l) (ts : Fin l → L.Term (α ⊕ Fin n)) : BoundedFormulaInf α n
+  | rel {n l : ℕ} (R : L.Relations l) (ts : Fin l → L.Term (α ⊕ Fin n)) : BoundedFormulaInfLegacy α n
   /-- Implication between formulas. -/
-  | imp {n} (φ ψ : BoundedFormulaInf α n) : BoundedFormulaInf α n
+  | imp {n} (φ ψ : BoundedFormulaInfLegacy α n) : BoundedFormulaInfLegacy α n
   /-- Universal quantification. -/
-  | all {n} (φ : BoundedFormulaInf α (n + 1)) : BoundedFormulaInf α n
+  | all {n} (φ : BoundedFormulaInfLegacy α (n + 1)) : BoundedFormulaInfLegacy α n
   /-- Arbitrary-indexed disjunction (supremum). The index type lives in universe `uι`. -/
-  | iSup {n} {ι : Type uι} (φs : ι → BoundedFormulaInf α n) : BoundedFormulaInf α n
+  | iSup {n} {ι : Type uι} (φs : ι → BoundedFormulaInfLegacy α n) : BoundedFormulaInfLegacy α n
   /-- Arbitrary-indexed conjunction (infimum). The index type lives in universe `uι`. -/
-  | iInf {n} {ι : Type uι} (φs : ι → BoundedFormulaInf α n) : BoundedFormulaInf α n
+  | iInf {n} {ι : Type uι} (φs : ι → BoundedFormulaInfLegacy α n) : BoundedFormulaInfLegacy α n
 
 /-- L∞ω formulas with no bound variables in scope. -/
-abbrev FormulaInf (α : Type u') := L.BoundedFormulaInf α 0
+abbrev FormulaInfLegacy (α : Type u') := L.BoundedFormulaInfLegacy α 0
 
 /-- L∞ω sentences: formulas with no free or bound variables in scope. -/
-abbrev SentenceInf := L.FormulaInf Empty
+abbrev SentenceInfLegacy := L.FormulaInfLegacy Empty
 
 variable {L} {α : Type u'} {n : ℕ}
 
-namespace BoundedFormulaInf
+namespace BoundedFormulaInfLegacy
 
-instance : Inhabited (L.BoundedFormulaInf α n) := ⟨falsum⟩
+instance : Inhabited (L.BoundedFormulaInfLegacy α n) := ⟨falsum⟩
 
-instance : Bot (L.BoundedFormulaInf α n) := ⟨falsum⟩
+instance : Bot (L.BoundedFormulaInfLegacy α n) := ⟨falsum⟩
 
 /-- The true formula, defined as ¬⊥. -/
-protected def top : L.BoundedFormulaInf α n := imp falsum falsum
+protected def top : L.BoundedFormulaInfLegacy α n := imp falsum falsum
 
-instance : Top (L.BoundedFormulaInf α n) := ⟨BoundedFormulaInf.top⟩
+instance : Top (L.BoundedFormulaInfLegacy α n) := ⟨BoundedFormulaInfLegacy.top⟩
 
 /-- Negation of a formula. -/
 @[match_pattern]
-protected def not (φ : L.BoundedFormulaInf α n) : L.BoundedFormulaInf α n := φ.imp ⊥
+protected def not (φ : L.BoundedFormulaInfLegacy α n) : L.BoundedFormulaInfLegacy α n := φ.imp ⊥
 
 /-- Conjunction of two formulas, defined via De Morgan. -/
 @[match_pattern]
-protected def and (φ ψ : L.BoundedFormulaInf α n) : L.BoundedFormulaInf α n :=
+protected def and (φ ψ : L.BoundedFormulaInfLegacy α n) : L.BoundedFormulaInfLegacy α n :=
   (φ.imp ψ.not).not
 
-instance : Min (L.BoundedFormulaInf α n) := ⟨BoundedFormulaInf.and⟩
+instance : Min (L.BoundedFormulaInfLegacy α n) := ⟨BoundedFormulaInfLegacy.and⟩
 
 /-- Disjunction of two formulas. -/
 @[match_pattern]
-protected def or (φ ψ : L.BoundedFormulaInf α n) : L.BoundedFormulaInf α n :=
+protected def or (φ ψ : L.BoundedFormulaInfLegacy α n) : L.BoundedFormulaInfLegacy α n :=
   φ.not.imp ψ
 
-instance : Max (L.BoundedFormulaInf α n) := ⟨BoundedFormulaInf.or⟩
+instance : Max (L.BoundedFormulaInfLegacy α n) := ⟨BoundedFormulaInfLegacy.or⟩
 
 /-- Existential quantification. -/
 @[match_pattern]
-protected def ex (φ : L.BoundedFormulaInf α (n + 1)) : L.BoundedFormulaInf α n :=
+protected def ex (φ : L.BoundedFormulaInfLegacy α (n + 1)) : L.BoundedFormulaInfLegacy α n :=
   φ.not.all.not
 
 /-- Biconditional between formulas. -/
-protected def iff (φ ψ : L.BoundedFormulaInf α n) : L.BoundedFormulaInf α n :=
+protected def iff (φ ψ : L.BoundedFormulaInfLegacy α n) : L.BoundedFormulaInfLegacy α n :=
   (φ.imp ψ) ⊓ (ψ.imp φ)
 
 /-- Empty disjunction (equivalent to ⊥). -/
-def emptyiSup : L.BoundedFormulaInf α n := iSup (ι := Empty) (fun e => e.elim)
+def emptyiSup : L.BoundedFormulaInfLegacy α n := iSup (ι := Empty) (fun e => e.elim)
 
 /-- Empty conjunction (equivalent to ⊤). -/
-def emptyiInf : L.BoundedFormulaInf α n := iInf (ι := Empty) (fun e => e.elim)
+def emptyiInf : L.BoundedFormulaInfLegacy α n := iInf (ι := Empty) (fun e => e.elim)
 
-end BoundedFormulaInf
+end BoundedFormulaInfLegacy
 
 -- Notation for L∞ω
-scoped[Linfomega] infixr:62 " ⟹∞ " => FirstOrder.Language.BoundedFormulaInf.imp
+scoped[Linfomega] infixr:62 " ⟹∞ " => FirstOrder.Language.BoundedFormulaInfLegacy.imp
 
-scoped[Linfomega] prefix:110 "∀'∞ " => FirstOrder.Language.BoundedFormulaInf.all
+scoped[Linfomega] prefix:110 "∀'∞ " => FirstOrder.Language.BoundedFormulaInfLegacy.all
 
-scoped[Linfomega] prefix:arg "∼∞" => FirstOrder.Language.BoundedFormulaInf.not
+scoped[Linfomega] prefix:arg "∼∞" => FirstOrder.Language.BoundedFormulaInfLegacy.not
 
-scoped[Linfomega] prefix:110 "∃'∞ " => FirstOrder.Language.BoundedFormulaInf.ex
+scoped[Linfomega] prefix:110 "∃'∞ " => FirstOrder.Language.BoundedFormulaInfLegacy.ex
 
-scoped[Linfomega] infixl:61 " ⇔∞ " => FirstOrder.Language.BoundedFormulaInf.iff
+scoped[Linfomega] infixl:61 " ⇔∞ " => FirstOrder.Language.BoundedFormulaInfLegacy.iff
 
 end Language
 

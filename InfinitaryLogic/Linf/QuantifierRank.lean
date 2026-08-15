@@ -14,7 +14,7 @@ relation between structures.
 
 ## Main Definitions
 
-- `BoundedFormulaInf.qrank`: The quantifier rank of an L∞ω formula.
+- `BoundedFormulaInfLegacy.qrank`: The quantifier rank of an L∞ω formula.
 - `EquivQRInf`: Two structures are equivalent up to quantifier rank α if they satisfy
   the same sentences of quantifier rank ≤ α.
 
@@ -46,7 +46,7 @@ open FirstOrder Structure Ordinal
 - Implication takes the max of its arguments
 - Universal quantification adds 1
 - Infinitary connectives take the sup of their arguments -/
-noncomputable def BoundedFormulaInf.qrank : L.BoundedFormulaInf α n → Ordinal.{0}
+noncomputable def BoundedFormulaInfLegacy.qrank : L.BoundedFormulaInfLegacy α n → Ordinal.{0}
   | .falsum       => 0
   | .equal _ _    => 0
   | .rel _ _      => 0
@@ -56,24 +56,24 @@ noncomputable def BoundedFormulaInf.qrank : L.BoundedFormulaInf α n → Ordinal
   | .iInf φs      => ⨆ i, (φs i).qrank
 
 /-- Quantifier rank of a formula (no bound variables). -/
-noncomputable abbrev FormulaInf.qrank (φ : L.FormulaInf α) : Ordinal.{0} :=
-  BoundedFormulaInf.qrank φ
+noncomputable abbrev FormulaInfLegacy.qrank (φ : L.FormulaInfLegacy α) : Ordinal.{0} :=
+  BoundedFormulaInfLegacy.qrank φ
 
 /-- Quantifier rank of a sentence. -/
-noncomputable abbrev SentenceInf.qrank (φ : L.SentenceInf) : Ordinal.{0} :=
-  BoundedFormulaInf.qrank φ
+noncomputable abbrev SentenceInfLegacy.qrank (φ : L.SentenceInfLegacy) : Ordinal.{0} :=
+  BoundedFormulaInfLegacy.qrank φ
 
 /-! ### Quantifier Rank Lemmas -/
 
-namespace BoundedFormulaInf
+namespace BoundedFormulaInfLegacy
 
 variable {α : Type*} {n : ℕ}
 
 @[simp]
-theorem qrank_falsum : (falsum : L.BoundedFormulaInf α n).qrank = 0 := rfl
+theorem qrank_falsum : (falsum : L.BoundedFormulaInfLegacy α n).qrank = 0 := rfl
 
 @[simp]
-theorem qrank_bot : (⊥ : L.BoundedFormulaInf α n).qrank = 0 := rfl
+theorem qrank_bot : (⊥ : L.BoundedFormulaInfLegacy α n).qrank = 0 := rfl
 
 @[simp]
 theorem qrank_equal (t₁ t₂ : L.Term (α ⊕ Fin n)) : (equal t₁ t₂).qrank = 0 := rfl
@@ -83,51 +83,51 @@ theorem qrank_rel {l : ℕ} (R : L.Relations l) (ts : Fin l → L.Term (α ⊕ F
     (rel R ts).qrank = 0 := rfl
 
 @[simp]
-theorem qrank_imp (φ ψ : L.BoundedFormulaInf α n) :
+theorem qrank_imp (φ ψ : L.BoundedFormulaInfLegacy α n) :
     (imp φ ψ).qrank = max φ.qrank ψ.qrank := rfl
 
 @[simp]
-theorem qrank_all (φ : L.BoundedFormulaInf α (n + 1)) :
+theorem qrank_all (φ : L.BoundedFormulaInfLegacy α (n + 1)) :
     (all φ).qrank = φ.qrank + 1 := rfl
 
 @[simp]
-theorem qrank_iSup {ι : Type*} (φs : ι → L.BoundedFormulaInf α n) :
+theorem qrank_iSup {ι : Type*} (φs : ι → L.BoundedFormulaInfLegacy α n) :
     (iSup φs).qrank = ⨆ i, (φs i).qrank := rfl
 
 @[simp]
-theorem qrank_iInf {ι : Type*} (φs : ι → L.BoundedFormulaInf α n) :
+theorem qrank_iInf {ι : Type*} (φs : ι → L.BoundedFormulaInfLegacy α n) :
     (iInf φs).qrank = ⨆ i, (φs i).qrank := rfl
 
 /-- The top formula has rank 0. -/
 @[simp]
-theorem qrank_top : (⊤ : L.BoundedFormulaInf α n).qrank = 0 := by
-  simp only [Top.top, BoundedFormulaInf.top, qrank_imp, qrank_falsum, max_self]
+theorem qrank_top : (⊤ : L.BoundedFormulaInfLegacy α n).qrank = 0 := by
+  simp only [Top.top, BoundedFormulaInfLegacy.top, qrank_imp, qrank_falsum, max_self]
 
 /-- Negation preserves quantifier rank. -/
 @[simp]
-theorem qrank_not (φ : L.BoundedFormulaInf α n) : φ.not.qrank = φ.qrank := by
-  simp [BoundedFormulaInf.not, qrank_imp, qrank_bot]
+theorem qrank_not (φ : L.BoundedFormulaInfLegacy α n) : φ.not.qrank = φ.qrank := by
+  simp [BoundedFormulaInfLegacy.not, qrank_imp, qrank_bot]
 
 /-- Conjunction takes max of ranks. -/
-theorem qrank_and (φ ψ : L.BoundedFormulaInf α n) :
+theorem qrank_and (φ ψ : L.BoundedFormulaInfLegacy α n) :
     (φ.and ψ).qrank = max φ.qrank ψ.qrank := by
-  simp only [BoundedFormulaInf.and, qrank_not, qrank_imp, max_comm φ.qrank ψ.qrank]
+  simp only [BoundedFormulaInfLegacy.and, qrank_not, qrank_imp, max_comm φ.qrank ψ.qrank]
 
 /-- Disjunction takes max of ranks. -/
-theorem qrank_or (φ ψ : L.BoundedFormulaInf α n) :
+theorem qrank_or (φ ψ : L.BoundedFormulaInfLegacy α n) :
     (φ.or ψ).qrank = max φ.qrank ψ.qrank := by
-  simp only [BoundedFormulaInf.or, qrank_not, qrank_imp]
+  simp only [BoundedFormulaInfLegacy.or, qrank_not, qrank_imp]
 
 /-- Existential quantification adds 1 to rank. -/
-theorem qrank_ex (φ : L.BoundedFormulaInf α (n + 1)) :
+theorem qrank_ex (φ : L.BoundedFormulaInfLegacy α (n + 1)) :
     φ.ex.qrank = φ.qrank + 1 := by
-  simp only [BoundedFormulaInf.ex, qrank_not, qrank_all]
+  simp only [BoundedFormulaInfLegacy.ex, qrank_not, qrank_all]
 
 /-- `mapFreeVars` preserves quantifier rank. Renaming free variables does not
 change the logical complexity of a formula. -/
 @[simp]
 theorem qrank_mapFreeVars {α α' : Type w'} (f : α → α') {n : ℕ}
-    (φ : L.BoundedFormulaInf α n) :
+    (φ : L.BoundedFormulaInfLegacy α n) :
     (φ.mapFreeVars f).qrank = φ.qrank := by
   induction φ with
   | falsum => rfl
@@ -144,7 +144,7 @@ theorem qrank_mapFreeVars {α α' : Type w'} (f : α → α') {n : ℕ}
     simp only [mapFreeVars, qrank_iInf]
     congr 1; funext i; exact ih i
 
-end BoundedFormulaInf
+end BoundedFormulaInfLegacy
 
 /-! ### Equivalence up to Quantifier Rank -/
 
@@ -152,13 +152,13 @@ end BoundedFormulaInf
 sentences of quantifier rank ≤ α.
 
 The current definition pins both the ordinal `α` and the formula universe to
-`Ordinal.{0}` and `BoundedFormulaInf.{u, v, 0, 0}` respectively. This is a
+`Ordinal.{0}` and `BoundedFormulaInfLegacy.{u, v, 0, 0}` respectively. This is a
 practical choice: `qrank` returns `Ordinal.{0}`, so the inequality `φ.qrank ≤ α`
 requires `α : Ordinal.{0}`. See `LinfEquiv` for discussion of the `uι = 0` choice. -/
 def EquivQRInf (L : Language.{u, v}) (α : Ordinal.{0}) (M N : Type w)
     [L.Structure M] [L.Structure N] : Prop :=
-  ∀ (φ : BoundedFormulaInf.{u, v, 0, 0} L Empty 0),
-    φ.qrank ≤ α → (SentenceInf.Realize φ M ↔ SentenceInf.Realize φ N)
+  ∀ (φ : BoundedFormulaInfLegacy.{u, v, 0, 0} L Empty 0),
+    φ.qrank ≤ α → (SentenceInfLegacy.Realize φ M ↔ SentenceInfLegacy.Realize φ N)
 
 namespace EquivQRInf
 
@@ -184,8 +184,8 @@ theorem monotone {α β : Ordinal} (hαβ : α ≤ β) (h : EquivQRInf L β M N)
 
 /-- Equivalence at rank 0 means agreement on all quantifier-free sentences. -/
 theorem zero_iff_agree_atomic : EquivQRInf L 0 M N ↔
-    ∀ φ : BoundedFormulaInf.{u, v, 0, 0} L Empty 0, φ.qrank = 0 →
-      (SentenceInf.Realize φ M ↔ SentenceInf.Realize φ N) := by
+    ∀ φ : BoundedFormulaInfLegacy.{u, v, 0, 0} L Empty 0, φ.qrank = 0 →
+      (SentenceInfLegacy.Realize φ M ↔ SentenceInfLegacy.Realize φ N) := by
   exact ⟨fun h φ hφ => h φ (le_of_eq hφ), fun h φ hφ => h φ (nonpos_iff_eq_zero.mp hφ)⟩
 
 end EquivQRInf
@@ -194,13 +194,13 @@ end EquivQRInf
 
 /-- Equivalence up to quantifier rank α with index types matching the structure universe.
 
-Unlike `EquivQRInf` which pins `uι = 0`, this version uses `BoundedFormulaInf.{u, v, 0, w}`
+Unlike `EquivQRInf` which pins `uι = 0`, this version uses `BoundedFormulaInfLegacy.{u, v, 0, w}`
 so that index types for `iSup`/`iInf` may be any `Type w`. This is the companion of
 `LinfEquivW` for tracking quantifier rank bounds. -/
 def EquivQRInfW (L : Language.{u, v}) (α : Ordinal.{0}) (M N : Type w)
     [L.Structure M] [L.Structure N] : Prop :=
-  ∀ (φ : BoundedFormulaInf.{u, v, 0, w} L Empty 0),
-    φ.qrank ≤ α → (SentenceInf.Realize φ M ↔ SentenceInf.Realize φ N)
+  ∀ (φ : BoundedFormulaInfLegacy.{u, v, 0, w} L Empty 0),
+    φ.qrank ≤ α → (SentenceInfLegacy.Realize φ M ↔ SentenceInfLegacy.Realize φ N)
 
 namespace EquivQRInfW
 

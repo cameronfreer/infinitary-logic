@@ -131,15 +131,15 @@ private theorem toLinf_qrank {α : Type*} {n : ℕ} (φ : L.BoundedFormulaω α 
   | equal => rfl
   | rel => rfl
   | imp φ ψ ih₁ ih₂ =>
-    simp only [BoundedFormulaω.toLinf, BoundedFormulaInf.qrank_imp, BoundedFormulaω.qrank_imp,
+    simp only [BoundedFormulaω.toLinf, BoundedFormulaInfLegacy.qrank_imp, BoundedFormulaω.qrank_imp,
       ih₁, ih₂]
   | all φ ih =>
-    simp only [BoundedFormulaω.toLinf, BoundedFormulaInf.qrank_all, BoundedFormulaω.qrank_all, ih]
+    simp only [BoundedFormulaω.toLinf, BoundedFormulaInfLegacy.qrank_all, BoundedFormulaω.qrank_all, ih]
   | iSup φs ih =>
-    simp only [BoundedFormulaω.toLinf, BoundedFormulaInf.qrank_iSup, BoundedFormulaω.qrank_iSup]
+    simp only [BoundedFormulaω.toLinf, BoundedFormulaInfLegacy.qrank_iSup, BoundedFormulaω.qrank_iSup]
     congr 1; funext i; exact ih i
   | iInf φs ih =>
-    simp only [BoundedFormulaω.toLinf, BoundedFormulaInf.qrank_iInf, BoundedFormulaω.qrank_iInf]
+    simp only [BoundedFormulaω.toLinf, BoundedFormulaInfLegacy.qrank_iInf, BoundedFormulaω.qrank_iInf]
     congr 1; funext i; exact ih i
 
 omit [Countable (Σ l, L.Relations l)] in

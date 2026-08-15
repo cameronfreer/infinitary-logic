@@ -13,16 +13,16 @@ This file defines operations on L∞ω formulas including relabeling, casting, a
 
 ## Main Definitions
 
-- `BoundedFormulaInf.relabel`: Relabels free variables.
-- `BoundedFormulaInf.castLE`: Increases the number of bound variables.
-- `BoundedFormulaInf.subst`: Substitutes terms for free variables.
+- `BoundedFormulaInfLegacy.relabel`: Relabels free variables.
+- `BoundedFormulaInfLegacy.castLE`: Increases the number of bound variables.
+- `BoundedFormulaInfLegacy.subst`: Substitutes terms for free variables.
 - `BoundedFormula.toLinf`: Embeds first-order formulas into L∞ω.
 - `BoundedFormulaω.toLinf`: Embeds Lω₁ω formulas into L∞ω.
 
 ## Implementation Notes
 
 The operations here (castLE, relabel, mapFreeVars, subst) closely mirror those in
-`Lomega1omega/Operations.lean`. The duplication exists because `BoundedFormulaInf` and
+`Lomega1omega/Operations.lean`. The duplication exists because `BoundedFormulaInfLegacy` and
 `BoundedFormulaω` are separate inductive types: the former uses arbitrary `{ι : Type uι}`
 for `iSup`/`iInf` while the latter uses `ℕ`. Factoring into a shared abstraction would
 require a typeclass over the formula type, deferred for future work.
@@ -39,11 +39,11 @@ variable {α β : Type u'} {n m : ℕ}
 
 open FirstOrder Structure Fin
 
-namespace BoundedFormulaInf
+namespace BoundedFormulaInfLegacy
 
 /-- Casts a bounded formula to one with more bound variables. -/
 @[simp]
-def castLE : ∀ {m n : ℕ} (_h : m ≤ n), L.BoundedFormulaInf α m → L.BoundedFormulaInf α n
+def castLE : ∀ {m n : ℕ} (_h : m ≤ n), L.BoundedFormulaInfLegacy α m → L.BoundedFormulaInfLegacy α n
   | _, _, _, falsum => falsum
   | _, _, h, equal t₁ t₂ =>
     equal (t₁.relabel (Sum.map id (Fin.castLE h))) (t₂.relabel (Sum.map id (Fin.castLE h)))
@@ -54,7 +54,7 @@ def castLE : ∀ {m n : ℕ} (_h : m ≤ n), L.BoundedFormulaInf α m → L.Boun
   | _, _, h, iInf φs => iInf fun i => (φs i).castLE h
 
 /-- `castLE (le_refl n)` is the identity on formulas. -/
-theorem castLE_refl : (φ : L.BoundedFormulaInf α n) → φ.castLE (le_refl n) = φ := by
+theorem castLE_refl : (φ : L.BoundedFormulaInfLegacy α n) → φ.castLE (le_refl n) = φ := by
   intro φ
   induction φ with
   | falsum => rfl
@@ -92,7 +92,7 @@ variable {M : Type*} [L.Structure M]
 /-- `castLE` over a proof of `m ≤ m` preserves semantics.
 This is more general than matching on `le_refl` directly, as it works for any
 proof `h : m ≤ m` regardless of how it was constructed. -/
-theorem realize_castLE_of_eq {m n : ℕ} (φ : L.BoundedFormulaInf α m) (h : m ≤ n) (heq : m = n)
+theorem realize_castLE_of_eq {m n : ℕ} (φ : L.BoundedFormulaInfLegacy α m) (h : m ≤ n) (heq : m = n)
     (v : α → M) (xs : Fin n → M) :
     (φ.castLE h).Realize v xs ↔ φ.Realize v (xs ∘ Fin.cast heq) := by
   subst heq
@@ -102,13 +102,13 @@ theorem realize_castLE_of_eq {m n : ℕ} (φ : L.BoundedFormulaInf α m) (h : m 
   rw [this, castLE_refl]
 
 /-- `castLE (le_refl n)` preserves semantics. -/
-theorem realize_castLE_refl {n : ℕ} (φ : L.BoundedFormulaInf α n)
+theorem realize_castLE_refl {n : ℕ} (φ : L.BoundedFormulaInfLegacy α n)
     (v : α → M) (xs : Fin n → M) :
     (φ.castLE (le_refl n)).Realize v xs ↔ φ.Realize v xs := by
   rw [castLE_refl]
 
 /-- `castLE` over any proof `h : n ≤ n` preserves semantics. -/
-theorem realize_castLE_self {n : ℕ} (φ : L.BoundedFormulaInf α n) (h : n ≤ n)
+theorem realize_castLE_self {n : ℕ} (φ : L.BoundedFormulaInfLegacy α n) (h : n ≤ n)
     (v : α → M) (xs : Fin n → M) :
     (φ.castLE h).Realize v xs ↔ φ.Realize v xs :=
   realize_castLE_of_eq φ h rfl v xs
@@ -118,7 +118,7 @@ def relabelAux (g : α → β ⊕ Fin n) (k : ℕ) : α ⊕ Fin k → β ⊕ Fin
   Sum.map id finSumFinEquiv ∘ Equiv.sumAssoc _ _ _ ∘ Sum.map g id
 
 /-- Relabels a bounded formula's free variables. -/
-def relabel (g : α → β ⊕ Fin n) : ∀ {k}, L.BoundedFormulaInf α k → L.BoundedFormulaInf β (n + k)
+def relabel (g : α → β ⊕ Fin n) : ∀ {k}, L.BoundedFormulaInfLegacy α k → L.BoundedFormulaInfLegacy β (n + k)
   | _, falsum => falsum
   | _, equal t₁ t₂ => equal (t₁.relabel (relabelAux g _)) (t₂.relabel (relabelAux g _))
   | _, rel R ts => rel R fun i => (ts i).relabel (relabelAux g _)
@@ -131,7 +131,7 @@ def relabel (g : α → β ⊕ Fin n) : ∀ {k}, L.BoundedFormulaInf α k → L.
 
 Unlike `relabel`, which can move free variables into bound positions, `mapFreeVars`
 simply renames free variables while preserving the bound variable structure. -/
-def mapFreeVars (f : α → β) : ∀ {n}, L.BoundedFormulaInf α n → L.BoundedFormulaInf β n
+def mapFreeVars (f : α → β) : ∀ {n}, L.BoundedFormulaInfLegacy α n → L.BoundedFormulaInfLegacy β n
   | _, .falsum => .falsum
   | _, .equal t₁ t₂ => .equal (t₁.relabel (Sum.map f id)) (t₂.relabel (Sum.map f id))
   | _, .rel R ts => .rel R (fun i => (ts i).relabel (Sum.map f id))
@@ -142,7 +142,7 @@ def mapFreeVars (f : α → β) : ∀ {n}, L.BoundedFormulaInf α n → L.Bounde
 
 /-- Realization commutes with free variable renaming. -/
 theorem realize_mapFreeVars {M : Type*} [L.Structure M]
-    (f : α → β) (φ : L.BoundedFormulaInf α n) (v : β → M) (xs : Fin n → M) :
+    (f : α → β) (φ : L.BoundedFormulaInfLegacy α n) (v : β → M) (xs : Fin n → M) :
     (φ.mapFreeVars f).Realize v xs ↔ φ.Realize (v ∘ f) xs := by
   induction φ with
   | falsum => simp [mapFreeVars, Realize]
@@ -166,7 +166,7 @@ theorem realize_mapFreeVars {M : Type*} [L.Structure M]
     exact forall_congr' fun i => ih i xs
 
 /-- Substitutes the free variables in a bounded formula with terms. -/
-def subst : ∀ {n : ℕ}, L.BoundedFormulaInf α n → (α → L.Term β) → L.BoundedFormulaInf β n
+def subst : ∀ {n : ℕ}, L.BoundedFormulaInfLegacy α n → (α → L.Term β) → L.BoundedFormulaInfLegacy β n
   | _, falsum, _ => falsum
   | _, equal t₁ t₂, tf =>
     equal (t₁.subst (Sum.elim (Term.relabel Sum.inl ∘ tf) (Term.var ∘ Sum.inr)))
@@ -185,10 +185,10 @@ section LiftUI
 universe w
 
 /-- Lift a formula from index universe 0 to index universe `w` by ULifting each index type.
-This maps `BoundedFormulaInf.{u,v,u',0}` to `BoundedFormulaInf.{u,v,u',w}`, preserving
+This maps `BoundedFormulaInfLegacy.{u,v,u',0}` to `BoundedFormulaInfLegacy.{u,v,u',w}`, preserving
 semantics and quantifier rank. -/
-def liftUI : ∀ {n}, BoundedFormulaInf.{u, v, u', 0} L α n →
-    BoundedFormulaInf.{u, v, u', w} L α n
+def liftUI : ∀ {n}, BoundedFormulaInfLegacy.{u, v, u', 0} L α n →
+    BoundedFormulaInfLegacy.{u, v, u', w} L α n
   | _, falsum => falsum
   | _, equal t₁ t₂ => equal t₁ t₂
   | _, rel R ts => rel R ts
@@ -201,7 +201,7 @@ variable {M : Type*} [L.Structure M]
 
 /-- Universe lifting preserves semantics. -/
 theorem realize_liftUI :
-    ∀ {n} (φ : BoundedFormulaInf.{u, v, u', 0} L α n) (v : α → M) (xs : Fin n → M),
+    ∀ {n} (φ : BoundedFormulaInfLegacy.{u, v, u', 0} L α n) (v : α → M) (xs : Fin n → M),
     (liftUI.{u, v, u', w} φ).Realize v xs ↔ φ.Realize v xs := by
   intro n φ
   induction φ with
@@ -242,11 +242,11 @@ private def insertLastBoundInf {n : ℕ} : Fin (n + 1) → Fin n ⊕ Fin 1 :=
   fun i => if h : i.val < n then Sum.inl ⟨i.val, h⟩ else Sum.inr 0
 
 /-- Existentially quantify over the last free variable of an L∞ω formula. -/
-def existsLastVarInf {n : ℕ} (φ : L.FormulaInf (Fin (n + 1))) : L.FormulaInf (Fin n) :=
+def existsLastVarInf {n : ℕ} (φ : L.FormulaInfLegacy (Fin (n + 1))) : L.FormulaInfLegacy (Fin n) :=
   (φ.relabel insertLastBoundInf).ex
 
 /-- Universally quantify over the last free variable of an L∞ω formula. -/
-def forallLastVarInf {n : ℕ} (φ : L.FormulaInf (Fin (n + 1))) : L.FormulaInf (Fin n) :=
+def forallLastVarInf {n : ℕ} (φ : L.FormulaInfLegacy (Fin (n + 1))) : L.FormulaInfLegacy (Fin n) :=
   (φ.relabel insertLastBoundInf).all
 
 /-- Maps `j : Fin k` to `⟨j.val + 1, ...⟩ : Fin (1 + k)`. -/
@@ -313,7 +313,7 @@ variable {M : Type*} [L.Structure M]
     For a formula with k bound variables, relabeling shifts the last free variable
     to bound position 0, while bound variables shift up by 1. -/
 private theorem realize_relabel_insertLastBoundInf {n : ℕ} :
-    ∀ {k : ℕ} (φ : L.BoundedFormulaInf (Fin (n + 1)) k) (v : Fin n → M)
+    ∀ {k : ℕ} (φ : L.BoundedFormulaInfLegacy (Fin (n + 1)) k) (v : Fin n → M)
       (xs : Fin (1 + k) → M),
     (φ.relabel insertLastBoundInf).Realize v xs ↔
     φ.Realize (Fin.snoc v (xs 0)) (xs ∘ Fin.succShiftInf) := by
@@ -348,13 +348,13 @@ private theorem realize_relabel_insertLastBoundInf {n : ℕ} :
 
 /-- The key semantics lemma for formulas with 0 bound variables. -/
 private theorem realize_relabel_insertLastBoundInf_zero {n : ℕ}
-    (φ : L.FormulaInf (Fin (n + 1)))
+    (φ : L.FormulaInfLegacy (Fin (n + 1)))
     (v : Fin n → M) (xs : Fin 1 → M) :
     (φ.relabel insertLastBoundInf).Realize v xs ↔
     φ.Realize (Fin.snoc v (xs 0)) := by
   have h := realize_relabel_insertLastBoundInf (k := 0) φ v xs
   rw [h]
-  simp only [FormulaInf.Realize]
+  simp only [FormulaInfLegacy.Realize]
   rw [show (xs ∘ Fin.succShiftInf : Fin 0 → M) = Fin.elim0 from Fin.eq_elim0 _]
 
 /-- Helper: `Fin.snoc Fin.elim0 x` evaluated at 0 gives x. -/
@@ -363,48 +363,48 @@ private theorem snoc_elim0_zero_inf (x : M) :
   congrFun (Fin.snoc_elim0_eq x) 0
 
 /-- Semantics of `existsLastVarInf`: existentially quantifies over the last variable. -/
-theorem realize_existsLastVarInf {n : ℕ} (φ : L.FormulaInf (Fin (n + 1))) (v : Fin n → M) :
-    FormulaInf.Realize (existsLastVarInf φ) v ↔ ∃ x : M, FormulaInf.Realize φ (Fin.snoc v x) := by
-  simp only [existsLastVarInf, FormulaInf.Realize, realize_ex,
+theorem realize_existsLastVarInf {n : ℕ} (φ : L.FormulaInfLegacy (Fin (n + 1))) (v : Fin n → M) :
+    FormulaInfLegacy.Realize (existsLastVarInf φ) v ↔ ∃ x : M, FormulaInfLegacy.Realize φ (Fin.snoc v x) := by
+  simp only [existsLastVarInf, FormulaInfLegacy.Realize, realize_ex,
     realize_relabel_insertLastBoundInf_zero, snoc_elim0_zero_inf]
 
 /-- Semantics of `forallLastVarInf`: universally quantifies over the last variable. -/
-theorem realize_forallLastVarInf {n : ℕ} (φ : L.FormulaInf (Fin (n + 1))) (v : Fin n → M) :
-    FormulaInf.Realize (forallLastVarInf φ) v ↔ ∀ x : M, FormulaInf.Realize φ (Fin.snoc v x) := by
-  simp only [forallLastVarInf, FormulaInf.Realize, realize_all,
+theorem realize_forallLastVarInf {n : ℕ} (φ : L.FormulaInfLegacy (Fin (n + 1))) (v : Fin n → M) :
+    FormulaInfLegacy.Realize (forallLastVarInf φ) v ↔ ∀ x : M, FormulaInfLegacy.Realize φ (Fin.snoc v x) := by
+  simp only [forallLastVarInf, FormulaInfLegacy.Realize, realize_all,
     realize_relabel_insertLastBoundInf_zero, snoc_elim0_zero_inf]
 
 end LastVar
 
-end BoundedFormulaInf
+end BoundedFormulaInfLegacy
 
-namespace FormulaInf
+namespace FormulaInfLegacy
 
 /-- Converts a formula with `Fin 0` free variables to a sentence (with `Empty` free variables).
 
 Since both `Fin 0` and `Empty` are empty types, this is a purely type-theoretic conversion
 that does not change the semantics of the formula. -/
-def toSentenceInf (φ : L.FormulaInf (Fin 0)) : L.SentenceInf :=
+def toSentenceInf (φ : L.FormulaInfLegacy (Fin 0)) : L.SentenceInfLegacy :=
   φ.mapFreeVars Fin.elim0
 
 /-- `toSentenceInf` preserves semantics: the sentence realizes in M iff the original
 formula realizes with the `Fin.elim0` assignment. -/
 theorem realize_toSentenceInf {M : Type*} [L.Structure M]
-    (φ : L.FormulaInf (Fin 0)) :
-    SentenceInf.Realize φ.toSentenceInf M ↔ FormulaInf.Realize φ (Fin.elim0 : Fin 0 → M) := by
-  unfold toSentenceInf SentenceInf.Realize FormulaInf.Realize
-  rw [BoundedFormulaInf.realize_mapFreeVars]
+    (φ : L.FormulaInfLegacy (Fin 0)) :
+    SentenceInfLegacy.Realize φ.toSentenceInf M ↔ FormulaInfLegacy.Realize φ (Fin.elim0 : Fin 0 → M) := by
+  unfold toSentenceInf SentenceInfLegacy.Realize FormulaInfLegacy.Realize
+  rw [BoundedFormulaInfLegacy.realize_mapFreeVars]
   simp only [comp_fin_elim0]
 
-end FormulaInf
+end FormulaInfLegacy
 
 namespace BoundedFormula
 
 /-- Embeds a first-order bounded formula into L∞ω. -/
-def toLinf : ∀ {n : ℕ}, L.BoundedFormula α n → L.BoundedFormulaInf α n
-  | _, falsum => BoundedFormulaInf.falsum
-  | _, equal t₁ t₂ => BoundedFormulaInf.equal t₁ t₂
-  | _, rel R ts => BoundedFormulaInf.rel R ts
+def toLinf : ∀ {n : ℕ}, L.BoundedFormula α n → L.BoundedFormulaInfLegacy α n
+  | _, falsum => BoundedFormulaInfLegacy.falsum
+  | _, equal t₁ t₂ => BoundedFormulaInfLegacy.equal t₁ t₂
+  | _, rel R ts => BoundedFormulaInfLegacy.rel R ts
   | _, imp φ ψ => (φ.toLinf).imp (ψ.toLinf)
   | _, all φ => φ.toLinf.all
 
@@ -418,20 +418,20 @@ theorem realize_toLinf (φ : L.BoundedFormula α n) :
   | equal => rfl
   | rel => rfl
   | imp _ _ ih₁ ih₂ =>
-    simp only [toLinf, BoundedFormulaInf.realize_imp, BoundedFormula.realize_imp, ih₁, ih₂]
+    simp only [toLinf, BoundedFormulaInfLegacy.realize_imp, BoundedFormula.realize_imp, ih₁, ih₂]
   | all _ ih =>
-    simp only [toLinf, BoundedFormulaInf.realize_all, BoundedFormula.realize_all, ih]
+    simp only [toLinf, BoundedFormulaInfLegacy.realize_all, BoundedFormula.realize_all, ih]
 
 end BoundedFormula
 
 namespace Formula
 
 /-- Embeds a first-order formula into L∞ω. -/
-def toLinf (φ : L.Formula α) : L.FormulaInf α := BoundedFormula.toLinf φ
+def toLinf (φ : L.Formula α) : L.FormulaInfLegacy α := BoundedFormula.toLinf φ
 
 @[simp]
 theorem realize_toLinf {M : Type*} [L.Structure M] {v : α → M} (φ : L.Formula α) :
-    FormulaInf.Realize φ.toLinf v ↔ φ.Realize v :=
+    FormulaInfLegacy.Realize φ.toLinf v ↔ φ.Realize v :=
   BoundedFormula.realize_toLinf φ
 
 end Formula
@@ -439,13 +439,13 @@ end Formula
 namespace Sentence
 
 /-- Embeds a first-order sentence into L∞ω. -/
-def toLinf (φ : L.Sentence) : L.SentenceInf := Formula.toLinf φ
+def toLinf (φ : L.Sentence) : L.SentenceInfLegacy := Formula.toLinf φ
 
 @[simp]
 theorem realize_toLinf {M : Type*} [L.Structure M] [Nonempty M] (φ : L.Sentence) :
-    SentenceInf.Realize φ.toLinf M ↔ M ⊨ φ := by
+    SentenceInfLegacy.Realize φ.toLinf M ↔ M ⊨ φ := by
   have h : (default : Empty → M) = (fun e : Empty => e.elim) := Empty.eq_elim default
-  simp only [SentenceInf.Realize, Sentence.Realize, Formula.Realize, toLinf, Formula.toLinf, h]
+  simp only [SentenceInfLegacy.Realize, Sentence.Realize, Formula.Realize, toLinf, Formula.toLinf, h]
   exact BoundedFormula.realize_toLinf φ
 
 end Sentence
