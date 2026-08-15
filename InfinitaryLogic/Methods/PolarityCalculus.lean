@@ -253,6 +253,18 @@ abbrev BoundedFormulaω.baseNegativeRelations {n : ℕ} (φ : L'[[J]].BoundedFor
 
 namespace BoundedFormulaω
 
+/-- Signed occurrences of a **base-language** atom inside a constant expansion.
+
+Stated with the symbol `Sum.inl R` baked in rather than left to the generic
+`relationsInSigned_rel`: the goal's copy of that symbol carries the type
+`L'.Relations l ⊕ (constantsOn J).Relations l`, which `rw`/`simp` cannot assign to
+`relationsInSigned_rel`'s `?R : L'[[J]].Relations l` at `implicit` transparency. Spelling it the
+same way here makes the match syntactic. -/
+private theorem relationsInSigned_rel_inl {n l : ℕ} (s : Bool) (R : L'.Relations l)
+    (ts : Fin l → L'[[J]].Term (α ⊕ Fin n)) :
+    relationsInSigned s (BoundedFormulaω.rel (Sum.inl R : L'[[J]].Relations l) ts)
+      = if s then {(⟨l, Sum.inl R⟩ : Σ n, L'[[J]].Relations n)} else ∅ := rfl
+
 theorem baseRelationsInSigned_subset {n : ℕ} (s : Bool) (φ : L'[[J]].BoundedFormulaω α n) :
     baseRelationsInSigned s φ ⊆ φ.baseRelationsIn :=
   fun _ hp => relationsInSigned_subset_relationsIn s φ hp
@@ -350,27 +362,27 @@ open BoundedFormulaω
 /-- An atomic relation instance occurs **positively** only, and its base positive set does not
 depend on the constant tuple. -/
 theorem basePositiveRelations_relInst {l : ℕ} (R : L.Relations l) (g g' : Fin l → ℕ) :
-    basePositiveRelations (relInst R g) = basePositiveRelations (relInst R g') := by
-  ext p; simp [baseRelationsInSigned, relInst]
+    basePositiveRelations (relInst R g) = basePositiveRelations (relInst R g') := rfl
 
 /-- An atomic relation instance's base **positive** set is exactly its own symbol. -/
 theorem basePositiveRelations_relInst_eq {l : ℕ} (R : L.Relations l) (g : Fin l → ℕ) :
     basePositiveRelations (relInst R g) = {(⟨l, R⟩ : Σ n, L.Relations n)} := by
   ext p
   obtain ⟨n, r⟩ := p
-  simp only [baseRelationsInSigned, relInst, Set.mem_setOf_eq, relationsInSigned_rel,
-    if_true, Set.mem_singleton_iff, Sigma.mk.injEq]
+  show (⟨n, Sum.inl r⟩ : Σ k, L[[ℕ]].Relations k)
+      ∈ ({⟨l, Sum.inl R⟩} : Set (Σ k, L[[ℕ]].Relations k)) ↔ _
+  rw [Set.mem_singleton_iff, Set.mem_singleton_iff]
   constructor
-  · rintro ⟨rfl, h2⟩
-    rw [heq_eq_eq] at h2
-    exact ⟨rfl, heq_of_eq (Sum.inl_injective h2)⟩
-  · rintro ⟨rfl, h2⟩
-    rw [heq_eq_eq] at h2
-    exact ⟨rfl, heq_of_eq (congrArg Sum.inl h2)⟩
+  · intro h
+    obtain ⟨rfl, h2⟩ := Sigma.mk.inj_iff.mp h
+    exact congrArg _ (Sum.inl_injective (eq_of_heq h2))
+  · intro h
+    obtain ⟨rfl, h2⟩ := Sigma.mk.inj_iff.mp h
+    exact congrArg _ (congrArg Sum.inl (eq_of_heq h2))
 
 @[simp] theorem baseNegativeRelations_relInst {l : ℕ} (R : L.Relations l) (g : Fin l → ℕ) :
-    baseNegativeRelations (relInst R g) = ∅ := by
-  ext p; simp [baseRelationsInSigned, relInst]
+    baseNegativeRelations (relInst R g) = ∅ :=
+  Set.eq_empty_iff_forall_notMem.mpr fun _ h => h
 
 /-- Universal instantiation does not enlarge the base signed sets. -/
 theorem baseRelationsInSigned_instConst (c : ℕ) (s : Bool)
@@ -393,8 +405,7 @@ private theorem tag_inl_rel_inj :
       (fun p : Σ n, L.Relations n => (⟨p.1, Sum.inl p.2⟩ : Σ n, L[[ℕ]].Relations n)) := by
   rintro ⟨a1, a2⟩ ⟨b1, b2⟩ h
   obtain ⟨rfl, h2⟩ := Sigma.mk.inj_iff.mp h
-  rw [heq_eq_eq] at h2
-  exact Sigma.ext rfl (heq_of_eq (Sum.inl_injective h2))
+  exact Sigma.ext rfl (heq_of_eq (Sum.inl_injective (eq_of_heq h2)))
 
 theorem baseRelationsInSigned_mapLanguage_withConstants (s : Bool) (r : L.Sentenceω) :
     baseRelationsInSigned s (BoundedFormulaω.mapLanguage (L.lhomWithConstants ℕ) r) =
@@ -435,7 +446,7 @@ theorem relationsInSigned_stripConsts (s : Bool) :
         subst hp
         show (⟨_, Sum.inl R⟩ : Σ n, L[[ℕ]].Relations n) ∈
           relationsInSigned true (BoundedFormulaω.rel (Sum.inl R) ts)
-        rw [relationsInSigned_rel]
+        rw [relationsInSigned_rel_inl]
         exact Set.mem_singleton _
     · exact nomatch R
   | imp φ ψ ihφ ihψ =>

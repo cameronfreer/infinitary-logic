@@ -83,9 +83,13 @@ theorem exists_model_relPreserving_isRelational [L.IsRelational]
   · exact (realize_restrictSymbols_expandSymbStructureBase _ _ φ (subset_refl _)
       (Set.subset_insert _ _) Empty.elim Fin.elim0).mp hreal₀
   · have hpres := hf₀ q r hqr
-    rw [← LHom.map_onRelation (symbSublangIncl φ.functionsIn
-      (insert ⟨2, lt⟩ φ.relationsIn))] at hpres
-    exact hpres
+    -- The relation and carrier are supplied explicitly: with `?R` open, `rw` must assign the
+    -- subtype element `⟨lt, _⟩` to `?R : (symbSublang ..).Relations 2`, which fails at `implicit`
+    -- transparency.
+    exact Eq.mp (LHom.map_onRelation (M := N) (n := 2)
+      (symbSublangIncl φ.functionsIn
+        (insert (⟨2, lt⟩ : Σ n, L.Relations n) φ.relationsIn))
+      ⟨lt, Set.mem_insert _ _⟩ ![f q, f r]).symm hpres
 
 /-- **Boundedness, well-founded form, no symbol countability**: layer 2's
 `wellFounded_boundedness_relational` through the sublanguage-wrapped endpoint. -/

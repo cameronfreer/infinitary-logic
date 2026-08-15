@@ -166,8 +166,8 @@ theorem locJRename_expand (e : J ≃o J) {k : ℕ} (s t : Fin k ↪o J)
     rcases l with _ | l
     · rcases f with f' | i₀
       · exact congrArg _ harg
-      · rw [locJExpand_func_inr, locJExpand_func_inr, locJRename_func_inr, hst i₀]
-        exact congrArg _ harg
+      · exact congrArg₂ (fun j (g : Fin 0 → Λ[[J]].Term α) =>
+          Term.func (Sum.inr j : Λ[[J]].Functions 0) g) (hst i₀) harg
     · rcases f with f' | c
       · exact congrArg _ harg
       · exact c.elim

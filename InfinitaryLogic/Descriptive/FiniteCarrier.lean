@@ -303,6 +303,30 @@ noncomputable def codeModel
       ⟨encodeViaEquiv e, encodeViaEquiv_models e hφ⟩)
 
 omit [Countable ((l : ℕ) × L.Relations l)] in
+/-- Branch equation for `codeModel` on a finite carrier.
+
+Stated as a lemma because the unfolded body of `codeModel` is type-correct only at default
+transparency (its membership proof needs `ModelsOfOn` unfolded), so `rw`/`simp` cannot select
+the branch in place; term-mode `dite_eq_left` can. -/
+private theorem codeModel_of_finite {M : Type} [L.Structure M] [Countable M]
+    (hφ : Sentenceω.Realize φ M) (hfin : Finite M) :
+    codeModel hφ = Sum.inr ⟨@Fintype.card M (Fintype.ofFinite M),
+      Quotient.mk (isoSetoidOn φ _)
+        ⟨encodeViaEquiv (@Fintype.equivFin M (Fintype.ofFinite M)),
+          encodeViaEquiv_models _ hφ⟩⟩ :=
+  dite_eq_left hfin
+
+omit [Countable ((l : ℕ) × L.Relations l)] in
+/-- Branch equation for `codeModel` on an infinite carrier. See `codeModel_of_finite` for why
+this is a term-mode lemma rather than a `rw` on the unfolded definition. -/
+private theorem codeModel_of_infinite {M : Type} [L.Structure M] [Countable M] [Infinite M]
+    (hφ : Sentenceω.Realize φ M) (hfin : ¬Finite M) :
+    codeModel hφ = Sum.inl (Quotient.mk (isoSetoid φ)
+      ⟨encodeViaEquiv (nonempty_equiv_of_countable (α := M) (β := ℕ)).some,
+        encodeViaEquiv_models _ hφ⟩) :=
+  dite_eq_right hfin
+
+omit [Countable ((l : ℕ) × L.Relations l)] in
 /-- Compose L-equivs through encoding bijections to build iso between coded structures. -/
 private theorem compose_encoded_iso
     {M N : Type} [L.Structure M] [L.Structure N] {α : Type}
@@ -337,7 +361,7 @@ theorem codeModel_eq_of_iso
     haveI hfinN : Finite N := Finite.of_equiv M hequiv
     have hcard : @Fintype.card M (Fintype.ofFinite M) = @Fintype.card N (Fintype.ofFinite N) :=
       @Fintype.card_congr M N (Fintype.ofFinite M) (Fintype.ofFinite N) hequiv
-    unfold codeModel; simp only [dif_pos hfinM, dif_pos hfinN]
+    rw [codeModel_of_finite hφM hfinM, codeModel_of_finite hφN hfinN]
     have h1 : ∀ (n : ℕ) (f : M ≃ Fin n) (g : N ≃ Fin n)
         (hf : @Sentenceω.Realize L φ _ (StructureSpaceOn.toStructure (encodeViaEquiv f)))
         (hg : @Sentenceω.Realize L φ _ (StructureSpaceOn.toStructure (encodeViaEquiv g))),
@@ -364,12 +388,12 @@ theorem codeModel_eq_of_iso
     haveI : Infinite N := not_finite_iff_infinite.mp hfinN
     have hM_eq : codeModel hφM = Sum.inl
         ⟦⟨encodeViaEquiv (nonempty_equiv_of_countable (α := M) (β := ℕ)).some,
-          encodeViaEquiv_models _ hφM⟩⟧ := by
-      unfold codeModel; rw [dif_neg hfinM]
+          encodeViaEquiv_models _ hφM⟩⟧ :=
+      codeModel_of_infinite hφM hfinM
     have hN_eq : codeModel hφN = Sum.inl
         ⟦⟨encodeViaEquiv (nonempty_equiv_of_countable (α := N) (β := ℕ)).some,
-          encodeViaEquiv_models _ hφN⟩⟧ := by
-      unfold codeModel; rw [dif_neg hfinN]
+          encodeViaEquiv_models _ hφN⟩⟧ :=
+      codeModel_of_infinite hφN hfinN
     rw [hM_eq, hN_eq]
     congr 1
     apply Quotient.sound
@@ -401,11 +425,12 @@ theorem iso_of_codeModel_eq
   · -- Finite M → finite N: same compose pattern, Sigma-dependent extraction.
     haveI hfinN : Finite N := by
       by_contra hfN
-      unfold codeModel at h; rw [dif_pos hfinM, dif_neg hfN] at h
+      haveI : Infinite N := not_finite_iff_infinite.mp hfN
+      rw [codeModel_of_finite hφM hfinM, codeModel_of_infinite hφN hfN] at h
       exact absurd h (by simp)
     -- Use the same pattern as codeModel_eq_of_iso finite branch:
     -- generalize over the cardinality and subst to unify Fin types.
-    unfold codeModel at h; simp only [dif_pos hfinM, dif_pos hfinN] at h
+    rw [codeModel_of_finite hφM hfinM, codeModel_of_finite hφN hfinN] at h
     have hSigma := Sum.inr.inj h
     have hcard : @Fintype.card M (Fintype.ofFinite M) =
         @Fintype.card N (Fintype.ofFinite N) := congrArg Sigma.fst hSigma
@@ -432,12 +457,12 @@ theorem iso_of_codeModel_eq
     haveI : Infinite M := not_finite_iff_infinite.mp hfinM
     have hfinN : ¬Finite N := by
       intro hfN
-      unfold codeModel at h; rw [dif_neg hfinM, dif_pos hfN] at h
+      rw [codeModel_of_infinite hφM hfinM, codeModel_of_finite hφN hfN] at h
       exact absurd h (by simp)
     haveI : Infinite N := not_finite_iff_infinite.mp hfinN
     set eM : M ≃ ℕ := (nonempty_equiv_of_countable (α := M) (β := ℕ)).some
     set eN : N ≃ ℕ := (nonempty_equiv_of_countable (α := N) (β := ℕ)).some
-    unfold codeModel at h; rw [dif_neg hfinM, dif_neg hfinN] at h
+    rw [codeModel_of_infinite hφM hfinM, codeModel_of_infinite hφN hfinN] at h
     obtain ⟨qIso⟩ := Quotient.exact (Sum.inl.inj h)
     obtain ⟨iM⟩ := encodeViaEquiv_iso (L := L) (M := M) eM
     obtain ⟨iN⟩ := encodeViaEquiv_iso (L := L) (M := N) eN
@@ -478,7 +503,7 @@ theorem codeModel_surjective :
       exact ⟨@Language.Equiv.symm L ℕ ℕ instN
         (StructureSpaceOn.toStructure (encodeViaEquiv e)) iso⟩
     -- Now unfold codeModel and match
-    unfold codeModel; rw [dif_neg hInfN]
+    rw [codeModel_of_infinite hc hInfN]
     exact congrArg Sum.inl hiso
   · -- Fin n branch: decode representative, Fin n with its toStructure is the model.
     refine Quotient.inductionOn qFin fun ⟨c, hc⟩ => ?_
@@ -489,7 +514,7 @@ theorem codeModel_surjective :
     -- After unfold: Sum.inr ⟨Fintype.card (Fin n), ⟦⟨encodeViaEquiv (equivFin (Fin n)), _⟩⟧⟩
     -- Need: card (Fin n) = n and quotient equality
     haveI : Finite (Fin n) := inferInstance
-    unfold codeModel; rw [dif_pos (inferInstance : Finite (Fin n))]
+    rw [codeModel_of_finite hc (inferInstance : Finite (Fin n))]
     -- The unfolded codeModel uses Fintype.ofFinite (Fin n) internally.
     -- We need to match Fintype.card with n, handling the diamond.
     -- Use suffices to abstract over the cardinality and subst.

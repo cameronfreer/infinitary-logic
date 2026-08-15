@@ -215,12 +215,18 @@ theorem entails_constEq_trans {Γ : Set L[[ℕ]].Sentenceω} {a b d : ℕ}
 theorem entails_rel_congr {Γ : Set L[[ℕ]].Sentenceω} {l : ℕ} (Rr : L.Relations l) (g : Fin l → ℕ)
     (i : Fin l) (b : ℕ) (h1 : relInst Rr g ∈ Γ) (h2 : constEq (g i) b ∈ Γ) :
     Theoryω.Entails Γ (relInst Rr (Function.update g i b)) := by
-  intro M _ _ hmodel
+  intro M inst _ hmodel
   have hr := hmodel _ h1
   have he := hmodel _ h2
   rw [realize_constEq] at he
-  simp only [relInst, Sentenceω.Realize, BoundedFormulaω.realize_rel] at hr ⊢
-  convert hr using 2 with j
+  simp only [relInst, Sentenceω.Realize] at hr ⊢
+  -- `BoundedFormulaω.realize_rel` no longer fires: the goal spells the symbol as `Sum.inl Rr`,
+  -- typed `L.Relations l ⊕ (constantsOn ℕ).Relations l`, so it is not type-correct at `implicit`
+  -- transparency. Supplying the symbol explicitly makes the congruence term-mode.
+  refine (Iff.of_eq (congrArg
+    (@Structure.RelMap (L[[ℕ]]) M inst l (Sum.inl Rr)) ?_)).mpr hr
+  funext j
+  dsimp only
   by_cases hji : j = i
   · subst hji
     simp only [Function.update_self]

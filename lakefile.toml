@@ -19,7 +19,7 @@ rev = "3d425859e73fcfbef85b9638c2a91708ef4a22d4"
 [[require]]
 name = "mathlib"
 git = "https://github.com/leanprover-community/mathlib4"
-rev = "v4.32.0"
+rev = "caa4dbde35c1f4f9fbc5268c5de0a5929f762645"
 
 [[lean_lib]]
 name = "InfinitaryLogic"

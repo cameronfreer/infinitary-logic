@@ -177,10 +177,11 @@ theorem henkinConstsIn_mapLanguage {α : Type} {n : ℕ} (τ : (L''[[J]]).Bounde
     BoundedFormulaω.functionsIn_mapLanguage, Set.mem_image, Set.mem_empty_iff_false, iff_false,
     not_exists, not_and]
   rintro ⟨k, f⟩ _ heq
-  rw [Sigma.mk.injEq] at heq
-  obtain ⟨rfl, heq2⟩ := heq
-  rw [heq_eq_eq] at heq2
-  simp at heq2
+  -- `rw [Sigma.mk.injEq]` / `rw [heq_eq_eq]` no longer fire: the sigma payload spells the symbol
+  -- at its whnf'd sum type, so the equation is not type-correct at `implicit` transparency.
+  obtain ⟨rfl, heq2⟩ := Sigma.mk.inj_iff.mp heq
+  have heq3 : ((L''[[J]]).lhomWithConstants ℕ).onFunction f = Sum.inr m := eq_of_heq heq2
+  simp at heq3
 
 /-- The Henkin inclusion preserves the skeleton (`J`) constant support: the expansion `J`-constants
 of a lifted formula are exactly the `J`-constants of the original. -/
@@ -192,10 +193,10 @@ theorem expJConstsIn_mapLanguage {α : Type} {n : ℕ} (τ : (L''[[J]]).BoundedF
     BoundedFormulaω.functionsIn_mapLanguage, Set.mem_image]
   constructor
   · rintro ⟨⟨k, f⟩, hf, heq⟩
-    rw [Sigma.mk.injEq] at heq
-    obtain ⟨rfl, heq2⟩ := heq
-    rw [heq_eq_eq] at heq2
-    have hf2 : f = Sum.inr j := Sum.inl_injective heq2
+    obtain ⟨rfl, heq2⟩ := Sigma.mk.inj_iff.mp heq
+    have heq3 : ((L''[[J]]).lhomWithConstants ℕ).onFunction f = Sum.inl (Sum.inr j) :=
+      eq_of_heq heq2
+    have hf2 : f = Sum.inr j := Sum.inl_injective heq3
     exact hf2 ▸ hf
   · intro hj
     exact ⟨⟨0, Sum.inr j⟩, hj, rfl⟩
@@ -222,17 +223,15 @@ theorem sentenceJConsts_templateSentence {n : ℕ} (ψ : L''.BoundedFormulaω Em
   rcases hsub with hbody | hconst
   · rw [BoundedFormulaω.functionsIn_mapLanguage] at hbody
     obtain ⟨⟨k, f⟩, -, heq⟩ := hbody
-    rw [Sigma.mk.injEq] at heq
-    obtain ⟨rfl, heq2⟩ := heq
-    rw [heq_eq_eq] at heq2
-    exact absurd heq2 (by simp)
+    obtain ⟨rfl, heq2⟩ := Sigma.mk.inj_iff.mp heq
+    have heq3 : (L''.lhomWithConstants J).onFunction f = Sum.inr j := eq_of_heq heq2
+    exact absurd heq3 (by simp)
   · simp only [Set.mem_iUnion, Term.functionsIn, Set.iUnion_of_empty,
       Set.mem_insert_iff, Set.mem_empty_iff_false, or_false] at hconst
     obtain ⟨i, hi⟩ := hconst
-    rw [Sigma.mk.injEq] at hi
-    obtain ⟨-, hi2⟩ := hi
-    rw [heq_eq_eq] at hi2
-    exact ⟨i, (Sum.inr_injective hi2).symm⟩
+    obtain ⟨-, hi2⟩ := Sigma.mk.inj_iff.mp hi
+    have hi3 : (Sum.inr j : (L''[[J]]).Functions 0) = Sum.inr (t i) := eq_of_heq hi2
+    exact ⟨i, (Sum.inr_injective hi3).symm⟩
 
 /-- **Every lifted `templateSentence` is an `FSentence`.** Its expansion `J`-support is the finite
 tuple image `image t`, and its Henkin support is empty. -/

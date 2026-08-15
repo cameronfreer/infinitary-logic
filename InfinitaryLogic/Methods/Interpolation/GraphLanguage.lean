@@ -44,8 +44,18 @@ inductive GraphRelation (L : Language.{0, 0}) : ℕ → Type
   | base : ∀ {n}, L.Relations n → GraphRelation L n
   | graph : ∀ {n}, L.Functions n → GraphRelation L (n + 1)
 
-/-- The relationalization of `L`: **no** function symbols, relation symbols `GraphRelation L`. -/
-def graphLanguage (L : Language.{0, 0}) : Language.{0, 0} where
+/-- The relationalization of `L`: **no** function symbols, relation symbols `GraphRelation L`.
+
+Marked `@[reducible]` so that `(graphLanguage L).Relations n` unfolds to `GraphRelation L n` at
+`implicit` transparency. The whole relationalization tower already treats the two as
+interchangeable — `baseRelSym`/`graphRelSym` below take their codomain in `GraphRelation L n`
+precisely so the constructors' injectivity and no-confusion lemmas apply directly, and the
+companion `graphExpansion` is `@[reducible]` for the same reason. Since Lean 4.34 requires goals
+to be type-correct at `implicit` transparency before `rw`/`simp` will act, that pre-existing
+identification has to hold there too; otherwise every generic lemma about `graphLanguage`
+formulas needs a specialized copy with the symbol spelled `GraphRelation.base`/`.graph`. This is
+a direct structure literal with no proof content, so reducibility costs nothing. -/
+@[reducible] def graphLanguage (L : Language.{0, 0}) : Language.{0, 0} where
   Functions _ := Empty
   Relations n := GraphRelation L n
 

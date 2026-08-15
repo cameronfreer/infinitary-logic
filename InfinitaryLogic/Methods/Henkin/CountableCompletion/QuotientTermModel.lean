@@ -53,8 +53,11 @@ theorem eq_constTerm_qtConst (t : L[[ℕ]].Term Empty) : t = constTerm (qtConst 
 omit [L.IsRelational] in
 theorem constTerm_injective {a b : ℕ}
     (h : (constTerm (L' := L) (J := ℕ) a) = constTerm b) : a = b := by
-  simp only [constTerm, Term.func.injEq] at h
-  exact Sum.inr.inj (eq_of_heq h.2.1)
+  simp only [constTerm] at h
+  -- `Term.func.injEq` cannot fire: the goal spells the head symbol as `Sum.inr a`, typed
+  -- `(constantsOn ℕ).Functions 0`, so it is not type-correct at `implicit` transparency.
+  injection h with _ hf _
+  exact Sum.inr.inj hf
 
 theorem qtConst_constTerm (c : ℕ) : qtConst (constTerm (L' := L) (J := ℕ) c) = c :=
   constTerm_injective (eq_constTerm_qtConst (constTerm c)).symm

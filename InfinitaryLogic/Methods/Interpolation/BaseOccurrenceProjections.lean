@@ -139,9 +139,9 @@ theorem baseFunctionsIn_instConst_subset (c : ℕ) (φ : L[[ℕ]].BoundedFormula
     obtain ⟨_, ha⟩ := h
     rw [constTerm_functionsIn] at ha
     obtain ⟨n', f⟩ := s
-    simp only [Set.mem_singleton_iff, Sigma.mk.injEq] at ha
+    simp only [Set.mem_singleton_iff] at ha
+    -- `rcases` now discharges the `Sum.inl`/`Sum.inr` clash itself.
     obtain ⟨rfl, ha2⟩ := ha
-    exact Sum.inl_ne_inr (eq_of_heq ha2)
 
 theorem baseRelationsIn_instConst_subset (c : ℕ) (φ : L[[ℕ]].BoundedFormulaω Empty 1) :
     (instConst c φ).baseRelationsIn ⊆ (BoundedFormulaω.all φ).baseRelationsIn := by
@@ -178,9 +178,9 @@ theorem baseFunctionsIn_relInst {l : ℕ} (Rr : L.Relations l) (g : Fin l → �
   obtain ⟨n, f⟩ := s
   simp only [relInst, constTermS, BoundedFormulaω.baseFunctionsIn, BoundedFormulaω.functionsIn,
     Term.functionsIn, Set.mem_setOf_eq, Set.mem_iUnion, Set.iUnion_of_empty, Set.mem_insert_iff,
-    Set.mem_empty_iff_false, or_false, Sigma.mk.injEq, iff_false, not_exists]
+    Set.mem_empty_iff_false, or_false, iff_false, not_exists]
+  -- `rintro` now discharges the `Sum.inl`/`Sum.inr` clash itself.
   rintro i ⟨rfl, h⟩
-  exact (Sum.inl_ne_inr (eq_of_heq h))
 
 theorem baseRelationsIn_relInst {l : ℕ} (Rr : L.Relations l) (g g' : Fin l → ℕ) :
     (relInst Rr g).baseRelationsIn = (relInst Rr g').baseRelationsIn := by
@@ -195,16 +195,14 @@ private theorem tag_inl_fun_injective :
       (fun p : Σ n, L.Functions n => (⟨p.1, Sum.inl p.2⟩ : Σ n, L[[ℕ]].Functions n)) := by
   rintro ⟨a1, a2⟩ ⟨b1, b2⟩ h
   obtain ⟨rfl, h2⟩ := Sigma.mk.inj_iff.mp h
-  rw [heq_eq_eq] at h2
-  exact Sigma.ext rfl (heq_of_eq (Sum.inl_injective h2))
+  exact Sigma.ext rfl (heq_of_eq (Sum.inl_injective (eq_of_heq h2)))
 
 private theorem tag_inl_rel_injective :
     Function.Injective
       (fun p : Σ n, L.Relations n => (⟨p.1, Sum.inl p.2⟩ : Σ n, L[[ℕ]].Relations n)) := by
   rintro ⟨a1, a2⟩ ⟨b1, b2⟩ h
   obtain ⟨rfl, h2⟩ := Sigma.mk.inj_iff.mp h
-  rw [heq_eq_eq] at h2
-  exact Sigma.ext rfl (heq_of_eq (Sum.inl_injective h2))
+  exact Sigma.ext rfl (heq_of_eq (Sum.inl_injective (eq_of_heq h2)))
 
 /-- **Base functions of a constant-expansion image** are the sentence's own functions. -/
 theorem baseFunctionsIn_mapLanguage_withConstants (r : L.Sentenceω) :

@@ -148,18 +148,20 @@ theorem BoundedFormulaω.mapLanguage_restrictFuns {α : Type} {F : Set (Σ n, L.
   | falsum => intro h; rfl
   | equal t u =>
     intro h
-    simp only [BoundedFormulaω.restrictFuns, BoundedFormulaω.mapLanguage,
-      Term.onTerm_restrictFuns]
+    simp only [BoundedFormulaω.restrictFuns, BoundedFormulaω.mapLanguage]
+    exact congrArg₂ _ (Term.onTerm_restrictFuns _ _) (Term.onTerm_restrictFuns _ _)
   | rel R ts =>
     intro h
     simp only [BoundedFormulaω.restrictFuns, BoundedFormulaω.mapLanguage]
     exact congrArg _ (funext fun i => Term.onTerm_restrictFuns (ts i) _)
   | imp φ ψ ihφ ihψ =>
     intro h
-    simp only [BoundedFormulaω.restrictFuns, BoundedFormulaω.mapLanguage, ihφ, ihψ]
+    simp only [BoundedFormulaω.restrictFuns, BoundedFormulaω.mapLanguage]
+    exact congrArg₂ _ (ihφ _) (ihψ _)
   | all φ ih =>
     intro h
-    simp only [BoundedFormulaω.restrictFuns, BoundedFormulaω.mapLanguage, ih]
+    simp only [BoundedFormulaω.restrictFuns, BoundedFormulaω.mapLanguage]
+    exact congrArg _ (ih _)
   | iSup φs ih =>
     intro h
     simp only [BoundedFormulaω.restrictFuns, BoundedFormulaω.mapLanguage]
@@ -299,18 +301,20 @@ theorem BoundedFormulaω.mapLanguage_restrictSymbols {α : Type} {F : Set (Σ n,
   | falsum => intro hF hR; rfl
   | equal t u =>
     intro hF hR
-    simp only [BoundedFormulaω.restrictSymbols, BoundedFormulaω.mapLanguage,
-      Term.onTerm_restrictSymbols]
+    simp only [BoundedFormulaω.restrictSymbols, BoundedFormulaω.mapLanguage]
+    exact congrArg₂ _ (Term.onTerm_restrictSymbols _ _) (Term.onTerm_restrictSymbols _ _)
   | rel R ts =>
     intro hF hR
     simp only [BoundedFormulaω.restrictSymbols, BoundedFormulaω.mapLanguage]
     exact congrArg _ (funext fun i => Term.onTerm_restrictSymbols (ts i) _)
   | imp φ ψ ihφ ihψ =>
     intro hF hR
-    simp only [BoundedFormulaω.restrictSymbols, BoundedFormulaω.mapLanguage, ihφ, ihψ]
+    simp only [BoundedFormulaω.restrictSymbols, BoundedFormulaω.mapLanguage]
+    exact congrArg₂ _ (ihφ _ _) (ihψ _ _)
   | all φ ih =>
     intro hF hR
-    simp only [BoundedFormulaω.restrictSymbols, BoundedFormulaω.mapLanguage, ih]
+    simp only [BoundedFormulaω.restrictSymbols, BoundedFormulaω.mapLanguage]
+    exact congrArg _ (ih _ _)
   | iSup φs ih =>
     intro hF hR
     simp only [BoundedFormulaω.restrictSymbols, BoundedFormulaω.mapLanguage]

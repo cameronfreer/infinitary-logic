@@ -74,7 +74,6 @@ theorem relationsInSigned_termGraphAux :
     refine ⟨?_, rfl⟩
     show relationsInSigned true (BoundedFormulaω.equal (ρ z) y) = _
     rw [relationsInSigned_equal, Term.functionsIn, Set.image_empty]
-    rfl
   | m, .func f ts, ρ, y => by
     constructor
     · show relationsInSigned true (BoundedFormulaω.existsBlock _) = _
@@ -114,7 +113,6 @@ theorem relationsInSigned_equalGraph {n : ℕ} (t u : L.Term (α ⊕ Fin n)) :
     rw [relationsInSigned_existsBlock, relationsInSigned_and,
       (relationsInSigned_termGraphAux t _ _).1, (relationsInSigned_termGraphAux u _ _).1,
       Set.image_union]
-    rfl
   · show relationsInSigned false (BoundedFormulaω.existsBlock _) = _
     rw [relationsInSigned_existsBlock, relationsInSigned_and,
       (relationsInSigned_termGraphAux t _ _).2, (relationsInSigned_termGraphAux u _ _).2,

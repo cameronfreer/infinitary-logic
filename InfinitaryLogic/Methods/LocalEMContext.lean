@@ -189,8 +189,11 @@ theorem locDeTermFin_realize_superset (d : ℕ) (S T : Finset J) (w : Λ[[J]].Te
   obtain ⟨j, hj, rfl⟩ := Finset.mem_image.mp (locConstantsToVars_varFinset_subset Λ J w hx)
   have hjS : j ∈ S := hw hj
   have hlt : deepRank J S j < S.card := deepRank_lt_card (J := J) hjS
-  simp only [Function.comp_apply, Sum.elim_inl, dif_pos hlt]
-  rw [orderEmbOfFin_deepRank J S rfl hjS hlt]
+  have hdite : (if h : deepRank J S j < S.card then
+      deepRank J T (S.orderEmbOfFin rfl ⟨deepRank J S j, h⟩) else 0) = deepRank J T j := by
+    rw [dite_eq_left hlt, orderEmbOfFin_deepRank J S rfl hjS hlt]
+  simp only [Function.comp_apply, Sum.elim_inl]
+  exact congrArg (fun m => a (d + m)) hdite
 
 /-! ### Atom and formula realize bridges -/
 

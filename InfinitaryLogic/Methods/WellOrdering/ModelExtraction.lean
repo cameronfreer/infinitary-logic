@@ -51,10 +51,9 @@ theorem realize_constTermS_eq_constTerm {M : Type} [L[[ℕ]].Structure M] (c : �
     (v : Empty ⊕ Fin 0 → M) :
     Term.realize v (constTermS (L := L) c) =
       Term.realize (Empty.elim : Empty → M) (constTerm (L' := L) (J := ℕ) c) := by
-  simp only [constTermS, constTerm, Term.realize_func]
-  congr 1
-  funext i
-  exact i.elim0
+  simp only [constTermS, constTerm]
+  -- `congr 1` now also splits the variable-type index, leaving `(Empty ⊕ Fin 0) = Empty`.
+  exact congrArg _ (funext fun i => i.elim0)
 
 /-- A positive diagram atom realizes as the expansion relation at the mapped rationals. -/
 theorem realize_ratLtAtom {M : Type} [inst : L[[ℕ]].Structure M] (q r : ℚ) :

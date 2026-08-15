@@ -125,9 +125,8 @@ theorem ambient_realize_iff_wc [S : L[[ℕ]].Structure M] {n : ℕ}
     · rfl
     · match l, k with
       | 0, k =>
-        rw [wc_funMap_inr]
         show @Structure.funMap L[[ℕ]] M S 0 (Sum.inr k) x = ambientConstMap M k
-        rw [ambientConstMap]
+        simp only [ambientConstMap]
         exact congrArg _ (Subsingleton.elim _ _)
       | (l + 1), k => exact isEmptyElim k
   · intro l R x
@@ -162,7 +161,6 @@ theorem Term.realize_congr_const (base : L.Structure M) {h h' : ℕ → M} {n : 
       | 0, k =>
         show @Structure.funMap L[[ℕ]] M (wc base h) 0 (Sum.inr k) _
           = @Structure.funMap L[[ℕ]] M (wc base h') 0 (Sum.inr k) _
-        simp only [wc_funMap_inr]
         exact hagree k (by simp only [Term.functionsIn]; exact Set.mem_insert _ _)
       | (l + 1), k => exact isEmptyElim k
 
@@ -266,7 +264,7 @@ theorem Term.realize_abstractConst (base : L.Structure M) (h : ℕ → M) (j : �
         · have habs : Term.abstractConst j (Term.func (Sum.inr k) Fin.elim0)
               = (Term.var (Sum.inl 0) : L[[ℕ]].Term (Fin 1 ⊕ Fin n)) := by
             simp only [Term.abstractConst]; rw [if_pos hk]
-          rw [habs, wc_funMap_inr]
+          rw [habs]
           show (Sum.elim (fun _ => a) xs) (Sum.inl (0 : Fin 1)) = Function.update h j a (k : ℕ)
           rw [Sum.elim_inl, hk, Function.update_self]
         · have habs : Term.abstractConst j (Term.func (Sum.inr k) Fin.elim0)
@@ -375,7 +373,7 @@ theorem Term.notMem_functionsIn_abstractConst (j : ℕ) {n : ℕ} :
     · intro hs
       simp only [Term.abstractConst, Term.functionsIn] at hs
       rcases Set.mem_insert_iff.mp hs with heq | hs
-      · simp only [Sigma.mk.injEq] at heq; obtain ⟨rfl, h2⟩ := heq; simp at h2
+      · cases heq
       · obtain ⟨_, ⟨i, rfl⟩, hmem⟩ := hs
         exact ih i hmem
     · match l, k with
@@ -391,8 +389,7 @@ theorem Term.notMem_functionsIn_abstractConst (j : ℕ) {n : ℕ} :
           rw [hred]; intro hs
           simp only [Term.functionsIn, Set.iUnion_of_empty,
             Set.mem_insert_iff, Set.mem_empty_iff_false, or_false] at hs
-          simp only [Sigma.mk.injEq, heq_eq_eq, true_and] at hs
-          exact hk (Sum.inr.inj hs).symm
+          exact hk (Sum.inr.inj (eq_of_heq (Sigma.mk.inj_iff.mp hs).2)).symm
       | (l + 1), k => exact nomatch k
 
 /-- Abstraction adds no new function symbols to a formula. -/

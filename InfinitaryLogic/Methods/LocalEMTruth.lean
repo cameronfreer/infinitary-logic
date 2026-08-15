@@ -150,10 +150,9 @@ theorem LocalEMContext.eventualDeepTruth_rel_iff (ctx : LocalEMContext Λ J (M :
     letI : Λ[[J]].Structure ctx.Carrier := ctx.structure
     rw [show (BoundedFormulaω.rel R args).mapLanguage (lhomWithConstants Λ J)
         = BoundedFormulaω.rel (Sum.inl R)
-            (fun i => (lhomWithConstants Λ J).onTerm (args i)) from rfl,
-      BoundedFormulaω.realize_rel]
-    apply Iff.of_eq
-    congr 1
+            (fun i => (lhomWithConstants Λ J).onTerm (args i)) from rfl]
+    refine Iff.of_eq (congrArg
+      (@Structure.RelMap (Λ[[J]]) ctx.Carrier ctx.structure l (Sum.inl R)) ?_)
     funext i
     exact LocalEMContext.realize_term_mkClass (Λ := Λ) (J := J) ctx ts _
   have hcommon : LocalEMContext.eventualDeepTruth (Λ := Λ) (J := J) ctx

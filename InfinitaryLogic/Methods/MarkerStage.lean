@@ -625,10 +625,12 @@ theorem termValueWith_congr {σ σ' : J → M} {h h' : ℕ → M} {β : Type}
     · rw [termValueWith_base, termValueWith_base]
       exact congrArg _ (funext hargs)
     · cases l with
-      | zero => rw [termValueWith_skeleton, termValueWith_skeleton]; exact hσ c hhead
+      -- `termValueWith_skeleton` is `rfl`, and its `j : J` cannot be unified with
+      -- `c : (constantsOn J).Functions 0` at `implicit` transparency; `exact` checks at default.
+      | zero => exact hσ c hhead
       | succ l => exact c.elim
     · cases l with
-      | zero => rw [termValueWith_henkin, termValueWith_henkin]; exact hh c hhead
+      | zero => exact hh c hhead
       | succ l => exact c.elim
 
 /-- **Formula congruence** — the semantic-support engine of the Marker construction:
@@ -1322,7 +1324,13 @@ theorem expJConstsIn_witnessSentence (φ : ((L''[[J]])[[ℕ]]).BoundedFormulaω 
   intro j hj
   rcases (functionsIn_witnessSentence φ n) hj with h | h
   · exact h
-  · exact absurd (Set.mem_singleton_iff.mp h) (by simp)
+  -- Term mode: the goal spells `Sum.inr j` at the whnf'd type `J`, so it is not type-correct at
+  -- `implicit` transparency and `simp` cannot discharge the disequality in place.
+  · have heq : (⟨0, Sum.inl (Sum.inr j)⟩ : Σ l, ((L''[[J]])[[ℕ]]).Functions l) = ⟨0, Sum.inr n⟩ :=
+      Set.mem_singleton_iff.mp h
+    have h2 : (Sum.inl (Sum.inr j) : ((L''[[J]])[[ℕ]]).Functions 0) = Sum.inr n :=
+      eq_of_heq (Sigma.mk.inj_iff.mp heq).2
+    cases h2
 
 omit [LinearOrder J] in
 theorem henkinConstsIn_witnessSentence (φ : ((L''[[J]])[[ℕ]]).BoundedFormulaω Empty 1) (n : ℕ) :
@@ -1333,8 +1341,8 @@ theorem henkinConstsIn_witnessSentence (φ : ((L''[[J]])[[ℕ]]).BoundedFormula�
   · exact Set.mem_insert_of_mem _ h
   · have heq : (⟨0, Sum.inr m⟩ : Σ l, ((L''[[J]])[[ℕ]]).Functions l) = ⟨0, Sum.inr n⟩ :=
       Set.mem_singleton_iff.mp h
-    simp only [Sigma.mk.injEq, heq_eq_eq, true_and] at heq
-    exact Set.mem_insert_iff.mpr (Or.inl (Sum.inr_injective heq))
+    exact Set.mem_insert_iff.mpr
+      (Or.inl (Sum.inr_injective (eq_of_heq (Sigma.mk.inj_iff.mp heq).2)))
 
 omit [LinearOrder J] [LinearOrder M] in
 /-- **The semantic bridge**: realizing the witness sentence is realizing `φ` with the last

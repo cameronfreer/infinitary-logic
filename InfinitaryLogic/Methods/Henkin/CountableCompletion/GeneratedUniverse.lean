@@ -302,9 +302,8 @@ theorem constTermS_jConsts (c : ℕ) :
     Term.jConsts (L' := L) (constTermS (L := L) c) ⊆ {c} := by
   intro k hk
   simp only [constTermS, Term.jConsts, Term.functionsIn, Set.iUnion_of_empty,
-    Set.mem_insert_iff, Set.mem_empty_iff_false, or_false, Set.mem_setOf_eq,
-    Sigma.mk.injEq, heq_eq_eq, true_and] at hk
-  exact Set.mem_singleton_iff.mpr (Sum.inr.inj hk)
+    Set.mem_insert_iff, Set.mem_empty_iff_false, or_false, Set.mem_setOf_eq] at hk
+  exact Set.mem_singleton_iff.mpr (Sum.inr.inj (eq_of_heq (Sigma.mk.inj_iff.mp hk).2))
 
 /-- **Finite constant support**: assuming the roots have finite constant support, every member
 of `U` does. -/
