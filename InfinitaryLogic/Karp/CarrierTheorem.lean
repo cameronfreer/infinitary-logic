@@ -32,8 +32,8 @@ carrier — any `κ` admitting codings of both structures.
 - `karp_theorem_at`: potential isomorphism is equivalent to `InfEquivAt L κ M N` for **any**
   carrier `κ` admitting codings `IndexCoding M κ` and `IndexCoding N κ`.
 - `karp_theorem_on_sum`: the canonical specialization at `κ := M ⊕ N`.
-- `karp_theorem_idx`: the packaged same-universe endpoint, `Nonempty (PotentialIso L M N) ↔
-  InfEquivW L M N`.
+- `karp_theorem_w`: the packaged same-universe endpoint, `Nonempty (PotentialIso L M N) ↔
+  InfEquivW L M N`. This is the public statement of Karp's theorem.
 
 The separating conjunctions in the backward direction are `iInfAlong` along the two given
 codings — a conjunction indexed by one structure's carrier, expressed at `κ`. That is the
@@ -262,12 +262,23 @@ theorem karp_theorem_on_sum :
     Nonempty (PotentialIso L M N) ↔ InfEquivAt L (M ⊕ N) M N :=
   karp_theorem_at (.sumInl M N) (.sumInr M N)
 
-/-- **Karp's theorem, packaged**: potential isomorphism is equivalent to agreement at every
-carrier in the structures' universe.
+/-- **Karp's theorem** (KK04 Theorem 1.2.1): potential isomorphism is equivalent to
+agreement on all `L∞ω` sentences branching over carriers in the structures' universe.
 
 Forward instantiates the generic direction at each `ι`; backward specializes to the single
 carrier `M ⊕ N`. Pure packaging around `karp_theorem_at`. -/
-theorem karp_theorem_idx :
+@[blueprint "thm:karp-theorem"
+  (title := /-- Karp's theorem -/)
+  (statement := /-- $M$ and $N$ admit a potential isomorphism if and only if they are
+    $L_{\infty\omega}^w$-equivalent (satisfy the same $L_{\infty\omega}$ sentences whose
+    infinitary connectives branch over carriers in universe $w$). -/)
+  (proof := /-- Forward: a potential isomorphism witnesses agreement on every formula over
+    every carrier, by structural induction with the tuple in bound positions, so the
+    universal case consumes forth and back directly. Backward: at the single carrier
+    $M \oplus N$, separating formulas are conjunctions indexed by one structure's carrier
+    and expressed at the common carrier along its coding. -/)
+  (proofUses := ["def:potential-iso", "def:linf-equiv"])]
+theorem karp_theorem_w :
     Nonempty (PotentialIso L M N) ↔ InfEquivW L M N :=
   ⟨fun ⟨P⟩ ι => P.infEquivAt ι,
    fun h => infEquivAt_implies_potentialIso (.sumInl M N) (.sumInr M N) (h (M ⊕ N))⟩

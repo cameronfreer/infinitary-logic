@@ -13,7 +13,12 @@ Two jobs, neither of which an axiom scan can do.
        is the actual content of "any common carrier suffices";
      * the packaged same-universe endpoint resolves from the DEFAULT import surface.
 
-2. DEPENDENCY CONE — with a POSITIVE assertion, not only prohibitions. A guard that merely
+2. ZERO-OCCURRENCE — the old per-node-index Karp implementation (`liftUI`, `existsLastVarInf`,
+   the `LinfEquivW` bridges, and the superseded endpoint names) must be ABSENT from the
+   environment, not merely unreferenced. Absence is what makes the replacement real; a
+   surviving-but-unused copy would silently rot.
+
+3. DEPENDENCY CONE — with a POSITIVE assertion, not only prohibitions. A guard that merely
    forbids is satisfied vacuously by a theorem that proves nothing, so the cone must be shown
    to *contain* the coded-conjunction machinery (`iInfAlong`, `IndexCoding`, `reindex`) that
    the fixed-carrier argument is supposed to run on, and to contain none of the old per-node
@@ -68,10 +73,10 @@ example {M : Type w} {N : Type w'} [L.Structure M] [L.Structure N] {ι : Type*} 
     (c : IndexCoding ι κ) (h : InfEquivAt L κ M N) : InfEquivAt L ι M N :=
   h.of_reindex c
 
-/-- The packaged same-universe endpoint, from the default import surface. -/
+/-- The public same-universe endpoint, from the default import surface. -/
 example {M N : Type w} [L.Structure M] [L.Structure N] :
     Nonempty (PotentialIso L M N) ↔ InfEquivW L M N :=
-  karp_theorem_idx
+  karp_theorem_w
 
 end Gates
 
@@ -116,11 +121,22 @@ def hasSub (hay needle : String) : Bool := (hay.splitOn needle).length > 1
 def forbiddenSub : List String := ["BoundedFormulaInfLegacy", "FormulaInfLegacy",
   "SentenceInfLegacy"]
 
-def forbiddenExact : List Name :=
+/-- The old Karp implementation's operations. These are now DELETED, so the assertion below
+is that they are absent from the environment entirely — a stronger and cheaper check than a
+cone scan, and one that fails loudly if any of them is ever reintroduced. -/
+def removedNames : List Name :=
   [`FirstOrder.Language.BoundedFormulaInfLegacy.liftUI,
    `FirstOrder.Language.BoundedFormulaInfLegacy.realize_liftUI,
    `FirstOrder.Language.BoundedFormulaInfLegacy.existsLastVarInf,
-   `FirstOrder.Language.BoundedFormulaInfLegacy.realize_existsLastVarInf]
+   `FirstOrder.Language.BoundedFormulaInfLegacy.realize_existsLastVarInf,
+   `FirstOrder.Language.LinfEquivW_implies_potentialIso,
+   `FirstOrder.Language.LinfEquivW_implies_LinfEquiv,
+   `FirstOrder.Language.PotentialIso_implies_LinfEquiv,
+   `FirstOrder.Language.karp_theorem_forward,
+   `FirstOrder.Language.karp_theorem_universe0,
+   `FirstOrder.Language.karp_theorem_idx]
+
+def forbiddenExact : List Name := removedNames
 
 /-- POSITIVE assertion: the fixed-carrier machinery the argument must actually run on. Without
 this a cone guard is satisfied by a theorem that proves nothing. -/
@@ -135,10 +151,15 @@ the work; the other two are its packagings, and inherit the cone. -/
 def guardedRoots : List Name :=
   [`FirstOrder.Language.karp_theorem_at,
    `FirstOrder.Language.karp_theorem_on_sum,
-   `FirstOrder.Language.karp_theorem_idx]
+   `FirstOrder.Language.karp_theorem_w]
 
 run_cmd do
   let env ← getEnv
+  -- zero-occurrence check: the old implementation must be gone, not merely unreferenced
+  let survivors := removedNames.filter fun n => (env.find? n).isSome
+  unless survivors.isEmpty do
+    throwError "[NOT REMOVED] the old Karp implementation is still in the environment: \
+      {survivors}"
   for root in guardedRoots do
     unless (env.find? root).isSome do throwError "root declaration {root} not found"
     let deps := transitiveDeps env root
@@ -150,5 +171,5 @@ run_cmd do
     unless missing.isEmpty do
       throwError "[MISSING WITNESS] {root} does not consume the coded-conjunction \
         machinery: {missing}"
-  logInfo "Karp carrier guard: OK (elaboration gates pass; cones consume IndexCoding/iInfAlong \
-    and no legacy syntax)"
+  logInfo "Karp carrier guard: OK (elaboration gates pass; old implementation absent; cones \
+    consume IndexCoding/iInfAlong and no legacy syntax)"

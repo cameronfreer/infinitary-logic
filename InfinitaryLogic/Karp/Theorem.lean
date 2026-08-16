@@ -10,26 +10,26 @@ import InfinitaryLogic.Linf.Theory
 import Architect
 
 /-!
-# Karp's Theorem
+# Karp's theorem: the per-node-index remnants
 
-This file proves Karp's theorem: two structures are potentially isomorphic if and only
-if they are L∞ω-elementarily equivalent.
+The theorem itself is `karp_theorem_w` in `Karp/CarrierTheorem.lean`. This file holds the
+declarations against the older per-node-index syntax that still have live consumers.
 
 ## Main Results
 
-- `karp_theorem_w`: Karp's theorem for relational languages: potential isomorphism is
-  equivalent to `LinfEquivW` (L∞ω-elementary equivalence with index types at universe
-  `w` matching the structure universe).
-- `karp_theorem_universe0`: Specialization of `karp_theorem_w` to `Type 0`, where
-  `LinfEquivW` and `LinfEquiv` coincide.
 - `BFEquiv_implies_agreeQR`: Forward direction of the Karp lemma: BF-equivalence at
   level α implies agreement on all formulas of quantifier rank ≤ α.
+- `PotentialIso_implies_LinfEquivW`: the forward direction against the per-node-index
+  syntax, retained for its `ScottCompletion` consumer.
 
 ## Design Notes
 
-The theorem is stated with `LinfEquivW` (universe-`w` index types) rather than
-`LinfEquiv` (universe-0 index types) because the backward direction constructs
-formulas with `iInf` indexed by `N : Type w`, which requires `uι = w`.
+Karp's theorem itself lives in `Karp/CarrierTheorem.lean`, stated against the fixed-carrier
+syntax. What remains here is the per-node-index material that still has consumers: the
+quantifier-rank forward lemma, which `Scott/QuantifierRank.lean` and
+`ModelTheory/TypePreservingBF.lean` use, and the `LinfEquivW` forward direction, which
+`ModelTheory/ScottCompletion.lean` uses. Both are retained deliberately rather than ported,
+because quantifier rank has no upstream target in the current pin.
 
 ## References
 
@@ -303,169 +303,7 @@ theorem PotentialIso_implies_LinfEquivW (P : PotentialIso L M N) : LinfEquivW L 
     simp only [Fin.eq_elim0]; exact P.empty_mem
   exact PotentialIso_implies_agree_aux P P.empty_mem _ _ _ hext
 
-/-! #### Backward: LinfEquivW → PotentialIso -/
-
-omit [Countable (Σ l, L.Relations l)] in
-/-- Backward direction: LinfEquivW implies PotentialIso.
-
-The family consists of tuples `(n, a, b)` such that `a` and `b` agree on all
-`BoundedFormulaInfLegacy.{u,v,0,w}` formulas with `Fin n` free variables. The forth/back
-properties use a contradiction argument: if no witness exists, we can build a separating
-formula using `iInf` indexed by `N : Type w` (which requires `uι = w`). -/
-theorem LinfEquivW_implies_potentialIso (h : LinfEquivW L M N) :
-    Nonempty (PotentialIso L M N) := by
-  refine ⟨{
-    family := { p | ∀ φ : BoundedFormulaInfLegacy.{u, v, 0, w} L (Fin p.1) 0,
-      FormulaInfLegacy.Realize φ p.2.1 ↔ FormulaInfLegacy.Realize φ p.2.2 }
-    empty_mem := ?_
-    compatible := ?_
-    forth := ?_
-    back := ?_
-  }⟩
-  · -- empty_mem: from h via Empty ↔ Fin 0 bridge
-    intro φ
-    have hφ := formulaInf_realize_iff_mapFreeVarsW φ (M := M)
-    have hφN := formulaInf_realize_iff_mapFreeVarsW φ (M := N)
-    exact hφ.trans ((h _).trans hφN.symm)
-  · -- compatible: atomic formulas distinguish atomic type
-    intro p hp idx
-    exact (realize_atomicFormulaInfW idx p.2.1).symm.trans
-      ((hp _).trans (realize_atomicFormulaInfW idx p.2.2))
-  · -- forth: by contradiction using iInf indexed by N : Type w
-    intro ⟨n, a, b⟩ hfamily m
-    simp only [Set.mem_setOf_eq] at hfamily ⊢
-    by_contra h_no
-    push Not at h_no
-    -- For each n' : N, choose a separating formula
-    choose φ_bad h_bad using h_no
-    -- For each n', get a formula true for (snoc a m) but false for (snoc b n')
-    -- (or vice versa). WLOG, choose the direction.
-    have h_sep : ∀ n' : N, ∃ ψ : BoundedFormulaInfLegacy.{u, v, 0, w} L (Fin (n + 1)) 0,
-        FormulaInfLegacy.Realize ψ (Fin.snoc a m) ∧ ¬ FormulaInfLegacy.Realize ψ (Fin.snoc b n') := by
-      intro n'
-      -- h_bad n' : (Realize .. (snoc a m) ∧ ¬ Realize .. (snoc b n')) ∨
-      --            (¬ Realize .. (snoc a m) ∧ Realize .. (snoc b n'))
-      rcases h_bad n' with ⟨hM, hN⟩ | ⟨hM, hN⟩
-      · exact ⟨φ_bad n', hM, hN⟩
-      · -- Use negation: ¬Realize at (snoc a m), Realize at (snoc b n')
-        refine ⟨(φ_bad n').not, (BoundedFormulaInfLegacy.realize_not _).mpr hM, fun hc => ?_⟩
-        exact absurd hN ((BoundedFormulaInfLegacy.realize_not _).mp hc)
-    choose ψ hψ using h_sep
-    -- Build: χ := existsLastVarInf (iInf (fun n' : N => ψ n'))
-    -- The iInf is indexed by N : Type w — this is why we need uι = w!
-    let conj : BoundedFormulaInfLegacy.{u, v, 0, w} L (Fin (n + 1)) 0 :=
-      .iInf (ι := N) ψ
-    let χ : BoundedFormulaInfLegacy.{u, v, 0, w} L (Fin n) 0 :=
-      BoundedFormulaInfLegacy.existsLastVarInf conj
-    -- χ is true for a: witness m satisfies all ψ n'
-    have hM : FormulaInfLegacy.Realize χ a := by
-      rw [BoundedFormulaInfLegacy.realize_existsLastVarInf]
-      exact ⟨m, fun n' => (hψ n').1⟩
-    have hN : ¬ FormulaInfLegacy.Realize χ b := by
-      rw [BoundedFormulaInfLegacy.realize_existsLastVarInf]
-      rintro ⟨x, hx⟩
-      exact (hψ x).2 (hx x)
-    exact hN ((hfamily χ).mp hM)
-  · -- back: symmetric argument
-    intro ⟨n, a, b⟩ hfamily n'
-    simp only [Set.mem_setOf_eq] at hfamily ⊢
-    by_contra h_no
-    push Not at h_no
-    choose φ_bad h_bad using h_no
-    have h_sep : ∀ m : M, ∃ ψ : BoundedFormulaInfLegacy.{u, v, 0, w} L (Fin (n + 1)) 0,
-        FormulaInfLegacy.Realize ψ (Fin.snoc b n') ∧ ¬ FormulaInfLegacy.Realize ψ (Fin.snoc a m) := by
-      intro m
-      -- h_bad m : (Realize .. (snoc a m) ∧ ¬ Realize .. (snoc b n')) ∨
-      --           (¬ Realize .. (snoc a m) ∧ Realize .. (snoc b n'))
-      rcases h_bad m with ⟨hM, hN⟩ | ⟨hM, hN⟩
-      · -- Case: Realize (φ_bad m) (snoc a m) ∧ ¬ Realize (φ_bad m) (snoc b n')
-        -- Use negation of φ_bad m: true at (snoc b n') and false at (snoc a m)
-        refine ⟨(φ_bad m).not, (BoundedFormulaInfLegacy.realize_not _).mpr hN, fun hc => ?_⟩
-        exact absurd hM ((BoundedFormulaInfLegacy.realize_not _).mp hc)
-      · -- Case: ¬ Realize (φ_bad m) (snoc a m) ∧ Realize (φ_bad m) (snoc b n')
-        exact ⟨φ_bad m, hN, hM⟩
-    choose ψ hψ using h_sep
-    let conj : BoundedFormulaInfLegacy.{u, v, 0, w} L (Fin (n + 1)) 0 :=
-      .iInf (ι := M) ψ
-    let χ : BoundedFormulaInfLegacy.{u, v, 0, w} L (Fin n) 0 :=
-      BoundedFormulaInfLegacy.existsLastVarInf conj
-    have hN : FormulaInfLegacy.Realize χ b := by
-      rw [BoundedFormulaInfLegacy.realize_existsLastVarInf]
-      exact ⟨n', fun m => (hψ m).1⟩
-    have hM : ¬ FormulaInfLegacy.Realize χ a := by
-      rw [BoundedFormulaInfLegacy.realize_existsLastVarInf]
-      rintro ⟨x, hx⟩
-      exact (hψ x).2 (hx x)
-    exact hM ((hfamily χ).mpr hN)
-
-omit [Countable (Σ l, L.Relations l)] in
-/-- **Karp's Theorem** (KK04 Theorem 1.2.1): For relational languages, two
-structures are potentially isomorphic if and only if they are L∞ω-elementarily equivalent
-(with index types at universe `w` matching the structure universe).
-
-Both directions are fully proved:
-- Forward: structural induction on formulas, using PotentialIso.forth/back for `all`.
-- Backward: direct construction of PotentialIso family from formula agreement, using
-  `iInf` indexed by `N : Type w` to build separating formulas (requires `uι = w`). -/
-@[blueprint "thm:karp-theorem"
-  (title := /-- Karp's theorem -/)
-  (statement := /-- $M$ and $N$ admit a potential isomorphism if and only if they are
-    $L_{\infty\omega}^w$-equivalent (satisfy the same $L_{\infty\omega}$ sentences
-    with index types in universe $w$). -/)
-  (proof := /-- Forward: a potential isomorphism witnesses agreement on all
-    $L_{\infty\omega}$ sentences by induction on formula complexity. Backward: BFEquiv
-    at all ordinals gives a potential isomorphism via the game-tree family. -/)
-  (proofUses := ["def:potential-iso", "def:linf-equiv"])]
-theorem karp_theorem_w :
-    Nonempty (PotentialIso L M N) ↔ LinfEquivW L M N :=
-  ⟨fun ⟨P⟩ => PotentialIso_implies_LinfEquivW P,
-   LinfEquivW_implies_potentialIso⟩
-
-omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-/-- `LinfEquivW` implies `LinfEquiv`: universe-correct equivalence implies the standard one.
-This follows from `liftUI` which embeds `BoundedFormulaInfLegacy.{u,v,0,0}` into
-`BoundedFormulaInfLegacy.{u,v,0,w}`. -/
-theorem LinfEquivW_implies_LinfEquiv (h : LinfEquivW L M N) : LinfEquiv L M N := by
-  intro φ
-  -- liftUI sends φ : BoundedFormulaInfLegacy.{u,v,0,0} to BoundedFormulaInfLegacy.{u,v,0,w}
-  let lφ : BoundedFormulaInfLegacy.{u, v, 0, w} L Empty 0 := BoundedFormulaInfLegacy.liftUI φ
-  -- SentenceInfLegacy.Realize unfolds to Realize Empty.elim Fin.elim0
-  show φ.Realize (Empty.elim : Empty → M) Fin.elim0 ↔
-       φ.Realize (Empty.elim : Empty → N) Fin.elim0
-  have hM : lφ.Realize (Empty.elim : Empty → M) Fin.elim0 ↔
-            φ.Realize (Empty.elim : Empty → M) Fin.elim0 :=
-    BoundedFormulaInfLegacy.realize_liftUI φ _ _
-  have hN : lφ.Realize (Empty.elim : Empty → N) Fin.elim0 ↔
-            φ.Realize (Empty.elim : Empty → N) Fin.elim0 :=
-    BoundedFormulaInfLegacy.realize_liftUI φ _ _
-  exact hM.symm.trans ((h lφ).trans hN)
-
-omit [Countable (Σ l, L.Relations l)] in
-/-- **Forward direction of Karp's theorem**: PotentialIso → LinfEquiv.
-
-This composes `PotentialIso_implies_LinfEquivW` with `LinfEquivW_implies_LinfEquiv`
-to get the standard `LinfEquiv` (with `Ordinal.{0}` index types) from a PotentialIso. -/
-theorem PotentialIso_implies_LinfEquiv (P : PotentialIso L M N) : LinfEquiv L M N :=
-  LinfEquivW_implies_LinfEquiv (PotentialIso_implies_LinfEquivW P)
-
-omit [Countable (Σ l, L.Relations l)] in
-/-- **Forward direction of Karp's theorem at all universes**:
-Potential isomorphism implies L∞ω-elementary equivalence. -/
-theorem karp_theorem_forward :
-    Nonempty (PotentialIso L M N) → LinfEquivW L M N :=
-  fun ⟨P⟩ => PotentialIso_implies_LinfEquivW P
-
 end KarpW
-
-omit [Countable (Σ l, L.Relations l)] in
-/-- **Karp's Theorem at universe 0**.
-
-This is `karp_theorem_w` specialized to `M N : Type` (i.e., `Type 0`). At universe 0,
-`LinfEquivW` and `LinfEquiv` coincide (both use `BoundedFormulaInfLegacy.{u,v,0,0}`). -/
-theorem karp_theorem_universe0 {M N : Type} [L.Structure M] [L.Structure N] :
-    Nonempty (PotentialIso L M N) ↔ LinfEquiv L M N :=
-  karp_theorem_w
-
 end Language
 
 end FirstOrder
