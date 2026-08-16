@@ -38,82 +38,102 @@ must return nothing, and `TheoryInf`'s definition must be inspected directly rat
 from that count. Wire it into `scripts/` alongside the existing boundary guards only once it can
 pass.
 
-## Declaration-level audit (2026-08-16)
+## Dependency table (re-audited 2026-08-16, at `36e7250`)
 
-168 declarations mention a `*Legacy` type. **50 have no reference outside their defining file** —
-searching the whole repository (library, `scripts/`, `blueprint/`) and counting dot-notation uses,
-both of which the first pass missed: a library-only search wrongly reported `karp_theorem_w` dead
-because its only consumers are `check_headline_axioms.sh` and the blueprint.
+### The gate does NOT pass as stated
 
-Occurrence counts are not a classification. `E2` was satisfied by *deleting* `TheoryInf`, and the
-lift machinery that looked deletable turned out to be Karp-coupled — neither is visible in a count.
+The intended gate was: *every surviving `toLinf` use lies in the legacy rank bridge, and every
+non-rank consumer reaches fixed-carrier syntax directly.* Measured, there are **two** consumers
+outside the defining files, not one:
 
-| File | legacy decls | no external reference |
-|---|---:|---:|
-| `Karp/Theorem.lean` | 18 | 12 |
-| `Lomega1omega/Embedding.lean` | 22 | 11 |
-| `Linf/Operations.lean` | 30 | 10 |
-| `Linf/Countability.lean` | 11 | 8 |
-| `Linf/QuantifierRank.lean` | 24 | 3 |
-| `Linf/Semantics.lean` | 29 | 2 |
-| `ModelTheory/TypePreservingBF.lean` | 4 | 2 |
-| `Linf/Theory.lean` | 17 | 1 |
-| `Linf/Syntax.lean` | 11 | 0 |
-| `Core.lean`, `Scott/QuantifierRank.lean` | 2 | 1 |
+| Consumer | Kind | Reaches fixed-carrier syntax? |
+|---|---|---|
+| `Scott/QuantifierRank.lean:158` | rank bridge — feeds `φ.toLinf` into `BFEquiv_implies_agreeQR` | no, and by design until the rank layer lands |
+| `Karp/CountableCorollary.lean:61` | `countable_LinfEquiv_implies_iso_of` | **no** — this is the gate failure |
 
-### Done: dead theory machinery removed
+The second is not a rank use. It converts `LinfEquiv → LomegaEquiv` by mapping each `Sentenceω`
+through `toLinf`, inside a theorem whose *hypothesis* is the legacy `LinfEquiv`. It is the same
+shape as the `ScottCompletion` detour just removed, and has the same one-line fix: restate the
+hypothesis as `InfEquivW` (or `InfEquivAt L ℕ`) and the body collapses, because
+`InfEquivAt L ℕ` and `LomegaEquiv` are the same proposition. Doing that first would let the gate
+pass honestly instead of being weakened to accommodate the site.
 
-- **`TheoryInf` and its whole API deleted** (`Model`, `Model.empty`, `Model.mono`, `Valid`,
-  `Model.of_equiv`). Every one of its ten references was internal to `Linf/Theory.lean`; nothing in
-  the repository consumed it. **E2 is now satisfied by deletion, not by porting** — the file is
-  `L∞ω Elementary Equivalence` now, and `realize_equiv` stays because `LinfEquiv.of_equiv` and
-  `LinfEquivW.of_equiv` use it.
-- `forallLastVarInf` / `realize_forallLastVarInf` and `toSentenceInf` / `realize_toSentenceInf`
-  deleted — dead, and not shared with anything live.
+### Measured dependencies
 
-### Finding: the lift machinery is Karp-coupled, not unused
+**`toLinf` / `realize_toLinf`** — defined in `Lomega1omega/Embedding.lean` (the ω family) and
+`Linf/Operations.lean` (the finitary family). The finitary family has **zero** consumers
+anywhere. The ω family has the two above.
 
-`liftUI` and `realize_liftUI` have exactly one consumer: `Karp/Theorem.lean:428`
-(`LinfEquivW_implies_LinfEquiv`). `existsLastVarInf` / `realize_existsLastVarInf` likewise have
-exactly one: Karp's backward direction (`:354`, `:391`) — the mixed-index construction itself. The
-private helpers underneath (`insertLastBoundInf`, `realize_relabel_insertLastBoundInf_zero`,
-`snoc_elim0_zero_inf`) serve that same ∃ path.
+**Importers of `Lomega1omega.Embedding`**: `Scott/QuantifierRank.lean`,
+`Karp/CountableCorollary.lean`, and `Core.lean` (bundle).
 
-**So removing the lift machinery is a consequence of the Karp port, not a precursor to it.** Step 2
-cannot retire it; step 3 will, and the deletion should land in the same commit that replaces the
-mixed-index construction, so no intermediate commit carries a half-ported Karp.
+**Consumers of `BFEquiv_implies_agreeQR`**: `Scott/QuantifierRank.lean:158` (through `toLinf`)
+and `ModelTheory/TypePreservingBF.lean:177` (directly, on a legacy formula — no `toLinf`).
 
-### Not touched, and why
+**Importers of `Karp.Theorem`**: `Core.lean`, `Scott/QuantifierRank.lean`,
+`ModelTheory/TypePreservingBF.lean`, and `Karp/CountableCorollary.lean` — where the import is
+now **stale**: it uses nothing from the file.
 
-- `Linf/Countability.lean` (8 dead: `indexBound`, `isKappa_succ_indexBound`, `exists_isKappa`,
-  `IsCountable.toIsKappa_aleph1`, …) and `Lomega1omega/Embedding.lean` (11 dead: the whole
-  `ofCountable` cluster) belong to the countability layer, which — like rank — is **not in PR2**.
-  Deleting them presumes a replacement that does not exist upstream yet.
-- `emptyiSup` / `emptyiInf` and their realize lemmas: retained by an earlier decision — zero
-  internal references does not prove zero external users.
-- The 12 dead declarations in `Karp/Theorem.lean` are bucket 3; they go with the port.
+### Remaining legacy declarations, grouped
 
-## Next tranche
+| Group | Decls | Occurrences | Files |
+|---|---:|---:|---|
+| core legacy syntax | 67 | 153 | `Linf/{Syntax,Semantics,Operations,Theory}.lean` |
+| rank | 36 | 62 | `Linf/QuantifierRank.lean`, `Karp/Theorem.lean`, `Scott/QuantifierRank.lean`, `ModelTheory/TypePreservingBF.lean` |
+| countability + `toLinf` | 22 | 46 | `Lomega1omega/Embedding.lean` |
+| countability | 11 | 21 | `Linf/Countability.lean` |
+| bundle | 1 | 1 | `Core.lean` |
 
-**Target: dead legacy API removal plus Karp. Not a mass `Legacy` → new-API replacement.**
+### Remaining sequence
 
-1. **Classify declarations, not occurrences.** An occurrence count says nothing about whether a
-   declaration has consumers. Each legacy declaration goes into exactly one bucket, and the
-   classification is the deliverable:
-   - **delete** — no consumer outside its defining file, or superseded outright;
-   - **port** — a genuine carrier-parametric operation, to `BoundedFormulaInf L ι`;
-   - **replace** — Karp's mixed-index construction, by the common-carrier formulation.
+1. Fix the `CountableCorollary` gate failure above (restate the hypothesis as `InfEquivW`).
+2. Re-check the gate; it should then pass with the rank bridge as the sole `toLinf` consumer.
+3. Stage the rank module on top of PR2.
+4. Port `BFEquiv_implies_agreeQR`, Scott rank, and `TypePreservingBF`.
+5. Delete `toLinf` and the remaining legacy Karp file.
 
-   All ten `TheoryInf` references are internal to `Linf/Theory.lean`, so that API is
-   **deletion-first**: do not port it by default just because it exists.
-2. **Remove** the genuinely unused legacy theory and lift machinery.
-3. **Port Karp** to the common-carrier API via `IndexCoding`, keeping the canonical sum-carrier
-   theorem as a corollary rather than as the primitive statement.
-4. **Add Karp's guards**: the headline axiom check, and a theorem-body dependency-cone guard that
-   includes a *positive* dependency assertion — a cone guard that only forbids is satisfied
-   vacuously by a theorem that proves nothing.
-5. **Reassess** the remaining legacy surface, then delete the old per-node syntax once its final
-   consumer disappears.
+### What the rank tranche removes, once the gate passes
+
+`BFEquiv_implies_agreeQR` and its supporting legacy induction; the `toLinf` family with its
+realization and rank lemmas; and the remaining contents of `Karp/Theorem.lean`, letting that
+module disappear.
+
+`Lomega1omega/Embedding.lean` does **not** disappear with it: it also owns the deferred
+`ofCountable` cluster. Trim it to countable recovery, or rename/split it when the countability
+layer is ported — do not delete it merely because its `toLinf` half became obsolete.
+
+## Deferred: one bounded documentation commit, near the end of the migration
+
+Not provenance infrastructure — no `SOURCE_PROVENANCE.md`. Three separate tracks:
+
+1. **Blueprint bibliography** (`blueprint/src/refs.bib`). Verified state at `36e7250`: the file
+   holds exactly `karp1965`, `scott1965`, `keisler1971`, `nadel1974`, `barwise1975`,
+   `marker2016`; `content.tex` cites only `marker2016`, `karp1965`, `barwise1975`, `nadel1974`,
+   `keisler1971`.
+   - **Keisler–Knight 2004 is absent** (DOI `10.2178/bsl/1080330272`) while 25 `[KK04]` markers
+     across 10+ modules refer to it and `CarrierTheorem.lean` names Theorem 1.2.1. Most
+     immediate defect.
+   - **`scott1965` is present but never cited.** Cite it in the Scott section as the original
+     theorem, with Marker Ch. 2 as the modern exposition.
+   - **Karp 1964 is absent** from `refs.bib` (the README has it); add alongside
+     syntax/countability if that material gets a blueprint paragraph.
+   - Expand the bare `[Karp65]`, `[KK04]` markers in `CarrierTheorem.lean`.
+2. **Design credit**, in the migration PR and release notes only, not the README: the
+   fixed-carrier formulation was suggested by Aaron Liu on Zulip and developed against Mathlib
+   in PR #42758; infinitary-logic #43 records the downstream validation. Use exact permalinks.
+3. **Not sources**: TauCetiRoadmap #41 (downstream planning), #43 (implementation evidence),
+   and any AI tooling — the last is a development-assistance disclosure in the PR, not
+   authorship. Malitz 1969 stays unverified; the audit records that the primary paper was never
+   checked.
+
+Module docs must not imply Karp stated the `IndexCoding` formulation. The mathematical
+equivalence is Karp's theorem; "any common carrier equipped with codings" is this
+formalization's API-level presentation of it. When the generalized Scott sentence moves from
+the spike into production it is **new to this repository, not mathematically novel** — Scott
+1965 for the countable theorem, Marker Ch. 2 (Thm 2.19) for the arbitrary-structure statement.
+
+Unrelated to this migration, worth a later cleanup: López–Escobar 1965 is in the README but not
+in `refs.bib`, and the blueprint's López–Escobar chapter has no citation.
 
 ### Dependency fence: quantifier rank is not in PR2
 
