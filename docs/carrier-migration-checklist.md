@@ -40,23 +40,19 @@ pass.
 
 ## Dependency table (re-audited 2026-08-16, at `36e7250`)
 
-### The gate does NOT pass as stated
+### Gate: PASSES (as of `countable_InfEquivW_implies_iso`)
 
-The intended gate was: *every surviving `toLinf` use lies in the legacy rank bridge, and every
-non-rank consumer reaches fixed-carrier syntax directly.* Measured, there are **two** consumers
-outside the defining files, not one:
+*Every surviving `toLinf` use lies in the legacy rank bridge, and every non-rank consumer
+reaches fixed-carrier syntax directly.* The single external ω-`toLinf` consumer is
+`Scott/QuantifierRank.lean:158`, feeding `φ.toLinf` into `BFEquiv_implies_agreeQR`.
 
-| Consumer | Kind | Reaches fixed-carrier syntax? |
-|---|---|---|
-| `Scott/QuantifierRank.lean:158` | rank bridge — feeds `φ.toLinf` into `BFEquiv_implies_agreeQR` | no, and by design until the rank layer lands |
-| `Karp/CountableCorollary.lean:61` | `countable_LinfEquiv_implies_iso_of` | **no** — this is the gate failure |
-
-The second is not a rank use. It converts `LinfEquiv → LomegaEquiv` by mapping each `Sentenceω`
-through `toLinf`, inside a theorem whose *hypothesis* is the legacy `LinfEquiv`. It is the same
-shape as the `ScottCompletion` detour just removed, and has the same one-line fix: restate the
-hypothesis as `InfEquivW` (or `InfEquivAt L ℕ`) and the body collapses, because
-`InfEquivAt L ℕ` and `LomegaEquiv` are the same proposition. Doing that first would let the gate
-pass honestly instead of being weakened to accommodate the site.
+The earlier failure was `Karp/CountableCorollary.lean:61`. Fixing it produced a **stronger
+theorem**, not a restatement: `countable_InfEquivW_implies_iso` goes `InfEquivW → PotentialIso
+→ isomorphism` and needs neither `CountableRefinementHypothesis` nor a countable language, so
+it has no `_of` variant to discharge. Verified: its cone of 2502 constants contains no
+`CountableRefinementHypothesis`, no `scottSentence`, no `*Legacy`. The `Lω₁ω` statement keeps
+both hypotheses because `LomegaEquiv` is genuinely weaker and must route through the Scott
+sentence.
 
 ### Measured dependencies
 
@@ -64,15 +60,15 @@ pass honestly instead of being weakened to accommodate the site.
 `Linf/Operations.lean` (the finitary family). The finitary family has **zero** consumers
 anywhere. The ω family has the two above.
 
-**Importers of `Lomega1omega.Embedding`**: `Scott/QuantifierRank.lean`,
-`Karp/CountableCorollary.lean`, and `Core.lean` (bundle).
+**Importers of `Lomega1omega.Embedding`**: `Scott/QuantifierRank.lean` (rank bridge) and
+`Core.lean` (bundle).
 
 **Consumers of `BFEquiv_implies_agreeQR`**: `Scott/QuantifierRank.lean:158` (through `toLinf`)
 and `ModelTheory/TypePreservingBF.lean:177` (directly, on a legacy formula — no `toLinf`).
 
-**Importers of `Karp.Theorem`**: `Core.lean`, `Scott/QuantifierRank.lean`,
-`ModelTheory/TypePreservingBF.lean`, and `Karp/CountableCorollary.lean` — where the import is
-now **stale**: it uses nothing from the file.
+**Importers of `Karp.Theorem`**: `Core.lean` (bundle), `Scott/QuantifierRank.lean` and
+`ModelTheory/TypePreservingBF.lean` — both rank. `Karp/CountableCorollary.lean`'s stale import
+is gone.
 
 ### Remaining legacy declarations, grouped
 
@@ -86,11 +82,15 @@ now **stale**: it uses nothing from the file.
 
 ### Remaining sequence
 
-1. Fix the `CountableCorollary` gate failure above (restate the hypothesis as `InfEquivW`).
-2. Re-check the gate; it should then pass with the rank bridge as the sole `toLinf` consumer.
-3. Stage the rank module on top of PR2.
-4. Port `BFEquiv_implies_agreeQR`, Scott rank, and `TypePreservingBF`.
-5. Delete `toLinf` and the remaining legacy Karp file.
+1. ~~Fix the `CountableCorollary` gate failure.~~ Done — and it yielded a stronger theorem.
+2. ~~Re-check the gate.~~ Done — passes.
+3. Delete the unused finitary `BoundedFormula.toLinf` family (zero consumers; Mathlib's
+   carrier-generic `BoundedFormula.toInf` is the direct replacement). Separate small commit.
+4. Stage the rank module on top of PR2.
+5. Port `BFEquiv_implies_agreeQR`, Scott rank, and `TypePreservingBF`. The
+   `TypePreservingBF → BFEquiv_implies_agreeQR` edge is direct, not through `toLinf`, so the
+   tranche must port the agreement theorem itself — removing the ω embedding is not enough.
+6. Delete `toLinf` and the remaining legacy Karp file.
 
 ### What the rank tranche removes, once the gate passes
 
