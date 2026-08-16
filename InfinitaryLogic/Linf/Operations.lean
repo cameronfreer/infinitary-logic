@@ -245,10 +245,6 @@ private def insertLastBoundInf {n : ℕ} : Fin (n + 1) → Fin n ⊕ Fin 1 :=
 def existsLastVarInf {n : ℕ} (φ : L.FormulaInfLegacy (Fin (n + 1))) : L.FormulaInfLegacy (Fin n) :=
   (φ.relabel insertLastBoundInf).ex
 
-/-- Universally quantify over the last free variable of an L∞ω formula. -/
-def forallLastVarInf {n : ℕ} (φ : L.FormulaInfLegacy (Fin (n + 1))) : L.FormulaInfLegacy (Fin n) :=
-  (φ.relabel insertLastBoundInf).all
-
 /-- Maps `j : Fin k` to `⟨j.val + 1, ...⟩ : Fin (1 + k)`. -/
 private def Fin.succShiftInf {k : ℕ} : Fin k → Fin (1 + k) :=
   fun j => ⟨j.val + 1, by omega⟩
@@ -368,35 +364,9 @@ theorem realize_existsLastVarInf {n : ℕ} (φ : L.FormulaInfLegacy (Fin (n + 1)
   simp only [existsLastVarInf, FormulaInfLegacy.Realize, realize_ex,
     realize_relabel_insertLastBoundInf_zero, snoc_elim0_zero_inf]
 
-/-- Semantics of `forallLastVarInf`: universally quantifies over the last variable. -/
-theorem realize_forallLastVarInf {n : ℕ} (φ : L.FormulaInfLegacy (Fin (n + 1))) (v : Fin n → M) :
-    FormulaInfLegacy.Realize (forallLastVarInf φ) v ↔ ∀ x : M, FormulaInfLegacy.Realize φ (Fin.snoc v x) := by
-  simp only [forallLastVarInf, FormulaInfLegacy.Realize, realize_all,
-    realize_relabel_insertLastBoundInf_zero, snoc_elim0_zero_inf]
-
 end LastVar
 
 end BoundedFormulaInfLegacy
-
-namespace FormulaInfLegacy
-
-/-- Converts a formula with `Fin 0` free variables to a sentence (with `Empty` free variables).
-
-Since both `Fin 0` and `Empty` are empty types, this is a purely type-theoretic conversion
-that does not change the semantics of the formula. -/
-def toSentenceInf (φ : L.FormulaInfLegacy (Fin 0)) : L.SentenceInfLegacy :=
-  φ.mapFreeVars Fin.elim0
-
-/-- `toSentenceInf` preserves semantics: the sentence realizes in M iff the original
-formula realizes with the `Fin.elim0` assignment. -/
-theorem realize_toSentenceInf {M : Type*} [L.Structure M]
-    (φ : L.FormulaInfLegacy (Fin 0)) :
-    SentenceInfLegacy.Realize φ.toSentenceInf M ↔ FormulaInfLegacy.Realize φ (Fin.elim0 : Fin 0 → M) := by
-  unfold toSentenceInf SentenceInfLegacy.Realize FormulaInfLegacy.Realize
-  rw [BoundedFormulaInfLegacy.realize_mapFreeVars]
-  simp only [comp_fin_elim0]
-
-end FormulaInfLegacy
 
 namespace BoundedFormula
 

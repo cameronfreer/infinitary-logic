@@ -9,15 +9,13 @@ import Mathlib.Data.Set.Basic
 import Architect
 
 /-!
-# L∞ω Theories and Semantic Entailment
+# L∞ω Elementary Equivalence
 
-This file defines theories, models, semantic entailment, and elementary equivalence
-in L∞ω (infinitary logic with arbitrary conjunctions/disjunctions).
+This file defines L∞ω-elementary equivalence between structures, in both the
+universe-restricted and universe-correct forms, and its invariance under isomorphism.
 
 ## Main Definitions
 
-- `TheoryInf`: A theory in L∞ω is a set of sentences.
-- `TheoryInf.Model`: A structure M is a model of theory T if it satisfies all sentences in T.
 - `LinfEquiv`: L∞ω-elementary equivalence between structures.
 
 ## Main Results
@@ -40,33 +38,6 @@ namespace Language
 variable {L : Language.{u, v}}
 
 open FirstOrder Structure
-
-/-! ### Theories -/
-
-/-- A theory in L∞ω is a set of L∞ω sentences. -/
-abbrev TheoryInf (L : Language.{u, v}) := Set L.SentenceInfLegacy
-
-namespace TheoryInf
-
-variable {T T' : L.TheoryInf} {φ : L.SentenceInfLegacy}
-
-/-- A structure M is a model of theory T if it satisfies all sentences in T. -/
-def Model (T : L.TheoryInf) (M : Type w) [L.Structure M] : Prop :=
-  ∀ φ ∈ T, SentenceInfLegacy.Realize φ M
-
-/-- The empty theory has every structure as a model. -/
-theorem Model.empty (M : Type w) [L.Structure M] : Model (∅ : L.TheoryInf) M := by
-  intro φ hφ
-  exact False.elim (Set.notMem_empty φ hφ)
-
-/-- If T ⊆ T' and M ⊨ T', then M ⊨ T. -/
-theorem Model.mono (h : T ⊆ T') {M : Type w} [L.Structure M] (hM : T'.Model M) : T.Model M :=
-  fun φ hφ => hM φ (h hφ)
-
-/-- Semantic entailment from the empty theory: valid sentences. -/
-def Valid (φ : L.SentenceInfLegacy) : Prop := ∀ (M : Type) [L.Structure M], SentenceInfLegacy.Realize φ M
-
-end TheoryInf
 
 /-! ### Isomorphism Invariance of Realization -/
 
@@ -187,16 +158,6 @@ theorem of_equiv (e : M ≃[L] N) : LinfEquivW L M N := by
   rwa [comp_empty_elim e, comp_fin_elim0 e] at h
 
 end LinfEquivW
-
-/-! ### Invariance under Isomorphism -/
-
-/-- Models of a theory are preserved under isomorphism. -/
-theorem TheoryInf.Model.of_equiv {T : L.TheoryInf} {M N : Type w} [L.Structure M]
-    [L.Structure N] (hM : T.Model M) (e : M ≃[L] N) : T.Model N := by
-  intro φ hφ
-  have h := BoundedFormulaInfLegacy.realize_equiv e φ (Empty.elim : Empty → M) (Fin.elim0 : Fin 0 → M)
-  rw [comp_empty_elim e, comp_fin_elim0 e] at h
-  exact h.mp (hM φ hφ)
 
 end Language
 
