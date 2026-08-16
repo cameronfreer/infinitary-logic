@@ -56,9 +56,10 @@ sentence.
 
 ### Measured dependencies
 
-**`toLinf` / `realize_toLinf`** — defined in `Lomega1omega/Embedding.lean` (the ω family) and
-`Linf/Operations.lean` (the finitary family). The finitary family has **zero** consumers
-anywhere. The ω family has the two above.
+**`toLinf` / `realize_toLinf`** — the finitary family in `Linf/Operations.lean` had zero
+consumers anywhere and is **deleted**; Mathlib's carrier-generic `BoundedFormula.toInf` is its
+direct replacement. The ω family in `Lomega1omega/Embedding.lean` remains, with the rank bridge
+as its sole external consumer.
 
 **Importers of `Lomega1omega.Embedding`**: `Scott/QuantifierRank.lean` (rank bridge) and
 `Core.lean` (bundle).
@@ -74,7 +75,7 @@ is gone.
 
 | Group | Decls | Occurrences | Files |
 |---|---:|---:|---|
-| core legacy syntax | 67 | 153 | `Linf/{Syntax,Semantics,Operations,Theory}.lean` |
+| core legacy syntax | 61 | 131 | `Linf/{Syntax,Semantics,Operations,Theory}.lean` |
 | rank | 36 | 62 | `Linf/QuantifierRank.lean`, `Karp/Theorem.lean`, `Scott/QuantifierRank.lean`, `ModelTheory/TypePreservingBF.lean` |
 | countability + `toLinf` | 22 | 46 | `Lomega1omega/Embedding.lean` |
 | countability | 11 | 21 | `Linf/Countability.lean` |
@@ -84,8 +85,7 @@ is gone.
 
 1. ~~Fix the `CountableCorollary` gate failure.~~ Done — and it yielded a stronger theorem.
 2. ~~Re-check the gate.~~ Done — passes.
-3. Delete the unused finitary `BoundedFormula.toLinf` family (zero consumers; Mathlib's
-   carrier-generic `BoundedFormula.toInf` is the direct replacement). Separate small commit.
+3. ~~Delete the unused finitary `BoundedFormula.toLinf` family.~~ Done.
 4. Stage the rank module on top of PR2.
 5. Port `BFEquiv_implies_agreeQR`, Scott rank, and `TypePreservingBF`. The
    `TypePreservingBF → BFEquiv_implies_agreeQR` edge is direct, not through `toLinf`, so the

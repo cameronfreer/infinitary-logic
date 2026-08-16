@@ -16,8 +16,6 @@ This file defines operations on L∞ω formulas including relabeling, casting, a
 - `BoundedFormulaInfLegacy.relabel`: Relabels free variables.
 - `BoundedFormulaInfLegacy.castLE`: Increases the number of bound variables.
 - `BoundedFormulaInfLegacy.subst`: Substitutes terms for free variables.
-- `BoundedFormula.toLinf`: Embeds first-order formulas into L∞ω.
-- `BoundedFormulaω.toLinf`: Embeds Lω₁ω formulas into L∞ω.
 
 ## Implementation Notes
 
@@ -179,58 +177,6 @@ def subst : ∀ {n : ℕ}, L.BoundedFormulaInfLegacy α n → (α → L.Term β)
   | _, iInf φs, tf => iInf fun i => (φs i).subst tf
 
 end BoundedFormulaInfLegacy
-
-namespace BoundedFormula
-
-/-- Embeds a first-order bounded formula into L∞ω. -/
-def toLinf : ∀ {n : ℕ}, L.BoundedFormula α n → L.BoundedFormulaInfLegacy α n
-  | _, falsum => BoundedFormulaInfLegacy.falsum
-  | _, equal t₁ t₂ => BoundedFormulaInfLegacy.equal t₁ t₂
-  | _, rel R ts => BoundedFormulaInfLegacy.rel R ts
-  | _, imp φ ψ => (φ.toLinf).imp (ψ.toLinf)
-  | _, all φ => φ.toLinf.all
-
-variable {M : Type*} [L.Structure M] {v : α → M} {xs : Fin n → M}
-
-@[simp]
-theorem realize_toLinf (φ : L.BoundedFormula α n) :
-    φ.toLinf.Realize v xs ↔ φ.Realize v xs := by
-  induction φ with
-  | falsum => rfl
-  | equal => rfl
-  | rel => rfl
-  | imp _ _ ih₁ ih₂ =>
-    simp only [toLinf, BoundedFormulaInfLegacy.realize_imp, BoundedFormula.realize_imp, ih₁, ih₂]
-  | all _ ih =>
-    simp only [toLinf, BoundedFormulaInfLegacy.realize_all, BoundedFormula.realize_all, ih]
-
-end BoundedFormula
-
-namespace Formula
-
-/-- Embeds a first-order formula into L∞ω. -/
-def toLinf (φ : L.Formula α) : L.FormulaInfLegacy α := BoundedFormula.toLinf φ
-
-@[simp]
-theorem realize_toLinf {M : Type*} [L.Structure M] {v : α → M} (φ : L.Formula α) :
-    FormulaInfLegacy.Realize φ.toLinf v ↔ φ.Realize v :=
-  BoundedFormula.realize_toLinf φ
-
-end Formula
-
-namespace Sentence
-
-/-- Embeds a first-order sentence into L∞ω. -/
-def toLinf (φ : L.Sentence) : L.SentenceInfLegacy := Formula.toLinf φ
-
-@[simp]
-theorem realize_toLinf {M : Type*} [L.Structure M] [Nonempty M] (φ : L.Sentence) :
-    SentenceInfLegacy.Realize φ.toLinf M ↔ M ⊨ φ := by
-  have h : (default : Empty → M) = (fun e : Empty => e.elim) := Empty.eq_elim default
-  simp only [SentenceInfLegacy.Realize, Sentence.Realize, Formula.Realize, toLinf, Formula.toLinf, h]
-  exact BoundedFormula.realize_toLinf φ
-
-end Sentence
 
 end Language
 
