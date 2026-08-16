@@ -134,7 +134,9 @@ def removedNames : List Name :=
    `FirstOrder.Language.PotentialIso_implies_LinfEquiv,
    `FirstOrder.Language.karp_theorem_forward,
    `FirstOrder.Language.karp_theorem_universe0,
-   `FirstOrder.Language.karp_theorem_idx]
+   `FirstOrder.Language.karp_theorem_idx,
+   `FirstOrder.Language.PotentialIso_implies_LinfEquivW,
+   `FirstOrder.Language.linfEquivW_of_realize_canonicalScottSentenceω_pair]
 
 def forbiddenExact : List Name := removedNames
 
