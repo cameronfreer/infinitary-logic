@@ -19,7 +19,7 @@ rev = "3d425859e73fcfbef85b9638c2a91708ef4a22d4"
 [[require]]
 name = "mathlib"
 git = "https://github.com/cameronfreer/mathlib4"
-rev = "3492e69d21"
+rev = "add88ffe6c"
 
 [[lean_lib]]
 name = "InfinitaryLogic"
