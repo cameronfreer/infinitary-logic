@@ -136,7 +136,11 @@ def removedNames : List Name :=
    `FirstOrder.Language.karp_theorem_universe0,
    `FirstOrder.Language.karp_theorem_idx,
    `FirstOrder.Language.PotentialIso_implies_LinfEquivW,
-   `FirstOrder.Language.linfEquivW_of_realize_canonicalScottSentenceω_pair]
+   `FirstOrder.Language.linfEquivW_of_realize_canonicalScottSentenceω_pair,
+   `FirstOrder.Language.BoundedFormulaω.toLinf,
+   `FirstOrder.Language.Formulaω.toLinf,
+   `FirstOrder.Language.Sentenceω.toLinf,
+   `FirstOrder.Language.BoundedFormulaω.realize_toLinf]
 
 def forbiddenExact : List Name := removedNames
 
@@ -148,12 +152,20 @@ def requiredWitness : List Name :=
    `FirstOrder.Language.BoundedFormulaInf.realize_iInfAlong,
    `FirstOrder.Language.BoundedFormulaInf]
 
+/-- The agreement theorem must run on the UPSTREAM rank, not a local copy of it. -/
+def rankWitness : List Name :=
+  [`FirstOrder.Language.BoundedFormulaInf.qrank,
+   `FirstOrder.Language.BFEquiv]
+
 /-- Roots whose cone must reach the coded machinery. `karp_theorem_at` is the theorem doing
 the work; the other two are its packagings, and inherit the cone. -/
 def guardedRoots : List Name :=
   [`FirstOrder.Language.karp_theorem_at,
    `FirstOrder.Language.karp_theorem_on_sum,
    `FirstOrder.Language.karp_theorem_w]
+
+/-- The rank-bounded agreement theorem, guarded on the same terms plus the rank witnesses. -/
+def rankRoots : List Name := [`FirstOrder.Language.BFEquiv_implies_agreeQR]
 
 run_cmd do
   let env ← getEnv
@@ -173,5 +185,15 @@ run_cmd do
     unless missing.isEmpty do
       throwError "[MISSING WITNESS] {root} does not consume the coded-conjunction \
         machinery: {missing}"
+  for root in rankRoots do
+    unless (env.find? root).isSome do throwError "root declaration {root} not found"
+    let deps := transitiveDeps env root
+    let hits := deps.toList.filter fun d =>
+      forbiddenSub.any (hasSub d.toString ·) || forbiddenExact.contains d
+    unless hits.isEmpty do
+      throwError "[FORBIDDEN] {root} depends on the legacy syntax or embedding: {hits}"
+    let missing := rankWitness.filter fun r => !deps.contains r
+    unless missing.isEmpty do
+      throwError "[MISSING WITNESS] {root} does not consume the upstream rank: {missing}"
   logInfo "Karp carrier guard: OK (elaboration gates pass; old implementation absent; cones \
     consume IndexCoding/iInfAlong and no legacy syntax)"

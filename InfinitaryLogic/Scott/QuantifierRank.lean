@@ -5,8 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Scott.Formula
 import InfinitaryLogic.Lomega1omega.QuantifierRank
-import InfinitaryLogic.Lomega1omega.Embedding
-import InfinitaryLogic.Karp.Theorem
+import InfinitaryLogic.Karp.CarrierTheorem
 
 /-!
 # Quantifier Rank of Scott Formulas
@@ -122,31 +121,13 @@ theorem scottFormula_qrank_le {M : Type w} [L.Structure M] [Countable M]
     apply Ordinal.iSup_le; intro ⟨γ, hγ⟩
     exact le_trans (ih γ hγ a (lt_trans hγ hα)) (le_of_lt hγ)
 
-omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-/-- The `toLinf` embedding preserves quantifier rank. -/
-private theorem toLinf_qrank {α : Type*} {n : ℕ} (φ : L.BoundedFormulaω α n) :
-    (φ.toLinf).qrank = φ.qrank := by
-  induction φ with
-  | falsum => rfl
-  | equal => rfl
-  | rel => rfl
-  | imp φ ψ ih₁ ih₂ =>
-    simp only [BoundedFormulaω.toLinf, BoundedFormulaInfLegacy.qrank_imp, BoundedFormulaω.qrank_imp,
-      ih₁, ih₂]
-  | all φ ih =>
-    simp only [BoundedFormulaω.toLinf, BoundedFormulaInfLegacy.qrank_all, BoundedFormulaω.qrank_all, ih]
-  | iSup φs ih =>
-    simp only [BoundedFormulaω.toLinf, BoundedFormulaInfLegacy.qrank_iSup, BoundedFormulaω.qrank_iSup]
-    congr 1; funext i; exact ih i
-  | iInf φs ih =>
-    simp only [BoundedFormulaω.toLinf, BoundedFormulaInfLegacy.qrank_iInf, BoundedFormulaω.qrank_iInf]
-    congr 1; funext i; exact ih i
-
 omit [Countable (Σ l, L.Relations l)] in
 /-- BF-equivalence at level α implies agreement on Lω₁ω formulas of quantifier rank ≤ α.
 
-This is derived from the forward direction of the Karp lemma
-(`BFEquiv_implies_agreeQR`) by embedding Lω₁ω into L∞ω via `toLinf`. -/
+This is the carrier-`ℕ` case of the forward direction of the Karp lemma
+(`BFEquiv_implies_agreeQR`). There is no embedding step: `L.Formulaω` *is*
+`L.BoundedFormulaInf ℕ` and the ω rank *is* the carrier-generic rank, so specializing the
+carrier is the whole proof. -/
 theorem BFEquiv_implies_agree_formulas_omega {M : Type w} [L.Structure M] [Countable M]
     {N : Type w} [L.Structure N] [Countable N]
     {n : ℕ} (a : Fin n → M) (b : Fin n → N)
@@ -155,9 +136,7 @@ theorem BFEquiv_implies_agree_formulas_omega {M : Type w} [L.Structure M] [Count
     ∀ (φ : L.Formulaω (Fin n)), φ.qrank ≤ α →
       (Formulaω.Realize φ a ↔ Formulaω.Realize φ b) := by
   intro hBF φ hφ
-  have hLinf := BFEquiv_implies_agreeQR α a b hBF φ.toLinf (toLinf_qrank φ ▸ hφ)
-  simp only [Formulaω.realize_toLinf] at hLinf
-  exact hLinf
+  exact BFEquiv_implies_agreeQR α a b hBF φ hφ
 
 omit [L.IsRelational] in
 /-- Agreement on all Lω₁ω formulas of quantifier rank ≤ α implies BF-equivalence.

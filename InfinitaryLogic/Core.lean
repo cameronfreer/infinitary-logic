@@ -40,7 +40,6 @@ import InfinitaryLogic.Scott.Height
 
 -- Karp's theorem
 import InfinitaryLogic.Karp.PotentialIso
-import InfinitaryLogic.Karp.Theorem
 import InfinitaryLogic.Karp.CarrierTheorem
 import InfinitaryLogic.Karp.CountableCorollary
 
