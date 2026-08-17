@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Lomega1omega.Semantics
 import InfinitaryLogic.Lomega1omega.Operations
+import Mathlib.ModelTheory.Infinitary.QuantifierRank
 import Mathlib.SetTheory.Ordinal.Family
 
 /-!
@@ -43,22 +44,21 @@ open FirstOrder Structure Ordinal
 
 /-! ### Quantifier Rank -/
 
-/-- The quantifier rank of an Lω₁ω formula.
+/-- The quantifier rank of an Lω₁ω formula: Mathlib's carrier-generic
+`BoundedFormulaInf.qrank`, specialized at the branching carrier `ℕ`.
 
-- Atomic formulas (falsum, equal, rel) have rank 0
-- Implication takes the max of its arguments
-- Universal quantification adds 1
-- Countable connectives take the sup of their arguments
+Because the rank is valued in the carrier's own ordinal universe, the `ℕ` specialization
+lands in `Ordinal.{0}` exactly — no lifting, which is what Scott analysis needs.
+
+This is an `abbrev`, so it is the upstream rank rather than a parallel copy of it (gated by
+`rfl` below). The ω-facing lemmas beneath keep their historical statements: `qrank_all` and
+`qrank_ex` are still stated with `+ 1` rather than `Order.succ`, so downstream sees no
+proposition-level change. Only code that relied on the old definition unfolding by `rfl` is
+affected.
 
 Note: For Lω₁ω, the quantifier rank is always a countable ordinal (< ω₁). -/
-noncomputable def BoundedFormulaω.qrank : L.BoundedFormulaω α n → Ordinal.{0}
-  | .falsum       => 0
-  | .equal _ _    => 0
-  | .rel _ _      => 0
-  | .imp φ ψ      => max φ.qrank ψ.qrank
-  | .all φ        => φ.qrank + 1
-  | .iSup φs      => ⨆ (k : ℕ), (φs k).qrank
-  | .iInf φs      => ⨆ (k : ℕ), (φs k).qrank
+noncomputable abbrev BoundedFormulaω.qrank : L.BoundedFormulaω α n → Ordinal.{0} :=
+  BoundedFormulaInf.qrank
 
 /-- Quantifier rank of a formula (no bound variables). -/
 noncomputable abbrev Formulaω.qrank (φ : L.Formulaω α) : Ordinal.{0} :=
@@ -67,6 +67,17 @@ noncomputable abbrev Formulaω.qrank (φ : L.Formulaω α) : Ordinal.{0} :=
 /-- Quantifier rank of a sentence. -/
 noncomputable abbrev Sentenceω.qrank (φ : L.Sentenceω) : Ordinal.{0} :=
   BoundedFormulaω.qrank φ
+
+/-! ### Gate: the ω rank IS the upstream rank
+
+Must close by `rfl` — that is what certifies this is Mathlib's rank specialized at `ℕ`
+rather than a parallel recursive copy that happens to agree. -/
+
+example (φ : L.BoundedFormulaω α n) :
+    BoundedFormulaω.qrank φ = BoundedFormulaInf.qrank φ := rfl
+
+/-- The `ℕ` specialization lands in `Ordinal.{0}` exactly, with no lift. -/
+noncomputable example (φ : L.BoundedFormulaω α n) : Ordinal.{0} := BoundedFormulaω.qrank φ
 
 /-! ### Quantifier Rank Lemmas -/
 
@@ -91,9 +102,12 @@ theorem qrank_rel {l : ℕ} (R : L.Relations l) (ts : Fin l → L.Term (α ⊕ F
 theorem qrank_imp (φ ψ : L.BoundedFormulaω α n) :
     (imp φ ψ).qrank = max φ.qrank ψ.qrank := rfl
 
+/-- Universal quantification adds 1. Kept in `+ 1` form: upstream states it with
+`Order.succ`, and the two agree for ordinals. -/
 @[simp]
 theorem qrank_all (φ : L.BoundedFormulaω α (n + 1)) :
-    (all φ).qrank = φ.qrank + 1 := rfl
+    (all φ).qrank = φ.qrank + 1 :=
+  BoundedFormulaInf.qrank_all.trans (Order.succ_eq_add_one _)
 
 @[simp]
 theorem qrank_iSup (φs : ℕ → L.BoundedFormulaω α n) :
@@ -112,7 +126,7 @@ theorem qrank_top : (⊤ : L.BoundedFormulaω α n).qrank = 0 := by
 /-- Negation preserves quantifier rank. -/
 @[simp]
 theorem qrank_not (φ : L.BoundedFormulaω α n) : φ.not.qrank = φ.qrank := by
-  simp [BoundedFormulaInf.not, qrank_imp, qrank_falsum]
+  simp [BoundedFormulaInf.not, qrank_falsum]
 
 /-- Conjunction takes max of ranks. -/
 theorem qrank_and (φ ψ : L.BoundedFormulaω α n) :
@@ -124,7 +138,7 @@ theorem qrank_or (φ ψ : L.BoundedFormulaω α n) :
     (φ.or ψ).qrank = max φ.qrank ψ.qrank := by
   simp only [BoundedFormulaω.or, qrank_not, qrank_imp]
 
-/-- Existential quantification adds 1 to rank. -/
+/-- Existential quantification adds 1 to rank. Kept in `+ 1` form, as for `qrank_all`. -/
 theorem qrank_ex (φ : L.BoundedFormulaω α (n + 1)) :
     φ.ex.qrank = φ.qrank + 1 := by
   simp only [BoundedFormulaInf.ex, qrank_not, qrank_all]
