@@ -12,7 +12,7 @@ FirstOrder.Language.scottRank_lt_omega1
 FirstOrder.Language.scottHeight
 FirstOrder.Language.scottHeight_lt_omega1
 FirstOrder.Language.PotentialIso
-FirstOrder.Language.LinfEquivW
+FirstOrder.Language.InfEquivW
 FirstOrder.Language.karp_theorem_w
 FirstOrder.Language.model_existence
 FirstOrder.Language.karp_completeness

@@ -5,8 +5,6 @@ import InfinitaryLogic.Linf.Syntax
 import InfinitaryLogic.Linf.Semantics
 import InfinitaryLogic.Linf.Operations
 import InfinitaryLogic.Linf.Countability
-import InfinitaryLogic.Linf.Theory
-import InfinitaryLogic.Linf.QuantifierRank
 
 -- Lω₁ω (countable infinitary logic)
 import InfinitaryLogic.Lomega1omega.Syntax

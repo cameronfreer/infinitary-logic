@@ -67,6 +67,11 @@ def InfEquivAt (L : Language.{u, v}) (ι : Type uι) (M : Type w) (N : Type w')
 /-- `L∞ω`-equivalence with branching carriers drawn from the structures' own universe. The
 quantifier over index types is here, outside the syntax, rather than inside every
 infinitary node. -/
+@[blueprint "def:linf-equiv"
+  (title := /-- $\Linf$-elementary equivalence -/)
+  (statement := /-- $M \equiv_{\Linf}^w N$: the structures satisfy the same $\Linf$
+    sentences whose infinitary connectives branch over carriers in universe $w$. The
+    quantifier over branching carriers sits outside the syntax. -/)]
 def InfEquivW (L : Language.{u, v}) (M N : Type w) [L.Structure M] [L.Structure N] : Prop :=
   ∀ ι : Type w, InfEquivAt L ι M N
 
