@@ -33,6 +33,9 @@ jobs:
           use-github-cache: true
           use-mathlib-cache: true
 
+      - name: Verify docbuild resolves the same toolchain and Mathlib as the root
+        run: python3 scripts/check_docbuild_sync.py
+
       - name: Verify sorry boundary
         run: python3 scripts/check_sorry_boundary.py
 
