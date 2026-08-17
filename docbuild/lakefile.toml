@@ -7,7 +7,10 @@ packagesDir = "../.lake/packages"
 name = "InfinitaryLogic"
 path = "../"
 
+# Pinned to an exact commit on doc-gen4's main branch, not to a moving branch name.
+# There is no v4.34.0 tag; main is on leanprover/lean4:v4.34.0-rc1, matching the root
+# toolchain. Bump this together with the root toolchain.
 [[require]]
 scope = "leanprover"
 name = "doc-gen4"
-rev = "v4.32.0"
+rev = "db53577d4634df2604840cabb4bc74685300afe4"
