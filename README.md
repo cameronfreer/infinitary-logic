@@ -107,7 +107,7 @@ modules live in the separate non-default `InfinitaryLogicWIP` target, so they ne
 
 | Directory | Contents |
 |---|---|
-| `Linf/`, `Lomega1omega/` | the two syntaxes — formulas, semantics, operations, the embedding between them, countability predicates, quantifier rank |
+| `Lomega1omega/` | the Lω₁ω layer over Mathlib's fixed-carrier infinitary syntax — semantics, operations, fragments, polarity, quantifier rank |
 | `Scott/`, `Karp/` | atomic diagrams, back-and-forth equivalence, Scott formulas and sentences, rank and height; Karp's theorem |
 | `Methods/` | the proof engines: the Henkin/consistency-property kernel, interpolation, the well-ordering machine, López–Escobar, Ehrenfeucht–Mostowski |
 | `ModelTheory/` | Löwenheim–Skolem, Hanf numbers and the Hanf spectrum, small models, counting |

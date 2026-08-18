@@ -121,11 +121,27 @@ def hasSub (hay needle : String) : Bool := (hay.splitOn needle).length > 1
 def forbiddenSub : List String := ["BoundedFormulaInfLegacy", "FormulaInfLegacy",
   "SentenceInfLegacy"]
 
-/-- The old Karp implementation's operations. These are now DELETED, so the assertion below
-is that they are absent from the environment entirely — a stronger and cheaper check than a
-cone scan, and one that fails loudly if any of them is ever reintroduced. -/
+/-- The old Karp implementation's operations, and the per-node-index syntax layer itself.
+These are now DELETED, so the assertion below is that they are absent from the environment
+entirely — a stronger and cheaper check than a cone scan, and one that fails loudly if any of
+them is ever reintroduced.
+
+The three type names are the migration's exit condition E1 in mechanical form. Grep cannot
+serve here: this file must name them in order to forbid them, and module docs may legitimately
+mention them in prose. Absence from the environment is the property actually wanted.
+
+`IsCountable`, `IsKappa`, `indexBound` and `ofCountable` went with the syntax they were defined
+over. None had a consumer anywhere in the tree; a carrier-generic replacement, if one is ever
+wanted, belongs upstream next to `BoundedFormulaInf`, not here. -/
 def removedNames : List Name :=
-  [`FirstOrder.Language.BoundedFormulaInfLegacy.liftUI,
+  [`FirstOrder.Language.BoundedFormulaInfLegacy,
+   `FirstOrder.Language.FormulaInfLegacy,
+   `FirstOrder.Language.SentenceInfLegacy,
+   `FirstOrder.Language.BoundedFormulaInfLegacy.IsCountable,
+   `FirstOrder.Language.BoundedFormulaInfLegacy.IsKappa,
+   `FirstOrder.Language.BoundedFormulaInfLegacy.indexBound,
+   `FirstOrder.Language.BoundedFormulaInfLegacy.ofCountable,
+   `FirstOrder.Language.BoundedFormulaInfLegacy.liftUI,
    `FirstOrder.Language.BoundedFormulaInfLegacy.realize_liftUI,
    `FirstOrder.Language.BoundedFormulaInfLegacy.existsLastVarInf,
    `FirstOrder.Language.BoundedFormulaInfLegacy.realize_existsLastVarInf,

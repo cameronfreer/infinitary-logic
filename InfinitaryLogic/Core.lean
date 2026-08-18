@@ -1,10 +1,6 @@
 import InfinitaryLogic.Util
 
 -- L∞ω (arbitrary infinitary logic)
-import InfinitaryLogic.Linf.Syntax
-import InfinitaryLogic.Linf.Semantics
-import InfinitaryLogic.Linf.Operations
-import InfinitaryLogic.Linf.Countability
 
 -- Lω₁ω (countable infinitary logic)
 import InfinitaryLogic.Lomega1omega.Syntax
@@ -12,7 +8,6 @@ import InfinitaryLogic.Lomega1omega.Semantics
 import InfinitaryLogic.Lomega1omega.CountableIndex
 import InfinitaryLogic.Lomega1omega.Fragment
 import InfinitaryLogic.Lomega1omega.Operations
-import InfinitaryLogic.Lomega1omega.Embedding
 import InfinitaryLogic.Lomega1omega.Theory
 import InfinitaryLogic.Lomega1omega.Entailment
 import InfinitaryLogic.Lomega1omega.QuantifierRank
@@ -47,20 +42,28 @@ import InfinitaryLogic.Karp.CountableCorollary
 Import this bundle for the foundational objects of infinitary logic without
 model-existence machinery, admissible-set theory, or descriptive set theory.
 
-## Linf / Lomega1omega parallel structure
+## One syntax, fixed at a branching carrier
 
-`Linf/` and `Lomega1omega/` have a deliberately parallel file structure
-(Syntax, Semantics, Operations, Theory, QuantifierRank) with consistent
-theorem names (`realize_imp`, `realize_iSup`, `realize_iInf`, etc.). The
-fundamental difference is the connective index type:
+There is a single infinitary syntax, Mathlib's `BoundedFormulaInf ι α n`, whose
+`iSup`/`iInf` nodes branch over a carrier `ι` fixed once for the whole formula
+rather than chosen at each node. L∞ω is that type at an arbitrary carrier; Lω₁ω
+is the same type at carrier `ℕ`:
 
-- **Linf**: `iSup {ι : Type uι} (φs : ι → ...)` — arbitrary index types
-- **Lomega1omega**: `iSup (φs : ℕ → ...)` — ℕ-indexed only
+```
+L.BoundedFormulaω α n  =  L.BoundedFormulaInf ℕ α n     -- definitional
+L.Sentenceω            =  L.SentenceInf ℕ               -- definitional
+LomegaEquiv L M N      =  InfEquivAt L ℕ M N            -- definitional
+```
 
-This difference is baked into the inductive type constructors
-(`BoundedFormulaInfLegacy` vs `BoundedFormulaω`), so a shared abstract kernel
-would require type-level parametrization over the index type — feasible
-but non-trivial. The current parallel structure trades ~1000 lines of
-duplication for clarity and type safety. The embedding
-(`Lomega1omega/Embedding.lean`) maps between the two logics.
+So embedding Lω₁ω into L∞ω is **not an operation**: it is specialization at
+carrier `ℕ`, and every ω-level statement is already an L∞ω statement. `Lomega1omega/`
+re-exports the `ℕ` specialization under ω-facing names — `@[match_pattern]` abbrevs
+for the constructors, so `match`/`induction` keep working — and adds what is genuinely
+ω-specific (fragments, polarity, quantifier classes, the `Encodable` adapters).
+
+Transport between carriers is a first-class operation instead: `IndexCoding ι κ`
+reindexes a formula from one carrier to another, padding undecodable branches with
+`⊥`/`⊤`. That is what lets Karp's theorem be stated at an arbitrary common carrier
+(`karp_theorem_at`) with the canonical sum carrier as a corollary
+(`karp_theorem_on_sum`); see `Karp/CarrierTheorem.lean`.
 -/
