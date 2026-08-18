@@ -23,10 +23,15 @@ of the fragment-controlled universals (`tvWitnessSet` — `|A|`-many witness sup
 (`aElementary_of_tarskiVaught`) applies. Witnesses are extracted from existence proofs
 (`Exists.choose`), so no `Nonempty M` hypothesis and no dummy elements are needed.
 
-Marker's textbook bound `max(|A|,|X|)` (Theorem 1.22) is the corollary
-`mk_le_of_functions_le` under `|Σ Functions| ≤ max ℵ₀ |A|`; the countable corollary is
-`exists_countable_aElementary_substructure`. The file is stated for `Language.{0,0}` and
-`Type 0` carriers — the consumers' setting.
+Marker's textbook bound `max(|A|,|X|)` (Theorem 1.22) is the special case
+`|Σ Functions| ≤ max ℵ₀ |A|`; the countable corollary, which is what the consumers use, is
+`exists_countable_aElementary_substructure`.
+
+The language's two universes and the carrier's are independent. The three cardinals being
+compared therefore start in three different universes, so every bound is stated with an explicit
+`Cardinal.lift` into `max u v w`; `lift_mk_umax` reconciles the complementary levels that
+Mathlib's heterogeneous lemmas produce. `exists_aElementary_substructure_of_eq_univ` is the
+same-universe form, where those lifts are identities.
 -/
 
 namespace FirstOrder
@@ -35,7 +40,9 @@ namespace Language
 
 open Cardinal
 
-variable {L : Language.{0, 0}} {M : Type} [L.Structure M] (A : Fragment L)
+universe u v w x y
+
+variable {L : Language.{u, v}} {M : Type w} [L.Structure M] (A : Fragment L)
 
 /-! ## The witness sets and the hull -/
 
@@ -123,7 +130,7 @@ theorem aElementary_lsHull (X : Set M) :
 /-! ## The cardinal bound -/
 
 /-- The per-arity witness suppliers: fragment-controlled bodies paired with tuples from `Y`. -/
-def tvSlice (Y : Set M) (n : ℕ) : Type :=
+def tvSlice (Y : Set M) (n : ℕ) : Type (max u v w) :=
   {q : L.BoundedFormulaω Empty (n + 1) × (Fin n → M) //
     (⟨n, q.1.all⟩ : Σ n, L.BoundedFormulaω Empty n) ∈ A.toSet ∧ ∀ i, q.2 i ∈ Y}
 
@@ -139,12 +146,33 @@ theorem tvWitnessSet_subset_iUnion (Y : Set M) :
   show tvSliceWitness A Y n ⟨(φ, a), hφ, ha⟩ = some hex.choose
   exact dite_eq_left hex
 
+/-! Mathlib's heterogeneous-universe lemmas produce the *complementary* lift level: for a set
+in `M` they give `lift.{max u v}`, and for language-side data `lift.{w}`. Both land in
+`Cardinal.{max u v w}`, but Lean keeps the level expressions distinct, so every bound below is
+stated with the uniform `lift.{max u v w}` and converted once through these. -/
+
+/-- Absorb a `max` into the lift level: `lift.{max y x} #α` and `lift.{y} #α` are the same map
+on `Cardinal.{x}`, but Lean does not identify the level expressions. Both directions of the
+mismatch below are this one lemma — set-of-`M` data lifted by `max u v`, and language data
+lifted by `w`. -/
+private theorem lift_mk_umax {α : Type x} :
+    Cardinal.lift.{max y x} (Cardinal.mk α) = Cardinal.lift.{y} (Cardinal.mk α) :=
+  congrFun Cardinal.lift_umax _
+
 omit [L.Structure M] in
 theorem mk_tvSlice_le (Y : Set M) (n : ℕ) :
     Cardinal.mk (tvSlice A Y n)
-      ≤ max (max Cardinal.aleph0 (Cardinal.mk Y)) (Cardinal.mk A.toSet) := by
-  set κ := max (max Cardinal.aleph0 (Cardinal.mk Y)) (Cardinal.mk A.toSet) with hκ
+      ≤ max (max Cardinal.aleph0 (Cardinal.lift.{max u v w} (Cardinal.mk Y)))
+          (Cardinal.lift.{max u v w} (Cardinal.mk A.toSet)) := by
+  set κ := max (max Cardinal.aleph0 (Cardinal.lift.{max u v w} (Cardinal.mk Y)))
+    (Cardinal.lift.{max u v w} (Cardinal.mk A.toSet)) with hκ
   have hκinf : Cardinal.aleph0 ≤ κ := le_trans (le_max_left _ _) (le_max_left _ _)
+  -- `mk_prod` produces the complementary lift levels; these are the same maps, since
+  -- `max (max u v) w` and `max w (max u v)` are the same universe.
+  have hAlift : Cardinal.lift.{max u v w} (Cardinal.mk A.toSet)
+      = Cardinal.lift.{w} (Cardinal.mk A.toSet) := lift_mk_umax
+  have hYlift : Cardinal.lift.{max u v w} (Cardinal.mk Y)
+      = Cardinal.lift.{max u v} (Cardinal.mk Y) := lift_mk_umax
   have hinj : Function.Injective (fun q : tvSlice A Y n =>
       ((⟨q.1.1, q.2.1⟩, fun i => ⟨q.1.2 i, q.2.2 i⟩) :
         {φ : L.BoundedFormulaω Empty (n + 1) //
@@ -164,7 +192,7 @@ theorem mk_tvSlice_le (Y : Set M) (n : ℕ) :
     exact Subtype.ext (by injection h2)
   have hYle : Cardinal.mk (Fin n → Y) ≤ max Cardinal.aleph0 (Cardinal.mk Y) := by
     have hpow : Cardinal.mk (Fin n → Y) = Cardinal.mk Y ^ (n : Cardinal) := by
-      rw [← Cardinal.power_def, Cardinal.mk_fin]
+      rw [Cardinal.mk_arrow, Cardinal.mk_fin, Cardinal.lift_natCast, Cardinal.lift_uzero]
     rw [hpow]
     calc Cardinal.mk Y ^ (n : Cardinal)
         ≤ (max Cardinal.aleph0 (Cardinal.mk Y)) ^ (n : Cardinal) :=
@@ -175,81 +203,117 @@ theorem mk_tvSlice_le (Y : Set M) (n : ℕ) :
       ≤ Cardinal.mk ({φ : L.BoundedFormulaω Empty (n + 1) //
           (⟨n, φ.all⟩ : Σ n, L.BoundedFormulaω Empty n) ∈ A.toSet} × (Fin n → Y)) :=
         Cardinal.mk_le_of_injective hinj
-    _ = Cardinal.mk {φ : L.BoundedFormulaω Empty (n + 1) //
-          (⟨n, φ.all⟩ : Σ n, L.BoundedFormulaω Empty n) ∈ A.toSet} * Cardinal.mk (Fin n → Y) := by
-        rw [Cardinal.mk_prod, Cardinal.lift_id, Cardinal.lift_id]
-    _ ≤ κ * κ := mul_le_mul' (hφle.trans (le_max_right _ _))
-        (hYle.trans (le_max_left _ _))
+    _ = Cardinal.lift.{w} (Cardinal.mk {φ : L.BoundedFormulaω Empty (n + 1) //
+          (⟨n, φ.all⟩ : Σ n, L.BoundedFormulaω Empty n) ∈ A.toSet})
+            * Cardinal.lift.{max u v} (Cardinal.mk (Fin n → Y)) := Cardinal.mk_prod _ _
+    _ ≤ κ * κ := by
+        refine mul_le_mul' ?_ ?_
+        · refine le_trans (Cardinal.lift_le.mpr hφle) ?_
+          rw [← hAlift]
+          exact le_max_right _ _
+        · refine le_trans (Cardinal.lift_le.mpr hYle) ?_
+          rw [Cardinal.lift_max, Cardinal.lift_aleph0, ← hYlift]
+          exact le_max_left _ _
     _ = κ := Cardinal.mul_eq_self hκinf
 
 theorem mk_tvWitnessSet_le (Y : Set M) :
-    Cardinal.mk (tvWitnessSet A Y)
-      ≤ max (max Cardinal.aleph0 (Cardinal.mk Y)) (Cardinal.mk A.toSet) := by
-  refine le_trans (Cardinal.mk_le_mk_of_subset (tvWitnessSet_subset_iUnion A Y)) ?_
-  refine FirstOrder.HanfLadder.mk_iUnion_le_of_countable
+    Cardinal.lift.{max u v w} (Cardinal.mk (tvWitnessSet A Y))
+      ≤ max (max Cardinal.aleph0 (Cardinal.lift.{max u v w} (Cardinal.mk Y)))
+          (Cardinal.lift.{max u v w} (Cardinal.mk A.toSet)) := by
+  rw [lift_mk_umax.{w, max u v}]
+  refine le_trans (Cardinal.lift_le.mpr
+    (Cardinal.mk_le_mk_of_subset (tvWitnessSet_subset_iUnion A Y))) ?_
+  refine FirstOrder.HanfLadder.lift_mk_iUnion_le_of_countable (ι := ℕ)
     (le_trans (le_max_left _ _) (le_max_left _ _)) fun n => ?_
-  exact le_trans (Cardinal.mk_preimage_of_injective _ _ (Option.some_injective _))
-    (le_trans (Cardinal.mk_range_le) (mk_tvSlice_le A Y n))
+  refine le_trans (Cardinal.lift_le.mpr
+    (Cardinal.mk_preimage_of_injective _ _ (Option.some_injective _))) ?_
+  refine le_trans ?_ (mk_tvSlice_le A Y n)
+  calc Cardinal.lift.{max u v} (Cardinal.mk (Set.range (tvSliceWitness A Y n)))
+      = Cardinal.lift.{max u v w} (Cardinal.mk (Set.range (tvSliceWitness A Y n))) :=
+        lift_mk_umax.{w, max u v}.symm
+    _ ≤ Cardinal.mk (tvSlice A Y n) :=
+        (Cardinal.mk_range_le_lift (f := tvSliceWitness A Y n)).trans_eq (Cardinal.lift_id' _)
+
+/-- Mathlib's closure bound, moved into the common universe. Its own statement lives in
+`Cardinal.{max u w}` — it predates the fragment's `Type v` relation data — so it needs one
+further lift, and the function-symbol summand arrives with the complementary level. -/
+theorem lift_mk_closure_le (S : Set M) {κ : Cardinal.{max u v w}} (hκ : Cardinal.aleph0 ≤ κ)
+    (hS : Cardinal.lift.{max u v w} (Cardinal.mk S) ≤ κ)
+    (hF : Cardinal.lift.{max u v w} (Cardinal.mk (Σ n, L.Functions n)) ≤ κ) :
+    Cardinal.lift.{max u v w} (Cardinal.mk (Substructure.closure L S : Set M)) ≤ κ := by
+  have h := Cardinal.lift_le.{v}.mpr (Substructure.lift_card_closure_le (L := L) (s := S))
+  rw [Cardinal.lift_lift, Cardinal.lift_max, Cardinal.lift_aleph0, Cardinal.lift_add,
+    Cardinal.lift_lift, Cardinal.lift_lift] at h
+  rw [lift_mk_umax.{w, max u v}]
+  refine le_trans h (max_le hκ ?_)
+  refine le_trans (add_le_add ?_ ?_) (le_of_eq (Cardinal.add_eq_self hκ))
+  · rwa [← lift_mk_umax.{w, max u v}]
+  · rwa [← lift_mk_umax.{u, max v w}]
 
 /-- The honest per-stage bound. -/
 theorem mk_lsStage_le (X : Set M) (k : ℕ) :
-    Cardinal.mk (lsStage A X k)
-      ≤ max (max Cardinal.aleph0 (Cardinal.mk X))
-          (max (Cardinal.mk A.toSet) (Cardinal.mk (Σ n, L.Functions n))) := by
-  set κ := max (max Cardinal.aleph0 (Cardinal.mk X))
-    (max (Cardinal.mk A.toSet) (Cardinal.mk (Σ n, L.Functions n))) with hκ
+    Cardinal.lift.{max u v w} (Cardinal.mk (lsStage A X k))
+      ≤ max (max Cardinal.aleph0 (Cardinal.lift.{max u v w} (Cardinal.mk X)))
+          (max (Cardinal.lift.{max u v w} (Cardinal.mk A.toSet))
+            (Cardinal.lift.{max u v w} (Cardinal.mk (Σ n, L.Functions n)))) := by
+  set κ := max (max Cardinal.aleph0 (Cardinal.lift.{max u v w} (Cardinal.mk X)))
+    (max (Cardinal.lift.{max u v w} (Cardinal.mk A.toSet))
+      (Cardinal.lift.{max u v w} (Cardinal.mk (Σ n, L.Functions n)))) with hκ
   have hκinf : Cardinal.aleph0 ≤ κ := le_trans (le_max_left _ _) (le_max_left _ _)
-  have hF : Cardinal.mk (Σ n, L.Functions n) ≤ κ :=
-    le_trans (le_max_right (Cardinal.mk A.toSet) _) (le_max_right _ _)
-  have hclosure : ∀ Y : Set M, Cardinal.mk Y ≤ κ →
-      Cardinal.mk (Substructure.closure L Y : Set M) ≤ κ := by
-    intro Y hY
-    have h := Substructure.lift_card_closure_le (L := L) (s := Y)
-    rw [Cardinal.lift_id, Cardinal.lift_id, Cardinal.lift_id] at h
-    refine le_trans h (max_le hκinf ?_)
-    calc Cardinal.mk Y + Cardinal.mk (Σ n, L.Functions n) ≤ κ + κ := add_le_add hY hF
-      _ = κ := Cardinal.add_eq_self hκinf
+  have hF : Cardinal.lift.{max u v w} (Cardinal.mk (Σ n, L.Functions n)) ≤ κ :=
+    le_trans (le_max_right _ _) (le_max_right _ _)
   induction k with
   | zero => exact le_trans (le_max_right _ _) (le_max_left _ _)
   | succ k ih =>
-    have hclk := hclosure (lsStage A X k) ih
-    refine le_trans (Cardinal.mk_union_le _ _) ?_
-    have hW : Cardinal.mk (tvWitnessSet A
-        ((Substructure.closure L (lsStage A X k) : Set M))) ≤ κ := by
+    have hclk := lift_mk_closure_le (L := L) (lsStage A X k) hκinf ih hF
+    refine le_trans (Cardinal.lift_le.mpr (Cardinal.mk_union_le _ _)) ?_
+    have hW : Cardinal.lift.{max u v w} (Cardinal.mk (tvWitnessSet A
+        ((Substructure.closure L (lsStage A X k) : Set M)))) ≤ κ := by
       refine le_trans (mk_tvWitnessSet_le A _) (max_le (max_le hκinf hclk) ?_)
       exact le_trans (le_max_left _ _) (le_max_right _ _)
-    calc Cardinal.mk (Substructure.closure L (lsStage A X k) : Set M)
-          + Cardinal.mk (tvWitnessSet A ((Substructure.closure L (lsStage A X k) : Set M)))
+    rw [Cardinal.lift_add]
+    calc Cardinal.lift.{max u v w} (Cardinal.mk (Substructure.closure L (lsStage A X k) : Set M))
+          + Cardinal.lift.{max u v w}
+            (Cardinal.mk (tvWitnessSet A ((Substructure.closure L (lsStage A X k) : Set M))))
         ≤ κ + κ := add_le_add hclk hW
       _ = κ := Cardinal.add_eq_self hκinf
 
 /-- **The honest hull bound**: `|N| ≤ max(ℵ₀, |X|, |A|, |Σ Functions|)`. -/
 theorem mk_lsHull_le (X : Set M) :
-    Cardinal.mk (lsHull A X)
-      ≤ max (max Cardinal.aleph0 (Cardinal.mk X))
-          (max (Cardinal.mk A.toSet) (Cardinal.mk (Σ n, L.Functions n))) := by
-  set κ := max (max Cardinal.aleph0 (Cardinal.mk X))
-    (max (Cardinal.mk A.toSet) (Cardinal.mk (Σ n, L.Functions n))) with hκ
+    Cardinal.lift.{max u v w} (Cardinal.mk (lsHull A X))
+      ≤ max (max Cardinal.aleph0 (Cardinal.lift.{max u v w} (Cardinal.mk X)))
+          (max (Cardinal.lift.{max u v w} (Cardinal.mk A.toSet))
+            (Cardinal.lift.{max u v w} (Cardinal.mk (Σ n, L.Functions n)))) := by
+  set κ := max (max Cardinal.aleph0 (Cardinal.lift.{max u v w} (Cardinal.mk X)))
+    (max (Cardinal.lift.{max u v w} (Cardinal.mk A.toSet))
+      (Cardinal.lift.{max u v w} (Cardinal.mk (Σ n, L.Functions n)))) with hκ
   have hκinf : Cardinal.aleph0 ≤ κ := le_trans (le_max_left _ _) (le_max_left _ _)
-  have hunion : Cardinal.mk (⋃ k, lsStage A X k) ≤ κ :=
-    FirstOrder.HanfLadder.mk_iUnion_le_of_countable hκinf (mk_lsStage_le A X)
-  have hF : Cardinal.mk (Σ n, L.Functions n) ≤ κ :=
-    le_trans (le_max_right (Cardinal.mk A.toSet) _) (le_max_right _ _)
-  have h := Substructure.lift_card_closure_le (L := L) (s := ⋃ k, lsStage A X k)
-  rw [Cardinal.lift_id, Cardinal.lift_id, Cardinal.lift_id] at h
-  refine le_trans h (max_le hκinf ?_)
-  calc Cardinal.mk (⋃ k, lsStage A X k) + Cardinal.mk (Σ n, L.Functions n)
-      ≤ κ + κ := add_le_add hunion hF
-    _ = κ := Cardinal.add_eq_self hκinf
+  have hF : Cardinal.lift.{max u v w} (Cardinal.mk (Σ n, L.Functions n)) ≤ κ :=
+    le_trans (le_max_right _ _) (le_max_right _ _)
+  have hunion : Cardinal.lift.{max u v w} (Cardinal.mk (⋃ k, lsStage A X k)) ≤ κ :=
+    FirstOrder.HanfLadder.lift_mk_iUnion_le_of_countable (ι := ℕ) hκinf (mk_lsStage_le A X)
+  exact lift_mk_closure_le (L := L) _ hκinf hunion hF
 
 /-- **Genuine downward Löwenheim–Skolem for fragments** (issue #13 unit 5): every `X ⊆ M` is
 contained in an A-elementary substructure of size at most `max(ℵ₀, |X|, |A|, |Σ Functions|)` —
 the honest bound; only function symbols enlarge the hull beyond the fragment's witnesses. -/
 theorem exists_aElementary_substructure (A : Fragment L) (X : Set M) :
     ∃ N : L.Substructure M, X ⊆ (N : Set M) ∧ AElementary A N.subtype ∧
-      Cardinal.mk N ≤ max (max Cardinal.aleph0 (Cardinal.mk X))
-        (max (Cardinal.mk A.toSet) (Cardinal.mk (Σ n, L.Functions n))) :=
+      Cardinal.lift.{max u v w} (Cardinal.mk N)
+        ≤ max (max Cardinal.aleph0 (Cardinal.lift.{max u v w} (Cardinal.mk X)))
+            (max (Cardinal.lift.{max u v w} (Cardinal.mk A.toSet))
+              (Cardinal.lift.{max u v w} (Cardinal.mk (Σ n, L.Functions n)))) :=
   ⟨lsHull A X, subset_lsHull A X, aElementary_lsHull A X, mk_lsHull_le A X⟩
+
+/-- The same-universe form, for a language and a structure that already share one universe: the
+lifts are then all identities, so this is the statement without the universe bookkeeping. -/
+theorem exists_aElementary_substructure_of_eq_univ {L : Language.{u, u}} {M : Type u}
+    [L.Structure M] (A : Fragment L) (X : Set M) :
+    ∃ N : L.Substructure M, X ⊆ (N : Set M) ∧ AElementary A N.subtype ∧
+      Cardinal.mk N ≤ max (max Cardinal.aleph0 (Cardinal.mk X))
+        (max (Cardinal.mk A.toSet) (Cardinal.mk (Σ n, L.Functions n))) := by
+  obtain ⟨N, hXN, hAe, hcard⟩ := exists_aElementary_substructure A X
+  exact ⟨N, hXN, hAe, by simpa using hcard⟩
 
 /-- **The countable corollary** (Marker, Theorem 1.22 second half — what #17 consumes):
 countable data yields a countable A-elementary substructure. -/
@@ -260,12 +324,35 @@ theorem exists_countable_aElementary_substructure (A : Fragment L) {X : Set M}
   obtain ⟨N, hXN, hAe, hcard⟩ := exists_aElementary_substructure A X
   refine ⟨N, hXN, hAe, ?_⟩
   rw [← Cardinal.mk_le_aleph0_iff]
-  refine le_trans hcard (max_le (max_le le_rfl ?_) (max_le ?_ ?_))
-  · haveI := hX.to_subtype
-    exact Cardinal.mk_le_aleph0
-  · haveI := hA.to_subtype
-    exact Cardinal.mk_le_aleph0
-  · exact Cardinal.mk_le_aleph0
+  refine Cardinal.lift_le_aleph0.{w, max u v w}.mp
+    (le_trans hcard (max_le (max_le le_rfl ?_) (max_le ?_ ?_)))
+  · have := hX.to_subtype
+    exact Cardinal.lift_le_aleph0.mpr Cardinal.mk_le_aleph0
+  · have := hA.to_subtype
+    exact Cardinal.lift_le_aleph0.mpr Cardinal.mk_le_aleph0
+  · exact Cardinal.lift_le_aleph0.mpr Cardinal.mk_le_aleph0
+
+/-! ## Universe regression
+
+These instantiate the hull construction and its cardinal bound where the language's two universes
+and the structure's universe are pairwise distinct, and at the universe-zero setting the
+development previously assumed. They are compiled, so they fail if the file is ever reconstrained;
+the `variable` block alone would not catch that, since a `Language.{u, v}` binder can still be
+silently pinned by a downstream lemma. -/
+
+example {L' : Language.{1, 2}} {M' : Type 3} [L'.Structure M'] (A : Fragment L') (X : Set M') :
+    ∃ N : L'.Substructure M', X ⊆ (N : Set M') ∧ AElementary A N.subtype ∧
+      Cardinal.lift.{3} (Cardinal.mk N)
+        ≤ max (max Cardinal.aleph0 (Cardinal.lift.{3} (Cardinal.mk X)))
+            (max (Cardinal.lift.{3} (Cardinal.mk A.toSet))
+              (Cardinal.lift.{3} (Cardinal.mk (Σ n, L'.Functions n)))) :=
+  exists_aElementary_substructure A X
+
+example {L' : Language.{0, 0}} {M' : Type} [L'.Structure M'] (A : Fragment L') (X : Set M') :
+    ∃ N : L'.Substructure M', X ⊆ (N : Set M') ∧ AElementary A N.subtype ∧
+      Cardinal.mk N ≤ max (max Cardinal.aleph0 (Cardinal.mk X))
+        (max (Cardinal.mk A.toSet) (Cardinal.mk (Σ n, L'.Functions n))) :=
+  exists_aElementary_substructure_of_eq_univ A X
 
 end Language
 
