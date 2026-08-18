@@ -86,13 +86,15 @@ Headline results include:
 
 \section{Back-and-Forth Equivalence}
 
-Back-and-forth equivalence at ordinal levels, following Karp~\cite{karp1965}.
+Back-and-forth equivalence at ordinal levels, following Karp~\cite{karp1965}; the
+infinitary languages themselves are developed in Karp~\cite{karp1964}.
 
 \inputleannode{def:BFEquiv}
 
 \section{Scott Formulas and Sentences}
 
-Scott formulas and their characteristic property, following
+Scott formulas and their characteristic property.  The theorem is
+Scott's~\cite{scott1965}; the presentation here follows the modern exposition in
 Marker~\cite[Ch.~2]{marker2016}.
 
 \inputleannode{def:scottFormula}
@@ -143,7 +145,13 @@ must stabilize below~$\omegaone$.
 \chapter{Karp's Theorem}
 
 Karp's theorem characterizes $\Linf$-equivalence via back-and-forth
-systems, following Karp~\cite{karp1965}.
+systems~\cite{karp1965}; the statement formalized here is Theorem~1.2.1 of
+Keisler--Knight~\cite{keislerknight2004}.
+
+The formalization states the equivalence at an arbitrary common branching carrier
+equipped with codings of both structures, taking the disjoint sum as a corollary rather
+than as the definition.  That is a presentation choice of this formalization, not part of
+the cited statement: the mathematical content is Karp's.
 
 \inputleannode{def:potential-iso}
 
@@ -334,7 +342,8 @@ on the coding space for countable structures.
 
 \section{L\'opez--Escobar}
 
-\emph{Status: proved, both directions.}  The hard direction follows Marker's
+\emph{Status: proved, both directions.}  The theorem is
+L\'opez--Escobar's~\cite{lopezescobar1965}.  The hard direction follows Marker's
 route (Theorem~4.25 of~\cite{marker2016}) rather than an induction on the Borel
 hierarchy, which would not preserve isomorphism invariance.  An invariant Borel
 class and its complement are analytic, hence branch projections of cylinder

@@ -42,7 +42,16 @@ whole content of "any common carrier suffices": the sum is canonical, not necess
 
 ## References
 
-- [Karp65], [KK04]
+- Carol R. Karp, *Finite-quantifier equivalence*, in **The Theory of Models** (Addison,
+  Henkin, Tarski, eds.), North-Holland, 1965, pp. 407–412. The theorem.
+- Carol R. Karp, *Languages with Expressions of Infinite Length*, North-Holland, 1964 —
+  the infinitary languages themselves.
+- H. Jerome Keisler and Julia F. Knight, *Barwise: infinitary logic and admissible sets*,
+  Bull. Symbolic Logic **10** (2004), 4–36, doi:10.2178/bsl/1080330272. Theorem 1.2.1 is
+  the statement formalized here.
+
+The common-carrier formulation with `IndexCoding` is this formalization's presentation, not
+a statement made in those sources; the mathematics is Karp's.
 -/
 
 universe u v w w' uι uκ
