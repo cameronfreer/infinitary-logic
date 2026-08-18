@@ -60,7 +60,7 @@ theorem insepAt_swap (h : InsepAt F R A Γ Δ) : InsepAt F R A Δ Γ := by
   · rw [sentenceJConsts_not]; exact hsupp
   · intro M _ _ hmodel
     have hσ := hΔσ M hmodel
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_not, not_not]
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not, not_not]
     exact hσ
 
 /-- **Gate (a): cross-coordinate contradiction gives a shared separator.** A shared sentence `φ`
@@ -89,7 +89,7 @@ theorem insepAt_insert_of_shared_entails {σ φ : L[[ℕ]].Sentenceω}
   refine h ⟨σ.imp ρ, baseFunctionsIn_imp_subset hσF hbf, baseRelationsIn_imp_subset hσR hbr,
     sentenceJConsts_imp_subset hσA hsupp, ?_, ?_⟩
   · intro M _ _ hmodel
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_imp]
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_imp]
     intro hσreal
     have hφreal : Sentenceω.Realize φ M := hcons M (by
       intro μ hμ
@@ -104,7 +104,7 @@ theorem insepAt_insert_of_shared_entails {σ φ : L[[ℕ]].Sentenceω}
   · intro M _ _ hmodel
     have hσ := hΔσ M hmodel
     have hρn := hΔρnot M hmodel
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_imp,
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_imp,
       Classical.not_imp] at hσ hρn ⊢
     exact ⟨hσ, hρn⟩
 

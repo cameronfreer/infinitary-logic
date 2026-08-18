@@ -172,17 +172,23 @@ Uses `realize_relabel_insertLastBound_zero` to show that:
 -/
 theorem realize_existsLastVar {n : ℕ} (φ : L.Formulaω (Fin (n + 1))) (v : Fin n → N) :
     (existsLastVar φ).Realize v ↔ ∃ x : N, φ.Realize (snoc v x) := by
-  simp only [existsLastVar, Formulaω.Realize, realize_ex]
-  constructor <;> rintro ⟨x, hx⟩ <;>
-    exact ⟨x, by rwa [realize_relabel_insertLastBound_zero, snoc_elim0_zero] at *⟩
+  -- keep the formula-level interface intact: apply the quantifier lemma at the empty tuple the
+  -- sentence semantics actually supplies (`default`), rather than unfolding `Formulaω.Realize`
+  have h := BoundedFormulaω.realize_ex (M := N) (v := v) (xs := (default : Fin 0 → N))
+    (φ.relabel insertLastBound)
+  refine h.trans (exists_congr fun x => ?_)
+  have hz : (snoc (α := fun _ => N) (default : Fin 0 → N) x) 0 = x := snoc_elim0_zero x
+  rw [realize_relabel_insertLastBound_zero, hz]
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- Semantics of forallLastVar: universally quantifies over the last variable. -/
 theorem realize_forallLastVar {n : ℕ} (φ : L.Formulaω (Fin (n + 1))) (v : Fin n → N) :
     (forallLastVar φ).Realize v ↔ ∀ x : N, φ.Realize (snoc v x) := by
-  simp only [forallLastVar, Formulaω.Realize, realize_all]
-  constructor <;> intro h x <;>
-    have := h x <;> rwa [realize_relabel_insertLastBound_zero, snoc_elim0_zero] at *
+  have h := BoundedFormulaω.realize_all (M := N) (v := v) (xs := (default : Fin 0 → N))
+    (φ.relabel insertLastBound)
+  refine h.trans (forall_congr' fun x => ?_)
+  have hz : (snoc (α := fun _ => N) (default : Fin 0 → N) x) 0 = x := snoc_elim0_zero x
+  rw [realize_relabel_insertLastBound_zero, hz]
 
 end Semantics
 
@@ -313,7 +319,9 @@ theorem realize_scottFormula_iff_BFEquiv
     rw [BFEquiv.limit β hβlimit]
     unfold scottFormula
     rw [Ordinal.limitRecOn_limit _ _ _ _ hβlimit]
-    simp only [hα, dite_true, Formulaω.Realize, realize_einf]
+    -- do not unfold `Formulaω.Realize`: that exposes the raw ℕ-indexed `iInf` and loses the
+    -- `Set.Iio`-style index type of the limit conjunction
+    simp only [hα, dite_true, Formulaω.realize_einf]
     exact ⟨fun h γ hγ => (ih γ hγ a b (lt_trans hγ hα)).mp (h ⟨γ, hγ⟩),
            fun h ⟨γ, hγ⟩ => (ih γ hγ a b (lt_trans hγ hα)).mpr (h γ hγ)⟩
 

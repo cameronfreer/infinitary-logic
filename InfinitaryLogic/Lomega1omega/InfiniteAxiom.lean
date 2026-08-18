@@ -36,7 +36,7 @@ variable {L} {M : Type} [L.Structure M] [Nonempty M]
 @[simp] theorem realize_infiniteAxiom :
     Sentenceω.Realize (infiniteAxiom L) M ↔ Infinite M := by
   rw [show Sentenceω.Realize (infiniteAxiom L) M ↔ ∀ n : ℕ, (M ⊨ Sentence.cardGe L n) from by
-    simp only [infiniteAxiom, Sentenceω.Realize, BoundedFormulaω.realize_iInf]
+    simp only [infiniteAxiom, Sentenceω.realize_def, BoundedFormulaω.realize_iInf]
     exact forall_congr' fun n => Sentence.realize_toLω _]
   simp only [Sentence.realize_cardGe]
   constructor

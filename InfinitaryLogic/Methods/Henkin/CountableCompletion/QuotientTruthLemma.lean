@@ -137,9 +137,12 @@ private theorem depth_instConst_lt (body : L[[ℕ]].BoundedFormulaω Empty 1) (c
 
 /-! ## Two small realization bookkeeping facts -/
 
-/-- A single-variable valuation built by `Fin.snoc Fin.elim0` is constant. -/
+/-- A single-variable valuation built by `Fin.snoc` on the empty tuple is constant.
+
+Stated at `default`, the empty tuple the sentence semantics actually supplies; it is
+definitionally `Fin.elim0`, but `rw` needs the spelling the goal carries. -/
 private theorem snoc_elim0_const {M : Type*} (y : M) :
-    (Fin.snoc Fin.elim0 y : Fin 1 → M) = fun _ => y := by
+    (Fin.snoc (default : Fin 0 → M) y : Fin 1 → M) = fun _ => y := by
   funext i
   rw [Fin.eq_zero i]
   rfl
@@ -165,7 +168,7 @@ theorem truth_both (hsc : HenkinComplete U S) :
       (σ ∈ S → @Sentenceω.Realize L[[ℕ]] σ (QModel hsc) (qModelStructure hsc)) ∧
       (σ.not ∈ S → ¬ @Sentenceω.Realize L[[ℕ]] σ (QModel hsc) (qModelStructure hsc))
   | .falsum =>
-      ⟨fun hmem => absurd hmem hsc.no_falsum, fun _ => by simp [Sentenceω.Realize]⟩
+      ⟨fun hmem => absurd hmem hsc.no_falsum, fun _ => by simp [Sentenceω.realize_def]⟩
   | .equal t₁ t₂ => by
       refine ⟨fun hmem => ?_, fun hmem => ?_⟩
       · -- positive: `equal t₁ t₂ ∈ S` gives the equality of classes

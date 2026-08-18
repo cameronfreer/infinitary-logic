@@ -5,7 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.ModelTheory.CountableCompanion
 import InfinitaryLogic.Scott.BackAndForth
-import InfinitaryLogic.Karp.Theorem
+import InfinitaryLogic.Karp.CarrierTheorem
 
 /-!
 # The type-preserving back-and-forth (issue #17 chunk 3)
@@ -168,10 +168,10 @@ theorem exists_countable_bfEquiv_of_lomega1omegaSmall [Countable (Σ n, L.Functi
 
 /-- **All-`L_∞ω`-formula agreement** with a companion — the relational packaging boundary
 (`BFEquiv_implies_agreeQR`). -/
-theorem realize_inf_iff_of_companion [L.IsRelational]
+theorem realize_inf_iff_of_companion [L.IsRelational] {ι : Type uι}
     {hsmall : Lomega1omegaSmall (L := L) M} {N : L.Substructure M}
     (hAe : AElementary (isolatorFragment hsmall) N.subtype)
-    (φ : BoundedFormulaInf.{0, 0, 0, 0} L (Fin 0) 0) :
+    (φ : L.BoundedFormulaInf ι (Fin 0) 0) :
     FormulaInf.Realize φ (Fin.elim0 : Fin 0 → M)
       ↔ FormulaInf.Realize φ (Fin.elim0 : Fin 0 → N) :=
   BFEquiv_implies_agreeQR φ.qrank Fin.elim0 Fin.elim0

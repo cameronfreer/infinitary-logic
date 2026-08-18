@@ -77,7 +77,9 @@ theorem BoundedFormulaω.realize_congr_instances (S S' : L.Structure M)
   | imp φ ψ ihφ ihψ =>
     intro v xs
     show (_ → _) ↔ (_ → _)
-    rw [ihφ, ihψ]
+    -- apply the induction hypotheses rather than rewriting: they are stated through the reducible
+    -- `BoundedFormulaω.Realize` alias, which `rw` cannot key against the unfolded goal
+    exact imp_congr (ihφ v xs) (ihψ v xs)
   | all φ ih =>
     intro v xs
     exact forall_congr' fun x => ih v (Fin.snoc xs x)
@@ -196,8 +198,8 @@ theorem BoundedFormulaω.realize_congr_const (base : L.Structure M) {h h' : ℕ 
   | imp φ ψ ihφ ihψ =>
     intro hagree v xs
     show (_ → _) ↔ (_ → _)
-    rw [ihφ (fun k hk => hagree k (sentenceJConsts_imp_left _ _ hk)),
-      ihψ (fun k hk => hagree k (sentenceJConsts_imp_right _ _ hk))]
+    exact imp_congr (ihφ (fun k hk => hagree k (sentenceJConsts_imp_left _ _ hk)) v xs)
+      (ihψ (fun k hk => hagree k (sentenceJConsts_imp_right _ _ hk)) v xs)
   | all φ ih =>
     intro hagree v xs
     exact forall_congr' fun x => ih hagree v (Fin.snoc xs x)
@@ -310,7 +312,7 @@ theorem BoundedFormulaω.realize_abstractConst (base : L.Structure M) (h : ℕ �
   | imp φ ψ ihφ ihψ =>
     intro xs
     show (_ → _) ↔ (_ → _)
-    rw [ihφ xs, ihψ xs]
+    exact imp_congr (ihφ xs) (ihψ xs)
   | all φ ih =>
     intro xs
     exact forall_congr' fun x => ih (Fin.snoc xs x)

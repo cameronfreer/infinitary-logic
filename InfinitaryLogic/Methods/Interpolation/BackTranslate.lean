@@ -120,9 +120,10 @@ theorem realize_backTranslateFormula :
     show _ ↔ (graphExpansion L M).RelMap (GraphRelation.graph f) fun i =>
       @Term.realize (graphLanguage L) M (graphExpansion L M) _ (Sum.elim v xs) (ts i)
     rw [graphExpansion_relMap_graph]
-  | _, .imp φ ψ, v, xs => by
-    show (_ → _) ↔ (_ → _)
-    rw [realize_backTranslateFormula φ v xs, realize_backTranslateFormula ψ v xs]
+  | _, .imp φ ψ, v, xs =>
+    -- apply the recursive call rather than rewriting with it: the statement is through the
+    -- reducible `BoundedFormulaω.Realize` alias, which `rw` cannot key against the unfolded goal
+    imp_congr (realize_backTranslateFormula φ v xs) (realize_backTranslateFormula ψ v xs)
   | _, .all φ, v, xs =>
     forall_congr' fun x => realize_backTranslateFormula φ v (Fin.snoc xs x)
   | _, .iSup φs, v, xs => exists_congr fun i => realize_backTranslateFormula (φs i) v xs

@@ -102,7 +102,10 @@ theorem isWellOrder_of_realize (lt : L.Relations 2) {φ : L.Sentenceω}
   have hN : Sentenceω.Realize (φ.and (infiniteAxiom L)) ↥N :=
     (hAe.realize_sentence_iff (Fragment.mem_generatedSentence _)).mp hM
   obtain ⟨hNφ, hNinf⟩ := (BoundedFormulaω.realize_and _ _).mp hN
-  haveI : Infinite ↥N := realize_infiniteAxiom.mp hNinf
+  -- re-ascribed at the sentence level: `SentenceInf.Realize` is a plain definition upstream, so
+  -- `realize_infiniteAxiom`'s implicit arguments cannot be solved against the unfolded form
+  have hNinfS : Sentenceω.Realize (infiniteAxiom L) ↥N := hNinf
+  haveI : Infinite ↥N := realize_infiniteAxiom.mp hNinfS
   -- transport it to the carrier `ℕ`
   letI e : ↥N ≃ ℕ := (nonempty_equiv_of_countable (α := ↥N) (β := ℕ)).some
   have hd : StructureSpaceOn.encodeViaEquiv e ∈ ModelsOf φ :=
@@ -188,7 +191,8 @@ theorem wellOrderClass_not_measurableSet (lt : L.Relations 2) :
     (β := α + Ordinal.omega0) le_add_self hcnt
   have hcφ : @Sentenceω.Realize L (φ.and (infiniteAxiom L)) ℕ c.toStructure := by
     letI : L.Structure ℕ := c.toStructure
-    refine (BoundedFormulaω.realize_and _ _).mpr ⟨?_, realize_infiniteAxiom.mpr inferInstance⟩
+    have hinf : Sentenceω.Realize (infiniteAxiom L) ℕ := realize_infiniteAxiom.mpr inferInstance
+    refine (BoundedFormulaω.realize_and _ _).mpr ⟨?_, hinf⟩
     have hmem : c ∈ ModelsOf φ := by rw [← hφ]; exact hc
     exact hmem
   have hb : @Ordinal.type ℕ

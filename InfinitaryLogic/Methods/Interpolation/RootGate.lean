@@ -75,9 +75,9 @@ theorem entails_singleton_of_neg_entails_neg {r₂ θ : L.Sentenceω}
   by_contra hr₂
   have hnr₂ : Theoryω.Model {r₂.not} M := by
     intro ψ hψ; rw [Set.mem_singleton_iff] at hψ; subst hψ
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_not]; exact hr₂
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not]; exact hr₂
   have := hE M hnr₂
-  simp only [Sentenceω.Realize, BoundedFormulaω.realize_not] at this
+  simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not] at this
   exact this (hmodel θ (Set.mem_singleton _))
 
 end FirstOrder.Language

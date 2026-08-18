@@ -120,7 +120,7 @@ theorem omitting_types [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Rel
   have hφ_sem : ∀ m' : TermModel C S' hmax,
       Formulaω.Realize φ_eq (fun _ : Fin 1 => m') ↔ m' = m := by
     intro m'
-    simp only [φ_eq, Formulaω.Realize, BoundedFormulaω.realize_equal]
+    simp only [φ_eq, Formulaω.realize_def, BoundedFormulaω.realize_equal]
     simp only [Term.realize_var, Term.realize_relabel]
     constructor
     · intro h
@@ -142,7 +142,7 @@ theorem omitting_types [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Rel
   have h_ex_true : Sentenceω.Realize
       ((φ_eq.relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).ex)
       (TermModel C S' hmax) := by
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_ex]
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_ex]
     exact ⟨m, by rw [snoc_eq, BoundedFormulaω.realize_relabel_sumInr_zero]; exact (hφ_sem m).mpr rfl⟩
   -- T ∪ {∃x(φ_eq)} ∈ C'.sets
   have hT_ex : T ∪ {(φ_eq.relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).ex}
@@ -159,10 +159,10 @@ theorem omitting_types [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Rel
       (TermModel C S' hmax) :=
     hψ₀ (Set.mem_union_right T rfl)
   -- Unpack: ∃ m', m' = m ∧ ¬ψ₀(m'), giving ¬ψ₀(m)
-  simp only [Sentenceω.Realize, BoundedFormulaω.realize_ex] at h_and_true
+  simp only [Sentenceω.realize_def, BoundedFormulaω.realize_ex] at h_and_true
   obtain ⟨m', hm'⟩ := h_and_true
   rw [snoc_eq, BoundedFormulaω.realize_relabel_sumInr_zero] at hm'
-  simp only [Formulaω.Realize, BoundedFormulaω.realize_and, BoundedFormulaω.realize_not] at hm'
+  simp only [Formulaω.realize_def, BoundedFormulaω.realize_and, BoundedFormulaω.realize_not] at hm'
   obtain ⟨hm'_eq, hm'_neg⟩ := hm'
   have hm'_is_m : m' = m := (hφ_sem m').mp hm'_eq
   rw [hm'_is_m] at hm'_neg

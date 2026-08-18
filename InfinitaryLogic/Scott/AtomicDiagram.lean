@@ -145,23 +145,27 @@ theorem sameAtomicType_iff_realize_atomicDiagram [Countable (Σ l, L.Relations l
     SameAtomicType (L := L) (M := M) (N := N) a b ↔
       Formulaω.Realize (atomicDiagram (L := L) (M := M) a) b := by
   classical
-  simp only [atomicDiagram, Formulaω.Realize, BoundedFormulaω.realize_einf]
+  -- keep the formula-level interface intact: unfolding `Formulaω.Realize` would expose the raw
+  -- ℕ-indexed `iInf` semantics and lose the `AtomicIdx` index type
+  simp only [atomicDiagram, Formulaω.realize_einf]
   constructor
   · intro h idx
     specialize h idx
     by_cases ha : idx.holds a
-    · simp only [ha, ↓reduceIte, realize_atomicFormulaω] at *
-      exact h.mp ha
-    · simp only [ha, ↓reduceIte, BoundedFormulaω.realize_not, realize_atomicFormulaω] at *
-      exact fun hb => ha (h.mpr hb)
+    · simp only [ha, ↓reduceIte]
+      exact (realize_atomicFormulaω (M := N) idx b).mpr (h.mp ha)
+    · simp only [ha, ↓reduceIte, Formulaω.realize_not]
+      exact fun hb => ha (h.mpr ((realize_atomicFormulaω (M := N) idx b).mp hb))
   · intro h idx
+    have hidx := h idx
     constructor
     · intro ha
-      simpa [ha, realize_atomicFormulaω] using h idx
+      simp only [ha, ↓reduceIte] at hidx
+      exact (realize_atomicFormulaω (M := N) idx b).mp hidx
     · intro hb
-      by_cases ha : idx.holds a
-      · exact ha
-      · exact absurd hb (by simpa [ha, realize_atomicFormulaω] using h idx)
+      by_contra ha
+      simp only [ha, ↓reduceIte, Formulaω.realize_not] at hidx
+      exact hidx ((realize_atomicFormulaω (M := N) idx b).mpr hb)
 
 omit [L.IsRelational] in
 /-- Same atomic type is reflexive. -/

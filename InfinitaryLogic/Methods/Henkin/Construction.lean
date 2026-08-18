@@ -762,30 +762,31 @@ theorem realize_openBounds {M : Type*} [L.Structure M] :
     simp_rw [term_realize_openBounds]
   | imp φ ψ ihφ ihψ =>
     intro xs
-    simp only [BoundedFormulaω.openBounds, Formulaω.Realize, BoundedFormulaω.realize_imp]
+    simp only [BoundedFormulaω.openBounds, Formulaω.realize_def, BoundedFormulaω.realize_imp]
     exact Iff.imp (ihφ xs) (ihψ xs)
   | iSup φs ih =>
     intro xs
-    simp only [BoundedFormulaω.openBounds, Formulaω.Realize, BoundedFormulaω.realize_iSup]
+    simp only [BoundedFormulaω.openBounds, Formulaω.realize_def, BoundedFormulaω.realize_iSup]
     exact exists_congr (fun i => ih i xs)
   | iInf φs ih =>
     intro xs
-    simp only [BoundedFormulaω.openBounds, Formulaω.Realize, BoundedFormulaω.realize_iInf]
+    simp only [BoundedFormulaω.openBounds, Formulaω.realize_def, BoundedFormulaω.realize_iInf]
     exact forall_congr' (fun i => ih i xs)
   | all φ ih =>
     intro xs
-    show Formulaω.Realize (((φ.openBounds).relabel insertLastBound).all) xs ↔
+    -- `φ` is induction-bound, so it carries the inductive type and needs the qualified name
+    show Formulaω.Realize (((BoundedFormulaω.openBounds φ).relabel insertLastBound).all) xs ↔
          (BoundedFormulaω.all φ).Realize Empty.elim xs
-    simp only [Formulaω.Realize, BoundedFormulaω.realize_all]
-    constructor
-    · intro h x
-      have h1 := h x
-      rw [realize_relabel_insertLastBound_zero] at h1
-      rw [snoc_elim0_zero_eq] at h1
-      exact (ih (Fin.snoc xs x)).mp h1
-    · intro h x
-      rw [realize_relabel_insertLastBound_zero, snoc_elim0_zero_eq]
-      exact (ih (Fin.snoc xs x)).mpr (h x)
+    -- `FormulaInf.Realize` is a plain definition upstream, not a reducible abbreviation, so a
+    -- lemma stated at the bounded-formula level cannot be `rw`-keyed against this goal; both
+    -- sides are `all`-quantified, so bridge the bodies by application instead
+    refine forall_congr' fun x => ?_
+    have hz : (Fin.snoc (α := fun _ => M) (default : Fin 0 → M) x) (0 : Fin 1) = x :=
+      snoc_elim0_zero_eq x
+    refine (realize_relabel_insertLastBound_zero (BoundedFormulaω.openBounds φ) xs
+      (Fin.snoc default x)).trans ?_
+    rw [hz]
+    exact ih (Fin.snoc xs x)
 
 /-! ### Truth Lemma -/
 
@@ -860,7 +861,11 @@ theorem truthLemma :
         -- IH backward: Realize (φs k) M → φs k ∈ S, contradicting (φs k).not ∈ S
         exact absurd ((truthLemma (φs k)).mpr (h k)) ((hmax.not_mem_iff (φs k)).mp hkn)
   | .equal t₁ t₂ => by
-    simp only [Sentenceω.Realize, BoundedFormulaω.Realize]
+    -- `SentenceInf.Realize` is a plain definition upstream, so bridge to the term equation with
+    -- `show` rather than trying to rewrite with a bounded-formula realization lemma
+    show (BoundedFormulaω.equal t₁ t₂ ∈ S) ↔
+      t₁.realize (Sum.elim (Empty.elim : Empty → TermModel C S hmax) Fin.elim0) =
+        t₂.realize (Sum.elim (Empty.elim : Empty → TermModel C S hmax) Fin.elim0)
     constructor
     · intro h
       rw [Term.realize_toEmpty t₁, Term.realize_toEmpty t₂, term_realize_eq_mk, term_realize_eq_mk]
@@ -923,22 +928,23 @@ theorem truthLemma :
         φ.Realize (Empty.elim : Empty → TermModel C S hmax)
           (Fin.snoc Fin.elim0 (t.realize (Empty.elim : Empty → TermModel C S hmax))) := by
       intro t
-      simp only [Sentenceω.Realize, BoundedFormulaω.realize_subst]
-      -- Goal: (openBounds φ).Realize (fun _ => t.realize Empty.elim) Fin.elim0 ↔
-      --       φ.Realize Empty.elim (snoc Fin.elim0 (t.realize Empty.elim))
-      -- Convert to Formulaω.Realize form for realize_openBounds
-      show Formulaω.Realize (φ.openBounds) (fun _ => t.realize Empty.elim) ↔
-           φ.Realize Empty.elim (Fin.snoc Fin.elim0 (t.realize Empty.elim))
-      rw [realize_openBounds]
-      -- Goal: φ.Realize Empty.elim (fun _ => t.realize Empty.elim) ↔
-      --       φ.Realize Empty.elim (snoc Fin.elim0 (t.realize Empty.elim))
-      -- These are the same because Fin 1 → M is determined by its value at 0,
-      -- and both (fun _ => x) and (snoc Fin.elim0 x) map 0 to x.
+      -- `SentenceInf.Realize` and `FormulaInf.Realize` are plain definitions upstream, not
+      -- reducible abbreviations, so a lemma stated at one level cannot be `rw`-keyed against a
+      -- goal at another; chain the three steps by application instead.
+      have hsubst : Sentenceω.Realize ((φ.openBounds).subst (fun _ => t)) (TermModel C S hmax) ↔
+          Formulaω.Realize (φ.openBounds)
+            (fun _ => t.realize (Empty.elim : Empty → TermModel C S hmax)) :=
+        BoundedFormulaω.realize_subst (fun _ => t) (φ.openBounds)
+          (Empty.elim : Empty → TermModel C S hmax) Fin.elim0
+      -- `Fin 1 → M` is determined by its value at `0`, and both `fun _ => x` and
+      -- `Fin.snoc Fin.elim0 x` send `0` to `x`.
       have heq : (fun (_ : Fin 1) => t.realize (Empty.elim : Empty → TermModel C S hmax)) =
           Fin.snoc Fin.elim0 (t.realize (Empty.elim : Empty → TermModel C S hmax)) := by
         funext i
         exact Fin.eq_zero i ▸ (snoc_elim0_zero_eq (t.realize Empty.elim)).symm
-      rw [heq]
+      exact hsubst.trans ((realize_openBounds φ _).trans
+        (Iff.of_eq (congrArg
+          (BoundedFormulaω.Realize φ (Empty.elim : Empty → TermModel C S hmax)) heq)))
     constructor
     · -- Forward: all φ ∈ S → ∀ m : TermModel, φ.Realize Empty.elim (snoc Fin.elim0 m)
       intro hall m

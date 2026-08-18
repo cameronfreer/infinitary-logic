@@ -3,31 +3,39 @@ Copyright (c) 2026 Cameron Freer. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
-import Mathlib.ModelTheory.Syntax
+import Mathlib.ModelTheory.Infinitary.Syntax
 import Mathlib.Logic.Encodable.Basic
 
 /-!
-# Lω₁ω Syntax
+# Lω₁ω Syntax — compatibility facade over the fixed-carrier syntax
 
-This file defines the syntax of the infinitary logic Lω₁ω, which extends first-order logic
-with countable conjunctions and disjunctions.
+`BoundedFormulaω`, `Formulaω` and `Sentenceω` are no longer declared here. They come from
+`Mathlib.ModelTheory.Infinitary.Syntax`, where `BoundedFormulaω L α n` is an **abbrev** for
+`BoundedFormulaInf L ℕ α n`. This file re-exports that syntax under the module path and namespace
+the project already uses, and adds only what Mathlib does not provide.
 
-## Main Definitions
+## Why an abbrev and not a `def`
 
-- `FirstOrder.Language.BoundedFormulaω`: The type of Lω₁ω formulas with free variables in `α`
-  and bound variables in `Fin n`.
-- `FirstOrder.Language.Formulaω`: Formulas with no bound variables.
-- `FirstOrder.Language.Sentenceω`: Sentences (formulas with no free variables).
+The specialization must stay *definitional*, not merely propositional. Since Lean 4.34 a goal has
+to be type-correct at `implicit` transparency before `rw`/`simp` will act on it, so a semireducible
+wrapper around `BoundedFormulaInf ℕ` would silently break rewriting across the whole ω consumer
+surface. The probes at the end of this file certify the identification with no `change`, rewrite,
+or explicit cast — their *absence* is the certification.
 
-## Implementation Notes
+## What this file still owns
 
-The formulas are defined inductively with constructors for the standard first-order connectives
-plus ℕ-indexed conjunction (`iInf`) and disjunction (`iSup`). The `einf` and `esup` variants
-handle general countable indices via `Encodable`.
+- the qualified `BoundedFormulaω.*` constructor surface, for consumers that name constructors
+  explicitly rather than through dot-notation (dot-notation resolves through the head symbol
+  `BoundedFormulaInf` and needs no help);
+- the derived connectives Mathlib does not define: `and`, `or`, `iff`, with their `Min`/`Max`
+  instances;
+- the `Encodable`-indexed connectives `einf`/`esup` and their explicit-encoding forms
+  `einfWith`/`esupWith`;
+- the scoped notation.
 
-The derived connectives (`and`, `or`, `ex`) are defined classically via De Morgan laws.
-This matches Mathlib's `BoundedFormula` conventions and ensures compatibility with
-classical semantics.
+`Bot`, `Top`, `Inhabited`, `not` and `ex` now come from Mathlib and are deliberately **not**
+redeclared. `BoundedFormulaInf.verum` plays the role of the old `top` and is definitionally equal to it
+(`not falsum` reduces to `imp falsum falsum`).
 -/
 
 universe u v u'
@@ -36,48 +44,58 @@ namespace FirstOrder
 
 namespace Language
 
-variable (L : Language.{u, v})
-
-/-- Lω₁ω bounded formulas: first-order formulas extended with countable conjunctions and
-disjunctions. `BoundedFormulaω L α n` has free variables indexed by `α` and `n` bound variables. -/
-inductive BoundedFormulaω (α : Type u') : ℕ → Type max u v u' where
-  /-- The false formula. -/
-  | falsum {n} : BoundedFormulaω α n
-  /-- Equality of two terms. -/
-  | equal {n} (t₁ t₂ : L.Term (α ⊕ Fin n)) : BoundedFormulaω α n
-  /-- A relation applied to terms. -/
-  | rel {n l : ℕ} (R : L.Relations l) (ts : Fin l → L.Term (α ⊕ Fin n)) : BoundedFormulaω α n
-  /-- Implication between formulas. -/
-  | imp {n} (φ ψ : BoundedFormulaω α n) : BoundedFormulaω α n
-  /-- Universal quantification. -/
-  | all {n} (φ : BoundedFormulaω α (n + 1)) : BoundedFormulaω α n
-  /-- ℕ-indexed disjunction (supremum). Use `esup` for general countable indices. -/
-  | iSup {n} (φs : ℕ → BoundedFormulaω α n) : BoundedFormulaω α n
-  /-- ℕ-indexed conjunction (infimum). Use `einf` for general countable indices. -/
-  | iInf {n} (φs : ℕ → BoundedFormulaω α n) : BoundedFormulaω α n
-
-/-- Lω₁ω formulas with no bound variables in scope. -/
-abbrev Formulaω (α : Type u') := L.BoundedFormulaω α 0
-
-/-- Lω₁ω sentences: formulas with no free or bound variables in scope. -/
-abbrev Sentenceω := L.Formulaω Empty
-
-variable {L} {α : Type u'} {n : ℕ}
+variable {L : Language.{u, v}} {α : Type u'} {n : ℕ}
 
 namespace BoundedFormulaω
 
-instance : Inhabited (L.BoundedFormulaω α n) := ⟨falsum⟩
+/-! ### Qualified constructor surface
 
-instance : Bot (L.BoundedFormulaω α n) := ⟨falsum⟩
+The constructors live in the `BoundedFormulaInf` namespace. Dot-notation on a
+`BoundedFormulaω` already resolves there, but consumers naming a constructor explicitly as
+`BoundedFormulaω.falsum` need these. Each is an `abbrev`, so it unfolds by `rfl`, and each is
+`@[match_pattern]`, so it may still be used in pattern position. -/
 
-/-- The true formula, defined as ¬⊥. -/
-protected def top : L.BoundedFormulaω α n := imp falsum falsum
+@[match_pattern] abbrev falsum : L.BoundedFormulaω α n := BoundedFormulaInf.falsum
 
-instance : Top (L.BoundedFormulaω α n) := ⟨BoundedFormulaω.top⟩
+@[match_pattern] abbrev equal (t₁ t₂ : L.Term (α ⊕ Fin n)) : L.BoundedFormulaω α n :=
+  BoundedFormulaInf.equal t₁ t₂
 
-/-- Negation of a formula. -/
-@[match_pattern]
-protected def not (φ : L.BoundedFormulaω α n) : L.BoundedFormulaω α n := φ.imp ⊥
+@[match_pattern] abbrev rel {l : ℕ} (R : L.Relations l) (ts : Fin l → L.Term (α ⊕ Fin n)) :
+    L.BoundedFormulaω α n :=
+  BoundedFormulaInf.rel R ts
+
+@[match_pattern] abbrev imp (φ ψ : L.BoundedFormulaω α n) : L.BoundedFormulaω α n :=
+  BoundedFormulaInf.imp φ ψ
+
+@[match_pattern] abbrev all (φ : L.BoundedFormulaω α (n + 1)) : L.BoundedFormulaω α n :=
+  BoundedFormulaInf.all φ
+
+@[match_pattern] abbrev iSup (φs : ℕ → L.BoundedFormulaω α n) : L.BoundedFormulaω α n :=
+  BoundedFormulaInf.iSup φs
+
+@[match_pattern] abbrev iInf (φs : ℕ → L.BoundedFormulaω α n) : L.BoundedFormulaω α n :=
+  BoundedFormulaInf.iInf φs
+
+/-- Negation, as a qualified name. `BoundedFormulaInf.not` is the definition. -/
+@[match_pattern] protected abbrev not (φ : L.BoundedFormulaω α n) : L.BoundedFormulaω α n :=
+  BoundedFormulaInf.not φ
+
+/-- Existential quantification, as a qualified name. -/
+@[match_pattern] protected abbrev ex (φ : L.BoundedFormulaω α (n + 1)) : L.BoundedFormulaω α n :=
+  BoundedFormulaInf.ex φ
+
+/-- The true formula. Mathlib calls it `verum`; this is the project's historical name for it, and
+the two are definitionally equal (`not falsum` reduces to `imp falsum falsum`). -/
+protected abbrev top : L.BoundedFormulaω α n := BoundedFormulaInf.verum
+
+/-! Production's `not` and `ex` were `@[match_pattern]`; Mathlib's are not, and the attribute
+**cannot** be added downstream ("cannot add attribute to a declaration in an imported module").
+The qualified `BoundedFormulaω.not`/`.ex` above are declared here and so do carry it, which covers
+consumers that name them explicitly; dot-notation *patterns* (`| .not φ => …`) resolve through the
+head symbol to `BoundedFormulaInf.not` and are therefore not available. If a consumer needs them,
+the fix belongs upstream on the fork, not here. -/
+
+/-! ### Derived connectives Mathlib does not provide -/
 
 /-- Conjunction of two formulas, defined via De Morgan. -/
 @[match_pattern]
@@ -92,11 +110,6 @@ protected def or (φ ψ : L.BoundedFormulaω α n) : L.BoundedFormulaω α n :=
   φ.not.imp ψ
 
 instance : Max (L.BoundedFormulaω α n) := ⟨BoundedFormulaω.or⟩
-
-/-- Existential quantification. -/
-@[match_pattern]
-protected def ex (φ : L.BoundedFormulaω α (n + 1)) : L.BoundedFormulaω α n :=
-  φ.not.all.not
 
 /-- Biconditional between formulas. -/
 protected def iff (φ ψ : L.BoundedFormulaω α n) : L.BoundedFormulaω α n :=
@@ -155,6 +168,55 @@ scoped[Lomega1omega] prefix:arg "∼ω" => FirstOrder.Language.BoundedFormulaω.
 scoped[Lomega1omega] prefix:110 "∃'ω " => FirstOrder.Language.BoundedFormulaω.ex
 
 scoped[Lomega1omega] infixl:61 " ⇔ω " => FirstOrder.Language.BoundedFormulaω.iff
+
+/-! ## Facade transparency gates
+
+These must elaborate with **no** `change`, rewrite, or explicit cast. That is precisely what
+certifies that the ω names remain a definitional specialization — the property Lean 4.34's
+`implicit`-transparency requirement makes load-bearing for every `rw`/`simp` in the ω tower. -/
+
+section Gates
+
+example (L : Language.{u, v}) (α : Type u') (n : ℕ) :
+    L.BoundedFormulaω α n = L.BoundedFormulaInf ℕ α n := rfl
+
+example (φ : L.BoundedFormulaω α n) : L.BoundedFormulaInf ℕ α n := φ
+
+example (φ : L.BoundedFormulaInf ℕ α n) : L.BoundedFormulaω α n := φ
+
+/-- Exact universe ascription: the ω syntax must land in `Type max u v u'`, with no `uι` bump. -/
+example (L : Language.{u, v}) (α : Type u') (n : ℕ) : Type max u v u' := L.BoundedFormulaω α n
+
+example (L : Language.{u, v}) (α : Type u') : L.Formulaω α = L.BoundedFormulaω α 0 := rfl
+
+example (L : Language.{u, v}) : L.Sentenceω = L.Formulaω Empty := rfl
+
+/-- The qualified ω aliases remain usable in **pattern** position. This is what the lost
+`@[match_pattern]` on `BoundedFormulaInf.not`/`.ex` does *not* cost us: the aliases
+declared in this file carry the attribute themselves. -/
+example (φ : L.BoundedFormulaω α n) : Bool :=
+  match φ with
+  | BoundedFormulaω.falsum => false
+  | BoundedFormulaω.equal _ _ => true
+  | BoundedFormulaω.rel _ _ => true
+  | BoundedFormulaω.imp _ _ => true
+  | BoundedFormulaω.all _ => true
+  | BoundedFormulaω.iSup _ => true
+  | BoundedFormulaω.iInf _ => true
+
+/-- Induction through the abbreviation: the recursor is reachable and its case names are the ones
+the ω consumers already write. -/
+example (φ : L.BoundedFormulaω α n) : True := by
+  induction φ with
+  | falsum => trivial
+  | equal _ _ => trivial
+  | rel _ _ => trivial
+  | imp _ _ _ _ => trivial
+  | all _ _ => trivial
+  | iSup _ _ => trivial
+  | iInf _ _ => trivial
+
+end Gates
 
 end Language
 

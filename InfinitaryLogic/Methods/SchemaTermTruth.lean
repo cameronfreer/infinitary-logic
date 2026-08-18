@@ -40,11 +40,11 @@ theorem locSkWitness_universal_constInterp_nat
     (ts : Fin n → (localColim s₀)[[ℕ]].Term Empty) :
     letI : (localColim s₀).Structure M := localColimStructure s₀
     letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
-    (ψ.mapLanguage (LlocalInclusion s₀ k)).Realize (Empty.elim : Empty → M)
+    (BoundedFormulaω.mapLanguage (LlocalInclusion s₀ k) ψ).Realize (Empty.elim : Empty → M)
         (Fin.snoc (fun i => (ts i).realize (Empty.elim : Empty → M))
           ((locSkWitnessTerm s₀ ℕ h ts).realize (Empty.elim : Empty → M))) →
       ∀ x : M,
-        (ψ.mapLanguage (LlocalInclusion s₀ k)).Realize (Empty.elim : Empty → M)
+        (BoundedFormulaω.mapLanguage (LlocalInclusion s₀ k) ψ).Realize (Empty.elim : Empty → M)
           (Fin.snoc (fun i => (ts i).realize (Empty.elim : Empty → M)) x) := by
   letI : (localColim s₀).Structure M := localColimStructure s₀
   letI : (Llocal s₀ k).Structure M := localStageStructure s₀ k
@@ -179,11 +179,11 @@ theorem schemaTruthLemmaStage :
       ∀ ts : Fin n → (localColim s₀)[[ℕ]].Term Empty,
         (@BoundedFormulaω.Realize ((localColim s₀)[[ℕ]])
             (SchemaTermCarrier (s₀ := s₀) (M := M) hM) (schemaTermStructure hM) Empty n
-            ((ψ.mapLanguage (LlocalInclusion s₀ (k + 1))).mapLanguage
+            ((BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) ψ).mapLanguage
               (lhomWithConstants (localColim s₀) ℕ))
             (Empty.elim : Empty → SchemaTermCarrier (s₀ := s₀) (M := M) hM)
             (fun i => SchemaTermCarrier.mk hM (ts i)) ↔
-          schemaFormulaSentence (ψ.mapLanguage (LlocalInclusion s₀ (k + 1))) ts
+          schemaFormulaSentence (BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) ψ) ts
             ∈ schemaCompletionTheory (schemaEnumeration s₀) hM) := by
   letI : (localColim s₀).Structure M := localColimStructure s₀
   intro hM k
@@ -298,11 +298,11 @@ theorem schemaTruthLemmaStage :
       (toLocalColimFormula_mem_ΓlocalColim s₀ hψmem) ts
     have himpu := schemaFormulaSentence_mem_universe
       (toLocalColimFormula_mem_ΓlocalColim s₀ hmem) ts
-    rw [show ((φ.imp ψ').mapLanguage (LlocalInclusion s₀ (k + 1))).mapLanguage
+    rw [show (BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) (φ.imp ψ')).mapLanguage
           (lhomWithConstants (localColim s₀) ℕ)
-        = ((φ.mapLanguage (LlocalInclusion s₀ (k + 1))).mapLanguage
+        = ((BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) φ).mapLanguage
             (lhomWithConstants (localColim s₀) ℕ)).imp
-          ((ψ'.mapLanguage (LlocalInclusion s₀ (k + 1))).mapLanguage
+          ((BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) ψ').mapLanguage
             (lhomWithConstants (localColim s₀) ℕ)) from rfl,
       BoundedFormulaω.realize_imp, ihφ hφmem ts, ihψ hψmem ts]
     constructor
@@ -310,11 +310,11 @@ theorem schemaTruthLemmaStage :
       rcases (schemaCompletionTheorySpec hM).complete_on_universe _ himpu with hpos | hneg
       · exact hpos
       · exfalso
-        by_cases hφT : schemaFormulaSentence (φ.mapLanguage (LlocalInclusion s₀ (k + 1))) ts
+        by_cases hφT : schemaFormulaSentence (BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) φ) ts
             ∈ schemaCompletionTheory (schemaEnumeration s₀) hM
         · obtain ⟨σ, w, hbody⟩ := exists_body_of_subset hM
-            {(schemaFormulaSentence ((φ.imp ψ').mapLanguage (LlocalInclusion s₀ (k + 1))) ts).not,
-              schemaFormulaSentence (ψ'.mapLanguage (LlocalInclusion s₀ (k + 1))) ts}
+            {(schemaFormulaSentence (BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) (φ.imp ψ')) ts).not,
+              schemaFormulaSentence (BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) ψ') ts}
             (fun τ hτ => by
               rw [Finset.mem_insert, Finset.mem_singleton] at hτ
               rcases hτ with rfl | rfl
@@ -327,8 +327,8 @@ theorem schemaTruthLemmaStage :
           rw [realize_schemaFormulaSentence_iff] at h2
           exact h1 fun _ => h2
         · obtain ⟨σ, w, hbody⟩ := exists_body_of_subset hM
-            {(schemaFormulaSentence ((φ.imp ψ').mapLanguage (LlocalInclusion s₀ (k + 1))) ts).not,
-              (schemaFormulaSentence (φ.mapLanguage (LlocalInclusion s₀ (k + 1))) ts).not}
+            {(schemaFormulaSentence (BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) (φ.imp ψ')) ts).not,
+              (schemaFormulaSentence (BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) φ) ts).not}
             (fun τ hτ => by
               rw [Finset.mem_insert, Finset.mem_singleton] at hτ
               rcases hτ with rfl | rfl
@@ -345,9 +345,9 @@ theorem schemaTruthLemmaStage :
       · exact hpos
       · exfalso
         obtain ⟨σ, w, hbody⟩ := exists_body_of_subset hM
-          {schemaFormulaSentence ((φ.imp ψ').mapLanguage (LlocalInclusion s₀ (k + 1))) ts,
-            schemaFormulaSentence (φ.mapLanguage (LlocalInclusion s₀ (k + 1))) ts,
-            (schemaFormulaSentence (ψ'.mapLanguage (LlocalInclusion s₀ (k + 1))) ts).not}
+          {schemaFormulaSentence (BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) (φ.imp ψ')) ts,
+            schemaFormulaSentence (BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) φ) ts,
+            (schemaFormulaSentence (BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) ψ') ts).not}
           (fun τ hτ => by
             rw [Finset.mem_insert, Finset.mem_insert, Finset.mem_singleton] at hτ
             rcases hτ with rfl | rfl | rfl
@@ -372,7 +372,7 @@ theorem schemaTruthLemmaStage :
       bfSubformulas_subset_Γlocal_succ s₀ hmem rfl
     rw [show ((BoundedFormulaω.all ψ₀).mapLanguage (LlocalInclusion s₀ (k + 1))).mapLanguage
           (lhomWithConstants (localColim s₀) ℕ)
-        = BoundedFormulaω.all ((ψ₀.mapLanguage (LlocalInclusion s₀ (k + 1))).mapLanguage
+        = BoundedFormulaω.all ((BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) ψ₀).mapLanguage
             (lhomWithConstants (localColim s₀) ℕ)) from rfl,
       BoundedFormulaω.realize_all]
     constructor
@@ -392,7 +392,7 @@ theorem schemaTruthLemmaStage :
       · exact hpos
       · exfalso
         obtain ⟨σ, w', hbody⟩ := exists_body_of_subset hM
-          {schemaFormulaSentence (ψ₀.mapLanguage (LlocalInclusion s₀ (k + 1)))
+          {schemaFormulaSentence (BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) ψ₀)
               (Fin.snoc ts (locSkWitnessTerm s₀ ℕ hmem ts)),
             (schemaFormulaSentence ((BoundedFormulaω.all ψ₀).mapLanguage
               (LlocalInclusion s₀ (k + 1))) ts).not}
@@ -433,7 +433,7 @@ theorem schemaTruthLemmaStage :
         obtain ⟨σ, w', hbody⟩ := exists_body_of_subset hM
           {schemaFormulaSentence ((BoundedFormulaω.all ψ₀).mapLanguage
               (LlocalInclusion s₀ (k + 1))) ts,
-            (schemaFormulaSentence (ψ₀.mapLanguage (LlocalInclusion s₀ (k + 1)))
+            (schemaFormulaSentence (BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) ψ₀)
               (Fin.snoc ts u)).not}
           (fun τ hτ => by
             rw [Finset.mem_insert, Finset.mem_singleton] at hτ
@@ -447,7 +447,7 @@ theorem schemaTruthLemmaStage :
         rw [realizeWith_not, realize_schemaFormulaSentence_iff] at h2
         letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
         refine h2 ?_
-        show (ψ₀.mapLanguage (LlocalInclusion s₀ (k + 1))).Realize (Empty.elim : Empty → M)
+        show (BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) ψ₀).Realize (Empty.elim : Empty → M)
           (fun i => ((Fin.snoc ts u : Fin _ → (localColim s₀)[[ℕ]].Term Empty) i).realize
             Empty.elim)
         rw [show (fun i => ((Fin.snoc ts u : Fin _ → (localColim s₀)[[ℕ]].Term Empty) i).realize
@@ -463,8 +463,8 @@ theorem schemaTruthLemmaStage :
     classical
     rw [show ((BoundedFormulaω.iSup φs).mapLanguage (LlocalInclusion s₀ (k + 1))).mapLanguage
           (lhomWithConstants (localColim s₀) ℕ)
-        = BoundedFormulaω.iSup (fun i => ((φs i).mapLanguage
-            (LlocalInclusion s₀ (k + 1))).mapLanguage
+        = BoundedFormulaω.iSup (fun i => (BoundedFormulaω.mapLanguage
+            (LlocalInclusion s₀ (k + 1)) (φs i)).mapLanguage
               (lhomWithConstants (localColim s₀) ℕ)) from rfl,
       BoundedFormulaω.realize_iSup]
     constructor
@@ -476,7 +476,7 @@ theorem schemaTruthLemmaStage :
       · exact hpos
       · exfalso
         obtain ⟨σ, w, hbody⟩ := exists_body_of_subset hM
-          {schemaFormulaSentence ((φs i).mapLanguage (LlocalInclusion s₀ (k + 1))) ts,
+          {schemaFormulaSentence (BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) (φs i)) ts,
             (schemaFormulaSentence ((BoundedFormulaω.iSup φs).mapLanguage
               (LlocalInclusion s₀ (k + 1))) ts).not}
           (fun τ hτ => by
@@ -501,19 +501,19 @@ theorem schemaTruthLemmaStage :
     intro hmem ts
     classical
     have hcolim : (⟨_, BoundedFormulaω.iInf fun i =>
-          (φs i).mapLanguage (LlocalInclusion s₀ (k + 1))⟩ :
+          BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) (φs i)⟩ :
         Σ n, (localColim s₀).BoundedFormulaω Empty n) ∈ ΓlocalColim s₀ :=
       toLocalColimFormula_mem_ΓlocalColim s₀ hmem
     rw [show ((BoundedFormulaω.iInf φs).mapLanguage (LlocalInclusion s₀ (k + 1))).mapLanguage
           (lhomWithConstants (localColim s₀) ℕ)
-        = BoundedFormulaω.iInf (fun i => ((φs i).mapLanguage
-            (LlocalInclusion s₀ (k + 1))).mapLanguage
+        = BoundedFormulaω.iInf (fun i => (BoundedFormulaω.mapLanguage
+            (LlocalInclusion s₀ (k + 1)) (φs i)).mapLanguage
               (lhomWithConstants (localColim s₀) ℕ)) from rfl,
       BoundedFormulaω.realize_iInf,
       show schemaFormulaSentence
             ((BoundedFormulaω.iInf φs).mapLanguage (LlocalInclusion s₀ (k + 1))) ts
           = schemaFormulaSentence (BoundedFormulaω.iInf fun i =>
-              (φs i).mapLanguage (LlocalInclusion s₀ (k + 1))) ts from rfl]
+              BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) (φs i)) ts from rfl]
     constructor
     · intro h
       rcases (schemaCompletionTheorySpec hM).complete_on_universe _
@@ -542,7 +542,7 @@ theorem schemaTruthLemmaStage :
         obtain ⟨σ, w, hbody⟩ := exists_body_of_subset hM
           {schemaFormulaSentence ((BoundedFormulaω.iInf φs).mapLanguage
               (LlocalInclusion s₀ (k + 1))) ts,
-            (schemaFormulaSentence ((φs j).mapLanguage (LlocalInclusion s₀ (k + 1))) ts).not}
+            (schemaFormulaSentence (BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) (φs j)) ts).not}
           (fun τ hτ => by
             rw [Finset.mem_insert, Finset.mem_singleton] at hτ
             rcases hτ with rfl | rfl
@@ -567,15 +567,15 @@ theorem schemaTruthLemmaStage_of_mem :
       ∀ ts : Fin n → (localColim s₀)[[ℕ]].Term Empty,
         (@BoundedFormulaω.Realize ((localColim s₀)[[ℕ]])
             (SchemaTermCarrier (s₀ := s₀) (M := M) hM) (schemaTermStructure hM) Empty n
-            ((ψ.mapLanguage (LlocalInclusion s₀ k)).mapLanguage
+            ((BoundedFormulaω.mapLanguage (LlocalInclusion s₀ k) ψ).mapLanguage
               (lhomWithConstants (localColim s₀) ℕ))
             (Empty.elim : Empty → SchemaTermCarrier (s₀ := s₀) (M := M) hM)
             (fun i => SchemaTermCarrier.mk hM (ts i)) ↔
-          schemaFormulaSentence (ψ.mapLanguage (LlocalInclusion s₀ k)) ts
+          schemaFormulaSentence (BoundedFormulaω.mapLanguage (LlocalInclusion s₀ k) ψ) ts
             ∈ schemaCompletionTheory (schemaEnumeration s₀) hM) := by
   letI : (localColim s₀).Structure M := localColimStructure s₀
   intro hM k n ψ hmem ts
-  have h := schemaTruthLemmaStage hM k (ψ.mapLanguage (LlocalHom s₀ k))
+  have h := schemaTruthLemmaStage hM k (BoundedFormulaω.mapLanguage (LlocalHom s₀ k) ψ)
     (liftGamma_mem_Γlocal_succ s₀ hmem) ts
   rwa [mapLanguage_LlocalInclusion_lift] at h
 
@@ -601,7 +601,7 @@ theorem canonDeForm_realize_iff {Λ : Language.{0, 0}} {N : Type} [Λ.Structure 
     (canonDeForm Λ φ g).Realize (Empty.elim : Empty → N) xs ↔
       φ.Realize (Empty.elim : Empty → N) (fun i => (g i).realize xs) := by
   rw [canonDeForm, BoundedFormulaω.realize_relabel_sumInr_zero]
-  simp only [Formulaω.Realize, BoundedFormulaω.realize_subst]
+  simp only [Formulaω.realize_def, BoundedFormulaω.realize_subst]
   exact realize_openBounds φ _
 
 variable {s₀ : LocalStage}
@@ -798,7 +798,7 @@ theorem schemaTruthLemma_colim :
       ∀ ts : Fin m → (localColim s₀)[[ℕ]].Term Empty,
         (@BoundedFormulaω.Realize ((localColim s₀)[[ℕ]])
             (SchemaTermCarrier (s₀ := s₀) (M := M) hM) (schemaTermStructure hM) Empty m
-            (φ.mapLanguage (lhomWithConstants (localColim s₀) ℕ))
+            (BoundedFormulaω.mapLanguage (lhomWithConstants (localColim s₀) ℕ) φ)
             (Empty.elim : Empty → SchemaTermCarrier (s₀ := s₀) (M := M) hM)
             (fun i => SchemaTermCarrier.mk hM (ts i)) ↔
           schemaFormulaSentence φ ts ∈ schemaCompletionTheory (schemaEnumeration s₀) hM) := by

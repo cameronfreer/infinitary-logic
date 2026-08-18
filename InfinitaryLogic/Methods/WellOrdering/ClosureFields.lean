@@ -198,7 +198,7 @@ theorem WOMem.no_contradiction {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S
       rw [hsupp] at this
       exact Set.notMem_empty _ this
   · -- a negation cannot be a positive atom
-    exact absurd hnatom (by simp [BoundedFormulaω.not, ratLtAtom, relInst])
+    exact absurd hnatom (by simp [BoundedFormulaω.not, BoundedFormulaInf.not, ratLtAtom, relInst])
 
 /-! ## Deterministic connective fields -/
 
@@ -207,7 +207,7 @@ theorem WOMem.C2_not_not {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S)
     (ψ : L[[ℕ]].Sentenceω) (hσ : ψ.not.not ∈ S) : WOMem φ lt (S ∪ {ψ}) := by
   by_cases hb : ψ ∈ baseDiagram φ lt
   · exact hS.union_of_mem_base hb
-  · refine hS.extend_det hσ (fun q r h => by simp [BoundedFormulaω.not, ratLtAtom, relInst] at h)
+  · refine hS.extend_det hσ (fun q r h => by simp [BoundedFormulaω.not, BoundedFormulaInf.not, ratLtAtom, relInst] at h)
       hb (negimp_left_mem (hS.subset_U hσ)) ?_ ?_
     · rw [sentenceJConsts_not, sentenceJConsts_not]
     · intro M inst _ h hr
@@ -223,7 +223,7 @@ theorem WOMem.C1_neg_imp {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S)
   · by_cases hb : ψ₁ ∈ baseDiagram φ lt
     · exact hS.union_of_mem_base hb
     · refine hS.extend_det hσ
-        (fun q r h => by simp [BoundedFormulaω.not, ratLtAtom, relInst] at h) hb
+        (fun q r h => by simp [BoundedFormulaω.not, BoundedFormulaInf.not, ratLtAtom, relInst] at h) hb
         (negimp_left_mem (hS.subset_U hσ)) ?_ ?_
       · rw [sentenceJConsts_not]
         exact sentenceJConsts_imp_left ψ₁ ψ₂
@@ -235,7 +235,7 @@ theorem WOMem.C1_neg_imp {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S)
   · by_cases hb : ψ₂.not ∈ baseDiagram φ lt
     · exact hS.union_of_mem_base hb
     · refine hS.extend_det hσ
-        (fun q r h => by simp [BoundedFormulaω.not, ratLtAtom, relInst] at h) hb
+        (fun q r h => by simp [BoundedFormulaω.not, BoundedFormulaInf.not, ratLtAtom, relInst] at h) hb
         (negimp_right_mem (hS.subset_U hσ)) ?_ ?_
       · rw [sentenceJConsts_not, sentenceJConsts_not]
         exact sentenceJConsts_imp_right ψ₁ ψ₂
@@ -264,7 +264,7 @@ theorem WOMem.C4_neg_iSup {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S)
   by_cases hb : (φs k).not ∈ baseDiagram φ lt
   · exact hS.union_of_mem_base hb
   · refine hS.extend_det hσ
-      (fun q r h => by simp [BoundedFormulaω.not, ratLtAtom, relInst] at h) hb
+      (fun q r h => by simp [BoundedFormulaω.not, BoundedFormulaInf.not, ratLtAtom, relInst] at h) hb
       (negiSup_comp_mem k (hS.subset_U hσ)) ?_ ?_
     · rw [sentenceJConsts_not, sentenceJConsts_not]
       exact sentenceJConsts_component_iSup φs k
@@ -406,7 +406,7 @@ theorem WOMem.C3_neg_iInf {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S)
     rcases hS.mem_cases hσ with h | h | ⟨q, r, _, h⟩
     · exact Or.inl h
     · exact Or.inr h
-    · exact absurd h (by simp [BoundedFormulaω.not, ratLtAtom, relInst])
+    · exact absurd h (by simp [BoundedFormulaω.not, BoundedFormulaInf.not, ratLtAtom, relInst])
   have hchoice : ∀ α : Ordinal.{0}, α < (Cardinal.aleph 1).ord →
       ∃ k : ℕ, StarCondition φ lt ((S \ baseDiagram φ lt) ∪ {(φs k).not}) α := by
     intro α hα
@@ -654,7 +654,7 @@ theorem WOMem.neg_all_witness {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S)
     rcases hS.mem_cases hσ with h | h | ⟨q, r, _, h⟩
     · exact Or.inl h
     · exact Or.inr h
-    · exact absurd h (by simp [BoundedFormulaω.not, ratLtAtom, relInst])
+    · exact absurd h (by simp [BoundedFormulaω.not, BoundedFormulaInf.not, ratLtAtom, relInst])
   refine ⟨c, hS.extend hb (negall_inst_mem c (hS.subset_U hσ)) ?_ ?_⟩
   · refine Set.Finite.subset ((hS.jConsts_finite_of_mem hσ).union
       (Set.finite_singleton c)) ?_
@@ -673,11 +673,17 @@ theorem WOMem.neg_all_witness {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S)
     rw [BoundedFormulaω.realize_all] at h1
     push Not at h1
     obtain ⟨v, hv⟩ := h1
-    rw [snoc_elim0_eq_const] at hv
+    -- this occurrence carries the sentence semantics' `default` rather than `Fin.elim0`; the two
+    -- are definitionally equal, so the shared lemma still proves it in the shape the goal has
+    have hdef : (Fin.snoc (default : Fin 0 → W.M) v : Fin 1 → W.M) = fun _ => v :=
+      snoc_elim0_eq_const v
+    rw [hdef] at hv
     refine ⟨(W.update_nonrat hcr hcΓ v).add_sentence ?_ ?_⟩
     · show @Sentenceω.Realize L[[ℕ]] ((instConst c ψ).not) W.M
         (wc W.inst (Function.update W.h c v))
       letI : L[[ℕ]].Structure W.M := wc W.inst (Function.update W.h c v)
+      -- normalize the empty tuple to `Fin.elim0` first, the spelling the downstream lemmas use
+      rw [Sentenceω.realize_def]
       refine (BoundedFormulaω.realize_not _).mpr ?_
       intro hcon
       rw [realize_instConst W.inst (Function.update W.h c v) c ψ] at hcon

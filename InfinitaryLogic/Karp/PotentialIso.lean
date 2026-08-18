@@ -3,7 +3,6 @@ Copyright (c) 2026 Cameron Freer. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
-import InfinitaryLogic.Linf.Theory
 import InfinitaryLogic.Scott.BackAndForth
 import Architect
 import Mathlib.SetTheory.Ordinal.Family

@@ -211,7 +211,7 @@ theorem lyndonInsepAt_iSup_component (φs : ℕ → L[[ℕ]].Sentenceω)
     sentenceJConsts_iSup_subset σ hsupp, ?_, ?_⟩
   · intro M _ _ hmodel
     have hsup := hmodel _ hmem
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_iSup] at hsup ⊢
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_iSup] at hsup ⊢
     obtain ⟨k, hk⟩ := hsup
     exact ⟨k, hΓσ k M (by
       intro ρ hρ
@@ -219,11 +219,11 @@ theorem lyndonInsepAt_iSup_component (φs : ℕ → L[[ℕ]].Sentenceω)
       · exact hk
       · exact hmodel ρ hρ)⟩
   · intro M _ _ hmodel
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iSup,
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iSup,
       not_exists]
     intro k
     have hk := hΔσ k M hmodel
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_not] at hk
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not] at hk
     exact hk
 
 /-- **C3' (negated conjunction)**: a negated conjunction in `Γ` splits off a negated component. -/
@@ -239,21 +239,21 @@ theorem lyndonInsepAt_neg_iInf_component (φs : ℕ → L[[ℕ]].Sentenceω)
     sentenceJConsts_iSup_subset σ hsupp, ?_, ?_⟩
   · intro M _ _ hmodel
     have hnotinf := hmodel _ hmem
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iInf,
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iInf,
       not_forall] at hnotinf
     obtain ⟨k, hk⟩ := hnotinf
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_iSup]
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_iSup]
     exact ⟨k, hΓσ k M (by
       intro ρ hρ
       rcases Set.mem_insert_iff.mp hρ with rfl | hρ
-      · simp only [Sentenceω.Realize, BoundedFormulaω.realize_not]; exact hk
+      · simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not]; exact hk
       · exact hmodel ρ hρ)⟩
   · intro M _ _ hmodel
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iSup,
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iSup,
       not_exists]
     intro k
     have hk := hΔσ k M hmodel
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_not] at hk
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not] at hk
     exact hk
 
 /-! ## The one-sided closures: falsum and internal contradiction (separator `⊥`) -/
@@ -270,7 +270,7 @@ theorem lyndonInsepAt_falsum_absurd
       baseRelationsInSigned_falsum false]; exact Set.empty_subset _
   · rw [sentenceJConsts_falsum]; exact Set.empty_subset _
   · intro M _ _ _
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_falsum,
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_falsum,
       not_false_eq_true]
 
 theorem lyndonInsepAt_contradiction_absurd {φ : L[[ℕ]].Sentenceω}
@@ -286,10 +286,10 @@ theorem lyndonInsepAt_contradiction_absurd {φ : L[[ℕ]].Sentenceω}
   · intro M _ _ hmodel
     have hφ := hmodel _ h1
     have hnφ := hmodel _ h2
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_not] at hnφ
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not] at hnφ
     exact absurd hφ hnφ
   · intro M _ _ _
-    simp only [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_falsum,
+    simp only [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_falsum,
       not_false_eq_true]
 
 /-! ## The one-sided closures: fresh support and the quantifier round trip (separator `genEx`) -/

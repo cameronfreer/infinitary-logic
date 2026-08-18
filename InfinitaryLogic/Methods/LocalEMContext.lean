@@ -263,7 +263,7 @@ theorem realize_locDeForm (d : ℕ) (S : Finset J) {n : ℕ}
       = (fun i => locDeepInterp Λ J a d S (ts i)) :=
     funext fun i => (locDeTermFin_realize Λ J a d S (ts i) (hsub i)).symm
   rw [locDeForm, canonDeForm, BoundedFormulaω.realize_relabel_sumInr_zero]
-  simp only [Formulaω.Realize, BoundedFormulaω.realize_subst]
+  simp only [Formulaω.realize_def, BoundedFormulaω.realize_subst]
   rw [hassign]
   exact realize_openBounds φ _
 

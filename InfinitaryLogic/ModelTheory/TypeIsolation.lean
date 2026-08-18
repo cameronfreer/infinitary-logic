@@ -18,9 +18,10 @@ type `p` is ISOLATED AMONG THE REALIZED TYPES by a single `L_{ω₁ω}`-formula
 
 where `θ_{p,q}` is an oriented separator (true at realizers of `p`, false at realizers of `q`;
 a membership-difference formula or its negation) and the countable conjunction is `ciInf` over
-the countable subtype of realized types. Universes are pinned to `Language.{0,0}`/`Type 0`
-(`ciInf`'s index universe) — "language-general" means arbitrary function and relation symbols,
-no relationality assumption. The characterization:
+the countable subtype of realized types. Both the language and the structure live in arbitrary
+universes: the subtype of realized types lands in `Type (max u v)`, and `ciInf` encodes an index
+of any universe into the fixed `ℕ` carrier. "Language-general" means arbitrary function and
+relation symbols, no relationality assumption. The characterization:
 
   `realize_isolatingFormula_iff : χ_p.Realize Empty.elim a ↔ infinitaryType M a = p`.
 -/
@@ -29,7 +30,9 @@ namespace FirstOrder
 
 namespace Language
 
-variable {L : Language.{0, 0}} {M : Type} [L.Structure M] {n : ℕ}
+universe u v w
+
+variable {L : Language.{u, v}} {M : Type w} [L.Structure M] {n : ℕ}
 
 theorem mem_infinitaryType_iff {φ : L.BoundedFormulaω Empty n} {a : Fin n → M} :
     φ ∈ infinitaryType M a ↔ φ.Realize Empty.elim a :=
@@ -104,6 +107,25 @@ theorem exists_realize_isolatingFormula
     ∃ a : Fin n → M, (isolatingFormula hcount p).Realize Empty.elim a := by
   obtain ⟨a, ha⟩ := hp
   exact ⟨a, (realize_isolatingFormula_iff hcount p a).mpr ha⟩
+
+/-! ## Universe regression
+
+These instantiate the characterization at a nonzero universe and at universe zero. They are
+compiled, so they fail if the development is ever reconstrained; the `variable` block alone
+would not catch that, since a `Language.{u, v}` binder can still be silently pinned by a
+downstream lemma. -/
+
+example {L' : Language.{1, 1}} {M' : Type 2} [L'.Structure M'] {m : ℕ}
+    (hcount : (RealizedInfinitaryTypes (L := L') M' m).Countable)
+    (p : Set (L'.BoundedFormulaω Empty m)) (a : Fin m → M') :
+    (isolatingFormula hcount p).Realize Empty.elim a ↔ infinitaryType M' a = p :=
+  realize_isolatingFormula_iff hcount p a
+
+example {L' : Language.{0, 0}} {M' : Type} [L'.Structure M'] {m : ℕ}
+    (hcount : (RealizedInfinitaryTypes (L := L') M' m).Countable)
+    (p : Set (L'.BoundedFormulaω Empty m)) (a : Fin m → M') :
+    (isolatingFormula hcount p).Realize Empty.elim a ↔ infinitaryType M' a = p :=
+  realize_isolatingFormula_iff hcount p a
 
 end Language
 

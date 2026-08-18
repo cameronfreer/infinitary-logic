@@ -196,7 +196,7 @@ theorem not_budgetedPairInsep_of_mixed_rev (hΓ : Γ ⊆ SentBnd F₁ R₁) (hΔ
     ⟨Set.subset_inter hb₁.1 hb₂.1, Set.subset_inter hb₁.2 hb₂.2⟩, ?_, ?_, ?_⟩
   · -- `Δ ⊨ ¬¬σ` by double-negation introduction from `σ ∈ Δ`
     intro N instN neN hmodel
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not]
     intro hcon
     rw [BoundedFormulaω.realize_not] at hcon
     exact hcon (hmodel _ hσΔ)
@@ -217,10 +217,10 @@ theorem not_budgetedPairInsep_of_left_contradiction (hσ : σ ∈ Γ) (hnσ : σ
   · intro N instN _ hmodel
     have h1 := hmodel σ hσ
     have h2 := hmodel σ.not hnσ
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not] at h2
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not] at h2
     exact absurd h1 h2
   · intro N instN _ _
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not]
     exact fun hf => hf
   · exact ⟨by rw [baseFunctionsIn_falsum]; exact Set.empty_subset _,
       by rw [show (BoundedFormulaω.falsum : L[[ℕ]].Sentenceω).baseRelationsIn = ∅ from
@@ -237,7 +237,7 @@ theorem not_budgetedPairInsep_of_falsum_left
   intro h
   refine h ⟨BoundedFormulaω.falsum, fun N instN _ hmodel => hmodel _ hmem, ?_, ?_, ?_, ?_, ?_⟩
   · intro N instN _ _
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not]
     exact fun hf => hf
   · exact ⟨by rw [baseFunctionsIn_falsum]; exact Set.empty_subset _,
       by rw [show (BoundedFormulaω.falsum : L[[ℕ]].Sentenceω).baseRelationsIn = ∅ from
@@ -253,7 +253,7 @@ theorem not_budgetedPairInsep_of_falsum_right
   intro h
   refine h ⟨(BoundedFormulaω.falsum : L[[ℕ]].Sentenceω).not, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · intro N instN _ _
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not]
     exact fun hf => hf
   · intro N instN _ hmodel
     exact absurd (hmodel _ hmem) (fun hf => hf)
@@ -303,27 +303,27 @@ theorem budgetedPairInsep_imp_left (φ ψ : L[[ℕ]].Sentenceω) (hmem : φ.imp 
   refine h ⟨(τ₁.not).imp τ₂, ?_, ?_, ?_, ?_, ?_, ?_⟩
   -- `Γ ⊨ τ₁ ∨ τ₂`, by the implication member
   · intro N instN neN hmodel
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_imp, BoundedFormulaω.realize_not]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_imp, BoundedFormulaω.realize_not]
     intro hnτ₁
     have hφtrue : @Sentenceω.Realize L[[ℕ]] φ N instN := by
       by_contra hnφ
       refine hnτ₁ (@hE₁ N instN neN fun ρ hρ => ?_)
       rcases Set.mem_insert_iff.mp hρ with rfl | hρ
-      · rw [Sentenceω.Realize, BoundedFormulaω.realize_not]; exact hnφ
+      · rw [Sentenceω.realize_def, BoundedFormulaω.realize_not]; exact hnφ
       · exact hmodel ρ hρ
     have himp := hmodel _ hmem
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_imp] at himp
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_imp] at himp
     refine @hE₂ N instN neN fun ρ hρ => ?_
     rcases Set.mem_insert_iff.mp hρ with rfl | hρ
     · exact himp hφtrue
     · exact hmodel ρ hρ
   · intro N instN neN hmodel
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_imp,
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_imp,
       BoundedFormulaω.realize_not]
     intro hcontra
     have hn₁ := @hN₁ N instN neN hmodel
     have hn₂ := @hN₂ N instN neN hmodel
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not] at hn₁ hn₂
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not] at hn₁ hn₂
     exact hn₂ (hcontra hn₁)
   · exact ⟨baseFunctionsIn_imp_subset (by rw [baseFunctionsIn_not]; exact hb₁.1) hb₂.1,
       baseRelationsIn_imp_subset (by rw [baseRelationsIn_not]; exact hb₁.2) hb₂.2⟩
@@ -364,24 +364,24 @@ theorem budgetedPairInsep_imp_right (φ ψ : L[[ℕ]].Sentenceω) (hmem : φ.imp
   rw [hcφ] at hc₁; rw [hcψ] at hc₂; rw [huφ] at hx₁; rw [huψ] at hx₂
   refine h ⟨τ₁.and τ₂, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · intro N instN neN hmodel
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_and]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_and]
     exact ⟨@hE₁ N instN neN hmodel, @hE₂ N instN neN hmodel⟩
   · intro N instN neN hmodel
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_and]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_and]
     have himp := hmodel _ hmem
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_imp] at himp
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_imp] at himp
     by_cases hφtrue : @Sentenceω.Realize L[[ℕ]] φ N instN
     · have hn := @hN₂ N instN neN fun ρ hρ => by
         rcases Set.mem_insert_iff.mp hρ with rfl | hρ
         · exact himp hφtrue
         · exact hmodel ρ hρ
-      rw [Sentenceω.Realize, BoundedFormulaω.realize_not] at hn
+      rw [Sentenceω.realize_def, BoundedFormulaω.realize_not] at hn
       exact fun hand => hn hand.2
     · have hn := @hN₁ N instN neN fun ρ hρ => by
         rcases Set.mem_insert_iff.mp hρ with rfl | hρ
-        · rw [Sentenceω.Realize, BoundedFormulaω.realize_not]; exact hφtrue
+        · rw [Sentenceω.realize_def, BoundedFormulaω.realize_not]; exact hφtrue
         · exact hmodel ρ hρ
-      rw [Sentenceω.Realize, BoundedFormulaω.realize_not] at hn
+      rw [Sentenceω.realize_def, BoundedFormulaω.realize_not] at hn
       exact fun hand => hn hand.1
   · refine ⟨?_, ?_⟩
     · rw [show (τ₁.and τ₂).baseFunctionsIn = ((τ₁.imp τ₂.not).not).baseFunctionsIn from rfl,
@@ -630,9 +630,9 @@ theorem exists_universal_interpolant_of_not_budgetedPairInsep {r₁ r₂ : L[[�
   have := @hsep.2.1 N instN neN (fun ρ hρ => by
     rw [Set.mem_singleton_iff] at hρ
     subst hρ
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not]
     exact hnr₂)
-  rw [Sentenceω.Realize, BoundedFormulaω.realize_not] at this
+  rw [Sentenceω.realize_def, BoundedFormulaω.realize_not] at this
   exact this (hmodel _ rfl)
 
 
@@ -723,11 +723,11 @@ theorem not_budgetedPairInsep_of_right_contradiction (hσ : σ ∈ Δ) (hnσ : �
     intro N inst hmodel
     have h1 := hmodel σ hσ
     have h2 := hmodel σ.not hnσ
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not] at h2
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not] at h2
     exact h2 h1
   refine h ⟨(BoundedFormulaω.falsum : L[[ℕ]].Sentenceω).not, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · intro N instN _ _
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not]
     exact fun hf => hf
   · intro N instN _ hmodel
     exact absurd hmodel (fun hm => hincon N hm)
@@ -766,17 +766,17 @@ theorem budgetedPairInsep_insert_shared_left (hσΔ : σ ∈ Δ)
   rw [huΓ'] at hu
   refine h ⟨σ.imp θ, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · intro N instN neN hmodel
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_imp]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_imp]
     intro hσtrue
     refine @hE N instN neN fun ρ hρ => ?_
     rcases Set.mem_insert_iff.mp hρ with rfl | hρ
     · exact hσtrue
     · exact hmodel ρ hρ
   · intro N instN neN hmodel
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_imp]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_imp]
     intro hcontra
     have hn := @hN N instN neN hmodel
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not] at hn
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not] at hn
     exact hn (hcontra (hmodel σ hσΔ))
   · exact ⟨baseFunctionsIn_imp_subset (Set.subset_inter hb₁.1 hb₂.1) hbnd.1,
       baseRelationsIn_imp_subset (Set.subset_inter hb₁.2 hb₂.2) hbnd.2⟩
@@ -807,16 +807,16 @@ theorem budgetedPairInsep_insert_shared_right (hσΓ : σ ∈ Γ)
   rw [huΔ'] at hx
   refine h ⟨σ.and θ, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · intro N instN neN hmodel
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_and]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_and]
     exact ⟨hmodel σ hσΓ, @hE N instN neN hmodel⟩
   · intro N instN neN hmodel
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_and]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_and]
     by_cases hσtrue : @Sentenceω.Realize L[[ℕ]] σ N instN
     · have hn := @hN N instN neN fun ρ hρ => by
         rcases Set.mem_insert_iff.mp hρ with rfl | hρ
         · exact hσtrue
         · exact hmodel ρ hρ
-      rw [Sentenceω.Realize, BoundedFormulaω.realize_not] at hn
+      rw [Sentenceω.realize_def, BoundedFormulaω.realize_not] at hn
       exact fun hand => hn hand.2
     · exact fun hand => hσtrue hand.1
   · refine ⟨?_, ?_⟩
@@ -925,12 +925,12 @@ theorem budgetedPairInsep_relCongr_mixed {l : ℕ} (R : L.Relations l) (g : Fin 
     have hupd : Function.update hm b (hm (g i)) = hm := by
       rw [hval, Function.update_eq_self]
     show @Sentenceω.Realize L[[ℕ]] τ.not N instN
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not]
     intro hcontra
     have hθ := (realize_substConst base hm b (g i) θ).mp ((bridge _).mp hcontra)
     rw [hupd] at hθ
     have hn := @hN N instN neN hmodel
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not] at hn
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not] at hn
     exact hn ((bridge _).mpr hθ)
   · exact ⟨(baseFunctionsIn_substConst_subset b (g i) θ).trans hbnd.1,
       (baseRelationsIn_substConst b (g i) θ).trans hbnd.2⟩
@@ -1040,7 +1040,7 @@ theorem budgetedPairInsep_not_not_left (hmem : φ.not.not ∈ Γ)
   refine budgetedPairInsep_insert_of_member_left hmem ?_ ?_ ?_ h
   · intro N instN _ hmodel
     have := hmodel _ hmem
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_not,
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_not,
       not_not] at this
     exact this
   · rw [sentenceJConsts_not, sentenceJConsts_not]
@@ -1055,7 +1055,7 @@ theorem budgetedPairInsep_not_not_right (hmem : φ.not.not ∈ Δ)
   refine budgetedPairInsep_insert_of_member_right hmem ?_ ?_ ?_ h
   · intro N instN _ hmodel
     have := hmodel _ hmem
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_not,
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_not,
       not_not] at this
     exact this
   · rw [sentenceJConsts_not, sentenceJConsts_not]
@@ -1070,7 +1070,7 @@ theorem budgetedPairInsep_neg_imp_left₁ (hmem : (φ.imp ψ).not ∈ Γ)
   refine budgetedPairInsep_insert_of_member_left hmem ?_ ?_ ?_ h
   · intro N instN _ hmodel
     have := hmodel _ hmem
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_imp,
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_imp,
       Classical.not_imp] at this
     exact this.1
   · rw [sentenceJConsts_not]; exact sentenceJConsts_imp_left φ ψ
@@ -1085,9 +1085,9 @@ theorem budgetedPairInsep_neg_imp_left₂ (hmem : (φ.imp ψ).not ∈ Γ)
   refine budgetedPairInsep_insert_of_member_left hmem ?_ ?_ ?_ h
   · intro N instN _ hmodel
     have := hmodel _ hmem
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_imp,
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_imp,
       Classical.not_imp] at this
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not]
     exact this.2
   · rw [sentenceJConsts_not, sentenceJConsts_not]; exact sentenceJConsts_imp_right φ ψ
   · intro hq
@@ -1102,7 +1102,7 @@ theorem budgetedPairInsep_neg_imp_right₁ (hmem : (φ.imp ψ).not ∈ Δ)
   refine budgetedPairInsep_insert_of_member_right hmem ?_ ?_ ?_ h
   · intro N instN _ hmodel
     have := hmodel _ hmem
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_imp,
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_imp,
       Classical.not_imp] at this
     exact this.1
   · rw [sentenceJConsts_not]; exact sentenceJConsts_imp_left φ ψ
@@ -1117,9 +1117,9 @@ theorem budgetedPairInsep_neg_imp_right₂ (hmem : (φ.imp ψ).not ∈ Δ)
   refine budgetedPairInsep_insert_of_member_right hmem ?_ ?_ ?_ h
   · intro N instN _ hmodel
     have := hmodel _ hmem
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_imp,
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_imp,
       Classical.not_imp] at this
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not]
     exact this.2
   · rw [sentenceJConsts_not, sentenceJConsts_not]; exact sentenceJConsts_imp_right φ ψ
   · intro hq
@@ -1134,7 +1134,7 @@ theorem budgetedPairInsep_iInf_component_left (hmem : BoundedFormulaω.iInf φs 
   refine budgetedPairInsep_insert_of_member_left hmem ?_ (sentenceJConsts_component_iInf φs k) ?_ h
   · intro N instN _ hmodel
     have := hmodel _ hmem
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_iInf] at this
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_iInf] at this
     exact this k
   · intro hq
     rw [hasQuantSigned_iInf]
@@ -1147,7 +1147,7 @@ theorem budgetedPairInsep_iInf_component_right (hmem : BoundedFormulaω.iInf φs
   refine budgetedPairInsep_insert_of_member_right hmem ?_ (sentenceJConsts_component_iInf φs k) ?_ h
   · intro N instN _ hmodel
     have := hmodel _ hmem
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_iInf] at this
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_iInf] at this
     exact this k
   · intro hq
     rw [hasQuantSigned_iInf]
@@ -1160,9 +1160,9 @@ theorem budgetedPairInsep_neg_iSup_component_left (hmem : (BoundedFormulaω.iSup
   refine budgetedPairInsep_insert_of_member_left hmem ?_ ?_ ?_ h
   · intro N instN _ hmodel
     have := hmodel _ hmem
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iSup,
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iSup,
       not_exists] at this
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not]
     exact this k
   · rw [sentenceJConsts_not, sentenceJConsts_not]
     exact sentenceJConsts_component_iSup φs k
@@ -1178,9 +1178,9 @@ theorem budgetedPairInsep_neg_iSup_component_right (hmem : (BoundedFormulaω.iSu
   refine budgetedPairInsep_insert_of_member_right hmem ?_ ?_ ?_ h
   · intro N instN _ hmodel
     have := hmodel _ hmem
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iSup,
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iSup,
       not_exists] at this
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not]
     exact this k
   · rw [sentenceJConsts_not, sentenceJConsts_not]
     exact sentenceJConsts_component_iSup φs k
@@ -1257,20 +1257,20 @@ theorem budgetedPairInsep_iSup_left (hmem : BoundedFormulaω.iSup φs ∈ Γ)
   refine h ⟨BoundedFormulaω.iSup θ, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · intro N instN neN hmodel
     have hiSup := hmodel _ hmem
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_iSup] at hiSup
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_iSup] at hiSup
     obtain ⟨n, hn⟩ := hiSup
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_iSup]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_iSup]
     have hEn := (hsep n).1
     exact ⟨n, @hEn N instN neN fun ρ hρ => by
       rcases Set.mem_insert_iff.mp hρ with rfl | hρ
       · exact hn
       · exact hmodel ρ hρ⟩
   · intro N instN neN hmodel
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iSup, not_exists]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iSup, not_exists]
     intro n hn
     have hNn := (hsep n).2.1
     have := @hNn N instN neN hmodel
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not] at this
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not] at this
     exact this hn
   · exact ⟨baseFunctionsIn_iSup_subset θ fun n => (hsep n).2.2.1.1,
       baseRelationsIn_iSup_subset θ fun n => (hsep n).2.2.1.2⟩
@@ -1305,21 +1305,21 @@ theorem budgetedPairInsep_iSup_right (hmem : BoundedFormulaω.iSup φs ∈ Δ)
       Theoryω.hasQuantSigned_of_mem hmem ((hasQuantSigned_iSup true φs).mpr ⟨n, hq⟩)
   refine h ⟨BoundedFormulaω.iInf θ, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · intro N instN neN hmodel
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_iInf]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_iInf]
     intro n
     have hEn := (hsep n).1
     exact @hEn N instN neN hmodel
   · intro N instN neN hmodel
     have hiSup := hmodel _ hmem
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_iSup] at hiSup
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_iSup] at hiSup
     obtain ⟨n, hn⟩ := hiSup
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iInf, not_forall]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iInf, not_forall]
     have hNn := (hsep n).2.1
     have := @hNn N instN neN fun ρ hρ => by
       rcases Set.mem_insert_iff.mp hρ with rfl | hρ
       · exact hn
       · exact hmodel ρ hρ
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not] at this
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not] at this
     exact ⟨n, this⟩
   · exact ⟨baseFunctionsIn_iInf_subset θ fun n => (hsep n).2.2.1.1,
       baseRelationsIn_iInf_subset θ fun n => (hsep n).2.2.1.2⟩
@@ -1361,21 +1361,21 @@ theorem budgetedPairInsep_neg_iInf_left (hmem : (BoundedFormulaω.iInf φs).not 
   refine h ⟨BoundedFormulaω.iSup θ, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · intro N instN neN hmodel
     have hneg := hmodel _ hmem
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iInf,
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iInf,
       not_forall] at hneg
     obtain ⟨n, hn⟩ := hneg
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_iSup]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_iSup]
     have hEn := (hsep n).1
     exact ⟨n, @hEn N instN neN fun ρ hρ => by
       rcases Set.mem_insert_iff.mp hρ with rfl | hρ
-      · rw [Sentenceω.Realize, BoundedFormulaω.realize_not]; exact hn
+      · rw [Sentenceω.realize_def, BoundedFormulaω.realize_not]; exact hn
       · exact hmodel ρ hρ⟩
   · intro N instN neN hmodel
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iSup, not_exists]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iSup, not_exists]
     intro n hn
     have hNn := (hsep n).2.1
     have := @hNn N instN neN hmodel
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not] at this
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not] at this
     exact this hn
   · exact ⟨baseFunctionsIn_iSup_subset θ fun n => (hsep n).2.2.1.1,
       baseRelationsIn_iSup_subset θ fun n => (hsep n).2.2.1.2⟩
@@ -1416,22 +1416,22 @@ theorem budgetedPairInsep_neg_iInf_right (hmem : (BoundedFormulaω.iInf φs).not
       exact ⟨n, hq⟩
   refine h ⟨BoundedFormulaω.iInf θ, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · intro N instN neN hmodel
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_iInf]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_iInf]
     intro n
     have hEn := (hsep n).1
     exact @hEn N instN neN hmodel
   · intro N instN neN hmodel
     have hneg := hmodel _ hmem
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iInf,
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iInf,
       not_forall] at hneg
     obtain ⟨n, hn⟩ := hneg
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iInf, not_forall]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iInf, not_forall]
     have hNn := (hsep n).2.1
     have := @hNn N instN neN fun ρ hρ => by
       rcases Set.mem_insert_iff.mp hρ with rfl | hρ
-      · rw [Sentenceω.Realize, BoundedFormulaω.realize_not]; exact hn
+      · rw [Sentenceω.realize_def, BoundedFormulaω.realize_not]; exact hn
       · exact hmodel ρ hρ
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not] at this
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not] at this
     exact ⟨n, this⟩
   · exact ⟨baseFunctionsIn_iInf_subset θ fun n => (hsep n).2.2.1.1,
       baseRelationsIn_iInf_subset θ fun n => (hsep n).2.2.1.2⟩
@@ -1518,12 +1518,12 @@ theorem budgetedPairInsep_substCut_left (b c : ℕ) (ψ : L[[ℕ]].Sentenceω)
     have hval : hm b = hm c := (bridge _).mp (@hΔeq N instN neN hmodel)
     have hupd : Function.update hm c (hm b) = hm := by
       rw [hval, Function.update_eq_self]
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not]
     intro hcontra
     have hθ := (realize_substConst base hm c b θ).mp ((bridge _).mp hcontra)
     rw [hupd] at hθ
     have hn := @hN N instN neN hmodel
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not] at hn
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not] at hn
     exact hn ((bridge _).mpr hθ)
   · exact ⟨(baseFunctionsIn_substConst_subset c b θ).trans hbnd.1,
       (baseRelationsIn_substConst c b θ).trans hbnd.2⟩
@@ -1604,7 +1604,7 @@ theorem budgetedPairInsep_substCut_right (b c : ℕ) (ψ : L[[ℕ]].Sentenceω)
     have hψ' : @BoundedFormulaω.Realize L[[ℕ]] N (wc base (Function.update hm c (hm b))) Empty 0 ψ
         Empty.elim Fin.elim0 :=
       (realize_substConst base hm c b ψ).mp ((bridge _).mp (@hΔψ N instN neN hmodel))
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not]
     intro hcontra
     have hθ := (realize_substConst base hm c b θ).mp ((bridge _).mp hcontra)
     exact (@hN N (wc base (Function.update hm c (hm b))) neN (fun ρ hρ => by
@@ -1755,7 +1755,7 @@ theorem budgetedPairInsep_eq_trans_mixed_left (hab : constEq (L := L) a b ∈ Δ
   have hΔeq : Theoryω.Entails Δ (constEq (L := L) b a) := by
     intro N instN neN hmodel
     have := hmodel _ hab
-    rw [Sentenceω.Realize] at this ⊢
+    rw [Sentenceω.realize_def] at this ⊢
     exact this.symm
   -- and the left entails the `a := b` image of `a = d`, namely `b = d` read symmetrically
   have hΓψ : Theoryω.Entails Γ (substConst a b (constEq (L := L) a d)) := by
@@ -1837,7 +1837,7 @@ theorem budgetedPairInsep_eq_symm_left (hmem : constEq (L := L) a b ∈ Γ)
   refine budgetedPairInsep_insert_of_member_left hmem ?_ ?_ ?_ h
   · intro N instN neN hmodel
     have := hmodel _ hmem
-    rw [Sentenceω.Realize] at this ⊢
+    rw [Sentenceω.realize_def] at this ⊢
     exact this.symm
   · rw [← sentenceJConsts_constEq_comm]
   · intro hq; exact absurd hq (hasQuantSigned_constEq_false true b a)
@@ -1849,7 +1849,7 @@ theorem budgetedPairInsep_eq_symm_right (hmem : constEq (L := L) a b ∈ Δ)
   refine budgetedPairInsep_insert_of_member_right hmem ?_ ?_ ?_ h
   · intro N instN neN hmodel
     have := hmodel _ hmem
-    rw [Sentenceω.Realize] at this ⊢
+    rw [Sentenceω.realize_def] at this ⊢
     exact this.symm
   · rw [← sentenceJConsts_constEq_comm]
   · intro hq; exact absurd hq (hasQuantSigned_constEq_false true b a)
@@ -1862,7 +1862,7 @@ theorem budgetedPairInsep_eq_trans_left (hab : constEq (L := L) a b ∈ Γ)
   · intro N instN neN hmodel
     have h1 := hmodel _ hab
     have h2 := hmodel _ hbd
-    rw [Sentenceω.Realize] at h1 h2 ⊢
+    rw [Sentenceω.realize_def] at h1 h2 ⊢
     exact h1.trans h2
   · refine (sentenceJConsts_constEq_subset a d).trans ?_
     intro k hk
@@ -1880,7 +1880,7 @@ theorem budgetedPairInsep_eq_trans_right (hab : constEq (L := L) a b ∈ Δ)
   · intro N instN neN hmodel
     have h1 := hmodel _ hab
     have h2 := hmodel _ hbd
-    rw [Sentenceω.Realize] at h1 h2 ⊢
+    rw [Sentenceω.realize_def] at h1 h2 ⊢
     exact h1.trans h2
   · refine (sentenceJConsts_constEq_subset a d).trans ?_
     intro k hk
@@ -2106,7 +2106,7 @@ theorem entails_not_genEx_of_all_inst_entails_not {φ : L[[ℕ]].BoundedFormula�
         ↔ @BoundedFormulaω.Realize L[[ℕ]] M (wc base h) Empty 0 ψ Empty.elim Fin.elim0 :=
     fun ψ => ambient_realize_iff_wc (S := instM) ψ Empty.elim Fin.elim0
   show @Sentenceω.Realize L[[ℕ]] (genEx c θ).not M instM
-  rw [Sentenceω.Realize, BoundedFormulaω.realize_not]
+  rw [Sentenceω.realize_def, BoundedFormulaω.realize_not]
   intro hcon
   obtain ⟨x, hx⟩ := (realize_genEx base h c θ).mp ((bridge _).mp hcon)
   -- freshness transports every member of `Δ` across the reinterpretation `c := x`

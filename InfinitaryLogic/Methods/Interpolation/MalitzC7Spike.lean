@@ -138,7 +138,7 @@ theorem malitzInsepAt_witness_of_existentialDelta (c : ℕ) (φc : L[[ℕ]].Sent
   -- `σ(c)` and `¬σ(c)` at once.
   · intro N instN neN hmodel
     show @Sentenceω.Realize L[[ℕ]] (Theoryω.conjunction Δ hΔc).not N instN
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not]
     intro hcon
     have hΔmodel : Theoryω.Model Δ N := (hreal N).mp hcon
     set base := (L.lhomWithConstants ℕ).reduct N with hbase
@@ -177,7 +177,7 @@ theorem malitzInsepAt_witness_of_existentialDelta (c : ℕ) (φc : L[[ℕ]].Sent
   -- `Δ ⊨ ¬¬⋀Δ`
   · intro N instN neN hmodel
     show @Sentenceω.Realize L[[ℕ]] (Theoryω.conjunction Δ hΔc).not.not N instN
-    rw [Sentenceω.Realize, BoundedFormulaω.realize_not, BoundedFormulaω.realize_not]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_not]
     exact fun hn => hn ((hreal N).mpr hmodel)
 
 end FirstOrder.Language

@@ -168,7 +168,9 @@ theorem entails_not_genEx_of_entails_not
     fun ψ => ambient_realize_iff_wc (S := instM) ψ Empty.elim Fin.elim0
   -- Goal: `¬ ∃x σ(x)`.
   show @Sentenceω.Realize L[[ℕ]] (genEx j σc).not M instM
-  rw [Sentenceω.Realize, BoundedFormulaω.realize_not]
+  -- apply the negation lemma rather than unfolding `Sentenceω.Realize` first: unfolding leaves the
+  -- goal in `SentenceInf.Realize`, which `rw` cannot key the alias-stated lemma against
+  refine (BoundedFormulaω.realize_not (genEx j σc)).mpr ?_
   intro hcon
   have hcon' : @BoundedFormulaω.Realize L[[ℕ]] M (wc base h) Empty 0 (genEx j σc)
       Empty.elim Fin.elim0 := (bridge _).mp hcon

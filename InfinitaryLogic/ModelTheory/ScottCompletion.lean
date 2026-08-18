@@ -7,7 +7,7 @@ import InfinitaryLogic.ModelTheory.ArbitraryStabilization
 import InfinitaryLogic.ModelTheory.TypePreservingBF
 import InfinitaryLogic.ModelTheory.SmallModels
 import InfinitaryLogic.Scott.Height.CanonicalSentence
-import InfinitaryLogic.Karp.Theorem
+import InfinitaryLogic.Karp.CarrierTheorem
 
 /-!
 # The Scott completion and categoricity (issue #17 chunks 5.2–6)
@@ -18,8 +18,10 @@ ordinal (`realize_canonicalScottSentence_iff_bfEquiv_all`, via the arbitrary-tar
 stabilization kernel). Consequences, in order:
 
 * any two models of the canonical sentence are pairwise `BFEquiv` at every level (transitivity
-  through the countable source), hence `L_∞ω`-equivalent (`PotentialIso_implies_LinfEquivW`)
-  and `L_ω₁ω`-equivalent;
+  through the countable source), hence potentially isomorphic, hence `L_∞ω`-equivalent at
+  every branching carrier (`PotentialIso.infEquivAt`). `L_ω₁ω`-equivalence is then the
+  carrier-`ℕ` case, not a separate result reached by an embedding: `L.Sentenceω` *is*
+  `L.SentenceInf ℕ`, so `LomegaEquiv` and `InfEquivAt L ℕ` are the same proposition;
 * **`Lomega1omegaComplete`** — the repository-level completeness predicate — holds for the
   canonical Scott sentence (`lomega1omegaComplete_canonicalScottSentenceω`), DERIVED from the
   semantic equivalence, never the reverse;
@@ -104,25 +106,27 @@ theorem bfEquiv_all_of_realize_canonicalScottSentenceω_pair {P Q : Type}
     (realize_canonicalScottSentenceω_iff_bfEquiv_all.mp hQ β)
 
 /-- **Semantic `L_∞ω`-completeness**: any two models of the canonical Scott sentence are
-`L_∞ω`-equivalent. -/
-theorem linfEquivW_of_realize_canonicalScottSentenceω_pair {P Q : Type}
+`L_∞ω`-equivalent, at every branching carrier. -/
+theorem infEquivW_of_realize_canonicalScottSentenceω_pair {P Q : Type}
     [L.Structure P] [L.Structure Q]
     (hP : Sentenceω.Realize (canonicalScottSentenceω (L := L) N) P)
     (hQ : Sentenceω.Realize (canonicalScottSentenceω (L := L) N) Q) :
-    LinfEquivW L P Q := by
+    InfEquivW L P Q := by
   obtain ⟨pi⟩ := BFEquiv_all_implies_potentialIso
     (bfEquiv_all_of_realize_canonicalScottSentenceω_pair hP hQ)
-  exact PotentialIso_implies_LinfEquivW pi
+  exact fun ι => pi.infEquivAt ι
 
-/-- `L_ω₁ω`-equivalence of any two models, via `toLinf`. -/
+/-- `L_ω₁ω`-equivalence of any two models: the carrier-`ℕ` case of the previous theorem.
+
+There is no embedding step. `L.Sentenceω` *is* `L.SentenceInf ℕ`, and `LomegaEquiv L P Q` is
+`InfEquivAt L ℕ P Q` — the same proposition, accepted by `rfl` — so specializing the carrier
+is the whole proof. -/
 theorem lomegaEquiv_of_realize_canonicalScottSentenceω_pair {P Q : Type}
     [L.Structure P] [L.Structure Q]
     (hP : Sentenceω.Realize (canonicalScottSentenceω (L := L) N) P)
     (hQ : Sentenceω.Realize (canonicalScottSentenceω (L := L) N) Q) :
-    LomegaEquiv L P Q := fun φ =>
-  (Sentenceω.realize_toLinf φ).symm.trans
-    ((linfEquivW_of_realize_canonicalScottSentenceω_pair hP hQ φ.toLinf).trans
-      (Sentenceω.realize_toLinf φ))
+    LomegaEquiv L P Q :=
+  infEquivW_of_realize_canonicalScottSentenceω_pair hP hQ ℕ
 
 /-- **Repository-level completeness**: a sentence is `L_ω₁ω`-complete when it decides every
 `Sentenceω` across its models. -/

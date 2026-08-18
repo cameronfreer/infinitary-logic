@@ -92,37 +92,37 @@ noncomputable def processDecompose (S : SetIn P) (t : U) (idx : ℕ) : SetIn P :
     match heq : (t : L[[ℕ]].Sentenceω) with
     | .imp (.imp φ ψ) .falsum =>
       -- C1' (also subsumes C2 double-negation when `ψ = falsum`): add `φ` or `ψ.not`.
-      have hmem : ((φ.imp ψ).imp BoundedFormulaω.falsum) ∈ S.1 := heq ▸ hs
+      have hmem : ((BoundedFormulaInf.imp φ ψ).imp BoundedFormulaInf.falsum) ∈ S.1 := heq ▸ hs
       if idx = 0 then ⟨S.1 ∪ {φ}, (P.C1_neg_imp S.1 S.2 φ ψ hmem).1⟩
       else ⟨S.1 ∪ {ψ.not}, (P.C1_neg_imp S.1 S.2 φ ψ hmem).2⟩
     | .imp (.iInf φs) .falsum =>
       -- C3': choose a component whose negation stays consistent.
-      have hmem : ((BoundedFormulaω.iInf φs).imp BoundedFormulaω.falsum) ∈ S.1 := heq ▸ hs
+      have hmem : ((BoundedFormulaInf.iInf φs).imp BoundedFormulaInf.falsum) ∈ S.1 := heq ▸ hs
       let h := P.C3_neg_iInf S.1 S.2 φs hmem
       ⟨S.1 ∪ {(φs h.choose).not}, h.choose_spec⟩
     | .imp (.iSup φs) .falsum =>
       -- C4': every component's negation is consistent; add the `idx`-th.
-      have hmem : ((BoundedFormulaω.iSup φs).imp BoundedFormulaω.falsum) ∈ S.1 := heq ▸ hs
+      have hmem : ((BoundedFormulaInf.iSup φs).imp BoundedFormulaInf.falsum) ∈ S.1 := heq ▸ hs
       ⟨S.1 ∪ {(φs idx).not}, P.C4_neg_iSup S.1 S.2 φs hmem idx⟩
     | .imp (.all φ) .falsum =>
       -- negated universal: choose a witness.
-      have hmem : ((BoundedFormulaω.all φ).imp BoundedFormulaω.falsum) ∈ S.1 := heq ▸ hs
+      have hmem : ((BoundedFormulaInf.all φ).imp BoundedFormulaInf.falsum) ∈ S.1 := heq ▸ hs
       let h := P.neg_all_witness S.1 S.2 φ hmem
       ⟨S.1 ∪ {(instConst h.choose φ).not}, h.choose_spec⟩
     | .imp φ ψ =>
       -- C1: add whichever branch is consistent.
-      have hmem : (φ.imp ψ) ∈ S.1 := heq ▸ hs
+      have hmem : (BoundedFormulaInf.imp φ ψ) ∈ S.1 := heq ▸ hs
       if hb : S.1 ∪ {φ.not} ∈ P.sets then ⟨S.1 ∪ {φ.not}, hb⟩
       else ⟨S.1 ∪ {ψ}, (P.C1_imp S.1 S.2 φ ψ hmem).resolve_left hb⟩
     | .iInf φs =>
-      have hmem : (BoundedFormulaω.iInf φs) ∈ S.1 := heq ▸ hs
+      have hmem : (BoundedFormulaInf.iInf φs) ∈ S.1 := heq ▸ hs
       ⟨S.1 ∪ {φs idx}, P.C3_iInf S.1 S.2 φs hmem idx⟩
     | .iSup φs =>
-      have hmem : (BoundedFormulaω.iSup φs) ∈ S.1 := heq ▸ hs
+      have hmem : (BoundedFormulaInf.iSup φs) ∈ S.1 := heq ▸ hs
       let h := P.C4_iSup S.1 S.2 φs hmem
       ⟨S.1 ∪ {φs h.choose}, h.choose_spec⟩
     | .all φ =>
-      have hmem : (BoundedFormulaω.all φ) ∈ S.1 := heq ▸ hs
+      have hmem : (BoundedFormulaInf.all φ) ∈ S.1 := heq ▸ hs
       ⟨S.1 ∪ {instConst idx φ}, P.all_inst S.1 S.2 φ hmem idx⟩
     | _ => S
   else S
@@ -134,7 +134,7 @@ noncomputable def processImpC1 (S : SetIn P) (t : U) : SetIn P :=
   if hs : (t : L[[ℕ]].Sentenceω) ∈ S.1 then
     match heq : (t : L[[ℕ]].Sentenceω) with
     | .imp φ ψ =>
-      have hmem : (φ.imp ψ) ∈ S.1 := heq ▸ hs
+      have hmem : (BoundedFormulaInf.imp φ ψ) ∈ S.1 := heq ▸ hs
       if hb : S.1 ∪ {φ.not} ∈ P.sets then ⟨S.1 ∪ {φ.not}, hb⟩
       else ⟨S.1 ∪ {ψ}, (P.C1_imp S.1 S.2 φ ψ hmem).resolve_left hb⟩
     | _ => S

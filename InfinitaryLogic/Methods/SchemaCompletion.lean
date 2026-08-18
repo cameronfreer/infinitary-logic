@@ -106,7 +106,7 @@ theorem realizeWith_templateSentence (σ : J → M) (h : ℕ → M)
   letI : (constantsOn ℕ).Structure M := constantsOn.structure h
   rw [← sentenceRealize_iff_realizeWith]
   show Sentenceω.Realize _ M ↔ _
-  rw [Sentenceω.Realize]
+  rw [Sentenceω.realize_def]
   rw [BoundedFormulaω.realize_mapLanguage ((L''[[J]]).lhomWithConstants ℕ)
     (Lomega1omegaTemplate.templateSentence ψ t)]
   exact realize_templateSentence σ ψ t
@@ -321,7 +321,7 @@ noncomputable def stageStep
         Or.inl ⟨Finset.mem_insert_of_mem (Finset.mem_insert_self _ _), fun φs' hφs' => ?_⟩⟩
       have hφeq : Classical.choose hSup = φs' := by
         have h := hφs.symm.trans hφs'
-        rwa [BoundedFormulaω.iSup.injEq] at h
+        rwa [BoundedFormulaInf.iSup.injEq] at h
       exact ⟨k, by rw [← congrFun hφeq k]; exact Finset.mem_insert_self _ _⟩
     · refine ⟨insert (ρ n).1 Fp.1, hpos, Finset.subset_insert _ _,
         Or.inl ⟨Finset.mem_insert_self _ _, fun φs' hφs' => ?_⟩⟩
@@ -340,7 +340,7 @@ noncomputable def stageStep
         Or.inr ⟨Finset.mem_insert_of_mem (Finset.mem_insert_self _ _), fun φs' hφs' => ?_⟩⟩
       have hφeq : Classical.choose hInf = φs' := by
         have h := hφs.symm.trans hφs'
-        rwa [BoundedFormulaω.iInf.injEq] at h
+        rwa [BoundedFormulaInf.iInf.injEq] at h
       exact ⟨k, by rw [← congrFun hφeq k]; exact Finset.mem_insert_self _ _⟩
     · refine ⟨insert (ρ n).1.not Fp.1, hneg, Finset.subset_insert _ _,
         Or.inr ⟨Finset.mem_insert_self _ _, fun φs' hφs' => ?_⟩⟩
