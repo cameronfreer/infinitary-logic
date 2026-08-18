@@ -15,14 +15,14 @@ quantify over countable-but-not-`ℕ` index types. This file provides the conjun
 disjunction over any such index, as thin wrappers around Mathlib's carrier-transport
 primitives `BoundedFormulaInf.iInfAlong`/`iSupAlong`.
 
-**The index may live in any universe.** `ι` is encoded into `ℕ`, so nothing forces it into
-`Type 0`; this is what lets the type-isolation chain be universe-polymorphic.
+**The index may live in any universe**, since `ι` is encoded into `ℕ` rather than enumerated
+from it. This is what lets a consumer such as `ModelTheory/TypeIsolation.lean` — whose index
+is a subtype of realized types, landing in `Type (max u v)` — be universe-polymorphic.
 
-Choice has not disappeared — `Encodable.ofCountable` is noncomputable, so these definitions
-are too. What the coding removes is the bespoke scaffolding the previous implementation
-needed: a `Nonempty ι` case split, a chosen surjection `ℕ → ι`, ad-hoc defaults for the empty
-family, and four hand-proved realization lemmas. Padding handles the empty carrier uniformly,
-so each realization lemma is now the upstream one applied directly.
+Both definitions are noncomputable: `Encodable.ofCountable` upgrades `[Countable ι]` to an
+encoding by choice. Padding handles the empty index uniformly, an empty `ι` padding every
+branch, so no case split is needed and each realization lemma is the upstream one applied
+directly.
 
 Only the realization lemmas are provided. No syntactic naturality API is built here: the
 encoding is noncanonical, so definitional commutation statements would be unpleasant —

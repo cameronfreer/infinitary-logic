@@ -110,10 +110,10 @@ theorem exists_realize_isolatingFormula
 
 /-! ## Universe regression
 
-These instantiate the characterization away from universe zero, where this development was
-pinned until `ciInf` stopped forcing its index into `Type 0`. They are compiled, so they fail
-if the restriction is ever reintroduced; the `variable` block alone would not catch that,
-since a `Language.{u, v}` binder can still be silently constrained by a downstream lemma. -/
+These instantiate the characterization at a nonzero universe and at universe zero. They are
+compiled, so they fail if the development is ever reconstrained; the `variable` block alone
+would not catch that, since a `Language.{u, v}` binder can still be silently pinned by a
+downstream lemma. -/
 
 example {L' : Language.{1, 1}} {M' : Type 2} [L'.Structure M'] {m : ℕ}
     (hcount : (RealizedInfinitaryTypes (L := L') M' m).Countable)

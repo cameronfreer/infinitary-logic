@@ -20,9 +20,9 @@ This file defines operations on Lω₁ω formulas including relabeling, casting,
 
 ## Implementation Notes
 
-These are the ω-facing operations, defined over `BoundedFormulaInf ℕ`. There is no longer a
-parallel carrier-generic copy: an operation that makes sense at an arbitrary branching carrier
-belongs upstream on `BoundedFormulaInf`, and `IndexCoding` handles transport between carriers.
+These are the ω-facing operations, defined over `BoundedFormulaInf ℕ`. An operation that makes
+sense at an arbitrary branching carrier belongs upstream on `BoundedFormulaInf`; `IndexCoding`
+handles transport between carriers.
 -/
 
 universe u v u'
