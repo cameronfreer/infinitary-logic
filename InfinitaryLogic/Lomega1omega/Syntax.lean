@@ -7,7 +7,7 @@ import Mathlib.ModelTheory.Infinitary.Syntax
 import Mathlib.Logic.Encodable.Basic
 
 /-!
-# Lω₁ω Syntax — compatibility facade over Mathlib's fixed-carrier syntax
+# Lω₁ω Syntax — compatibility facade over the fixed-carrier syntax
 
 `BoundedFormulaω`, `Formulaω` and `Sentenceω` are no longer declared here. They come from
 `Mathlib.ModelTheory.Infinitary.Syntax`, where `BoundedFormulaω L α n` is an **abbrev** for
@@ -34,7 +34,7 @@ or explicit cast — their *absence* is the certification.
 - the scoped notation.
 
 `Bot`, `Top`, `Inhabited`, `not` and `ex` now come from Mathlib and are deliberately **not**
-redeclared. Mathlib's `verum` plays the role of the old `top` and is definitionally equal to it
+redeclared. `BoundedFormulaInf.verum` plays the role of the old `top` and is definitionally equal to it
 (`not falsum` reduces to `imp falsum falsum`).
 -/
 
@@ -50,7 +50,7 @@ namespace BoundedFormulaω
 
 /-! ### Qualified constructor surface
 
-Mathlib's constructors live in the `BoundedFormulaInf` namespace. Dot-notation on a
+The constructors live in the `BoundedFormulaInf` namespace. Dot-notation on a
 `BoundedFormulaω` already resolves there, but consumers naming a constructor explicitly as
 `BoundedFormulaω.falsum` need these. Each is an `abbrev`, so it unfolds by `rfl`, and each is
 `@[match_pattern]`, so it may still be used in pattern position. -/
@@ -76,7 +76,7 @@ Mathlib's constructors live in the `BoundedFormulaInf` namespace. Dot-notation o
 @[match_pattern] abbrev iInf (φs : ℕ → L.BoundedFormulaω α n) : L.BoundedFormulaω α n :=
   BoundedFormulaInf.iInf φs
 
-/-- Negation, as a qualified name. Mathlib's `BoundedFormulaInf.not` is the definition. -/
+/-- Negation, as a qualified name. `BoundedFormulaInf.not` is the definition. -/
 @[match_pattern] protected abbrev not (φ : L.BoundedFormulaω α n) : L.BoundedFormulaω α n :=
   BoundedFormulaInf.not φ
 
@@ -192,7 +192,7 @@ example (L : Language.{u, v}) (α : Type u') : L.Formulaω α = L.BoundedFormula
 example (L : Language.{u, v}) : L.Sentenceω = L.Formulaω Empty := rfl
 
 /-- The qualified ω aliases remain usable in **pattern** position. This is what the lost
-`@[match_pattern]` on Mathlib's `BoundedFormulaInf.not`/`.ex` does *not* cost us: the aliases
+`@[match_pattern]` on `BoundedFormulaInf.not`/`.ex` does *not* cost us: the aliases
 declared in this file carry the attribute themselves. -/
 example (φ : L.BoundedFormulaω α n) : Bool :=
   match φ with

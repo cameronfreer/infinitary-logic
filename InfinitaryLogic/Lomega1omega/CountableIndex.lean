@@ -12,7 +12,7 @@ import Mathlib.ModelTheory.Infinitary.Reindex
 `BoundedFormulaω`'s `iInf`/`iSup` branch over the fixed carrier `ℕ`. Constructions like the
 Hanf beth ladder (clause families over pairs of countable ordinals) and countable fragments
 quantify over countable-but-not-`ℕ` index types. This file provides the conjunction and
-disjunction over any such index, as thin wrappers around Mathlib's carrier-transport
+disjunction over any such index, as thin wrappers around the carrier-transport
 primitives `BoundedFormulaInf.iInfAlong`/`iSupAlong`.
 
 **The index may live in any universe**, since `ι` is encoded into `ℕ` rather than enumerated

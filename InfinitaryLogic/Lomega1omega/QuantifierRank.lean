@@ -44,7 +44,7 @@ open FirstOrder Structure Ordinal
 
 /-! ### Quantifier Rank -/
 
-/-- The quantifier rank of an Lω₁ω formula: Mathlib's carrier-generic
+/-- The quantifier rank of an Lω₁ω formula: the carrier-generic
 `BoundedFormulaInf.qrank`, specialized at the branching carrier `ℕ`.
 
 Because the rank is valued in the carrier's own ordinal universe, the `ℕ` specialization
@@ -70,7 +70,7 @@ noncomputable abbrev Sentenceω.qrank (φ : L.Sentenceω) : Ordinal.{0} :=
 
 /-! ### Gate: the ω rank IS the upstream rank
 
-Must close by `rfl` — that is what certifies this is Mathlib's rank specialized at `ℕ`
+Must close by `rfl` — that is what certifies this is the carrier-generic rank specialized at `ℕ`
 rather than a parallel recursive copy that happens to agree. -/
 
 example (φ : L.BoundedFormulaω α n) :

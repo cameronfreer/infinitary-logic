@@ -7,7 +7,7 @@ import InfinitaryLogic.Lomega1omega.Syntax
 import Mathlib.ModelTheory.Infinitary.Semantics
 
 /-!
-# Lω₁ω Semantics — compatibility facade over Mathlib's fixed-carrier semantics
+# Lω₁ω Semantics — compatibility facade over the fixed-carrier semantics
 
 The three realization *definitions* are no longer given here. They come from
 `Mathlib.ModelTheory.Infinitary.Semantics`, whose `BoundedFormulaInf.Realize` is the single

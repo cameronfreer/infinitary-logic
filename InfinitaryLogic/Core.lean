@@ -44,7 +44,14 @@ model-existence machinery, admissible-set theory, or descriptive set theory.
 
 ## One syntax, fixed at a branching carrier
 
-There is a single infinitary syntax, Mathlib's `BoundedFormulaInf ι α n`, whose
+The infinitary syntax comes from the pinned Mathlib dependency. It is **proposed
+upstream, not yet accepted** — the pin is a fork branch, and names or packaging may
+change under review. Project-level facades (`Lomega1omega/Syntax.lean`,
+`Semantics.lean`, `QuantifierRank.lean`, `CountableIndex.lean`, and
+`Karp/CarrierTheorem.lean`) exist so that such a change is absorbed there rather
+than across the theorem files.
+
+There is a single infinitary syntax, `BoundedFormulaInf ι α n`, whose
 `iSup`/`iInf` nodes branch over a carrier `ι` fixed once for the whole formula
 rather than chosen at each node. L∞ω is that type at an arbitrary carrier; Lω₁ω
 is the same type at carrier `ℕ`:
