@@ -4,9 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Admissible.Fragment.Honest
+import InfinitaryLogic.Admissible.Predicates
 import InfinitaryLogic.Lomega1omega.Theory
 import InfinitaryLogic.Lomega1omega.FirstOrderImage
 import Mathlib.ModelTheory.Satisfiability
+import Mathlib.Data.Set.Finite.Basic
+import Mathlib.Data.Fintype.EquivFin
 
 /-!
 # The HF fragment (issue #18)
@@ -139,6 +142,41 @@ def hfPresentation (L : Language.{u, v}) : AdmissiblePresentation L where
   DecodesFamily := fun _ _ _ => True
   -- vacuous: no code is infinitary
   decodes_unique := fun h _ _ => absurd h not_false
+  -- a code `k` names the sets enumerated by `Fin k` — for HF, exactly the finite sets
+  DecodesTheory := fun k T => ∃ f : Fin k → L.Sentenceω, Set.range f = T
+  -- every HF code is finite; that is what HF *is*
+  CodesFinite := fun _ => True
+  -- first-order compactness carries no definability restriction, so nothing is excluded here
+  Sigma1 := fun _ => True
+
+/-- **Oracle condition 3, the hypothesis side.**  `A`-finiteness over HF **is** ordinary
+finiteness.  This is what makes HF's compactness theorem `finitaryFragment_compact` by
+specialization — hypothesis for hypothesis — rather than through a bridging lemma. -/
+theorem hf_aFinite_iff {L : Language.{u, v}} {T : Set L.Sentenceω} :
+    AFinite (hfPresentation L) T ↔ T.Finite := by
+  constructor
+  · rintro ⟨k, -, f, rfl⟩
+    -- `k` is bound at type `(hfPresentation L).Code`, so the `Fin` instances need pointing at
+    haveI : Fintype (Fin k) := Fin.fintype k
+    haveI : Finite (Fin k) := Finite.of_fintype _
+    exact Set.finite_range f
+  · intro hT
+    obtain ⟨s, rfl⟩ := hT.exists_finset_coe
+    haveI : Fintype {x // x ∈ s} := FinsetCoe.fintype s
+    refine ⟨Fintype.card {x // x ∈ s}, trivial,
+      fun i => ((Fintype.equivFin {x // x ∈ s}).symm i : L.Sentenceω), ?_⟩
+    ext x
+    constructor
+    · rintro ⟨i, rfl⟩
+      exact ((Fintype.equivFin {x // x ∈ s}).symm i).2
+    · intro hx
+      exact ⟨Fintype.equivFin _ ⟨x, hx⟩, by simp⟩
+
+/-- …and the definability side is unrestricted: first-order compactness applies to every theory,
+so nothing is excluded.  Recorded as a theorem rather than left implicit, because a *nontrivial*
+`Sigma1` here would silently narrow the oracle. -/
+theorem hf_acEnumerable {L : Language.{u, v}} (T : Set L.Sentenceω) :
+    ACEnumerable (hfPresentation L) T := trivial
 
 /-- **Gate 4.**  `CodedFamily` over HF is uninhabited. -/
 theorem isEmpty_codedFamily_hf : IsEmpty (CodedFamily (hfPresentation L) n) :=
