@@ -135,17 +135,18 @@ any `AdmissibleFragment` over it are vacuous.  Note where the emptiness lives: i
 /-- The HF presentation: codes are (say) natural numbers naming finite index types, and **no code
 names an infinitary family**. -/
 def hfPresentation (L : Language.{u, v}) : AdmissiblePresentation L where
-  Code := ℕ
-  Index := fun k => Fin k
+  -- a code carries its enumeration, not merely a cardinality: `k` alone would decode every theory
+  -- of size `≤ k`, so a code would name many theories and `decodes_theory_unique` would fail
+  Code := Σ k : ℕ, Fin k → L.Sentenceω
+  Index := fun c => Fin c.1
   indexEncodable := fun _ => inferInstance
   CodesInfFamily := fun _ => False
   DecodesFamily := fun _ _ _ => True
   -- vacuous: no code is infinitary
   decodes_unique := fun h _ _ => absurd h not_false
-  -- a code `k` names the sets enumerated by `Fin k` — for HF, exactly the finite sets
-  DecodesTheory := fun k T => ∃ f : Fin k → L.Sentenceω, Set.range f = T
-  -- every HF code is finite; that is what HF *is*
-  CodesFinite := fun _ => True
+  -- the code *is* the enumeration; the theory it names is that enumeration's range
+  DecodesTheory := fun c T => Set.range c.2 = T
+  decodes_theory_unique := fun h h' => h ▸ h'
   -- first-order compactness carries no definability restriction, so nothing is excluded here
   Sigma1 := fun _ => True
 
@@ -155,16 +156,13 @@ specialization — hypothesis for hypothesis — rather than through a bridging 
 theorem hf_aFinite_iff {L : Language.{u, v}} {T : Set L.Sentenceω} :
     AFinite (hfPresentation L) T ↔ T.Finite := by
   constructor
-  · rintro ⟨k, -, f, rfl⟩
-    -- `k` is bound at type `(hfPresentation L).Code`, so the `Fin` instances need pointing at
-    haveI : Fintype (Fin k) := Fin.fintype k
-    haveI : Finite (Fin k) := Finite.of_fintype _
+  · rintro ⟨⟨k, f⟩, rfl⟩
     exact Set.finite_range f
   · intro hT
     obtain ⟨s, rfl⟩ := hT.exists_finset_coe
     haveI : Fintype {x // x ∈ s} := FinsetCoe.fintype s
-    refine ⟨Fintype.card {x // x ∈ s}, trivial,
-      fun i => ((Fintype.equivFin {x // x ∈ s}).symm i : L.Sentenceω), ?_⟩
+    refine ⟨⟨Fintype.card {x // x ∈ s},
+      fun i => ((Fintype.equivFin {x // x ∈ s}).symm i : L.Sentenceω)⟩, ?_⟩
     ext x
     constructor
     · rintro ⟨i, rfl⟩
@@ -177,6 +175,19 @@ so nothing is excluded.  Recorded as a theorem rather than left implicit, becaus
 `Sigma1` here would silently narrow the oracle. -/
 theorem hf_acEnumerable {L : Language.{u, v}} (T : Set L.Sentenceω) :
     ACEnumerable (hfPresentation L) T := trivial
+
+/-- **Oracle condition 3, in full.**  Not merely the two hypotheses separately: the *entire*
+`CompactFor` statement holds over HF at the finitary fragment, and its proof is
+`finitaryFragment_compact` with the `A`-finiteness hypothesis translated by `hf_aFinite_iff`.
+
+This is the theorem that certifies the interface.  `hf_aFinite_iff` and `hf_acEnumerable` alone
+would leave open whether the assembled statement still specializes; here it does, with no bridging
+lemma and no widening. -/
+theorem hf_compactFor (T : Set L.Sentenceω) :
+    CompactFor (hfPresentation L) (finitaryFragment L) T := by
+  intro hT _ hfin
+  refine finitaryFragment_compact hT fun T₀ hT₀ hT₀fin => ?_
+  exact hfin T₀ hT₀ (hf_aFinite_iff.mpr hT₀fin)
 
 /-- **Gate 4.**  `CodedFamily` over HF is uninhabited. -/
 theorem isEmpty_codedFamily_hf : IsEmpty (CodedFamily (hfPresentation L) n) :=

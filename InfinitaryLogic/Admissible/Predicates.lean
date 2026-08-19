@@ -19,9 +19,10 @@ defect `barwise_compactness` exhibits today, where the conclusion is `A.compact`
 arguments.  Keeping the evidence outside the record makes that structurally impossible rather than
 merely observed.
 
-**`AFinite` is not ordinary finiteness.**  It is membership in `A` — "`T₀ ∈ A`" — which for
-`A = L(ω₁^CK)` includes infinite hyperarithmetical sets.  The two coincide exactly at `A = HF`,
-which is what `hf_aFinite_iff` below proves and what makes HF's compactness theorem
+**`A`-finite means `T₀ ∈ A`, nothing more.**  It is not "`A` believes `T₀` finite", and it is not
+external finiteness: for `A = L(ω₁^CK)` the `A`-finite sets include infinite hyperarithmetical
+ones.  Being named by a code *is* the condition.  It collapses to ordinary finiteness exactly at
+`A = HF`, which is what `hf_aFinite_iff` proves and what makes HF's compactness statement
 `finitaryFragment_compact` by specialization rather than by a bridging lemma.
 -/
 
@@ -31,10 +32,10 @@ universe u v uCode uIndex
 
 variable {L : Language.{u, v}} (A : AdmissiblePresentation.{u, v, uCode, uIndex} L)
 
-/-- **`A`-finiteness**: the theory is named by a code that `A` believes finite.  The Barwise
-theorem's "`T₀ ∈ A`", not external finiteness. -/
+/-- **`A`-finiteness**: the theory is named by a code — the Barwise theorem's "`T₀ ∈ A`".  No
+finiteness side condition; see the module docstring. -/
 def AFinite (T : Set L.Sentenceω) : Prop :=
-  ∃ c, A.CodesFinite c ∧ A.DecodesTheory c T
+  ∃ c, A.DecodesTheory c T
 
 /-- **`A`-c.e.**: the theory is Σ₁-on-`A`.  The definability side condition that restricts which
 theories the compactness theorem applies to. -/
@@ -43,16 +44,25 @@ def ACEnumerable (T : Set L.Sentenceω) : Prop :=
 
 variable {A}
 
-theorem aFinite_def {T : Set L.Sentenceω} :
-    AFinite A T ↔ ∃ c, A.CodesFinite c ∧ A.DecodesTheory c T := Iff.rfl
+theorem aFinite_def {T : Set L.Sentenceω} : AFinite A T ↔ ∃ c, A.DecodesTheory c T := Iff.rfl
 
 theorem acEnumerable_def {T : Set L.Sentenceω} : ACEnumerable A T ↔ A.Sigma1 T := Iff.rfl
 
-/-- The shape of a Barwise-style compactness statement: both predicates enter as **hypotheses**.
-Stated as an abbreviation so that instances are checked to have this exact shape, and so that no
-theorem can claim it while secretly reading a compactness field — there is none to read. -/
-def CompactFor (T : Set L.Sentenceω) : Prop :=
-  ACEnumerable A T →
+/-- A code names at most one `A`-finite theory — `decodes_theory_unique` at the predicate level. -/
+theorem AFinite.unique {T T' : Set L.Sentenceω} {c : A.Code}
+    (h : A.DecodesTheory c T) (h' : A.DecodesTheory c T') : T = T' :=
+  A.decodes_theory_unique h h'
+
+variable (A)
+
+/-- The shape of a Barwise-style compactness statement, over a permitted sentence set `P`.
+
+`T ⊆ P` is a genuine hypothesis, not decoration: the standard theorem restricts to theories inside
+the fragment `L_A`, and the EM adapters supply exactly that containment.  Both predicates enter as
+hypotheses too, so no instance can claim this shape while secretly reading a compactness field —
+there is none to read. -/
+def CompactFor (P T : Set L.Sentenceω) : Prop :=
+  T ⊆ P → ACEnumerable A T →
     (∀ T₀ ⊆ T, AFinite A T₀ →
       ∃ (M : Type) (_ : L.Structure M) (_ : Nonempty M), Theoryω.Model T₀ M) →
     ∃ (M : Type) (_ : L.Structure M) (_ : Nonempty M), Theoryω.Model T M

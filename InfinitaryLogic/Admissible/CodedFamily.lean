@@ -53,14 +53,16 @@ structure AdmissiblePresentation (L : Language.{u, v}) where
   decodes_unique : ∀ {n : ℕ} {c : Code} {f g : Index c → L.BoundedFormulaω Empty n},
     CodesInfFamily c → DecodesFamily n c f → DecodesFamily n c g → f = g
   /-- Which set of sentences a code names.  A *theory* decoding, separate from `DecodesFamily`:
-  the same codes (the elements of `A`) but a different thing named.  This is what makes "`T₀ ∈ A`"
-  — the internality the Barwise theorem actually uses — expressible without a bare external
-  finiteness predicate. -/
+  the same codes (the elements of `A`) but a different thing named.  Being decoded by **some**
+  code is exactly "`T₀ ∈ A`", the internality the Barwise theorem uses; there is deliberately no
+  separate finiteness condition, because `A`-finite *means* `∈ A` and for `A = L(ω₁^CK)` that
+  includes infinite hyperarithmetical sets. -/
   DecodesTheory : Code → Set L.Sentenceω → Prop
-  /-- The codes `A` believes finite.  Deliberately **not** ordinary finiteness of the decoded set:
-  for `A = L(ω₁^CK)` the `A`-finite sets include infinite hyperarithmetical ones.  It coincides
-  with ordinary finiteness exactly at `A = HF`. -/
-  CodesFinite : Code → Prop
+  /-- **Theory-decoding functionality.**  A code names *a* theory, not a family of them.  The
+  companion to `decodes_unique`, and unconditional: unlike the family certificate there is no
+  case here that any presentation should discharge vacuously. -/
+  decodes_theory_unique : ∀ {c : Code} {T T' : Set L.Sentenceω},
+    DecodesTheory c T → DecodesTheory c T' → T = T'
   /-- Σ₁-on-`A` definability of a theory.  Abstract at this layer, as in `BarwiseCompactnessData`;
   carrying the defining Σ formula would require the Δ₀/Σ hierarchy for the `∈`-language, which is
   a separate project. -/
