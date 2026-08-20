@@ -63,9 +63,18 @@ structure AdmissiblePresentation (L : Language.{u, v}) where
   case here that any presentation should discharge vacuously. -/
   decodes_theory_unique : ∀ {c : Code} {T T' : Set L.Sentenceω},
     DecodesTheory c T → DecodesTheory c T' → T = T'
-  /-- Σ₁-on-`A` definability of a theory.  Abstract at this layer, as in `BarwiseCompactnessData`;
-  carrying the defining Σ formula would require the Δ₀/Σ hierarchy for the `∈`-language, which is
-  a separate project. -/
+  /-- Σ₁-on-`A` definability of a theory.
+
+  **A known placeholder, and the last bare external predicate here.**  It is exactly the shape
+  this design rejects everywhere else — a `Prop` on an arbitrary external set, with no data
+  witnessing the representation — and it is retained only because carrying the defining Σ formula
+  needs the Δ₀/Σ hierarchy for the `∈`-language.  #19A replaces it with decoding data
+  (`DefinesSigmaTheory : DefinitionCode → Set L.Sentenceω → Prop` plus a uniqueness law); whether
+  `DefinitionCode` is the same carrier as `Code` is an audit question, since making the carrier
+  explicit does not require conflating unrelated kinds of code.
+
+  A presentation may set this to `True` to *widen* the compactness domain — HF does, to recover
+  unrestricted first-order compactness — but that is an enlargement, not a Σ₁ claim. -/
   Sigma1 : Set L.Sentenceω → Prop
 
 /-- A **coded family**: a code, its infinitary certificate, its decoded family, and the law tying

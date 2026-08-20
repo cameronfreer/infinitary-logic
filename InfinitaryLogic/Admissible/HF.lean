@@ -170,24 +170,49 @@ theorem hf_aFinite_iff {L : Language.{u, v}} {T : Set L.Sentenceω} :
     · intro hx
       exact ⟨Fintype.equivFin _ ⟨x, hx⟩, by simp⟩
 
-/-- …and the definability side is unrestricted: first-order compactness applies to every theory,
-so nothing is excluded.  Recorded as a theorem rather than left implicit, because a *nontrivial*
-`Sigma1` here would silently narrow the oracle. -/
-theorem hf_acEnumerable {L : Language.{u, v}} (T : Set L.Sentenceω) :
-    ACEnumerable (hfPresentation L) T := trivial
+/-- **The definability side is deliberately enlarged, and this is NOT Σ₁-on-HF.**
 
-/-- **Oracle condition 3, in full.**  Not merely the two hypotheses separately: the *entire*
-`CompactFor` statement holds over HF at the finitary fragment, and its proof is
-`finitaryFragment_compact` with the `A`-finiteness hypothesis translated by `hf_aFinite_iff`.
+Σ₁-definability over HF is ordinary computable enumerability (Keisler–Knight §2.2), so the honest
+`Sigma1` for HF is the c.e. predicate, not `True`.  `hfPresentation` sets it to `True`, which
+*widens* the domain of the compactness statement to every theory.  That widening is sound — it is
+how unrestricted first-order compactness is recovered — but it must not be read as a claim that
+every theory is `A`-c.e.
 
-This is the theorem that certifies the interface.  `hf_aFinite_iff` and `hf_acEnumerable` alone
-would leave open whether the assembled statement still specializes; here it does, with no bridging
-lemma and no widening. -/
+Stated as an equation about the presentation rather than as a theorem named `hf_acEnumerable`,
+precisely so that no consumer can cite a mathematically specific name for it.  Nothing downstream
+may depend on this: `hf_compact_of_aFinite` below is the unconditional theorem, and `hf_compactFor`
+discards the hypothesis rather than using it.  #19A replaces the `Sigma1` field with decoding data
+(`DefinesSigmaTheory`), at which point HF's instantiation must become the c.e. predicate and this
+equation must fail to typecheck. -/
+theorem hfPresentation_sigma1_eq_top (L : Language.{u, v}) :
+    (hfPresentation L).Sigma1 = fun _ => True := rfl
+
+/-- **HF compactness in the external `A`-finite form, with NO definability hypothesis.**
+
+This is the theorem the EM adapters and every other consumer should use.  It is strictly stronger
+than `hf_compactFor`, and stating it separately is what keeps the enlarged `Sigma1` from becoming
+load-bearing: a consumer that needs compactness gets it here without ever mentioning
+`ACEnumerable`, so tightening HF's `Sigma1` to the honest c.e. predicate in #19A cannot break it.
+
+The only translation is `hf_aFinite_iff`; the mathematics is `finitaryFragment_compact`. -/
+theorem hf_compact_of_aFinite {T : Set L.Sentenceω} (hT : T ⊆ finitaryFragment L)
+    (hfin : ∀ T₀ ⊆ T, AFinite (hfPresentation L) T₀ →
+      ∃ (M : Type) (_ : L.Structure M) (_ : Nonempty M), Theoryω.Model T₀ M) :
+    ∃ (M : Type) (_ : L.Structure M) (_ : Nonempty M), Theoryω.Model T M :=
+  finitaryFragment_compact hT fun T₀ hT₀ hT₀fin => hfin T₀ hT₀ (hf_aFinite_iff.mpr hT₀fin)
+
+/-- **Oracle condition 3, in full.**  Not merely the hypotheses separately: the *entire*
+`CompactFor` statement holds over HF at the finitary fragment.
+
+This is what certifies the interface — `hf_aFinite_iff` alone would leave open whether the
+assembled statement still specializes.  Here it does, with no bridging lemma and no widening.
+
+The `ACEnumerable` hypothesis is **discarded**, not used: the content is
+`hf_compact_of_aFinite`.  So this theorem survives #19A tightening HF's `Sigma1` to the honest
+c.e. predicate — it would then simply apply to fewer theories. -/
 theorem hf_compactFor (T : Set L.Sentenceω) :
-    CompactFor (hfPresentation L) (finitaryFragment L) T := by
-  intro hT _ hfin
-  refine finitaryFragment_compact hT fun T₀ hT₀ hT₀fin => ?_
-  exact hfin T₀ hT₀ (hf_aFinite_iff.mpr hT₀fin)
+    CompactFor (hfPresentation L) (finitaryFragment L) T := fun hT _ hfin =>
+  hf_compact_of_aFinite hT hfin
 
 /-- **Gate 4.**  `CodedFamily` over HF is uninhabited. -/
 theorem isEmpty_codedFamily_hf : IsEmpty (CodedFamily (hfPresentation L) n) :=
