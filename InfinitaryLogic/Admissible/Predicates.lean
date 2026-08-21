@@ -55,16 +55,21 @@ theorem AFinite.unique {T T' : Set L.Sentenceω} {c : A.Code}
 
 variable (A)
 
+/-- **The Barwise premise**: every `A`-finite subtheory is satisfiable.
+
+Deliberately *not* `Theoryω.IsFinitelySatisfiable`, which quantifies over ordinarily finite
+subtheories.  The two differ for every `A` beyond HF — `A`-finite means `∈ A`, so for
+`A = L(ω₁^CK)` this quantifies over infinite hyperarithmetical subtheories as well.  Naming both
+is what makes the confusion hard to commit silently. -/
+def AFinitelySatisfiable (T : L.Theoryω) : Prop :=
+  ∀ T₀ ⊆ T, AFinite A T₀ → T₀.IsSatisfiable
+
 /-- The shape of a Barwise-style compactness statement, over a permitted sentence set `P`.
 
 `T ⊆ P` is a genuine hypothesis, not decoration: the standard theorem restricts to theories inside
-the fragment `L_A`, and the EM adapters supply exactly that containment.  Both predicates enter as
-hypotheses too, so no instance can claim this shape while secretly reading a compactness field —
-there is none to read. -/
-def CompactFor (P T : Set L.Sentenceω) : Prop :=
-  T ⊆ P → ACEnumerable A T →
-    (∀ T₀ ⊆ T, AFinite A T₀ →
-      ∃ (M : Type) (_ : L.Structure M) (_ : Nonempty M), Theoryω.Model T₀ M) →
-    ∃ (M : Type) (_ : L.Structure M) (_ : Nonempty M), Theoryω.Model T M
+the fragment `L_A`.  Both predicates enter as hypotheses too, so no instance can claim this shape
+while secretly reading a compactness field — there is none to read. -/
+def CompactFor (P T : L.Theoryω) : Prop :=
+  T ⊆ P → ACEnumerable A T → AFinitelySatisfiable A T → T.IsSatisfiable
 
 end FirstOrder.Language

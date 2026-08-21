@@ -64,6 +64,24 @@ theorem Model.empty (M : Type w) [L.Structure M] : Model (∅ : L.Theoryω) M :=
 theorem Model.mono (h : T ⊆ T') {M : Type w} [L.Structure M] (hM : T'.Model M) : T.Model M :=
   fun φ hφ => hM φ (h hφ)
 
+/-- **Satisfiability**, named rather than written out.  The existential-model statement was
+repeated at every compactness site; spelling it out invites confusing *ordinary* finite
+satisfiability with the `A`-finite kind, which are different hypotheses.  Named after Mathlib's
+`Theory.IsSatisfiable` for the finitary case. -/
+def IsSatisfiable (T : L.Theoryω) : Prop :=
+  ∃ (M : Type) (_ : L.Structure M) (_ : Nonempty M), T.Model M
+
+/-- **Finite satisfiability** — every *ordinarily* finite subtheory has a model.  Contrast
+`AFinitelySatisfiable`, the Barwise premise, which quantifies over `A`-finite subtheories
+instead; at `A = HF` the two coincide, and nowhere else. -/
+def IsFinitelySatisfiable (T : L.Theoryω) : Prop :=
+  ∀ T₀ ⊆ T, T₀.Finite → T₀.IsSatisfiable
+
+theorem IsSatisfiable.mono {T T' : L.Theoryω} (h : T ⊆ T') (hT' : T'.IsSatisfiable) :
+    T.IsSatisfiable := by
+  obtain ⟨M, inst, ne, hM⟩ := hT'
+  exact ⟨M, inst, ne, hM.mono h⟩
+
 open Classical in
 /-- **A countable theory as one sentence**: the countable conjunction of an enumeration (a
 tautology for the empty theory). Realization is exactly theory modelhood

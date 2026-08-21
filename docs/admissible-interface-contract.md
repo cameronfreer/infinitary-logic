@@ -362,3 +362,46 @@ the assembled conclusion, never only the pieces.
 type.  Codes carry laws (`decodes_unique`, `decodes_theory_unique`, #19A's naturality), so the best
 available analogue is "vacuous by certificate" — propositional, needing `absurd`.  Do not redesign
 chasing `rfl` on the admissible side.
+
+---
+
+## 10. Factoring decisions (2026-08-21)
+
+**Done now — the satisfiability API.**  `Theoryω.IsSatisfiable`, `Theoryω.IsFinitelySatisfiable`
+(Mathlib-parallel names), and `AFinitelySatisfiable A T` — the exact Barwise premise.  `CompactFor`
+is now transparent:
+
+```
+T ⊆ P → ACEnumerable A T → AFinitelySatisfiable A T → T.IsSatisfiable
+```
+
+Done *before* the EM tranche on purpose: the existential model statement was written out at every
+site, which made ordinary finite satisfiability and `A`-finite satisfiability easy to confuse.  They
+coincide at HF and nowhere else — `hf_aFinitelySatisfiable_iff` is that equation, and it is the only
+place the two may be interchanged.
+
+**Deferred to #19A — layer the presentation.**  `AdmissiblePresentation` now mixes a shared code
+carrier, family decoding, theory decoding, and Σ₁ classification.  Changing the Σ₁ implementation
+therefore changes the type that `CodedFamily` and `AdmissibleFragment` depend on, though neither
+consumes it.  Target shape:
+
+```
+shared code carrier
+├── family-coding layer
+├── theory-coding layer
+└── Σ-definition layer
+```
+
+A full presentation packages all three over the same carrier; `CodedFamily`/`AdmissibleFragment`
+depend only on the family layer.  This keeps the one-ambient-carrier lesson without a kitchen-sink
+record.
+
+**Deferred to #19A — partial decoding functions.**  Theory decoding is a relation plus
+`decodes_theory_unique`; `decodeTheory : Code → Option L.Theoryω` would make functionality hold by
+construction.  Do **not** generalize until theory decoding and Σ-definition decoding give two real
+consumers — family decoding has dependent output and a certificate, so it will not fit the same
+shape.
+
+**Explicitly not factored yet.**  `PresentationHom`/transport: wait until both language maps and
+adding constants need it.  A generic compactness oracle parameterized by arbitrary "smallness"
+predicates: `AFinitelySatisfiable` is already the mathematically meaningful boundary.

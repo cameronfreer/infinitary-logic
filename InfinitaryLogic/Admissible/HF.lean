@@ -105,10 +105,8 @@ theorem model_foTheory_iff {T : Set L.Sentenceω} (hT : T ⊆ finitaryFragment L
 
 No `compact` field is consulted: the infinitary finite-satisfiability hypothesis is pushed through
 `toLω` to the preimage theory, Mathlib supplies a model, and the correspondence carries it back. -/
-theorem finitaryFragment_compact {T : Set L.Sentenceω} (hT : T ⊆ finitaryFragment L)
-    (hfin : ∀ F ⊆ T, F.Finite → ∃ (M : Type) (_ : L.Structure M) (_ : Nonempty M),
-      Theoryω.Model F M) :
-    ∃ (M : Type) (_ : L.Structure M) (_ : Nonempty M), Theoryω.Model T M := by
+theorem finitaryFragment_compact {T : L.Theoryω} (hT : T ⊆ finitaryFragment L)
+    (hfin : T.IsFinitelySatisfiable) : T.IsSatisfiable := by
   -- every finite subset of the preimage theory is satisfiable
   have hfs : (foTheory T).IsFinitelySatisfiable := by
     intro F₀ hF₀
@@ -187,19 +185,32 @@ equation must fail to typecheck. -/
 theorem hfPresentation_sigma1_eq_top (L : Language.{u, v}) :
     (hfPresentation L).Sigma1 = fun _ => True := rfl
 
+/-- **The premise-level oracle**: over HF, the Barwise premise *is* ordinary finite
+satisfiability.  Immediate from `hf_aFinite_iff`, but worth naming — it is the equation that keeps
+`AFinitelySatisfiable` and `Theoryω.IsFinitelySatisfiable` from being silently interchanged, which
+is legitimate at HF and at no other `A`. -/
+theorem hf_aFinitelySatisfiable_iff {L : Language.{u, v}} {T : L.Theoryω} :
+    AFinitelySatisfiable (hfPresentation L) T ↔ T.IsFinitelySatisfiable :=
+  ⟨fun h T₀ hT₀ hfin => h T₀ hT₀ (hf_aFinite_iff.mpr hfin),
+   fun h T₀ hT₀ hA => h T₀ hT₀ (hf_aFinite_iff.mp hA)⟩
+
 /-- **HF compactness in the external `A`-finite form, with NO definability hypothesis.**
 
-This is the theorem the EM adapters and every other consumer should use.  It is strictly stronger
-than `hf_compactFor`, and stating it separately is what keeps the enlarged `Sigma1` from becoming
-load-bearing: a consumer that needs compactness gets it here without ever mentioning
+Strictly stronger than `hf_compactFor`, and stating it separately is what keeps the enlarged
+`Sigma1` from becoming load-bearing: a consumer gets compactness here without ever mentioning
 `ACEnumerable`, so tightening HF's `Sigma1` to the honest c.e. predicate in #19A cannot break it.
 
-The only translation is `hf_aFinite_iff`; the mathematics is `finitaryFragment_compact`. -/
-theorem hf_compact_of_aFinite {T : Set L.Sentenceω} (hT : T ⊆ finitaryFragment L)
-    (hfin : ∀ T₀ ⊆ T, AFinite (hfPresentation L) T₀ →
-      ∃ (M : Type) (_ : L.Structure M) (_ : Nonempty M), Theoryω.Model T₀ M) :
-    ∃ (M : Type) (_ : L.Structure M) (_ : Nonempty M), Theoryω.Model T M :=
-  finitaryFragment_compact hT fun T₀ hT₀ hT₀fin => hfin T₀ hT₀ (hf_aFinite_iff.mpr hT₀fin)
+**Only genuinely finitary consumers may use this.**  It requires `T ⊆ finitaryFragment L`.  A
+general EM template theory is built from an arbitrary `s : ℕ → Σ n, L.BoundedFormulaω Empty n`, so
+its sentences lie in an arbitrary fragment and need not be finitary at all; the EM adapters take
+`CompactFor` as a hypothesis instead, and only a separately proved finitary specialization can
+discharge it from here.
+
+The only translation is `hf_aFinitelySatisfiable_iff`; the mathematics is
+`finitaryFragment_compact`. -/
+theorem hf_compact_of_aFinite {T : L.Theoryω} (hT : T ⊆ finitaryFragment L)
+    (hfin : AFinitelySatisfiable (hfPresentation L) T) : T.IsSatisfiable :=
+  finitaryFragment_compact hT (hf_aFinitelySatisfiable_iff.mp hfin)
 
 /-- **Oracle condition 3, in full.**  Not merely the hypotheses separately: the *entire*
 `CompactFor` statement holds over HF at the finitary fragment.
