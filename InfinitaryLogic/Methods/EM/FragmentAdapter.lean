@@ -197,6 +197,23 @@ instead of the full `IsLomega1omegaIndiscernible a`, and state their
 conclusions against `(templateOfSeq a).truth` rather than `h.template.truth`.
 Tranche 2b of the Phase 2 refactor. -/
 
+/-- **Finite satisfiability of the template theory**, as the named property.
+
+`Nonempty M` comes from the source sequence: `Infinite I` gives `Nonempty I`, and `a` carries
+it into `M`.  So no inhabitation hypothesis is needed here either. -/
+theorem IsLomega1omegaIndiscernibleOn.templateTheoryOfSeq_isFinitelySatisfiable
+    {I : Type w} [LinearOrder I] [Infinite I]
+    {M : Type} [L.Structure M] {a : I → M}
+    (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
+    (h : IsLomega1omegaIndiscernibleOn a (Set.range s))
+    {J : Type u} [LinearOrder J] :
+    Theoryω.IsFinitelySatisfiable
+      ((templateOfSeq a : Lomega1omegaTemplate L).templateTheoryOfSeq s J) := by
+  intro F hFsub hFfinite
+  obtain ⟨σ, hσ⟩ := h.templateTheoryOfSeq_finitelySatisfiable s hFfinite hFsub
+  letI : (constantsOn J).Structure M := constantsOn.structure σ
+  exact ⟨M, inferInstance, ⟨a (Classical.arbitrary I)⟩, hσ⟩
+
 /-- Compact-oracle adapter under restricted indiscernibility. -/
 theorem IsLomega1omegaIndiscernibleOn.templateTheoryOfSeq_model_of_compact
     {I : Type w} [LinearOrder I] [Infinite I]

@@ -206,6 +206,23 @@ theorem IsLomega1omegaIndiscernibleOnTail.templateTheoryOfSeq_finitelySatisfiabl
       ∀ τ ∈ F, Sentenceω.Realize τ M :=
   h.templateTheoryOn_finitelySatisfiable hFin hSub
 
+/-- **Finite satisfiability of the tail-template theory**, as the named property.
+
+The `Nonempty` component of `Theoryω.IsSatisfiable` is supplied by the source sequence itself:
+`a : ℕ → M` inhabits `M`.  No extra hypothesis is needed, and none should be added — a
+template built from an indiscernible sequence always has a witness. -/
+theorem IsLomega1omegaIndiscernibleOnTail.templateTheoryOfSeq_isFinitelySatisfiable
+    {M : Type} [L.Structure M] {a : ℕ → M}
+    (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
+    (h : IsLomega1omegaIndiscernibleOnTail (L := L) a (Set.range s))
+    {J : Type u} [LinearOrder J] :
+    Theoryω.IsFinitelySatisfiable
+      ((tailTemplateOfSeq a : Lomega1omegaTemplate L).templateTheoryOfSeq s J) := by
+  intro F hFsub hFfinite
+  obtain ⟨σ, hσ⟩ := h.templateTheoryOfSeq_finitelySatisfiable s hFfinite hFsub
+  letI : (constantsOn J).Structure M := constantsOn.structure σ
+  exact ⟨M, inferInstance, ⟨a 0⟩, hσ⟩
+
 /-! ### Compact-oracle stretching from tail indiscernibility -/
 
 /-- Compact-oracle adapter under tail indiscernibility. -/
