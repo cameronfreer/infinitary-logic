@@ -229,61 +229,7 @@ theorem IsLomega1omegaIndiscernibleOnTail.templateTheoryOfSeq_model_of_compact
   letI : (constantsOn J).Structure M := constantsOn.structure σ
   exact ⟨M, inferInstance, hσ⟩
 
-/-- **EM stretching (sentence form, compact oracle, tail-indiscernible source).** -/
-theorem IsLomega1omegaIndiscernibleOnTail.stretch_restricted_of_compact
-    {M : Type} [L.Structure M] {a : ℕ → M}
-    (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
-    (h : IsLomega1omegaIndiscernibleOnTail (L := L) a (Set.range s))
-    {J : Type u} [LinearOrder J]
-    (height : Ordinal.{0}) (h_height : Ordinal.omega0 < height)
-    (hCompact : ∀ S : Set L[[J]].Sentenceω,
-      (∀ F : Set L[[J]].Sentenceω, F.Finite → F ⊆ S →
-        ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model F N) →
-      ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model S N) :
-    ∃ (N : Type) (_ : L[[J]].Structure N),
-      ∀ (i : ℕ) (t : Fin (s i).1 ↪o J),
-        Sentenceω.Realize (Lomega1omegaTemplate.templateSentence (s i).2 t) N ↔
-          (tailTemplateOfSeq a : Lomega1omegaTemplate L).truth (s i).2 := by
-  classical
-  obtain ⟨N, _, hModel⟩ :=
-    h.templateTheoryOfSeq_model_of_compact s height h_height hCompact
-  refine ⟨N, inferInstance, ?_⟩
-  intro i t
-  have hmem : ⟨(s i).1, (s i).2⟩ ∈ Set.range s := ⟨i, rfl⟩
-  by_cases htruth : (tailTemplateOfSeq a : Lomega1omegaTemplate L).truth (s i).2
-  · refine ⟨fun _ => htruth, fun _ => ?_⟩
-    exact hModel _ ⟨(s i).1, (s i).2, t, hmem, Or.inl ⟨htruth, rfl⟩⟩
-  · refine ⟨fun hreal => ?_, fun hT => absurd hT htruth⟩
-    exact absurd hreal
-      (hModel _ ⟨(s i).1, (s i).2, t, hmem, Or.inr ⟨htruth, rfl⟩⟩)
 
-/-- **EM stretching (sequence form, compact oracle, tail-indiscernible source).** -/
-theorem IsLomega1omegaIndiscernibleOnTail.stretch_restricted_sequence_of_compact
-    {M : Type} [L.Structure M] {a : ℕ → M}
-    (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
-    (h : IsLomega1omegaIndiscernibleOnTail (L := L) a (Set.range s))
-    {J : Type u} [LinearOrder J]
-    (height : Ordinal.{0}) (h_height : Ordinal.omega0 < height)
-    (hCompact : ∀ S : Set L[[J]].Sentenceω,
-      (∀ F : Set L[[J]].Sentenceω, F.Finite → F ⊆ S →
-        ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model F N) →
-      ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model S N) :
-    ∃ (N : Type) (_ : L[[J]].Structure N) (b : J → N),
-      letI : L.Structure N := (L.lhomWithConstants J).reduct N
-      ∀ (i : ℕ) (t : Fin (s i).1 ↪o J),
-        ((s i).2).Realize (Empty.elim : Empty → N) (b ∘ t) ↔
-          (tailTemplateOfSeq a : Lomega1omegaTemplate L).truth (s i).2 := by
-  obtain ⟨N, _inst, hBase⟩ :=
-    h.stretch_restricted_of_compact s height h_height hCompact
-  let b : J → N := fun j =>
-    (Term.func (Sum.inr j : L[[J]].Functions 0) Fin.elim0 : L[[J]].Term Empty).realize
-      (Empty.elim : Empty → N)
-  refine ⟨N, inferInstance, b, ?_⟩
-  letI : L.Structure N := (L.lhomWithConstants J).reduct N
-  intro i t
-  have hBridge :=
-    realize_templateSentence_of_structure (L := L) (J := J) (N := N) (s i).2 t
-  exact hBridge.symm.trans (hBase i t)
 
 /-! ### Stretching from a model of the tail-template theory (honest residual)
 
