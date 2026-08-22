@@ -4,7 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Descriptive.PerfectAntichain
-import InfinitaryLogic.Descriptive.CountingDichotomy
+import InfinitaryLogic.Descriptive.SatisfactionBorel
+import Architect
 
 /-!
 # The ambient isomorphism relation on coded structures
@@ -15,9 +16,9 @@ that is the wrong place to work: whether a set is perfect should be a fact about
 `StructureSpace L`, not about a refinement chosen to make one particular model class Polish.
 
 So the isomorphism relation is defined **once**, ambiently, as `structureIsoSetoid L`, and
-`isoSetoid φ` is recovered as its pullback along the subtype inclusion
-(`isoSetoid_eq_comap`).  The sentence-level predicates below then quantify over perfect subsets
-of `StructureSpace L` contained in `ModelsOf φ`, and the chosen refinement never enters their
+`isoSetoid φ` *is* its pullback along the subtype inclusion — that is its definition, not a
+theorem about it.  The sentence-level predicates below then quantify over perfect subsets of
+`StructureSpace L` contained in `ModelsOf φ`, and the chosen refinement never enters their
 statements.
 -/
 
@@ -42,8 +43,18 @@ def structureIsoSetoid (L : Language.{u, v}) [L.IsRelational] : Setoid (Structur
 
 variable [Countable (Σ l, L.Relations l)]
 
-/-- `isoSetoid φ` is the ambient relation pulled back along the subtype inclusion — it adds
-nothing beyond restricting the domain. -/
+/-- The isomorphism equivalence relation on coded ℕ-models of φ: the ambient relation
+restricted to the models of `φ`.  Two codes are related iff the decoded structures on ℕ are
+L-isomorphic. -/
+@[blueprint "def:iso-setoid"
+  (title := /-- Isomorphism setoid on coded models -/)
+  (statement := /-- The equivalence relation on coded $\mathbb{N}$-models of $\varphi$
+    where two codes are related iff their decoded structures are $L$-isomorphic. -/)]
+def isoSetoid (φ : L.Sentenceω) : Setoid ↥(ModelsOf φ) :=
+  (structureIsoSetoid L).comap Subtype.val
+
+/-- `isoSetoid φ` is the ambient relation pulled back along the subtype inclusion.  True by
+definition; stated so consumers can rewrite with it without unfolding. -/
 theorem isoSetoid_eq_comap (φ : L.Sentenceω) :
     isoSetoid φ = (structureIsoSetoid L).comap (Subtype.val : ↥(ModelsOf φ) → StructureSpace L) :=
   rfl
