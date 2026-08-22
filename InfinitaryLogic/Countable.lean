@@ -15,6 +15,8 @@ import InfinitaryLogic.Methods.EM.Indiscernible
 import InfinitaryLogic.Methods.EM.Template
 import InfinitaryLogic.Methods.EM.Realization
 import InfinitaryLogic.Methods.EM.Extraction
+import InfinitaryLogic.Methods.EM.FragmentAdapter
+import InfinitaryLogic.Methods.EM.TailAdapter
 
 /-!
 # Countable: model existence + model theory for countable structures
@@ -23,8 +25,8 @@ Import this bundle for the Henkin construction, model existence theorem,
 Löwenheim-Skolem, Hanf numbers, counting models, and the EM-stretching chain
 (indiscernibles → templates → realization).
 
-The admissible-fragment adapter theorems (`_of_fragment`, `_of_fullFragment`,
-`_of_compact`) are in `Methods/EM/FragmentAdapter.lean`, imported by the
-`Admissible` bundle — NOT by this bundle. So `import InfinitaryLogic.Countable`
-is genuinely countable-side only.
+The `_of_compact` endpoints (`Methods/EM/FragmentAdapter.lean` and the tail variants in
+`TailAdapter.lean`) are part of this bundle. They take a `Theoryω.OrdinaryCompactness` oracle
+as a hypothesis and mention no admissible notion, so `import InfinitaryLogic.Countable`
+remains admissible-free.
 -/

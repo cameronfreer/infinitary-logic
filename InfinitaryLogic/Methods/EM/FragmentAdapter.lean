@@ -4,21 +4,20 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.EM.Realization
-import InfinitaryLogic.Admissible.Compactness
-import InfinitaryLogic.Admissible.Barwise.ConsistencyBridge
-import InfinitaryLogic.Admissible.WithConstants
 
 /-!
-# EM Realization: Admissible/Barwise Adapter Layer
+# EM Realization: the compactness-oracle layer
 
-This file contains the theorems that connect the EM template-theory machinery
-(from `Realization.lean`) to the admissible-fragment infrastructure. These are
-the `_of_fragment`, `_of_fullFragment`, and `_of_compact` endpoints that take
-`FiniteCompactFragment`, `FullBarwiseFragment`, or bare compactness hypotheses.
+The endpoints that take EM template theories from *finite satisfiability* to a model, by
+applying a supplied `Theoryω.OrdinaryCompactness` oracle.
 
-Separated from `Realization.lean` so that the `Countable` import bundle can
-import the core EM machinery without transitively pulling in admissible-fragment
-infrastructure. The adapter layer lives in the `Admissible` bundle instead.
+An EM template theory is built from an arbitrary
+`s : ℕ → Σ n, L.BoundedFormulaω Empty n`, so its sentences lie in an arbitrary fragment: there
+is no fragment-specific fact to appeal to, and no admissible module is imported here.
+
+The oracle is genuinely an *assumption* — full `Lω₁ω` compactness for `L[[J]]` fails in
+general.  `Realization.lean`'s model-input endpoints are the honest residual beneath it: they
+take the model itself, and the oracle factors through them.
 -/
 
 universe u v w
@@ -26,48 +25,6 @@ universe u v w
 namespace FirstOrder.Language
 
 variable {L : Language.{u, v}}
-
-/-! ### Model of `templateTheoryOn` via Barwise compactness -/
-
-/-- Abstract Barwise wrapper for the restricted template theory. -/
-theorem Lomega1omegaTemplate.templateTheoryOn_model_of_fragment
-    (T : Lomega1omegaTemplate L)
-    (Γ : Set (Σ n, L.BoundedFormulaω Empty n))
-    {J : Type u} [LinearOrder J]
-    (A : FiniteCompactFragment L[[J]])
-    (hSub : T.templateTheoryOn Γ J ⊆ A.formulas)
-    (hfin : ∀ F : Set L[[J]].Sentenceω, F.Finite → F ⊆ T.templateTheoryOn Γ J →
-      ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model F N) :
-    ∃ (N : Type) (_ : L[[J]].Structure N),
-      Theoryω.Model (T.templateTheoryOn Γ J) N := by
-  apply barwise_compactness A hSub
-  rintro F ⟨_, hFfinite⟩ hFsub
-  exact hfin F hFfinite hFsub
-
-
-/-! ### Sequence-indexed adapter wrappers -/
-
-namespace Lomega1omegaTemplate
-
-variable {J : Type u} [LinearOrder J]
-
-/-- Abstract Barwise wrapper for `templateTheoryOfSeq`. -/
-theorem templateTheoryOfSeq_model_of_fragment
-    (T : Lomega1omegaTemplate L)
-    (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
-    (A : FiniteCompactFragment L[[J]])
-    (hSub : T.templateTheoryOfSeq s J ⊆ A.formulas)
-    (hfin : ∀ F : Set L[[J]].Sentenceω, F.Finite → F ⊆ T.templateTheoryOfSeq s J →
-      ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model F N) :
-    ∃ (N : Type) (_ : L[[J]].Structure N),
-      Theoryω.Model (T.templateTheoryOfSeq s J) N :=
-  T.templateTheoryOn_model_of_fragment (Set.range s) A hSub hfin
-
-
-end Lomega1omegaTemplate
-
-
-
 
 /-! ### Stretching along an arbitrary target order
 
@@ -80,11 +37,11 @@ target orders, which is where Morley–Hanf cardinality amplification lives.
 
 Two forms are provided:
 
-  - `stretch_restricted_of_fullFragment` / `_of_compact` use
+  - `stretch_restricted_of_compact` uses
     `Sentenceω.Realize (templateSentence φ t) N` as the conclusion — this is
     the form the template theory literally delivers.
-  - `stretch_restricted_sequence_of_fullFragment` / `_of_compact` produce an
-    explicit `b : J → N` sequence and conclude
+  - `stretch_restricted_sequence_of_compact` produces an
+    explicit `b : J → N` sequence and concludes
     `φ.Realize Empty.elim (b ∘ t) ↔ h.template.truth φ`, via the bridge
     `realize_templateSentence_of_structure`.
 
@@ -194,8 +151,24 @@ theorem morleySeed_indiscernibleOn {M : Type*} [L.Structure M] (φ : L.Sentence�
 
 These `_on` theorems take `IsLomega1omegaIndiscernibleOn a (Set.range s)`
 instead of the full `IsLomega1omegaIndiscernible a`, and state their
-conclusions against `(templateOfSeq a).truth` rather than `h.template.truth`.
-Tranche 2b of the Phase 2 refactor. -/
+conclusions against `(templateOfSeq a).truth` rather than `h.template.truth`. -/
+
+/-- **Finite satisfiability of the template theory**, as the named property.
+
+`Nonempty M` comes from the source sequence: `Infinite I` gives `Nonempty I`, and `a` carries
+it into `M`.  So no inhabitation hypothesis is needed here either. -/
+theorem IsLomega1omegaIndiscernibleOn.templateTheoryOfSeq_isFinitelySatisfiable
+    {I : Type w} [LinearOrder I] [Infinite I]
+    {M : Type} [L.Structure M] {a : I → M}
+    (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
+    (h : IsLomega1omegaIndiscernibleOn a (Set.range s))
+    {J : Type u} [LinearOrder J] :
+    Theoryω.IsFinitelySatisfiable
+      ((templateOfSeq a : Lomega1omegaTemplate L).templateTheoryOfSeq s J) := by
+  intro F hFsub hFfinite
+  obtain ⟨σ, hσ⟩ := h.templateTheoryOfSeq_finitelySatisfiable s hFfinite hFsub
+  letI : (constantsOn J).Structure M := constantsOn.structure σ
+  exact ⟨M, inferInstance, ⟨a (Classical.arbitrary I)⟩, hσ⟩
 
 /-- Compact-oracle adapter under restricted indiscernibility. -/
 theorem IsLomega1omegaIndiscernibleOn.templateTheoryOfSeq_model_of_compact
@@ -204,20 +177,10 @@ theorem IsLomega1omegaIndiscernibleOn.templateTheoryOfSeq_model_of_compact
     (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
     (h : IsLomega1omegaIndiscernibleOn a (Set.range s))
     {J : Type u} [LinearOrder J]
-    (height : Ordinal.{0}) (h_height : Ordinal.omega0 < height)
-    (hCompact : ∀ S : Set L[[J]].Sentenceω,
-      (∀ F : Set L[[J]].Sentenceω, F.Finite → F ⊆ S →
-        ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model F N) →
-      ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model S N) :
-    ∃ (N : Type) (_ : L[[J]].Structure N),
-      Theoryω.Model ((templateOfSeq a : Lomega1omegaTemplate L).templateTheoryOfSeq s J) N := by
-  apply (templateOfSeq a : Lomega1omegaTemplate L).templateTheoryOfSeq_model_of_fragment s
-    (admissibleFragmentOfUniv height h_height hCompact)
-    (Set.subset_univ _)
-  intro F hFfinite hFsub
-  obtain ⟨σ, hσ⟩ := h.templateTheoryOfSeq_finitelySatisfiable s hFfinite hFsub
-  letI : (constantsOn J).Structure M := constantsOn.structure σ
-  exact ⟨M, inferInstance, hσ⟩
+    (hCompact : Theoryω.OrdinaryCompactness L[[J]]) :
+    Theoryω.IsSatisfiable
+      ((templateOfSeq a : Lomega1omegaTemplate L).templateTheoryOfSeq s J) :=
+  hCompact _ (h.templateTheoryOfSeq_isFinitelySatisfiable s)
 
 
 /-- **EM stretching (sentence form, compact oracle, restricted source).** -/
@@ -227,17 +190,13 @@ theorem IsLomega1omegaIndiscernibleOn.stretch_restricted_of_compact
     (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
     (h : IsLomega1omegaIndiscernibleOn a (Set.range s))
     {J : Type u} [LinearOrder J]
-    (height : Ordinal.{0}) (h_height : Ordinal.omega0 < height)
-    (hCompact : ∀ S : Set L[[J]].Sentenceω,
-      (∀ F : Set L[[J]].Sentenceω, F.Finite → F ⊆ S →
-        ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model F N) →
-      ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model S N) :
+    (hCompact : Theoryω.OrdinaryCompactness L[[J]]) :
     ∃ (N : Type) (_ : L[[J]].Structure N),
       ∀ (i : ℕ) (t : Fin (s i).1 ↪o J),
         Sentenceω.Realize (Lomega1omegaTemplate.templateSentence (s i).2 t) N ↔
           (templateOfSeq a : Lomega1omegaTemplate L).truth (s i).2 := by
-  obtain ⟨N, _, hModel⟩ :=
-    h.templateTheoryOfSeq_model_of_compact s height h_height hCompact
+  obtain ⟨N, _, _, hModel⟩ :=
+    h.templateTheoryOfSeq_model_of_compact s hCompact
   refine ⟨N, inferInstance, ?_⟩
   intro i t
   have hmem : ⟨(s i).1, (s i).2⟩ ∈ Set.range s := ⟨i, rfl⟩
@@ -256,18 +215,14 @@ theorem IsLomega1omegaIndiscernibleOn.stretch_restricted_sequence_of_compact
     (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
     (h : IsLomega1omegaIndiscernibleOn a (Set.range s))
     {J : Type u} [LinearOrder J]
-    (height : Ordinal.{0}) (h_height : Ordinal.omega0 < height)
-    (hCompact : ∀ S : Set L[[J]].Sentenceω,
-      (∀ F : Set L[[J]].Sentenceω, F.Finite → F ⊆ S →
-        ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model F N) →
-      ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model S N) :
+    (hCompact : Theoryω.OrdinaryCompactness L[[J]]) :
     ∃ (N : Type) (_ : L[[J]].Structure N) (b : J → N),
       letI : L.Structure N := (L.lhomWithConstants J).reduct N
       ∀ (i : ℕ) (t : Fin (s i).1 ↪o J),
         ((s i).2).Realize (Empty.elim : Empty → N) (b ∘ t) ↔
           (templateOfSeq a : Lomega1omegaTemplate L).truth (s i).2 := by
   obtain ⟨N, _inst, hBase⟩ :=
-    h.stretch_restricted_of_compact s height h_height hCompact
+    h.stretch_restricted_of_compact s hCompact
   let b : J → N := fun j =>
     (Term.func (Sum.inr j : L[[J]].Functions 0) Fin.elim0 : L[[J]].Term Empty).realize
       (Empty.elim : Empty → N)

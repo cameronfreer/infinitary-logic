@@ -405,3 +405,29 @@ shape.
 **Explicitly not factored yet.**  `PresentationHom`/transport: wait until both language maps and
 adding constants need it.  A generic compactness oracle parameterized by arbitrary "smallness"
 predicates: `AFinitelySatisfiable` is already the mathematically meaningful boundary.
+
+---
+
+## 11. #18 completion status
+
+**Status: complete.** The remaining items from §4 and the EM tranche are done.
+
+* **External theory predicates** (§4): `AFinite`, `ACEnumerable`, `AFinitelySatisfiable` and
+  `CompactFor` live in `Admissible/Predicates.lean`, never as fields.  `hf_aFinite_iff`,
+  `hf_aFinitelySatisfiable_iff` and `hf_compactFor` are the HF oracle checks, the last of them
+  certifying that the *assembled* statement specializes to `finitaryFragment_compact`.
+* **EM adapters**: the compactness-oracle layer applies a supplied
+  `Theoryω.OrdinaryCompactness` directly.  The `_of_fragment` / `_of_fullFragment` endpoints,
+  the `Ordinal` height parameters, and `admissibleFragmentOfUniv`'s last uses are deleted — 16
+  dead declarations plus the two-declaration legacy spine.  `Methods/EM` imports no admissible
+  module, and the layer is exported from `Countable`, matching its actual API boundary.
+* **Guard**: `scripts/check_em_compactness_boundary.lean`, wired into CI.  It checks both
+  directions — no root reaches `FiniteCompactFragment`, `FullBarwiseFragment`,
+  `AdmissibleFragmentCore`, `admissibleFragmentOfUniv` or `barwise_compactness`; every direct
+  root exposes the oracle in its *type*; every assembly cone reaches the ordinary
+  finite-satisfiability corollary — plus absence checks for the deleted spine and a
+  theorem-root negative control, failure-tested in all three directions.
+
+**Carried into #19A**, unchanged: no `height` field (§9 — `o(A)` is derivable in principle but
+the presentation does not encode enough of `A` to construct it), `CodedFamily` indexed by the
+presentation alone, and `Sigma1` as the last bare external predicate (§9, refinement 2).

@@ -32,9 +32,11 @@ weakens the EM interface accordingly:
 * `IsLomega1omegaIndiscernibleOnTail.templateTheoryOn_finitelySatisfiable` — the deep-tuple
   finite-satisfiability lemma (mirroring the full-indiscernibility proof, with the
   interpreting embedding placed beyond the joint cutoff);
-* `…templateTheoryOfSeq_model_of_compact`, `…stretch_restricted_of_compact`,
-  `…stretch_restricted_sequence_of_compact` — the compact-oracle stretching pipeline,
-  verbatim mirrors against the tail template.
+* `…templateTheoryOfSeq_isFinitelySatisfiable` and `…templateTheoryOfSeq_model_of_compact` —
+  finite satisfiability of the tail-template theory, and the one application of a
+  `Theoryω.OrdinaryCompactness` oracle that turns it into a model;
+* `…stretch_restricted_of_model` and `…stretch_restricted_sequence_of_model` — stretching from
+  that model, the honest residual which assumes no compactness at all.
 
 The downstream consumer is `hasArbLargeModels_of_tail_extraction` in
 `InfinitaryLogic/Conditional/MorleyHanfTransfer.lean`.
@@ -206,6 +208,23 @@ theorem IsLomega1omegaIndiscernibleOnTail.templateTheoryOfSeq_finitelySatisfiabl
       ∀ τ ∈ F, Sentenceω.Realize τ M :=
   h.templateTheoryOn_finitelySatisfiable hFin hSub
 
+/-- **Finite satisfiability of the tail-template theory**, as the named property.
+
+The `Nonempty` component of `Theoryω.IsSatisfiable` is supplied by the source sequence itself:
+`a : ℕ → M` inhabits `M`.  No extra hypothesis is needed, and none should be added — a
+template built from an indiscernible sequence always has a witness. -/
+theorem IsLomega1omegaIndiscernibleOnTail.templateTheoryOfSeq_isFinitelySatisfiable
+    {M : Type} [L.Structure M] {a : ℕ → M}
+    (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
+    (h : IsLomega1omegaIndiscernibleOnTail (L := L) a (Set.range s))
+    {J : Type u} [LinearOrder J] :
+    Theoryω.IsFinitelySatisfiable
+      ((tailTemplateOfSeq a : Lomega1omegaTemplate L).templateTheoryOfSeq s J) := by
+  intro F hFsub hFfinite
+  obtain ⟨σ, hσ⟩ := h.templateTheoryOfSeq_finitelySatisfiable s hFfinite hFsub
+  letI : (constantsOn J).Structure M := constantsOn.structure σ
+  exact ⟨M, inferInstance, ⟨a 0⟩, hσ⟩
+
 /-! ### Compact-oracle stretching from tail indiscernibility -/
 
 /-- Compact-oracle adapter under tail indiscernibility. -/
@@ -214,20 +233,10 @@ theorem IsLomega1omegaIndiscernibleOnTail.templateTheoryOfSeq_model_of_compact
     (s : ℕ → Σ n, L.BoundedFormulaω Empty n)
     (h : IsLomega1omegaIndiscernibleOnTail (L := L) a (Set.range s))
     {J : Type u} [LinearOrder J]
-    (height : Ordinal.{0}) (h_height : Ordinal.omega0 < height)
-    (hCompact : ∀ S : Set L[[J]].Sentenceω,
-      (∀ F : Set L[[J]].Sentenceω, F.Finite → F ⊆ S →
-        ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model F N) →
-      ∃ (N : Type) (_ : L[[J]].Structure N), Theoryω.Model S N) :
-    ∃ (N : Type) (_ : L[[J]].Structure N),
-      Theoryω.Model
-        ((tailTemplateOfSeq a : Lomega1omegaTemplate L).templateTheoryOfSeq s J) N := by
-  apply (tailTemplateOfSeq a : Lomega1omegaTemplate L).templateTheoryOfSeq_model_of_fragment
-    s (admissibleFragmentOfUniv height h_height hCompact) (Set.subset_univ _)
-  intro F hFfinite hFsub
-  obtain ⟨σ, hσ⟩ := h.templateTheoryOfSeq_finitelySatisfiable s hFfinite hFsub
-  letI : (constantsOn J).Structure M := constantsOn.structure σ
-  exact ⟨M, inferInstance, hσ⟩
+    (hCompact : Theoryω.OrdinaryCompactness L[[J]]) :
+    Theoryω.IsSatisfiable
+      ((tailTemplateOfSeq a : Lomega1omegaTemplate L).templateTheoryOfSeq s J) :=
+  hCompact _ (h.templateTheoryOfSeq_isFinitelySatisfiable s)
 
 
 
