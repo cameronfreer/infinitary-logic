@@ -1,5 +1,6 @@
 import InfinitaryLogic.Admissible.Fragment
 import InfinitaryLogic.Admissible.CodedFamily
+import InfinitaryLogic.Admissible.Predicates
 import InfinitaryLogic.Admissible.Fragment.Honest
 import InfinitaryLogic.Admissible.HF
 import InfinitaryLogic.Admissible.Barwise.Data
@@ -9,8 +10,6 @@ import InfinitaryLogic.Admissible.Nadel
 import InfinitaryLogic.Admissible.Barwise.ProofSystem
 import InfinitaryLogic.Admissible.Barwise.Soundness
 import InfinitaryLogic.Admissible.Barwise.ConsistencyBridge
-import InfinitaryLogic.Methods.EM.FragmentAdapter
-import InfinitaryLogic.Methods.EM.TailAdapter
 
 /-!
 # Admissible: coded fragments, conditional compactness interfaces, proof system
@@ -27,7 +26,7 @@ not a field of any of these structures.
 conditional interfaces that package Barwise compactness and the Nadel bound as hypotheses rather
 than discharging them, plus proof system / derivability, soundness, and the consistency-property
 bridge. These are being replaced by the interface above.
-The EM adapter theorems (`Methods/EM/FragmentAdapter.lean` and the
-tail-indiscernibility variants in `Methods/EM/TailAdapter.lean`) live here
-rather than in `Countable`, keeping that bundle admissible-free.
+The EM compactness-oracle layer is not part of this bundle: it assumes a
+`Theoryω.OrdinaryCompactness` oracle and mentions no admissible notion, so it belongs to
+`Countable` with the rest of the EM chain.
 -/

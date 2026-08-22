@@ -52,6 +52,30 @@ structure AdmissiblePresentation (L : Language.{u, v}) where
   naturality laws. -/
   decodes_unique : ∀ {n : ℕ} {c : Code} {f g : Index c → L.BoundedFormulaω Empty n},
     CodesInfFamily c → DecodesFamily n c f → DecodesFamily n c g → f = g
+  /-- Which set of sentences a code names.  A *theory* decoding, separate from `DecodesFamily`:
+  the same codes (the elements of `A`) but a different thing named.  Being decoded by **some**
+  code is exactly "`T₀ ∈ A`", the internality the Barwise theorem uses; there is deliberately no
+  separate finiteness condition, because `A`-finite *means* `∈ A` and for `A = L(ω₁^CK)` that
+  includes infinite hyperarithmetical sets. -/
+  DecodesTheory : Code → Set L.Sentenceω → Prop
+  /-- **Theory-decoding functionality.**  A code names *a* theory, not a family of them.  The
+  companion to `decodes_unique`, and unconditional: unlike the family certificate there is no
+  case here that any presentation should discharge vacuously. -/
+  decodes_theory_unique : ∀ {c : Code} {T T' : Set L.Sentenceω},
+    DecodesTheory c T → DecodesTheory c T' → T = T'
+  /-- Σ₁-on-`A` definability of a theory.
+
+  **A known placeholder, and the last bare external predicate here.**  It is exactly the shape
+  this design rejects everywhere else — a `Prop` on an arbitrary external set, with no data
+  witnessing the representation — and it is retained only because carrying the defining Σ formula
+  needs the Δ₀/Σ hierarchy for the `∈`-language.  #19A replaces it with decoding data
+  (`DefinesSigmaTheory : DefinitionCode → Set L.Sentenceω → Prop` plus a uniqueness law); whether
+  `DefinitionCode` is the same carrier as `Code` is an audit question, since making the carrier
+  explicit does not require conflating unrelated kinds of code.
+
+  A presentation may set this to `True` to *widen* the compactness domain — HF does, to recover
+  unrestricted first-order compactness — but that is an enlargement, not a Σ₁ claim. -/
+  Sigma1 : Set L.Sentenceω → Prop
 
 /-- A **coded family**: a code, its infinitary certificate, its decoded family, and the law tying
 the two together. -/
