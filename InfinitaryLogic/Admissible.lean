@@ -26,7 +26,7 @@ not a field of any of these structures.
 conditional interfaces that package Barwise compactness and the Nadel bound as hypotheses rather
 than discharging them, plus proof system / derivability, soundness, and the consistency-property
 bridge. These are being replaced by the interface above.
-The EM compactness-oracle layer used to be exported here, because it routed through
-`FiniteCompactFragment` and `admissibleFragmentOfUniv`. It no longer mentions any admissible
-notion, so it moved to `Countable` alongside the rest of the EM chain.
+The EM compactness-oracle layer is not part of this bundle: it assumes a
+`Theoryω.OrdinaryCompactness` oracle and mentions no admissible notion, so it belongs to
+`Countable` with the rest of the EM chain.
 -/

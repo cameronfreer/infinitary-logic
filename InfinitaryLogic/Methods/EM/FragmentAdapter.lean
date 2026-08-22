@@ -11,13 +11,9 @@ import InfinitaryLogic.Methods.EM.Realization
 The endpoints that take EM template theories from *finite satisfiability* to a model, by
 applying a supplied `Theoryω.OrdinaryCompactness` oracle.
 
-**This is no longer an admissible/Barwise adapter.**  It once routed through
-`FiniteCompactFragment`, `FullBarwiseFragment` and `admissibleFragmentOfUniv`, with an
-`Ordinal` height parameter that existed only to manufacture the latter.  All of that was
-either dead or a detour: an EM template theory is built from an arbitrary
-`s : ℕ → Σ n, L.BoundedFormulaω Empty n`, so its sentences lie in an arbitrary fragment and
-there was never a fragment-specific fact to use.  The oracle is now applied directly, and no
-admissible module is imported.
+An EM template theory is built from an arbitrary
+`s : ℕ → Σ n, L.BoundedFormulaω Empty n`, so its sentences lie in an arbitrary fragment: there
+is no fragment-specific fact to appeal to, and no admissible module is imported here.
 
 The oracle is genuinely an *assumption* — full `Lω₁ω` compactness for `L[[J]]` fails in
 general.  `Realization.lean`'s model-input endpoints are the honest residual beneath it: they
@@ -30,23 +26,6 @@ namespace FirstOrder.Language
 
 variable {L : Language.{u, v}}
 
-/-! ### Restricted-indiscernibility endpoints -/
-
-
-
-/-! ### Sequence-indexed adapter wrappers -/
-
-namespace Lomega1omegaTemplate
-
-variable {J : Type u} [LinearOrder J]
-
-
-
-end Lomega1omegaTemplate
-
-
-
-
 /-! ### Stretching along an arbitrary target order
 
 These theorems package the existing `templateTheoryOfSeq` pipeline into
@@ -58,11 +37,11 @@ target orders, which is where Morley–Hanf cardinality amplification lives.
 
 Two forms are provided:
 
-  - `stretch_restricted_of_fullFragment` / `_of_compact` use
+  - `stretch_restricted_of_compact` uses
     `Sentenceω.Realize (templateSentence φ t) N` as the conclusion — this is
     the form the template theory literally delivers.
-  - `stretch_restricted_sequence_of_fullFragment` / `_of_compact` produce an
-    explicit `b : J → N` sequence and conclude
+  - `stretch_restricted_sequence_of_compact` produces an
+    explicit `b : J → N` sequence and concludes
     `φ.Realize Empty.elim (b ∘ t) ↔ h.template.truth φ`, via the bridge
     `realize_templateSentence_of_structure`.
 

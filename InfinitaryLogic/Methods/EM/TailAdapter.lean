@@ -32,9 +32,11 @@ weakens the EM interface accordingly:
 * `IsLomega1omegaIndiscernibleOnTail.templateTheoryOn_finitelySatisfiable` — the deep-tuple
   finite-satisfiability lemma (mirroring the full-indiscernibility proof, with the
   interpreting embedding placed beyond the joint cutoff);
-* `…templateTheoryOfSeq_model_of_compact`, `…stretch_restricted_of_compact`,
-  `…stretch_restricted_sequence_of_compact` — the compact-oracle stretching pipeline,
-  verbatim mirrors against the tail template.
+* `…templateTheoryOfSeq_isFinitelySatisfiable` and `…templateTheoryOfSeq_model_of_compact` —
+  finite satisfiability of the tail-template theory, and the one application of a
+  `Theoryω.OrdinaryCompactness` oracle that turns it into a model;
+* `…stretch_restricted_of_model` and `…stretch_restricted_sequence_of_model` — stretching from
+  that model, the honest residual which assumes no compactness at all.
 
 The downstream consumer is `hasArbLargeModels_of_tail_extraction` in
 `InfinitaryLogic/Conditional/MorleyHanfTransfer.lean`.

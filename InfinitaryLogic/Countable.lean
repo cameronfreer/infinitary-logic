@@ -26,8 +26,7 @@ Löwenheim-Skolem, Hanf numbers, counting models, and the EM-stretching chain
 (indiscernibles → templates → realization).
 
 The `_of_compact` endpoints (`Methods/EM/FragmentAdapter.lean` and the tail variants in
-`TailAdapter.lean`) are now part of this bundle. They take a `Theoryω.OrdinaryCompactness`
-oracle as a hypothesis and mention no admissible notion, so this bundle remains
-admissible-free; the `_of_fragment` and `_of_fullFragment` endpoints they replaced are
-deleted.
+`TailAdapter.lean`) are part of this bundle. They take a `Theoryω.OrdinaryCompactness` oracle
+as a hypothesis and mention no admissible notion, so `import InfinitaryLogic.Countable`
+remains admissible-free.
 -/
