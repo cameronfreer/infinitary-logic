@@ -3,6 +3,7 @@ Copyright (c) 2026 Cameron Freer. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
+import InfinitaryLogic.OrdinalUtil
 import InfinitaryLogic.Scott.Sentence
 import Architect
 
@@ -44,8 +45,7 @@ open FirstOrder Structure Fin Ordinal BoundedFormulaω
 
 /-! ### Countability of initial segments below ω₁ -/
 
-/-- For any ordinal β < ω₁, the set of ordinals below β is countable. -/
-private theorem countable_Iio_of_lt_omega1 (β : Ordinal.{0}) (hβ : β < Ordinal.omega 1) :
+private theorem InfinitaryLogic.setCountable_Iio_of_lt_omega1 (β : Ordinal.{0}) (hβ : β < Ordinal.omega 1) :
     Set.Countable (Set.Iio β) := by
   -- β < ω₁ means β.card < ℵ₁
   have h_card : β.card < Cardinal.aleph 1 := Cardinal.lt_omega_iff_card_lt.mp hβ
@@ -206,7 +206,7 @@ theorem countableRefinementHypothesis : CountableRefinementHypothesis.{u, v, w} 
   set γ := ⨆ k : ℕ, (α₀ + (↑k : Ordinal.{0}))
   have hγ_lt : γ < Ordinal.omega 1 := by
     exact Ordinal.iSup_lt_omega_one fun k => by rw [← Cardinal.ord_aleph]; exact hα_k_lt k
-  apply Set.Countable.mono (s₂ := Set.Iio γ) _ (countable_Iio_of_lt_omega1 γ hγ_lt)
+  apply Set.Countable.mono (s₂ := Set.Iio γ) _ (InfinitaryLogic.setCountable_Iio_of_lt_omega1 γ hγ_lt)
   intro ε ⟨_, N, instN, instCN, b, hBF, hNot⟩
   simp only [Set.mem_Iio]
   by_contra hge; push Not at hge
