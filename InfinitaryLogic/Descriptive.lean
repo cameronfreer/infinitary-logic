@@ -19,6 +19,7 @@ import InfinitaryLogic.Descriptive.ModelClassStandardBorel
 import InfinitaryLogic.Descriptive.CantorAntichain
 import InfinitaryLogic.Descriptive.PerfectAntichain
 import InfinitaryLogic.Descriptive.StructureIsoSetoid
+import InfinitaryLogic.Descriptive.RankedThinness
 import InfinitaryLogic.Descriptive.Mycielski
 import InfinitaryLogic.Descriptive.KuratowskiUlam
 import InfinitaryLogic.Descriptive.GSGraph
@@ -71,6 +72,8 @@ imports), developed for the proof of Silver's theorem:
   and Polish-quotient cardinal facts
 - `StructureIsoSetoid`: the ambient isomorphism relation on `StructureSpace L`, and the
   sentence-level perfect-set/thinness predicates stated against it
+- `RankedThinness`: the countable-ordinal rank route to thinness (`ThinRankAnalysis`), with
+  the quotient-countability step (`Setoid.countable_antichain`)
   (`CantorScheme.exists_antichain_map` and the splitting-predicate builder);
 - `Mycielski`: Mycielski's theorem for Cantor space (`mycielski_cantor`);
 - `KuratowskiUlam`: the meager-sections direction of Kuratowski–Ulam
