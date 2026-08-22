@@ -81,12 +81,25 @@ run_cmd do
   let env ← Lean.getEnv
   let oracle := `FirstOrder.Language.Theoryω.OrdinaryCompactness
 
-  -- NEGATIVE CONTROL: the traversal must see through a THEOREM body. `deps` on a direct root
-  -- has to reach the oracle; if theorem bodies were skipped this would come back empty and
-  -- every FORBIDDEN check below would pass vacuously.
-  let probe := directRoots.head!
-  unless (deps env probe).contains oracle do
-    throwError "negative control failed: theorem-body traversal is not working ({probe})"
+  -- NEGATIVE CONTROL for the `.thmInfo` path.
+  --
+  -- The witness must be **proof-only**: a constant that appears in the root's VALUE but not in
+  -- its TYPE. `OrdinaryCompactness` would be useless here, since it occurs in the type and the
+  -- check would still pass with theorem-body traversal completely broken — which is exactly the
+  -- silent-vacuity failure this control exists to prevent.
+  let probe := `FirstOrder.Language.IsLomega1omegaIndiscernibleOn.templateTheoryOfSeq_model_of_compact
+  let witness :=
+    `FirstOrder.Language.IsLomega1omegaIndiscernibleOn.templateTheoryOfSeq_isFinitelySatisfiable
+  let some pci := env.find? probe | throwError "negative control: {probe} not found"
+  if pci.type.getUsedConstants.contains witness then
+    throwError "negative control is no longer proof-only: {witness} now occurs in {probe}'s type"
+  let some pval := declValue? pci
+    | throwError "negative control: no value for {probe}; declValue? is not matching .thmInfo"
+  unless pval.getUsedConstants.contains witness do
+    throwError "negative control: {witness} absent from {probe}'s value"
+  unless (deps env probe).contains witness do
+    throwError "negative control FAILED: theorem-body traversal is broken \
+      ({witness} is in {probe}'s value but not in its cone)"
 
   for root in directRoots do
     unless (env.find? root).isSome do throwError "root {root} not found"

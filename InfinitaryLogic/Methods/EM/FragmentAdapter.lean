@@ -151,8 +151,7 @@ theorem morleySeed_indiscernibleOn {M : Type*} [L.Structure M] (Ï† : L.SentenceÏ
 
 These `_on` theorems take `IsLomega1omegaIndiscernibleOn a (Set.range s)`
 instead of the full `IsLomega1omegaIndiscernible a`, and state their
-conclusions against `(templateOfSeq a).truth` rather than `h.template.truth`.
-Tranche 2b of the Phase 2 refactor. -/
+conclusions against `(templateOfSeq a).truth` rather than `h.template.truth`. -/
 
 /-- **Finite satisfiability of the template theory**, as the named property.
 
