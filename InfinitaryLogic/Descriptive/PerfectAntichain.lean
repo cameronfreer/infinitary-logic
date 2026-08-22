@@ -76,12 +76,14 @@ theorem HasCantorAntichainOn.mono (h : HasCantorAntichainOn r A) (hAB : A ⊆ B)
   exact ⟨f, hcont, fun x => hAB (hmem x), hineq⟩
 
 /-- A Cantor antichain is injective — by *reflexivity*, not by an added hypothesis: distinct
-arguments have inequivalent images, and equal images would be equivalent to themselves. -/
+arguments have inequivalent images, and equal images would be equivalent to themselves.
+
+The inequivalence clause is deliberately **not** restated in the conclusion: it is already the
+content of `h`, and a consumer needing it should unpack `h`.  One job per adapter. -/
 theorem HasCantorAntichainOn.injective (h : HasCantorAntichainOn r A) :
-    ∃ f : (ℕ → Bool) → X, Continuous f ∧ Function.Injective f ∧ (∀ x, f x ∈ A) ∧
-      ∀ x y, x ≠ y → ¬r.r (f x) (f y) := by
+    ∃ f : (ℕ → Bool) → X, Continuous f ∧ Set.range f ⊆ A ∧ Function.Injective f := by
   obtain ⟨f, hcont, hmem, hineq⟩ := h
-  refine ⟨f, hcont, fun x y hxy => ?_, hmem, hineq⟩
+  refine ⟨f, hcont, Set.range_subset_iff.mpr hmem, fun x y hxy => ?_⟩
   by_contra hne
   exact hineq x y hne (hxy ▸ r.refl (f x))
 
@@ -89,7 +91,8 @@ theorem HasCantorAntichainOn.injective (h : HasCantorAntichainOn r A) :
 the argument is the quotient-map injection, and only `Continuous f` mentions the topology. -/
 theorem HasCantorAntichainOn.continuum_le_quotient (h : HasCantorAntichainOn r A) :
     Cardinal.continuum ≤ #(Quotient r) := by
-  obtain ⟨f, -, hinj, -, hineq⟩ := h.injective
+  -- unpack `h` directly: the inequivalence is its content, and `injective` is a separate job
+  obtain ⟨f, -, -, hineq⟩ := h
   have hq : Function.Injective (fun x : ℕ → Bool => Quotient.mk r (f x)) := by
     intro x y hxy
     by_contra hne
