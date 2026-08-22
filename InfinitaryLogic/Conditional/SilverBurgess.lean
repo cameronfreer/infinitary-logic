@@ -23,8 +23,10 @@ equivalence relations on Polish spaces; the Borel case and the full
 
 The perfect-set and Polish-quotient cardinal facts this file used to open with now live in
 `InfinitaryLogic/Descriptive/PerfectAntichain.lean` (`Perfect.mk_eq_continuum`,
-`continuum_classes_of_perfect_transversal`, and the three companions), unchanged and under the
-same names: none of them mentions a dichotomy or a splitting hypothesis.
+`continuum_classes_of_perfect_transversal`, and the three companions).  The names are the same,
+but the statements are not identical: several now assume less than they did here — in
+particular `continuum_classes_of_perfect_transversal` no longer requires second countability.
+None of them mentions a dichotomy or a splitting hypothesis.
 
 - `splitting_lemma_closed`: Closed equiv relation with uncountably many classes splits
   into disjoint closed pieces, each uncountable, cross-inequivalent.

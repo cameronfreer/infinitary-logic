@@ -64,17 +64,20 @@ Import this bundle for the structure space, satisfaction measurability,
 Borel complexity, counting dichotomy, finite carrier analysis, and the
 countable-model counting theorems.
 
-It also provides a reusable, model-theory-free DST library (pure Mathlib
-imports), developed for the proof of Silver's theorem:
+It also provides reusable DST infrastructure, developed for the proof of
+Silver's theorem.  Everything below is generic — pure Mathlib imports, no model
+theory — except `StructureIsoSetoid`, which is deliberately the model-theoretic
+application of that vocabulary:
 
 - `CantorAntichain`: Cantor-scheme → perfect-antichain extraction
+  (`CantorScheme.exists_antichain_map` and the splitting-predicate builder);
 - `PerfectAntichain`: perfect/Cantor-antichain and thinness vocabulary, plus the perfect-set
   and Polish-quotient cardinal facts
-- `StructureIsoSetoid`: the ambient isomorphism relation on `StructureSpace L`, and the
-  sentence-level perfect-set/thinness predicates stated against it
+- `StructureIsoSetoid`: **the application** — isomorphism defined once on the ambient
+  `StructureSpace L`, `isoSetoid φ` as its restriction, and the sentence-level
+  perfect-set/thinness predicates stated against it
 - `RankedThinness`: the countable-ordinal rank route to thinness (`ThinRankAnalysis`), with
-  the quotient-countability step (`Setoid.countable_antichain`)
-  (`CantorScheme.exists_antichain_map` and the splitting-predicate builder);
+  the quotient-countability step (`Setoid.countable_antichain`);
 - `Mycielski`: Mycielski's theorem for Cantor space (`mycielski_cantor`);
 - `KuratowskiUlam`: the meager-sections direction of Kuratowski–Ulam
   (`isMeagre_of_isMeagre_sections`);

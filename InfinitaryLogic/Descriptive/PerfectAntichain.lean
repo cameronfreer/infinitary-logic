@@ -25,10 +25,13 @@ The two positive forms are related by `HasPerfectAntichainOn.hasCantorAntichainO
 an extra hypothesis: it follows from *reflexivity* of the setoid, since distinct arguments have
 inequivalent images and every point is equivalent to itself.
 
-Also here, moved unchanged from `Conditional/SilverBurgess.lean`: the cardinal facts about
-perfect sets and Polish quotients.  None of them mentions a dichotomy, an equivalence relation
-being closed, or a splitting hypothesis — they are about perfect sets and Polish spaces, and
-belonged in the conditional file only by accident of where they were first needed.
+The file also carries the cardinal facts these statements are measured against: a nonempty
+perfect set in a complete metric space has size continuum (`Perfect.mk_eq_continuum`); a
+perfect transversal forces continuum-many classes (`continuum_classes_of_perfect_transversal`,
+with its two-sided companion); and a Polish space, hence any quotient of one, has at most
+continuum-many points (`mk_le_continuum_of_polish`, `mk_quotient_le_continuum_of_polish`).
+None of them mentions a dichotomy, an equivalence relation being closed, or a splitting
+hypothesis.
 
 **Hypotheses are kept minimal, and the ordering below is what makes that possible.**  Only three
 results need `SecondCountableTopology`: the two Polish cardinality bounds and the *upper* half of
