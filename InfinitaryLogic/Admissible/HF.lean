@@ -4,9 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Admissible.Fragment.Honest
+import InfinitaryLogic.Admissible.Predicates
 import InfinitaryLogic.Lomega1omega.Theory
 import InfinitaryLogic.Lomega1omega.FirstOrderImage
 import Mathlib.ModelTheory.Satisfiability
+import Mathlib.Data.Set.Finite.Basic
+import Mathlib.Data.Fintype.EquivFin
 
 /-!
 # The HF fragment (issue #18)
@@ -102,10 +105,8 @@ theorem model_foTheory_iff {T : Set L.Sentenceω} (hT : T ⊆ finitaryFragment L
 
 No `compact` field is consulted: the infinitary finite-satisfiability hypothesis is pushed through
 `toLω` to the preimage theory, Mathlib supplies a model, and the correspondence carries it back. -/
-theorem finitaryFragment_compact {T : Set L.Sentenceω} (hT : T ⊆ finitaryFragment L)
-    (hfin : ∀ F ⊆ T, F.Finite → ∃ (M : Type) (_ : L.Structure M) (_ : Nonempty M),
-      Theoryω.Model F M) :
-    ∃ (M : Type) (_ : L.Structure M) (_ : Nonempty M), Theoryω.Model T M := by
+theorem finitaryFragment_compact {T : L.Theoryω} (hT : T ⊆ finitaryFragment L)
+    (hfin : T.IsFinitelySatisfiable) : T.IsSatisfiable := by
   -- every finite subset of the preimage theory is satisfiable
   have hfs : (foTheory T).IsFinitelySatisfiable := by
     intro F₀ hF₀
@@ -132,13 +133,97 @@ any `AdmissibleFragment` over it are vacuous.  Note where the emptiness lives: i
 /-- The HF presentation: codes are (say) natural numbers naming finite index types, and **no code
 names an infinitary family**. -/
 def hfPresentation (L : Language.{u, v}) : AdmissiblePresentation L where
-  Code := ℕ
-  Index := fun k => Fin k
+  -- a code carries its enumeration, not merely a cardinality: `k` alone would decode every theory
+  -- of size `≤ k`, so a code would name many theories and `decodes_theory_unique` would fail
+  Code := Σ k : ℕ, Fin k → L.Sentenceω
+  Index := fun c => Fin c.1
   indexEncodable := fun _ => inferInstance
   CodesInfFamily := fun _ => False
   DecodesFamily := fun _ _ _ => True
   -- vacuous: no code is infinitary
   decodes_unique := fun h _ _ => absurd h not_false
+  -- the code *is* the enumeration; the theory it names is that enumeration's range
+  DecodesTheory := fun c T => Set.range c.2 = T
+  decodes_theory_unique := fun h h' => h ▸ h'
+  -- first-order compactness carries no definability restriction, so nothing is excluded here
+  Sigma1 := fun _ => True
+
+/-- **Oracle condition 3, the hypothesis side.**  `A`-finiteness over HF **is** ordinary
+finiteness.  This is what makes HF's compactness theorem `finitaryFragment_compact` by
+specialization — hypothesis for hypothesis — rather than through a bridging lemma. -/
+theorem hf_aFinite_iff {L : Language.{u, v}} {T : Set L.Sentenceω} :
+    AFinite (hfPresentation L) T ↔ T.Finite := by
+  constructor
+  · rintro ⟨⟨k, f⟩, rfl⟩
+    exact Set.finite_range f
+  · intro hT
+    obtain ⟨s, rfl⟩ := hT.exists_finset_coe
+    haveI : Fintype {x // x ∈ s} := FinsetCoe.fintype s
+    refine ⟨⟨Fintype.card {x // x ∈ s},
+      fun i => ((Fintype.equivFin {x // x ∈ s}).symm i : L.Sentenceω)⟩, ?_⟩
+    ext x
+    constructor
+    · rintro ⟨i, rfl⟩
+      exact ((Fintype.equivFin {x // x ∈ s}).symm i).2
+    · intro hx
+      exact ⟨Fintype.equivFin _ ⟨x, hx⟩, by simp⟩
+
+/-- **The definability side is deliberately enlarged, and this is NOT Σ₁-on-HF.**
+
+Σ₁-definability over HF is ordinary computable enumerability (Keisler–Knight §2.2), so the honest
+`Sigma1` for HF is the c.e. predicate, not `True`.  `hfPresentation` sets it to `True`, which
+*widens* the domain of the compactness statement to every theory.  That widening is sound — it is
+how unrestricted first-order compactness is recovered — but it must not be read as a claim that
+every theory is `A`-c.e.
+
+Stated as an equation about the presentation rather than as a theorem named `hf_acEnumerable`,
+precisely so that no consumer can cite a mathematically specific name for it.  Nothing downstream
+may depend on this: `hf_compact_of_aFinite` below is the unconditional theorem, and `hf_compactFor`
+discards the hypothesis rather than using it.  #19A replaces the `Sigma1` field with decoding data
+(`DefinesSigmaTheory`), at which point HF's instantiation must become the c.e. predicate and this
+equation must fail to typecheck. -/
+theorem hfPresentation_sigma1_eq_top (L : Language.{u, v}) :
+    (hfPresentation L).Sigma1 = fun _ => True := rfl
+
+/-- **The premise-level oracle**: over HF, the Barwise premise *is* ordinary finite
+satisfiability.  Immediate from `hf_aFinite_iff`, but worth naming — it is the equation that keeps
+`AFinitelySatisfiable` and `Theoryω.IsFinitelySatisfiable` from being silently interchanged, which
+is legitimate at HF and at no other `A`. -/
+theorem hf_aFinitelySatisfiable_iff {L : Language.{u, v}} {T : L.Theoryω} :
+    AFinitelySatisfiable (hfPresentation L) T ↔ T.IsFinitelySatisfiable :=
+  ⟨fun h T₀ hT₀ hfin => h T₀ hT₀ (hf_aFinite_iff.mpr hfin),
+   fun h T₀ hT₀ hA => h T₀ hT₀ (hf_aFinite_iff.mp hA)⟩
+
+/-- **HF compactness in the external `A`-finite form, with NO definability hypothesis.**
+
+Strictly stronger than `hf_compactFor`, and stating it separately is what keeps the enlarged
+`Sigma1` from becoming load-bearing: a consumer gets compactness here without ever mentioning
+`ACEnumerable`, so tightening HF's `Sigma1` to the honest c.e. predicate in #19A cannot break it.
+
+**Only genuinely finitary consumers may use this.**  It requires `T ⊆ finitaryFragment L`.  A
+general EM template theory is built from an arbitrary `s : ℕ → Σ n, L.BoundedFormulaω Empty n`, so
+its sentences lie in an arbitrary fragment and need not be finitary at all; the EM adapters take
+`CompactFor` as a hypothesis instead, and only a separately proved finitary specialization can
+discharge it from here.
+
+The only translation is `hf_aFinitelySatisfiable_iff`; the mathematics is
+`finitaryFragment_compact`. -/
+theorem hf_compact_of_aFinite {T : L.Theoryω} (hT : T ⊆ finitaryFragment L)
+    (hfin : AFinitelySatisfiable (hfPresentation L) T) : T.IsSatisfiable :=
+  finitaryFragment_compact hT (hf_aFinitelySatisfiable_iff.mp hfin)
+
+/-- **Oracle condition 3, in full.**  Not merely the hypotheses separately: the *entire*
+`CompactFor` statement holds over HF at the finitary fragment.
+
+This is what certifies the interface — `hf_aFinite_iff` alone would leave open whether the
+assembled statement still specializes.  Here it does, with no bridging lemma and no widening.
+
+The `ACEnumerable` hypothesis is **discarded**, not used: the content is
+`hf_compact_of_aFinite`.  So this theorem survives #19A tightening HF's `Sigma1` to the honest
+c.e. predicate — it would then simply apply to fewer theories. -/
+theorem hf_compactFor (T : Set L.Sentenceω) :
+    CompactFor (hfPresentation L) (finitaryFragment L) T := fun hT _ hfin =>
+  hf_compact_of_aFinite hT hfin
 
 /-- **Gate 4.**  `CodedFamily` over HF is uninhabited. -/
 theorem isEmpty_codedFamily_hf : IsEmpty (CodedFamily (hfPresentation L) n) :=
