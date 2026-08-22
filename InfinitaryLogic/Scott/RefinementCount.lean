@@ -43,28 +43,6 @@ variable [Countable (Σ l, L.Relations l)]
 
 open FirstOrder Structure Fin Ordinal BoundedFormulaω
 
-/-! ### Countability of initial segments below ω₁ -/
-
-private theorem InfinitaryLogic.setCountable_Iio_of_lt_omega1 (β : Ordinal.{0}) (hβ : β < Ordinal.omega 1) :
-    Set.Countable (Set.Iio β) := by
-  -- β < ω₁ means β.card < ℵ₁
-  have h_card : β.card < Cardinal.aleph 1 := Cardinal.lt_omega_iff_card_lt.mp hβ
-  -- Therefore β.card ≤ ℵ₀
-  have h_card_le : β.card ≤ Cardinal.aleph0 := by
-    have h1 : Cardinal.aleph 1 = Order.succ (Cardinal.aleph 0) := by
-      rw [Cardinal.succ_aleph, zero_add]
-    rw [h1, Cardinal.aleph_zero] at h_card
-    exact Order.lt_succ_iff.mp h_card
-  -- β.ToType is countable since β.card ≤ ℵ₀
-  haveI : Countable β.ToType := by
-    rw [← Cardinal.mk_le_aleph0_iff, Cardinal.mk_toType]
-    exact h_card_le
-  -- Set.Iio β is in bijection with β.ToType via the Ordinal.ToType.mk map
-  have h_equiv : β.ToType ≃ Set.Iio β :=
-    (Ordinal.ToType.mk.toEquiv).symm
-  -- Therefore Set.Iio β is countable
-  exact Countable.of_equiv β.ToType h_equiv
-
 /-! ### Self-stabilization to full stabilization
 
 The key insight: `SelfStabilizesCompletely M α₀` (internal BFEquiv stabilization) implies

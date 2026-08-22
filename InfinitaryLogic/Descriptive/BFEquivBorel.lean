@@ -57,20 +57,6 @@ def BFEquivSet (α : Ordinal.{0}) (n : ℕ)
     Set (StructurePairSpace L) :=
   {p | @BFEquiv L ℕ p.1.toStructure ℕ p.2.toStructure α n a b}
 
-private theorem InfinitaryLogic.countable_Iio_of_lt_omega1 (β : Ordinal.{0}) (hβ : β < Ordinal.omega 1) :
-    Countable (Set.Iio β) := by
-  -- β < ω₁ implies β.card < ℵ₁ = succ ℵ₀, so β.card ≤ ℵ₀
-  have hle : β.card ≤ ℵ₀ := by
-    have hlt : β.card < Cardinal.aleph 1 := Cardinal.lt_omega_iff_card_lt.mp hβ
-    rw [← Cardinal.succ_aleph0] at hlt
-    exact Order.lt_succ_iff.mp hlt
-  -- #(Set.Iio β) = lift β.card ≤ lift ℵ₀ = ℵ₀
-  rw [← Cardinal.mk_le_aleph0_iff]
-  calc #(Set.Iio β)
-      = Cardinal.lift.{1, 0} β.card := Cardinal.mk_Iio_ordinal β
-    _ ≤ Cardinal.lift.{1, 0} ℵ₀ := Cardinal.lift_le.mpr hle
-    _ = ℵ₀ := Cardinal.lift_aleph0
-
 /-- `SameAtomicType a b` on the pair space is measurable. -/
 private theorem sameAtomicType_measurableSet
     [Countable (Σ l, L.Relations l)]
