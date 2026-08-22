@@ -1,0 +1,95 @@
+/-
+Copyright (c) 2026 Cameron Freer. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Cameron Freer
+-/
+import InfinitaryLogic.Descriptive.PerfectAntichain
+import InfinitaryLogic.Descriptive.CountingDichotomy
+
+/-!
+# The ambient isomorphism relation on coded structures
+
+`isoSetoid φ` lives on the subtype `↥(ModelsOf φ)`, which means every statement about it is
+implicitly a statement about a chosen Polish structure *on that subtype*.  For a perfect set
+that is the wrong place to work: whether a set is perfect should be a fact about the ambient
+`StructureSpace L`, not about a refinement chosen to make one particular model class Polish.
+
+So the isomorphism relation is defined **once**, ambiently, as `structureIsoSetoid L`, and
+`isoSetoid φ` is recovered as its pullback along the subtype inclusion
+(`isoSetoid_eq_comap`).  The sentence-level predicates below then quantify over perfect subsets
+of `StructureSpace L` contained in `ModelsOf φ`, and the chosen refinement never enters their
+statements.
+-/
+
+open Cardinal Set
+
+universe u v
+
+namespace FirstOrder.Language
+
+variable {L : Language.{u, v}} [L.IsRelational]
+
+/-- **The ambient isomorphism relation**: two codes are related iff the structures they decode
+on `ℕ` are `L`-isomorphic.  Stated on all of `StructureSpace L`, with no reference to any
+sentence. -/
+def structureIsoSetoid (L : Language.{u, v}) [L.IsRelational] : Setoid (StructureSpace L) where
+  r c₁ c₂ := Nonempty (@Language.Equiv L ℕ ℕ c₁.toStructure c₂.toStructure)
+  iseqv :=
+    { refl := fun c => ⟨@Language.Equiv.refl L ℕ c.toStructure⟩
+      symm := fun {c₁ c₂} ⟨e⟩ => ⟨@Language.Equiv.symm L ℕ ℕ c₁.toStructure c₂.toStructure e⟩
+      trans := fun {c₁ c₂ c₃} ⟨e₁⟩ ⟨e₂⟩ =>
+        ⟨@Language.Equiv.comp L ℕ ℕ c₁.toStructure c₂.toStructure ℕ c₃.toStructure e₂ e₁⟩ }
+
+variable [Countable (Σ l, L.Relations l)]
+
+/-- `isoSetoid φ` is the ambient relation pulled back along the subtype inclusion — it adds
+nothing beyond restricting the domain. -/
+theorem isoSetoid_eq_comap (φ : L.Sentenceω) :
+    isoSetoid φ = (structureIsoSetoid L).comap (Subtype.val : ↥(ModelsOf φ) → StructureSpace L) :=
+  rfl
+
+/-- Membership in the pulled-back relation is membership in the ambient one. -/
+theorem isoSetoid_r_iff {φ : L.Sentenceω} {c₁ c₂ : ↥(ModelsOf φ)} :
+    (isoSetoid φ).r c₁ c₂ ↔ (structureIsoSetoid L).r c₁.1 c₂.1 := Iff.rfl
+
+/-! ### Sentence-level predicates
+
+Stated ambiently, so that no Polish refinement of the model subtype appears in the
+definitions. -/
+
+/-- `φ` has a perfect set of pairwise non-isomorphic countable models. -/
+def Sentenceω.HasPerfectSetOfPairwiseNonisomorphicNatModels (φ : L.Sentenceω) : Prop :=
+  HasPerfectAntichainOn (structureIsoSetoid L) (ModelsOf φ)
+
+/-- `φ` is thin on its countable models: no such perfect set. -/
+def Sentenceω.IsThinOnNatModels (φ : L.Sentenceω) : Prop :=
+  IsThinOn (structureIsoSetoid L) (ModelsOf φ)
+
+theorem Sentenceω.isThinOnNatModels_iff {φ : L.Sentenceω} :
+    φ.IsThinOnNatModels ↔ ¬φ.HasPerfectSetOfPairwiseNonisomorphicNatModels := Iff.rfl
+
+/-- **The bridge to the existing quotient**: a perfect set of pairwise non-isomorphic models
+gives continuum-many isomorphism classes.
+
+The antichain lives in the ambient space, while the quotient is over the subtype, so the
+transversal is transported through the inclusion — which is exactly what `isoSetoid_eq_comap`
+licenses. -/
+theorem Sentenceω.HasPerfectSetOfPairwiseNonisomorphicNatModels.continuum_le
+    {φ : L.Sentenceω} (h : φ.HasPerfectSetOfPairwiseNonisomorphicNatModels) :
+    Cardinal.continuum ≤ #(Quotient (isoSetoid φ)) := by
+  obtain ⟨P, hperf, hne, hsub, hanti⟩ := h
+  -- the ambient perfect set sits inside `ModelsOf φ`, so it maps into the subtype quotient
+  have hinj : Function.Injective
+      (fun x : P => (Quotient.mk (isoSetoid φ) ⟨x.1, hsub x.2⟩)) := by
+    intro x y hxy
+    have hq : Quotient.mk (isoSetoid φ) ⟨x.1, hsub x.2⟩
+        = Quotient.mk (isoSetoid φ) ⟨y.1, hsub y.2⟩ := hxy
+    have hr : (isoSetoid φ).r ⟨x.1, hsub x.2⟩ ⟨y.1, hsub y.2⟩ := Quotient.exact hq
+    exact Subtype.ext (hanti x.1 x.2 y.1 y.2 (isoSetoid_r_iff.mp hr))
+  -- `StructureSpace L` is metrizable but carries no chosen metric, so upgrade the Polish
+  -- structure here; the topology is unchanged, hence `hperf` still applies.
+  letI := TopologicalSpace.upgradeIsCompletelyMetrizable (StructureSpace L)
+  calc Cardinal.continuum = #P := (hperf.mk_eq_continuum hne).symm
+    _ ≤ #(Quotient (isoSetoid φ)) := Cardinal.mk_le_of_injective hinj
+
+end FirstOrder.Language

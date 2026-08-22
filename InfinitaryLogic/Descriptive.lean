@@ -18,6 +18,7 @@ import InfinitaryLogic.Descriptive.ModelClassStandardBorel
 -- Cantor scheme / perfect antichain extraction (pure Mathlib infrastructure)
 import InfinitaryLogic.Descriptive.CantorAntichain
 import InfinitaryLogic.Descriptive.PerfectAntichain
+import InfinitaryLogic.Descriptive.StructureIsoSetoid
 import InfinitaryLogic.Descriptive.Mycielski
 import InfinitaryLogic.Descriptive.KuratowskiUlam
 import InfinitaryLogic.Descriptive.GSGraph
@@ -68,6 +69,8 @@ imports), developed for the proof of Silver's theorem:
 - `CantorAntichain`: Cantor-scheme → perfect-antichain extraction
 - `PerfectAntichain`: perfect/Cantor-antichain and thinness vocabulary, plus the perfect-set
   and Polish-quotient cardinal facts
+- `StructureIsoSetoid`: the ambient isomorphism relation on `StructureSpace L`, and the
+  sentence-level perfect-set/thinness predicates stated against it
   (`CantorScheme.exists_antichain_map` and the splitting-predicate builder);
 - `Mycielski`: Mycielski's theorem for Cantor space (`mycielski_cantor`);
 - `KuratowskiUlam`: the meager-sections direction of Kuratowski–Ulam
