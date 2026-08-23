@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Descriptive.PerfectAntichain
 import InfinitaryLogic.OrdinalUtil
+import Architect
 
 /-!
 # Thinness from a countable-ordinal rank
@@ -37,6 +38,13 @@ theorem Setoid.countable_antichain {X : Type u} (r : Setoid X) [Countable (Quoti
 variable {X : Type u} [TopologicalSpace X]
 
 /-- The evidence that a rank witnesses thinness of `A` for `r`. -/
+@[blueprint "def:thin-rank-analysis"
+  (title := /-- Ranked thinness analysis -/)
+  (statement := /-- A \emph{ranked thinness analysis} of $A$ for $r$ is a rank
+    $\rho : X \to \mathrm{Ord}$ together with the evidence that $\rho$ is $< \omegaone$ on $A$,
+    that each fixed-rank antichain inside $A$ is countable, and that any Cantor antichain in $A$
+    has ranks bounded below $\omegaone$.  It packages hypotheses only; it asserts no conclusion. -/)
+  (uses := ["def:cantor-antichain"])]
 structure ThinRankAnalysis (r : Setoid X) (A : Set X) where
   /-- The rank function. -/
   rank : X → Ordinal.{0}
@@ -104,6 +112,15 @@ theorem no_cantorAntichain (T : ThinRankAnalysis r A) : ¬HasCantorAntichainOn r
 
 /-- **Thinness.**  Immediate from `no_cantorAntichain`, since a perfect antichain would give a
 Cantor antichain. -/
+@[blueprint "thm:ranked-thinness"
+  (title := /-- Ranked thinness criterion -/)
+  (statement := /-- If $A$ admits a ranked thinness analysis for $r$ in a complete metric space,
+    then $A$ is thin for $r$. -/)
+  (proof := /-- A Cantor antichain would have ranks bounded by some $\beta < \omegaone$, so it
+    would be the union of the countably many fixed-rank antichains below $\beta$, each countable,
+    hence countable.  But it is an injective image of $2^{\mathbb{N}}$, which is uncountable by
+    diagonalization.  So there is no Cantor antichain, and therefore no perfect antichain. -/)
+  (uses := ["def:thin-rank-analysis", "def:thin-on", "def:cantor-antichain"])]
 theorem isThinOn {α : Type u} [MetricSpace α] [CompleteSpace α] {r : Setoid α} {A : Set α}
     (T : ThinRankAnalysis r A) : IsThinOn r A :=
   IsThinOn.of_no_cantorAntichain T.no_cantorAntichain

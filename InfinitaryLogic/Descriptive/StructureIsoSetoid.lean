@@ -73,6 +73,13 @@ def Sentenceω.HasPerfectSetOfPairwiseNonisomorphicNatModels (φ : L.Sentenceω)
   HasPerfectAntichainOn (structureIsoSetoid L) (ModelsOf φ)
 
 /-- `φ` is thin on its countable models: no such perfect set. -/
+@[blueprint "def:thin-nat-models"
+  (title := /-- Thinness on coded $\mathbb{N}$-models -/)
+  (statement := /-- A sentence $\varphi$ is \emph{thin on its $\mathbb{N}$-models} if the set of
+    codes of $\mathbb{N}$-models of $\varphi$ carries no perfect antichain for the ambient
+    isomorphism relation on the structure space.  Stated ambiently, so no Polish refinement of
+    the model subtype enters the definition. -/)
+  (uses := ["def:thin-on", "def:iso-setoid"])]
 def Sentenceω.IsThinOnNatModels (φ : L.Sentenceω) : Prop :=
   IsThinOn (structureIsoSetoid L) (ModelsOf φ)
 
