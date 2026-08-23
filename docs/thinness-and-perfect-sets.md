@@ -99,16 +99,12 @@ IsClopenable refinement  (t' ≤ t)
   → ambient perfect antichain      HasCantorAntichainOn.hasPerfectAntichainOn
 ```
 
-Coarsening is applied to the *Cantor* antichain, where only the continuity clause is topological
-and coarsening the codomain is immediate (`continuous_le_rng`); perfectness is then obtained in
-the ambient space. `Sentenceω.hasPerfectSet_of_refined_cantorAntichain` packages the chain, and
+Coarsening is applied to the *Cantor* antichain, where only the continuity clause is topological;
+perfectness is then obtained in the ambient space.
+`Sentenceω.hasPerfectSet_of_refined_cantorAntichain` packages the chain, and
 `Sentenceω.exists_clopenable_refinement_forcing_perfectSet` records that the refinement
-`modelsOf_isClopenable` actually produces is one the chain accepts.
-
-A Lean-specific caveat worth knowing before reading those statements: a quantified
-`t' : TopologicalSpace (StructureSpace L)` *is* a local instance, so a bare `inferInstance` in its
-scope resolves to the refinement rather than to the ambient topology. Hence the explicit
-`ambientTop L`, and the split that keeps the metric upgrade outside the refinement binder.
+`modelsOf_isClopenable` produces is one the chain accepts — retaining the closedness and openness
+of `ModelsOf φ` in `t'` in its conclusion, so a consumer that needs the clopen structure keeps it.
 
 ## The thinness criterion
 

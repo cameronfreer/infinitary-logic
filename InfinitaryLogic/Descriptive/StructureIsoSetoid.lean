@@ -132,26 +132,17 @@ The two steps are ordered so that the delicate one never arises: coarsening is a
 ambient space.  Nothing here asserts that perfectness survives coarsening — it does not in
 general. -/
 
-/-- The ambient topology on the structure space, bound by name.
-
-A quantified refinement `t' : TopologicalSpace (StructureSpace L)` is itself a *local instance*,
-so a bare `inferInstance` in the scope of such a binder resolves to the refinement rather than to
-the canonical topology.  Naming it here keeps the refinement statements below honest without
-depending on the auto-generated instance name. -/
+/-- The ambient topology on the structure space, bound by name so that statements quantifying
+over a refinement can compare against it explicitly. -/
 private abbrev ambientTop (L : Language.{u, v}) [L.IsRelational]
     [Countable (Σ l, L.Relations l)] : TopologicalSpace (StructureSpace L) := inferInstance
 
-/-- The ambient half of the route, kept free of any refinement binder.
-
-Instance search treats a quantified `t' : TopologicalSpace (StructureSpace L)` as a local
-instance, so both the metric upgrade and the dot-notation application below must happen where no
-such binder is in scope — hence the split. -/
+/-- The ambient half of the route: a Cantor antichain on the model class in the ambient topology
+gives a perfect set of pairwise non-isomorphic models. -/
 private theorem hasPerfectSet_of_ambient_cantorAntichain {φ : L.Sentenceω}
     (h : HasCantorAntichainOn (structureIsoSetoid L) (ModelsOf φ)) :
     φ.HasPerfectSetOfPairwiseNonisomorphicNatModels := by
-  -- `StructureSpace L` is metrizable but carries no chosen metric, and `T2Space` is not reachable
-  -- from `PolishSpace` by instance search; upgrading supplies a metric, hence `T2Space`, without
-  -- changing the topology.
+  -- upgrading supplies a metric, hence `T2Space`, without changing the topology
   letI := TopologicalSpace.upgradeIsCompletelyMetrizable (StructureSpace L)
   exact h.hasPerfectAntichainOn
 
@@ -163,14 +154,18 @@ theorem Sentenceω.hasPerfectSet_of_refined_cantorAntichain {φ : L.Sentenceω}
     φ.HasPerfectSetOfPairwiseNonisomorphicNatModels :=
   hasPerfectSet_of_ambient_cantorAntichain (h.mono_topology hle)
 
-/-- The refinement `modelsOf_isClopenable` actually produces is one the route above accepts:
-the whole chain compiles at the real model-space boundary, not merely in the abstract. -/
+/-- The refinement `modelsOf_isClopenable` produces is one the route above accepts, and it is
+still genuinely clopen: the conclusion keeps `IsClosed[t']` and `IsOpen[t']` alongside the
+implication, so a consumer needing the clopen structure — as the tiered counting theorem may —
+does not have to rebuild the refinement. -/
 theorem Sentenceω.exists_clopenable_refinement_forcing_perfectSet (φ : L.Sentenceω) :
     ∃ t' : TopologicalSpace (StructureSpace L),
       t' ≤ ambientTop L ∧ @PolishSpace _ t' ∧
+        @IsClosed _ t' (ModelsOf φ) ∧ @IsOpen _ t' (ModelsOf φ) ∧
         (@HasCantorAntichainOn _ t' (structureIsoSetoid L) (ModelsOf φ) →
           φ.HasPerfectSetOfPairwiseNonisomorphicNatModels) := by
-  obtain ⟨t', hle, hpolish, -, -⟩ := modelsOf_isClopenable φ
-  exact ⟨t', hle, hpolish, fun h => Sentenceω.hasPerfectSet_of_refined_cantorAntichain hle h⟩
+  obtain ⟨t', hle, hpolish, hclosed, hopen⟩ := modelsOf_isClopenable φ
+  exact ⟨t', hle, hpolish, hclosed, hopen,
+    fun h => Sentenceω.hasPerfectSet_of_refined_cantorAntichain hle h⟩
 
 end FirstOrder.Language
