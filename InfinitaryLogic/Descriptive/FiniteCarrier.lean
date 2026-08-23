@@ -99,19 +99,42 @@ theorem iso_iff_orbit (n : ℕ) (c₁ c₂ : StructureSpaceOn L (Fin n)) :
 
 /-! ### Isomorphism setoid on finite-carrier models -/
 
-/-- The isomorphism setoid on models of φ with carrier `Fin n`. -/
-def isoSetoidOn (φ : L.Sentenceω) (n : ℕ) :
-    Setoid ↥(ModelsOfOn (α := Fin n) φ) where
+/-- **The ambient isomorphism relation at carrier `Fin n`**: two codes are related iff the
+structures they decode on `Fin n` are `L`-isomorphic.  Stated on all of
+`StructureSpaceOn L (Fin n)`, with no reference to any sentence.
+
+This mirrors `structureIsoSetoid` at the `ℕ` tier, and for the same reason: perfectness of a set
+of codes must be a property of the ambient space, not of whichever refinement was chosen to make
+one model class Polish. -/
+def structureIsoSetoidOn (L : Language.{u, v}) [L.IsRelational] (n : ℕ) :
+    Setoid (StructureSpaceOn L (Fin n)) where
   r c₁ c₂ := Nonempty (@Language.Equiv L (Fin n) (Fin n)
-    (StructureSpaceOn.toStructure c₁.1) (StructureSpaceOn.toStructure c₂.1))
-  iseqv := {
-    refl := fun c => ⟨@Language.Equiv.refl L (Fin n) (StructureSpaceOn.toStructure c.1)⟩
-    symm := fun {c₁ c₂} ⟨e⟩ =>
-      ⟨@Language.Equiv.symm L (Fin n) (Fin n) c₁.1.toStructure c₂.1.toStructure e⟩
-    trans := fun {c₁ c₂ c₃} ⟨e₁⟩ ⟨e₂⟩ =>
-      ⟨@Language.Equiv.comp L (Fin n) (Fin n) c₁.1.toStructure c₂.1.toStructure
-        (Fin n) c₃.1.toStructure e₂ e₁⟩
-  }
+    (StructureSpaceOn.toStructure c₁) (StructureSpaceOn.toStructure c₂))
+  iseqv :=
+    { refl := fun c => ⟨@Language.Equiv.refl L (Fin n) (StructureSpaceOn.toStructure c)⟩
+      symm := fun {c₁ c₂} ⟨e⟩ =>
+        ⟨@Language.Equiv.symm L (Fin n) (Fin n) c₁.toStructure c₂.toStructure e⟩
+      trans := fun {c₁ c₂ c₃} ⟨e₁⟩ ⟨e₂⟩ =>
+        ⟨@Language.Equiv.comp L (Fin n) (Fin n) c₁.toStructure c₂.toStructure
+          (Fin n) c₃.toStructure e₂ e₁⟩ }
+
+/-- The isomorphism setoid on models of φ with carrier `Fin n`: the ambient relation restricted
+along the subtype inclusion.  That is its definition, not a theorem about it. -/
+def isoSetoidOn (φ : L.Sentenceω) (n : ℕ) :
+    Setoid ↥(ModelsOfOn (α := Fin n) φ) :=
+  (structureIsoSetoidOn L n).comap Subtype.val
+
+/-- Membership in the pulled-back relation is membership in the ambient one. -/
+theorem isoSetoidOn_r_iff {φ : L.Sentenceω} {n : ℕ} {c₁ c₂ : ↥(ModelsOfOn (α := Fin n) φ)} :
+    (isoSetoidOn φ n).r c₁ c₂ ↔ (structureIsoSetoidOn L n).r c₁.1 c₂.1 := Iff.rfl
+
+/-- `φ` has a perfect set of pairwise non-isomorphic models with carrier `Fin n`.
+
+The finite tier is not decoration: an infinite language can have continuum-many `Fin n` models
+while having no `ℕ`-models at all, so a counting dichotomy that only spoke about `ℕ`-models would
+miss that case entirely. -/
+def Sentenceω.HasPerfectSetOfPairwiseNonisomorphicFinModels (φ : L.Sentenceω) (n : ℕ) : Prop :=
+  HasPerfectAntichainOn (structureIsoSetoidOn L n) (ModelsOfOn (α := Fin n) φ)
 
 /-! ### Isomorphism relation is Borel on finite carriers -/
 
