@@ -98,6 +98,23 @@ theorem HasCantorAntichainOn.mono (h : HasCantorAntichainOn r A) (hAB : A ⊆ B)
   exact ⟨f, hcont, fun x => hAB (hmem x), hineq⟩
 
 omit [TopologicalSpace X] in
+/-- **A Cantor antichain survives coarsening the topology.**
+
+Of the three clauses only continuity is topological, and continuity into a coarser topology is
+just composition with the identity.  This is the direction needed to carry a witness built in a
+Polish refinement — the kind `PolishSpace.IsClopenable` supplies — back to the ambient space.
+
+It is also why no theorem about *perfectness* surviving coarsening is required: coarsening is
+applied to the Cantor antichain, where it is cheap, and perfectness is recovered afterwards in
+the ambient space by `HasCantorAntichainOn.hasPerfectAntichainOn`. -/
+theorem HasCantorAntichainOn.mono_topology {t t' : TopologicalSpace X} (hle : t' ≤ t)
+    (h : @HasCantorAntichainOn X t' r A) : @HasCantorAntichainOn X t r A := by
+  obtain ⟨f, hcont, hmem, hineq⟩ := h
+  -- `continuous_le_rng` coarsens the codomain directly; going through `id` instead forces the
+  -- elaborator to synthesize one `TopologicalSpace X` where two different ones are meant
+  exact ⟨f, continuous_le_rng hle hcont, hmem, hineq⟩
+
+omit [TopologicalSpace X] in
 /-- Pairwise inequivalence forces injectivity — by *reflexivity*, not by an added hypothesis:
 distinct arguments have inequivalent images, and equal images would be equivalent to themselves.
 

@@ -83,6 +83,33 @@ Perfectness here is a property of a subset of the ambient `StructureSpace L`. If
 instead stated on the subtype `↥(ModelsOf φ)`, it would silently be a statement about whichever
 Polish refinement was chosen to make that subtype standard Borel — a different assertion.
 
+### Getting back from the refinement
+
+That raises the obvious problem: a Cantor antichain is *built* where the model class is well
+behaved, namely in a finer Polish topology of the kind `modelsOf_isClopenable` supplies, while the
+perfect set has to be perfect in the ambient space. Proving directly that perfectness survives
+coarsening would be delicate — and false in general.
+
+The two steps are therefore ordered so the delicate one never arises:
+
+```
+IsClopenable refinement  (t' ≤ t)
+  → Cantor antichain in t'
+  → Cantor antichain in t          HasCantorAntichainOn.mono_topology
+  → ambient perfect antichain      HasCantorAntichainOn.hasPerfectAntichainOn
+```
+
+Coarsening is applied to the *Cantor* antichain, where only the continuity clause is topological
+and coarsening the codomain is immediate (`continuous_le_rng`); perfectness is then obtained in
+the ambient space. `Sentenceω.hasPerfectSet_of_refined_cantorAntichain` packages the chain, and
+`Sentenceω.exists_clopenable_refinement_forcing_perfectSet` records that the refinement
+`modelsOf_isClopenable` actually produces is one the chain accepts.
+
+A Lean-specific caveat worth knowing before reading those statements: a quantified
+`t' : TopologicalSpace (StructureSpace L)` *is* a local instance, so a bare `inferInstance` in its
+scope resolves to the refinement rather than to the ambient topology. Hence the explicit
+`ambientTop L`, and the split that keeps the metric upgrade outside the refinement binder.
+
 ## The thinness criterion
 
 `InfinitaryLogic/Descriptive/RankedThinness.lean` supplies the standard rank argument.
