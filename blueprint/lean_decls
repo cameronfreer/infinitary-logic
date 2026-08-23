@@ -68,6 +68,13 @@ FirstOrder.Language.counting_coded_models_dichotomy
 FirstOrder.Language.isoSetoidOn_measurableSet
 FirstOrder.Language.allCodedIsoClasses_dichotomy
 FirstOrder.Language.morley_counting
+HasPerfectAntichainOn
+HasCantorAntichainOn
+IsThinOn
+FirstOrder.Language.structureIsoSetoid
+FirstOrder.Language.Sentenceω.IsThinOnNatModels
+ThinRankAnalysis
+ThinRankAnalysis.isThinOn
 FirstOrder.Language.craig_interpolation
 FirstOrder.Language.craig_interpolation_relational
 FirstOrder.Language.lyndon_interpolation

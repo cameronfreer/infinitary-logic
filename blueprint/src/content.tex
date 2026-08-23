@@ -409,6 +409,8 @@ for coded $\mathbb{N}$-models with bounded Scott height.
 
 \inputleannode{thm:silver-burgess-proved}
 
+\inputleannode{def:structure-iso-setoid}
+
 \inputleannode{def:iso-setoid}
 
 \inputleannode{thm:counting-dichotomy}
@@ -431,6 +433,53 @@ Miller's classical category route (Kuratowski--Ulam, Mycielski, the
 Kechris--Solecki--Todorcevic $G_0$-dichotomy); \texttt{morley\_counting} is
 therefore unconditional, with axioms exactly
 \texttt{[propext, Classical.choice, Quot.sound]}.
+
+\section{Thinness and Perfect Sets}
+
+The counting theorems above are stated cardinally.  The underlying dichotomy is
+sharper: the ``many classes'' side is witnessed by a perfect set of pairwise
+inequivalent points.  This section records the vocabulary for that witness, and
+a criterion for ruling it out.
+
+\inputleannode{def:perfect-antichain}
+
+\inputleannode{def:cantor-antichain}
+
+\inputleannode{def:thin-on}
+
+\inputleannode{def:thin-nat-models}
+
+The Cantor antichain is the load-bearing intermediary in both directions: it is
+what the Cantor-scheme builders produce, and it is what a thinness proof must
+refute.  The two chains are
+\[
+  \text{perfect antichain} \longrightarrow \text{Cantor antichain}
+    \longrightarrow 2^{\aleph_0} \text{ classes},
+\]
+\[
+  \mathtt{ThinRankAnalysis} \longrightarrow \text{no Cantor antichain}
+    \longrightarrow \text{thinness},
+\]
+with $\mathtt{structureIsoSetoid}$ together with $\mathrm{ModelsOf}\ \varphi$
+specializing the ambient notions to $\mathtt{IsThinOnNatModels}$.
+
+\inputleannode{def:thin-rank-analysis}
+
+\inputleannode{thm:ranked-thinness}
+
+\texttt{ThinRankAnalysis} packages sufficient evidence for thinness, and
+\texttt{ThinRankAnalysis.isThinOn} proves the implication.  No concrete instance
+of that package is supplied here.  Only the direction perfect antichain
+$\to$ Cantor antichain is currently formalized; the converse requires showing
+that a continuous injective Cantor image has perfect range.
+
+Cardinal equality alone does not establish thinness in ZFC.  Under $\mathsf{CH}$
+we have $\aleph_1 = 2^{\aleph_0}$, so a quotient of exactly $\aleph_1$ classes is
+compatible with a perfect antichain; under $\neg\mathsf{CH}$, exact $\aleph_1$
+does rule one out.  Separately, the cardinal interface forgets the witness:
+$\mathtt{SilverBurgessDichotomy}$ concludes with a cardinal disjunction and
+retains nothing from which a perfect set could be extracted, so the current
+cardinal interface cannot itself produce a perfect-set witness.
 
 \chapter{Craig Interpolation}
 
