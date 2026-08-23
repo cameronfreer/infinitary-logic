@@ -71,6 +71,7 @@ FirstOrder.Language.morley_counting
 HasPerfectAntichainOn
 HasCantorAntichainOn
 IsThinOn
+FirstOrder.Language.structureIsoSetoid
 FirstOrder.Language.Sentenceω.IsThinOnNatModels
 ThinRankAnalysis
 ThinRankAnalysis.isThinOn

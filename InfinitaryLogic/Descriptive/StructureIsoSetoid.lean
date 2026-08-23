@@ -33,6 +33,13 @@ variable {L : Language.{u, v}} [L.IsRelational]
 /-- **The ambient isomorphism relation**: two codes are related iff the structures they decode
 on `ℕ` are `L`-isomorphic.  Stated on all of `StructureSpace L`, with no reference to any
 sentence. -/
+@[blueprint "def:structure-iso-setoid"
+  (title := /-- Ambient isomorphism relation -/)
+  (statement := /-- The equivalence relation on all of the structure space where two codes are
+    related iff the structures they decode on $\mathbb{N}$ are $L$-isomorphic.  Defined without
+    reference to any sentence, so that perfectness of a set of codes is a property of the ambient
+    space rather than of a refinement chosen to make one model class Polish. -/)
+  (uses := ["def:structure-space"])]
 def structureIsoSetoid (L : Language.{u, v}) [L.IsRelational] : Setoid (StructureSpace L) where
   r c₁ c₂ := Nonempty (@Language.Equiv L ℕ ℕ c₁.toStructure c₂.toStructure)
   iseqv :=
@@ -49,7 +56,9 @@ L-isomorphic. -/
 @[blueprint "def:iso-setoid"
   (title := /-- Isomorphism setoid on coded models -/)
   (statement := /-- The equivalence relation on coded $\mathbb{N}$-models of $\varphi$
-    where two codes are related iff their decoded structures are $L$-isomorphic. -/)]
+    where two codes are related iff their decoded structures are $L$-isomorphic.  It is the
+    ambient relation restricted along the subtype inclusion. -/)
+  (uses := ["def:structure-iso-setoid"])]
 def isoSetoid (φ : L.Sentenceω) : Setoid ↥(ModelsOf φ) :=
   (structureIsoSetoid L).comap Subtype.val
 
@@ -79,7 +88,7 @@ def Sentenceω.HasPerfectSetOfPairwiseNonisomorphicNatModels (φ : L.Sentenceω)
     codes of $\mathbb{N}$-models of $\varphi$ carries no perfect antichain for the ambient
     isomorphism relation on the structure space.  Stated ambiently, so no Polish refinement of
     the model subtype enters the definition. -/)
-  (uses := ["def:thin-on", "def:iso-setoid"])]
+  (uses := ["def:thin-on", "def:structure-iso-setoid"])]
 def Sentenceω.IsThinOnNatModels (φ : L.Sentenceω) : Prop :=
   IsThinOn (structureIsoSetoid L) (ModelsOf φ)
 

@@ -1,7 +1,8 @@
 # Thinness and perfect sets
 
-The counting results in `InfinitaryLogic/Descriptive/` are stated cardinally: a quotient has at
-most `ℵ₀` classes, or `ℵ₁`, or exactly `2^ℵ₀`. The underlying dichotomies are sharper than that.
+The counting results in `InfinitaryLogic/Descriptive/` are stated cardinally: bounds such as
+`≤ ℵ₀` or `≤ ℵ₁`, and alternatives of exactly `2^ℵ₀`. The underlying dichotomies are sharper than
+that.
 On the "many classes" side, the classical proofs produce a **witness** — a perfect set of pairwise
 inequivalent points — and cardinality is a consequence of that witness rather than the primary
 output.
@@ -56,9 +57,8 @@ Left-to-right along the first chain: `HasPerfectAntichainOn.hasCantorAntichainOn
 `Perfect.exists_nat_bool_injection`, needing a complete metric space), then
 `HasCantorAntichainOn.continuum_le_quotient`, which needs only a topology.
 
-**The reverse of the first arrow is not proved here.** Going from a Cantor antichain back to a
-perfect antichain — showing the continuous injective image has perfect range — is a genuine gap,
-not an oversight of packaging.
+Only perfect antichain → Cantor antichain is currently formalized. The converse requires showing
+that a continuous injective Cantor image has perfect range.
 
 ## The model-theoretic specialization
 
@@ -92,13 +92,15 @@ provides the criterion, not an application of it.
 
 ## Two things that do not follow
 
-**Cardinal equality does not establish thinness.** Knowing `#(Quotient (isoSetoid φ)) = ℵ₁` does
-not tell you whether `φ` is thin. Under `¬CH` a set of size `ℵ₁` may or may not contain a perfect
-subset, and the counting theorems as stated forget the witness that would settle it: the
-`SilverBurgessDichotomy` hypothesis concludes with a cardinal disjunction and retains nothing from
-which a perfect set could be extracted. Recovering the witness requires strengthening the
-statement at the point where the classical proof still has it.
+**Cardinal equality does not establish thinness.** Knowing that the quotient has exactly `ℵ₁`
+classes does not establish thinness in ZFC. Under CH, `ℵ₁ = 2^ℵ₀`, so that cardinality is
+compatible with a perfect antichain. Under `¬CH`, exact `ℵ₁` does rule out a perfect antichain.
 
-**"Scattered" is deliberately not formalized.** The literature's *scattered* terminology for the
-same phenomenon is intentionally left unformalized here, and no `IsScattered` alias is introduced.
-The repository uses *thin* throughout, for one notion under one name.
+Separately, the counting theorems as stated forget the witness: the `SilverBurgessDichotomy`
+hypothesis concludes with a cardinal disjunction and retains nothing from which a perfect set
+could be extracted. Consequently, the current cardinal interface cannot itself produce a
+perfect-set witness.
+
+**"Scattered" is not formalized.** Terminology involving "scattered" varies in the literature and
+is not formalized here; no `IsScattered` alias is introduced. The repository uses *thin*
+throughout, for one notion under one name.
