@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Descriptive.CantorAntichain
 import Architect
+import Mathlib.Topology.DerivedSet
 import Mathlib.Topology.MetricSpace.Perfect
 import Mathlib.Topology.MetricSpace.Polish
 import Mathlib.MeasureTheory.Constructions.Polish.Basic
@@ -44,6 +45,9 @@ the lower bound.
 -/
 
 open Cardinal Set
+
+-- `𝓟` only; opening `Filter` itself would clash with `Set` on names like `map`.
+open scoped Filter
 
 universe u v
 
@@ -93,17 +97,25 @@ theorem HasCantorAntichainOn.mono (h : HasCantorAntichainOn r A) (hAB : A ⊆ B)
   obtain ⟨f, hcont, hmem, hineq⟩ := h
   exact ⟨f, hcont, fun x => hAB (hmem x), hineq⟩
 
-/-- A Cantor antichain is injective — by *reflexivity*, not by an added hypothesis: distinct
-arguments have inequivalent images, and equal images would be equivalent to themselves.
+omit [TopologicalSpace X] in
+/-- Pairwise inequivalence forces injectivity — by *reflexivity*, not by an added hypothesis:
+distinct arguments have inequivalent images, and equal images would be equivalent to themselves.
+
+Stated on the raw components rather than on `HasCantorAntichainOn`, so that both the packaged
+adapter below and consumers that have already destructured a witness can share one proof. -/
+private theorem injective_of_pairwise_inequiv {f : (ℕ → Bool) → X}
+    (hineq : ∀ x y, x ≠ y → ¬r.r (f x) (f y)) : Function.Injective f := fun x y hxy => by
+  by_contra hne
+  exact hineq x y hne (hxy ▸ r.refl (f x))
+
+/-- A Cantor antichain is injective.
 
 The inequivalence clause is deliberately **not** restated in the conclusion: it is already the
 content of `h`, and a consumer needing it should unpack `h`.  One job per adapter. -/
 theorem HasCantorAntichainOn.injective (h : HasCantorAntichainOn r A) :
     ∃ f : (ℕ → Bool) → X, Continuous f ∧ Set.range f ⊆ A ∧ Function.Injective f := by
   obtain ⟨f, hcont, hmem, hineq⟩ := h
-  refine ⟨f, hcont, Set.range_subset_iff.mpr hmem, fun x y hxy => ?_⟩
-  by_contra hne
-  exact hineq x y hne (hxy ▸ r.refl (f x))
+  exact ⟨f, hcont, Set.range_subset_iff.mpr hmem, injective_of_pairwise_inequiv hineq⟩
 
 /-- A Cantor antichain forces continuum-many classes.  No metric or completeness assumption:
 the argument is the quotient-map injection, and only `Continuous f` mentions the topology. -/
@@ -119,6 +131,68 @@ theorem HasCantorAntichainOn.continuum_le_quotient (h : HasCantorAntichainOn r A
   simp only [lift_uzero] at h1
   rw [show lift.{u} #(ℕ → Bool) = Cardinal.continuum from by simp] at h1
   exact h1
+
+/-! ### Cantor antichain → perfect antichain
+
+The converse direction to `HasPerfectAntichainOn.hasCantorAntichainOn` below, and the one that
+needs no metric or completeness assumption — only that the ambient space is Hausdorff. -/
+
+/-- **Cantor space has no isolated points.**
+
+Stated as the bare accumulation-point fact rather than as a `PerfectSpace (ℕ → Bool)` instance:
+this Mathlib pin supplies no such instance (its only ones require `ConnectedSpace`, or a module
+over a field), and a global orphan instance here would be liable to collide with one added
+upstream later.
+
+A neighbourhood in the product topology constrains only finitely many coordinates, so some
+coordinate is left free; flipping it moves the point without leaving the neighbourhood. -/
+private theorem accPt_univ_natBool (x : ℕ → Bool) :
+    AccPt x (𝓟 (Set.univ : Set (ℕ → Bool))) := by
+  rw [accPt_iff_nhds]
+  intro U hU
+  rw [nhds_pi, Filter.mem_pi] at hU
+  obtain ⟨I, hIfin, V, hV, hVU⟩ := hU
+  obtain ⟨n, -, hn⟩ := Set.infinite_univ.exists_notMem_finite hIfin
+  refine ⟨Function.update x n (!x n), ⟨hVU fun i hi => ?_, trivial⟩, fun hEq => ?_⟩
+  · -- `i` is constrained by the neighbourhood, so it is not the flipped coordinate
+    rw [Function.update_of_ne (fun h : i = n => hn (h ▸ hi))]
+    exact mem_of_mem_nhds (hV i)
+  · exact Bool.not_ne_self (x n) (Function.update_self n (!x n) x ▸ congrFun hEq n)
+
+/-- **A Cantor antichain is a perfect antichain.**
+
+The range is closed because a continuous injection out of a compact space into a Hausdorff one is
+a closed embedding; and it inherits Cantor space's lack of isolated points by transporting
+accumulation points along that injection.  No metric, completeness, or second-countability
+assumption is needed — only `T2Space`. -/
+@[blueprint "thm:cantor-to-perfect"
+  (title := /-- A Cantor antichain is a perfect antichain -/)
+  (statement := /-- If $A$ carries a Cantor antichain for $r$ in a Hausdorff space, then $A$
+    carries a perfect antichain for $r$.  The range of the Cantor map is closed because a
+    continuous injection out of a compact space into a Hausdorff space is a closed embedding,
+    and it has no isolated points because accumulation points transport along that injection.
+    Unlike the reverse implication, this needs no metric or completeness assumption. -/)
+  (uses := ["def:cantor-antichain", "def:perfect-antichain"])]
+theorem HasCantorAntichainOn.hasPerfectAntichainOn [T2Space X]
+    (h : HasCantorAntichainOn r A) : HasPerfectAntichainOn r A := by
+  obtain ⟨f, hcont, hmem, hineq⟩ := h
+  have hinj : Function.Injective f := injective_of_pairwise_inequiv hineq
+  have hemb := hcont.isClosedEmbedding hinj
+  refine ⟨Set.range f, ⟨hemb.isClosed_range, ?_⟩, ⟨f (fun _ => false), ⟨_, rfl⟩⟩,
+    Set.range_subset_iff.mpr hmem, ?_⟩
+  · rintro _ ⟨x, rfl⟩
+    -- spelled out: dot notation on `AccPt` resolves to `Filter.NeBot.map`, which is not this
+    simpa [Filter.map_principal] using
+      AccPt.map (accPt_univ_natBool x) hcont.continuousAt hinj
+  · rintro _ ⟨a, rfl⟩ _ ⟨b, rfl⟩ hr
+    by_contra hne
+    exact hineq a b (fun hab => hne (congrArg f hab)) hr
+
+/-- Thinness rules out a Cantor antichain.  The converse of `IsThinOn.of_no_cantorAntichain`
+below, and much cheaper: that direction needs a complete metric space, this one only `T2Space`. -/
+theorem IsThinOn.no_cantorAntichain [T2Space X] (h : IsThinOn r A) :
+    ¬HasCantorAntichainOn r A :=
+  fun hc => h hc.hasPerfectAntichainOn
 
 /-! ### Adapters needing the Cantor injection
 

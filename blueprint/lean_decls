@@ -70,6 +70,7 @@ FirstOrder.Language.allCodedIsoClasses_dichotomy
 FirstOrder.Language.morley_counting
 HasPerfectAntichainOn
 HasCantorAntichainOn
+HasCantorAntichainOn.hasPerfectAntichainOn
 IsThinOn
 FirstOrder.Language.structureIsoSetoid
 FirstOrder.Language.Sentenceω.IsThinOnNatModels
