@@ -26,7 +26,9 @@ namespace Language
 
 open Lomega1omega
 
-variable {L : Language.{0, 0}} {M : Type} [L.Structure M]
+universe u v w
+
+variable {L : Language.{u, v}} {M : Type w} [L.Structure M]
 
 /-- The controlling seed: all isolators, and the existential closures of all isolators of one
 higher arity. -/

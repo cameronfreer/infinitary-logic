@@ -32,7 +32,9 @@ namespace Language
 
 open Lomega1omega
 
-variable {L : Language.{0, 0}} {M : Type} [L.Structure M]
+universe u v w
+
+variable {L : Language.{u, v}} {M : Type w} [L.Structure M]
 
 /-- **Type agreement**: the complete types in the AMBIENT structure coincide. -/
 def TypeAgree (N : L.Substructure M) {n : ℕ} (a : Fin n → M) (b : Fin n → N) : Prop :=
@@ -161,7 +163,7 @@ structure over countably many function symbols has a countable model back-and-fo
 equivalent to it at every ordinal. -/
 theorem exists_countable_bfEquiv_of_lomega1omegaSmall [Countable (Σ n, L.Functions n)]
     (hsmall : Lomega1omegaSmall (L := L) M) :
-    ∃ (N : Type) (_ : L.Structure N), Countable N ∧
+    ∃ (N : Type w) (_ : L.Structure N), Countable N ∧
       ∀ α : Ordinal, BFEquiv (L := L) α 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) := by
   obtain ⟨N, hcnt, hAe⟩ := exists_countable_companion hsmall
   exact ⟨N, inferInstance, hcnt, bfEquiv_all_of_companion hAe⟩

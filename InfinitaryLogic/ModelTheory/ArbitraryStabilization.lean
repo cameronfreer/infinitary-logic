@@ -33,13 +33,15 @@ namespace Language
 
 open Lomega1omega
 
-variable {L : Language.{0, 0}}
+universe u v w
+
+variable {L : Language.{u, v}}
 
 /-! ## The generic extension-family bridge (two arbitrary structures) -/
 
 /-- The two-structure form of the audited thin bridge: any tuple relation with atomic
 agreement and the forth/back extensions is `BFEquiv` at every ordinal. -/
-theorem bfEquiv_all_of_extensionFamily {M' N' : Type} [L.Structure M'] [L.Structure N']
+theorem bfEquiv_all_of_extensionFamily {M' N' : Type w} [L.Structure M'] [L.Structure N']
     (R : ∀ n : ℕ, (Fin n → M') → (Fin n → N') → Prop)
     (hzero : ∀ {n : ℕ} {a : Fin n → M'} {b : Fin n → N'}, R n a b →
       SameAtomicType (L := L) (M := M') (N := N') a b)
@@ -71,10 +73,10 @@ theorem bfEquiv_all_of_extensionFamily {M' N' : Type} [L.Structure M'] [L.Struct
 /-! ## The closed Scott seed and its fragment -/
 
 variable [L.IsRelational] [Countable (Σ l, L.Relations l)]
-variable {N : Type} [L.Structure N] [Countable N]
+variable {N : Type w} [L.Structure N] [Countable N]
 
 /-- The closed level-`α` Scott formulas of all finite tuples of the countable source. -/
-noncomputable def scottSeed (N : Type) [L.Structure N] [Countable N] (α : Ordinal) :
+noncomputable def scottSeed (N : Type w) [L.Structure N] [Countable N] (α : Ordinal) :
     Set (Σ n, L.BoundedFormulaω Empty n) :=
   ⋃ m : ℕ, (fun a : Fin m → N =>
     (⟨m, (scottFormula (L := L) a α).relabel (Sum.inr : Fin m → Empty ⊕ Fin m)⟩ :
@@ -85,7 +87,7 @@ theorem scottSeed_countable (α : Ordinal) : (scottSeed (L := L) N α).Countable
   Set.countable_iUnion fun _ => Set.countable_univ.image _
 
 /-- The controlling fragment for arbitrary-target stabilization. -/
-noncomputable def scottFragment (N : Type) [L.Structure N] [Countable N] (α : Ordinal) :
+noncomputable def scottFragment (N : Type w) [L.Structure N] [Countable N] (α : Ordinal) :
     Fragment L :=
   Fragment.generated (scottSeed N α)
 
@@ -102,7 +104,7 @@ theorem closedScott_mem_scottFragment (α : Ordinal) {m : ℕ} (a : Fin m → N)
 
 omit [L.IsRelational] in
 /-- The closed Scott formula realizes exactly as the open one. -/
-theorem realize_closedScott_iff {P : Type} [L.Structure P] (α : Ordinal) {m : ℕ}
+theorem realize_closedScott_iff {P : Type w} [L.Structure P] (α : Ordinal) {m : ℕ}
     (a : Fin m → N) (b : Fin m → P) :
     ((scottFormula (L := L) a α).relabel
         (Sum.inr : Fin m → Empty ⊕ Fin m)).Realize (Empty.elim : Empty → P) b
@@ -115,7 +117,7 @@ theorem realize_closedScott_iff {P : Type} [L.Structure P] (α : Ordinal) {m : �
 
 /-! ## Arbitrary-target stabilization -/
 
-variable {P : Type} [L.Structure P]
+variable {P : Type w} [L.Structure P]
 
 omit [Countable (Σ l, L.Relations l)] in
 /-- Relational languages have (vacuously) countably many function symbols. -/
