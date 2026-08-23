@@ -7,7 +7,8 @@ compiled and passed every other gate while no bundle imported it — its only im
 stubs and a guard script. This file is the regression test for exactly that.
 
 Deliberately tiny: one promised declaration per module boundary
-(`Admissible/CodedFamily.lean`, `Admissible/Fragment/Honest.lean`, `Admissible/HF.lean`).
+(`Admissible/CodedFamily.lean`, `Admissible/Fragment/Honest.lean`, `Admissible/Predicates.lean`,
+`Admissible/HF.lean`).
 Do not grow it into a general API smoke test.
 
 Run *after* `lake build`, so the oleans it resolves against are current.
@@ -17,4 +18,5 @@ import InfinitaryLogic
 #check FirstOrder.Language.AdmissiblePresentation
 #check FirstOrder.Language.CodedFamily
 #check FirstOrder.Language.AdmissibleFragment
+#check FirstOrder.Language.AFinite
 #check FirstOrder.Language.hfAdmissibleFragment

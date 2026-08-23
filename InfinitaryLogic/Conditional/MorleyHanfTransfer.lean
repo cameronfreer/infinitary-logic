@@ -154,10 +154,7 @@ The proof combines:
   (uses := ["def:arb-large-models"])]
 theorem hasArbLargeModels_of_restricted_extraction
     (hExtract : MorleyHanfExtraction (L' := L'))
-    (hCompact : ∀ (J : Type) [LinearOrder J] (S : Set L'[[J]].Sentenceω),
-      (∀ F : Set L'[[J]].Sentenceω, F.Finite → F ⊆ S →
-        ∃ (N : Type) (_ : L'[[J]].Structure N), Theoryω.Model F N) →
-      ∃ (N : Type) (_ : L'[[J]].Structure N), Theoryω.Model S N)
+    (hCompact : ∀ (J : Type) [LinearOrder J], Theoryω.OrdinaryCompactness L'[[J]])
     (φ : L'.Sentenceω)
     (hφ : ∃ (M : Type) (_ : L'.Structure M), Sentenceω.Realize φ M ∧
       Cardinal.mk M ≥ Cardinal.beth (Ordinal.omega 1)) :
@@ -186,8 +183,7 @@ theorem hasArbLargeModels_of_restricted_extraction
   -- Apply the compact-oracle sequence stretching.
   obtain ⟨N, instN, b, hSeq⟩ :=
     IsLomega1omegaIndiscernibleOn.stretch_restricted_sequence_of_compact (J := J) s hIndisc
-      (Order.succ (Ordinal.omega0 : Ordinal.{0}))
-      (Order.lt_succ (Ordinal.omega0 : Ordinal.{0})) (hCompact J)
+      (hCompact J)
   letI : L'.Structure N := (L'.lhomWithConstants J).reduct N
   refine ⟨N, inferInstance, ?_, ?_⟩
   · -- Sentence preservation: φ is realized in N.
@@ -416,15 +412,13 @@ omit [Countable (Σ l, L'.Relations l)] in
 residual: apply compactness to the (finitely-satisfiable) tail-template theory itself. Witnesses
 that `TailTemplateRealizable` is genuinely weaker than full compactness. -/
 theorem tailTemplateRealizable_of_compact
-    (hCompact : ∀ (J : Type) [LinearOrder J] (S : Set L'[[J]].Sentenceω),
-      (∀ F : Set L'[[J]].Sentenceω, F.Finite → F ⊆ S →
-        ∃ (N : Type) (_ : L'[[J]].Structure N), Theoryω.Model F N) →
-      ∃ (N : Type) (_ : L'[[J]].Structure N), Theoryω.Model S N) :
+    (hCompact : ∀ (J : Type) [LinearOrder J], Theoryω.OrdinaryCompactness L'[[J]]) :
     TailTemplateRealizable (L' := L') := by
   intro s M instM a J instJ _hSize hIndisc
-  exact hIndisc.templateTheoryOfSeq_model_of_compact s
-    (Order.succ (Ordinal.omega0 : Ordinal.{0}))
-    (Order.lt_succ (Ordinal.omega0 : Ordinal.{0})) (hCompact J)
+  -- `TailTemplateRealizable` deliberately asks only for a model, so the `Nonempty` evidence
+  -- the oracle now delivers is forgotten here, at that boundary and nowhere earlier.
+  obtain ⟨N, instN, _, hModel⟩ := hIndisc.templateTheoryOfSeq_model_of_compact s (hCompact J)
+  exact ⟨N, instN, hModel⟩
 
 omit [Countable (Σ l, L'.Relations l)] in
 /-- **Morley–Hanf via seed-template realizability alone — no extraction** (the definitive
@@ -562,10 +556,7 @@ residual via `tailTemplateRealizable_of_compact`. Prefer
 `hasArbLargeModels_of_tail_realizability`. -/
 theorem hasArbLargeModels_of_tail_extraction
     (hExtract : MorleyHanfExtractionTail (L' := L'))
-    (hCompact : ∀ (J : Type) [LinearOrder J] (S : Set L'[[J]].Sentenceω),
-      (∀ F : Set L'[[J]].Sentenceω, F.Finite → F ⊆ S →
-        ∃ (N : Type) (_ : L'[[J]].Structure N), Theoryω.Model F N) →
-      ∃ (N : Type) (_ : L'[[J]].Structure N), Theoryω.Model S N)
+    (hCompact : ∀ (J : Type) [LinearOrder J], Theoryω.OrdinaryCompactness L'[[J]])
     (φ : L'.Sentenceω)
     (hφ : ∃ (M : Type) (_ : L'.Structure M), Sentenceω.Realize φ M ∧
       Cardinal.mk M ≥ Cardinal.beth (Ordinal.omega 1)) :
@@ -794,10 +785,7 @@ Composes the proved chain:
 theorem hasArbLargeModels_of_pureColoring_and_compact
     {L' : Language.{0, 0}} [Countable (Σ l, L'.Relations l)]
     (hPure : PureColoringHypothesis)
-    (hCompact : ∀ (J : Type) [LinearOrder J] (S : Set L'[[J]].Sentenceω),
-      (∀ F : Set L'[[J]].Sentenceω, F.Finite → F ⊆ S →
-        ∃ (N : Type) (_ : L'[[J]].Structure N), Theoryω.Model F N) →
-      ∃ (N : Type) (_ : L'[[J]].Structure N), Theoryω.Model S N)
+    (hCompact : ∀ (J : Type) [LinearOrder J], Theoryω.OrdinaryCompactness L'[[J]])
     (φ : L'.Sentenceω)
     (hφ : ∃ (M : Type) (_ : L'.Structure M), Sentenceω.Realize φ M ∧
       Cardinal.mk M ≥ Cardinal.beth (Ordinal.omega 1)) :
@@ -816,10 +804,7 @@ Specializes `hasArbLargeModels_of_pureColoring_and_compact` to the
 theorem morley_hanf_of_pureColoring_and_compact
     {L' : Language.{0, 0}} [Countable (Σ l, L'.Relations l)]
     (hPure : PureColoringHypothesis)
-    (hCompact : ∀ (J : Type) [LinearOrder J] (S : Set L'[[J]].Sentenceω),
-      (∀ F : Set L'[[J]].Sentenceω, F.Finite → F ⊆ S →
-        ∃ (N : Type) (_ : L'[[J]].Structure N), Theoryω.Model F N) →
-      ∃ (N : Type) (_ : L'[[J]].Structure N), Theoryω.Model S N)
+    (hCompact : ∀ (J : Type) [LinearOrder J], Theoryω.OrdinaryCompactness L'[[J]])
     (φ : L'.Sentenceω) :
     IsHanfBound φ (Cardinal.beth (Ordinal.omega 1)) := by
   intro ⟨M, hStr, hRealize, hSize⟩
@@ -883,10 +868,7 @@ compatibility; the per-target compactness oracle is strictly stronger than the h
 compactness, which is false in general. Prefer `hasArbLargeModels_of_tail_realizable`. -/
 theorem hasArbLargeModels_of_tail_compact
     {L' : Language.{0, 0}}
-    (hCompact : ∀ (J : Type) [LinearOrder J] (S : Set L'[[J]].Sentenceω),
-      (∀ F : Set L'[[J]].Sentenceω, F.Finite → F ⊆ S →
-        ∃ (N : Type) (_ : L'[[J]].Structure N), Theoryω.Model F N) →
-      ∃ (N : Type) (_ : L'[[J]].Structure N), Theoryω.Model S N)
+    (hCompact : ∀ (J : Type) [LinearOrder J], Theoryω.OrdinaryCompactness L'[[J]])
     (φ : L'.Sentenceω)
     (hφ : ∃ (M : Type) (_ : L'.Structure M), Sentenceω.Realize φ M ∧
       Cardinal.mk M ≥ Cardinal.beth (Ordinal.omega 1)) :
@@ -899,10 +881,7 @@ theorem hasArbLargeModels_of_tail_compact
 `morley_hanf_of_tail_realizable`. -/
 theorem morley_hanf_of_tail_compact
     {L' : Language.{0, 0}}
-    (hCompact : ∀ (J : Type) [LinearOrder J] (S : Set L'[[J]].Sentenceω),
-      (∀ F : Set L'[[J]].Sentenceω, F.Finite → F ⊆ S →
-        ∃ (N : Type) (_ : L'[[J]].Structure N), Theoryω.Model F N) →
-      ∃ (N : Type) (_ : L'[[J]].Structure N), Theoryω.Model S N)
+    (hCompact : ∀ (J : Type) [LinearOrder J], Theoryω.OrdinaryCompactness L'[[J]])
     (φ : L'.Sentenceω) :
     IsHanfBound φ (Cardinal.beth (Ordinal.omega 1)) := by
   intro ⟨M, hStr, hRealize, hSize⟩

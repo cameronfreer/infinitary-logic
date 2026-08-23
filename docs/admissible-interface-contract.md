@@ -306,3 +306,128 @@ rule's *conclusion* is a formula not already known to be permitted — the intro
 component of something already derived (`imp_elim`, `not_not_elim`, `iInf_elim`, `iSup_elim`,
 `all_elim`) carry none. So membership guards conclusions, never hypotheses — which is precisely why
 no distinguished element is needed in the carrier.
+
+---
+
+## 9. The governing design rule (carried into #19A)
+
+> **Do not quantify over external objects the presentation cannot name.  Carry the indexing or
+> coding data, and formulate closure and compactness only for what that data represents.**
+
+This is the same correction Aaron Liu's fixed-carrier syntax made to `L∞ω`, arrived at
+independently here.  The old `iInf` node took an arbitrary `ι : Type` chosen in the metatheory;
+`AdmissibleFragmentCore.closed_iInf` demanded closure under an arbitrary external `ℕ → Formula`.
+Both quantify over things the object does not contain.  The fixes are the same fix: make the
+indexing data a parameter the object carries — `BoundedFormulaInf ι α n`, `A.Index c`.
+
+**The diagnostic that follows from it:** *does the degenerate instance need an adapter?*  `Lω₁ω` is
+`BoundedFormulaInf ℕ` definitionally, so its embedding is `rfl` rather than an operation; HF's
+closure fields are vacuous rather than bridged.  If the base case needs an adapter, the abstraction
+is still wrong.  That is what oracle condition 4 is really testing.
+
+**Refinement 1 — predicates are not the enemy; unwitnessed representation claims are.**
+`CodesInfFamily` is a legitimate certificate: it expresses a genuine additional property.
+`CodesFinite` was wrong for a different reason — `A`-finite *means* "is represented by an element
+of `A`", so an extra condition changed the notion rather than describing it.
+
+> Representation claims should be witnessed by decoding data; predicates should express genuine
+> additional properties.
+
+**Refinement 2 — `Sigma1` is the remaining violation, and it is a live issue, not future polish.**
+At HF, Σ-definability is ordinary computable enumerability (Keisler–Knight §§2.2, 3.1), so
+`hfPresentation`'s `Sigma1 := fun _ => True` is a deliberate *enlargement* of the compactness
+domain, not a Σ₁ claim.  It is recorded as `hfPresentation_sigma1_eq_top` with that warning, and
+deliberately not as a theorem named `hf_acEnumerable`, so no consumer can cite a mathematically
+specific name for it.  Nothing depends on it: `hf_compact_of_aFinite` is unconditional and is what
+consumers use, and `hf_compactFor` discards the hypothesis.  When #19A installs
+`DefinesSigmaTheory`, HF's instantiation must become the c.e. predicate and that equation must
+fail to typecheck.
+
+Unrestricted `finitaryFragment_compact` remains a stronger, separate HF theorem — it is not
+reached through the `A`-c.e. route at all.
+
+**Consequence for `height` (updating §6).**  `o(A)` *is* derived — it is the set of ordinals in
+`A` — but the present presentation does not encode enough of `A` to carry out that construction
+(Keisler–Knight).  So: **omit `height` now; derive it only if #19A enriches the presentation enough
+to support the construction.**  Do not add it as a field on the strength of "it is derivable in
+principle".
+
+**Method transfer.**  Per-piece generality does not prove the assembled conclusion specializes.
+The universe tranche needed compiled regressions at literal extreme universes *and*
+`exists_aElementary_substructure_of_eq_univ`, not just generalized lemmas; the admissible layer
+correspondingly needs `hf_compactFor`, not just `hf_aFinite_iff`.  Compile the extreme instance and
+the assembled conclusion, never only the pieces.
+
+**Limit of the analogy.**  Carriers specialize *definitionally* because `ι` is a law-free index
+type.  Codes carry laws (`decodes_unique`, `decodes_theory_unique`, #19A's naturality), so the best
+available analogue is "vacuous by certificate" — propositional, needing `absurd`.  Do not redesign
+chasing `rfl` on the admissible side.
+
+---
+
+## 10. Factoring decisions (2026-08-21)
+
+**Done now — the satisfiability API.**  `Theoryω.IsSatisfiable`, `Theoryω.IsFinitelySatisfiable`
+(Mathlib-parallel names), and `AFinitelySatisfiable A T` — the exact Barwise premise.  `CompactFor`
+is now transparent:
+
+```
+T ⊆ P → ACEnumerable A T → AFinitelySatisfiable A T → T.IsSatisfiable
+```
+
+Done *before* the EM tranche on purpose: the existential model statement was written out at every
+site, which made ordinary finite satisfiability and `A`-finite satisfiability easy to confuse.  They
+coincide at HF and nowhere else — `hf_aFinitelySatisfiable_iff` is that equation, and it is the only
+place the two may be interchanged.
+
+**Deferred to #19A — layer the presentation.**  `AdmissiblePresentation` now mixes a shared code
+carrier, family decoding, theory decoding, and Σ₁ classification.  Changing the Σ₁ implementation
+therefore changes the type that `CodedFamily` and `AdmissibleFragment` depend on, though neither
+consumes it.  Target shape:
+
+```
+shared code carrier
+├── family-coding layer
+├── theory-coding layer
+└── Σ-definition layer
+```
+
+A full presentation packages all three over the same carrier; `CodedFamily`/`AdmissibleFragment`
+depend only on the family layer.  This keeps the one-ambient-carrier lesson without a kitchen-sink
+record.
+
+**Deferred to #19A — partial decoding functions.**  Theory decoding is a relation plus
+`decodes_theory_unique`; `decodeTheory : Code → Option L.Theoryω` would make functionality hold by
+construction.  Do **not** generalize until theory decoding and Σ-definition decoding give two real
+consumers — family decoding has dependent output and a certificate, so it will not fit the same
+shape.
+
+**Explicitly not factored yet.**  `PresentationHom`/transport: wait until both language maps and
+adding constants need it.  A generic compactness oracle parameterized by arbitrary "smallness"
+predicates: `AFinitelySatisfiable` is already the mathematically meaningful boundary.
+
+---
+
+## 11. #18 completion status
+
+**Status: complete.** The remaining items from §4 and the EM tranche are done.
+
+* **External theory predicates** (§4): `AFinite`, `ACEnumerable`, `AFinitelySatisfiable` and
+  `CompactFor` live in `Admissible/Predicates.lean`, never as fields.  `hf_aFinite_iff`,
+  `hf_aFinitelySatisfiable_iff` and `hf_compactFor` are the HF oracle checks, the last of them
+  certifying that the *assembled* statement specializes to `finitaryFragment_compact`.
+* **EM adapters**: the compactness-oracle layer applies a supplied
+  `Theoryω.OrdinaryCompactness` directly.  The `_of_fragment` / `_of_fullFragment` endpoints,
+  the `Ordinal` height parameters, and `admissibleFragmentOfUniv`'s last uses are deleted — 16
+  dead declarations plus the two-declaration legacy spine.  `Methods/EM` imports no admissible
+  module, and the layer is exported from `Countable`, matching its actual API boundary.
+* **Guard**: `scripts/check_em_compactness_boundary.lean`, wired into CI.  It checks both
+  directions — no root reaches `FiniteCompactFragment`, `FullBarwiseFragment`,
+  `AdmissibleFragmentCore`, `admissibleFragmentOfUniv` or `barwise_compactness`; every direct
+  root exposes the oracle in its *type*; every assembly cone reaches the ordinary
+  finite-satisfiability corollary — plus absence checks for the deleted spine and a
+  theorem-root negative control, failure-tested in all three directions.
+
+**Carried into #19A**, unchanged: no `height` field (§9 — `o(A)` is derivable in principle but
+the presentation does not encode enough of `A` to construct it), `CodedFamily` indexed by the
+presentation alone, and `Sigma1` as the last bare external predicate (§9, refinement 2).

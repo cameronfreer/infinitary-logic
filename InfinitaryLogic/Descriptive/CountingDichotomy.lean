@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Descriptive.ModelClassStandardBorel
 import InfinitaryLogic.Descriptive.IsomorphismBorel
+import InfinitaryLogic.Descriptive.StructureIsoSetoid
 import Mathlib.SetTheory.Cardinal.Continuum
 import Architect
 
@@ -20,7 +21,10 @@ the number of isomorphism classes is either ≤ ℵ₀ or exactly 2^ℵ₀.
 
 - `SilverBurgessDichotomy`: The Silver–Burgess dichotomy for Borel equivalence
   relations on standard Borel spaces.
-- `isoSetoid`: The isomorphism equivalence relation on `↥(ModelsOf φ)`.
+
+The isomorphism relation `isoSetoid` this file counts is defined in
+`Descriptive/StructureIsoSetoid.lean`, as the restriction of the ambient relation on
+`StructureSpace L`.
 
 ## Main Results
 
@@ -52,23 +56,6 @@ def SilverBurgessDichotomy : Prop :=
     (#(Quotient r) ≤ ℵ₀) ∨ (#(Quotient r) = Cardinal.continuum)
 
 variable {L : Language.{u, v}} [L.IsRelational] [Countable (Σ l, L.Relations l)]
-
-/-- The isomorphism equivalence relation on coded ℕ-models of φ.
-Two codes are related iff the decoded structures on ℕ are L-isomorphic. -/
-@[blueprint "def:iso-setoid"
-  (title := /-- Isomorphism setoid on coded models -/)
-  (statement := /-- The equivalence relation on coded $\mathbb{N}$-models of $\varphi$
-    where two codes are related iff their decoded structures are $L$-isomorphic. -/)]
-def isoSetoid (φ : L.Sentenceω) : Setoid ↥(ModelsOf φ) where
-  r c₁ c₂ := Nonempty (@Language.Equiv L ℕ ℕ c₁.1.toStructure c₂.1.toStructure)
-  iseqv := {
-    refl := fun c => ⟨@Language.Equiv.refl L ℕ c.1.toStructure⟩
-    symm := fun {c₁ c₂} ⟨e⟩ =>
-      ⟨@Language.Equiv.symm L ℕ ℕ c₁.1.toStructure c₂.1.toStructure e⟩
-    trans := fun {c₁ c₂ c₃} ⟨e₁⟩ ⟨e₂⟩ =>
-      ⟨@Language.Equiv.comp L ℕ ℕ c₁.1.toStructure c₂.1.toStructure ℕ
-        c₃.1.toStructure e₂ e₁⟩
-  }
 
 omit [Countable (Σ l, L.Relations l)] in
 /-- The subtype inclusion `↥(ModelsOf φ) × ↥(ModelsOf φ) → StructureSpace L × StructureSpace L`

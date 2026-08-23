@@ -63,5 +63,8 @@ jobs:
       - name: "Verify #18 proof-system boundary (no legacy fragment structures in the Derivable/soundness cone)"
         run: lake env lean scripts/check_proof_system_boundary.lean
 
+      - name: "Verify #18 EM compactness boundary (oracle is a hypothesis; no legacy admissible machinery)"
+        run: lake env lean scripts/check_em_compactness_boundary.lean
+
       - name: "Verify the fixed-carrier Karp formulation (universe gates + coded-machinery cone)"
         run: lake env lean scripts/check_karp_carrier.lean

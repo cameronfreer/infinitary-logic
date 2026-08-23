@@ -29,8 +29,7 @@ Marker's textbook bound `max(|A|,|X|)` (Theorem 1.22) is the special case
 
 The language's two universes and the carrier's are independent. The three cardinals being
 compared therefore start in three different universes, so every bound is stated with an explicit
-`Cardinal.lift` into `max u v w`; `lift_mk_umax` reconciles the complementary levels that
-Mathlib's heterogeneous lemmas produce. `exists_aElementary_substructure_of_eq_univ` is the
+`Cardinal.lift` into `max u v w`. `exists_aElementary_substructure_of_eq_univ` is the
 same-universe form, where those lifts are identities.
 -/
 
@@ -40,7 +39,7 @@ namespace Language
 
 open Cardinal
 
-universe u v w x y
+universe u v w
 
 variable {L : Language.{u, v}} {M : Type w} [L.Structure M] (A : Fragment L)
 
@@ -151,6 +150,10 @@ in `M` they give `lift.{max u v}`, and for language-side data `lift.{w}`. Both l
 `Cardinal.{max u v w}`, but Lean keeps the level expressions distinct, so every bound below is
 stated with the uniform `lift.{max u v w}` and converted once through these. -/
 
+section
+
+universe x y
+
 /-- Absorb a `max` into the lift level: `lift.{max y x} #α` and `lift.{y} #α` are the same map
 on `Cardinal.{x}`, but Lean does not identify the level expressions. Both directions of the
 mismatch below are this one lemma — set-of-`M` data lifted by `max u v`, and language data
@@ -158,6 +161,8 @@ lifted by `w`. -/
 private theorem lift_mk_umax {α : Type x} :
     Cardinal.lift.{max y x} (Cardinal.mk α) = Cardinal.lift.{y} (Cardinal.mk α) :=
   congrFun Cardinal.lift_umax _
+
+end
 
 omit [L.Structure M] in
 theorem mk_tvSlice_le (Y : Set M) (n : ℕ) :
@@ -234,9 +239,9 @@ theorem mk_tvWitnessSet_le (Y : Set M) :
     _ ≤ Cardinal.mk (tvSlice A Y n) :=
         (Cardinal.mk_range_le_lift (f := tvSliceWitness A Y n)).trans_eq (Cardinal.lift_id' _)
 
-/-- Mathlib's closure bound, moved into the common universe. Its own statement lives in
-`Cardinal.{max u w}` — it predates the fragment's `Type v` relation data — so it needs one
-further lift, and the function-symbol summand arrives with the complementary level. -/
+/-- The substructure-closure bound is lifted into the common universe `max u v w`. Mathlib's
+own statement lives in `Cardinal.{max u w}`, so it needs one further lift, and the
+function-symbol summand arrives with the complementary level. -/
 theorem lift_mk_closure_le (S : Set M) {κ : Cardinal.{max u v w}} (hκ : Cardinal.aleph0 ≤ κ)
     (hS : Cardinal.lift.{max u v w} (Cardinal.mk S) ≤ κ)
     (hF : Cardinal.lift.{max u v w} (Cardinal.mk (Σ n, L.Functions n)) ≤ κ) :
@@ -335,8 +340,8 @@ theorem exists_countable_aElementary_substructure (A : Fragment L) {X : Set M}
 /-! ## Universe regression
 
 These instantiate the hull construction and its cardinal bound where the language's two universes
-and the structure's universe are pairwise distinct, and at the universe-zero setting the
-development previously assumed. They are compiled, so they fail if the file is ever reconstrained;
+and the structure's universe are pairwise distinct, and at the same-universe specialization.
+They are compiled, so they fail if the file is ever reconstrained;
 the `variable` block alone would not catch that, since a `Language.{u, v}` binder can still be
 silently pinned by a downstream lemma. -/
 
