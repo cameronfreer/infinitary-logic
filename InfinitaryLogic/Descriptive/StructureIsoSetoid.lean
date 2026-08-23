@@ -3,6 +3,7 @@ Copyright (c) 2026 Cameron Freer. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
+import InfinitaryLogic.Descriptive.ModelClassStandardBorel
 import InfinitaryLogic.Descriptive.PerfectAntichain
 import InfinitaryLogic.Descriptive.SatisfactionBorel
 import Architect
@@ -118,5 +119,53 @@ theorem Sentenceω.HasPerfectSetOfPairwiseNonisomorphicNatModels.continuum_le
   letI := TopologicalSpace.upgradeIsCompletelyMetrizable (StructureSpace L)
   calc Cardinal.continuum = #P := (hperf.mk_eq_continuum hne).symm
     _ ≤ #(Quotient (isoSetoid φ)) := Cardinal.mk_le_of_injective hinj
+
+/-! ### From a Polish refinement back to the ambient space
+
+A Cantor antichain is built where the model class is well behaved — in a finer Polish topology
+of the kind `modelsOf_isClopenable` supplies.  The perfect set, though, must be perfect in the
+*ambient* `StructureSpace L`, or `IsThinOnNatModels` would be a statement about whichever
+refinement happened to be chosen.
+
+The two steps are ordered so that the delicate one never arises: coarsening is applied to the
+**Cantor** antichain, where only continuity moves, and perfectness is then obtained in the
+ambient space.  Nothing here asserts that perfectness survives coarsening — it does not in
+general. -/
+
+/-- The ambient topology on the structure space, bound by name so that statements quantifying
+over a refinement can compare against it explicitly. -/
+private abbrev ambientTop (L : Language.{u, v}) [L.IsRelational]
+    [Countable (Σ l, L.Relations l)] : TopologicalSpace (StructureSpace L) := inferInstance
+
+/-- The ambient half of the route: a Cantor antichain on the model class in the ambient topology
+gives a perfect set of pairwise non-isomorphic models. -/
+private theorem hasPerfectSet_of_ambient_cantorAntichain {φ : L.Sentenceω}
+    (h : HasCantorAntichainOn (structureIsoSetoid L) (ModelsOf φ)) :
+    φ.HasPerfectSetOfPairwiseNonisomorphicNatModels := by
+  -- upgrading supplies a metric, hence `T2Space`, without changing the topology
+  letI := TopologicalSpace.upgradeIsCompletelyMetrizable (StructureSpace L)
+  exact h.hasPerfectAntichainOn
+
+/-- A Cantor antichain in any finer topology yields an **ambient** perfect set of pairwise
+non-isomorphic models. -/
+theorem Sentenceω.hasPerfectSet_of_refined_cantorAntichain {φ : L.Sentenceω}
+    {t' : TopologicalSpace (StructureSpace L)} (hle : t' ≤ ambientTop L)
+    (h : @HasCantorAntichainOn _ t' (structureIsoSetoid L) (ModelsOf φ)) :
+    φ.HasPerfectSetOfPairwiseNonisomorphicNatModels :=
+  hasPerfectSet_of_ambient_cantorAntichain (h.mono_topology hle)
+
+/-- The refinement `modelsOf_isClopenable` produces is one the route above accepts, and it is
+still genuinely clopen: the conclusion keeps `IsClosed[t']` and `IsOpen[t']` alongside the
+implication, so a consumer needing the clopen structure — as the tiered counting theorem may —
+does not have to rebuild the refinement. -/
+theorem Sentenceω.exists_clopenable_refinement_forcing_perfectSet (φ : L.Sentenceω) :
+    ∃ t' : TopologicalSpace (StructureSpace L),
+      t' ≤ ambientTop L ∧ @PolishSpace _ t' ∧
+        @IsClosed _ t' (ModelsOf φ) ∧ @IsOpen _ t' (ModelsOf φ) ∧
+        (@HasCantorAntichainOn _ t' (structureIsoSetoid L) (ModelsOf φ) →
+          φ.HasPerfectSetOfPairwiseNonisomorphicNatModels) := by
+  obtain ⟨t', hle, hpolish, hclosed, hopen⟩ := modelsOf_isClopenable φ
+  exact ⟨t', hle, hpolish, hclosed, hopen,
+    fun h => Sentenceω.hasPerfectSet_of_refined_cantorAntichain hle h⟩
 
 end FirstOrder.Language

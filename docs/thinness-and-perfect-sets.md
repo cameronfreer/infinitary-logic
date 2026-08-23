@@ -48,17 +48,25 @@ reflexivity alone.
 ## The two chains
 
 ```
-perfect antichain  ──→  Cantor antichain  ──→  continuum-many classes
+perfect antichain  ←──→  Cantor antichain  ──→  continuum-many classes
 ThinRankAnalysis   ──→  no Cantor antichain  ──→  thinness
 structureIsoSetoid + ModelsOf φ  ──→  IsThinOnNatModels
 ```
 
-Left-to-right along the first chain: `HasPerfectAntichainOn.hasCantorAntichainOn` (via
-`Perfect.exists_nat_bool_injection`, needing a complete metric space), then
-`HasCantorAntichainOn.continuum_le_quotient`, which needs only a topology.
+The first chain is now an equivalence, but the two directions cost very different hypotheses:
 
-Only perfect antichain → Cantor antichain is currently formalized. The converse requires showing
-that a continuous injective Cantor image has perfect range.
+- `HasPerfectAntichainOn.hasCantorAntichainOn` goes via `Perfect.exists_nat_bool_injection` and
+  needs a **complete metric space**;
+- `HasCantorAntichainOn.hasPerfectAntichainOn` needs only **`T2Space`**. A continuous injection
+  out of Cantor space into a Hausdorff space is a closed embedding, so its range is closed; and
+  the range inherits Cantor space's lack of isolated points by transporting accumulation points
+  along that injection (`AccPt.map`). No metric, completeness, or second-countability enters.
+
+`HasCantorAntichainOn.continuum_le_quotient` closes the chain and needs only a topology.
+
+The Hausdorff-only direction is why `HasCantorAntichainOn` is worth keeping as a separate notion:
+a construction that produces one gets the ambient perfect set for free, without first having to
+exhibit a metric on the ambient space.
 
 ## The model-theoretic specialization
 
@@ -75,6 +83,29 @@ Perfectness here is a property of a subset of the ambient `StructureSpace L`. If
 instead stated on the subtype `↥(ModelsOf φ)`, it would silently be a statement about whichever
 Polish refinement was chosen to make that subtype standard Borel — a different assertion.
 
+### Getting back from the refinement
+
+That raises the obvious problem: a Cantor antichain is *built* where the model class is well
+behaved, namely in a finer Polish topology of the kind `modelsOf_isClopenable` supplies, while the
+perfect set has to be perfect in the ambient space. Proving directly that perfectness survives
+coarsening would be delicate — and false in general.
+
+The two steps are therefore ordered so the delicate one never arises:
+
+```
+IsClopenable refinement  (t' ≤ t)
+  → Cantor antichain in t'
+  → Cantor antichain in t          HasCantorAntichainOn.mono_topology
+  → ambient perfect antichain      HasCantorAntichainOn.hasPerfectAntichainOn
+```
+
+Coarsening is applied to the *Cantor* antichain, where only the continuity clause is topological;
+perfectness is then obtained in the ambient space.
+`Sentenceω.hasPerfectSet_of_refined_cantorAntichain` packages the chain, and
+`Sentenceω.exists_clopenable_refinement_forcing_perfectSet` records that the refinement
+`modelsOf_isClopenable` produces is one the chain accepts — retaining the closedness and openness
+of `ModelsOf φ` in `t'` in its conclusion, so a consumer that needs the clopen structure keeps it.
+
 ## The thinness criterion
 
 `InfinitaryLogic/Descriptive/RankedThinness.lean` supplies the standard rank argument.
@@ -89,6 +120,10 @@ suffices.
 **ThinRankAnalysis packages sufficient evidence for thinness, and `ThinRankAnalysis.isThinOn`
 proves the implication. No concrete instance of that package is supplied here.** The repository
 provides the criterion, not an application of it.
+
+Its `[MetricSpace] [CompleteSpace]` hypotheses are *not* relaxed by the cheap Hausdorff direction
+above: `isThinOn` consumes `IsThinOn.of_no_cantorAntichain`, which is the perfect → Cantor
+direction. The cheap direction gives the companion `IsThinOn.no_cantorAntichain` instead.
 
 ## Two things that do not follow
 

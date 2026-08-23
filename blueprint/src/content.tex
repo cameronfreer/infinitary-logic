@@ -453,7 +453,7 @@ The Cantor antichain is the load-bearing intermediary in both directions: it is
 what the Cantor-scheme builders produce, and it is what a thinness proof must
 refute.  The two chains are
 \[
-  \text{perfect antichain} \longrightarrow \text{Cantor antichain}
+  \text{perfect antichain} \longleftrightarrow \text{Cantor antichain}
     \longrightarrow 2^{\aleph_0} \text{ classes},
 \]
 \[
@@ -463,15 +463,25 @@ refute.  The two chains are
 with $\mathtt{structureIsoSetoid}$ together with $\mathrm{ModelsOf}\ \varphi$
 specializing the ambient notions to $\mathtt{IsThinOnNatModels}$.
 
+\inputleannode{thm:cantor-to-perfect}
+
+The two directions of that equivalence cost very different hypotheses.  Perfect
+antichain $\to$ Cantor antichain goes through
+$\mathtt{Perfect.exists\_nat\_bool\_injection}$ and needs a complete metric
+space.  The converse needs only that the ambient space is Hausdorff, which is
+why $\mathtt{HasCantorAntichainOn}$ is worth keeping as a separate notion: a
+construction that produces one obtains the ambient perfect set without first
+exhibiting a metric.
+
 \inputleannode{def:thin-rank-analysis}
 
 \inputleannode{thm:ranked-thinness}
 
 \texttt{ThinRankAnalysis} packages sufficient evidence for thinness, and
 \texttt{ThinRankAnalysis.isThinOn} proves the implication.  No concrete instance
-of that package is supplied here.  Only the direction perfect antichain
-$\to$ Cantor antichain is currently formalized; the converse requires showing
-that a continuous injective Cantor image has perfect range.
+of that package is supplied here.  Note that the cheap direction above does not
+weaken those hypotheses: \texttt{isThinOn} consumes perfect $\to$ Cantor, the
+complete-metric direction.
 
 Cardinal equality alone does not establish thinness in ZFC.  Under $\mathsf{CH}$
 we have $\aleph_1 = 2^{\aleph_0}$, so a quotient of exactly $\aleph_1$ classes is
