@@ -131,10 +131,36 @@ direction. The cheap direction gives the companion `IsThinOn.no_cantorAntichain`
 classes does not establish thinness in ZFC. Under CH, `ℵ₁ = 2^ℵ₀`, so that cardinality is
 compatible with a perfect antichain. Under `¬CH`, exact `ℵ₁` does rule out a perfect antichain.
 
-Separately, the counting theorems as stated forget the witness: the `SilverBurgessDichotomy`
+Separately, a theorem parameterized by `SilverBurgessDichotomy` forgets the witness: that
 hypothesis concludes with a cardinal disjunction and retains nothing from which a perfect set
-could be extracted. Consequently, the current cardinal interface cannot itself produce a
-perfect-set witness.
+could be extracted. No amount of work downstream of it recovers one.
+
+## Getting the witness back
+
+The way around that is to bypass the cardinal interface and use the proved Polish-space core,
+`silver_core_polish`, directly. `Conditional/MorleyPerfect.lean` does exactly this, and its
+`morley_counting_or_perfect` replaces the `= 2^ℵ₀` alternative with a perfect set:
+
+```
+#(AllCodedIsoClasses φ) ≤ ℵ₁
+  ∨ φ.HasPerfectSetOfPairwiseNonisomorphicNatModels
+  ∨ ∃ n, φ.HasPerfectSetOfPairwiseNonisomorphicFinModels n
+```
+
+The finite-carrier alternative is not a technicality. An infinite language can have
+continuum-many `Fin n`-models and no `ℕ`-models at all, so a statement offering only an `ℕ`-tier
+perfect set would be false.
+
+Both tiers go through one factored pipeline, `silver_countable_or_cantorAntichain`, which absorbs
+the fact that a model class is a *Borel* subset of the structure space and therefore not Polish as
+a subtype: a clopenable refinement is taken, Silver runs there, and the antichain returns by the
+two moves of the previous section. The tiers differ only in the relation Silver sees — BF
+equivalence at a level `α < ω₁` for `ℕ`, isomorphism itself for `Fin n`, where it is already
+Borel — with `HasCantorAntichainOn.mono_relation` transferring the witness in the first case.
+
+Since a perfect antichain forces continuum-many classes, the cardinal form follows as
+`morley_counting_or_perfect_cardinal`; the converse does not. The parameterized `morley_counting`
+is retained unchanged.
 
 **"Scattered" is not formalized.** Terminology involving "scattered" varies in the literature and
 is not formalized here; no `IsScattered` alias is introduced. The repository uses *thin*

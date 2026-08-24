@@ -99,19 +99,75 @@ theorem iso_iff_orbit (n : ℕ) (c₁ c₂ : StructureSpaceOn L (Fin n)) :
 
 /-! ### Isomorphism setoid on finite-carrier models -/
 
-/-- The isomorphism setoid on models of φ with carrier `Fin n`. -/
-def isoSetoidOn (φ : L.Sentenceω) (n : ℕ) :
-    Setoid ↥(ModelsOfOn (α := Fin n) φ) where
+/-- **The ambient isomorphism relation at carrier `Fin n`**: two codes are related iff the
+structures they decode on `Fin n` are `L`-isomorphic.  Stated on all of
+`StructureSpaceOn L (Fin n)`, with no reference to any sentence.
+
+This mirrors `structureIsoSetoid` at the `ℕ` tier, and for the same reason: perfectness of a set
+of codes must be a property of the ambient space, not of whichever refinement was chosen to make
+one model class Polish. -/
+def structureIsoSetoidOn (L : Language.{u, v}) [L.IsRelational] (n : ℕ) :
+    Setoid (StructureSpaceOn L (Fin n)) where
   r c₁ c₂ := Nonempty (@Language.Equiv L (Fin n) (Fin n)
-    (StructureSpaceOn.toStructure c₁.1) (StructureSpaceOn.toStructure c₂.1))
-  iseqv := {
-    refl := fun c => ⟨@Language.Equiv.refl L (Fin n) (StructureSpaceOn.toStructure c.1)⟩
-    symm := fun {c₁ c₂} ⟨e⟩ =>
-      ⟨@Language.Equiv.symm L (Fin n) (Fin n) c₁.1.toStructure c₂.1.toStructure e⟩
-    trans := fun {c₁ c₂ c₃} ⟨e₁⟩ ⟨e₂⟩ =>
-      ⟨@Language.Equiv.comp L (Fin n) (Fin n) c₁.1.toStructure c₂.1.toStructure
-        (Fin n) c₃.1.toStructure e₂ e₁⟩
-  }
+    (StructureSpaceOn.toStructure c₁) (StructureSpaceOn.toStructure c₂))
+  iseqv :=
+    { refl := fun c => ⟨@Language.Equiv.refl L (Fin n) (StructureSpaceOn.toStructure c)⟩
+      symm := fun {c₁ c₂} ⟨e⟩ =>
+        ⟨@Language.Equiv.symm L (Fin n) (Fin n) c₁.toStructure c₂.toStructure e⟩
+      trans := fun {c₁ c₂ c₃} ⟨e₁⟩ ⟨e₂⟩ =>
+        ⟨@Language.Equiv.comp L (Fin n) (Fin n) c₁.toStructure c₂.toStructure
+          (Fin n) c₃.toStructure e₂ e₁⟩ }
+
+/-- The isomorphism setoid on models of φ with carrier `Fin n`: the ambient relation restricted
+along the subtype inclusion.  That is its definition, not a theorem about it. -/
+def isoSetoidOn (φ : L.Sentenceω) (n : ℕ) :
+    Setoid ↥(ModelsOfOn (α := Fin n) φ) :=
+  (structureIsoSetoidOn L n).comap Subtype.val
+
+/-- Membership in the pulled-back relation is membership in the ambient one. -/
+theorem isoSetoidOn_r_iff {φ : L.Sentenceω} {n : ℕ} {c₁ c₂ : ↥(ModelsOfOn (α := Fin n) φ)} :
+    (isoSetoidOn φ n).r c₁ c₂ ↔ (structureIsoSetoidOn L n).r c₁.1 c₂.1 := Iff.rfl
+
+/-- `φ` has a perfect set of pairwise non-isomorphic models with carrier `Fin n`.
+
+The finite tier is not decoration: an infinite language can have continuum-many `Fin n` models
+while having no `ℕ`-models at all, so a counting dichotomy that only spoke about `ℕ`-models would
+miss that case entirely. -/
+def Sentenceω.HasPerfectSetOfPairwiseNonisomorphicFinModels (φ : L.Sentenceω) (n : ℕ) : Prop :=
+  HasPerfectAntichainOn (structureIsoSetoidOn L n) (ModelsOfOn (α := Fin n) φ)
+
+/-- The ambient half of the finite-tier route: a Cantor antichain on the model class in the
+ambient topology gives a perfect set of pairwise non-isomorphic `Fin n`-models.
+
+`StructureSpaceOn L (Fin n)` is metrizable but carries no chosen metric, so the `T2Space` instance
+that `HasCantorAntichainOn.hasPerfectAntichainOn` needs is produced here rather than assumed; the
+topology is unchanged, so the hypothesis still applies. -/
+theorem Sentenceω.hasPerfectSetFin_of_ambient_cantorAntichain {φ : L.Sentenceω} {n : ℕ}
+    (h : HasCantorAntichainOn (structureIsoSetoidOn L n) (ModelsOfOn (α := Fin n) φ)) :
+    φ.HasPerfectSetOfPairwiseNonisomorphicFinModels n := by
+  let := TopologicalSpace.upgradeIsCompletelyMetrizable (StructureSpaceOn L (Fin n))
+  exact h.hasPerfectAntichainOn
+
+/-- **The bridge to the quotient**: a perfect set of pairwise non-isomorphic `Fin n`-models gives
+continuum-many isomorphism classes at that tier.
+
+Mirrors the `ℕ`-tier bridge and for the same reason: the antichain lives in the ambient space
+while the quotient is over the subtype, so the transversal is transported through the inclusion —
+which is what `isoSetoidOn` being a `comap` licenses. -/
+theorem Sentenceω.HasPerfectSetOfPairwiseNonisomorphicFinModels.continuum_le
+    {φ : L.Sentenceω} {n : ℕ} (h : φ.HasPerfectSetOfPairwiseNonisomorphicFinModels n) :
+    Cardinal.continuum ≤ #(Quotient (isoSetoidOn φ n)) := by
+  obtain ⟨P, hperf, hne, hsub, hanti⟩ := h
+  have hinj : Function.Injective
+      (fun x : P => Quotient.mk (isoSetoidOn φ n) ⟨x.1, hsub x.2⟩) := by
+    intro x y hxy
+    have hr : (isoSetoidOn φ n).r ⟨x.1, hsub x.2⟩ ⟨y.1, hsub y.2⟩ := Quotient.exact hxy
+    exact Subtype.ext (hanti x.1 x.2 y.1 y.2 (isoSetoidOn_r_iff.mp hr))
+  -- as at the `ℕ` tier: a metric is needed for the cardinality of a perfect set, and the upgrade
+  -- supplies one without changing the topology, so `hperf` survives
+  let := TopologicalSpace.upgradeIsCompletelyMetrizable (StructureSpaceOn L (Fin n))
+  calc Cardinal.continuum = #P := (hperf.mk_eq_continuum hne).symm
+    _ ≤ #(Quotient (isoSetoidOn φ n)) := Cardinal.mk_le_of_injective hinj
 
 /-! ### Isomorphism relation is Borel on finite carriers -/
 
@@ -181,6 +237,26 @@ theorem counting_fin_models_dichotomy
 def AllCodedIsoClasses (φ : L.Sentenceω) :=
   Quotient (isoSetoid φ) ⊕ Σ n, Quotient (isoSetoidOn φ n)
 
+/-- **The finite tiers, summed**: their disjoint union has at most `ℵ₀ * bound` classes whenever
+each single tier has at most `bound`.
+
+There are countably many tiers, so this is the whole of the cardinal arithmetic the counting
+theorems need on the finite side.  Stated once because three of them need it at two different
+bounds (`ℵ₀` and `continuum`). -/
+theorem mk_sigma_isoSetoidOn_le (φ : L.Sentenceω) (bound : Cardinal.{v})
+    (hle : ∀ n, #(Quotient (isoSetoidOn φ n)) ≤ bound) :
+    #(Σ n, Quotient (isoSetoidOn φ n)) ≤ ℵ₀ * bound :=
+  calc #(Σ n, Quotient (isoSetoidOn φ n))
+    = Cardinal.sum (fun n => #(Quotient (isoSetoidOn φ n))) := mk_sigma _
+    _ ≤ Cardinal.lift.{v, 0} #ℕ * ⨆ i, Cardinal.lift.{0, v} (#(Quotient (isoSetoidOn φ i))) :=
+      sum_le_lift_mk_mul_iSup_lift _
+    _ = ℵ₀ * ⨆ i, #(Quotient (isoSetoidOn φ i)) := by
+      rw [Cardinal.mk_nat, Cardinal.lift_aleph0]
+      congr 1; apply iSup_congr; intro i; exact Cardinal.lift_uzero _
+    _ ≤ ℵ₀ * bound := by
+      apply mul_le_mul_right
+      exact ciSup_le hle
+
 /-- Counting dichotomy for all countable models with bounded Scott height.
 The type `AllCodedIsoClasses φ` faithfully represents all isomorphism classes of
 countable models of φ (via the bridge theorems `codeModel`, `iso_of_codeModel_eq`,
@@ -209,21 +285,6 @@ theorem allCodedIsoClasses_dichotomy
   have hEmbed : ∀ n₀, #(Quotient (isoSetoidOn φ n₀)) ≤
       #(Σ n, Quotient (isoSetoidOn φ n)) := fun n₀ =>
     ⟨⟨fun x => ⟨n₀, x⟩, fun a b h => eq_of_heq (Sigma.mk.inj h).2⟩⟩
-  -- Sigma bound via sum
-  have hSigma_bound : ∀ (bound : Cardinal),
-      (∀ n, #(Quotient (isoSetoidOn φ n)) ≤ bound) → ℵ₀ ≤ bound →
-      #(Σ n, Quotient (isoSetoidOn φ n)) ≤ ℵ₀ * bound := by
-    intro bound hle hge
-    calc #(Σ n, Quotient (isoSetoidOn φ n))
-      = Cardinal.sum (fun n => #(Quotient (isoSetoidOn φ n))) := mk_sigma _
-      _ ≤ Cardinal.lift.{v, 0} #ℕ * ⨆ i, Cardinal.lift.{0, v} (#(Quotient (isoSetoidOn φ i))) :=
-        sum_le_lift_mk_mul_iSup_lift _
-      _ = ℵ₀ * ⨆ i, #(Quotient (isoSetoidOn φ i)) := by
-        rw [Cardinal.mk_nat, Cardinal.lift_aleph0]
-        congr 1; apply iSup_congr; intro i; exact Cardinal.lift_uzero _
-      _ ≤ ℵ₀ * bound := by
-        apply mul_le_mul_right
-        exact ciSup_le fun n => hle n
   -- Case split on whether any tier has continuum-many classes
   by_cases hc : (#(Quotient (isoSetoid φ)) = Cardinal.continuum) ∨
     ∃ n, #(Quotient (isoSetoidOn φ n)) = Cardinal.continuum
@@ -240,7 +301,7 @@ theorem allCodedIsoClasses_dichotomy
       rw [mk_sum, Cardinal.lift_id, Cardinal.lift_id]
       apply add_le_of_le aleph0_le_continuum hA_le
       calc #(Σ n, Quotient (isoSetoidOn φ n))
-        ≤ ℵ₀ * Cardinal.continuum := hSigma_bound _ hFin_le aleph0_le_continuum
+        ≤ ℵ₀ * Cardinal.continuum := mk_sigma_isoSetoidOn_le φ _ hFin_le
         _ = Cardinal.continuum := by
           rw [Cardinal.aleph0_mul_eq aleph0_le_continuum]
     · -- Lower bound
@@ -268,7 +329,7 @@ theorem allCodedIsoClasses_dichotomy
     rw [mk_sum, Cardinal.lift_id, Cardinal.lift_id]
     apply add_le_of_le le_rfl hA_le
     calc #(Σ n, Quotient (isoSetoidOn φ n))
-      ≤ ℵ₀ * ℵ₀ := hSigma_bound _ hFin_le le_rfl
+      ≤ ℵ₀ * ℵ₀ := mk_sigma_isoSetoidOn_le φ _ hFin_le
       _ = ℵ₀ := Cardinal.aleph0_mul_aleph0
 
 /-! ### Bridge theorems: coded classes represent all countable models -/

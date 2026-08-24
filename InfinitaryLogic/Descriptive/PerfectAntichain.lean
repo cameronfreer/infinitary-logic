@@ -97,6 +97,34 @@ theorem HasCantorAntichainOn.mono (h : HasCantorAntichainOn r A) (hAB : A ⊆ B)
   obtain ⟨f, hcont, hmem, hineq⟩ := h
   exact ⟨f, hcont, fun x => hAB (hmem x), hineq⟩
 
+/-- **A Cantor antichain for a coarser relation is one for a finer relation.**
+
+`hrs` says `r` **refines** `s`: being `r`-related implies being `s`-related, so `r` cuts the space
+into the finer classes.  Separating points for the coarser `s` is therefore the *stronger*
+requirement, and it survives the passage to `r`.
+
+The direction is easy to reverse mentally, so concretely: with `r := isoSetoid φ` and
+`s := bfEquivSetoid φ α`, isomorphic models are back-and-forth equivalent, so a family that is
+pairwise BF-**in**equivalent is in particular pairwise non-isomorphic. -/
+theorem HasCantorAntichainOn.mono_relation {r s : Setoid X} (hrs : ∀ x y, r.r x y → s.r x y)
+    (h : HasCantorAntichainOn s A) : HasCantorAntichainOn r A := by
+  obtain ⟨f, hcont, hmem, hineq⟩ := h
+  exact ⟨f, hcont, hmem, fun x y hxy hr => hineq x y hxy (hrs _ _ hr)⟩
+
+/-- **A Cantor antichain on a subtype is one on the underlying set.**
+
+The subtype carries `r` pulled back along the inclusion, and it *is* the ambient set seen from
+inside, so the containment clause is vacuous there and becomes membership in `A` here.  Only
+continuity has to move, and it moves by composing with the inclusion.
+
+This is the return leg for anything proved on the model subtype — where a Polish structure is
+available — when the statement to be established is about the ambient space. -/
+theorem HasCantorAntichainOn.of_subtype
+    (h : HasCantorAntichainOn (r.comap (Subtype.val : ↥A → X)) (Set.univ : Set ↥A)) :
+    HasCantorAntichainOn r A := by
+  obtain ⟨f, hcont, -, hineq⟩ := h
+  exact ⟨fun x => (f x).1, continuous_subtype_val.comp hcont, fun x => (f x).2, hineq⟩
+
 omit [TopologicalSpace X] in
 /-- **A Cantor antichain survives coarsening the topology.**
 

@@ -138,8 +138,11 @@ private abbrev ambientTop (L : Language.{u, v}) [L.IsRelational]
     [Countable (Σ l, L.Relations l)] : TopologicalSpace (StructureSpace L) := inferInstance
 
 /-- The ambient half of the route: a Cantor antichain on the model class in the ambient topology
-gives a perfect set of pairwise non-isomorphic models. -/
-private theorem hasPerfectSet_of_ambient_cantorAntichain {φ : L.Sentenceω}
+gives a perfect set of pairwise non-isomorphic models.
+
+`StructureSpace L` is metrizable but carries no chosen metric, so the `T2Space` instance that
+`HasCantorAntichainOn.hasPerfectAntichainOn` needs is produced here rather than assumed. -/
+theorem Sentenceω.hasPerfectSet_of_ambient_cantorAntichain {φ : L.Sentenceω}
     (h : HasCantorAntichainOn (structureIsoSetoid L) (ModelsOf φ)) :
     φ.HasPerfectSetOfPairwiseNonisomorphicNatModels := by
   -- upgrading supplies a metric, hence `T2Space`, without changing the topology
@@ -152,7 +155,7 @@ theorem Sentenceω.hasPerfectSet_of_refined_cantorAntichain {φ : L.Sentenceω}
     {t' : TopologicalSpace (StructureSpace L)} (hle : t' ≤ ambientTop L)
     (h : @HasCantorAntichainOn _ t' (structureIsoSetoid L) (ModelsOf φ)) :
     φ.HasPerfectSetOfPairwiseNonisomorphicNatModels :=
-  hasPerfectSet_of_ambient_cantorAntichain (h.mono_topology hle)
+  Sentenceω.hasPerfectSet_of_ambient_cantorAntichain (h.mono_topology hle)
 
 /-- The refinement `modelsOf_isClopenable` produces is one the route above accepts, and it is
 still genuinely clopen: the conclusion keeps `IsClosed[t']` and `IsOpen[t']` alongside the

@@ -488,8 +488,42 @@ we have $\aleph_1 = 2^{\aleph_0}$, so a quotient of exactly $\aleph_1$ classes i
 compatible with a perfect antichain; under $\neg\mathsf{CH}$, exact $\aleph_1$
 does rule one out.  Separately, the cardinal interface forgets the witness:
 $\mathtt{SilverBurgessDichotomy}$ concludes with a cardinal disjunction and
-retains nothing from which a perfect set could be extracted, so the current
-cardinal interface cannot itself produce a perfect-set witness.
+retains nothing from which a perfect set could be extracted, so no theorem
+parameterized by it can produce a perfect-set witness.
+
+\section{Morley Counting with a Witness}
+
+The way past that obstruction is to bypass the cardinal interface entirely and
+apply the proved Polish-space core \texttt{silver\_core\_polish} directly.  The
+model class is a \emph{Borel} subset of the structure space, hence not Polish as
+a subtype, so a clopenable refinement is taken first, Silver runs there, and the
+Cantor antichain is carried back to the ambient space --- the pipeline factored
+as \texttt{silver\_countable\_or\_cantorAntichain}.  Only the Cantor form is
+coarsened, where continuity is the sole topological clause; perfectness is
+recovered ambiently afterwards, so nothing here asserts that perfectness
+survives coarsening, which it does not.
+
+\inputleannode{thm:morley-counting-coded-or-perfect}
+
+\inputleannode{thm:counting-fin-models-or-perfect}
+
+The two tiers differ only in the relation Silver is applied to.  At $\mathbb{N}$
+it is back-and-forth equivalence at a level $\alpha < \omegaone$ --- what the
+Scott stratification makes Borel --- and the antichain transfers to isomorphism,
+which refines it.  At $\operatorname{Fin} n$ isomorphism is itself Borel, a
+finite union of permutation graphs, so Silver applies to it directly.
+
+\inputleannode{thm:morley-counting-or-perfect}
+
+The finite-carrier alternative is not a formality: an infinite language can have
+continuum-many $\operatorname{Fin} n$-models and no $\mathbb{N}$-models at all,
+so a statement offering only an $\mathbb{N}$-tier perfect set would be false.
+Since a perfect antichain forces continuum-many classes, the cardinal form of
+Theorem~\ref{thm:morley-counting} is recovered as the corollary
+\texttt{morley\_counting\_or\_perfect\_cardinal}, with the upper bound supplied
+by the ambient space; the converse fails, which is the sense in which the
+perfect alternatives carry strictly more information.  The parameterized
+\texttt{morley\_counting} is retained unchanged.
 
 \chapter{Craig Interpolation}
 
