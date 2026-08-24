@@ -97,6 +97,20 @@ theorem HasCantorAntichainOn.mono (h : HasCantorAntichainOn r A) (hAB : A ⊆ B)
   obtain ⟨f, hcont, hmem, hineq⟩ := h
   exact ⟨f, hcont, fun x => hAB (hmem x), hineq⟩
 
+/-- **A Cantor antichain for a coarser relation is one for a finer relation.**
+
+`hrs` says `r` **refines** `s`: being `r`-related implies being `s`-related, so `r` cuts the space
+into the finer classes.  Separating points for the coarser `s` is therefore the *stronger*
+requirement, and it survives the passage to `r`.
+
+The direction is easy to reverse mentally, so concretely: with `r := isoSetoid φ` and
+`s := bfEquivSetoid φ α`, isomorphic models are back-and-forth equivalent, so a family that is
+pairwise BF-**in**equivalent is in particular pairwise non-isomorphic. -/
+theorem HasCantorAntichainOn.mono_relation {r s : Setoid X} (hrs : ∀ x y, r.r x y → s.r x y)
+    (h : HasCantorAntichainOn s A) : HasCantorAntichainOn r A := by
+  obtain ⟨f, hcont, hmem, hineq⟩ := h
+  exact ⟨f, hcont, hmem, fun x y hxy hr => hineq x y hxy (hrs _ _ hr)⟩
+
 omit [TopologicalSpace X] in
 /-- **A Cantor antichain survives coarsening the topology.**
 
