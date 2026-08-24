@@ -140,23 +140,106 @@ private theorem bfEquiv_at_height_implies_iso {φ : L.Sentenceω} {c₁ c₂ : �
     inferInstance inferInstance (α := α) hα hstab hBF).some⟩
 
 omit [L.IsRelational] in
-/-- The cardinality of StructureSpace L is at most continuum. -/
-private theorem mk_structureSpace_le_continuum :
-    #(StructureSpace L) ≤ Cardinal.continuum := by
-  -- StructureSpace L = RelQuery L → Bool, and RelQuery L is countable
-  -- #(X → Bool) = 2^(#X) ≤ 2^ℵ₀ = continuum when #X ≤ ℵ₀
-  unfold StructureSpace
-  -- Now the goal is about StructureSpaceOn L ℕ = RelQueryOn L ℕ → Bool
-  show #(RelQuery L → Bool) ≤ _
-  calc #(RelQuery L → Bool)
-      = Cardinal.lift.{v, 0} #Bool ^ Cardinal.lift.{0, v} #(RelQuery L) := Cardinal.mk_arrow _ _
-    _ = (2 : Cardinal) ^ Cardinal.lift.{0, v} #(RelQuery L) := by
+/-- **Every countable-carrier structure space has at most continuum-many points**: it is a
+`Bool`-valued function space on a countable index.
+
+Stated for an arbitrary countable carrier rather than for `ℕ` alone, since the finite tiers need
+exactly the same bound at `Fin n`. -/
+theorem mk_structureSpaceOn_le_continuum {α : Type} [Countable α] :
+    #(StructureSpaceOn L α) ≤ Cardinal.continuum := by
+  -- `#(X → Bool) = 2 ^ #X ≤ 2 ^ ℵ₀ = continuum` once `X` is countable
+  show #(RelQueryOn L α → Bool) ≤ _
+  calc #(RelQueryOn L α → Bool)
+      = Cardinal.lift.{v, 0} #Bool ^ Cardinal.lift.{0, v} #(RelQueryOn L α) :=
+        Cardinal.mk_arrow _ _
+    _ = (2 : Cardinal) ^ Cardinal.lift.{0, v} #(RelQueryOn L α) := by
         simp
     _ ≤ (2 : Cardinal) ^ ℵ₀ := by
         apply Cardinal.power_le_power_left (by norm_num : (2 : Cardinal) ≠ 0)
         rw [Cardinal.lift_le_aleph0]
         exact Cardinal.mk_le_aleph0
     _ = Cardinal.continuum := Cardinal.two_power_aleph0
+
+omit [L.IsRelational] in
+/-- The cardinality of `StructureSpace L` is at most continuum. -/
+theorem mk_structureSpace_le_continuum :
+    #(StructureSpace L) ≤ Cardinal.continuum := mk_structureSpaceOn_le_continuum
+
+/-- **The Scott-height stratification bound.**  If every back-and-forth level below `ω₁` has only
+countably many classes, then isomorphism has at most `ℵ₁` classes.
+
+Extracted from `morley_counting_coded` so that the witness-bearing route can reuse it: that route
+reaches the same hypothesis by a different case split, and the stratification argument itself is
+indifferent to how the countability of each level was established. -/
+theorem mk_isoSetoid_quotient_le_aleph_one (φ : L.Sentenceω)
+    (hle : ∀ α, α < Ordinal.omega 1 → #(Quotient (bfEquivSetoid φ α)) ≤ ℵ₀) :
+    #(Quotient (isoSetoid φ)) ≤ Cardinal.aleph 1 := by
+  -- For each α < ω₁, iso classes with height = α inject into BFEquiv_α classes (≤ ℵ₀)
+  -- Total over ω₁ strata: ≤ ℵ₁
+  set Q := Quotient (isoSetoid φ)
+  -- Fiber bound: for each α < ω₁, #{iso classes with height = α} ≤ ℵ₀
+  have hfiber_le : ∀ α, α < Ordinal.omega 1 →
+      #{ q : Q // isoClassHeight q = α } ≤ ℵ₀ := by
+    intro α hα
+    have hinj : Function.Injective (fun (q : { q : Q // isoClassHeight q = α }) =>
+        Quotient.map id (fun a b h => isoSetoid_refines_bfEquivSetoid φ α h) q.1 :
+        { q : Q // isoClassHeight q = α } → Quotient (bfEquivSetoid φ α)) := by
+      intro ⟨q₁, hq₁⟩ ⟨q₂, hq₂⟩ heq
+      ext
+      induction q₁ using Quotient.inductionOn with | _ c₁ =>
+      induction q₂ using Quotient.inductionOn with | _ c₂ =>
+      apply Quotient.sound
+      have hBF : (bfEquivSetoid φ α).r c₁ c₂ := Quotient.exact heq
+      exact bfEquiv_at_height_implies_iso hα (hq₁ ▸ le_rfl) hBF
+    calc #{ q : Q // isoClassHeight q = α }
+        ≤ #(Quotient (bfEquivSetoid φ α)) := Cardinal.mk_le_of_injective hinj
+      _ ≤ ℵ₀ := hle α hα
+  -- Now bound #Q ≤ ℵ₁ using the fiber bound.
+  -- Strategy: use Cardinal.mk_subtype_le_of_countable_eventually_mem
+  -- or directly show the lifted inequality.
+  -- We use: lift #Q ≤ lift #(Iio ω₁) * ⨆ i, lift #(fiber i)
+  -- via mk_iUnion_le_lift for the fibers indexed by Iio ω₁.
+  -- Then bound: lift #(Iio ω₁) ≤ aleph 1, sup (lift #(fiber i)) ≤ ℵ₀.
+  -- aleph 1 * ℵ₀ = aleph 1. Then use lift_le to get #Q ≤ aleph 1.
+  -- Define fibers
+  set fibers : Set.Iio (Ordinal.omega 1 : Ordinal.{0}) → Set Q :=
+    fun ⟨α, _⟩ => {q | isoClassHeight q = α}
+  -- Q = ⋃ fibers
+  have hQ_eq : (Set.univ : Set Q) ⊆ ⋃ (α : Set.Iio (Ordinal.omega 1 : Ordinal.{0})),
+      fibers α := by
+    intro q _
+    exact Set.mem_iUnion.mpr ⟨⟨isoClassHeight q, isoClassHeight_lt_omega1 q⟩, rfl⟩
+  have hQ_le : #Q ≤ #(⋃ (α : Set.Iio (Ordinal.omega 1 : Ordinal.{0})), fibers α) := by
+    rw [← Cardinal.mk_univ]
+    exact Cardinal.mk_le_mk_of_subset hQ_eq
+  -- Bound the union using lift
+  have hbound := Cardinal.mk_iUnion_le_lift (α := Q)
+    (ι := Set.Iio (Ordinal.omega 1 : Ordinal.{0})) fibers
+  -- hbound : lift #(⋃ ...) ≤ lift #(Iio ω₁) * ⨆ i, lift #(fiber i)
+  -- We want: #Q ≤ aleph 1 (in Cardinal.{v})
+  -- From hbound, the RHS is in Cardinal.{max 1 v}.
+  -- We need: Cardinal.lift.{1,v} (#Q) ≤ Cardinal.aleph 1 (in Cardinal.{max 1 v})
+  suffices h : Cardinal.lift.{1, v} #Q ≤ Cardinal.aleph 1 by
+    rwa [Cardinal.lift_le_aleph_one] at h
+  calc Cardinal.lift.{1, v} #Q
+      ≤ Cardinal.lift.{1, v} #(⋃ (α : Set.Iio (Ordinal.omega 1 : Ordinal.{0})), fibers α) :=
+        Cardinal.lift_le.mpr hQ_le
+    _ ≤ Cardinal.lift.{v, 1} #(Set.Iio (Ordinal.omega 1 : Ordinal.{0})) *
+          ⨆ (i : Set.Iio (Ordinal.omega 1 : Ordinal.{0})),
+            Cardinal.lift.{1, v} #↑(fibers i) := hbound
+    _ ≤ Cardinal.aleph 1 * ℵ₀ := by
+        apply mul_le_mul'
+        · -- lift.{v,1} #(Iio ω₁) = aleph 1
+          rw [Cardinal.mk_Iio_ordinal, Cardinal.lift_lift, Ordinal.card_omega,
+            Cardinal.lift_aleph, Ordinal.lift_one]
+        · -- ⨆ i, lift #(fiber i) ≤ ℵ₀
+          haveI : Nonempty (Set.Iio (Ordinal.omega 1 : Ordinal.{0})) :=
+            ⟨⟨0, Ordinal.omega_pos 1⟩⟩
+          apply ciSup_le
+          intro ⟨α, hα⟩
+          rw [Cardinal.lift_le_aleph0]
+          exact hfiber_le α hα
+    _ = Cardinal.aleph 1 := Cardinal.mul_aleph0_eq (Cardinal.aleph0_le_aleph 1)
 
 /-- Morley counting for ℕ-coded models: ≤ ℵ₁ or = 2^ℵ₀. -/
 theorem morley_counting_coded (silver : SilverBurgessDichotomy.{v}) (φ : L.Sentenceω) :
@@ -180,79 +263,8 @@ theorem morley_counting_coded (silver : SilverBurgessDichotomy.{v}) (φ : L.Sent
   · -- Case 2: All BFEquiv_α have ≤ ℵ₀ classes → iso has ≤ ℵ₁ classes
     left
     push Not at hc
-    -- Every BFEquiv_α with α < ω₁ has ≤ ℵ₀ classes
-    have hle : ∀ α, α < Ordinal.omega 1 →
-        #(Quotient (bfEquivSetoid φ α)) ≤ ℵ₀ := by
-      intro α hα
-      rcases bfEquiv_classes_dichotomy silver φ α hα with h | h
-      · exact h
-      · exact absurd h (hc α hα)
-    -- For each α < ω₁, iso classes with height = α inject into BFEquiv_α classes (≤ ℵ₀)
-    -- Total over ω₁ strata: ≤ ℵ₁
-    set Q := Quotient (isoSetoid φ)
-    -- Fiber bound: for each α < ω₁, #{iso classes with height = α} ≤ ℵ₀
-    have hfiber_le : ∀ α, α < Ordinal.omega 1 →
-        #{ q : Q // isoClassHeight q = α } ≤ ℵ₀ := by
-      intro α hα
-      have hinj : Function.Injective (fun (q : { q : Q // isoClassHeight q = α }) =>
-          Quotient.map id (fun a b h => isoSetoid_refines_bfEquivSetoid φ α h) q.1 :
-          { q : Q // isoClassHeight q = α } → Quotient (bfEquivSetoid φ α)) := by
-        intro ⟨q₁, hq₁⟩ ⟨q₂, hq₂⟩ heq
-        ext
-        induction q₁ using Quotient.inductionOn with | _ c₁ =>
-        induction q₂ using Quotient.inductionOn with | _ c₂ =>
-        apply Quotient.sound
-        have hBF : (bfEquivSetoid φ α).r c₁ c₂ := Quotient.exact heq
-        exact bfEquiv_at_height_implies_iso hα (hq₁ ▸ le_rfl) hBF
-      calc #{ q : Q // isoClassHeight q = α }
-          ≤ #(Quotient (bfEquivSetoid φ α)) := Cardinal.mk_le_of_injective hinj
-        _ ≤ ℵ₀ := hle α hα
-    -- Now bound #Q ≤ ℵ₁ using the fiber bound.
-    -- Strategy: use Cardinal.mk_subtype_le_of_countable_eventually_mem
-    -- or directly show the lifted inequality.
-    -- We use: lift #Q ≤ lift #(Iio ω₁) * ⨆ i, lift #(fiber i)
-    -- via mk_iUnion_le_lift for the fibers indexed by Iio ω₁.
-    -- Then bound: lift #(Iio ω₁) ≤ aleph 1, sup (lift #(fiber i)) ≤ ℵ₀.
-    -- aleph 1 * ℵ₀ = aleph 1. Then use lift_le to get #Q ≤ aleph 1.
-    -- Define fibers
-    set fibers : Set.Iio (Ordinal.omega 1 : Ordinal.{0}) → Set Q :=
-      fun ⟨α, _⟩ => {q | isoClassHeight q = α}
-    -- Q = ⋃ fibers
-    have hQ_eq : (Set.univ : Set Q) ⊆ ⋃ (α : Set.Iio (Ordinal.omega 1 : Ordinal.{0})),
-        fibers α := by
-      intro q _
-      exact Set.mem_iUnion.mpr ⟨⟨isoClassHeight q, isoClassHeight_lt_omega1 q⟩, rfl⟩
-    have hQ_le : #Q ≤ #(⋃ (α : Set.Iio (Ordinal.omega 1 : Ordinal.{0})), fibers α) := by
-      rw [← Cardinal.mk_univ]
-      exact Cardinal.mk_le_mk_of_subset hQ_eq
-    -- Bound the union using lift
-    have hbound := Cardinal.mk_iUnion_le_lift (α := Q)
-      (ι := Set.Iio (Ordinal.omega 1 : Ordinal.{0})) fibers
-    -- hbound : lift #(⋃ ...) ≤ lift #(Iio ω₁) * ⨆ i, lift #(fiber i)
-    -- We want: #Q ≤ aleph 1 (in Cardinal.{v})
-    -- From hbound, the RHS is in Cardinal.{max 1 v}.
-    -- We need: Cardinal.lift.{1,v} (#Q) ≤ Cardinal.aleph 1 (in Cardinal.{max 1 v})
-    suffices h : Cardinal.lift.{1, v} #Q ≤ Cardinal.aleph 1 by
-      rwa [Cardinal.lift_le_aleph_one] at h
-    calc Cardinal.lift.{1, v} #Q
-        ≤ Cardinal.lift.{1, v} #(⋃ (α : Set.Iio (Ordinal.omega 1 : Ordinal.{0})), fibers α) :=
-          Cardinal.lift_le.mpr hQ_le
-      _ ≤ Cardinal.lift.{v, 1} #(Set.Iio (Ordinal.omega 1 : Ordinal.{0})) *
-            ⨆ (i : Set.Iio (Ordinal.omega 1 : Ordinal.{0})),
-              Cardinal.lift.{1, v} #↑(fibers i) := hbound
-      _ ≤ Cardinal.aleph 1 * ℵ₀ := by
-          apply mul_le_mul'
-          · -- lift.{v,1} #(Iio ω₁) = aleph 1
-            rw [Cardinal.mk_Iio_ordinal, Cardinal.lift_lift, Ordinal.card_omega,
-              Cardinal.lift_aleph, Ordinal.lift_one]
-          · -- ⨆ i, lift #(fiber i) ≤ ℵ₀
-            haveI : Nonempty (Set.Iio (Ordinal.omega 1 : Ordinal.{0})) :=
-              ⟨⟨0, Ordinal.omega_pos 1⟩⟩
-            apply ciSup_le
-            intro ⟨α, hα⟩
-            rw [Cardinal.lift_le_aleph0]
-            exact hfiber_le α hα
-      _ = Cardinal.aleph 1 := Cardinal.mul_aleph0_eq (Cardinal.aleph0_le_aleph 1)
+    exact mk_isoSetoid_quotient_le_aleph_one φ fun α hα =>
+      (bfEquiv_classes_dichotomy silver φ α hα).resolve_right (hc α hα)
 
 /-! ### Full Morley counting theorem -/
 
@@ -281,21 +293,6 @@ theorem morley_counting (silver : SilverBurgessDichotomy.{v}) (φ : L.Sentenceω
   have hEmbed : ∀ n₀, #(Quotient (isoSetoidOn φ n₀)) ≤
       #(Σ n, Quotient (isoSetoidOn φ n)) := fun n₀ =>
     ⟨⟨fun x => ⟨n₀, x⟩, fun a b h => eq_of_heq (Sigma.mk.inj h).2⟩⟩
-  -- Sigma bound
-  have hSigma_bound : ∀ (bound : Cardinal),
-      (∀ n, #(Quotient (isoSetoidOn φ n)) ≤ bound) → ℵ₀ ≤ bound →
-      #(Σ n, Quotient (isoSetoidOn φ n)) ≤ ℵ₀ * bound := by
-    intro bound hle hge
-    calc #(Σ n, Quotient (isoSetoidOn φ n))
-      = Cardinal.sum (fun n => #(Quotient (isoSetoidOn φ n))) := Cardinal.mk_sigma _
-      _ ≤ Cardinal.lift.{v, 0} #ℕ * ⨆ i, Cardinal.lift.{0, v} (#(Quotient (isoSetoidOn φ i))) :=
-        Cardinal.sum_le_lift_mk_mul_iSup_lift _
-      _ = ℵ₀ * ⨆ i, #(Quotient (isoSetoidOn φ i)) := by
-        rw [Cardinal.mk_nat, Cardinal.lift_aleph0]
-        congr 1; apply iSup_congr; intro i; exact Cardinal.lift_uzero _
-      _ ≤ ℵ₀ * bound := by
-        apply mul_le_mul_right
-        exact ciSup_le fun n => hle n
   -- Case split: does any tier have continuum-many classes?
   by_cases hc : (#(Quotient (isoSetoid φ)) = Cardinal.continuum) ∨
     ∃ n, #(Quotient (isoSetoidOn φ n)) = Cardinal.continuum
@@ -312,7 +309,7 @@ theorem morley_counting (silver : SilverBurgessDichotomy.{v}) (φ : L.Sentenceω
       rw [Cardinal.mk_sum, Cardinal.lift_id, Cardinal.lift_id]
       apply Cardinal.add_le_of_le Cardinal.aleph0_le_continuum hA_le
       calc #(Σ n, Quotient (isoSetoidOn φ n))
-        ≤ ℵ₀ * Cardinal.continuum := hSigma_bound _ hFin_le Cardinal.aleph0_le_continuum
+        ≤ ℵ₀ * Cardinal.continuum := mk_sigma_isoSetoidOn_le φ _ hFin_le
         _ = Cardinal.continuum := Cardinal.aleph0_mul_eq Cardinal.aleph0_le_continuum
     · -- Lower bound
       rcases hc with hcA | ⟨n₀, hn₀⟩
@@ -339,7 +336,7 @@ theorem morley_counting (silver : SilverBurgessDichotomy.{v}) (φ : L.Sentenceω
     rw [Cardinal.mk_sum, Cardinal.lift_id, Cardinal.lift_id]
     apply Cardinal.add_le_of_le (Cardinal.aleph0_le_aleph 1) hA_le
     calc #(Σ n, Quotient (isoSetoidOn φ n))
-      ≤ ℵ₀ * ℵ₀ := hSigma_bound _ hFin_le le_rfl
+      ≤ ℵ₀ * ℵ₀ := mk_sigma_isoSetoidOn_le φ _ hFin_le
       _ = ℵ₀ := Cardinal.aleph0_mul_aleph0
       _ ≤ Cardinal.aleph 1 := Cardinal.aleph0_le_aleph 1
 

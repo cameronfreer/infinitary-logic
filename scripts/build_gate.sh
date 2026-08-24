@@ -5,7 +5,11 @@
 # pipe tail must not certify a failed build (incident: commit 27145eb).
 set -euo pipefail
 cd "$(dirname "$0")/.."
-targets="${@:-InfinitaryLogic InfinitaryLogicWIP}"
+# Default targets must match .github/workflows/build.yml, or the gate passes on a
+# strictly smaller module set than CI checks. `InfinitaryLogic` alone does NOT reach
+# `InfinitaryLogic/Conditional/`; only `Everything` does (incident: a new Conditional
+# module compiled nowhere while this gate reported OK).
+targets="${@:-InfinitaryLogic InfinitaryLogic.Everything InfinitaryLogicWIP}"
 echo "build_gate: lake build $targets"
 lake build $targets
 python3 scripts/check_sorry_boundary.py

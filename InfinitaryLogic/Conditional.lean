@@ -3,6 +3,7 @@ import InfinitaryLogic.Conditional.MorleyHanfSchemaDischarge
 import InfinitaryLogic.Conditional.SilverBurgess
 import InfinitaryLogic.Conditional.GandyHarrington
 import InfinitaryLogic.Conditional.SilverAntichain
+import InfinitaryLogic.Conditional.MorleyPerfect
 import InfinitaryLogic.Conditional.SilverCategoryRoute
 
 /-!
@@ -40,6 +41,9 @@ intermediates and historical statement shapes.
 - `SilverAntichain.lean`: `silver_core_polish` repackaged for a Borel *subset* of a
   Polish space, returning a Cantor antichain in the **ambient** space rather than
   in the refinement the subtype needed to be Polish.
+- `MorleyPerfect.lean`: the tiered **`morley_counting_or_perfect`** — Morley counting
+  with a perfect set of pairwise non-isomorphic models in place of the bare cardinal
+  equation, at the `ℕ` and `Fin n` tiers, with the cardinal form as a corollary.
 
 There are no sorries anywhere in the project; the historical sorry-bearing
 `Combinatorics/ErdosRado.lean` exploration is preserved on the
