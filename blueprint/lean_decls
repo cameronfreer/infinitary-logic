@@ -63,6 +63,7 @@ FirstOrder.Language.modelsOf_isClopenable
 FirstOrder.Language.modelsOf_standardBorel
 FirstOrder.Language.SilverBurgessDichotomy
 FirstOrder.Language.silverBurgessDichotomy
+FirstOrder.Language.structureIsoSetoid
 FirstOrder.Language.isoSetoid
 FirstOrder.Language.counting_coded_models_dichotomy
 FirstOrder.Language.isoSetoidOn_measurableSet
@@ -70,12 +71,14 @@ FirstOrder.Language.allCodedIsoClasses_dichotomy
 FirstOrder.Language.morley_counting
 HasPerfectAntichainOn
 HasCantorAntichainOn
-HasCantorAntichainOn.hasPerfectAntichainOn
 IsThinOn
-FirstOrder.Language.structureIsoSetoid
 FirstOrder.Language.Sentenceω.IsThinOnNatModels
+HasCantorAntichainOn.hasPerfectAntichainOn
 ThinRankAnalysis
 ThinRankAnalysis.isThinOn
+FirstOrder.Language.morley_counting_coded_or_perfect
+FirstOrder.Language.counting_fin_models_countable_or_perfect
+FirstOrder.Language.morley_counting_or_perfect
 FirstOrder.Language.craig_interpolation
 FirstOrder.Language.craig_interpolation_relational
 FirstOrder.Language.lyndon_interpolation
@@ -85,6 +88,3 @@ FirstOrder.Language.exists_model_relPreserving
 FirstOrder.Language.wellOrder_type_boundedness
 FirstOrder.Language.wellOrdering_undefinable
 FirstOrder.Language.wellOrderClass_not_measurableSet
-FirstOrder.Language.morley_counting_coded_or_perfect
-FirstOrder.Language.counting_fin_models_countable_or_perfect
-FirstOrder.Language.morley_counting_or_perfect
