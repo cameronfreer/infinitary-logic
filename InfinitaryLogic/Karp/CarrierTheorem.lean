@@ -277,7 +277,7 @@ theorem karp_theorem_on_sum :
     Nonempty (PotentialIso L M N) ↔ InfEquivAt L (M ⊕ N) M N :=
   karp_theorem_at (.sumInl M N) (.sumInr M N)
 
-/-- **Karp's theorem** (KK04 Theorem 1.2.1): potential isomorphism is equivalent to
+/-- **Karp's theorem** (Keisler–Knight 2004, Theorem 1.2.1): potential isomorphism is equivalent to
 agreement on all `L∞ω` sentences branching over carriers in the structures' universe.
 
 Forward instantiates the generic direction at each `ι`; backward specializes to the single
