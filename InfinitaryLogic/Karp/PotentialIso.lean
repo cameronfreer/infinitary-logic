@@ -253,8 +253,8 @@ theorem PotentialIso.countable_toEquiv
     · intro h; convert hrel.symm.mp (by convert h)
     · intro h; convert hrel.symm.mpr (by convert h)
   rw [not_isEmpty_iff] at hM
-  haveI : Nonempty M := hM
-  haveI : Nonempty N := ⟨(P.forth _ P.empty_mem (Classical.arbitrary M)).choose⟩
+  have : Nonempty M := hM
+  have : Nonempty N := ⟨(P.forth _ P.empty_mem (Classical.arbitrary M)).choose⟩
   -- Get enumerations
   obtain ⟨enumM, hM_surj⟩ := exists_surjective_nat M
   obtain ⟨enumN, hN_surj⟩ := exists_surjective_nat N

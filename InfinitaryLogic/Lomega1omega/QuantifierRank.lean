@@ -150,7 +150,7 @@ which changes the universe of the supremum. We need `Small.{0} ι` (from `Encoda
 for `Ordinal.le_iSup` to work at `Ordinal.{0}`. -/
 theorem qrank_einf {ι : Type*} [Encodable ι] (φs : ι → L.BoundedFormulaω α n) :
     (einf φs).qrank = ⨆ i, (φs i).qrank := by
-  haveI : Small.{0} ι := Countable.toSmall ι
+  have : Small.{0} ι := Countable.toSmall ι
   simp only [einf, qrank_iInf]
   apply le_antisymm
   · apply Ordinal.iSup_le; intro k
@@ -166,7 +166,7 @@ theorem qrank_einf {ι : Type*} [Encodable ι] (φs : ι → L.BoundedFormulaω 
 /-- The quantifier rank of esup is the sup of the family's ranks. -/
 theorem qrank_esup {ι : Type*} [Encodable ι] (φs : ι → L.BoundedFormulaω α n) :
     (esup φs).qrank = ⨆ i, (φs i).qrank := by
-  haveI : Small.{0} ι := Countable.toSmall ι
+  have : Small.{0} ι := Countable.toSmall ι
   simp only [esup, qrank_iSup]
   apply le_antisymm
   · apply Ordinal.iSup_le; intro k

@@ -47,24 +47,24 @@ theorem exists_small_model_of_hasArbLargeModels_countable_symbols {L' : Language
   -- the highly order-transitive skeleton of size κ
   set W := highlyTransitiveOrderAt κ hκ with hW
   set J := W.Carrier with hJ
-  letI : LinearOrder J := W.linearOrder
-  haveI : Infinite J := by
+  let : LinearOrder J := W.linearOrder
+  have : Infinite J := by
     rw [Cardinal.infinite_iff, W.card_eq]
     exact hκ
   -- the schema term source over the Morley seed
   obtain ⟨instLO, instWF⟩ := exists_wellFoundedLT M
-  letI : LinearOrder M := instLO
-  haveI : WellFoundedLT M := instWF
-  haveI : Nonempty M := Cardinal.mk_ne_zero_iff.mp
+  let : LinearOrder M := instLO
+  have : WellFoundedLT M := instWF
+  have : Nonempty M := Cardinal.mk_ne_zero_iff.mp
     (((lt_of_lt_of_le Cardinal.aleph0_pos (Cardinal.aleph0_le_beth _)).trans_le hMsize).ne')
   have hM : Cardinal.beth (Ordinal.omega 1) ≤ Cardinal.mk M := hMsize
   set s₀ := LocalStage.ofSeq L' (morleySeed φ) with hs₀
-  letI : (localColim s₀).Structure M := localColimStructure s₀
-  letI : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+  let : (localColim s₀).Structure M := localColimStructure s₀
+  let : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
     schemaTermStructure hM
-  letI : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+  let : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
     (lhomWithConstants (localColim s₀) ℕ).reduct _
-  letI : L'.Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+  let : L'.Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
     (LlocalInclusion s₀ 0).reduct _
   -- the schema context over J, with carrier identity kept
   set ctx := schemaTermLocalEMContext (s₀ := s₀) (M := M) hM J with hctx
@@ -75,15 +75,15 @@ theorem exists_small_model_of_hasArbLargeModels_countable_symbols {L' : Language
     intro i j hij
     by_contra hne
     exact schemaSeq_pairwise_ne (s₀ := s₀) (M := M) hM hne hij
-  haveI : Countable (Σ l, (localColim s₀).Functions l) := localColim_fun_countable s₀
+  have : Countable (Σ l, (localColim s₀).Functions l) := localColim_fun_countable s₀
   -- the carrier, its structures, and the three conclusions
-  letI : (localColim s₀)[[J]].Structure ctx.Carrier := ctx.structure
-  letI : (Llocal s₀ 0)[[J]].Structure ctx.Carrier :=
+  let : (localColim s₀)[[J]].Structure ctx.Carrier := ctx.structure
+  let : (Llocal s₀ 0)[[J]].Structure ctx.Carrier :=
     ((LlocalInclusion s₀ 0).addConstants J).reduct ctx.Carrier
-  letI instColim : (localColim s₀).Structure ctx.Carrier := ctx.structureBase
-  letI instL' : (Llocal s₀ 0).Structure ctx.Carrier :=
+  let instColim : (localColim s₀).Structure ctx.Carrier := ctx.structureBase
+  let instL' : (Llocal s₀ 0).Structure ctx.Carrier :=
     ((Llocal s₀ 0).lhomWithConstants J).reduct ctx.Carrier
-  haveI hexp : (LlocalInclusion s₀ 0).IsExpansionOn ctx.Carrier := by
+  have hexp : (LlocalInclusion s₀ 0).IsExpansionOn ctx.Carrier := by
     constructor
     · intro n f x
       rfl

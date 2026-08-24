@@ -131,7 +131,7 @@ theorem ordIso_ordToType_of_card_ge {c : Cardinal.{0}}
     {S : Set c.ord.ToType}
     (hS : Cardinal.mk S ≥ c) :
     Nonempty (S ≃o c.ord.ToType) := by
-  haveI : IsWellOrder S (· < ·) := inferInstance
+  have : IsWellOrder S (· < ·) := inferInstance
   set β : Ordinal.{0} := @Ordinal.type S (· < ·) _ with hβ
   -- The inclusion `S ↪o c.ord.ToType`.
   let incl : S ↪o c.ord.ToType := OrderEmbedding.subtype _
@@ -170,7 +170,7 @@ lemma initialSegOfLe_compose
     (initialSegOfLe h_βγ).toOrderEmbedding
         ((initialSegOfLe h_αβ).toOrderEmbedding x) =
       (initialSegOfLe (h_αβ.trans h_βγ)).toOrderEmbedding x := by
-  haveI : IsWellOrder γ.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder γ.ToType (· < ·) := isWellOrder_lt
   rw [InitialSeg.toOrderEmbedding_apply, InitialSeg.toOrderEmbedding_apply,
       InitialSeg.toOrderEmbedding_apply,
       ← InitialSeg.trans_apply (initialSegOfLe h_αβ)
@@ -417,7 +417,7 @@ noncomputable def ehmrChosen (cR : (Fin 2 ↪o Source κ) → C)
 termination_by β
 decreasing_by
   all_goals
-    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    have : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
     have hh := Ordinal.typein_lt_type (· < · : β.ToType → β.ToType → Prop) x
     rwa [Ordinal.type_toType] at hh
 
@@ -545,7 +545,7 @@ noncomputable def yRep (cR : (Fin 2 ↪o Source κ) → C) (y : Source κ)
 termination_by γ
 decreasing_by
   all_goals
-    haveI : IsWellOrder γ.ToType (· < ·) := isWellOrder_lt
+    have : IsWellOrder γ.ToType (· < ·) := isWellOrder_lt
     exact lt_of_lt_of_eq (Ordinal.typein_lt_type _ _) (Ordinal.type_toType γ)
 
 /-- The canonical `y`-path node of length `β` (a *plain* def over `yRep`): at position
@@ -573,8 +573,8 @@ theorem yNode_restrict (cR : (Fin 2 ↪o Source κ) → C) (y : Source κ)
     {β δ : Ordinal.{0}} (hδ : δ ≤ β) :
     (yNode cR y β).restrict hδ = yNode cR y δ := by
   classical
-  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
-  haveI : IsWellOrder δ.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder δ.ToType (· < ·) := isWellOrder_lt
   funext x'
   have htx : Ordinal.typein (· < ·) ((initialSegOfLe hδ).toOrderEmbedding x')
       = Ordinal.typein (· < ·) x' := Ordinal.typein_apply (initialSegOfLe hδ) x'
@@ -600,7 +600,7 @@ theorem yNode_mem_of (cR : (Fin 2 ↪o Source κ) → C) (y : Source κ)
     {β : Ordinal.{0}} (hbelow : ∀ δ : Ordinal.{0}, δ < β → yRep cR y δ < y) :
     y ∈ ehmrS cR (yNode cR y β) := by
   classical
-  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
   intro x
   have hrep : ehmrRep cR (yNode cR y β) x = yRep cR y (Ordinal.typein (· < ·) x) :=
     ehmrRep_yNode cR y x
@@ -621,7 +621,7 @@ theorem yRep_strictMono (cR : (Fin 2 ↪o Source κ) → C) (y : Source κ)
     (hlive : ∀ δ : Ordinal.{0}, δ < γ₂ → yRep cR y δ < y) :
     yRep cR y γ₁ < yRep cR y γ₂ := by
   classical
-  haveI : IsWellOrder γ₂.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder γ₂.ToType (· < ·) := isWellOrder_lt
   have hlive2 : ehmrLive cR (yNode cR y γ₂) := ⟨y, yNode_mem_of cR y hlive⟩
   have hγ₁ : γ₁ < Ordinal.type (· < · : γ₂.ToType → γ₂.ToType → Prop) := by
     rw [Ordinal.type_toType]; exact h12
@@ -641,7 +641,7 @@ theorem exists_yRep_ge (cR : (Fin 2 ↪o Source κ) → C) (y : Source κ) :
   have hexists : ∃ γ : Ordinal.{0}, y ≤ yRep cR y γ := by
     by_contra hcon
     push Not at hcon
-    haveI : IsWellOrder (Source κ) (· < ·) := isWellOrder_lt
+    have : IsWellOrder (Source κ) (· < ·) := isWellOrder_lt
     have hmono : StrictMono (yRep cR y) := fun a b hab =>
       yRep_strictMono cR y hab (fun δ _ => hcon δ)
     have hmono_g : StrictMono (fun γ => Ordinal.typein (· < ·) (yRep cR y γ)) :=
@@ -694,9 +694,9 @@ theorem EHMRNodeAt.restrict_trans {β : Ordinal.{0}} (h : EHMRNodeAt C β)
     {δ ε : Ordinal.{0}} (hδ : δ ≤ β) (hε : ε ≤ δ) :
     (h.restrict hδ).restrict hε = h.restrict (hε.trans hδ) := by
   classical
-  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
-  haveI : IsWellOrder δ.ToType (· < ·) := isWellOrder_lt
-  haveI : IsWellOrder ε.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder δ.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder ε.ToType (· < ·) := isWellOrder_lt
   funext z
   show h ((initialSegOfLe hδ).toOrderEmbedding
         ((initialSegOfLe hε).toOrderEmbedding z))
@@ -715,8 +715,8 @@ theorem ehmrRep_restrict (cR : (Fin 2 ↪o Source κ) → C) {β : Ordinal.{0}}
     ehmrRep cR (h.restrict hδ) x =
       ehmrRep cR h ((initialSegOfLe hδ).toOrderEmbedding x) := by
   classical
-  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
-  haveI : IsWellOrder δ.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder δ.ToType (· < ·) := isWellOrder_lt
   set lx := (initialSegOfLe hδ).toOrderEmbedding x with hlx_def
   have htx : Ordinal.typein (· < ·) lx = Ordinal.typein (· < ·) x := by
     rw [hlx_def]; exact Ordinal.typein_apply (initialSegOfLe hδ) x
@@ -736,8 +736,8 @@ theorem ehmrLive_restrict (cR : (Fin 2 ↪o Source κ) → C) {β : Ordinal.{0}}
     {h : EHMRNodeAt C β} (hlive : ehmrLive cR h) {δ : Ordinal.{0}} (hδ : δ ≤ β) :
     ehmrLive cR (h.restrict hδ) := by
   classical
-  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
-  haveI : IsWellOrder δ.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder δ.ToType (· < ·) := isWellOrder_lt
   obtain ⟨y, hy⟩ := hlive
   refine ⟨y, ?_⟩
   intro x
@@ -759,8 +759,8 @@ theorem ehmrRep_strictMono (cR : (Fin 2 ↪o Source κ) → C) {β : Ordinal.{0}
     {h : EHMRNodeAt C β} (hlive : ehmrLive cR h) {x₁ x₂ : β.ToType} (hx : x₁ < x₂) :
     ehmrRep cR h x₁ < ehmrRep cR h x₂ := by
   classical
-  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
-  haveI : IsWellOrder (Ordinal.typein (· < · : β.ToType → β.ToType → Prop) x₂).ToType (· < ·) :=
+  have : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder (Ordinal.typein (· < · : β.ToType → β.ToType → Prop) x₂).ToType (· < ·) :=
     isWellOrder_lt
   have hx₂lt : Ordinal.typein (· < ·) x₂ < β :=
     lt_of_lt_of_eq (Ordinal.typein_lt_type (· < ·) x₂) (Ordinal.type_toType β)
@@ -790,8 +790,8 @@ theorem ehmr_fact8 (cR : (Fin 2 ↪o Source κ) → C) {β : Ordinal.{0}}
     {h : EHMRNodeAt C β} (hlive : ehmrLive cR h) {x₁ x₂ : β.ToType} (hx : x₁ < x₂) :
     cR (pairEmbed (ehmrRep_strictMono cR hlive hx)) = h x₁ := by
   classical
-  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
-  haveI : IsWellOrder (Ordinal.typein (· < · : β.ToType → β.ToType → Prop) x₂).ToType (· < ·) :=
+  have : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder (Ordinal.typein (· < · : β.ToType → β.ToType → Prop) x₂).ToType (· < ·) :=
     isWellOrder_lt
   have hx₂lt : Ordinal.typein (· < ·) x₂ < β :=
     lt_of_lt_of_eq (Ordinal.typein_lt_type (· < ·) x₂) (Ordinal.type_toType β)
@@ -844,7 +844,7 @@ theorem ehmrBranchPos_strictMono {β : Ordinal.{0}} (hβ : (Order.succ κ).ord �
     {β' γ' : Ordinal.{0}} (hβ' : β' < (Order.succ κ).ord)
     (hγ' : γ' < (Order.succ κ).ord) (h' : β' < γ') :
     ehmrBranchPos hβ β' hβ' < ehmrBranchPos hβ γ' hγ' := by
-  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
   show Ordinal.enum (· < ·) ⟨β', _⟩ < Ordinal.enum (· < ·) ⟨γ', _⟩
   exact Ordinal.enum_lt_enum.mpr h'
 
@@ -877,7 +877,7 @@ theorem exists_live_node_ge [Nonempty C] (hκ : Cardinal.aleph0 ≤ κ)
   classical
   by_contra hcon
   push Not at hcon
-  haveI : IsWellOrder (Order.succ κ).ord.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder (Order.succ κ).ord.ToType (· < ·) := isWellOrder_lt
   -- The Type-0 index of live nodes of length `< (succ κ).ord`.
   have hlower : Order.succ ((2 : Cardinal.{0}) ^ κ) ≤
       Cardinal.mk (Σ b : (Order.succ κ).ord.ToType,
@@ -956,7 +956,7 @@ theorem exists_coherentMajorityBranch_of_ehmrBranch
       haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
       Ordinal.typein (· < ·) x < (Order.succ κ).ord := by
     intro α hα x
-    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    have : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
     have h := Ordinal.typein_lt_type (· < · : α.ToType → α.ToType → Prop) x
     rw [Ordinal.type_toType] at h
     exact h.trans hα
@@ -972,7 +972,7 @@ theorem exists_coherentMajorityBranch_of_ehmrBranch
       haveI : IsWellOrder (Order.succ γ).ToType (· < ·) := isWellOrder_lt
       Ordinal.typein (· < ·) (⊤ : (Order.succ γ).ToType) = γ := by
     intro γ
-    haveI : IsWellOrder (Order.succ γ).ToType (· < ·) := isWellOrder_lt
+    have : IsWellOrder (Order.succ γ).ToType (· < ·) := isWellOrder_lt
     rw [show (⊤ : (Order.succ γ).ToType) = Ordinal.enum (α := (Order.succ γ).ToType) (· < ·)
           ⟨γ, by simp only [Set.mem_Iio, Ordinal.type_toType]; exact Order.lt_succ γ⟩ from
         Ordinal.enum_succ_eq_top.symm]
@@ -991,7 +991,7 @@ theorem exists_coherentMajorityBranch_of_ehmrBranch
   have pre_apply : ∀ (α : Ordinal.{0}) (hα : α < (Order.succ κ).ord) (x : α.ToType),
       haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
       pre α hα x = b.rep (Ordinal.typein (· < ·) x) (htlt hα x) := by
-    intro α hα x; haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt; rfl
+    intro α hα x; have : IsWellOrder α.ToType (· < ·) := isWellOrder_lt; rfl
   have br_apply : ∀ (α : Ordinal.{0}) (hα : α < (Order.succ κ).ord) (x : α.ToType),
       haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
       br α hα x = b.bit (Ordinal.typein (· < ·) x) (htlt hα x) := by
@@ -1004,20 +1004,20 @@ theorem exists_coherentMajorityBranch_of_ehmrBranch
     top_in_validFiber := ?_ }⟩
   · -- prefix_restrict
     intro β α hβα hβ hα x
-    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
-    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    have : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    have : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
     rw [pre_apply α hα, pre_apply β hβ]
     exact repc _ _ (Ordinal.typein_apply _ x)
   · -- branch_restrict
     intro β α hβα hβ hα x
-    haveI : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
-    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    have : IsWellOrder α.ToType (· < ·) := isWellOrder_lt
+    have : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
     rw [br_apply α hα, br_apply β hβ]
     exact bitc _ _ (Ordinal.typein_apply _ x)
   · -- top_in_validFiber
     intro γ hγ hsγ
-    haveI : IsWellOrder (Order.succ γ).ToType (· < ·) := isWellOrder_lt
-    haveI : IsWellOrder γ.ToType (· < ·) := isWellOrder_lt
+    have : IsWellOrder (Order.succ γ).ToType (· < ·) := isWellOrder_lt
+    have : IsWellOrder γ.ToType (· < ·) := isWellOrder_lt
     intro x
     have hx_lt : Ordinal.typein (· < ·) x < γ := by
       have h := Ordinal.typein_lt_type (· < · : γ.ToType → γ.ToType → Prop) x
@@ -1044,7 +1044,7 @@ tree. -/
 theorem exists_coherentMajorityBranch (hκ : Cardinal.aleph0 ≤ κ)
     (hC : Cardinal.mk C ≤ κ) (cR : (Fin 2 ↪o Source κ) → C) :
     Nonempty (CoherentMajorityBranch cR) := by
-  haveI : Nonempty C := nonempty_color cR
+  have : Nonempty C := nonempty_color cR
   obtain ⟨b⟩ := ehmr_tree_has_branch hκ hC cR
   exact exists_coherentMajorityBranch_of_ehmrBranch b
 
@@ -1085,8 +1085,8 @@ lemma treeCommitOfBranch_strictMono
     (hδ₁ : δ₁ < (Order.succ κ).ord) (hδ₂ : δ₂ < (Order.succ κ).ord)
     (h : δ₁ < δ₂) :
     treeCommitOfBranch hκ B δ₁ hδ₁ < treeCommitOfBranch hκ B δ₂ hδ₂ := by
-  haveI : IsWellOrder (Order.succ δ₁).ToType (· < ·) := isWellOrder_lt
-  haveI : IsWellOrder (Order.succ δ₂).ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder (Order.succ δ₁).ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder (Order.succ δ₂).ToType (· < ·) := isWellOrder_lt
   have hsδ₁ : Order.succ δ₁ < (Order.succ κ).ord := succ_lt_ord_of_lt hκ hδ₁
   have hsδ₂ : Order.succ δ₂ < (Order.succ κ).ord := succ_lt_ord_of_lt hκ hδ₂
   have hsδ₁_le_sδ₂ : Order.succ δ₁ ≤ Order.succ δ₂ :=
@@ -1187,9 +1187,9 @@ theorem treeChain_pair_homogeneous_ofBranch
     cR (pairEmbed (treeCommitOfBranch_strictMono hκ B
         (hδη.trans hη) hη hδη)) =
       treeCommitColorOfBranch hκ B δ (hδη.trans hη) := by
-  haveI : IsWellOrder η.ToType (· < ·) := isWellOrder_lt
-  haveI : IsWellOrder (Order.succ δ).ToType (· < ·) := isWellOrder_lt
-  haveI : IsWellOrder (Order.succ η).ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder η.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder (Order.succ δ).ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder (Order.succ η).ToType (· < ·) := isWellOrder_lt
   have hδ : δ < (Order.succ κ).ord := hδη.trans hη
   have hsδ : Order.succ δ < (Order.succ κ).ord := succ_lt_ord_of_lt hκ hδ
   have hsη : Order.succ η < (Order.succ κ).ord := succ_lt_ord_of_lt hκ hη
@@ -1287,7 +1287,7 @@ theorem pairErdosRado_general_of_coherentMajorityBranch
     ∃ (f : (Order.succ κ).ord.ToType ↪o Source κ) (b : C),
       ∀ {x y : (Order.succ κ).ord.ToType} (hxy : x < y),
         cR (pairEmbed (f.strictMono hxy)) = b := by
-  haveI : IsWellOrder (Order.succ κ).ord.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder (Order.succ κ).ord.ToType (· < ·) := isWellOrder_lt
   obtain ⟨b, hb⟩ := exists_large_treeCommitColorFn_fiber_ofBranch hκ hC B
   obtain ⟨iso⟩ := ordIso_ordToType_of_card_ge hb
   -- f : (succ κ).ord.ToType → Source κ via iso.symm + value extraction +

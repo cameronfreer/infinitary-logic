@@ -102,8 +102,8 @@ theorem realizeWith_templateSentence (σ : J → M) (h : ℕ → M)
           ((L''[[J]]).lhomWithConstants ℕ))
         (Empty.elim : Empty → M) Fin.elim0
       ↔ ψ.Realize (Empty.elim : Empty → M) (fun i => σ (t i)) := by
-  letI : (constantsOn J).Structure M := constantsOn.structure σ
-  letI : (constantsOn ℕ).Structure M := constantsOn.structure h
+  let : (constantsOn J).Structure M := constantsOn.structure σ
+  let : (constantsOn ℕ).Structure M := constantsOn.structure h
   rw [← sentenceRealize_iff_realizeWith]
   show Sentenceω.Realize _ M ↔ _
   rw [Sentenceω.realize_def]
@@ -136,7 +136,7 @@ starting point the ω-stage `extension`/`iSup_choice` chain builds on. -/
 theorem markerHenkinConsistent_empty
     (hM : Cardinal.beth (Ordinal.omega 1) ≤ Cardinal.mk M) :
     MarkerHenkinConsistent M (∅ : Finset (((L''[[J]])[[ℕ]]).Sentenceω)) := by
-  haveI : Nonempty M := Cardinal.mk_ne_zero_iff.mp
+  have : Nonempty M := Cardinal.mk_ne_zero_iff.mp
     (((lt_of_lt_of_le Cardinal.aleph0_pos (Cardinal.aleph0_le_beth _)).trans_le hM).ne')
   refine ⟨∅, ∅, fun τ hτ => by simp at hτ, fun τ hτ => by simp at hτ, fun β hβ => ?_⟩
   obtain ⟨_, _, _, _, _, e, _⟩ :=
@@ -849,7 +849,7 @@ theorem schemaCompletionTheory_tuple_uniform
       obtain ⟨α, hα0, hα1, hbody⟩ := hcof 0 (Ordinal.omega_pos 1)
       obtain ⟨e, hsat⟩ := hbody
       let D := (Order.succ (Cardinal.beth α)).ord.ToType
-      haveI : Infinite D := by
+      have : Infinite D := by
         rw [show D = (Order.succ (Cardinal.beth α)).ord.ToType from rfl,
           Cardinal.infinite_iff, Cardinal.mk_ord_toType]
         exact (Cardinal.aleph0_le_beth α).trans (Order.le_succ _)

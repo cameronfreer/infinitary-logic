@@ -296,7 +296,7 @@ theorem MarkerFiniteCert.not_mem_and_not_mem {α : Ordinal.{0}} {F : Set L'[[J]]
   rintro ⟨h1, h2⟩
   obtain ⟨S, hsupp, e, hsat⟩ := h
   obtain ⟨σ, hmono, hrange⟩ := exists_strictMonoOn_interp e S
-  letI : (constantsOn J).Structure M := constantsOn.structure σ
+  let : (constantsOn J).Structure M := constantsOn.structure σ
   exact (BoundedFormulaω.realize_not τ).mp (hsat σ hmono hrange _ h2)
     (hsat σ hmono hrange _ h1)
 
@@ -351,7 +351,7 @@ theorem MarkerCofinalConsistent.not_not {Sset : Set L'[[J]].Sentenceω}
     (h : MarkerCofinalConsistent M Sset) {φ : L'[[J]].Sentenceω}
     (hmem : φ.not.not ∈ Sset) : MarkerCofinalConsistent M (Sset ∪ {φ}) :=
   h.extend_of_semantic hmem (by simp [sentenceJConsts_not]) fun σ => by
-    letI : (constantsOn J).Structure M := constantsOn.structure σ
+    let : (constantsOn J).Structure M := constantsOn.structure σ
     exact fun hreal => of_not_not fun hn =>
       (BoundedFormulaω.realize_not φ.not).mp hreal ((BoundedFormulaω.realize_not φ).mpr hn)
 
@@ -361,7 +361,7 @@ theorem MarkerCofinalConsistent.iInf_component {Sset : Set L'[[J]].Sentenceω}
     (hmem : BoundedFormulaω.iInf φs ∈ Sset) (k : ℕ) :
     MarkerCofinalConsistent M (Sset ∪ {φs k}) :=
   h.extend_of_semantic hmem (sentenceJConsts_component_iInf φs k) fun σ => by
-    letI : (constantsOn J).Structure M := constantsOn.structure σ
+    let : (constantsOn J).Structure M := constantsOn.structure σ
     exact fun hreal => (BoundedFormulaω.realize_iInf φs).mp hreal k
 
 /-- **`C4'` (negated-disjunction components)**: `¬⋁ᵢ φᵢ ∈ Sset` allows adjoining every
@@ -374,7 +374,7 @@ theorem MarkerCofinalConsistent.neg_iSup_component {Sset : Set L'[[J]].Sentence�
     (by rw [sentenceJConsts_not, sentenceJConsts_not]
         exact sentenceJConsts_component_iSup φs k)
     fun σ => by
-      letI : (constantsOn J).Structure M := constantsOn.structure σ
+      let : (constantsOn J).Structure M := constantsOn.structure σ
       exact fun hreal => (BoundedFormulaω.realize_not (φs k)).mpr fun hk =>
         (BoundedFormulaω.realize_not _).mp hreal
           ((BoundedFormulaω.realize_iSup φs).mpr ⟨k, hk⟩)
@@ -457,7 +457,7 @@ theorem Theoryω.model_reduct_of_expansion {L : Language.{0, 0}} {γ : Type} (T 
       Sentenceω.Realize (BoundedFormulaω.mapLanguage (L.lhomWithConstants γ) τ) N) :
     letI : L.Structure N := (L.lhomWithConstants γ).reduct N
     Theoryω.Model T N := by
-  letI : L.Structure N := (L.lhomWithConstants γ).reduct N
+  let : L.Structure N := (L.lhomWithConstants γ).reduct N
   intro τ hτ
   exact (BoundedFormulaω.realize_mapLanguage (L.lhomWithConstants γ) τ _ _).mp (h τ hτ)
 
@@ -582,8 +582,8 @@ def baseRel {l : ℕ} : ((L''[[J]])[[ℕ]]).Relations l → L''.Relations l
 @[simp] theorem realizeWith_ex (σ : J → M) (h : ℕ → M) {α : Type} {n : ℕ}
     (φ : ((L''[[J]])[[ℕ]]).BoundedFormulaω α (n + 1)) (v : α → M) (xs : Fin n → M) :
     realizeWith σ h φ.ex v xs ↔ ∃ x, realizeWith σ h φ v (Fin.snoc xs x) := by
-  letI : (constantsOn J).Structure M := constantsOn.structure σ
-  letI : (constantsOn ℕ).Structure M := constantsOn.structure h
+  let : (constantsOn J).Structure M := constantsOn.structure σ
+  let : (constantsOn ℕ).Structure M := constantsOn.structure h
   exact BoundedFormulaω.realize_ex φ
 
 /-- Bridge to the raw sentence satisfaction used by `MarkerHenkinCert`. -/
@@ -1351,8 +1351,8 @@ theorem realizeWith_witness (σ : J → M) (h : ℕ → M)
     (φ : ((L''[[J]])[[ℕ]]).BoundedFormulaω Empty 1) (n : ℕ) :
     realizeWith σ h (witnessSentence φ n) (Empty.elim : Empty → M) Fin.elim0 ↔
       realizeWith σ h φ (Empty.elim : Empty → M) (Fin.snoc Fin.elim0 (h n)) := by
-  letI : (constantsOn J).Structure M := constantsOn.structure σ
-  letI : (constantsOn ℕ).Structure M := constantsOn.structure h
+  let : (constantsOn J).Structure M := constantsOn.structure σ
+  let : (constantsOn ℕ).Structure M := constantsOn.structure h
   show ((φ.openBounds).subst (fun _ => henkinConst n)).Realize (Empty.elim : Empty → M) Fin.elim0 ↔
     φ.Realize (Empty.elim : Empty → M) (Fin.snoc Fin.elim0 (h n))
   rw [BoundedFormulaω.realize_subst]
@@ -1609,8 +1609,8 @@ theorem termValueWith_relabel_inl (σ : J → M) (hk : ℕ → M)
     (t : ((L''[[J]])[[ℕ]]).Term Empty) :
     termValueWith σ hk (t.relabel Sum.inl) (Sum.elim (Empty.elim : Empty → M) Fin.elim0)
       = termValueWith σ hk t (Empty.elim : Empty → M) := by
-  letI : (constantsOn J).Structure M := constantsOn.structure σ
-  letI : (constantsOn ℕ).Structure M := constantsOn.structure hk
+  let : (constantsOn J).Structure M := constantsOn.structure σ
+  let : (constantsOn ℕ).Structure M := constantsOn.structure hk
   show (t.relabel Sum.inl).realize (Sum.elim Empty.elim Fin.elim0) = t.realize Empty.elim
   rw [Term.realize_relabel]
   exact congrArg (fun v => Term.realize v t) (Subsingleton.elim _ _)
@@ -1622,8 +1622,8 @@ theorem realizeWith_subst_const (σ : J → M) (hk : ℕ → M)
     (φ : ((L''[[J]])[[ℕ]]).BoundedFormulaω (Fin 1) 0) (t : ((L''[[J]])[[ℕ]]).Term Empty) :
     realizeWith σ hk (φ.subst (fun _ => t)) (Empty.elim : Empty → M) Fin.elim0 ↔
       realizeWith σ hk φ (fun _ => termValueWith σ hk t (Empty.elim : Empty → M)) Fin.elim0 := by
-  letI : (constantsOn J).Structure M := constantsOn.structure σ
-  letI : (constantsOn ℕ).Structure M := constantsOn.structure hk
+  let : (constantsOn J).Structure M := constantsOn.structure σ
+  let : (constantsOn ℕ).Structure M := constantsOn.structure hk
   show (φ.subst (fun _ => t)).Realize Empty.elim Fin.elim0 ↔
     φ.Realize (fun _ => t.realize Empty.elim) Fin.elim0
   rw [BoundedFormulaω.realize_subst]

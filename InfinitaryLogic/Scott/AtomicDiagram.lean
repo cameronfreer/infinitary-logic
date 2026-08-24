@@ -48,10 +48,10 @@ namespace AtomicIdx
 
 /-- Countable instance for AtomicIdx. -/
 instance [Countable (Σ l, L.Relations l)] : Countable (L.AtomicIdx n) := by
-  haveI (l : ℕ) : Countable (L.Relations l) :=
+  have (l : ℕ) : Countable (L.Relations l) :=
     Function.Injective.countable (f := fun R => (⟨l, R⟩ : Σ l, L.Relations l))
       (fun _ _ h => by injection h)
-  haveI : Countable (Σ l, L.Relations l × (Fin l → Fin n)) := inferInstance
+  have : Countable (Σ l, L.Relations l × (Fin l → Fin n)) := inferInstance
   apply Countable.of_equiv (Fin n × Fin n ⊕ (Σ l, L.Relations l × (Fin l → Fin n)))
   exact {
     toFun := fun | .inl ⟨i, j⟩ => .eq i j | .inr ⟨_, R, f⟩ => .rel R f

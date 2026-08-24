@@ -44,7 +44,7 @@ countable total space `Σ k, F k`. (Generic companion to `DirectedColim`; the re
 colimit stays countable while `skolemColim` does not.) -/
 theorem DirectedColim.countable {F : ℕ → Type} {φ : ∀ k, F k → F (k + 1)}
     (h : ∀ k, Countable (F k)) : Countable (DirectedColim F φ) := by
-  haveI : ∀ k, Countable (F k) := h
+  have : ∀ k, Countable (F k) := h
   exact inferInstanceAs (Countable (Quot _))
 
 /-- `mapLanguage` composes: transporting along `g` then `h` is transporting along `h.comp g`.
@@ -70,12 +70,12 @@ variable (s₀ : LocalStage)
 /-- Per-arity function-symbol countability at each stage (the fibre of the stagewise all-arity
 certificate `Llocal_fun_countable`). -/
 theorem Llocal_functions_countable (k m : ℕ) : Countable ((Llocal s₀ k).Functions m) := by
-  haveI := Llocal_fun_countable s₀ k
+  have := Llocal_fun_countable s₀ k
   exact (sigma_mk_injective (i := m)).countable
 
 /-- Per-arity relation-symbol countability at each stage. -/
 theorem Llocal_relations_countable (k m : ℕ) : Countable ((Llocal s₀ k).Relations m) := by
-  haveI := Llocal_rel_countable s₀ k
+  have := Llocal_rel_countable s₀ k
   exact (sigma_mk_injective (i := m)).countable
 
 /-! ### The colimit language `L_Γ` and the stage cocone -/
@@ -143,12 +143,12 @@ theorem localColim_relations_countable (m : ℕ) : Countable ((localColim s₀).
 /-- **The local colimit language has countably many function symbols** — in contrast to
 `skolemColim`, whose function-symbol type has the cardinality of the continuum. -/
 theorem localColim_fun_countable : Countable (Σ n, (localColim s₀).Functions n) := by
-  haveI : ∀ n, Countable ((localColim s₀).Functions n) := localColim_functions_countable s₀
+  have : ∀ n, Countable ((localColim s₀).Functions n) := localColim_functions_countable s₀
   infer_instance
 
 /-- **The local colimit language has countably many relation symbols.** -/
 theorem localColim_rel_countable : Countable (Σ n, (localColim s₀).Relations n) := by
-  haveI : ∀ n, Countable ((localColim s₀).Relations n) := localColim_relations_countable s₀
+  have : ∀ n, Countable ((localColim s₀).Relations n) := localColim_relations_countable s₀
   infer_instance
 
 /-! ### Stage structures on a fixed model and the colimit structure -/
@@ -217,9 +217,9 @@ theorem realize_map_LlocalInclusion (k : ℕ) {n : ℕ}
     letI : (Llocal s₀ k).Structure M := localStageStructure s₀ k
     letI : (localColim s₀).Structure M := localColimStructure s₀
     (φ.mapLanguage (LlocalInclusion s₀ k)).Realize v xs ↔ φ.Realize v xs := by
-  letI : (Llocal s₀ k).Structure M := localStageStructure s₀ k
-  letI : (localColim s₀).Structure M := localColimStructure s₀
-  haveI := LlocalInclusion_isExpansionOn (s₀ := s₀) (M := M) k
+  let : (Llocal s₀ k).Structure M := localStageStructure s₀ k
+  let : (localColim s₀).Structure M := localColimStructure s₀
+  have := LlocalInclusion_isExpansionOn (s₀ := s₀) (M := M) k
   exact BoundedFormulaω.realize_mapLanguage (LlocalInclusion s₀ k) φ v xs
 
 end Structures

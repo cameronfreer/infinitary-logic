@@ -53,7 +53,7 @@ theorem encodeViaEquiv_models {M : Type w} [L.Structure M] {α : Type w}
     [Countable α] {φ : L.Sentenceω} (e : M ≃ α) (hφ : Sentenceω.Realize φ M) :
     @Sentenceω.Realize L φ α (encodeViaEquiv e).toStructure := by
   rw [toStructure_encodeViaEquiv_eq]
-  letI : L.Structure α := Equiv.inducedStructure e
+  let : L.Structure α := Equiv.inducedStructure e
   exact (LomegaEquiv.of_equiv (Equiv.inducedStructureEquiv e) φ).mp hφ
 
 /-- The encoded structure is `L`-isomorphic to the source via the equivalence. -/

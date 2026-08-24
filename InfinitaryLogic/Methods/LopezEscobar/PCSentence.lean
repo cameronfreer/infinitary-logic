@@ -141,7 +141,7 @@ theorem graphExpansion_realizes_pcSentence {M : Type} [Nonempty M]
     (hreal : Sentenceω.Realize (functionalPCSentence L side T) M) :
     @Sentenceω.Realize (graphLanguage (KLang L)) (pcSentence L side T) M
       (graphExpansion (KLang L) M) := by
-  letI := graphExpansion (KLang L) M
+  let := graphExpansion (KLang L) M
   rw [realize_pcSentence_iff]
   exact ⟨graphExpansion_realizes_graphAxioms _ M,
     (realize_relationalizeFormula _ _ _).mpr hreal⟩

@@ -65,8 +65,8 @@ def canonEqAtoms : Set (Σ n, Λ.BoundedFormulaω Empty n) :=
 range of a map from `Σ m, (Λ.Term (Fin m))²`, countable by Mathlib's term encoding. -/
 theorem canonEqAtoms_countable (hf : Countable (Σ n, Λ.Functions n)) :
     (canonEqAtoms Λ).Countable := by
-  haveI := hf
-  haveI : ∀ m : ℕ, Countable (Λ.Term (Fin m)) := fun _ => inferInstance
+  have := hf
+  have : ∀ m : ℕ, Countable (Λ.Term (Fin m)) := fun _ => inferInstance
   exact Set.countable_range _
 
 /-- The **canonical relation atom**: a relation symbol applied to rebound `Fin m`-variable
@@ -84,10 +84,10 @@ def canonRelAtoms : Set (Σ n, Λ.BoundedFormulaω Empty n) :=
 /-- The canonical relation-atom seed is countable when `Λ`'s symbol types are. -/
 theorem canonRelAtoms_countable (hf : Countable (Σ n, Λ.Functions n))
     (hr : Countable (Σ n, Λ.Relations n)) : (canonRelAtoms Λ).Countable := by
-  haveI := hf
-  haveI := hr
-  haveI : ∀ m : ℕ, Countable (Λ.Term (Fin m)) := fun _ => inferInstance
-  haveI : ∀ l : ℕ, Countable (Λ.Relations l) := fun _ => sigma_mk_injective.countable
+  have := hf
+  have := hr
+  have : ∀ m : ℕ, Countable (Λ.Term (Fin m)) := fun _ => inferInstance
+  have : ∀ l : ℕ, Countable (Λ.Relations l) := fun _ => sigma_mk_injective.countable
   exact Set.countable_range _
 
 /-- The **canonical deForm** of a formula `φ` (arity `n`) along a tuple of `Fin p`-variable
@@ -109,8 +109,8 @@ def canonDeForms (Γc : Set (Σ n, Λ.BoundedFormulaω Empty n)) :
 theorem canonDeForms_countable {Γc : Set (Σ n, Λ.BoundedFormulaω Empty n)}
     (hΓc : Γc.Countable) (hf : Countable (Σ n, Λ.Functions n)) :
     (canonDeForms Λ Γc).Countable := by
-  haveI := hf
-  haveI : ∀ m : ℕ, Countable (Λ.Term (Fin m)) := fun _ => inferInstance
+  have := hf
+  have : ∀ m : ℕ, Countable (Λ.Term (Fin m)) := fun _ => inferInstance
   exact hΓc.biUnion fun _ _ => Set.countable_range _
 
 /-- Membership constructor for the canonical deForm closure. -/

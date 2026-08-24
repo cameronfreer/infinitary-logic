@@ -46,14 +46,14 @@ certificate in `LocalStage.succ`. -/
 theorem sum_sigma_functions_countable {L L' : Language.{0, 0}}
     (h : Countable (Σ n, L.Functions n)) (h' : Countable (Σ n, L'.Functions n)) :
     Countable (Σ n, (L.sum L').Functions n) := by
-  haveI := h; haveI := h'
+  have := h; have := h'
   exact (Equiv.sigmaSumDistrib (fun n => L.Functions n) (fun n => L'.Functions n)).injective.countable
 
 /-- The full relation-symbol type of `L.sum L'` is countable when both summands' are. -/
 theorem sum_sigma_relations_countable {L L' : Language.{0, 0}}
     (h : Countable (Σ n, L.Relations n)) (h' : Countable (Σ n, L'.Relations n)) :
     Countable (Σ n, (L.sum L').Relations n) := by
-  haveI := h; haveI := h'
+  have := h; have := h'
   exact (Equiv.sigmaSumDistrib (fun n => L.Relations n) (fun n => L'.Relations n)).injective.countable
 
 variable {L : Language.{0, 0}}
@@ -162,7 +162,7 @@ def localSkWitnessSeed (Γ : Set (Σ n, L.BoundedFormulaω Empty n)) :
 Skolem symbol type. -/
 theorem localSkWitnessSeed_countable {Γ : Set (Σ n, L.BoundedFormulaω Empty n)} (hΓ : Γ.Countable) :
     (localSkWitnessSeed Γ).Countable := by
-  haveI := localSkolem_sigma_functions_countable Γ hΓ
+  have := localSkolem_sigma_functions_countable Γ hΓ
   exact Set.countable_range _
 
 /-- **Reserved deForm-closure seed** (placeholder). The truth lemma's family must be closed under the

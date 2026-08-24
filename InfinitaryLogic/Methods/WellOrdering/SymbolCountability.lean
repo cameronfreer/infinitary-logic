@@ -43,12 +43,12 @@ theorem exists_model_relPreserving_isRelational [L.IsRelational]
     ∃ (M : Type) (_ : L.Structure M) (_ : Nonempty M) (f : ℚ → M),
       Sentenceω.Realize φ M ∧ RelPreserving lt f := by
   classical
-  haveI : (symbSublang (L := L) φ.functionsIn
+  have : (symbSublang (L := L) φ.functionsIn
       (insert ⟨2, lt⟩ φ.relationsIn)).IsRelational := symbSublang_isRelational _ _
-  haveI : Countable (Σ n, (symbSublang (L := L) φ.functionsIn
+  have : Countable (Σ n, (symbSublang (L := L) φ.functionsIn
       (insert ⟨2, lt⟩ φ.relationsIn)).Functions n) :=
     symbSublang_fun_countable φ.functionsIn_countable _
-  haveI : Countable (Σ l, (symbSublang (L := L) φ.functionsIn
+  have : Countable (Σ l, (symbSublang (L := L) φ.functionsIn
       (insert ⟨2, lt⟩ φ.relationsIn)).Relations l) :=
     symbSublang_rel_countable _ (φ.relationsIn_countable.insert _)
   -- the restricted root and the surviving distinguished relation
@@ -58,8 +58,8 @@ theorem exists_model_relPreserving_isRelational [L.IsRelational]
         (insert ⟨2, lt⟩ φ.relationsIn)).Relations 2) := by
     intro α hα
     obtain ⟨M, instM, ne, hreal, w, hchain⟩ := h α hα
-    letI instM₀ := (symbSublangIncl φ.functionsIn (insert ⟨2, lt⟩ φ.relationsIn)).reduct M
-    haveI : (symbSublangIncl φ.functionsIn
+    let instM₀ := (symbSublangIncl φ.functionsIn (insert ⟨2, lt⟩ φ.relationsIn)).reduct M
+    have : (symbSublangIncl φ.functionsIn
         (insert ⟨2, lt⟩ φ.relationsIn)).IsExpansionOn M := LHom.isExpansionOn_reduct _ _
     refine ⟨M, instM₀, ne, ?_, w, fun x y hxy => hchain x y hxy⟩
     have hmap := BoundedFormulaω.realize_mapLanguage
@@ -70,11 +70,11 @@ theorem exists_model_relPreserving_isRelational [L.IsRelational]
     exact hmap.mp hreal
   obtain ⟨N, instN₀, neN, f, hreal₀, hf₀⟩ :=
     exists_model_relPreserving_relational _ _ hchains₀
-  letI := instN₀
-  haveI := neN
-  letI instN : L.Structure N :=
+  let := instN₀
+  have := neN
+  let instN : L.Structure N :=
     expandSymbStructureBase φ.functionsIn (insert ⟨2, lt⟩ φ.relationsIn)
-  haveI : (symbSublangIncl φ.functionsIn (insert ⟨2, lt⟩ φ.relationsIn)).IsExpansionOn N := by
+  have : (symbSublangIncl φ.functionsIn (insert ⟨2, lt⟩ φ.relationsIn)).IsExpansionOn N := by
     have hred := reduct_expandSymbStructureBase (L := L) φ.functionsIn
       (insert ⟨2, lt⟩ φ.relationsIn) (M := N)
     rw [← hred]
@@ -108,11 +108,11 @@ theorem wellFounded_boundedness_isRelational [L.IsRelational]
     · obtain ⟨M, inst, hreal, w, -⟩ := hcon 1 (by
         have h1 := add_one_lt_omega1 hα
         rwa [zero_add] at h1)
-      haveI : Nonempty (Ordinal.ToType 1) := Ordinal.nonempty_toType_iff.mpr one_ne_zero
+      have : Nonempty (Ordinal.ToType 1) := Ordinal.nonempty_toType_iff.mpr one_ne_zero
       exact ⟨M, inst, ⟨w (Classical.arbitrary _)⟩, hreal,
         fun x => isEmptyElim x, fun x => isEmptyElim x⟩
     · obtain ⟨M, inst, hreal, w, hw⟩ := hcon α hα
-      haveI : Nonempty α.ToType := Ordinal.nonempty_toType_iff.mpr hne
+      have : Nonempty α.ToType := Ordinal.nonempty_toType_iff.mpr hne
       exact ⟨M, inst, ⟨w (Classical.arbitrary _)⟩, hreal, w, hw⟩
   obtain ⟨M, instL, -, f, hφreal, hf⟩ := exists_model_relPreserving_isRelational φ lt hchains
   exact not_relPreserving_of_wellFounded (hwf M instL hφreal) f hf
@@ -129,7 +129,7 @@ theorem wellOrder_type_boundedness_isRelational [L.IsRelational]
   obtain ⟨α, hα, hnochain⟩ := wellFounded_boundedness_isRelational φ lt
     (fun M inst h => letI := hwo M inst h; IsWellFounded.wf)
   refine ⟨α, hα, fun M inst hreal => ?_⟩
-  letI := hwo M inst hreal
+  let := hwo M inst hreal
   by_contra hle
   rw [not_lt, ← Ordinal.type_toType α] at hle
   obtain ⟨g⟩ := Ordinal.type_le_iff'.mp hle
@@ -144,8 +144,8 @@ theorem wellOrdering_undefinable_isRelational {L : Language.{0, 0}} [L.IsRelatio
   rintro ⟨φ, hφ⟩
   obtain ⟨α, hα, hbound⟩ := wellOrder_type_boundedness_isRelational φ lt
     (fun M inst h => (hφ M inst).mp h)
-  letI instα : L.Structure α.ToType := ordinalStructure L α
-  haveI hwo := ordinalStructure_isWellOrder L α lt
+  let instα : L.Structure α.ToType := ordinalStructure L α
+  have hwo := ordinalStructure_isWellOrder L α lt
   have hreal : Sentenceω.Realize φ α.ToType := (hφ α.ToType instα).mpr hwo
   have hb := hbound α.ToType instα hreal
   have hiso : (fun x y : α.ToType => RelMap lt ![x, y]) ≃r

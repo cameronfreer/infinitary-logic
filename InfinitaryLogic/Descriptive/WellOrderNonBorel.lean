@@ -71,7 +71,7 @@ theorem exists_countable_defect_seed (h : ¬ IsWellOrder M r) :
       ⟨a, Set.mem_insert _ _⟩, fun N hXN hwo => ?_⟩
     have ha : a ∈ N := hXN (Set.mem_insert _ _)
     have hb : b ∈ N := hXN (Set.mem_insert_of_mem _ rfl)
-    haveI := hwo
+    have := hwo
     exact hne (congrArg Subtype.val (Std.Trichotomous.trichotomous
       (r := fun x y : ↥N => r ↑x ↑y) ⟨a, ha⟩ ⟨b, hb⟩ hab hba))
 
@@ -98,16 +98,16 @@ theorem isWellOrder_of_realize (lt : L.Relations 2) {φ : L.Sentenceω}
     (Fragment.generatedSentence (φ.and (infiniteAxiom L))) hXc
     (Fragment.generatedSentence_countable _)
   obtain ⟨x₀, hx₀⟩ := hXne
-  haveI : Nonempty ↥N := ⟨⟨x₀, hXN hx₀⟩⟩
+  have : Nonempty ↥N := ⟨⟨x₀, hXN hx₀⟩⟩
   have hN : Sentenceω.Realize (φ.and (infiniteAxiom L)) ↥N :=
     (hAe.realize_sentence_iff (Fragment.mem_generatedSentence _)).mp hM
   obtain ⟨hNφ, hNinf⟩ := (BoundedFormulaω.realize_and _ _).mp hN
   -- re-ascribed at the sentence level: `SentenceInf.Realize` is a plain definition upstream, so
   -- `realize_infiniteAxiom`'s implicit arguments cannot be solved against the unfolded form
   have hNinfS : Sentenceω.Realize (infiniteAxiom L) ↥N := hNinf
-  haveI : Infinite ↥N := realize_infiniteAxiom.mp hNinfS
+  have : Infinite ↥N := realize_infiniteAxiom.mp hNinfS
   -- transport it to the carrier `ℕ`
-  letI e : ↥N ≃ ℕ := (nonempty_equiv_of_countable (α := ↥N) (β := ℕ)).some
+  let e : ↥N ≃ ℕ := (nonempty_equiv_of_countable (α := ↥N) (β := ℕ)).some
   have hd : StructureSpaceOn.encodeViaEquiv e ∈ ModelsOf φ :=
     StructureSpaceOn.encodeViaEquiv_models e hNφ
   rw [hφ] at hd
@@ -123,9 +123,9 @@ theorem isWellOrder_of_realize (lt : L.Relations 2) {φ : L.Sentenceω}
       (StructureSpaceOn.encodeViaEquiv e).toStructure 2 lt ![x, y]) ≃r
         fun x y : ↥N => @Structure.RelMap L ↥N _ 2 lt ![x, y] :=
     ⟨e.symm, fun {a b} => (hrel a b).symm⟩
-  haveI : IsWellOrder ℕ fun x y : ℕ => @Structure.RelMap L ℕ
+  have : IsWellOrder ℕ fun x y : ℕ => @Structure.RelMap L ℕ
       (StructureSpaceOn.encodeViaEquiv e).toStructure 2 lt ![x, y] := hd
-  haveI hwoN : IsWellOrder ↥N fun x y : ↥N => @Structure.RelMap L ↥N _ 2 lt ![x, y] :=
+  have hwoN : IsWellOrder ↥N fun x y : ↥N => @Structure.RelMap L ↥N _ 2 lt ![x, y] :=
     hiso.symm.toRelEmbedding.isWellOrder
   -- but the defect survived into `N`
   have hsub : ∀ x y : ↥N, (@Structure.RelMap L ↥N _ 2 lt ![x, y] ↔
@@ -190,7 +190,7 @@ theorem wellOrderClass_not_measurableSet (lt : L.Relations 2) :
   obtain ⟨c, hc, htype⟩ := exists_code_type_eq (L := L) lt
     (β := α + Ordinal.omega0) le_add_self hcnt
   have hcφ : @Sentenceω.Realize L (φ.and (infiniteAxiom L)) ℕ c.toStructure := by
-    letI : L.Structure ℕ := c.toStructure
+    let : L.Structure ℕ := c.toStructure
     have hinf : Sentenceω.Realize (infiniteAxiom L) ℕ := realize_infiniteAxiom.mpr inferInstance
     refine (BoundedFormulaω.realize_and _ _).mpr ⟨?_, hinf⟩
     have hmem : c ∈ ModelsOf φ := by rw [← hφ]; exact hc

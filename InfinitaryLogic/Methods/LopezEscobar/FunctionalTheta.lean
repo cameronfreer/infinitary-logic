@@ -281,7 +281,7 @@ theorem realize_codeAxiom [Countable (Σ l, L.Relations l)]
         (@Structure.RelMap (MidLang L) M inst q.1.1 (Sum.inl q.1.2)
             (fun i => numMap L M (q.2 i)) ↔
           fMap L M (numMap L M (queryEmbedding (L := L) q)) = numMap L M 1) := by
-  letI : Encodable (RelQuery L) := queryEncodable
+  let : Encodable (RelQuery L) := queryEncodable
   show BoundedFormulaω.Realize _ _ _ ↔ _
   rw [codeAxiom, BoundedFormulaω.realize_einf]
   refine forall_congr' fun q => ?_
@@ -307,7 +307,7 @@ theorem realize_defaultAxiom [Countable (Σ l, L.Relations l)]
     Sentenceω.Realize (defaultAxiom L) M ↔
       ∀ n ∉ Set.range (queryEmbedding (L := L)),
         fMap L M (numMap L M n) = numMap L M 0 := by
-  letI : Encodable {n : ℕ // n ∉ Set.range (queryEmbedding (L := L))} :=
+  let : Encodable {n : ℕ // n ∉ Set.range (queryEmbedding (L := L))} :=
     Encodable.ofCountable _
   show BoundedFormulaω.Realize _ _ _ ↔ _
   rw [defaultAxiom, BoundedFormulaω.realize_einf]
@@ -373,7 +373,7 @@ theorem realize_treeDiagram {M : Type} [inst : (MidLang L).Structure M]
         (@Structure.RelMap (MidLang L) M inst (2 * n) (Sum.inr (WitnessRel.tree n))
             (treeTuple L M n σ τ) ↔ (σ, τ) ∈ T n) := by
   classical
-  letI : Encodable (Σ n, (Fin n → Bool) × (Fin n → ℕ)) := Encodable.ofCountable _
+  let : Encodable (Σ n, (Fin n → Bool) × (Fin n → ℕ)) := Encodable.ofCountable _
   show BoundedFormulaω.Realize _ _ _ ↔ _
   rw [treeDiagram, BoundedFormulaω.realize_einf]
   constructor

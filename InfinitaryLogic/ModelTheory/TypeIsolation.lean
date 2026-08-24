@@ -82,7 +82,7 @@ theorem realize_isolatingFormula_iff
     (hcount : (RealizedInfinitaryTypes (L := L) M n).Countable)
     (p : Set (L.BoundedFormulaω Empty n)) (a : Fin n → M) :
     (isolatingFormula hcount p).Realize Empty.elim a ↔ infinitaryType M a = p := by
-  haveI := hcount.to_subtype
+  have := hcount.to_subtype
   rw [isolatingFormula, BoundedFormulaω.realize_ciInf]
   constructor
   · intro h

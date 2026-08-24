@@ -43,8 +43,8 @@ the base structure. -/
 theorem realize_lift_wc {M : Type} (base : L.Structure M) (h : ℕ → M) (φ : L.Sentenceω) :
     @Sentenceω.Realize L[[ℕ]] (φ.mapLanguage (L.lhomWithConstants ℕ)) M (wc base h) ↔
       Sentenceω.Realize φ M := by
-  letI := base
-  letI : (constantsOn ℕ).Structure M := constantsOn.structure h
+  let := base
+  let : (constantsOn ℕ).Structure M := constantsOn.structure h
   exact BoundedFormulaω.realize_mapLanguage (L.lhomWithConstants ℕ) φ _ _
 
 /-- The lift mentions no constants. -/

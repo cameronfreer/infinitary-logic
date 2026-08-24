@@ -232,10 +232,10 @@ theorem not_smallFam_univ {ι : Type*} [Nonempty ι] (r : Setoid α)
     intro x
     obtain ⟨_, k, hk⟩ := hcap (fun _ => x) (mem_univ _)
     exact ⟨k, hk⟩
-  haveI : Nonempty α := by
+  have : Nonempty α := by
     by_contra hne
     rw [not_nonempty_iff] at hne
-    haveI : IsEmpty (Quotient r) := ⟨fun q => q.exists_rep.elim fun x _ => hne.false x⟩
+    have : IsEmpty (Quotient r) := ⟨fun q => q.exists_rep.elim fun x _ => hne.false x⟩
     exact hunc inferInstance
   classical
   set f : ℕ → Quotient r := fun k =>
@@ -293,7 +293,7 @@ protected theorem AnalyticSet.prod {β : Type*} [TopologicalSpace β] {A : Set �
     (hA : AnalyticSet A) (hB : AnalyticSet B) : AnalyticSet (A ×ˢ B) := by
   obtain ⟨X, hXt, hXp, f, hf, rfl⟩ := analyticSet_iff_exists_polishSpace_range.mp hA
   obtain ⟨Y, hYt, hYp, g, hg, rfl⟩ := analyticSet_iff_exists_polishSpace_range.mp hB
-  letI := hXt; haveI := hXp; letI := hYt; haveI := hYp
+  let := hXt; have := hXp; let := hYt; have := hYp
   rw [← Set.range_prodMap]
   exact analyticSet_range_of_polishSpace (hf.prodMap hg)
 

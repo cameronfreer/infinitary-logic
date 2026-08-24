@@ -155,7 +155,7 @@ theorem reconstruct_graphExpansion_funMap {n : ℕ} (f : L.Functions n)
     letI := graphExpansion L M
     ((reconstructStructure F (graphExpansion_realizes_graphAxioms F M)).funMap f v =
       funMap f v) := by
-  letI := graphExpansion L M
+  let := graphExpansion L M
   refine (graphValue_unique (graphExpansion_realizes_graphAxioms F M) f h v (funMap f v)
     ?_).symm
   rw [graphExpansion_relMap_graph, Fin.init_snoc, Fin.snoc_last]

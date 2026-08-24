@@ -500,7 +500,7 @@ theorem exists_lyndon_paired_model [L.IsRelational] [Countable (Σ l, L.Relation
     (hroot : LyndonInsepAt (F₁ ∩ F₂) (P₁ ∩ N₂) (N₁ ∩ P₂) A₀ {rL} {rR}) :
     ∃ (M : Type) (_ : L[[ℕ]].Structure M) (_ : Nonempty M),
       Sentenceω.Realize rL M ∧ Sentenceω.Realize rR M := by
-  haveI : Countable ↥(GenU (L := L) rL rR) := genU_countable.to_subtype
+  have : Countable ↥(GenU (L := L) rL rR) := genU_countable.to_subtype
   have hmem : LyndonPairedMem F₁ P₁ N₁ F₂ P₂ N₂ rL rR ({rL} ∪ {rR}) := by
     refine ⟨{rL}, {rR}, A₀, Set.finite_singleton _, Set.finite_singleton _,
       Set.singleton_subset_iff.mpr root₁_mem, Set.singleton_subset_iff.mpr root₂_mem,

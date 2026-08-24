@@ -233,7 +233,7 @@ theorem mk_isoSetoid_quotient_le_aleph_one (φ : L.Sentenceω)
           rw [Cardinal.mk_Iio_ordinal, Cardinal.lift_lift, Ordinal.card_omega,
             Cardinal.lift_aleph, Ordinal.lift_one]
         · -- ⨆ i, lift #(fiber i) ≤ ℵ₀
-          haveI : Nonempty (Set.Iio (Ordinal.omega 1 : Ordinal.{0})) :=
+          have : Nonempty (Set.Iio (Ordinal.omega 1 : Ordinal.{0})) :=
             ⟨⟨0, Ordinal.omega_pos 1⟩⟩
           apply ciSup_le
           intro ⟨α, hα⟩

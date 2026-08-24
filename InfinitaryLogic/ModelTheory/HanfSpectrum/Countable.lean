@@ -80,7 +80,7 @@ namespace CountableSpectrum
 theorem nat_models :
     letI : (constantsOn ℕ).Structure ℕ := constantsOn.structure id
     Sentenceω.Realize countableSpectrumSentence ℕ := by
-  letI : (constantsOn ℕ).Structure ℕ := constantsOn.structure id
+  let : (constantsOn ℕ).Structure ℕ := constantsOn.structure id
   show BoundedFormulaω.Realize _ (Empty.elim : Empty → ℕ) Fin.elim0
   rw [countableSpectrumSentence, BoundedFormulaω.realize_iInf]
   intro n
@@ -155,7 +155,7 @@ theorem mk_eq_aleph0_of_models_countableSpectrumSentence {M : Type}
     (hM : Sentenceω.Realize countableSpectrumSentence M) :
     Cardinal.mk M = Cardinal.aleph0 := by
   refine le_antisymm ?_ ?_
-  · haveI : Countable M := (CountableSpectrum.constInterp_surjective hM).countable
+  · have : Countable M := (CountableSpectrum.constInterp_surjective hM).countable
     exact Cardinal.mk_le_aleph0
   · have h := Cardinal.mk_le_of_injective (CountableSpectrum.constInterp_injective hM)
     rwa [Cardinal.mk_nat] at h
@@ -173,7 +173,7 @@ theorem not_hasArbLargeModels_countableSpectrumSentence :
 sentence through the generic bounded-spectrum endpoint. -/
 theorem aleph0_lt_Lomega1omegaHanfNumber :
     Cardinal.aleph0 < Lomega1omegaHanfNumber := by
-  letI : (constantsOn ℕ).Structure ℕ := constantsOn.structure id
+  let : (constantsOn ℕ).Structure ℕ := constantsOn.structure id
   exact lt_Lomega1omegaHanfNumber_of_maximal_model
     ⟨ℕ, inferInstance, CountableSpectrum.nat_models, by rw [Cardinal.mk_nat]⟩
     (fun M instM hM =>

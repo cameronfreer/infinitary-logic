@@ -59,16 +59,16 @@ theorem craig_pcSeparation_relational [L.IsRelational] (ψ₁ ψ₂ : L.Sentence
   set R₀ : Set (Σ n, L.Relations n) := ψ₁.relationsIn ∩ ψ₂.relationsIn with hR₀
   refine ⟨θ.restrictSymbols hθF hθR, ?_, ?_⟩
   · intro M instM neM hψ₁
-    letI instM' : (symbSublang (L := L) F₀ R₀).Structure M := (symbSublangIncl F₀ R₀).reduct M
-    haveI : (symbSublangIncl F₀ R₀).IsExpansionOn M :=
+    let instM' : (symbSublang (L := L) F₀ R₀).Structure M := (symbSublangIncl F₀ R₀).reduct M
+    have : (symbSublangIncl F₀ R₀).IsExpansionOn M :=
       LHom.isExpansionOn_reduct (symbSublangIncl F₀ R₀) M
     have hiff := BoundedFormulaω.realize_mapLanguage (symbSublangIncl F₀ R₀)
       (θ.restrictSymbols hθF hθR) (Empty.elim : Empty → M) Fin.elim0
     rw [BoundedFormulaω.mapLanguage_restrictSymbols] at hiff
     exact hiff.mp ((Sentenceω.entails_iff.mp hE1) M hψ₁)
   · intro M instM neM hψ₂ hcon
-    letI instM' : (symbSublang (L := L) F₀ R₀).Structure M := (symbSublangIncl F₀ R₀).reduct M
-    haveI : (symbSublangIncl F₀ R₀).IsExpansionOn M :=
+    let instM' : (symbSublang (L := L) F₀ R₀).Structure M := (symbSublangIncl F₀ R₀).reduct M
+    have : (symbSublangIncl F₀ R₀).IsExpansionOn M :=
       LHom.isExpansionOn_reduct (symbSublangIncl F₀ R₀) M
     have hiff := BoundedFormulaω.realize_mapLanguage (symbSublangIncl F₀ R₀)
       (θ.restrictSymbols hθF hθR) (Empty.elim : Empty → M) Fin.elim0

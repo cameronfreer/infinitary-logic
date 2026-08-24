@@ -77,8 +77,8 @@ theorem lyndon_interpolation (r₁ r₂ : L.Sentenceω) (h : Sentenceω.Entails 
       θ.positiveRelationsIn ⊆ r₁.positiveRelationsIn ∩ r₂.positiveRelationsIn ∧
       θ.negativeRelationsIn ⊆ r₁.negativeRelationsIn ∩ r₂.negativeRelationsIn ∧
       Sentenceω.Entails r₁ θ ∧ Sentenceω.Entails θ r₂ := by
-  letI : Countable ↥r₁.functionsIn := r₁.functionsIn_countable.to_subtype
-  letI : Countable ↥r₂.functionsIn := r₂.functionsIn_countable.to_subtype
+  let : Countable ↥r₁.functionsIn := r₁.functionsIn_countable.to_subtype
+  let : Countable ↥r₂.functionsIn := r₂.functionsIn_countable.to_subtype
   -- Relational Lyndon in the graph language, on the translated entailment.
   obtain ⟨θg, -, hθP, hθN, hE₁, hE₂⟩ :=
     lyndon_interpolation_relational _ _ (entails_graphTranslation r₁ r₂ h)
@@ -118,7 +118,7 @@ theorem lyndon_interpolation (r₁ r₂ : L.Sentenceω) (h : Sentenceω.Entails 
   · -- `r₁ ⊨ θ`: graph-expand, feed the antecedent, back-translate.  Craig's argument, unchanged.
     rw [Sentenceω.entails_iff]
     intro M instM neM hr₁
-    letI := graphExpansion L M
+    let := graphExpansion L M
     have hA : Sentenceω.Realize
         ((graphAxioms r₁.functionsIn).and (relationalizeFormula r₁)) M :=
       (BoundedFormulaω.realize_and _ _).mpr
@@ -129,7 +129,7 @@ theorem lyndon_interpolation (r₁ r₂ : L.Sentenceω) (h : Sentenceω.Entails 
   · -- `θ ⊨ r₂`: graph-expand, supply `Ax(F₂)` from the expansion, recover `r₂`.
     rw [Sentenceω.entails_iff]
     intro M instM neM hθ
-    letI := graphExpansion L M
+    let := graphExpansion L M
     have hB := Sentenceω.entails_iff.mp hE₂ M
       ((realize_backTranslateFormula θg Empty.elim Fin.elim0).mp hθ)
     exact (realize_relationalizeFormula r₂ Empty.elim Fin.elim0).mp

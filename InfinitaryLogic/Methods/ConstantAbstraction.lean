@@ -258,7 +258,7 @@ theorem Term.realize_abstractConst (base : L.Structure M) (h : ℕ → M) (j : �
       exact congrArg _ (funext ih)
     · match l, k with
       | 0, k =>
-        haveI : DecidableEq ((constantsOn ℕ).Functions 0) := inferInstanceAs (DecidableEq ℕ)
+        have : DecidableEq ((constantsOn ℕ).Functions 0) := inferInstanceAs (DecidableEq ℕ)
         show @Term.realize L[[ℕ]] M (wc base h) _ (Sum.elim (fun _ => a) xs)
             (Term.abstractConst j (Term.func (Sum.inr k) Fin.elim0))
           = @Structure.funMap L[[ℕ]] M (wc base (Function.update h j a)) 0 (Sum.inr k) _

@@ -46,9 +46,9 @@ theorem locSkWitness_universal_constInterp_nat
       ∀ x : M,
         (BoundedFormulaω.mapLanguage (LlocalInclusion s₀ k) ψ).Realize (Empty.elim : Empty → M)
           (Fin.snoc (fun i => (ts i).realize (Empty.elim : Empty → M)) x) := by
-  letI : (localColim s₀).Structure M := localColimStructure s₀
-  letI : (Llocal s₀ k).Structure M := localStageStructure s₀ k
-  letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+  let : (localColim s₀).Structure M := localColimStructure s₀
+  let : (Llocal s₀ k).Structure M := localStageStructure s₀ k
+  let : (constantsOn ℕ).Structure M := constantsOn.structure σ
   simp only [realize_map_LlocalInclusion]
   intro hψw x
   by_contra hcon
@@ -114,7 +114,7 @@ theorem schemaTerm_realize_sumElim_mk {n : ℕ}
     u.realize (Sum.elim (Empty.elim : Empty → SchemaTermCarrier (s₀ := s₀) (M := M) hM)
         fun i => SchemaTermCarrier.mk hM (ts i))
       = SchemaTermCarrier.mk hM (u.subst (Sum.elim (fun e => e.elim) ts)) := by
-  letI := schemaTermStructure (s₀ := s₀) (M := M) hM
+  let := schemaTermStructure (s₀ := s₀) (M := M) hM
   induction u with
   | var x =>
     rcases x with e | i
@@ -185,9 +185,9 @@ theorem schemaTruthLemmaStage :
             (fun i => SchemaTermCarrier.mk hM (ts i)) ↔
           schemaFormulaSentence (BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) ψ) ts
             ∈ schemaCompletionTheory (schemaEnumeration s₀) hM) := by
-  letI : (localColim s₀).Structure M := localColimStructure s₀
+  let : (localColim s₀).Structure M := localColimStructure s₀
   intro hM k
-  letI := schemaTermStructure (s₀ := s₀) (M := M) hM
+  let := schemaTermStructure (s₀ := s₀) (M := M) hM
   intro n ψ
   induction ψ with
   | falsum =>
@@ -220,7 +220,7 @@ theorem schemaTruthLemmaStage :
         (locJSupport_subset_schemaRelSupport ts))
       ((schemaRelSupport ts).orderEmbOfFin rfl)
       (fun σ w => ?_)
-    letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+    let : (constantsOn ℕ).Structure M := constantsOn.structure σ
     have mid : ((((lhomWithConstants (localColim s₀) ℕ).onTerm
             ((LlocalInclusion s₀ (k + 1)).onTerm t₁)).subst
               (Sum.elim (fun e => e.elim) ts)).realize (Empty.elim : Empty → M)
@@ -266,7 +266,7 @@ theorem schemaTruthLemmaStage :
         (locJSupport_subset_schemaRelSupport ts))
       ((schemaRelSupport ts).orderEmbOfFin rfl)
       (fun σ w => ?_)
-    letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+    let : (constantsOn ℕ).Structure M := constantsOn.structure σ
     have mid : (Structure.RelMap ((LlocalInclusion s₀ (k + 1)).onRelation R)
           fun i => (((lhomWithConstants (localColim s₀) ℕ).onTerm
               ((LlocalInclusion s₀ (k + 1)).onTerm (args i))).subst
@@ -406,7 +406,7 @@ theorem schemaTruthLemmaStage :
           (by rw [Finset.mem_insert]; exact Or.inr (Finset.mem_singleton_self _))
         rw [realize_schemaFormulaSentence_iff] at h1
         rw [realizeWith_not, realize_schemaFormulaSentence_iff] at h2
-        letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+        let : (constantsOn ℕ).Structure M := constantsOn.structure σ
         refine h2 ?_
         intro x
         refine locSkWitness_universal_constInterp_nat s₀ σ hmem ts ?_ x
@@ -445,7 +445,7 @@ theorem schemaTruthLemmaStage :
           (by rw [Finset.mem_insert]; exact Or.inr (Finset.mem_singleton_self _))
         rw [realize_schemaFormulaSentence_iff] at h1
         rw [realizeWith_not, realize_schemaFormulaSentence_iff] at h2
-        letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+        let : (constantsOn ℕ).Structure M := constantsOn.structure σ
         refine h2 ?_
         show (BoundedFormulaω.mapLanguage (LlocalInclusion s₀ (k + 1)) ψ₀).Realize (Empty.elim : Empty → M)
           (fun i => ((Fin.snoc ts u : Fin _ → (localColim s₀)[[ℕ]].Term Empty) i).realize
@@ -573,7 +573,7 @@ theorem schemaTruthLemmaStage_of_mem :
             (fun i => SchemaTermCarrier.mk hM (ts i)) ↔
           schemaFormulaSentence (BoundedFormulaω.mapLanguage (LlocalInclusion s₀ k) ψ) ts
             ∈ schemaCompletionTheory (schemaEnumeration s₀) hM) := by
-  letI : (localColim s₀).Structure M := localColimStructure s₀
+  let : (localColim s₀).Structure M := localColimStructure s₀
   intro hM k n ψ hmem ts
   have h := schemaTruthLemmaStage hM k (BoundedFormulaω.mapLanguage (LlocalHom s₀ k) ψ)
     (liftGamma_mem_Γlocal_succ s₀ hmem) ts
@@ -630,7 +630,7 @@ theorem realize_schemaCloseTerm (σ : ℕ → M) {m : ℕ}
     letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
     (schemaCloseTerm u t).realize (Empty.elim : Empty → M)
       = u.realize fun i => σ (t i) := by
-  letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+  let : (constantsOn ℕ).Structure M := constantsOn.structure σ
   rw [schemaCloseTerm, Term.realize_subst,
     LHom.realize_onTerm (lhomWithConstants (localColim s₀) ℕ)]
   rfl
@@ -643,7 +643,7 @@ theorem schemaCloseTerm_realize_mk {m : ℕ}
     ((lhomWithConstants (localColim s₀) ℕ).onTerm u).realize
         (fun i => schemaSeq (s₀ := s₀) (M := M) hM (t i))
       = SchemaTermCarrier.mk hM (schemaCloseTerm u t) := by
-  letI := schemaTermStructure (s₀ := s₀) (M := M) hM
+  let := schemaTermStructure (s₀ := s₀) (M := M) hM
   rw [show (fun i => schemaSeq (s₀ := s₀) (M := M) hM (t i))
       = fun i => (henkinConst (L := localColim s₀) (t i)).realize
           (Empty.elim : Empty → SchemaTermCarrier (s₀ := s₀) (M := M) hM) from
@@ -661,11 +661,11 @@ theorem schemaCloseTerm_reduct_realize {m : ℕ}
       (lhomWithConstants (localColim s₀) ℕ).reduct _
     u.realize (fun i => schemaSeq (s₀ := s₀) (M := M) hM (t i))
       = SchemaTermCarrier.mk hM (schemaCloseTerm u t) := by
-  letI : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+  let : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
     schemaTermStructure hM
-  letI : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+  let : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
     (lhomWithConstants (localColim s₀) ℕ).reduct _
-  haveI : (lhomWithConstants (localColim s₀) ℕ).IsExpansionOn
+  have : (lhomWithConstants (localColim s₀) ℕ).IsExpansionOn
       (SchemaTermCarrier (s₀ := s₀) (M := M) hM) := LHom.isExpansionOn_reduct _ _
   exact (LHom.realize_onTerm (lhomWithConstants (localColim s₀) ℕ) u _).symm.trans
     (schemaCloseTerm_realize_mk hM u t)
@@ -687,7 +687,7 @@ theorem schemaFormulaSentence_henkin_mem_iff_schemaLift {m : ℕ}
     ((schemaRelSupport fun i => henkinConst (t i)).orderEmbOfFin rfl)
     (ΓlocalColim_subset_ΓEMlocal s₀ hφ) t
     (fun σ w => by
-      letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+      let : (constantsOn ℕ).Structure M := constantsOn.structure σ
       exact (realize_schemaFormulaSentence_iff σ w φ (fun i => henkinConst (t i))).trans
         (realizeWith_templateSentence (L'' := localColim s₀) σ w φ t).symm)
 
@@ -705,7 +705,7 @@ theorem schemaEqSentence_close_mem_iff_schemaLift {m : ℕ}
     ((schemaSupport (schemaCloseTerm u₁ t) (schemaCloseTerm u₂ t)).orderEmbOfFin rfl)
     (Or.inl (Or.inl (Or.inr ⟨⟨m, (u₁, u₂)⟩, rfl⟩))) t
     (fun σ w => by
-      letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+      let : (constantsOn ℕ).Structure M := constantsOn.structure σ
       have h1 := realize_schemaEqSentence_iff σ w (schemaCloseTerm u₁ t) (schemaCloseTerm u₂ t)
       have h2 := realizeWith_templateSentence (L'' := localColim s₀) σ w
         (canonEqAtom (localColim s₀) u₁ u₂) t
@@ -733,7 +733,7 @@ theorem schemaRelSentence_close_mem_iff_schemaLift {m l : ℕ}
     ((schemaRelSupport fun i => schemaCloseTerm (us i) t).orderEmbOfFin rfl)
     (Or.inl (Or.inr ⟨⟨m, l, (R, us)⟩, rfl⟩)) t
     (fun σ w => by
-      letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+      let : (constantsOn ℕ).Structure M := constantsOn.structure σ
       have h1 := realize_schemaRelSentence_iff σ w R (fun i => schemaCloseTerm (us i) t)
       have h2 := realizeWith_templateSentence (L'' := localColim s₀) σ w
         (canonRelAtom (localColim s₀) R us) t
@@ -764,7 +764,7 @@ theorem schemaFormulaSentence_close_mem_iff_schemaLift_canonDeForm {q m : ℕ}
     ((schemaRelSupport fun j => schemaCloseTerm (g j) t).orderEmbOfFin rfl)
     (canonDeForm_mem_ΓEMlocal hφ g) t
     (fun σ w => by
-      letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+      let : (constantsOn ℕ).Structure M := constantsOn.structure σ
       have h1 := realize_schemaFormulaSentence_iff σ w φ (fun j => schemaCloseTerm (g j) t)
       have h2 := realizeWith_templateSentence (L'' := localColim s₀) σ w
         (canonDeForm (localColim s₀) φ g) t
@@ -802,7 +802,7 @@ theorem schemaTruthLemma_colim :
             (Empty.elim : Empty → SchemaTermCarrier (s₀ := s₀) (M := M) hM)
             (fun i => SchemaTermCarrier.mk hM (ts i)) ↔
           schemaFormulaSentence φ ts ∈ schemaCompletionTheory (schemaEnumeration s₀) hM) := by
-  letI : (localColim s₀).Structure M := localColimStructure s₀
+  let : (localColim s₀).Structure M := localColimStructure s₀
   intro hM m φ hφ ts
   obtain ⟨k, hk⟩ := Set.mem_iUnion.mp hφ
   obtain ⟨⟨m', ψ₀⟩, hmem, heq⟩ := hk
@@ -832,13 +832,13 @@ theorem schemaSeq_realize_iff_schemaLift_mem :
         (ψ.Realize (Empty.elim : Empty → SchemaTermCarrier (s₀ := s₀) (M := M) hM)
             (fun i => schemaSeq hM (t i)) ↔
           schemaLift ψ t ∈ schemaCompletionTheory (schemaEnumeration s₀) hM) := by
-  letI : (localColim s₀).Structure M := localColimStructure s₀
+  let : (localColim s₀).Structure M := localColimStructure s₀
   intro hM m ψ hψ t
-  letI : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+  let : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
     schemaTermStructure hM
-  letI : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+  let : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
     (lhomWithConstants (localColim s₀) ℕ).reduct _
-  haveI : (lhomWithConstants (localColim s₀) ℕ).IsExpansionOn
+  have : (lhomWithConstants (localColim s₀) ℕ).IsExpansionOn
       (SchemaTermCarrier (s₀ := s₀) (M := M) hM) := LHom.isExpansionOn_reduct _ _
   show ψ.Realize (Empty.elim : Empty → SchemaTermCarrier (s₀ := s₀) (M := M) hM)
       (fun i => schemaSeq hM (t i)) ↔
@@ -919,11 +919,11 @@ theorem schemaSeq_indiscernibleOn :
         (lhomWithConstants (localColim s₀) ℕ).reduct _
       IsLomega1omegaIndiscernibleOn (L := localColim s₀)
         (schemaSeq (s₀ := s₀) (M := M) hM) (ΓEMlocal s₀) := by
-  letI : (localColim s₀).Structure M := localColimStructure s₀
+  let : (localColim s₀).Structure M := localColimStructure s₀
   intro hM
-  letI : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+  let : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
     schemaTermStructure hM
-  letI : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+  let : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
     (lhomWithConstants (localColim s₀) ℕ).reduct _
   intro n φ hφ s t hs ht
   exact (schemaSeq_realize_iff_schemaLift_mem hM φ hφ
@@ -947,11 +947,11 @@ theorem tailTemplate_schemaSeq_truth_iff :
         (⟨p, ψ⟩ : Σ n, (localColim s₀).BoundedFormulaω Empty n) ∈ ΓEMlocal s₀ →
         ((tailTemplateOfSeq (L := localColim s₀) (schemaSeq (s₀ := s₀) (M := M) hM)).truth ψ ↔
           schemaLift ψ (stdTuple p) ∈ schemaCompletionTheory (schemaEnumeration s₀) hM) := by
-  letI : (localColim s₀).Structure M := localColimStructure s₀
+  let : (localColim s₀).Structure M := localColimStructure s₀
   intro hM
-  letI : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+  let : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
     schemaTermStructure hM
-  letI : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+  let : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
     (lhomWithConstants (localColim s₀) ℕ).reduct _
   intro p ψ hψ
   have hind : IsLomega1omegaIndiscernibleOn (L := localColim s₀)
@@ -979,11 +979,11 @@ theorem schemaSeq_tailTemplateOmegaWitnessed :
       letI : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
         (lhomWithConstants (localColim s₀) ℕ).reduct _
       TailTemplateOmegaWitnessed s₀ (schemaSeq (s₀ := s₀) (M := M) hM) := by
-  letI : (localColim s₀).Structure M := localColimStructure s₀
+  let : (localColim s₀).Structure M := localColimStructure s₀
   intro hM
-  letI : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+  let : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
     schemaTermStructure hM
-  letI : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+  let : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
     (lhomWithConstants (localColim s₀) ℕ).reduct _
   constructor
   · intro m φs hmem p g htruth

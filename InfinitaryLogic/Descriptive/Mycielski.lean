@@ -276,8 +276,8 @@ theorem mycielski_cantor {M : Set ((ℕ → Bool) × (ℕ → Bool))} (hM : IsMe
     ∃ ψ : (ℕ → Bool) → (ℕ → Bool), Continuous ψ ∧
       ∀ a b : ℕ → Bool, a ≠ b → (ψ a, ψ b) ∉ M := by
   classical
-  letI : MetricSpace (ℕ → Bool) := cantorMetricSpace
-  haveI : CompleteSpace (ℕ → Bool) := cantorCompleteSpace
+  let : MetricSpace (ℕ → Bool) := cantorMetricSpace
+  have : CompleteSpace (ℕ → Bool) := cantorCompleteSpace
   -- Extract a countable family of dense open sets with intersection inside `Mᶜ`
   obtain ⟨U, hUo, hUd, hUM⟩ : ∃ U : ℕ → Set ((ℕ → Bool) × (ℕ → Bool)),
       (∀ k, IsOpen (U k)) ∧ (∀ k, Dense (U k)) ∧ (⋂ k, U k) ⊆ Mᶜ := by

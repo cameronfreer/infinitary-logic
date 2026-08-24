@@ -69,7 +69,7 @@ theorem LocalEMContext.locatedCode_injective (ctx : LocalEMContext Λ J (M := M)
 /-- The located-code type has size at most `max ℵ₀ #J` for a countable base language. -/
 theorem mk_locatedTermCode_le [Countable (Σ l, Λ.Functions l)] :
     Cardinal.mk (LocatedTermCode Λ J) ≤ max Cardinal.aleph0 (Cardinal.mk J) := by
-  haveI hcnt : ∀ k, Countable (Λ[[Fin k]].Term Empty) := fun k =>
+  have hcnt : ∀ k, Countable (Λ[[Fin k]].Term Empty) := fun k =>
     haveI := countable_sigma_functions_withFin Λ k
     inferInstance
   show Cardinal.mk (Σ k : ℕ, (Fin k ↪o J) × Λ[[Fin k]].Term Empty)

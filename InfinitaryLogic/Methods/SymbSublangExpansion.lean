@@ -79,8 +79,8 @@ theorem realize_restrictSymbols_expandSymbStructureBase
     @BoundedFormulaω.Realize (symbSublang (L := L) F R) M instM Empty n
         (φ.restrictSymbols hF hR) v xs
       ↔ @BoundedFormulaω.Realize L M (expandSymbStructureBase F R) Empty n φ v xs := by
-  letI : L.Structure M := expandSymbStructureBase F R
-  haveI : (symbSublangIncl F R).IsExpansionOn M := by
+  let : L.Structure M := expandSymbStructureBase F R
+  have : (symbSublangIncl F R).IsExpansionOn M := by
     constructor
     · intro m f xs
       show (if h : (⟨m, f.1⟩ : Σ n, L.Functions n) ∈ F then
@@ -106,7 +106,7 @@ theorem entails_restrictSymbols_singleton
     (hE : Sentenceω.Entails r₁ r₂) :
     Sentenceω.Entails (r₁.restrictSymbols hr₁F hr₁R) (r₂.restrictSymbols hr₂F hr₂R) := by
   intro N _ neN hmodel
-  letI : L.Structure N := expandSymbStructureBase F R
+  let : L.Structure N := expandSymbStructureBase F R
   have hr₁N : @Sentenceω.Realize L r₁ N _ :=
     (realize_restrictSymbols_expandSymbStructureBase F R r₁ hr₁F hr₁R Empty.elim Fin.elim0).mp
       (hmodel _ (Set.mem_singleton _))

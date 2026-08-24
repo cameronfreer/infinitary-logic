@@ -278,17 +278,17 @@ theorem exists_complete_self_stabilization (M : Type w) [L.Structure M] [Countab
   -- Step 2: Extract per-triple bound ordinals
   choose boundOrd hboundOrd_lt hboundOrd_spec using hTriple
   -- Step 3: Enumerate all triples
-  haveI : Countable (Σ n, (Fin n → M) × (Fin n → M)) := inferInstance
+  have : Countable (Σ n, (Fin n → M) × (Fin n → M)) := inferInstance
   -- Handle empty M
   by_cases hM_nonempty : Nonempty M
   swap
-  · haveI : IsEmpty M := not_nonempty_iff.mp hM_nonempty
+  · have : IsEmpty M := not_nonempty_iff.mp hM_nonempty
     exact ⟨0, Ordinal.omega_pos 1, fun n a a' => match n with
       | 0 => ⟨fun h0 => (BFEquiv.succ 0 a a').mpr
           ⟨h0, fun m => isEmptyElim m, fun m' => isEmptyElim m'⟩, BFEquiv.of_succ⟩
       | _ + 1 => (IsEmpty.false (a 0)).elim⟩
-  haveI : Nonempty M := hM_nonempty
-  haveI : Nonempty (Σ n, (Fin n → M) × (Fin n → M)) :=
+  have : Nonempty M := hM_nonempty
+  have : Nonempty (Σ n, (Fin n → M) × (Fin n → M)) :=
     ⟨⟨0, Fin.elim0, Fin.elim0⟩⟩
   obtain ⟨enumTriples, hTriples_surj⟩ :=
     exists_surjective_nat (Σ n, (Fin n → M) × (Fin n → M))
@@ -345,7 +345,7 @@ private theorem BFEquiv_all_countable_ordinals_implies_all
       · have hsucc0_lt : Order.succ 0 < Ordinal.omega 1 :=
           Order.IsSuccLimit.succ_lt (Cardinal.isSuccLimit_omega 1) (Ordinal.omega_pos 1)
         exact hN.false (BFEquiv.forth (h _ hsucc0_lt) m).choose
-      · rw [not_isEmpty_iff] at hN; haveI := hN
+      · rw [not_isEmpty_iff] at hN; have := hN
         choose αbad hαbad_lt hαbad_fail using show ∀ n' : N, ∃ γ < (Ordinal.omega 1 : Ordinal.{0}),
             ¬BFEquiv (L := L) γ (n + 1) (Fin.snoc a m) (Fin.snoc b n') from
           fun n' => by_contra fun hall => h_no n' (ih (fun γ hγ => by push Not at hall; exact hall γ hγ))
@@ -365,7 +365,7 @@ private theorem BFEquiv_all_countable_ordinals_implies_all
       by_cases hM : IsEmpty M
       · exact hM.false (BFEquiv.back (h _ (Order.IsSuccLimit.succ_lt
           (Cardinal.isSuccLimit_omega 1) (Ordinal.omega_pos 1))) n').choose
-      · rw [not_isEmpty_iff] at hM; haveI := hM
+      · rw [not_isEmpty_iff] at hM; have := hM
         choose αbad hαbad_lt hαbad_fail using show ∀ m : M, ∃ γ < (Ordinal.omega 1 : Ordinal.{0}),
             ¬BFEquiv (L := L) γ (n + 1) (Fin.snoc a m) (Fin.snoc b n') from
           fun m => by_contra fun hall => h_no m (ih (fun γ hγ => by push Not at hall; exact hall γ hγ))
@@ -440,7 +440,7 @@ theorem nonempty_iInter_of_antitone_of_nonempty {X : Type*} [Countable X]
     exact absurd (hNonempty 0 (Ordinal.omega_pos 1)) (by
       rw [Set.not_nonempty_iff_eq_empty, Set.eq_empty_iff_forall_notMem]
       intro x; exact hX.elim x)
-  rw [not_isEmpty_iff] at hX; haveI := hX
+  rw [not_isEmpty_iff] at hX; have := hX
   obtain ⟨enum, henum⟩ := exists_surjective_nat X
   -- Compose depart with enum to get ℕ → Ordinal.{0}
   let depart_seq : ℕ → Ordinal.{0} := depart ∘ enum
@@ -859,8 +859,8 @@ theorem per_tuple_stabilization_below_omega1_of
     by_cases hRne : ({α : Ordinal.{0} | α < Ordinal.omega 1 ∧
         ∃ (N : Type w) (_ : L.Structure N) (_ : Countable N) (b : Fin n → N),
           BFEquiv (L := L) α n a b ∧ ¬BFEquiv (L := L) (Order.succ α) n a b}).Nonempty
-    · haveI := hR.to_subtype
-      haveI := hRne.to_subtype
+    · have := hR.to_subtype
+      have := hRne.to_subtype
       obtain ⟨enum, henum⟩ := exists_surjective_nat
         ({α : Ordinal.{0} | α < Ordinal.omega 1 ∧
           ∃ (N : Type w) (_ : L.Structure N) (_ : Countable N) (b : Fin n → N),
@@ -912,10 +912,10 @@ theorem exists_complete_stabilization_of
             (BFEquiv (L := L) α t.1 t.2 b ↔ BFEquiv (L := L) (Order.succ α) t.1 t.2 b) :=
     fun ⟨n, a⟩ => per_tuple_stabilization_below_omega1_of hcount n a
   choose boundOrd hboundOrd_lt hboundOrd_spec using hTuple
-  haveI : Countable (Σ n, Fin n → M) := inferInstance
+  have : Countable (Σ n, Fin n → M) := inferInstance
   by_cases hM_nonempty : Nonempty M
   swap
-  · haveI : IsEmpty M := not_nonempty_iff.mp hM_nonempty
+  · have : IsEmpty M := not_nonempty_iff.mp hM_nonempty
     use 1
     constructor
     · calc (1 : Ordinal) < ω := Ordinal.one_lt_omega0
@@ -934,8 +934,8 @@ theorem exists_complete_stabilization_of
           exact isEmptyElim (hBF.2.2 n').choose
         · exact BFEquiv.of_succ
       | succ k => exact (IsEmpty.false (a 0)).elim
-  haveI : Nonempty M := hM_nonempty
-  haveI : Nonempty (Σ n, Fin n → M) := ⟨⟨0, Fin.elim0⟩⟩
+  have : Nonempty M := hM_nonempty
+  have : Nonempty (Σ n, Fin n → M) := ⟨⟨0, Fin.elim0⟩⟩
   obtain ⟨enumTuples, hTuples_surj⟩ := exists_surjective_nat (Σ n, Fin n → M)
   let globalStab : Ordinal.{0} := ⨆ k, boundOrd (enumTuples k) + 1
   have hGlobalLt : globalStab < Ordinal.omega 1 := by

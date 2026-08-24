@@ -74,8 +74,8 @@ theorem realize_templateSentence_of_structure
       φ.Realize (Empty.elim : Empty → N)
         (fun i => (Term.func (Sum.inr (t i) : L[[J]].Functions 0)
             Fin.elim0 : L[[J]].Term Empty).realize (Empty.elim : Empty → N)) := by
-  letI : L.Structure N := (L.lhomWithConstants J).reduct N
-  haveI : (L.lhomWithConstants J).IsExpansionOn N := LHom.isExpansionOn_reduct _ _
+  let : L.Structure N := (L.lhomWithConstants J).reduct N
+  have : (L.lhomWithConstants J).IsExpansionOn N := LHom.isExpansionOn_reduct _ _
   show BoundedFormulaω.Realize _ Empty.elim Fin.elim0 ↔ _
   rw [Lomega1omegaTemplate.templateSentence, BoundedFormulaω.realize_subst]
   exact (realize_openBounds _ _).trans
@@ -167,7 +167,7 @@ theorem IsLomega1omegaIndiscernibleOn.templateTheoryOfSeq_isFinitelySatisfiable
       ((templateOfSeq a : Lomega1omegaTemplate L).templateTheoryOfSeq s J) := by
   intro F hFsub hFfinite
   obtain ⟨σ, hσ⟩ := h.templateTheoryOfSeq_finitelySatisfiable s hFfinite hFsub
-  letI : (constantsOn J).Structure M := constantsOn.structure σ
+  let : (constantsOn J).Structure M := constantsOn.structure σ
   exact ⟨M, inferInstance, ⟨a (Classical.arbitrary I)⟩, hσ⟩
 
 /-- Compact-oracle adapter under restricted indiscernibility. -/
@@ -227,7 +227,7 @@ theorem IsLomega1omegaIndiscernibleOn.stretch_restricted_sequence_of_compact
     (Term.func (Sum.inr j : L[[J]].Functions 0) Fin.elim0 : L[[J]].Term Empty).realize
       (Empty.elim : Empty → N)
   refine ⟨N, inferInstance, b, ?_⟩
-  letI : L.Structure N := (L.lhomWithConstants J).reduct N
+  let : L.Structure N := (L.lhomWithConstants J).reduct N
   intro i t
   have hBridge :=
     realize_templateSentence_of_structure (L := L) (J := J) (N := N) (s i).2 t

@@ -64,8 +64,8 @@ private theorem sameAtomicType_measurableSet
     MeasurableSet {p : StructurePairSpace L |
       @SameAtomicType L ℕ p.1.toStructure n ℕ p.2.toStructure a b} := by
   -- SameAtomicType a b = ∀ idx, idx.holds a ↔ idx.holds b
-  haveI : Countable (L.AtomicIdx n) := inferInstance
-  haveI : Encodable (L.AtomicIdx n) := Encodable.ofCountable _
+  have : Countable (L.AtomicIdx n) := inferInstance
+  have : Encodable (L.AtomicIdx n) := Encodable.ofCountable _
   -- Countable intersection over AtomicIdx
   have : {p : StructurePairSpace L |
       @SameAtomicType L ℕ p.1.toStructure n ℕ p.2.toStructure a b} =
@@ -153,7 +153,7 @@ theorem bfEquivSet_measurableSet
       simp only [BFEquivSet, Set.mem_setOf_eq, Set.mem_iInter, Set.Iio, Subtype.forall]
       exact @BFEquiv.limit L ℕ p.1.toStructure ℕ p.2.toStructure n β hβ_limit a b
     rw [this]
-    haveI := InfinitaryLogic.countable_Iio_of_lt_omega1 β hα
+    have := InfinitaryLogic.countable_Iio_of_lt_omega1 β hα
     exact MeasurableSet.iInter fun γ => ih γ.1 γ.2 (lt_trans γ.2 hα) n a b
 
 end Language

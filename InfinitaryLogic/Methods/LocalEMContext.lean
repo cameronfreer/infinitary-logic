@@ -105,7 +105,7 @@ indiscernibility applies. -/
 theorem locDeepInterp_eq_realize (d : ℕ) (S : Finset J) (t : Λ[[J]].Term Empty) :
     locDeepInterp Λ J a d S t =
       t.constantsToVars.realize (Sum.elim (fun j => a (d + deepRank J S j)) Empty.elim) := by
-  letI : (constantsOn J).Structure M := constantsOn.structure (fun j => a (d + deepRank J S j))
+  let : (constantsOn J).Structure M := constantsOn.structure (fun j => a (d + deepRank J S j))
   show t.realize Empty.elim = _
   exact (Term.realize_constantsToVars (t := t) (v := Empty.elim)).symm
 
@@ -118,7 +118,7 @@ theorem locDeepInterp_subst (d : ℕ) (S : Finset J) {n : ℕ}
     letI : (constantsOn J).Structure M := constantsOn.structure fun j => a (d + deepRank J S j)
     locDeepInterp Λ J a d S (t.subst (Sum.elim (fun e => e.elim) ts)) =
       t.realize (Sum.elim Empty.elim fun i => locDeepInterp Λ J a d S (ts i)) := by
-  letI : (constantsOn J).Structure M := constantsOn.structure fun j => a (d + deepRank J S j)
+  let : (constantsOn J).Structure M := constantsOn.structure fun j => a (d + deepRank J S j)
   show (t.subst (Sum.elim (fun e => e.elim) ts)).realize Empty.elim = _
   rw [Term.realize_subst]
   congr 1
@@ -135,7 +135,7 @@ theorem locDeepInterp_onTerm_subst (d : ℕ) (S : Finset J) {n : ℕ}
     locDeepInterp Λ J a d S
         (((lhomWithConstants Λ J).onTerm t).subst (Sum.elim (fun e => e.elim) ts)) =
       t.realize (Sum.elim Empty.elim fun i => locDeepInterp Λ J a d S (ts i)) := by
-  letI : (constantsOn J).Structure M := constantsOn.structure fun j => a (d + deepRank J S j)
+  let : (constantsOn J).Structure M := constantsOn.structure fun j => a (d + deepRank J S j)
   rw [locDeepInterp_subst]
   exact LHom.realize_onTerm (lhomWithConstants Λ J) t _
 
@@ -633,8 +633,8 @@ base-language formulas. -/
 theorem LocalEMContext.lhomWithConstants_isExpansionOn (ctx : LocalEMContext Λ J (M := M)) :
     @LHom.IsExpansionOn Λ (Λ[[J]])
       (lhomWithConstants Λ J) ctx.Carrier ctx.structureBase ctx.structure := by
-  letI : Λ.Structure ctx.Carrier := ctx.structureBase
-  letI : (Λ[[J]]).Structure ctx.Carrier := ctx.structure
+  let : Λ.Structure ctx.Carrier := ctx.structureBase
+  let : (Λ[[J]]).Structure ctx.Carrier := ctx.structure
   exact ⟨fun _ _ => rfl, fun _ _ => rfl⟩
 
 end Quotient

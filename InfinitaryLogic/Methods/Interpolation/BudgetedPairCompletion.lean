@@ -48,7 +48,7 @@ theorem exists_henkinComplete_budgetedPairRoot {r₁ r₂ : L[[ℕ]].Sentenceω}
         HenkinComplete (GenU r₁ r₂.not) Sstar := by
   have hr₂' : (sentenceJConsts (L' := L) (J := ℕ) r₂.not).Finite := by
     rwa [sentenceJConsts_not]
-  haveI : Countable ↥(GenU (L := L) r₁ r₂.not) := genU_countable.to_subtype
+  have : Countable ↥(GenU (L := L) r₁ r₂.not) := genU_countable.to_subtype
   obtain ⟨Sstar, hsub, -, hcomplete⟩ :=
     exists_henkinComplete (U := GenU r₁ r₂.not)
       (P := budgetedPairConsistencyProperty F₁ R₁ F₂ R₂ r₁ r₂.not hr₁ hr₂')

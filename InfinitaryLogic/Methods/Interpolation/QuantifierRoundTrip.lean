@@ -42,7 +42,7 @@ theorem realize_instConst (base : L.Structure M) (h : ℕ → M) (c : ℕ)
     (ψ : L[[ℕ]].BoundedFormulaω Empty 1) :
     @BoundedFormulaω.Realize L[[ℕ]] M (wc base h) Empty 0 (instConst c ψ) Empty.elim Fin.elim0
       ↔ @BoundedFormulaω.Realize L[[ℕ]] M (wc base h) Empty 1 ψ Empty.elim (fun _ => h c) := by
-  letI : L[[ℕ]].Structure M := wc base h
+  let : L[[ℕ]].Structure M := wc base h
   rw [instConst, BoundedFormulaω.realize_subst]
   rw [show (fun a : Fin 1 => (constTerm c).realize (Empty.elim : Empty → M))
         = (fun _ : Fin 1 => h c) from funext fun _ => realize_constTerm base h c Empty.elim]
@@ -56,7 +56,7 @@ theorem realize_genEx_instConst (base : L.Structure M) (h : ℕ → M) (c : ℕ)
     @BoundedFormulaω.Realize L[[ℕ]] M (wc base h) Empty 0 (genEx c (instConst c ψ))
         Empty.elim Fin.elim0
       ↔ @BoundedFormulaω.Realize L[[ℕ]] M (wc base h) Empty 0 ψ.ex Empty.elim Fin.elim0 := by
-  letI : L[[ℕ]].Structure M := wc base h
+  let : L[[ℕ]].Structure M := wc base h
   rw [realize_genEx base h c (instConst c ψ), BoundedFormulaω.realize_ex]
   refine exists_congr fun x => ?_
   have hsnoc : (Fin.snoc Fin.elim0 x : Fin 1 → M) = (fun _ => x) := by

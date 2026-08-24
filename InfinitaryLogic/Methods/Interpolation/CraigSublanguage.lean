@@ -54,8 +54,8 @@ theorem entails_mapLanguage_restrictSymbols_left (F : Set (Σ n, L.Functions n))
     Sentenceω.Entails r (θ'.mapLanguage (symbSublangIncl F R)) := by
   rw [Sentenceω.entails_iff]
   intro M instM neM hr
-  letI instM' : (symbSublang (L := L) F R).Structure M := (symbSublangIncl F R).reduct M
-  haveI : (symbSublangIncl F R).IsExpansionOn M := LHom.isExpansionOn_reduct (symbSublangIncl F R) M
+  let instM' : (symbSublang (L := L) F R).Structure M := (symbSublangIncl F R).reduct M
+  have : (symbSublangIncl F R).IsExpansionOn M := LHom.isExpansionOn_reduct (symbSublangIncl F R) M
   have hr' : @Sentenceω.Realize (symbSublang (L := L) F R) (r.restrictSymbols hF hR) M instM' := by
     have hiff :=
       BoundedFormulaω.realize_mapLanguage (symbSublangIncl F R) (r.restrictSymbols hF hR)
@@ -74,8 +74,8 @@ theorem entails_mapLanguage_restrictSymbols_right (F : Set (Σ n, L.Functions n)
     Sentenceω.Entails (θ'.mapLanguage (symbSublangIncl F R)) r := by
   rw [Sentenceω.entails_iff]
   intro M instM neM hθ
-  letI instM' : (symbSublang (L := L) F R).Structure M := (symbSublangIncl F R).reduct M
-  haveI : (symbSublangIncl F R).IsExpansionOn M := LHom.isExpansionOn_reduct (symbSublangIncl F R) M
+  let instM' : (symbSublang (L := L) F R).Structure M := (symbSublangIncl F R).reduct M
+  have : (symbSublangIncl F R).IsExpansionOn M := LHom.isExpansionOn_reduct (symbSublangIncl F R) M
   have hθ' : @Sentenceω.Realize (symbSublang (L := L) F R) θ' M instM' :=
     (BoundedFormulaω.realize_mapLanguage (symbSublangIncl F R) θ' (Empty.elim : Empty → M) Fin.elim0).mp hθ
   have hr :=
@@ -140,7 +140,7 @@ theorem craig_interpolation_relational [L.IsRelational] (r₁ r₂ : L.Sentence�
   have hE' : Sentenceω.Entails (r₁.restrictSymbols hr₁F hr₁R) (r₂.restrictSymbols hr₂F hr₂R) :=
     entails_restrictSymbols_singleton F R r₁ r₂ hr₁F hr₁R hr₂F hr₂R h
   -- Apply Layer 1 in the sublanguage (relational + countably many relations).
-  haveI : Countable (Σ n, (symbSublang (L := L) F R).Relations n) :=
+  have : Countable (Σ n, (symbSublang (L := L) F R).Relations n) :=
     symbSublang_rel_countable F hRc
   obtain ⟨θ', hθ'F, hθ'R, hE1', hE2'⟩ :=
     craig_interpolation_relational_countable (r₁.restrictSymbols hr₁F hr₁R)

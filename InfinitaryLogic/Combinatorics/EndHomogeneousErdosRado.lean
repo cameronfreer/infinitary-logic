@@ -227,9 +227,9 @@ variable {lam : Cardinal.{0}} {C : Type} {n : ℕ}
 theorem NodeAt.restrict_trans {β : Ordinal.{0}} (h : NodeAt C n β)
     {δ ε : Ordinal.{0}} (hδ : δ ≤ β) (hε : ε ≤ δ) :
     (h.restrict hδ).restrict hε = h.restrict (hε.trans hδ) := by
-  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
-  haveI : IsWellOrder δ.ToType (· < ·) := isWellOrder_lt
-  haveI : IsWellOrder ε.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder δ.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder ε.ToType (· < ·) := isWellOrder_lt
   funext τ
   show h ((τ.trans (initialSegOfLe hε).toOrderEmbedding).trans
         (initialSegOfLe hδ).toOrderEmbedding)
@@ -297,7 +297,7 @@ noncomputable def nodeChosen (G : (Fin (n + 2) ↪o Source lam) → C)
 termination_by β
 decreasing_by
   all_goals
-    haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+    have : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
     have hh := Ordinal.typein_lt_type (· < · : β.ToType → β.ToType → Prop) x
     rwa [Ordinal.type_toType] at hh
 
@@ -338,7 +338,7 @@ theorem nodeChosen_mem (G : (Fin (n + 2) ↪o Source lam) → C) {β : Ordinal.{
     (h : NodeAt C n β) (hlive : nodeLive G h) :
     nodeChosen G β h ∈ nodeS G h := by
   classical
-  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
   have hcond : (nodeFiber G
       (fun x => nodeChosen G (Ordinal.typein (· < ·) x)
         (h.restrict (le_of_lt (by
@@ -354,7 +354,7 @@ theorem nodeChosen_eq_min (G : (Fin (n + 2) ↪o Source lam) → C) {β : Ordina
       (IsWellFounded.wf : WellFounded (· < · : Source lam → Source lam → Prop)).min
         (nodeS G h) hlive := by
   classical
-  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
   have hcond : (nodeFiber G
       (fun x => nodeChosen G (Ordinal.typein (· < ·) x)
         (h.restrict (le_of_lt (by
@@ -410,7 +410,7 @@ noncomputable def yRep (G : (Fin (n + 2) ↪o Source lam) → C) (y : Source lam
 termination_by γ
 decreasing_by
   all_goals
-    haveI : IsWellOrder γ.ToType (· < ·) := isWellOrder_lt
+    have : IsWellOrder γ.ToType (· < ·) := isWellOrder_lt
     exact lt_of_lt_of_eq (Ordinal.typein_lt_type _ _) (Ordinal.type_toType γ)
 
 /-- The canonical `y`-path node of length `β` (a *plain* def over `yRep`). -/
@@ -434,8 +434,8 @@ theorem yNode_restrict (G : (Fin (n + 2) ↪o Source lam) → C) (y : Source lam
     {β δ : Ordinal.{0}} (hδ : δ ≤ β) :
     (yNode G y β).restrict hδ = yNode G y δ := by
   classical
-  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
-  haveI : IsWellOrder δ.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder δ.ToType (· < ·) := isWellOrder_lt
   funext τ
   show colorAbove G y (fun k => yRep G y (Ordinal.typein (· < ·)
         ((τ.trans (initialSegOfLe hδ).toOrderEmbedding) k)))
@@ -460,7 +460,7 @@ theorem yNode_mem_of (G : (Fin (n + 2) ↪o Source lam) → C) (y : Source lam)
     {β : Ordinal.{0}} (hbelow : ∀ δ : Ordinal.{0}, δ < β → yRep G y δ < y) :
     y ∈ nodeS G (yNode G y β) := by
   classical
-  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
   constructor
   · intro x
     rw [nodeRep_yNode]
@@ -479,7 +479,7 @@ theorem yRep_strictMono (G : (Fin (n + 2) ↪o Source lam) → C) (y : Source la
     (hlive : ∀ δ : Ordinal.{0}, δ < γ₂ → yRep G y δ < y) :
     yRep G y γ₁ < yRep G y γ₂ := by
   classical
-  haveI : IsWellOrder γ₂.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder γ₂.ToType (· < ·) := isWellOrder_lt
   have hlive2 : nodeLive G (yNode G y γ₂) := ⟨y, yNode_mem_of G y hlive⟩
   have hγ₁ : γ₁ < Ordinal.type (· < · : γ₂.ToType → γ₂.ToType → Prop) := by
     rw [Ordinal.type_toType]; exact h12
@@ -496,7 +496,7 @@ theorem exists_yRep_ge (G : (Fin (n + 2) ↪o Source lam) → C) (y : Source lam
   have hexists : ∃ γ : Ordinal.{0}, y ≤ yRep G y γ := by
     by_contra hcon
     push Not at hcon
-    haveI : IsWellOrder (Source lam) (· < ·) := isWellOrder_lt
+    have : IsWellOrder (Source lam) (· < ·) := isWellOrder_lt
     have hmono : StrictMono (yRep G y) := fun a b hab =>
       yRep_strictMono G y hab (fun δ _ => hcon δ)
     have hmono_g : StrictMono (fun γ => Ordinal.typein (· < ·) (yRep G y γ)) :=
@@ -547,8 +547,8 @@ theorem nodeRep_restrict (G : (Fin (n + 2) ↪o Source lam) → C) {β : Ordinal
     nodeRep G (h.restrict hδ) x =
       nodeRep G h ((initialSegOfLe hδ).toOrderEmbedding x) := by
   classical
-  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
-  haveI : IsWellOrder δ.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder δ.ToType (· < ·) := isWellOrder_lt
   set lx := (initialSegOfLe hδ).toOrderEmbedding x with hlx_def
   have htx : Ordinal.typein (· < ·) lx = Ordinal.typein (· < ·) x := by
     rw [hlx_def]; exact Ordinal.typein_apply (initialSegOfLe hδ) x
@@ -568,8 +568,8 @@ theorem nodeLive_restrict (G : (Fin (n + 2) ↪o Source lam) → C) {β : Ordina
     {h : NodeAt C n β} (hlive : nodeLive G h) {δ : Ordinal.{0}} (hδ : δ ≤ β) :
     nodeLive G (h.restrict hδ) := by
   classical
-  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
-  haveI : IsWellOrder δ.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder δ.ToType (· < ·) := isWellOrder_lt
   obtain ⟨y, hy1, hy2⟩ := hlive
   refine ⟨y, ?_, ?_⟩
   · intro x
@@ -588,7 +588,7 @@ private lemma exists_seg_preimage {β : Ordinal.{0}} [IsWellOrder β.ToType (· 
     {x₁ x₂ : β.ToType} (hx : x₁ < x₂) (hx₂lt : Ordinal.typein (· < ·) x₂ < β) :
     ∃ z : (Ordinal.typein (· < ·) x₂).ToType,
       (initialSegOfLe (le_of_lt hx₂lt)).toOrderEmbedding z = x₁ := by
-  haveI : IsWellOrder (Ordinal.typein (· < · : β.ToType → β.ToType → Prop) x₂).ToType
+  have : IsWellOrder (Ordinal.typein (· < · : β.ToType → β.ToType → Prop) x₂).ToType
       (· < ·) := isWellOrder_lt
   have hx₁ty : Ordinal.typein (· < ·) x₁ <
       Ordinal.type (· < · : (Ordinal.typein (· < ·) x₂).ToType →
@@ -625,7 +625,7 @@ theorem nodeRep_strictMono (G : (Fin (n + 2) ↪o Source lam) → C) {β : Ordin
     {h : NodeAt C n β} (hlive : nodeLive G h) {x₁ x₂ : β.ToType} (hx : x₁ < x₂) :
     nodeRep G h x₁ < nodeRep G h x₂ := by
   classical
-  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
   have hx₂lt : Ordinal.typein (· < ·) x₂ < β :=
     lt_of_lt_of_eq (Ordinal.typein_lt_type (· < ·) x₂) (Ordinal.type_toType β)
   have h₂live : nodeLive G (h.restrict (le_of_lt hx₂lt)) :=
@@ -643,7 +643,7 @@ theorem node_fact8 (G : (Fin (n + 2) ↪o Source lam) → C) {β : Ordinal.{0}}
     {x₂ : β.ToType} (hx : ∀ k, τ k < x₂) :
     colorAbove G (nodeRep G h x₂) (fun k => nodeRep G h (τ k)) = h τ := by
   classical
-  haveI : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder β.ToType (· < ·) := isWellOrder_lt
   have hx₂lt : Ordinal.typein (· < ·) x₂ < β :=
     lt_of_lt_of_eq (Ordinal.typein_lt_type (· < ·) x₂) (Ordinal.type_toType β)
   have h₂live : nodeLive G (h.restrict (le_of_lt hx₂lt)) :=
@@ -718,7 +718,7 @@ theorem exists_live_node_ge (hlam : Cardinal.aleph0 ≤ lam)
   classical
   by_contra hcon
   push Not at hcon
-  haveI : IsWellOrder (Order.succ lam).ord.ToType (· < ·) := isWellOrder_lt
+  have : IsWellOrder (Order.succ lam).ord.ToType (· < ·) := isWellOrder_lt
   have hlower : Order.succ ((2 : Cardinal.{0}) ^ lam) ≤
       Cardinal.mk (Σ b : (Order.succ lam).ord.ToType,
         { h : NodeAt C n (Ordinal.typein (· < ·) b) // nodeLive G h }) := by
@@ -788,7 +788,7 @@ theorem exists_endHomogeneous (lam : Cardinal.{0}) (hlam : Cardinal.aleph0 ≤ l
         (_ : ∀ k, s k ∈ Set.range f) (_ : x ∈ Set.range f) (_ : y ∈ Set.range f)
         (hx : ∀ k, s k < x) (hy : ∀ k, s k < y),
         G (appendLastOE s x hx) = G (appendLastOE s y hy) := by
-  haveI : Nonempty C := nonempty_color_tuple hlam G
+  have : Nonempty C := nonempty_color_tuple hlam G
   obtain ⟨B⟩ := tree_has_branch hlam hC G
   refine ⟨OrderEmbedding.ofStrictMono B.rep B.rep_strictMono, ?_⟩
   intro s x y hs hx_mem hy_mem hx hy

@@ -54,7 +54,7 @@ theorem realize_genAll (base : L.Structure M) (h : ℕ → M) (j : ℕ) (ρ : L[
     @BoundedFormulaω.Realize L[[ℕ]] M (wc base h) Empty 0 (genAll j ρ) Empty.elim Fin.elim0
       ↔ ∀ x, @BoundedFormulaω.Realize L[[ℕ]] M (wc base (Function.update h j x)) Empty 0 ρ
           Empty.elim Fin.elim0 := by
-  letI : L[[ℕ]].Structure M := wc base h
+  let : L[[ℕ]].Structure M := wc base h
   have hval : ∀ x : M, (Fin.snoc Fin.elim0 x : Fin 1 → M) = (fun _ => x) := by
     intro x; funext i; simp [Fin.snoc, Fin.eq_zero i]
   rw [genAll, BoundedFormulaω.realize_all]

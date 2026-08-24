@@ -85,7 +85,7 @@ theorem malitz_interpolation_relational_countable [L.IsRelational]
       (budgetedPairMem_root (mapLanguage_withConstants_mem_sentBnd r₁)
         (mapLanguage_withConstants_not_mem_sentBnd r₂) hroot)
   -- the base reduct contradicts `r₁ ⊨ r₂`
-  letI : L.Structure M := (L.lhomWithConstants ℕ).reduct M
+  let : L.Structure M := (L.lhomWithConstants ℕ).reduct M
   have hb1 : @Sentenceω.Realize L r₁ M _ :=
     (BoundedFormulaω.realize_mapLanguage (L.lhomWithConstants ℕ) r₁ Empty.elim Fin.elim0).mp hM1
   have hb2 : ¬ @Sentenceω.Realize L r₂ M _ := fun hc =>

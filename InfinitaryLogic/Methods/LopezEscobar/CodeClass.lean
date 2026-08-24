@@ -27,7 +27,7 @@ open FirstOrder Structure Set
 variable {L : Language.{0, 0}} [L.IsRelational] [Countable (Σ l, L.Relations l)]
 
 instance instCountableFunctionsOfRelational : Countable (Σ n, L.Functions n) := by
-  haveI : IsEmpty (Σ n, L.Functions n) := ⟨fun p => (‹L.IsRelational› p.1).false p.2⟩
+  have : IsEmpty (Σ n, L.Functions n) := ⟨fun p => (‹L.IsRelational› p.1).false p.2⟩
   infer_instance
 
 /-- **Converse gate** (`pcClass_subset`): the base reducts of the PC class lie in `B`.  This
@@ -40,11 +40,11 @@ theorem pcClass_subset {B : Set (StructureSpace L)} (side : PCSide)
     codeReduct '' ModelsOf (pcSentence L side T) ⊆ B := by
   rintro _ ⟨d, hd, rfl⟩
   -- the decoded graph-language model and its two conjuncts
-  letI Nstar : (graphLanguage (KLang L)).Structure ℕ := d.toStructure
+  let Nstar : (graphLanguage (KLang L)).Structure ℕ := d.toStructure
   obtain ⟨hAx, hrel⟩ := (realize_pcSentence_iff side T).mp hd
   -- reconstruct the functional structures
-  letI Kstar : (KLang L).Structure ℕ := reconstructStructure (sideFunsSet L side) hAx
-  letI Mstar : (MidLang L).Structure ℕ := (sideEmb L side).reduct ℕ
+  let Kstar : (KLang L).Structure ℕ := reconstructStructure (sideFunsSet L side) hAx
+  let Mstar : (MidLang L).Structure ℕ := (sideEmb L side).reduct ℕ
   have hM : @Sentenceω.Realize (MidLang L) (functionalTheta L T) ℕ Mstar := by
     have h1 := reconstruct_realizes_functionalPCSentence side T hAx hrel
     rw [functionalPCSentence] at h1
@@ -110,7 +110,7 @@ theorem pcClass_subset {B : Set (StructureSpace L)} (side : PCSide)
     exact (htree m _ _).mp hp
   have hpB : pulledCode L ℕ ∈ B := (hT (pulledCode L ℕ)).mpr ⟨ĝ, hbr⟩
   -- transport back along ν to the reduct code, then invoke invariance
-  letI : L.Structure ℕ := (codeReduct d).toStructure
+  let : L.Structure ℕ := (codeReduct d).toStructure
   have hcodeeq : StructureSpaceOn.encodeViaEquiv (L := L) (M := ℕ) (α := ℕ) νEquiv.symm
       = pulledCode L ℕ := by
     funext q

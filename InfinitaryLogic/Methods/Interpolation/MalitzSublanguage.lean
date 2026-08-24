@@ -71,7 +71,7 @@ theorem malitz_interpolation [L.IsRelational] (φ ψ : L.Sentenceω) (hψ : IsUn
   have h₂R : ψ.relationsIn ⊆ R := Set.subset_union_right
   have hE' : Sentenceω.Entails (φ.restrictSymbols h₁F h₁R) (ψ.restrictSymbols h₂F h₂R) :=
     entails_restrictSymbols_singleton F R φ ψ h₁F h₁R h₂F h₂R h
-  haveI : Countable (Σ n, (symbSublang (L := L) F R).Relations n) :=
+  have : Countable (Σ n, (symbSublang (L := L) F R).Relations n) :=
     symbSublang_rel_countable F hRc
   -- the consequent stays universal inside the sublanguage
   have hψ' : IsUniversal (ψ.restrictSymbols h₂F h₂R) :=

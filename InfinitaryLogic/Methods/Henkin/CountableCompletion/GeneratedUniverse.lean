@@ -44,7 +44,7 @@ theorem exists_eq_constTerm [L.IsRelational] (t : L[[ℕ]].Term Empty) :
   | var x => exact x.elim
   | @func l f ts =>
     rcases f with f | c
-    · haveI : IsEmpty (L.Functions l) := ‹L.IsRelational› l
+    · have : IsEmpty (L.Functions l) := ‹L.IsRelational› l
       exact isEmptyElim f
     · match l, c with
       | 0, c => exact ⟨c, congrArg _ (funext fun i => i.elim0)⟩
@@ -159,7 +159,7 @@ theorem seed_countable [Countable (Σ l, L.Relations l)] : (seed r₁ r₂).Coun
   refine Set.Countable.union (Set.Countable.union ?_ ?_) ?_
   · exact Set.countable_insert.mpr (Set.countable_singleton _)
   · exact Set.countable_range _
-  · haveI : ∀ l, Countable (L.Relations l) := countable_relations_each
+  · have : ∀ l, Countable (L.Relations l) := countable_relations_each
     have : {χ : L[[ℕ]].Sentenceω | ∃ (l : ℕ) (R : L.Relations l) (g : Fin l → ℕ), χ = relInst R g}
         = Set.range (fun p : Σ l, L.Relations l × (Fin l → ℕ) => relInst p.2.1 p.2.2) := by
       ext χ

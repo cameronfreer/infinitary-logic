@@ -103,14 +103,14 @@ theorem modelsOfBounded_measurableSet
     · convert MeasurableSet.univ (α := StructureSpace L)
       ext c
       simp only [Set.mem_setOf_eq, ModelsOfBounded, Set.mem_univ, iff_true]
-      letI := c.toStructure
+      let := c.toStructure
       simp [BoundedFormulaω.Realize, Term.realize, h]
     · convert MeasurableSet.empty (α := StructureSpace L)
       ext c
       simp only [Set.mem_setOf_eq, ModelsOfBounded, Set.mem_empty_iff_false, iff_false]
       intro hc
       apply h
-      letI := c.toStructure
+      let := c.toStructure
       simp [BoundedFormulaω.Realize, Term.realize] at hc
       exact hc
   | @rel _ l R ts =>
@@ -125,7 +125,7 @@ theorem modelsOfBounded_measurableSet
         letI := c.toStructure
         (fun i => (ts i).realize (Sum.elim v xs)) = tup := by
       intro c
-      letI := c.toStructure
+      let := c.toStructure
       funext i
       simp [hxs' i, Term.realize_var, tup]
     convert measurableSet_relHolds (L := L) ⟨⟨l, R⟩, tup⟩ using 1
@@ -133,13 +133,13 @@ theorem modelsOfBounded_measurableSet
     simp only [Set.mem_setOf_eq, ModelsOfBounded]
     constructor
     · intro hc
-      letI := c.toStructure
+      let := c.toStructure
       have hrel : @Structure.RelMap L ℕ c.toStructure l R
           (fun i => (ts i).realize (Sum.elim v xs)) := hc
       rw [StructureSpace.relMap_toStructure] at hrel
       rwa [htup] at hrel
     · intro hc
-      letI := c.toStructure
+      let := c.toStructure
       show @Structure.RelMap L ℕ c.toStructure l R
           (fun i => (ts i).realize (Sum.elim v xs))
       rw [StructureSpace.relMap_toStructure, htup]

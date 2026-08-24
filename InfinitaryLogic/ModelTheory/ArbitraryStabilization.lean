@@ -123,7 +123,7 @@ omit [Countable (Σ l, L.Relations l)] in
 /-- Relational languages have (vacuously) countably many function symbols. -/
 theorem countable_functions_of_isRelational :
     Countable (Σ n, L.Functions n) := by
-  haveI : ∀ n, IsEmpty (L.Functions n) := ‹L.IsRelational›
+  have : ∀ n, IsEmpty (L.Functions n) := ‹L.IsRelational›
   exact inferInstance
 
 omit [L.IsRelational] in
@@ -145,7 +145,7 @@ theorem bfEquiv_succ_of_stabilizesCompletely_arbitrary {α : Ordinal}
     (hα : α < Ordinal.omega 1) (hstab : StabilizesCompletely (L := L) N α)
     {n : ℕ} {a : Fin n → N} {b : Fin n → P} (h : BFEquiv (L := L) α n a b) :
     BFEquiv (L := L) (Order.succ α) n a b := by
-  haveI : Countable (Σ n, L.Functions n) := countable_functions_of_isRelational
+  have : Countable (Σ n, L.Functions n) := countable_functions_of_isRelational
   rw [BFEquiv.succ]
   refine ⟨h, ?_, ?_⟩
   · -- forth: a' : N gets a target match

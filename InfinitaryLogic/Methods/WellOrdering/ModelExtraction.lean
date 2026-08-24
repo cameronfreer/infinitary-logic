@@ -86,8 +86,8 @@ theorem exists_model_relPreserving_relational [L.IsRelational]
     ∃ (M : Type) (_ : L.Structure M) (_ : Nonempty M) (f : ℚ → M),
       Sentenceω.Realize φ M ∧ RelPreserving lt f := by
   obtain ⟨M, instM, hne, hall⟩ := exists_model_baseDiagram φ lt h
-  letI instL : L.Structure M := (L.lhomWithConstants ℕ).reduct M
-  haveI : (L.lhomWithConstants ℕ).IsExpansionOn M := LHom.isExpansionOn_reduct _ _
+  let instL : L.Structure M := (L.lhomWithConstants ℕ).reduct M
+  have : (L.lhomWithConstants ℕ).IsExpansionOn M := LHom.isExpansionOn_reduct _ _
   refine ⟨M, instL, hne, ratConstMap (L := L) M, ?_, fun q r hqr => ?_⟩
   · exact (BoundedFormulaω.realize_mapLanguage (L.lhomWithConstants ℕ) φ
       (Empty.elim : Empty → M) Fin.elim0).mp (hall _ (mapLanguage_mem_baseDiagram φ lt))

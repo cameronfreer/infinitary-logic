@@ -667,7 +667,7 @@ theorem exists_paired_model [L.IsRelational] [Countable (Σ l, L.Relations l)]
     (hroot : InsepAt (F₁ ∩ F₂) (R₁ ∩ R₂) A₀ {rL} {rR}) :
     ∃ (M : Type) (_ : L[[ℕ]].Structure M) (_ : Nonempty M),
       Sentenceω.Realize rL M ∧ Sentenceω.Realize rR M := by
-  haveI : Countable ↥(GenU (L := L) rL rR) := genU_countable.to_subtype
+  have : Countable ↥(GenU (L := L) rL rR) := genU_countable.to_subtype
   have hmem : PairedInsepFamilyMem F₁ R₁ F₂ R₂ rL rR ({rL} ∪ {rR}) := by
     refine ⟨{rL}, {rR}, A₀, Set.finite_singleton _, Set.finite_singleton _,
       Set.singleton_subset_iff.mpr root₁_mem, Set.singleton_subset_iff.mpr root₂_mem,

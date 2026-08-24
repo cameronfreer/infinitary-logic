@@ -101,7 +101,7 @@ theorem realize_templateSentence
     letI : (constantsOn J).Structure M := constantsOn.structure σ
     Sentenceω.Realize (Lomega1omegaTemplate.templateSentence φ t) M ↔
       φ.Realize (Empty.elim : Empty → M) (σ ∘ t) := by
-  letI : (constantsOn J).Structure M := constantsOn.structure σ
+  let : (constantsOn J).Structure M := constantsOn.structure σ
   -- Unfold templateSentence and Sentenceω.Realize
   show BoundedFormulaω.Realize _ Empty.elim Fin.elim0 ↔ _
   rw [Lomega1omegaTemplate.templateSentence, BoundedFormulaω.realize_subst]
@@ -181,9 +181,9 @@ theorem templateTheoryOn_countable
     {J : Type u} [LinearOrder J] [Countable J] :
     (T.templateTheoryOn Γ J).Countable := by
   classical
-  haveI : Countable ↥Γ := hΓ.to_subtype
-  haveI : ∀ n : ℕ, Countable (Fin n ↪o J) := fun n => Fin.countable_orderEmbedding n
-  haveI : Countable (Σ x : ↥Γ, Fin x.val.1 ↪o J) := inferInstance
+  have : Countable ↥Γ := hΓ.to_subtype
+  have : ∀ n : ℕ, Countable (Fin n ↪o J) := fun n => Fin.countable_orderEmbedding n
+  have : Countable (Σ x : ↥Γ, Fin x.val.1 ↪o J) := inferInstance
   refine (Set.countable_range (fun p : Σ x : ↥Γ, Fin x.val.1 ↪o J =>
     if T.truth p.1.val.2 then templateSentence p.1.val.2 p.2
     else (templateSentence p.1.val.2 p.2).not)).mono ?_
@@ -217,7 +217,7 @@ theorem IsLomega1omegaIndiscernible.templateTheory_finitelySatisfiable
       ∀ τ ∈ F, Sentenceω.Realize τ M := by
   classical
   -- Step 1: pick a base point i₀ ∈ I, m₀ := a i₀ ∈ M
-  haveI : Nonempty I := inferInstance
+  have : Nonempty I := inferInstance
   let i₀ : I := Classical.arbitrary I
   let m₀ : M := a i₀
   -- Step 2: extract witnesses for each τ ∈ F
@@ -229,7 +229,7 @@ theorem IsLomega1omegaIndiscernible.templateTheory_finitelySatisfiable
     fun τ => hSub τ.property
   choose nOf phiOf tOf hOf using witness
   -- Step 3: collect mentioned J-indices into a finset and sort
-  haveI : Fintype ↥F := hFin.fintype
+  have : Fintype ↥F := hFin.fintype
   let S : Finset J := (Finset.univ : Finset ↥F).biUnion
     (fun τ => (Finset.univ : Finset (Fin (nOf τ))).image (fun i => tOf τ i))
   let k : ℕ := S.card
@@ -239,7 +239,7 @@ theorem IsLomega1omegaIndiscernible.templateTheory_finitelySatisfiable
   let σ : J → M := fun j =>
     if hj : j ∈ S then a (f (orderIso.symm ⟨j, hj⟩)) else m₀
   refine ⟨σ, ?_⟩
-  letI : (constantsOn J).Structure M := constantsOn.structure σ
+  let : (constantsOn J).Structure M := constantsOn.structure σ
   -- Step 5: verify each τ ∈ F realizes
   -- Helper: every value of every t_τ lies in S
   have htS : ∀ (τ : ↥F) (i : Fin (nOf τ)), tOf τ i ∈ S := by
@@ -317,7 +317,7 @@ theorem IsLomega1omegaIndiscernibleOn.templateTheoryOn_finitelySatisfiable
       letI : (constantsOn J).Structure M := constantsOn.structure σ
       ∀ τ ∈ F, Sentenceω.Realize τ M := by
   classical
-  haveI : Nonempty I := inferInstance
+  have : Nonempty I := inferInstance
   let i₀ : I := Classical.arbitrary I
   let m₀ : M := a i₀
   -- Step 2 (modified): extract witnesses carrying membership in Γ.
@@ -331,7 +331,7 @@ theorem IsLomega1omegaIndiscernibleOn.templateTheoryOn_finitelySatisfiable
     obtain ⟨n, φ, t, hΓmem, hcase⟩ := hSub τ.property
     exact ⟨n, φ, t, hΓmem, hcase⟩
   choose nOf phiOf tOf hΓOf hOf using witness
-  haveI : Fintype ↥F := hFin.fintype
+  have : Fintype ↥F := hFin.fintype
   let S : Finset J := (Finset.univ : Finset ↥F).biUnion
     (fun τ => (Finset.univ : Finset (Fin (nOf τ))).image (fun i => tOf τ i))
   let k : ℕ := S.card
@@ -340,7 +340,7 @@ theorem IsLomega1omegaIndiscernibleOn.templateTheoryOn_finitelySatisfiable
   let σ : J → M := fun j =>
     if hj : j ∈ S then a (f (orderIso.symm ⟨j, hj⟩)) else m₀
   refine ⟨σ, ?_⟩
-  letI : (constantsOn J).Structure M := constantsOn.structure σ
+  let : (constantsOn J).Structure M := constantsOn.structure σ
   have htS : ∀ (τ : ↥F) (i : Fin (nOf τ)), tOf τ i ∈ S := by
     intro τ i
     exact Finset.mem_biUnion.mpr ⟨τ, Finset.mem_univ _,

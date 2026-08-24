@@ -42,7 +42,7 @@ decoded structures transports satisfaction. -/
 theorem modelsOf_mem_iff_of_equiv (φ : L.Sentenceω) {c d : StructureSpace L}
     (e : @Language.Equiv L ℕ ℕ c.toStructure d.toStructure) :
     c ∈ ModelsOf φ ↔ d ∈ ModelsOf φ := by
-  letI : L.Structure ℕ := c.toStructure
+  let : L.Structure ℕ := c.toStructure
   show @BoundedFormulaω.Realize L ℕ c.toStructure Empty 0 φ Empty.elim Fin.elim0
     ↔ @BoundedFormulaω.Realize L ℕ d.toStructure Empty 0 φ Empty.elim Fin.elim0
   have h := @BoundedFormulaω.realize_equiv L ℕ ℕ c.toStructure d.toStructure e Empty 0 φ

@@ -142,8 +142,8 @@ theorem relInst_congr_iff (hsc : HenkinComplete U S) {l : ℕ} (R : L.Relations 
 /-! ## The `L[[ℕ]]`-structure on the quotient -/
 
 instance qfuncSuccIsEmpty (n : ℕ) : IsEmpty (L[[ℕ]].Functions (n + 1)) := by
-  haveI : IsEmpty (L.Functions (n + 1)) := ‹L.IsRelational› (n + 1)
-  haveI : IsEmpty ((constantsOn ℕ).Functions (n + 1)) := isEmpty_functions_constantsOn_succ
+  have : IsEmpty (L.Functions (n + 1)) := ‹L.IsRelational› (n + 1)
+  have : IsEmpty ((constantsOn ℕ).Functions (n + 1)) := isEmpty_functions_constantsOn_succ
   exact instIsEmptySum
 
 /-- The quotient term model as an `L[[ℕ]]`-structure. Function interpretation is the constant

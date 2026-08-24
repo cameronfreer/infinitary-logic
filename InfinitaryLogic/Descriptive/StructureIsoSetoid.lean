@@ -116,7 +116,7 @@ theorem Sentenceω.HasPerfectSetOfPairwiseNonisomorphicNatModels.continuum_le
     exact Subtype.ext (hanti x.1 x.2 y.1 y.2 (isoSetoid_r_iff.mp hr))
   -- `StructureSpace L` is metrizable but carries no chosen metric, so upgrade the Polish
   -- structure here; the topology is unchanged, hence `hperf` still applies.
-  letI := TopologicalSpace.upgradeIsCompletelyMetrizable (StructureSpace L)
+  let := TopologicalSpace.upgradeIsCompletelyMetrizable (StructureSpace L)
   calc Cardinal.continuum = #P := (hperf.mk_eq_continuum hne).symm
     _ ≤ #(Quotient (isoSetoid φ)) := Cardinal.mk_le_of_injective hinj
 
@@ -146,7 +146,7 @@ theorem Sentenceω.hasPerfectSet_of_ambient_cantorAntichain {φ : L.Sentenceω}
     (h : HasCantorAntichainOn (structureIsoSetoid L) (ModelsOf φ)) :
     φ.HasPerfectSetOfPairwiseNonisomorphicNatModels := by
   -- upgrading supplies a metric, hence `T2Space`, without changing the topology
-  letI := TopologicalSpace.upgradeIsCompletelyMetrizable (StructureSpace L)
+  let := TopologicalSpace.upgradeIsCompletelyMetrizable (StructureSpace L)
   exact h.hasPerfectAntichainOn
 
 /-- A Cantor antichain in any finer topology yields an **ambient** perfect set of pairwise

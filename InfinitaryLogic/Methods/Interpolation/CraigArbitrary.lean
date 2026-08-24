@@ -78,12 +78,12 @@ theorem entails_graphTranslation (r₁ r₂ : L.Sentenceω) (h : Sentenceω.Enta
   show BoundedFormulaω.Realize _ _ _
   rw [BoundedFormulaω.realize_imp]
   intro hAx₂
-  letI : Countable ↥(r₁.functionsIn ∪ r₂.functionsIn) :=
+  let : Countable ↥(r₁.functionsIn ∪ r₂.functionsIn) :=
     ((Set.countable_coe_iff.mp inferInstance).union
       (Set.countable_coe_iff.mp inferInstance)).to_subtype
   have hAxU : Sentenceω.Realize (graphAxioms (r₁.functionsIn ∪ r₂.functionsIn)) M :=
     (realize_graphAxioms_union r₁.functionsIn r₂.functionsIn).mpr ⟨hAx₁, hAx₂⟩
-  letI recon : L.Structure M := reconstructStructure _ hAxU
+  let recon : L.Structure M := reconstructStructure _ hAxU
   have h₁ : @BoundedFormulaω.Realize L M recon Empty 0 r₁ Empty.elim Fin.elim0 :=
     (realize_relationalize_reconstruct hAxU r₁ Set.subset_union_left Empty.elim Fin.elim0).mp hr₁
   have h₂ : @Sentenceω.Realize L r₂ M recon := Sentenceω.entails_iff.mp h M h₁
@@ -136,7 +136,7 @@ theorem craig_interpolation (r₁ r₂ : L.Sentenceω) (h : Sentenceω.Entails r
   · -- `r₁ ⊨ θ`: graph-expand, feed the antecedent, back-translate. No reconstruction.
     rw [Sentenceω.entails_iff]
     intro M instM neM hr₁
-    letI := graphExpansion L M
+    let := graphExpansion L M
     have hA : Sentenceω.Realize
         ((graphAxioms r₁.functionsIn).and (relationalizeFormula r₁)) M :=
       (BoundedFormulaω.realize_and _ _).mpr
@@ -147,7 +147,7 @@ theorem craig_interpolation (r₁ r₂ : L.Sentenceω) (h : Sentenceω.Entails r
   · -- `θ ⊨ r₂`: graph-expand, supply `Ax(F₂)` from the expansion, recover `r₂`.
     rw [Sentenceω.entails_iff]
     intro M instM neM hθ
-    letI := graphExpansion L M
+    let := graphExpansion L M
     have hB := Sentenceω.entails_iff.mp hE₂ M
       ((realize_backTranslateFormula θg Empty.elim Fin.elim0).mp hθ)
     exact (realize_relationalizeFormula r₂ Empty.elim Fin.elim0).mp
@@ -177,16 +177,16 @@ theorem craig_pcSeparation (ψ₁ ψ₂ : L.Sentenceω) (h : Sentenceω.Entails 
   set R₀ : Set (Σ n, L.Relations n) := ψ₁.relationsIn ∩ ψ₂.relationsIn with hR₀
   refine ⟨θ.restrictSymbols hθF hθR, ?_, ?_⟩
   · intro M instM neM hψ₁
-    letI instM' : (symbSublang (L := L) F₀ R₀).Structure M := (symbSublangIncl F₀ R₀).reduct M
-    haveI : (symbSublangIncl F₀ R₀).IsExpansionOn M :=
+    let instM' : (symbSublang (L := L) F₀ R₀).Structure M := (symbSublangIncl F₀ R₀).reduct M
+    have : (symbSublangIncl F₀ R₀).IsExpansionOn M :=
       LHom.isExpansionOn_reduct (symbSublangIncl F₀ R₀) M
     have hiff := BoundedFormulaω.realize_mapLanguage (symbSublangIncl F₀ R₀)
       (θ.restrictSymbols hθF hθR) (Empty.elim : Empty → M) Fin.elim0
     rw [BoundedFormulaω.mapLanguage_restrictSymbols] at hiff
     exact hiff.mp ((Sentenceω.entails_iff.mp hE1) M hψ₁)
   · intro M instM neM hψ₂ hcon
-    letI instM' : (symbSublang (L := L) F₀ R₀).Structure M := (symbSublangIncl F₀ R₀).reduct M
-    haveI : (symbSublangIncl F₀ R₀).IsExpansionOn M :=
+    let instM' : (symbSublang (L := L) F₀ R₀).Structure M := (symbSublangIncl F₀ R₀).reduct M
+    have : (symbSublangIncl F₀ R₀).IsExpansionOn M :=
       LHom.isExpansionOn_reduct (symbSublangIncl F₀ R₀) M
     have hiff := BoundedFormulaω.realize_mapLanguage (symbSublangIncl F₀ R₀)
       (θ.restrictSymbols hθF hθR) (Empty.elim : Empty → M) Fin.elim0

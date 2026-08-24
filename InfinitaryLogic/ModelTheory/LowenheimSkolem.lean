@@ -166,7 +166,7 @@ theorem downward_LS [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relati
     ∃ (N : Type u) (_ : L.Structure N) (_ : Countable N),
       Sentenceω.Realize φ N := by
   -- Step 1: Extend L with constants for M. L[[M]] is countable since L and M are.
-  letI := Language.withConstantsSelfStructure (L := L) (M := M)
+  let := Language.withConstantsSelfStructure (L := L) (M := M)
   -- Step 2: Lift φ to L[[M]]
   let φ' : L[[M]].Sentenceω := φ.mapLanguage (L.lhomWithConstants M)
   -- Step 3: φ' is true in M (by realize_mapLanguage with the expansion)
@@ -178,7 +178,7 @@ theorem downward_LS [Countable (Σ l, L.Functions l)] [Countable (Σ l, L.Relati
   obtain ⟨N, hStrN, hCountN, hNφ'⟩ :=
     downward_LS_with_naming φ' M (namingFunctionWithConstants L M) hM'
   -- Step 5: Restrict N from L[[M]] back to L
-  letI : L.Structure N := (L.lhomWithConstants M).reduct N
+  let : L.Structure N := (L.lhomWithConstants M).reduct N
   exact ⟨N, inferInstance, hCountN, by
     simp only [Sentenceω.realize_def]
     have := hNφ'
@@ -203,7 +203,7 @@ theorem downward_LS_theory [Countable (Σ l, L.Functions l)] [Countable (Σ l, L
     ∃ (N : Type u) (_ : L.Structure N) (_ : Countable N),
       T.Model N := by
   -- Lift T to L[[M]], apply model_existence, restrict back
-  letI := Language.withConstantsSelfStructure (L := L) (M := M)
+  let := Language.withConstantsSelfStructure (L := L) (M := M)
   let ι := namingFunctionWithConstants L M
   -- The lifted theory
   let T' : Set L[[M]].Sentenceω := BoundedFormulaω.mapLanguage (L.lhomWithConstants M) '' T
@@ -218,7 +218,7 @@ theorem downward_LS_theory [Countable (Σ l, L.Functions l)] [Countable (Σ l, L
   obtain ⟨N, hStrN, hCountN, hModel'⟩ :=
     model_existence (trueInModelConsistencyPropertyEq M ι) T' hM' hT'_countable
   -- Restrict N to L
-  letI : L.Structure N := (L.lhomWithConstants M).reduct N
+  let : L.Structure N := (L.lhomWithConstants M).reduct N
   exact ⟨N, inferInstance, hCountN, by
     intro σ hσ
     have h := hModel' (σ.mapLanguage (L.lhomWithConstants M)) ⟨σ, hσ, rfl⟩

@@ -175,7 +175,7 @@ theorem exists_complete_sentence_of_lomega1omegaSmall {M : Type} [L.Structure M]
     (hφ : Sentenceω.Realize φ M) :
     ∃ ψ : L.Sentenceω, Lomega1omegaComplete ψ ∧ Sentenceω.Realize ψ M ∧
       ∀ (P : Type) (_ : L.Structure P), Sentenceω.Realize ψ P → Sentenceω.Realize φ P := by
-  haveI : Countable (Σ n, L.Functions n) := countable_functions_of_isRelational
+  have : Countable (Σ n, L.Functions n) := countable_functions_of_isRelational
   obtain ⟨N', hcnt, hAe⟩ := exists_countable_companion hsmall
   refine ⟨canonicalScottSentenceω (L := L) N', lomega1omegaComplete_canonicalScottSentenceω,
     ?_, ?_⟩
@@ -220,7 +220,7 @@ theorem exists_complete_kCategorical_of_hasArbLargeModels {φ : L.Sentenceω}
       (∀ (P : Type) (_ : L.Structure P), Sentenceω.Realize ψ P → Sentenceω.Realize φ P) ∧
       (∃ (P : Type) (_ : L.Structure P), Sentenceω.Realize ψ P ∧ Cardinal.mk P = κ) ∧
       KCategorical ψ κ := by
-  haveI : Countable (Σ n, L.Functions n) := countable_functions_of_isRelational
+  have : Countable (Σ n, L.Functions n) := countable_functions_of_isRelational
   obtain ⟨M, instM, hφM, hMκ, hsmall⟩ := exists_small_model_of_hasArbLargeModels hφarb hκ
   obtain ⟨ψ, hcomp, hψM, hent⟩ := exists_complete_sentence_of_lomega1omegaSmall hsmall hφM
   refine ⟨ψ, hcomp, hent, ⟨M, instM, hψM, hMκ⟩, ?_⟩

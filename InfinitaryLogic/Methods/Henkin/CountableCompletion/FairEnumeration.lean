@@ -50,7 +50,7 @@ namespace Request
 /-- The request type is countable when `U` and the relation symbols are. -/
 instance instCountable [Countable U] [Countable (Σ l, L.Relations l)] :
     Countable (Request U) := by
-  haveI : ∀ l, Countable (L.Relations l) := countable_relations_each
+  have : ∀ l, Countable (L.Relations l) := countable_relations_each
   let f : Request U → (U × ℕ) ⊕ U ⊕ ℕ ⊕ (ℕ × ℕ) ⊕ (ℕ × ℕ × ℕ) ⊕
       (Σ l, L.Relations l × (Fin l → ℕ) × Fin l × ℕ) :=
     fun r => match r with
@@ -513,7 +513,7 @@ inside `U`. -/
 theorem exists_henkinComplete [Countable U] [Countable (Σ l, L.Relations l)] :
     ∃ Sstar : Set L[[ℕ]].Sentenceω,
       S₀.1 ⊆ Sstar ∧ Sstar ⊆ U ∧ HenkinComplete U Sstar := by
-  haveI : Nonempty (Request U) := ⟨.eqRefl 0⟩
+  have : Nonempty (Request U) := ⟨.eqRefl 0⟩
   obtain ⟨e', he'⟩ := exists_surjective_nat (Request U)
   exact ⟨Sstar e' S₀, subset_Sstar e' S₀, Sstar_subset_U e' S₀,
     henkinComplete_Sstar e' he' S₀⟩

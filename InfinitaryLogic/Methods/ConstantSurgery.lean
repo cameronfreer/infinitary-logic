@@ -52,7 +52,7 @@ theorem realize_substConst (base : L.Structure M) (h : ℕ → M) (b a : ℕ) (�
     @BoundedFormulaω.Realize L[[ℕ]] M (wc base h) Empty 0 (substConst b a ρ) Empty.elim Fin.elim0
       ↔ @BoundedFormulaω.Realize L[[ℕ]] M (wc base (Function.update h b (h a))) Empty 0 ρ
           Empty.elim Fin.elim0 := by
-  letI : L[[ℕ]].Structure M := wc base h
+  let : L[[ℕ]].Structure M := wc base h
   rw [substConst, realize_instConst base h a _,
     BoundedFormulaω.realize_relabel_sumInr_zero (ρ.abstractConst b) (fun _ : Fin 1 => h a)]
   exact BoundedFormulaω.realize_abstractConst base h b (h a) ρ Fin.elim0

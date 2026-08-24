@@ -114,9 +114,9 @@ theorem finitaryFragment_compact {T : L.Theoryω} (hT : T ⊆ finitaryFragment L
       hfin (Sentence.toLω '' (F₀ : Set L.Sentence))
         (by rintro _ ⟨φ₀, hφ₀, rfl⟩; exact hF₀ hφ₀)
         (F₀.finite_toSet.image _)
-    letI : L.Structure M := instM
-    haveI := neM
-    haveI : M ⊨ (↑F₀ : L.Theory) :=
+    let : L.Structure M := instM
+    have := neM
+    have : M ⊨ (↑F₀ : L.Theory) :=
       ⟨fun {φ₀} hφ₀ => (Sentence.realize_toLω φ₀).mp (hM _ ⟨φ₀, hφ₀, rfl⟩)⟩
     exact Theory.Model.isSatisfiable M
   -- Mathlib first-order compactness
@@ -158,7 +158,7 @@ theorem hf_aFinite_iff {L : Language.{u, v}} {T : Set L.Sentenceω} :
     exact Set.finite_range f
   · intro hT
     obtain ⟨s, rfl⟩ := hT.exists_finset_coe
-    haveI : Fintype {x // x ∈ s} := FinsetCoe.fintype s
+    have : Fintype {x // x ∈ s} := FinsetCoe.fintype s
     refine ⟨⟨Fintype.card {x // x ∈ s},
       fun i => ((Fintype.equivFin {x // x ∈ s}).symm i : L.Sentenceω)⟩, ?_⟩
     ext x

@@ -44,12 +44,12 @@ theorem schemaTerm_localSkolemUniversalForColim
     letI : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
       (lhomWithConstants (localColim s₀) ℕ).reduct _
     LocalSkolemUniversalForColim s₀ (M := SchemaTermCarrier (s₀ := s₀) (M := M) hM) := by
-  letI : (localColim s₀).Structure M := localColimStructure s₀
-  letI : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+  let : (localColim s₀).Structure M := localColimStructure s₀
+  let : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
     schemaTermStructure hM
-  letI : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+  let : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
     (lhomWithConstants (localColim s₀) ℕ).reduct _
-  haveI : (lhomWithConstants (localColim s₀) ℕ).IsExpansionOn
+  have : (lhomWithConstants (localColim s₀) ℕ).IsExpansionOn
       (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
     LHom.isExpansionOn_reduct _ _
   refine ⟨?_⟩
@@ -137,7 +137,7 @@ theorem schemaTerm_localSkolemUniversalForColim
         (LlocalInclusion s₀ (k + 1))).Realize _ _ at h1
       rw [mapLanguage_LlocalInclusion_lift, BoundedFormulaω.mapLanguage_not,
         BoundedFormulaω.realize_not] at h1
-      letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+      let : (constantsOn ℕ).Structure M := constantsOn.structure σ
       have hψσ : (ψ.mapLanguage (LlocalInclusion s₀ k)).Realize (Empty.elim : Empty → M)
           (fun i => (args i).realize Empty.elim) := Classical.not_not.mp h1
       refine h2 ?_
@@ -210,10 +210,10 @@ theorem schemaTermLocalEMContext_omegaCompleteForColim
       (lhomWithConstants (localColim s₀) ℕ).reduct _
     LocalEMContext.OmegaCompleteForColim s₀ J
       (schemaTermLocalEMContext (s₀ := s₀) (M := M) hM J) := by
-  letI : (localColim s₀).Structure M := localColimStructure s₀
-  letI : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+  let : (localColim s₀).Structure M := localColimStructure s₀
+  let : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
     schemaTermStructure hM
-  letI : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+  let : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
     (lhomWithConstants (localColim s₀) ℕ).reduct _
   exact (schemaSeq_tailTemplateOmegaWitnessed (s₀ := s₀) (M := M) hM)
     |>.omegaCompleteForColim (schemaTermLocalEMContext (s₀ := s₀) (M := M) hM J).hind
@@ -238,16 +238,16 @@ theorem schemaTerm_realizes_stage0_sentence
     letI : s₀.Lang.Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
       (LlocalInclusion s₀ 0).reduct _
     Sentenceω.Realize φ (SchemaTermCarrier (s₀ := s₀) (M := M) hM) := by
-  letI : (localColim s₀).Structure M := localColimStructure s₀
-  letI : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+  let : (localColim s₀).Structure M := localColimStructure s₀
+  let : (localColim s₀)[[ℕ]].Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
     schemaTermStructure hM
-  letI : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+  let : (localColim s₀).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
     (lhomWithConstants (localColim s₀) ℕ).reduct _
-  letI : s₀.Lang.Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+  let : s₀.Lang.Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
     (LlocalInclusion s₀ 0).reduct _
-  letI : (Llocal s₀ 0).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+  let : (Llocal s₀ 0).Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
     (inferInstance : s₀.Lang.Structure (SchemaTermCarrier (s₀ := s₀) (M := M) hM))
-  haveI : (LlocalInclusion s₀ 0).IsExpansionOn (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
+  have : (LlocalInclusion s₀ 0).IsExpansionOn (SchemaTermCarrier (s₀ := s₀) (M := M) hM) :=
     LHom.isExpansionOn_reduct _ _
   let ψ : (localColim s₀).Sentenceω := φ.mapLanguage (LlocalInclusion s₀ 0)
   have hψ : (⟨0, ψ⟩ : Σ n, (localColim s₀).BoundedFormulaω Empty n) ∈ ΓEMlocal s₀ :=
@@ -298,20 +298,20 @@ theorem morleySeed_tailTemplate_model_of_schemaSource {L' : Language.{0, 0}}
         ((tailTemplateOfSeq a : Lomega1omegaTemplate L').templateTheoryOfSeq
           (morleySeed φ) J) N := by
   obtain ⟨instLO, instWF⟩ := exists_wellFoundedLT M
-  letI : LinearOrder M := instLO
-  haveI : WellFoundedLT M := instWF
-  haveI : Nonempty M := Cardinal.mk_ne_zero_iff.mp
+  let : LinearOrder M := instLO
+  have : WellFoundedLT M := instWF
+  have : Nonempty M := Cardinal.mk_ne_zero_iff.mp
     (((lt_of_lt_of_le Cardinal.aleph0_pos (Cardinal.aleph0_le_beth _)).trans_le hSize).ne')
   have hM : Cardinal.beth (Ordinal.omega 1) ≤ Cardinal.mk M := hSize
-  letI : (localColim (LocalStage.ofSeq L' (morleySeed φ))).Structure M :=
+  let : (localColim (LocalStage.ofSeq L' (morleySeed φ))).Structure M :=
     localColimStructure (LocalStage.ofSeq L' (morleySeed φ))
-  letI : (localColim (LocalStage.ofSeq L' (morleySeed φ)))[[ℕ]].Structure
+  let : (localColim (LocalStage.ofSeq L' (morleySeed φ)))[[ℕ]].Structure
       (SchemaTermCarrier (s₀ := LocalStage.ofSeq L' (morleySeed φ)) (M := M) hM) :=
     schemaTermStructure hM
-  letI : (localColim (LocalStage.ofSeq L' (morleySeed φ))).Structure
+  let : (localColim (LocalStage.ofSeq L' (morleySeed φ))).Structure
       (SchemaTermCarrier (s₀ := LocalStage.ofSeq L' (morleySeed φ)) (M := M) hM) :=
     (lhomWithConstants (localColim (LocalStage.ofSeq L' (morleySeed φ))) ℕ).reduct _
-  letI : L'.Structure
+  let : L'.Structure
       (SchemaTermCarrier (s₀ := LocalStage.ofSeq L' (morleySeed φ)) (M := M) hM) :=
     (LlocalInclusion (LocalStage.ofSeq L' (morleySeed φ)) 0).reduct _
   have hmem : (⟨0, φ⟩ : Σ n,
