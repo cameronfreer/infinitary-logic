@@ -39,6 +39,9 @@ jobs:
       - name: Verify sorry boundary
         run: python3 scripts/check_sorry_boundary.py
 
+      - name: Verify no warning regressions
+        run: python3 scripts/check_warning_regression.py
+
       - name: Verify local EMContext import boundary
         run: bash scripts/check_local_boundary.sh
 
