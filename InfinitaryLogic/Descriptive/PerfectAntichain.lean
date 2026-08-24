@@ -111,6 +111,20 @@ theorem HasCantorAntichainOn.mono_relation {r s : Setoid X} (hrs : ∀ x y, r.r 
   obtain ⟨f, hcont, hmem, hineq⟩ := h
   exact ⟨f, hcont, hmem, fun x y hxy hr => hineq x y hxy (hrs _ _ hr)⟩
 
+/-- **A Cantor antichain on a subtype is one on the underlying set.**
+
+The subtype carries `r` pulled back along the inclusion, and it *is* the ambient set seen from
+inside, so the containment clause is vacuous there and becomes membership in `A` here.  Only
+continuity has to move, and it moves by composing with the inclusion.
+
+This is the return leg for anything proved on the model subtype — where a Polish structure is
+available — when the statement to be established is about the ambient space. -/
+theorem HasCantorAntichainOn.of_subtype
+    (h : HasCantorAntichainOn (r.comap (Subtype.val : ↥A → X)) (Set.univ : Set ↥A)) :
+    HasCantorAntichainOn r A := by
+  obtain ⟨f, hcont, -, hineq⟩ := h
+  exact ⟨fun x => (f x).1, continuous_subtype_val.comp hcont, fun x => (f x).2, hineq⟩
+
 omit [TopologicalSpace X] in
 /-- **A Cantor antichain survives coarsening the topology.**
 

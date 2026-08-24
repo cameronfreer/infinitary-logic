@@ -2,6 +2,7 @@ import InfinitaryLogic.Conditional.MorleyHanfTransfer
 import InfinitaryLogic.Conditional.MorleyHanfSchemaDischarge
 import InfinitaryLogic.Conditional.SilverBurgess
 import InfinitaryLogic.Conditional.GandyHarrington
+import InfinitaryLogic.Conditional.SilverAntichain
 import InfinitaryLogic.Conditional.SilverCategoryRoute
 
 /-!
@@ -36,6 +37,9 @@ intermediates and historical statement shapes.
 - `GandyHarrington.lean`: Silver-for-Borel, **PROVED** (2026-06-10, sorry-free):
   `gandy_harrington_for_relation`, `silver_core_polish`, `silverBurgessDichotomy`
   all report axioms exactly `[propext, Classical.choice, Quot.sound]`.
+- `SilverAntichain.lean`: `silver_core_polish` repackaged for a Borel *subset* of a
+  Polish space, returning a Cantor antichain in the **ambient** space rather than
+  in the refinement the subtype needed to be Polish.
 
 There are no sorries anywhere in the project; the historical sorry-bearing
 `Combinatorics/ErdosRado.lean` exploration is preserved on the
