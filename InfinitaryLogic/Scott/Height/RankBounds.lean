@@ -33,7 +33,7 @@ namespace Language
 variable {L : Language.{u, v}} [L.IsRelational]
 variable [Countable (Σ l, L.Relations l)]
 
-open FirstOrder Structure Fin Ordinal
+open FirstOrder Structure Ordinal
 
 /-- The supremum of element ranks without the +1 adjustment.
 

@@ -42,7 +42,7 @@ namespace Language
 variable {L : Language.{u, v}} [L.IsRelational]
 variable [Countable (Σ l, L.Relations l)]
 
-open FirstOrder Structure Fin Ordinal BoundedFormulaω Substructure
+open FirstOrder Structure Ordinal BoundedFormulaω Substructure
 
 -- We fix the ordinal universe to avoid metavariable issues
 -- In practice, we typically work with Ordinal.{0}

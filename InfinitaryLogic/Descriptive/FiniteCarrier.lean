@@ -124,6 +124,7 @@ def isoSetoidOn (φ : L.Sentenceω) (n : ℕ) :
     Setoid ↥(ModelsOfOn (α := Fin n) φ) :=
   (structureIsoSetoidOn L n).comap Subtype.val
 
+omit [Countable ((l : ℕ) × L.Relations l)] in
 /-- Membership in the pulled-back relation is membership in the ambient one. -/
 theorem isoSetoidOn_r_iff {φ : L.Sentenceω} {n : ℕ} {c₁ c₂ : ↥(ModelsOfOn (α := Fin n) φ)} :
     (isoSetoidOn φ n).r c₁ c₂ ↔ (structureIsoSetoidOn L n).r c₁.1 c₂.1 := Iff.rfl
@@ -237,6 +238,7 @@ theorem counting_fin_models_dichotomy
 def AllCodedIsoClasses (φ : L.Sentenceω) :=
   Quotient (isoSetoid φ) ⊕ Σ n, Quotient (isoSetoidOn φ n)
 
+omit [Countable ((l : ℕ) × L.Relations l)] in
 /-- **The finite tiers, summed**: their disjoint union has at most `ℵ₀ * bound` classes whenever
 each single tier has at most `bound`.
 

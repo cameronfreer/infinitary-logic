@@ -163,8 +163,9 @@ theorem baseFunctionsIn_constEq (a b : ℕ) :
   obtain ⟨n, f⟩ := s
   simp only [constEq, constTermS, BoundedFormulaω.baseFunctionsIn, BoundedFormulaω.functionsIn,
     Term.functionsIn, Set.mem_ofPred_eq, Set.mem_union, Set.iUnion_of_empty,
-    Set.mem_insert_iff, Set.mem_empty_iff_false, or_false, Sigma.mk.injEq, iff_false, not_or]
-  refine ⟨?_, ?_⟩ <;> rintro ⟨rfl, h⟩ <;> exact (Sum.inl_ne_inr (eq_of_heq h))
+    Set.mem_insert_iff, Set.mem_empty_iff_false, or_false, iff_false, not_or]
+  -- `rintro` closes both goals outright: the `rfl` pattern is already contradictory
+  refine ⟨?_, ?_⟩ <;> rintro ⟨rfl, h⟩
 
 theorem baseRelationsIn_constEq (a b : ℕ) :
     (constEq (L := L) a b).baseRelationsIn = ∅ := by

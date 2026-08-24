@@ -63,12 +63,14 @@ L-isomorphic. -/
 def isoSetoid (φ : L.Sentenceω) : Setoid ↥(ModelsOf φ) :=
   (structureIsoSetoid L).comap Subtype.val
 
+omit [Countable ((l : ℕ) × L.Relations l)] in
 /-- `isoSetoid φ` is the ambient relation pulled back along the subtype inclusion.  True by
 definition; stated so consumers can rewrite with it without unfolding. -/
 theorem isoSetoid_eq_comap (φ : L.Sentenceω) :
     isoSetoid φ = (structureIsoSetoid L).comap (Subtype.val : ↥(ModelsOf φ) → StructureSpace L) :=
   rfl
 
+omit [Countable ((l : ℕ) × L.Relations l)] in
 /-- Membership in the pulled-back relation is membership in the ambient one. -/
 theorem isoSetoid_r_iff {φ : L.Sentenceω} {c₁ c₂ : ↥(ModelsOf φ)} :
     (isoSetoid φ).r c₁ c₂ ↔ (structureIsoSetoid L).r c₁.1 c₂.1 := Iff.rfl
@@ -93,6 +95,7 @@ def Sentenceω.HasPerfectSetOfPairwiseNonisomorphicNatModels (φ : L.Sentenceω)
 def Sentenceω.IsThinOnNatModels (φ : L.Sentenceω) : Prop :=
   IsThinOn (structureIsoSetoid L) (ModelsOf φ)
 
+omit [Countable ((l : ℕ) × L.Relations l)] in
 theorem Sentenceω.isThinOnNatModels_iff {φ : L.Sentenceω} :
     φ.IsThinOnNatModels ↔ ¬φ.HasPerfectSetOfPairwiseNonisomorphicNatModels := Iff.rfl
 

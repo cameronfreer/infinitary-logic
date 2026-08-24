@@ -1032,8 +1032,8 @@ theorem exists_coherentMajorityBranch_of_ehmrBranch
       apply RelEmbedding.ext
       intro i
       match i with
-      | ⟨0, _⟩ => simp only [pairEmbed, OrderEmbedding.coe_ofStrictMono]; exact hpx
-      | ⟨1, _⟩ => simp only [pairEmbed, OrderEmbedding.coe_ofStrictMono]; exact hpt
+      | ⟨0, _⟩ => simp only [pairEmbed]; exact hpx
+      | ⟨1, _⟩ => simp only [pairEmbed]; exact hpt
     rw [hpe, br_apply γ hγ]
     exact b.coloring (htlt hγ x) hγ hx_lt
 

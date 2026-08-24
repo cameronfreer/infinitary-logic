@@ -178,33 +178,33 @@ theorem realize_omegaAxioms :
     · have h := hinj ![x, y]
       rw [BoundedFormulaω.realize_imp, BoundedFormulaω.realize_equal,
         BoundedFormulaω.realize_equal] at h
-      simp only [realize_s_app, realize_var_block, Matrix.cons_val_zero,
-        Matrix.cons_val_one] at h
+      simp only [realize_s_app, 
+        ] at h
       exact h hxy
     · have h := hne ![x]
       rw [BoundedFormulaω.realize_not, BoundedFormulaω.realize_equal] at h
-      simp only [realize_s_app, realize_var_block, realize_mNum, Matrix.cons_val_zero] at h
+      simp only [realize_s_app, realize_mNum] at h
       exact h hx
     · have h := hsurj ![x]
       rw [BoundedFormulaω.realize_iSup] at h
       obtain ⟨i, hi⟩ := h
       rw [BoundedFormulaω.realize_equal] at hi
-      simp only [realize_mNum, realize_var_block, Matrix.cons_val_zero] at hi
+      simp only [realize_mNum] at hi
       exact ⟨i, hi⟩
   · rintro ⟨hinj, hne, hsurj⟩
     refine ⟨fun ws => ?_, fun ws => ?_, fun ws => ?_⟩
     · rw [BoundedFormulaω.realize_imp, BoundedFormulaω.realize_equal,
         BoundedFormulaω.realize_equal]
-      simp only [realize_s_app, realize_var_block]
+      simp only [realize_s_app]
       exact fun h => hinj h
     · rw [BoundedFormulaω.realize_not, BoundedFormulaω.realize_equal]
-      simp only [realize_s_app, realize_var_block, realize_mNum]
+      simp only [realize_s_app, realize_mNum]
       exact hne (ws 0)
     · rw [BoundedFormulaω.realize_iSup]
       obtain ⟨i, hi⟩ := hsurj (ws 0)
       refine ⟨i, ?_⟩
       rw [BoundedFormulaω.realize_equal]
-      simp only [realize_mNum, realize_var_block]
+      simp only [realize_mNum]
       exact hi
 
 /-- **Clause 1 export**: the numeral map of a model of `omegaAxioms` is bijective. -/

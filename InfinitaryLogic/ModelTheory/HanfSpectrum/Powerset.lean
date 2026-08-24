@@ -166,7 +166,7 @@ theorem mk_le_continuum_of_isLadderModel {M : Type} [(ladderLang 0).Structure M]
 
 end HanfLadder
 
-open HanfLadder in
+open _root_.FirstOrder.Language.HanfLadder in
 /-- **The second sharpness step**: `ℶ_1 < Lomega1omegaHanfNumber` — the `α = 0` ladder sentence
 has the powerset `Set ℕ` as a maximal model of size exactly `2 ^ ℵ₀ = ℶ_1`. -/
 theorem beth_one_lt_Lomega1omegaHanfNumber :

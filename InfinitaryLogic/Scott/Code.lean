@@ -49,7 +49,7 @@ namespace Language
 
 variable (L : Language.{u, v})
 
-open FirstOrder Structure Fin Ordinal BoundedFormulaω
+open FirstOrder Structure Ordinal BoundedFormulaω
 
 mutual
 /-- Countable codes for Lω₁ω formulas.
@@ -165,11 +165,11 @@ private theorem encodeList_injective :
     exact congrArg₂ _ (encode_injective hp.1) (encodeList_injective hp.2)
 end
 
-instance instCountable [Countable (Σ l, L.Relations l)] (n : ℕ) :
+instance instCountable (n : ℕ) :
     Countable (FormulaCode L n) :=
   encode_injective.countable
 
-instance instCountableList [Countable (Σ l, L.Relations l)] (n : ℕ) :
+instance instCountableList (n : ℕ) :
     Countable (FormulaCodeList L n) :=
   encodeList_injective.countable
 

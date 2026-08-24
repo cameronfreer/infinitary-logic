@@ -42,7 +42,7 @@ namespace Language
 variable {L : Language.{u, v}} [L.IsRelational]
 variable [Countable (Σ l, L.Relations l)]
 
-open FirstOrder Structure Fin Ordinal
+open FirstOrder Structure Ordinal
 
 /-- Conditional variant of `countable_LomegaEquiv_implies_iso`. -/
 theorem countable_LomegaEquiv_implies_iso_of
@@ -81,6 +81,7 @@ theorem countable_InfEquivW_implies_iso
     InfEquivW L M N → Nonempty (M ≃[L] N) :=
   fun h => countable_PotentialIso_implies_iso (karp_theorem_w.mpr h)
 
+omit [Countable ((l : ℕ) × L.Relations l)] in
 /-- For countable structures, BFEquiv at all ordinals implies isomorphism. -/
 theorem countable_BFEquiv_all_implies_iso
     {M : Type w} [L.Structure M] [Countable M]

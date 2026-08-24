@@ -35,7 +35,7 @@ namespace Language
 variable {L : Language.{u, v}} [L.IsRelational]
 variable [Countable (Σ l, L.Relations l)]
 
-open FirstOrder Structure Fin Ordinal
+open FirstOrder Structure Ordinal
 
 /-- The Scott height of a structure M: the least ordinal at which the Scott formula
 analysis stabilizes for all tuples simultaneously.

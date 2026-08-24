@@ -39,7 +39,7 @@ namespace Language
 variable {L : Language.{u, v}} [L.IsRelational]
 variable [Countable (Σ l, L.Relations l)]
 
-open FirstOrder Structure Fin Ordinal
+open FirstOrder Structure Ordinal
 
 /-- The rank of an element m in a structure M: the least ordinal α such that
 for any tuple a containing m, the α-type of a determines whether any extension

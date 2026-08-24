@@ -27,7 +27,7 @@ namespace FirstOrder
 
 namespace Language
 
-open HanfLadder
+open _root_.FirstOrder.Language.HanfLadder
 
 /-- **The per-stage sharpness step**: for every `α < ω₁`, the ladder sentence has maximal
 model size exactly `ℶ_{α+1}`, so `ℶ_{α+1} < Lomega1omegaHanfNumber`. -/

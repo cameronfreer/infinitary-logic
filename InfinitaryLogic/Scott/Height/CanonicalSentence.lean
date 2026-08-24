@@ -33,7 +33,7 @@ namespace Language
 variable {L : Language.{u, v}} [L.IsRelational]
 variable [Countable (Σ l, L.Relations l)]
 
-open FirstOrder Structure Fin Ordinal
+open FirstOrder Structure Ordinal
 
 /-- The canonical Scott sentence of a structure M, defined as the Scott formula at Scott
 height level for the empty tuple.
