@@ -81,8 +81,8 @@ theorem rel_congr_of_maximal {l : ℕ} (R : L.Relations l) (g : Fin l → ℕ) (
     congr 1
     funext j
     by_cases hj : j = i
-    · subst hj; rw [if_pos rfl, Function.update_self, constTerm_relabel_inl]
-    · rw [if_neg hj, Function.update_of_ne hj, constTerm_relabel_inl]
+    · subst hj; rw [ite_eq_left rfl, Function.update_self, constTerm_relabel_inl]
+    · rw [ite_eq_right hj, Function.update_of_ne hj, constTerm_relabel_inl]
   -- φ(c_{g i}) = R(g) ∈ S.
   have hφ_ai : φ.subst (fun _ => constTerm (g i)) ∈ S := by
     rw [hφ_subst, hinst, Function.update_eq_self_iff.mpr rfl]; exact hrel

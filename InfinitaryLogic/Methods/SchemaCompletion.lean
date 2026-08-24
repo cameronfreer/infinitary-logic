@@ -747,28 +747,28 @@ theorem exists_admissible_pair
   · intro a ha b hb hab
     rw [show σ₁ a = if h : q a < K then e (dEmb ⟨q a, h⟩) else dflt from rfl,
       show σ₁ b = if h : q b < K then e (dEmb ⟨q b, h⟩) else dflt from rfl,
-      dif_pos (hbound_q (hSA (Finset.mem_coe.mp ha))),
-      dif_pos (hbound_q (hSA (Finset.mem_coe.mp hb)))]
+      dite_eq_left (hbound_q (hSA (Finset.mem_coe.mp ha))),
+      dite_eq_left (hbound_q (hSA (Finset.mem_coe.mp hb)))]
     exact e.strictMono (dEmb.strictMono (hq hab))
   · intro j hj
     rw [show σ₁ j = if h : q j < K then e (dEmb ⟨q j, h⟩) else dflt from rfl,
-      dif_pos (hbound_q (hSA hj))]
+      dite_eq_left (hbound_q (hSA hj))]
     exact ⟨dEmb ⟨q j, hbound_q (hSA hj)⟩, rfl⟩
   · intro a ha b hb hab
     rw [show σ₂ a = if h : q' a < K then e (dEmb ⟨q' a, h⟩) else dflt from rfl,
       show σ₂ b = if h : q' b < K then e (dEmb ⟨q' b, h⟩) else dflt from rfl,
-      dif_pos (hbound_q' (hSA (Finset.mem_coe.mp ha))),
-      dif_pos (hbound_q' (hSA (Finset.mem_coe.mp hb)))]
+      dite_eq_left (hbound_q' (hSA (Finset.mem_coe.mp ha))),
+      dite_eq_left (hbound_q' (hSA (Finset.mem_coe.mp hb)))]
     exact e.strictMono (dEmb.strictMono (hq' hab))
   · intro j hj
     rw [show σ₂ j = if h : q' j < K then e (dEmb ⟨q' j, h⟩) else dflt from rfl,
-      dif_pos (hbound_q' (hSA hj))]
+      dite_eq_left (hbound_q' (hSA hj))]
     exact ⟨dEmb ⟨q' j, hbound_q' (hSA hj)⟩, rfl⟩
   · rw [show σ₁ (t i) =
         if h : q (t i) < K then e (dEmb ⟨q (t i), h⟩) else dflt from rfl,
       show σ₂ (t' i) =
         if h : q' (t' i) < K then e (dEmb ⟨q' (t' i), h⟩) else dflt from rfl,
-      dif_pos (hbound_q (htA i)), dif_pos (hbound_q' (htA' i))]
+      dite_eq_left (hbound_q (htA i)), dite_eq_left (hbound_q' (htA' i))]
     apply congrArg e
     apply congrArg dEmb
     apply Fin.ext

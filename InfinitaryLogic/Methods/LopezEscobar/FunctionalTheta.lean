@@ -350,8 +350,8 @@ theorem realize_treeAtom {M : Type} [inst : (MidLang L).Structure M] (n : ℕ)
     (@Structure.RelMap (MidLang L) M inst (2 * n) (Sum.inr (WitnessRel.tree n))) ?_)
   funext i
   by_cases h : (i : ℕ) < n
-  · simp only [treeTuple, dif_pos h, realize_mNum]
-  · simp only [treeTuple, dif_neg h, realize_mNum]
+  · simp only [treeTuple, dite_eq_left h, realize_mNum]
+  · simp only [treeTuple, dite_eq_right h, realize_mNum]
 
 variable (L) in
 open Classical in
@@ -380,16 +380,16 @@ theorem realize_treeDiagram {M : Type} [inst : (MidLang L).Structure M]
   · intro h n σ τ
     have hp := h ⟨n, σ, τ⟩
     by_cases hmem : (σ, τ) ∈ T n
-    · rw [if_pos hmem] at hp
+    · rw [ite_eq_left hmem] at hp
       exact ⟨fun _ => hmem, fun _ => (realize_treeAtom (L := L) n σ τ).mp hp⟩
-    · rw [if_neg hmem, BoundedFormulaω.realize_not] at hp
+    · rw [ite_eq_right hmem, BoundedFormulaω.realize_not] at hp
       exact ⟨fun hR => absurd ((realize_treeAtom (L := L) n σ τ).mpr hR) hp,
         fun hmem' => absurd hmem' hmem⟩
   · intro h p
     by_cases hmem : (p.2.1, p.2.2) ∈ T p.1
-    · rw [if_pos hmem]
+    · rw [ite_eq_left hmem]
       exact (realize_treeAtom (L := L) p.1 p.2.1 p.2.2).mpr ((h p.1 p.2.1 p.2.2).mpr hmem)
-    · rw [if_neg hmem, BoundedFormulaω.realize_not]
+    · rw [ite_eq_right hmem, BoundedFormulaω.realize_not]
       exact fun hreal =>
         hmem ((h p.1 p.2.1 p.2.2).mp ((realize_treeAtom (L := L) p.1 p.2.1 p.2.2).mp hreal))
 
@@ -423,8 +423,8 @@ theorem realize_pathAxiom {M : Type} [inst : (MidLang L).Structure M] :
     (@Structure.RelMap (MidLang L) M inst (2 * n) (Sum.inr (WitnessRel.tree n))) ?_)
   funext i
   by_cases h : (i : ℕ) < n
-  · simp only [pathTuple, if_pos h, realize_mF, realize_mNum]
-  · simp only [pathTuple, if_neg h, realize_mG, realize_mNum]
+  · simp only [pathTuple, ite_eq_left h, realize_mF, realize_mNum]
+  · simp only [pathTuple, ite_eq_right h, realize_mG, realize_mNum]
 
 /-! ## The pulled-back code and the bit-sequence identification -/
 

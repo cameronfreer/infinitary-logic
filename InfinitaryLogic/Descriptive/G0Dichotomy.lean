@@ -247,7 +247,7 @@ theorem not_smallFam_univ {ι : Type*} [Nonempty ι] (r : Setoid α)
     obtain ⟨k, hk⟩ := hcov x
     refine ⟨k, ?_⟩
     have hne : (C k).Nonempty := ⟨x, hk⟩
-    simp only [f, dif_pos hne]
+    simp only [f, dite_eq_left hne]
     exact Quotient.sound (rel_of_relIndependent_compl r (hC k).2 hne.choose_spec hk)
   exact hsurj.countable
 

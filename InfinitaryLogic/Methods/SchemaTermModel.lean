@@ -110,7 +110,7 @@ theorem locDeTermFin_realize_constInterp_nat (σ : ℕ → M) {S : Finset ℕ}
     rw [locDeTermFin]
     refine Term.realize_restrictVar
       (fun n => if h : n < S.card then σ (S.orderEmbOfFin rfl ⟨n, h⟩) else σ 0) (fun x => ?_)
-    simp only [dif_pos (Finset.mem_range.mp
+    simp only [dite_eq_left (Finset.mem_range.mp
       (locDeTermPos_varFinset_subset (Λ := localColim s₀) (J := ℕ) hsub x.2))]
   rw [hRHS, hLHS, locDeTermPos, Term.realize_relabel]
   apply Term.realize_eq_of_eq_on_varFinset

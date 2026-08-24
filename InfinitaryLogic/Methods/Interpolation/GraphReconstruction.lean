@@ -53,7 +53,7 @@ theorem graphValue_spec (hAx : Sentenceω.Realize (graphAxioms F) M) {n : ℕ}
     (f : L.Functions n) (h : (⟨n, f⟩ : Σ n, L.Functions n) ∈ F) (xs : Fin n → M) :
     RelMap (L := graphLanguage L) (GraphRelation.graph f)
       (Fin.snoc xs (graphValue hAx f xs)) := by
-  rw [graphValue, dif_pos h]
+  rw [graphValue, dite_eq_left h]
   exact Classical.choose_spec
     ((realize_graphTotality f).mp ((realize_graphAxioms_iff F).mp hAx ⟨⟨n, f⟩, h⟩).1 xs)
 

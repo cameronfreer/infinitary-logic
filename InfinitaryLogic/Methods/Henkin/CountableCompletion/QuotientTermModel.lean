@@ -119,8 +119,8 @@ theorem relInst_congr (hsc : HenkinComplete U S) {l : ℕ} (R : L.Relations l) (
         · rw [Function.update_of_ne hik]
           have hne : (i : ℕ) ≠ k := fun hc => hik (Fin.ext hc)
           by_cases hlt : (i : ℕ) < k
-          · rw [if_pos hlt, if_pos (by omega)]
-          · rw [if_neg hlt, if_neg (by omega)]
+          · rw [ite_eq_left hlt, ite_eq_left (by omega)]
+          · rw [ite_eq_right hlt, ite_eq_right (by omega)]
       rw [hupd] at key
       exact key
     · have hstep : (fun i : Fin l => if (i : ℕ) < k + 1 then g' i else g i)
@@ -128,8 +128,8 @@ theorem relInst_congr (hsc : HenkinComplete U S) {l : ℕ} (R : L.Relations l) (
         funext i
         have hil : (i : ℕ) < l := i.2
         by_cases hlt : (i : ℕ) < k
-        · rw [if_pos hlt, if_pos (by omega)]
-        · rw [if_neg hlt, if_neg (by omega)]
+        · rw [ite_eq_left hlt, ite_eq_left (by omega)]
+        · rw [ite_eq_right hlt, ite_eq_right (by omega)]
       rw [hstep]; exact ih
 
 omit [L.IsRelational] in

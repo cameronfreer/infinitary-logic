@@ -441,7 +441,7 @@ theorem relationsInSigned_stripConsts (s : Bool) :
     · intro h p hp
       cases s
       · exact absurd hp (Set.notMem_empty p)
-      · simp only [BoundedFormulaω.stripConsts, relationsInSigned_rel, if_true,
+      · simp only [BoundedFormulaω.stripConsts, relationsInSigned_rel, ite_true,
           Set.mem_singleton_iff] at hp
         subst hp
         show (⟨_, Sum.inl R⟩ : Σ n, L[[ℕ]].Relations n) ∈

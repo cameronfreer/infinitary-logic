@@ -182,7 +182,7 @@ theorem locDeTermFin_realize_superset (d : ℕ) (S T : Finset J) (w : Λ[[J]].Te
     refine Term.realize_restrictVar
       (fun n => a (d + if h : n < S.card then deepRank J T (S.orderEmbOfFin rfl ⟨n, h⟩) else 0))
       (fun x => ?_)
-    simp only [dif_pos (Finset.mem_range.mp (locDeTermPos_varFinset_subset (Λ := Λ) (J := J) hw x.2))]
+    simp only [dite_eq_left (Finset.mem_range.mp (locDeTermPos_varFinset_subset (Λ := Λ) (J := J) hw x.2))]
   rw [hrv, locDeepInterp_eq_realize, locDeTermPos, Term.realize_relabel]
   apply Term.realize_eq_of_eq_on_varFinset
   intro x hx

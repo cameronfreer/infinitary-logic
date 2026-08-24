@@ -271,12 +271,12 @@ theorem exists_strictMonoOn_interp {α : Ordinal.{0}}
     else e (Classical.arbitrary _), ?_, ?_⟩
   · intro j hj j' hj' hlt
     dsimp only
-    rw [dif_pos (Finset.mem_coe.mp hj), dif_pos (Finset.mem_coe.mp hj')]
+    rw [dite_eq_left (Finset.mem_coe.mp hj), dite_eq_left (Finset.mem_coe.mp hj')]
     exact e.strictMono ((s.orderEmbOfFin hcard).strictMono
       ((S.orderIsoOfFin rfl).symm.strictMono (Subtype.mk_lt_mk.mpr hlt)))
   · intro j hj
     dsimp only
-    rw [dif_pos hj]
+    rw [dite_eq_left hj]
     exact ⟨_, rfl⟩
 
 /-- **`C0` (no falsum)**: a certified fragment cannot contain `⊥` — an increasing
@@ -1044,7 +1044,7 @@ noncomputable def tupleInterp (S : Finset J) (e : D ↪o M) (t : Fin S.card → 
 theorem tupleInterp_orderEmbOfFin (S : Finset J) (e : D ↪o M) (t : Fin S.card → D) (dflt : M)
     (i : Fin S.card) : tupleInterp S e t dflt (S.orderEmbOfFin rfl i) = e (t i) := by
   have hmem : S.orderEmbOfFin rfl i ∈ S := S.orderEmbOfFin_mem rfl i
-  rw [tupleInterp, dif_pos hmem]
+  rw [tupleInterp, dite_eq_left hmem]
   congr 2
   have hcoe : (⟨S.orderEmbOfFin rfl i, hmem⟩ : ↑S) = S.orderIsoOfFin rfl i :=
     Subtype.ext (S.coe_orderIsoOfFin_apply rfl i).symm
@@ -1054,13 +1054,13 @@ theorem strictMonoOn_tupleInterp (S : Finset J) (e : D ↪o M) {t : Fin S.card �
     (ht : StrictMono t) (dflt : M) : StrictMonoOn (tupleInterp S e t dflt) ↑S := by
   intro j hj j' hj' hlt
   simp only [tupleInterp]
-  rw [dif_pos (Finset.mem_coe.mp hj), dif_pos (Finset.mem_coe.mp hj')]
+  rw [dite_eq_left (Finset.mem_coe.mp hj), dite_eq_left (Finset.mem_coe.mp hj')]
   exact e.strictMono (ht ((S.orderIsoOfFin rfl).symm.strictMono (Subtype.mk_lt_mk.mpr hlt)))
 
 theorem tupleInterp_mem_range (S : Finset J) (e : D ↪o M) (t : Fin S.card → D) (dflt : M) :
     ∀ j ∈ S, tupleInterp S e t dflt j ∈ Set.range e := by
   intro j hj
-  rw [tupleInterp, dif_pos hj]
+  rw [tupleInterp, dite_eq_left hj]
   exact ⟨_, rfl⟩
 
 /-- On the support, `tupleInterp` agrees with any `σ` matching it index-by-index. -/

@@ -109,14 +109,14 @@ theorem realize_templateSentence_expandSymb {L : Language.{0, 0}}
           Structure.funMap (L := (symbSublang (L := L) F R)[[J]])
             (Sum.inl (⟨f.1, h⟩ : (symbSublang (L := L) F R).Functions m)) xs
         else Classical.arbitrary N) = _
-      rw [dif_pos f.2]
+      rw [dite_eq_left f.2]
       rfl
     · intro m r xs
       show (if h : (⟨m, r.1⟩ : Σ n, L.Relations n) ∈ R then
           Structure.RelMap (L := (symbSublang (L := L) F R)[[J]])
             (Sum.inl (⟨r.1, h⟩ : (symbSublang (L := L) F R).Relations m)) xs
         else False) = _
-      rw [dif_pos r.2]
+      rw [dite_eq_left r.2]
       rfl
   have htup : (fun i => (Term.func (Sum.inr (t i) : L[[J]].Functions 0)
         Fin.elim0 : L[[J]].Term Empty).realize (Empty.elim : Empty → N))

@@ -56,10 +56,10 @@ def prependWord (w : List Bool) (x : ℕ → Bool) : ℕ → Bool := fun n =>
   if n < w.length then w.getD n false else x (n - w.length)
 
 theorem prependWord_apply_of_lt {w : List Bool} {n : ℕ} (h : n < w.length) (x : ℕ → Bool) :
-    prependWord w x n = w.getD n false := if_pos h
+    prependWord w x n = w.getD n false := ite_eq_left h
 
 theorem prependWord_apply_of_le {w : List Bool} {n : ℕ} (h : w.length ≤ n) (x : ℕ → Bool) :
-    prependWord w x n = x (n - w.length) := if_neg (not_lt.mpr h)
+    prependWord w x n = x (n - w.length) := ite_eq_right (not_lt.mpr h)
 
 /-- The basic clopen set of sequences extending the word `w`. -/
 def wordCylinder (w : List Bool) : Set (ℕ → Bool) := Set.range (prependWord w)

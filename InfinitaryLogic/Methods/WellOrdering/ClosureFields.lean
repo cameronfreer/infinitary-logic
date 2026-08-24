@@ -305,7 +305,7 @@ theorem WOMem.branch_choice {S : Set L[[ℕ]].Sentenceω} (_ : WOMem φ lt S)
   have hspec := (hchoice α hlt).choose_spec
   have hFeq : F α = (hchoice α hlt).choose := by
     simp only [hF]
-    rw [dif_pos hlt]
+    rw [dite_eq_left hlt]
   rw [hFeq] at hFα
   rwa [hFα] at hspec
 

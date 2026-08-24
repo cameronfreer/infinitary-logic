@@ -265,13 +265,13 @@ theorem Term.realize_abstractConst (base : L.Structure M) (h : ℕ → M) (j : �
         by_cases hk : (k : ℕ) = j
         · have habs : Term.abstractConst j (Term.func (Sum.inr k) Fin.elim0)
               = (Term.var (Sum.inl 0) : L[[ℕ]].Term (Fin 1 ⊕ Fin n)) := by
-            simp only [Term.abstractConst]; rw [if_pos hk]
+            simp only [Term.abstractConst]; rw [ite_eq_left hk]
           rw [habs]
           show (Sum.elim (fun _ => a) xs) (Sum.inl (0 : Fin 1)) = Function.update h j a (k : ℕ)
           rw [Sum.elim_inl, hk, Function.update_self]
         · have habs : Term.abstractConst j (Term.func (Sum.inr k) Fin.elim0)
               = (Term.func (Sum.inr k) Fin.elim0 : L[[ℕ]].Term (Fin 1 ⊕ Fin n)) := by
-            simp only [Term.abstractConst]; rw [if_neg hk]
+            simp only [Term.abstractConst]; rw [ite_eq_right hk]
           rw [habs]
           show h k = Function.update h j a (k : ℕ)
           have key : Function.update h j a (k : ℕ) = h (k : ℕ) :=
@@ -348,11 +348,11 @@ theorem Term.functionsIn_abstractConst_subset (j : ℕ) {n : ℕ} :
         by_cases hk : (k : ℕ) = j
         · have hred : (Term.func (Sum.inr k) ts).abstractConst j
               = (Term.var (Sum.inl 0) : L[[ℕ]].Term (Fin 1 ⊕ Fin n)) := by
-            simp only [Term.abstractConst]; rw [if_pos hk]
+            simp only [Term.abstractConst]; rw [ite_eq_left hk]
           rw [hred]; intro s hs; exact absurd hs (Set.notMem_empty s)
         · have hred : (Term.func (Sum.inr k) ts).abstractConst j
               = (Term.func (Sum.inr k) Fin.elim0 : L[[ℕ]].Term (Fin 1 ⊕ Fin n)) := by
-            simp only [Term.abstractConst]; rw [if_neg hk]
+            simp only [Term.abstractConst]; rw [ite_eq_right hk]
           rw [hred]; intro s hs
           simp only [Term.functionsIn, Set.iUnion_of_empty,
             Set.mem_insert_iff, Set.mem_empty_iff_false, or_false] at hs ⊢
@@ -383,11 +383,11 @@ theorem Term.notMem_functionsIn_abstractConst (j : ℕ) {n : ℕ} :
         by_cases hk : (k : ℕ) = j
         · have hred : (Term.func (Sum.inr k) ts).abstractConst j
               = (Term.var (Sum.inl 0) : L[[ℕ]].Term (Fin 1 ⊕ Fin n)) := by
-            simp only [Term.abstractConst]; rw [if_pos hk]
+            simp only [Term.abstractConst]; rw [ite_eq_left hk]
           rw [hred]; exact Set.notMem_empty _
         · have hred : (Term.func (Sum.inr k) ts).abstractConst j
               = (Term.func (Sum.inr k) Fin.elim0 : L[[ℕ]].Term (Fin 1 ⊕ Fin n)) := by
-            simp only [Term.abstractConst]; rw [if_neg hk]
+            simp only [Term.abstractConst]; rw [ite_eq_right hk]
           rw [hred]; intro hs
           simp only [Term.functionsIn, Set.iUnion_of_empty,
             Set.mem_insert_iff, Set.mem_empty_iff_false, or_false] at hs

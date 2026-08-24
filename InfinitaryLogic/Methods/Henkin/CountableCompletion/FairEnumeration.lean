@@ -318,25 +318,25 @@ theorem spec_impC1 (acc : SetIn P) (φ ψ : L[[ℕ]].Sentenceω) (hU : (φ.imp �
     (hmem : φ.imp ψ ∈ acc.1) :
     φ.not ∈ (process acc (.impC1 ⟨φ.imp ψ, hU⟩)).1 ∨ ψ ∈ (process acc (.impC1 ⟨φ.imp ψ, hU⟩)).1 := by
   show φ.not ∈ (processImpC1 acc ⟨φ.imp ψ, hU⟩).1 ∨ ψ ∈ (processImpC1 acc ⟨φ.imp ψ, hU⟩).1
-  simp only [processImpC1, dif_pos hmem]
+  simp only [processImpC1, dite_eq_left hmem]
   split_ifs <;> [left; right] <;> exact Set.mem_union_right _ rfl
 
 theorem spec_negImp (acc : SetIn P) (φ ψ : L[[ℕ]].Sentenceω) (hU : ((φ.imp ψ).not) ∈ U)
     (hmem : (φ.imp ψ).not ∈ acc.1) (idx : ℕ) :
     (idx = 0 → φ ∈ (process acc (.decompose ⟨(φ.imp ψ).not, hU⟩ idx)).1) ∧
     (idx ≠ 0 → ψ.not ∈ (process acc (.decompose ⟨(φ.imp ψ).not, hU⟩ idx)).1) := by
-  simp only [process, processDecompose, dif_pos hmem]
+  simp only [process, processDecompose, dite_eq_left hmem]
   by_cases hidx : idx = 0
-  · rw [if_pos hidx]
+  · rw [ite_eq_left hidx]
     exact ⟨fun _ => Set.mem_union_right _ rfl, fun h => absurd hidx h⟩
-  · rw [if_neg hidx]
+  · rw [ite_eq_right hidx]
     exact ⟨fun h => absurd h hidx, fun _ => Set.mem_union_right _ rfl⟩
 
 theorem spec_iInf (acc : SetIn P) (φs : ℕ → L[[ℕ]].Sentenceω)
     (hU : (BoundedFormulaω.iInf φs) ∈ U) (idx : ℕ) (hmem : BoundedFormulaω.iInf φs ∈ acc.1) :
     φs idx ∈ (process acc (.decompose ⟨BoundedFormulaω.iInf φs, hU⟩ idx)).1 := by
   show φs idx ∈ (processDecompose acc ⟨BoundedFormulaω.iInf φs, hU⟩ idx).1
-  simp only [processDecompose, dif_pos hmem]
+  simp only [processDecompose, dite_eq_left hmem]
   exact Set.mem_union_right _ rfl
 
 theorem spec_negIInf (acc : SetIn P) (φs : ℕ → L[[ℕ]].Sentenceω)
@@ -344,14 +344,14 @@ theorem spec_negIInf (acc : SetIn P) (φs : ℕ → L[[ℕ]].Sentenceω)
     (hmem : (BoundedFormulaω.iInf φs).not ∈ acc.1) :
     ∃ k, (φs k).not ∈ (process acc (.decompose ⟨(BoundedFormulaω.iInf φs).not, hU⟩ idx)).1 := by
   show ∃ k, (φs k).not ∈ (processDecompose acc ⟨(BoundedFormulaω.iInf φs).not, hU⟩ idx).1
-  simp only [processDecompose, dif_pos hmem]
+  simp only [processDecompose, dite_eq_left hmem]
   exact ⟨_, Set.mem_union_right _ rfl⟩
 
 theorem spec_iSup (acc : SetIn P) (φs : ℕ → L[[ℕ]].Sentenceω)
     (hU : (BoundedFormulaω.iSup φs) ∈ U) (idx : ℕ) (hmem : BoundedFormulaω.iSup φs ∈ acc.1) :
     ∃ k, φs k ∈ (process acc (.decompose ⟨BoundedFormulaω.iSup φs, hU⟩ idx)).1 := by
   show ∃ k, φs k ∈ (processDecompose acc ⟨BoundedFormulaω.iSup φs, hU⟩ idx).1
-  simp only [processDecompose, dif_pos hmem]
+  simp only [processDecompose, dite_eq_left hmem]
   exact ⟨_, Set.mem_union_right _ rfl⟩
 
 theorem spec_negISup (acc : SetIn P) (φs : ℕ → L[[ℕ]].Sentenceω)
@@ -359,21 +359,21 @@ theorem spec_negISup (acc : SetIn P) (φs : ℕ → L[[ℕ]].Sentenceω)
     (hmem : (BoundedFormulaω.iSup φs).not ∈ acc.1) :
     (φs idx).not ∈ (process acc (.decompose ⟨(BoundedFormulaω.iSup φs).not, hU⟩ idx)).1 := by
   show (φs idx).not ∈ (processDecompose acc ⟨(BoundedFormulaω.iSup φs).not, hU⟩ idx).1
-  simp only [processDecompose, dif_pos hmem]
+  simp only [processDecompose, dite_eq_left hmem]
   exact Set.mem_union_right _ rfl
 
 theorem spec_allInst (acc : SetIn P) (φ : L[[ℕ]].BoundedFormulaω Empty 1)
     (hU : (φ.all) ∈ U) (idx : ℕ) (hmem : φ.all ∈ acc.1) :
     instConst idx φ ∈ (process acc (.decompose ⟨φ.all, hU⟩ idx)).1 := by
   show instConst idx φ ∈ (processDecompose acc ⟨φ.all, hU⟩ idx).1
-  simp only [processDecompose, dif_pos hmem]
+  simp only [processDecompose, dite_eq_left hmem]
   exact Set.mem_union_right _ rfl
 
 theorem spec_negAll (acc : SetIn P) (φ : L[[ℕ]].BoundedFormulaω Empty 1)
     (hU : (φ.all.not) ∈ U) (idx : ℕ) (hmem : φ.all.not ∈ acc.1) :
     ∃ c, (instConst c φ).not ∈ (process acc (.decompose ⟨φ.all.not, hU⟩ idx)).1 := by
   show ∃ c, (instConst c φ).not ∈ (processDecompose acc ⟨φ.all.not, hU⟩ idx).1
-  simp only [processDecompose, dif_pos hmem]
+  simp only [processDecompose, dite_eq_left hmem]
   exact ⟨_, Set.mem_union_right _ rfl⟩
 
 theorem spec_eqRefl (acc : SetIn P) (c : ℕ) :
@@ -381,18 +381,18 @@ theorem spec_eqRefl (acc : SetIn P) (c : ℕ) :
 
 theorem spec_eqSymm (acc : SetIn P) (a b : ℕ) (hmem : constEq a b ∈ acc.1) :
     constEq b a ∈ (process acc (.eqSymm a b)).1 := by
-  simp only [process, dif_pos hmem]; exact Set.mem_union_right _ rfl
+  simp only [process, dite_eq_left hmem]; exact Set.mem_union_right _ rfl
 
 theorem spec_eqTrans (acc : SetIn P) (a b d : ℕ)
     (h1 : constEq a b ∈ acc.1) (h2 : constEq b d ∈ acc.1) :
     constEq a d ∈ (process acc (.eqTrans a b d)).1 := by
-  simp only [process, dif_pos (⟨h1, h2⟩ : constEq a b ∈ acc.1 ∧ constEq b d ∈ acc.1)]
+  simp only [process, dite_eq_left (⟨h1, h2⟩ : constEq a b ∈ acc.1 ∧ constEq b d ∈ acc.1)]
   exact Set.mem_union_right _ rfl
 
 theorem spec_relCongr (acc : SetIn P) (l : ℕ) (R : L.Relations l) (g : Fin l → ℕ) (i : Fin l)
     (b : ℕ) (h1 : relInst R g ∈ acc.1) (h2 : constEq (g i) b ∈ acc.1) :
     relInst R (Function.update g i b) ∈ (process acc (.relCongr l R g i b)).1 := by
-  simp only [process, dif_pos (⟨h1, h2⟩ : relInst R g ∈ acc.1 ∧ constEq (g i) b ∈ acc.1)]
+  simp only [process, dite_eq_left (⟨h1, h2⟩ : relInst R g ∈ acc.1 ∧ constEq (g i) b ∈ acc.1)]
   exact Set.mem_union_right _ rfl
 
 /-! ## The limit is Henkin-complete -/

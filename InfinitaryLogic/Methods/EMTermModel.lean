@@ -305,7 +305,7 @@ theorem deTermFin_realize_superset (d : ℕ) (S T : Finset J) (w : (skolemColim 
     refine Term.realize_restrictVar
       (fun n => a (d + if h : n < S.card then deepRank J T (S.orderEmbOfFin rfl ⟨n, h⟩) else 0))
       (fun x => ?_)
-    simp only [dif_pos (Finset.mem_range.mp (deTermPos_varFinset_subset (L := L) (J := J) hw x.2))]
+    simp only [dite_eq_left (Finset.mem_range.mp (deTermPos_varFinset_subset (L := L) (J := J) hw x.2))]
   rw [hrv, deepInterp_eq_realize, deTermPos, Term.realize_relabel]
   apply Term.realize_eq_of_eq_on_varFinset
   intro x hx
@@ -369,7 +369,7 @@ theorem realize_deEqAtom_superset (d : ℕ) {S T : Finset J} (_hST : S ⊆ T)
       refine Term.realize_restrictVar
         (fun n => a (d + if h : n < S.card then deepRank J T (S.orderEmbOfFin rfl ⟨n, h⟩) else 0))
         (fun x => ?_)
-      simp only [dif_pos (Finset.mem_range.mp (deTermPos_varFinset_subset (L := L) (J := J) hw x.2))]
+      simp only [dite_eq_left (Finset.mem_range.mp (deTermPos_varFinset_subset (L := L) (J := J) hw x.2))]
     rw [hrv, deepInterp_eq_realize, deTermPos, Term.realize_relabel]
     apply Term.realize_eq_of_eq_on_varFinset
     intro x hx

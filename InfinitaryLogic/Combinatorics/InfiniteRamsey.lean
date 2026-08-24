@@ -61,7 +61,7 @@ private noncomputable def headColoring {n : ℕ} (c : (Fin (n + 1) ↪o ℕ) →
 
 private lemma headColoring_spec {n : ℕ} (c : (Fin (n + 1) ↪o ℕ) → Bool) (a : ℕ)
     (w : Fin n ↪o ℕ) (h : ∀ k, a < w k) : headColoring c a w = c (consOEmb a w h) := by
-  simp only [headColoring, dif_pos h]
+  simp only [headColoring, dite_eq_left h]
 
 open Set in
 /-- Removing the least element of an infinite set of naturals (equivalently, intersecting

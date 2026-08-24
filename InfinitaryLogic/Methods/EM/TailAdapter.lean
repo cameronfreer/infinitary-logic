@@ -174,7 +174,7 @@ theorem IsLomega1omegaIndiscernibleOnTail.templateTheoryOn_finitelySatisfiable
     show σ (tOf τ i) = a (f (t'Of τ i))
     show (if hj : tOf τ i ∈ S then a (f (orderIso.symm ⟨tOf τ i, hj⟩)) else m₀) =
          a (f (orderIso.symm ⟨tOf τ i, htS τ i⟩))
-    rw [dif_pos (htS τ i)]
+    rw [dite_eq_left (htS τ i)]
   intro τ hτ
   let τ' : ↥F := ⟨τ, hτ⟩
   show Sentenceω.Realize (↑τ' : L[[J]].Sentenceω) M

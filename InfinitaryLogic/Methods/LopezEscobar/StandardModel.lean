@@ -126,7 +126,7 @@ theorem treeTuple_firstIdx (n : ℕ) (σ : Fin n → Bool) (τ : Fin n → ℕ) 
   show (if h : ((firstIdx n i : Fin (2 * n)) : ℕ) < n
       then @numMap L ℕ (standardMid c g T) (cond (σ ⟨_, h⟩) 1 0)
       else @numMap L ℕ (standardMid c g T) (τ ⟨_, _⟩)) = _
-  rw [dif_pos h, numMap_std]
+  rw [dite_eq_left h, numMap_std]
   congr 1
 
 theorem treeTuple_secondIdx (n : ℕ) (σ : Fin n → Bool) (τ : Fin n → ℕ) (i : Fin n) :
@@ -136,7 +136,7 @@ theorem treeTuple_secondIdx (n : ℕ) (σ : Fin n → Bool) (τ : Fin n → ℕ)
   show (if h : ((secondIdx n i : Fin (2 * n)) : ℕ) < n
       then @numMap L ℕ (standardMid c g T) (cond (σ ⟨_, h⟩) 1 0)
       else @numMap L ℕ (standardMid c g T) (τ ⟨((secondIdx n i : Fin (2 * n)) : ℕ) - n, _⟩)) = _
-  rw [dif_neg h, numMap_std]
+  rw [dite_eq_right h, numMap_std]
   congr 1
   apply Fin.ext
   show n + (i : ℕ) - n = (i : ℕ)
@@ -148,7 +148,7 @@ theorem pathTuple_firstIdx (n : ℕ) (i : Fin n) :
   show (if ((firstIdx n i : Fin (2 * n)) : ℕ) < n
       then @fMap L ℕ (standardMid c g T) (@numMap L ℕ (standardMid c g T) _)
       else _) = _
-  rw [if_pos h, numMap_std, fMap_std]
+  rw [ite_eq_left h, numMap_std, fMap_std]
   rfl
 
 theorem pathTuple_secondIdx (n : ℕ) (i : Fin n) :
@@ -158,7 +158,7 @@ theorem pathTuple_secondIdx (n : ℕ) (i : Fin n) :
   show (if ((secondIdx n i : Fin (2 * n)) : ℕ) < n then _
       else @gMap L ℕ (standardMid c g T)
         (@numMap L ℕ (standardMid c g T) (((secondIdx n i : Fin (2 * n)) : ℕ) - n))) = _
-  rw [if_neg h, numMap_std, gMap_std]
+  rw [ite_eq_right h, numMap_std, gMap_std]
   congr 1
   show n + (i : ℕ) - n = (i : ℕ)
   omega

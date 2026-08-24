@@ -86,7 +86,7 @@ theorem pcClass_subset {B : Set (StructureSpace L)} (side : PCSide)
             = (if h : (i : ℕ) < m
               then @numMap L ℕ Mstar (cond ((fun j : Fin m =>
                 queryCode (pulledCode L ℕ) (j : ℕ)) ⟨(i : ℕ), h⟩) 1 0) else _)
-        rw [if_pos hi, dif_pos hi]
+        rw [ite_eq_left hi, dite_eq_left hi]
         show @fMap L ℕ Mstar (@numMap L ℕ Mstar (i : ℕ))
           = @numMap L ℕ Mstar (cond (queryCode (pulledCode L ℕ) (i : ℕ)) 1 0)
         by_cases hq : queryCode (pulledCode L ℕ) (i : ℕ) = true
@@ -102,7 +102,7 @@ theorem pcClass_subset {B : Set (StructureSpace L)} (side : PCSide)
               else @gMap L ℕ Mstar (@numMap L ℕ Mstar ((i : ℕ) - m)))
             = (if h : (i : ℕ) < m then _
               else @numMap L ℕ Mstar ((fun j : Fin m => ĝ (j : ℕ)) ⟨(i : ℕ) - m, by omega⟩))
-        rw [if_neg hi, dif_neg hi]
+        rw [ite_eq_right hi, dite_eq_right hi]
         show @gMap L ℕ Mstar (@numMap L ℕ Mstar ((i : ℕ) - m)) = @numMap L ℕ Mstar (ĝ ((i : ℕ) - m))
         rw [hg]
     have hp := hpath m

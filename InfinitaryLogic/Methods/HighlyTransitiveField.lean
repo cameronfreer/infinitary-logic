@@ -35,25 +35,25 @@ theorem dilateFun_strictMono {a c : K} (hc : 0 < c) : StrictMono (dilateFun a c)
   intro z w hzw
   unfold dilateFun
   rcases le_or_gt w a with hw | hw
-  · rw [if_pos (hzw.le.trans hw), if_pos hw]
+  · rw [ite_eq_left (hzw.le.trans hw), ite_eq_left hw]
     exact hzw
-  · rw [if_neg (not_le.mpr hw)]
+  · rw [ite_eq_right (not_le.mpr hw)]
     rcases le_or_gt z a with hz | hz
-    · rw [if_pos hz]
+    · rw [ite_eq_left hz]
       calc z ≤ a := hz
         _ < a + c * (w - a) := lt_add_of_pos_right a (mul_pos hc (sub_pos.mpr hw))
-    · rw [if_neg (not_le.mpr hz)]
+    · rw [ite_eq_right (not_le.mpr hz)]
       have := mul_lt_mul_of_pos_left (sub_lt_sub_right hzw a) hc
       linarith
 
 theorem dilateFun_surjective {a c : K} (hc : 0 < c) : Function.Surjective (dilateFun a c) := by
   intro w
   rcases le_or_gt w a with hw | hw
-  · exact ⟨w, by rw [dilateFun, if_pos hw]⟩
+  · exact ⟨w, by rw [dilateFun, ite_eq_left hw]⟩
   · refine ⟨a + (w - a) / c, ?_⟩
     have hz : a < a + (w - a) / c :=
       lt_add_of_pos_right a (div_pos (sub_pos.mpr hw) hc)
-    rw [dilateFun, if_neg (not_le.mpr hz)]
+    rw [dilateFun, ite_eq_right (not_le.mpr hz)]
     field_simp
     ring
 
@@ -67,12 +67,12 @@ noncomputable def dilateAbove (a x y : K) (hx : a < x) (hy : a < y) : K ≃o K :
 theorem dilateAbove_apply_of_le {a x y : K} (hx : a < x) (hy : a < y) {z : K} (hz : z ≤ a) :
     dilateAbove a x y hx hy z = z := by
   show dilateFun a _ z = z
-  rw [dilateFun, if_pos hz]
+  rw [dilateFun, ite_eq_left hz]
 
 theorem dilateAbove_apply_point {a x y : K} (hx : a < x) (hy : a < y) :
     dilateAbove a x y hx hy x = y := by
   show dilateFun a _ x = y
-  rw [dilateFun, if_neg (not_le.mpr hx), div_mul_cancel₀ _ (sub_ne_zero.mpr hx.ne')]
+  rw [dilateFun, ite_eq_right (not_le.mpr hx), div_mul_cancel₀ _ (sub_ne_zero.mpr hx.ne')]
   ring
 
 /-- **Every linear ordered field is highly order-transitive** — the left-to-right point-moving

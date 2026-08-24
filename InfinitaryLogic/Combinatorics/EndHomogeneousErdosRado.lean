@@ -268,7 +268,7 @@ theorem colorAbove_eq (G : (Fin (n + 2) ↪o Source lam) → C) {y : Source lam}
     colorAbove G y ⇑remb = G (appendLastOE remb y hlt) := by
   classical
   have hpos : StrictMono (⇑remb) ∧ ∀ k, remb k < y := ⟨remb.strictMono, hlt⟩
-  rw [colorAbove, dif_pos hpos]
+  rw [colorAbove, dite_eq_left hpos]
   exact congrArg G (appendLastOE_congr (fun k => rfl) rfl _ _)
 
 /-- The successor set `S(h)` of a node with reps `rep`: points `y` strictly above every
@@ -344,7 +344,7 @@ theorem nodeChosen_mem (G : (Fin (n + 2) ↪o Source lam) → C) {β : Ordinal.{
         (h.restrict (le_of_lt (by
           have hh := Ordinal.typein_lt_type (· < · : β.ToType → β.ToType → Prop) x
           rwa [Ordinal.type_toType] at hh)))) h).Nonempty := hlive
-  rw [nodeChosen, dif_pos hcond]
+  rw [nodeChosen, dite_eq_left hcond]
   exact WellFounded.min_mem _ _ hcond
 
 /-- On a live node, `nodeChosen` is exactly the well-order minimum of the successor set. -/
@@ -360,7 +360,7 @@ theorem nodeChosen_eq_min (G : (Fin (n + 2) ↪o Source lam) → C) {β : Ordina
         (h.restrict (le_of_lt (by
           have hh := Ordinal.typein_lt_type (· < · : β.ToType → β.ToType → Prop) x
           rwa [Ordinal.type_toType] at hh)))) h).Nonempty := hlive
-  rw [nodeChosen, dif_pos hcond]
+  rw [nodeChosen, dite_eq_left hcond]
   rfl
 
 /-- The chosen min is `≤` every successor. -/
@@ -530,7 +530,7 @@ theorem exists_node_choosing_source (G : (Fin (n + 2) ↪o Source lam) → C)
     rw [← yRep_eq]; exact le_antisymm hge hle
   have hlive : nodeLive G (yNode G y γ) := ⟨y, hmem⟩
   refine ⟨γ, yNode G y γ, ?_⟩
-  rw [nodeR, if_pos hlive, Set.mem_singleton_iff]
+  rw [nodeR, ite_eq_left hlive, Set.mem_singleton_iff]
   exact heq
 
 end YPath
@@ -727,7 +727,7 @@ theorem exists_live_node_ge (hlam : Cardinal.aleph0 ≤ lam)
       obtain ⟨β_y, h_y, hy⟩ := exists_node_choosing_source G y
       have hlive_y : nodeLive G h_y := by
         by_contra hnl
-        rw [nodeR, if_neg hnl] at hy
+        rw [nodeR, ite_eq_right hnl] at hy
         exact (Set.mem_empty_iff_false y).mp hy
       have hβ_lt : β_y < (Order.succ lam).ord := by
         by_contra hge

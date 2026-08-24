@@ -148,7 +148,7 @@ theorem realize_templateSentence_expand {L : Language.{0, 0}} {F : Set (Σ n, L.
           Structure.funMap (L := (funSublang (L := L) F)[[J]])
             (Sum.inl (⟨f.1, h⟩ : (funSublang (L := L) F).Functions m)) xs
         else Classical.arbitrary N) = _
-      rw [dif_pos f.2]
+      rw [dite_eq_left f.2]
       rfl
     · intro m r xs
       rfl

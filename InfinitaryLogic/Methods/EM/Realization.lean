@@ -190,9 +190,9 @@ theorem templateTheoryOn_countable
   rintro σ ⟨n, φ, t, hΓφ, hcase⟩
   refine ⟨⟨⟨⟨n, φ⟩, hΓφ⟩, t⟩, ?_⟩
   rcases hcase with ⟨hpos, heq⟩ | ⟨hneg, heq⟩
-  · simp only [if_pos hpos]
+  · simp only [ite_eq_left hpos]
     exact heq.symm
-  · simp only [if_neg hneg]
+  · simp only [ite_eq_right hneg]
     exact heq.symm
 
 end Lomega1omegaTemplate
@@ -268,7 +268,7 @@ theorem IsLomega1omegaIndiscernible.templateTheory_finitelySatisfiable
     show σ (tOf τ i) = a (f (t'Of τ i))
     show (if hj : tOf τ i ∈ S then a (f (orderIso.symm ⟨tOf τ i, hj⟩)) else m₀) =
          a (f (orderIso.symm ⟨tOf τ i, htS τ i⟩))
-    rw [dif_pos (htS τ i)]
+    rw [dite_eq_left (htS τ i)]
   -- Now verify each τ ∈ F
   intro τ hτ
   let τ' : ↥F := ⟨τ, hτ⟩
@@ -363,7 +363,7 @@ theorem IsLomega1omegaIndiscernibleOn.templateTheoryOn_finitelySatisfiable
     show σ (tOf τ i) = a (f (t'Of τ i))
     show (if hj : tOf τ i ∈ S then a (f (orderIso.symm ⟨tOf τ i, hj⟩)) else m₀) =
          a (f (orderIso.symm ⟨tOf τ i, htS τ i⟩))
-    rw [dif_pos (htS τ i)]
+    rw [dite_eq_left (htS τ i)]
   intro τ hτ
   let τ' : ↥F := ⟨τ, hτ⟩
   show Sentenceω.Realize (↑τ' : L[[J]].Sentenceω) M

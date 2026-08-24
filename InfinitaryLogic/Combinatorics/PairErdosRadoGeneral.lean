@@ -463,7 +463,7 @@ theorem ehmrChosen_mem (cR : (Fin 2 ↪o Source κ) → C) {β : Ordinal.{0}}
         (h.restrict (le_of_lt (by
           have hh := Ordinal.typein_lt_type (· < · : β.ToType → β.ToType → Prop) x
           rwa [Ordinal.type_toType] at hh)))) h).Nonempty := hlive
-  rw [ehmrChosen, dif_pos hcond]
+  rw [ehmrChosen, dite_eq_left hcond]
   exact WellFounded.min_mem _ _ hcond
 
 /-- On a live node, `ehmrChosen` is exactly the well-order minimum of the successor set
@@ -479,7 +479,7 @@ theorem ehmrChosen_eq_min (cR : (Fin 2 ↪o Source κ) → C) {β : Ordinal.{0}}
         (h.restrict (le_of_lt (by
           have hh := Ordinal.typein_lt_type (· < · : β.ToType → β.ToType → Prop) x
           rwa [Ordinal.type_toType] at hh)))) h).Nonempty := hlive
-  rw [ehmrChosen, dif_pos hcond]
+  rw [ehmrChosen, dite_eq_left hcond]
   -- `rw`'s closing `rfl` is reducible-only; `ehmrS`/`ehmrRep` are regular defs, so the
   -- raw fiber and `ehmrS cR h` are defeq only at default transparency. Close it manually.
   rfl
@@ -611,7 +611,7 @@ theorem yNode_mem_of (cR : (Fin 2 ↪o Source κ) → C) (y : Source κ)
   refine ⟨hlt, ?_⟩
   show cR (pairEmbed hlt) = yNode cR y β x
   simp only [yNode]
-  rw [dif_pos hlt]
+  rw [dite_eq_left hlt]
 
 /-- As long as `yNode cR y γ₂` is live (every earlier rep stays `< y`), the canonical
 reps strictly increase: `yRep γ₁ < yRep γ₂` for `γ₁ < γ₂`. (The rep at the position `γ₁`
@@ -678,7 +678,7 @@ theorem exists_node_choosing_source (cR : (Fin 2 ↪o Source κ) → C)
     rw [← yRep_eq]; exact le_antisymm hge hle
   have hlive : ehmrLive cR (yNode cR y γ) := ⟨y, hmem⟩
   refine ⟨γ, yNode cR y γ, ?_⟩
-  rw [ehmrR, if_pos hlive, Set.mem_singleton_iff]
+  rw [ehmrR, ite_eq_left hlive, Set.mem_singleton_iff]
   exact heq
 
 end YPath
@@ -889,7 +889,7 @@ theorem exists_live_node_ge [Nonempty C] (hκ : Cardinal.aleph0 ≤ κ)
       obtain ⟨β_y, h_y, hy⟩ := exists_node_choosing_source cR y
       have hlive_y : ehmrLive cR h_y := by
         by_contra hnl
-        rw [ehmrR, if_neg hnl] at hy
+        rw [ehmrR, ite_eq_right hnl] at hy
         exact (Set.mem_empty_iff_false y).mp hy
       have hβ_lt : β_y < (Order.succ κ).ord := by
         by_contra hge

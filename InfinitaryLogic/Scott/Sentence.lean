@@ -425,12 +425,12 @@ theorem nonempty_iInter_of_antitone_of_nonempty {X : Type*} [Countable X]
   have hdepart_lt : ∀ x ∈ S 0, depart x < Ordinal.omega 1 := by
     intro x hx
     simp only [depart]
-    rw [dif_pos hx]
+    rw [dite_eq_left hx]
     exact (hAllDepart x hx).choose_spec.1
   have hdepart_spec : ∀ x ∈ S 0, x ∉ S (depart x) := by
     intro x hx
     simp only [depart]
-    rw [dif_pos hx]
+    rw [dite_eq_left hx]
     exact (hAllDepart x hx).choose_spec.2
   -- Enumerate X (or rather S 0)
   -- Take sup of departure ordinals over all of X
@@ -451,7 +451,7 @@ theorem nonempty_iInter_of_antitone_of_nonempty {X : Type*} [Countable X]
     · exact hdepart_lt (enum k) hx
     · show depart (enum k) < _
       simp only [depart]
-      rw [dif_neg hx]
+      rw [dite_eq_right hx]
       exact Ordinal.omega_pos 1
   have hSup_lt : (⨆ k, depart_seq k) < Ordinal.omega 1 :=
     Ordinal.iSup_lt_omega_one fun k => by rw [← Cardinal.ord_aleph]; exact hdepart_seq_lt k

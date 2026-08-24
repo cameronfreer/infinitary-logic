@@ -141,7 +141,7 @@ theorem constInterp_injective {M : Type} [(constantsOn ℕ).Structure M]
   have hd : BoundedFormulaω.Realize (distinctAt (Nat.pair i j))
       (Empty.elim : Empty → M) Fin.elim0 := hreal (Nat.pair i j + 1)
   rw [distinctAt, Nat.unpair_pair] at hd
-  rw [if_neg (show ¬((i, j).1 = (i, j).2) from hne)] at hd
+  rw [ite_eq_right (show ¬((i, j).1 = (i, j).2) from hne)] at hd
   rw [BoundedFormulaω.realize_not, BoundedFormulaω.realize_equal,
     const_realize, const_realize] at hd
   exact hd hij

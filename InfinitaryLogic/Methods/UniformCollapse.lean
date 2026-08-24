@@ -85,7 +85,7 @@ theorem Term.onTerm_uniformCollapse_eq {φ : L.Sentenceω} {α : Type} :
     show Term.func ((uniformCollapse φ).onFunction f)
         (fun i => (uniformCollapse φ).onTerm (ts i)) = _
     rw [show (uniformCollapse φ).onFunction f
-        = Sum.inl ⟨f, h (Set.mem_insert _ _)⟩ from dif_pos (h (Set.mem_insert _ _))]
+        = Sum.inl ⟨f, h (Set.mem_insert _ _)⟩ from dite_eq_left (h (Set.mem_insert _ _))]
     exact congrArg _ (funext fun i => Term.onTerm_uniformCollapse_eq (ts i) _)
 
 /-- **The support-aware collapse identity**: on formulas whose symbols lie in `φ`'s, the
@@ -108,7 +108,7 @@ theorem BoundedFormulaω.mapLanguage_uniformCollapse_eq {φ : L.Sentenceω} {α 
     show BoundedFormulaω.rel ((uniformCollapse φ).onRelation Rl)
         (fun i => (uniformCollapse φ).onTerm (ts i)) = _
     rw [show (uniformCollapse φ).onRelation Rl
-        = Sum.inl ⟨Rl, hR rfl⟩ from dif_pos (hR rfl)]
+        = Sum.inl ⟨Rl, hR rfl⟩ from dite_eq_left (hR rfl)]
     refine congrArg _ (funext fun i => ?_)
     exact Term.onTerm_uniformCollapse_eq (ts i)
       (fun _ hx => hF (Set.mem_iUnion.mpr ⟨i, hx⟩))
