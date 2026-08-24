@@ -36,7 +36,7 @@ theorem entails_reduct_of_entails_map {Γ₀ : Set L.Sentenceω} {φ : L.Sentenc
             (φ.mapLanguage (L.lhomWithConstants ℕ))) :
     Theoryω.Entails Γ₀ φ := by
   intro M instM neM hmodel
-  letI : L[[ℕ]].Structure M := wc instM (fun _ => Classical.arbitrary M)
+  let : L[[ℕ]].Structure M := wc instM (fun _ => Classical.arbitrary M)
   have hmodel' : Theoryω.Model
       (BoundedFormulaω.mapLanguage (L.lhomWithConstants ℕ) '' Γ₀) M := by
     intro ψ hψ

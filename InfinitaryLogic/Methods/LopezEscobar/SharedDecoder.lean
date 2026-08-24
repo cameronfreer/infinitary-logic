@@ -91,11 +91,11 @@ theorem sharedToBase_isExpansionOn
       (@LHom.reduct (sharedLang L T₀ T₁) (graphLanguage (KLang L))
         (symbSublangIncl _ _) ℕ d.toStructure)
       (codeReduct d).toStructure := by
-  letI : (graphLanguage (KLang L)).Structure ℕ := d.toStructure
-  letI : (sharedLang L T₀ T₁).Structure ℕ :=
+  let : (graphLanguage (KLang L)).Structure ℕ := d.toStructure
+  let : (sharedLang L T₀ T₁).Structure ℕ :=
     @LHom.reduct (sharedLang L T₀ T₁) (graphLanguage (KLang L))
       (symbSublangIncl _ _) ℕ d.toStructure
-  letI : L.Structure ℕ := (codeReduct d).toStructure
+  let : L.Structure ℕ := (codeReduct d).toStructure
   refine ⟨fun {_} f _ => f.1.elim, fun {n} r x => propext ?_⟩
   refine (codeReduct_toStructure ((sharedToBase L T₀ T₁).onRelation r) x).trans ?_
   rw [← sharedToBase_onRelation_spec T₀ T₁ r]
@@ -111,11 +111,11 @@ theorem realize_sharedToBase (T₀ T₁ : (n : ℕ) → Set ((Fin n → Bool) ×
         (@LHom.reduct (sharedLang L T₀ T₁) (graphLanguage (KLang L))
           (symbSublangIncl _ _) ℕ d.toStructure) ↔
       @Sentenceω.Realize L (θ₀.mapLanguage (sharedToBase L T₀ T₁)) ℕ (codeReduct d).toStructure := by
-  letI : (sharedLang L T₀ T₁).Structure ℕ :=
+  let : (sharedLang L T₀ T₁).Structure ℕ :=
     @LHom.reduct (sharedLang L T₀ T₁) (graphLanguage (KLang L))
       (symbSublangIncl _ _) ℕ d.toStructure
-  letI : L.Structure ℕ := (codeReduct d).toStructure
-  haveI := sharedToBase_isExpansionOn T₀ T₁ d
+  let : L.Structure ℕ := (codeReduct d).toStructure
+  have := sharedToBase_isExpansionOn T₀ T₁ d
   exact (BoundedFormulaω.realize_mapLanguage (sharedToBase L T₀ T₁) θ₀
     (Empty.elim : Empty → ℕ) Fin.elim0).symm
 

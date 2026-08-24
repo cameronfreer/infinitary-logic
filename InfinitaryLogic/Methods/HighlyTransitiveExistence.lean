@@ -74,7 +74,7 @@ noncomputable def hahnSubfield : Subfield (hahnField X) :=
   Subfield.closure (Set.range (hahnMonomial X))
 
 theorem mk_hahnSubfield [Infinite X] : Cardinal.mk (hahnSubfield X) = Cardinal.mk X := by
-  haveI : Infinite (Set.range (hahnMonomial X)) :=
+  have : Infinite (Set.range (hahnMonomial X)) :=
     Set.infinite_coe_iff.mpr (Set.infinite_range_of_injective (hahnMonomial_injective X))
   rw [hahnSubfield, Subfield.cardinalMk_closure,
     Cardinal.mk_range_eq _ (hahnMonomial_injective X)]

@@ -43,8 +43,8 @@ the base structure. -/
 theorem realize_lift_wc {M : Type} (base : L.Structure M) (h : ℕ → M) (φ : L.Sentenceω) :
     @Sentenceω.Realize L[[ℕ]] (φ.mapLanguage (L.lhomWithConstants ℕ)) M (wc base h) ↔
       Sentenceω.Realize φ M := by
-  letI := base
-  letI : (constantsOn ℕ).Structure M := constantsOn.structure h
+  let := base
+  let : (constantsOn ℕ).Structure M := constantsOn.structure h
   exact BoundedFormulaω.realize_mapLanguage (L.lhomWithConstants ℕ) φ _ _
 
 /-- The lift mentions no constants. -/
@@ -52,7 +52,7 @@ theorem sentenceJConsts_lift_eq_empty (φ : L.Sentenceω) :
     sentenceJConsts (L' := L) (J := ℕ) (φ.mapLanguage (L.lhomWithConstants ℕ)) = ∅ := by
   rw [Set.eq_empty_iff_forall_notMem]
   intro j hj
-  rw [sentenceJConsts, Set.mem_setOf_eq, BoundedFormulaω.functionsIn_mapLanguage] at hj
+  rw [sentenceJConsts, Set.mem_ofPred_eq, BoundedFormulaω.functionsIn_mapLanguage] at hj
   obtain ⟨⟨l, f⟩, -, heq⟩ := hj
   obtain ⟨rfl, h2⟩ := Sigma.mk.inj_iff.mp heq
   have h3 : (L.lhomWithConstants ℕ).onFunction f = Sum.inr j := eq_of_heq h2

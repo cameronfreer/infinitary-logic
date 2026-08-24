@@ -58,17 +58,17 @@ noncomputable def uniformCollapse (φ : L.Sentenceω) : L →ᴸ uniformLanguage
 
 theorem countable_sigma_functions_uniformLanguage (φ : L.Sentenceω) :
     Countable (Σ n, (uniformLanguage φ).Functions n) := by
-  haveI h1 : Countable (Σ n, (symbSublang (L := L) φ.functionsIn φ.relationsIn).Functions n) :=
+  have h1 : Countable (Σ n, (symbSublang (L := L) φ.functionsIn φ.relationsIn).Functions n) :=
     symbSublang_fun_countable (BoundedFormulaω.functionsIn_countable φ) _
-  haveI h2 : Countable (Σ n, dummyLang.Functions n) :=
+  have h2 : Countable (Σ n, dummyLang.Functions n) :=
     inferInstanceAs (Countable (Σ _ : ℕ, Unit))
   exact Countable.of_equiv _ (Equiv.sigmaSumDistrib _ _).symm
 
 theorem countable_sigma_relations_uniformLanguage (φ : L.Sentenceω) :
     Countable (Σ n, (uniformLanguage φ).Relations n) := by
-  haveI h1 : Countable (Σ n, (symbSublang (L := L) φ.functionsIn φ.relationsIn).Relations n) :=
+  have h1 : Countable (Σ n, (symbSublang (L := L) φ.functionsIn φ.relationsIn).Relations n) :=
     symbSublang_rel_countable _ (BoundedFormulaω.relationsIn_countable φ)
-  haveI h2 : Countable (Σ n, dummyLang.Relations n) :=
+  have h2 : Countable (Σ n, dummyLang.Relations n) :=
     inferInstanceAs (Countable (Σ _ : ℕ, Unit))
   exact Countable.of_equiv _ (Equiv.sigmaSumDistrib _ _).symm
 
@@ -85,7 +85,7 @@ theorem Term.onTerm_uniformCollapse_eq {φ : L.Sentenceω} {α : Type} :
     show Term.func ((uniformCollapse φ).onFunction f)
         (fun i => (uniformCollapse φ).onTerm (ts i)) = _
     rw [show (uniformCollapse φ).onFunction f
-        = Sum.inl ⟨f, h (Set.mem_insert _ _)⟩ from dif_pos (h (Set.mem_insert _ _))]
+        = Sum.inl ⟨f, h (Set.mem_insert _ _)⟩ from dite_eq_left (h (Set.mem_insert _ _))]
     exact congrArg _ (funext fun i => Term.onTerm_uniformCollapse_eq (ts i) _)
 
 /-- **The support-aware collapse identity**: on formulas whose symbols lie in `φ`'s, the
@@ -108,7 +108,7 @@ theorem BoundedFormulaω.mapLanguage_uniformCollapse_eq {φ : L.Sentenceω} {α 
     show BoundedFormulaω.rel ((uniformCollapse φ).onRelation Rl)
         (fun i => (uniformCollapse φ).onTerm (ts i)) = _
     rw [show (uniformCollapse φ).onRelation Rl
-        = Sum.inl ⟨Rl, hR rfl⟩ from dif_pos (hR rfl)]
+        = Sum.inl ⟨Rl, hR rfl⟩ from dite_eq_left (hR rfl)]
     refine congrArg _ (funext fun i => ?_)
     exact Term.onTerm_uniformCollapse_eq (ts i)
       (fun _ hx => hF (Set.mem_iUnion.mpr ⟨i, hx⟩))
@@ -148,13 +148,13 @@ theorem hasArbLargeModels_mapLanguage_uniformCollapse {φ : L.Sentenceω}
     HasArbLargeModels (φ.mapLanguage (uniformCollapse φ)) := by
   intro μ
   obtain ⟨M, instM, hφM, hMsize⟩ := hφarb (max μ Cardinal.aleph0)
-  haveI : Nonempty M := Cardinal.mk_ne_zero_iff.mp
+  have : Nonempty M := Cardinal.mk_ne_zero_iff.mp
     ((lt_of_lt_of_le Cardinal.aleph0_pos (le_trans (le_max_right μ _) hMsize)).ne')
-  letI : (symbSublang (L := L) φ.functionsIn φ.relationsIn).Structure M :=
+  let : (symbSublang (L := L) φ.functionsIn φ.relationsIn).Structure M :=
     (symbSublangIncl _ _).reduct M
-  letI : dummyLang.Structure M :=
+  let : dummyLang.Structure M :=
     ⟨fun _ _ => Classical.arbitrary M, fun _ _ => False⟩
-  haveI : (symbSublangIncl (L := L) φ.functionsIn φ.relationsIn).IsExpansionOn M :=
+  have : (symbSublangIncl (L := L) φ.functionsIn φ.relationsIn).IsExpansionOn M :=
     LHom.isExpansionOn_reduct _ _
   refine ⟨M, inferInstance, ?_, le_trans (le_max_left μ _) hMsize⟩
   have h0 : Sentenceω.Realize
@@ -196,13 +196,13 @@ theorem exists_small_model_of_hasArbLargeModels {φ : L.Sentenceω}
     (hφarb : HasArbLargeModels φ) {κ : Cardinal.{0}} (hκ : Cardinal.aleph0 ≤ κ) :
     ∃ (N : Type) (_ : L.Structure N),
       Sentenceω.Realize φ N ∧ Cardinal.mk N = κ ∧ Lomega1omegaSmall (L := L) N := by
-  haveI := countable_sigma_functions_uniformLanguage φ
-  haveI := countable_sigma_relations_uniformLanguage φ
+  have := countable_sigma_functions_uniformLanguage φ
+  have := countable_sigma_relations_uniformLanguage φ
   obtain ⟨N, instN, hφ'N, hNcard, hNsmall⟩ :=
     exists_small_model_of_hasArbLargeModels_countable_symbols
       (hasArbLargeModels_mapLanguage_uniformCollapse hφarb) hκ
-  letI : L.Structure N := (uniformCollapse φ).reduct N
-  haveI : (uniformCollapse φ).IsExpansionOn N := LHom.isExpansionOn_reduct _ _
+  let : L.Structure N := (uniformCollapse φ).reduct N
+  have : (uniformCollapse φ).IsExpansionOn N := LHom.isExpansionOn_reduct _ _
   refine ⟨N, inferInstance, ?_, hNcard,
     Lomega1omegaSmall.of_expansion (uniformCollapse φ) hNsmall⟩
   exact (BoundedFormulaω.realize_mapLanguage (uniformCollapse φ) φ

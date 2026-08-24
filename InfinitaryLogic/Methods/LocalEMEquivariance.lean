@@ -288,7 +288,7 @@ theorem LocalEMContext.realize_carrierEquiv (ctx : LocalEMContext Λ J (M := M))
     (v : α → ctx.Carrier) (xs : Fin n → ctx.Carrier) :
     letI := ctx.structureBase
     (φ.Realize v xs ↔ φ.Realize (ctx.carrierEquiv e ∘ v) (ctx.carrierEquiv e ∘ xs)) := by
-  letI := ctx.structureBase
+  let := ctx.structureBase
   exact BoundedFormulaω.realize_equiv (ctx.baseAutomorphism e) φ v xs
 
 end Language

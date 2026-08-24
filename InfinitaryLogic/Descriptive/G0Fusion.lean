@@ -219,10 +219,10 @@ def prepw (c : List ℕ) (w : ℕ → ℕ) : ℕ → ℕ := fun j =>
   if j < c.length then c.getD j 0 else w (j - c.length)
 
 theorem prepw_apply_of_lt {c : List ℕ} {j : ℕ} (h : j < c.length) (w : ℕ → ℕ) :
-    prepw c w j = c.getD j 0 := if_pos h
+    prepw c w j = c.getD j 0 := ite_eq_left h
 
 theorem prepw_apply_of_le {c : List ℕ} {j : ℕ} (h : c.length ≤ j) (w : ℕ → ℕ) :
-    prepw c w j = w (j - c.length) := if_neg (not_lt.mpr h)
+    prepw c w j = w (j - c.length) := ite_eq_right (not_lt.mpr h)
 
 theorem prepw_nil (w : ℕ → ℕ) : prepw [] w = w :=
   funext fun j => by simp [prepw]
@@ -488,11 +488,11 @@ def precw (n : ℕ) (cw : (Fin n → Bool) × (Fin n → Bool) → List ℕ) :
 
 theorem precw_of_last_eq {n : ℕ} {cw : (Fin n → Bool) × (Fin n → Bool) → List ℕ}
     {u v : Fin (n + 1) → Bool} (h : u (Fin.last n) = v (Fin.last n)) :
-    precw n cw (u, v) = cw (Fin.init u, Fin.init v) := if_pos h
+    precw n cw (u, v) = cw (Fin.init u, Fin.init v) := ite_eq_left h
 
 theorem precw_of_last_ne {n : ℕ} {cw : (Fin n → Bool) × (Fin n → Bool) → List ℕ}
     {u v : Fin (n + 1) → Bool} (h : ¬ u (Fin.last n) = v (Fin.last n)) :
-    precw n cw (u, v) = [] := if_neg h
+    precw n cw (u, v) = [] := ite_eq_right h
 
 theorem precw_snoc {n : ℕ} (cw : (Fin n → Bool) × (Fin n → Bool) → List ℕ)
     (u v : Fin n → Bool) (i : Bool) :
@@ -793,7 +793,7 @@ theorem exists_gsGraph_hom [Nonempty α] (hG : AnalyticSet G) (hg : Continuous g
       have hgW : ∀ n, L₀ ≤ n → g (W n) = (a y' n, a z' n) := by
         intro n h
         rw [hW]
-        simp only [dif_pos h]
+        simp only [dite_eq_left h]
         exact (hwitn n h).choose_spec
       -- the witness points converge to the limit word
       have hWlim : Filter.Tendsto W Filter.atTop (nhds wlim) := by
@@ -807,7 +807,7 @@ theorem exists_gsGraph_hom [Nonempty α] (hG : AnalyticSet G) (hg : Continuous g
           have := hlen n hL₀n
           omega
         rw [hW]
-        simp only [dif_pos hL₀n]
+        simp only [dite_eq_left hL₀n]
         rw [prepw_apply_of_lt hjlen]
         exact (hgetD j n hn).symm
       -- identify the limits

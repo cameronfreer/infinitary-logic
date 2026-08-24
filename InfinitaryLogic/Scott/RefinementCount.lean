@@ -41,7 +41,7 @@ namespace Language
 variable {L : Language.{u, v}} [L.IsRelational]
 variable [Countable (Σ l, L.Relations l)]
 
-open FirstOrder Structure Fin Ordinal BoundedFormulaω
+open FirstOrder Structure Ordinal BoundedFormulaω
 
 /-! ### Self-stabilization to full stabilization
 

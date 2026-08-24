@@ -71,7 +71,7 @@ theorem lopez_escobar {B : Set (StructureSpace L)}
   · -- (5a) forward: `B`'s codes carry a left model, on which `θ₀` holds
     intro c hc
     obtain ⟨d, hd, hdc⟩ := subset_pcClass .left T₀ hT₀ hc
-    letI : (graphLanguage (KLang L)).Structure ℕ := d.toStructure
+    let : (graphLanguage (KLang L)).Structure ℕ := d.toStructure
     have hθ := hpos ℕ hd
     show @Sentenceω.Realize L (θ₀.mapLanguage (sharedToBase L T₀ T₁)) ℕ c.toStructure
     rw [← hdc]
@@ -80,7 +80,7 @@ theorem lopez_escobar {B : Set (StructureSpace L)}
     intro c hc
     by_contra hcB
     obtain ⟨d, hd, hdc⟩ := subset_pcClass .right T₁ hT₁ hcB
-    letI : (graphLanguage (KLang L)).Structure ℕ := d.toStructure
+    let : (graphLanguage (KLang L)).Structure ℕ := d.toStructure
     refine hneg ℕ hd ((realize_sharedToBase T₀ T₁ θ₀ d).mpr ?_)
     rw [hdc]
     exact hc

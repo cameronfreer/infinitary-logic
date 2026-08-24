@@ -406,7 +406,7 @@ theorem sentenceJConsts_component_iInf {α : Type} {n : ℕ}
     sentenceJConsts (L' := L') (φs k) ⊆
       sentenceJConsts (L' := L') (BoundedFormulaω.iInf φs) := by
   intro j hj
-  simp only [sentenceJConsts, Set.mem_setOf_eq, BoundedFormulaω.functionsIn] at hj ⊢
+  simp only [sentenceJConsts, Set.mem_ofPred_eq, BoundedFormulaω.functionsIn] at hj ⊢
   exact Set.mem_iUnion.mpr ⟨k, hj⟩
 
 /-- A disjunction component's constant support is contained in the disjunction's. -/
@@ -415,21 +415,21 @@ theorem sentenceJConsts_component_iSup {α : Type} {n : ℕ}
     sentenceJConsts (L' := L') (φs k) ⊆
       sentenceJConsts (L' := L') (BoundedFormulaω.iSup φs) := by
   intro j hj
-  simp only [sentenceJConsts, Set.mem_setOf_eq, BoundedFormulaω.functionsIn] at hj ⊢
+  simp only [sentenceJConsts, Set.mem_ofPred_eq, BoundedFormulaω.functionsIn] at hj ⊢
   exact Set.mem_iUnion.mpr ⟨k, hj⟩
 
 /-- An implication's antecedent support is contained in the implication's. -/
 theorem sentenceJConsts_imp_left {α : Type} {n : ℕ} (φ ψ : L'[[J]].BoundedFormulaω α n) :
     sentenceJConsts (L' := L') φ ⊆ sentenceJConsts (L' := L') (φ.imp ψ) := by
   intro j hj
-  simp only [sentenceJConsts, Set.mem_setOf_eq, BoundedFormulaω.functionsIn] at hj ⊢
+  simp only [sentenceJConsts, Set.mem_ofPred_eq, BoundedFormulaω.functionsIn] at hj ⊢
   exact Set.mem_union_left _ hj
 
 /-- An implication's consequent support is contained in the implication's. -/
 theorem sentenceJConsts_imp_right {α : Type} {n : ℕ} (φ ψ : L'[[J]].BoundedFormulaω α n) :
     sentenceJConsts (L' := L') ψ ⊆ sentenceJConsts (L' := L') (φ.imp ψ) := by
   intro j hj
-  simp only [sentenceJConsts, Set.mem_setOf_eq, BoundedFormulaω.functionsIn] at hj ⊢
+  simp only [sentenceJConsts, Set.mem_ofPred_eq, BoundedFormulaω.functionsIn] at hj ⊢
   exact Set.mem_union_right _ hj
 
 /-- The constant support of an expansion term. -/
@@ -702,7 +702,7 @@ theorem sentenceJConsts_mapLanguage_withConstants (r : L.Sentenceω) :
     sentenceJConsts (L' := L) (J := ℕ)
       (BoundedFormulaω.mapLanguage (L.lhomWithConstants ℕ) r) = ∅ := by
   ext j
-  simp only [sentenceJConsts, Set.mem_setOf_eq, BoundedFormulaω.functionsIn_mapLanguage,
+  simp only [sentenceJConsts, Set.mem_ofPred_eq, BoundedFormulaω.functionsIn_mapLanguage,
     Set.mem_image, Set.mem_empty_iff_false, iff_false, not_exists, not_and]
   rintro ⟨p1, p2⟩ - hpe
   obtain ⟨rfl, h2⟩ := Sigma.mk.inj_iff.mp hpe

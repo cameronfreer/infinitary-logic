@@ -46,10 +46,10 @@ theorem exists_ΓEMlocal_tail_indiscernible (M : Type) [s₀.Lang.Structure M] [
       (∀ i j : ℕ, i ≠ j → a i ≠ a j) ∧
       @IsLomega1omegaIndiscernibleOnTail (localColim s₀) M (localColimStructure s₀) a
         (ΓEMlocal s₀) := by
-  haveI : Infinite M := by
+  have : Infinite M := by
     rw [Cardinal.infinite_iff]
     exact le_trans (Cardinal.aleph0_le_beth _) hSize
-  letI : (localColim s₀).Structure M := localColimStructure s₀
+  let : (localColim s₀).Structure M := localColimStructure s₀
   obtain ⟨e, he⟩ := exists_ΓEMlocalEnum s₀
   obtain ⟨a, hinj, hind⟩ := morleyHanfExtractionTail_holds (L' := localColim s₀) e M hSize
   refine ⟨a, hinj, ?_⟩
@@ -69,7 +69,7 @@ theorem exists_localEMContext (J : Type) [LinearOrder J]
     letI : (localColim s₀).Structure M := localColimStructure s₀
     ∃ ctx : LocalEMContext (localColim s₀) J (M := M),
       ctx.Γ = ΓEMlocal s₀ ∧ (∀ i j : ℕ, i ≠ j → ctx.a i ≠ ctx.a j) := by
-  letI : (localColim s₀).Structure M := localColimStructure s₀
+  let : (localColim s₀).Structure M := localColimStructure s₀
   obtain ⟨a, hinj, hind⟩ := exists_ΓEMlocal_tail_indiscernible s₀ M hSize
   refine ⟨(⟨a, ΓEMlocal s₀, hind, locDeEqAtom_mem_ΓEMlocal J s₀,
       locDeRelAtom_mem_ΓEMlocal J s₀⟩ : LocalEMContext (localColim s₀) J (M := M)), rfl, hinj⟩

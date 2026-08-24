@@ -152,9 +152,9 @@ theorem realize_map_stageInclusion (k : ℕ) {n : ℕ}
     letI : (skolemStage L k).Structure M := skolemStageStructure L k
     letI : (skolemColim L).Structure M := skolemColimStructure L
     (φ.mapLanguage (skolemStageInclusion L k)).Realize v xs ↔ φ.Realize v xs := by
-  letI : (skolemStage L k).Structure M := skolemStageStructure L k
-  letI : (skolemColim L).Structure M := skolemColimStructure L
-  haveI := skolemStageInclusion_isExpansionOn (L := L) (M := M) k
+  let : (skolemStage L k).Structure M := skolemStageStructure L k
+  let : (skolemColim L).Structure M := skolemColimStructure L
+  have := skolemStageInclusion_isExpansionOn (L := L) (M := M) k
   exact BoundedFormulaω.realize_mapLanguage (skolemStageInclusion L k) φ v xs
 
 end Structures

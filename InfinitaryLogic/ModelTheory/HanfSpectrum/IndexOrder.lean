@@ -49,7 +49,9 @@ theorem idxVal_idxOf (β : Ordinal.{0}) (h : β < α + 2) : idxVal (idxOf (α :=
 @[simp]
 theorem idxOf_idxVal (i : Index α) : idxOf (idxVal i) (idxVal_lt i) = i := by
   rw [idxOf]
-  exact (OrderIso.apply_eq_iff_eq_symm_apply _ _ _).mpr (Subtype.ext rfl)
+  -- `eq_symm_apply` states the iff in the opposite direction from the lemma it replaces, and
+  -- takes the two points implicitly, so this is `.mp` of one argument rather than `.mpr` of three
+  exact (OrderIso.eq_symm_apply _).mp (Subtype.ext rfl)
 
 theorem idxVal_lt_idxVal_iff {i j : Index α} : idxVal i < idxVal j ↔ i < j := by
   rw [idxVal, idxVal, show ((ToType.mk.symm i : Set.Iio (α + 2)) : Ordinal)

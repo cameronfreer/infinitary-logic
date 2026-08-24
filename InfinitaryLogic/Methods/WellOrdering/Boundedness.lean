@@ -49,11 +49,11 @@ theorem wellFounded_boundedness_relational [L.IsRelational]
       obtain ⟨M, inst, hreal, w, -⟩ := hcon 1 (by
         have h1 := add_one_lt_omega1 hα
         rwa [zero_add] at h1)
-      haveI : Nonempty (Ordinal.ToType 1) := Ordinal.nonempty_toType_iff.mpr one_ne_zero
+      have : Nonempty (Ordinal.ToType 1) := Ordinal.nonempty_toType_iff.mpr one_ne_zero
       exact ⟨M, inst, ⟨w (Classical.arbitrary _)⟩, hreal,
         fun x => isEmptyElim x, fun x => isEmptyElim x⟩
     · obtain ⟨M, inst, hreal, w, hw⟩ := hcon α hα
-      haveI : Nonempty α.ToType := Ordinal.nonempty_toType_iff.mpr hne
+      have : Nonempty α.ToType := Ordinal.nonempty_toType_iff.mpr hne
       exact ⟨M, inst, ⟨w (Classical.arbitrary _)⟩, hreal, w, hw⟩
   obtain ⟨M, instL, -, f, hφreal, hf⟩ := exists_model_relPreserving_relational φ lt hchains
   exact not_relPreserving_of_wellFounded (hwf M instL hφreal) f hf
@@ -71,7 +71,7 @@ theorem wellOrder_type_boundedness_relational [L.IsRelational]
   obtain ⟨α, hα, hnochain⟩ := wellFounded_boundedness_relational φ lt
     (fun M inst h => letI := hwo M inst h; IsWellFounded.wf)
   refine ⟨α, hα, fun M inst hreal => ?_⟩
-  letI := hwo M inst hreal
+  let := hwo M inst hreal
   by_contra hle
   rw [not_lt, ← Ordinal.type_toType α] at hle
   obtain ⟨g⟩ := Ordinal.type_le_iff'.mp hle

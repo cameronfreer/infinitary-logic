@@ -203,7 +203,7 @@ theorem gSGraphHomHypothesis_holds : GSGraphHomHypothesis.{u} := by
       have hmem : (a, b) ∈ G := hab
       rw [h] at hmem
       exact hmem
-    haveI : Subsingleton (Quotient r) :=
+    have : Subsingleton (Quotient r) :=
       ⟨fun q₁ q₂ => Quotient.inductionOn₂ q₁ q₂ fun a b => Quotient.sound (hall a b)⟩
     infer_instance
   -- the continuous parametrization of G
@@ -211,7 +211,7 @@ theorem gSGraphHomHypothesis_holds : GSGraphHomHypothesis.{u} := by
   rw [MeasureTheory.AnalyticSet_def] at hGa2
   rcases hGa2 with hempty | ⟨g, hgc, hgr⟩
   · exact absurd hempty (Set.nonempty_iff_ne_empty.mp hGne)
-  haveI : Nonempty α := ⟨hGne.some.1⟩
+  have : Nonempty α := ⟨hGne.some.1⟩
   have hpos := not_smallFam_univ (ι := Fin 0 → Bool) r hunc
   have hsymm : ∀ a b : α, (a, b) ∈ G → (b, a) ∈ G := by
     intro a b hab hba

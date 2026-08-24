@@ -134,7 +134,7 @@ theorem StarWitness.realize_marked_atom {φ : L.Sentenceω} {lt : L.Relations 2}
     {Γ : Set L[[ℕ]].Sentenceω} {α : Ordinal.{0}} (W : StarWitness φ lt Γ α)
     (hα : 0 < α) {i j : Fin W.m} (hij : i < j) :
     @Sentenceω.Realize L[[ℕ]] (ratLtAtom lt (W.mark i) (W.mark j)) W.M (wc W.inst W.h) := by
-  letI := W.inst
+  let := W.inst
   have hrank : W.witness.rank i < W.witness.rank j :=
     lt_of_lt_of_le (lt_add_of_pos_right _ hα) (W.witness.gaps i j hij)
   have hchain := W.witness.chain

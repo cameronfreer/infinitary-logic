@@ -166,8 +166,8 @@ theorem skWitness_universal (d : ℕ) (S : Finset J) {k n : ℕ}
           (deepInterp L J a d S (skWitnessTerm L J ψ₀.not ts))) →
       ∀ x : M, (BoundedFormulaω.mapLanguage (skolemStageInclusion L k) ψ₀).Realize (Empty.elim : Empty → M)
           (Fin.snoc (fun i => deepInterp L J a d S (ts i)) x) := by
-  letI : (skolemColim L).Structure M := skolemColimStructure L
-  letI : (skolemStage L k).Structure M := skolemStageStructure L k
+  let : (skolemColim L).Structure M := skolemColimStructure L
+  let : (skolemStage L k).Structure M := skolemStageStructure L k
   simp only [realize_map_stageInclusion]
   intro hψw x
   by_contra hcon
@@ -191,8 +191,8 @@ theorem deepInterp_eq_realize (d : ℕ) (S : Finset J) (t : (skolemColim L)[[J]]
     letI : (skolemColim L).Structure M := skolemColimStructure L
     deepInterp L J a d S t =
       t.constantsToVars.realize (Sum.elim (fun j => a (d + deepRank J S j)) Empty.elim) := by
-  letI : (skolemColim L).Structure M := skolemColimStructure L
-  letI : (constantsOn J).Structure M := constantsOn.structure (fun j => a (d + deepRank J S j))
+  let : (skolemColim L).Structure M := skolemColimStructure L
+  let : (constantsOn J).Structure M := constantsOn.structure (fun j => a (d + deepRank J S j))
   show t.realize Empty.elim = _
   exact (Term.realize_constantsToVars (t := t) (v := Empty.elim)).symm
 
@@ -206,8 +206,8 @@ theorem deepInterp_subst (d : ℕ) (S : Finset J) {n : ℕ}
     letI : (constantsOn J).Structure M := constantsOn.structure fun j => a (d + deepRank J S j)
     deepInterp L J a d S (t.subst (Sum.elim (fun e => e.elim) ts)) =
       t.realize (Sum.elim Empty.elim fun i => deepInterp L J a d S (ts i)) := by
-  letI : (skolemColim L).Structure M := skolemColimStructure L
-  letI : (constantsOn J).Structure M := constantsOn.structure fun j => a (d + deepRank J S j)
+  let : (skolemColim L).Structure M := skolemColimStructure L
+  let : (constantsOn J).Structure M := constantsOn.structure fun j => a (d + deepRank J S j)
   show (t.subst (Sum.elim (fun e => e.elim) ts)).realize Empty.elim = _
   rw [Term.realize_subst]
   congr 1
@@ -226,8 +226,8 @@ theorem deepInterp_onTerm_subst (d : ℕ) (S : Finset J) {n : ℕ}
     deepInterp L J a d S
         (((lhomWithConstants (skolemColim L) J).onTerm t).subst (Sum.elim (fun e => e.elim) ts)) =
       t.realize (Sum.elim Empty.elim fun i => deepInterp L J a d S (ts i)) := by
-  letI : (skolemColim L).Structure M := skolemColimStructure L
-  letI : (constantsOn J).Structure M := constantsOn.structure fun j => a (d + deepRank J S j)
+  let : (skolemColim L).Structure M := skolemColimStructure L
+  let : (constantsOn J).Structure M := constantsOn.structure fun j => a (d + deepRank J S j)
   rw [deepInterp_subst]
   exact LHom.realize_onTerm (lhomWithConstants (skolemColim L) J) t _
 
@@ -256,7 +256,7 @@ indiscernibility consumes (a strictly-increasing deep tuple). -/
 theorem deepInterp_eq_realize_pos (d : ℕ) (S : Finset J) (t : (skolemColim L)[[J]].Term Empty) :
     letI : (skolemColim L).Structure M := skolemColimStructure L
     deepInterp L J a d S t = (deTermPos L J S t).realize (fun n => a (d + n)) := by
-  letI : (skolemColim L).Structure M := skolemColimStructure L
+  let : (skolemColim L).Structure M := skolemColimStructure L
   rw [deepInterp_eq_realize, deTermPos, Term.realize_relabel]
   congr 1
   funext x
@@ -280,7 +280,7 @@ theorem deepInterp_eq_realize_fin (d : ℕ) (S : Finset J) (t : (skolemColim L)[
     (hsub : jSupport L J t ⊆ S) :
     letI : (skolemColim L).Structure M := skolemColimStructure L
     deepInterp L J a d S t = (deTermFin L J S t hsub).realize (fun i : Fin S.card => a (d + i)) := by
-  letI : (skolemColim L).Structure M := skolemColimStructure L
+  let : (skolemColim L).Structure M := skolemColimStructure L
   rw [deepInterp_eq_realize_pos, deTermFin]
   symm
   exact Term.realize_restrictVar (fun n => a (d + n)) (fun _ => rfl)
@@ -296,7 +296,7 @@ theorem deTermFin_realize_superset (d : ℕ) (S T : Finset J) (w : (skolemColim 
     (deTermFin L J S w hw).realize
         (fun i : Fin S.card => a (d + deepRank J T (S.orderEmbOfFin rfl i)))
       = deepInterp L J a d T w := by
-  letI : (skolemColim L).Structure M := skolemColimStructure L
+  let : (skolemColim L).Structure M := skolemColimStructure L
   have hrv : (deTermFin L J S w hw).realize
         (fun i : Fin S.card => a (d + deepRank J T (S.orderEmbOfFin rfl i)))
       = (deTermPos L J S w).realize
@@ -305,7 +305,7 @@ theorem deTermFin_realize_superset (d : ℕ) (S T : Finset J) (w : (skolemColim 
     refine Term.realize_restrictVar
       (fun n => a (d + if h : n < S.card then deepRank J T (S.orderEmbOfFin rfl ⟨n, h⟩) else 0))
       (fun x => ?_)
-    simp only [dif_pos (Finset.mem_range.mp (deTermPos_varFinset_subset (L := L) (J := J) hw x.2))]
+    simp only [dite_eq_left (Finset.mem_range.mp (deTermPos_varFinset_subset (L := L) (J := J) hw x.2))]
   rw [hrv, deepInterp_eq_realize, deTermPos, Term.realize_relabel]
   apply Term.realize_eq_of_eq_on_varFinset
   intro x hx
@@ -338,7 +338,7 @@ theorem realize_deEqAtom (d : ℕ) (S : Finset J) (t u : (skolemColim L)[[J]].Te
     letI : (skolemColim L).Structure M := skolemColimStructure L
     (deEqAtom L J S t u ht hu).Realize Empty.elim (fun i : Fin S.card => a (d + i)) ↔
       deepInterp L J a d S t = deepInterp L J a d S u := by
-  letI : (skolemColim L).Structure M := skolemColimStructure L
+  let : (skolemColim L).Structure M := skolemColimStructure L
   rw [deEqAtom, BoundedFormulaω.realize_equal, Term.realize_relabel, Term.realize_relabel,
     Sum.elim_comp_inr, ← deepInterp_eq_realize_fin (t := t) (hsub := ht),
     ← deepInterp_eq_realize_fin (t := u) (hsub := hu)]
@@ -355,7 +355,7 @@ theorem realize_deEqAtom_superset (d : ℕ) {S T : Finset J} (_hST : S ⊆ T)
     (deEqAtom L J S t u ht hu).Realize Empty.elim
         (fun i : Fin S.card => a (d + deepRank J T (S.orderEmbOfFin rfl i))) ↔
       deepInterp L J a d T t = deepInterp L J a d T u := by
-  letI : (skolemColim L).Structure M := skolemColimStructure L
+  let : (skolemColim L).Structure M := skolemColimStructure L
   have key : ∀ (w : (skolemColim L)[[J]].Term Empty) (hw : jSupport L J w ⊆ S),
       (deTermFin L J S w hw).realize
           (fun i : Fin S.card => a (d + deepRank J T (S.orderEmbOfFin rfl i)))
@@ -369,7 +369,7 @@ theorem realize_deEqAtom_superset (d : ℕ) {S T : Finset J} (_hST : S ⊆ T)
       refine Term.realize_restrictVar
         (fun n => a (d + if h : n < S.card then deepRank J T (S.orderEmbOfFin rfl ⟨n, h⟩) else 0))
         (fun x => ?_)
-      simp only [dif_pos (Finset.mem_range.mp (deTermPos_varFinset_subset (L := L) (J := J) hw x.2))]
+      simp only [dite_eq_left (Finset.mem_range.mp (deTermPos_varFinset_subset (L := L) (J := J) hw x.2))]
     rw [hrv, deepInterp_eq_realize, deTermPos, Term.realize_relabel]
     apply Term.realize_eq_of_eq_on_varFinset
     intro x hx
@@ -398,7 +398,7 @@ theorem realize_deRelAtom (d : ℕ) (S : Finset J) {l : ℕ} (R : (skolemColim L
     letI : (skolemColim L).Structure M := skolemColimStructure L
     (deRelAtom L J S R ts ht).Realize Empty.elim (fun i : Fin S.card => a (d + i)) ↔
       Structure.RelMap R fun i => deepInterp L J a d S (ts i) := by
-  letI : (skolemColim L).Structure M := skolemColimStructure L
+  let : (skolemColim L).Structure M := skolemColimStructure L
   rw [deRelAtom, BoundedFormulaω.realize_rel]
   apply Iff.of_eq
   congr 1
@@ -415,7 +415,7 @@ theorem realize_deRelAtom_superset (d : ℕ) {S T : Finset J} (_hST : S ⊆ T) {
     (deRelAtom L J S R ts ht).Realize Empty.elim
         (fun i : Fin S.card => a (d + deepRank J T (S.orderEmbOfFin rfl i))) ↔
       Structure.RelMap R fun i => deepInterp L J a d T (ts i) := by
-  letI : (skolemColim L).Structure M := skolemColimStructure L
+  let : (skolemColim L).Structure M := skolemColimStructure L
   rw [deRelAtom, BoundedFormulaω.realize_rel]
   apply Iff.of_eq
   congr 1
@@ -470,7 +470,7 @@ theorem realize_deForm (d : ℕ) (S : Finset J) {n : ℕ}
     letI : (skolemColim L).Structure M := skolemColimStructure L
     (deForm L J S φ ts hsub).Realize Empty.elim (fun i : Fin S.card => a (d + i)) ↔
       φ.Realize Empty.elim (fun i => deepInterp L J a d S (ts i)) := by
-  letI : (skolemColim L).Structure M := skolemColimStructure L
+  let : (skolemColim L).Structure M := skolemColimStructure L
   have hassign : (fun i => (deTermFin L J S (ts i) (hsub i)).realize
         (fun i : Fin S.card => a (d + i)))
       = (fun i => deepInterp L J a d S (ts i)) :=
@@ -515,7 +515,7 @@ theorem EMEq_eventually_on_superset
           Finset.subset_union_right⟩ : Σ n, (skolemColim L).BoundedFormulaω Empty n) ∈ Γ)
     (h : EMEq L J a t u) {S : Finset J} (hS : jSupport L J t ∪ jSupport L J u ⊆ S) :
     ∀ᶠ d in Filter.atTop, deepInterp L J a d S t = deepInterp L J a d S u := by
-  letI : (skolemColim L).Structure M := skolemColimStructure L
+  let : (skolemColim L).Structure M := skolemColimStructure L
   set S₀ := jSupport L J t ∪ jSupport L J u with hS₀def
   obtain ⟨N, hN⟩ := hind hmem
   rw [EMEq, Filter.eventually_atTop] at h
@@ -554,7 +554,7 @@ theorem eventually_deepInterp_superset_iff
       (deepInterp L J a d (jSupport L J t ∪ jSupport L J u) t
             = deepInterp L J a d (jSupport L J t ∪ jSupport L J u) u ↔
           deepInterp L J a d S t = deepInterp L J a d S u) := by
-  letI : (skolemColim L).Structure M := skolemColimStructure L
+  let : (skolemColim L).Structure M := skolemColimStructure L
   obtain ⟨N, hN⟩ := hind hmem
   rw [Filter.eventually_atTop]
   refine ⟨N, fun d hd => ?_⟩
@@ -591,7 +591,7 @@ theorem eventually_relMap_superset_iff
       (Structure.RelMap R
             (fun i => deepInterp L J a d (Finset.univ.biUnion fun i => jSupport L J (ts i)) (ts i)) ↔
         Structure.RelMap R (fun i => deepInterp L J a d S (ts i))) := by
-  letI : (skolemColim L).Structure M := skolemColimStructure L
+  let : (skolemColim L).Structure M := skolemColimStructure L
   obtain ⟨N, hN⟩ := hind hmem
   rw [Filter.eventually_atTop]
   refine ⟨N, fun d hd => ?_⟩
@@ -766,7 +766,7 @@ theorem EMContext.eventually_relMap_congr_terms (ctx : EMContext L J (M := M)) {
     letI : (skolemColim L).Structure M := skolemColimStructure L
     (∀ᶠ d in Filter.atTop, Structure.RelMap R fun i => deepInterp L J ctx.a d T (ts i)) ↔
       (∀ᶠ d in Filter.atTop, Structure.RelMap R fun i => deepInterp L J ctx.a d T (ts' i)) := by
-  letI : (skolemColim L).Structure M := skolemColimStructure L
+  let : (skolemColim L).Structure M := skolemColimStructure L
   have hcong : ∀ᶠ d in Filter.atTop, ∀ i,
       deepInterp L J ctx.a d T (ts i) = deepInterp L J ctx.a d T (ts' i) :=
     Filter.eventually_all.mpr fun i =>
@@ -787,7 +787,7 @@ theorem EMContext.relMap_mkClass_iff (ctx : EMContext L J (M := M)) {l : ℕ}
         (fun i => ctx.mkClass (t := ts i)) ↔
       letI : (skolemColim L).Structure M := skolemColimStructure L
       ∀ᶠ d in Filter.atTop, Structure.RelMap R fun i => deepInterp L J ctx.a d S (ts i) := by
-  letI : (skolemColim L).Structure M := skolemColimStructure L
+  let : (skolemColim L).Structure M := skolemColimStructure L
   show (∀ᶠ d in Filter.atTop, Structure.RelMap R fun i =>
         deepInterp L J ctx.a d
           (Finset.univ.biUnion fun i => jSupport L J (Quotient.out (ctx.mkClass (t := ts i))))
@@ -851,8 +851,8 @@ transfer realizations of base-language formulas. Mirrors `skolemStageInclusion_i
 theorem EMContext.lhomWithConstants_isExpansionOn (ctx : EMContext L J (M := M)) :
     @LHom.IsExpansionOn (skolemColim L) ((skolemColim L)[[J]])
       (lhomWithConstants (skolemColim L) J) ctx.Carrier ctx.structureBase ctx.structure := by
-  letI : (skolemColim L).Structure ctx.Carrier := ctx.structureBase
-  letI : (skolemColim L)[[J]].Structure ctx.Carrier := ctx.structure
+  let : (skolemColim L).Structure ctx.Carrier := ctx.structureBase
+  let : (skolemColim L)[[J]].Structure ctx.Carrier := ctx.structure
   exact ⟨fun _ _ => rfl, fun _ _ => rfl⟩
 
 /-- **Carrier-side term substitution**: realizing a term in the EM term model under the assignment
@@ -898,7 +898,7 @@ theorem EMContext.eventualDeepTruth_equal_iff (ctx : EMContext L J (M := M)) {n 
             (Sum.elim (fun e => e.elim) ts))
         = ctx.mkClass (t := ((lhomWithConstants (skolemColim L) J).onTerm t₂).subst
             (Sum.elim (fun e => e.elim) ts)) := by
-    letI : (skolemColim L)[[J]].Structure ctx.Carrier := ctx.structure
+    let : (skolemColim L)[[J]].Structure ctx.Carrier := ctx.structure
     rw [show (BoundedFormulaω.equal t₁ t₂).mapLanguage (lhomWithConstants (skolemColim L) J)
         = BoundedFormulaω.equal ((lhomWithConstants (skolemColim L) J).onTerm t₁)
             ((lhomWithConstants (skolemColim L) J).onTerm t₂) from rfl,
@@ -911,7 +911,7 @@ theorem EMContext.eventualDeepTruth_equal_iff (ctx : EMContext L J (M := M)) {n 
             (Sum.elim (fun e => e.elim) ts))
           = deepInterp L J ctx.a d S (((lhomWithConstants (skolemColim L) J).onTerm t₂).subst
             (Sum.elim (fun e => e.elim) ts))) := by
-    letI : (skolemColim L).Structure M := skolemColimStructure L
+    let : (skolemColim L).Structure M := skolemColimStructure L
     refine Filter.eventually_congr (Filter.Eventually.of_forall fun d => ?_)
     rw [BoundedFormulaω.realize_equal, ← deepInterp_onTerm_subst, ← deepInterp_onTerm_subst]
   rw [hcarrier, hcommon]
@@ -941,7 +941,7 @@ theorem EMContext.eventualDeepTruth_rel_iff (ctx : EMContext L J (M := M)) {n l 
       ↔ @Structure.RelMap ((skolemColim L)[[J]]) ctx.Carrier ctx.structure l (Sum.inl R)
           (fun i => ctx.mkClass (t := ((lhomWithConstants (skolemColim L) J).onTerm (args i)).subst
             (Sum.elim (fun e => e.elim) ts))) := by
-    letI : (skolemColim L)[[J]].Structure ctx.Carrier := ctx.structure
+    let : (skolemColim L)[[J]].Structure ctx.Carrier := ctx.structure
     rw [show (BoundedFormulaω.rel R args).mapLanguage (lhomWithConstants (skolemColim L) J)
         = BoundedFormulaω.rel (Sum.inl R)
             (fun i => (lhomWithConstants (skolemColim L) J).onTerm (args i)) from rfl,
@@ -960,7 +960,7 @@ theorem EMContext.eventualDeepTruth_rel_iff (ctx : EMContext L J (M := M)) {n l 
         Structure.RelMap R fun i => deepInterp L J ctx.a d S
           (((lhomWithConstants (skolemColim L) J).onTerm (args i)).subst
             (Sum.elim (fun e => e.elim) ts))) := by
-    letI : (skolemColim L).Structure M := skolemColimStructure L
+    let : (skolemColim L).Structure M := skolemColimStructure L
     refine Filter.eventually_congr (Filter.Eventually.of_forall fun d => ?_)
     rw [BoundedFormulaω.realize_rel]
     apply Iff.of_eq
@@ -987,7 +987,7 @@ theorem EMContext.eventualDeepTruth_decided (ctx : EMContext L J (M := M)) {n : 
     letI : (skolemColim L).Structure M := skolemColimStructure L
     (∀ᶠ d in Filter.atTop, φ.Realize Empty.elim fun i => deepInterp L J ctx.a d S (ts i)) ∨
       (∀ᶠ d in Filter.atTop, ¬ φ.Realize Empty.elim fun i => deepInterp L J ctx.a d S (ts i)) := by
-  letI : (skolemColim L).Structure M := skolemColimStructure L
+  let : (skolemColim L).Structure M := skolemColimStructure L
   obtain ⟨N, hN⟩ := ctx.hind hmem
   have hmono : ∀ d : ℕ, StrictMono (fun i : Fin S.card => d + (i : ℕ)) :=
     fun d _ _ hii' => Nat.add_lt_add_left hii' d
@@ -1038,7 +1038,7 @@ theorem EMContext.eventualDeepTruth_imp_iff (ctx : EMContext L J (M := M)) {n : 
     EMContext.eventualDeepTruth (L := L) (J := J) ctx (φ.imp ψ) ts S ↔
       (EMContext.eventualDeepTruth (L := L) (J := J) ctx φ ts S →
         EMContext.eventualDeepTruth (L := L) (J := J) ctx ψ ts S) := by
-  letI : (skolemColim L).Structure M := skolemColimStructure L
+  let : (skolemColim L).Structure M := skolemColimStructure L
   simp only [EMContext.eventualDeepTruth, BoundedFormulaω.realize_imp]
   exact eventually_imp_iff_imp_eventually hdec
 
@@ -1157,7 +1157,7 @@ theorem EMContext.truthLemmaStage (ctx : EMContext L J (M := M)) (hc : ctx.Omega
           Empty.elim (fun i => ctx.mkClass (t := ts i)) ↔
         EMContext.eventualDeepTruth (L := L) (J := J) ctx
           (BoundedFormulaω.mapLanguage (skolemStageInclusion L k) ψ) ts S) := by
-  letI : (skolemColim L)[[J]].Structure ctx.Carrier := ctx.structure
+  let : (skolemColim L)[[J]].Structure ctx.Carrier := ctx.structure
   intro n ψ
   induction ψ with
   | falsum =>
@@ -1257,7 +1257,7 @@ theorem EMContext.truthLemmaStage (ctx : EMContext L J (M := M)) (hc : ctx.Omega
             (Fin.snoc ts (skWitnessTerm L J ψ₀.not ts)) T ↔
           EMContext.eventualDeepTruth (L := L) (J := J) ctx (BoundedFormulaω.all φ₀) ts T := by
       intro T
-      letI : (skolemColim L).Structure M := skolemColimStructure L
+      let : (skolemColim L).Structure M := skolemColimStructure L
       rw [EMContext.eventualDeepTruth, EMContext.eventualDeepTruth]
       refine Filter.eventually_congr (Filter.Eventually.of_forall fun d => ?_)
       rw [BoundedFormulaω.realize_all, deepInterp_snoc]
@@ -1267,7 +1267,7 @@ theorem EMContext.truthLemmaStage (ctx : EMContext L J (M := M)) (hc : ctx.Omega
         EMContext.eventualDeepTruth (L := L) (J := J) ctx (BoundedFormulaω.all φ₀) ts T →
           EMContext.eventualDeepTruth (L := L) (J := J) ctx φ₀ (Fin.snoc ts u) T := by
       intro T u h
-      letI : (skolemColim L).Structure M := skolemColimStructure L
+      let : (skolemColim L).Structure M := skolemColimStructure L
       rw [EMContext.eventualDeepTruth] at h ⊢
       refine h.mono fun d hd => ?_
       rw [deepInterp_snoc]

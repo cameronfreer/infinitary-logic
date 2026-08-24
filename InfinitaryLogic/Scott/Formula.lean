@@ -229,7 +229,7 @@ noncomputable def scottFormula {n : ℕ} (a : Fin n → M) (α : Ordinal) : L.Fo
       if h_lt : _β < Ordinal.omega 1 then
         haveI : Countable {γ // γ < _β} := by
           -- β.ToType is countable for β < ω₁
-          haveI : Countable _β.ToType := by
+          have : Countable _β.ToType := by
             rw [← Cardinal.mk_le_aleph0_iff]
             rw [Cardinal.mk_toType]
             have h_card : _β.card < Cardinal.aleph 1 := Cardinal.lt_omega_iff_card_lt.mp h_lt
@@ -257,7 +257,7 @@ theorem scottFormula_succ {n : ℕ} (a : Fin n → M) (α : Ordinal) :
       scottFormula a α ⊓
       einf (fun m : M => existsLastVar (scottFormula (snoc a m) α)) ⊓
       forallLastVar (esup (fun m : M => scottFormula (snoc a m) α)) := by
-  haveI : Encodable M := Encodable.ofCountable M
+  have : Encodable M := Encodable.ofCountable M
   simp only [scottFormula, Order.succ_eq_add_one, Ordinal.limitRecOn_add_one]
 
 omit [L.IsRelational] in

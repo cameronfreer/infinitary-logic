@@ -203,7 +203,7 @@ theorem StarWitness.mark_rat {φ : L.Sentenceω} {lt : L.Relations 2}
   · -- unmarked: automatically fresh for the remainder
     have hfresh : ∀ χ ∈ Γ, ratConstIdx q₀ ∉ sentenceJConsts (L' := L) (J := ℕ) χ :=
       fun χ hχ hc => hmarked (W.mark_cover ⟨χ, hχ, hc⟩)
-    letI := W.inst
+    let := W.inst
     obtain ⟨s, hs⟩ := exists_insertNth_slot W.mark_mono hmarked
     obtain ⟨x, ⟨Wg⟩⟩ := W.witness.exists_insertNth hβ s
     -- the re-pointed constant map and extended marking

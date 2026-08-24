@@ -43,7 +43,7 @@ variable {L} {M : Type} [L.Structure M] [Nonempty M]
   · intro h
     by_contra hinf
     rw [not_infinite_iff_finite] at hinf
-    haveI := Fintype.ofFinite M
+    have := Fintype.ofFinite M
     have hlt := h (Fintype.card M + 1)
     rw [Cardinal.mk_fintype] at hlt
     exact absurd (Nat.cast_le.mp hlt) (by omega)

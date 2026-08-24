@@ -33,7 +33,7 @@ namespace Language
 variable {L : Language.{u, v}} [L.IsRelational]
 variable [Countable (Σ l, L.Relations l)]
 
-open FirstOrder Structure Fin Ordinal
+open FirstOrder Structure Ordinal
 
 /-- The canonical Scott sentence of a structure M, defined as the Scott formula at Scott
 height level for the empty tuple.
@@ -73,10 +73,10 @@ theorem canonicalScottSentence_iff_potentialIso_of
       compatible := fun p hp =>
         (BFEquiv.zero p.2.1 p.2.2).mp (BFEquiv.monotone bot_le hp)
       forth := fun ⟨k, a, b⟩ hp m => by
-        simp only [Set.mem_setOf_eq] at hp ⊢
+        simp only [Set.mem_ofPred_eq] at hp ⊢
         exact BFEquiv.forth ((hstab k N a b).mp hp) m
       back := fun ⟨k, a, b⟩ hp n' => by
-        simp only [Set.mem_setOf_eq] at hp ⊢
+        simp only [Set.mem_ofPred_eq] at hp ⊢
         exact BFEquiv.back ((hstab k N a b).mp hp) n'
     }⟩
   · intro ⟨P⟩

@@ -182,7 +182,7 @@ def LocalEMTupleCode (Λ : Language.{0, 0}) (n : ℕ) : Type :=
 /-- Symbol countability passes to the constant expansion by a compressed skeleton. -/
 theorem countable_sigma_functions_withFin (k : ℕ)
     [Countable (Σ l, Λ.Functions l)] : Countable (Σ l, Λ[[Fin k]].Functions l) := by
-  haveI : ∀ l, Countable ((constantsOn (Fin k)).Functions l) := fun l =>
+  have : ∀ l, Countable ((constantsOn (Fin k)).Functions l) := fun l =>
     match l with
     | 0 => inferInstanceAs (Countable (Fin k))
     | _ + 1 => inferInstanceAs (Countable PEmpty)
@@ -192,9 +192,9 @@ theorem countable_sigma_functions_withFin (k : ℕ)
 many tuple codes at each arity. -/
 theorem countable_localEMTupleCode (n : ℕ)
     [Countable (Σ l, Λ.Functions l)] : Countable (LocalEMTupleCode Λ n) := by
-  haveI : ∀ k, Countable (Σ l, Λ[[Fin k]].Functions l) := fun k =>
+  have : ∀ k, Countable (Σ l, Λ[[Fin k]].Functions l) := fun k =>
     countable_sigma_functions_withFin Λ k
-  haveI : ∀ k, Countable (Λ[[Fin k]].Term Empty) := fun k => inferInstance
+  have : ∀ k, Countable (Λ[[Fin k]].Term Empty) := fun k => inferInstance
   exact inferInstanceAs (Countable (Σ k : ℕ, Fin n → Λ[[Fin k]].Term Empty))
 
 end Language

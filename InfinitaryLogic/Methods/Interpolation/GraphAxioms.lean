@@ -165,7 +165,7 @@ theorem realize_graphFunctionality {n : ℕ} (f : L.Functions n) :
 theorem realize_graphAxioms_iff (F : Set (Σ n, L.Functions n)) [Countable ↥F] :
     Sentenceω.Realize (graphAxioms F) M ↔
       ∀ p : ↥F, Sentenceω.Realize (graphTotality p.1.2) M ∧ Sentenceω.Realize (graphFunctionality p.1.2) M := by
-  letI : Encodable ↥F := Encodable.ofCountable _
+  let : Encodable ↥F := Encodable.ofCountable _
   show BoundedFormulaω.Realize _ _ _ ↔ _
   rw [graphAxioms, BoundedFormulaω.realize_einf]
   exact forall_congr' fun p => BoundedFormulaω.realize_and _ _
@@ -177,7 +177,7 @@ theorem realize_graphAxioms_union (F₁ F₂ : Set (Σ n, L.Functions n))
       ((Set.countable_coe_iff.mp ‹_›).union (Set.countable_coe_iff.mp ‹_›)).to_subtype
     (Sentenceω.Realize (graphAxioms (F₁ ∪ F₂)) M ↔
       Sentenceω.Realize (graphAxioms F₁) M ∧ Sentenceω.Realize (graphAxioms F₂) M) := by
-  haveI : Countable ↥(F₁ ∪ F₂) :=
+  have : Countable ↥(F₁ ∪ F₂) :=
     ((Set.countable_coe_iff.mp ‹_›).union (Set.countable_coe_iff.mp ‹_›)).to_subtype
   rw [realize_graphAxioms_iff, realize_graphAxioms_iff, realize_graphAxioms_iff]
   constructor
@@ -193,7 +193,7 @@ theorem graphExpansion_realizes_graphAxioms (F : Set (Σ n, L.Functions n)) [Cou
     (M : Type) [L.Structure M] :
     letI := graphExpansion L M
     Sentenceω.Realize (graphAxioms F) M := by
-  letI := graphExpansion L M
+  let := graphExpansion L M
   rw [realize_graphAxioms_iff]
   intro p
   constructor
@@ -225,7 +225,7 @@ theorem relationsIn_graphFunctionality {n : ℕ} (f : L.Functions n) :
 relations of `F`. -/
 theorem relationsIn_graphAxioms (F : Set (Σ n, L.Functions n)) [Countable ↥F] :
     (graphAxioms F).relationsIn = graphRelSym L '' F := by
-  letI : Encodable ↥F := Encodable.ofCountable _
+  let : Encodable ↥F := Encodable.ofCountable _
   have hpt : ∀ p : ↥F,
       ((graphTotality p.1.2).and (graphFunctionality p.1.2)).relationsIn =
         {(⟨p.1.1 + 1, GraphRelation.graph p.1.2⟩ : Σ k, (graphLanguage L).Relations k)} := by

@@ -113,7 +113,7 @@ theorem uncountable_classCondensationPt_classes {α : Type u}
   suffices h : (allClasses \ condensClasses).Countable by
     intro h_cond_count
     exact hunc (h.union h_cond_count |>.mono (Set.subset_union_left.trans
-      (by intro q; simp only [Set.mem_union, Set.mem_diff]; tauto)))
+      (by intro q; simp only [Set.mem_union, Set.mem_sdiff]; tauto)))
   -- For each q ∈ allClasses \ condensClasses, every representative y ∈ U of q
   -- is NOT a condensation point, so has a basis nbhd with countably many classes.
   -- Key: allClasses \ condensClasses ⊆ ⋃ (B ∈ "countable" basis elts), classes(U ∩ B)
@@ -127,7 +127,7 @@ theorem uncountable_classCondensationPt_classes {α : Type u}
   intro q ⟨hq_all, hq_not_cond⟩
   obtain ⟨y, hy_U, hy_eq⟩ := hq_all
   -- y is not a condensation point
-  simp only [condensClasses, Set.mem_setOf_eq, not_exists, not_and] at hq_not_cond
+  simp only [condensClasses, Set.mem_ofPred_eq, not_exists, not_and] at hq_not_cond
   have h_not_cond : ¬IsClassCondensationPt r U y := by
     intro h_cond
     exact hq_not_cond y h_cond hy_eq

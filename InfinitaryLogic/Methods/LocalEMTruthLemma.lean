@@ -590,7 +590,7 @@ theorem LocalEMContext.truthLemmaStage_of_skolemUniversal
             LocalEMContext.eventualDeepTruth (Λ := localColim s₀) (J := J) ctx
               (ψ.mapLanguage (LlocalInclusion s₀ (k + 1))) ts S) := by
   intro ctx hc k
-  letI : (localColim s₀)[[J]].Structure ctx.Carrier := ctx.structure
+  let : (localColim s₀)[[J]].Structure ctx.Carrier := ctx.structure
   intro n ψ
   induction ψ with
   | falsum =>
@@ -822,7 +822,7 @@ theorem LocalEMContext.truthLemmaStage :
               Empty.elim (fun i => ctx.mkClass (t := ts i)) ↔
             LocalEMContext.eventualDeepTruth (Λ := localColim s₀) (J := J) ctx
               (ψ.mapLanguage (LlocalInclusion s₀ (k + 1))) ts S) := by
-  letI : (localColim s₀).Structure M := localColimStructure s₀
+  let : (localColim s₀).Structure M := localColimStructure s₀
   exact LocalEMContext.truthLemmaStage_of_skolemUniversal s₀ J
     (localSkolemUniversalForColim_canonical s₀)
 
@@ -843,7 +843,7 @@ theorem LocalEMContext.truthLemmaStage_of_mem :
               Empty.elim (fun i => ctx.mkClass (t := ts i)) ↔
             LocalEMContext.eventualDeepTruth (Λ := localColim s₀) (J := J) ctx
               (ψ.mapLanguage (LlocalInclusion s₀ k)) ts S) := by
-  letI : (localColim s₀).Structure M := localColimStructure s₀
+  let : (localColim s₀).Structure M := localColimStructure s₀
   exact LocalEMContext.truthLemmaStage_of_mem_of_skolemUniversal s₀ J
     (localSkolemUniversalForColim_canonical s₀)
 

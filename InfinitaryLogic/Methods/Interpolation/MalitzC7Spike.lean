@@ -125,11 +125,11 @@ theorem malitzInsepAt_witness_of_existentialDelta (c : ℕ) (φc : L[[ℕ]].Sent
   refine h ⟨(Theoryω.conjunction Δ hΔc).not, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · exact (isUniversal_not _).mpr (isExistential_conjunction Δ hΔc hΔex)
   · intro s hs
-    simp only [BoundedFormulaω.baseFunctionsIn, BoundedFormulaω.functionsIn, Set.mem_setOf_eq,
+    simp only [BoundedFormulaω.baseFunctionsIn, BoundedFormulaω.functionsIn, Set.mem_ofPred_eq,
       Set.union_empty] at hs
     exact baseFunctionsIn_conjunction_subset Δ hΔc hΔF hs
   · intro s hs
-    simp only [BoundedFormulaω.baseRelationsIn, BoundedFormulaω.relationsIn, Set.mem_setOf_eq,
+    simp only [BoundedFormulaω.baseRelationsIn, BoundedFormulaω.relationsIn, Set.mem_ofPred_eq,
       Set.union_empty] at hs
     exact baseRelationsIn_conjunction_subset Δ hΔc hΔR hs
   · rw [sentenceJConsts_not]

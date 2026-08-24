@@ -71,8 +71,8 @@ theorem wellOrdering_undefinable_relational {L : Language.{0, 0}} [L.IsRelationa
   rintro ⟨φ, hφ⟩
   obtain ⟨α, hα, hbound⟩ := wellOrder_type_boundedness_relational φ lt
     (fun M inst h => (hφ M inst).mp h)
-  letI instα : L.Structure α.ToType := ordinalStructure L α
-  haveI hwo := ordinalStructure_isWellOrder L α lt
+  let instα : L.Structure α.ToType := ordinalStructure L α
+  have hwo := ordinalStructure_isWellOrder L α lt
   have hreal : Sentenceω.Realize φ α.ToType := (hφ α.ToType instα).mpr hwo
   have hb := hbound α.ToType instα hreal
   have hiso : (fun x y : α.ToType => RelMap lt ![x, y]) ≃r

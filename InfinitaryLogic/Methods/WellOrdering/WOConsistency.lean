@@ -66,7 +66,7 @@ theorem exists_henkinComplete_baseDiagram [Countable (Σ l, L.Relations l)]
       baseDiagram φ lt ⊆ S ∧
       HenkinComplete (GenU (φ.mapLanguage (L.lhomWithConstants ℕ))
         (φ.mapLanguage (L.lhomWithConstants ℕ))) S := by
-  haveI : Countable ↥(GenU (φ.mapLanguage (L.lhomWithConstants ℕ))
+  have : Countable ↥(GenU (φ.mapLanguage (L.lhomWithConstants ℕ))
       (φ.mapLanguage (L.lhomWithConstants ℕ))) := genU_countable.to_subtype
   obtain ⟨Sstar, hsub, -, hcomp⟩ := exists_henkinComplete
     (P := woConsistencyProperty φ lt)

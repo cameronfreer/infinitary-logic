@@ -124,6 +124,7 @@ def isoSetoidOn (φ : L.Sentenceω) (n : ℕ) :
     Setoid ↥(ModelsOfOn (α := Fin n) φ) :=
   (structureIsoSetoidOn L n).comap Subtype.val
 
+omit [Countable ((l : ℕ) × L.Relations l)] in
 /-- Membership in the pulled-back relation is membership in the ambient one. -/
 theorem isoSetoidOn_r_iff {φ : L.Sentenceω} {n : ℕ} {c₁ c₂ : ↥(ModelsOfOn (α := Fin n) φ)} :
     (isoSetoidOn φ n).r c₁ c₂ ↔ (structureIsoSetoidOn L n).r c₁.1 c₂.1 := Iff.rfl
@@ -197,7 +198,7 @@ theorem isoSetoidOn_measurableSet (φ : L.Sentenceω) (n : ℕ) :
     ⋃ σ : Equiv.Perm (Fin n),
       {p | σ • p.1.1 = p.2.1} := by
     ext ⟨⟨c₁, hc₁⟩, ⟨c₂, hc₂⟩⟩
-    simp only [Set.mem_setOf_eq, Set.mem_iUnion]
+    simp only [Set.mem_ofPred_eq, Set.mem_iUnion]
     exact iso_iff_orbit n c₁ c₂
   rw [hset]
   -- Step 2: Finite union of measurable sets is measurable
@@ -210,7 +211,7 @@ theorem isoSetoidOn_measurableSet (φ : L.Sentenceω) (n : ℕ) :
     (fun p : ↥(ModelsOfOn (α := Fin n) φ) × ↥(ModelsOfOn (α := Fin n) φ) =>
       (σ • p.1.1, p.2.1)) ⁻¹' {q : StructureSpaceOn L (Fin n) × StructureSpaceOn L (Fin n) |
         q.1 = q.2} := by
-    ext p; simp [Set.mem_setOf_eq]
+    ext p; simp [Set.mem_ofPred_eq]
   rw [hgraph]
   -- Step 4: The diagonal is closed, hence measurable
   exact isClosed_diagonal.measurableSet.preimage
@@ -226,7 +227,7 @@ theorem counting_fin_models_dichotomy
     (φ : L.Sentenceω) (n : ℕ) :
     (#(Quotient (isoSetoidOn φ n)) ≤ ℵ₀) ∨
     (#(Quotient (isoSetoidOn φ n)) = Cardinal.continuum) := by
-  haveI : StandardBorelSpace ↥(ModelsOfOn (α := Fin n) φ) :=
+  have : StandardBorelSpace ↥(ModelsOfOn (α := Fin n) φ) :=
     (modelsOfOn_measurableSet φ).standardBorel
   exact silver (isoSetoidOn φ n) (isoSetoidOn_measurableSet φ n)
 
@@ -237,6 +238,7 @@ theorem counting_fin_models_dichotomy
 def AllCodedIsoClasses (φ : L.Sentenceω) :=
   Quotient (isoSetoid φ) ⊕ Σ n, Quotient (isoSetoidOn φ n)
 
+omit [Countable ((l : ℕ) × L.Relations l)] in
 /-- **The finite tiers, summed**: their disjoint union has at most `ℵ₀ * bound` classes whenever
 each single tier has at most `bound`.
 
@@ -419,7 +421,7 @@ theorem codeModel_eq_of_iso
   have hequiv := e.toEquiv
   by_cases hfinM : Finite M
   · -- M is finite → N is finite
-    haveI hfinN : Finite N := Finite.of_equiv M hequiv
+    have hfinN : Finite N := Finite.of_equiv M hequiv
     have hcard : @Fintype.card M (Fintype.ofFinite M) = @Fintype.card N (Fintype.ofFinite N) :=
       @Fintype.card_congr M N (Fintype.ofFinite M) (Fintype.ofFinite N) hequiv
     rw [codeModel_of_finite hφM hfinM, codeModel_of_finite hφN hfinN]
@@ -444,9 +446,9 @@ theorem codeModel_eq_of_iso
     congr 2
     exact h1 _ _ _ _ _
   · -- M is infinite → N is infinite
-    haveI : Infinite M := not_finite_iff_infinite.mp hfinM
+    have : Infinite M := not_finite_iff_infinite.mp hfinM
     have hfinN : ¬Finite N := fun h => hfinM (Finite.of_equiv N hequiv.symm)
-    haveI : Infinite N := not_finite_iff_infinite.mp hfinN
+    have : Infinite N := not_finite_iff_infinite.mp hfinN
     have hM_eq : codeModel hφM = Sum.inl
         ⟦⟨encodeViaEquiv (nonempty_equiv_of_countable (α := M) (β := ℕ)).some,
           encodeViaEquiv_models _ hφM⟩⟧ :=
@@ -484,9 +486,9 @@ theorem iso_of_codeModel_eq
       (@Language.Equiv.symm L N α ‹L.Structure N› instα₂ iN) inner⟩
   by_cases hfinM : Finite M
   · -- Finite M → finite N: same compose pattern, Sigma-dependent extraction.
-    haveI hfinN : Finite N := by
+    have hfinN : Finite N := by
       by_contra hfN
-      haveI : Infinite N := not_finite_iff_infinite.mp hfN
+      have : Infinite N := not_finite_iff_infinite.mp hfN
       rw [codeModel_of_finite hφM hfinM, codeModel_of_infinite hφN hfN] at h
       exact absurd h (by simp)
     -- Use the same pattern as codeModel_eq_of_iso finite branch:
@@ -515,12 +517,12 @@ theorem iso_of_codeModel_eq
     obtain ⟨iN⟩ := encodeViaEquiv_iso (L := L) (M := N) g
     exact compose iM qIso iN
   · -- Infinite M → infinite N
-    haveI : Infinite M := not_finite_iff_infinite.mp hfinM
+    have : Infinite M := not_finite_iff_infinite.mp hfinM
     have hfinN : ¬Finite N := by
       intro hfN
       rw [codeModel_of_infinite hφM hfinM, codeModel_of_finite hφN hfN] at h
       exact absurd h (by simp)
-    haveI : Infinite N := not_finite_iff_infinite.mp hfinN
+    have : Infinite N := not_finite_iff_infinite.mp hfinN
     set eM : M ≃ ℕ := (nonempty_equiv_of_countable (α := M) (β := ℕ)).some
     set eN : N ≃ ℕ := (nonempty_equiv_of_countable (α := N) (β := ℕ)).some
     rw [codeModel_of_infinite hφM hfinM, codeModel_of_infinite hφN hfinN] at h
@@ -542,7 +544,7 @@ theorem codeModel_surjective :
   · -- ℕ branch: decode representative, ℕ with its toStructure is the model.
     refine Quotient.inductionOn qN fun ⟨c, hc⟩ => ?_
     -- Establish c.toStructure as the L.Structure instance on ℕ
-    letI instN : L.Structure ℕ := c.toStructure
+    let instN : L.Structure ℕ := c.toStructure
     refine ⟨ℕ, instN, inferInstance, hc, ?_⟩
     -- Goal: codeModel hc = Sum.inl ⟦⟨c, hc⟩⟧
     -- codeModel hc takes dif_neg (Infinite ℕ) branch:
@@ -568,13 +570,13 @@ theorem codeModel_surjective :
     exact congrArg Sum.inl hiso
   · -- Fin n branch: decode representative, Fin n with its toStructure is the model.
     refine Quotient.inductionOn qFin fun ⟨c, hc⟩ => ?_
-    letI instFin : L.Structure (Fin n) := c.toStructure
+    let instFin : L.Structure (Fin n) := c.toStructure
     refine ⟨Fin n, instFin, inferInstance, hc, ?_⟩
     -- Goal: codeModel hc = Sum.inr ⟨n, ⟦⟨c, hc⟩⟧⟩
     -- Fin n is finite, so codeModel takes the dif_pos branch
     -- After unfold: Sum.inr ⟨Fintype.card (Fin n), ⟦⟨encodeViaEquiv (equivFin (Fin n)), _⟩⟧⟩
     -- Need: card (Fin n) = n and quotient equality
-    haveI : Finite (Fin n) := inferInstance
+    have : Finite (Fin n) := inferInstance
     rw [codeModel_of_finite hc (inferInstance : Finite (Fin n))]
     -- The unfolded codeModel uses Fintype.ofFinite (Fin n) internally.
     -- We need to match Fintype.card with n, handling the diamond.

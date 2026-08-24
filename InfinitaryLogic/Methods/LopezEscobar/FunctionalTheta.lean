@@ -178,33 +178,33 @@ theorem realize_omegaAxioms :
     · have h := hinj ![x, y]
       rw [BoundedFormulaω.realize_imp, BoundedFormulaω.realize_equal,
         BoundedFormulaω.realize_equal] at h
-      simp only [realize_s_app, realize_var_block, Matrix.cons_val_zero,
-        Matrix.cons_val_one] at h
+      simp only [realize_s_app, 
+        ] at h
       exact h hxy
     · have h := hne ![x]
       rw [BoundedFormulaω.realize_not, BoundedFormulaω.realize_equal] at h
-      simp only [realize_s_app, realize_var_block, realize_mNum, Matrix.cons_val_zero] at h
+      simp only [realize_s_app, realize_mNum] at h
       exact h hx
     · have h := hsurj ![x]
       rw [BoundedFormulaω.realize_iSup] at h
       obtain ⟨i, hi⟩ := h
       rw [BoundedFormulaω.realize_equal] at hi
-      simp only [realize_mNum, realize_var_block, Matrix.cons_val_zero] at hi
+      simp only [realize_mNum] at hi
       exact ⟨i, hi⟩
   · rintro ⟨hinj, hne, hsurj⟩
     refine ⟨fun ws => ?_, fun ws => ?_, fun ws => ?_⟩
     · rw [BoundedFormulaω.realize_imp, BoundedFormulaω.realize_equal,
         BoundedFormulaω.realize_equal]
-      simp only [realize_s_app, realize_var_block]
+      simp only [realize_s_app]
       exact fun h => hinj h
     · rw [BoundedFormulaω.realize_not, BoundedFormulaω.realize_equal]
-      simp only [realize_s_app, realize_var_block, realize_mNum]
+      simp only [realize_s_app, realize_mNum]
       exact hne (ws 0)
     · rw [BoundedFormulaω.realize_iSup]
       obtain ⟨i, hi⟩ := hsurj (ws 0)
       refine ⟨i, ?_⟩
       rw [BoundedFormulaω.realize_equal]
-      simp only [realize_mNum, realize_var_block]
+      simp only [realize_mNum]
       exact hi
 
 /-- **Clause 1 export**: the numeral map of a model of `omegaAxioms` is bijective. -/
@@ -281,7 +281,7 @@ theorem realize_codeAxiom [Countable (Σ l, L.Relations l)]
         (@Structure.RelMap (MidLang L) M inst q.1.1 (Sum.inl q.1.2)
             (fun i => numMap L M (q.2 i)) ↔
           fMap L M (numMap L M (queryEmbedding (L := L) q)) = numMap L M 1) := by
-  letI : Encodable (RelQuery L) := queryEncodable
+  let : Encodable (RelQuery L) := queryEncodable
   show BoundedFormulaω.Realize _ _ _ ↔ _
   rw [codeAxiom, BoundedFormulaω.realize_einf]
   refine forall_congr' fun q => ?_
@@ -307,7 +307,7 @@ theorem realize_defaultAxiom [Countable (Σ l, L.Relations l)]
     Sentenceω.Realize (defaultAxiom L) M ↔
       ∀ n ∉ Set.range (queryEmbedding (L := L)),
         fMap L M (numMap L M n) = numMap L M 0 := by
-  letI : Encodable {n : ℕ // n ∉ Set.range (queryEmbedding (L := L))} :=
+  let : Encodable {n : ℕ // n ∉ Set.range (queryEmbedding (L := L))} :=
     Encodable.ofCountable _
   show BoundedFormulaω.Realize _ _ _ ↔ _
   rw [defaultAxiom, BoundedFormulaω.realize_einf]
@@ -350,8 +350,8 @@ theorem realize_treeAtom {M : Type} [inst : (MidLang L).Structure M] (n : ℕ)
     (@Structure.RelMap (MidLang L) M inst (2 * n) (Sum.inr (WitnessRel.tree n))) ?_)
   funext i
   by_cases h : (i : ℕ) < n
-  · simp only [treeTuple, dif_pos h, realize_mNum]
-  · simp only [treeTuple, dif_neg h, realize_mNum]
+  · simp only [treeTuple, dite_eq_left h, realize_mNum]
+  · simp only [treeTuple, dite_eq_right h, realize_mNum]
 
 variable (L) in
 open Classical in
@@ -373,23 +373,23 @@ theorem realize_treeDiagram {M : Type} [inst : (MidLang L).Structure M]
         (@Structure.RelMap (MidLang L) M inst (2 * n) (Sum.inr (WitnessRel.tree n))
             (treeTuple L M n σ τ) ↔ (σ, τ) ∈ T n) := by
   classical
-  letI : Encodable (Σ n, (Fin n → Bool) × (Fin n → ℕ)) := Encodable.ofCountable _
+  let : Encodable (Σ n, (Fin n → Bool) × (Fin n → ℕ)) := Encodable.ofCountable _
   show BoundedFormulaω.Realize _ _ _ ↔ _
   rw [treeDiagram, BoundedFormulaω.realize_einf]
   constructor
   · intro h n σ τ
     have hp := h ⟨n, σ, τ⟩
     by_cases hmem : (σ, τ) ∈ T n
-    · rw [if_pos hmem] at hp
+    · rw [ite_eq_left hmem] at hp
       exact ⟨fun _ => hmem, fun _ => (realize_treeAtom (L := L) n σ τ).mp hp⟩
-    · rw [if_neg hmem, BoundedFormulaω.realize_not] at hp
+    · rw [ite_eq_right hmem, BoundedFormulaω.realize_not] at hp
       exact ⟨fun hR => absurd ((realize_treeAtom (L := L) n σ τ).mpr hR) hp,
         fun hmem' => absurd hmem' hmem⟩
   · intro h p
     by_cases hmem : (p.2.1, p.2.2) ∈ T p.1
-    · rw [if_pos hmem]
+    · rw [ite_eq_left hmem]
       exact (realize_treeAtom (L := L) p.1 p.2.1 p.2.2).mpr ((h p.1 p.2.1 p.2.2).mpr hmem)
-    · rw [if_neg hmem, BoundedFormulaω.realize_not]
+    · rw [ite_eq_right hmem, BoundedFormulaω.realize_not]
       exact fun hreal =>
         hmem ((h p.1 p.2.1 p.2.2).mp ((realize_treeAtom (L := L) p.1 p.2.1 p.2.2).mp hreal))
 
@@ -423,8 +423,8 @@ theorem realize_pathAxiom {M : Type} [inst : (MidLang L).Structure M] :
     (@Structure.RelMap (MidLang L) M inst (2 * n) (Sum.inr (WitnessRel.tree n))) ?_)
   funext i
   by_cases h : (i : ℕ) < n
-  · simp only [pathTuple, if_pos h, realize_mF, realize_mNum]
-  · simp only [pathTuple, if_neg h, realize_mG, realize_mNum]
+  · simp only [pathTuple, ite_eq_left h, realize_mF, realize_mNum]
+  · simp only [pathTuple, ite_eq_right h, realize_mG, realize_mNum]
 
 /-! ## The pulled-back code and the bit-sequence identification -/
 

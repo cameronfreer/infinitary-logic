@@ -80,7 +80,7 @@ def funSublangIncl (F : Set (Σ n, L.Functions n)) : funSublang (L := L) F →�
 the certificate the local EM tower needs, now provable rather than assumed. -/
 theorem funSublang_fun_countable {F : Set (Σ n, L.Functions n)} (hF : F.Countable) :
     Countable (Σ n, (funSublang (L := L) F).Functions n) := by
-  haveI := hF.to_subtype
+  have := hF.to_subtype
   refine Function.Injective.countable
     (f := fun p : Σ n, (funSublang (L := L) F).Functions n => (⟨⟨p.1, p.2.1⟩, p.2.2⟩ : ↥F)) ?_
   rintro ⟨n, f, hf⟩ ⟨n', f', hf'⟩ h
@@ -218,7 +218,7 @@ def symbSublangIncl (F : Set (Σ n, L.Functions n)) (R : Set (Σ n, L.Relations 
 theorem symbSublang_fun_countable {F : Set (Σ n, L.Functions n)} (hF : F.Countable)
     (R : Set (Σ n, L.Relations n)) :
     Countable (Σ n, (symbSublang (L := L) F R).Functions n) := by
-  haveI := hF.to_subtype
+  have := hF.to_subtype
   refine Function.Injective.countable
     (f := fun p : Σ n, (symbSublang (L := L) F R).Functions n =>
       (⟨⟨p.1, p.2.1⟩, p.2.2⟩ : ↥F)) ?_
@@ -232,7 +232,7 @@ theorem symbSublang_fun_countable {F : Set (Σ n, L.Functions n)} (hF : F.Counta
 theorem symbSublang_rel_countable (F : Set (Σ n, L.Functions n))
     {R : Set (Σ n, L.Relations n)} (hR : R.Countable) :
     Countable (Σ n, (symbSublang (L := L) F R).Relations n) := by
-  haveI := hR.to_subtype
+  have := hR.to_subtype
   refine Function.Injective.countable
     (f := fun p : Σ n, (symbSublang (L := L) F R).Relations n =>
       (⟨⟨p.1, p.2.1⟩, p.2.2⟩ : ↥R)) ?_

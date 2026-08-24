@@ -57,9 +57,9 @@ theorem continuous_smul_query (R : Σ l, L.Relations l) (v : Fin R.1 → ℕ) :
     have hopen : IsOpen {p : Equiv.Perm ℕ × StructureSpace L | p.1⁻¹ (v i) = m i} :=
       (isOpen_discrete ({m i} : Set ℕ)).preimage
         ((NatPerm.continuous_inv_apply (v i)).comp continuous_fst)
-    exact hopen.mem_nhds (by simp only [Set.mem_setOf_eq, hm])
+    exact hopen.mem_nhds (by simp only [Set.mem_ofPred_eq, hm])
   filter_upwards [Filter.iInter_mem.mpr hmem] with p hp
-  simp only [Set.mem_iInter, Set.mem_setOf_eq] at hp
+  simp only [Set.mem_iInter, Set.mem_ofPred_eq] at hp
   have hmw : (⇑p.1⁻¹ ∘ v) = m := by funext i; exact hp i
   show p.2 ⟨R, m⟩ = (p.1 • p.2) ⟨R, v⟩
   rw [logicAction_apply, hmw]

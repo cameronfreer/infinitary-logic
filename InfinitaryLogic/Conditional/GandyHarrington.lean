@@ -130,14 +130,14 @@ spaces, derived from `silver_core_polish`. -/
 theorem silverBurgessDichotomy : SilverBurgessDichotomy.{v} := by
   intro X _ _ r hr
   -- Upgrade the standard Borel space to a Polish topology
-  letI := upgradeStandardBorel X
+  let := upgradeStandardBorel X
   -- Further upgrade to a compatible complete metric
-  letI := TopologicalSpace.upgradeIsCompletelyMetrizable X
+  let := TopologicalSpace.upgradeIsCompletelyMetrizable X
   rcases silver_core_polish r hr with h_count | ⟨f, hf_cont, hf_inj, hf_ineq⟩
   · left; exact mk_le_aleph0
   · right
     apply le_antisymm
-    · haveI : Nonempty X := ⟨f (fun _ => false)⟩
+    · have : Nonempty X := ⟨f (fun _ => false)⟩
       exact mk_quotient_le_continuum_of_polish r
     · have hinj : Function.Injective (fun x : ULift.{v} (ℕ → Bool) =>
           Quotient.mk r (f x.down)) := by

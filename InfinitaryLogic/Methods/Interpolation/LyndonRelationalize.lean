@@ -129,7 +129,7 @@ theorem relationsInSigned_relGraph {n k : ℕ} (R : L.Relations k)
   · show relationsInSigned true (BoundedFormulaω.existsBlock _) = _
     rw [relationsInSigned_existsBlock, relationsInSigned_and, relationsInSigned_einf,
       Set.iUnion_congr fun i => (relationsInSigned_termGraphAux (ts i) _ _).1,
-      relationsInSigned_rel, Set.image_iUnion, if_pos rfl]
+      relationsInSigned_rel, Set.image_iUnion, ite_eq_left rfl]
     rfl
   · show relationsInSigned false (BoundedFormulaω.existsBlock _) = _
     rw [relationsInSigned_existsBlock, relationsInSigned_and, relationsInSigned_einf,
@@ -137,7 +137,7 @@ theorem relationsInSigned_relGraph {n k : ℕ} (R : L.Relations k)
       relationsInSigned_rel]
     show (⋃ _i : Fin _, (∅ : Set (Σ n, GraphRelation L n))) ∪
       (if false then {(⟨k, GraphRelation.base R⟩ : Σ l, GraphRelation L l)} else ∅) = ∅
-    rw [Set.iUnion_empty, if_neg (by simp), Set.union_empty]
+    rw [Set.iUnion_empty, ite_eq_right (by simp), Set.union_empty]
 
 /-- Preimage form of range-disjointness: no base symbol pulls back from a graph image. -/
 theorem preimage_baseRelSym_graphRelSym_image (X : Set (Σ n, L.Functions n)) :
@@ -197,7 +197,7 @@ theorem mem_relationsInSigned_relationalizeFormula (s : Bool) (p : Σ n, L.Relat
     rw [relationalizeFormula_rel, relationsInSigned_rel]
     cases s with
     | true =>
-      rw [(relationsInSigned_relGraph R ts).1, if_pos rfl]
+      rw [(relationsInSigned_relGraph R ts).1, ite_eq_left rfl]
       simp only [Set.mem_singleton_iff]
       constructor
       · rintro (⟨q, -, hq⟩ | hq)
@@ -206,7 +206,7 @@ theorem mem_relationsInSigned_relationalizeFormula (s : Bool) (p : Σ n, L.Relat
       · rintro rfl
         exact Or.inr rfl
     | false =>
-      rw [(relationsInSigned_relGraph R ts).2, if_neg (by simp)]
+      rw [(relationsInSigned_relGraph R ts).2, ite_eq_right (by simp)]
       exact iff_of_false (Set.notMem_empty _) (Set.notMem_empty _)
   | _, .imp φ ψ => by
     rw [relationalizeFormula_imp, relationsInSigned_imp, relationsInSigned_imp]
@@ -292,12 +292,12 @@ theorem mem_relationsInSigned_backTranslateFormula (s : Bool) (p : Σ n, L.Relat
     rw [relationsInSigned_rel, relationsInSigned_rel]
     cases s with
     | true =>
-      rw [if_pos rfl, if_pos rfl]
+      rw [ite_eq_left rfl, ite_eq_left rfl]
       constructor
       · rintro rfl; exact rfl
       · intro h; exact baseRelSym_injective (Set.mem_singleton_iff.mp h)
     | false =>
-      rw [if_neg (by simp), if_neg (by simp)]
+      rw [ite_eq_right (by simp), ite_eq_right (by simp)]
       exact iff_of_false (Set.notMem_empty _) (Set.notMem_empty _)
   | _, .rel (GraphRelation.graph f) ts => by
     -- the graph atom back-translates to an equality: empty in both signs
@@ -305,12 +305,12 @@ theorem mem_relationsInSigned_backTranslateFormula (s : Bool) (p : Σ n, L.Relat
     rw [relationsInSigned_equal, relationsInSigned_rel]
     cases s with
     | true =>
-      rw [if_pos rfl]
+      rw [ite_eq_left rfl]
       refine iff_of_false (Set.notMem_empty _) ?_
       intro h
       exact baseRelSym_ne_graphRelSym p ⟨_, f⟩ (Set.mem_singleton_iff.mp h)
     | false =>
-      rw [if_neg (by simp)]
+      rw [ite_eq_right (by simp)]
       exact iff_of_false (Set.notMem_empty _) (Set.notMem_empty _)
   | _, .imp φ ψ => by
     show p ∈ relationsInSigned s ((backTranslateFormula φ).imp (backTranslateFormula ψ)) ↔ _

@@ -49,7 +49,7 @@ def SentBnd (F : Set (Σ n, L.Functions n)) (R : Set (Σ n, L.Relations n)) :
 variable {F : Set (Σ n, L.Functions n)} {R : Set (Σ n, L.Relations n)}
 
 theorem sentBnd_not_iff {σ : L[[ℕ]].Sentenceω} : σ.not ∈ SentBnd F R ↔ σ ∈ SentBnd F R := by
-  simp only [SentBnd, Set.mem_setOf_eq, baseFunctionsIn_not, baseRelationsIn_not]
+  simp only [SentBnd, Set.mem_ofPred_eq, baseFunctionsIn_not, baseRelationsIn_not]
 
 theorem sentBnd_imp_left {φ ψ : L[[ℕ]].Sentenceω} (h : φ.imp ψ ∈ SentBnd F R) : φ ∈ SentBnd F R :=
   ⟨baseFunctionsIn_imp_left.trans h.1, baseRelationsIn_imp_left.trans h.2⟩
@@ -124,14 +124,14 @@ theorem sentenceJConsts_constEq_comm (a b : ℕ) :
     sentenceJConsts (L' := L) (J := ℕ) (constEq a b) =
       sentenceJConsts (L' := L) (J := ℕ) (constEq b a) := by
   ext k
-  simp only [constEq, sentenceJConsts, BoundedFormulaω.functionsIn, Set.mem_setOf_eq,
+  simp only [constEq, sentenceJConsts, BoundedFormulaω.functionsIn, Set.mem_ofPred_eq,
     Set.mem_union]
   tauto
 
 theorem sentenceJConsts_relInst_eq {l : ℕ} (Rr : L.Relations l) (g : Fin l → ℕ) :
     sentenceJConsts (L' := L) (J := ℕ) (relInst Rr g) = Set.range g := by
   ext k
-  simp only [relInst, sentenceJConsts, BoundedFormulaω.functionsIn, Set.mem_setOf_eq,
+  simp only [relInst, sentenceJConsts, BoundedFormulaω.functionsIn, Set.mem_ofPred_eq,
     Set.mem_iUnion, Set.mem_range]
   constructor
   · rintro ⟨i, hi⟩; exact ⟨i, (constTermS_jConsts (g i) hi).symm⟩
@@ -667,7 +667,7 @@ theorem exists_paired_model [L.IsRelational] [Countable (Σ l, L.Relations l)]
     (hroot : InsepAt (F₁ ∩ F₂) (R₁ ∩ R₂) A₀ {rL} {rR}) :
     ∃ (M : Type) (_ : L[[ℕ]].Structure M) (_ : Nonempty M),
       Sentenceω.Realize rL M ∧ Sentenceω.Realize rR M := by
-  haveI : Countable ↥(GenU (L := L) rL rR) := genU_countable.to_subtype
+  have : Countable ↥(GenU (L := L) rL rR) := genU_countable.to_subtype
   have hmem : PairedInsepFamilyMem F₁ R₁ F₂ R₂ rL rR ({rL} ∪ {rR}) := by
     refine ⟨{rL}, {rR}, A₀, Set.finite_singleton _, Set.finite_singleton _,
       Set.singleton_subset_iff.mpr root₁_mem, Set.singleton_subset_iff.mpr root₂_mem,

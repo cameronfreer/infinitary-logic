@@ -126,7 +126,7 @@ theorem treeTuple_firstIdx (n : ℕ) (σ : Fin n → Bool) (τ : Fin n → ℕ) 
   show (if h : ((firstIdx n i : Fin (2 * n)) : ℕ) < n
       then @numMap L ℕ (standardMid c g T) (cond (σ ⟨_, h⟩) 1 0)
       else @numMap L ℕ (standardMid c g T) (τ ⟨_, _⟩)) = _
-  rw [dif_pos h, numMap_std]
+  rw [dite_eq_left h, numMap_std]
   congr 1
 
 theorem treeTuple_secondIdx (n : ℕ) (σ : Fin n → Bool) (τ : Fin n → ℕ) (i : Fin n) :
@@ -136,7 +136,7 @@ theorem treeTuple_secondIdx (n : ℕ) (σ : Fin n → Bool) (τ : Fin n → ℕ)
   show (if h : ((secondIdx n i : Fin (2 * n)) : ℕ) < n
       then @numMap L ℕ (standardMid c g T) (cond (σ ⟨_, h⟩) 1 0)
       else @numMap L ℕ (standardMid c g T) (τ ⟨((secondIdx n i : Fin (2 * n)) : ℕ) - n, _⟩)) = _
-  rw [dif_neg h, numMap_std]
+  rw [dite_eq_right h, numMap_std]
   congr 1
   apply Fin.ext
   show n + (i : ℕ) - n = (i : ℕ)
@@ -148,7 +148,7 @@ theorem pathTuple_firstIdx (n : ℕ) (i : Fin n) :
   show (if ((firstIdx n i : Fin (2 * n)) : ℕ) < n
       then @fMap L ℕ (standardMid c g T) (@numMap L ℕ (standardMid c g T) _)
       else _) = _
-  rw [if_pos h, numMap_std, fMap_std]
+  rw [ite_eq_left h, numMap_std, fMap_std]
   rfl
 
 theorem pathTuple_secondIdx (n : ℕ) (i : Fin n) :
@@ -158,7 +158,7 @@ theorem pathTuple_secondIdx (n : ℕ) (i : Fin n) :
   show (if ((secondIdx n i : Fin (2 * n)) : ℕ) < n then _
       else @gMap L ℕ (standardMid c g T)
         (@numMap L ℕ (standardMid c g T) (((secondIdx n i : Fin (2 * n)) : ℕ) - n))) = _
-  rw [if_neg h, numMap_std, gMap_std]
+  rw [ite_eq_right h, numMap_std, gMap_std]
   congr 1
   show n + (i : ℕ) - n = (i : ℕ)
   omega
@@ -169,7 +169,7 @@ theorem standardMid_models
     (hbranch : ∀ n : ℕ,
       ((fun i : Fin n => queryCode c (i : ℕ)), (fun i : Fin n => g (i : ℕ))) ∈ T n) :
     @Sentenceω.Realize (MidLang L) (functionalTheta L T) ℕ (standardMid c g T) := by
-  letI := standardMid c g T
+  let := standardMid c g T
   rw [realize_functionalTheta]
   refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
   · -- omegaAxioms
@@ -225,8 +225,8 @@ theorem standardMid_models
 theorem sideEmb_isExpansionOn (side : PCSide) :
     @LHom.IsExpansionOn (MidLang L) (KLang L) (sideEmb L side) ℕ (standardMid c g T)
       (standardK c g T) := by
-  letI := standardMid c g T
-  letI := standardK c g T
+  let := standardMid c g T
+  let := standardK c g T
   constructor
   · intro k f a
     cases side <;> cases f with
@@ -241,9 +241,9 @@ theorem standardK_models_pc (side : PCSide)
     (hbranch : ∀ n : ℕ,
       ((fun i : Fin n => queryCode c (i : ℕ)), (fun i : Fin n => g (i : ℕ))) ∈ T n) :
     @Sentenceω.Realize (KLang L) (functionalPCSentence L side T) ℕ (standardK c g T) := by
-  letI := standardMid c g T
-  letI := standardK c g T
-  haveI := sideEmb_isExpansionOn c g T side
+  let := standardMid c g T
+  let := standardK c g T
+  have := sideEmb_isExpansionOn c g T side
   rw [functionalPCSentence]
   exact (BoundedFormulaω.realize_mapLanguage (sideEmb L side) (functionalTheta L T)
     (Empty.elim : Empty → ℕ) Fin.elim0).mpr (standardMid_models c g T hbranch)
@@ -268,7 +268,7 @@ theorem forwardCode_mem_modelsOf (side : PCSide)
     (hbranch : ∀ n : ℕ,
       ((fun i : Fin n => queryCode c (i : ℕ)), (fun i : Fin n => g (i : ℕ))) ∈ T n) :
     forwardCode c g T ∈ ModelsOf (pcSentence L side T) := by
-  letI := standardK c g T
+  let := standardK c g T
   show @Sentenceω.Realize (graphLanguage (KLang L)) (pcSentence L side T) ℕ
     (forwardCode c g T).toStructure
   rw [forwardCode_toStructure]
@@ -276,7 +276,7 @@ theorem forwardCode_mem_modelsOf (side : PCSide)
 
 theorem codeReduct_forwardCode :
     codeReduct (forwardCode c g T) = c := by
-  letI := standardK c g T
+  let := standardK c g T
   funext q
   rw [Bool.eq_iff_iff]
   show (forwardCode c g T) ⟨⟨q.1.1, GraphRelation.base (Sum.inl q.1.2)⟩, q.2⟩ = true ↔ c q = true

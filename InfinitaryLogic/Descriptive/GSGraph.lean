@@ -56,10 +56,10 @@ def prependWord (w : List Bool) (x : ℕ → Bool) : ℕ → Bool := fun n =>
   if n < w.length then w.getD n false else x (n - w.length)
 
 theorem prependWord_apply_of_lt {w : List Bool} {n : ℕ} (h : n < w.length) (x : ℕ → Bool) :
-    prependWord w x n = w.getD n false := if_pos h
+    prependWord w x n = w.getD n false := ite_eq_left h
 
 theorem prependWord_apply_of_le {w : List Bool} {n : ℕ} (h : w.length ≤ n) (x : ℕ → Bool) :
-    prependWord w x n = x (n - w.length) := if_neg (not_lt.mpr h)
+    prependWord w x n = x (n - w.length) := ite_eq_right (not_lt.mpr h)
 
 /-- The basic clopen set of sequences extending the word `w`. -/
 def wordCylinder (w : List Bool) : Set (ℕ → Bool) := Set.range (prependWord w)
@@ -251,7 +251,7 @@ theorem exists_gSGraph_edge_of_not_isMeagre
   -- Localization: B is comeager in some word cylinder
   obtain ⟨W, hW_open, hBW⟩ := hB.residualEq_isOpen
   have hsym : IsMeagre {p : ℕ → Bool | ¬(p ∈ B ↔ p ∈ W)} := by
-    rw [IsMeagre, compl_setOf]
+    rw [IsMeagre, compl_ofPred]
     simp only [not_not]
     exact Filter.eventuallyEq_set.mp hBW
   have hW_ne : W.Nonempty := by
@@ -276,7 +276,7 @@ theorem exists_gSGraph_edge_of_not_isMeagre
     rintro p ⟨hpc, hpB⟩
     have hpW : p ∈ W :=
       hrW (wordCylinder_subset_of_prefix (hrs.trans ⟨[i], rfl⟩) hpc)
-    simp only [mem_setOf_eq]
+    simp only [mem_ofPred_eq]
     intro h
     exact hpB (h.mpr hpW)
   -- A common point avoiding both meager sets

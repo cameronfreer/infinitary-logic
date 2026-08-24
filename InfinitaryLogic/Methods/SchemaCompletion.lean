@@ -102,8 +102,8 @@ theorem realizeWith_templateSentence (σ : J → M) (h : ℕ → M)
           ((L''[[J]]).lhomWithConstants ℕ))
         (Empty.elim : Empty → M) Fin.elim0
       ↔ ψ.Realize (Empty.elim : Empty → M) (fun i => σ (t i)) := by
-  letI : (constantsOn J).Structure M := constantsOn.structure σ
-  letI : (constantsOn ℕ).Structure M := constantsOn.structure h
+  let : (constantsOn J).Structure M := constantsOn.structure σ
+  let : (constantsOn ℕ).Structure M := constantsOn.structure h
   rw [← sentenceRealize_iff_realizeWith]
   show Sentenceω.Realize _ M ↔ _
   rw [Sentenceω.realize_def]
@@ -136,7 +136,7 @@ starting point the ω-stage `extension`/`iSup_choice` chain builds on. -/
 theorem markerHenkinConsistent_empty
     (hM : Cardinal.beth (Ordinal.omega 1) ≤ Cardinal.mk M) :
     MarkerHenkinConsistent M (∅ : Finset (((L''[[J]])[[ℕ]]).Sentenceω)) := by
-  haveI : Nonempty M := Cardinal.mk_ne_zero_iff.mp
+  have : Nonempty M := Cardinal.mk_ne_zero_iff.mp
     (((lt_of_lt_of_le Cardinal.aleph0_pos (Cardinal.aleph0_le_beth _)).trans_le hM).ne')
   refine ⟨∅, ∅, fun τ hτ => by simp at hτ, fun τ hτ => by simp at hτ, fun β hβ => ?_⟩
   obtain ⟨_, _, _, _, _, e, _⟩ :=
@@ -173,7 +173,7 @@ variable {L'' : Language.{0, 0}} {J : Type}
 theorem henkinConstsIn_mapLanguage {α : Type} {n : ℕ} (τ : (L''[[J]]).BoundedFormulaω α n) :
     henkinConstsIn (L'' := L'') (τ.mapLanguage ((L''[[J]]).lhomWithConstants ℕ)) = ∅ := by
   ext m
-  simp only [henkinConstsIn, sentenceJConsts, Set.mem_setOf_eq,
+  simp only [henkinConstsIn, sentenceJConsts, Set.mem_ofPred_eq,
     BoundedFormulaω.functionsIn_mapLanguage, Set.mem_image, Set.mem_empty_iff_false, iff_false,
     not_exists, not_and]
   rintro ⟨k, f⟩ _ heq
@@ -189,7 +189,7 @@ theorem expJConstsIn_mapLanguage {α : Type} {n : ℕ} (τ : (L''[[J]]).BoundedF
     expJConstsIn (L'' := L'') (τ.mapLanguage ((L''[[J]]).lhomWithConstants ℕ)) =
       sentenceJConsts (L' := L'') (J := J) τ := by
   ext j
-  simp only [expJConstsIn, sentenceJConsts, Set.mem_setOf_eq,
+  simp only [expJConstsIn, sentenceJConsts, Set.mem_ofPred_eq,
     BoundedFormulaω.functionsIn_mapLanguage, Set.mem_image]
   constructor
   · rintro ⟨⟨k, f⟩, hf, heq⟩
@@ -215,7 +215,7 @@ theorem sentenceJConsts_templateSentence {n : ℕ} (ψ : L''.BoundedFormulaω Em
     sentenceJConsts (L' := L'') (J := J) (Lomega1omegaTemplate.templateSentence ψ t)
       ⊆ Set.range (⇑t) := by
   intro j hj
-  simp only [sentenceJConsts, Set.mem_setOf_eq, Lomega1omegaTemplate.templateSentence] at hj
+  simp only [sentenceJConsts, Set.mem_ofPred_eq, Lomega1omegaTemplate.templateSentence] at hj
   have hsub := BoundedFormulaω.functionsIn_subst
     (fun i => Term.func (Sum.inr (t i) : (L''[[J]]).Functions 0) Fin.elim0)
     ((ψ.mapLanguage (L''.lhomWithConstants J)).openBounds) hj
@@ -747,28 +747,28 @@ theorem exists_admissible_pair
   · intro a ha b hb hab
     rw [show σ₁ a = if h : q a < K then e (dEmb ⟨q a, h⟩) else dflt from rfl,
       show σ₁ b = if h : q b < K then e (dEmb ⟨q b, h⟩) else dflt from rfl,
-      dif_pos (hbound_q (hSA (Finset.mem_coe.mp ha))),
-      dif_pos (hbound_q (hSA (Finset.mem_coe.mp hb)))]
+      dite_eq_left (hbound_q (hSA (Finset.mem_coe.mp ha))),
+      dite_eq_left (hbound_q (hSA (Finset.mem_coe.mp hb)))]
     exact e.strictMono (dEmb.strictMono (hq hab))
   · intro j hj
     rw [show σ₁ j = if h : q j < K then e (dEmb ⟨q j, h⟩) else dflt from rfl,
-      dif_pos (hbound_q (hSA hj))]
+      dite_eq_left (hbound_q (hSA hj))]
     exact ⟨dEmb ⟨q j, hbound_q (hSA hj)⟩, rfl⟩
   · intro a ha b hb hab
     rw [show σ₂ a = if h : q' a < K then e (dEmb ⟨q' a, h⟩) else dflt from rfl,
       show σ₂ b = if h : q' b < K then e (dEmb ⟨q' b, h⟩) else dflt from rfl,
-      dif_pos (hbound_q' (hSA (Finset.mem_coe.mp ha))),
-      dif_pos (hbound_q' (hSA (Finset.mem_coe.mp hb)))]
+      dite_eq_left (hbound_q' (hSA (Finset.mem_coe.mp ha))),
+      dite_eq_left (hbound_q' (hSA (Finset.mem_coe.mp hb)))]
     exact e.strictMono (dEmb.strictMono (hq' hab))
   · intro j hj
     rw [show σ₂ j = if h : q' j < K then e (dEmb ⟨q' j, h⟩) else dflt from rfl,
-      dif_pos (hbound_q' (hSA hj))]
+      dite_eq_left (hbound_q' (hSA hj))]
     exact ⟨dEmb ⟨q' j, hbound_q' (hSA hj)⟩, rfl⟩
   · rw [show σ₁ (t i) =
         if h : q (t i) < K then e (dEmb ⟨q (t i), h⟩) else dflt from rfl,
       show σ₂ (t' i) =
         if h : q' (t' i) < K then e (dEmb ⟨q' (t' i), h⟩) else dflt from rfl,
-      dif_pos (hbound_q (htA i)), dif_pos (hbound_q' (htA' i))]
+      dite_eq_left (hbound_q (htA i)), dite_eq_left (hbound_q' (htA' i))]
     apply congrArg e
     apply congrArg dEmb
     apply Fin.ext
@@ -849,7 +849,7 @@ theorem schemaCompletionTheory_tuple_uniform
       obtain ⟨α, hα0, hα1, hbody⟩ := hcof 0 (Ordinal.omega_pos 1)
       obtain ⟨e, hsat⟩ := hbody
       let D := (Order.succ (Cardinal.beth α)).ord.ToType
-      haveI : Infinite D := by
+      have : Infinite D := by
         rw [show D = (Order.succ (Cardinal.beth α)).ord.ToType from rfl,
           Cardinal.infinite_iff, Cardinal.mk_ord_toType]
         exact (Cardinal.aleph0_le_beth α).trans (Order.le_succ _)

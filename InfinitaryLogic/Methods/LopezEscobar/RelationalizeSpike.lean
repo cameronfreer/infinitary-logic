@@ -60,8 +60,8 @@ theorem pilot_realize {M : Type} [instM : (KLang L).Structure M] :
         Empty 0 (relationalizeFormula ((pilotFormula).mapLanguage (leftWitnessEmb L)))
         Empty.elim Fin.elim0) ↔
       (@Sentenceω.Realize WitnessLang pilotFormula M ((leftWitnessEmb L).reduct M)) := by
-  letI : WitnessLang.Structure M := (leftWitnessEmb L).reduct M
-  haveI : (leftWitnessEmb L).IsExpansionOn M := LHom.isExpansionOn_reduct _ _
+  let : WitnessLang.Structure M := (leftWitnessEmb L).reduct M
+  have : (leftWitnessEmb L).IsExpansionOn M := LHom.isExpansionOn_reduct _ _
   exact (realize_relationalizeFormula _ _ _).trans
     (BoundedFormulaω.realize_mapLanguage (leftWitnessEmb L) pilotFormula
       (Empty.elim : Empty → M) Fin.elim0)

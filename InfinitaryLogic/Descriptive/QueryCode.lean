@@ -56,13 +56,13 @@ noncomputable def decodeCode (x : ℕ → Bool) : StructureSpace L :=
     queryCode c (queryEmbedding (L := L) q) = c q := by
   have hex : ∃ q', queryEmbedding (L := L) q' = queryEmbedding (L := L) q := ⟨q, rfl⟩
   unfold queryCode
-  rw [dif_pos hex, queryEmbedding.injective hex.choose_spec]
+  rw [dite_eq_left hex, queryEmbedding.injective hex.choose_spec]
 
 /-- **Gate 2**: coordinates outside the embedding's range are `false`. -/
 theorem queryCode_of_notMem_range (c : StructureSpace L) {n : ℕ}
     (h : n ∉ Set.range (queryEmbedding (L := L))) : queryCode c n = false := by
   unfold queryCode
-  exact dif_neg h
+  exact dite_eq_right h
 
 theorem decodeCode_queryCode : Function.LeftInverse (decodeCode (L := L)) queryCode := by
   intro c
@@ -76,9 +76,9 @@ theorem continuous_queryCode : Continuous (queryCode (L := L)) := by
   refine continuous_pi fun n => ?_
   unfold queryCode
   by_cases h : ∃ q, queryEmbedding (L := L) q = n
-  · simp only [dif_pos h]
+  · simp only [dite_eq_left h]
     exact continuous_apply _
-  · simp only [dif_neg h]
+  · simp only [dite_eq_right h]
     exact continuous_const
 
 theorem continuous_decodeCode : Continuous (decodeCode (L := L)) := by
@@ -98,9 +98,9 @@ theorem range_queryCode :
     refine ⟨decodeCode x, funext fun n => ?_⟩
     unfold queryCode
     by_cases h : ∃ q, queryEmbedding (L := L) q = n
-    · rw [dif_pos h]
+    · rw [dite_eq_left h]
       exact congrArg x h.choose_spec
-    · rw [dif_neg h]
+    · rw [dite_eq_right h]
       exact (hx n h).symm
 
 /-- **Gate 4**: the range is closed — an intersection of clopen coordinate conditions. -/
@@ -109,7 +109,7 @@ theorem isClosed_range_queryCode : IsClosed (Set.range (queryCode (L := L))) := 
   have heq : {x : ℕ → Bool | ∀ n ∉ Set.range (queryEmbedding (L := L)), x n = false}
       = ⋂ n, {x : ℕ → Bool | n ∈ Set.range (queryEmbedding (L := L)) ∨ x n = false} := by
     ext x
-    simp only [Set.mem_setOf_eq, Set.mem_iInter]
+    simp only [Set.mem_ofPred_eq, Set.mem_iInter]
     constructor
     · intro hx n
       by_cases h : n ∈ Set.range (queryEmbedding (L := L))

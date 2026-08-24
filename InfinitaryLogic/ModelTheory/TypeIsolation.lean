@@ -82,22 +82,22 @@ theorem realize_isolatingFormula_iff
     (hcount : (RealizedInfinitaryTypes (L := L) M n).Countable)
     (p : Set (L.BoundedFormulaω Empty n)) (a : Fin n → M) :
     (isolatingFormula hcount p).Realize Empty.elim a ↔ infinitaryType M a = p := by
-  haveI := hcount.to_subtype
+  have := hcount.to_subtype
   rw [isolatingFormula, BoundedFormulaω.realize_ciInf]
   constructor
   · intro h
     by_contra hne
     have hq : infinitaryType M a ∈ RealizedInfinitaryTypes (L := L) M n := ⟨a, rfl⟩
     have hcomp := h ⟨infinitaryType M a, hq⟩
-    rw [dif_neg hne] at hcomp
+    rw [dite_eq_right hne] at hcomp
     exact (exists_separator (M := M) fun he => hne he.symm).choose_spec.2 a rfl hcomp
   · intro htp q
     by_cases h : q.1 = p
-    · rw [dif_pos h]
+    · rw [dite_eq_left h]
       show (BoundedFormulaω.falsum.imp BoundedFormulaω.falsum).Realize Empty.elim a
       rw [BoundedFormulaω.realize_imp]
       exact fun hf => hf
-    · rw [dif_neg h]
+    · rw [dite_eq_right h]
       exact (exists_separator (M := M) fun he => h he.symm).choose_spec.1 a htp
 
 /-- Realizers exist: `χ_p` is satisfiable in `M` (by any tuple realizing `p`). -/

@@ -94,29 +94,29 @@ theorem realize_templateSentence_expandSymb {L : Language.{0, 0}}
         (Lomega1omegaTemplate.templateSentence (ψ₀.mapLanguage (symbSublangIncl F R)) t) N ↔
       Sentenceω.Realize (Lomega1omegaTemplate.templateSentence ψ₀ t) N) := by
   classical
-  letI instE : L[[J]].Structure N := expandSymbStructure F R J
+  let instE : L[[J]].Structure N := expandSymbStructure F R J
   refine (realize_templateSentence_of_structure (L := L) (J := J) (N := N)
     (ψ₀.mapLanguage (symbSublangIncl F R)) t).trans
     (Iff.trans ?_ (realize_templateSentence_of_structure (L := symbSublang (L := L) F R)
       (J := J) (N := N) ψ₀ t).symm)
-  letI : L.Structure N := (L.lhomWithConstants J).reduct N
-  letI : (symbSublang (L := L) F R).Structure N :=
+  let : L.Structure N := (L.lhomWithConstants J).reduct N
+  let : (symbSublang (L := L) F R).Structure N :=
     ((symbSublang (L := L) F R).lhomWithConstants J).reduct N
-  haveI : (symbSublangIncl F R).IsExpansionOn N := by
+  have : (symbSublangIncl F R).IsExpansionOn N := by
     constructor
     · intro m f xs
       show (if h : (⟨m, f.1⟩ : Σ n, L.Functions n) ∈ F then
           Structure.funMap (L := (symbSublang (L := L) F R)[[J]])
             (Sum.inl (⟨f.1, h⟩ : (symbSublang (L := L) F R).Functions m)) xs
         else Classical.arbitrary N) = _
-      rw [dif_pos f.2]
+      rw [dite_eq_left f.2]
       rfl
     · intro m r xs
       show (if h : (⟨m, r.1⟩ : Σ n, L.Relations n) ∈ R then
           Structure.RelMap (L := (symbSublang (L := L) F R)[[J]])
             (Sum.inl (⟨r.1, h⟩ : (symbSublang (L := L) F R).Relations m)) xs
         else False) = _
-      rw [dif_pos r.2]
+      rw [dite_eq_left r.2]
       rfl
   have htup : (fun i => (Term.func (Sum.inr (t i) : L[[J]].Functions 0)
         Fin.elim0 : L[[J]].Term Empty).realize (Empty.elim : Empty → N))
@@ -160,19 +160,19 @@ proved not assumed) at an injective `ℕ`-sequence of the source, and its model 
 theorem morleySeedTailTemplateRealizable_holds {L' : Language.{0, 0}} :
     MorleySeedTailTemplateRealizable (L' := L') := by
   intro φ M instM a J instJ hSize hφreal hPair _hTail
-  haveI : Infinite M := by
+  have : Infinite M := by
     rw [Cardinal.infinite_iff]
     exact le_trans (Cardinal.aleph0_le_beth _) hSize
-  haveI : Nonempty M := ⟨(Infinite.natEmbedding M) 0⟩
+  have : Nonempty M := ⟨(Infinite.natEmbedding M) 0⟩
   rcases isEmpty_or_nonempty J with hJe | hJne
   · exact morleySeed_theory_model_of_isEmptyJ φ a J hφreal
-  haveI : Countable (Σ n, (symbSublang (L := L') φ.functionsIn φ.relationsIn).Functions n) :=
+  have : Countable (Σ n, (symbSublang (L := L') φ.functionsIn φ.relationsIn).Functions n) :=
     symbSublang_fun_countable φ.functionsIn_countable _
-  haveI : Countable (Σ l, (symbSublang (L := L') φ.functionsIn φ.relationsIn).Relations l) :=
+  have : Countable (Σ l, (symbSublang (L := L') φ.functionsIn φ.relationsIn).Relations l) :=
     symbSublang_rel_countable _ φ.relationsIn_countable
-  letI : (symbSublang (L := L') φ.functionsIn φ.relationsIn).Structure M :=
+  let : (symbSublang (L := L') φ.functionsIn φ.relationsIn).Structure M :=
     (symbSublangIncl φ.functionsIn φ.relationsIn).reduct M
-  haveI : (symbSublangIncl (L := L') φ.functionsIn φ.relationsIn).IsExpansionOn M :=
+  have : (symbSublangIncl (L := L') φ.functionsIn φ.relationsIn).IsExpansionOn M :=
     LHom.isExpansionOn_reduct _ _
   have hφ₀map : (φ.restrictSymbols (subset_refl _) (subset_refl _)).mapLanguage
       (symbSublangIncl φ.functionsIn φ.relationsIn) = φ :=
@@ -201,14 +201,14 @@ theorem morleySeedTailTemplateRealizable_holds {L' : Language.{0, 0}} :
           Empty 2) t) N :=
     fun t => hmodel _ ⟨2, disEqFormula, t, ⟨1, rfl⟩,
       Or.inl ⟨tailTemplateOfSeq_truth_disEq ha₀Pair, rfl⟩⟩
-  haveI : Nonempty J := hJne
-  haveI : Nonempty N := ⟨(Term.func
+  have : Nonempty J := hJne
+  have : Nonempty N := ⟨(Term.func
     (Sum.inr (Classical.arbitrary J) :
       (symbSublang (L := L') φ.functionsIn φ.relationsIn)[[J]].Functions 0)
     Fin.elim0 :
       (symbSublang (L := L') φ.functionsIn φ.relationsIn)[[J]].Term Empty).realize
     (Empty.elim : Empty → N)⟩
-  letI instE : L'[[J]].Structure N := expandSymbStructure φ.functionsIn φ.relationsIn J
+  let instE : L'[[J]].Structure N := expandSymbStructure φ.functionsIn φ.relationsIn J
   refine ⟨N, instE, ?_⟩
   rintro σ ⟨n, ψ, t, ⟨k, hk⟩, hcase⟩
   match k, hk with

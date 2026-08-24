@@ -96,7 +96,7 @@ theorem lyndon_interpolation_relational [L.IsRelational] (r₁ r₂ : L.Sentence
   have hr₂R : r₂.relationsIn ⊆ R := Set.subset_union_right
   have hE' : Sentenceω.Entails (r₁.restrictSymbols hr₁F hr₁R) (r₂.restrictSymbols hr₂F hr₂R) :=
     entails_restrictSymbols_singleton F R r₁ r₂ hr₁F hr₁R hr₂F hr₂R h
-  haveI : Countable (Σ n, (symbSublang (L := L) F R).Relations n) :=
+  have : Countable (Σ n, (symbSublang (L := L) F R).Relations n) :=
     symbSublang_rel_countable F hRc
   obtain ⟨θ', hθ'F, hθ'P, hθ'N, hE1', hE2'⟩ :=
     lyndon_interpolation_relational_countable (r₁.restrictSymbols hr₁F hr₁R)

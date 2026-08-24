@@ -48,7 +48,7 @@ theorem baseFunctionsIn_iSup_subset {A : Set (Σ n, L.Functions n)}
     (σ : ℕ → L[[ℕ]].Sentenceω) (h : ∀ k, (σ k).baseFunctionsIn ⊆ A) :
     (BoundedFormulaω.iSup σ).baseFunctionsIn ⊆ A := by
   intro s hs
-  simp only [BoundedFormulaω.baseFunctionsIn, BoundedFormulaω.functionsIn, Set.mem_setOf_eq,
+  simp only [BoundedFormulaω.baseFunctionsIn, BoundedFormulaω.functionsIn, Set.mem_ofPred_eq,
     Set.mem_iUnion] at hs
   obtain ⟨k, hk⟩ := hs; exact h k hk
 
@@ -56,7 +56,7 @@ theorem baseRelationsIn_iSup_subset {A : Set (Σ n, L.Relations n)}
     (σ : ℕ → L[[ℕ]].Sentenceω) (h : ∀ k, (σ k).baseRelationsIn ⊆ A) :
     (BoundedFormulaω.iSup σ).baseRelationsIn ⊆ A := by
   intro s hs
-  simp only [BoundedFormulaω.baseRelationsIn, BoundedFormulaω.relationsIn, Set.mem_setOf_eq,
+  simp only [BoundedFormulaω.baseRelationsIn, BoundedFormulaω.relationsIn, Set.mem_ofPred_eq,
     Set.mem_iUnion] at hs
   obtain ⟨k, hk⟩ := hs; exact h k hk
 
@@ -64,14 +64,14 @@ theorem sentenceJConsts_iSup_subset {A : Set ℕ}
     (σ : ℕ → L[[ℕ]].Sentenceω) (h : ∀ k, sentenceJConsts (L' := L) (J := ℕ) (σ k) ⊆ A) :
     sentenceJConsts (L' := L) (J := ℕ) (BoundedFormulaω.iSup σ) ⊆ A := by
   intro j hj
-  simp only [sentenceJConsts, BoundedFormulaω.functionsIn, Set.mem_setOf_eq, Set.mem_iUnion] at hj
+  simp only [sentenceJConsts, BoundedFormulaω.functionsIn, Set.mem_ofPred_eq, Set.mem_iUnion] at hj
   obtain ⟨k, hk⟩ := hj; exact h k hk
 
 theorem baseFunctionsIn_imp_subset {A : Set (Σ n, L.Functions n)} {σ₁ σ₂ : L[[ℕ]].Sentenceω}
     (h₁ : σ₁.baseFunctionsIn ⊆ A) (h₂ : σ₂.baseFunctionsIn ⊆ A) :
     (σ₁.imp σ₂).baseFunctionsIn ⊆ A := by
   intro s hs
-  simp only [BoundedFormulaω.baseFunctionsIn, BoundedFormulaω.functionsIn, Set.mem_setOf_eq,
+  simp only [BoundedFormulaω.baseFunctionsIn, BoundedFormulaω.functionsIn, Set.mem_ofPred_eq,
     Set.mem_union] at hs
   rcases hs with hs | hs
   · exact h₁ hs
@@ -81,7 +81,7 @@ theorem baseRelationsIn_imp_subset {A : Set (Σ n, L.Relations n)} {σ₁ σ₂ 
     (h₁ : σ₁.baseRelationsIn ⊆ A) (h₂ : σ₂.baseRelationsIn ⊆ A) :
     (σ₁.imp σ₂).baseRelationsIn ⊆ A := by
   intro s hs
-  simp only [BoundedFormulaω.baseRelationsIn, BoundedFormulaω.relationsIn, Set.mem_setOf_eq,
+  simp only [BoundedFormulaω.baseRelationsIn, BoundedFormulaω.relationsIn, Set.mem_ofPred_eq,
     Set.mem_union] at hs
   rcases hs with hs | hs
   · exact h₁ hs
@@ -92,7 +92,7 @@ theorem sentenceJConsts_imp_subset {A : Set ℕ} {σ₁ σ₂ : L[[ℕ]].Sentenc
     (h₂ : sentenceJConsts (L' := L) (J := ℕ) σ₂ ⊆ A) :
     sentenceJConsts (L' := L) (J := ℕ) (σ₁.imp σ₂) ⊆ A := by
   intro j hj
-  simp only [sentenceJConsts, BoundedFormulaω.functionsIn, Set.mem_setOf_eq, Set.mem_union] at hj
+  simp only [sentenceJConsts, BoundedFormulaω.functionsIn, Set.mem_ofPred_eq, Set.mem_union] at hj
   rcases hj with hj | hj
   · exact h₁ hj
   · exact h₂ hj
@@ -100,31 +100,31 @@ theorem sentenceJConsts_imp_subset {A : Set ℕ} {σ₁ σ₂ : L[[ℕ]].Sentenc
 theorem baseFunctionsIn_not (φ : L[[ℕ]].Sentenceω) :
     φ.not.baseFunctionsIn = φ.baseFunctionsIn := by
   ext s
-  simp only [BoundedFormulaω.baseFunctionsIn, BoundedFormulaω.functionsIn, Set.mem_setOf_eq,
+  simp only [BoundedFormulaω.baseFunctionsIn, BoundedFormulaω.functionsIn, Set.mem_ofPred_eq,
     Set.union_empty]
 
 theorem baseRelationsIn_not (φ : L[[ℕ]].Sentenceω) :
     φ.not.baseRelationsIn = φ.baseRelationsIn := by
   ext s
-  simp only [BoundedFormulaω.baseRelationsIn, BoundedFormulaω.relationsIn, Set.mem_setOf_eq,
+  simp only [BoundedFormulaω.baseRelationsIn, BoundedFormulaω.relationsIn, Set.mem_ofPred_eq,
     Set.union_empty]
 
 theorem baseFunctionsIn_falsum :
     (BoundedFormulaω.falsum : L[[ℕ]].Sentenceω).baseFunctionsIn = ∅ := by
   ext s
-  simp only [BoundedFormulaω.baseFunctionsIn, BoundedFormulaω.functionsIn, Set.mem_setOf_eq,
+  simp only [BoundedFormulaω.baseFunctionsIn, BoundedFormulaω.functionsIn, Set.mem_ofPred_eq,
     Set.mem_empty_iff_false]
 
 theorem baseRelationsIn_falsum :
     (BoundedFormulaω.falsum : L[[ℕ]].Sentenceω).baseRelationsIn = ∅ := by
   ext s
-  simp only [BoundedFormulaω.baseRelationsIn, BoundedFormulaω.relationsIn, Set.mem_setOf_eq,
+  simp only [BoundedFormulaω.baseRelationsIn, BoundedFormulaω.relationsIn, Set.mem_ofPred_eq,
     Set.mem_empty_iff_false]
 
 theorem sentenceJConsts_falsum :
     sentenceJConsts (L' := L) (J := ℕ) (BoundedFormulaω.falsum : L[[ℕ]].Sentenceω) = ∅ := by
   ext j
-  simp only [sentenceJConsts, BoundedFormulaω.functionsIn, Set.mem_setOf_eq,
+  simp only [sentenceJConsts, BoundedFormulaω.functionsIn, Set.mem_ofPred_eq,
     Set.mem_empty_iff_false]
 
 /-! ## The consequence-preservation workhorse and semantic validities -/

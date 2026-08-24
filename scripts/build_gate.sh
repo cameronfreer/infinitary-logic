@@ -13,4 +13,5 @@ targets="${@:-InfinitaryLogic InfinitaryLogic.Everything InfinitaryLogicWIP}"
 echo "build_gate: lake build $targets"
 lake build $targets
 python3 scripts/check_sorry_boundary.py
+python3 scripts/check_warning_regression.py
 echo "build_gate: OK"

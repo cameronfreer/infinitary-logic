@@ -41,7 +41,7 @@ invariant under those automorphisms (`realize_carrierEquiv`), so they realize th
 theorem LocalEMContext.codeTypes_subsingleton (ctx : LocalEMContext Λ J (M := M))
     (hJ : HighlyOrderTransitive J) {n : ℕ} (c : LocalEMTupleCode Λ n) :
     (ctx.CodeTypes c).Subsingleton := by
-  letI := ctx.structureBase
+  let := ctx.structureBase
   rintro p ⟨a, ha, rfl⟩ q ⟨b, hb, rfl⟩
   obtain ⟨e, he⟩ := ctx.exists_carrierEquiv_of_tupleCode_eq hJ (ha.trans hb.symm)
   ext ψ
@@ -57,7 +57,7 @@ theorem LocalEMContext.realizedTypes_eq_iUnion_codeTypes (ctx : LocalEMContext �
     letI := ctx.structureBase
     RealizedInfinitaryTypes (L := Λ) ctx.Carrier n
       = ⋃ c : LocalEMTupleCode Λ n, ctx.CodeTypes c := by
-  letI := ctx.structureBase
+  let := ctx.structureBase
   ext p
   simp only [Set.mem_iUnion]
   constructor
@@ -73,11 +73,11 @@ theorem LocalEMContext.lomega1omegaSmall (ctx : LocalEMContext Λ J (M := M))
     (hJ : HighlyOrderTransitive J) [Countable (Σ l, Λ.Functions l)] :
     letI := ctx.structureBase
     Lomega1omegaSmall (L := Λ) ctx.Carrier := by
-  letI := ctx.structureBase
+  let := ctx.structureBase
   intro n
   have hunion := ctx.realizedTypes_eq_iUnion_codeTypes n
   rw [hunion]
-  haveI : Countable (LocalEMTupleCode Λ n) := countable_localEMTupleCode Λ n
+  have : Countable (LocalEMTupleCode Λ n) := countable_localEMTupleCode Λ n
   exact Set.countable_iUnion fun c => (ctx.codeTypes_subsingleton hJ c).countable
 
 end Language

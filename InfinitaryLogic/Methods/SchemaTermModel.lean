@@ -99,7 +99,7 @@ theorem locDeTermFin_realize_constInterp_nat (σ : ℕ → M) {S : Finset ℕ}
       = letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
         t.realize (Empty.elim : Empty → M) := by
   classical
-  letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+  let : (constantsOn ℕ).Structure M := constantsOn.structure σ
   have hRHS : t.realize (Empty.elim : Empty → M)
       = t.constantsToVars.realize (Sum.elim σ (Empty.elim : Empty → M)) :=
     (Term.realize_constantsToVars (t := t) (v := Empty.elim)).symm
@@ -110,7 +110,7 @@ theorem locDeTermFin_realize_constInterp_nat (σ : ℕ → M) {S : Finset ℕ}
     rw [locDeTermFin]
     refine Term.realize_restrictVar
       (fun n => if h : n < S.card then σ (S.orderEmbOfFin rfl ⟨n, h⟩) else σ 0) (fun x => ?_)
-    simp only [dif_pos (Finset.mem_range.mp
+    simp only [dite_eq_left (Finset.mem_range.mp
       (locDeTermPos_varFinset_subset (Λ := localColim s₀) (J := ℕ) hsub x.2))]
   rw [hRHS, hLHS, locDeTermPos, Term.realize_relabel]
   apply Term.realize_eq_of_eq_on_varFinset
@@ -280,7 +280,7 @@ theorem realize_schemaRelSentence_iff (σ h : ℕ → M) {l : ℕ} (R : (localCo
     realizeWith σ h (schemaRelSentence R ts) (Empty.elim : Empty → M) Fin.elim0 ↔
       letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
       Structure.RelMap R fun i => (ts i).realize (Empty.elim : Empty → M) := by
-  letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+  let : (constantsOn ℕ).Structure M := constantsOn.structure σ
   rw [schemaRelSentence, realizeWith_templateSentence, locDeRelAtom, canonRelAtom,
     BoundedFormulaω.realize_rel]
   apply Iff.of_eq
@@ -326,7 +326,7 @@ theorem schemaTermRel_congr {l : ℕ} (R : (localColim s₀).Relations l)
         (Finset.mem_insert_of_mem (Finset.mem_insert_of_mem
           (Finset.mem_image_of_mem _ (Finset.mem_univ i))))
       rwa [realize_schemaEqSentence_iff] at this
-    letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+    let : (constantsOn ℕ).Structure M := constantsOn.structure σ
     rw [show (fun i => Term.realize (Empty.elim : Empty → M) (us i))
         = fun i => Term.realize (Empty.elim : Empty → M) (ts i) from (funext hi).symm]
     exact ha
@@ -390,7 +390,7 @@ theorem schemaTerm_realize_eq_mk (t : (localColim s₀)[[ℕ]].Term Empty) :
     letI := schemaTermStructure (s₀ := s₀) (M := M) hM
     t.realize (Empty.elim : Empty → SchemaTermCarrier (s₀ := s₀) (M := M) hM)
       = SchemaTermCarrier.mk hM t := by
-  letI := schemaTermStructure (s₀ := s₀) (M := M) hM
+  let := schemaTermStructure (s₀ := s₀) (M := M) hM
   induction t with
   | var x => exact x.elim
   | func f ts ih =>
@@ -468,7 +468,7 @@ theorem realize_schemaFormulaSentence_iff (σ h : ℕ → M) {n : ℕ}
       letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
       φ.Realize (Empty.elim : Empty → M)
         (fun i => (ts i).realize (Empty.elim : Empty → M)) := by
-  letI : (constantsOn ℕ).Structure M := constantsOn.structure σ
+  let : (constantsOn ℕ).Structure M := constantsOn.structure σ
   rw [schemaFormulaSentence, realizeWith_templateSentence, locDeForm, canonDeForm,
     BoundedFormulaω.realize_relabel_sumInr_zero]
   simp only [Formulaω.realize_def, BoundedFormulaω.realize_subst]

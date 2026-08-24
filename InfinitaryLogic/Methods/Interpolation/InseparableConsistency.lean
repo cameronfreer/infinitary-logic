@@ -94,7 +94,7 @@ theorem exists_henkinComplete_of_root [Countable (Σ l, L.Relations l)]
     (A₀ : Finset ℕ) (hroot : InsepAt F R A₀ {r₁} Δ) :
     ∃ Sstar : Set L[[ℕ]].Sentenceω,
       {r₁} ⊆ Sstar ∧ Sstar ⊆ GenU r₁ r₂ ∧ HenkinComplete (GenU r₁ r₂) Sstar := by
-  haveI : Countable ↥(GenU (L := L) r₁ r₂) := genU_countable.to_subtype
+  have : Countable ↥(GenU (L := L) r₁ r₂) := genU_countable.to_subtype
   have hmem : InsepFamilyMem F R Δ r₁ r₂ {r₁} :=
     ⟨Set.finite_singleton _, Set.singleton_subset_iff.mpr root₁_mem, A₀, hroot⟩
   exact exists_henkinComplete

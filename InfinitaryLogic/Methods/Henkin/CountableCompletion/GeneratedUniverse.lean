@@ -44,7 +44,7 @@ theorem exists_eq_constTerm [L.IsRelational] (t : L[[ℕ]].Term Empty) :
   | var x => exact x.elim
   | @func l f ts =>
     rcases f with f | c
-    · haveI : IsEmpty (L.Functions l) := ‹L.IsRelational› l
+    · have : IsEmpty (L.Functions l) := ‹L.IsRelational› l
       exact isEmptyElim f
     · match l, c with
       | 0, c => exact ⟨c, congrArg _ (funext fun i => i.elim0)⟩
@@ -159,7 +159,7 @@ theorem seed_countable [Countable (Σ l, L.Relations l)] : (seed r₁ r₂).Coun
   refine Set.Countable.union (Set.Countable.union ?_ ?_) ?_
   · exact Set.countable_insert.mpr (Set.countable_singleton _)
   · exact Set.countable_range _
-  · haveI : ∀ l, Countable (L.Relations l) := countable_relations_each
+  · have : ∀ l, Countable (L.Relations l) := countable_relations_each
     have : {χ : L[[ℕ]].Sentenceω | ∃ (l : ℕ) (R : L.Relations l) (g : Fin l → ℕ), χ = relInst R g}
         = Set.range (fun p : Σ l, L.Relations l × (Fin l → ℕ) => relInst p.2.1 p.2.2) := by
       ext χ
@@ -279,7 +279,7 @@ theorem genU_countable [Countable (Σ l, L.Relations l)] : (GenU r₁ r₂).Coun
   have hchar : GenU r₁ r₂
       = ⋃ s ∈ seed r₁ r₂, Option.some ⁻¹' Set.range (fun l : List (ℕ × ℕ) => uPath s l) := by
     ext p
-    simp only [GenU, Set.mem_setOf_eq, Set.mem_iUnion, Set.mem_preimage, Set.mem_range,
+    simp only [GenU, Set.mem_ofPred_eq, Set.mem_iUnion, Set.mem_preimage, Set.mem_range,
       exists_prop]
     exact reachFrom_iff_path
   rw [hchar]
@@ -302,7 +302,7 @@ theorem constTermS_jConsts (c : ℕ) :
     Term.jConsts (L' := L) (constTermS (L := L) c) ⊆ {c} := by
   intro k hk
   simp only [constTermS, Term.jConsts, Term.functionsIn, Set.iUnion_of_empty,
-    Set.mem_insert_iff, Set.mem_empty_iff_false, or_false, Set.mem_setOf_eq] at hk
+    Set.mem_insert_iff, Set.mem_empty_iff_false, or_false, Set.mem_ofPred_eq] at hk
   exact Set.mem_singleton_iff.mpr (Sum.inr.inj (eq_of_heq (Sigma.mk.inj_iff.mp hk).2))
 
 /-- **Finite constant support**: assuming the roots have finite constant support, every member

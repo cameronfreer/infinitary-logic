@@ -175,7 +175,7 @@ theorem WOMem.no_contradiction {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S
     (χ : L[[ℕ]].Sentenceω) : ¬(χ ∈ S ∧ χ.not ∈ S) := by
   rintro ⟨hχ, hnχ⟩
   obtain ⟨W⟩ := hS.star 1 one_lt_omega1
-  letI : L[[ℕ]].Structure W.M := wc W.inst W.h
+  let : L[[ℕ]].Structure W.M := wc W.inst W.h
   rcases hS.mem_cases hnχ with hnΓ | hnroot | ⟨q, r, _, hnatom⟩
   · -- the opposite lies in the remainder
     have hnreal := W.rem_realize _ hnΓ
@@ -211,7 +211,7 @@ theorem WOMem.C2_not_not {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S)
       hb (negimp_left_mem (hS.subset_U hσ)) ?_ ?_
     · rw [sentenceJConsts_not, sentenceJConsts_not]
     · intro M inst _ h hr
-      letI : L[[ℕ]].Structure M := wc inst h
+      let : L[[ℕ]].Structure M := wc inst h
       have h1 := (BoundedFormulaω.realize_not ψ.not).mp hr
       rw [BoundedFormulaω.realize_not] at h1
       exact not_not.mp h1
@@ -228,7 +228,7 @@ theorem WOMem.C1_neg_imp {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S)
       · rw [sentenceJConsts_not]
         exact sentenceJConsts_imp_left ψ₁ ψ₂
       · intro M inst _ h hr
-        letI : L[[ℕ]].Structure M := wc inst h
+        let : L[[ℕ]].Structure M := wc inst h
         have h1 := (BoundedFormulaω.realize_not _).mp hr
         rw [BoundedFormulaω.realize_imp] at h1
         exact (Classical.not_imp.mp h1).1
@@ -240,7 +240,7 @@ theorem WOMem.C1_neg_imp {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S)
       · rw [sentenceJConsts_not, sentenceJConsts_not]
         exact sentenceJConsts_imp_right ψ₁ ψ₂
       · intro M inst _ h hr
-        letI : L[[ℕ]].Structure M := wc inst h
+        let : L[[ℕ]].Structure M := wc inst h
         have h1 := (BoundedFormulaω.realize_not _).mp hr
         rw [BoundedFormulaω.realize_imp] at h1
         exact (BoundedFormulaω.realize_not ψ₂).mpr (Classical.not_imp.mp h1).2
@@ -254,7 +254,7 @@ theorem WOMem.C3_iInf {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S)
   · refine hS.extend_det hσ (fun q r h => by simp [ratLtAtom, relInst] at h) hb
       (iInf_comp_mem k (hS.subset_U hσ)) (sentenceJConsts_component_iInf φs k) ?_
     intro M inst _ h hr
-    letI : L[[ℕ]].Structure M := wc inst h
+    let : L[[ℕ]].Structure M := wc inst h
     exact (BoundedFormulaω.realize_iInf φs).mp hr k
 
 /-- (C4') Negated disjunction: every negated component. -/
@@ -269,7 +269,7 @@ theorem WOMem.C4_neg_iSup {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S)
     · rw [sentenceJConsts_not, sentenceJConsts_not]
       exact sentenceJConsts_component_iSup φs k
     · intro M inst _ h hr
-      letI : L[[ℕ]].Structure M := wc inst h
+      let : L[[ℕ]].Structure M := wc inst h
       have h1 := (BoundedFormulaω.realize_not _).mp hr
       rw [BoundedFormulaω.realize_iSup] at h1
       exact (BoundedFormulaω.realize_not (φs k)).mpr fun hk => h1 ⟨k, hk⟩
@@ -305,7 +305,7 @@ theorem WOMem.branch_choice {S : Set L[[ℕ]].Sentenceω} (_ : WOMem φ lt S)
   have hspec := (hchoice α hlt).choose_spec
   have hFeq : F α = (hchoice α hlt).choose := by
     simp only [hF]
-    rw [dif_pos hlt]
+    rw [dite_eq_left hlt]
   rw [hFeq] at hFα
   rwa [hFα] at hspec
 
@@ -340,7 +340,7 @@ theorem WOMem.C1_imp {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S)
         ((S \ baseDiagram φ lt) ∪ {cond b ψ₁.not ψ₂}) α := by
     intro α hα
     obtain ⟨W⟩ := hS.star α hα
-    letI : L[[ℕ]].Structure W.M := wc W.inst W.h
+    let : L[[ℕ]].Structure W.M := wc W.inst W.h
     have hreal := W.realize_source hsrcloc
     by_cases hψ₁ : @Sentenceω.Realize L[[ℕ]] ψ₁ W.M (wc W.inst W.h)
     · refine ⟨false, ⟨W.add_sentence ?_ ?_⟩⟩
@@ -378,7 +378,7 @@ theorem WOMem.C4_iSup {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S)
       ∃ k : ℕ, StarCondition φ lt ((S \ baseDiagram φ lt) ∪ {φs k}) α := by
     intro α hα
     obtain ⟨W⟩ := hS.star α hα
-    letI : L[[ℕ]].Structure W.M := wc W.inst W.h
+    let : L[[ℕ]].Structure W.M := wc W.inst W.h
     have hreal := W.realize_source hsrcloc
     obtain ⟨k, hk⟩ := (BoundedFormulaω.realize_iSup φs).mp hreal
     refine ⟨k, ⟨W.add_sentence hk ?_⟩⟩
@@ -411,7 +411,7 @@ theorem WOMem.C3_neg_iInf {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S)
       ∃ k : ℕ, StarCondition φ lt ((S \ baseDiagram φ lt) ∪ {(φs k).not}) α := by
     intro α hα
     obtain ⟨W⟩ := hS.star α hα
-    letI : L[[ℕ]].Structure W.M := wc W.inst W.h
+    let : L[[ℕ]].Structure W.M := wc W.inst W.h
     have hreal := W.realize_source hsrcloc
     have h1 := (BoundedFormulaω.realize_not _).mp hreal
     rw [BoundedFormulaω.realize_iInf] at h1
@@ -603,7 +603,7 @@ theorem WOMem.all_inst {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S)
       ψ.all = φ.mapLanguage (L.lhomWithConstants ℕ) →
       @Sentenceω.Realize L[[ℕ]] (instConst c ψ) W.M (wc W.inst W.h) := by
     intro Γ' α' W hloc
-    letI : L[[ℕ]].Structure W.M := wc W.inst W.h
+    let : L[[ℕ]].Structure W.M := wc W.inst W.h
     have hall := W.realize_source hloc
     rw [show @Sentenceω.Realize L[[ℕ]] ψ.all W.M (wc W.inst W.h) =
       @BoundedFormulaω.Realize L[[ℕ]] W.M (wc W.inst W.h) Empty 0 ψ.all
@@ -667,7 +667,7 @@ theorem WOMem.neg_all_witness {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S)
     · exact Or.inr h
   · intro α hα
     obtain ⟨W⟩ := hS.star α hα
-    letI : L[[ℕ]].Structure W.M := wc W.inst W.h
+    let : L[[ℕ]].Structure W.M := wc W.inst W.h
     have hsrc := W.realize_source hsrcloc
     have h1 := (BoundedFormulaω.realize_not _).mp hsrc
     rw [BoundedFormulaω.realize_all] at h1
@@ -681,7 +681,7 @@ theorem WOMem.neg_all_witness {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S)
     refine ⟨(W.update_nonrat hcr hcΓ v).add_sentence ?_ ?_⟩
     · show @Sentenceω.Realize L[[ℕ]] ((instConst c ψ).not) W.M
         (wc W.inst (Function.update W.h c v))
-      letI : L[[ℕ]].Structure W.M := wc W.inst (Function.update W.h c v)
+      let : L[[ℕ]].Structure W.M := wc W.inst (Function.update W.h c v)
       -- normalize the empty tuple to `Fin.elim0` first, the spelling the downstream lemmas use
       rw [Sentenceω.realize_def]
       refine (BoundedFormulaω.realize_not _).mpr ?_

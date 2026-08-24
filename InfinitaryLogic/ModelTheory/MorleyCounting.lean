@@ -76,7 +76,7 @@ theorem bfEquivSetoid_measurableSet (φ : L.Sentenceω) (α : Ordinal.{0})
       (fun p : ↥(ModelsOf φ) × ↥(ModelsOf φ) => (p.1.1, p.2.1)) ⁻¹'
         (BFEquivSet (L := L) α 0 Fin.elim0 Fin.elim0) := by
     ext ⟨⟨c₁, _⟩, ⟨c₂, _⟩⟩
-    simp only [Set.mem_setOf_eq, Set.mem_preimage, BFEquivSet]
+    simp only [Set.mem_ofPred_eq, Set.mem_preimage, BFEquivSet]
     exact Iff.rfl
   rw [hset]
   exact ((measurable_subtype_coe.comp measurable_fst).prodMk
@@ -233,7 +233,7 @@ theorem mk_isoSetoid_quotient_le_aleph_one (φ : L.Sentenceω)
           rw [Cardinal.mk_Iio_ordinal, Cardinal.lift_lift, Ordinal.card_omega,
             Cardinal.lift_aleph, Ordinal.lift_one]
         · -- ⨆ i, lift #(fiber i) ≤ ℵ₀
-          haveI : Nonempty (Set.Iio (Ordinal.omega 1 : Ordinal.{0})) :=
+          have : Nonempty (Set.Iio (Ordinal.omega 1 : Ordinal.{0})) :=
             ⟨⟨0, Ordinal.omega_pos 1⟩⟩
           apply ciSup_le
           intro ⟨α, hα⟩

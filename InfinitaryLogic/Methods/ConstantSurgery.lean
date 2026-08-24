@@ -52,7 +52,7 @@ theorem realize_substConst (base : L.Structure M) (h : ℕ → M) (b a : ℕ) (�
     @BoundedFormulaω.Realize L[[ℕ]] M (wc base h) Empty 0 (substConst b a ρ) Empty.elim Fin.elim0
       ↔ @BoundedFormulaω.Realize L[[ℕ]] M (wc base (Function.update h b (h a))) Empty 0 ρ
           Empty.elim Fin.elim0 := by
-  letI : L[[ℕ]].Structure M := wc base h
+  let : L[[ℕ]].Structure M := wc base h
   rw [substConst, realize_instConst base h a _,
     BoundedFormulaω.realize_relabel_sumInr_zero (ρ.abstractConst b) (fun _ : Fin 1 => h a)]
   exact BoundedFormulaω.realize_abstractConst base h b (h a) ρ Fin.elim0
@@ -61,7 +61,7 @@ theorem baseFunctionsIn_substConst_subset (b a : ℕ) (ρ : L[[ℕ]].Sentenceω)
     (substConst b a ρ).baseFunctionsIn ⊆ ρ.baseFunctionsIn := by
   refine (baseFunctionsIn_instConst_subset a _).trans ?_
   intro s hs
-  simp only [BoundedFormulaω.baseFunctionsIn, Set.mem_setOf_eq] at hs ⊢
+  simp only [BoundedFormulaω.baseFunctionsIn, Set.mem_ofPred_eq] at hs ⊢
   rw [show (BoundedFormulaω.all ((ρ.abstractConst b).relabel
       (Sum.inr : Fin 1 → Empty ⊕ Fin 1))).functionsIn
     = ((ρ.abstractConst b).relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).functionsIn from rfl,
@@ -72,7 +72,7 @@ theorem baseRelationsIn_substConst (b a : ℕ) (ρ : L[[ℕ]].Sentenceω) :
     (substConst b a ρ).baseRelationsIn ⊆ ρ.baseRelationsIn := by
   refine (baseRelationsIn_instConst_subset a _).trans ?_
   intro s hs
-  simp only [BoundedFormulaω.baseRelationsIn, Set.mem_setOf_eq] at hs ⊢
+  simp only [BoundedFormulaω.baseRelationsIn, Set.mem_ofPred_eq] at hs ⊢
   rw [show (BoundedFormulaω.all ((ρ.abstractConst b).relabel
       (Sum.inr : Fin 1 → Empty ⊕ Fin 1))).relationsIn
     = ((ρ.abstractConst b).relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).relationsIn from rfl,

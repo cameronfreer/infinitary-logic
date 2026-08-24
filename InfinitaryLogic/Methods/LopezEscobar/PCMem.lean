@@ -61,7 +61,7 @@ theorem pcMem_iff_mem_codeReduct_image (Θ : (graphLanguage (KLang L)).Sentence�
       (codeReduct d).toStructure d.toStructure (fun {_} f _ => isEmptyElim f)
       (fun {_} R x => propext (codeReduct_toStructure (d := d) R x).symm), hd⟩
   · rintro ⟨S', hexp, hreal⟩
-    letI : L.Structure ℕ := c.toStructure
+    let : L.Structure ℕ := c.toStructure
     refine ⟨StructureSpaceOn.ofStructure S', mem_modelsOf_ofStructure hreal, ?_⟩
     · funext q
       rw [Bool.eq_iff_iff]

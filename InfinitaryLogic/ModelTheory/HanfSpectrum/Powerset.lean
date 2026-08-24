@@ -92,7 +92,7 @@ theorem not_isSuccLimit_index_zero (j : Index 0) : ¬Order.IsSuccLimit j := fun 
 theorem powerset_isLadderModel :
     letI := powersetStructure
     IsLadderModel 0 (M := Set ℕ) := by
-  letI := powersetStructure
+  let := powersetStructure
   refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
   · -- base: `U_⊥` is exactly the constants (the singletons)
     intro x
@@ -166,13 +166,13 @@ theorem mk_le_continuum_of_isLadderModel {M : Type} [(ladderLang 0).Structure M]
 
 end HanfLadder
 
-open HanfLadder in
+open _root_.FirstOrder.Language.HanfLadder in
 /-- **The second sharpness step**: `ℶ_1 < Lomega1omegaHanfNumber` — the `α = 0` ladder sentence
 has the powerset `Set ℕ` as a maximal model of size exactly `2 ^ ℵ₀ = ℶ_1`. -/
 theorem beth_one_lt_Lomega1omegaHanfNumber :
     Cardinal.beth 1 < Lomega1omegaHanfNumber := by
   rw [Cardinal.beth_one, ← Cardinal.two_power_aleph0]
-  letI := powersetStructure
+  let := powersetStructure
   refine lt_Lomega1omegaHanfNumber_of_maximal_model
     ⟨Set ℕ, inferInstance, (realize_ladderSentence_iff (α := 0)).mpr powerset_isLadderModel,
       by rw [Cardinal.mk_set, Cardinal.mk_nat]⟩

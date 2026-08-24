@@ -129,7 +129,7 @@ theorem IsLomega1omegaIndiscernibleOnTail.templateTheoryOn_finitelySatisfiable
     obtain ⟨n, φ, t, hΓmem, hcase⟩ := hSub τ.property
     exact ⟨n, φ, t, hΓmem, hcase⟩
   choose nOf phiOf tOf hΓOf hOf using witness
-  haveI : Fintype ↥F := hFin.fintype
+  have : Fintype ↥F := hFin.fintype
   -- Per-formula truth-collapse cutoffs, and their joint maximum
   choose cutOf hcutOf using fun τ : F => h.tailTemplateOfSeq_truth_iff (hΓOf τ)
   let N₀ : ℕ := (Finset.univ : Finset ↥F).sup cutOf
@@ -149,7 +149,7 @@ theorem IsLomega1omegaIndiscernibleOnTail.templateTheoryOn_finitelySatisfiable
   let σ : J → M := fun j =>
     if hj : j ∈ S then a (f (orderIso.symm ⟨j, hj⟩)) else m₀
   refine ⟨σ, ?_⟩
-  letI : (constantsOn J).Structure M := constantsOn.structure σ
+  let : (constantsOn J).Structure M := constantsOn.structure σ
   have htS : ∀ (τ : ↥F) (i : Fin (nOf τ)), tOf τ i ∈ S := by
     intro τ i
     exact Finset.mem_biUnion.mpr ⟨τ, Finset.mem_univ _,
@@ -174,7 +174,7 @@ theorem IsLomega1omegaIndiscernibleOnTail.templateTheoryOn_finitelySatisfiable
     show σ (tOf τ i) = a (f (t'Of τ i))
     show (if hj : tOf τ i ∈ S then a (f (orderIso.symm ⟨tOf τ i, hj⟩)) else m₀) =
          a (f (orderIso.symm ⟨tOf τ i, htS τ i⟩))
-    rw [dif_pos (htS τ i)]
+    rw [dite_eq_left (htS τ i)]
   intro τ hτ
   let τ' : ↥F := ⟨τ, hτ⟩
   show Sentenceω.Realize (↑τ' : L[[J]].Sentenceω) M
@@ -222,7 +222,7 @@ theorem IsLomega1omegaIndiscernibleOnTail.templateTheoryOfSeq_isFinitelySatisfia
       ((tailTemplateOfSeq a : Lomega1omegaTemplate L).templateTheoryOfSeq s J) := by
   intro F hFsub hFfinite
   obtain ⟨σ, hσ⟩ := h.templateTheoryOfSeq_finitelySatisfiable s hFfinite hFsub
-  letI : (constantsOn J).Structure M := constantsOn.structure σ
+  let : (constantsOn J).Structure M := constantsOn.structure σ
   exact ⟨M, inferInstance, ⟨a 0⟩, hσ⟩
 
 /-! ### Compact-oracle stretching from tail indiscernibility -/
@@ -290,7 +290,7 @@ theorem IsLomega1omegaIndiscernibleOnTail.stretch_restricted_sequence_of_model
     (Term.func (Sum.inr j : L[[J]].Functions 0) Fin.elim0 : L[[J]].Term Empty).realize
       (Empty.elim : Empty → N)
   refine ⟨N, inferInstance, b, ?_⟩
-  letI : L.Structure N := (L.lhomWithConstants J).reduct N
+  let : L.Structure N := (L.lhomWithConstants J).reduct N
   intro i t
   have hBridge :=
     realize_templateSentence_of_structure (L := L) (J := J) (N := N) (s i).2 t

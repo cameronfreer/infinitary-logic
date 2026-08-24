@@ -178,13 +178,13 @@ theorem hasArbLargeModels_of_restricted_extraction
   intro κ
   -- Target linear order J of cardinality κ.
   let J : Type := (Cardinal.ord κ).ToType
-  haveI : LinearOrder J := linearOrder_toType _
+  have : LinearOrder J := linearOrder_toType _
   have hJ_card : Cardinal.mk J = κ := Cardinal.mk_ord_toType κ
   -- Apply the compact-oracle sequence stretching.
   obtain ⟨N, instN, b, hSeq⟩ :=
     IsLomega1omegaIndiscernibleOn.stretch_restricted_sequence_of_compact (J := J) s hIndisc
       (hCompact J)
-  letI : L'.Structure N := (L'.lhomWithConstants J).reduct N
+  let : L'.Structure N := (L'.lhomWithConstants J).reduct N
   refine ⟨N, inferInstance, ?_, ?_⟩
   · -- Sentence preservation: φ is realized in N.
     -- Apply hSeq at i = 0 with the unique empty embedding Fin 0 ↪o J.
@@ -300,7 +300,7 @@ theorem morleyHanfExtractionTail_holds : MorleyHanfExtractionTail (L' := L') := 
   classical
   intro s M instM hSize
   -- `M` is infinite: `ℵ₀ ≤ ℶ_{ω₁} ≤ #M`.
-  haveI : Infinite M := by
+  have : Infinite M := by
     rw [Cardinal.infinite_iff]
     exact le_trans (Cardinal.aleph0_le_beth _) hSize
   -- Injective base sequence `a : ℕ → M` (no order on `M` is needed).
@@ -450,7 +450,7 @@ theorem hasArbLargeModels_of_seed_realizability
   let s : ℕ → Σ n, L'.BoundedFormulaω Empty n := morleySeed φ
   have hs0 : s 0 = ⟨0, φ⟩ := rfl
   have hs1 : s 1 = ⟨2, disEqFormula⟩ := rfl
-  haveI : Infinite M := by
+  have : Infinite M := by
     rw [Cardinal.infinite_iff]
     exact le_trans (Cardinal.aleph0_le_beth _) hSizeM
   set a : ℕ → M := fun n => (Infinite.natEmbedding M) n with ha_def
@@ -461,12 +461,12 @@ theorem hasArbLargeModels_of_seed_realizability
       (morleySeed_indiscernibleOn φ hPairwise)
   intro κ
   let J : Type := (Cardinal.ord κ).ToType
-  haveI : LinearOrder J := linearOrder_toType _
+  have : LinearOrder J := linearOrder_toType _
   have hJ_card : Cardinal.mk J = κ := Cardinal.mk_ord_toType κ
   obtain ⟨N, instN, b, hSeq⟩ :=
     IsLomega1omegaIndiscernibleOnTail.stretch_restricted_sequence_of_model (J := J)
       s (hRealize φ M a J hSizeM hRealizeM hPairwise hIndisc)
-  letI : L'.Structure N := (L'.lhomWithConstants J).reduct N
+  let : L'.Structure N := (L'.lhomWithConstants J).reduct N
   refine ⟨N, inferInstance, ?_, ?_⟩
   · -- Sentence preservation
     have hSeq_at_0 := hSeq 0
@@ -611,7 +611,7 @@ theorem morleyHanfExtraction_of_indiscernibleSequence
   -- Equip `M` with a canonical well-ordering via `exists_wellFoundedLT`,
   -- which provides both a `LinearOrder` and `WellFoundedLT` on `M`.
   obtain ⟨instLO, instWF⟩ := exists_wellFoundedLT M
-  letI : LinearOrder M := instLO
+  let : LinearOrder M := instLO
   obtain ⟨f, hfMono, hfInd⟩ := hSeq s M instLO instWF hSize
   refine ⟨f, ?_, ?_⟩
   · -- Pairwise distinct: strict-mono → injective.
@@ -1015,7 +1015,7 @@ theorem T_counterexample : ¬ TailTemplateRealizable (L' := HeightCex.Lang) := b
   intro h
   obtain ⟨N, instN, hModel⟩ := h HeightCex.seed HeightCex.Carrier HeightCex.a ℕ
     (ge_of_eq HeightCex.mk_Carrier) HeightCex.tail_indisc
-  letI : HeightCex.Lang[[ℕ]].Structure N := instN
+  let : HeightCex.Lang[[ℕ]].Structure N := instN
   let t : Fin 1 ↪o ℕ :=
     OrderEmbedding.ofStrictMono (fun _ => 0) (HeightCex.strictMono_fin_one _)
   -- the positive `Pᵢ` sentences and the negative `⋀ᵢ Pᵢ` sentence are all in the theory
@@ -1025,7 +1025,7 @@ theorem T_counterexample : ¬ TailTemplateRealizable (L' := HeightCex.Lang) := b
   have hneg : Sentenceω.Realize (Lomega1omegaTemplate.templateSentence HeightCex.conj t).not N :=
     hModel _ ⟨1, HeightCex.conj, t, ⟨0, rfl⟩, Or.inr ⟨HeightCex.not_truth_conj, rfl⟩⟩
   -- bridge to component realizations at the constants tuple
-  letI : HeightCex.Lang.Structure N := (HeightCex.Lang.lhomWithConstants ℕ).reduct N
+  let : HeightCex.Lang.Structure N := (HeightCex.Lang.lhomWithConstants ℕ).reduct N
   set bt : Fin 1 → N := fun i =>
     (Term.func (Sum.inr (t i) : HeightCex.Lang[[ℕ]].Functions 0) Fin.elim0 :
       HeightCex.Lang[[ℕ]].Term Empty).realize (Empty.elim : Empty → N) with hbt

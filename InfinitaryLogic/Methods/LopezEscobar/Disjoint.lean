@@ -29,7 +29,7 @@ open FirstOrder Structure Set
 variable {L : Language.{0, 0}} [L.IsRelational] [Countable (Σ l, L.Relations l)]
 
 instance : Countable (Σ n, (graphLanguage (KLang L)).Functions n) := by
-  haveI : IsEmpty (Σ n, (graphLanguage (KLang L)).Functions n) :=
+  have : IsEmpty (Σ n, (graphLanguage (KLang L)).Functions n) :=
     ⟨fun p => (graphLanguage_isRelational (KLang L) p.1).false p.2⟩
   infer_instance
 
@@ -48,12 +48,12 @@ theorem pcMem_disjoint {B : Set (StructureSpace L)}
        @PCMem L (graphLanguage (KLang L)) baseGraphEmb (pcSentence L .right T₁) M instL) := by
   rintro ⟨hL, hR⟩
   obtain ⟨S, hSleft, hSright⟩ := pcMem_glue T₀ T₁ hL hR
-  letI : (graphLanguage (KLang L)).Structure M := S
+  let : (graphLanguage (KLang L)).Structure M := S
   -- countable fragment-elementary substructure modelling both side sentences
   obtain ⟨N, -, hAe, hCount⟩ := exists_countable_aElementary_substructure
     (Fragment.generatedSentence ((pcSentence L .left T₀).and (pcSentence L .right T₁)))
     (X := (∅ : Set M)) Set.countable_empty (Fragment.generatedSentence_countable _)
-  haveI := hCount
+  have := hCount
   have hNand : @Sentenceω.Realize (graphLanguage (KLang L))
       ((pcSentence L .left T₀).and (pcSentence L .right T₁)) ↥N _ :=
     (hAe.realize_sentence_iff (Fragment.mem_generatedSentence _)).mp
@@ -67,7 +67,7 @@ theorem pcMem_disjoint {B : Set (StructureSpace L)}
     ((BoundedFormulaω.realize_and _ _).mp hNand).2
   obtain ⟨hAxN, hrelN⟩ := (realize_pcSentence_iff .left T₀).mp hNleft
   -- nonemptiness bootstrap from the graph-totality of the tagged zero-ary witness `c`
-  haveI : Nonempty N := by
+  have : Nonempty N := by
     have hc : (⟨0, Sum.inr (Sum.inl WitnessFun.c)⟩ : Σ n, (KLang L).Functions n)
         ∈ sideFunsSet L .left := Or.inr ⟨⟨0, WitnessFun.c⟩, rfl⟩
     have htot := ((realize_graphAxioms_iff (sideFunsSet L .left)).mp hAxN
@@ -75,8 +75,8 @@ theorem pcMem_disjoint {B : Set (StructureSpace L)}
     obtain ⟨y, -⟩ := (realize_graphTotality _).mp htot Fin.elim0
     exact ⟨y⟩
   -- reconstruct the functional structure and make `N` infinite
-  letI Kstar : (KLang L).Structure N := reconstructStructure (sideFunsSet L .left) hAxN
-  letI Mstar : (MidLang L).Structure N := (sideEmb L .left).reduct N
+  let Kstar : (KLang L).Structure N := reconstructStructure (sideFunsSet L .left) hAxN
+  let Mstar : (MidLang L).Structure N := (sideEmb L .left).reduct N
   have hM : @Sentenceω.Realize (MidLang L) (functionalTheta L T₀) N Mstar := by
     have h1 := reconstruct_realizes_functionalPCSentence .left T₀ hAxN hrelN
     rw [functionalPCSentence] at h1
@@ -84,9 +84,9 @@ theorem pcMem_disjoint {B : Set (StructureSpace L)}
       (Empty.elim : Empty → N) Fin.elim0).mp h1
   obtain ⟨homega, -⟩ := (realize_functionalTheta T₀).mp hM
   have hν := numMap_bijective homega
-  haveI : Infinite N := Infinite.of_injective (numMap L N) hν.injective
+  have : Infinite N := Infinite.of_injective (numMap L N) hν.injective
   -- transport both side sentences to `ℕ`
-  letI e : N ≃ ℕ := (nonempty_equiv_of_countable (α := N) (β := ℕ)).some
+  let e : N ≃ ℕ := (nonempty_equiv_of_countable (α := N) (β := ℕ)).some
   have hdleft : StructureSpaceOn.encodeViaEquiv e ∈ ModelsOf (pcSentence L .left T₀) :=
     StructureSpaceOn.encodeViaEquiv_models e hNleft
   have hdright : StructureSpaceOn.encodeViaEquiv e ∈ ModelsOf (pcSentence L .right T₁) :=
@@ -114,8 +114,8 @@ theorem pcSentences_entails_not {B : Set (StructureSpace L)}
   have hleft : @Sentenceω.Realize (graphLanguage (KLang L)) (pcSentence L .left T₀) M instM :=
     hmodel _ (Set.mem_singleton _)
   intro hright
-  letI Mbase : L.Structure M := (baseGraphEmb (L := L)).reduct M
-  haveI : (baseGraphEmb (L := L)).IsExpansionOn M := LHom.isExpansionOn_reduct _ _
+  let Mbase : L.Structure M := (baseGraphEmb (L := L)).reduct M
+  have : (baseGraphEmb (L := L)).IsExpansionOn M := LHom.isExpansionOn_reduct _ _
   exact pcMem_disjoint T₀ T₁ hT₀ hT₁ hinv M ⟨⟨instM, ‹_›, hleft⟩, ⟨instM, ‹_›, hright⟩⟩
 
 end FirstOrder.Language

@@ -35,7 +35,7 @@ namespace Language
 variable {L : Language.{u, v}} [L.IsRelational]
 variable [Countable (Σ l, L.Relations l)]
 
-open FirstOrder Structure Fin Ordinal
+open FirstOrder Structure Ordinal
 
 /-- The Scott height of a structure M: the least ordinal at which the Scott formula
 analysis stabilizes for all tuples simultaneously.
@@ -146,7 +146,7 @@ theorem scottHeight_eq_of_equiv
       exact ⟨α, fun {n} a P _ _ b hBF => (hstab n P a b).mp hBF⟩
     · -- S_N ⊆ S_M
       intro α hα_N
-      simp only [Set.mem_setOf_eq] at hα_N ⊢
+      simp only [Set.mem_ofPred_eq] at hα_N ⊢
       intro n a P _ _ b hBF
       -- Translate a to N via e: BFEquiv α (e ∘ a) b
       have h1 : BFEquiv (L := L) α n (e ∘ a) b :=
@@ -162,7 +162,7 @@ theorem scottHeight_eq_of_equiv
     · obtain ⟨α, _, hstab⟩ := exists_complete_stabilization (L := L) M
       exact ⟨α, fun {n} a P _ _ b hBF => (hstab n P a b).mp hBF⟩
     · intro α hα_M
-      simp only [Set.mem_setOf_eq] at hα_M ⊢
+      simp only [Set.mem_ofPred_eq] at hα_M ⊢
       intro n a P _ _ b hBF
       have h1 : BFEquiv (L := L) α n (e.symm ∘ a) b :=
         (equiv_implies_BFEquiv e.symm α n a).symm.trans hBF

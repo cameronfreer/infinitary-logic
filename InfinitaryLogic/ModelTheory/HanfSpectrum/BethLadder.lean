@@ -27,7 +27,7 @@ namespace FirstOrder
 
 namespace Language
 
-open HanfLadder
+open _root_.FirstOrder.Language.HanfLadder
 
 /-- **The per-stage sharpness step**: for every `α < ω₁`, the ladder sentence has maximal
 model size exactly `ℶ_{α+1}`, so `ℶ_{α+1} < Lomega1omegaHanfNumber`. -/
@@ -47,8 +47,8 @@ model size exactly `ℶ_{α+1}`, so `ℶ_{α+1} < Lomega1omegaHanfNumber`. -/
 theorem beth_add_one_lt_Lomega1omegaHanfNumber {α : Ordinal.{0}}
     (hα : α < Ordinal.omega 1) :
     Cardinal.beth (α + 1) < Lomega1omegaHanfNumber := by
-  haveI : Countable (Index α) := countable_index_of_lt_omega1 hα
-  letI := vStructure α
+  have : Countable (Index α) := countable_index_of_lt_omega1 hα
+  let := vStructure α
   refine lt_Lomega1omegaHanfNumber_of_maximal_model
     ⟨VCarrier α, inferInstance,
       realize_ladderSentence_iff.mpr (vStructure_isLadderModel α), (mk_vCarrier α).ge⟩

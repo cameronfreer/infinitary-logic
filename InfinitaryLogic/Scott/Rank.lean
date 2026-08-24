@@ -39,7 +39,7 @@ namespace Language
 variable {L : Language.{u, v}} [L.IsRelational]
 variable [Countable (Σ l, L.Relations l)]
 
-open FirstOrder Structure Fin Ordinal
+open FirstOrder Structure Ordinal
 
 /-- The rank of an element m in a structure M: the least ordinal α such that
 for any tuple a containing m, the α-type of a determines whether any extension
@@ -112,7 +112,7 @@ theorem scottRank_lt_omega1_of
   by_cases h_nonempty : Nonempty M
   · calc ⨆ m, elementRank (L := L) m + 1 ≤ α + 1 := ciSup_le h_bound'
       _ < Ordinal.omega 1 := h_limit.succ_lt hα_lt
-  · haveI : IsEmpty M := not_nonempty_iff.mp h_nonempty
+  · have : IsEmpty M := not_nonempty_iff.mp h_nonempty
     have h_zero : (⨆ (m : M), elementRank (L := L) m + 1) = 0 := by
       rw [Ordinal.iSup_eq_zero_iff]
       intro m

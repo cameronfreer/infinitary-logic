@@ -390,7 +390,7 @@ theorem baseRelationsIn_instConst (c : ℕ) (φ : L[[ℕ]].BoundedFormulaω Empt
     show ((φ.openBounds).subst _).relationsIn = _
     rw [relationsIn_subst_eq, relationsIn_openBounds_eq]; rfl
   ext s
-  simp only [BoundedFormulaω.baseRelationsIn, Set.mem_setOf_eq, h1]
+  simp only [BoundedFormulaω.baseRelationsIn, Set.mem_ofPred_eq, h1]
 
 /-- **The consumer-shaped freshness transfer.**  From `(φ.all).not ∈ T` — semantically `∃x ¬φ(x)` —
 the witness is produced directly, and the constant-free separator is pulled back unchanged.  No

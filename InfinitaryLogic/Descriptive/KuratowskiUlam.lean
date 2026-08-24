@@ -59,7 +59,7 @@ theorem residual_isNowhereDense_section [SecondCountableTopology Y]
     intro V hV
     have himg : D V = Prod.fst '' (Cᶜ ∩ univ ×ˢ V) := by
       ext x
-      simp only [hD, mem_setOf_eq, mem_image, mem_inter_iff, mem_prod, mem_univ, true_and]
+      simp only [hD, mem_ofPred_eq, mem_image, mem_inter_iff, mem_prod, mem_univ, true_and]
       constructor
       · rintro ⟨y, hyV, hyC⟩
         exact ⟨(x, y), ⟨hyC, hyV⟩, rfl⟩
@@ -119,7 +119,7 @@ theorem isMeagre_of_isMeagre_sections [SecondCountableTopology Y]
   obtain ⟨W, hW_open, hAW⟩ := hA.residualEq_isOpen
   -- The symmetric difference of A and W is meager
   have hM : IsMeagre {p : X × Y | ¬(p ∈ A ↔ p ∈ W)} := by
-    rw [IsMeagre, compl_setOf]
+    rw [IsMeagre, compl_ofPred]
     simp only [not_not]
     exact Filter.eventuallyEq_set.mp hAW
   by_contra hA_nm

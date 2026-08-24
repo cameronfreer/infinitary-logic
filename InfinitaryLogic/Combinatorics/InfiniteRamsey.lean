@@ -61,7 +61,7 @@ private noncomputable def headColoring {n : ℕ} (c : (Fin (n + 1) ↪o ℕ) →
 
 private lemma headColoring_spec {n : ℕ} (c : (Fin (n + 1) ↪o ℕ) → Bool) (a : ℕ)
     (w : Fin n ↪o ℕ) (h : ∀ k, a < w k) : headColoring c a w = c (consOEmb a w h) := by
-  simp only [headColoring, dif_pos h]
+  simp only [headColoring, dite_eq_left h]
 
 open Set in
 /-- Removing the least element of an infinite set of naturals (equivalently, intersecting
@@ -70,7 +70,7 @@ private lemma tailRegion_infinite {U : Set ℕ} (hU : U.Infinite) :
     (U ∩ {x | sInf U < x}).Infinite := by
   have hsub : U ∩ {x | sInf U < x} = U \ {sInf U} := by
     ext x
-    simp only [mem_inter_iff, mem_setOf_eq, mem_sdiff, mem_singleton_iff]
+    simp only [mem_inter_iff, mem_ofPred_eq, mem_sdiff, mem_singleton_iff]
     constructor
     · rintro ⟨hxU, hlt⟩; exact ⟨hxU, by rintro rfl; exact absurd hlt (lt_irrefl _)⟩
     · rintro ⟨hxU, hne⟩

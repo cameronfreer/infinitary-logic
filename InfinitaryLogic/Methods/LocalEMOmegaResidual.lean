@@ -82,10 +82,10 @@ theorem morleySeedTailTemplateRealizable_of_localEMOmega {L' : Language.{0, 0}}
     [Countable (Σ n, L'.Functions n)] [Countable (Σ l, L'.Relations l)]
     (h : MorleySeedOmegaExtraction L') : MorleySeedTailTemplateRealizable (L' := L') := by
   intro φ M instM a J instJ hSize hφreal hPair hTail
-  haveI : Infinite M := by
+  have : Infinite M := by
     rw [Cardinal.infinite_iff]
     exact le_trans (Cardinal.aleph0_le_beth _) hSize
-  haveI : Nonempty M := ⟨(Infinite.natEmbedding M) 0⟩
+  have : Nonempty M := ⟨(Infinite.natEmbedding M) 0⟩
   exact tailTemplateRealizable_of_localEM (morleySeed φ) M a J hTail
     (h φ M a J hSize hφreal hPair hTail)
 
@@ -133,22 +133,22 @@ theorem realize_templateSentence_expand {L : Language.{0, 0}} {F : Set (Σ n, L.
         (Lomega1omegaTemplate.templateSentence (ψ₀.mapLanguage (funSublangIncl F)) t) N ↔
       Sentenceω.Realize (Lomega1omegaTemplate.templateSentence ψ₀ t) N) := by
   classical
-  letI instE : L[[J]].Structure N := expandFunStructure F J
+  let instE : L[[J]].Structure N := expandFunStructure F J
   refine (realize_templateSentence_of_structure (L := L) (J := J) (N := N)
     (ψ₀.mapLanguage (funSublangIncl F)) t).trans
     (Iff.trans ?_ (realize_templateSentence_of_structure (L := funSublang (L := L) F)
       (J := J) (N := N) ψ₀ t).symm)
-  letI : L.Structure N := (L.lhomWithConstants J).reduct N
-  letI : (funSublang (L := L) F).Structure N :=
+  let : L.Structure N := (L.lhomWithConstants J).reduct N
+  let : (funSublang (L := L) F).Structure N :=
     ((funSublang (L := L) F).lhomWithConstants J).reduct N
-  haveI : (funSublangIncl F).IsExpansionOn N := by
+  have : (funSublangIncl F).IsExpansionOn N := by
     constructor
     · intro m f xs
       show (if h : (⟨m, f.1⟩ : Σ n, L.Functions n) ∈ F then
           Structure.funMap (L := (funSublang (L := L) F)[[J]])
             (Sum.inl (⟨f.1, h⟩ : (funSublang (L := L) F).Functions m)) xs
         else Classical.arbitrary N) = _
-      rw [dif_pos f.2]
+      rw [dite_eq_left f.2]
       rfl
     · intro m r xs
       rfl
@@ -192,20 +192,20 @@ theorem morleySeedTailTemplateRealizable_of_morleyHanfExtraction {L' : Language.
       MorleyHanfExtraction (L' := L'')) :
     MorleySeedTailTemplateRealizable (L' := L') := by
   intro φ M instM a J instJ hSize hφreal hPair _hTail
-  haveI : Infinite M := by
+  have : Infinite M := by
     rw [Cardinal.infinite_iff]
     exact le_trans (Cardinal.aleph0_le_beth _) hSize
-  haveI : Nonempty M := ⟨(Infinite.natEmbedding M) 0⟩
+  have : Nonempty M := ⟨(Infinite.natEmbedding M) 0⟩
   rcases isEmpty_or_nonempty J with hJe | hJne
   · exact morleySeed_theory_model_of_isEmptyJ φ a J hφreal
   -- the generated sublanguage of φ and the restricted seed sentence
-  haveI : Countable (Σ n, (funSublang (L := L') φ.functionsIn).Functions n) :=
+  have : Countable (Σ n, (funSublang (L := L') φ.functionsIn).Functions n) :=
     funSublang_fun_countable φ.functionsIn_countable
-  haveI : Countable (Σ l, (funSublang (L := L') φ.functionsIn).Relations l) :=
+  have : Countable (Σ l, (funSublang (L := L') φ.functionsIn).Relations l) :=
     funSublang_rel_countable _
-  letI : (funSublang (L := L') φ.functionsIn).Structure M :=
+  let : (funSublang (L := L') φ.functionsIn).Structure M :=
     (funSublangIncl φ.functionsIn).reduct M
-  haveI : (funSublangIncl (L := L') φ.functionsIn).IsExpansionOn M :=
+  have : (funSublangIncl (L := L') φ.functionsIn).IsExpansionOn M :=
     LHom.isExpansionOn_reduct _ _
   have hφ₀map : (φ.restrictFuns (subset_refl _)).mapLanguage (funSublangIncl φ.functionsIn)
       = φ := BoundedFormulaω.mapLanguage_restrictFuns φ (subset_refl _)
@@ -218,16 +218,16 @@ theorem morleySeedTailTemplateRealizable_of_morleyHanfExtraction {L' : Language.
   -- the local EM construction over the sublanguage seed
   set s₀' := LocalStage.ofSeq (funSublang (L := L') φ.functionsIn)
     (morleySeed (φ.restrictFuns (subset_refl _))) with hs₀'
-  letI : (localColim s₀').Structure M := localColimStructure s₀'
-  haveI := localColim_rel_countable s₀'
+  let : (localColim s₀').Structure M := localColimStructure s₀'
+  have := localColim_rel_countable s₀'
   obtain ⟨e, he⟩ := exists_ΓEMlocalEnum s₀'
   obtain ⟨b, hbPair, hbInd⟩ := hExtract (localColim s₀') e M hSize
   rw [← he] at hbInd
   set ctx : LocalEMContext (localColim s₀') J (M := M) :=
     ⟨b, ΓEMlocal s₀', hbInd.isLomega1omegaIndiscernibleOnTail,
       locDeEqAtom_mem_ΓEMlocal J s₀', locDeRelAtom_mem_ΓEMlocal J s₀'⟩ with hctx
-  letI : (localColim s₀')[[J]].Structure ctx.Carrier := ctx.structure
-  letI instN : (funSublang (L := L') φ.functionsIn)[[J]].Structure ctx.Carrier :=
+  let : (localColim s₀')[[J]].Structure ctx.Carrier := ctx.structure
+  let instN : (funSublang (L := L') φ.functionsIn)[[J]].Structure ctx.Carrier :=
     ((LlocalInclusion s₀' 0).addConstants J).reduct ctx.Carrier
   have hmodel := LocalEMContext.templateTheoryOn_seed_model s₀' J ctx subset_rfl
     (LocalEMContext.omegaCompleteForColim_of_indiscernibleOn s₀' J ctx subset_rfl hbInd)
@@ -244,9 +244,9 @@ theorem morleySeedTailTemplateRealizable_of_morleyHanfExtraction {L' : Language.
     fun t => hmodel _ ⟨2, disEqFormula, t, ⟨1, rfl⟩,
       Or.inl ⟨tailTemplateOfSeq_truth_disEq hbPair, rfl⟩⟩
   -- nonempty carrier (a skeleton class), expansion, and the member-wise model
-  haveI : Nonempty ctx.Carrier := ⟨ctx.mkClass (t := Term.func
+  have : Nonempty ctx.Carrier := ⟨ctx.mkClass (t := Term.func
     (Sum.inr (Classical.arbitrary J) : (localColim s₀')[[J]].Functions 0) Fin.elim0)⟩
-  letI instE : L'[[J]].Structure ctx.Carrier := expandFunStructure φ.functionsIn J
+  let instE : L'[[J]].Structure ctx.Carrier := expandFunStructure φ.functionsIn J
   refine ⟨ctx.Carrier, instE, ?_⟩
   rintro σ ⟨n, ψ, t, ⟨k, hk⟩, hcase⟩
   match k, hk with
@@ -440,7 +440,7 @@ theorem canonDeForm_P_iff (g : ℕ ↪o ℕ) (i d : ℕ) :
     ((canonDeForm (localColim badStage) ((P i).mapLanguage (LlocalInclusion badStage 0))
         (fun _ : Fin 1 => Term.var (0 : Fin 1))).Realize (Empty.elim : Empty → Carrier)
       (fun k : Fin 1 => (a ∘ ⇑g) (d + (k : ℕ))) ↔ i ≤ g d) := by
-  letI : (localColim badStage).Structure Carrier := localColimStructure badStage
+  let : (localColim badStage).Structure Carrier := localColimStructure badStage
   have hxs : (P i).Realize (Empty.elim : Empty → Carrier) (fun _ : Fin 1 => emb (g d))
       ↔ i ≤ g d := by
     rw [realize_P]
@@ -456,7 +456,7 @@ conjunction: each `Pᵢ(a (g d))` is eventually true, but at every depth `d` the
 theorem height_no_seed_omega_homogeneous (g : ℕ ↪o ℕ) :
     letI : (localColim badStage).Structure Carrier := localColimStructure badStage
     ¬ LocalEMOmegaHomogeneous badStage (a ∘ ⇑g) := by
-  letI : (localColim badStage).Structure Carrier := localColimStructure badStage
+  let : (localColim badStage).Structure Carrier := localColimStructure badStage
   intro hhom
   have hcut := hhom.iInf_homogeneous
     (fun i => (P i).mapLanguage (LlocalInclusion badStage 0)) conj_mem_ΓlocalColim
@@ -493,7 +493,7 @@ theorem not_morleySeedOmegaExtraction_height :
   obtain ⟨g, ctx, hctxa, _hctxΓ, hc⟩ := h HeightCex.badSentence HeightCex.Carrier HeightCex.a ℕ
     (ge_of_eq HeightCex.mk_Carrier) HeightCex.realize_badSentence
     (fun i j hij hEq => hij (HeightCex.emb.injective hEq)) HeightCex.tail_indisc_morleySeed
-  letI : (localColim HeightCex.badStage).Structure HeightCex.Carrier :=
+  let : (localColim HeightCex.badStage).Structure HeightCex.Carrier :=
     localColimStructure HeightCex.badStage
   set ts : Fin 1 → (localColim HeightCex.badStage)[[ℕ]].Term Empty :=
     fun _ => Term.func

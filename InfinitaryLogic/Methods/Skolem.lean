@@ -86,7 +86,7 @@ theorem realize_skolemTerm {γ : Type u'} {n : ℕ} (ψ : L.BoundedFormulaω Emp
     (ts : Fin n → (L.sum (skolem₁ω L)).Term γ) (v : γ → M) :
     (skolemTerm ψ ts).realize v
       = Structure.funMap (L := skolem₁ω L) ψ (fun i => (ts i).realize v) := by
-  simp only [skolemTerm, Term.realize_func]
+  simp only [skolemTerm]
   rfl
 
 /-- **Skolem witness lemma** (currently unused). If, under the assignment given by `ts`, the

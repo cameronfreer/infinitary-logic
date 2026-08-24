@@ -33,7 +33,7 @@ namespace Language
 variable {L : Language.{u, v}} [L.IsRelational]
 variable [Countable (Σ l, L.Relations l)]
 
-open FirstOrder Structure Fin Ordinal
+open FirstOrder Structure Ordinal
 
 /-- The supremum of element ranks without the +1 adjustment.
 
@@ -47,7 +47,7 @@ omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 theorem sr_le_scottRank (M : Type w) [L.Structure M] [Countable M] :
     sr (L := L) M ≤ scottRank (L := L) M := by
   unfold sr scottRank
-  haveI : Small.{0} M := Countable.toSmall M
+  have : Small.{0} M := Countable.toSmall M
   apply Ordinal.iSup_le
   intro m
   calc elementRank (L := L) m
@@ -64,7 +64,7 @@ theorem sr_le_scottHeight_of
     (M : Type w) [L.Structure M] [Countable M] :
     sr (L := L) M ≤ scottHeight (L := L) M := by
   unfold sr
-  haveI : Small.{0} M := Countable.toSmall M
+  have : Small.{0} M := Countable.toSmall M
   apply Ordinal.iSup_le
   intro m
   exact elementRank_le_completeStab (scottHeight_stabilizesCompletely_of hcount M) m
@@ -80,7 +80,7 @@ theorem scottRank_le_scottHeight_succ_of
     (M : Type w) [L.Structure M] [Countable M] :
     scottRank (L := L) M ≤ scottHeight (L := L) M + 1 := by
   unfold scottRank
-  haveI : Small.{0} M := Countable.toSmall M
+  have : Small.{0} M := Countable.toSmall M
   apply Ordinal.iSup_le
   intro m
   have h_bound := elementRank_le_completeStab (scottHeight_stabilizesCompletely_of hcount M) m

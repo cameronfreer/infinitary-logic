@@ -59,10 +59,10 @@ theorem wellOrderClass_isomorphismInvariant (lt : L.Relations 2) :
   rintro c d ⟨f⟩
   constructor
   · intro hc
-    haveI : IsWellOrder ℕ fun x y : ℕ => @Structure.RelMap L ℕ c.toStructure 2 lt ![x, y] := hc
+    have : IsWellOrder ℕ fun x y : ℕ => @Structure.RelMap L ℕ c.toStructure 2 lt ![x, y] := hc
     exact (relIsoOfEquiv lt f).symm.toRelEmbedding.isWellOrder
   · intro hd
-    haveI : IsWellOrder ℕ fun x y : ℕ => @Structure.RelMap L ℕ d.toStructure 2 lt ![x, y] := hd
+    have : IsWellOrder ℕ fun x y : ℕ => @Structure.RelMap L ℕ d.toStructure 2 lt ![x, y] := hd
     exact (relIsoOfEquiv lt f).toRelEmbedding.isWellOrder
 
 /-! ## Every countably infinite order type occurs -/
@@ -90,11 +90,11 @@ theorem exists_code_type_eq (lt : L.Relations 2) {β : Ordinal.{0}}
     ∃ c : StructureSpace L, ∃ h : IsWellOrder ℕ
         fun x y : ℕ => @Structure.RelMap L ℕ c.toStructure 2 lt ![x, y],
       @Ordinal.type ℕ (fun x y : ℕ => @Structure.RelMap L ℕ c.toStructure 2 lt ![x, y]) h = β := by
-  haveI : Countable β.ToType := countable_toType_of_lt_omega1 hcnt
-  haveI : Infinite β.ToType := infinite_toType_of_omega0_le hinf
-  haveI : Nonempty β.ToType := inferInstance
-  letI instβ : L.Structure β.ToType := ordinalStructureFull L β
-  letI e : β.ToType ≃ ℕ := (nonempty_equiv_of_countable (α := β.ToType) (β := ℕ)).some
+  have : Countable β.ToType := countable_toType_of_lt_omega1 hcnt
+  have : Infinite β.ToType := infinite_toType_of_omega0_le hinf
+  have : Nonempty β.ToType := inferInstance
+  let instβ : L.Structure β.ToType := ordinalStructureFull L β
+  let e : β.ToType ≃ ℕ := (nonempty_equiv_of_countable (α := β.ToType) (β := ℕ)).some
   -- the code's relation is the ordinal order read through `e.symm`
   have hrel : ∀ x y : ℕ, @Structure.RelMap L ℕ
       (StructureSpaceOn.encodeViaEquiv e).toStructure 2 lt ![x, y] ↔ e.symm x < e.symm y := by
@@ -107,7 +107,7 @@ theorem exists_code_type_eq (lt : L.Relations 2) {β : Ordinal.{0}}
       (StructureSpaceOn.encodeViaEquiv e).toStructure 2 lt ![x, y]) ≃r
         ((· < ·) : β.ToType → β.ToType → Prop) :=
     ⟨e.symm, fun {a b} => (hrel a b).symm⟩
-  haveI hwo : IsWellOrder ℕ (fun x y : ℕ => @Structure.RelMap L ℕ
+  have hwo : IsWellOrder ℕ (fun x y : ℕ => @Structure.RelMap L ℕ
       (StructureSpaceOn.encodeViaEquiv e).toStructure 2 lt ![x, y]) :=
     hiso.toRelEmbedding.isWellOrder
   exact ⟨StructureSpaceOn.encodeViaEquiv e, hwo, by

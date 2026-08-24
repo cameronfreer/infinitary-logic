@@ -106,7 +106,7 @@ theorem toZ_surjective {z : ZFSet.{0}} (hz : z ∈ ladderLevel (α + 1)) :
 theorem toZ_constVal (n : ℕ) :
     letI := vStructure α
     toZ α (constVal α n : VCarrier α) = omegaEnumZ n := by
-  letI := vStructure α
+  let := vStructure α
   rw [toZ, constVal]
   exact congrArg Subtype.val (_root_.Equiv.symm_apply_apply (equivShrink ↥(ladderLevel (α + 1)))
     ⟨omegaEnumZ n, ladderLevel_subset zero_le (omegaEnumZ_mem n)⟩)
@@ -115,7 +115,7 @@ theorem toZ_constVal (n : ℕ) :
 theorem vStructure_isLadderModel :
     letI := vStructure α
     IsLadderModel α (M := VCarrier α) := by
-  letI := vStructure α
+  let := vStructure α
   have hLevel : ∀ (i : Index α) (x : VCarrier α),
       Level α i x ↔ toZ α x ∈ ladderLevel (idxVal i) := fun i x => Iff.rfl
   have hEdge : ∀ x y : VCarrier α, Edge α x y ↔ toZ α x ∈ toZ α y := fun x y => Iff.rfl

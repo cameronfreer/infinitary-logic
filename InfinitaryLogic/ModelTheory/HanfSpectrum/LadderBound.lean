@@ -41,7 +41,7 @@ theorem mk_level_le_beth [Countable (Index α)] (h : IsLadderModel α (M := M)) 
       rintro ⟨x, hx⟩
       obtain ⟨n, hn⟩ := (h.base x).mp hx
       exact ⟨n, Subtype.ext hn.symm⟩
-    haveI := hsurj.countable
+    have := hsurj.countable
     exact Cardinal.mk_le_aleph0
   by_cases hcov : ∃ i' : Index α, i' ⋖ i
   · obtain ⟨i', hi'⟩ := hcov

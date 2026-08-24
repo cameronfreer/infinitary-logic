@@ -60,7 +60,7 @@ private theorem modelsOfBounded_imp {α : Type u'} {n : ℕ}
     ModelsOfBounded (φ.imp ψ) v xs =
     (ModelsOfBounded φ v xs)ᶜ ∪ (ModelsOfBounded ψ v xs) := by
   ext c
-  simp only [ModelsOfBounded, Set.mem_setOf_eq, Set.mem_compl_iff, Set.mem_union]
+  simp only [ModelsOfBounded, Set.mem_ofPred_eq, Set.mem_compl_iff, Set.mem_union]
   exact Iff.intro (fun h => by tauto) (fun h => by tauto)
 
 omit [Countable (Σ l, L.Relations l)] in
@@ -68,21 +68,21 @@ private theorem modelsOfBounded_all {α : Type u'} {n : ℕ}
     (φ : L.BoundedFormulaω α (n + 1)) (v : α → ℕ) (xs : Fin n → ℕ) :
     ModelsOfBounded φ.all v xs =
     ⋂ (m : ℕ), ModelsOfBounded φ v (Fin.snoc xs m) := by
-  ext c; simp only [ModelsOfBounded, Set.mem_setOf_eq, Set.mem_iInter]; rfl
+  ext c; simp only [ModelsOfBounded, Set.mem_ofPred_eq, Set.mem_iInter]; rfl
 
 omit [Countable (Σ l, L.Relations l)] in
 private theorem modelsOfBounded_iSup {α : Type u'} {n : ℕ}
     (φs : ℕ → L.BoundedFormulaω α n) (v : α → ℕ) (xs : Fin n → ℕ) :
     ModelsOfBounded (BoundedFormulaω.iSup φs) v xs =
     ⋃ (i : ℕ), ModelsOfBounded (φs i) v xs := by
-  ext c; simp only [ModelsOfBounded, Set.mem_setOf_eq, Set.mem_iUnion]; rfl
+  ext c; simp only [ModelsOfBounded, Set.mem_ofPred_eq, Set.mem_iUnion]; rfl
 
 omit [Countable (Σ l, L.Relations l)] in
 private theorem modelsOfBounded_iInf {α : Type u'} {n : ℕ}
     (φs : ℕ → L.BoundedFormulaω α n) (v : α → ℕ) (xs : Fin n → ℕ) :
     ModelsOfBounded (BoundedFormulaω.iInf φs) v xs =
     ⋂ (i : ℕ), ModelsOfBounded (φs i) v xs := by
-  ext c; simp only [ModelsOfBounded, Set.mem_setOf_eq, Set.mem_iInter]; rfl
+  ext c; simp only [ModelsOfBounded, Set.mem_ofPred_eq, Set.mem_iInter]; rfl
 
 omit [Countable (Σ l, L.Relations l)] in
 /-- Satisfaction of any bounded Lω₁ω formula in a countable relational language
@@ -102,15 +102,15 @@ theorem modelsOfBounded_measurableSet
     by_cases h : Sum.elim v xs x₁ = Sum.elim v xs x₂
     · convert MeasurableSet.univ (α := StructureSpace L)
       ext c
-      simp only [Set.mem_setOf_eq, ModelsOfBounded, Set.mem_univ, iff_true]
-      letI := c.toStructure
+      simp only [Set.mem_ofPred_eq, ModelsOfBounded, Set.mem_univ, iff_true]
+      let := c.toStructure
       simp [BoundedFormulaω.Realize, Term.realize, h]
     · convert MeasurableSet.empty (α := StructureSpace L)
       ext c
-      simp only [Set.mem_setOf_eq, ModelsOfBounded, Set.mem_empty_iff_false, iff_false]
+      simp only [Set.mem_ofPred_eq, ModelsOfBounded, Set.mem_empty_iff_false, iff_false]
       intro hc
       apply h
-      letI := c.toStructure
+      let := c.toStructure
       simp [BoundedFormulaω.Realize, Term.realize] at hc
       exact hc
   | @rel _ l R ts =>
@@ -125,21 +125,21 @@ theorem modelsOfBounded_measurableSet
         letI := c.toStructure
         (fun i => (ts i).realize (Sum.elim v xs)) = tup := by
       intro c
-      letI := c.toStructure
+      let := c.toStructure
       funext i
       simp [hxs' i, Term.realize_var, tup]
     convert measurableSet_relHolds (L := L) ⟨⟨l, R⟩, tup⟩ using 1
     ext c
-    simp only [Set.mem_setOf_eq, ModelsOfBounded]
+    simp only [Set.mem_ofPred_eq, ModelsOfBounded]
     constructor
     · intro hc
-      letI := c.toStructure
+      let := c.toStructure
       have hrel : @Structure.RelMap L ℕ c.toStructure l R
           (fun i => (ts i).realize (Sum.elim v xs)) := hc
       rw [StructureSpace.relMap_toStructure] at hrel
       rwa [htup] at hrel
     · intro hc
-      letI := c.toStructure
+      let := c.toStructure
       show @Structure.RelMap L ℕ c.toStructure l R
           (fun i => (ts i).realize (Sum.elim v xs))
       rw [StructureSpace.relMap_toStructure, htup]

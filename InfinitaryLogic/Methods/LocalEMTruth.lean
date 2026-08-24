@@ -105,7 +105,7 @@ theorem LocalEMContext.eventualDeepTruth_equal_iff (ctx : LocalEMContext Λ J (M
             (Sum.elim (fun e => e.elim) ts))
         = ctx.mkClass (t := ((lhomWithConstants Λ J).onTerm t₂).subst
             (Sum.elim (fun e => e.elim) ts)) := by
-    letI : Λ[[J]].Structure ctx.Carrier := ctx.structure
+    let : Λ[[J]].Structure ctx.Carrier := ctx.structure
     rw [show (BoundedFormulaω.equal t₁ t₂).mapLanguage (lhomWithConstants Λ J)
         = BoundedFormulaω.equal ((lhomWithConstants Λ J).onTerm t₁)
             ((lhomWithConstants Λ J).onTerm t₂) from rfl,
@@ -147,7 +147,7 @@ theorem LocalEMContext.eventualDeepTruth_rel_iff (ctx : LocalEMContext Λ J (M :
       ↔ @Structure.RelMap (Λ[[J]]) ctx.Carrier ctx.structure l (Sum.inl R)
           (fun i => ctx.mkClass (t := ((lhomWithConstants Λ J).onTerm (args i)).subst
             (Sum.elim (fun e => e.elim) ts))) := by
-    letI : Λ[[J]].Structure ctx.Carrier := ctx.structure
+    let : Λ[[J]].Structure ctx.Carrier := ctx.structure
     rw [show (BoundedFormulaω.rel R args).mapLanguage (lhomWithConstants Λ J)
         = BoundedFormulaω.rel (Sum.inl R)
             (fun i => (lhomWithConstants Λ J).onTerm (args i)) from rfl]
@@ -309,8 +309,8 @@ theorem locDeepInterp_skWitness (d : ℕ) (S : Finset J) {k n : ℕ}
     locDeepInterp (localColim s₀) J a d S (locSkWitnessTerm s₀ J h ts)
       = Classical.epsilon (fun b => ψ.not.Realize (Empty.elim : Empty → M)
           (Fin.snoc (fun i => locDeepInterp (localColim s₀) J a d S (ts i)) b)) := by
-  letI : (Llocal s₀ k).Structure M := localStageStructure s₀ k
-  letI : (localColim s₀).Structure M := localColimStructure s₀
+  let : (Llocal s₀ k).Structure M := localStageStructure s₀ k
+  let : (localColim s₀).Structure M := localColimStructure s₀
   rw [locSkWitnessTerm, locDeepInterp_func]; rfl
 
 /-- **Local Skolem-witness universality** (the contrapositive Skolem axiom, transported to the deep
@@ -327,8 +327,8 @@ theorem locSkWitness_universal (d : ℕ) (S : Finset J) {k n : ℕ}
           (locDeepInterp (localColim s₀) J a d S (locSkWitnessTerm s₀ J h ts))) →
       ∀ x : M, (ψ.mapLanguage (LlocalInclusion s₀ k)).Realize (Empty.elim : Empty → M)
           (Fin.snoc (fun i => locDeepInterp (localColim s₀) J a d S (ts i)) x) := by
-  letI : (localColim s₀).Structure M := localColimStructure s₀
-  letI : (Llocal s₀ k).Structure M := localStageStructure s₀ k
+  let : (localColim s₀).Structure M := localColimStructure s₀
+  let : (Llocal s₀ k).Structure M := localStageStructure s₀ k
   simp only [realize_map_LlocalInclusion]
   intro hψw x
   by_contra hcon

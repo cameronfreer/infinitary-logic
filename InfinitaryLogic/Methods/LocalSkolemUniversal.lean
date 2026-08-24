@@ -55,10 +55,10 @@ theorem localSkolemUniversalForColim_canonical (s₀ : LocalStage) {M : Type}
     [s₀.Lang.Structure M] [Nonempty M] :
     letI : (localColim s₀).Structure M := localColimStructure s₀
     LocalSkolemUniversalForColim s₀ (M := M) := by
-  letI : (localColim s₀).Structure M := localColimStructure s₀
+  let : (localColim s₀).Structure M := localColimStructure s₀
   refine ⟨?_⟩
   intro k n ψ h xs
-  letI : (Llocal s₀ k).Structure M := localStageStructure s₀ k
+  let : (Llocal s₀ k).Structure M := localStageStructure s₀ k
   simp only [realize_map_LlocalInclusion]
   intro hψw x
   by_contra hcon
