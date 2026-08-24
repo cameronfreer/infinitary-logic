@@ -279,7 +279,7 @@ theorem genU_countable [Countable (Σ l, L.Relations l)] : (GenU r₁ r₂).Coun
   have hchar : GenU r₁ r₂
       = ⋃ s ∈ seed r₁ r₂, Option.some ⁻¹' Set.range (fun l : List (ℕ × ℕ) => uPath s l) := by
     ext p
-    simp only [GenU, Set.mem_setOf_eq, Set.mem_iUnion, Set.mem_preimage, Set.mem_range,
+    simp only [GenU, Set.mem_ofPred_eq, Set.mem_iUnion, Set.mem_preimage, Set.mem_range,
       exists_prop]
     exact reachFrom_iff_path
   rw [hchar]
@@ -302,7 +302,7 @@ theorem constTermS_jConsts (c : ℕ) :
     Term.jConsts (L' := L) (constTermS (L := L) c) ⊆ {c} := by
   intro k hk
   simp only [constTermS, Term.jConsts, Term.functionsIn, Set.iUnion_of_empty,
-    Set.mem_insert_iff, Set.mem_empty_iff_false, or_false, Set.mem_setOf_eq] at hk
+    Set.mem_insert_iff, Set.mem_empty_iff_false, or_false, Set.mem_ofPred_eq] at hk
   exact Set.mem_singleton_iff.mpr (Sum.inr.inj (eq_of_heq (Sigma.mk.inj_iff.mp hk).2))
 
 /-- **Finite constant support**: assuming the roots have finite constant support, every member

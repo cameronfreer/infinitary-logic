@@ -68,7 +68,7 @@ theorem mem_sentBndPol_iff {σ : L[[ℕ]].Sentenceω} :
 unsigned `sentBnd_not_iff`.  It is *not* a same-class equivalence. -/
 theorem sentBndPol_not_iff {σ : L[[ℕ]].Sentenceω} :
     σ.not ∈ SentBndPol F P N ↔ σ ∈ SentBndPol F N P := by
-  simp only [SentBndPol, Set.mem_setOf_eq, baseFunctionsIn_not, basePositiveRelations_not,
+  simp only [SentBndPol, Set.mem_ofPred_eq, baseFunctionsIn_not, basePositiveRelations_not,
     baseNegativeRelations_not]
   tauto
 

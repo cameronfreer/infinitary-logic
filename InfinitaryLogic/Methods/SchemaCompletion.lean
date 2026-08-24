@@ -173,7 +173,7 @@ variable {L'' : Language.{0, 0}} {J : Type}
 theorem henkinConstsIn_mapLanguage {α : Type} {n : ℕ} (τ : (L''[[J]]).BoundedFormulaω α n) :
     henkinConstsIn (L'' := L'') (τ.mapLanguage ((L''[[J]]).lhomWithConstants ℕ)) = ∅ := by
   ext m
-  simp only [henkinConstsIn, sentenceJConsts, Set.mem_setOf_eq,
+  simp only [henkinConstsIn, sentenceJConsts, Set.mem_ofPred_eq,
     BoundedFormulaω.functionsIn_mapLanguage, Set.mem_image, Set.mem_empty_iff_false, iff_false,
     not_exists, not_and]
   rintro ⟨k, f⟩ _ heq
@@ -189,7 +189,7 @@ theorem expJConstsIn_mapLanguage {α : Type} {n : ℕ} (τ : (L''[[J]]).BoundedF
     expJConstsIn (L'' := L'') (τ.mapLanguage ((L''[[J]]).lhomWithConstants ℕ)) =
       sentenceJConsts (L' := L'') (J := J) τ := by
   ext j
-  simp only [expJConstsIn, sentenceJConsts, Set.mem_setOf_eq,
+  simp only [expJConstsIn, sentenceJConsts, Set.mem_ofPred_eq,
     BoundedFormulaω.functionsIn_mapLanguage, Set.mem_image]
   constructor
   · rintro ⟨⟨k, f⟩, hf, heq⟩
@@ -215,7 +215,7 @@ theorem sentenceJConsts_templateSentence {n : ℕ} (ψ : L''.BoundedFormulaω Em
     sentenceJConsts (L' := L'') (J := J) (Lomega1omegaTemplate.templateSentence ψ t)
       ⊆ Set.range (⇑t) := by
   intro j hj
-  simp only [sentenceJConsts, Set.mem_setOf_eq, Lomega1omegaTemplate.templateSentence] at hj
+  simp only [sentenceJConsts, Set.mem_ofPred_eq, Lomega1omegaTemplate.templateSentence] at hj
   have hsub := BoundedFormulaω.functionsIn_subst
     (fun i => Term.func (Sum.inr (t i) : (L''[[J]]).Functions 0) Fin.elim0)
     ((ψ.mapLanguage (L''.lhomWithConstants J)).openBounds) hj

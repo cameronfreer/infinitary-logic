@@ -508,7 +508,7 @@ theorem BFEquiv_below_omega1_implies_potentialIso
   have hforth : ∀ p ∈ F, ∀ m : M, ∃ n' : N,
       ⟨p.1 + 1, Fin.snoc p.2.1 m, Fin.snoc p.2.2 n'⟩ ∈ F := by
     intro ⟨k, a, b⟩ hp m
-    simp only [Set.mem_setOf_eq, F] at hp ⊢
+    simp only [Set.mem_ofPred_eq, F] at hp ⊢
     -- For each α < ω₁, succ α < ω₁ (ω₁ is a limit), so BFEquiv (succ α) k a b holds.
     -- By forth, ∃ n'_α with BFEquiv α (k+1) (snoc a m) (snoc b n'_α).
     -- Define S_α = {n' | BFEquiv α (k+1) (snoc a m) (snoc b n')}
@@ -517,7 +517,7 @@ theorem BFEquiv_below_omega1_implies_potentialIso
     -- S is antitone
     have hAnti : Antitone S := by
       intro α β hαβ n' hn'
-      simp only [Set.mem_setOf_eq, S] at hn' ⊢
+      simp only [Set.mem_ofPred_eq, S] at hn' ⊢
       exact BFEquiv.monotone hαβ hn'
     -- Each S α is nonempty for α < ω₁
     have hNonempty : ∀ α < (Ordinal.omega 1 : Ordinal.{0}), (S α).Nonempty := by
@@ -528,18 +528,18 @@ theorem BFEquiv_below_omega1_implies_potentialIso
       exact ⟨n', hn'⟩
     -- By countable intersection lemma
     obtain ⟨n', hn'⟩ := nonempty_iInter_of_antitone_of_nonempty S hAnti hNonempty
-    simp only [Set.mem_iInter, Set.mem_Iio, Set.mem_setOf_eq, S] at hn'
+    simp only [Set.mem_iInter, Set.mem_Iio, Set.mem_ofPred_eq, S] at hn'
     exact ⟨n', hn'⟩
   -- back: symmetric argument
   have hback : ∀ p ∈ F, ∀ n' : N, ∃ m : M,
       ⟨p.1 + 1, Fin.snoc p.2.1 m, Fin.snoc p.2.2 n'⟩ ∈ F := by
     intro ⟨k, a, b⟩ hp n'
-    simp only [Set.mem_setOf_eq, F] at hp ⊢
+    simp only [Set.mem_ofPred_eq, F] at hp ⊢
     let S : Ordinal.{0} → Set M := fun α =>
       { m | BFEquiv (L := L) α (k + 1) (Fin.snoc a m) (Fin.snoc b n') }
     have hAnti : Antitone S := by
       intro α β hαβ m hm
-      simp only [Set.mem_setOf_eq, S] at hm ⊢
+      simp only [Set.mem_ofPred_eq, S] at hm ⊢
       exact BFEquiv.monotone hαβ hm
     have hNonempty : ∀ α < (Ordinal.omega 1 : Ordinal.{0}), (S α).Nonempty := by
       intro α hα
@@ -548,7 +548,7 @@ theorem BFEquiv_below_omega1_implies_potentialIso
       obtain ⟨m, hm⟩ := BFEquiv.back (hp (Order.succ α) hsucc_lt) n'
       exact ⟨m, hm⟩
     obtain ⟨m, hm⟩ := nonempty_iInter_of_antitone_of_nonempty S hAnti hNonempty
-    simp only [Set.mem_iInter, Set.mem_Iio, Set.mem_setOf_eq, S] at hm
+    simp only [Set.mem_iInter, Set.mem_Iio, Set.mem_ofPred_eq, S] at hm
     exact ⟨m, hm⟩
   exact ⟨PotentialIso.mk F hempty hcompat hforth hback⟩
 
@@ -973,10 +973,10 @@ theorem BFEquiv_stabilization_implies_equiv {M N : Type w} [L.Structure M] [L.St
     h
     (fun p hp => (BFEquiv.zero p.2.1 p.2.2).mp (BFEquiv.monotone bot_le hp))
     (fun ⟨k, a, b⟩ hp m => by
-      simp only [Set.mem_setOf_eq] at hp ⊢
+      simp only [Set.mem_ofPred_eq] at hp ⊢
       exact BFEquiv.forth ((hstab k N a b).mp hp) m)
     (fun ⟨k, a, b⟩ hp n' => by
-      simp only [Set.mem_setOf_eq] at hp ⊢
+      simp only [Set.mem_ofPred_eq] at hp ⊢
       exact BFEquiv.back ((hstab k N a b).mp hp) n')
   ).countable_toEquiv
 

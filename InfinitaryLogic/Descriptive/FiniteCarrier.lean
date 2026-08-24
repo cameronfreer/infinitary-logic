@@ -197,7 +197,7 @@ theorem isoSetoidOn_measurableSet (φ : L.Sentenceω) (n : ℕ) :
     ⋃ σ : Equiv.Perm (Fin n),
       {p | σ • p.1.1 = p.2.1} := by
     ext ⟨⟨c₁, hc₁⟩, ⟨c₂, hc₂⟩⟩
-    simp only [Set.mem_setOf_eq, Set.mem_iUnion]
+    simp only [Set.mem_ofPred_eq, Set.mem_iUnion]
     exact iso_iff_orbit n c₁ c₂
   rw [hset]
   -- Step 2: Finite union of measurable sets is measurable
@@ -210,7 +210,7 @@ theorem isoSetoidOn_measurableSet (φ : L.Sentenceω) (n : ℕ) :
     (fun p : ↥(ModelsOfOn (α := Fin n) φ) × ↥(ModelsOfOn (α := Fin n) φ) =>
       (σ • p.1.1, p.2.1)) ⁻¹' {q : StructureSpaceOn L (Fin n) × StructureSpaceOn L (Fin n) |
         q.1 = q.2} := by
-    ext p; simp [Set.mem_setOf_eq]
+    ext p; simp [Set.mem_ofPred_eq]
   rw [hgraph]
   -- Step 4: The diagonal is closed, hence measurable
   exact isClosed_diagonal.measurableSet.preimage

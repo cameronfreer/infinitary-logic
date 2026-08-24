@@ -81,7 +81,7 @@ theorem invariantMeasurableSets_eq_range_modelsOf :
     {B : Set (StructureSpace L) | MeasurableSet B ∧ ActionInvariant B} =
       Set.range (ModelsOf (L := L)) := by
   ext B
-  rw [Set.mem_setOf_eq, lopezEscobar_action_iff, Set.mem_range]
+  rw [Set.mem_ofPred_eq, lopezEscobar_action_iff, Set.mem_range]
   exact ⟨fun ⟨φ, hφ⟩ => ⟨φ, hφ.symm⟩, fun ⟨φ, hφ⟩ => ⟨φ, hφ.symm⟩⟩
 
 variable (L) in
@@ -91,7 +91,7 @@ theorem isoInvariantMeasurableSets_eq_range_modelsOf :
     {B : Set (StructureSpace L) | MeasurableSet B ∧ IsomorphismInvariant B} =
       Set.range (ModelsOf (L := L)) := by
   ext B
-  rw [Set.mem_setOf_eq, lopezEscobar_iff, Set.mem_range]
+  rw [Set.mem_ofPred_eq, lopezEscobar_iff, Set.mem_range]
   exact ⟨fun ⟨φ, hφ⟩ => ⟨φ, hφ.symm⟩, fun ⟨φ, hφ⟩ => ⟨φ, hφ.symm⟩⟩
 
 end FirstOrder.Language

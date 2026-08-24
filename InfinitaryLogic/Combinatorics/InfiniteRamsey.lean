@@ -70,7 +70,7 @@ private lemma tailRegion_infinite {U : Set ℕ} (hU : U.Infinite) :
     (U ∩ {x | sInf U < x}).Infinite := by
   have hsub : U ∩ {x | sInf U < x} = U \ {sInf U} := by
     ext x
-    simp only [mem_inter_iff, mem_setOf_eq, mem_sdiff, mem_singleton_iff]
+    simp only [mem_inter_iff, mem_ofPred_eq, mem_sdiff, mem_singleton_iff]
     constructor
     · rintro ⟨hxU, hlt⟩; exact ⟨hxU, by rintro rfl; exact absurd hlt (lt_irrefl _)⟩
     · rintro ⟨hxU, hne⟩

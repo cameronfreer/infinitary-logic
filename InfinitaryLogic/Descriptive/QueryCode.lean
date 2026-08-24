@@ -109,7 +109,7 @@ theorem isClosed_range_queryCode : IsClosed (Set.range (queryCode (L := L))) := 
   have heq : {x : ℕ → Bool | ∀ n ∉ Set.range (queryEmbedding (L := L)), x n = false}
       = ⋂ n, {x : ℕ → Bool | n ∈ Set.range (queryEmbedding (L := L)) ∨ x n = false} := by
     ext x
-    simp only [Set.mem_setOf_eq, Set.mem_iInter]
+    simp only [Set.mem_ofPred_eq, Set.mem_iInter]
     constructor
     · intro hx n
       by_cases h : n ∈ Set.range (queryEmbedding (L := L))

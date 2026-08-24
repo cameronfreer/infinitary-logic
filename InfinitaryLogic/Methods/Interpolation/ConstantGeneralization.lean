@@ -302,12 +302,12 @@ theorem baseFunctionsIn_conjunction_subset (T : L[[ℕ]].Theoryω) (hT : T.Count
   rw [Theoryω.conjunction]
   split_ifs with hne
   · intro s hs
-    simp only [BoundedFormulaω.baseFunctionsIn, BoundedFormulaω.functionsIn, Set.mem_setOf_eq,
+    simp only [BoundedFormulaω.baseFunctionsIn, BoundedFormulaω.functionsIn, Set.mem_ofPred_eq,
       Set.mem_iUnion] at hs
     obtain ⟨n, hn⟩ := hs
     exact h _ ((hT.exists_eq_range hne).choose_spec.symm.subset (Set.mem_range_self n)) hn
   · intro s hs
-    simp only [BoundedFormulaω.baseFunctionsIn, BoundedFormulaω.functionsIn, Set.mem_setOf_eq,
+    simp only [BoundedFormulaω.baseFunctionsIn, BoundedFormulaω.functionsIn, Set.mem_ofPred_eq,
       Set.union_self, Set.mem_empty_iff_false] at hs
 
 theorem baseRelationsIn_conjunction_subset (T : L[[ℕ]].Theoryω) (hT : T.Countable)
@@ -316,12 +316,12 @@ theorem baseRelationsIn_conjunction_subset (T : L[[ℕ]].Theoryω) (hT : T.Count
   rw [Theoryω.conjunction]
   split_ifs with hne
   · intro s hs
-    simp only [BoundedFormulaω.baseRelationsIn, BoundedFormulaω.relationsIn, Set.mem_setOf_eq,
+    simp only [BoundedFormulaω.baseRelationsIn, BoundedFormulaω.relationsIn, Set.mem_ofPred_eq,
       Set.mem_iUnion] at hs
     obtain ⟨n, hn⟩ := hs
     exact h _ ((hT.exists_eq_range hne).choose_spec.symm.subset (Set.mem_range_self n)) hn
   · intro s hs
-    simp only [BoundedFormulaω.baseRelationsIn, BoundedFormulaω.relationsIn, Set.mem_setOf_eq,
+    simp only [BoundedFormulaω.baseRelationsIn, BoundedFormulaω.relationsIn, Set.mem_ofPred_eq,
       Set.union_self, Set.mem_empty_iff_false] at hs
 
 theorem sentenceJConsts_conjunction_subset (T : L[[ℕ]].Theoryω) (hT : T.Countable) {A : Set ℕ}
@@ -331,12 +331,12 @@ theorem sentenceJConsts_conjunction_subset (T : L[[ℕ]].Theoryω) (hT : T.Count
   rw [Theoryω.conjunction]
   split_ifs with hne
   · intro k hk
-    simp only [sentenceJConsts, BoundedFormulaω.functionsIn, Set.mem_setOf_eq,
+    simp only [sentenceJConsts, BoundedFormulaω.functionsIn, Set.mem_ofPred_eq,
       Set.mem_iUnion] at hk
     obtain ⟨n, hn⟩ := hk
     exact h _ ((hT.exists_eq_range hne).choose_spec.symm.subset (Set.mem_range_self n)) hn
   · intro k hk
-    simp only [sentenceJConsts, BoundedFormulaω.functionsIn, Set.mem_setOf_eq, Set.union_self,
+    simp only [sentenceJConsts, BoundedFormulaω.functionsIn, Set.mem_ofPred_eq, Set.union_self,
       Set.mem_empty_iff_false] at hk
 
 end Conjunction

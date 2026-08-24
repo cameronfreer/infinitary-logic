@@ -273,7 +273,7 @@ theorem baseRelationsInSigned_subset {n : ℕ} (s : Bool) (φ : L'[[J]].BoundedF
 theorem baseRelationsIn_eq_signed_union {n : ℕ} (φ : L'[[J]].BoundedFormulaω α n) :
     φ.baseRelationsIn = basePositiveRelations φ ∪ baseNegativeRelations φ := by
   ext p
-  simp only [baseRelationsIn, baseRelationsInSigned, Set.mem_setOf_eq, Set.mem_union]
+  simp only [baseRelationsIn, baseRelationsInSigned, Set.mem_ofPred_eq, Set.mem_union]
   rw [relationsIn_eq_signed_union]
   exact Set.mem_union _ _ _
 
@@ -297,13 +297,13 @@ theorem baseNegativeRelations_not {n : ℕ} (φ : L'[[J]].BoundedFormulaω α n)
 theorem baseRelationsInSigned_imp_left {s : Bool} {φ ψ : L'[[J]].BoundedFormulaω α n} :
     baseRelationsInSigned (!s) φ ⊆ baseRelationsInSigned s (φ.imp ψ) := by
   intro p hp
-  simp only [baseRelationsInSigned, Set.mem_setOf_eq, relationsInSigned_imp, Set.mem_union] at hp ⊢
+  simp only [baseRelationsInSigned, Set.mem_ofPred_eq, relationsInSigned_imp, Set.mem_union] at hp ⊢
   exact Or.inl hp
 
 theorem baseRelationsInSigned_imp_right {s : Bool} {φ ψ : L'[[J]].BoundedFormulaω α n} :
     baseRelationsInSigned s ψ ⊆ baseRelationsInSigned s (φ.imp ψ) := by
   intro p hp
-  simp only [baseRelationsInSigned, Set.mem_setOf_eq, relationsInSigned_imp, Set.mem_union] at hp ⊢
+  simp only [baseRelationsInSigned, Set.mem_ofPred_eq, relationsInSigned_imp, Set.mem_union] at hp ⊢
   exact Or.inr hp
 
 theorem baseRelationsInSigned_imp_subset {A : Set (Σ n, L'.Relations n)} {s : Bool}
@@ -311,7 +311,7 @@ theorem baseRelationsInSigned_imp_subset {A : Set (Σ n, L'.Relations n)} {s : B
     (h₁ : baseRelationsInSigned (!s) φ ⊆ A) (h₂ : baseRelationsInSigned s ψ ⊆ A) :
     baseRelationsInSigned s (φ.imp ψ) ⊆ A := by
   intro p hp
-  simp only [baseRelationsInSigned, Set.mem_setOf_eq, relationsInSigned_imp, Set.mem_union] at hp
+  simp only [baseRelationsInSigned, Set.mem_ofPred_eq, relationsInSigned_imp, Set.mem_union] at hp
   rcases hp with hp | hp
   · exact h₁ hp
   · exact h₂ hp
@@ -320,7 +320,7 @@ theorem baseRelationsInSigned_component_iInf {s : Bool} {φs : ℕ → L'[[J]].B
     (k : ℕ) :
     baseRelationsInSigned s (φs k) ⊆ baseRelationsInSigned s (BoundedFormulaω.iInf φs) := by
   intro p hp
-  simp only [baseRelationsInSigned, Set.mem_setOf_eq, relationsInSigned_iInf,
+  simp only [baseRelationsInSigned, Set.mem_ofPred_eq, relationsInSigned_iInf,
     Set.mem_iUnion] at hp ⊢
   exact ⟨k, hp⟩
 
@@ -328,7 +328,7 @@ theorem baseRelationsInSigned_component_iSup {s : Bool} {φs : ℕ → L'[[J]].B
     (k : ℕ) :
     baseRelationsInSigned s (φs k) ⊆ baseRelationsInSigned s (BoundedFormulaω.iSup φs) := by
   intro p hp
-  simp only [baseRelationsInSigned, Set.mem_setOf_eq, relationsInSigned_iSup,
+  simp only [baseRelationsInSigned, Set.mem_ofPred_eq, relationsInSigned_iSup,
     Set.mem_iUnion] at hp ⊢
   exact ⟨k, hp⟩
 
@@ -336,7 +336,7 @@ theorem baseRelationsInSigned_iSup_subset {A : Set (Σ n, L'.Relations n)} {s : 
     (φs : ℕ → L'[[J]].BoundedFormulaω α n) (h : ∀ k, baseRelationsInSigned s (φs k) ⊆ A) :
     baseRelationsInSigned s (BoundedFormulaω.iSup φs) ⊆ A := by
   intro p hp
-  simp only [baseRelationsInSigned, Set.mem_setOf_eq, relationsInSigned_iSup,
+  simp only [baseRelationsInSigned, Set.mem_ofPred_eq, relationsInSigned_iSup,
     Set.mem_iUnion] at hp
   obtain ⟨k, hk⟩ := hp
   exact h k hk
@@ -389,14 +389,14 @@ theorem baseRelationsInSigned_instConst (c : ℕ) (s : Bool)
     (φ : L[[ℕ]].BoundedFormulaω Empty 1) :
     baseRelationsInSigned s (instConst c φ) = baseRelationsInSigned s (BoundedFormulaω.all φ) := by
   ext p
-  simp only [baseRelationsInSigned, Set.mem_setOf_eq, relationsInSigned_instConst,
+  simp only [baseRelationsInSigned, Set.mem_ofPred_eq, relationsInSigned_instConst,
     relationsInSigned_all]
 
 /-- Existential generalization of a constant does not move the base signed sets. -/
 theorem baseRelationsInSigned_genEx (j : ℕ) (s : Bool) (ρ : L[[ℕ]].Sentenceω) :
     baseRelationsInSigned s (genEx j ρ) = baseRelationsInSigned s ρ := by
   ext p
-  simp only [baseRelationsInSigned, Set.mem_setOf_eq, relationsInSigned_genEx]
+  simp only [baseRelationsInSigned, Set.mem_ofPred_eq, relationsInSigned_genEx]
 
 /-- **Base signed occurrences of a constant-expansion image** are the sentence's own signed
 occurrences. -/
@@ -411,7 +411,7 @@ theorem baseRelationsInSigned_mapLanguage_withConstants (s : Bool) (r : L.Senten
     baseRelationsInSigned s (BoundedFormulaω.mapLanguage (L.lhomWithConstants ℕ) r) =
       relationsInSigned s r := by
   ext p
-  simp only [baseRelationsInSigned, Set.mem_setOf_eq,
+  simp only [baseRelationsInSigned, Set.mem_ofPred_eq,
     relationsInSigned_mapLanguage (L.lhomWithConstants ℕ)]
   exact tag_inl_rel_inj.mem_set_image
 

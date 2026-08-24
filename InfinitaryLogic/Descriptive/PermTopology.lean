@@ -103,12 +103,12 @@ theorem range_embed :
     exact ⟨Equiv.mk p.1 p.2 h2 h1, by ext <;> simp [embed]⟩
 
 theorem isClosed_range_embed : IsClosed (Set.range embed) := by
-  rw [range_embed, Set.setOf_and]
+  rw [range_embed, Set.ofPred_and]
   refine IsClosed.inter ?_ ?_
-  · rw [Set.setOf_forall]
+  · rw [Set.ofPred_forall]
     exact isClosed_iInter fun n => isClosed_eq
       (continuous_evalComp continuous_fst ((continuous_apply n).comp continuous_snd)) continuous_const
-  · rw [Set.setOf_forall]
+  · rw [Set.ofPred_forall]
     exact isClosed_iInter fun n => isClosed_eq
       (continuous_evalComp continuous_snd ((continuous_apply n).comp continuous_fst)) continuous_const
 
@@ -163,8 +163,8 @@ theorem hasBasis_nhds (σ₀ : Equiv.Perm ℕ) :
   · rintro ⟨s, t⟩ -
     refine ⟨s ∪ t.image (⇑σ₀⁻¹), trivial, ?_⟩
     intro σ hσ
-    simp only [stab, Set.mem_setOf_eq] at hσ
-    simp only [embed, Set.mem_preimage, Set.mem_prod, Set.mem_setOf_eq]
+    simp only [stab, Set.mem_ofPred_eq] at hσ
+    simp only [embed, Set.mem_preimage, Set.mem_prod, Set.mem_ofPred_eq]
     refine ⟨fun i hi => hσ i (Finset.mem_union_left _ hi), fun j hj => ?_⟩
     have hk : σ (σ₀⁻¹ j) = σ₀ (σ₀⁻¹ j) :=
       hσ (σ₀⁻¹ j) (Finset.mem_union_right _ (Finset.mem_image_of_mem _ hj))
@@ -175,8 +175,8 @@ theorem hasBasis_nhds (σ₀ : Equiv.Perm ℕ) :
   · rintro s -
     refine ⟨(s, ∅), ⟨trivial, trivial⟩, ?_⟩
     intro σ hσ
-    simp only [embed, Set.mem_preimage, Set.mem_prod, Set.mem_setOf_eq] at hσ
-    simp only [stab, Set.mem_setOf_eq]
+    simp only [embed, Set.mem_preimage, Set.mem_prod, Set.mem_ofPred_eq] at hσ
+    simp only [stab, Set.mem_ofPred_eq]
     exact fun i hi => hσ.1 i hi
 
 end NatPerm

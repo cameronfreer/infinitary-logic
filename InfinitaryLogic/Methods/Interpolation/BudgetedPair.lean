@@ -1217,7 +1217,7 @@ private theorem baseFunctionsIn_iInf_subset {A : Set (Σ n, L.Functions n)}
     (τ : ℕ → L[[ℕ]].Sentenceω) (hτ : ∀ k, (τ k).baseFunctionsIn ⊆ A) :
     (BoundedFormulaω.iInf τ).baseFunctionsIn ⊆ A := by
   intro s hs
-  simp only [BoundedFormulaω.baseFunctionsIn, BoundedFormulaω.functionsIn, Set.mem_setOf_eq,
+  simp only [BoundedFormulaω.baseFunctionsIn, BoundedFormulaω.functionsIn, Set.mem_ofPred_eq,
     Set.mem_iUnion] at hs
   obtain ⟨k, hk⟩ := hs
   exact hτ k hk
@@ -1226,7 +1226,7 @@ private theorem baseRelationsIn_iInf_subset {A : Set (Σ n, L.Relations n)}
     (τ : ℕ → L[[ℕ]].Sentenceω) (hτ : ∀ k, (τ k).baseRelationsIn ⊆ A) :
     (BoundedFormulaω.iInf τ).baseRelationsIn ⊆ A := by
   intro s hs
-  simp only [BoundedFormulaω.baseRelationsIn, BoundedFormulaω.relationsIn, Set.mem_setOf_eq,
+  simp only [BoundedFormulaω.baseRelationsIn, BoundedFormulaω.relationsIn, Set.mem_ofPred_eq,
     Set.mem_iUnion] at hs
   obtain ⟨k, hk⟩ := hs
   exact hτ k hk
@@ -1235,7 +1235,7 @@ private theorem sentenceJConsts_iInf_subset {A : Set ℕ} (τ : ℕ → L[[ℕ]]
     (hτ : ∀ k, sentenceJConsts (L' := L) (J := ℕ) (τ k) ⊆ A) :
     sentenceJConsts (L' := L) (J := ℕ) (BoundedFormulaω.iInf τ) ⊆ A := by
   intro j hj
-  simp only [sentenceJConsts, BoundedFormulaω.functionsIn, Set.mem_setOf_eq, Set.mem_iUnion] at hj
+  simp only [sentenceJConsts, BoundedFormulaω.functionsIn, Set.mem_ofPred_eq, Set.mem_iUnion] at hj
   obtain ⟨k, hk⟩ := hj
   exact hτ k hk
 

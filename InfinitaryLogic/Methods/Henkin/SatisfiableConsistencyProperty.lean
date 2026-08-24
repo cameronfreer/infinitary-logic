@@ -175,7 +175,7 @@ noncomputable def trueInModelConsistencyPropertyEq
     intro S hS t₁ t₂ φ heq hφt₁
     have h_eq : t₁.realize (Empty.elim : Empty → M) = t₂.realize (Empty.elim : Empty → M) := by
       have := hS heq
-      simp only [trueInModel, Set.mem_setOf_eq, Sentenceω.realize_def, realize_equal,
+      simp only [trueInModel, Set.mem_ofPred_eq, Sentenceω.realize_def, realize_equal,
                   Term.realize_relabel] at this
       simpa using this
     have h_φ : Sentenceω.Realize (φ.subst (fun _ => t₁)) M := hS hφt₁
@@ -188,14 +188,14 @@ noncomputable def trueInModelConsistencyPropertyEq
   C7_quantifier := by
     intro S hS φ hmem
     have hsat := hS hmem
-    simp only [trueInModel, Set.mem_setOf_eq, Sentenceω.realize_def, realize_ex] at hsat
+    simp only [trueInModel, Set.mem_ofPred_eq, Sentenceω.realize_def, realize_ex] at hsat
     obtain ⟨m, hm⟩ := hsat
     rw [snoc_elim0_eq_const, realize_relabel_sumInr_zero] at hm
     exact ⟨ι.name m, union_subset_trueInModel hS ((realize_subst_name ι φ m).mpr hm)⟩
   C7_all := by
     intro S hS φ hmem t
     have hsat := hS hmem
-    simp only [trueInModel, Set.mem_setOf_eq, Sentenceω.realize_def, realize_all] at hsat
+    simp only [trueInModel, Set.mem_ofPred_eq, Sentenceω.realize_def, realize_all] at hsat
     have hm := hsat (t.realize (Empty.elim : Empty → M))
     rw [snoc_elim0_eq_const, realize_relabel_sumInr_zero] at hm
     exact union_subset_trueInModel hS (by
@@ -204,7 +204,7 @@ noncomputable def trueInModelConsistencyPropertyEq
   C7_neg_all := by
     intro S hS φ hmem
     have hsat := hS hmem
-    simp only [trueInModel, Set.mem_setOf_eq, Sentenceω.realize_def, realize_not, realize_all] at hsat
+    simp only [trueInModel, Set.mem_ofPred_eq, Sentenceω.realize_def, realize_not, realize_all] at hsat
     push Not at hsat
     obtain ⟨m, hm⟩ := hsat
     rw [snoc_elim0_eq_const, realize_relabel_sumInr_zero] at hm
@@ -216,7 +216,7 @@ noncomputable def trueInModelConsistencyPropertyEq
   C7_neg_ex := by
     intro S hS φ hmem t
     have hsat := hS hmem
-    simp only [trueInModel, Set.mem_setOf_eq, Sentenceω.realize_def, realize_not, realize_ex] at hsat
+    simp only [trueInModel, Set.mem_ofPred_eq, Sentenceω.realize_def, realize_not, realize_ex] at hsat
     push Not at hsat
     have hm := hsat (t.realize (Empty.elim : Empty → M))
     rw [snoc_elim0_eq_const, realize_relabel_sumInr_zero] at hm
@@ -227,7 +227,7 @@ noncomputable def trueInModelConsistencyPropertyEq
   C7_all_bound := by
     intro S hS φ hmem t
     have hsat := hS hmem
-    simp only [trueInModel, Set.mem_setOf_eq, Sentenceω.realize_def, realize_all] at hsat
+    simp only [trueInModel, Set.mem_ofPred_eq, Sentenceω.realize_def, realize_all] at hsat
     have h := hsat (t.realize (Empty.elim : Empty → M))
     rw [snoc_elim0_eq_const] at h
     exact union_subset_trueInModel hS (by
@@ -237,7 +237,7 @@ noncomputable def trueInModelConsistencyPropertyEq
   C7_neg_all_bound := by
     intro S hS φ hmem
     have hsat := hS hmem
-    simp only [trueInModel, Set.mem_setOf_eq, Sentenceω.realize_def, realize_not,
+    simp only [trueInModel, Set.mem_ofPred_eq, Sentenceω.realize_def, realize_not,
                realize_all] at hsat
     push Not at hsat
     obtain ⟨m, hm⟩ := hsat

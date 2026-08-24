@@ -35,56 +35,56 @@ in the whole's. -/
 theorem baseFunctionsIn_imp_left {φ ψ : L[[ℕ]].Sentenceω} :
     φ.baseFunctionsIn ⊆ (φ.imp ψ).baseFunctionsIn := by
   intro s hs
-  simp only [BoundedFormulaω.baseFunctionsIn, BoundedFormulaω.functionsIn, Set.mem_setOf_eq,
+  simp only [BoundedFormulaω.baseFunctionsIn, BoundedFormulaω.functionsIn, Set.mem_ofPred_eq,
     Set.mem_union] at hs ⊢
   exact Or.inl hs
 
 theorem baseFunctionsIn_imp_right {φ ψ : L[[ℕ]].Sentenceω} :
     ψ.baseFunctionsIn ⊆ (φ.imp ψ).baseFunctionsIn := by
   intro s hs
-  simp only [BoundedFormulaω.baseFunctionsIn, BoundedFormulaω.functionsIn, Set.mem_setOf_eq,
+  simp only [BoundedFormulaω.baseFunctionsIn, BoundedFormulaω.functionsIn, Set.mem_ofPred_eq,
     Set.mem_union] at hs ⊢
   exact Or.inr hs
 
 theorem baseRelationsIn_imp_left {φ ψ : L[[ℕ]].Sentenceω} :
     φ.baseRelationsIn ⊆ (φ.imp ψ).baseRelationsIn := by
   intro s hs
-  simp only [BoundedFormulaω.baseRelationsIn, BoundedFormulaω.relationsIn, Set.mem_setOf_eq,
+  simp only [BoundedFormulaω.baseRelationsIn, BoundedFormulaω.relationsIn, Set.mem_ofPred_eq,
     Set.mem_union] at hs ⊢
   exact Or.inl hs
 
 theorem baseRelationsIn_imp_right {φ ψ : L[[ℕ]].Sentenceω} :
     ψ.baseRelationsIn ⊆ (φ.imp ψ).baseRelationsIn := by
   intro s hs
-  simp only [BoundedFormulaω.baseRelationsIn, BoundedFormulaω.relationsIn, Set.mem_setOf_eq,
+  simp only [BoundedFormulaω.baseRelationsIn, BoundedFormulaω.relationsIn, Set.mem_ofPred_eq,
     Set.mem_union] at hs ⊢
   exact Or.inr hs
 
 theorem baseFunctionsIn_component_iInf {φs : ℕ → L[[ℕ]].Sentenceω} (k : ℕ) :
     (φs k).baseFunctionsIn ⊆ (BoundedFormulaω.iInf φs).baseFunctionsIn := by
   intro s hs
-  simp only [BoundedFormulaω.baseFunctionsIn, BoundedFormulaω.functionsIn, Set.mem_setOf_eq,
+  simp only [BoundedFormulaω.baseFunctionsIn, BoundedFormulaω.functionsIn, Set.mem_ofPred_eq,
     Set.mem_iUnion] at hs ⊢
   exact ⟨k, hs⟩
 
 theorem baseRelationsIn_component_iInf {φs : ℕ → L[[ℕ]].Sentenceω} (k : ℕ) :
     (φs k).baseRelationsIn ⊆ (BoundedFormulaω.iInf φs).baseRelationsIn := by
   intro s hs
-  simp only [BoundedFormulaω.baseRelationsIn, BoundedFormulaω.relationsIn, Set.mem_setOf_eq,
+  simp only [BoundedFormulaω.baseRelationsIn, BoundedFormulaω.relationsIn, Set.mem_ofPred_eq,
     Set.mem_iUnion] at hs ⊢
   exact ⟨k, hs⟩
 
 theorem baseFunctionsIn_component_iSup {φs : ℕ → L[[ℕ]].Sentenceω} (k : ℕ) :
     (φs k).baseFunctionsIn ⊆ (BoundedFormulaω.iSup φs).baseFunctionsIn := by
   intro s hs
-  simp only [BoundedFormulaω.baseFunctionsIn, BoundedFormulaω.functionsIn, Set.mem_setOf_eq,
+  simp only [BoundedFormulaω.baseFunctionsIn, BoundedFormulaω.functionsIn, Set.mem_ofPred_eq,
     Set.mem_iUnion] at hs ⊢
   exact ⟨k, hs⟩
 
 theorem baseRelationsIn_component_iSup {φs : ℕ → L[[ℕ]].Sentenceω} (k : ℕ) :
     (φs k).baseRelationsIn ⊆ (BoundedFormulaω.iSup φs).baseRelationsIn := by
   intro s hs
-  simp only [BoundedFormulaω.baseRelationsIn, BoundedFormulaω.relationsIn, Set.mem_setOf_eq,
+  simp only [BoundedFormulaω.baseRelationsIn, BoundedFormulaω.relationsIn, Set.mem_ofPred_eq,
     Set.mem_iUnion] at hs ⊢
   exact ⟨k, hs⟩
 
@@ -126,7 +126,7 @@ theorem relationsIn_openBounds_eq {n : ℕ} (φ : L[[ℕ]].BoundedFormulaω Empt
 theorem baseFunctionsIn_instConst_subset (c : ℕ) (φ : L[[ℕ]].BoundedFormulaω Empty 1) :
     (instConst c φ).baseFunctionsIn ⊆ (BoundedFormulaω.all φ).baseFunctionsIn := by
   intro s hs
-  simp only [BoundedFormulaω.baseFunctionsIn, Set.mem_setOf_eq] at hs ⊢
+  simp only [BoundedFormulaω.baseFunctionsIn, Set.mem_ofPred_eq] at hs ⊢
   have hsub :=
     BoundedFormulaω.functionsIn_subst (fun _ : Fin 1 => constTerm (L' := L) c) φ.openBounds
   have hmem := hsub hs
@@ -149,7 +149,7 @@ theorem baseRelationsIn_instConst_subset (c : ℕ) (φ : L[[ℕ]].BoundedFormula
     show ((φ.openBounds).subst _).relationsIn = _
     rw [relationsIn_subst_eq, relationsIn_openBounds_eq]; rfl
   intro s hs
-  simp only [BoundedFormulaω.baseRelationsIn, Set.mem_setOf_eq, h1] at hs ⊢
+  simp only [BoundedFormulaω.baseRelationsIn, Set.mem_ofPred_eq, h1] at hs ⊢
   exact hs
 
 /-! ## Atomic base symbols
@@ -162,7 +162,7 @@ theorem baseFunctionsIn_constEq (a b : ℕ) :
   ext s
   obtain ⟨n, f⟩ := s
   simp only [constEq, constTermS, BoundedFormulaω.baseFunctionsIn, BoundedFormulaω.functionsIn,
-    Term.functionsIn, Set.mem_setOf_eq, Set.mem_union, Set.iUnion_of_empty,
+    Term.functionsIn, Set.mem_ofPred_eq, Set.mem_union, Set.iUnion_of_empty,
     Set.mem_insert_iff, Set.mem_empty_iff_false, or_false, Sigma.mk.injEq, iff_false, not_or]
   refine ⟨?_, ?_⟩ <;> rintro ⟨rfl, h⟩ <;> exact (Sum.inl_ne_inr (eq_of_heq h))
 
@@ -170,14 +170,14 @@ theorem baseRelationsIn_constEq (a b : ℕ) :
     (constEq (L := L) a b).baseRelationsIn = ∅ := by
   ext s
   simp only [constEq, BoundedFormulaω.baseRelationsIn, BoundedFormulaω.relationsIn,
-    Set.mem_setOf_eq, Set.mem_empty_iff_false]
+    Set.mem_ofPred_eq, Set.mem_empty_iff_false]
 
 theorem baseFunctionsIn_relInst {l : ℕ} (Rr : L.Relations l) (g : Fin l → ℕ) :
     (relInst Rr g).baseFunctionsIn = ∅ := by
   ext s
   obtain ⟨n, f⟩ := s
   simp only [relInst, constTermS, BoundedFormulaω.baseFunctionsIn, BoundedFormulaω.functionsIn,
-    Term.functionsIn, Set.mem_setOf_eq, Set.mem_iUnion, Set.iUnion_of_empty, Set.mem_insert_iff,
+    Term.functionsIn, Set.mem_ofPred_eq, Set.mem_iUnion, Set.iUnion_of_empty, Set.mem_insert_iff,
     Set.mem_empty_iff_false, or_false, iff_false, not_exists]
   -- `rintro` now discharges the `Sum.inl`/`Sum.inr` clash itself.
   rintro i ⟨rfl, h⟩
@@ -186,7 +186,7 @@ theorem baseRelationsIn_relInst {l : ℕ} (Rr : L.Relations l) (g g' : Fin l →
     (relInst Rr g).baseRelationsIn = (relInst Rr g').baseRelationsIn := by
   ext s
   simp only [relInst, BoundedFormulaω.baseRelationsIn, BoundedFormulaω.relationsIn,
-    Set.mem_setOf_eq]
+    Set.mem_ofPred_eq]
 
 /-! ## The three constant-expansion transport equalities (the base-`L` ↔ `L[[ℕ]]` boundary) -/
 
@@ -208,7 +208,7 @@ private theorem tag_inl_rel_injective :
 theorem baseFunctionsIn_mapLanguage_withConstants (r : L.Sentenceω) :
     (BoundedFormulaω.mapLanguage (L.lhomWithConstants ℕ) r).baseFunctionsIn = r.functionsIn := by
   ext s
-  simp only [BoundedFormulaω.baseFunctionsIn, Set.mem_setOf_eq,
+  simp only [BoundedFormulaω.baseFunctionsIn, Set.mem_ofPred_eq,
     BoundedFormulaω.functionsIn_mapLanguage]
   exact tag_inl_fun_injective.mem_set_image
 
@@ -216,7 +216,7 @@ theorem baseFunctionsIn_mapLanguage_withConstants (r : L.Sentenceω) :
 theorem baseRelationsIn_mapLanguage_withConstants (r : L.Sentenceω) :
     (BoundedFormulaω.mapLanguage (L.lhomWithConstants ℕ) r).baseRelationsIn = r.relationsIn := by
   ext s
-  simp only [BoundedFormulaω.baseRelationsIn, Set.mem_setOf_eq,
+  simp only [BoundedFormulaω.baseRelationsIn, Set.mem_ofPred_eq,
     BoundedFormulaω.relationsIn_mapLanguage]
   exact tag_inl_rel_injective.mem_set_image
 

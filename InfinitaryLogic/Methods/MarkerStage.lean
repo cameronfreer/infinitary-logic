@@ -650,18 +650,18 @@ theorem realizeWith_congr {σ σ' : J → M} {h h' : ℕ → M} {α : Type} {n :
     rw [realizeWith_equal, realizeWith_equal,
       termValueWith_congr t₁
         (fun j hj => hσ j (by
-          simp only [expJConstsIn, Set.mem_setOf_eq, BoundedFormulaω.functionsIn]
+          simp only [expJConstsIn, Set.mem_ofPred_eq, BoundedFormulaω.functionsIn]
           exact Set.mem_union_left _ hj))
         (fun m hm => hh m (by
-          simp only [henkinConstsIn, sentenceJConsts, Set.mem_setOf_eq,
+          simp only [henkinConstsIn, sentenceJConsts, Set.mem_ofPred_eq,
             BoundedFormulaω.functionsIn]
           exact Set.mem_union_left _ hm)) _,
       termValueWith_congr t₂
         (fun j hj => hσ j (by
-          simp only [expJConstsIn, Set.mem_setOf_eq, BoundedFormulaω.functionsIn]
+          simp only [expJConstsIn, Set.mem_ofPred_eq, BoundedFormulaω.functionsIn]
           exact Set.mem_union_right _ hj))
         (fun m hm => hh m (by
-          simp only [henkinConstsIn, sentenceJConsts, Set.mem_setOf_eq,
+          simp only [henkinConstsIn, sentenceJConsts, Set.mem_ofPred_eq,
             BoundedFormulaω.functionsIn]
           exact Set.mem_union_right _ hm)) _]
   | rel R ts =>
@@ -669,26 +669,26 @@ theorem realizeWith_congr {σ σ' : J → M} {h h' : ℕ → M} {α : Type} {n :
     exact iff_of_eq (congrArg _ (funext fun i =>
       termValueWith_congr (ts i)
         (fun j hj => hσ j (by
-          simp only [expJConstsIn, Set.mem_setOf_eq, BoundedFormulaω.functionsIn]
+          simp only [expJConstsIn, Set.mem_ofPred_eq, BoundedFormulaω.functionsIn]
           exact Set.mem_iUnion.mpr ⟨i, hj⟩))
         (fun m hm => hh m (by
-          simp only [henkinConstsIn, sentenceJConsts, Set.mem_setOf_eq,
+          simp only [henkinConstsIn, sentenceJConsts, Set.mem_ofPred_eq,
             BoundedFormulaω.functionsIn]
           exact Set.mem_iUnion.mpr ⟨i, hm⟩)) _))
   | imp φ ψ ihφ ihψ =>
     rw [realizeWith_imp, realizeWith_imp,
       ihφ (fun j hj => hσ j (by
-          simp only [expJConstsIn, Set.mem_setOf_eq, BoundedFormulaω.functionsIn] at hj ⊢
+          simp only [expJConstsIn, Set.mem_ofPred_eq, BoundedFormulaω.functionsIn] at hj ⊢
           exact Set.mem_union_left _ hj))
         (fun m hm => hh m (by
-          simp only [henkinConstsIn, sentenceJConsts, Set.mem_setOf_eq,
+          simp only [henkinConstsIn, sentenceJConsts, Set.mem_ofPred_eq,
             BoundedFormulaω.functionsIn] at hm ⊢
           exact Set.mem_union_left _ hm)),
       ihψ (fun j hj => hσ j (by
-          simp only [expJConstsIn, Set.mem_setOf_eq, BoundedFormulaω.functionsIn] at hj ⊢
+          simp only [expJConstsIn, Set.mem_ofPred_eq, BoundedFormulaω.functionsIn] at hj ⊢
           exact Set.mem_union_right _ hj))
         (fun m hm => hh m (by
-          simp only [henkinConstsIn, sentenceJConsts, Set.mem_setOf_eq,
+          simp only [henkinConstsIn, sentenceJConsts, Set.mem_ofPred_eq,
             BoundedFormulaω.functionsIn] at hm ⊢
           exact Set.mem_union_right _ hm))]
   | all φ ih =>
@@ -698,20 +698,20 @@ theorem realizeWith_congr {σ σ' : J → M} {h h' : ℕ → M} {α : Type} {n :
     rw [realizeWith_iSup, realizeWith_iSup]
     exact exists_congr fun i =>
       ih i (fun j hj => hσ j (by
-          simp only [expJConstsIn, Set.mem_setOf_eq, BoundedFormulaω.functionsIn] at hj ⊢
+          simp only [expJConstsIn, Set.mem_ofPred_eq, BoundedFormulaω.functionsIn] at hj ⊢
           exact Set.mem_iUnion.mpr ⟨i, hj⟩))
         (fun m hm => hh m (by
-          simp only [henkinConstsIn, sentenceJConsts, Set.mem_setOf_eq,
+          simp only [henkinConstsIn, sentenceJConsts, Set.mem_ofPred_eq,
             BoundedFormulaω.functionsIn] at hm ⊢
           exact Set.mem_iUnion.mpr ⟨i, hm⟩)) xs
   | iInf φs ih =>
     rw [realizeWith_iInf, realizeWith_iInf]
     exact forall_congr' fun i =>
       ih i (fun j hj => hσ j (by
-          simp only [expJConstsIn, Set.mem_setOf_eq, BoundedFormulaω.functionsIn] at hj ⊢
+          simp only [expJConstsIn, Set.mem_ofPred_eq, BoundedFormulaω.functionsIn] at hj ⊢
           exact Set.mem_iUnion.mpr ⟨i, hj⟩))
         (fun m hm => hh m (by
-          simp only [henkinConstsIn, sentenceJConsts, Set.mem_setOf_eq,
+          simp only [henkinConstsIn, sentenceJConsts, Set.mem_ofPred_eq,
             BoundedFormulaω.functionsIn] at hm ⊢
           exact Set.mem_iUnion.mpr ⟨i, hm⟩)) xs
 
@@ -752,7 +752,7 @@ theorem expJConstsIn_component_iInf {α : Type} {n : ℕ}
     expJConstsIn (L'' := L'') (φs k) ⊆
       expJConstsIn (L'' := L'') (BoundedFormulaω.iInf φs) := by
   intro j hj
-  simp only [expJConstsIn, Set.mem_setOf_eq, BoundedFormulaω.functionsIn] at hj ⊢
+  simp only [expJConstsIn, Set.mem_ofPred_eq, BoundedFormulaω.functionsIn] at hj ⊢
   exact Set.mem_iUnion.mpr ⟨k, hj⟩
 
 /-- A disjunction component's skeleton support is contained in the disjunction's. -/
@@ -761,7 +761,7 @@ theorem expJConstsIn_component_iSup {α : Type} {n : ℕ}
     expJConstsIn (L'' := L'') (φs k) ⊆
       expJConstsIn (L'' := L'') (BoundedFormulaω.iSup φs) := by
   intro j hj
-  simp only [expJConstsIn, Set.mem_setOf_eq, BoundedFormulaω.functionsIn] at hj ⊢
+  simp only [expJConstsIn, Set.mem_ofPred_eq, BoundedFormulaω.functionsIn] at hj ⊢
   exact Set.mem_iUnion.mpr ⟨k, hj⟩
 
 /-- An implication's antecedent skeleton support is contained in the implication's. -/
@@ -769,7 +769,7 @@ theorem expJConstsIn_imp_left {α : Type} {n : ℕ}
     (φ ψ : ((L''[[J]])[[ℕ]]).BoundedFormulaω α n) :
     expJConstsIn (L'' := L'') φ ⊆ expJConstsIn (L'' := L'') (φ.imp ψ) := by
   intro j hj
-  simp only [expJConstsIn, Set.mem_setOf_eq, BoundedFormulaω.functionsIn] at hj ⊢
+  simp only [expJConstsIn, Set.mem_ofPred_eq, BoundedFormulaω.functionsIn] at hj ⊢
   exact Set.mem_union_left _ hj
 
 /-- An implication's consequent skeleton support is contained in the implication's. -/
@@ -777,7 +777,7 @@ theorem expJConstsIn_imp_right {α : Type} {n : ℕ}
     (φ ψ : ((L''[[J]])[[ℕ]]).BoundedFormulaω α n) :
     expJConstsIn (L'' := L'') ψ ⊆ expJConstsIn (L'' := L'') (φ.imp ψ) := by
   intro j hj
-  simp only [expJConstsIn, Set.mem_setOf_eq, BoundedFormulaω.functionsIn] at hj ⊢
+  simp only [expJConstsIn, Set.mem_ofPred_eq, BoundedFormulaω.functionsIn] at hj ⊢
   exact Set.mem_union_right _ hj
 
 /-! ### Support lemmas for the expansion's Henkin constants (wrappers around the generic
@@ -1253,11 +1253,11 @@ theorem MarkerHenkinConsistent.imp_choice
     MarkerHenkinConsistent M (insert φ.not F) ∨ MarkerHenkinConsistent M (insert ψ F) := by
   obtain ⟨b, hb⟩ := h.branch_choice (fun b => cond b ψ φ.not) hmem
     (fun b => by cases b
-                 · simpa only [cond_false, expJConstsIn_not] using expJConstsIn_imp_left φ ψ
-                 · simpa only [cond_true] using expJConstsIn_imp_right φ ψ)
+                 · simpa only [Bool.cond_false, expJConstsIn_not] using expJConstsIn_imp_left φ ψ
+                 · simpa only [Bool.cond_true] using expJConstsIn_imp_right φ ψ)
     (fun b => by cases b
-                 · simpa only [cond_false, henkinConstsIn_not] using henkinConstsIn_imp_left φ ψ
-                 · simpa only [cond_true] using henkinConstsIn_imp_right φ ψ)
+                 · simpa only [Bool.cond_false, henkinConstsIn_not] using henkinConstsIn_imp_left φ ψ
+                 · simpa only [Bool.cond_true] using henkinConstsIn_imp_right φ ψ)
     (fun σ hk hreal => by
       rw [realizeWith_imp] at hreal
       by_cases hφ : realizeWith σ hk φ (Empty.elim : Empty → M) Fin.elim0
@@ -1472,11 +1472,11 @@ theorem MarkerHenkinConsistent.extension
   have hbJ : ∀ b : Bool, expJConstsIn (L'' := L'') (cond b τ.not τ) ⊆ ↑S' := by
     intro b; cases b
     · exact hSτ.trans hSτS'
-    · rw [cond_true, expJConstsIn_not]; exact hSτ.trans hSτS'
+    · rw [Bool.cond_true, expJConstsIn_not]; exact hSτ.trans hSτS'
   have hbH : ∀ b : Bool, henkinConstsIn (L'' := L'') (cond b τ.not τ) ⊆ ↑H' := by
     intro b; cases b
     · exact hHτ.trans hHτH'
-    · rw [cond_true, henkinConstsIn_not]; exact hHτ.trans hHτH'
+    · rw [Bool.cond_true, henkinConstsIn_not]; exact hHτ.trans hHτH'
   -- The uniform choice over `Bool`, per target level via re-homogenization.
   have hstep : ∀ β, β < Ordinal.omega 1 →
       ∃ α, β ≤ α ∧ α < Ordinal.omega 1 ∧

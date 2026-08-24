@@ -62,7 +62,7 @@ theorem iso_borel_of_bounded_scottHeight
   ext ⟨c₁, c₂⟩
   simp only [Set.mem_inter_iff, Set.mem_prod]
   unfold IsoSet BFEquivSet ModelsOf ModelsOfBounded
-  simp only [Set.mem_setOf_eq]
+  simp only [Set.mem_ofPred_eq]
   constructor
   · rintro ⟨hiso, hc₁, hc₂⟩
     exact ⟨(@bounded_scottHeight_iso_eq_BFEquiv _ _ _ _ _ hα hbound

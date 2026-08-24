@@ -71,7 +71,7 @@ private theorem sameAtomicType_measurableSet
       @SameAtomicType L ℕ p.1.toStructure n ℕ p.2.toStructure a b} =
     ⋂ (idx : L.AtomicIdx n), {p | @AtomicIdx.holds L ℕ p.1.toStructure n idx a ↔
       @AtomicIdx.holds L ℕ p.2.toStructure n idx b} := by
-    ext p; simp only [SameAtomicType, Set.mem_setOf_eq, Set.mem_iInter]
+    ext p; simp only [SameAtomicType, Set.mem_ofPred_eq, Set.mem_iInter]
   rw [this]
   apply MeasurableSet.iInter
   intro idx
@@ -95,7 +95,7 @@ private theorem sameAtomicType_measurableSet
       ({p | p.1 ⟨⟨_, R⟩, a ∘ f⟩ = true} ∩ {p | p.2 ⟨⟨_, R⟩, b ∘ f⟩ = true}) ∪
       ({p | p.1 ⟨⟨_, R⟩, a ∘ f⟩ = true}ᶜ ∩ {p | p.2 ⟨⟨_, R⟩, b ∘ f⟩ = true}ᶜ) := by
       ext p
-      simp only [Set.mem_setOf_eq, Set.mem_union, Set.mem_inter_iff, Set.mem_compl_iff]
+      simp only [Set.mem_ofPred_eq, Set.mem_union, Set.mem_inter_iff, Set.mem_compl_iff]
       rcases Bool.eq_false_or_eq_true (p.1 ⟨⟨_, R⟩, a ∘ f⟩) with h1 | h1 <;>
         rcases Bool.eq_false_or_eq_true (p.2 ⟨⟨_, R⟩, b ∘ f⟩) with h2 | h2 <;>
         simp_all
@@ -135,7 +135,7 @@ theorem bfEquivSet_measurableSet
       (⋂ (m : ℕ), ⋃ (n' : ℕ), BFEquivSet β (n + 1) (Fin.snoc a m) (Fin.snoc b n')) ∩
       (⋂ (n' : ℕ), ⋃ (m : ℕ), BFEquivSet β (n + 1) (Fin.snoc a m) (Fin.snoc b n')) := by
       ext p
-      simp only [BFEquivSet, Set.mem_setOf_eq, Set.mem_inter_iff, Set.mem_iInter, Set.mem_iUnion]
+      simp only [BFEquivSet, Set.mem_ofPred_eq, Set.mem_inter_iff, Set.mem_iInter, Set.mem_iUnion]
       rw [@BFEquiv.succ L ℕ p.1.toStructure ℕ p.2.toStructure n β a b]
       tauto
     rw [this]
@@ -150,7 +150,7 @@ theorem bfEquivSet_measurableSet
     have : BFEquivSet (L := L) β n a b =
       ⋂ (γ : Set.Iio β), BFEquivSet (↑γ) n a b := by
       ext p
-      simp only [BFEquivSet, Set.mem_setOf_eq, Set.mem_iInter, Set.Iio, Subtype.forall]
+      simp only [BFEquivSet, Set.mem_ofPred_eq, Set.mem_iInter, Set.Iio, Subtype.forall]
       exact @BFEquiv.limit L ℕ p.1.toStructure ℕ p.2.toStructure n β hβ_limit a b
     rw [this]
     have := InfinitaryLogic.countable_Iio_of_lt_omega1 β hα

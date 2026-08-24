@@ -61,7 +61,7 @@ theorem baseFunctionsIn_substConst_subset (b a : ℕ) (ρ : L[[ℕ]].Sentenceω)
     (substConst b a ρ).baseFunctionsIn ⊆ ρ.baseFunctionsIn := by
   refine (baseFunctionsIn_instConst_subset a _).trans ?_
   intro s hs
-  simp only [BoundedFormulaω.baseFunctionsIn, Set.mem_setOf_eq] at hs ⊢
+  simp only [BoundedFormulaω.baseFunctionsIn, Set.mem_ofPred_eq] at hs ⊢
   rw [show (BoundedFormulaω.all ((ρ.abstractConst b).relabel
       (Sum.inr : Fin 1 → Empty ⊕ Fin 1))).functionsIn
     = ((ρ.abstractConst b).relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).functionsIn from rfl,
@@ -72,7 +72,7 @@ theorem baseRelationsIn_substConst (b a : ℕ) (ρ : L[[ℕ]].Sentenceω) :
     (substConst b a ρ).baseRelationsIn ⊆ ρ.baseRelationsIn := by
   refine (baseRelationsIn_instConst_subset a _).trans ?_
   intro s hs
-  simp only [BoundedFormulaω.baseRelationsIn, Set.mem_setOf_eq] at hs ⊢
+  simp only [BoundedFormulaω.baseRelationsIn, Set.mem_ofPred_eq] at hs ⊢
   rw [show (BoundedFormulaω.all ((ρ.abstractConst b).relabel
       (Sum.inr : Fin 1 → Empty ⊕ Fin 1))).relationsIn
     = ((ρ.abstractConst b).relabel (Sum.inr : Fin 1 → Empty ⊕ Fin 1)).relationsIn from rfl,

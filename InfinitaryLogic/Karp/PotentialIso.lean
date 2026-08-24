@@ -73,17 +73,17 @@ variable {N : Type w'} [L.Structure N]
 /-- The trivial potential isomorphism from M to itself via the identity. -/
 noncomputable def refl (M : Type w) [L.Structure M] : PotentialIso L M M where
   family := { p | SameAtomicType (L := L) p.2.1 p.2.2 ∧ p.2.1 = p.2.2 }
-  empty_mem := by simp only [Set.mem_setOf_eq]; exact ⟨SameAtomicType.refl _, trivial⟩
+  empty_mem := by simp only [Set.mem_ofPred_eq]; exact ⟨SameAtomicType.refl _, trivial⟩
   compatible := fun p hp => hp.1
   forth := fun p hp m => by
-    simp only [Set.mem_setOf_eq] at hp ⊢
+    simp only [Set.mem_ofPred_eq] at hp ⊢
     use m
     constructor
     · simp only [hp.2]
       exact SameAtomicType.refl _
     · simp only [hp.2]
   back := fun p hp n' => by
-    simp only [Set.mem_setOf_eq] at hp ⊢
+    simp only [Set.mem_ofPred_eq] at hp ⊢
     use n'
     constructor
     · simp only [hp.2]
@@ -93,13 +93,13 @@ noncomputable def refl (M : Type w) [L.Structure M] : PotentialIso L M M where
 /-- Potential isomorphism is symmetric. -/
 noncomputable def symm (p : PotentialIso L M N) : PotentialIso L N M where
   family := { q | ⟨q.1, q.2.2, q.2.1⟩ ∈ p.family }
-  empty_mem := by simpa [Set.mem_setOf_eq] using p.empty_mem
+  empty_mem := by simpa [Set.mem_ofPred_eq] using p.empty_mem
   compatible := fun q hq => by
-    simpa [Set.mem_setOf_eq] using (p.compatible ⟨q.1, q.2.2, q.2.1⟩ hq).symm
+    simpa [Set.mem_ofPred_eq] using (p.compatible ⟨q.1, q.2.2, q.2.1⟩ hq).symm
   forth := fun ⟨n, b, a⟩ hq n' => by
-    simpa [Set.mem_setOf_eq] using p.back ⟨n, a, b⟩ (by simpa [Set.mem_setOf_eq] using hq) n'
+    simpa [Set.mem_ofPred_eq] using p.back ⟨n, a, b⟩ (by simpa [Set.mem_ofPred_eq] using hq) n'
   back := fun ⟨n, b, a⟩ hq m => by
-    simpa [Set.mem_setOf_eq] using p.forth ⟨n, a, b⟩ (by simpa [Set.mem_setOf_eq] using hq) m
+    simpa [Set.mem_ofPred_eq] using p.forth ⟨n, a, b⟩ (by simpa [Set.mem_ofPred_eq] using hq) m
 
 /-- Every finite `N`-tuple is matched to an `M`-tuple through a potential isomorphism, by
 iterating `back` along the tuple. -/
@@ -421,7 +421,7 @@ theorem BFEquiv_all_implies_potentialIso
     exact (BFEquiv.zero p.2.1 p.2.2).mp (BFEquiv.monotone le_rfl (hp 0))
   · -- forth: by sSup contradiction
     intro ⟨n, a, b⟩ hfamily m
-    simp only [Set.mem_setOf_eq] at hfamily ⊢
+    simp only [Set.mem_ofPred_eq] at hfamily ⊢
     by_contra h_no
     push Not at h_no
     -- For each n' : N, choose an ordinal where BFEquiv fails
@@ -434,7 +434,7 @@ theorem BFEquiv_all_implies_potentialIso
     exact hbad n'₀ (BFEquiv.monotone (le_ciSup hbdd n'₀) hn'₀)
   · -- back: symmetric argument
     intro ⟨n, a, b⟩ hfamily n'
-    simp only [Set.mem_setOf_eq] at hfamily ⊢
+    simp only [Set.mem_ofPred_eq] at hfamily ⊢
     by_contra h_no
     push Not at h_no
     choose αbad hbad using h_no

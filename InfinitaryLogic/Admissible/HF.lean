@@ -79,7 +79,7 @@ theorem sentence_slice_hfFragment (L : Language.{u, v}) :
     {φ : L.Sentenceω | (⟨0, φ⟩ : Σ n, L.BoundedFormulaω Empty n) ∈ hfFragment L} =
       finitaryFragment L := by
   ext φ
-  simp only [Set.mem_setOf_eq, Fragment.mem_def, mem_finitaryFragment_iff]
+  simp only [Set.mem_ofPred_eq, Fragment.mem_def, mem_finitaryFragment_iff]
   exact Iff.rfl
 
 /-- The **full preimage theory** — every first-order sentence whose image lies in `T`, not one

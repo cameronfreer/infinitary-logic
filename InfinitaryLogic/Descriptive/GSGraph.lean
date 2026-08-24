@@ -251,7 +251,7 @@ theorem exists_gSGraph_edge_of_not_isMeagre
   -- Localization: B is comeager in some word cylinder
   obtain ⟨W, hW_open, hBW⟩ := hB.residualEq_isOpen
   have hsym : IsMeagre {p : ℕ → Bool | ¬(p ∈ B ↔ p ∈ W)} := by
-    rw [IsMeagre, compl_setOf]
+    rw [IsMeagre, compl_ofPred]
     simp only [not_not]
     exact Filter.eventuallyEq_set.mp hBW
   have hW_ne : W.Nonempty := by
@@ -276,7 +276,7 @@ theorem exists_gSGraph_edge_of_not_isMeagre
     rintro p ⟨hpc, hpB⟩
     have hpW : p ∈ W :=
       hrW (wordCylinder_subset_of_prefix (hrs.trans ⟨[i], rfl⟩) hpc)
-    simp only [mem_setOf_eq]
+    simp only [mem_ofPred_eq]
     intro h
     exact hpB (h.mpr hpW)
   -- A common point avoiding both meager sets

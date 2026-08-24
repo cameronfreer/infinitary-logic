@@ -52,7 +52,7 @@ theorem sentenceJConsts_lift_eq_empty (φ : L.Sentenceω) :
     sentenceJConsts (L' := L) (J := ℕ) (φ.mapLanguage (L.lhomWithConstants ℕ)) = ∅ := by
   rw [Set.eq_empty_iff_forall_notMem]
   intro j hj
-  rw [sentenceJConsts, Set.mem_setOf_eq, BoundedFormulaω.functionsIn_mapLanguage] at hj
+  rw [sentenceJConsts, Set.mem_ofPred_eq, BoundedFormulaω.functionsIn_mapLanguage] at hj
   obtain ⟨⟨l, f⟩, -, heq⟩ := hj
   obtain ⟨rfl, h2⟩ := Sigma.mk.inj_iff.mp heq
   have h3 : (L.lhomWithConstants ℕ).onFunction f = Sum.inr j := eq_of_heq h2
