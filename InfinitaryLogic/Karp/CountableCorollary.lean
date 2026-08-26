@@ -27,6 +27,12 @@ in `CountableRefinementHypothesis` and the countable relational language.
   implies isomorphism. Unconditional — no refinement hypothesis, no countable language.
 - `countable_LomegaEquiv_implies_iso`: for countable structures in a countable relational
   language, `Lω₁ω`-elementary equivalence implies isomorphism (KK04 Corollary 1.2.2).
+- `countable_extensionFamily_implies_iso`: for countable structures, a relation-form
+  back-and-forth system yields an isomorphism. The relational language need not be countable.
+- `ExtensionPresentation.countable_toEquiv`: the same from a proof-relevant state presentation.
+
+Both endpoints are direct compositions with `PotentialIso.countable_toEquiv`, which remains the
+sole implementation of the eventual isomorphism; they add packaging, not mathematics.
 
 ## References
 
@@ -100,6 +106,69 @@ theorem countable_LomegaEquiv_implies_iso
     {N : Type w} [L.Structure N] [Countable N] :
     LomegaEquiv L M N → Nonempty (M ≃[L] N) :=
   countable_LomegaEquiv_implies_iso_of countableRefinementHypothesis
+
+/-! ## Witness-generated back-and-forth systems
+
+Two endpoints for callers who already hold a back-and-forth system.  Both are the direct
+composition with `PotentialIso.countable_toEquiv`, which remains the sole implementation of the
+eventual isomorphism.
+
+**Countability of the two carriers is the only countability needed** — in particular no
+`[Countable (Σ l, L.Relations l)]`, which the `omit` clauses below enforce rather than merely
+assert.  That matches `countable_InfEquivW_implies_iso` and contrasts with the `Lω₁ω` route. -/
+
+omit [Countable (Σ l, L.Relations l)] in
+/-- **From a relation-form extension family to an isomorphism.**
+
+Tuples are arbitrary functions `Fin n → M`, so repeated coordinates are supported; atomic
+compatibility is exactly `SameAtomicType`.  No complete types, elementary maps, Scott sentences or
+formula invariance are involved, and the relational language need not be countable. -/
+theorem countable_extensionFamily_implies_iso
+    {M : Type w} [L.Structure M] [Countable M]
+    {N : Type w} [L.Structure N] [Countable N]
+    (R : ∀ n : ℕ, (Fin n → M) → (Fin n → N) → Prop)
+    (empty : R 0 Fin.elim0 Fin.elim0)
+    (compatible : ∀ {n a b}, R n a b → SameAtomicType (L := L) a b)
+    (forth : ∀ {n a b}, R n a b → ∀ m : M,
+      ∃ n' : N, R (n + 1) (Fin.snoc a m) (Fin.snoc b n'))
+    (back : ∀ {n a b}, R n a b → ∀ n' : N,
+      ∃ m : M, R (n + 1) (Fin.snoc a m) (Fin.snoc b n')) :
+    Nonempty (M ≃[L] N) :=
+  (PotentialIso.ofExtensionFamily R empty compatible forth back).countable_toEquiv
+
+omit [Countable (Σ l, L.Relations l)] in
+/-- **From a proof-relevant state presentation to an isomorphism.** -/
+theorem ExtensionPresentation.countable_toEquiv
+    {M : Type w} [L.Structure M] [Countable M]
+    {N : Type w} [L.Structure N] [Countable N]
+    (P : ExtensionPresentation L M N) : Nonempty (M ≃[L] N) :=
+  P.toPotentialIso.countable_toEquiv
+
+/-! ### Acceptance tests
+
+The identity system, in both presentations, including the empty-tuple case. -/
+
+/-- Relation form: the diagonal family. -/
+example {M : Type w} [L.Structure M] : PotentialIso L M M :=
+  PotentialIso.ofExtensionFamily (fun _ a b => a = b) rfl
+    (fun h => h ▸ SameAtomicType.refl _)
+    (fun h m => ⟨m, by rw [h]⟩)
+    (fun h n' => ⟨n', by rw [h]⟩)
+
+/-- State form: states *are* the tuples.  `empty := Fin.elim0` is the empty-tuple case. -/
+example {M : Type w} [L.Structure M] : ExtensionPresentation L M M where
+  State n := Fin n → M
+  left s := s
+  right s := s
+  empty := Fin.elim0
+  compatible _s := SameAtomicType.refl _
+  forth s m := ⟨m, Fin.snoc s m, rfl, rfl⟩
+  back s n' := ⟨n', Fin.snoc s n', rfl, rfl⟩
+
+/-- …and a state presentation converts through to an isomorphism. -/
+example {M : Type w} [L.Structure M] [Countable M]
+    (P : ExtensionPresentation L M M) : Nonempty (M ≃[L] M) :=
+  P.countable_toEquiv
 
 end Language
 

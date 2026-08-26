@@ -17,6 +17,12 @@ back-and-forth equivalence at all ordinal levels.
 
 - `PotentialIso`: A potential isomorphism between structures M and N is a family of
   finite partial maps containing the empty map and closed under extension in both directions.
+- `PotentialIso.ofExtensionFamily`: builds one from a relation-form extension family. A
+  producer-facing adapter, strictly below the BF-equivalence machinery.
+- `ExtensionPresentation`: the proof-relevant variant, for callers holding *states* rather than
+  a predicate.
+- `ExtensionPresentation.toPotentialIso`: its induced potential isomorphism, via the existential
+  image of the states and routed solely through `ofExtensionFamily`.
 
 ## Main Results
 
@@ -100,6 +106,38 @@ noncomputable def symm (p : PotentialIso L M N) : PotentialIso L N M where
     simpa [Set.mem_ofPred_eq] using p.back ⟨n, a, b⟩ (by simpa [Set.mem_ofPred_eq] using hq) n'
   back := fun ⟨n, b, a⟩ hq m => by
     simpa [Set.mem_ofPred_eq] using p.forth ⟨n, a, b⟩ (by simpa [Set.mem_ofPred_eq] using hq) m
+
+/-! ### Producer-facing adapters
+
+Two thin constructors for callers who have a back-and-forth system in hand and want the standard
+object.  Both build `family` directly and route through nothing else — no `BFEquiv`, no ordinal
+induction, no Scott formulas, no infinitary formula agreement.  In particular they sit *below*
+`implies_BFEquiv_all` in this file and below `Karp/CarrierTheorem.lean` in the import graph.
+
+Contrast `bfEquiv_all_of_extensionFamily`, which serves the opposite purpose: it consumes an
+extension family to produce formula-level agreement.  These produce the `PotentialIso` itself. -/
+
+/-- **Build a potential isomorphism from a relation-form extension family.**
+
+The family is literally `{p | R p.1 p.2.1 p.2.2}`.  Tuples are arbitrary functions `Fin n → M`, so
+repeated coordinates are supported and no injectivity is assumed; atomic compatibility is exactly
+`SameAtomicType`.  Carrier universes stay independent. -/
+def ofExtensionFamily
+    (R : ∀ n : ℕ, (Fin n → M) → (Fin n → N) → Prop)
+    (empty : R 0 Fin.elim0 Fin.elim0)
+    (compatible : ∀ {n a b}, R n a b → SameAtomicType (L := L) a b)
+    (forth : ∀ {n a b}, R n a b → ∀ m : M,
+      ∃ n' : N, R (n + 1) (Fin.snoc a m) (Fin.snoc b n'))
+    (back : ∀ {n a b}, R n a b → ∀ n' : N,
+      ∃ m : M, R (n + 1) (Fin.snoc a m) (Fin.snoc b n')) :
+    PotentialIso L M N where
+  family := {p | R p.1 p.2.1 p.2.2}
+  empty_mem := by simpa only [Set.mem_ofPred_eq] using empty
+  compatible := fun _ hp => compatible (by simpa only [Set.mem_ofPred_eq] using hp)
+  forth := fun _ hp m => by
+    simpa only [Set.mem_ofPred_eq] using forth (by simpa only [Set.mem_ofPred_eq] using hp) m
+  back := fun _ hp n' => by
+    simpa only [Set.mem_ofPred_eq] using back (by simpa only [Set.mem_ofPred_eq] using hp) n'
 
 /-- Every finite `N`-tuple is matched to an `M`-tuple through a potential isomorphism, by
 iterating `back` along the tuple. -/
@@ -454,6 +492,68 @@ theorem potentialIso_iff_BFEquiv_all
     Nonempty (PotentialIso L M N) ↔
     ∀ α : Ordinal.{w}, BFEquiv (L := L) α 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) :=
   ⟨fun ⟨P⟩ α => P.implies_BFEquiv_all α, BFEquiv_all_implies_potentialIso⟩
+
+/-! ## Proof-relevant presentations
+
+A second producer-facing adapter, for callers who build *states* (partial maps, finite
+approximations, game positions) rather than a predicate.  It exists so that certificates need not
+be flattened into a global relation by hand.
+
+`State` is proof-relevant on purpose: different certificates may present the same tuple pair, and
+nothing here quotients or picks canonical representatives.  This introduces **no** competing
+back-and-forth structure — its output is the existing `PotentialIso`, built through
+`ofExtensionFamily`, and the eventual isomorphism still comes only from
+`PotentialIso.countable_toEquiv`. -/
+
+/-- A back-and-forth system presented by states rather than by a predicate. -/
+structure ExtensionPresentation (L : Language.{u, v}) [L.IsRelational]
+    (M : Type w) (N : Type w') [L.Structure M] [L.Structure N] where
+  /-- The states at each tuple length. -/
+  State : ℕ → Type*
+  /-- The `M`-tuple a state presents. -/
+  left : ∀ {n}, State n → Fin n → M
+  /-- The `N`-tuple a state presents. -/
+  right : ∀ {n}, State n → Fin n → N
+  /-- A state over the empty tuple. -/
+  empty : State 0
+  /-- Every state presents an atomic-type-preserving pair. -/
+  compatible : ∀ {n} (s : State n), SameAtomicType (L := L) (left s) (right s)
+  /-- Forth, witnessed by a successor state. -/
+  forth : ∀ {n} (s : State n) (m : M), ∃ (n' : N) (s' : State (n + 1)),
+    left s' = Fin.snoc (left s) m ∧ right s' = Fin.snoc (right s) n'
+  /-- Back, witnessed by a successor state. -/
+  back : ∀ {n} (s : State n) (n' : N), ∃ (m : M) (s' : State (n + 1)),
+    left s' = Fin.snoc (left s) m ∧ right s' = Fin.snoc (right s) n'
+
+namespace ExtensionPresentation
+
+variable {M : Type w} [L.Structure M] {N : Type w'} [L.Structure N]
+variable (P : ExtensionPresentation L M N)
+
+/-- The family a presentation induces: the **existential image** of its states.  Two distinct
+states presenting the same pair collapse here and nowhere earlier. -/
+def Rel (n : ℕ) (a : Fin n → M) (b : Fin n → N) : Prop :=
+  ∃ s : P.State n, P.left s = a ∧ P.right s = b
+
+/-- Every state lands in the induced family. -/
+theorem rel_of_state {n : ℕ} (s : P.State n) : P.Rel n (P.left s) (P.right s) :=
+  ⟨s, rfl, rfl⟩
+
+/-- The standard object a presentation produces. -/
+def toPotentialIso : PotentialIso L M N :=
+  PotentialIso.ofExtensionFamily P.Rel
+    ⟨P.empty, funext fun i => i.elim0, funext fun i => i.elim0⟩
+    (fun ⟨s, hl, hr⟩ => hl ▸ hr ▸ P.compatible s)
+    (fun {_ _ _} h m => by
+      obtain ⟨s, rfl, rfl⟩ := h
+      obtain ⟨n', s', hl, hr⟩ := P.forth s m
+      exact ⟨n', s', hl, hr⟩)
+    (fun {_ _ _} h n' => by
+      obtain ⟨s, rfl, rfl⟩ := h
+      obtain ⟨m, s', hl, hr⟩ := P.back s n'
+      exact ⟨m, s', hl, hr⟩)
+
+end ExtensionPresentation
 
 end Language
 
