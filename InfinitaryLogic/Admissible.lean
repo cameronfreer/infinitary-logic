@@ -1,5 +1,6 @@
 import InfinitaryLogic.Admissible.Ackermann
 import InfinitaryLogic.Admissible.Ambient
+import InfinitaryLogic.Admissible.AmbientHF
 import InfinitaryLogic.Admissible.Fragment
 import InfinitaryLogic.Admissible.CodedFamily
 import InfinitaryLogic.Admissible.Predicates

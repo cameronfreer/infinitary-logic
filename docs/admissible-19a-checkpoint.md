@@ -21,9 +21,11 @@ known gap, named so that it cannot be mistaken for settled.
 | Fragment containment is derivable from Σ-definability + adequacy | **established** |
 | "c.e." must mean `Nat.Partrec`, not an unrestricted `W` | **established** |
 | The sentence coding must be stored data, not an `Encodable` instance | **established** |
-| `FinitaryCoding` is an *acceptable* numbering | **placeholder** — only injective |
-| The `A`-finite / theory-code layer | **placeholder** — `IsTheoryCode` is trivial, no `decodeTheory` |
-| KP closure | **placeholder** — the fields are vacuous, see §6 |
+| The `A`-finite / theory-code layer | **established** — derived from ambient membership, §6(b) |
+| HF `A`-finiteness is **not** globally ordinary finiteness | **established** (theorem) — §6(b) |
+| Pairing and union carry specification laws | **established** — §6(c) |
+| `FinitaryCoding` is an *acceptable* numbering | **placeholder** — only injective, §6(a) |
+| KP beyond pairing and union | **deferred** — pending the source audit, §6(c) |
 
 ---
 
@@ -99,31 +101,53 @@ definition is `CE S := ∃ f : ℕ →. ℕ, Nat.Partrec f ∧ ∀ n, n ∈ S �
 
 `[Encodable L.Sentence]` supplies syntax coding only. It does not make arbitrary subsets c.e.
 
-## 6. The three placeholders
+## 6. The three placeholders — one open, two closed
 
-Named explicitly because each currently *looks* like a constraint and is not one.
+Named explicitly because each *looked* like a constraint and was not one. Two are now discharged in
+`InfinitaryLogic/Admissible/{Ackermann,Ambient,AmbientHF}.lean`; (a) remains open and is next.
 
-**(a) `FinitaryCoding` is not an acceptable numbering.** It stores `enc` and injectivity. Injectivity
-gives numbering-independence of the *decoded range* — hence of adequacy and containment — but **not**
-of `Sigma1` itself. Two injective numberings can disagree about which theories are c.e. Either store
-a canonical numbering with the required `Nat.Partrec` properties, or state the whole Σ-layer
-explicitly relative to a chosen effective presentation.
+**(a) `FinitaryCoding` is not an acceptable numbering — STILL OPEN.** It stores `enc` and
+injectivity. Injectivity gives numbering-independence of the *decoded range* — hence of adequacy and
+containment, which is `hfAmbient_range_indep` — but **not** of `Sigma1` itself. Two injective
+numberings can disagree about which theories are c.e. Either store a canonical numbering with the
+required `Nat.Partrec` properties, or state the whole Σ-layer explicitly relative to a chosen
+effective presentation.
 
-**(b) The `A`-finite layer is not reconstructed.** `IsTheoryCode n := ∃ k : ℕ, n = k` is
-definitionally `True`, and `AmbientPresentation` has no `decodeTheory`. So the ambient interface does
-not yet carry `AFinite` at all.
+**(b) The `A`-finite layer — RESOLVED, and it corrects an API.** `IsTheoryCode` and `decodeTheory`
+are now **derived**, not fields: given ambient membership, a theory code is an element all of whose
+members are sentence codes, and the theory it names is their decoded image. Deriving them is what
+keeps `Mem` honest — a stored `decodeTheory` would hide a vacuous membership relation.
 
-**(c) The KP fields are vacuous.** `pair_total : ∀ a b, ∃ c, Pair a b c` with no specification law is
-satisfied by `Pair := fun _ _ _ => True` on any inhabited carrier. Totality is not pairing. The fix
-is an ambient membership relation plus laws:
+The correction: **`hf_aFinite_iff`'s global `AFinite T ↔ T.Finite` does not survive.** Theory codes
+are built from *finitary* sentence codes, so a finite theory containing an infinitary sentence is
+simply not an element of HF. The honest endpoint is
 
 ```
-Pair a b c  ↔ ∀ x, x ∈ₐ c ↔ x = a ∨ x = b
-Union a c   ↔ ∀ x, x ∈ₐ c ↔ ∃ y, y ∈ₐ a ∧ x ∈ₐ y
+AFinite T ↔ T.Finite ∧ T ⊆ finitaryFragment L                    -- hfAmbient_aFinite_iff
+T ⊆ finitaryFragment L → (AFinite T ↔ T.Finite)                  -- ..._of_finitary
 ```
 
-Do **not** attempt all of KP now: the #19A source audit must first identify which closure and
-absoluteness laws later proofs actually consume.
+The old global form is a harmless enlargement on `hfPresentation`'s current compactness domain, but
+preserving it here would mean encoding infinitary sentences into HF, which §1 rules out.
+`not_hfAmbient_aFinite_iff_finite` **exhibits** a finite non-`A`-finite theory — a singleton `iInf`
+— so the equation cannot be quietly restored "for compatibility" during the production migration.
+
+**(c) The KP fields were vacuous — RESOLVED for pairing and union.** `pair_total : ∀ a b, ∃ c,
+Pair a b c` with no specification law is satisfied by `Pair := fun _ _ _ => True` on any inhabited
+carrier. Totality is not pairing. `AmbientPresentation` now carries ambient membership, and `WithKP`
+pins each operation by a law against it:
+
+```
+mem_pair  : Mem x (pair a b) ↔ x = a ∨ x = b
+mem_union : Mem x (union a)  ↔ ∃ y, Mem y a ∧ Mem x y
+```
+
+`Nat.AckMem` (`∈ₐ`, bit `a` of `b`) implements it, `hfAmbientKP` is then a structure literal, and
+`Nat.finite_ackMem` / `Nat.exists_ack_of_finite` — codes name *exactly* the finite sets — are what
+make (b) provable.
+
+The rest of KP stays **deferred, not forgotten**: the #19A source audit must first identify which
+closure and absoluteness laws later proofs actually consume.
 
 ## 7. Two questions that must not be merged
 
@@ -139,14 +163,16 @@ either side of the model-universe question.
 
 ## 8. The tranche
 
-1. **Freeze the layered production interface** — one ambient `Element` with family, theory, sentence
-   and Σ-definition subdomains. `CodedFamily` depends only on the family layer; effective Σ-data must
-   not infect the syntax interface.
-2. **Honest HF theory coding** over Ackermann-coded finite sets on `ℕ`: sentence codes from the
-   stored finitary coding, theory codes exactly the finite sets of sentence codes, `decodeTheory` as
-   their decoded image, and `AFinite ↔ Set.Finite`.
-3. **Honest effective coding** — §6(a).
-4. **Meaningful KP** — §6(c), with Ackermann membership for the HF instance.
+1. ~~**Freeze the layered production interface**~~ — **DONE** (`Ambient.lean`): one ambient `Element`
+   with family, theory, sentence and Σ-definition subdomains. `CodedFamily` still depends only on the
+   family layer; effective Σ-data does not infect the syntax interface.
+2. ~~**Honest HF theory coding**~~ — **DONE** (`AmbientHF.lean`): sentence codes from the stored
+   finitary coding, theory codes exactly the finite sets of sentence codes, `decodeTheory` as their
+   decoded image. The characterization is `AFinite T ↔ T.Finite ∧ T ⊆ finitaryFragment L`, **not**
+   the global `↔ Set.Finite` originally written here — see §6(b).
+3. **Honest effective coding** — §6(a). **This is the next step.**
+4. ~~**Meaningful KP**~~ — **DONE** (`Ackermann.lean`, `WithKP`, `hfAmbientKP`), for pairing and
+   union only; §6(c).
 5. **Production migration** — replace the bare `Sigma1` field with definition-code data; make
    `ACEnumerable` existential over those codes; delete `hfPresentation_sigma1_eq_top`; preserve
    `hf_compact_of_aFinite`; prove the generic HF compactness route without the current trivial
