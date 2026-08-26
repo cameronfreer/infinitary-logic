@@ -17,6 +17,12 @@ back-and-forth equivalence at all ordinal levels.
 
 - `PotentialIso`: A potential isomorphism between structures M and N is a family of
   finite partial maps containing the empty map and closed under extension in both directions.
+- `PotentialIso.ofExtensionFamily`: builds one from a relation-form extension family. A
+  producer-facing adapter, strictly below the BF-equivalence machinery.
+- `ExtensionPresentation`: the proof-relevant variant, for callers holding *states* rather than
+  a predicate.
+- `ExtensionPresentation.toPotentialIso`: its induced potential isomorphism, via the existential
+  image of the states and routed solely through `ofExtensionFamily`.
 
 ## Main Results
 
@@ -534,7 +540,7 @@ theorem rel_of_state {n : ℕ} (s : P.State n) : P.Rel n (P.left s) (P.right s) 
   ⟨s, rfl, rfl⟩
 
 /-- The standard object a presentation produces. -/
-noncomputable def toPotentialIso : PotentialIso L M N :=
+def toPotentialIso : PotentialIso L M N :=
   PotentialIso.ofExtensionFamily P.Rel
     ⟨P.empty, funext fun i => i.elim0, funext fun i => i.elim0⟩
     (fun ⟨s, hl, hr⟩ => hl ▸ hr ▸ P.compatible s)

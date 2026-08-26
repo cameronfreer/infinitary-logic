@@ -27,6 +27,12 @@ in `CountableRefinementHypothesis` and the countable relational language.
   implies isomorphism. Unconditional — no refinement hypothesis, no countable language.
 - `countable_LomegaEquiv_implies_iso`: for countable structures in a countable relational
   language, `Lω₁ω`-elementary equivalence implies isomorphism (KK04 Corollary 1.2.2).
+- `countable_extensionFamily_implies_iso`: for countable structures, a relation-form
+  back-and-forth system yields an isomorphism. The relational language need not be countable.
+- `ExtensionPresentation.countable_toEquiv`: the same from a proof-relevant state presentation.
+
+Both endpoints are direct compositions with `PotentialIso.countable_toEquiv`, which remains the
+sole implementation of the eventual isomorphism; they add packaging, not mathematics.
 
 ## References
 
@@ -116,7 +122,7 @@ omit [Countable (Σ l, L.Relations l)] in
 
 Tuples are arbitrary functions `Fin n → M`, so repeated coordinates are supported; atomic
 compatibility is exactly `SameAtomicType`.  No complete types, elementary maps, Scott sentences or
-formula invariance are involved, and the language may be arbitrary. -/
+formula invariance are involved, and the relational language need not be countable. -/
 theorem countable_extensionFamily_implies_iso
     {M : Type w} [L.Structure M] [Countable M]
     {N : Type w} [L.Structure N] [Countable N]
