@@ -104,7 +104,7 @@ definition is `CE S := ∃ f : ℕ →. ℕ, Nat.Partrec f ∧ ∀ n, n ∈ S �
 ## 6. The three placeholders — all closed
 
 Named explicitly because each *looked* like a constraint and was not one. All three are now
-discharged in `InfinitaryLogic/Admissible/{Ackermann,Ambient,AmbientHF,EffectiveCoding}.lean`.
+discharged in `InfinitaryLogic/Admissible/{Ackermann,Ambient,AmbientHF,Numbering}.lean`.
 
 **(a) The numbering — RESOLVED by a second layer, not by strengthening the first.** `FinitaryCoding`
 stores `enc` and injectivity. Injectivity gives numbering-independence of the *decoded range* — hence
@@ -112,32 +112,57 @@ of adequacy and containment, which is `hfAmbient_range_indep` — but **not** of
 injective numberings can disagree about which theories are c.e.
 
 The fix is not a stronger single numbering. It is a **relation** between numberings, so
-`FinitaryCoding` is left alone and `EffectiveCoding` is added *beside* it, consumed only by
-Σ-definability:
+`FinitaryCoding` is left alone and the new layer is added *beside* it, in
+`InfinitaryLogic/Admissible/Numbering.lean`:
 
 ```
-FinitaryCoding    → adequacy, AFinite            -- any language
-EffectiveCoding   → Sigma1 only                  -- + surjectivity
-ComputablyEquivalent C C' → gate5_sigma1_iff     -- + total computable translations
+FinitaryCoding              adequacy, AFinite, and Sigma1 itself   -- any language
+FinitaryNumbering           a *bijective* numbering; no effectiveness on its own
+ComputablyEquivalent C C'   Sigma1 invariance                      -- the actual content
 ```
 
-Six gates, `gate1_`…`gate6_`. Gates 1/3 are the same-sentence translation equations; gate 4 is
-c.e. transport; gate 5 is `Sigma1 T ↔ Sigma1 T` across codings — the property injectivity could not
-give. Gates 6 are the **separation guards**: `hfAmbient` still takes a `FinitaryCoding`, so
-`hfAmbient C` fails to elaborate for an `EffectiveCoding C` without `.toFinitaryCoding`. That
-type error is the guarantee that computability has not infected the fragment or theory layers.
+**Read the middle line carefully — an earlier draft of this section overclaimed here.**
+`Sigma1` is *already* definable from the weak layer: `hfAmbient` takes a `FinitaryCoding` and
+supplies `enumerates`, so every coding has its own coding-relative `Sigma1`. The numbering is needed
+for **invariance**, not for the definition. And `FinitaryNumbering` is structurally a bijective
+numbering and nothing more — `ofDenumerable` builds one from a bare `Denumerable` instance with no
+computability evidence at all. It was renamed from `EffectiveCoding` precisely so the name stops
+claiming effectiveness it does not have; effectiveness enters only at
+`ComputablyEquivalent.forward_computable`. **Independence holds only when a witness is supplied.**
 
-*The bijectivity simplification.* `EffectiveCoding` requires `enc` to be onto, so every natural is a
-valid code and the invalid-code bookkeeping disappears: gate 2 becomes *provably vacuous*
-(`gate2_no_invalid_codes` states it rather than dropping it), and the translations become mutually
-inverse computable permutations, so image along one is preimage along the other and gate 4 needs no
-dovetailing. The cost is explicit in `EffectiveCoding.equiv`: the layer exists exactly when
-`L.Sentence` is denumerable — the intended setting — and `EffectiveCoding.ofDenumerable` witnesses
-that it is inhabited, so the gates are not conditionally vacuous. Languages outside it keep the weak
-layer and correctly get no effective layer at all.
+`FinitaryNumbering.Sigma1 T := (hfAmbient C.toFinitaryCoding).Sigma1 T` is the production-facing
+predicate — definitionally the ambient one, named separately so consumers state hypotheses against a
+numbering, which is what makes invariance applicable to them. Use it in migration stage 5.3.
 
-*One forced deviation.* `ComputablyEquivalent` cannot be `Prop`-valued: `forward`/`backward` are
-data. Use `Nonempty (ComputablyEquivalent C C')` where the propositional relation is wanted.
+The six gates, by the semantic names they now carry (the numbering survives only here):
+
+| # | Statement | Name |
+|---|---|---|
+| 1 | translation preserves the decoded sentence | `ComputablyEquivalent.decodeSentence_forward` |
+| 2 | no invalid inputs to bookkeep | `FinitaryNumbering.invalid_codes_eq_empty` |
+| 3 | …the reverse translation likewise | `ComputablyEquivalent.decodeSentence_backward` |
+| 4 | c.e. code sets transport | `ComputablyEquivalent.ce_forward_image` |
+| 5 | `Sigma1` is numbering-independent | `AreComputablyEquivalent.sigma1_iff` |
+| 6 | the weak layer suffices downstream | `hfAmbient_rejects_numbering` + two examples |
+
+Gate 6 needs the guard, not the examples. Positive theorems show weak data *suffices*; they cannot
+detect a future widening of `hfAmbient`. `hfAmbient_rejects_numbering` carries a `fail_if_success`
+on `hfAmbient C` and then proves adequacy through `.toFinitaryCoding`, so it asserts both halves.
+Verified live: `fail_if_success` on the *working* forgetful route does itself fail, so the guard
+discriminates rather than passing vacuously.
+
+*The bijectivity simplification.* `enc` is required to be onto, so every natural is a valid code and
+invalid-code bookkeeping disappears: gate 2 becomes *provably vacuous* rather than dropped, and the
+translations become mutually inverse computable permutations, so image along one is preimage along
+the other and gate 4 needs no dovetailing. The cost is explicit in `FinitaryNumbering.equiv`: the
+layer exists exactly when `L.Sentence` is denumerable — the intended setting — and `ofDenumerable`
+witnesses that it is inhabited, so nothing is conditionally vacuous. Languages outside it keep the
+weak layer and correctly get no numbering at all.
+
+*Prop vs Type.* `ComputablyEquivalent` stores `forward`/`backward`, so it cannot be `Prop`-valued.
+The public relation is `AreComputablyEquivalent C C' := Nonempty (ComputablyEquivalent C C')`, an
+equivalence relation (`refl`/`symm`/`trans`, with `ComputablyEquivalent.trans` composing the
+translations underneath).
 
 **(b) The `A`-finite layer — RESOLVED, and it corrects an API.** `IsTheoryCode` and `decodeTheory`
 are now **derived**, not fields: given ambient membership, a theory code is an element all of whose
@@ -196,8 +221,9 @@ either side of the model-universe question.
    finitary coding, theory codes exactly the finite sets of sentence codes, `decodeTheory` as their
    decoded image. The characterization is `AFinite T ↔ T.Finite ∧ T ⊆ finitaryFragment L`, **not**
    the global `↔ Set.Finite` originally written here — see §6(b).
-3. ~~**Honest effective coding**~~ — **DONE** (`EffectiveCoding.lean`): a *second* layer beside
-   `FinitaryCoding`, not a strengthening of it; six gates, ending in `gate5_sigma1_iff`; §6(a).
+3. ~~**Honest effective coding**~~ — **DONE** (`Numbering.lean`): a *second* layer beside
+   `FinitaryCoding`, not a strengthening of it; six gates, ending in
+   `AreComputablyEquivalent.sigma1_iff`; §6(a).
 4. ~~**Meaningful KP**~~ — **DONE** (`Ackermann.lean`, `WithKP`, `hfAmbientKP`), for pairing and
    union only; §6(c).
 
