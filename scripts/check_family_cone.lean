@@ -63,25 +63,35 @@ partial def transitiveDeps (env : Environment) (start : Name) : NameSet := Id.ru
   return seen
 
 /-- Forbidden exact declarations: the bundling presentation, the theory / Σ / KP layers, and the
-numbering layer. -/
+numbering layer.
+
+Every name here is checked to EXIST before the cone test runs.  A forbidden name that has been
+renamed away is silently useless — the guard would keep reporting OK while protecting nothing.
+That is not hypothetical: this list went stale within one commit, when the theory layer moved from
+`AmbientPresentation` to `TheoryPresentation` and the bare `AFinite` became
+`AdmissiblePresentation.AFinite`. -/
 def forbiddenExact : List Name :=
   [-- the bundling signature the syntax layer must no longer reach
    `FirstOrder.Language.AdmissiblePresentation,
-   -- the ambient presentation and everything hanging off its non-family kinds
+   -- the theory layer
+   `FirstOrder.Language.TheoryPresentation,
+   `FirstOrder.Language.TheoryPresentation.IsTheoryCode,
+   `FirstOrder.Language.TheoryPresentation.decodeTheory,
+   `FirstOrder.Language.TheoryPresentation.members,
+   `FirstOrder.Language.TheoryPresentation.AFinite,
+   `FirstOrder.Language.TheoryPresentation.AFinitelySatisfiable,
+   `FirstOrder.Language.TheoryPresentation.sentenceRange,
+   `FirstOrder.Language.TheoryPresentation.AdequateFor,
+   -- the ambient presentation and its definability layer
    `FirstOrder.Language.AmbientPresentation,
    `FirstOrder.Language.AmbientPresentation.WithKP,
-   `FirstOrder.Language.AmbientPresentation.IsTheoryCode,
-   `FirstOrder.Language.AmbientPresentation.decodeTheory,
-   `FirstOrder.Language.AmbientPresentation.members,
-   `FirstOrder.Language.AmbientPresentation.AFinite,
    `FirstOrder.Language.AmbientPresentation.theoryOf,
    `FirstOrder.Language.AmbientPresentation.Sigma1,
-   `FirstOrder.Language.AmbientPresentation.sentenceRange,
-   `FirstOrder.Language.AmbientPresentation.AdequateFor,
-   -- the external theory predicates
-   `FirstOrder.Language.AFinite,
-   `FirstOrder.Language.ACEnumerable,
-   `FirstOrder.Language.CompactFor,
+   -- the legacy external theory predicates
+   `FirstOrder.Language.AdmissiblePresentation.AFinite,
+   `FirstOrder.Language.AdmissiblePresentation.ACEnumerable,
+   `FirstOrder.Language.AdmissiblePresentation.AFinitelySatisfiable,
+   `FirstOrder.Language.AdmissiblePresentation.CompactFor,
    -- the coding and numbering layers
    `FirstOrder.Language.FinitaryCoding,
    `FirstOrder.Language.FinitaryNumbering,
@@ -113,6 +123,10 @@ def guardedRoots : List Name :=
 
 run_cmd do
   let env ← getEnv
+  -- a forbidden name that no longer exists protects nothing; fail loudly rather than pass
+  for f in forbiddenExact do
+    unless (env.find? f).isSome do
+      throwError "[STALE GUARD] forbidden declaration {f} no longer exists — update this list"
   for root in guardedRoots do
     unless (env.find? root).isSome do throwError "root declaration {root} not found"
     let deps := transitiveDeps env root

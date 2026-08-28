@@ -66,6 +66,9 @@ jobs:
       - name: "Verify #19A family-layer cone (syntax depends only on FamilyPresentation)"
         run: lake env lean scripts/check_family_cone.lean
 
+      - name: "Verify #19A theory-layer cone (theory API depends only on TheoryPresentation)"
+        run: lake env lean scripts/check_theory_cone.lean
+
       - name: "Verify #18 proof-system boundary (no legacy fragment structures in the Derivable/soundness cone)"
         run: lake env lean scripts/check_proof_system_boundary.lean
 

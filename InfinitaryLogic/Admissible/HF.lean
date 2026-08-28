@@ -152,7 +152,7 @@ def hfPresentation (L : Language.{u, v}) : AdmissiblePresentation L where
 finiteness.  This is what makes HF's compactness theorem `finitaryFragment_compact` by
 specialization — hypothesis for hypothesis — rather than through a bridging lemma. -/
 theorem hf_aFinite_iff {L : Language.{u, v}} {T : Set L.Sentenceω} :
-    AFinite (hfPresentation L) T ↔ T.Finite := by
+    (hfPresentation L).AFinite T ↔ T.Finite := by
   constructor
   · rintro ⟨⟨k, f⟩, rfl⟩
     exact Set.finite_range f
@@ -190,7 +190,7 @@ satisfiability.  Immediate from `hf_aFinite_iff`, but worth naming — it is the
 `AFinitelySatisfiable` and `Theoryω.IsFinitelySatisfiable` from being silently interchanged, which
 is legitimate at HF and at no other `A`. -/
 theorem hf_aFinitelySatisfiable_iff {L : Language.{u, v}} {T : L.Theoryω} :
-    AFinitelySatisfiable (hfPresentation L) T ↔ T.IsFinitelySatisfiable :=
+    (hfPresentation L).AFinitelySatisfiable T ↔ T.IsFinitelySatisfiable :=
   ⟨fun h T₀ hT₀ hfin => h T₀ hT₀ (hf_aFinite_iff.mpr hfin),
    fun h T₀ hT₀ hA => h T₀ hT₀ (hf_aFinite_iff.mp hA)⟩
 
@@ -209,7 +209,7 @@ discharge it from here.
 The only translation is `hf_aFinitelySatisfiable_iff`; the mathematics is
 `finitaryFragment_compact`. -/
 theorem hf_compact_of_aFinite {T : L.Theoryω} (hT : T ⊆ finitaryFragment L)
-    (hfin : AFinitelySatisfiable (hfPresentation L) T) : T.IsSatisfiable :=
+    (hfin : (hfPresentation L).AFinitelySatisfiable T) : T.IsSatisfiable :=
   finitaryFragment_compact hT (hf_aFinitelySatisfiable_iff.mp hfin)
 
 /-- **Oracle condition 3, in full.**  Not merely the hypotheses separately: the *entire*
@@ -222,7 +222,7 @@ The `ACEnumerable` hypothesis is **discarded**, not used: the content is
 `hf_compact_of_aFinite`.  So this theorem survives #19A tightening HF's `Sigma1` to the honest
 c.e. predicate — it would then simply apply to fewer theories. -/
 theorem hf_compactFor (T : Set L.Sentenceω) :
-    CompactFor (hfPresentation L) (finitaryFragment L) T := fun hT _ hfin =>
+    (hfPresentation L).CompactFor (finitaryFragment L) T := fun hT _ hfin =>
   hf_compact_of_aFinite hT hfin
 
 /-- **Gate 4.**  `CodedFamily` over HF is uninhabited.

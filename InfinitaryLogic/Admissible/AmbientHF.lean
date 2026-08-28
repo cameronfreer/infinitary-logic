@@ -148,7 +148,7 @@ theorem hfAmbient_aFinite_iff (C : FinitaryCoding L) {T : L.Theoryω} :
   constructor
   · rintro ⟨a, rfl⟩
     exact ⟨(hfAmbient_members_finite C a).image _,
-      AmbientPresentation.AFinite.subset_of_adequate (hfAmbient_adequate C) ⟨a, rfl⟩⟩
+      TheoryPresentation.AFinite.subset_of_adequate (hfAmbient_adequate C) ⟨a, rfl⟩⟩
   · rintro ⟨hfin, hsub⟩
     have hrange : T ⊆ (hfAmbient C).sentenceRange := by
       rw [hfAmbient_adequate C]; exact hsub
@@ -195,7 +195,7 @@ theorem not_hfAmbient_aFinite_iff_finite (C : FinitaryCoding L) (φs : ℕ → L
       ({BoundedFormulaω.iInf φs} : L.Theoryω).Finite) := by
   intro h
   obtain ⟨φ₀, hφ₀⟩ :=
-    AmbientPresentation.AFinite.subset_of_adequate (hfAmbient_adequate C)
+    TheoryPresentation.AFinite.subset_of_adequate (hfAmbient_adequate C)
       (h.mpr (Set.finite_singleton _)) rfl
   exact BoundedFormulaω.not_isFirstOrder_iInf φs ⟨φ₀, hφ₀⟩
 
@@ -239,7 +239,7 @@ variable {L : Language.{0, 0}}
 `hfAmbient_subset_finitary`; the caller supplies only the Barwise premise. -/
 theorem hfAmbient_compact (C : FinitaryCoding L) (T : L.Theoryω)
     (hT : (hfAmbient C).Sigma1 T)
-    (hfin : AFinitelySatisfiable (hfPresentation L) T) : T.IsSatisfiable :=
+    (hfin : (hfPresentation L).AFinitelySatisfiable T) : T.IsSatisfiable :=
   hf_compact_of_aFinite (hfAmbient_subset_finitary C hT) hfin
 
 end Regression

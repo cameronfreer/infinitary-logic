@@ -245,7 +245,21 @@ either side of the model-universe question.
       Separation is by import — `Family.lean` is imported *by* the theory/Σ files — and pinned by
       `scripts/check_family_cone.lean`, falsification-tested by adding `hfAdmissibleFragment` as a
       root and confirming it reports `AdmissiblePresentation`.
-   2. move `AFinite` onto the derived `decodeTheory`;
+   2. ~~move `AFinite` onto the derived `decodeTheory`~~ — **DONE** (`Theory.lean`).
+      `TheoryPresentation` is the middle layer: `FamilyPresentation` + `Mem` + `IsSentenceCode` +
+      `decodeSentence`, with `IsTheoryCode` / `decodeTheory` / `AFinite` / `AFinitelySatisfiable` /
+      adequacy **derived**. `AmbientPresentation` extends it and keeps only `IsDefinitionCode`,
+      `enumerates` and `Sigma1`. The shortcut avoided: defining the production `AFinite` as
+      `AmbientPresentation.AFinite` would type-check and make the whole theory API depend on the Σ
+      layer that no theory-side proof uses. Pinned by `scripts/check_theory_cone.lean`.
+
+      *The legacy route could not be projected, only isolated.* `AdmissiblePresentation` stores
+      `DecodesTheory` as an arbitrary relation and has no `Mem` or `decodeSentence`, so there is
+      nothing to derive a theory view from — no `toTheoryPresentation` exists, and the absence is
+      the honest measure of how far the migration has got. Its predicates are now namespaced
+      (`AdmissiblePresentation.AFinite`, `.ACEnumerable`, `.AFinitelySatisfiable`, `.CompactFor`)
+      so every legacy use site says so; stage 5.4 retires them with `hfPresentation`.
+      `hf_compact_of_aFinite` is preserved, and `hfAmbient_aFinite_iff` is unchanged.
    3. replace the bare `Sigma1` field with definition-code data;
    4. install the honest HF instance and **delete `hfPresentation_sigma1_eq_top`**;
    5. reprove the generic HF compactness route without the current trivial bridge;

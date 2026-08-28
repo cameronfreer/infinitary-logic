@@ -1,5 +1,6 @@
 import InfinitaryLogic.Admissible.Ackermann
 import InfinitaryLogic.Admissible.Family
+import InfinitaryLogic.Admissible.Theory
 import InfinitaryLogic.Admissible.Ambient
 import InfinitaryLogic.Admissible.AmbientHF
 import InfinitaryLogic.Admissible.Numbering
