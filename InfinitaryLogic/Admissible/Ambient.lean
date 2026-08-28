@@ -3,6 +3,7 @@ Copyright (c) 2026 Cameron Freer. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
+import InfinitaryLogic.Admissible.Family
 import InfinitaryLogic.Lomega1omega.Theory
 
 /-!
@@ -40,9 +41,21 @@ extensionality law to discharge even though a sentence may have many codes.
 **Totality is deliberately omitted.**  A presentation is not obliged to name every theory, and an
 honest HF must not: `AFinite` is existential over codes, never a bijection with theories.
 
+## The family layer is inherited, not duplicated
+
+`AmbientPresentation` **extends `FamilyPresentation`**, so `Element` and `IsFamilyCode` — together
+with the `Index` / `indexEncodable` / `DecodesFamily` / `decodes_unique` data the syntax layer needs
+— come from the family view rather than being restated here.  That is what makes the ambient design
+complete: before this, `IsFamilyCode` was an orphan field with no decoding data behind it, so no
+coded family could actually be built from an ambient presentation.
+
+The dependency runs one way.  `Admissible/Family.lean` does not import this file, so the syntax
+layer cannot reach `decodeTheory`, `Sigma1`, `enumerates` or `WithKP`.
+
 ## Main definitions
 
-- `AmbientPresentation`: the carrier, ambient membership, the four kinds, and the two decodings.
+- `AmbientPresentation`: the family view, ambient membership, the remaining kinds, and the
+  decodings.
 - `AmbientPresentation.decodeTheory`, `AFinite`: the theory layer, derived from membership.
 - `AmbientPresentation.Sigma1`: the Σ-definition layer.
 - `AmbientPresentation.AdequateFor`: the decoded sentence range is exactly the intended fragment.
@@ -56,7 +69,7 @@ honest HF must not: `AFinite` is existential over codes, never a bijection with 
 
 namespace FirstOrder.Language
 
-universe u v w
+universe u v w uIndex
 
 /-- **The ambient presentation.**  One carrier `Element`, an ambient membership relation, four
 overlapping code kinds, and the decoding data.
@@ -64,14 +77,11 @@ overlapping code kinds, and the decoding data.
 `decodeSentence` is a *function*, so sentence decoding is functional by construction; it is not
 injective, since a sentence may have many codes.  `enumerates` returns a set of **sentence codes**,
 never a set of sentences — that is what makes `Sigma1` functional for free. -/
-structure AmbientPresentation (L : Language.{u, v}) where
-  /-- The elements of `A`.  Every code is one of these. -/
-  Element : Type w
+structure AmbientPresentation (L : Language.{u, v}) extends
+    FamilyPresentation.{u, v, w, uIndex} L where
   /-- **Ambient membership.**  Without it, closure obligations are vacuous and the theory layer
   cannot be derived; see `WithKP`. -/
   Mem : Element → Element → Prop
-  /-- Codes naming infinitary families — the `CodedFamily` layer's kind. -/
-  IsFamilyCode : Element → Prop
   /-- Codes naming a single sentence. -/
   IsSentenceCode : Element → Prop
   /-- Codes naming a Σ-definition, i.e. an *intension*.  Contrast a theory code, which names a set
@@ -84,7 +94,7 @@ structure AmbientPresentation (L : Language.{u, v}) where
 
 namespace AmbientPresentation
 
-variable {L : Language.{u, v}} (A : AmbientPresentation.{u, v, w} L)
+variable {L : Language.{u, v}} (A : AmbientPresentation.{u, v, w, uIndex} L)
 
 /-- The sentence-code subdomain. -/
 abbrev SentenceCode := {e // A.IsSentenceCode e}
@@ -183,7 +193,7 @@ discharged trivially.
 
 Only pairing and union appear.  The full KP schema is deliberately not attempted: the #19A source
 audit must first identify which closure and absoluteness laws later proofs actually consume. -/
-structure WithKP (L : Language.{u, v}) extends AmbientPresentation.{u, v, w} L where
+structure WithKP (L : Language.{u, v}) extends AmbientPresentation.{u, v, w, uIndex} L where
   /-- The unordered pair. -/
   pair : Element → Element → Element
   /-- Its specification — the law the bare totality field lacked. -/

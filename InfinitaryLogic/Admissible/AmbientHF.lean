@@ -78,12 +78,18 @@ variable {L}
 
 `noncomputable` only because `decodeSentence` inverts `enc` by choice; the *coding* itself is
 concrete data, which is the point of storing it. -/
-noncomputable def hfAmbient (C : FinitaryCoding L) : AmbientPresentation.{u, v, 0} L where
+noncomputable def hfAmbient (C : FinitaryCoding L) : AmbientPresentation.{u, v, 0, 0} L where
   Element := ℕ
   -- Ackermann membership: `x ∈ₐ e` iff bit `x` of `e` is set
   Mem := Nat.AckMem
-  -- no code names an infinitary family
+  -- **no code names an infinitary family** — the sole source of HF's coded-family emptiness.
+  -- Everything below it in the family layer is then vacuous: the code subdomain is empty, so
+  -- `Index`, `indexEncodable`, `DecodesFamily` and functionality are all `c.2.elim`.
   IsFamilyCode _ := False
+  Index c := c.2.elim
+  indexEncodable c := c.2.elim
+  DecodesFamily _ c _ := c.2.elim
+  decodes_unique {_} {c} {_} {_} _ _ := c.2.elim
   IsSentenceCode n := ∃ φ₀ : L.Sentence, C.enc φ₀ = n
   -- every natural reads as a partial-recursive code
   IsDefinitionCode _ := True
@@ -201,7 +207,7 @@ membership was the missing ingredient — the earlier totality-only fields were 
 `fun _ _ _ => True` and proved nothing. -/
 
 /-- **HF with pairing and union.** -/
-noncomputable def hfAmbientKP (C : FinitaryCoding L) : AmbientPresentation.WithKP.{u, v, 0} L where
+noncomputable def hfAmbientKP (C : FinitaryCoding L) : AmbientPresentation.WithKP.{u, v, 0, 0} L where
   toAmbientPresentation := hfAmbient C
   pair := Nat.ackPair
   mem_pair _ _ _ := Nat.mem_ackPair

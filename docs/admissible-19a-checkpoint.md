@@ -215,8 +215,13 @@ either side of the model-universe question.
 ## 8. The tranche
 
 1. ~~**Freeze the layered production interface**~~ — **DONE** (`Ambient.lean`): one ambient `Element`
-   with family, theory, sentence and Σ-definition subdomains. `CodedFamily` still depends only on the
-   family layer; effective Σ-data does not infect the syntax interface.
+   with family, theory, sentence and Σ-definition subdomains.
+
+   *An earlier version of this line claimed `CodedFamily` "still depends only on the family layer".
+   That was false when written* — `CodedFamily` was parameterized by the whole
+   `AdmissiblePresentation`, `Sigma1` included, and the ambient `IsFamilyCode` had no `Index` /
+   `DecodesFamily` behind it, so no coded family could be built from an ambient presentation at all.
+   It became true only with migration stage 5.1 below.
 2. ~~**Honest HF theory coding**~~ — **DONE** (`AmbientHF.lean`): sentence codes from the stored
    finitary coding, theory codes exactly the finite sets of sentence codes, `decodeTheory` as their
    decoded image. The characterization is `AFinite T ↔ T.Finite ∧ T ⊆ finitaryFragment L`, **not**
@@ -230,7 +235,16 @@ either side of the model-universe question.
 **Steps 1–4 are complete. Everything below is unstarted.**
 
 5. **Production migration**, staged — each stage its own commit, each independently green:
-   1. move `CodedFamily` onto the ambient **family** layer;
+   1. ~~move `CodedFamily` onto the ambient **family** layer~~ — **DONE** (`Family.lean`).
+      `FamilyPresentation` is the minimal view: ambient `Element`, `IsFamilyCode`, code-dependent
+      `Index`, stored `indexEncodable`, `DecodesFamily`, and functionality — which is
+      *unconditional* here because the old `CodesInfFamily` hypothesis is absorbed into the code
+      subtype. `CodedFamily`, `codedIInf`, `codedISup` and `AdmissibleFragment` take that view;
+      `AdmissiblePresentation.toFamilyPresentation` is the explicit projection, and
+      `AmbientPresentation` now **extends** the view instead of duplicating `IsFamilyCode`.
+      Separation is by import — `Family.lean` is imported *by* the theory/Σ files — and pinned by
+      `scripts/check_family_cone.lean`, falsification-tested by adding `hfAdmissibleFragment` as a
+      root and confirming it reports `AdmissiblePresentation`.
    2. move `AFinite` onto the derived `decodeTheory`;
    3. replace the bare `Sigma1` field with definition-code data;
    4. install the honest HF instance and **delete `hfPresentation_sigma1_eq_top`**;
