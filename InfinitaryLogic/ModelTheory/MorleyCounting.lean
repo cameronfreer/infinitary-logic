@@ -97,9 +97,26 @@ def bfProj (φ : L.Sentenceω) (α : Ordinal.{0}) :
   Quotient.map id (fun _a _b h => isoSetoid_refines_bfEquivSetoid φ α h)
 
 omit [Countable (Σ l, L.Relations l)] in
+@[simp] theorem bfProj_mk (φ : L.Sentenceω) (α : Ordinal.{0}) (c : ↥(ModelsOf φ)) :
+    bfProj φ α (Quotient.mk _ c) = Quotient.mk _ c := rfl
+
+omit [Countable (Σ l, L.Relations l)] in
 theorem bfProj_surjective (φ : L.Sentenceω) (α : Ordinal.{0}) :
     Function.Surjective (bfProj φ α) := fun q =>
   q.inductionOn fun c => ⟨Quotient.mk _ c, rfl⟩
+
+omit [Countable (Σ l, L.Relations l)] in
+/-- The depth-`α` projection of the isomorphism classes satisfying `P`: the range of `bfProj`
+restricted to `P`. -/
+def bfProjRange (φ : L.Sentenceω) (P : Quotient (isoSetoid φ) → Prop) (α : Ordinal.{0}) :
+    Set (Quotient (bfEquivSetoid φ α)) :=
+  Set.range (fun q : {q : Quotient (isoSetoid φ) // P q} => bfProj φ α q.1)
+
+omit [Countable (Σ l, L.Relations l)] in
+theorem mem_bfProjRange {φ : L.Sentenceω} {P : Quotient (isoSetoid φ) → Prop} {α : Ordinal.{0}}
+    {x : Quotient (bfEquivSetoid φ α)} :
+    x ∈ bfProjRange φ P α ↔ ∃ q : {q : Quotient (isoSetoid φ) // P q}, bfProj φ α q.1 = x :=
+  Iff.rfl
 
 omit [Countable (Σ l, L.Relations l)] in
 /-- Refinement gives: #(BFEquiv α classes) ≤ #(iso classes). -/
@@ -176,7 +193,7 @@ theorem mk_structureSpace_le_continuum :
 
 /-- **The Scott-height stratification bound, relativized.**  Let `P` be any collection of
 isomorphism classes of coded models of `φ`.  If for every `α < ω₁` the depth-`α` back-and-forth
-projection of `P` has range of size at most `ℵ₁`, then `P` has at most `ℵ₁` members.
+projection of `P` (`bfProjRange φ P α`) has size at most `ℵ₁`, then `P` has at most `ℵ₁` members.
 
 The height-`α` classes in `P` inject into that range (`bfEquiv_at_height_implies_iso`), and the
 union over the `ω₁` heights is bounded by `ℵ₁ · ℵ₁ = ℵ₁`.  Two things are deliberately weaker
@@ -184,9 +201,7 @@ than in the unrelativized statement: only the classes in `P` are counted at each
 level is allowed `ℵ₁` rather than `ℵ₀` classes. -/
 theorem mk_isoSetoid_subtype_le_aleph_one (φ : L.Sentenceω)
     (P : Quotient (isoSetoid φ) → Prop)
-    (hle : ∀ α : Ordinal.{0}, α < Ordinal.omega 1 →
-      #(Set.range (fun q : {q : Quotient (isoSetoid φ) // P q} => bfProj φ α q.1)) ≤
-        Cardinal.aleph 1) :
+    (hle : ∀ α : Ordinal.{0}, α < Ordinal.omega 1 → #(bfProjRange φ P α) ≤ Cardinal.aleph 1) :
     #{q : Quotient (isoSetoid φ) // P q} ≤ Cardinal.aleph 1 := by
   set Q' := {q : Quotient (isoSetoid φ) // P q}
   -- Fiber bound: for each α < ω₁, the height-α classes in P inject into the restricted range.
@@ -195,7 +210,7 @@ theorem mk_isoSetoid_subtype_le_aleph_one (φ : L.Sentenceω)
     intro α hα
     have hinj : Function.Injective
         (fun (q : { q : Q' // isoClassHeight q.1 = α }) =>
-          (⟨bfProj φ α q.1.1, ⟨q.1, rfl⟩⟩ : Set.range (fun q : Q' => bfProj φ α q.1))) := by
+          (⟨bfProj φ α q.1.1, mem_bfProjRange.mpr ⟨q.1, rfl⟩⟩ : bfProjRange φ P α)) := by
       intro ⟨⟨q₁, hP₁⟩, hq₁⟩ ⟨⟨q₂, hP₂⟩, hq₂⟩ heq
       apply Subtype.ext
       apply Subtype.ext
@@ -206,7 +221,7 @@ theorem mk_isoSetoid_subtype_le_aleph_one (φ : L.Sentenceω)
       have hBF : (bfEquivSetoid φ α).r c₁ c₂ := Quotient.exact heq'
       exact bfEquiv_at_height_implies_iso hα (hq₁ ▸ le_rfl) hBF
     calc #{ q : Q' // isoClassHeight q.1 = α }
-        ≤ #(Set.range (fun q : Q' => bfProj φ α q.1)) := Cardinal.mk_le_of_injective hinj
+        ≤ #(bfProjRange φ P α) := Cardinal.mk_le_of_injective hinj
       _ ≤ Cardinal.aleph 1 := hle α hα
   -- Q' is covered by the fibers over Iio ω₁; bound the union via mk_iUnion_le_lift.
   set fibers : Set.Iio (Ordinal.omega 1 : Ordinal.{0}) → Set Q' :=
@@ -244,19 +259,16 @@ theorem mk_isoSetoid_subtype_le_aleph_one (φ : L.Sentenceω)
 depth-`α` projection of `P` has countable range, then `P` has at most `ℵ₁` members. -/
 theorem mk_isoSetoid_subtype_le_aleph_one_of_countable_levels (φ : L.Sentenceω)
     (P : Quotient (isoSetoid φ) → Prop)
-    (hle : ∀ α : Ordinal.{0}, α < Ordinal.omega 1 →
-      #(Set.range (fun q : {q : Quotient (isoSetoid φ) // P q} => bfProj φ α q.1)) ≤ ℵ₀) :
+    (hle : ∀ α : Ordinal.{0}, α < Ordinal.omega 1 → #(bfProjRange φ P α) ≤ ℵ₀) :
     #{q : Quotient (isoSetoid φ) // P q} ≤ Cardinal.aleph 1 :=
   mk_isoSetoid_subtype_le_aleph_one φ P
     (fun α hα => (hle α hα).trans (Cardinal.aleph0_le_aleph 1))
 
 /-- **The Scott-height stratification bound.**  If every back-and-forth level below `ω₁` has only
-countably many classes, then isomorphism has at most `ℵ₁` classes.
-
-Extracted from `morley_counting_coded` so that the witness-bearing route can reuse it: that route
-reaches the same hypothesis by a different case split, and the stratification argument itself is
-indifferent to how the countability of each level was established.  It is the case `P := ⊤` of
-`mk_isoSetoid_subtype_le_aleph_one_of_countable_levels`. -/
+countably many classes, then isomorphism has at most `ℵ₁` classes.  This is the case `P := ⊤` of
+`mk_isoSetoid_subtype_le_aleph_one_of_countable_levels`; both `morley_counting_coded` and the
+witness-bearing route consume it, since the stratification argument is indifferent to how the
+countability of each level was established. -/
 theorem mk_isoSetoid_quotient_le_aleph_one (φ : L.Sentenceω)
     (hle : ∀ α, α < Ordinal.omega 1 → #(Quotient (bfEquivSetoid φ α)) ≤ ℵ₀) :
     #(Quotient (isoSetoid φ)) ≤ Cardinal.aleph 1 := by
