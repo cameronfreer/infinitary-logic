@@ -92,6 +92,6 @@ application of that vocabulary:
 
 **Note**: the Silver chain (Silver-Burgess, the category route, and
 Gandy-Harrington — all sorry-free) lives in `InfinitaryLogic.Conditional`.
-`CountingCountable`
-and `MorleyCounting` depend on descriptive results and are included here.
+The model-theoretic counting modules imported above depend on descriptive results and are
+included here.
 -/

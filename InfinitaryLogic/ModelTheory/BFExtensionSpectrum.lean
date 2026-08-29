@@ -19,10 +19,13 @@ back-and-forth relation on `n`-tuples of `C`-models is an equivalence relation
 
 * `bfTupleSetoid_succ_iff` — `(α+1)`-equivalence is `α`-equivalence together with equality of
   extension spectra, for every arity and every class of models.
+* `bfExtensionSpectra` — the realized extension spectra, the range of `bfExtensionSpectrum`.
 * `countable_bfTupleQuotient_succ` — countably many `α`-classes over `n`-tuples and countably
   many realized extension spectra give countably many `(α+1)`-classes over `n`-tuples.
 * `mk_bfTupleQuotient_succ_le_aleph_one` — the same transfer with `≤ ℵ₁` on both inputs.
-* `bfTupleSetoid_zero_iff` — at arity `0` the setoid is `bfEquivSetoid` (the tuple is trivial).
+* `bfTupleSetoid_zero_eq_comap` — at arity `0` the setoid is the pullback of `bfEquivSetoid`
+  along the forgetful map to the underlying coded model (the tuple is trivial, and the class
+  membership is forgotten); `bfTupleSetoid_zero_iff` is the pointwise form.
 
 The hypothesis on the extension spectra is the whole content: a subset of a countable class
 space can a priori take continuum many values, so nothing here bounds the spectra themselves.
@@ -40,12 +43,12 @@ open Cardinal
 variable {L : Language.{u, v}} [L.IsRelational]
 
 /-- Coded models of `φ` in a class `C`, each with an `n`-tuple. -/
-abbrev TupleModel (φ : L.Sentenceω) (C : Set ↥(ModelsOf φ)) (n : ℕ) :=
+abbrev CodedModelTuple (φ : L.Sentenceω) (C : Set ↥(ModelsOf φ)) (n : ℕ) :=
   C × (Fin n → ℕ)
 
 /-- The depth-`α` back-and-forth setoid on `n`-tuples of `C`-models. -/
 def bfTupleSetoid (φ : L.Sentenceω) (C : Set ↥(ModelsOf φ)) (α : Ordinal.{0}) (n : ℕ) :
-    Setoid (TupleModel φ C n) where
+    Setoid (CodedModelTuple φ C n) where
   r x y := @BFEquiv L ℕ x.1.1.1.toStructure ℕ y.1.1.1.toStructure α n x.2 y.2
   iseqv := by
     refine ⟨fun x => ?_, fun {x y} h => ?_, fun {x y z} h₁ h₂ => ?_⟩
@@ -54,25 +57,39 @@ def bfTupleSetoid (φ : L.Sentenceω) (C : Set ↥(ModelsOf φ)) (α : Ordinal.{
     · exact @BFEquiv.trans L ℕ x.1.1.1.toStructure ℕ y.1.1.1.toStructure
         ℕ z.1.1.1.toStructure (n := n) (α := α) (a := x.2) (b := y.2) (c := z.2) h₁ h₂
 
-/-- At arity `0` the tuple is trivial and the setoid is `bfEquivSetoid` on the underlying
-coded models. -/
-theorem bfTupleSetoid_zero_iff (φ : L.Sentenceω) (C : Set ↥(ModelsOf φ)) (α : Ordinal.{0})
-    (x y : TupleModel φ C 0) :
-    (bfTupleSetoid φ C α 0).r x y ↔ (bfEquivSetoid φ α).r x.1.1 y.1.1 := by
+/-- At arity `0` the tuple is trivial, and the setoid is the pullback of `bfEquivSetoid` along
+the map forgetting the class membership and the empty tuple. -/
+theorem bfTupleSetoid_zero_eq_comap (φ : L.Sentenceω) (C : Set ↥(ModelsOf φ))
+    (α : Ordinal.{0}) :
+    bfTupleSetoid φ C α 0 =
+      (bfEquivSetoid φ α).comap (fun x : CodedModelTuple φ C 0 => x.1.1) := by
+  ext x y
   change @BFEquiv L ℕ x.1.1.1.toStructure ℕ y.1.1.1.toStructure α 0 x.2 y.2 ↔
     @BFEquiv L ℕ x.1.1.1.toStructure ℕ y.1.1.1.toStructure α 0 Fin.elim0 Fin.elim0
   rw [Fin.eq_elim0 x.2, Fin.eq_elim0 y.2]
 
+/-- The pointwise form of `bfTupleSetoid_zero_eq_comap`. -/
+theorem bfTupleSetoid_zero_iff (φ : L.Sentenceω) (C : Set ↥(ModelsOf φ)) (α : Ordinal.{0})
+    (x y : CodedModelTuple φ C 0) :
+    (bfTupleSetoid φ C α 0).r x y ↔ (bfEquivSetoid φ α).r x.1.1 y.1.1 := by
+  rw [bfTupleSetoid_zero_eq_comap]
+  exact Iff.rfl
+
 /-- **The depth-`α` extension spectrum** of a tuple: the depth-`α` classes of its one-point
 extensions. -/
 def bfExtensionSpectrum (φ : L.Sentenceω) (C : Set ↥(ModelsOf φ)) (α : Ordinal.{0}) (n : ℕ)
-    (x : TupleModel φ C n) : Set (Quotient (bfTupleSetoid φ C α (n + 1))) :=
+    (x : CodedModelTuple φ C n) : Set (Quotient (bfTupleSetoid φ C α (n + 1))) :=
   Set.range (fun m : ℕ => Quotient.mk (bfTupleSetoid φ C α (n + 1)) (x.1, Fin.snoc x.2 m))
+
+/-- **The realized extension spectra** of `n`-tuples of `C`-models at depth `α`. -/
+def bfExtensionSpectra (φ : L.Sentenceω) (C : Set ↥(ModelsOf φ)) (α : Ordinal.{0}) (n : ℕ) :
+    Set (Set (Quotient (bfTupleSetoid φ C α (n + 1)))) :=
+  Set.range (bfExtensionSpectrum φ C α n)
 
 /-- **The successor characterization**: `(α+1)`-equivalence is `α`-equivalence with equal
 depth-`α` extension spectra. -/
 theorem bfTupleSetoid_succ_iff (φ : L.Sentenceω) (C : Set ↥(ModelsOf φ)) (α : Ordinal.{0})
-    (n : ℕ) (x y : TupleModel φ C n) :
+    (n : ℕ) (x y : CodedModelTuple φ C n) :
     (bfTupleSetoid φ C (Order.succ α) n).r x y ↔
       (bfTupleSetoid φ C α n).r x y ∧
         bfExtensionSpectrum φ C α n x = bfExtensionSpectrum φ C α n y := by
@@ -105,12 +122,11 @@ spectrum). -/
 theorem exists_injective_bfTupleQuotient_succ (φ : L.Sentenceω) (C : Set ↥(ModelsOf φ))
     (α : Ordinal.{0}) (n : ℕ) :
     ∃ f : Quotient (bfTupleSetoid φ C (Order.succ α) n) →
-      Quotient (bfTupleSetoid φ C α n) ×
-        {Sp : Set (Quotient (bfTupleSetoid φ C α (n + 1))) //
-          ∃ x : TupleModel φ C n, bfExtensionSpectrum φ C α n x = Sp},
+      Quotient (bfTupleSetoid φ C α n) × bfExtensionSpectra φ C α n,
       Function.Injective f := by
   refine ⟨Quotient.lift
-    (fun x => (Quotient.mk (bfTupleSetoid φ C α n) x, ⟨bfExtensionSpectrum φ C α n x, x, rfl⟩))
+    (fun x => (Quotient.mk (bfTupleSetoid φ C α n) x,
+      ⟨bfExtensionSpectrum φ C α n x, Set.mem_range_self x⟩))
     (fun x y h => by
       obtain ⟨h0, hs⟩ := (bfTupleSetoid_succ_iff φ C α n x y).mp h
       exact Prod.ext (Quotient.sound h0) (Subtype.ext hs)), ?_⟩
@@ -126,8 +142,7 @@ realized extension spectra give countably many `(α+1)`-classes over `n`-tuples.
 theorem countable_bfTupleQuotient_succ (φ : L.Sentenceω) (C : Set ↥(ModelsOf φ))
     (α : Ordinal.{0}) (n : ℕ)
     (hα : Countable (Quotient (bfTupleSetoid φ C α n)))
-    (hspec : Countable {Sp : Set (Quotient (bfTupleSetoid φ C α (n + 1))) //
-      ∃ x : TupleModel φ C n, bfExtensionSpectrum φ C α n x = Sp}) :
+    (hspec : Countable (bfExtensionSpectra φ C α n)) :
     Countable (Quotient (bfTupleSetoid φ C (Order.succ α) n)) :=
   let ⟨_, hf⟩ := exists_injective_bfTupleQuotient_succ φ C α n
   hf.countable
@@ -137,19 +152,14 @@ extension spectra both number at most `ℵ₁`, so do the `(α+1)`-classes over 
 theorem mk_bfTupleQuotient_succ_le_aleph_one (φ : L.Sentenceω) (C : Set ↥(ModelsOf φ))
     (α : Ordinal.{0}) (n : ℕ)
     (hα : #(Quotient (bfTupleSetoid φ C α n)) ≤ Cardinal.aleph 1)
-    (hspec : #{Sp : Set (Quotient (bfTupleSetoid φ C α (n + 1))) //
-      ∃ x : TupleModel φ C n, bfExtensionSpectrum φ C α n x = Sp} ≤ Cardinal.aleph 1) :
+    (hspec : #(bfExtensionSpectra φ C α n) ≤ Cardinal.aleph 1) :
     #(Quotient (bfTupleSetoid φ C (Order.succ α) n)) ≤ Cardinal.aleph 1 := by
   obtain ⟨f, hf⟩ := exists_injective_bfTupleQuotient_succ φ C α n
   calc #(Quotient (bfTupleSetoid φ C (Order.succ α) n))
-      ≤ #(Quotient (bfTupleSetoid φ C α n) ×
-          {Sp : Set (Quotient (bfTupleSetoid φ C α (n + 1))) //
-            ∃ x : TupleModel φ C n, bfExtensionSpectrum φ C α n x = Sp}) :=
+      ≤ #(Quotient (bfTupleSetoid φ C α n) × bfExtensionSpectra φ C α n) :=
         Cardinal.mk_le_of_injective hf
     _ = Cardinal.lift #(Quotient (bfTupleSetoid φ C α n)) *
-          Cardinal.lift #{Sp : Set (Quotient (bfTupleSetoid φ C α (n + 1))) //
-            ∃ x : TupleModel φ C n, bfExtensionSpectrum φ C α n x = Sp} :=
-        Cardinal.mk_prod _ _
+          Cardinal.lift #(bfExtensionSpectra φ C α n) := Cardinal.mk_prod _ _
     _ ≤ Cardinal.aleph 1 * Cardinal.aleph 1 := by
         apply mul_le_mul'
         · exact Cardinal.lift_le_aleph_one.mpr hα
