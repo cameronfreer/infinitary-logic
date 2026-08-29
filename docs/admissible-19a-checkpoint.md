@@ -280,14 +280,42 @@ either side of the model-universe question.
       general (legacy `A`-finite is every finite theory, honest is the finite *finitary* ones) but
       coincide inside the fragment, since a finite subtheory of a finitary theory is finitary.
 
-      **The legacy cluster is now obsolete but not deleted.** `hfPresentation` still inhabits only
-      that route, so stage 5.4 switches HF and removes `AdmissiblePresentation`, its four
-      namespaced predicates, `DecodesTheory` with its uniqueness law, and the bare `Sigma1` field
-      — atomically, once they have zero consumers.
-   4. install the honest HF instance and **delete `hfPresentation_sigma1_eq_top`**;
+      **The legacy *theory/definability* route is obsolete — the legacy cluster is not.** An
+      earlier version of this line said "the legacy cluster is obsolete", which was wrong:
+      `hfPresentation` was still supplying the HF **family** view to three syntax consumers
+      (`isEmpty_codedFamily_hf`, `hf_coded_closure_vacuous`, `hfAdmissibleFragment`), so deleting
+      it would not have been a matter of replacing one compactness proof.
+
+      That is now fixed ahead of stage 5.4: `hfFamily` (`Family.lean`) is the family-layer HF
+      presentation — `Element := ℕ`, `IsFamilyCode := False`, the rest vacuous — the three syntax
+      consumers are stated over it, and `hfAmbient_toFamilyPresentation` proves
+      `(hfAmbient C).toFamilyPresentation = hfFamily L` by `rfl`. All four are now roots of
+      `check_family_cone.lean`, so their independence from the legacy presentation is enforced
+      rather than asserted.
+
+      What `hfPresentation` still supplies is exactly the theory side: `hf_aFinite_iff`,
+      `hf_aFinitelySatisfiable_iff`, `hf_compact_of_aFinite`, `hf_compactFor`, and the bridge
+      `hfAmbient_aFinitelySatisfiable_iff`.
+   4. install the honest HF instance and **delete `hfPresentation_sigma1_eq_top`**. The family
+      side is already migrated (see 5.3 above), so what remains is the theory side: reprove
+      `hf_compact_of_aFinite`'s content over `hfAmbient`, drop the
+      `hfAmbient_aFinitelySatisfiable_iff` bridge, then delete `AdmissiblePresentation`, its four
+      namespaced predicates, `DecodesTheory` with `decodes_theory_unique`, and the bare `Sigma1`
+      field — atomically, once they have zero consumers;
    5. reprove the generic HF compactness route without the current trivial bridge;
    6. add the absence and assembly guards;
    7. resolve the model-universe gate **last**.
 
    Preserve `hf_compact_of_aFinite` throughout, and recheck the four consumers.
 6. **Land #19A** — before any Henkin/#19B work begins.
+
+### Release gate for the #19A PR
+
+**Strip the stage-by-stage migration narration from production docstrings.** `Family.lean`,
+`CodedFamily.lean`, `Theory.lean`, `Ambient.lean`, `AmbientHF.lean`, `Numbering.lean` and
+`Predicates.lean` currently narrate *which stage* moved what, and why an earlier arrangement was
+wrong. That belongs here, in the checkpoint — not in the settled API, where it will read as
+archaeology to anyone who never saw the migration.
+
+Deliberately deferred rather than done incrementally: stage 5.4 will add more of it, so a single
+pass at the end is one edit instead of several. Do not let the PR go out without it.

@@ -162,4 +162,38 @@ theorem codedIInf_eq_of_code_eq {F G : CodedFamily P n} (h : F.code = G.code) :
 theorem codedISup_eq_of_code_eq {F G : CodedFamily P n} (h : F.code = G.code) :
     codedISup F = codedISup G := by rw [CodedFamily.ext h]
 
+/-! ## The HF family view
+
+HF names no infinitary family, so its family layer is determined by `IsFamilyCode := False` and
+everything else is vacuous.  Defined here, at the family layer, so the *syntax* consumers of HF
+depend on nothing else — in particular not on a full presentation carrying theory decoding or
+`Sigma1`.
+
+`Element := ℕ` matches the ambient HF instance, so `(hfAmbient C).toFamilyPresentation` is this
+presentation definitionally (`hfAmbient_toFamilyPresentation`). -/
+
+/-- **The HF family view.**  No code names an infinitary family; the remaining fields are
+discharged by the empty code subdomain. -/
+def hfFamily (L : Language.{u, v}) : FamilyPresentation.{u, v, 0, 0} L where
+  Element := ℕ
+  IsFamilyCode _ := False
+  Index c := c.2.elim
+  indexEncodable c := c.2.elim
+  DecodesFamily _ c _ := c.2.elim
+  decodes_unique {_} {c} {_} {_} _ _ := c.2.elim
+
+/-- **`CodedFamily` over HF is uninhabited** — the whole content of "HF has no primitive coded
+families", and it depends on the family layer alone. -/
+theorem isEmpty_codedFamily_hfFamily {L : Language.{u, v}} {n : ℕ} :
+    IsEmpty (CodedFamily (hfFamily L) n) :=
+  ⟨fun F => F.infinitary⟩
+
+/-- Consequently every upward-closure obligation over HF is vacuous, for **any** target set. -/
+theorem hfFamily_coded_closure_vacuous {L : Language.{u, v}} {n : ℕ}
+    (S : Set (Σ n, L.BoundedFormulaω Empty n)) :
+    ∀ F : CodedFamily (hfFamily L) n,
+      (∀ i, (⟨n, F.decode i⟩ : Σ n, L.BoundedFormulaω Empty n) ∈ S) →
+        (⟨n, codedIInf F⟩ : Σ n, L.BoundedFormulaω Empty n) ∈ S :=
+  fun F => absurd F.infinitary not_false
+
 end FirstOrder.Language

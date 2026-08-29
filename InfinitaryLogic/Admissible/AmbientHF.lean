@@ -96,6 +96,15 @@ noncomputable def hfAmbient (C : FinitaryCoding L) : AmbientPresentation.{u, v, 
   decodeSentence e := e.2.choose.toLω
   enumerates d := {s | (Nat.Partrec.Code.eval (Denumerable.ofNat Nat.Partrec.Code d.1) s.1).Dom}
 
+/-- **The ambient instance and the family-layer HF presentation agree, definitionally.**
+
+`hfFamily` is what the HF *syntax* consumers (`isEmpty_codedFamily_hf`, `hf_coded_closure_vacuous`,
+`hfAdmissibleFragment`) are stated over, and this is what ties them to the ambient instance without
+either one depending on the other's extra layers.  It is also independent of the coding `C`, as it
+must be: the family layer sees no sentence numbering. -/
+theorem hfAmbient_toFamilyPresentation (C : FinitaryCoding L) :
+    (hfAmbient C).toFamilyPresentation = hfFamily L := rfl
+
 /-- Decoding a stored code returns that very sentence — this is where `enc_injective` is used, and
 why the coding must be stored rather than assumed. -/
 theorem hfAmbient_decode (C : FinitaryCoding L) (φ₀ : L.Sentence)

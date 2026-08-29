@@ -227,19 +227,18 @@ theorem hf_compactFor (T : Set L.Sentenceω) :
 
 /-- **Gate 4.**  `CodedFamily` over HF is uninhabited.
 
-Stated over the *family view*: the syntax layer never sees `hfPresentation` itself.  The emptiness
-comes solely from `CodesInfFamily := False`, which `toFamilyPresentation` carries across as
-`IsFamilyCode`. -/
-theorem isEmpty_codedFamily_hf :
-    IsEmpty (CodedFamily (hfPresentation L).toFamilyPresentation n) :=
-  ⟨fun F => F.infinitary⟩
+Stated over `hfFamily`, the family-layer HF presentation, so the syntax consumers of HF depend on
+no presentation carrying theory decoding or `Sigma1`.  The emptiness comes solely from
+`IsFamilyCode := False`. -/
+theorem isEmpty_codedFamily_hf : IsEmpty (CodedFamily (hfFamily L) n) :=
+  isEmpty_codedFamily_hfFamily
 
 /-- Consequently every upward-closure obligation over HF is vacuous, for **any** target set. -/
 theorem hf_coded_closure_vacuous (S : Set (Σ n, L.BoundedFormulaω Empty n)) :
-    ∀ F : CodedFamily (hfPresentation L).toFamilyPresentation n,
+    ∀ F : CodedFamily (hfFamily L) n,
       (∀ i, (⟨n, F.decode i⟩ : Σ n, L.BoundedFormulaω Empty n) ∈ S) →
         (⟨n, codedIInf F⟩ : Σ n, L.BoundedFormulaω Empty n) ∈ S :=
-  fun F => absurd F.infinitary not_false
+  hfFamily_coded_closure_vacuous S
 
 
 /-! ## Step 4 — the honest HF instance
@@ -248,8 +247,7 @@ Essentially a structure literal: the base is `hfFragment`, and both upward field
 certificate absurdity.  That it *is* nearly definitional is the signal that the signature is right. -/
 
 /-- **The HF admissible fragment.**  No adapter, no widening. -/
-def hfAdmissibleFragment (L : Language.{0, 0}) :
-    AdmissibleFragment (hfPresentation L).toFamilyPresentation where
+def hfAdmissibleFragment (L : Language.{0, 0}) : AdmissibleFragment (hfFamily L) where
   toFragment := hfFragment L
   iInf_coded_mem := fun F _ => absurd F.infinitary not_false
   iSup_coded_mem := fun F _ => absurd F.infinitary not_false

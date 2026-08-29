@@ -24,9 +24,14 @@ projection requires its structure in the type, and the structure is cone-visible
 are genuine `def`s (`AmbientPresentation.Sigma1`, `.decodeTheory`, `.theoryOf`, `.AFinite`) are
 listed individually and are detected directly.
 
-`hfAdmissibleFragment` is deliberately NOT a root: it is an HF *instance*, so it legitimately
-mentions `hfPresentation` and hence `AdmissiblePresentation`. The boundary being guarded is the
-generic interface, not its instantiations.
+`hfAdmissibleFragment` and the other HF syntax consumers ARE roots, as of stage 5.4's preparation:
+they are stated over `hfFamily`, the family-layer HF presentation, so they no longer reach
+`hfPresentation`. They were excluded while they went through `hfPresentation.toFamilyPresentation`.
+
+Still excluded, and legitimately: HF's THEORY-side results (`hf_compactFor`, `hf_aFinite_iff`,
+`hf_compact_of_aFinite`), which are stated over the legacy presentation until stage 5.4 retires it.
+`hf_compactFor` is the current witness that this guard discriminates — adding it as a root makes
+the guard report `AdmissiblePresentation`.
 
 Run with: lake env lean scripts/check_family_cone.lean
 -/
@@ -121,7 +126,14 @@ def guardedRoots : List Name :=
    `FirstOrder.Language.codedIInf_uses_presentation_encoding,
    `FirstOrder.Language.codedIInf_eq_of_code_eq,
    `FirstOrder.Language.codedISup_eq_of_code_eq,
-   `FirstOrder.Language.AdmissibleFragment]
+   `FirstOrder.Language.AdmissibleFragment,
+   -- HF's SYNTAX consumers, now stated over `hfFamily` rather than a full presentation.
+   -- These were excluded while they went through `hfPresentation.toFamilyPresentation`; that
+   -- they are roots at all is the content of migration stage 5.4's preparation.
+   `FirstOrder.Language.hfFamily,
+   `FirstOrder.Language.isEmpty_codedFamily_hf,
+   `FirstOrder.Language.hf_coded_closure_vacuous,
+   `FirstOrder.Language.hfAdmissibleFragment]
 
 run_cmd do
   let env ← getEnv
