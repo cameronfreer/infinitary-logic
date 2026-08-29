@@ -8,17 +8,20 @@ import InfinitaryLogic.ModelTheory.HanfSpectrum.CardinalBounds
 import InfinitaryLogic.OrdinalUtil
 
 /-!
-# Back-and-forth limit levels via pointwise isolation
+# Back-and-forth levels via pointwise isolation from lower levels
 
-At a limit ordinal `λ`, `BFEquiv λ` is the conjunction of the `BFEquiv β` for `β < λ`
-(`BFEquiv.limit`), so a depth-`λ` class is a coherent family of classes at the lower levels.
-Countably many classes at every lower level do **not** by themselves bound the number of
-depth-`λ` classes: a countable product of countable sets can have the size of the continuum.
+The motivating application is a limit ordinal `λ`: there `BFEquiv λ` is the conjunction of the
+`BFEquiv β` for `β < λ` (`BFEquiv.limit`), so a depth-`λ` class is a coherent family of classes
+at the lower levels, and countably many classes at every lower level do **not** by themselves
+bound the number of depth-`λ` classes — a countable product of countable sets can have the size
+of the continuum.
 
 A sufficient condition is *pointwise isolation*: every model is determined, up to depth-`λ`
-equivalence, by its class at some lower level `β < λ` — where `β` may depend on the model.
-Then each depth-`λ` class is pinned by one node of a countable collection of lower-level
-quotients, so the limit level inherits the cardinal bound of the lower levels.
+equivalence, by its class at some lower level `β < λ`, where `β` may depend on the model.  Then
+each depth-`λ` class is pinned by one node of a countable collection of lower-level quotients,
+so level `λ` inherits the cardinal bound of the lower levels.  The results below assume only
+this isolation hypothesis and `λ < ω₁`; they do not assume `λ` is a limit and never use
+`BFEquiv.limit` (at a successor the hypothesis holds trivially with `β := λ - 1`).
 
 The generic statement is about an arbitrary family of setoids `E : I → Setoid X` with `I`
 countable and a target setoid `L` (`Setoid.IsolatedBy`); no uniformity in the isolating index
@@ -31,7 +34,7 @@ is required, and nothing about a product of the lower levels is used.
 * `Setoid.countable_quotient_of_isolatedBy`, `Setoid.lift_mk_quotient_le_of_isolatedBy` —
   the countable and general cardinal transfers.
 * `countable_bfEquivSetoid_quotient_of_isolated`, `mk_bfEquivSetoid_quotient_le_aleph_one_of_isolated`
-  — the instances for `bfEquivSetoid φ λ` at a limit `λ < ω₁`, from the levels `β < λ`.
+  — the instances for `bfEquivSetoid φ λ`, `λ < ω₁`, from the levels `β < λ`.
 -/
 
 universe u v w
@@ -94,15 +97,14 @@ namespace Language
 
 open Cardinal
 
-variable {L : Language.{u, v}} [L.IsRelational] [Countable (Σ l, L.Relations l)]
+variable {L : Language.{u, v}} [L.IsRelational]
 
-/-- **Pointwise isolation at a limit level** for coded models: every model is determined, up
+/-- **Pointwise isolation from lower levels** for coded models: every model is determined, up
 to depth-`λ` back-and-forth equivalence, by its depth-`β` class for some `β < λ` depending on
-the model. -/
+the model.  The intended `λ` is a limit ordinal, but nothing below requires it. -/
 def BFIsolatedBelow (φ : L.Sentenceω) (lam : Ordinal.{0}) : Prop :=
   Setoid.IsolatedBy (fun β : Set.Iio lam => bfEquivSetoid φ β.1) (bfEquivSetoid φ lam)
 
-omit [Countable (Σ l, L.Relations l)] in
 /-- Countable levels below a countable `λ`, with pointwise isolation, give a countable level
 `λ`. -/
 theorem countable_bfEquivSetoid_quotient_of_isolated (φ : L.Sentenceω) {lam : Ordinal.{0}}
@@ -112,7 +114,6 @@ theorem countable_bfEquivSetoid_quotient_of_isolated (φ : L.Sentenceω) {lam : 
   haveI := InfinitaryLogic.countable_Iio_of_lt_omega1 lam hlam
   Setoid.countable_quotient_of_isolatedBy hiso
 
-omit [Countable (Σ l, L.Relations l)] in
 /-- Levels of size `≤ ℵ₁` below a countable `λ`, with pointwise isolation, give a level `λ` of
 size `≤ ℵ₁`. -/
 theorem mk_bfEquivSetoid_quotient_le_aleph_one_of_isolated (φ : L.Sentenceω)
