@@ -57,6 +57,7 @@ import InfinitaryLogic.Descriptive.WellOrderNonBorel
 import InfinitaryLogic.ModelTheory.CountingCountable
 import InfinitaryLogic.ModelTheory.MorleyCounting
 import InfinitaryLogic.ModelTheory.BFExtensionSpectrum
+import InfinitaryLogic.ModelTheory.BFLimitIsolation
 
 /-!
 # Descriptive: descriptive set theory of Lω₁ω model classes
