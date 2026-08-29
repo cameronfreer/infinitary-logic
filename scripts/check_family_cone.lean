@@ -87,6 +87,8 @@ def forbiddenExact : List Name :=
    `FirstOrder.Language.AmbientPresentation.WithKP,
    `FirstOrder.Language.AmbientPresentation.theoryOf,
    `FirstOrder.Language.AmbientPresentation.Sigma1,
+   `FirstOrder.Language.AmbientPresentation.ACEnumerable,
+   `FirstOrder.Language.AmbientPresentation.CompactFor,
    -- the legacy external theory predicates
    `FirstOrder.Language.AdmissiblePresentation.AFinite,
    `FirstOrder.Language.AdmissiblePresentation.ACEnumerable,

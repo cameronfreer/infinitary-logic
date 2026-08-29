@@ -110,6 +110,47 @@ theorem subset_of_adequate {F : Set L.Sentenceω} (hade : A.AdequateFor F)
   obtain ⟨d, rfl⟩ := hT
   exact hade ▸ theoryOf_subset d
 
+/-! ### The compactness interface
+
+The honest replacement for the legacy `AdmissiblePresentation.ACEnumerable` / `.CompactFor`, which
+read a bare external `Sigma1` predicate carrying no representation data. Here both come from the
+presentation's own definition codes. -/
+
+variable (A)
+
+/-- **`A`-c.e.**: the theory is Σ₁-on-`A`.
+
+Unlike the legacy predicate this is not an arbitrary `Prop` on a set — unfolding it produces a
+definition *code*, which is what makes `subset_of_adequate` available at all. -/
+def ACEnumerable (T : L.Theoryω) : Prop := A.Sigma1 T
+
+/-- The shape of a Barwise-style compactness statement over a permitted sentence set `P`.
+
+`T ⊆ P` stays a **genuine hypothesis**.  It is not removed: `subset_of_adequate` yields it only
+once an adequacy equation identifies the decoded range with `P`, and a presentation need not be
+adequate for the `P` a caller has in mind.  `compactFor_of_adequate` below is the wrapper that
+discharges it where adequacy *is* available.
+
+Both premises enter as hypotheses, so no instance can claim this shape while secretly projecting a
+compactness field — there is none to read. -/
+def CompactFor (P T : L.Theoryω) : Prop :=
+  T ⊆ P → A.ACEnumerable T → A.toTheoryPresentation.AFinitelySatisfiable T → T.IsSatisfiable
+
+variable {A}
+
+theorem acEnumerable_def {T : L.Theoryω} : A.ACEnumerable T ↔ A.Sigma1 T := Iff.rfl
+
+/-- **The assembly theorem.**  A consumer holding compactness *and* adequacy never supplies
+containment: it follows from Σ-definability, because a definition code enumerates sentence codes
+and those decode into the fragment and nowhere else.
+
+This is the payoff of `Sigma1` carrying coding data rather than being a bare predicate — the legacy
+route could not state it. -/
+theorem compactFor_of_adequate {P T : L.Theoryω} (hcompact : A.CompactFor P T)
+    (hade : A.AdequateFor P) (hce : A.ACEnumerable T)
+    (hfin : A.toTheoryPresentation.AFinitelySatisfiable T) : T.IsSatisfiable :=
+  hcompact (subset_of_adequate hade hce) hce hfin
+
 /-! ### KP closure, with specification laws -/
 
 /-- **Pairing and union, stated meaningfully.**

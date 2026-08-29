@@ -235,12 +235,51 @@ section Regression
 
 variable {L : Language.{0, 0}}
 
-/-- **The assembled HF compactness regression.**  Containment is discharged internally by
-`hfAmbient_subset_finitary`; the caller supplies only the Barwise premise. -/
+/-- **The two Barwise premises agree on the finitary fragment.**
+
+They are *not* equivalent in general — the legacy `A`-finite class is every finite theory, the
+honest one is the finite *finitary* theories.  Inside the fragment the difference vanishes: a
+finite subtheory of a finitary theory is itself finitary, so `hfAmbient_aFinite_iff`'s second
+conjunct comes for free.
+
+This is the bridge that lets the honest route stand on the legacy compactness proof until stage 5.4
+replaces it. -/
+theorem hfAmbient_aFinitelySatisfiable_iff (C : FinitaryCoding L) {T : L.Theoryω}
+    (hT : T ⊆ finitaryFragment L) :
+    (hfAmbient C).toTheoryPresentation.AFinitelySatisfiable T ↔
+      (hfPresentation L).AFinitelySatisfiable T := by
+  constructor
+  · intro h T₀ hT₀ hfin
+    exact h T₀ hT₀ ((hfAmbient_aFinite_iff C).mpr ⟨hf_aFinite_iff.mp hfin, hT₀.trans hT⟩)
+  · intro h T₀ hT₀ hA
+    exact h T₀ hT₀ (hf_aFinite_iff.mpr ((hfAmbient_aFinite_iff C).mp hA).1)
+
+/-- **The assembled HF compactness regression**, on the honest route: both premises now come from
+`hfAmbient`'s own coding data, with no legacy predicate in the statement.
+
+Containment is discharged internally by `hfAmbient_subset_finitary`; the caller supplies only
+Σ-definability and the Barwise premise. -/
 theorem hfAmbient_compact (C : FinitaryCoding L) (T : L.Theoryω)
-    (hT : (hfAmbient C).Sigma1 T)
-    (hfin : (hfPresentation L).AFinitelySatisfiable T) : T.IsSatisfiable :=
-  hf_compact_of_aFinite (hfAmbient_subset_finitary C hT) hfin
+    (hT : (hfAmbient C).ACEnumerable T)
+    (hfin : (hfAmbient C).toTheoryPresentation.AFinitelySatisfiable T) : T.IsSatisfiable :=
+  have hsub := hfAmbient_subset_finitary C hT
+  hf_compact_of_aFinite hsub ((hfAmbient_aFinitelySatisfiable_iff C hsub).mp hfin)
+
+/-- **HF inhabits the honest compactness interface.**
+
+The legacy `hf_compactFor` still exists and is what `hfPresentation` satisfies; this is the same
+statement over the ambient presentation, and it is what will make the legacy cluster *deletable* in
+stage 5.4 rather than merely unused. -/
+theorem hfAmbient_compactFor (C : FinitaryCoding L) (T : L.Theoryω) :
+    (hfAmbient C).CompactFor (finitaryFragment L) T :=
+  fun _ hce hfin => hfAmbient_compact C T hce hfin
+
+/-- **Acceptance: the caller never supplies containment.**  `compactFor_of_adequate` derives
+`T ⊆ finitaryFragment L` from adequacy plus Σ-definability, so this consumer mentions neither. -/
+example (C : FinitaryCoding L) (T : L.Theoryω) (hce : (hfAmbient C).ACEnumerable T)
+    (hfin : (hfAmbient C).toTheoryPresentation.AFinitelySatisfiable T) : T.IsSatisfiable :=
+  AmbientPresentation.compactFor_of_adequate (hfAmbient_compactFor C T) (hfAmbient_adequate C)
+    hce hfin
 
 end Regression
 

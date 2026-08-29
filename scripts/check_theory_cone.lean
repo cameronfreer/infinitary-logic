@@ -68,6 +68,8 @@ def forbiddenExact : List Name :=
   [-- the definability layer
    `FirstOrder.Language.AmbientPresentation,
    `FirstOrder.Language.AmbientPresentation.Sigma1,
+   `FirstOrder.Language.AmbientPresentation.ACEnumerable,
+   `FirstOrder.Language.AmbientPresentation.CompactFor,
    `FirstOrder.Language.AmbientPresentation.theoryOf,
    `FirstOrder.Language.AmbientPresentation.WithKP,
    -- the coding and numbering layers

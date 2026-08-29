@@ -260,7 +260,30 @@ either side of the model-universe question.
       (`AdmissiblePresentation.AFinite`, `.ACEnumerable`, `.AFinitelySatisfiable`, `.CompactFor`)
       so every legacy use site says so; stage 5.4 retires them with `hfPresentation`.
       `hf_compact_of_aFinite` is preserved, and `hfAmbient_aFinite_iff` is unchanged.
-   3. replace the bare `Sigma1` field with definition-code data;
+   3. ~~replace the bare `Sigma1` field with definition-code data~~ — **DONE** (`Ambient.lean`).
+      `AmbientPresentation.ACEnumerable A T := A.Sigma1 T` and
+
+      ```
+      A.CompactFor P T := T ⊆ P → A.ACEnumerable T →
+                          A.toTheoryPresentation.AFinitelySatisfiable T → T.IsSatisfiable
+      ```
+
+      The `T ⊆ P` hypothesis **stays**: a presentation need not be adequate for the `P` a caller
+      has in mind. `compactFor_of_adequate` is the separate assembly theorem that discharges it
+      from `A.AdequateFor P` + `A.Sigma1 T` via `subset_of_adequate` — a statement the legacy route
+      could not make, because a bare `Prop` on a set carries no representation data to derive
+      containment from.
+
+      HF now inhabits the honest route: `hfAmbient_compact` states both premises over `hfAmbient`
+      with no legacy predicate, and `hfAmbient_compactFor` is the assembled instance. The bridge is
+      `hfAmbient_aFinitelySatisfiable_iff` — the two Barwise premises are *not* equivalent in
+      general (legacy `A`-finite is every finite theory, honest is the finite *finitary* ones) but
+      coincide inside the fragment, since a finite subtheory of a finitary theory is finitary.
+
+      **The legacy cluster is now obsolete but not deleted.** `hfPresentation` still inhabits only
+      that route, so stage 5.4 switches HF and removes `AdmissiblePresentation`, its four
+      namespaced predicates, `DecodesTheory` with its uniqueness law, and the bare `Sigma1` field
+      — atomically, once they have zero consumers.
    4. install the honest HF instance and **delete `hfPresentation_sigma1_eq_top`**;
    5. reprove the generic HF compactness route without the current trivial bridge;
    6. add the absence and assembly guards;
