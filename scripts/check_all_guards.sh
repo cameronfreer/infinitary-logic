@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Every post-build guard, in ONE place, so the local gate and CI cannot drift apart.
+# Every post-build guard, behind one shared DISCOVERY RULE, so the local gate and CI cannot
+# drift apart.
 #
 # Why this exists: `build_gate.sh` promised "the build or any guard" while running only the
 # sorry boundary and the warning regression. The Lean cone guards, the headline-axiom scan and
@@ -10,8 +11,8 @@
 #
 #   A guard is a file matching `scripts/check_*.lean`, `scripts/check_*.py` or
 #   `scripts/check_*.sh`. Name it that way and it runs — locally and in CI, with no edit to
-#   this script, to build_gate.sh, or to the workflow. Name it anything else and it runs
-#   nowhere.
+#   this script, to build_gate.sh, or to the workflow. Name it anything else and it is not
+#   registered with the shared local/CI gate.
 #
 # That filename pattern is the whole registration mechanism. The anti-drift property is this
 # single DISCOVERY RULE, not a single list, so resist replacing it with an allowlist. Resist

@@ -109,6 +109,34 @@ def guardedRoots : List Name :=
 
 run_cmd do
   let env ← getEnv
+  -- NEGATIVE CONTROL for the `.thmInfo` path.
+  --
+  -- Every root above would still pass if theorem-body traversal were broken, because each
+  -- forbidden name they could plausibly touch also occurs in a TYPE. This probe's forbidden
+  -- dependency is reachable ONLY through a proof body: `hfAmbient_compact`'s type names no legacy
+  -- declaration at all, and its proof calls `hf_compact_of_aFinite`, whose type names the legacy
+  -- presentation. So `AdmissiblePresentation` is absent from the probe's type *and* from its
+  -- value's direct constants, and appears in its cone only if `declValue?` matches `.thmInfo` and
+  -- the closure is genuinely transitive.
+  --
+  -- Verified proof-only when written; the checks below re-verify it rather than assuming it, so
+  -- the control cannot rot into a tautology.
+  let probe := `FirstOrder.Language.hfAmbient_compact
+  let witness := `FirstOrder.Language.hf_compact_of_aFinite
+  let leaked := `FirstOrder.Language.AdmissiblePresentation
+  let some pci := env.find? probe | throwError "negative control: {probe} not found"
+  if pci.type.getUsedConstants.contains witness then
+    throwError "negative control is no longer proof-only: {witness} now occurs in {probe}'s type"
+  if pci.type.getUsedConstants.contains leaked then
+    throwError "negative control is no longer proof-only: {leaked} now occurs in {probe}'s type"
+  let some pval := declValue? pci
+    | throwError "negative control: no value for {probe}; declValue? is not matching .thmInfo"
+  unless pval.getUsedConstants.contains witness do
+    throwError "negative control: {witness} absent from {probe}'s value"
+  unless (transitiveDeps env probe).contains leaked do
+    throwError "negative control FAILED: theorem-body traversal is broken \
+      ({leaked} is reachable from {probe} only through a proof body)"
+
   for f in forbiddenExact do
     unless (env.find? f).isSome do
       throwError "[STALE GUARD] forbidden declaration {f} no longer exists — update this list"

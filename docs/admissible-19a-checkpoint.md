@@ -243,8 +243,19 @@ either side of the model-universe question.
       `AdmissiblePresentation.toFamilyPresentation` is the explicit projection, and
       `AmbientPresentation` now **extends** the view instead of duplicating `IsFamilyCode`.
       Separation is by import — `Family.lean` is imported *by* the theory/Σ files — and pinned by
-      `scripts/check_family_cone.lean`, falsification-tested by adding `hfAdmissibleFragment` as a
-      root and confirming it reports `AdmissiblePresentation`.
+      `scripts/check_family_cone.lean`.
+
+      *On how that guard is falsification-tested.* It was originally checked by adding
+      `hfAdmissibleFragment` as a root and confirming it reported `AdmissiblePresentation`. That
+      witness is **gone**: stage 5.4's preparation moved `hfAdmissibleFragment` onto `hfFamily`, so
+      it is now a permanent *passing* root. The current controls are:
+
+      - **positive witness** — `hf_compactFor` as a root makes the guard report
+        `AdmissiblePresentation.AFinite` and `.CompactFor`;
+      - **proof-only negative control** — `hfAmbient_compact` names no legacy declaration in its
+        type, yet reaches `AdmissiblePresentation` through its proof body. Breaking the `.thmInfo`
+        case of `declValue?` makes the guard fail, which the type-level witness alone would not
+        detect.
    2. ~~move `AFinite` onto the derived `decodeTheory`~~ — **DONE** (`Theory.lean`).
       `TheoryPresentation` is the middle layer: `FamilyPresentation` + `Mem` + `IsSentenceCode` +
       `decodeSentence`, with `IsTheoryCode` / `decodeTheory` / `AFinite` / `AFinitelySatisfiable` /
@@ -301,7 +312,24 @@ either side of the model-universe question.
       `hf_compact_of_aFinite`'s content over `hfAmbient`, drop the
       `hfAmbient_aFinitelySatisfiable_iff` bridge, then delete `AdmissiblePresentation`, its four
       namespaced predicates, `DecodesTheory` with `decodes_theory_unique`, and the bare `Sigma1`
-      field — atomically, once they have zero consumers;
+      field — atomically, once they have zero consumers.
+
+      **The guards must move in the same commit.** Deferring guard work to 5.6 cannot produce a
+      green intermediate commit, because four guards currently *depend on the legacy names
+      existing*:
+
+      | Guard | Dependency |
+      |---|---|
+      | `check_family_cone.lean` | `forbiddenExact` lists `AdmissiblePresentation` and its four predicates, and the `[STALE GUARD]` check **requires each to exist** |
+      | `check_theory_cone.lean` | same |
+      | both cone guards | the proof-only negative control names `hfAmbient_compact`, `hf_compact_of_aFinite` and `AdmissiblePresentation` — a new control pair is needed once that route is gone |
+      | `check_admissible_surface.lean` | `#check`s `AdmissiblePresentation` and `AdmissiblePresentation.AFinite` |
+      | `check_hf_compactness.lean` | has `hfPresentation` as a guarded **root** |
+
+      The staleness check added in 5.2 is what makes this mandatory rather than optional — it was
+      built precisely so a vanished forbidden name fails loudly instead of silently weakening the
+      guard, and deletion is exactly that event. Stage 5.6 then *strengthens* the absence/assembly
+      guards; it does not perform this baseline migration;
    5. reprove the generic HF compactness route without the current trivial bridge;
    6. add the absence and assembly guards;
    7. resolve the model-universe gate **last**.
@@ -309,7 +337,19 @@ either side of the model-universe question.
    Preserve `hf_compact_of_aFinite` throughout, and recheck the four consumers.
 6. **Land #19A** — before any Henkin/#19B work begins.
 
-### Release gate for the #19A PR
+### Release gates for the #19A PR
+
+**The #19A release is BREAKING — it must not be called `v2.3.0`.** Stage 5.4 deletes
+`AdmissiblePresentation` together with its published predicates (`AFinite`, `ACEnumerable`,
+`AFinitelySatisfiable`, `CompactFor`), `DecodesTheory` and `decodes_theory_unique`. Those are
+shipped API as of v2.0.0, so removal is a major bump — the same reasoning that made v2.0.0 major
+rather than v1.9.0. Decide the number when the PR is cut, but not from the 2.x line.
+
+**Merge current `master` first, then rerun the full gate.** The branch is based at v2.1.0 while
+`master` has moved to v2.2.0 (`db7c49b`). Deferring the merge is safe *today* — v2.2.0's changes
+are confined to `ModelTheory/BF*`, `ModelTheory/MorleyCounting.lean` and `Descriptive.lean`, which
+this branch does not touch, so the file-overlap is empty — but that is a fact about today, not a
+standing guarantee. Re-check before the PR rather than trusting this line.
 
 **Strip the stage-by-stage migration narration from production docstrings.** `Family.lean`,
 `CodedFamily.lean`, `Theory.lean`, `Ambient.lean`, `AmbientHF.lean`, `Numbering.lean` and
