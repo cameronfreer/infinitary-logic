@@ -6,13 +6,20 @@
 # the blueprint declaration check ran in CI alone. A rename that broke
 # `check_admissible_surface.lean` therefore passed the local gate and would have failed CI.
 #
-# The anti-drift property is a single DISCOVERY RULE, not a single list: every
-# `scripts/check_*.{lean,py,sh}` is picked up automatically, so a new guard needs no edit here.
-# Resist replacing it with an allowlist, and resist quoting a count of guards anywhere — the
-# count changes and the prose goes stale, which is the failure mode this file exists to stop.
+# REGISTRATION CONTRACT
 #
-# One check is NOT discovered and stays explicit: `lake exe checkdecls`, which is a lake
-# executable rather than a `scripts/check_*` file.
+#   A guard is a file matching `scripts/check_*.lean`, `scripts/check_*.py` or
+#   `scripts/check_*.sh`. Name it that way and it runs — locally and in CI, with no edit to
+#   this script, to build_gate.sh, or to the workflow. Name it anything else and it runs
+#   nowhere.
+#
+# That filename pattern is the whole registration mechanism. The anti-drift property is this
+# single DISCOVERY RULE, not a single list, so resist replacing it with an allowlist. Resist
+# also quoting a count of guards anywhere in this repo's prose: the count changes and the
+# sentence goes stale, which is the failure mode this file exists to stop.
+#
+# One check is NOT discovered and stays explicit: `lake exe checkdecls`, a lake executable
+# rather than a `scripts/check_*` file. It is the only exception; keep it that way.
 #
 # Assumes `lake build` has already succeeded — run it via `build_gate.sh`, or after a build.
 set -euo pipefail
