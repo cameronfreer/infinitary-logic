@@ -56,6 +56,7 @@ import InfinitaryLogic.Descriptive.WellOrderNonBorel
 -- Counting theorems (depend on descriptive results)
 import InfinitaryLogic.ModelTheory.CountingCountable
 import InfinitaryLogic.ModelTheory.MorleyCounting
+import InfinitaryLogic.ModelTheory.BFExtensionSpectrum
 
 /-!
 # Descriptive: descriptive set theory of Lω₁ω model classes
