@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # The checked build gate: run before ANY commit that touches Lean files.
 # Exits nonzero if the build or any guard fails — safe to chain with &&.
+# The guard list lives in scripts/check_all_guards.sh, which CI invokes too, so the local
+# gate and CI cannot drift. Do not add individual guards here.
 # Never pipe `lake build` through tail/grep without this wrapper: a successful
 # pipe tail must not certify a failed build (incident: commit 27145eb).
 set -euo pipefail
@@ -12,6 +14,5 @@ cd "$(dirname "$0")/.."
 targets="${@:-InfinitaryLogic InfinitaryLogic.Everything InfinitaryLogicWIP}"
 echo "build_gate: lake build $targets"
 lake build $targets
-python3 scripts/check_sorry_boundary.py
-python3 scripts/check_warning_regression.py
+bash scripts/check_all_guards.sh
 echo "build_gate: OK"

@@ -33,47 +33,5 @@ jobs:
           use-github-cache: true
           use-mathlib-cache: true
 
-      - name: Verify docbuild resolves the same toolchain and Mathlib as the root
-        run: python3 scripts/check_docbuild_sync.py
-
-      - name: Verify sorry boundary
-        run: python3 scripts/check_sorry_boundary.py
-
-      - name: Verify no warning regressions
-        run: python3 scripts/check_warning_regression.py
-
-      - name: Verify local EMContext import boundary
-        run: bash scripts/check_local_boundary.sh
-
-      - name: Check blueprint declarations
-        run: lake exe checkdecls blueprint/lean_decls
-
-      - name: Verify headline declarations (default-import smoke + standard axioms)
-        run: bash scripts/check_headline_axioms.sh
-
-      - name: Verify morley_hanf dependency cone (bounded ER yes, infinite Ramsey / legacy ladder no)
-        run: lake env lean scripts/check_morley_hanf_deps.lean
-
-      - name: "Verify #8 truth-lemma cone (Henkin closure yes, maximal consistency no)"
-        run: lake env lean scripts/check_truth_lemma_cone.lean
-
-      - name: Verify honest HF fragment (Mathlib compactness yes, legacy fragment structures no)
-        run: lake env lean scripts/check_hf_compactness.lean
-
-      - name: Verify coded-fragment interface is on the default import surface
-        run: lake env lean scripts/check_admissible_surface.lean
-
-      - name: "Verify #19A family-layer cone (syntax depends only on FamilyPresentation)"
-        run: lake env lean scripts/check_family_cone.lean
-
-      - name: "Verify #19A theory-layer cone (theory API depends only on TheoryPresentation)"
-        run: lake env lean scripts/check_theory_cone.lean
-
-      - name: "Verify #18 proof-system boundary (no legacy fragment structures in the Derivable/soundness cone)"
-        run: lake env lean scripts/check_proof_system_boundary.lean
-
-      - name: "Verify #18 EM compactness boundary (oracle is a hypothesis; no legacy admissible machinery)"
-        run: lake env lean scripts/check_em_compactness_boundary.lean
-
-      - name: "Verify the fixed-carrier Karp formulation (universe gates + coded-machinery cone)"
-        run: lake env lean scripts/check_karp_carrier.lean
+      - name: Run all guards (shared list with scripts/build_gate.sh)
+        run: bash scripts/check_all_guards.sh
