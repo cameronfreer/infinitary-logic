@@ -11,8 +11,14 @@ cd "$(dirname "$0")/.."
 # strictly smaller module set than CI checks. `InfinitaryLogic` alone does NOT reach
 # `InfinitaryLogic/Conditional/`; only `Everything` does (incident: a new Conditional
 # module compiled nowhere while this gate reported OK).
-targets="${@:-InfinitaryLogic InfinitaryLogic.Everything InfinitaryLogicWIP}"
-echo "build_gate: lake build $targets"
-lake build $targets
+# An array, not a string: `targets="${@:-...}"` collapses the positional parameters into one
+# scalar, so a target containing whitespace would be re-split and an empty one silently dropped.
+if (( $# )); then
+  targets=("$@")
+else
+  targets=(InfinitaryLogic InfinitaryLogic.Everything InfinitaryLogicWIP)
+fi
+echo "build_gate: lake build ${targets[*]}"
+lake build "${targets[@]}"
 bash scripts/check_all_guards.sh
 echo "build_gate: OK"
