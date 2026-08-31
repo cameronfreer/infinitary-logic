@@ -82,13 +82,18 @@ variable {L : Language.{0, 0}} [L.IsRelational] [Countable (Σ l, L.Relations l)
 /-! ## The bridge: coded definability forces every model to be well-ordered -/
 
 omit [Countable (Σ l, L.Relations l)] in
-/-- **The bridge** (#13's role in this argument): if a sentence defines the well-order class on
-codes, then every model of that sentence **conjoined with the infiniteness axiom** interprets
+/-- **The bridge** (#13's role in this argument), in containment form: if every *code* satisfying
+`φ` is a well-order, then every model of `φ` **conjoined with the infiniteness axiom** interprets
 the distinguished relation as a well-order.  A defect would survive into a countable
 fragment-elementary substructure seeded with its witnesses, and that substructure — infinite by
-the added conjunct — transports to a code of `ModelsOf φ` that is not a well-order. -/
-theorem isWellOrder_of_realize (lt : L.Relations 2) {φ : L.Sentenceω}
-    (hφ : ModelsOf φ = wellOrderClass lt) (M : Type) [instM : L.Structure M]
+the added conjunct — transports to a code of `ModelsOf φ` that is not a well-order.
+
+Containment, not equality: the argument only ever pushes a *particular* code into
+`wellOrderClass lt`, so nothing is lost, and this is the form the analytic-PC sandwich of #64
+supplies — a `pcSentence` whose reduct class sits inside an invariant envelope, never exactly
+equals a prescribed set.  `isWellOrder_of_realize` is the equality-form corollary. -/
+theorem isWellOrder_of_realize_of_modelsOf_subset (lt : L.Relations 2) {φ : L.Sentenceω}
+    (hφ : ModelsOf φ ⊆ wellOrderClass lt) (M : Type) [instM : L.Structure M]
     (hM : Sentenceω.Realize (φ.and (infiniteAxiom L)) M) :
     IsWellOrder M fun x y : M => RelMap lt ![x, y] := by
   by_contra hwo
@@ -110,7 +115,8 @@ theorem isWellOrder_of_realize (lt : L.Relations 2) {φ : L.Sentenceω}
   let e : ↥N ≃ ℕ := (nonempty_equiv_of_countable (α := ↥N) (β := ℕ)).some
   have hd : StructureSpaceOn.encodeViaEquiv e ∈ ModelsOf φ :=
     StructureSpaceOn.encodeViaEquiv_models e hNφ
-  rw [hφ] at hd
+  -- the ONLY use of the hypothesis: push this one code into the well-order class
+  replace hd := hφ hd
   -- the code is a well-order, hence so is `N`
   have hrel : ∀ x y : ℕ, @Structure.RelMap L ℕ
       (StructureSpaceOn.encodeViaEquiv e).toStructure 2 lt ![x, y] ↔
@@ -140,6 +146,19 @@ theorem isWellOrder_of_realize (lt : L.Relations 2) {φ : L.Sentenceω}
   · exact fun a b hab hba => Std.Trichotomous.trichotomous
       (r := fun x y : ↥N => @Structure.RelMap L ↥N _ 2 lt ![x, y]) a b
       (fun h => hab ((hsub a b).mp h)) (fun h => hba ((hsub b a).mp h))
+
+omit [Countable (Σ l, L.Relations l)] in
+/-- **The bridge**, equality form: if a sentence *defines* the well-order class on codes, then
+every model of it conjoined with the infiniteness axiom is well-ordered.
+
+The `ModelsOf φ = wellOrderClass lt` specialization of
+`isWellOrder_of_realize_of_modelsOf_subset`; the defect-seed argument lives there and is not
+repeated. -/
+theorem isWellOrder_of_realize (lt : L.Relations 2) {φ : L.Sentenceω}
+    (hφ : ModelsOf φ = wellOrderClass lt) (M : Type) [instM : L.Structure M]
+    (hM : Sentenceω.Realize (φ.and (infiniteAxiom L)) M) :
+    IsWellOrder M fun x y : M => RelMap lt ![x, y] :=
+  isWellOrder_of_realize_of_modelsOf_subset lt hφ.subset M hM
 
 /-! ## The endpoint -/
 
