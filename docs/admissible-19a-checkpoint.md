@@ -253,9 +253,20 @@ either side of the model-universe question.
       - **positive witness** — `hf_compactFor` as a root makes the guard report
         `AdmissiblePresentation.AFinite` and `.CompactFor`;
       - **proof-only negative control** — `hfAmbient_compact` names no legacy declaration in its
-        type, yet reaches `AdmissiblePresentation` through its proof body. Breaking the `.thmInfo`
-        case of `declValue?` makes the guard fail, which the type-level witness alone would not
-        detect.
+        type, yet reaches `AdmissiblePresentation` through its proof body.
+
+      The control runs the cone **twice**, which is what makes it durable: `depsWith false`
+      (types and `def` bodies, no theorem bodies) must *not* reach `AdmissiblePresentation`, and
+      `depsWith true` must. Inspecting direct constants cannot establish "reachable only through
+      bodies" — a type-side path elsewhere in the cone would go unnoticed. Two further assertions
+      keep it honest: `AdmissiblePresentation` must be absent from the probe's own value, so the
+      full traversal is exercising transitivity rather than a one-hop lookup, and
+      `hf_compact_of_aFinite` must be present there but absent from the type.
+
+      Falsification-tested in three modes, each producing a distinct message: theorem bodies not
+      followed while `declValue?` still returns a value — the bug an earlier, weaker version of
+      this control could not see, because it failed at "no value" for a different reason; a
+      `leaked` name reachable in one hop; and a `leaked` name reachable without any theorem body.
    2. ~~move `AFinite` onto the derived `decodeTheory`~~ — **DONE** (`Theory.lean`).
       `TheoryPresentation` is the middle layer: `FamilyPresentation` + `Mem` + `IsSentenceCode` +
       `decodeSentence`, with `IsTheoryCode` / `decodeTheory` / `AFinite` / `AFinitelySatisfiable` /

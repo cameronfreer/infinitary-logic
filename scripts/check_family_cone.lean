@@ -48,7 +48,10 @@ def declValue? (ci : ConstantInfo) : Option Expr :=
   | .opaqueInfo v => some v.value
   | _ => none
 
-partial def transitiveDeps (env : Environment) (start : Name) : NameSet := Id.run do
+/-- Transitive constant cone.  `followThm := false` skips THEOREM bodies while still following
+types and `def` bodies; running the cone both ways is what proves a dependency is reachable *only*
+through proof bodies, which inspecting direct constants cannot show. -/
+partial def depsWith (env : Environment) (followThm : Bool) (start : Name) : NameSet := Id.run do
   let mut seen : NameSet := {}
   let mut stack : List Name := [start]
   while !stack.isEmpty do
@@ -60,12 +63,17 @@ partial def transitiveDeps (env : Environment) (start : Name) : NameSet := Id.ru
     | none => pure ()
     | some ci =>
       let mut cs := ci.type.getUsedConstantsAsSet
-      match declValue? ci with
-      | some v => cs := cs.union v.getUsedConstantsAsSet
-      | none => pure ()
+      let follow := match ci with | .thmInfo _ => followThm | _ => true
+      if follow then
+        match declValue? ci with
+        | some v => cs := cs.union v.getUsedConstantsAsSet
+        | none => pure ()
       for c in cs do
         if !seen.contains c then stack := c :: stack
   return seen
+
+/-- The real cone: theorem bodies included. -/
+def transitiveDeps (env : Environment) (start : Name) : NameSet := depsWith env true start
 
 /-- Forbidden exact declarations: the bundling presentation, the theory / Σ / KP layers, and the
 numbering layer.
@@ -139,29 +147,36 @@ run_cmd do
   let env ← getEnv
   -- NEGATIVE CONTROL for the `.thmInfo` path.
   --
-  -- Every root above would still pass if theorem-body traversal were broken, because each
+  -- Every root above would still pass with theorem-body traversal completely broken, because each
   -- forbidden name they could plausibly touch also occurs in a TYPE. This probe's forbidden
-  -- dependency is reachable ONLY through a proof body: `hfAmbient_compact`'s type names no legacy
-  -- declaration at all, and its proof calls `hf_compact_of_aFinite`, whose type names the legacy
-  -- presentation. So `AdmissiblePresentation` is absent from the probe's type *and* from its
-  -- value's direct constants, and appears in its cone only if `declValue?` matches `.thmInfo` and
-  -- the closure is genuinely transitive.
+  -- dependency is reachable ONLY through proof bodies -- and that claim is established by running
+  -- the cone TWICE, not by inspecting direct constants:
   --
-  -- Verified proof-only when written; the checks below re-verify it rather than assuming it, so
-  -- the control cannot rot into a tautology.
+  --   * `depsWith false` (types and `def` bodies, no theorem bodies) must NOT reach it;
+  --   * `depsWith true`  (the real traversal)                        must reach it.
+  --
+  -- Two further assertions keep the control honest. `leaked` must be absent from the probe's own
+  -- value, so the full traversal is exercising TRANSITIVITY rather than a one-hop lookup; and
+  -- `witness` must be present there while absent from the type, so the probe is genuinely
+  -- proof-only. All four are re-verified every run, so the control cannot rot into a tautology as
+  -- the surrounding API moves.
   let probe := `FirstOrder.Language.hfAmbient_compact
   let witness := `FirstOrder.Language.hf_compact_of_aFinite
   let leaked := `FirstOrder.Language.AdmissiblePresentation
   let some pci := env.find? probe | throwError "negative control: {probe} not found"
-  if pci.type.getUsedConstants.contains witness then
-    throwError "negative control is no longer proof-only: {witness} now occurs in {probe}'s type"
-  if pci.type.getUsedConstants.contains leaked then
-    throwError "negative control is no longer proof-only: {leaked} now occurs in {probe}'s type"
   let some pval := declValue? pci
     | throwError "negative control: no value for {probe}; declValue? is not matching .thmInfo"
+  if pci.type.getUsedConstants.contains witness then
+    throwError "negative control is no longer proof-only: {witness} now occurs in {probe}'s type"
   unless pval.getUsedConstants.contains witness do
     throwError "negative control: {witness} absent from {probe}'s value"
-  unless (transitiveDeps env probe).contains leaked do
+  if pval.getUsedConstants.contains leaked then
+    throwError "negative control no longer exercises transitivity: {leaked} occurs directly in \
+      {probe}'s value"
+  if (depsWith env false probe).contains leaked then
+    throwError "negative control is no longer proof-only: {leaked} is reachable from {probe} \
+      without traversing any theorem body"
+  unless (depsWith env true probe).contains leaked do
     throwError "negative control FAILED: theorem-body traversal is broken \
       ({leaked} is reachable from {probe} only through a proof body)"
 
