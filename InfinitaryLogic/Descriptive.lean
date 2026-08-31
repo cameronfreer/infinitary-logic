@@ -54,6 +54,9 @@ import InfinitaryLogic.Descriptive.LopezEscobar
 -- Non-Borelness of the countable well-order class (issue #33; consumes López–Escobar + #12 + #13)
 import InfinitaryLogic.Descriptive.WellOrderNonBorel
 
+-- Boundedness for analytic families of coded well-orders (issue #64; the PC sandwich + #12 + #13)
+import InfinitaryLogic.Descriptive.AnalyticWellOrderBoundedness
+
 -- Counting theorems (depend on descriptive results)
 import InfinitaryLogic.ModelTheory.CountingCountable
 import InfinitaryLogic.ModelTheory.MorleyCounting
