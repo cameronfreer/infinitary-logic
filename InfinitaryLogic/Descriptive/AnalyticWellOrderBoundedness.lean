@@ -110,4 +110,30 @@ theorem analytic_wellOrder_type_boundedness {A : Set (StructureSpace L)} (lt : L
     exact (BoundedFormulaω.realize_and _ _).mpr ⟨hd, hinf⟩
   exact hbound ℕ d.toStructure hreal
 
+/-! ## Pullback along a continuous coding
+
+Boundedness is usually consumed one step removed: an analytic set `B` in some other space carries a
+*continuous* assignment of well-order codes, and what needs bounding is a rank read off those codes.
+The image `code '' B` is analytic, sits inside `wellOrderClass lt`, and the bound transports back. -/
+
+/-- **Boundedness along a continuous well-order presentation**: if an analytic `B` maps continuously
+to codes that are all well-orders, and `rank` computes the order type of those codes, then one
+countable ordinal bounds `rank` on `B`.
+
+`hrank` is stated for *every* well-ordering proof, so the hypothesis never mentions a particular
+`IsWellOrder` term — the caller supplies whichever one it has. -/
+theorem analytic_rank_bounded_of_continuousOn_wellOrderPresentation {X : Type*}
+    [TopologicalSpace X] {B : Set X} (lt : L.Relations 2) (hB : MeasureTheory.AnalyticSet B)
+    (code : X → StructureSpace L) (hcode : ContinuousOn code B)
+    (hWO : ∀ x ∈ B, code x ∈ wellOrderClass lt) (rank : X → Ordinal.{0})
+    (hrank : ∀ x ∈ B, ∀ h : IsWellOrder ℕ fun a b : ℕ =>
+        @Structure.RelMap L ℕ (code x).toStructure 2 lt ![a, b],
+      rank x = @Ordinal.type ℕ
+        (fun a b : ℕ => @Structure.RelMap L ℕ (code x).toStructure 2 lt ![a, b]) h) :
+    ∃ β : Ordinal.{0}, β < (Cardinal.aleph 1).ord ∧ ∀ x ∈ B, rank x < β := by
+  obtain ⟨β, hβ, hbound⟩ := analytic_wellOrder_type_boundedness lt (hB.image_of_continuousOn hcode)
+    (by rintro _ ⟨x, hx, rfl⟩; exact hWO x hx)
+  exact ⟨β, hβ, fun x hx => (hrank x hx (hWO x hx)).trans_lt
+    (hbound (code x) ⟨x, hx, rfl⟩ (hWO x hx))⟩
+
 end FirstOrder.Language
