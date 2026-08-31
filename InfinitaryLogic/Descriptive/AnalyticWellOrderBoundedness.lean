@@ -7,6 +7,7 @@ import InfinitaryLogic.Descriptive.AnalyticTree
 import InfinitaryLogic.Descriptive.WellOrderBridge
 import InfinitaryLogic.Methods.LopezEscobar.CodeClass
 import InfinitaryLogic.ModelTheory.WellOrdering
+import InfinitaryLogic.OrdinalUtil
 
 /-!
 # Analytic subsets of the well-order class are bounded (issue #64)
@@ -135,5 +136,24 @@ theorem analytic_rank_bounded_of_continuousOn_wellOrderPresentation {X : Type*}
     (by rintro _ ⟨x, hx, rfl⟩; exact hWO x hx)
   exact ⟨β, hβ, fun x hx => (hrank x hx (hWO x hx)).trans_lt
     (hbound (code x) ⟨x, hx, rfl⟩ (hWO x hx))⟩
+
+/-! ## The regression: the full well-order class is not analytic
+
+The `A := wellOrderClass lt` case.  Were the class analytic it would bound its own order types,
+but it realizes every countably infinite one — `α + ω` in particular. -/
+
+/-- **The countable well-order class is not analytic**: no analytic set of codes consists exactly
+of the well-ordered ones.  Non-Borelness (`wellOrderClass_not_measurableSet`) is weaker, since
+Borel sets are analytic; that endpoint is proved separately from López–Escobar and does not go
+through this one. -/
+theorem wellOrderClass_not_analyticSet (lt : L.Relations 2) :
+    ¬ MeasureTheory.AnalyticSet (wellOrderClass lt) := by
+  intro hA
+  obtain ⟨α, hα, hbound⟩ := analytic_wellOrder_type_boundedness lt hA subset_rfl
+  obtain ⟨c, hc, htype⟩ := exists_code_type_eq (L := L) lt
+    (β := α + Ordinal.omega0) le_add_self (InfinitaryLogic.add_omega0_lt_omega1 hα)
+  have hb := hbound c hc hc
+  rw [htype] at hb
+  exact absurd hb (not_lt.mpr le_self_add)
 
 end FirstOrder.Language
