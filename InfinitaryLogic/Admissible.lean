@@ -5,8 +5,6 @@ import InfinitaryLogic.Admissible.Ambient
 import InfinitaryLogic.Admissible.AmbientHF
 import InfinitaryLogic.Admissible.Numbering
 import InfinitaryLogic.Admissible.Fragment
-import InfinitaryLogic.Admissible.CodedFamily
-import InfinitaryLogic.Admissible.Predicates
 import InfinitaryLogic.Admissible.Fragment.Honest
 import InfinitaryLogic.Admissible.HF
 import InfinitaryLogic.Admissible.Barwise.Data

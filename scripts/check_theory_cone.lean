@@ -90,12 +90,7 @@ def forbiddenExact : List Name :=
    -- KP / Ackermann membership
    `Nat.AckMem,
    `Nat.ackPair,
-   `Nat.ackUnion,
-   -- the legacy bundling signature and its external predicates
-   `FirstOrder.Language.AdmissiblePresentation,
-   `FirstOrder.Language.AdmissiblePresentation.AFinite,
-   `FirstOrder.Language.AdmissiblePresentation.ACEnumerable,
-   `FirstOrder.Language.AdmissiblePresentation.CompactFor]
+   `Nat.ackUnion]
 
 /-- Positive witness: the theory view must genuinely be consumed. -/
 def requiredWitness : List Name := [`FirstOrder.Language.TheoryPresentation]

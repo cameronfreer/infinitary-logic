@@ -15,25 +15,19 @@ import Mathlib.Computability.PartrecCode
 sentences, theory codes are exactly the finite sets of sentence codes, and pairing and union are
 ordinary arithmetic.  The four kinds **overlap**, which is correct: in HF every code is a number.
 
-## The `A`-finiteness correction
+## `A`-finiteness is *not* plain finiteness
 
-`hf_aFinite_iff` (on the legacy `hfPresentation`) says `AFinite T ↔ T.Finite` *globally*.  The
-honest instance cannot preserve that, and should not:
-
-> theory codes are built from finitary sentence codes, so a finite theory containing an infinitary
-> sentence is not an element of HF.
-
-The correct endpoint is `hfAmbient_aFinite_iff`:
+Theory codes are built from **finitary** sentence codes, so a finite theory containing an
+infinitary sentence is not an element of HF.  The characterization is `hfAmbient_aFinite_iff`:
 
 ```
 AFinite T ↔ T.Finite ∧ T ⊆ finitaryFragment L
 ```
 
-with `hfAmbient_aFinite_iff_of_finitary` as the consumer-friendly form.  This is a **deliberate
-#19A API correction**, not an oversight: the old global theorem is a harmless enlargement on
-`hfPresentation`'s current compactness domain, but preserving it here would mean encoding
-infinitary sentences into HF, which `docs/admissible-19a-checkpoint.md` §1 rules out.
-`not_hfAmbient_aFinite_iff_finite` exhibits the failure rather than merely asserting it.
+with `hfAmbient_aFinite_iff_of_finitary` as the consumer-friendly form.  Both conjuncts are
+necessary: encoding arbitrary infinitary sentences into HF is ruled out by the uncountability of
+`L.Sentenceω` (`docs/admissible-19a-checkpoint.md` §1).  `not_hfAmbient_aFinite_iff_finite`
+exhibits a finite non-`A`-finite theory rather than merely asserting the distinction.
 
 ## What remains a placeholder
 
@@ -149,8 +143,8 @@ Both conjuncts are necessary.  Finiteness comes from `Nat.finite_ackMem`: an Ack
 finitely many bits set.  Containment comes from adequacy: the members are *sentence* codes, and
 those decode into the finitary fragment and nowhere else.
 
-Compare `hf_aFinite_iff`, whose global `↔ T.Finite` this deliberately replaces; see the module
-docstring and `not_hfAmbient_aFinite_iff_finite`. -/
+The global form `AFinite T ↔ T.Finite` is FALSE here; `not_hfAmbient_aFinite_iff_finite` exhibits
+a counterexample. -/
 theorem hfAmbient_aFinite_iff (C : FinitaryCoding L) {T : L.Theoryω} :
     (hfAmbient C).AFinite T ↔ T.Finite ∧ T ⊆ finitaryFragment L := by
   classical
@@ -188,17 +182,16 @@ theorem hfAmbient_aFinite_iff (C : FinitaryCoding L) {T : L.Theoryω} :
       exact ⟨⟨g φ, h⟩, (ha _).mpr ⟨φ, hφ, rfl⟩, hdec⟩
 
 /-- **The consumer-friendly form.**  Inside the finitary fragment — which is where every HF
-consumer already lives, by `hf_compact_of_aFinite`'s hypothesis — `A`-finiteness *is* ordinary
-finiteness. -/
+consumer lives — `A`-finiteness *is* ordinary finiteness. -/
 theorem hfAmbient_aFinite_iff_of_finitary (C : FinitaryCoding L) {T : L.Theoryω}
     (hT : T ⊆ finitaryFragment L) : (hfAmbient C).AFinite T ↔ T.Finite :=
   (hfAmbient_aFinite_iff C).trans ⟨And.left, fun h => ⟨h, hT⟩⟩
 
-/-- **The correction is real, not cosmetic.**  A singleton `iInf` theory is finite yet not
-`A`-finite, so the global `hf_aFinite_iff` form genuinely fails for the honest instance.
+/-- **The distinction is real, not cosmetic.**  A singleton `iInf` theory is finite yet not
+`A`-finite, so `AFinite T ↔ T.Finite` genuinely fails.
 
-Exhibiting the counterexample is the point: it is what stops the old equation from being restored
-"for compatibility" during the production migration. -/
+Exhibiting the counterexample is the point: it is what stops that equation from being adopted
+"for convenience". -/
 theorem not_hfAmbient_aFinite_iff_finite (C : FinitaryCoding L) (φs : ℕ → L.Sentenceω) :
     ¬((hfAmbient C).AFinite {BoundedFormulaω.iInf φs} ↔
       ({BoundedFormulaω.iInf φs} : L.Theoryω).Finite) := by
@@ -250,8 +243,7 @@ One direction only, and that is the honest shape: a finite subtheory of a finita
 itself finitary, so `hfAmbient_aFinite_iff`'s containment conjunct comes for free and every
 ordinarily finite subtheory is `A`-finite.
 
-Replaces the earlier bridge through `hfPresentation`.  Nothing here mentions the legacy
-presentation, so HF compactness no longer stands on it. -/
+Only this direction is needed, and it is all that holds without further hypotheses. -/
 theorem hfAmbient_isFinitelySatisfiable (C : FinitaryCoding L) {T : L.Theoryω}
     (hT : T ⊆ finitaryFragment L)
     (hfin : (hfAmbient C).toTheoryPresentation.AFinitelySatisfiable T) :
@@ -270,11 +262,7 @@ theorem hfAmbient_compact (C : FinitaryCoding L) (T : L.Theoryω)
   have hsub := hfAmbient_subset_finitary C hT
   finitaryFragment_compact hsub (hfAmbient_isFinitelySatisfiable C hsub hfin)
 
-/-- **HF inhabits the honest compactness interface.**
-
-The legacy `hf_compactFor` still exists and is what `hfPresentation` satisfies; this is the same
-statement over the ambient presentation, and it is what will make the legacy cluster *deletable* in
-stage 5.4 rather than merely unused. -/
+/-- **HF inhabits the compactness interface.** -/
 theorem hfAmbient_compactFor (C : FinitaryCoding L) (T : L.Theoryω) :
     (hfAmbient C).CompactFor (finitaryFragment L) T :=
   fun _ hce hfin => hfAmbient_compact C T hce hfin

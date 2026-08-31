@@ -318,34 +318,29 @@ either side of the model-universe question.
       What `hfPresentation` still supplies is exactly the theory side: `hf_aFinite_iff`,
       `hf_aFinitelySatisfiable_iff`, `hf_compact_of_aFinite`, `hf_compactFor`, and the bridge
       `hfAmbient_aFinitelySatisfiable_iff`.
-   4. install the honest HF instance and **delete `hfPresentation_sigma1_eq_top`**. The family
-      side is already migrated (see 5.3 above), so what remains is the theory side: reprove
-      `hf_compact_of_aFinite`'s content over `hfAmbient`, drop the
-      `hfAmbient_aFinitelySatisfiable_iff` bridge, then delete `AdmissiblePresentation`, its four
-      namespaced predicates, `DecodesTheory` with `decodes_theory_unique`, and the bare `Sigma1`
-      field — atomically, once they have zero consumers.
+   4. ~~install the honest HF instance and delete the legacy cluster~~ — **DONE**, in two commits.
 
-      **The guards must move in the same commit.** Deferring guard work to 5.6 cannot produce a
-      green intermediate commit, because four guards currently *depend on the legacy names
-      existing*:
+      *5.4a* reproved `hfAmbient_compact` through `finitaryFragment_compact` directly, via
+      `hfAmbient_isFinitelySatisfiable`, retiring the `hfAmbient_aFinitelySatisfiable_iff` bridge.
+      Verified by cone inspection that neither legacy name remained reachable. That change broke
+      both negative controls, exactly as predicted, so the replacement triple
+      (`hfAmbient_compact` / `finitaryFragment_compact` / `foTheory`) landed with it.
 
-      | Guard | Dependency |
-      |---|---|
-      | `check_family_cone.lean` | `forbiddenExact` lists `AdmissiblePresentation` and its four predicates, and the `[STALE GUARD]` check **requires each to exist** |
-      | `check_theory_cone.lean` | same |
-      | both cone guards | the proof-only negative control names `hfAmbient_compact`, `hf_compact_of_aFinite` and `AdmissiblePresentation` — a new control pair is needed once that route is gone |
-      | `check_admissible_surface.lean` | `#check`s `AdmissiblePresentation` and `AdmissiblePresentation.AFinite` |
-      | `check_hf_compactness.lean` | has `hfPresentation` as a guarded **root** |
+      *5.4b* deleted `AdmissiblePresentation`, its four namespaced predicates, `DecodesTheory`
+      with `decodes_theory_unique`, the bare `Sigma1` field, `hfPresentation` and its five
+      theorems — `Admissible/CodedFamily.lean` and `Admissible/Predicates.lean` went with them,
+      both having become empty. The guard migration landed in the same commit, as required: the
+      `[STALE GUARD]` existence check made it mandatory rather than optional.
 
-      The staleness check added in 5.2 is what makes this mandatory rather than optional — it was
-      built precisely so a vanished forbidden name fails loudly instead of silently weakening the
-      guard, and deletion is exactly that event. Stage 5.6 then *strengthens* the absence/assembly
-      guards; it does not perform this baseline migration;
-   5. reprove the generic HF compactness route without the current trivial bridge;
-   6. add the absence and assembly guards;
+   5. ~~reprove the generic HF compactness route without the trivial bridge~~ — **DONE** in 5.4a;
+      `hfAmbient_compact` now reaches Mathlib compactness directly.
+   6. **strengthen** the absence and assembly guards. Baseline guard migration already happened in
+      5.4b; what remains is genuinely new coverage, not catch-up.
    7. resolve the model-universe gate **last**.
 
-   Preserve `hf_compact_of_aFinite` throughout, and recheck the four consumers.
+   `hf_compact_of_aFinite` is **gone**, not preserved: its content survives as `hfAmbient_compact`
+   over the ambient presentation. The instruction to preserve it belonged to the staged migration,
+   where it had consumers; at the end of the migration it has none.
 6. **Land #19A** — before any Henkin/#19B work begins.
 
 ### Release gates for the #19A PR

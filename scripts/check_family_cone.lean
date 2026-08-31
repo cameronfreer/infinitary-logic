@@ -10,28 +10,27 @@ those things, so it cannot see them. This guard exists because that import direc
 reverse by accident: adding one `import` to `Family.lean`, or re-parameterizing `CodedFamily` by a
 richer structure, would silently re-bundle the layers and every build would still pass.
 
-1. FORBIDDEN — no declaration in the cone of the family-layer roots may be the bundling
-   presentation (`AdmissiblePresentation`), the ambient presentation or any of its theory /
-   Σ-definition / KP declarations, the numbering layer, or the c.e. predicate.
+1. FORBIDDEN — no declaration in the cone of the family-layer roots may be the theory layer, the
+   ambient presentation or any of its Σ-definition / KP declarations, the numbering layer, or the
+   c.e. predicate.
 
 2. REQUIRED — the cone MUST contain `FamilyPresentation`, so a root cannot pass by having been
    rewritten to depend on nothing at all.
 
 CAVEAT, stated because it bounds what this proves: structure-field projections compile to
-`Expr.proj` and are NOT cone-visible, so `AdmissiblePresentation.Sigma1` — a projection — cannot be
-detected directly. That is why the enclosing STRUCTURES are forbidden by name: any use of a
+`Expr.proj` and are NOT cone-visible, so `AmbientPresentation.enumerates` — a projection — cannot
+be detected directly. That is why the enclosing STRUCTURES are forbidden by name: any use of a
 projection requires its structure in the type, and the structure is cone-visible. Declarations that
-are genuine `def`s (`AmbientPresentation.Sigma1`, `.decodeTheory`, `.theoryOf`, `.AFinite`) are
-listed individually and are detected directly.
+are genuine `def`s (`AmbientPresentation.Sigma1`, `TheoryPresentation.decodeTheory`, `.AFinite`)
+are listed individually and are detected directly.
 
-`hfAdmissibleFragment` and the other HF syntax consumers ARE roots, as of stage 5.4's preparation:
-they are stated over `hfFamily`, the family-layer HF presentation, so they no longer reach
-`hfPresentation`. They were excluded while they went through `hfPresentation.toFamilyPresentation`.
+`hfAdmissibleFragment` and the other HF syntax consumers ARE roots: they are stated over
+`hfFamily`, the family-layer HF presentation.
 
-Still excluded, and legitimately: HF's THEORY-side results (`hf_compactFor`, `hf_aFinite_iff`,
-`hf_compact_of_aFinite`), which are stated over the legacy presentation until stage 5.4 retires it.
-`hf_compactFor` is the current witness that this guard discriminates — adding it as a root makes
-the guard report `AdmissiblePresentation`.
+Still excluded, and legitimately: HF's THEORY-side results (`hfAmbient_compact`,
+`hfAmbient_aFinite_iff`), which live at the ambient layer by construction. `hfAmbient_compact` is
+the witness that this guard discriminates — adding it as a root makes the guard report
+`hfAmbient`, `AmbientPresentation` and the theory layer.
 
 Run with: lake env lean scripts/check_family_cone.lean
 -/
@@ -80,13 +79,11 @@ numbering layer.
 
 Every name here is checked to EXIST before the cone test runs.  A forbidden name that has been
 renamed away is silently useless — the guard would keep reporting OK while protecting nothing.
-That is not hypothetical: this list went stale within one commit, when the theory layer moved from
-`AmbientPresentation` to `TheoryPresentation` and the bare `AFinite` became
-`AdmissiblePresentation.AFinite`. -/
+That is not hypothetical: this list went stale twice — when the theory layer moved from
+`AmbientPresentation` to `TheoryPresentation`, and again when the legacy presentation was deleted
+outright. Both times the existence check is what forced the update. -/
 def forbiddenExact : List Name :=
-  [-- the bundling signature the syntax layer must no longer reach
-   `FirstOrder.Language.AdmissiblePresentation,
-   -- the theory layer
+  [   -- the theory layer
    `FirstOrder.Language.TheoryPresentation,
    `FirstOrder.Language.TheoryPresentation.IsTheoryCode,
    `FirstOrder.Language.TheoryPresentation.decodeTheory,
@@ -102,11 +99,6 @@ def forbiddenExact : List Name :=
    `FirstOrder.Language.AmbientPresentation.Sigma1,
    `FirstOrder.Language.AmbientPresentation.ACEnumerable,
    `FirstOrder.Language.AmbientPresentation.CompactFor,
-   -- the legacy external theory predicates
-   `FirstOrder.Language.AdmissiblePresentation.AFinite,
-   `FirstOrder.Language.AdmissiblePresentation.ACEnumerable,
-   `FirstOrder.Language.AdmissiblePresentation.AFinitelySatisfiable,
-   `FirstOrder.Language.AdmissiblePresentation.CompactFor,
    -- the coding and numbering layers
    `FirstOrder.Language.FinitaryCoding,
    `FirstOrder.Language.FinitaryNumbering,

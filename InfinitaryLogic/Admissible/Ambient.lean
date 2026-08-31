@@ -36,8 +36,8 @@ the kind subdomains — the pair of a sentence code and a definition code is an 
 has no kind at all.  One carrier states such laws directly; separate sorts must route every closure
 law through `Sum`.
 
-**The frozen design is already ambient-shaped.**  `AdmissiblePresentation.Code` serves both
-`DecodesFamily` and `DecodesTheory`: the same codes, a different thing named.
+**One carrier was always the intent.**  The same codes — the elements of `A` — serve the family,
+theory, sentence and Σ-definition roles; only the thing named differs.
 
 ## `Sigma1` is derived
 
@@ -112,9 +112,8 @@ theorem subset_of_adequate {F : Set L.Sentenceω} (hade : A.AdequateFor F)
 
 /-! ### The compactness interface
 
-The honest replacement for the legacy `AdmissiblePresentation.ACEnumerable` / `.CompactFor`, which
-read a bare external `Sigma1` predicate carrying no representation data. Here both come from the
-presentation's own definition codes. -/
+Both come from the presentation's own definition codes, rather than from a bare external `Sigma1`
+predicate carrying no representation data. -/
 
 variable (A)
 

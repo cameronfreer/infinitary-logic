@@ -31,10 +31,9 @@ universe u v uCode uIndex
 /-- **An admissible fragment**: an ordinary `Fragment`, closed *upward* under the conjunctions and
 disjunctions named by **certified** coded families — and under nothing else.
 
-Parameterized by the **family view**, not by a full `AdmissiblePresentation`.  This file does not
-import `Admissible/CodedFamily.lean`, so the syntax interface cannot mention `DecodesTheory` or
-`Sigma1`: the separation is by import, not by convention.  A full presentation is used here through
-`AdmissiblePresentation.toFamilyPresentation`. -/
+Parameterized by the **family view**.  This file imports only `Admissible/Family.lean`, so the
+syntax interface cannot mention theory decoding or `Sigma1`: the separation is by import, not by
+convention.  A richer presentation is used here through its `toFamilyPresentation` projection. -/
 structure AdmissibleFragment {L : Language.{u, v}}
     (P : FamilyPresentation.{u, v, uCode, uIndex} L) extends Fragment L where
   iInf_coded_mem : ∀ {n : ℕ} (F : CodedFamily P n),
