@@ -40,4 +40,19 @@ theorem setCountable_Iio_of_lt_omega1 (β : Ordinal.{0}) (hβ : β < Ordinal.ome
     Set.Countable (Set.Iio β) :=
   Set.countable_coe_iff.mp (countable_Iio_of_lt_omega1 β hβ)
 
+/-- `ω₁` absorbs `+ ω`: a countable ordinal stays countable after appending `ω`.
+
+The standard way to exceed a bound `α < ω₁` while staying countable — `α + ω` is at least `α`,
+infinite, and still countable — which is what order-type diagonalizations against a boundedness
+theorem need. -/
+theorem add_omega0_lt_omega1 {α : Ordinal.{0}} (hα : α < (Cardinal.aleph 1).ord) :
+    α + Ordinal.omega0 < (Cardinal.aleph 1).ord := by
+  rw [Cardinal.ord_aleph, Cardinal.lt_omega_iff_card_lt] at hα ⊢
+  rw [← Cardinal.succ_aleph0] at hα
+  rw [Ordinal.card_add, Ordinal.card_omega0, ← Cardinal.succ_aleph0]
+  calc α.card + Cardinal.aleph0 ≤ Cardinal.aleph0 + Cardinal.aleph0 :=
+        add_le_add (Order.lt_succ_iff.mp hα) le_rfl
+    _ = Cardinal.aleph0 := Cardinal.aleph0_add_aleph0
+    _ < Order.succ Cardinal.aleph0 := Order.lt_succ _
+
 end InfinitaryLogic
