@@ -374,11 +374,10 @@ either side of the model-universe question.
 shipped API as of v2.0.0, so removal is a major bump — the same reasoning that made v2.0.0 major
 rather than v1.9.0. Decide the number when the PR is cut, but not from the 2.x line.
 
-**Merge current `master` first, then rerun the full gate.** The branch is based at v2.1.0 while
-`master` has moved to v2.2.0 (`db7c49b`). Deferring the merge is safe *today* — v2.2.0's changes
-are confined to `ModelTheory/BF*`, `ModelTheory/MorleyCounting.lean` and `Descriptive.lean`, which
-this branch does not touch, so the file-overlap is empty — but that is a fact about today, not a
-standing guarantee. Re-check before the PR rather than trusting this line.
+**Merge current `master` first, then rerun the full gate.** Before opening the PR, merge current
+`master`, recompute file overlap, and rerun the full gate. Do not rely on an earlier zero-overlap
+audit: any such finding is a fact about the day it was taken, not a standing guarantee, and the
+branch falls further behind with every merge to `master`.
 
 **Rewrite `docs/admissible-interface-contract.md` to present state.** It still presents deleted
 declarations as the implemented current API — `AdmissiblePresentation`, `hfPresentation`,
@@ -399,8 +398,8 @@ at the end is one edit instead of several. Do not let the PR go out without it.
 
 ### The remaining order
 
-1. 5.6 — absence and assembly guards.
-2. 5.7 — executable universe boundary.
+1. ~~5.6 — absence and assembly guards.~~ **DONE** — `scripts/check_admissible_migration.lean`.
+2. ~~5.7 — executable universe boundary.~~ **DONE** — `scripts/check_admissible_universes.lean`.
 3. Rewrite the public contract and strip production archaeology.
 4. Merge current `master` and rerun every gate.
 5. Open the breaking #19A PR; choose the next major version only **after** merge.
