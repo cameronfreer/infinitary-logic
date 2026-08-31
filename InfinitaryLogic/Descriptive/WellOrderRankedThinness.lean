@@ -86,11 +86,8 @@ def ThinRankAnalysis.of_wellOrderPresentations {X : Type w} [TopologicalSpace X]
   bounded_on_cantor_antichains := by
     intro f hcont hmem hineq
     obtain ⟨code, hcodecont, hcodeWO, hcoderank⟩ := present f hcont hmem hineq
-    -- second countable and completely metrizable, hence Polish.  Both parents synthesize, but
-    -- `PolishSpace (ℕ → Bool)` itself does not: instance search descends to `SeparableSpace Bool`
-    -- and loops through `SecondCountableTopology Bool → PolishSpace Bool`, answering every node
-    -- but never resuming the outer goal.  `PolishSpace.mk` supplies the parents directly, which is
-    -- the same route `Descriptive/Polish.lean` takes for `StructureSpace L`.
+    -- Both parents synthesize, but `PolishSpace (ℕ → Bool)` currently does not.
+    -- Construct it explicitly with `PolishSpace.mk`, as for `StructureSpace L`.
     have : PolishSpace (ℕ → Bool) := PolishSpace.mk
     obtain ⟨β, hβ, hbound⟩ := analytic_rank_bounded_of_continuousOn_wellOrderPresentation
       (B := (Set.univ : Set (ℕ → Bool))) lt isClosed_univ.analyticSet code
