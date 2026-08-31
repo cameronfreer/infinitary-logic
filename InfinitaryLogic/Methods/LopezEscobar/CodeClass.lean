@@ -30,14 +30,25 @@ instance instCountableFunctionsOfRelational : Countable (Σ n, L.Functions n) :=
   have : IsEmpty (Σ n, L.Functions n) := ⟨fun p => (‹L.IsRelational› p.1).false p.2⟩
   infer_instance
 
-/-- **Converse gate** (`pcClass_subset`): the base reducts of the PC class lie in `B`.  This
-is the sole consumer of `IsomorphismInvariant`. -/
-theorem pcClass_subset {B : Set (StructureSpace L)} (side : PCSide)
+/-- **Converse gate, through an invariant envelope**: the base reducts of the PC class lie in any
+isomorphism-invariant `W ⊇ B`.  This is the sole consumer of `IsomorphismInvariant`.
+
+`B` itself need **not** be invariant, which is what makes this usable for an arbitrary analytic
+family: a sentence-defined reduct class is always invariant, so `codeReduct '' ModelsOf Θ = B` is
+unachievable for non-invariant `B`, but the sandwich
+
+```
+B ⊆ codeReduct '' ModelsOf Θ ⊆ W
+```
+
+is available for every invariant `W ⊇ B` and is what boundedness arguments actually consume.
+`pcClass_subset` is the specialization `W := B`. -/
+theorem pcClass_subset_of_invariant_superset {B W : Set (StructureSpace L)} (side : PCSide)
     (T : (n : ℕ) → Set ((Fin n → Bool) × (Fin n → ℕ)))
     (hT : ∀ c : StructureSpace L, c ∈ B ↔ ∃ g : ℕ → ℕ,
       ∀ n, ((fun i : Fin n => queryCode c (i : ℕ)), (fun i : Fin n => g i)) ∈ T n)
-    (hinv : IsomorphismInvariant B) :
-    codeReduct '' ModelsOf (pcSentence L side T) ⊆ B := by
+    (hBW : B ⊆ W) (hWinv : IsomorphismInvariant W) :
+    codeReduct '' ModelsOf (pcSentence L side T) ⊆ W := by
   rintro _ ⟨d, hd, rfl⟩
   -- the decoded graph-language model and its two conjuncts
   let Nstar : (graphLanguage (KLang L)).Structure ℕ := d.toStructure
@@ -126,7 +137,19 @@ theorem pcClass_subset {B : Set (StructureSpace L)} (side : PCSide)
         (hνcoe (v x))]
   have hiso := StructureSpaceOn.encodeViaEquiv_iso (L := L) (M := ℕ) νEquiv.symm
   rw [hcodeeq] at hiso
-  exact (hinv (codeReduct d) (pulledCode L ℕ) hiso).mpr hpB
+  -- the ONLY step that differs from the `W := B` case: land in `B`, cross to `W`, then transport
+  exact (hWinv (codeReduct d) (pulledCode L ℕ) hiso).mpr (hBW hpB)
+
+/-- **Converse gate** (`pcClass_subset`): the base reducts of the PC class lie in `B`, when `B`
+itself is invariant.  The `W := B` specialization of
+`pcClass_subset_of_invariant_superset`. -/
+theorem pcClass_subset {B : Set (StructureSpace L)} (side : PCSide)
+    (T : (n : ℕ) → Set ((Fin n → Bool) × (Fin n → ℕ)))
+    (hT : ∀ c : StructureSpace L, c ∈ B ↔ ∃ g : ℕ → ℕ,
+      ∀ n, ((fun i : Fin n => queryCode c (i : ℕ)), (fun i : Fin n => g i)) ∈ T n)
+    (hinv : IsomorphismInvariant B) :
+    codeReduct '' ModelsOf (pcSentence L side T) ⊆ B :=
+  pcClass_subset_of_invariant_superset side T hT subset_rfl hinv
 
 /-- **The code-class equality** (needs invariance): the base reducts of the PC class are
 exactly `B`. -/
