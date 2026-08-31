@@ -57,6 +57,21 @@ bounds every one of their order types.
 
 The class `A` itself need not be isomorphism-invariant — only the envelope `wellOrderClass lt` is,
 which is what the sandwich `A ⊆ codeReduct '' ModelsOf Θ ⊆ wellOrderClass lt` consumes. -/
+@[blueprint "thm:analytic-wellorder-boundedness"
+  (title := /-- Boundedness for analytic families of coded well-orders -/)
+  (statement := /-- If $A$ is an analytic set of codes, every one of which interprets the
+    distinguished relation $<$ as a well-order of $\mathbb{N}$, then a single countable ordinal
+    $\alpha$ strictly bounds the order type of every code in $A$. -/)
+  (proof := /-- Put $A$ in tree normal form and let $\Theta$ be the resulting $PC$ sentence over
+    the graph language.  Its reduct class is sandwiched, $A \subseteq \mathrm{codeReduct}\,''\,
+    \mathrm{ModelsOf}\ \Theta \subseteq W$, for every isomorphism-invariant $W \supseteq A$;
+    take $W$ to be the well-order class, which is invariant and contains $A$ by hypothesis.  The
+    upper gate then says every model of $\Theta$ is a coded well-order for the transported
+    relation, the defect bridge in containment form lifts that to every model of $\Theta$
+    conjoined with the infiniteness axiom, and Corollary~4.27 bounds all those order types by one
+    countable $\alpha$.  The lower gate exhibits each code of $A$ as the reduct of such a model,
+    and $\mathbb{N}$ is infinite, so the bound applies to it. -/)
+  (uses := ["thm:wellordering-boundedness"])]
 theorem analytic_wellOrder_type_boundedness {A : Set (StructureSpace L)} (lt : L.Relations 2)
     (hA : MeasureTheory.AnalyticSet A) (hAW : A ⊆ wellOrderClass lt) :
     ∃ α : Ordinal.{0}, α < (Cardinal.aleph 1).ord ∧
