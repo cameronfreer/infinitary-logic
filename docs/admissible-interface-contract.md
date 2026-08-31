@@ -1,9 +1,31 @@
 # The admissible-fragment interface contract (issue #18)
 
-**Status: implemented.** The contract below was written and tested on paper against the HF oracle
-first; it is now realized in `Admissible/CodedFamily.lean`, `Admissible/Fragment/Honest.lean` and
-`Admissible/HF.lean`, all on the `InfinitaryLogic.Admissible` bundle surface. Two departures from the
-text below were forced by implementation and are recorded here rather than silently absorbed:
+> ## ⚠ STALE — do not read as current API
+>
+> **This document describes the issue #18 interface as it stood before the #19A migration.** Much of
+> what it presents in the present tense no longer exists. Deleted, and still named throughout below:
+>
+> - `AdmissiblePresentation` and the file `Admissible/CodedFamily.lean`;
+> - its predicates `AFinite`, `ACEnumerable`, `AFinitelySatisfiable`, `CompactFor`
+>   (the surviving predicates of those names are **different declarations** on the new layers);
+> - `DecodesTheory` and `decodes_theory_unique`;
+> - `hfPresentation`, `hf_aFinite_iff`, `hf_compactFor`, `hf_compact_of_aFinite`.
+>
+> The interface is now a three-layer tower — `FamilyPresentation` → `TheoryPresentation` →
+> `AmbientPresentation`, in `Admissible/{Family,Theory,Ambient}.lean` — with HF instantiated by
+> `hfFamily` and `hfAmbient`. See `docs/admissible-19a-checkpoint.md` for the present state and for
+> why each move was made.
+>
+> **A present-state rewrite of this document is a release gate for the #19A PR.** It is deliberately
+> not done incrementally: the migration is still in progress, and rewriting a contract twice is worse
+> than marking it once. What is *not* acceptable is leaving it reading as current, which is why this
+> banner exists rather than a note at the bottom.
+
+**Historical status (issue #18, pre-#19A).** The contract below was written and tested on paper
+against the HF oracle first; it was then realized in `Admissible/CodedFamily.lean`,
+`Admissible/Fragment/Honest.lean` and `Admissible/HF.lean`, all on the `InfinitaryLogic.Admissible`
+bundle surface. Two departures from the text below were forced by implementation and are recorded
+here rather than silently absorbed:
 
 * **`height` was dropped from `AdmissibleFragment`** (§3 proposes it). Whether height belongs to the
   presentation or is derived from it is unsettled, and a field on the fragment would permit a

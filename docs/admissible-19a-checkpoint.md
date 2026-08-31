@@ -335,8 +335,31 @@ either side of the model-universe question.
    5. ~~reprove the generic HF compactness route without the trivial bridge~~ — **DONE** in 5.4a;
       `hfAmbient_compact` now reaches Mathlib compactness directly.
    6. **strengthen** the absence and assembly guards. Baseline guard migration already happened in
-      5.4b; what remains is genuinely new coverage, not catch-up.
-   7. resolve the model-universe gate **last**.
+      5.4b; what remains is genuinely new coverage, not catch-up. Two kinds are required:
+
+      **Absence.** Assert that `AdmissiblePresentation`, its four predicates, `hfPresentation`,
+      `DecodesTheory` and `decodes_theory_unique` are **absent from the environment**. A deleted
+      name needs an absence assertion, not a stale-forbidden entry: the `[STALE GUARD]` check
+      *rejects* names that no longer exist, so a forbidden-list entry is exactly the wrong tool
+      here and would fail the guard rather than protect anything.
+
+      **Assembly.** Assert that `hfAmbient_compactFor` exposes the honest
+      `AmbientPresentation.CompactFor` and reaches `hfAmbient_compact`, and that
+      `compactFor_of_adequate` reaches `subset_of_adequate`. That pins both the containment
+      derivation and the final compactness route, neither of which any absence check can see.
+
+   7. **make the model-universe boundary executable — do not widen it.** Generalizing model
+      universes belongs to #19B, not here. What #19A should record is where the boundary actually
+      falls, as compiling probes:
+
+      - *positive* — `hfAmbient`, adequacy and `A`-finiteness elaborate at `Language.{u, v}`;
+      - *positive* — `hfAmbient_compact` elaborates at `Language.{0, 0}`;
+      - *negative* — applying it to a genuinely higher-universe language fails, **while the
+        representation layer still succeeds**.
+
+      The negative control is the informative one: it states the precise result, that coding is
+      universe-general while the satisfiability / first-order-compactness endpoint is
+      universe-zero. Without it the restriction looks like it might be a coding limitation.
 
    `hf_compact_of_aFinite` is **gone**, not preserved: its content survives as `hfAmbient_compact`
    over the ambient presentation. The instruction to preserve it belonged to the staged migration,
@@ -357,11 +380,27 @@ are confined to `ModelTheory/BF*`, `ModelTheory/MorleyCounting.lean` and `Descri
 this branch does not touch, so the file-overlap is empty — but that is a fact about today, not a
 standing guarantee. Re-check before the PR rather than trusting this line.
 
+**Rewrite `docs/admissible-interface-contract.md` to present state.** It still presents deleted
+declarations as the implemented current API — `AdmissiblePresentation`, `hfPresentation`,
+`DecodesTheory`, `decodes_theory_unique`, the old predicates and the old oracle table — under a
+"Status: implemented" heading, citing a file that no longer exists. That is **factually stale, not
+historical narration**, and the distinction matters: this checkpoint is where migration history
+belongs, the contract is a statement about what the API *is*. It now carries a staleness banner so
+it cannot mislead in the interim, but the banner is not the fix.
+
 **Strip the stage-by-stage migration narration from production docstrings.** `Family.lean`,
 `CodedFamily.lean`, `Theory.lean`, `Ambient.lean`, `AmbientHF.lean`, `Numbering.lean` and
 `Predicates.lean` currently narrate *which stage* moved what, and why an earlier arrangement was
 wrong. That belongs here, in the checkpoint — not in the settled API, where it will read as
 archaeology to anyone who never saw the migration.
 
-Deliberately deferred rather than done incrementally: stage 5.4 will add more of it, so a single
-pass at the end is one edit instead of several. Do not let the PR go out without it.
+Deliberately deferred rather than done incrementally: later stages add more of it, so a single pass
+at the end is one edit instead of several. Do not let the PR go out without it.
+
+### The remaining order
+
+1. 5.6 — absence and assembly guards.
+2. 5.7 — executable universe boundary.
+3. Rewrite the public contract and strip production archaeology.
+4. Merge current `master` and rerun every gate.
+5. Open the breaking #19A PR; choose the next major version only **after** merge.
