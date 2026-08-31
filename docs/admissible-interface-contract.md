@@ -1,455 +1,252 @@
-# The admissible-fragment interface contract (issue #18)
+# The admissible-presentation interface (issues #18, #19A)
 
-> ## ⚠ STALE — do not read as current API
->
-> **This document describes the issue #18 interface as it stood before the #19A migration.** Much of
-> what it presents in the present tense no longer exists. Deleted, and still named throughout below:
->
-> - `AdmissiblePresentation` and the file `Admissible/CodedFamily.lean`;
-> - its predicates `AFinite`, `ACEnumerable`, `AFinitelySatisfiable`, `CompactFor`
->   (the surviving predicates of those names are **different declarations** on the new layers);
-> - `DecodesTheory` and `decodes_theory_unique`;
-> - `hfPresentation`, `hf_aFinite_iff`, `hf_compactFor`, `hf_compact_of_aFinite`.
->
-> The interface is now a three-layer tower — `FamilyPresentation` → `TheoryPresentation` →
-> `AmbientPresentation`, in `Admissible/{Family,Theory,Ambient}.lean` — with HF instantiated by
-> `hfFamily` and `hfAmbient`. See `docs/admissible-19a-checkpoint.md` for the present state and for
-> why each move was made.
->
-> **A present-state rewrite of this document is a release gate for the #19A PR.** It is deliberately
-> not done incrementally: the migration is still in progress, and rewriting a contract twice is worse
-> than marking it once. What is *not* acceptable is leaving it reading as current, which is why this
-> banner exists rather than a note at the bottom.
-
-**Historical status (issue #18, pre-#19A).** The contract below was written and tested on paper
-against the HF oracle first; it was then realized in `Admissible/CodedFamily.lean`,
-`Admissible/Fragment/Honest.lean` and `Admissible/HF.lean`, all on the `InfinitaryLogic.Admissible`
-bundle surface. Two departures from the text below were forced by implementation and are recorded
-here rather than silently absorbed:
-
-* **`height` was dropped from `AdmissibleFragment`** (§3 proposes it). Whether height belongs to the
-  presentation or is derived from it is unsettled, and a field on the fragment would permit a
-  fragment whose height disagreed with its presentation's. It returns with #19A.
-* **`CodedFamily` is indexed by the presentation alone**, `CodedFamily A n` — the language is
-  recovered from `A`, so the separate `L` parameter in §2's sketch does not appear.
-
-The oracle conditions in §5 are discharged in Lean: condition 1 by `sentence_slice_hfFragment`,
-condition 2 by `isEmpty_codedFamily_hf`, condition 3 by `finitaryFragment_compact`, and condition 4
-by `scripts/check_hf_compactness.lean`, which is enforced in CI.
-
-The invariant this document exists to protect:
-
-> **HF validates the interface; the interface does not redefine HF to fit itself.**
-
-Every field below was checked against the HF specialization *before* being proposed. Where a natural
-field fails that test, the failure is recorded rather than the field weakened silently.
+What the admissible layer **is**. This document describes the implemented API and the boundaries it
+enforces; it is not a plan, and it records no history. Migration history, superseded designs, and
+the reasoning that produced these choices live in `docs/admissible-19a-checkpoint.md`.
 
 ---
 
-## 0. What the spike established
+## 1. The presentation tower and the import boundary
 
-`InfinitaryLogic/WIP/HFSpike.lean` (commit `25f6957`) proves, independent of every legacy structure:
+Three structures, each in its own file, each extending and imported *by* the next:
+
+```
+FamilyPresentation      Element, IsFamilyCode, Index, indexEncodable, DecodesFamily
+                                                                    -- Admissible/Family.lean
+        ↑
+TheoryPresentation      + Mem, IsSentenceCode, decodeSentence
+                        + derived IsTheoryCode / decodeTheory / AFinite
+                                                                    -- Admissible/Theory.lean
+        ↑
+AmbientPresentation     + IsDefinitionCode, enumerates
+                        + derived Sigma1                            -- Admissible/Ambient.lean
+```
+
+**One ambient `Element` carries all codes.** The four kinds — family, theory, sentence,
+Σ-definition — are subdomains of it and may overlap; in HF every code is a natural number, so they
+overlap totally. One carrier rather than separate sorts because KP closure discriminates: pairing
+and union are operations on *elements* and do not respect the kind subdomains, so separate sorts
+would route every closure law through `Sum`.
+
+**The layering is enforced by types and imports, not by convention.** The syntax layer cannot
+mention theory decoding; the theory layer cannot mention `Sigma1`, definition codes, KP or
+numberings — they are defined in files that import it. Two guards pin this permanently:
+
+| Guard | Pins |
+|---|---|
+| `scripts/check_family_cone.lean` | the syntax API depends only on `FamilyPresentation` |
+| `scripts/check_theory_cone.lean` | the theory API depends only on `TheoryPresentation` |
+
+Both traverse theorem bodies, and both carry a `[STALE GUARD]` check requiring every forbidden name
+to still exist — a forbidden entry naming something deleted protects nothing.
+
+---
+
+## 2. Certified infinitary families
+
+`CodedFamily P n` bundles a code, its decoding into `L.BoundedFormulaω Empty n`, and the
+certificate that the code names a family. `codedIInf` and `codedISup` build the named conjunction
+and disjunction.
+
+Three details are load-bearing:
+
+1. `decode` lands in the structure's own arity, so no independent arity field can drift.
+2. The enumeration is supplied by the presentation (`indexEncodable`), keyed on the code, **not**
+   found by instance search — so the syntax a coded family builds depends on the code.
+   `codedIInf_uses_presentation_encoding` states this.
+3. `IsFamilyCode` is a **certificate**, carried in the code subtype. Without it any code with any
+   decoding would build a coded family, and "HF has no primitive coded families" would be
+   unstatable.
+
+`decodes_unique` makes decoding code-determined, which is what `decode_eq_of_code_eq`,
+`codedIInf_eq_of_code_eq` and `codedISup_eq_of_code_eq` rest on.
+
+`AdmissibleFragment` (`Admissible/Fragment/Honest.lean`) is an ordinary `Fragment` closed upward
+under exactly the conjunctions and disjunctions named by *certified* coded families — and nothing
+else. It carries **no** `height` field and **no** compactness field; compactness is a theorem with
+hypotheses, proved externally, which is what makes "a theorem named Barwise compactness merely
+projects a field" structurally impossible rather than merely observed.
+
+---
+
+## 3. Derived theory codes and `AFinite`
+
+`IsTheoryCode` and `decodeTheory` are **not** fields. Given ambient membership, a theory code is an
+element all of whose members are sentence codes, and the theory it names is the decoded image of
+those members.
+
+Deriving them is what keeps `Mem` honest: a vacuous membership relation would collapse the theory
+layer, and a stored `decodeTheory` field would hide that.
 
 ```lean
-def finitaryFragment (L : Language.{0,0}) : Set L.Sentenceω := Set.range Sentence.toLω
-
-theorem finitaryFragment_compact {T : Set L.Sentenceω} (hT : T ⊆ finitaryFragment L)
-    (hfin : ∀ F ⊆ T, F.Finite → ∃ M …, Theoryω.Model F M) :
-    ∃ M …, Theoryω.Model T M
+AFinite T                 := ∃ a : TheoryCode, decodeTheory a = T
+AFinitelySatisfiable T    -- the Barwise premise, over A-finite subtheories
+AdequateFor F             := sentenceRange = F
 ```
 
-The proof consumes `Theory.isSatisfiable_iff_isFinitelySatisfiable` (Mathlib) and mentions neither
-`AdmissibleFragmentCore` nor `FiniteCompactFragment`.
+**Functionality is free.** A theory code names an *image*, not a relation, so `AFinite.unique` is
+`h ▸ h'` — no extensionality law, even though sentence decoding is non-injective.
 
-**The oracle.** Any proposed interface must satisfy, for its HF instance:
+**Totality is deliberately omitted.** A presentation is not obliged to name every theory, and an
+honest HF must not: `AFinite` is existential over codes, never a bijection with theories.
 
-1. underlying formulas are exactly the `toLω`-image;
-2. coded families reduce to **finite** families;
-3. its compactness theorem is exactly `finitaryFragment_compact`;
-4. **no adapter widens it back to all of Lω₁ω.**
+`AFinite.subset_of_adequate` derives fragment containment from adequacy rather than assuming it.
 
 ---
 
-## 1. The existing `Fragment` is the right base — and this is not obvious
+## 4. Definition codes, `Sigma1`, adequacy and containment
 
-`Lomega1omega/Fragment.lean` defines
+A Σ-definition code carries a set of *sentence codes*; `theoryOf` decodes their image, and
 
 ```lean
-structure Fragment (L) where
-  toSet : Set (Σ n, L.BoundedFormulaω Empty n)
-  imp_left_mem / imp_right_mem / all_mem / iInf_mem / iSup_mem : …
+Sigma1 T      := ∃ d : DefinitionCode, theoryOf d = T
+ACEnumerable  := Sigma1                    -- the Barwise Σ-definability premise
 ```
 
-Two properties matter, and together they are why this base works where
-`AdmissibleFragmentCore` does not:
+`Sigma1` is derived from `enumerates`, not stored, and `Sigma1.unique` is again `h ▸ h'` for the
+same image-not-relation reason.
 
-- **It is all-arity.** `Σ n, BoundedFormulaω Empty n`, not just sentences. This is #18's gate 2
-  already satisfied by the base.
-- **Every closure field is *downward*** — "if a member is an `iInf`, its components are members" —
-  never *upward*. Nothing obliges a `Fragment` to *contain* the conjunction of a family it contains.
-
-**HF check.** The HF instance is
-
-```
-hfSet L := Set.range (fun p : Σ n, L.BoundedFormula Empty n => ⟨p.1, p.2.toLω⟩)
-```
-
-(the spike's `finitaryFragment` is the arity-0 slice). `iInf_mem` and `iSup_mem` hold **vacuously**:
-`toLω` never emits an `iInf`/`iSup` constructor, so no member is one. `imp_left_mem`,
-`imp_right_mem`, `all_mem` hold because `toLω` is a structural embedding — if `φ.imp ψ` is in the
-image then its preimage is an implication, whose components are themselves in the image.
-
-**This is exactly the field that killed `AdmissibleFragmentCore`.** Its `closed_iInf`/`closed_iSup`
-are *upward* and quantify over **every external ℕ-family**:
+**`ACEnumerable` is not an arbitrary `Prop` on a set.** Unfolding it produces a definition *code*,
+and that is exactly what makes containment derivable:
 
 ```lean
-closed_iInf : ∀ φs : ℕ → L.Sentenceω, (∀ k, φs k ∈ formulas) → BoundedFormulaω.iInf φs ∈ formulas
+subset_of_adequate : A.AdequateFor F → A.Sigma1 T → T ⊆ F
 ```
 
-HF cannot satisfy this: take any `φs` constantly a member; the conjunction is a genuine `iInf` node,
-which is not in the `toLω` image. The field is unsatisfiable for HF, not merely inconvenient.
+A bare predicate on sets carries nothing from which containment could be obtained.
+
+`AmbientPresentation.WithKP` adds pairing and union **with specification laws**, not merely
+totality. Totality alone is vacuous: `pair_total : ∀ a b, ∃ c, Pair a b c` is satisfied by
+`Pair := fun _ _ _ => True` on any inhabited carrier. The full KP schema is deliberately not
+attempted; which closure and absoluteness laws are needed is settled by the proofs that consume
+them, and no such proof exists yet.
 
 ---
 
-## 2. Object 1 — `CodedFamily`
+## 5. The HF instance: Ackermann coding and corrected finiteness
 
-**Contract.** A coded family is a **code together with its decoding**, not a predicate on a function.
+`Element := ℕ` under Ackermann membership (`Admissible/Ackermann.lean`): `a ∈ₐ b` means bit `a` of
+`b` is set, so every natural is a finite set of naturals and the coding is total both ways.
+`Nat.ack_ext` gives extensionality; `Nat.mem_ackPair` and `Nat.mem_ackUnion` are the specification
+laws; `Nat.finite_ackMem` and `Nat.exists_ack_of_finite` say codes name exactly the finite sets.
 
+`hfAmbient C` is the ambient presentation over a stored `FinitaryCoding C` — an injective numbering
+of the *finitary* sentences. `hfAmbientKP` discharges pairing and union by Ackermann arithmetic.
+
+**`A`-finiteness is not plain finiteness.** Theory codes are built from finitary sentence codes, so
+a finite theory containing an infinitary sentence is not an element of HF:
+
+```lean
+hfAmbient_aFinite_iff : AFinite T ↔ T.Finite ∧ T ⊆ finitaryFragment L
 ```
-structure CodedFamily (A : AdmissiblePresentation) (L) (n : ℕ) where
-  code    : A.Code
-  decode  : A.Index code → L.BoundedFormulaω Empty n   -- lands in n; NO separate arity field
-  enc     : Encodable (A.Index code)                    -- needed to BUILD an iInf/iSup
-  isInf   : A.CodesInfFamily code                       -- the certificate; see below
-```
 
-Three requirements, each with a reason:
+Both conjuncts are necessary, and `not_hfAmbient_aFinite_iff_finite` **exhibits** a finite
+non-`A`-finite theory rather than merely asserting the distinction. The global form
+`AFinite T ↔ T.Finite` is false here. `hfAmbient_aFinite_iff_of_finitary` is the consumer-friendly
+specialization.
 
-- **Data-carrying, not Prop.** `CodedFamily` must supply the family, so that "the fragment is closed
-  under coded families" is a statement about objects the admissible set actually contains. A
-  `Prop`-valued predicate on an arbitrary external `ℕ → Formula` cannot express that: the function
-  is chosen in the metatheory, not in `A`.
-- **The index type comes from the code**, `A.Index code`, not fixed as `ℕ`. This is what lets HF's
-  coded families be finite and lets larger `A` have larger ones. Fixing `ℕ` here re-imports the exact
-  defect being removed.
-- **Naturality.** Decoding must commute with whatever code-level operations the proof system uses;
-  the precise laws are fixed in #19A, but the *shape* — that `decode` is a function of `code` — is
-  frozen now.
-
-**HF check (oracle condition 2).** For HF, `A.Index code` ranges over **finite** types.
-
-### Three Lean-level details, frozen
-
-1. **No independent arity.** `decode` lands directly in `BoundedFormulaω Empty n`, the `n` of the
-   structure. An extra `arity` field would permit a family whose arity disagrees with its use site.
-2. **`A.Index code` needs `Encodable` (or `Countable` + choice) as explicit data.** This repo's
-   `BoundedFormulaω.iInf` takes an **ℕ-indexed** family, so `codedIInf` cannot even be *defined*
-   without transporting `A.Index code` to `ℕ`. This is data, not a side condition — it must travel
-   in the structure.
-3. **`isInf` is load-bearing and was missing.** Without it, *any* `code` with a `decode` builds a
-   `CodedFamily`, so "HF's primitive coded families are empty" would be unstatable — HF has plenty
-   of codes and plenty of finite decodings. The certificate `A.CodesInfFamily code` (equivalently, a
-   separate relation) is what is **empty for HF**.
-   **Finiteness of `A.Index code` is not a substitute**: a finite index type is exactly what would
-   let someone build `iInf` over a padded sequence, which is the forbidden move below.
-
-> **Frozen design decision.** For HF, `A.CodesInfFamily` has **no inhabitants at all**. Finite conjunctions remain available through ordinary first-order
-> syntax (`⊓`, `⊔`), which stays inside the `toLω` image.
->
-> **Do not encode a finite family as an infinite sequence padded with `⊤`/`⊥`.** That is
-> semantically finitary but *syntactically* contains an infinitary constructor, so it leaves the
-> `toLω` image and violates oracle condition 1. This is the single most likely way to accidentally
-> cheat, and it is the sharpest test of the `CodedFamily` design.
+`hfAmbient_adequate` gives `sentenceRange = finitaryFragment L`, and `hfAmbient_range_indep` says
+the decoded range does not depend on which injective coding was stored.
 
 ---
 
-## 3. Object 2 — `AdmissibleFragment`
+## 6. Numberings and computable equivalence
 
-**Contract.** Wraps `Fragment`; adds *upward* closure **only** for decoded coded families.
+Injectivity gives range-independence — hence adequacy and containment — but **not** `Sigma1`
+independence: two injective numberings can disagree about which theories are c.e. That is a
+separate layer (`Admissible/Numbering.lean`):
 
 ```
-structure AdmissibleFragment (A) (L) extends Fragment L where
-  iInf_coded_mem : ∀ (F : CodedFamily A L n), (∀ i, ⟨n, F.decode i⟩ ∈ toSet) →
-      ⟨n, codedIInf F⟩ ∈ toSet
-  iSup_coded_mem : …
-  height : Ordinal          -- o(A); NO lower bound imposed
+FinitaryCoding              adequacy, AFinite, and Sigma1 itself      -- any language
+FinitaryNumbering           a *bijective* numbering; no effectiveness on its own
+ComputablyEquivalent C C'   Sigma1 invariance across numberings       -- the actual content
 ```
 
-- **No compactness data.** Not a field, not a bundled instance. Compactness is a *theorem about* a
-  fragment, proved from hypotheses, and belongs in object 3. This is the direct fix for the defect
-  the claims-hygiene pass documented (`barwise_compactness` currently projects `A.compact`).
-- **No `height_gt_omega`.** HF's height *is* ω. Any lower bound excludes the base case.
-- `codedIInf F` is the conjunction the *code* names — its index type is `A.Index F.code`, so for HF
-  it is a finite conjunction and reduces to first-order syntax.
+`FinitaryNumbering` is structurally a bijective numbering and nothing more —
+`FinitaryNumbering.ofDenumerable` builds one from a bare `Denumerable` instance, with no
+computability evidence. Effectiveness enters only at `ComputablyEquivalent.forward_computable`, and
+invariance (`sigma1_iff`) holds only against such a witness.
 
-**HF check.** With HF's coded families empty at the primitive nodes, `iInf_coded_mem` and
-`iSup_coded_mem` are **vacuous** — the same way the base's downward fields are. HF instantiates
-`AdmissibleFragment` honestly, with no adapter and no widening (oracle condition 4).
+Bijectivity makes every natural a valid sentence code, so `invalid_codes_eq_empty` states the
+invalid-input obligation is vacuous rather than dropping it, and forward/backward become mutually
+inverse computable permutations — image along one is preimage along the other
+(`forward_image_eq_backward_preimage`), so c.e. transport needs only closure under computable
+preimage, with no dovetailing. `equiv` states the cost: a `FinitaryNumbering` exists exactly when
+`L.Sentence` is denumerable.
+
+**The layers do not mix.** `hfAmbient` takes a plain `FinitaryCoding`, so numbering data cannot
+infect the fragment or theory layers. `hfAmbient_rejects_numbering` enforces that refusal with
+`fail_if_success` rather than leaving it to the positive examples.
 
 ---
 
-## 4. Object 3 — theory predicates and evidence, external
+## 7. Compactness assembly and the universe boundary
 
-**Contract.** These are *never* fields of the syntax record.
+HF inhabits the compactness interface on the honest route end to end:
 
-```
-def AFinite      (A) (T : Set …) : Prop   -- T is coded by an element of A that A believes finite
-def ACEnumerable (A) (T : Set …) : Prop   -- Σ₁-on-A
-theorem compactness (A) (hT : …) (hfin : …) : …   -- a THEOREM, with hypotheses
-```
-
-Rationale: separating closure assumptions from compactness conclusions is #18's gate 4, and keeping
-the evidence outside the record is what makes gate 7 ("no theorem named Barwise compactness merely
-projects a compact field") structurally impossible rather than merely observed.
-
-**HF check (oracle conditions 2 and 3).** `AFinite` for HF **is** ordinary finiteness, so the
-compactness statement specializes to
-
-```
-∀ F ⊆ T, F.Finite → (satisfiable) ⟹ (satisfiable)
+```lean
+CompactFor P T          := T ⊆ P → ACEnumerable T → AFinitelySatisfiable T → T.IsSatisfiable
+hfAmbient_compact       -- straight to finitaryFragment_compact, i.e. Mathlib compactness
+hfAmbient_compactFor    -- HF inhabits CompactFor
+compactFor_of_adequate  -- the caller never supplies containment
 ```
 
-which is `finitaryFragment_compact` verbatim — hypothesis for hypothesis, no adapter. Condition 3
-passes by *specialization*, not by a bridging lemma.
+`T ⊆ P` remains a genuine hypothesis on `CompactFor`: `subset_of_adequate` yields it only once an
+adequacy equation identifies the decoded range with `P`, and a presentation need not be adequate for
+the `P` a caller has in mind. `compactFor_of_adequate` is the wrapper that discharges it, and
+`scripts/check_admissible_migration.lean` asserts both that HF exposes the real interface and that
+the containment derivation is genuinely reached through the proofs.
+
+**The universe boundary.** Representation is universe-general; the satisfiability endpoint is not:
+
+| | Level |
+|---|---|
+| `hfAmbient`, `hfAmbient_adequate`, `hfAmbient_aFinite_iff` | any `Language.{u, v}` |
+| `hfAmbient_compact` | `Language.{0, 0}` |
+
+The restriction belongs to Mathlib's compactness theorem, **not** to HF coding — a semantic
+limitation must not be read back onto a syntactic definition.
+`scripts/check_admissible_universes.lean` states both halves as compiling probes at explicit levels,
+with a negative control exhibiting the higher-universe representation route while rejecting
+compactness at the same language.
 
 ---
 
-## 5. Oracle results
+## 8. The proof-system boundary, and deferred scope
 
-| # | Condition | Result |
-|---|---|---|
-| 1 | formulas are exactly the `toLω`-image | ✅ `hfSet` is that image; base fields hold vacuously or structurally |
-| 2 | coded families reduce to finite | ✅ `A.Index code` finite; primitive-node families empty by design |
-| 3 | compactness is `finitaryFragment_compact` | ✅ by specialization of the external theorem, `AFinite` = finite |
-| 4 | no adapter widens to all of Lω₁ω | ✅ nothing in the three objects mentions `Set.univ`; upward closure is coded-only |
+`Derivable`, `AConsistent` and `Derivable.sound` are parameterized by a raw `P : Set L.Sentenceω` —
+no fragment structure at all.
 
-**Verdict: the mathematics passes on paper.**  Implementation proceeds in this order, so that each
-step is compiler-checked against the one before:
-
-1. `hfFragment : Fragment L`, with its sentence slice proved equal to `finitaryFragment`.
-   Architecture-independent, and it makes the downward-closure argument *executable* rather than
-   asserted.
-2. A tiny `CodedFamily` **signature spike** resolving the three frozen details above — including an
-   actual definition of `codedIInf`, which is where the `Encodable` requirement bites.
-3. `AdmissibleFragment` over that tested signature.
-4. The honest HF instance, verifying the coded upward-closure fields are *genuinely* vacuous.
-5. Only then migrate the proof system.
-
----
-
-## 6. Open items for #19A, deliberately not settled here
-
-- The concrete shape of `AdmissiblePresentation` — abstract interface versus transitive `ZFSet`.
-  The roadmap leans abstract-first *provided* it exposes genuine coding/KP closure and does not hide
-  compactness as an axiom. A short Lean spike decides it.
-- The exact naturality laws for `decode`.
-- Whether `height` should be a field or derived from the presentation.
-
-## 7. Migration note
-
-`AdmissibleFragmentCore.hf := Set.univ` stays labelled a **legacy placeholder** until this interface
-lands. It is not to be mutated into something its fields cannot honestly support; it is to be
-*replaced*, and its consumers migrated.
-
----
-
-## 8. Proof-system consumer audit — the §5 step-5 gate
-
-**Status: proof-system core MIGRATED (2026-08-08).** `Derivable`, `AConsistent`, and
-`Derivable.sound` are parameterized by a raw `P : Set L.Sentenceω`; the two former
-`closed_neg` consumers take explicit `φ.not ∈ P` hypotheses; `AConsistent.of_has_model` and
-`extension_of_mem_formulas` dropped their unused containment arguments; `ConsistencyBridge`
-adapted mechanically (`B.formulas`, with `B.complete` discharging the explicit negation
-memberships) and remains quarantined for #19B. The boundary is CI-enforced by
-`scripts/check_proof_system_boundary.lean` (the Derivable/soundness cone cannot reach
-`FiniteCompactFragment`, `AdmissibleFragmentCore`, or `BarwiseFragment`). The audit below is
-the frozen record that authorized the migration.
-
-§5 ends "Only then migrate the proof system." This section is that gate: a consumer-by-consumer
-record of which legacy `FiniteCompactFragment` capabilities the proof system *actually* consumes.
-It is deliberately stated in terms of declaration and constructor names rather than line numbers, so
-it does not rot as the files move.
-
-### The finding that governs the migration
-
-**The proof system never consumes the fields that make the legacy record dishonest.** `Derivable`'s
-infinitary constructors take membership as a *hypothesis*:
+This is not a weakening. `Derivable`'s infinitary constructors take membership as a *hypothesis*:
 
 ```lean
 | iInf_intro : (∀ k, Derivable A T (φs k)) → .iInf φs ∈ A.formulas → …
-| iSup_intro (k : ℕ) : Derivable A T (φs k) → .iSup φs ∈ A.formulas → …
 ```
 
-`closed_iInf` and `closed_iSup` — the *upward* closure over arbitrary external ℕ-indexed families
-that §1 shows an honest HF fragment cannot satisfy — are never used by the proof system at all.
-The migration is therefore not a weakening of the proof system: it was already compatible with an
-honest carrier, and only its **parameter type** was not.
+so the upward closure over arbitrary external ℕ-indexed families — which an honest HF fragment
+provably cannot satisfy — is never consumed by the proof system. Soundness accesses no field of `A`
+whatsoever. The two lemmas that need negation membership (`AConsistent.no_contradiction`,
+`Derivable.inconsistent_of_both_extensions`) take `φ.not ∈ P` explicitly.
 
-### Consumer table
+`scripts/check_proof_system_boundary.lean` enforces it: the `Derivable`/soundness cone cannot reach
+`FiniteCompactFragment`, `AdmissibleFragmentCore` or `BarwiseFragment`.
 
-| Consumer | What it actually consumes |
+**Deliberately out of scope, and why:**
+
+| Deferred | Reason |
 |---|---|
-| `Derivable` constructors | `_ ∈ A.formulas` only, in `assumption`, `falsum_elim`, `imp_intro`, `iInf_intro`, `iSup_intro`, `all_intro`, `eq_refl`, `eq_subst`, `em`. No closure field, no `compact`, no `height` |
-| `AConsistent` | `Derivable` only |
-| `Derivable.sound` | **Nothing.** No field of `A` is accessed anywhere in its proof; `A` is a phantom parameter, present only to index `Derivable`. Corroborated by `AConsistent.of_has_model`, which already marks its fragment-containment hypothesis unused |
-| Basic consistency lemmas | `closed_neg`, at exactly two sites — `AConsistent.no_contradiction` and `Derivable.inconsistent_of_both_extensions` — both wanting the same thing, `φ.not ∈ permitted` |
-| `ConsistencyBridge` | Substantial legacy closure/completeness machinery. **Quarantine for #19B**; not part of this tranche |
-| EM `FragmentAdapter` | `A.formulas` only inside `⊆ A.formulas` containment hypotheses, plus `barwise_compactness`. Never touches a closure field — containment and compactness are already separate arguments, so this is a signature change, not a proof restructure |
-
-### Frozen conclusions
-
-- `Derivable` and `AConsistent` need only `P : Set L.Sentenceω`.
-- **No closure field and no distinguished-element field is required.**
-- The two `closed_neg` consumers receive `φ.not ∈ P` explicitly.
-- Soundness is completely independent of fragment structure.
-- An optional `falsum_mem` hypothesis belongs only on a later theorem that demonstrably needs it —
-  **not in the carrier API.**
-
-### One correction, recorded because it is easy to re-derive wrongly
-
-`Derivable` does **not** implicitly require `falsum_mem`. In
-
-```lean
-| falsum_elim : Derivable A T .falsum → φ ∈ A.formulas → Derivable A T φ
-```
-
-the membership premise concerns the arbitrary *conclusion* `φ`, not `.falsum`. Likewise
-`AConsistent P T := ¬ Derivable P T .falsum` is definable without `.falsum ∈ P`: derivability
-*targets* carry no blanket membership premise, and `imp_elim` — which has no membership premise at
-all — derives `.falsum` from `φ.imp .falsum` and `φ`.
-
-The tempting misreading is to treat the membership premise of `falsum_elim` as guarding its
-hypothesis rather than its conclusion, and conclude that the carrier must distinguish `.falsum`.
-It must not.
-
-**The structural reason.** Across the whole inductive, a membership premise appears exactly where a
-rule's *conclusion* is a formula not already known to be permitted — the introduction rules, plus
-`falsum_elim` and `em`, whose conclusions are arbitrary. The eliminations whose conclusion is a
-component of something already derived (`imp_elim`, `not_not_elim`, `iInf_elim`, `iSup_elim`,
-`all_elim`) carry none. So membership guards conclusions, never hypotheses — which is precisely why
-no distinguished element is needed in the carrier.
+| `height` on presentations or fragments | whether it belongs to the presentation or is derived is unsettled; a field would permit a fragment whose height disagreed with its presentation's |
+| the full KP schema | the consuming proofs do not exist yet, so the required laws are not yet determined |
+| `Admissible/Barwise/ConsistencyBridge.lean` | still built on legacy closure/completeness machinery; quarantined for #19B |
+| model-universe generalization | #19B; §7 records where the boundary falls rather than moving it |
+| `AdmissibleFragmentCore.hf := Set.univ` | a quarantined placeholder — nothing may be proved from it |
 
 ---
 
-## 9. The governing design rule (carried into #19A)
+## The governing design rule
 
-> **Do not quantify over external objects the presentation cannot name.  Carry the indexing or
-> coding data, and formulate closure and compactness only for what that data represents.**
-
-This is the same correction Aaron Liu's fixed-carrier syntax made to `L∞ω`, arrived at
-independently here.  The old `iInf` node took an arbitrary `ι : Type` chosen in the metatheory;
-`AdmissibleFragmentCore.closed_iInf` demanded closure under an arbitrary external `ℕ → Formula`.
-Both quantify over things the object does not contain.  The fixes are the same fix: make the
-indexing data a parameter the object carries — `BoundedFormulaInf ι α n`, `A.Index c`.
-
-**The diagnostic that follows from it:** *does the degenerate instance need an adapter?*  `Lω₁ω` is
-`BoundedFormulaInf ℕ` definitionally, so its embedding is `rfl` rather than an operation; HF's
-closure fields are vacuous rather than bridged.  If the base case needs an adapter, the abstraction
-is still wrong.  That is what oracle condition 4 is really testing.
-
-**Refinement 1 — predicates are not the enemy; unwitnessed representation claims are.**
-`CodesInfFamily` is a legitimate certificate: it expresses a genuine additional property.
-`CodesFinite` was wrong for a different reason — `A`-finite *means* "is represented by an element
-of `A`", so an extra condition changed the notion rather than describing it.
-
-> Representation claims should be witnessed by decoding data; predicates should express genuine
-> additional properties.
-
-**Refinement 2 — `Sigma1` is the remaining violation, and it is a live issue, not future polish.**
-At HF, Σ-definability is ordinary computable enumerability (Keisler–Knight §§2.2, 3.1), so
-`hfPresentation`'s `Sigma1 := fun _ => True` is a deliberate *enlargement* of the compactness
-domain, not a Σ₁ claim.  It is recorded as `hfPresentation_sigma1_eq_top` with that warning, and
-deliberately not as a theorem named `hf_acEnumerable`, so no consumer can cite a mathematically
-specific name for it.  Nothing depends on it: `hf_compact_of_aFinite` is unconditional and is what
-consumers use, and `hf_compactFor` discards the hypothesis.  When #19A installs
-`DefinesSigmaTheory`, HF's instantiation must become the c.e. predicate and that equation must
-fail to typecheck.
-
-Unrestricted `finitaryFragment_compact` remains a stronger, separate HF theorem — it is not
-reached through the `A`-c.e. route at all.
-
-**Consequence for `height` (updating §6).**  `o(A)` *is* derived — it is the set of ordinals in
-`A` — but the present presentation does not encode enough of `A` to carry out that construction
-(Keisler–Knight).  So: **omit `height` now; derive it only if #19A enriches the presentation enough
-to support the construction.**  Do not add it as a field on the strength of "it is derivable in
-principle".
-
-**Method transfer.**  Per-piece generality does not prove the assembled conclusion specializes.
-The universe tranche needed compiled regressions at literal extreme universes *and*
-`exists_aElementary_substructure_of_eq_univ`, not just generalized lemmas; the admissible layer
-correspondingly needs `hf_compactFor`, not just `hf_aFinite_iff`.  Compile the extreme instance and
-the assembled conclusion, never only the pieces.
-
-**Limit of the analogy.**  Carriers specialize *definitionally* because `ι` is a law-free index
-type.  Codes carry laws (`decodes_unique`, `decodes_theory_unique`, #19A's naturality), so the best
-available analogue is "vacuous by certificate" — propositional, needing `absurd`.  Do not redesign
-chasing `rfl` on the admissible side.
-
----
-
-## 10. Factoring decisions (2026-08-21)
-
-**Done now — the satisfiability API.**  `Theoryω.IsSatisfiable`, `Theoryω.IsFinitelySatisfiable`
-(Mathlib-parallel names), and `AFinitelySatisfiable A T` — the exact Barwise premise.  `CompactFor`
-is now transparent:
-
-```
-T ⊆ P → ACEnumerable A T → AFinitelySatisfiable A T → T.IsSatisfiable
-```
-
-Done *before* the EM tranche on purpose: the existential model statement was written out at every
-site, which made ordinary finite satisfiability and `A`-finite satisfiability easy to confuse.  They
-coincide at HF and nowhere else — `hf_aFinitelySatisfiable_iff` is that equation, and it is the only
-place the two may be interchanged.
-
-**Deferred to #19A — layer the presentation.**  `AdmissiblePresentation` now mixes a shared code
-carrier, family decoding, theory decoding, and Σ₁ classification.  Changing the Σ₁ implementation
-therefore changes the type that `CodedFamily` and `AdmissibleFragment` depend on, though neither
-consumes it.  Target shape:
-
-```
-shared code carrier
-├── family-coding layer
-├── theory-coding layer
-└── Σ-definition layer
-```
-
-A full presentation packages all three over the same carrier; `CodedFamily`/`AdmissibleFragment`
-depend only on the family layer.  This keeps the one-ambient-carrier lesson without a kitchen-sink
-record.
-
-**Deferred to #19A — partial decoding functions.**  Theory decoding is a relation plus
-`decodes_theory_unique`; `decodeTheory : Code → Option L.Theoryω` would make functionality hold by
-construction.  Do **not** generalize until theory decoding and Σ-definition decoding give two real
-consumers — family decoding has dependent output and a certificate, so it will not fit the same
-shape.
-
-**Explicitly not factored yet.**  `PresentationHom`/transport: wait until both language maps and
-adding constants need it.  A generic compactness oracle parameterized by arbitrary "smallness"
-predicates: `AFinitelySatisfiable` is already the mathematically meaningful boundary.
-
----
-
-## 11. #18 completion status
-
-**Status: complete.** The remaining items from §4 and the EM tranche are done.
-
-* **External theory predicates** (§4): `AFinite`, `ACEnumerable`, `AFinitelySatisfiable` and
-  `CompactFor` live in `Admissible/Predicates.lean`, never as fields.  `hf_aFinite_iff`,
-  `hf_aFinitelySatisfiable_iff` and `hf_compactFor` are the HF oracle checks, the last of them
-  certifying that the *assembled* statement specializes to `finitaryFragment_compact`.
-* **EM adapters**: the compactness-oracle layer applies a supplied
-  `Theoryω.OrdinaryCompactness` directly.  The `_of_fragment` / `_of_fullFragment` endpoints,
-  the `Ordinal` height parameters, and `admissibleFragmentOfUniv`'s last uses are deleted — 16
-  dead declarations plus the two-declaration legacy spine.  `Methods/EM` imports no admissible
-  module, and the layer is exported from `Countable`, matching its actual API boundary.
-* **Guard**: `scripts/check_em_compactness_boundary.lean`, wired into CI.  It checks both
-  directions — no root reaches `FiniteCompactFragment`, `FullBarwiseFragment`,
-  `AdmissibleFragmentCore`, `admissibleFragmentOfUniv` or `barwise_compactness`; every direct
-  root exposes the oracle in its *type*; every assembly cone reaches the ordinary
-  finite-satisfiability corollary — plus absence checks for the deleted spine and a
-  theorem-root negative control, failure-tested in all three directions.
-
-**Carried into #19A**, unchanged: no `height` field (§9 — `o(A)` is derivable in principle but
-the presentation does not encode enough of `A` to construct it), `CodedFamily` indexed by the
-presentation alone, and `Sigma1` as the last bare external predicate (§9, refinement 2).
+**Carry the coding data; do not replace it with the property it induces.** A presentation names
+theories and definitions by *codes*, and the predicates are existentials over those codes. Every
+derived result in §3, §4 and §7 — functionality for free, containment from adequacy, the assembled
+compactness route — exists because the code survived into the statement. A bare `Prop` on a set
+would type-check in each case and prove none of them.
