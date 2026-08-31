@@ -434,7 +434,7 @@ Kechris--Solecki--Todorcevic $G_0$-dichotomy); \texttt{morley\_counting} is
 therefore unconditional, with axioms exactly
 \texttt{[propext, Classical.choice, Quot.sound]}.
 
-\section{Thinness and Perfect Sets}
+\section{Thinness and Perfect Sets}\label{sec:thinness}
 
 The counting theorems above are stated cardinally.  The underlying dichotomy is
 sharper: the ``many classes'' side is witnessed by a perfect set of pairwise
@@ -478,10 +478,16 @@ exhibiting a metric.
 \inputleannode{thm:ranked-thinness}
 
 \texttt{ThinRankAnalysis} packages sufficient evidence for thinness, and
-\texttt{ThinRankAnalysis.isThinOn} proves the implication.  No concrete instance
-of that package is supplied here.  Note that the cheap direction above does not
-weaken those hypotheses: \texttt{isThinOn} consumes perfect $\to$ Cantor, the
-complete-metric direction.
+\texttt{ThinRankAnalysis.isThinOn} proves the implication.  Note that the cheap
+direction above does not weaken those hypotheses: \texttt{isThinOn} consumes
+perfect $\to$ Cantor, the complete-metric direction.
+
+One \emph{generic} constructor of that package is supplied, from ranks computed
+by coded well-orders presented continuously on each Cantor antichain
+(Definition~\ref{def:wellorder-presentation-thinness}); it is the bridge from
+analytic boundedness to thinness.  No \emph{concrete} instance is supplied: no
+model class is exhibited whose isomorphism rank admits such presentations, and
+producing one is the remaining mathematics rather than a packaging step.
 
 Cardinal equality alone does not establish thinness in ZFC.  Under $\mathsf{CH}$
 we have $\aleph_1 = 2^{\aleph_0}$, so a quotient of exactly $\aleph_1$ classes is
@@ -655,6 +661,15 @@ non-Borelness follows because every Borel set is analytic.  The node above is
 proved separately from L\'opez--Escobar and does not go through this one.
 
 \inputleannode{thm:analytic-wellorder-boundedness}
+
+That boundedness is what the thinness package of Section~\ref{sec:thinness}
+needs on a Cantor antichain, whenever the rank in question is the order type of
+a continuously presented family of coded well-orders.  Packaging the two
+together is the bridge between the chains, and it is generic: the presentation
+is quantified \emph{inside} the antichain, so each antichain supplies its own
+coding rather than the whole space carrying a uniform one.
+
+\inputleannode{def:wellorder-presentation-thinness}
 
 \bibliographystyle{amsalpha}
 \bibliography{refs}

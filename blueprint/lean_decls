@@ -89,3 +89,4 @@ FirstOrder.Language.wellOrder_type_boundedness
 FirstOrder.Language.wellOrdering_undefinable
 FirstOrder.Language.wellOrderClass_not_measurableSet
 FirstOrder.Language.analytic_wellOrder_type_boundedness
+FirstOrder.Language.ThinRankAnalysis.of_wellOrderPresentations

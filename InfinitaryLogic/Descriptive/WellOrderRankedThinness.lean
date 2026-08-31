@@ -52,6 +52,19 @@ antichain `f`, a continuous coding of Cantor space by well-orders whose order ty
 along `f`.
 
 `ThinRankAnalysis` is *evidence*, not a proposition, so this is a `def`. -/
+@[blueprint "def:wellorder-presentation-thinness"
+  (title := /-- Ranked thinness from well-order presentations -/)
+  (statement := /-- Suppose a rank $\rho$ is $< \omegaone$ on $A$ and each of its fixed-rank
+    antichains inside $A$ is countable, and suppose further that every continuous Cantor antichain
+    $f$ in $A$ admits a \emph{presentation}: a continuous map from $2^{\mathbb{N}}$ to codes, all
+    of them well-orders, whose order types are the ranks along $f$.  Then $\rho$ is a ranked
+    thinness analysis of $A$ for $r$. -/)
+  (proof := /-- Only the Cantor-antichain bound needs proving.  Given an antichain, take its
+    presentation; the coding is continuous on all of $2^{\mathbb{N}}$, which is analytic because
+    it is closed in a Polish space, so boundedness for analytic families of coded well-orders
+    bounds the order types --- that is, the ranks along the antichain --- by a single countable
+    ordinal. -/)
+  (uses := ["thm:analytic-wellorder-boundedness", "def:thin-rank-analysis"])]
 def ThinRankAnalysis.of_wellOrderPresentations {X : Type w} [TopologicalSpace X]
     {r : Setoid X} {A : Set X} (lt : L.Relations 2) (rank : X → Ordinal.{0})
     (rank_lt_omega1 : ∀ x ∈ A, rank x < Ordinal.omega 1)
@@ -73,8 +86,11 @@ def ThinRankAnalysis.of_wellOrderPresentations {X : Type w} [TopologicalSpace X]
   bounded_on_cantor_antichains := by
     intro f hcont hmem hineq
     obtain ⟨code, hcodecont, hcodeWO, hcoderank⟩ := present f hcont hmem hineq
-    -- Cantor space is a countable product of copies of `Bool`: compact, metrizable, second
-    -- countable, hence Polish — the same `PolishSpace.mk` route `StructureSpace L` takes
+    -- second countable and completely metrizable, hence Polish.  Both parents synthesize, but
+    -- `PolishSpace (ℕ → Bool)` itself does not: instance search descends to `SeparableSpace Bool`
+    -- and loops through `SecondCountableTopology Bool → PolishSpace Bool`, answering every node
+    -- but never resuming the outer goal.  `PolishSpace.mk` supplies the parents directly, which is
+    -- the same route `Descriptive/Polish.lean` takes for `StructureSpace L`.
     have : PolishSpace (ℕ → Bool) := PolishSpace.mk
     obtain ⟨β, hβ, hbound⟩ := analytic_rank_bounded_of_continuousOn_wellOrderPresentation
       (B := (Set.univ : Set (ℕ → Bool))) lt isClosed_univ.analyticSet code
