@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Descriptive.LopezEscobar
 import InfinitaryLogic.Descriptive.WellOrderBridge
+import InfinitaryLogic.OrdinalUtil
 
 /-!
 # Non-Borelness of the countable well-order class (issue #33)
@@ -69,24 +70,9 @@ theorem wellOrderClass_not_measurableSet (lt : L.Relations 2) :
   -- every model of `φ ⊓ infiniteAxiom` is well-ordered, so its order types are bounded
   obtain ⟨α, hα, hbound⟩ := wellOrder_type_boundedness (φ.and (infiniteAxiom L)) lt
     (fun M inst hreal => isWellOrder_of_realize lt hφ.symm M hreal)
-  -- `α + ω` is countable, infinite, and at least `α`
-  have hαc : α.card ≤ Cardinal.aleph0 := by
-    have h1 : α.card < Cardinal.aleph 1 := Cardinal.lt_ord.mp hα
-    rw [show Cardinal.aleph 1 = Order.succ (Cardinal.aleph 0) from by
-      rw [Cardinal.succ_aleph, zero_add], Cardinal.aleph_zero] at h1
-    exact Order.lt_succ_iff.mp h1
-  have hcnt : α + Ordinal.omega0 < (Cardinal.aleph 1).ord := by
-    rw [Cardinal.lt_ord, Ordinal.card_add, Ordinal.card_omega0]
-    calc α.card + Cardinal.aleph0 ≤ Cardinal.aleph0 + Cardinal.aleph0 :=
-          add_le_add hαc le_rfl
-      _ = Cardinal.aleph0 := Cardinal.aleph0_add_aleph0
-      _ < Cardinal.aleph 1 := by
-          rw [show Cardinal.aleph 1 = Order.succ (Cardinal.aleph 0) from by
-            rw [Cardinal.succ_aleph, zero_add], Cardinal.aleph_zero]
-          exact Order.lt_succ _
-  -- but the class realizes every countably infinite order type
+  -- but the class realizes every countably infinite order type, and `α + ω` is one
   obtain ⟨c, hc, htype⟩ := exists_code_type_eq (L := L) lt
-    (β := α + Ordinal.omega0) le_add_self hcnt
+    (β := α + Ordinal.omega0) le_add_self (InfinitaryLogic.add_omega0_lt_omega1 hα)
   have hcφ : @Sentenceω.Realize L (φ.and (infiniteAxiom L)) ℕ c.toStructure := by
     let : L.Structure ℕ := c.toStructure
     have hinf : Sentenceω.Realize (infiniteAxiom L) ℕ := realize_infiniteAxiom.mpr inferInstance
