@@ -7,7 +7,7 @@ import InfinitaryLogic.Admissible.Family
 import InfinitaryLogic.Lomega1omega.Theory
 
 /-!
-# The theory layer (issue #19A, migration stage 5.2)
+# The theory layer (issue #19A)
 
 The middle layer of the presentation tower:
 

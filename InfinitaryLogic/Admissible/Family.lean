@@ -7,7 +7,7 @@ import InfinitaryLogic.Lomega1omega.Syntax
 import InfinitaryLogic.Lomega1omega.Semantics
 
 /-!
-# The family layer (issues #18, #19A stage 5.1)
+# The family layer (issues #18, #19A)
 
 The honest replacement for closure under *arbitrary external* ℕ-indexed families.  A fragment may
 only be asked to contain the conjunctions and disjunctions that the admissible set itself **names**.
@@ -22,8 +22,9 @@ Three details are load-bearing and each was validated against the HF instance be
 1. `decode` lands in the structure's own arity — no independent arity field can drift.
 2. The enumeration is supplied by the presentation (`indexEncodable`), keyed on the code, **not**
    found by instance search; the syntax a coded family builds therefore depends on the code.
-3. `IsFamilyCode` is a **certificate**.  Without it any code with any decoding would build a coded
-   family, and "HF has no primitive coded families" would be unstatable.
+3. `IsFamilyCode` is a **certificate**, absorbed into the code subtype rather than carried as a
+   separate hypothesis.  Without it any code with any decoding would build a coded family, and
+   "HF has no primitive coded families" would be unstatable.
 
 `decodes_unique` makes decoding code-determined, which is what the extensionality API below rests
 on.
@@ -42,9 +43,9 @@ set_option linter.checkUnivs false in
 /-- **The family view of a presentation.**  The *only* data the syntax layer may consult.
 
 Phrased ambient-style: one `Element` carrier with `IsFamilyCode` carving out the subdomain of codes
-naming infinitary families.  The certificate that used to be a separate `CodesInfFamily` hypothesis
-now lives in the subtype, so `decodes_unique` is unconditional here while remaining vacuous for any
-presentation whose `IsFamilyCode` is empty. -/
+naming infinitary families.  The certificate lives in the code subtype rather than in a separate
+hypothesis, so `decodes_unique` is unconditional here while remaining vacuous for any presentation
+whose `IsFamilyCode` is empty. -/
 structure FamilyPresentation (L : Language.{u, v}) where
   /-- The elements of `A`. -/
   Element : Type uCode

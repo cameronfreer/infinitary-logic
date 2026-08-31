@@ -162,24 +162,20 @@ theorem hfAdmissibleFragment_toFragment (L : Language.{0, 0}) :
     (hfAdmissibleFragment L).toFragment = hfFragment L := rfl
 
 
-/-! ## Universe gate — CLOSED
+/-! ## The universe boundary
 
 The structures are **language-indexed and universe-polymorphic**: `FamilyPresentation L` for
 `L : Language.{u, v}`, so `FamilyPresentation L[[J]]` is well-formed for an arbitrary parameter
-type `J`.  This is the generalization route, chosen over restricting the EM adapter to `J : Type 0`
-— that restriction would silently weaken the existing arbitrary-target-order EM surface and confuse
-a universe limitation with the later mathematical question of which template theories are genuinely
-coded.
+type `J`.  The probes below record that, at the signature level only — nothing here claims a
+presentation for `L` lifts to one for `L[[J]]`.
 
-It does **not** claim a presentation for `L` lifts to one for `L[[J]]`; whether such a lift exists is
-genuine #19A coding content.  Only the *signature* is settled here.
+The boundary that actually constrains the interface is elsewhere and is enforced separately:
+representation is universe-general, while the satisfiability endpoint is confined to
+`Language.{0, 0}` by Mathlib's compactness theorem.  `scripts/check_admissible_universes.lean`
+states both halves as compiling probes.
 
-**Diagnosis of an earlier false alarm.**  A probe written with the result annotation `: Type` was
-reported as a universe-plumbing blocker.  It was a bug in the probe, not the API: bare `Type` means
-`Type 0`, and that result constraint propagates *backward*, forcing Lean to expect
-`FamilyPresentation.{0,0,0,0}` and producing a misleading error on the presentation argument.
-Explicit `.{…}` arguments cannot fix it, because the `Type 0` result constraint remains.  Writing
-`Type _` (or `Sort _`) lets the presentation universes be inferred and both probes compile. -/
+Write the probe results as `Type _`, not `Type`: bare `Type` means `Type 0`, and that constraint
+propagates *backward* onto the presentation argument. -/
 
 section UniverseGate
 

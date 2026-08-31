@@ -36,7 +36,7 @@ the kind subdomains — the pair of a sentence code and a definition code is an 
 has no kind at all.  One carrier states such laws directly; separate sorts must route every closure
 law through `Sum`.
 
-**One carrier was always the intent.**  The same codes — the elements of `A` — serve the family,
+**The kinds are roles, not sorts.**  The same codes — the elements of `A` — serve the family,
 theory, sentence and Σ-definition roles; only the thing named differs.
 
 ## `Sigma1` is derived
@@ -119,8 +119,8 @@ variable (A)
 
 /-- **`A`-c.e.**: the theory is Σ₁-on-`A`.
 
-Unlike the legacy predicate this is not an arbitrary `Prop` on a set — unfolding it produces a
-definition *code*, which is what makes `subset_of_adequate` available at all. -/
+Not an arbitrary `Prop` on a set: unfolding it produces a definition *code*, which is what makes
+`subset_of_adequate` available at all. -/
 def ACEnumerable (T : L.Theoryω) : Prop := A.Sigma1 T
 
 /-- The shape of a Barwise-style compactness statement over a permitted sentence set `P`.
@@ -143,8 +143,8 @@ theorem acEnumerable_def {T : L.Theoryω} : A.ACEnumerable T ↔ A.Sigma1 T := I
 containment: it follows from Σ-definability, because a definition code enumerates sentence codes
 and those decode into the fragment and nowhere else.
 
-This is the payoff of `Sigma1` carrying coding data rather than being a bare predicate — the legacy
-route could not state it. -/
+This is the payoff of `Sigma1` carrying coding data rather than being a bare predicate: a bare
+`Prop` on a set carries nothing from which containment could be derived. -/
 theorem compactFor_of_adequate {P T : L.Theoryω} (hcompact : A.CompactFor P T)
     (hade : A.AdequateFor P) (hce : A.ACEnumerable T)
     (hfin : A.toTheoryPresentation.AFinitelySatisfiable T) : T.IsSatisfiable :=

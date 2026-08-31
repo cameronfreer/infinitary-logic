@@ -7,7 +7,7 @@ import InfinitaryLogic.Admissible.AmbientHF
 import Mathlib.Computability.PartrecCode
 
 /-!
-# Numberings of the finitary sentences, and `Sigma1` invariance (issue #19A, step 3)
+# Numberings of the finitary sentences, and `Sigma1` invariance (issue #19A)
 
 `Sigma1` is **already defined** from the weak layer: `hfAmbient` takes a plain `FinitaryCoding` and
 supplies `enumerates`, so every coding has its own coding-relative `Sigma1`.  What a single coding
@@ -22,9 +22,9 @@ ComputablyEquivalent C C'   Sigma1 invariance across numberings       -- the act
 
 **Read the middle line carefully.**  `FinitaryNumbering` is structurally a bijective numbering and
 nothing more: `FinitaryNumbering.ofDenumerable` builds one from a bare `Denumerable` instance, with
-no computability evidence whatsoever.  It is *not* intrinsically effective, and it was renamed from
-`EffectiveCoding` precisely so the name stops claiming that.  Invariance holds **only when a
-`ComputablyEquivalent` witness is supplied**; the numbering alone proves nothing about `Sigma1`.
+no computability evidence whatsoever.  It is *not* intrinsically effective, and the name
+deliberately does not claim to be.  Invariance holds **only when a `ComputablyEquivalent` witness is
+supplied**; the numbering alone proves nothing about `Sigma1`.
 
 **The layers do not mix.**  `hfAmbient` still takes a plain `FinitaryCoding`, so numbering data
 cannot infect the fragment or theory layers.  That refusal is enforced by
@@ -33,9 +33,8 @@ below, which show only that the weak layer suffices.
 
 ## The bijectivity simplification
 
-Surjectivity is required, so every natural is a valid sentence code.  This is the "if invalid-code
-bookkeeping dominates, use stored bijective numberings; then acceptable numberings differ by
-computable permutations of `ℕ`" route, and it is a change of bookkeeping, not of mathematics:
+Surjectivity is required, so every natural is a valid sentence code.  Acceptable numberings then
+differ by computable permutations of `ℕ`, which is a change of bookkeeping, not of mathematics:
 
 - invalid-input bookkeeping becomes *provably vacuous* — `invalid_codes_eq_empty` states it
   explicitly instead of dropping the obligation;

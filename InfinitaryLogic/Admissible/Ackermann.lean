@@ -9,27 +9,27 @@ import Mathlib.Data.Finset.Sort
 import Mathlib.Data.Set.Finite.Basic
 
 /-!
-# Ackermann coding: hereditarily finite sets as naturals (issue #19A, step 4)
+# Ackermann coding: hereditarily finite sets as naturals (issue #19A)
 
 The concrete carrier for the HF admissible presentation.  `a ∈ₐ b` means bit `a` of `b` is set, so
 **every natural is a finite set of naturals** and the coding is total in both directions.
 
-## Why this file exists
+## Why specification laws, not totality
 
-The `WithKP` sketch in the #19A spike stated only that `Pair` and `Union` relations are *total*:
+A closure obligation stated as *totality* is vacuous:
 
 ```lean
   pair_total : ∀ a b, ∃ c, Pair a b c
 ```
 
-That is satisfied by `Pair := fun _ _ _ => True` on any inhabited carrier — **totality is not
-pairing**.  A closure obligation is meaningful only against an ambient membership relation together
-with specification laws saying *which* element the operation produces.  This file supplies that
-membership for HF and proves the specifications hold.
+is satisfied by `Pair := fun _ _ _ => True` on any inhabited carrier — **totality is not pairing**.
+Closure is meaningful only against an ambient membership relation together with specification laws
+saying *which* element the operation produces.  This file supplies that membership for HF and
+proves the specifications hold.
 
-Only pairing and union are built here.  The full KP schema is deliberately **not** attempted: the
-#19A source audit must first identify which closure and absoluteness laws later proofs consume.
-See `docs/admissible-19a-checkpoint.md` §6(c).
+Only pairing and union are built here.  The full KP schema is deliberately **not** attempted: which
+closure and absoluteness laws are actually consumed is settled by the proofs that need them, and no
+such proof exists yet.
 
 ## Main definitions
 

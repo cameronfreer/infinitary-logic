@@ -9,7 +9,7 @@ import InfinitaryLogic.Admissible.HF
 import Mathlib.Computability.PartrecCode
 
 /-!
-# The honest HF ambient instance (issue #19A, steps 2–3)
+# The honest HF ambient instance (issue #19A)
 
 `Element := ℕ` under Ackermann membership.  Sentence codes are the `enc`-image of the *finitary*
 sentences, theory codes are exactly the finite sets of sentence codes, and pairing and union are
@@ -29,12 +29,13 @@ necessary: encoding arbitrary infinitary sentences into HF is ruled out by the u
 `L.Sentenceω` (`docs/admissible-19a-checkpoint.md` §1).  `not_hfAmbient_aFinite_iff_finite`
 exhibits a finite non-`A`-finite theory rather than merely asserting the distinction.
 
-## What remains a placeholder
+## What injectivity does and does not give
 
 `FinitaryCoding` stores an injective numbering.  Injectivity gives numbering-independence of the
 decoded *range* — hence of adequacy and containment, which is `hfAmbient_range_indep` — but **not**
-of `Sigma1`: two injective numberings can disagree about which theories are c.e.  Closing that is
-checkpoint §6(a), and it is the next step, not this one.
+of `Sigma1`: two injective numberings can disagree about which theories are c.e.  `Sigma1`
+invariance is a separate layer, and holds only against an explicit `ComputablyEquivalent` witness;
+see `Admissible/Numbering.lean`.
 
 ## Main definitions
 
@@ -252,7 +253,7 @@ theorem hfAmbient_isFinitelySatisfiable (C : FinitaryCoding L) {T : L.Theoryω}
 
 /-- **The assembled HF compactness theorem**, on the honest route end to end: both premises come
 from `hfAmbient`'s own coding data, and the proof goes straight to `finitaryFragment_compact` —
-i.e. to Mathlib's first-order compactness — rather than through any legacy predicate.
+i.e. to Mathlib's first-order compactness.
 
 Containment is discharged internally by `hfAmbient_subset_finitary`; the caller supplies only
 Σ-definability and the Barwise premise. -/
