@@ -244,27 +244,23 @@ section Regression
 
 variable {L : Language.{0, 0}}
 
-/-- **The two Barwise premises agree on the finitary fragment.**
+/-- **Inside the fragment, the Barwise premise IS ordinary finite satisfiability.**
 
-They are *not* equivalent in general — the legacy `A`-finite class is every finite theory, the
-honest one is the finite *finitary* theories.  Inside the fragment the difference vanishes: a
-finite subtheory of a finitary theory is itself finitary, so `hfAmbient_aFinite_iff`'s second
-conjunct comes for free.
+One direction only, and that is the honest shape: a finite subtheory of a finitary theory is
+itself finitary, so `hfAmbient_aFinite_iff`'s containment conjunct comes for free and every
+ordinarily finite subtheory is `A`-finite.
 
-This is the bridge that lets the honest route stand on the legacy compactness proof until stage 5.4
-replaces it. -/
-theorem hfAmbient_aFinitelySatisfiable_iff (C : FinitaryCoding L) {T : L.Theoryω}
-    (hT : T ⊆ finitaryFragment L) :
-    (hfAmbient C).toTheoryPresentation.AFinitelySatisfiable T ↔
-      (hfPresentation L).AFinitelySatisfiable T := by
-  constructor
-  · intro h T₀ hT₀ hfin
-    exact h T₀ hT₀ ((hfAmbient_aFinite_iff C).mpr ⟨hf_aFinite_iff.mp hfin, hT₀.trans hT⟩)
-  · intro h T₀ hT₀ hA
-    exact h T₀ hT₀ (hf_aFinite_iff.mpr ((hfAmbient_aFinite_iff C).mp hA).1)
+Replaces the earlier bridge through `hfPresentation`.  Nothing here mentions the legacy
+presentation, so HF compactness no longer stands on it. -/
+theorem hfAmbient_isFinitelySatisfiable (C : FinitaryCoding L) {T : L.Theoryω}
+    (hT : T ⊆ finitaryFragment L)
+    (hfin : (hfAmbient C).toTheoryPresentation.AFinitelySatisfiable T) :
+    T.IsFinitelySatisfiable := fun T₀ hT₀ hfin₀ =>
+  hfin T₀ hT₀ ((hfAmbient_aFinite_iff C).mpr ⟨hfin₀, hT₀.trans hT⟩)
 
-/-- **The assembled HF compactness regression**, on the honest route: both premises now come from
-`hfAmbient`'s own coding data, with no legacy predicate in the statement.
+/-- **The assembled HF compactness theorem**, on the honest route end to end: both premises come
+from `hfAmbient`'s own coding data, and the proof goes straight to `finitaryFragment_compact` —
+i.e. to Mathlib's first-order compactness — rather than through any legacy predicate.
 
 Containment is discharged internally by `hfAmbient_subset_finitary`; the caller supplies only
 Σ-definability and the Barwise premise. -/
@@ -272,7 +268,7 @@ theorem hfAmbient_compact (C : FinitaryCoding L) (T : L.Theoryω)
     (hT : (hfAmbient C).ACEnumerable T)
     (hfin : (hfAmbient C).toTheoryPresentation.AFinitelySatisfiable T) : T.IsSatisfiable :=
   have hsub := hfAmbient_subset_finitary C hT
-  hf_compact_of_aFinite hsub ((hfAmbient_aFinitelySatisfiable_iff C hsub).mp hfin)
+  finitaryFragment_compact hsub (hfAmbient_isFinitelySatisfiable C hsub hfin)
 
 /-- **HF inhabits the honest compactness interface.**
 

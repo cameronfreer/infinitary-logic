@@ -148,21 +148,24 @@ run_cmd do
   -- NEGATIVE CONTROL for the `.thmInfo` path.
   --
   -- Every root above would still pass with theorem-body traversal completely broken, because each
-  -- forbidden name they could plausibly touch also occurs in a TYPE. This probe's forbidden
-  -- dependency is reachable ONLY through proof bodies -- and that claim is established by running
-  -- the cone TWICE, not by inspecting direct constants:
+  -- forbidden name they could plausibly touch also occurs in a TYPE. This control certifies the
+  -- traversal MECHANISM instead, on a probe whose dependency is reachable only through proof
+  -- bodies: `hfAmbient_compact`'s proof calls `finitaryFragment_compact`, whose own proof calls
+  -- `foTheory`. Neither name occurs in any type along the way.
   --
-  --   * `depsWith false` (types and `def` bodies, no theorem bodies) must NOT reach it;
+  -- The claim is established by running the cone TWICE, not by inspecting direct constants:
+  --
+  --   * `depsWith false` (types and `def` bodies, no theorem bodies) must NOT reach `foTheory`;
   --   * `depsWith true`  (the real traversal)                        must reach it.
   --
-  -- Two further assertions keep the control honest. `leaked` must be absent from the probe's own
-  -- value, so the full traversal is exercising TRANSITIVITY rather than a one-hop lookup; and
-  -- `witness` must be present there while absent from the type, so the probe is genuinely
-  -- proof-only. All four are re-verified every run, so the control cannot rot into a tautology as
-  -- the surrounding API moves.
+  -- Two further assertions keep it honest. `foTheory` must be absent from the probe's own value,
+  -- so the full traversal is exercising TRANSITIVITY -- here two theorem bodies deep -- rather
+  -- than a one-hop lookup; and `finitaryFragment_compact` must be present there while absent from
+  -- the type, so the probe is genuinely proof-only. All four are re-verified every run, so the
+  -- control cannot rot into a tautology as the surrounding API moves.
   let probe := `FirstOrder.Language.hfAmbient_compact
-  let witness := `FirstOrder.Language.hf_compact_of_aFinite
-  let leaked := `FirstOrder.Language.AdmissiblePresentation
+  let witness := `FirstOrder.Language.finitaryFragment_compact
+  let leaked := `FirstOrder.Language.foTheory
   let some pci := env.find? probe | throwError "negative control: {probe} not found"
   let some pval := declValue? pci
     | throwError "negative control: no value for {probe}; declValue? is not matching .thmInfo"
