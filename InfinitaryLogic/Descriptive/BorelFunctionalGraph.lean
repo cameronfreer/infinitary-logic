@@ -19,8 +19,9 @@ never restate it.  Nothing here is model-theoretic.
 * `measurableSet_domain` — the domain `Prod.fst '' G` is Borel.  Proved directly, with no subtype:
   `MeasurableSet.image_of_measurable_injOn` asks for `InjOn`, and `InjOn Prod.fst G` is exactly the
   functionality hypothesis.
-* `measurableEmbedding_proj` — the projection `↥G → X` is a measurable embedding.  This one *does*
-  need the subtype, because `Measurable.measurableEmbedding` asks for global injectivity.
+* `measurableEmbedding_proj` — the projection `↥G → X` is a measurable embedding.  Restricting the
+  projection to `↥G` turns `injOn_fst` into the global injectivity required by
+  `Measurable.measurableEmbedding`.
 * `equivDomain` — hence a measurable equivalence `↥G ≃ᵐ ↥domain`, whose inverse is measurable by
   construction.
 * `value`, `measurable_value`, `value_mem`, `value_eq_of_mem` — the induced partial function on the
@@ -76,8 +77,8 @@ theorem measurableSet_domain (h : BorelFunctionalGraph G) : MeasurableSet h.doma
 
 /-! ### The subtype layer
 
-Only from here on is the subtype needed: `Measurable.measurableEmbedding` asks for *global*
-injectivity, which `InjOn` cannot supply. -/
+Restricting the projection to `↥G` turns `injOn_fst` into the global injectivity required by
+`Measurable.measurableEmbedding`. -/
 
 /-- The projection of the graph onto its first coordinate. -/
 def proj (G : Set (X × Y)) : ↥G → X := fun p => (p : X × Y).1
@@ -107,10 +108,8 @@ private def toRange (h : BorelFunctionalGraph G) (x : ↥h.domain) : ↥(Set.ran
 /-- **The graph is measurably equivalent to its domain.**  In particular the inverse of the
 projection is measurable — the point of the whole construction.
 
-Built by hand rather than from `MeasurableEmbedding.equivRange` composed with
-`MeasurableEquiv.cast`: that route works, but the `cast` blocks reduction, and then
-`coe_equivDomain` below — on which both value specifications rest — is not provable by `rfl`.
-Here `toFun` is transparent and everything downstream follows definitionally. -/
+Built explicitly with a transparent forward map, so `coe_equivDomain` holds by `rfl`;
+measurability of the inverse comes from `MeasurableEmbedding.measurable_rangeSplitting`. -/
 noncomputable def equivDomain (h : BorelFunctionalGraph G) : ↥G ≃ᵐ ↥h.domain where
   toFun p := ⟨proj G p, ⟨(p : X × Y), p.2, rfl⟩⟩
   invFun x := Set.rangeSplitting (proj G) (h.toRange x)
