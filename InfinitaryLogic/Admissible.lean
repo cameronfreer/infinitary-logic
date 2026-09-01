@@ -1,6 +1,10 @@
+import InfinitaryLogic.Admissible.Ackermann
+import InfinitaryLogic.Admissible.Family
+import InfinitaryLogic.Admissible.Theory
+import InfinitaryLogic.Admissible.Ambient
+import InfinitaryLogic.Admissible.AmbientHF
+import InfinitaryLogic.Admissible.Numbering
 import InfinitaryLogic.Admissible.Fragment
-import InfinitaryLogic.Admissible.CodedFamily
-import InfinitaryLogic.Admissible.Predicates
 import InfinitaryLogic.Admissible.Fragment.Honest
 import InfinitaryLogic.Admissible.HF
 import InfinitaryLogic.Admissible.Barwise.Data

@@ -13,7 +13,7 @@ objects are not built on the quarantined legacy structures.
 
 Run with: lake env lean scripts/check_hf_compactness.lean
 -/
-import InfinitaryLogic.Admissible.HF
+import InfinitaryLogic.Admissible.AmbientHF
 
 open Lean
 
@@ -32,7 +32,7 @@ def guardedRoots : List Name :=
   [`FirstOrder.Language.finitaryFragment_compact,
    `FirstOrder.Language.hfFragment,
    `FirstOrder.Language.hfAdmissibleFragment,
-   `FirstOrder.Language.hfPresentation]
+   `FirstOrder.Language.hfAmbient_compact]
 
 def forbiddenSub : List String :=
   ["FiniteCompactFragment", "AdmissibleFragmentCore", "CodedIn", "BarwiseFragment"]

@@ -3,7 +3,7 @@ Copyright (c) 2026 Cameron Freer. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
-import InfinitaryLogic.Admissible.CodedFamily
+import InfinitaryLogic.Admissible.Family
 import InfinitaryLogic.Lomega1omega.Fragment
 
 /-!
@@ -29,13 +29,17 @@ namespace FirstOrder.Language
 universe u v uCode uIndex
 
 /-- **An admissible fragment**: an ordinary `Fragment`, closed *upward* under the conjunctions and
-disjunctions named by **certified** coded families — and under nothing else. -/
+disjunctions named by **certified** coded families — and under nothing else.
+
+Parameterized by the **family view**.  This file imports only `Admissible/Family.lean`, so the
+syntax interface cannot mention theory decoding or `Sigma1`: the separation is by import, not by
+convention.  A richer presentation is used here through its `toFamilyPresentation` projection. -/
 structure AdmissibleFragment {L : Language.{u, v}}
-    (A : AdmissiblePresentation.{u, v, uCode, uIndex} L) extends Fragment L where
-  iInf_coded_mem : ∀ {n : ℕ} (F : CodedFamily A n),
+    (P : FamilyPresentation.{u, v, uCode, uIndex} L) extends Fragment L where
+  iInf_coded_mem : ∀ {n : ℕ} (F : CodedFamily P n),
     (∀ i, (⟨n, F.decode i⟩ : Σ n, L.BoundedFormulaω Empty n) ∈ toSet) →
       (⟨n, codedIInf F⟩ : Σ n, L.BoundedFormulaω Empty n) ∈ toSet
-  iSup_coded_mem : ∀ {n : ℕ} (F : CodedFamily A n),
+  iSup_coded_mem : ∀ {n : ℕ} (F : CodedFamily P n),
     (∀ i, (⟨n, F.decode i⟩ : Σ n, L.BoundedFormulaω Empty n) ∈ toSet) →
       (⟨n, codedISup F⟩ : Σ n, L.BoundedFormulaω Empty n) ∈ toSet
 
