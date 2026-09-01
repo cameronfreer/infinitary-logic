@@ -64,9 +64,9 @@ structure ThinRankAnalysis (r : Setoid X) (A : Set X) where
   /-- Every Cantor antichain contains a Cantor **subcopy** on which the ranks are bounded below
   `ω₁`.  The bound need not hold on the whole antichain.
 
-  `e` is asked only to be continuous and injective, not to be an `IsEmbedding`: those two are
-  exactly what the consumers below use, and demanding a topological embedding would oblige every
-  producer to prove more than is needed. -/
+  `e` is stored as continuous and injective: continuity certifies the intended Cantor subcopy,
+  while injectivity is what the contradiction below consumes.  No separate `IsEmbedding` witness is
+  required. -/
   bounded_on_refined_cantor_antichains :
     ∀ f : (ℕ → Bool) → X, Continuous f → (∀ x, f x ∈ A) →
       (∀ x y, x ≠ y → ¬r.r (f x) (f y)) →
@@ -81,9 +81,8 @@ variable {r : Setoid X} {A : Set X}
 /-- **The slicing contradiction**, on a single antichain with a rank bound.
 
 Factored out so `no_cantorAntichain` can apply it to the *subcopy* the refined field supplies,
-without the argument being written twice.  Continuity is deliberately absent from the signature:
-this step never uses it — the countability contradiction needs only injectivity, membership and the
-bound. -/
+without the argument being written twice.  It uses membership, pairwise inequivalence (hence
+injectivity), fixed-rank countability, and the rank bound; it has no topological hypothesis. -/
 private theorem false_of_bounded_antichain (T : ThinRankAnalysis r A)
     (f : (ℕ → Bool) → X) (hmem : ∀ x, f x ∈ A)
     (hineq : ∀ x y, x ≠ y → ¬r.r (f x) (f y))

@@ -30,7 +30,8 @@ Cantor subcopy.  Producing the per-antichain presentation is the hard downstream
 boundedness itself, once a presentation exists, is this file.
 
 `ThinRankAnalysis.of_full_wellOrderPresentations` recovers the whole-antichain form for producers
-that have it, by taking the subcopy to be the identity.
+that have it, by taking the subcopy to be the identity.  Only that direction is supplied; no
+converse is claimed.
 
 The boundedness field is then four lines: the antichain's coding domain is all of Cantor space,
 which is analytic because it is closed in a Polish space, so
