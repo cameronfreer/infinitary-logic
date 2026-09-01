@@ -16,6 +16,7 @@ import InfinitaryLogic.Descriptive.IsomorphismBorel
 import InfinitaryLogic.Descriptive.ModelClassStandardBorel
 
 -- Cantor scheme / perfect antichain extraction (pure Mathlib infrastructure)
+import InfinitaryLogic.Descriptive.BorelFunctionalGraph
 import InfinitaryLogic.Descriptive.CantorAntichain
 import InfinitaryLogic.Descriptive.PerfectAntichain
 import InfinitaryLogic.Descriptive.StructureIsoSetoid
@@ -86,6 +87,9 @@ application of that vocabulary:
   perfect-set/thinness predicates stated against it
 - `RankedThinness`: the countable-ordinal rank route to thinness (`ThinRankAnalysis`), with
   the quotient-countability step (`Setoid.countable_antichain`);
+- `BorelFunctionalGraph`: Borel graphs with singleton vertical sections — Borel domain,
+  measurable-embedding projection, and the induced measurable partial function, all via
+  Lusin–Souslin;
 - `Mycielski`: Mycielski's theorem for Cantor space (`mycielski_cantor`);
 - `KuratowskiUlam`: the meager-sections direction of Kuratowski–Ulam
   (`isMeagre_of_isMeagre_sections`);
