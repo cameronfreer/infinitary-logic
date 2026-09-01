@@ -110,16 +110,30 @@ of `ModelsOf φ` in `t'` in its conclusion, so a consumer that needs the clopen 
 
 `InfinitaryLogic/Descriptive/RankedThinness.lean` supplies the standard rank argument.
 `ThinRankAnalysis r A` is a structure carrying four pieces of **evidence**: a rank function, the
-fact that ranks on `A` are `< ω₁`, countability of each fixed-rank antichain, and boundedness of
-the rank on any Cantor antichain.
+fact that ranks on `A` are `< ω₁`, countability of each fixed-rank antichain, and — the refined
+condition — that every Cantor antichain contains a Cantor **subcopy** on which the rank is bounded
+below `ω₁`.
+
+**The bound is on a subcopy, not on the whole antichain.** That is exactly what the countability
+contradiction consumes: it runs on any Cantor subcopy, so demanding a bound everywhere would ask
+producers for more than the argument uses. The subcopy `e` is required to be continuous and
+injective, deliberately not an `IsEmbedding` — again, precisely what the consumers use.
 
 `no_cantorAntichain` and `isThinOn` are **derived theorems, not fields**. A structure whose fields
 already asserted thinness would prove nothing; the content is that this particular evidence
 suffices.
 
+Two constructors recover the older, stronger hypotheses for producers that have them, both by
+taking the subcopy to be the identity: `ThinRankAnalysis.of_bounded_on_cantor_antichains` from a
+bound on the whole antichain, and `ThinRankAnalysis.of_full_wellOrderPresentations` from a
+presentation of the whole antichain. Only that direction holds; **no converse is claimed**, since a
+bound on some subcopy does not recover one on the whole antichain.
+
 **ThinRankAnalysis packages sufficient evidence for thinness, and `ThinRankAnalysis.isThinOn`
-proves the implication. No concrete instance of that package is supplied here.** The repository
-provides the criterion, not an application of it.
+proves the implication. One generic constructor is supplied — from ranks computed by coded
+well-orders presented continuously on each Cantor subcopy — but no concrete instance: no model
+class is exhibited whose isomorphism rank admits such presentations.** The repository provides the
+criterion, not an application of it.
 
 Its `[MetricSpace] [CompleteSpace]` hypotheses are *not* relaxed by the cheap Hausdorff direction
 above: `isThinOn` consumes `IsThinOn.of_no_cantorAntichain`, which is the perfect → Cantor
