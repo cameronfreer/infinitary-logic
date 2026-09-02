@@ -20,9 +20,9 @@ comeager set; here the comeager set is then thinned to a Cantor copy.)  The conc
 continuity of `g i ∘ e`, not continuity of `g i` at the points of `range e`.
 
 This is the natural companion of the Cantor-antichain vocabulary in this directory: a
-construction that produces a Cantor antichain and then needs finitely much Borel data along it
-to be *continuous* may pass to the subcopy `e` first, uniformly for countably many pieces of
-data at once.
+construction that produces a Cantor antichain and then needs countably many pieces of Borel
+data along it to be *continuous* may pass to the subcopy `e` first, uniformly for all of them at
+once.
 
 ## Route
 
@@ -40,7 +40,7 @@ data at once.
 
 ## Implementation notes
 
-* `PolishSpace (ℕ → Bool)` is not a Mathlib instance; it is assembled here from the countable-Pi
+* `PolishSpace (ℕ → Bool)` does not currently synthesize; it is assembled here from the countable-Pi
   second-countability and complete-metrizability instances and kept **local** to this file.
 * The Borel-set-contains-Cantor-copy lemma is stated for an arbitrary Polish space; Mathlib has
   only the closed-set form (`IsClosed.exists_nat_bool_injection_of_not_countable`).
@@ -52,14 +52,15 @@ namespace CantorStabilization
 
 /-- Cantor space is Polish (second countable + completely metrizable, both from the countable
 product instances).  Local to this file. -/
-theorem polishSpace_cantor : PolishSpace (ℕ → Bool) := ⟨⟩
+private theorem polishSpace_cantor : PolishSpace (ℕ → Bool) :=
+  PolishSpace.mk
 
 attribute [local instance] polishSpace_cantor
 
 /-! ## Cantor space has no isolated points -/
 
 /-- Flipping the `n`-th coordinate converges to `x` while staying away from it. -/
-theorem cantor_nhdsNE_neBot (x : ℕ → Bool) : (𝓝[≠] x).NeBot := by
+private theorem cantor_nhdsNE_neBot (x : ℕ → Bool) : (𝓝[≠] x).NeBot := by
   rw [← mem_closure_iff_nhdsWithin_neBot]
   refine mem_closure_of_tendsto (b := atTop) (f := fun n : ℕ => Function.update x n (!x n)) ?_ ?_
   · refine tendsto_pi_nhds.2 fun i => ?_
@@ -71,15 +72,16 @@ theorem cantor_nhdsNE_neBot (x : ℕ → Bool) : (𝓝[≠] x).NeBot := by
     have := congrFun h n
     simp at this
 
-theorem isMeagre_singleton_cantor (x : ℕ → Bool) : IsMeagre ({x} : Set (ℕ → Bool)) := by
+private theorem isMeagre_singleton_cantor (x : ℕ → Bool) : IsMeagre ({x} : Set (ℕ → Bool)) := by
   have := cantor_nhdsNE_neBot x
   exact residual_of_dense_open isOpen_compl_singleton (dense_compl_singleton x)
 
-theorem isMeagre_of_countable_cantor {s : Set (ℕ → Bool)} (hs : s.Countable) : IsMeagre s := by
+private theorem isMeagre_of_countable_cantor {s : Set (ℕ → Bool)} (hs : s.Countable) :
+    IsMeagre s := by
   rw [← Set.biUnion_of_singleton s]
   exact isMeagre_biUnion hs fun x _ => isMeagre_singleton_cantor x
 
-theorem not_countable_of_mem_residual_cantor {s : Set (ℕ → Bool)} (hs : s ∈ residual _) :
+private theorem not_countable_of_mem_residual_cantor {s : Set (ℕ → Bool)} (hs : s ∈ residual _) :
     ¬ s.Countable :=
   fun h => not_isMeagre_of_mem_residual hs (isMeagre_of_countable_cantor h)
 
