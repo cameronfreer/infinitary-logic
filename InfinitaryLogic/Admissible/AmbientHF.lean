@@ -228,8 +228,10 @@ caller-supplied containment. -/
 
 /-- **Containment for HF, derived from adequacy — no manual hypothesis.**
 
-Universe-general: only the compactness *theorem* below is pinned to `Language.{0, 0}`, and that
-restriction belongs to Mathlib's first-order compactness, not to any coding fact. -/
+Universe-general: only the ambient compactness *theorem* below is pinned to `Language.{0, 0}`,
+because its published interface still concludes the universe-zero `Theoryω.IsSatisfiable`.  The
+underlying first-order route is universe-general via `finitaryFragment_compactIn`; no coding fact
+imposes the restriction. -/
 theorem hfAmbient_subset_finitary (C : FinitaryCoding L) {T : L.Theoryω}
     (hT : (hfAmbient C).Sigma1 T) : T ⊆ finitaryFragment L :=
   AmbientPresentation.subset_of_adequate (hfAmbient_adequate C) hT

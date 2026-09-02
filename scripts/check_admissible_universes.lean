@@ -1,13 +1,15 @@
 /-
-Guard: the #19A model-universe boundary, as compiling probes (stage 5.7).
+Guard: the admissible model-universe boundary, as compiling probes.
 
-#19A does NOT widen model universes — that belongs to #19B. What it records is where the boundary
-actually falls, so the restriction cannot be mistaken for a limitation of the coding layer.
+The low-level semantic boundary has moved deliberately: `Theoryω.IsSatisfiableIn` selects a carrier
+universe, and `finitaryFragment_compactIn` works for any language.  The ambient Barwise interface
+has not moved yet: `hfAmbient_compact` still concludes the published universe-zero
+`Theoryω.IsSatisfiable` and remains confined to `Language.{0, 0}`.
 
-The result being pinned: **representation is universe-general, the satisfiability endpoint is
-universe-zero.** The coding, adequacy and `A`-finiteness apply to a language at any levels; only
-`hfAmbient_compact` is confined to `Language.{0, 0}`, because it consumes Mathlib's first-order
-compactness, not because anything about HF coding needs small types.
+The result being pinned is therefore three-part: representation is universe-general, finitary
+compactness is universe-general with an explicit output level, and the ambient compactness endpoint
+is still universe-zero.  This prevents the remaining interface restriction from being read back
+onto either syntax coding or Mathlib's first-order compactness.
 
 Probes are stated at EXPLICIT levels, `Language.{1, 2}`, not at generic `u v`. A generic probe
 proves nothing here: it would elaborate just as happily if the declarations had been silently
@@ -49,9 +51,19 @@ example (L : Language.{1, 2}) (C : FinitaryCoding L) {T : L.Theoryω} :
     (hfAmbient C).AFinite T ↔ T.Finite ∧ T ⊆ finitaryFragment L :=
   hfAmbient_aFinite_iff C
 
+/-! ## Positive: finitary compactness is language-universe general -/
+
+/-- Finite-subtheory models in `Type 3` yield Mathlib's canonical output model in `Type 2` for a
+`Language.{1, 2}`.  Distinct explicit levels ensure neither the language nor witness universe can
+silently collapse to zero. -/
+example (L : Language.{1, 2}) {T : L.Theoryω} (hT : T ⊆ finitaryFragment L)
+    (hfin : Theoryω.IsFinitelySatisfiableIn.{1, 2, 3} T) :
+    Theoryω.IsSatisfiableIn.{1, 2, 2} T :=
+  finitaryFragment_compactIn hT hfin
+
 /-! ## Positive: the satisfiability endpoint at `Language.{0, 0}` -/
 
-/-- Compactness elaborates at universe zero, where Mathlib's first-order compactness lives. -/
+/-- The ambient compactness API retains its published universe-zero endpoint. -/
 example (L : Language.{0, 0}) (C : FinitaryCoding L) (T : L.Theoryω)
     (hT : (hfAmbient C).ACEnumerable T)
     (hfin : (hfAmbient C).toTheoryPresentation.AFinitelySatisfiable T) : T.IsSatisfiable :=
@@ -59,8 +71,8 @@ example (L : Language.{0, 0}) (C : FinitaryCoding L) (T : L.Theoryω)
 
 /-! ## The combined negative control -/
 
-/-- **The boundary, in one declaration.**  At `Language.{1, 2}` the representation route is
-available — that is this example's conclusion — while `hfAmbient_compact` is not.
+/-- **The remaining boundary, in one declaration.**  At `Language.{1, 2}` the representation route
+is available — that is this example's conclusion — while `hfAmbient_compact` is not.
 
 If `hfAmbient_compact` is ever generalized, `fail_if_success` will report that its body succeeded.
 That is the correct failure: it means the boundary moved, and this guard is the record of where it
@@ -73,5 +85,6 @@ example (L : Language.{1, 2}) (C : FinitaryCoding L) :
 end FirstOrder.Language
 
 open Lean in
-run_cmd logInfo "universe boundary guard: OK (representation elaborates at Language.{1, 2}; \
-  the satisfiability endpoint is Language.{0, 0} and is rejected at {1, 2})"
+run_cmd logInfo "universe boundary guard: OK (representation and finitary compactness elaborate at \
+  higher universes; the ambient compactness endpoint remains Language.{0, 0} and is rejected at \
+  {1, 2})"

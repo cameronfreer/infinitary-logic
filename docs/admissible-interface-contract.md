@@ -197,15 +197,19 @@ the `P` a caller has in mind. `compactFor_of_adequate` is the wrapper that disch
 `scripts/check_admissible_migration.lean` asserts both that HF exposes the real interface and that
 the containment derivation is genuinely reached through the proofs.
 
-**The universe boundary.** Representation is universe-general; the satisfiability endpoint is not:
+**The universe boundary.** Representation and the low-level finitary compactness argument are
+universe-general; the ambient presentation endpoint has not yet adopted the indexed result:
 
 | | Level |
 |---|---|
 | `hfAmbient`, `hfAmbient_adequate`, `hfAmbient_aFinite_iff` | any `Language.{u, v}` |
+| `finitaryFragment_compactIn` | any `Language.{u, v}`; output carrier in `Type (max u v)` |
 | `hfAmbient_compact` | `Language.{0, 0}` |
 
-The restriction belongs to Mathlib's compactness theorem, **not** to HF coding — a semantic
-limitation must not be read back onto a syntactic definition.
+`Theoryω.IsSatisfiableIn.{u, v, w}` makes the carrier universe explicit while the published
+`Theoryω.IsSatisfiable` remains its universe-zero specialization.  The remaining restriction is in
+the ambient `CompactFor` interface, **not** in Mathlib compactness or HF coding; it must not be read
+back onto a syntactic definition.
 `scripts/check_admissible_universes.lean` states both halves as compiling probes at explicit levels,
 with a negative control exhibiting the higher-universe representation route while rejecting
 compactness at the same language.

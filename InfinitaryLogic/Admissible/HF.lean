@@ -29,9 +29,9 @@ cardinality, and not `einf`'s `⊤`-padding, which is legitimate for a real infi
 forbidden move is granting the certificate to a finite code and using padding to manufacture a
 primitive `iInf`.
 
-**Universes.**  The syntax layer is `Language.{u, v}`.  Only `finitaryFragment_compact` is
-specialized to `{0, 0}`, and that restriction belongs to Mathlib's compactness theorem — a semantic
-limitation must not propagate back onto a syntactic definition.
+**Universes.**  The syntax layer and `finitaryFragment_compactIn` are universe-general; the latter
+returns Mathlib's canonical model in `Type (max u v)`.  The compatibility theorem
+`finitaryFragment_compact` retains its published universe-zero result type.
 
 **Not built on the legacy structures.**  `AdmissibleFragmentCore.hf := Set.univ` is a quarantined
 placeholder; nothing here uses it, and nothing here may be proved from it.
@@ -39,7 +39,7 @@ placeholder; nothing here uses it, and nothing here may be proved from it.
 
 namespace FirstOrder.Language
 
-universe u v uCode uIndex
+universe u v w uCode uIndex
 
 variable {L : Language.{0, 0}}
 
@@ -72,8 +72,7 @@ theorem mem_finitaryFragment_iff {L : Language.{u, v}} {φ : L.Sentenceω} :
 /-- **The oracle, condition 1.**  The sentence slice of `hfFragment` is exactly `finitaryFragment`.
 Any proposed `AdmissibleFragment` whose HF instance fails this is wrong.
 
-Both sides are now universe-general; only `finitaryFragment_compact` below stays at `{0, 0}`, and
-that restriction belongs to Mathlib's compactness theorem, not to the syntax. -/
+Both sides are universe-general. -/
 theorem sentence_slice_hfFragment (L : Language.{u, v}) :
     {φ : L.Sentenceω | (⟨0, φ⟩ : Σ n, L.BoundedFormulaω Empty n) ∈ hfFragment L} =
       finitaryFragment L := by
@@ -84,13 +83,13 @@ theorem sentence_slice_hfFragment (L : Language.{u, v}) :
 /-- The **full preimage theory** — every first-order sentence whose image lies in `T`, not one
 chosen representative per member.  Choosing representatives would need `Classical.choice` and would
 make the model correspondence direction-sensitive. -/
-def foTheory (T : Set L.Sentenceω) : L.Theory :=
+def foTheory {L : Language.{u, v}} (T : Set L.Sentenceω) : L.Theory :=
   {φ₀ : L.Sentence | φ₀.toLω ∈ T}
 
 /-- **Model correspondence.**  For a theory inside the finitary fragment, models of the preimage
 theory are exactly models of the original. -/
-theorem model_foTheory_iff {T : Set L.Sentenceω} (hT : T ⊆ finitaryFragment L)
-    (M : Type) [L.Structure M] [Nonempty M] :
+theorem model_foTheory_iff {L : Language.{u, v}} {T : Set L.Sentenceω}
+    (hT : T ⊆ finitaryFragment L) (M : Type w) [L.Structure M] [Nonempty M] :
     M ⊨ foTheory T ↔ Theoryω.Model T M := by
   constructor
   · intro hM φ hφ
@@ -100,12 +99,16 @@ theorem model_foTheory_iff {T : Set L.Sentenceω} (hT : T ⊆ finitaryFragment L
     refine ⟨fun {φ₀} hφ₀ => ?_⟩
     exact (Sentence.realize_toLω φ₀).mp (hM _ hφ₀)
 
-/-- **Compactness for the finitary fragment**, derived from Mathlib's first-order compactness.
+/-- **Universe-general compactness for the finitary fragment**, derived from Mathlib's first-order
+compactness.
 
 No `compact` field is consulted: the infinitary finite-satisfiability hypothesis is pushed through
-`toLω` to the preimage theory, Mathlib supplies a model, and the correspondence carries it back. -/
-theorem finitaryFragment_compact {T : L.Theoryω} (hT : T ⊆ finitaryFragment L)
-    (hfin : T.IsFinitelySatisfiable) : T.IsSatisfiable := by
+`toLω` to the preimage theory, Mathlib supplies its canonical model in `Type (max u v)`, and the
+correspondence carries it back.  Finite-subtheory witnesses may live in any fixed `Type w`; their
+universe is independent of the output universe. -/
+theorem finitaryFragment_compactIn {L : Language.{u, v}} {T : L.Theoryω}
+    (hT : T ⊆ finitaryFragment L) (hfin : Theoryω.IsFinitelySatisfiableIn.{u, v, w} T) :
+    Theoryω.IsSatisfiableIn.{u, v, max u v} T := by
   -- every finite subset of the preimage theory is satisfiable
   have hfs : (foTheory T).IsFinitelySatisfiable := by
     intro F₀ hF₀
@@ -121,6 +124,13 @@ theorem finitaryFragment_compact {T : L.Theoryω} (hT : T ⊆ finitaryFragment L
   -- Mathlib first-order compactness
   obtain ⟨M⟩ := Theory.isSatisfiable_iff_isFinitelySatisfiable.mpr hfs
   exact ⟨M, inferInstance, inferInstance, (model_foTheory_iff hT M).mp M.is_model⟩
+
+/-- **Universe-zero compatibility endpoint.**  This retains the published result type while the
+underlying first-order argument is universe-general; use `finitaryFragment_compactIn` when the
+language or resulting carrier lives above universe zero. -/
+theorem finitaryFragment_compact {T : L.Theoryω} (hT : T ⊆ finitaryFragment L)
+    (hfin : T.IsFinitelySatisfiable) : T.IsSatisfiable :=
+  finitaryFragment_compactIn hT hfin
 
 
 /-! ## Gate 4 — the HF oracle
@@ -169,10 +179,10 @@ The structures are **language-indexed and universe-polymorphic**: `FamilyPresent
 type `J`.  The probes below record that, at the signature level only — nothing here claims a
 presentation for `L` lifts to one for `L[[J]]`.
 
-The boundary that actually constrains the interface is elsewhere and is enforced separately:
-representation is universe-general, while the satisfiability endpoint is confined to
-`Language.{0, 0}` by Mathlib's compactness theorem.  `scripts/check_admissible_universes.lean`
-states both halves as compiling probes.
+The low-level semantic boundary is now explicit: `Theoryω.IsSatisfiableIn` selects the carrier
+universe, and `finitaryFragment_compactIn` works for any language.  The ambient presentation API
+still concludes the published universe-zero `Theoryω.IsSatisfiable`; that remaining boundary is
+enforced separately by `scripts/check_admissible_universes.lean`.
 
 Write the probe results as `Type _`, not `Type`: bare `Type` means `Type 0`, and that constraint
 propagates *backward* onto the presentation argument. -/

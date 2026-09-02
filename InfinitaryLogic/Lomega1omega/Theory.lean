@@ -17,6 +17,7 @@ in Lω₁ω (countable infinitary logic with countable conjunctions/disjunctions
 
 - `Theoryω`: A theory in Lω₁ω is a set of sentences.
 - `Theoryω.Model`: A structure M is a model of theory T if it satisfies all sentences in T.
+- `Theoryω.IsSatisfiableIn`: T has a model in a selected carrier universe.
 - `LomegaEquiv`: Lω₁ω-elementary equivalence between structures.
 
 ## Main Results
@@ -64,10 +65,27 @@ theorem Model.empty (M : Type w) [L.Structure M] : Model (∅ : L.Theoryω) M :=
 theorem Model.mono (h : T ⊆ T') {M : Type w} [L.Structure M] (hM : T'.Model M) : T.Model M :=
   fun φ hφ => hM φ (h hφ)
 
+/-- **Satisfiability in a selected carrier universe.**
+
+The final universe parameter is part of the semantic specification:
+`IsSatisfiableIn.{u, v, w} T` asks for a model whose carrier lies in `Type w`, independently of the
+universes `u`, `v` of the language.  Use this form when a construction chooses the model universe;
+the older `IsSatisfiable` below is its universe-zero specialization. -/
+def IsSatisfiableIn (T : L.Theoryω) : Prop :=
+  ∃ (M : Type w) (_ : L.Structure M) (_ : Nonempty M), T.Model M
+
+/-- **Finite satisfiability in a selected carrier universe** — every ordinarily finite subtheory
+has a model in `Type w`. -/
+def IsFinitelySatisfiableIn (T : L.Theoryω) : Prop :=
+  ∀ T₀ ⊆ T, T₀.Finite → IsSatisfiableIn.{u, v, w} T₀
+
 /-- **Satisfiability**, named rather than written out.  The existential-model statement was
 repeated at every compactness site; spelling it out invites confusing *ordinary* finite
 satisfiability with the `A`-finite kind, which are different hypotheses.  Named after Mathlib's
-`Theory.IsSatisfiable` for the finitary case. -/
+`Theory.IsSatisfiable` for the finitary case.
+
+This published predicate retains its original universe-zero meaning.  Constructions that select a
+different model universe should use `IsSatisfiableIn`. -/
 def IsSatisfiable (T : L.Theoryω) : Prop :=
   ∃ (M : Type) (_ : L.Structure M) (_ : Nonempty M), T.Model M
 
@@ -76,6 +94,20 @@ def IsSatisfiable (T : L.Theoryω) : Prop :=
 instead; at `A = HF` the two coincide, and nowhere else. -/
 def IsFinitelySatisfiable (T : L.Theoryω) : Prop :=
   ∀ T₀ ⊆ T, T₀.Finite → T₀.IsSatisfiable
+
+/-- The published satisfiability predicate is exactly the universe-zero specialization. -/
+theorem isSatisfiableIn_zero_iff {T : L.Theoryω} :
+    IsSatisfiableIn.{u, v, 0} T ↔ T.IsSatisfiable := Iff.rfl
+
+/-- The published finite-satisfiability predicate is exactly the universe-zero specialization. -/
+theorem isFinitelySatisfiableIn_zero_iff {T : L.Theoryω} :
+    IsFinitelySatisfiableIn.{u, v, 0} T ↔ T.IsFinitelySatisfiable := Iff.rfl
+
+/-- Satisfiability in a fixed carrier universe is monotone under shrinking the theory. -/
+theorem IsSatisfiableIn.mono {T T' : L.Theoryω} (h : T ⊆ T')
+    (hT' : IsSatisfiableIn.{u, v, w} T') : IsSatisfiableIn.{u, v, w} T := by
+  obtain ⟨M, inst, ne, hM⟩ := hT'
+  exact ⟨M, inst, ne, hM.mono h⟩
 
 theorem IsSatisfiable.mono {T T' : L.Theoryω} (h : T ⊆ T') (hT' : T'.IsSatisfiable) :
     T.IsSatisfiable := by
