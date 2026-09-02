@@ -489,6 +489,17 @@ analytic boundedness to thinness.  No \emph{concrete} instance is supplied: no
 model class is exhibited whose isomorphism rank admits such presentations, and
 producing one is the remaining mathematics rather than a packaging step.
 
+The refined form of the boundedness field --- a bound on a continuous injective
+\emph{subcopy} of each Cantor antichain rather than on the antichain itself ---
+is what makes Borel data along the antichain usable: countably many maps from
+Cantor space into countable discrete spaces with Borel fibres become
+simultaneously continuous after composing with one continuous injective
+self-map of Cantor space
+(\texttt{CantorStabilization.exists\_subcopy\_continuous}, by the Baire
+property of Borel sets and the fact that an uncountable Borel subset of a
+Polish space contains a Cantor copy).  A construction may therefore choose the
+subcopy first and then treat such data as continuous.
+
 Cardinal equality alone does not establish thinness in ZFC.  Under $\mathsf{CH}$
 we have $\aleph_1 = 2^{\aleph_0}$, so a quotient of exactly $\aleph_1$ classes is
 compatible with a perfect antichain; under $\neg\mathsf{CH}$, exact $\aleph_1$

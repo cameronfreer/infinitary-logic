@@ -112,7 +112,7 @@ modules live in the separate non-default `InfinitaryLogicWIP` target, so they ne
 | `Methods/` | the proof engines: the Henkin/consistency-property kernel, interpolation, the well-ordering machine, López–Escobar, Ehrenfeucht–Mostowski |
 | `ModelTheory/` | Löwenheim–Skolem, Hanf numbers and the Hanf spectrum, small models, counting |
 | `Admissible/` | the coded-fragment interface and HF (above), plus the legacy conditional scaffolding |
-| `Descriptive/` | the Borel structure space and a reusable descriptive-set-theory library — Cantor-antichain extraction, Mycielski, Kuratowski–Ulam, the G₀ dichotomy and fusion |
+| `Descriptive/` | the Borel structure space and a reusable descriptive-set-theory library — Cantor-antichain extraction, Cantor-subcopy stabilization of Borel data, Mycielski, Kuratowski–Ulam, the G₀ dichotomy and fusion |
 | `Combinatorics/` | infinite Ramsey and the bounded finite-arity Erdős–Rado chain |
 | `Conditional/` | the Silver and Morley–Hanf chains, including the unconditional `morley_hanf` endpoint (the directory name is historical) |
 
