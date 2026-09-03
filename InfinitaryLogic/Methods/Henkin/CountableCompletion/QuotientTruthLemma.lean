@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.Henkin.CountableCompletion.QuotientTermModel
+import InfinitaryLogic.Methods.ConstantInstances
 
 /-!
 # The forward truth lemma for the quotient term model (issue #8, commit 5b)
@@ -83,11 +84,6 @@ theorem Term.realize_toGround {M : Type*} [L[[ℕ]].Structure M]
   | func f ts ih => simp only [Term.toGround, Term.realize]; congr 1; funext i; exact ih i
 
 /-! ## `closeBy` and its realization (validated commit-5b foundation) -/
-
-/-- The closing substitution of a bounded formula by constants. -/
-noncomputable def closeBy (φ : L[[ℕ]].BoundedFormulaω Empty n) (τ : Fin n → ℕ) :
-    L[[ℕ]].Sentenceω :=
-  (φ.openBounds).subst (fun i => constTerm (τ i))
 
 /-- Realizing `closeBy φ τ` in `QModel hsc` is realizing `φ` at the classes of the constants `τ`. -/
 theorem realize_closeBy (hsc : HenkinComplete U S) (φ : L[[ℕ]].BoundedFormulaω Empty n)

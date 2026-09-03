@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.Interpolation.Inseparability
 import InfinitaryLogic.Methods.Henkin.Construction
+import InfinitaryLogic.Methods.ConstantInstances
 
 /-!
 # The quantifier round-trip and the arbitrary-syntax C7 consumers (issue #8 tranche 1.5)
@@ -25,11 +26,6 @@ namespace FirstOrder.Language
 open FirstOrder Structure
 
 variable {L : Language.{0, 0}} {M : Type}
-
-/-- The constant instance `ψ(c)`: open the bound variable of `ψ` and substitute the constant
-`c_c`. -/
-def instConst (c : ℕ) (ψ : L[[ℕ]].BoundedFormulaω Empty 1) : L[[ℕ]].Sentenceω :=
-  (ψ.openBounds).subst (fun _ => constTerm c)
 
 /-- The constant `c_c` realizes to its interpretation `h c`. -/
 theorem realize_constTerm (base : L.Structure M) (h : ℕ → M) (c : ℕ) (v : Empty → M) :
