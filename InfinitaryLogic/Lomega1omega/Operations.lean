@@ -780,6 +780,21 @@ theorem realize_toSentenceω {M : Type*} [L.Structure M]
 
 end Formulaω
 
+/-! ### Closed-term substitution -/
+
+/-- Substituting a closed term into a term with no real variables reduces to the plain
+relabel.  Shared by the maximal-consistency term model and the proof-theoretic consistency
+family; it lives here so that neither needs to import the other. -/
+theorem term_subst_empty_aux (t t' : L.Term Empty) :
+    (t.relabel (Sum.inl ∘ Empty.elim : Empty → Fin 1 ⊕ Fin 0)).subst
+      (Sum.elim (Term.relabel Sum.inl ∘ fun (_ : Fin 1) => t') (Term.var ∘ Sum.inr)) =
+    t.relabel (Sum.inl : Empty → Empty ⊕ Fin 0) := by
+  induction t with
+  | var e => exact Empty.elim e
+  | func f ts ih =>
+    simp only [Term.relabel, Term.subst]
+    congr 1; funext i; exact ih i
+
 namespace BoundedFormula
 
 /-- Embeds a first-order bounded formula into Lω₁ω. -/
