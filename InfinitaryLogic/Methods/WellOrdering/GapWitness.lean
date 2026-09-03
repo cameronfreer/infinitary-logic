@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Methods.WellOrdering.Constants
 import Mathlib.SetTheory.Ordinal.Enum
+import Mathlib.SetTheory.Cardinal.Aleph
 
 /-!
 # Base diagram, preservation predicate, and the gap witness (issue #12, commit 2)

@@ -3,7 +3,7 @@ Copyright (c) 2026 Cameron Freer. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
-import InfinitaryLogic.Methods.Interpolation.QuantifierRoundTrip
+import InfinitaryLogic.Methods.ConstantInstances
 
 /-!
 # The generated enumeration universe `U` (issue #8 tranche 2, commit 1)
