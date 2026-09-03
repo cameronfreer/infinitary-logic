@@ -56,17 +56,21 @@ jobs:
           packages: graphviz libgraphviz-dev texlive-binaries texlive-bibtex-extra texlive-latex-extra texlive-xetex texlive-fonts-recommended texlive-fonts-extra latexmk
           # bumped 1.1 -> 1.2 on 2026-07-22: a restored 1.1 cache lacked the bibtex binary
           # (two consecutive failures), so force a fresh cache build
-          version: 1.2
+          # bumped 1.2 -> 1.3 on 2026-09-03: the 1.2 cache was evicted, the fresh install hit
+          # apt mirror fetch errors, and the action saved the broken (5 KB) result under the
+          # 1.2 key, so every later run restored a payload without xelatex
+          version: 1.3
 
       # The cached restore has delivered incomplete texlive payloads before (missing bibtex
       # despite a cache hit) - verify the binaries the pipeline actually invokes, and fall
       # back to a real install if any are absent.
       - name: Verify TeX binaries (post-cache check)
         run: |
-          command -v bibtex && command -v pdflatex && command -v latexmk || {
+          command -v bibtex && command -v pdflatex && command -v xelatex && command -v latexmk || {
             echo "cached apt restore incomplete - installing directly"
             sudo apt-get update
-            sudo apt-get install -y texlive-binaries texlive-bibtex-extra texlive-latex-extra latexmk
+            sudo apt-get install -y texlive-binaries texlive-bibtex-extra texlive-latex-extra \
+              texlive-xetex texlive-fonts-recommended latexmk
           }
 
       - name: Install leanblueprint
