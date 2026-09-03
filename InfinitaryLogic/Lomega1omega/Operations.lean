@@ -507,7 +507,7 @@ private theorem relabelAux_insertLastBound_finSumFinEquiv (n k l : ℕ) (x : Fin
     congr 1; exact Fin.ext (by simp; omega)
 
 /-- Composing `relabel insertLastBound` and `relabel finSumFinEquiv.symm` at the formula level. -/
-private theorem relabel_insertLastBound_comp_finSumFinEquiv (n k : ℕ) :
+theorem relabel_insertLastBound_comp_finSumFinEquiv (n k : ℕ) :
     ∀ {l : ℕ} (φ : L.BoundedFormulaω (Fin (n + k + 1)) l),
     (φ.relabel (insertLastBound : Fin (n+k+1) → Fin (n+k) ⊕ Fin 1)).relabel
       (fun i => finSumFinEquiv.symm i : Fin (n+k) → Fin n ⊕ Fin k) =
@@ -572,7 +572,7 @@ private theorem roundtrip_general :
 
 /-- `relabel (fun i => finSumFinEquiv.symm i)` at `k = 0` is the identity,
 since `finSumFinEquiv.symm : Fin n → Fin n ⊕ Fin 0` maps everything to `Sum.inl`. -/
-private theorem relabel_finSumFinEquiv_symm_zero (φ : L.Formulaω (Fin n)) :
+theorem relabel_finSumFinEquiv_symm_zero (φ : L.Formulaω (Fin n)) :
     φ.relabel (fun i => finSumFinEquiv.symm i : Fin (n + 0) → Fin n ⊕ Fin 0) = φ := by
   suffices h : ∀ {k : ℕ} (φ : L.BoundedFormulaω (Fin n) k),
       φ.relabel (fun i => finSumFinEquiv.symm i : Fin (n + 0) → Fin n ⊕ Fin 0) =
