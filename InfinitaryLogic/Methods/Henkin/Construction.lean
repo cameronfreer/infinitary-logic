@@ -364,18 +364,6 @@ private def termSetoidFamily (C : ConsistencyPropertyEq L) (S : Set L.Sentenceω
     ∀ (_ : Fin n), Setoid (L.Term Empty) :=
   fun _ => termSetoid C S hmax
 
-/-- Substituting a closed term into a term with no real variables reduces to the plain
-relabel. -/
-theorem term_subst_empty_aux (t t' : L.Term Empty) :
-    (t.relabel (Sum.inl ∘ Empty.elim : Empty → Fin 1 ⊕ Fin 0)).subst
-      (Sum.elim (Term.relabel Sum.inl ∘ fun (_ : Fin 1) => t') (Term.var ∘ Sum.inr)) =
-    t.relabel (Sum.inl : Empty → Empty ⊕ Fin 0) := by
-  induction t with
-  | var e => exact Empty.elim e
-  | func f ts ih =>
-    simp only [Term.relabel, Term.subst]
-    congr 1; funext i; exact ih i
-
 /-- Single-step congruence: replacing one argument preserves term equivalence. -/
 private theorem func_congr_step (f : L.Functions n) (args : Fin n → L.Term Empty)
     (i : Fin n) (t : L.Term Empty)
