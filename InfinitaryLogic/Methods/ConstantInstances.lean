@@ -17,7 +17,16 @@ both the interpolation layer and the countable-completion kernel:
   constants `c_{τ i}`.
 
 Their semantic consumer lemmas (`realize_instConst`, `realize_closeBy`, …) stay in the modules
-that own the structures they realize in.  This module holds only syntax.
+that own the structures they realize in.  This module holds only syntax: the
+**connective/universal** algebra of `closeBy` — how it commutes with the connectives, what the
+arity-one remainder of a closed universal is, and that the constant instance of that remainder is
+`closeBy` at the extended tuple.  Atomic template lemmas (closing an equality or relation template
+gives `constEq` / `relInst`) belong with those atoms, above this module.
+
+The public surface is deliberately small: `instConst`, `closeBy`, the `closeBy_*` commutations,
+`closeBy_zero`, `instConst_eq_closeBy`, `instConst_closeBy_all_remainder`, and the generic
+substitution laws `Term.subst_subst` / `Term.subst_relabel` / `Term.relabel_subst` /
+`BoundedFormulaω.subst_subst`.  Everything else is proof scaffolding and is private.
 
 ## The `all` case
 
@@ -27,27 +36,25 @@ last bound variable stays bound, and closed by `τ`.  The instance of that remai
 constants-expanded universe follow from a fragment's `all_mem`.  Proving it directly fights
 `castLE` inside `BoundedFormulaω.relabel`, so instead:
 
-* `closeWith ρ φ` closes bound variables by a term assignment `ρ`, by structural recursion with
-  **no** `relabel` of formulas; it depends on `ρ` only pointwise (`closeWith_congr`) and composes
-  (`closeWith_closeWith`);
-* one bridge lemma, `relabel_openBounds_subst_eq_closeWith`, identifies
-  `((openBounds φ).relabel g).subst τ'` with a `closeWith` for the standard splitting `g`, using
-  the two relabel-composition lemmas of `Operations.lean`;
+* a private `closeWith ρ φ` closes bound variables by a term assignment `ρ`, by structural
+  recursion with **no** `relabel` of formulas; it depends on `ρ` only pointwise and composes;
+* one private bridge lemma identifies `((openBounds φ).relabel g).subst τ'` with a `closeWith` for
+  the standard splitting `g`, using the two relabel-composition lemmas of `Operations.lean`;
 * `closeBy`, its remainder, and `instConst` are then all `closeWith`s, and
   `instConst_closeBy_all_remainder` is the composition law plus a pointwise check.
 -/
+
+universe u v u'
 
 namespace FirstOrder.Language
 
 open FirstOrder Structure
 
-variable {L : Language.{0, 0}}
-
 /-! ## Term-level substitution algebra -/
 
 namespace Term
 
-variable {α β γ : Type}
+variable {L : Language.{u, v}} {α β γ : Type u'}
 
 /-- Substituting after substituting is substituting the composite. -/
 theorem subst_subst (t : L.Term α) (f : α → L.Term β) (g : β → L.Term γ) :
@@ -76,13 +83,21 @@ theorem relabel_subst (t : L.Term α) (f : α → L.Term β) (g : β → γ) :
     simp only [relabel, subst]
     congr 1; funext i; exact ih i
 
+/-- Substituting variables for themselves does nothing. -/
+theorem subst_var_eq (t : L.Term α) : t.subst Term.var = t := by
+  induction t with
+  | var a => rfl
+  | func F ts ih =>
+    simp only [subst]
+    congr 1; funext i; exact ih i
+
 end Term
 
 /-! ## Formula-level substitution composition -/
 
 namespace BoundedFormulaω
 
-variable {α β γ : Type}
+variable {L : Language.{u, v}} {α β γ : Type u'} {n : ℕ}
 
 /-- The bound-variable-aware term substitution used by `BoundedFormulaω.subst`, composed. -/
 private theorem substAux_comp (f : α → L.Term β) (g : β → L.Term γ)
@@ -120,6 +135,8 @@ theorem subst_subst : ∀ {n : ℕ} (φ : L.BoundedFormulaω α n) (f : α → L
     congr 1; funext i; exact subst_subst (φs i) f g
 
 end BoundedFormulaω
+
+variable {L : Language.{0, 0}}
 
 /-! ## The closing operations -/
 
@@ -185,19 +202,19 @@ end CloseBy
 /-! ## `closeWith`: closing bound variables by a term assignment, without relabeling formulas -/
 
 /-- Extend a bound-variable assignment to one more bound variable, which stays bound. -/
-def extendAssign {m k : ℕ} (ρ : Fin m → L.Term (Empty ⊕ Fin k)) :
+private def extendAssign {m k : ℕ} (ρ : Fin m → L.Term (Empty ⊕ Fin k)) :
     Fin (m + 1) → L.Term (Empty ⊕ Fin (k + 1)) :=
   Fin.lastCases (Term.var (Sum.inr (Fin.last k)))
     (fun j => (ρ j).relabel (Sum.map id Fin.castSucc))
 
 /-- The term action of a bound-variable assignment. -/
-def assignTerm {m k : ℕ} (ρ : Fin m → L.Term (Empty ⊕ Fin k)) (t : L.Term (Empty ⊕ Fin m)) :
+private def assignTerm {m k : ℕ} (ρ : Fin m → L.Term (Empty ⊕ Fin k)) (t : L.Term (Empty ⊕ Fin m)) :
     L.Term (Empty ⊕ Fin k) :=
   t.subst (Sum.elim (Term.var ∘ Sum.inl) ρ)
 
 /-- **Closing by an assignment**: replace the `m` bound variables of `φ` by the terms `ρ`, which
 may mention `k` bound variables that stay bound.  Purely structural: no `relabel`, no `castLE`. -/
-def closeWith : ∀ {m k : ℕ}, (Fin m → L.Term (Empty ⊕ Fin k)) → L.BoundedFormulaω Empty m →
+private def closeWith : ∀ {m k : ℕ}, (Fin m → L.Term (Empty ⊕ Fin k)) → L.BoundedFormulaω Empty m →
     L.BoundedFormulaω Empty k
   | _, _, _, .falsum => .falsum
   | _, _, ρ, .equal t₁ t₂ => .equal (assignTerm ρ t₁) (assignTerm ρ t₂)
@@ -207,16 +224,16 @@ def closeWith : ∀ {m k : ℕ}, (Fin m → L.Term (Empty ⊕ Fin k)) → L.Boun
   | _, _, ρ, .iSup φs => .iSup fun i => closeWith ρ (φs i)
   | _, _, ρ, .iInf φs => .iInf fun i => closeWith ρ (φs i)
 
-theorem extendAssign_castSucc {m k : ℕ} (ρ : Fin m → L.Term (Empty ⊕ Fin k)) (j : Fin m) :
+private theorem extendAssign_castSucc {m k : ℕ} (ρ : Fin m → L.Term (Empty ⊕ Fin k)) (j : Fin m) :
     extendAssign ρ (Fin.castSucc j) = (ρ j).relabel (Sum.map id Fin.castSucc) := by
   simp [extendAssign]
 
-theorem extendAssign_last {m k : ℕ} (ρ : Fin m → L.Term (Empty ⊕ Fin k)) :
+private theorem extendAssign_last {m k : ℕ} (ρ : Fin m → L.Term (Empty ⊕ Fin k)) :
     extendAssign ρ (Fin.last m) = Term.var (Sum.inr (Fin.last k)) := by
   simp [extendAssign]
 
 /-- `closeWith` depends on the assignment only pointwise. -/
-theorem closeWith_congr : ∀ {m k : ℕ} {ρ ρ' : Fin m → L.Term (Empty ⊕ Fin k)}
+private theorem closeWith_congr : ∀ {m k : ℕ} {ρ ρ' : Fin m → L.Term (Empty ⊕ Fin k)}
     (_ : ∀ j, ρ j = ρ' j) (φ : L.BoundedFormulaω Empty m), closeWith ρ φ = closeWith ρ' φ
   | _, _, ρ, ρ', h, .falsum => rfl
   | _, _, ρ, ρ', h, .equal t₁ t₂ => by
@@ -238,11 +255,11 @@ theorem closeWith_congr : ∀ {m k : ℕ} {ρ ρ' : Fin m → L.Term (Empty ⊕ 
 /-! ## Composition -/
 
 /-- The composite assignment: first `ρ`, then `ρ'` on what stayed bound. -/
-def composeAssign {m k l : ℕ} (ρ : Fin m → L.Term (Empty ⊕ Fin k))
+private def composeAssign {m k l : ℕ} (ρ : Fin m → L.Term (Empty ⊕ Fin k))
     (ρ' : Fin k → L.Term (Empty ⊕ Fin l)) : Fin m → L.Term (Empty ⊕ Fin l) :=
   fun j => (ρ j).subst (Sum.elim (Term.var ∘ Sum.inl) ρ')
 
-theorem assignTerm_assignTerm {m k l : ℕ} (ρ : Fin m → L.Term (Empty ⊕ Fin k))
+private theorem assignTerm_assignTerm {m k l : ℕ} (ρ : Fin m → L.Term (Empty ⊕ Fin k))
     (ρ' : Fin k → L.Term (Empty ⊕ Fin l)) (t : L.Term (Empty ⊕ Fin m)) :
     assignTerm ρ' (assignTerm ρ t) = assignTerm (composeAssign ρ ρ') t := by
   unfold assignTerm composeAssign
@@ -264,7 +281,7 @@ private theorem relabel_castSucc_subst {k l : ℕ} (ρ' : Fin k → L.Term (Empt
   · rfl
   · simp [extendAssign_castSucc]
 
-theorem extendAssign_compose {m k l : ℕ} (ρ : Fin m → L.Term (Empty ⊕ Fin k))
+private theorem extendAssign_compose {m k l : ℕ} (ρ : Fin m → L.Term (Empty ⊕ Fin k))
     (ρ' : Fin k → L.Term (Empty ⊕ Fin l)) (j : Fin (m + 1)) :
     composeAssign (extendAssign ρ) (extendAssign ρ') j = extendAssign (composeAssign ρ ρ') j := by
   refine Fin.lastCases ?_ (fun j => ?_) j
@@ -273,7 +290,7 @@ theorem extendAssign_compose {m k l : ℕ} (ρ : Fin m → L.Term (Empty ⊕ Fin
     exact relabel_castSucc_subst ρ' (ρ j)
 
 /-- **Composition law**: closing twice is closing by the composite assignment. -/
-theorem closeWith_closeWith : ∀ {m k l : ℕ} (ρ : Fin m → L.Term (Empty ⊕ Fin k))
+private theorem closeWith_closeWith : ∀ {m k l : ℕ} (ρ : Fin m → L.Term (Empty ⊕ Fin k))
     (ρ' : Fin k → L.Term (Empty ⊕ Fin l)) (φ : L.BoundedFormulaω Empty m),
     closeWith ρ' (closeWith ρ φ) = closeWith (composeAssign ρ ρ') φ
   | _, _, _, ρ, ρ', .falsum => rfl
@@ -300,33 +317,26 @@ theorem closeWith_closeWith : ∀ {m k l : ℕ} (ρ : Fin m → L.Term (Empty �
 lemmas of `Operations.lean`, exactly as in `openBounds_relabel_sumInr`. -/
 
 /-- `relabelAux g 0` on a free variable is `g`, with the bound part cast to `Fin (k + 0)`. -/
-theorem relabelAux_zero_inl {α β : Type} {k : ℕ} (g : α → β ⊕ Fin k) (a : α) :
+private theorem relabelAux_zero_inl {α β : Type} {k : ℕ} (g : α → β ⊕ Fin k) (a : α) :
     BoundedFormulaω.relabelAux g 0 (Sum.inl a) = Sum.map id (Fin.castAdd 0) (g a) := by
   rcases hg : g a with b | j
   · simp [BoundedFormulaω.relabelAux, hg, Equiv.sumAssoc]
   · simp [BoundedFormulaω.relabelAux, hg, Equiv.sumAssoc, finSumFinEquiv]
 
-/-- A closed term is relabeled the same way by any two relabelings. -/
-theorem Term.relabel_congr_empty {β γ : Type} (t : L.Term Empty) (f g : Empty → β)
-    (h : β → γ) : (t.relabel f).relabel h = (t.relabel g).relabel h := by
-  induction t with
-  | var e => exact e.elim
-  | func F ts ih => simp only [Term.relabel]; congr 1; funext i; exact ih i
-
-theorem Term.subst_empty_eq_relabel {β : Type} (t : L.Term Empty) (f : Empty → L.Term β)
+private theorem Term.subst_empty_eq_relabel {β : Type} (t : L.Term Empty) (f : Empty → L.Term β)
     (g : Empty → β) : t.subst f = t.relabel g := by
   induction t with
   | var e => exact e.elim
   | func F ts ih => simp only [Term.relabel, Term.subst]; congr 1; funext i; exact ih i
 
-theorem Term.relabel_empty_eq {β : Type} (t : L.Term Empty) (f g : Empty → β) :
+private theorem Term.relabel_empty_eq {β : Type} (t : L.Term Empty) (f g : Empty → β) :
     t.relabel f = t.relabel g := by
   induction t with
   | var e => exact e.elim
   | func F ts ih => simp only [Term.relabel]; congr 1; funext i; exact ih i
 
 /-- The assignment induced by a splitting `g` and closed terms `τ'`. -/
-def splitAssign {m n k : ℕ} (g : Fin m → Fin n ⊕ Fin k) (τ' : Fin n → L.Term Empty) :
+private def splitAssign {m n k : ℕ} (g : Fin m → Fin n ⊕ Fin k) (τ' : Fin n → L.Term Empty) :
     Fin m → L.Term (Empty ⊕ Fin k) :=
   fun j => Sum.elim (Term.relabel Sum.inl ∘ τ') (Term.var ∘ Sum.inr) (g j)
 
@@ -371,7 +381,7 @@ private theorem splitAssign_succ (n k : ℕ) (τ' : Fin n → L.Term Empty) (j :
 
 /-- **The bridge**: opening, relabeling by the standard splitting, and substituting is closing by
 the induced assignment. -/
-theorem relabel_openBounds_subst_eq_closeWith {m : ℕ} (φ : L.BoundedFormulaω Empty m) :
+private theorem relabel_openBounds_subst_eq_closeWith {m : ℕ} (φ : L.BoundedFormulaω Empty m) :
     ∀ {n k : ℕ} (h : m = n + k) (τ' : Fin n → L.Term Empty),
       ((φ.openBounds).relabel
           (fun i => finSumFinEquiv.symm (Fin.cast h i) : Fin m → Fin n ⊕ Fin k)).subst τ'
@@ -420,11 +430,11 @@ theorem relabel_openBounds_subst_eq_closeWith {m : ℕ} (φ : L.BoundedFormulaω
 /-! ## `closeBy`, its arity-one remainder, and `instConst`, as `closeWith` -/
 
 /-- The assignment closing every bound variable by the constants `τ`. -/
-def constAssign {n : ℕ} (τ : Fin n → ℕ) : Fin n → L[[ℕ]].Term (Empty ⊕ Fin 0) :=
+private def constAssign {n : ℕ} (τ : Fin n → ℕ) : Fin n → L[[ℕ]].Term (Empty ⊕ Fin 0) :=
   fun j => (constTerm (τ j)).relabel Sum.inl
 
 /-- `closeBy` closes every variable by its constant. -/
-theorem closeBy_eq_closeWith {n : ℕ} (φ : L[[ℕ]].BoundedFormulaω Empty n) (τ : Fin n → ℕ) :
+private theorem closeBy_eq_closeWith {n : ℕ} (φ : L[[ℕ]].BoundedFormulaω Empty n) (τ : Fin n → ℕ) :
     closeBy φ τ = closeWith (constAssign τ) φ := by
   have h := relabel_openBounds_subst_eq_closeWith φ (n := n) (k := 0) rfl
     (fun i => constTerm (τ i))
@@ -439,12 +449,12 @@ theorem closeBy_eq_closeWith {n : ℕ} (φ : L[[ℕ]].BoundedFormulaω Empty n) 
   rfl
 
 /-- The assignment closing the first `n` variables by constants and keeping the last bound. -/
-def constAssignSucc {n : ℕ} (τ : Fin n → ℕ) : Fin (n + 1) → L[[ℕ]].Term (Empty ⊕ Fin 1) :=
+private def constAssignSucc {n : ℕ} (τ : Fin n → ℕ) : Fin (n + 1) → L[[ℕ]].Term (Empty ⊕ Fin 1) :=
   Fin.lastCases (Term.var (Sum.inr 0)) (fun j => (constTerm (τ j)).relabel Sum.inl)
 
 /-- The arity-one remainder of `closeBy_all` is `closeWith` by `constAssignSucc`. -/
-theorem closeBy_all_remainder_eq_closeWith {n : ℕ} (φ : L[[ℕ]].BoundedFormulaω Empty (n + 1))
-    (τ : Fin n → ℕ) :
+private theorem closeBy_all_remainder_eq_closeWith {n : ℕ}
+    (φ : L[[ℕ]].BoundedFormulaω Empty (n + 1)) (τ : Fin n → ℕ) :
     ((φ.openBounds).relabel insertLastBound).subst (fun i => constTerm (τ i))
       = closeWith (constAssignSucc τ) φ := by
   have h := relabel_openBounds_subst_eq_closeWith φ (n := n) (k := 1) rfl
@@ -460,6 +470,42 @@ theorem closeBy_all_remainder_eq_closeWith {n : ℕ} (φ : L[[ℕ]].BoundedFormu
   · have hc : (Fin.castSucc j) = Fin.castAdd 1 j := rfl
     conv_lhs => rw [hc, finSumFinEquiv_symm_apply_castAdd]
     simp [Fin.lastCases_castSucc]
+
+/-- Closing by the identity assignment does nothing. -/
+private theorem closeWith_id : ∀ {m : ℕ} (φ : L.BoundedFormulaω Empty m)
+    (ρ : Fin m → L.Term (Empty ⊕ Fin m)) (_ : ∀ j, ρ j = Term.var (Sum.inr j)),
+    closeWith ρ φ = φ
+  | _, .falsum, _, _ => rfl
+  | _, .equal t₁ t₂, ρ, h => by
+    have hρ : Sum.elim (Term.var ∘ Sum.inl) ρ = Term.var := by
+      funext x; rcases x with e | j
+      · rfl
+      · exact h j
+    simp only [closeWith, assignTerm, hρ, Term.subst_var_eq]
+  | _, .rel R ts, ρ, h => by
+    have hρ : Sum.elim (Term.var ∘ Sum.inl) ρ = Term.var := by
+      funext x; rcases x with e | j
+      · rfl
+      · exact h j
+    simp only [closeWith, assignTerm, hρ, Term.subst_var_eq]
+  | _, .imp φ ψ, ρ, h => by
+    simp only [closeWith, closeWith_id φ ρ h, closeWith_id ψ ρ h]
+  | _, .all φ, ρ, h => by
+    simp only [closeWith]
+    congr 1
+    refine closeWith_id φ _ fun j => ?_
+    refine Fin.lastCases ?_ (fun j => ?_) j
+    · exact extendAssign_last ρ
+    · rw [extendAssign_castSucc, h j]; rfl
+  | _, .iSup φs, ρ, h => by
+    simp only [closeWith]; congr 1; funext i; exact closeWith_id (φs i) ρ h
+  | _, .iInf φs, ρ, h => by
+    simp only [closeWith]; congr 1; funext i; exact closeWith_id (φs i) ρ h
+
+/-- Closing a sentence by the empty tuple does nothing. -/
+theorem closeBy_zero (φ : L[[ℕ]].Sentenceω) (τ : Fin 0 → ℕ) : closeBy φ τ = φ := by
+  rw [closeBy_eq_closeWith]
+  exact closeWith_id φ _ fun j => j.elim0
 
 /-- **The instance of the remainder is the closure at the extended tuple.** -/
 theorem instConst_closeBy_all_remainder {n : ℕ} (φ : L[[ℕ]].BoundedFormulaω Empty (n + 1))
