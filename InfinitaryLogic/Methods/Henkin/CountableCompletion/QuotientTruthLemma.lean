@@ -6,7 +6,7 @@ Authors: Cameron Freer
 import InfinitaryLogic.Methods.Henkin.CountableCompletion.QuotientTermModel
 import InfinitaryLogic.Methods.ConstantInstances
 import InfinitaryLogic.Lomega1omega.Depth
-import InfinitaryLogic.Methods.Henkin.Construction
+import InfinitaryLogic.Lomega1omega.OpenBoundsSemantics
 
 /-!
 # The forward truth lemma for the quotient term model (issue #8, commit 5b)
