@@ -237,12 +237,12 @@ whatsoever. The two lemmas that need negation membership (`AConsistent.no_contra
 
 **The consistency engine is the fair-enumeration kernel, not a maximal-consistent extension.**
 `Admissible/Barwise/HenkinClosed.lean` inhabits the countable-completion kernel's
-`ConsistencyPropertyEqOn P` from the `P`-bounded `P`-consistent sets over a `HenkinClosed P ⊆
-L[[ℕ]].Sentenceω`, and `HenkinClosed.exists_countable_model_of_aconsistent` produces a countable
+`ConsistencyPropertyEqOn P` from the `P`-bounded `P`-consistent sets over a
+`P : Set L[[ℕ]].Sentenceω` satisfying `HenkinClosed P`, and `HenkinClosed.exists_countable_model_of_aconsistent` produces a countable
 model of any `P`-consistent `T ⊆ P` (relational base, countable `P`, auxiliary constants present).
-The kernel has no `extension` and no `chain_closure` field, and chain closure is false for
-`AConsistent` — `scripts/check_chain_closure_counterexample.lean` keeps the counterexample
-executable, and `scripts/check_henkin_closed_cone.lean` pins the route to the kernel, away from
+The kernel has no `extension` and no `chain_closure` field, and chain closure fails for
+`AConsistent` over the full universe of a constants-expanded language —
+`scripts/check_chain_closure_counterexample.lean` keeps the counterexample executable, and `scripts/check_henkin_closed_cone.lean` pins the route to the kernel, away from
 maximality and from the legacy fragment structures.
 
 **Deliberately out of scope, and why:**
@@ -251,7 +251,7 @@ maximality and from the legacy fragment structures.
 |---|---|
 | `height` on presentations or fragments | whether it belongs to the presentation or is derived is unsettled; a field would permit a fragment whose height disagreed with its presentation's |
 | the full KP schema | the consuming proofs do not exist yet, so the required laws are not yet determined |
-| `Admissible/Barwise/ConsistencyBridge.lean` | the superseded full-fragment bridge over `FullBarwiseFragment`, whose chain-closure field is unsatisfiable; retired once the source-fragment adapter over `HenkinClosed` lands |
+| `Admissible/Barwise/ConsistencyBridge.lean` | the superseded full-fragment bridge over `FullBarwiseFragment`, whose chain-closure field fails for the full universe of a constants-expanded language; retired once the source-fragment adapter over `HenkinClosed` lands |
 | model-universe generalization | #19B; §7 records where the boundary falls rather than moving it |
 | `AdmissibleFragmentCore.hf := Set.univ` | a quarantined placeholder — nothing may be proved from it |
 

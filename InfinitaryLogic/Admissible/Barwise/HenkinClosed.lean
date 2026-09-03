@@ -352,4 +352,3 @@ theorem exists_countable_model_of_aconsistent (hP : HenkinClosed P) [L.IsRelatio
 end HenkinClosed
 
 end FirstOrder.Language
-

@@ -1,12 +1,12 @@
 /-
 Executable regression: chain closure is FALSE for `AConsistent`.
 
-The retired bridge design (`BarwiseFragment.chain_closure_consistent`, a Zorn-style maximal
-consistent extension) assumed that the union of a ⊆-chain of `P`-consistent sets is
-`P`-consistent. It is not, already for `P = Set.univ`: with one relation symbol `U` and ℕ many
-constants, `Sₙ := {¬⋀ₖ U(cₖ)} ∪ {U(cₖ) | k ≤ n}` are each consistent (model ℕ, `U` true exactly
-on `{0,…,n}`, every element named by its constant), form a chain, and the union derives `⊥` by
-the ω-rule `iInf_intro`.
+The superseded engine (`BarwiseFragment.chain_closure_consistent`, a Zorn-style maximal
+consistent extension, still present in `ConsistencyBridge.lean`) assumed that the union of a
+⊆-chain of `P`-consistent sets is `P`-consistent. It is not, already for `P = Set.univ`: with
+one relation symbol `U` and ℕ many constants, `Sₙ := {¬⋀ₖ U(cₖ)} ∪ {U(cₖ) | k ≤ n}` are each
+consistent (model ℕ, `U` true exactly on `{0,…,n}`, every element named by its constant), form
+a chain, and the union derives `⊥` by the ω-rule `iInf_intro`.
 
 Consequences recorded here so the discarded architecture cannot return:
 * `FullBarwiseFragment LC` is uninhabited (its `complete` field forces `formulas = Set.univ`);
@@ -117,4 +117,5 @@ run_cmd do
   let env ← getEnv
   unless (env.find? `ChainClosureCounterexample.no_chain_closure).isSome do
     throwError "chain-closure counterexample missing"
-  logInfo "chain-closure regression: OK (AConsistent is not chain-closed, even for P = Set.univ)"
+  logInfo "chain-closure regression: OK (AConsistent is not chain-closed, even for \
+    P = Set.univ)"
