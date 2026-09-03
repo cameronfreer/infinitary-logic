@@ -1,9 +1,12 @@
 /-
-Dependency-cone guard for the relational kernel adapter (issue #19B).
+Dependency-cone guard for the relational kernel adapter and the source-fragment adapter
+(issue #19B).
 
-`HenkinClosed.exists_countable_model_of_aconsistent` must earn its model from the fair
-enumeration and the forward quotient truth lemma, never from a maximal-consistent construction,
-and must not touch the legacy fragment structures.
+`HenkinClosed.exists_countable_model_of_aconsistent` and
+`Fragment.exists_countable_model_of_aconsistent_withConstants` must earn their models from the
+fair enumeration and the forward quotient truth lemma, never from a maximal-consistent
+construction, and must not touch the legacy fragment structures. The source-fragment root must
+additionally consume the constants-expanded universe, the basis, and the reduct transport.
 
 1. FORBIDDEN — no declaration in the cone may be a maximal-consistency lemma
    (`…MaximalConsistent…`), the maximal-consistency biconditional `truthLemma`, the
@@ -22,6 +25,7 @@ Theorem bodies are traversed (`.thmInfo` matched explicitly), as in the other co
 Run with: lake env lean scripts/check_henkin_closed_cone.lean
 -/
 import InfinitaryLogic.Admissible.Barwise.HenkinClosed
+import InfinitaryLogic.Admissible.Barwise.SourceFragment
 import InfinitaryLogic.Admissible.Barwise.ConsistencyBridge
 import InfinitaryLogic.Methods.Henkin.Construction
 
@@ -77,7 +81,15 @@ def guardedRoots : List (Name × List Name) :=
      `FirstOrder.Language.truth_both]),
    (`FirstOrder.Language.HenkinClosed.consistencyPropertyEqOn,
     [`FirstOrder.Language.ConsistencyPropertyEqOn, `FirstOrder.Language.AConsistent,
-     `FirstOrder.Language.Derivable])]
+     `FirstOrder.Language.Derivable]),
+   -- The source-fragment adapter: constants-expanded universe, Henkin closure, fair enumeration,
+   -- forward truth lemma, and reduct transport must all be consumed.
+   (`FirstOrder.Language.Fragment.exists_countable_model_of_aconsistent_withConstants,
+    [`FirstOrder.Language.Fragment.withNatConstantsSentences,
+     `FirstOrder.Language.Fragment.HenkinBasis,
+     `FirstOrder.Language.HenkinClosed, `FirstOrder.Language.AConsistent,
+     `FirstOrder.Language.exists_henkinComplete, `FirstOrder.Language.truth_both,
+     `FirstOrder.Language.BoundedFormulaω.realize_mapLanguage])]
 
 def requiredWitness : List Name := (guardedRoots.map Prod.snd).flatten
 
@@ -107,5 +119,5 @@ run_cmd do
     let missing := witnesses.filter fun r => !deps.contains r
     unless missing.isEmpty do
       throwError "[MISSING WITNESS] {root} does not consume the kernel: {missing}"
-  logInfo "HenkinClosed cone guard: OK (fair-enumeration kernel consumed; no maximality, no legacy \
-    fragment structures)"
+  logInfo "HenkinClosed cone guard: OK (fair-enumeration kernel and reduct transport consumed; \
+    no maximality, no legacy fragment structures)"

@@ -6,6 +6,7 @@ Authors: Cameron Freer
 import InfinitaryLogic.Methods.Henkin.ConsistencyProperty
 import InfinitaryLogic.Lomega1omega.Depth
 import InfinitaryLogic.Scott.Formula
+import InfinitaryLogic.Lomega1omega.OpenBoundsSemantics
 import Mathlib.Order.Zorn
 import Mathlib.Data.Fintype.Quotient
 import Mathlib.ModelTheory.Encoding
@@ -709,72 +710,6 @@ variables to free variables. The truth lemma uses the semantic roundtrip
 (`realize_openBounds`) rather than the syntactic roundtrip. -/
 
 /-! ### Semantic Roundtrip for openBounds -/
-
-/-- Term-level semantic roundtrip: evaluating a relabeled term with `Sum.elim xs Fin.elim0`
-equals evaluating the original term with `Sum.elim Empty.elim xs`. -/
-private theorem term_realize_openBounds {M : Type*} [L.Structure M]
-    (t : L.Term (Empty ⊕ Fin n)) (xs : Fin n → M) :
-    (t.relabel (Sum.elim Empty.elim Sum.inl)).realize (Sum.elim xs Fin.elim0) =
-    t.realize (Sum.elim Empty.elim xs) := by
-  simp only [Term.realize_relabel]
-  congr 1
-  funext x; rcases x with e | i
-  · exact Empty.elim e
-  · simp [Sum.elim, Function.comp]
-
-/-- Helper: `snoc Fin.elim0 x` evaluated at `0 : Fin 1` gives `x`. -/
-private lemma snoc_elim0_zero_eq {M : Type*} (x : M) :
-    (Fin.snoc (α := fun _ => M) Fin.elim0 x) (0 : Fin 1) = x :=
-  congrFun (Fin.snoc_elim0_eq x) 0
-
-/-- Semantic roundtrip: `openBounds` preserves semantics.
-For `φ : BoundedFormulaω Empty n`, evaluating `openBounds φ` with free variable assignment
-`xs : Fin n → M` is equivalent to evaluating `φ` with bound variable assignment `xs`. -/
-theorem realize_openBounds {M : Type*} [L.Structure M] :
-    ∀ {n : ℕ} (φ : L.BoundedFormulaω Empty n) (xs : Fin n → M),
-    Formulaω.Realize (φ.openBounds) xs ↔ φ.Realize Empty.elim xs := by
-  intro n φ
-  induction φ with
-  | falsum => intro xs; rfl
-  | equal t₁ t₂ =>
-    intro xs
-    show (t₁.relabel (Sum.elim Empty.elim Sum.inl)).realize (Sum.elim xs Fin.elim0) =
-         (t₂.relabel (Sum.elim Empty.elim Sum.inl)).realize (Sum.elim xs Fin.elim0) ↔
-         t₁.realize (Sum.elim Empty.elim xs) = t₂.realize (Sum.elim Empty.elim xs)
-    rw [term_realize_openBounds, term_realize_openBounds]
-  | rel R ts =>
-    intro xs
-    show (Structure.RelMap R fun i =>
-         (Term.relabel (Sum.elim Empty.elim Sum.inl) (ts i)).realize (Sum.elim xs Fin.elim0)) ↔
-         Structure.RelMap R fun i => (ts i).realize (Sum.elim Empty.elim xs)
-    simp_rw [term_realize_openBounds]
-  | imp φ ψ ihφ ihψ =>
-    intro xs
-    simp only [BoundedFormulaω.openBounds, Formulaω.realize_def, BoundedFormulaω.realize_imp]
-    exact Iff.imp (ihφ xs) (ihψ xs)
-  | iSup φs ih =>
-    intro xs
-    simp only [BoundedFormulaω.openBounds, Formulaω.realize_def, BoundedFormulaω.realize_iSup]
-    exact exists_congr (fun i => ih i xs)
-  | iInf φs ih =>
-    intro xs
-    simp only [BoundedFormulaω.openBounds, Formulaω.realize_def, BoundedFormulaω.realize_iInf]
-    exact forall_congr' (fun i => ih i xs)
-  | all φ ih =>
-    intro xs
-    -- `φ` is induction-bound, so it carries the inductive type and needs the qualified name
-    show Formulaω.Realize (((BoundedFormulaω.openBounds φ).relabel insertLastBound).all) xs ↔
-         (BoundedFormulaω.all φ).Realize Empty.elim xs
-    -- `FormulaInf.Realize` is a plain definition upstream, not a reducible abbreviation, so a
-    -- lemma stated at the bounded-formula level cannot be `rw`-keyed against this goal; both
-    -- sides are `all`-quantified, so bridge the bodies by application instead
-    refine forall_congr' fun x => ?_
-    have hz : (Fin.snoc (α := fun _ => M) (default : Fin 0 → M) x) (0 : Fin 1) = x :=
-      snoc_elim0_zero_eq x
-    refine (realize_relabel_insertLastBound_zero (BoundedFormulaω.openBounds φ) xs
-      (Fin.snoc default x)).trans ?_
-    rw [hz]
-    exact ih (Fin.snoc xs x)
 
 /-! ### Truth Lemma -/
 

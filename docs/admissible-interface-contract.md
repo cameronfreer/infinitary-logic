@@ -245,6 +245,18 @@ The kernel has no `extension` and no `chain_closure` field, and chain closure fa
 `scripts/check_chain_closure_counterexample.lean` keeps the counterexample executable, and `scripts/check_henkin_closed_cone.lean` pins the route to the kernel, away from
 maximality and from the legacy fragment structures.
 
+**The source-fragment adapter** (`Admissible/Barwise/SourceFragment.lean`) connects an honest
+`Fragment` to that engine without adding a field to any fragment structure.
+`Fragment.withNatConstantsSentences F` takes every member of `F`, at every arity, mapped into
+`L[[ℕ]]` and closed by constants, so universal-instance closure is `Fragment.all_mem` plus the
+`closeBy` algebra; `Fragment.HenkinBasis F` supplies only what `Fragment` omits (falsum, negation
+at every arity, one equality template, one relation template per symbol).
+`Fragment.exists_countable_model_of_aconsistent_withConstants` then gives a countable `L`-model of
+any `T ⊆ F.sentenceSlice` that is `AConsistent` **in the expanded universe** — the theorem is named
+for that hypothesis, and no countability of `T` is assumed. Transporting base-language consistency
+into the expanded universe is a deferred design branch, not a field and not a theorem. The same
+cone guard pins this root to the kernel and to the reduct transport.
+
 **Deliberately out of scope, and why:**
 
 | Deferred | Reason |
