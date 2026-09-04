@@ -53,19 +53,19 @@ jobs:
       # that lean-action caches). Restore it before generation and save it immediately after
       # successful generation, so a later TeX failure cannot discard a valid cache. The build
       # command stays unconditional: the cache supplies prior state, Lake decides freshness.
-      # Key: a cache-format version (bump it when the cached path, doc-gen4 layout, or any
-      # untraced documentation input changes), OS, arch, toolchain, both manifests and the
-      # doc-gen4 pin, plus the exact commit; the fallback drops only the commit, so a new commit
-      # restores the latest compatible prior state. Eviction is by last access, not size: the
-      # entries are small (~92 MB compressed), the root .lake caches dominate storage.
+      # Key: OS, arch, toolchain, both manifests and the doc-gen4 pin, plus the exact commit;
+      # the fallback drops only the commit, so a new commit restores the most recently created
+      # matching cache visible in the current cache scope. Eviction is by last access, not
+      # size; the root .lake caches dominate storage. A future change to the cached path,
+      # doc-gen4 layout, or any untraced documentation input should add a version to the prefix.
       - name: Restore docbuild cache
         id: docbuild-cache-restore
         uses: actions/cache/restore@v4
         with:
           path: docbuild/.lake/build
-          key: docbuild-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'docbuild/lake-manifest.json', 'docbuild/lakefile.toml') }}-${{ github.sha }}
+          key: docbuild-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'docbuild/lake-manifest.json', 'docbuild/lakefile.toml') }}-${{ github.sha }}
           restore-keys: |
-            docbuild-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'docbuild/lake-manifest.json', 'docbuild/lakefile.toml') }}-
+            docbuild-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'docbuild/lake-manifest.json', 'docbuild/lakefile.toml') }}-
 
       - name: Build API docs
         run: |
