@@ -5,6 +5,8 @@ Authors: Cameron Freer
 -/
 import Mathlib.SetTheory.Cardinal.Aleph
 import Mathlib.SetTheory.Ordinal.Basic
+import Mathlib.SetTheory.Ordinal.Rank
+import Mathlib.SetTheory.Ordinal.Family
 
 /-!
 # Small ordinal facts
@@ -54,5 +56,18 @@ theorem add_omega0_lt_omega1 {α : Ordinal.{0}} (hα : α < (Cardinal.aleph 1).o
         add_le_add (Order.lt_succ_iff.mp hα) le_rfl
     _ = Cardinal.aleph0 := Cardinal.aleph0_add_aleph0
     _ < Order.succ Cardinal.aleph0 := Order.lt_succ _
+
+/-! ## Rank is monotone in the relation -/
+
+/-- If `r ⊆ s` are both well-founded, ranks under `r` are bounded by ranks under `s`. -/
+theorem rank_le_rank_of_imp {α : Type*} {r s : α → α → Prop} [IsWellFounded α r]
+    [IsWellFounded α s] (h : ∀ a b, r a b → s a b) (a : α) :
+    IsWellFounded.rank r a ≤ IsWellFounded.rank s a := by
+  induction a using IsWellFounded.induction r with
+  | ind a ih =>
+    rw [IsWellFounded.rank_eq r, IsWellFounded.rank_eq s]
+    refine Ordinal.iSup_le fun b => ?_
+    exact (Order.succ_le_succ (ih b b.2)).trans
+      (Ordinal.le_iSup (fun c : {c // s c a} => Order.succ (IsWellFounded.rank s c)) ⟨b, h _ _ b.2⟩)
 
 end InfinitaryLogic

@@ -27,6 +27,7 @@ import InfinitaryLogic.Descriptive.GSGraph
 import InfinitaryLogic.Descriptive.G0Dichotomy
 import InfinitaryLogic.Descriptive.G0Fusion
 import InfinitaryLogic.Descriptive.CantorStabilization
+import InfinitaryLogic.Descriptive.KleeneBrouwer
 
 -- Counting dichotomy and finite carrier
 import InfinitaryLogic.Descriptive.CountingDichotomy
@@ -96,6 +97,10 @@ application of that vocabulary:
   continuous along one continuous injective Cantor subcopy
   (`CantorStabilization.exists_subcopy_continuous`), with the Borel-set form of the Cantor-copy
   extraction (`MeasurableSet.exists_nat_bool_injection_of_not_countable`);
+- `KleeneBrouwer`: the Kleene–Brouwer order on a tree over `ℕ` — no infinite branch is
+  well-foundedness of strict extension, KB is a well-order on a well-founded tree
+  (`KleeneBrouwer.isWellOrder_kbLT`), and the tree height is bounded by the KB order type
+  (`KleeneBrouwer.treeHeight_le_type`);
 - `KuratowskiUlam`: the meager-sections direction of Kuratowski–Ulam
   (`isMeagre_of_isMeagre_sections`);
 - `GSGraph`: the graphs `G_S(2^ℕ)` and Miller's independence lemma
