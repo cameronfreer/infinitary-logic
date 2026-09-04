@@ -97,6 +97,12 @@ private theorem kbEncode_append (p r : List ℕ) :
 /-- The Kleene–Brouwer order: proper extensions come first, then leftmost-first differences. -/
 def KBLT (x y : List ℕ) : Prop := kbEncode x < kbEncode y
 
+instance : DecidableRel KBLT := fun x y => inferInstanceAs (Decidable (kbEncode x < kbEncode y))
+
+instance : DecidableRel KBLT := fun x y => inferInstanceAs (Decidable (kbEncode x < kbEncode y))
+
+instance : DecidableRel KBLT := fun x y => inferInstanceAs (Decidable (kbEncode x < kbEncode y))
+
 /-- The KB order on the nodes of `T`. -/
 def kbLT (T : tree ℕ) (x y : ↥T) : Prop := KBLT (x : List ℕ) y
 
