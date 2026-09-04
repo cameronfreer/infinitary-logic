@@ -502,10 +502,19 @@ private theorem closeWith_id : ∀ {m : ℕ} (φ : L.BoundedFormulaω Empty m)
   | _, .iInf φs, ρ, h => by
     simp only [closeWith]; congr 1; funext i; exact closeWith_id (φs i) ρ h
 
-/-- Closing a sentence by the empty tuple does nothing. -/
-theorem closeBy_zero (φ : L[[ℕ]].Sentenceω) (τ : Fin 0 → ℕ) : closeBy φ τ = φ := by
-  rw [closeBy_eq_closeWith]
+/-- Opening a sentence and substituting the empty tuple of closed terms does nothing. -/
+theorem openBounds_subst_elim0 (φ : L.Sentenceω) (τ : Fin 0 → L.Term Empty) :
+    (φ.openBounds).subst τ = φ := by
+  have h := relabel_openBounds_subst_eq_closeWith φ (n := 0) (k := 0) rfl τ
+  simp only [Fin.cast_eq_self] at h
+  have h0 := BoundedFormulaω.relabel_finSumFinEquiv_symm_zero (BoundedFormulaω.openBounds φ)
+  erw [h0] at h
+  rw [h]
   exact closeWith_id φ _ fun j => j.elim0
+
+/-- Closing a sentence by the empty tuple does nothing. -/
+theorem closeBy_zero (φ : L[[ℕ]].Sentenceω) (τ : Fin 0 → ℕ) : closeBy φ τ = φ :=
+  openBounds_subst_elim0 φ _
 
 /-- **The instance of the remainder is the closure at the extended tuple.** -/
 theorem instConst_closeBy_all_remainder {n : ℕ} (φ : L[[ℕ]].BoundedFormulaω Empty (n + 1))

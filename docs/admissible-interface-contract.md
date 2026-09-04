@@ -253,9 +253,19 @@ maximality and from the legacy fragment structures.
 at every arity, one equality template, one relation template per symbol).
 `Fragment.exists_countable_model_of_aconsistent_withConstants` then gives a countable `L`-model of
 any `T ⊆ F.sentenceSlice` that is `AConsistent` **in the expanded universe** — the theorem is named
-for that hypothesis, and no countability of `T` is assumed. Transporting base-language consistency
-into the expanded universe is a deferred design branch, not a field and not a theorem. The same
-cone guard pins this root to the kernel and to the reduct transport.
+for that hypothesis, and no countability of `T` is assumed. The same cone guard pins this root to
+the kernel and to the reduct transport.
+
+**The syntactic transport is proved; the semantic arbitrary-language endpoint is pending.**
+`Admissible/Barwise/ConstantTransport.lean` eliminates the constants by one closed base term
+(`elimConsts t₀`), maps derivations rule by rule (`Derivable.map_elimConsts`), and transports
+consistency over the closed-instance universe `Fragment.closedInstances F` into consistency in the
+constants expansion (`aconsistent_withConstants_of_closedInstances`), for any language with a
+closed term. It composes with **nothing** semantic yet: a relational language has no closed term
+(`isEmpty_term_empty_of_isRelational`), and the kernel adapters above require `[L.IsRelational]`,
+so a composite theorem would be vacuous. `scripts/check_constant_transport_boundary.lean` rejects
+any declaration assuming both. The composite source theorem waits on the relationalization
+transport, where constant elimination is applied before, or within, that route.
 
 **Deliberately out of scope, and why:**
 

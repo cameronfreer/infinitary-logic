@@ -16,6 +16,7 @@ import InfinitaryLogic.Admissible.Barwise.Soundness
 import InfinitaryLogic.Admissible.Barwise.ConsistencyBridge
 import InfinitaryLogic.Admissible.Barwise.HenkinClosed
 import InfinitaryLogic.Admissible.Barwise.SourceFragment
+import InfinitaryLogic.Admissible.Barwise.ConstantTransport
 
 /-!
 # Admissible: coded fragments, conditional compactness interfaces, proof system
