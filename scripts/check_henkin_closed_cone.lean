@@ -26,6 +26,7 @@ Theorem bodies are traversed (`.thmInfo` matched explicitly), as in the other co
 Run with: lake env lean scripts/check_henkin_closed_cone.lean
 -/
 import InfinitaryLogic.Admissible.Barwise.HenkinClosed
+import InfinitaryLogic.Admissible.Barwise.HenkinClosure
 import InfinitaryLogic.Admissible.Barwise.SourceFragment
 import InfinitaryLogic.Admissible.Barwise.ConsistencyBridge
 import InfinitaryLogic.Methods.Henkin.Construction
@@ -39,7 +40,11 @@ def declValue? (ci : ConstantInfo) : Option Expr :=
   | .opaqueInfo v => some v.value
   | _ => none
 
-partial def transitiveDeps (env : Environment) (start : Name) : NameSet := Id.run do
+/-- Transitive dependencies through types and bodies.  With `skipProofs := true`, theorem
+bodies are not followed (definition bodies and all types still are), which is the traversal a
+proof-only witness must be absent from. -/
+partial def transitiveDepsWith (env : Environment) (skipProofs : Bool) (start : Name) :
+    NameSet := Id.run do
   let mut seen : NameSet := {}
   let mut stack : List Name := [start]
   while !stack.isEmpty do
@@ -51,12 +56,19 @@ partial def transitiveDeps (env : Environment) (start : Name) : NameSet := Id.ru
     | none => pure ()
     | some ci =>
       let mut cs := ci.type.getUsedConstantsAsSet
-      match declValue? ci with
-      | some v => cs := cs.union v.getUsedConstantsAsSet
-      | none => pure ()
+      let followBody := match ci with
+        | .thmInfo _ => !skipProofs
+        | _ => true
+      if followBody then
+        match declValue? ci with
+        | some v => cs := cs.union v.getUsedConstantsAsSet
+        | none => pure ()
       for c in cs do
         if !seen.contains c then stack := c :: stack
   return seen
+
+def transitiveDeps (env : Environment) (start : Name) : NameSet :=
+  transitiveDepsWith env false start
 
 /-- Forbidden by exact name (existence-checked). -/
 def forbiddenExact : List Name :=
@@ -90,6 +102,20 @@ def guardedRoots : List (Name × List Name) :=
      `FirstOrder.Language.Fragment.HenkinBasis,
      `FirstOrder.Language.HenkinClosed, `FirstOrder.Language.AConsistent,
      `FirstOrder.Language.exists_henkinComplete, `FirstOrder.Language.truth_both,
+     `FirstOrder.Language.BoundedFormulaω.realize_mapLanguage]),
+   -- The minimal-closure family constructor: the kernel's structure and the proof system.
+   (`FirstOrder.Language.HenkinClosedMin.consistencyPropertyEqOn,
+    [`FirstOrder.Language.ConsistencyPropertyEqOn, `FirstOrder.Language.AConsistent,
+     `FirstOrder.Language.Derivable]),
+   -- The closure endpoint: the closure operator, the generic negation closure, the basis it
+   -- supplies, and the whole source-fragment route below it.
+   (`FirstOrder.Language.Fragment.exists_countable_model_of_aconsistent_henkinClosure,
+    [`FirstOrder.Language.Fragment.henkinClosure, `FirstOrder.Language.Fragment.negationClosure,
+     `FirstOrder.Language.Fragment.henkinBasisSeed, `FirstOrder.Language.Fragment.HenkinBasis,
+     `FirstOrder.Language.Fragment.withNatConstantsSentences,
+     `FirstOrder.Language.HenkinClosed, `FirstOrder.Language.HenkinClosedMin,
+     `FirstOrder.Language.AConsistent, `FirstOrder.Language.exists_henkinComplete,
+     `FirstOrder.Language.truth_both,
      `FirstOrder.Language.BoundedFormulaω.realize_mapLanguage])]
 
 def requiredWitness : List Name := (guardedRoots.map Prod.snd).flatten
@@ -101,21 +127,29 @@ run_cmd do
       throwError "[STALE GUARD] forbidden declaration {f} no longer exists — update this list"
   for w in requiredWitness do
     unless (env.find? w).isSome do throwError "required witness {w} not found"
-  -- Theorem-body traversal is certified, not assumed: the kernel witnesses must be ABSENT
-  -- from the endpoint's type, so requiring them in the cone below can only be satisfied by
-  -- traversing the proof.
+  -- Theorem-body traversal is certified, not assumed, by two traversals: a proof-only witness
+  -- must be ABSENT from the cone that skips theorem bodies (types and definition bodies are
+  -- still followed, so a witness reachable through a definition does not qualify) and PRESENT
+  -- in the cone that follows them.  Absence from the endpoint's type alone is insufficient.
   let proofOnly : List (Name × List Name) :=
     [(`FirstOrder.Language.HenkinClosed.exists_countable_model_of_aconsistent,
       [`FirstOrder.Language.truth_both, `FirstOrder.Language.exists_henkinComplete]),
      (`FirstOrder.Language.Fragment.exists_countable_model_of_aconsistent_withConstants,
       [`FirstOrder.Language.truth_both, `FirstOrder.Language.exists_henkinComplete,
+       `FirstOrder.Language.BoundedFormulaω.realize_mapLanguage]),
+     (`FirstOrder.Language.Fragment.exists_countable_model_of_aconsistent_henkinClosure,
+      [`FirstOrder.Language.truth_both, `FirstOrder.Language.exists_henkinComplete,
        `FirstOrder.Language.BoundedFormulaω.realize_mapLanguage])]
   for (endpoint, ws) in proofOnly do
-    let some eci := env.find? endpoint | throwError "endpoint {endpoint} not found"
+    unless (env.find? endpoint).isSome do throwError "endpoint {endpoint} not found"
+    let noProofs := transitiveDepsWith env true endpoint
+    let withProofs := transitiveDepsWith env false endpoint
     for w in ws do
-      if eci.type.getUsedConstants.contains w then
-        throwError "[WEAKENED CHECK] {w} occurs in the TYPE of {endpoint}; the witness \
-          requirement below would no longer certify proof traversal"
+      if noProofs.contains w then
+        throwError "[WEAKENED CHECK] {w} is reachable from {endpoint} without traversing any \
+          theorem body; requiring it below would no longer certify proof traversal"
+      unless withProofs.contains w do
+        throwError "[MISSING WITNESS] {endpoint} does not consume {w} in its proof"
   for (root, witnesses) in guardedRoots do
     unless (env.find? root).isSome do throwError "root declaration {root} not found"
     let deps := transitiveDeps env root

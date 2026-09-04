@@ -240,6 +240,11 @@ whatsoever. The two lemmas that need negation membership (`AConsistent.no_contra
 `ConsistencyPropertyEqOn P` from the `P`-bounded `P`-consistent sets over a
 `P : Set L[[ℕ]].Sentenceω` satisfying `HenkinClosed P`, and `HenkinClosed.exists_countable_model_of_aconsistent` produces a countable
 model of any `P`-consistent `T ⊆ P` (relational base, countable `P`, auxiliary constants present).
+The family constructor is stated over the weaker `HenkinClosedMin P` — components, constant
+instances, the closed atoms, and only the kernel's negated targets rather than the negation of
+every member — which `HenkinClosed.toMin` derives from the full closure; since enlarging `P`
+strengthens `AConsistent P T`, the minimal interface is the honest consumer contract, and the
+`HenkinClosed` forms keep their published statements as wrappers.
 The kernel has no `extension` and no `chain_closure` field, and chain closure fails for
 `AConsistent` over the full universe of a constants-expanded language —
 `scripts/check_chain_closure_counterexample.lean` keeps the counterexample executable, and `scripts/check_henkin_closed_cone.lean` pins the route to the kernel, away from
@@ -255,6 +260,19 @@ at every arity, one equality template, one relation template per symbol).
 any `T ⊆ F.sentenceSlice` that is `AConsistent` **in the expanded universe** — the theorem is named
 for that hypothesis, and no countability of `T` is assumed. The same cone guard pins this root to
 the kernel and to the reduct transport.
+
+**The Henkin closure supplies the basis.** `Fragment.negationClosure S`
+(`Lomega1omega/NegationClosure.lean`, beside `Fragment.generated`) is the generic smallest
+negation-closed fragment containing `S`, by inductive reachability, countable for countable `S`.
+`Fragment.henkinClosure S := negationClosure (S ∪ henkinBasisSeed L)`
+(`Admissible/Barwise/HenkinClosure.lean`) adds falsum and the atomic templates, so
+`henkinBasis_henkinClosure` holds outright; countability needs the relation-symbol sigma
+countable as well, and the exact HF regression is `henkinClosure (hfFragment L).toSet =
+hfFragment L`. The sibling `Fragment.exists_countable_model_of_aconsistent_henkinClosure`
+discharges the basis internally; the v4.5.0 endpoint keeps its `HenkinBasis` hypothesis. The
+closure is external syntactic saturation, not an admissibility notion: admissibility enters only
+when internalizing the construction and showing its codes remain inside the admissible language.
+No fragment structure gains a field.
 
 **The syntactic transport is proved; the semantic arbitrary-language endpoint is pending.**
 `Admissible/Barwise/ConstantTransport.lean` eliminates the constants by one closed base term

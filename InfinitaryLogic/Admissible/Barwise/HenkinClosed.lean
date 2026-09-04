@@ -15,9 +15,17 @@ The relational kernel adapter for syntactic Barwise completeness (issue #19B).
 
 `HenkinClosed P` names the memberships a sentence set `P ⊆ L[[ℕ]].Sentenceω` must have for the
 family of `P`-bounded `P`-consistent sets to be a consistency property in the countable-completion
-kernel's sense.  `HenkinClosed.consistencyPropertyEqOn` inhabits `ConsistencyPropertyEqOn P` from
-that family using only the rules of `Derivable`; `exists_countable_model_of_aconsistent` then runs
-the fair enumeration and the quotient term model.
+kernel's sense.  `HenkinClosedMin P` is the weaker interface the family constructor actually
+consumes — components, constant instances, the closed atoms, and only the kernel's negated
+targets rather than the negation of every member — and `HenkinClosed.toMin` derives it from the
+full closure.  `HenkinClosedMin.consistencyPropertyEqOn` inhabits `ConsistencyPropertyEqOn P` from
+that family using only the rules of `Derivable`; `exists_countable_model_of_aconsistent` then
+runs the fair enumeration and the quotient term model.  Both are re-exported in the
+`HenkinClosed` namespace with their published statements unchanged.
+
+The closure is external syntactic saturation, not an admissibility notion: nothing here mentions
+an admissible set.  Admissibility enters only when internalizing the construction and showing its
+codes remain inside the admissible language.
 
 ## Why this engine
 
@@ -62,9 +70,52 @@ structure HenkinClosed (P : Set L[[ℕ]].Sentenceω) : Prop where
   constEq_mem : ∀ a b : ℕ, constEq (L := L) a b ∈ P
   relInst_mem : ∀ (l : ℕ) (R : L.Relations l) (g : Fin l → ℕ), relInst R g ∈ P
 
+/-- **The minimal Henkin closure**: exactly the memberships the family constructor
+`HenkinClosedMin.consistencyPropertyEqOn` consumes.  Instead of negation of every member, only
+the kernel's actual negated targets: the negated antecedent of a member implication, the negated
+consequent of a member negated implication, the negated components of a member negated
+conjunction or disjunction, and the negated constant instances of a member negated universal —
+the closure targets of the generated universe `GenU`.  `HenkinClosed.toMin` shows the full
+closure implies it; `falsum_mem` is not consumed by the kernel and is not required.
+
+Enlarging `P` strengthens the hypothesis `AConsistent P T` (more side conditions are
+discharged), so this weaker interface is the honest consumer contract. -/
+structure HenkinClosedMin (P : Set L[[ℕ]].Sentenceω) : Prop where
+  imp_left : ∀ φ ψ : L[[ℕ]].Sentenceω, φ.imp ψ ∈ P → φ ∈ P
+  imp_right : ∀ φ ψ : L[[ℕ]].Sentenceω, φ.imp ψ ∈ P → ψ ∈ P
+  iInf_comp : ∀ φs : ℕ → L[[ℕ]].Sentenceω, BoundedFormulaω.iInf φs ∈ P → ∀ k, φs k ∈ P
+  iSup_comp : ∀ φs : ℕ → L[[ℕ]].Sentenceω, BoundedFormulaω.iSup φs ∈ P → ∀ k, φs k ∈ P
+  all_inst : ∀ φ : L[[ℕ]].BoundedFormulaω Empty 1, φ.all ∈ P → ∀ c : ℕ, instConst c φ ∈ P
+  not_imp_left : ∀ φ ψ : L[[ℕ]].Sentenceω, φ.imp ψ ∈ P → φ.not ∈ P
+  not_neg_imp_right : ∀ φ ψ : L[[ℕ]].Sentenceω, (φ.imp ψ).not ∈ P → ψ.not ∈ P
+  not_neg_iInf_comp : ∀ φs : ℕ → L[[ℕ]].Sentenceω,
+    (BoundedFormulaω.iInf φs).not ∈ P → ∀ k, (φs k).not ∈ P
+  not_neg_iSup_comp : ∀ φs : ℕ → L[[ℕ]].Sentenceω,
+    (BoundedFormulaω.iSup φs).not ∈ P → ∀ k, (φs k).not ∈ P
+  not_neg_all_inst : ∀ φ : L[[ℕ]].BoundedFormulaω Empty 1,
+    φ.all.not ∈ P → ∀ c : ℕ, (instConst c φ).not ∈ P
+  constEq_mem : ∀ a b : ℕ, constEq (L := L) a b ∈ P
+  relInst_mem : ∀ (l : ℕ) (R : L.Relations l) (g : Fin l → ℕ), relInst R g ∈ P
+
 namespace HenkinClosed
 
 variable {P : Set L[[ℕ]].Sentenceω}
+
+/-- The full closure implies the minimal one: every negated target is the negation of a
+member. -/
+theorem toMin (hP : HenkinClosed P) : HenkinClosedMin P where
+  imp_left := hP.imp_left
+  imp_right := hP.imp_right
+  iInf_comp := hP.iInf_comp
+  iSup_comp := hP.iSup_comp
+  all_inst := hP.all_inst
+  not_imp_left φ ψ h := hP.not_mem φ (hP.imp_left φ ψ h)
+  not_neg_imp_right φ ψ h := hP.not_mem ψ (hP.imp_right φ ψ (hP.imp_left _ _ h))
+  not_neg_iInf_comp φs h k := hP.not_mem _ (hP.iInf_comp φs (hP.imp_left _ _ h) k)
+  not_neg_iSup_comp φs h k := hP.not_mem _ (hP.iSup_comp φs (hP.imp_left _ _ h) k)
+  not_neg_all_inst φ h c := hP.not_mem _ (hP.all_inst φ (hP.imp_left _ _ h) c)
+  constEq_mem := hP.constEq_mem
+  relInst_mem := hP.relInst_mem
 
 /-- The proof-theoretic family: `P`-bounded `P`-consistent sets. -/
 def aconsistentSets (P : Set L[[ℕ]].Sentenceω) : Set (Set L[[ℕ]].Sentenceω) :=
@@ -77,6 +128,14 @@ theorem union_singleton_subset {S : Set L[[ℕ]].Sentenceω} (hS : S ⊆ P)
   · exact hS hτ
   · rw [Set.mem_singleton_iff.mp hτ]; exact hφ
 
+end HenkinClosed
+
+namespace HenkinClosedMin
+
+open HenkinClosed (aconsistentSets union_singleton_subset)
+
+variable {P : Set L[[ℕ]].Sentenceω}
+
 private theorem derivable_falsum_of_not_mem {S : Set L[[ℕ]].Sentenceω}
     {φ : L[[ℕ]].Sentenceω} (hSφ : S ∪ {φ} ⊆ P)
     (h : S ∪ {φ} ∉ aconsistentSets P) : Derivable P (S ∪ {φ}) .falsum := by
@@ -84,11 +143,11 @@ private theorem derivable_falsum_of_not_mem {S : Set L[[ℕ]].Sentenceω}
   exact h ⟨hSφ, hd⟩
 
 /-- `¬φ ∈ P` gives `φ ∈ P`, since `φ.not = φ.imp ⊥`. -/
-theorem mem_of_not_mem (hP : HenkinClosed P) {φ : L[[ℕ]].Sentenceω} (h : φ.not ∈ P) : φ ∈ P :=
+theorem mem_of_not_mem (hP : HenkinClosedMin P) {φ : L[[ℕ]].Sentenceω} (h : φ.not ∈ P) : φ ∈ P :=
   hP.imp_left φ _ h
 
 /-- The one-hole relation template `R(g with x at coordinate i)` and its two instances. -/
-private theorem relInst_update_derivable (hP : HenkinClosed P) {S : Set L[[ℕ]].Sentenceω}
+private theorem relInst_update_derivable (hP : HenkinClosedMin P) {S : Set L[[ℕ]].Sentenceω}
     (hS : S ⊆ P)
     {l : ℕ} (R : L.Relations l) (g : Fin l → ℕ) (i : Fin l) (b : ℕ)
     (hrel : relInst R g ∈ S) (heq : constEq (g i) b ∈ S) :
@@ -138,7 +197,8 @@ private theorem relInst_update_derivable (hP : HenkinClosed P) {S : Set L[[ℕ]]
 
 /-- The one-hole equality template `x = c_a` (symmetry) — instances `c_a = c_a` and
 `c_b = c_a`. -/
-private theorem constEq_symm_derivable (hP : HenkinClosed P) {S : Set L[[ℕ]].Sentenceω} (hS : S ⊆ P)
+private theorem constEq_symm_derivable (hP : HenkinClosedMin P) {S : Set L[[ℕ]].Sentenceω}
+    (hS : S ⊆ P)
     (a b : ℕ) (h : constEq a b ∈ S) : Derivable P S (constEq b a) := by
   let φ : L[[ℕ]].Formulaω (Fin 1) :=
     BoundedFormulaω.equal (Term.var (Sum.inl (0 : Fin 1)))
@@ -168,7 +228,7 @@ private theorem constEq_symm_derivable (hP : HenkinClosed P) {S : Set L[[ℕ]].S
   rwa [h2] at hd
 
 /-- The one-hole equality template `c_a = x` (transitivity) — instances `c_a = c_b`, `c_a = c_d`. -/
-private theorem constEq_trans_derivable (hP : HenkinClosed P) {S : Set L[[ℕ]].Sentenceω}
+private theorem constEq_trans_derivable (hP : HenkinClosedMin P) {S : Set L[[ℕ]].Sentenceω}
     (hS : S ⊆ P)
     (a b d : ℕ) (h₁ : constEq a b ∈ S) (h₂ : constEq b d ∈ S) :
     Derivable P S (constEq a d) := by
@@ -199,9 +259,9 @@ private theorem constEq_trans_derivable (hP : HenkinClosed P) {S : Set L[[ℕ]].
     (by rw [h2]; exact hP.constEq_mem a d)
   rwa [h2] at hd
 
-/-- **The proof-theoretic consistency property over a Henkin-closed `P`.**  No `extension`,
-no `chain_closure`: the kernel does not ask for them. -/
-def consistencyPropertyEqOn (hP : HenkinClosed P) [L.IsRelational] :
+/-- **The proof-theoretic consistency property over a minimally Henkin-closed `P`.**  No
+`extension`, no `chain_closure`: the kernel does not ask for them. -/
+def consistencyPropertyEqOn (hP : HenkinClosedMin P) [L.IsRelational] :
     ConsistencyPropertyEqOn P where
   sets := aconsistentSets P
   subset_U := fun _ hS => hS.1
@@ -213,9 +273,10 @@ def consistencyPropertyEqOn (hP : HenkinClosed P) [L.IsRelational] :
     have hφP := hP.imp_left φ ψ (hS himp)
     have hψP := hP.imp_right φ ψ (hS himp)
     by_contra h; push Not at h
-    have hinc₁ := derivable_falsum_of_not_mem (union_singleton_subset hS (hP.not_mem φ hφP)) h.1
+    have hnφP := hP.not_imp_left φ ψ (hS himp)
+    have hinc₁ := derivable_falsum_of_not_mem (union_singleton_subset hS hnφP) h.1
     have hinc₂ := derivable_falsum_of_not_mem (union_singleton_subset hS hψP) h.2
-    have hφ_deriv := Derivable.not_not_elim (.neg_intro (hP.not_mem φ hφP) hinc₁)
+    have hφ_deriv := Derivable.not_not_elim (.neg_intro hnφP hinc₁)
     have hψn := Derivable.neg_intro hψP hinc₂
     exact hc (.neg_elim (.imp_elim (.assumption himp (hS himp)) hφ_deriv) hψn)
   C1_neg_imp := by
@@ -229,9 +290,10 @@ def consistencyPropertyEqOn (hP : HenkinClosed P) [L.IsRelational] :
       have hnφ := Derivable.neg_intro hφP hd
       have himp := Derivable.imp_intro_from_neg hnφ hφP hψP
       exact hc (.neg_elim himp (.assumption hnimp (hS hnimp)))
-    · refine ⟨union_singleton_subset hS (hP.not_mem ψ hψP), ?_⟩
+    · have hnψP := hP.not_neg_imp_right φ ψ (hS hnimp)
+      refine ⟨union_singleton_subset hS hnψP, ?_⟩
       intro hd
-      have hψ := Derivable.not_not_elim (.neg_intro (hP.not_mem ψ hψP) hd)
+      have hψ := Derivable.not_not_elim (.neg_intro hnψP hd)
       have himp := Derivable.imp_intro hφP (.weaken Set.subset_union_left hψ)
       exact hc (.neg_elim himp (.assumption hnimp (hS hnimp)))
   C2_not_not := by
@@ -254,10 +316,9 @@ def consistencyPropertyEqOn (hP : HenkinClosed P) [L.IsRelational] :
     by_contra h; push Not at h
     have hall : ∀ k, Derivable P S (φs k) := by
       intro k
-      have hkP := hP.iInf_comp φs hinfP k
-      have := derivable_falsum_of_not_mem
-        (union_singleton_subset hS (hP.not_mem _ hkP)) (h k)
-      exact .not_not_elim (.neg_intro (hP.not_mem _ hkP) this)
+      have hnkP := hP.not_neg_iInf_comp φs (hS hninf) k
+      have := derivable_falsum_of_not_mem (union_singleton_subset hS hnkP) (h k)
+      exact .not_not_elim (.neg_intro hnkP this)
     exact hc (.neg_elim (.iInf_intro hall hinfP) (.assumption hninf (hS hninf)))
   C4_iSup := by
     intro S ⟨hS, hc⟩ φs hsup
@@ -276,10 +337,10 @@ def consistencyPropertyEqOn (hP : HenkinClosed P) [L.IsRelational] :
   C4_neg_iSup := by
     intro S ⟨hS, hc⟩ φs hnsup k
     have hsupP := hP.mem_of_not_mem (hS hnsup)
-    have hkP := hP.iSup_comp φs hsupP k
-    refine ⟨union_singleton_subset hS (hP.not_mem _ hkP), ?_⟩
+    have hnkP := hP.not_neg_iSup_comp φs (hS hnsup) k
+    refine ⟨union_singleton_subset hS hnkP, ?_⟩
     intro hd
-    have hφk := Derivable.not_not_elim (.neg_intro (hP.not_mem _ hkP) hd)
+    have hφk := Derivable.not_not_elim (.neg_intro hnkP hd)
     exact hc (.neg_elim (.iSup_intro (k := k) hφk hsupP) (.assumption hnsup (hS hnsup)))
   eq_refl := by
     intro S ⟨hS, hc⟩ c
@@ -319,10 +380,9 @@ def consistencyPropertyEqOn (hP : HenkinClosed P) [L.IsRelational] :
     -- every constant instance is derivable ...
     have hconst : ∀ c : ℕ, Derivable P S (instConst c φ) := by
       intro c
-      have hcP := hP.all_inst φ hallP c
-      have := derivable_falsum_of_not_mem
-        (union_singleton_subset hS (hP.not_mem _ hcP)) (h c)
-      exact .not_not_elim (.neg_intro (hP.not_mem _ hcP) this)
+      have hncP := hP.not_neg_all_inst φ (hS hnall) c
+      have := derivable_falsum_of_not_mem (union_singleton_subset hS hncP) (h c)
+      exact .not_not_elim (.neg_intro hncP this)
     -- ... and over a relational base every closed term is a constant.
     have hderiv : ∀ t : L[[ℕ]].Term Empty, Derivable P S (φ.openBounds.subst (fun _ => t)) := by
       intro t
@@ -330,13 +390,13 @@ def consistencyPropertyEqOn (hP : HenkinClosed P) [L.IsRelational] :
       exact hconst c
     exact hc (.neg_elim (.all_intro φ hderiv hallP) (.assumption hnall (hS hnall)))
 
-/-- **Syntactic model existence over the relational core (countable `P`).**  A `P`-consistent
-`T ⊆ P` has a countable `L[[ℕ]]`-model.  No chain closure and no extension hypothesis: the fair
-enumeration never needs them.
+/-- **Syntactic model existence over the relational core (countable `P`), minimal closure.**  A
+`P`-consistent `T ⊆ P` has a countable `L[[ℕ]]`-model.  No chain closure and no extension
+hypothesis: the fair enumeration never needs them.
 
 This is the kernel adapter, stated explicitly over a relational base with the auxiliary constants
 still present.  It is not yet the Barwise theorem over an arbitrary language. -/
-theorem exists_countable_model_of_aconsistent (hP : HenkinClosed P) [L.IsRelational]
+theorem exists_countable_model_of_aconsistent (hP : HenkinClosedMin P) [L.IsRelational]
     [Countable (Σ l, L.Relations l)] (hPc : P.Countable) {T : Set L[[ℕ]].Sentenceω}
     (hT : T ⊆ P) (hcons : AConsistent P T) :
     ∃ (M : Type) (_ : L[[ℕ]].Structure M) (_ : Nonempty M) (_ : Countable M),
@@ -349,6 +409,32 @@ theorem exists_countable_model_of_aconsistent (hP : HenkinClosed P) [L.IsRelatio
     exact ⟨c, hc.symm⟩
   exact ⟨QModel hsc, qModelStructure hsc, ⟨qmk hsc (constTerm 0)⟩, hsurj.countable,
     fun φ hφ => (truth_both hsc φ).1 (hTS hφ)⟩
+
+end HenkinClosedMin
+
+namespace HenkinClosed
+
+variable {P : Set L[[ℕ]].Sentenceω}
+
+/-- `¬φ ∈ P` gives `φ ∈ P`, since `φ.not = φ.imp ⊥`. -/
+theorem mem_of_not_mem (hP : HenkinClosed P) {φ : L[[ℕ]].Sentenceω} (h : φ.not ∈ P) : φ ∈ P :=
+  hP.toMin.mem_of_not_mem h
+
+/-- **The proof-theoretic consistency property over a Henkin-closed `P`**, through the minimal
+closure. -/
+def consistencyPropertyEqOn (hP : HenkinClosed P) [L.IsRelational] :
+    ConsistencyPropertyEqOn P :=
+  hP.toMin.consistencyPropertyEqOn
+
+/-- **Syntactic model existence over the relational core (countable `P`).**  The full-closure
+form of `HenkinClosedMin.exists_countable_model_of_aconsistent`, kept as the published kernel
+adapter. -/
+theorem exists_countable_model_of_aconsistent (hP : HenkinClosed P) [L.IsRelational]
+    [Countable (Σ l, L.Relations l)] (hPc : P.Countable) {T : Set L[[ℕ]].Sentenceω}
+    (hT : T ⊆ P) (hcons : AConsistent P T) :
+    ∃ (M : Type) (_ : L[[ℕ]].Structure M) (_ : Nonempty M) (_ : Countable M),
+      Theoryω.Model T M :=
+  hP.toMin.exists_countable_model_of_aconsistent hPc hT hcons
 
 end HenkinClosed
 
