@@ -14,9 +14,10 @@ concurrency:
 permissions:
   contents: read
 
-# Pure CI: build + checks only (~5 min). The site (API docs, blueprint web/PDF,
+# Pure CI: build + checks only. The site (API docs, blueprint web/PDF,
 # homepage, Pages deploy) is built by docs.yml — weekly cron or manual dispatch
-# (gh workflow run docs.yml) — since doc-gen4 alone takes ~21 min per run.
+# (gh workflow run docs.yml) — and stays off the push path because API generation
+# dominates its run time.
 jobs:
   build:
     runs-on: ubuntu-latest

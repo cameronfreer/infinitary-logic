@@ -61,7 +61,8 @@ variable {L : Language.{0, 0}}
 inductive kbRelSym : ℕ → Type
   | lt : kbRelSym 2
 
-/-- The dedicated one-binary-relation language the Kleene–Brouwer code lands in. -/
+/-- The dedicated one-binary-relation language the Kleene–Brouwer code lands in.  Its only symbol
+is the strict order `kbRelSym.lt`. -/
 def kbLanguage : Language := ⟨fun _ => Empty, kbRelSym⟩
 
 namespace kbLanguage

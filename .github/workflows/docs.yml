@@ -2,6 +2,11 @@ name: Build and Deploy Site
 
 on:
   workflow_dispatch:
+    inputs:
+      deploy:
+        description: "Deploy to GitHub Pages (set false for cache experiments)"
+        type: boolean
+        default: true
   schedule:
     - cron: '0 6 * * 0'  # weekly, Sunday 6am UTC
 
@@ -15,9 +20,8 @@ permissions:
   id-token: write
 
 # The full site pipeline (API docs via doc-gen4, blueprint web + PDF, homepage,
-# GitHub Pages deploy). Kept off the push path — doc-gen4 alone takes ~21 min —
-# so per-push CI (build.yml) stays fast. Trigger manually with
-# `gh workflow run docs.yml` to refresh the site after notable pushes.
+# GitHub Pages deploy). Kept off the push path because API generation dominates the
+# run time; runs on manual dispatch (`gh workflow run docs.yml`) and a weekly cron.
 jobs:
   docs:
     runs-on: ubuntu-latest
@@ -45,10 +49,32 @@ jobs:
           use-github-cache: true
           use-mathlib-cache: true
 
+      # doc-gen4's incremental state lives in docbuild/.lake (separate from the root .lake
+      # that lean-action caches). Restore it before generation and save it immediately after
+      # successful generation, so a later TeX failure cannot discard a valid cache. The build
+      # command stays unconditional: the cache supplies prior state, Lake decides freshness.
+      # Key: OS, arch, toolchain, both manifests and the doc-gen4 pin, plus the exact commit;
+      # the fallback drops only the commit, so a new commit restores the nearest prior state.
+      - name: Restore docbuild cache
+        id: docbuild-cache-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: docbuild/.lake/build
+          key: docbuild-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'docbuild/lake-manifest.json', 'docbuild/lakefile.toml') }}-${{ github.sha }}
+          restore-keys: |
+            docbuild-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'docbuild/lake-manifest.json', 'docbuild/lakefile.toml') }}-
+
       - name: Build API docs
         run: |
           cd docbuild
           lake build InfinitaryLogic:docs
+
+      - name: Save docbuild cache
+        if: steps.docbuild-cache-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: docbuild/.lake/build
+          key: docbuild-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'docbuild/lake-manifest.json', 'docbuild/lakefile.toml') }}-${{ github.sha }}
 
       - name: Install blueprint dependencies (cached apt)
         uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9 # v1.6.3
@@ -126,6 +152,7 @@ jobs:
 
   deploy:
     needs: docs
+    if: github.event_name != 'workflow_dispatch' || inputs.deploy
     runs-on: ubuntu-latest
     name: Deploy to GitHub Pages
     environment:
