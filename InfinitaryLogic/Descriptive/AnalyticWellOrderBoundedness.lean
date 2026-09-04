@@ -142,6 +142,21 @@ theorem analytic_rank_bounded_of_continuousOn_wellOrderPresentation {X : Type*}
 The `A := wellOrderClass lt` case.  Were the class analytic it would bound its own order types,
 but it realizes every countably infinite one — `α + ω` in particular. -/
 
+/-- The `≤`-form of the pullback: the presented well-order need only **dominate** the rank. -/
+theorem analytic_rank_bounded_of_continuousOn_wellOrderPresentation_le {X : Type*}
+    [TopologicalSpace X] {B : Set X} (lt : L.Relations 2) (hB : MeasureTheory.AnalyticSet B)
+    (code : X → StructureSpace L) (hcode : ContinuousOn code B)
+    (hWO : ∀ x ∈ B, code x ∈ wellOrderClass lt) (rank : X → Ordinal.{0})
+    (hrank : ∀ x ∈ B, ∀ h : IsWellOrder ℕ fun a b : ℕ =>
+        @Structure.RelMap L ℕ (code x).toStructure 2 lt ![a, b],
+      rank x ≤ @Ordinal.type ℕ
+        (fun a b : ℕ => @Structure.RelMap L ℕ (code x).toStructure 2 lt ![a, b]) h) :
+    ∃ β : Ordinal.{0}, β < (Cardinal.aleph 1).ord ∧ ∀ x ∈ B, rank x < β := by
+  obtain ⟨β, hβ, hbound⟩ := analytic_wellOrder_type_boundedness lt (hB.image_of_continuousOn hcode)
+    (by rintro _ ⟨x, hx, rfl⟩; exact hWO x hx)
+  exact ⟨β, hβ, fun x hx => (hrank x hx (hWO x hx)).trans_lt
+    (hbound (code x) ⟨x, hx, rfl⟩ (hWO x hx))⟩
+
 /-- **The countable well-order class is not analytic**: no analytic set of codes consists exactly
 of the well-ordered ones.  Non-Borelness (`wellOrderClass_not_measurableSet`) is weaker, since
 Borel sets are analytic; that endpoint is proved separately from López–Escobar and does not go
