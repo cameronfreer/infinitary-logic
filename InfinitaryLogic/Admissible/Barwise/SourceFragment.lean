@@ -36,8 +36,8 @@ coded-family closure of `AdmissibleFragment` never enters.
 basis, a theory `T ⊆ F.sentenceSlice` that is consistent **in the expanded universe** has a
 countable model of `T` itself, as an `L`-structure, obtained by forgetting the constants.  The
 hypothesis is consistency in `withNatConstantsSentences F`, and the theorem is named for it.
-Transporting base-language consistency into the expanded universe is a separate question; see
-the design note in the repository.
+Transporting base-language consistency into the expanded universe is a separate question,
+recorded as a deferred design branch in `docs/admissible-interface-contract.md` §8.
 -/
 
 namespace FirstOrder.Language
