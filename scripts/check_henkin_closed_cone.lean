@@ -26,6 +26,7 @@ Theorem bodies are traversed (`.thmInfo` matched explicitly), as in the other co
 Run with: lake env lean scripts/check_henkin_closed_cone.lean
 -/
 import InfinitaryLogic.Admissible.Barwise.HenkinClosed
+import InfinitaryLogic.Admissible.Barwise.HenkinClosure
 import InfinitaryLogic.Admissible.Barwise.SourceFragment
 import InfinitaryLogic.Admissible.Barwise.ConsistencyBridge
 import InfinitaryLogic.Methods.Henkin.Construction
@@ -90,6 +91,20 @@ def guardedRoots : List (Name × List Name) :=
      `FirstOrder.Language.Fragment.HenkinBasis,
      `FirstOrder.Language.HenkinClosed, `FirstOrder.Language.AConsistent,
      `FirstOrder.Language.exists_henkinComplete, `FirstOrder.Language.truth_both,
+     `FirstOrder.Language.BoundedFormulaω.realize_mapLanguage]),
+   -- The minimal-closure family constructor: the kernel's structure and the proof system.
+   (`FirstOrder.Language.HenkinClosedMin.consistencyPropertyEqOn,
+    [`FirstOrder.Language.ConsistencyPropertyEqOn, `FirstOrder.Language.AConsistent,
+     `FirstOrder.Language.Derivable]),
+   -- The closure endpoint: the closure operator, the generic negation closure, the basis it
+   -- supplies, and the whole source-fragment route below it.
+   (`FirstOrder.Language.Fragment.exists_countable_model_of_aconsistent_henkinClosure,
+    [`FirstOrder.Language.Fragment.henkinClosure, `FirstOrder.Language.Fragment.negationClosure,
+     `FirstOrder.Language.Fragment.henkinBasisSeed, `FirstOrder.Language.Fragment.HenkinBasis,
+     `FirstOrder.Language.Fragment.withNatConstantsSentences,
+     `FirstOrder.Language.HenkinClosed, `FirstOrder.Language.HenkinClosedMin,
+     `FirstOrder.Language.AConsistent, `FirstOrder.Language.exists_henkinComplete,
+     `FirstOrder.Language.truth_both,
      `FirstOrder.Language.BoundedFormulaω.realize_mapLanguage])]
 
 def requiredWitness : List Name := (guardedRoots.map Prod.snd).flatten
@@ -109,7 +124,11 @@ run_cmd do
       [`FirstOrder.Language.truth_both, `FirstOrder.Language.exists_henkinComplete]),
      (`FirstOrder.Language.Fragment.exists_countable_model_of_aconsistent_withConstants,
       [`FirstOrder.Language.truth_both, `FirstOrder.Language.exists_henkinComplete,
-       `FirstOrder.Language.BoundedFormulaω.realize_mapLanguage])]
+       `FirstOrder.Language.BoundedFormulaω.realize_mapLanguage]),
+     (`FirstOrder.Language.Fragment.exists_countable_model_of_aconsistent_henkinClosure,
+      [`FirstOrder.Language.truth_both, `FirstOrder.Language.exists_henkinComplete,
+       `FirstOrder.Language.BoundedFormulaω.realize_mapLanguage,
+       `FirstOrder.Language.Fragment.negationClosure])]
   for (endpoint, ws) in proofOnly do
     let some eci := env.find? endpoint | throwError "endpoint {endpoint} not found"
     for w in ws do

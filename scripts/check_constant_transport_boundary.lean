@@ -38,7 +38,8 @@ def allowed : List Name := [`FirstOrder.Language.isEmpty_term_empty_of_isRelatio
 def guardedModules : List Name :=
   [`InfinitaryLogic.Admissible.Barwise.ConstantTransport,
    `InfinitaryLogic.Admissible.Barwise.SourceFragment,
-   `InfinitaryLogic.Admissible.Barwise.HenkinClosed]
+   `InfinitaryLogic.Admissible.Barwise.HenkinClosed,
+   `InfinitaryLogic.Admissible.Barwise.HenkinClosure]
 
 run_cmd do
   let env ← getEnv
