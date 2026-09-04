@@ -9,6 +9,7 @@ import Mathlib.SetTheory.Ordinal.Family
 import Mathlib.Order.OrderIsoNat
 import Mathlib.Data.List.Lex
 import Mathlib.Data.ENat.Basic
+import InfinitaryLogic.OrdinalUtil
 
 /-!
 # The Kleene–Brouwer order on a tree
@@ -31,7 +32,10 @@ mathematics behind analytic boundedness for well-founded trees (issue #73).
   branch.
 * `treeHeight T` is the strict supremum of the ranks of the nodes under strict extension, and
   `treeHeight_le_type` bounds it by the KB order type, through the monotonicity of
-  `IsWellFounded.rank` in the relation (`rank_le_rank_of_imp`).
+  `IsWellFounded.rank` in the relation (`InfinitaryLogic.rank_le_rank_of_imp`).
+
+The encoding lands in `ℕ∞`, which is defined as `WithTop ℕ`; the named type is what carries the
+derived `WellFoundedLT` instance the chain condition uses.
 -/
 
 namespace KleeneBrouwer
@@ -86,7 +90,7 @@ theorem kbEncode_injective : Function.Injective kbEncode := by
   exact (List.map_injective_iff (f := fun a : ℕ => (a : ℕ∞))).mpr
     (fun _ _ hab => ENat.natCast_inj.mp hab) this
 
-theorem kbEncode_append (p r : List ℕ) :
+private theorem kbEncode_append (p r : List ℕ) :
     kbEncode (p ++ r) = p.map (fun a : ℕ => (a : ℕ∞)) ++ kbEncode r := by
   simp [kbEncode]
 
@@ -122,30 +126,23 @@ theorem kbLT_of_extBelow (T : tree ℕ) {y x : ↥T} (h : extBelow T y x) : kbLT
 /-! ## KB is well-founded on a well-founded tree -/
 
 /-- `Lex` is invariant under a common left factor (for irreflexive `r`). -/
-theorem lex_append_left_iff {α : Type*} {r : α → α → Prop} [Std.Irrefl r] :
+private theorem lex_append_left_iff {α : Type*} {r : α → α → Prop} [Std.Irrefl r] :
     ∀ (p l₁ l₂ : List α), List.Lex r (p ++ l₁) (p ++ l₂) ↔ List.Lex r l₁ l₂
   | [], _, _ => Iff.rfl
   | a :: p, l₁, l₂ => by
     simp only [List.cons_append, List.lex_cons_iff]
     exact lex_append_left_iff p l₁ l₂
 
-/-- The head of a `Lex`-smaller list is at most the head of the larger one. -/
-theorem head_le_of_lex {α : Type*} [LinearOrder α] {a b : α} {l₁ l₂ : List α}
-    (h : List.Lex (· < ·) (a :: l₁) (b :: l₂)) : a ≤ b := by
-  cases h with
-  | rel h => exact le_of_lt h
-  | cons _ => exact le_rfl
-
 /-- The KB head of a tail: `⊤` for the empty tail, the first entry otherwise. -/
-def kbHead (r : List ℕ) : ℕ∞ := (kbEncode r).headD ⊤
+private def kbHead (r : List ℕ) : ℕ∞ := (kbEncode r).headD ⊤
 
-theorem kbEncode_eq_cons (r : List ℕ) : kbEncode r = kbHead r :: (kbEncode r).tail := by
+private theorem kbEncode_eq_cons (r : List ℕ) : kbEncode r = kbHead r :: (kbEncode r).tail := by
   cases r <;> simp [kbEncode, kbHead]
 
-theorem kbHead_eq_top_iff (r : List ℕ) : kbHead r = ⊤ ↔ r = [] := by
+private theorem kbHead_eq_top_iff (r : List ℕ) : kbHead r = ⊤ ↔ r = [] := by
   cases r <;> simp [kbHead, kbEncode]
 
-theorem exists_cons_of_kbHead_eq_coe (r : List ℕ) (a : ℕ) (h : kbHead r = a) :
+private theorem exists_cons_of_kbHead_eq_coe (r : List ℕ) (a : ℕ) (h : kbHead r = a) :
     ∃ r', r = a :: r' := by
   cases r with
   | nil => exact absurd h (by simp [kbHead, kbEncode])
@@ -156,7 +153,7 @@ theorem exists_cons_of_kbHead_eq_coe (r : List ℕ) (a : ℕ) (h : kbHead r = a)
 
 /-- Along a strictly KB-descending sequence whose `k`-prefixes agree, the `k`-th KB heads are
 antitone. -/
-theorem kbHead_drop_antitone {f : ℕ → List ℕ} (hf : ∀ n, KBLT (f (n + 1)) (f n)) {k : ℕ}
+private theorem kbHead_drop_antitone {f : ℕ → List ℕ} (hf : ∀ n, KBLT (f (n + 1)) (f n)) {k : ℕ}
     {p : List ℕ} {N : ℕ} (hp : ∀ n, N ≤ n → (f n).take k = p) :
     Antitone fun m => kbHead ((f (N + m)).drop k) := by
   refine antitone_nat_of_succ_le fun m => ?_
@@ -164,10 +161,10 @@ theorem kbHead_drop_antitone {f : ℕ → List ℕ} (hf : ∀ n, KBLT (f (n + 1)
   unfold KBLT at h
   rw [← List.take_append_drop k (f (N + m + 1)), ← List.take_append_drop k (f (N + m)),
     hp _ (by omega), hp _ (by omega), kbEncode_append, kbEncode_append] at h
-  have h' : List.Lex (· < ·) (kbEncode ((f (N + m + 1)).drop k)) (kbEncode ((f (N + m)).drop k)) :=
+  have h' : kbEncode ((f (N + m + 1)).drop k) < kbEncode ((f (N + m)).drop k) :=
     (lex_append_left_iff _ _ _).mp h
   rw [kbEncode_eq_cons ((f (N + m + 1)).drop k), kbEncode_eq_cons ((f (N + m)).drop k)] at h'
-  exact head_le_of_lex h'
+  exact List.head_le_of_lt h'
 
 /-- **Prefix stabilization**: along a strictly KB-descending sequence in a tree, every `k`-prefix
 is eventually constant, with full length `k`. -/
@@ -240,19 +237,6 @@ theorem isWellOrder_kbLT (T : tree ℕ) (hT : WellFounded (extBelow T)) :
   haveI : IsWellFounded ↥T (kbLT T) := ⟨wellFounded_kbLT T hT⟩
   IsWellOrder.mk
 
-/-! ## Rank is monotone in the relation -/
-
-/-- If `r ⊆ s` are both well-founded, ranks under `r` are bounded by ranks under `s`. -/
-theorem rank_le_rank_of_imp {α : Type*} {r s : α → α → Prop} [IsWellFounded α r]
-    [IsWellFounded α s] (h : ∀ a b, r a b → s a b) (a : α) :
-    IsWellFounded.rank r a ≤ IsWellFounded.rank s a := by
-  induction a using IsWellFounded.induction r with
-  | ind a ih =>
-    rw [IsWellFounded.rank_eq r, IsWellFounded.rank_eq s]
-    refine Ordinal.iSup_le fun b => ?_
-    exact (Order.succ_le_succ (ih b b.2)).trans
-      (Ordinal.le_iSup (fun c : {c // s c a} => Order.succ (IsWellFounded.rank s c)) ⟨b, h _ _ b.2⟩)
-
 /-- The height of the tree: the strict supremum of the ranks of its nodes under strict
 extension. -/
 noncomputable def treeHeight (T : tree ℕ) [IsWellFounded ↥T (extBelow T)] : Ordinal :=
@@ -264,9 +248,9 @@ theorem treeHeight_le_type (T : tree ℕ) [IsWellFounded ↥T (extBelow T)]
   refine Ordinal.iSup_le fun x => ?_
   rw [Order.succ_le_iff]
   calc IsWellFounded.rank (extBelow T) x
-      ≤ IsWellFounded.rank (kbLT T) x := rank_le_rank_of_imp (fun _ _ => kbLT_of_extBelow T) x
+      ≤ IsWellFounded.rank (kbLT T) x :=
+        InfinitaryLogic.rank_le_rank_of_imp (fun _ _ => kbLT_of_extBelow T) x
     _ = Ordinal.typein (kbLT T) x := by rw [IsWellFounded.rank_eq_typein]
     _ < Ordinal.type (kbLT T) := Ordinal.typein_lt_type _ _
 
 end KleeneBrouwer
-
