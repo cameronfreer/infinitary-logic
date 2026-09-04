@@ -17,8 +17,9 @@ additionally consume the constants-expanded universe, the basis, and the reduct 
    `ConsistencyPropertyEqOn`, `AConsistent` and `Derivable`. A root cannot pass by depending
    on nothing.
 3. STALENESS — every exactly-named forbidden declaration must still exist.
-4. PROOF-ONLY — `truth_both` and `exists_henkinComplete` must be absent from the endpoint's
-   TYPE, so their presence in the cone certifies theorem-body traversal.
+4. PROOF-ONLY — `truth_both` and `exists_henkinComplete` (and, for the source-fragment root,
+   `realize_mapLanguage`) must be absent from each endpoint's TYPE, so their presence in the cone
+   certifies theorem-body traversal.
 
 Theorem bodies are traversed (`.thmInfo` matched explicitly), as in the other cone guards.
 
@@ -103,12 +104,18 @@ run_cmd do
   -- Theorem-body traversal is certified, not assumed: the kernel witnesses must be ABSENT
   -- from the endpoint's type, so requiring them in the cone below can only be satisfied by
   -- traversing the proof.
-  let endpoint := `FirstOrder.Language.HenkinClosed.exists_countable_model_of_aconsistent
-  let some eci := env.find? endpoint | throwError "endpoint {endpoint} not found"
-  for w in [`FirstOrder.Language.truth_both, `FirstOrder.Language.exists_henkinComplete] do
-    if eci.type.getUsedConstants.contains w then
-      throwError "[WEAKENED CHECK] {w} occurs in the TYPE of {endpoint}; the witness requirement \
-        below would no longer certify proof traversal"
+  let proofOnly : List (Name × List Name) :=
+    [(`FirstOrder.Language.HenkinClosed.exists_countable_model_of_aconsistent,
+      [`FirstOrder.Language.truth_both, `FirstOrder.Language.exists_henkinComplete]),
+     (`FirstOrder.Language.Fragment.exists_countable_model_of_aconsistent_withConstants,
+      [`FirstOrder.Language.truth_both, `FirstOrder.Language.exists_henkinComplete,
+       `FirstOrder.Language.BoundedFormulaω.realize_mapLanguage])]
+  for (endpoint, ws) in proofOnly do
+    let some eci := env.find? endpoint | throwError "endpoint {endpoint} not found"
+    for w in ws do
+      if eci.type.getUsedConstants.contains w then
+        throwError "[WEAKENED CHECK] {w} occurs in the TYPE of {endpoint}; the witness \
+          requirement below would no longer certify proof traversal"
   for (root, witnesses) in guardedRoots do
     unless (env.find? root).isSome do throwError "root declaration {root} not found"
     let deps := transitiveDeps env root

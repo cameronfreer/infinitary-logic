@@ -263,7 +263,7 @@ cone guard pins this root to the kernel and to the reduct transport.
 |---|---|
 | `height` on presentations or fragments | whether it belongs to the presentation or is derived is unsettled; a field would permit a fragment whose height disagreed with its presentation's |
 | the full KP schema | the consuming proofs do not exist yet, so the required laws are not yet determined |
-| `Admissible/Barwise/ConsistencyBridge.lean` | the superseded full-fragment bridge over `FullBarwiseFragment`, whose chain-closure field fails for the full universe of a constants-expanded language; retired once the source-fragment adapter over `HenkinClosed` lands |
+| `Admissible/Barwise/ConsistencyBridge.lean` | the superseded full-fragment bridge over `FullBarwiseFragment`, whose chain-closure field fails for the full universe of a constants-expanded language; its retirement awaits the constants/conservativity design and will be a separate breaking change |
 | model-universe generalization | #19B; §7 records where the boundary falls rather than moving it |
 | `AdmissibleFragmentCore.hf := Set.univ` | a quarantined placeholder — nothing may be proved from it |
 
