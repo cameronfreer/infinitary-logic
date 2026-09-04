@@ -15,7 +15,7 @@ audit, which keeps formal-negation closure out of the structure.  `Fragment.Nega
 the corresponding predicate on fragments.
 
 Countability is by the same finite-path encoding as `Fragment.generated`, with one extra step
-tag for negation (`closureStep`, `closurePath`, `negationClosedFrom_iff_path`).
+tag for negation (private scaffolding; only `negationClosure_countable` is published).
 -/
 
 namespace FirstOrder
@@ -91,22 +91,23 @@ theorem negationClosure_toSet_eq {A : Fragment L} (hA : A.NegationClosed) :
 /-! ### Countability: the closure-path encoding
 
 `closureStep` extends `componentStep` by the tag `5` for negation; the rest is the argument of
-`Fragment.generated_countable` verbatim. -/
+`Fragment.generated_countable` verbatim.  The scaffolding is private: only
+`negationClosure_countable` is consumed. -/
 
 /-- One closure step, coded by a pair (tag, index): tag `5` is negation, the rest is
 `componentStep`. -/
-def closureStep (p : Σ n, L.BoundedFormulaω Empty n) :
+private def closureStep (p : Σ n, L.BoundedFormulaω Empty n) :
     ℕ × ℕ → Option (Σ n, L.BoundedFormulaω Empty n)
   | (5, _) => some ⟨p.1, p.2.not⟩
   | c => componentStep p c
 
 /-- Iterated closure steps along a list of codes. -/
-def closurePath (p : Σ n, L.BoundedFormulaω Empty n) :
+private def closurePath (p : Σ n, L.BoundedFormulaω Empty n) :
     List (ℕ × ℕ) → Option (Σ n, L.BoundedFormulaω Empty n)
   | [] => some p
   | c :: l => (closureStep p c).bind (closurePath · l)
 
-theorem closurePath_append (p : Σ n, L.BoundedFormulaω Empty n) (l₁ l₂ : List (ℕ × ℕ)) :
+private theorem closurePath_append (p : Σ n, L.BoundedFormulaω Empty n) (l₁ l₂ : List (ℕ × ℕ)) :
     closurePath p (l₁ ++ l₂) = (closurePath p l₁).bind (closurePath · l₂) := by
   induction l₁ generalizing p with
   | nil => rfl
@@ -118,7 +119,7 @@ theorem closurePath_append (p : Σ n, L.BoundedFormulaω Empty n) (l₁ l₂ : L
     | some q => exact ih q
 
 /-- A single component step lands inside the closure. -/
-theorem NegationClosedFrom.of_componentStep {S : Set (Σ n, L.BoundedFormulaω Empty n)}
+private theorem NegationClosedFrom.of_componentStep {S : Set (Σ n, L.BoundedFormulaω Empty n)}
     {q p : Σ n, L.BoundedFormulaω Empty n} {c : ℕ × ℕ}
     (hq : NegationClosedFrom S q) (h : componentStep q c = some p) : NegationClosedFrom S p := by
   unfold componentStep at h
@@ -131,7 +132,7 @@ theorem NegationClosedFrom.of_componentStep {S : Set (Σ n, L.BoundedFormulaω E
   · simp at h
 
 /-- A single closure step lands inside the closure. -/
-theorem NegationClosedFrom.of_closureStep {S : Set (Σ n, L.BoundedFormulaω Empty n)}
+private theorem NegationClosedFrom.of_closureStep {S : Set (Σ n, L.BoundedFormulaω Empty n)}
     {q p : Σ n, L.BoundedFormulaω Empty n} {c : ℕ × ℕ}
     (hq : NegationClosedFrom S q) (h : closureStep q c = some p) : NegationClosedFrom S p := by
   obtain ⟨n, φ⟩ := q
@@ -142,7 +143,7 @@ theorem NegationClosedFrom.of_closureStep {S : Set (Σ n, L.BoundedFormulaω Emp
 
 /-- **The path characterization**: the negation closure is exactly what is reachable from `S`
 by finitely many coded closure steps. -/
-theorem negationClosedFrom_iff_path {S : Set (Σ n, L.BoundedFormulaω Empty n)}
+private theorem negationClosedFrom_iff_path {S : Set (Σ n, L.BoundedFormulaω Empty n)}
     {p : Σ n, L.BoundedFormulaω Empty n} :
     NegationClosedFrom S p ↔ ∃ s ∈ S, ∃ l : List (ℕ × ℕ), closurePath s l = some p := by
   constructor

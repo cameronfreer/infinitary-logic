@@ -113,8 +113,11 @@ theorem henkinClosed_withNatConstantsSentences_henkinClosure
   henkinClosed_withNatConstantsSentences (henkinBasis_henkinClosure S)
 
 /-- **Countable model existence over the Henkin closure of a countable set.**  The v4.5.0
-source-fragment endpoint with the basis discharged by the closure; the consistency hypothesis is
-in the constants-expanded universe of the closure, as before. -/
+source-fragment endpoint with the basis discharged by the closure.  The consistency hypothesis is
+over the constants-expanded universe of the **full** closure, a larger permission set than the
+minimal interface `HenkinClosedMin` needs: the closure conveniently produces full closure, and
+the weaker interface permits weaker evidence, but nothing here transports consistency from a
+smaller universe to this one. -/
 theorem exists_countable_model_of_aconsistent_henkinClosure [L.IsRelational]
     [Countable (Σ l, L.Relations l)] {S : Set (Σ n, L.BoundedFormulaω Empty n)}
     (hS : S.Countable) {T : L.Theoryω} (hT : T ⊆ (henkinClosure S).sentenceSlice)

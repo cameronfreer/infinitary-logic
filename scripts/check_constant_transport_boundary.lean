@@ -17,6 +17,7 @@ assuming both is vacuous — it would type-check and prove anything by explosion
 Run with: lake env lean scripts/check_constant_transport_boundary.lean
 -/
 import InfinitaryLogic.Admissible.Barwise.ConstantTransport
+import InfinitaryLogic.Admissible.Barwise.HenkinClosure
 
 open Lean FirstOrder Language
 
@@ -45,6 +46,10 @@ run_cmd do
   let env ← getEnv
   unless (env.find? `FirstOrder.Language.isEmpty_term_empty_of_isRelational).isSome do
     throwError "boundary lemma isEmpty_term_empty_of_isRelational not found"
+  -- every guarded module must be imported: an omitted import would silently disable coverage
+  for m in guardedModules do
+    unless (env.getModuleIdx? m).isSome do
+      throwError "[UNGUARDED MODULE] {m} is not imported by this guard, so it is not inspected"
   -- negative control: the mechanism must see the vacuous shape
   unless mentionsBoth env `vacuousShapeControl do
     throwError "negative control FAILED: the guard cannot detect the vacuous shape"
