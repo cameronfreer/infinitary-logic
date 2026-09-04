@@ -17,6 +17,7 @@ import InfinitaryLogic.Admissible.Barwise.ConsistencyBridge
 import InfinitaryLogic.Admissible.Barwise.HenkinClosed
 import InfinitaryLogic.Admissible.Barwise.SourceFragment
 import InfinitaryLogic.Admissible.Barwise.HenkinClosure
+import InfinitaryLogic.Admissible.Barwise.GraphUniverse
 import InfinitaryLogic.Admissible.Barwise.ConstantTransport
 
 /-!

@@ -18,6 +18,7 @@ Run with: lake env lean scripts/check_constant_transport_boundary.lean
 -/
 import InfinitaryLogic.Admissible.Barwise.ConstantTransport
 import InfinitaryLogic.Admissible.Barwise.HenkinClosure
+import InfinitaryLogic.Admissible.Barwise.GraphUniverse
 
 open Lean FirstOrder Language
 
@@ -40,7 +41,8 @@ def guardedModules : List Name :=
   [`InfinitaryLogic.Admissible.Barwise.ConstantTransport,
    `InfinitaryLogic.Admissible.Barwise.SourceFragment,
    `InfinitaryLogic.Admissible.Barwise.HenkinClosed,
-   `InfinitaryLogic.Admissible.Barwise.HenkinClosure]
+   `InfinitaryLogic.Admissible.Barwise.HenkinClosure,
+   `InfinitaryLogic.Admissible.Barwise.GraphUniverse]
 
 run_cmd do
   let env ← getEnv
