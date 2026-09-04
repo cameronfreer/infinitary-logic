@@ -673,6 +673,16 @@ proved separately from L\'opez--Escobar and does not go through this one.
 
 \inputleannode{thm:analytic-wellorder-boundedness}
 
+The same boundedness reaches trees.  A code names a tree on $\mathbb{N}$ through a
+distinguished unary relation, and the tree class is closed.  The Kleene--Brouwer
+code sends a tree code to the code of the order that lists the tree's nodes first,
+in Kleene--Brouwer order, and every other natural afterwards; each coordinate of the
+code depends on two membership bits, so the map is continuous.  A well-founded tree
+has a well-ordered Kleene--Brouwer code, and its rank is at most the order type, so
+the bound on order types becomes a bound on tree ranks.
+
+\inputleannode{thm:analytic-wellfounded-tree-boundedness}
+
 That boundedness is what the thinness package of Section~\ref{sec:thinness}
 needs on a Cantor antichain, whenever the rank in question is the order type of
 a continuously presented family of coded well-orders.  Packaging the two

@@ -28,6 +28,7 @@ import InfinitaryLogic.Descriptive.G0Dichotomy
 import InfinitaryLogic.Descriptive.G0Fusion
 import InfinitaryLogic.Descriptive.CantorStabilization
 import InfinitaryLogic.Descriptive.KleeneBrouwer
+import InfinitaryLogic.Descriptive.TreeCodes
 
 -- Counting dichotomy and finite carrier
 import InfinitaryLogic.Descriptive.CountingDichotomy
@@ -101,6 +102,9 @@ application of that vocabulary:
   well-foundedness of strict extension, KB is a well-order on a well-founded tree
   (`KleeneBrouwer.isWellOrder_kbLT`), and the tree height is bounded by the KB order type
   (`KleeneBrouwer.treeHeight_le_type`);
+- `TreeCodes`: tree codes over a countable alphabet, the closed tree class, the continuous
+  Kleene–Brouwer code into `Language.order`, and analytic boundedness for well-founded trees
+  (`analytic_wellFoundedTree_rank_boundedness`) with its domination adapter;
 - `KuratowskiUlam`: the meager-sections direction of Kuratowski–Ulam
   (`isMeagre_of_isMeagre_sections`);
 - `GSGraph`: the graphs `G_S(2^ℕ)` and Miller's independence lemma
