@@ -274,7 +274,25 @@ closure is external syntactic saturation, not an admissibility notion: admissibi
 when internalizing the construction and showing its codes remain inside the admissible language.
 No fragment structure gains a field.
 
-**The syntactic transport is proved; the semantic arbitrary-language endpoint is pending.**
+**The countable-signature, not-necessarily-relational endpoint has landed**
+(`Admissible/Barwise/GraphUniverse.lean`). Relationalization is applied *before* the proof system:
+`Fragment.graphFragment F hF` is the Henkin closure of the relationalized members of a countable
+fragment together with the graph axioms of its function support (`Fragment.functionSupport`,
+countable, which `graphAxioms` requires — the countability parameter is not optional);
+`Fragment.graphUniverse F hF` is its constants-expanded universe, and `Fragment.graphTheory F hF T`
+the relationalized theory with the axioms, mapped into the expansion.
+`Fragment.exists_countable_model_of_aconsistent_graphUniverse` gives a countable `L`-model of any
+`T ⊆ F.sentenceSlice` whose graph theory is `AConsistent` **in the graph universe**: the kernel
+runs over the relational graph language, the constants are forgotten, and the source structure is
+reconstructed through the graph axioms and `realize_relationalize_reconstruct`. Both symbol sigmas
+of `L` are assumed countable; `L` need not be relational. No derivation-level relationalization
+is attempted, so no consistency is transported across relationalization: the theorem is named
+for its hypothesis. The unrestricted arbitrary-language endpoint (uncountable signatures) is
+still pending. The cone guard pins this root to the relationalization chain and the kernel;
+`scripts/check_graph_universe_imports.lean` keeps its import closure below the broad
+interpolation cone.
+
+**The syntactic transport is proved separately.**
 `Admissible/Barwise/ConstantTransport.lean` eliminates the constants by one closed base term
 (`elimConsts t₀`), maps derivations rule by rule (`Derivable.map_elimConsts`), and transports
 consistency over the closed-instance universe `Fragment.closedInstances F` into consistency in the
@@ -282,8 +300,10 @@ constants expansion (`aconsistent_withConstants_of_closedInstances`), for any la
 closed term. It composes with **nothing** semantic yet: a relational language has no closed term
 (`isEmpty_term_empty_of_isRelational`), and the kernel adapters above require `[L.IsRelational]`,
 so a composite theorem would be vacuous. `scripts/check_constant_transport_boundary.lean` rejects
-any declaration assuming both. The composite source theorem waits on the relationalization
-transport, where constant elimination is applied before, or within, that route.
+any declaration assuming both. It has no instance inside the relationalization route either:
+`graphLanguage L` is relational and has no closed term, and on the source side a
+derivation-level relationalization would be needed, which does not exist. The syntactic transport
+remains a standalone result about languages with a closed term.
 
 **Deliberately out of scope, and why:**
 

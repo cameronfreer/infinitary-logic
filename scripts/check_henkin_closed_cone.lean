@@ -27,6 +27,7 @@ Run with: lake env lean scripts/check_henkin_closed_cone.lean
 -/
 import InfinitaryLogic.Admissible.Barwise.HenkinClosed
 import InfinitaryLogic.Admissible.Barwise.HenkinClosure
+import InfinitaryLogic.Admissible.Barwise.GraphUniverse
 import InfinitaryLogic.Admissible.Barwise.SourceFragment
 import InfinitaryLogic.Admissible.Barwise.ConsistencyBridge
 import InfinitaryLogic.Methods.Henkin.Construction
@@ -116,6 +117,18 @@ def guardedRoots : List (Name × List Name) :=
      `FirstOrder.Language.HenkinClosed, `FirstOrder.Language.HenkinClosedMin,
      `FirstOrder.Language.AConsistent, `FirstOrder.Language.exists_henkinComplete,
      `FirstOrder.Language.truth_both,
+     `FirstOrder.Language.BoundedFormulaω.realize_mapLanguage]),
+   -- The graph-universe endpoint: relationalization, the graph axioms, reconstruction and the
+   -- capstone, the closure route, and the kernel below it.
+   (`FirstOrder.Language.Fragment.exists_countable_model_of_aconsistent_graphUniverse,
+    [`FirstOrder.Language.relationalizeFormula, `FirstOrder.Language.graphAxioms,
+     `FirstOrder.Language.reconstructStructure,
+     `FirstOrder.Language.realize_relationalize_reconstruct,
+     `FirstOrder.Language.Fragment.graphUniverse, `FirstOrder.Language.Fragment.graphTheory,
+     `FirstOrder.Language.Fragment.functionSupport, `FirstOrder.Language.Fragment.henkinClosure,
+     `FirstOrder.Language.HenkinClosed, `FirstOrder.Language.HenkinClosedMin,
+     `FirstOrder.Language.AConsistent, `FirstOrder.Language.exists_henkinComplete,
+     `FirstOrder.Language.truth_both,
      `FirstOrder.Language.BoundedFormulaω.realize_mapLanguage])]
 
 def requiredWitness : List Name := (guardedRoots.map Prod.snd).flatten
@@ -139,7 +152,12 @@ run_cmd do
        `FirstOrder.Language.BoundedFormulaω.realize_mapLanguage]),
      (`FirstOrder.Language.Fragment.exists_countable_model_of_aconsistent_henkinClosure,
       [`FirstOrder.Language.truth_both, `FirstOrder.Language.exists_henkinComplete,
-       `FirstOrder.Language.BoundedFormulaω.realize_mapLanguage])]
+       `FirstOrder.Language.BoundedFormulaω.realize_mapLanguage]),
+     (`FirstOrder.Language.Fragment.exists_countable_model_of_aconsistent_graphUniverse,
+      [`FirstOrder.Language.truth_both, `FirstOrder.Language.exists_henkinComplete,
+       `FirstOrder.Language.BoundedFormulaω.realize_mapLanguage,
+       `FirstOrder.Language.realize_relationalize_reconstruct,
+       `FirstOrder.Language.reconstructStructure])]
   for (endpoint, ws) in proofOnly do
     unless (env.find? endpoint).isSome do throwError "endpoint {endpoint} not found"
     let noProofs := transitiveDepsWith env true endpoint

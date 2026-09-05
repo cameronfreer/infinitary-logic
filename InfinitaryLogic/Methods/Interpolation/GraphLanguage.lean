@@ -64,6 +64,26 @@ instance graphLanguage_isRelational (L : Language.{0, 0}) : (graphLanguage L).Is
 
 variable {L : Language.{0, 0}}
 
+/-! ## Graph-symbol countability -/
+
+/-- A graph relation symbol is a base relation or a function symbol. -/
+private def graphRelCode :
+    (Σ n, (graphLanguage L).Relations n) → (Σ n, L.Relations n) ⊕ (Σ n, L.Functions n)
+  | ⟨_, .base R⟩ => Sum.inl ⟨_, R⟩
+  | ⟨_, .graph f⟩ => Sum.inr ⟨_, f⟩
+
+private theorem graphRelCode_injective : Function.Injective (graphRelCode (L := L)) := by
+  rintro ⟨n, R⟩ ⟨m, S⟩ h
+  cases R <;> cases S <;> simp only [graphRelCode, Sum.inl.injEq, Sum.inr.injEq,
+    Sigma.mk.injEq, reduceCtorEq] at h ⊢
+  · obtain ⟨rfl, h⟩ := h; exact ⟨rfl, by subst h; rfl⟩
+  · obtain ⟨rfl, h⟩ := h; exact ⟨rfl, by subst h; rfl⟩
+
+/-- The graph language's relation sigma is countable when both symbol sigmas of `L` are. -/
+instance graphLanguage_countable_relations [Countable (Σ l, L.Relations l)]
+    [Countable (Σ n, L.Functions n)] : Countable (Σ n, (graphLanguage L).Relations n) :=
+  graphRelCode_injective.countable
+
 /-! ## The graph expansion of an `L`-structure -/
 
 /-- Realization of a graph-language relation symbol in the graph expansion of an `L`-structure:
