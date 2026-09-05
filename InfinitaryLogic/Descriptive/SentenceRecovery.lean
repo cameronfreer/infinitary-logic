@@ -33,6 +33,15 @@ countable sentence list has countably many realized truth sequences carries no s
 (`no_antichain_of_countable_sentence_spectra`), and a sentence with that property is thin
 (`thin_of_countable_sentence_spectra`).  The converse needs Silver and lives in
 `Conditional/SentenceSpectrum.lean`.
+
+## Classical background
+
+Marker, *Lectures on Infinitary Model Theory* (Fall 2013 notes,
+https://homepages.math.uic.edu/~marker/math512-F13/512_lecture_notes1.pdf): Corollary 4.24 and
+Theorem 4.25 for invariant separation and López–Escobar; Definition 3.11 and Corollary 3.20 for
+scatteredness. The relative López–Escobar theorem and the recovery of Cantor parameters are derived
+here from invariant separation; they are consequences assembled in this project. No claim is made
+that these exact formulations occur in the notes.
 -/
 
 namespace FirstOrder.Language

@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Conditional.SilverAntichain
 import InfinitaryLogic.Descriptive.SentenceRecovery
+import InfinitaryLogic.Descriptive.SentenceObservables
 import Architect
 
 /-!
@@ -31,10 +32,20 @@ the model class discharged.
 ## Not claimed
 
 Countable spectra say `∀ θ, countable image`.  They do not supply one list `θ` that classifies
-isomorphism on `C`: a Borel complete invariant together with thinness would force countably many
-classes.  Nothing here establishes the spectrum bound for any particular sentence; applications
-must supply their own smallness argument.  This module lives in `Conditional/` beside
+isomorphism on `C`: a Borel complete invariant together with thinness forces countably many
+classes (`countable_iso_classes_of_thin_borel_classifiable`).  Nothing here establishes the
+spectrum bound for any particular sentence; applications must supply their own smallness
+argument.  This module lives in `Conditional/` beside
 `MorleyPerfect.lean` because it consumes the Silver adapter.
+
+## Classical background
+
+Marker, *Lectures on Infinitary Model Theory* (Fall 2013 notes,
+https://homepages.math.uic.edu/~marker/math512-F13/512_lecture_notes1.pdf): Corollary 4.24 and
+Theorem 4.25 for invariant separation and López–Escobar; Definition 3.11 and Corollary 3.20 for
+scatteredness. The sentence-spectrum formulation of scatteredness, on an arbitrary Borel class and
+without a Borel isomorphism relation, is assembled here from the project's Silver adapter and its
+sentence-recovery API. No claim is made that these exact formulations occur in the notes.
 -/
 
 namespace FirstOrder.Language
@@ -108,5 +119,25 @@ theorem Sentenceω.isThinOnNatModels_iff_countable_sentence_spectra (φ : L.Sent
     φ.IsThinOnNatModels ↔
       ∀ θ : ℕ → L.Sentenceω, (sentenceTheory θ '' ModelsOf φ).Countable :=
   thin_iff_countable_sentence_spectra (ModelsOf φ) (modelsOf_measurableSet φ)
+
+/-- **Guardrail**: a Borel complete invariant cannot classify a thin class with uncountably many
+isomorphism classes.  This does not conflict with countable sentence spectra, which quantify
+over each list separately rather than assert one complete list exists. -/
+theorem countable_iso_classes_of_thin_borel_classifiable (C : Set (StructureSpace L))
+    (hC : MeasurableSet C) (hthin : IsThinOn (structureIsoSetoid L) C)
+    (hp : ∃ p : C → (ℕ → Bool), Measurable p ∧ ∀ c d : C,
+      (structureIsoSetoid L).r c.val d.val ↔ p c = p d) :
+    Countable (Quotient (Setoid.comap (fun c : C => c.val) (structureIsoSetoid L))) := by
+  obtain ⟨θ, hθ⟩ := (sentence_classification_iff_borel_classification C hC).mpr hp
+  let f : C → (ℕ → Bool) := fun c => sentenceTheory θ c.val
+  have hsmall := (thin_iff_countable_sentence_spectra C hC).mp hthin θ
+  have hrange : (Set.range f).Countable := hsmall.mono (by
+    rintro _ ⟨c, rfl⟩
+    exact ⟨c.val, c.property, rfl⟩)
+  have := hrange.to_subtype
+  have hs : Setoid.comap (fun c : C => c.val) (structureIsoSetoid L) = Setoid.ker f :=
+    Setoid.ext hθ
+  rw [hs]
+  exact (Setoid.quotientKerEquivRange f).injective.countable
 
 end FirstOrder.Language
