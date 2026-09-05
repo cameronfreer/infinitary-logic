@@ -33,6 +33,21 @@ theorem repeated_family_regression (c : StructureSpace L) (p : ℕ → Bool) :
   sentences_recover_observable (fun _ : ℕ => c) measurable_const
     (fun _ : ℕ => p) measurable_const (fun _ _ _ => rfl)
 
+/-- Structure assembly: the tail adapter fits the actual refined boundedness field of
+`ThinRankAnalysis`, with the other fields supplied as hypotheses. -/
+theorem thinRankAnalysis_assembly (C : Set (StructureSpace L)) (r : StructureSpace L → Ordinal.{0})
+    (hr : ∀ c ∈ C, r c < Ordinal.omega 1)
+    (hfix : ∀ α < Ordinal.omega 1, ∀ B : Set (StructureSpace L), B ⊆ C → (∀ x ∈ B, r x = α) →
+      (∀ x ∈ B, ∀ y ∈ B, (structureIsoSetoid L).r x y → x = y) → B.Countable)
+    (htail : ∀ θ : ℕ → L.Sentenceω, ∃ b < Ordinal.omega 1,
+      (sentenceTheory θ '' {c | c ∈ C ∧ b ≤ r c}).Countable) :
+    Nonempty (ThinRankAnalysis (structureIsoSetoid L) C) :=
+  ⟨{ rank := r
+     rank_lt_omega1 := hr
+     fixedRankAntichains_countable := hfix
+     bounded_on_refined_cantor_antichains :=
+       ThinRankAnalysis.bounded_refined_of_fragment_tails C r hr htail }⟩
+
 def headline : List Name :=
   [`FirstOrder.Language.sentences_recover_observable,
    `FirstOrder.Language.sentences_encode_observable,
@@ -41,7 +56,7 @@ def headline : List Name :=
    `FirstOrder.Language.antichain_rank_bounded_of_fragment_tails,
    `FirstOrder.Language.fragment_tails_of_eventual_sentence_decision,
    `FirstOrder.Language.ThinRankAnalysis.bounded_refined_of_fragment_tails,
-   `repeated_family_regression,
+   `repeated_family_regression, `thinRankAnalysis_assembly,
    `FirstOrder.Language.invariant_analytic_separation,
    `FirstOrder.Language.sentence_separates_analytic_classes,
    `FirstOrder.Language.sentence_pullback_of_iso_compatible,
@@ -62,5 +77,5 @@ run_cmd do
     let bad := axs.toList.filter fun a => !standardAxioms.contains a
     unless bad.isEmpty do throwError "[NONSTANDARD AXIOMS] {n} uses {bad}"
   logInfo "sentence-spectrum regression guard: OK (empty and arbitrary singleton classes \
-    admitted without an invariance premise; repeated families admitted; headline declarations \
-    on standard axioms)"
+    admitted without an invariance premise; repeated families admitted; tail adapter \
+    assembles a ThinRankAnalysis; headline declarations on standard axioms)"

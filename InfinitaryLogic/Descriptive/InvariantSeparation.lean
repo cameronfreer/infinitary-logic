@@ -18,6 +18,15 @@ Borel and invariant.  No Borelness of the isomorphism relation is used.
 
 Composed with López–Escobar (`lopez_escobar`), the invariant separator is the model class of one
 `L_{ω₁ω}`-sentence: `sentence_separates_analytic_classes`.
+
+## Classical background
+
+Marker, *Lectures on Infinitary Model Theory* (Fall 2013 notes,
+https://homepages.math.uic.edu/~marker/math512-F13/512_lecture_notes1.pdf): Corollary 4.24 and
+Theorem 4.25 for invariant separation and López–Escobar; Definition 3.11 and Corollary 3.20 for
+scatteredness. Marker's separation proof goes through interpolation; the proof here iterates
+ordinary analytic separation with saturation. No claim is made that these exact formulations occur
+in the notes.
 -/
 
 namespace FirstOrder.Language

@@ -30,6 +30,14 @@ Thresholds may depend on the whole sentence, not merely its quantifier rank.
 boundedness field of `ThinRankAnalysis` with `e := id`: the bound holds on the whole antichain.
 The other fields of a thinness argument — countable ranks and countable fixed-rank antichains —
 remain inputs.  Nothing here establishes tail smallness for any particular class.
+
+## Classical background
+
+Marker, *Lectures on Infinitary Model Theory* (Fall 2013 notes,
+https://homepages.math.uic.edu/~marker/math512-F13/512_lecture_notes1.pdf): Corollary 4.24 and
+Theorem 4.25 for invariant separation and López–Escobar; Definition 3.11 and Corollary 3.20 for
+scatteredness. The arbitrary-rank tail lemma is derived from the project's sentence-recovery API. No
+claim is made that these exact formulations occur in the notes.
 -/
 
 namespace FirstOrder.Language

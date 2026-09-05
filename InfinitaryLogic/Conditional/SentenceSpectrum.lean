@@ -37,6 +37,15 @@ classes (`countable_iso_classes_of_thin_borel_classifiable`).  Nothing here esta
 spectrum bound for any particular sentence; applications must supply their own smallness
 argument.  This module lives in `Conditional/` beside
 `MorleyPerfect.lean` because it consumes the Silver adapter.
+
+## Classical background
+
+Marker, *Lectures on Infinitary Model Theory* (Fall 2013 notes,
+https://homepages.math.uic.edu/~marker/math512-F13/512_lecture_notes1.pdf): Corollary 4.24 and
+Theorem 4.25 for invariant separation and López–Escobar; Definition 3.11 and Corollary 3.20 for
+scatteredness. The sentence-spectrum formulation of scatteredness, on an arbitrary Borel class and
+without a Borel isomorphism relation, is assembled here from the project's Silver adapter and its
+sentence-recovery API. No claim is made that these exact formulations occur in the notes.
 -/
 
 namespace FirstOrder.Language
@@ -111,9 +120,9 @@ theorem Sentenceω.isThinOnNatModels_iff_countable_sentence_spectra (φ : L.Sent
       ∀ θ : ℕ → L.Sentenceω, (sentenceTheory θ '' ModelsOf φ).Countable :=
   thin_iff_countable_sentence_spectra (ModelsOf φ) (modelsOf_measurableSet φ)
 
-/-- **Guardrail**: a Borel complete invariant cannot classify an uncountable thin class.  This does
-not conflict with countable sentence spectra, which quantify over each list separately rather than
-assert one complete list exists. -/
+/-- **Guardrail**: a Borel complete invariant cannot classify a thin class with uncountably many
+isomorphism classes.  This does not conflict with countable sentence spectra, which quantify
+over each list separately rather than assert one complete list exists. -/
 theorem countable_iso_classes_of_thin_borel_classifiable (C : Set (StructureSpace L))
     (hC : MeasurableSet C) (hthin : IsThinOn (structureIsoSetoid L) C)
     (hp : ∃ p : C → (ℕ → Bool), Measurable p ∧ ∀ c d : C,

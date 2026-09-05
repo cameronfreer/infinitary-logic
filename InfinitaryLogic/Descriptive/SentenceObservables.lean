@@ -23,6 +23,14 @@ No selector of representatives is built, and no Borel map into the syntax of sen
 claimed: the sentence list exists for the chosen observable, by classical choice.  The
 thinness corollary (a Borel complete invariant on a thin class forces countably many classes)
 needs the spectrum characterization and lives in `Conditional/SentenceSpectrum.lean`.
+
+## Classical background
+
+Marker, *Lectures on Infinitary Model Theory* (Fall 2013 notes,
+https://homepages.math.uic.edu/~marker/math512-F13/512_lecture_notes1.pdf): Corollary 4.24 and
+Theorem 4.25 for invariant separation and López–Escobar; Definition 3.11 and Corollary 3.20 for
+scatteredness. The observable-recovery statements are derived from the project's sentence-recovery
+API. No claim is made that these exact formulations occur in the notes.
 -/
 
 namespace FirstOrder.Language
