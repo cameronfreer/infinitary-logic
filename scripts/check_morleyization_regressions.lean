@@ -6,8 +6,11 @@ an atomic formula, by an existential formula with several possible witnesses, an
 conjunction each read off the truth lemma definitionally; the reduct after expansion is the
 identity; translated sentence families stay countable; the coded expansion is injective and its
 image is the class of models of the defining theory.  The lifted isomorphism has the given
-underlying bijection (`morleyEquiv_toEquiv`): no witness is selected in its data.  Headline
-declarations on standard axioms.
+underlying bijection (`morleyEquiv_toEquiv`), which certifies that the lift selects no new
+bijection; that no witness is selected anywhere rests on the construction itself (unchanged
+function symbols, every new relation interpreted by the full satisfaction proposition), not on
+an axiom check.  A back-translation regression exercises a named predicate under a quantifier
+with repeated and with function-term arguments.  Headline declarations on standard axioms.
 
 Run with: lake env lean scripts/check_morleyization_regressions.lean
 -/
@@ -31,8 +34,8 @@ theorem atomic_regression {n : ℕ} (R : L.Relations n) {Φ : Set (Σ n, L.Bound
       Structure.RelMap R x :=
   Iff.rfl
 
-/-- A relation defined by an existential formula, with several possible witnesses: the truth
-lemma is the existential, no witness selected. -/
+/-- A relation defined by an existential formula, without a uniqueness assumption on witnesses:
+the truth lemma is the existential itself, and no witness is selected. -/
 theorem existential_regression {n : ℕ} (φ : L.BoundedFormulaω Empty (n + 1))
     {Φ : Set (Σ n, L.BoundedFormulaω Empty n)}
     (h : (⟨n, φ.not.all.not⟩ : Σ n, L.BoundedFormulaω Empty n) ∈ Φ) (x : Fin n → M) :
@@ -62,12 +65,45 @@ theorem coded_reduct_regression {L : Language.{0, 0}} [L.IsRelational]
     reductCode (morleyCode Φ c) = c :=
   reductCode_morleyCode c
 
+/-- Back-translation under a quantifier with a repeated variable argument: `∀y R_φ(y, y)`
+translates to `∀y φ(y, y)`. -/
+theorem backtranslation_repeated_regression {Φ : Set (Σ n, L.BoundedFormulaω Empty n)}
+    (φ : L.BoundedFormulaω Empty 2) (h : (⟨2, φ⟩ : Σ n, L.BoundedFormulaω Empty n) ∈ Φ) :
+    Sentenceω.Realize (unMorleyize ((BoundedFormulaω.rel (Sum.inr ⟨φ, h⟩ :
+        (L.morleyize Φ).Relations 2) fun _ => Term.var (Sum.inr 0)).all)) M ↔
+      ∀ y : M, φ.Realize Empty.elim ![y, y] := by
+  show (unMorleyize _).Realize Empty.elim Fin.elim0 ↔ _
+  rw [realize_unMorleyize]
+  simp only [BoundedFormulaω.realize_all]
+  refine forall_congr' fun y => ?_
+  show φ.Realize Empty.elim (fun _ => (Fin.snoc (Fin.elim0 : Fin 0 → M) y : Fin 1 → M) 0) ↔
+    φ.Realize Empty.elim ![y, y]
+  exact Iff.of_eq (congrArg _ (funext fun i => by fin_cases i <;> rfl))
+
+/-- Back-translation under a quantifier with a function-term argument: `∀y R_φ(f(y))`
+translates to `∀y φ(f(y))`. -/
+theorem backtranslation_functionTerm_regression {Φ : Set (Σ n, L.BoundedFormulaω Empty n)}
+    (f : L.Functions 1) (φ : L.BoundedFormulaω Empty 1)
+    (h : (⟨1, φ⟩ : Σ n, L.BoundedFormulaω Empty n) ∈ Φ) :
+    Sentenceω.Realize (unMorleyize ((BoundedFormulaω.rel (L := L.morleyize Φ)
+        (Sum.inr ⟨φ, h⟩ : (L.morleyize Φ).Relations 1)
+        fun _ => Term.func (L := L.morleyize Φ) f fun _ => Term.var (Sum.inr 0)).all)) M ↔
+      ∀ y : M, φ.Realize Empty.elim (fun _ => Structure.funMap f fun _ => y) := by
+  show (unMorleyize _).Realize Empty.elim Fin.elim0 ↔ _
+  rw [realize_unMorleyize]
+  simp only [BoundedFormulaω.realize_all]
+  refine forall_congr' fun y => ?_
+  exact Iff.rfl
+
 def headline : List Name :=
   [`FirstOrder.Language.reduct_morleyExpansion,
    `FirstOrder.Language.morleyExpansion_model_definingTheory,
    `FirstOrder.Language.eq_morleyExpansion_of_model_definingTheory,
    `FirstOrder.Language.realize_unMorleyize,
    `FirstOrder.Language.morleyEquiv, `FirstOrder.Language.morleyEquiv_toEquiv,
+   `FirstOrder.Language.morleyEquivRestrict, `FirstOrder.Language.nonempty_morleyEquiv_iff,
+   `FirstOrder.Language.morleyCode_iso_iff,
+   `backtranslation_repeated_regression, `backtranslation_functionTerm_regression,
    `FirstOrder.Language.exists_morleyEmbedding_iff_aElementary,
    `FirstOrder.Language.morleyEmbedding_unique,
    `FirstOrder.Language.measurable_morleyCode,

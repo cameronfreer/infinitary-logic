@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.ModelTheory.Morleyization
 import InfinitaryLogic.Descriptive.SatisfactionBorel
+import InfinitaryLogic.Descriptive.StructureIsoSetoid
 
 /-!
 # Morleyization on coded structures
@@ -23,6 +24,8 @@ The first coded endpoint: a countable relational base `L` and a countable family
   (`measurableSet_image_morleyCode`).
 * `range_morleyCode`: the image is exactly the class of expansion codes satisfying the defining
   theory, by uniqueness of expansions satisfying it.
+* `morleyCode_iso_iff`: two expansion codes are isomorphic iff the base codes are — the
+  classification boundary, from `nonempty_morleyEquiv_iff`.
 
 Borel, not necessarily continuous: a defined coordinate is the truth of an infinitary formula.
 The fragment logic topology is a separate construction.
@@ -147,5 +150,16 @@ theorem range_morleyCode :
       rw [toStructure_morleyCode, hS]
     have hcode := congrArg StructureSpace.ofStructure this
     rwa [StructureSpace.ofStructure_toStructure, StructureSpace.ofStructure_toStructure] at hcode
+
+omit [Countable (Σ l, L.Relations l)] in
+/-- **The classification boundary**: expansion codes are isomorphic iff the base codes are. -/
+theorem morleyCode_iso_iff (c d : StructureSpace L) :
+    (structureIsoSetoid (L.morleyize Φ)).r (morleyCode Φ c) (morleyCode Φ d) ↔
+      (structureIsoSetoid L).r c d := by
+  show Nonempty (@Language.Equiv (L.morleyize Φ) ℕ ℕ (morleyCode Φ c).toStructure
+      (morleyCode Φ d).toStructure) ↔
+    Nonempty (@Language.Equiv L ℕ ℕ c.toStructure d.toStructure)
+  rw [toStructure_morleyCode, toStructure_morleyCode]
+  exact @nonempty_morleyEquiv_iff L Φ ℕ c.toStructure ℕ d.toStructure
 
 end FirstOrder.Language

@@ -29,8 +29,26 @@ keeps the whole base signature and adds one relation symbol `R_φ` of arity `n` 
   cast), and `realize_unMorleyize`: realization over the canonical expansion equals
   realization of the back-translation over the base structure.  This is proved directly from
   the definitions; no back-and-forth machinery enters.
-* `morleyEquiv`: an `L`-isomorphism lifts to an isomorphism of canonical expansions, with no
-  selected witnesses; `morleyEquiv_reduct`: it restricts back to the given one.
+* `morleyEquiv` and `morleyEquivRestrict`: an `L`-isomorphism lifts to an isomorphism of the
+  canonical expansions with the given underlying bijection (`morleyEquiv_toEquiv`), and any
+  isomorphism of the canonical expansions restricts to an `L`-isomorphism with the same
+  bijection (`morleyEquivRestrict_toEquiv`); packaged as
+  `nonempty_morleyEquiv_iff : Nonempty (M⁺ ≃ N⁺) ↔ Nonempty (M ≃[L] N)`.
+
+## Universe boundary of the back-translation
+
+`unMorleyize` and `realize_unMorleyize` take their free-variable type in `Type`, not `Type*`:
+the substitution API `BoundedFormulaω.subst` shares one universe between its source and target
+variable types, and the bound-variable slots being substituted are `Fin n : Type`.  Sentences
+and finite tuples are covered; the language and carrier universes stay general.  The rest of
+the module is universe-polymorphic in the usual way.
+
+## What the witness-free claim rests on
+
+Function symbols are unchanged and every new relation symbol is interpreted by the complete
+satisfaction proposition of its formula, so the canonical expansion selects nothing.  The
+isomorphism lift carries the given bijection (`morleyEquiv_toEquiv`); that theorem certifies
+that the lift chooses no new bijection, and the construction certifies the rest.
 
 These are **infinitary** definitions when `Φ` contains infinitary formulas; they are not a
 first-order presentation with omitted types (Marker, *Lectures on Infinitary Model Theory*,
@@ -243,11 +261,11 @@ theorem eq_morleyExpansion_of_model_definingTheory (S : (L.morleyize Φ).Structu
 
 /-- Terms of the expanded language are terms of the base language: the function symbols are the
 same. -/
-def termBack {β : Type*} : (L.morleyize Φ).Term β → L.Term β
+private def termBack {β : Type*} : (L.morleyize Φ).Term β → L.Term β
   | .var x => .var x
   | .func f ts => .func f fun i => termBack (ts i)
 
-theorem realize_termBack {β : Type*} (t : (L.morleyize Φ).Term β) (w : β → M) :
+private theorem realize_termBack {β : Type*} (t : (L.morleyize Φ).Term β) (w : β → M) :
     (termBack t).realize w = @Term.realize (L.morleyize Φ) M (morleyExpansion Φ M) β w t := by
   induction t with
   | var x => rfl
@@ -259,12 +277,12 @@ theorem realize_termBack {β : Type*} (t : (L.morleyize Φ).Term β) (w : β →
     funext i
     exact ih i
 
-/-- Rebinding: `α ⊕ Fin n` free variables become `α` free and `n` extra bound variables, with no
-cast in the universal case. -/
 private def boundifyAux {α : Type*} (n k : ℕ) : (α ⊕ Fin n) ⊕ Fin k → α ⊕ Fin (n + k) :=
   Sum.map id finSumFinEquiv ∘ Equiv.sumAssoc _ _ _
 
-def boundify {α : Type*} {n : ℕ} :
+/-- Rebinding: `α ⊕ Fin n` free variables become `α` free and `n` extra bound variables, with no
+cast in the universal case.  Implementation scaffolding for `unMorleyize`. -/
+private def boundify {α : Type*} {n : ℕ} :
     ∀ {k : ℕ}, L.BoundedFormulaω (α ⊕ Fin n) k → L.BoundedFormulaω α (n + k)
   | _, .falsum => .falsum
   | k, .equal t u => .equal (t.relabel (boundifyAux n k)) (u.relabel (boundifyAux n k))
@@ -318,7 +336,7 @@ private lemma snoc_comp_natAdd_succ {n k : ℕ} (xs : Fin (n + k) → M) (y : M)
     simp only [h1_lt, h2_lt, dite_true]
     rfl
 
-theorem realize_boundify {α : Type*} {n : ℕ} (v : α → M) :
+private theorem realize_boundify {α : Type*} {n : ℕ} (v : α → M) :
     ∀ {k : ℕ} (φ : L.BoundedFormulaω (α ⊕ Fin n) k) (zs : Fin (n + k) → M),
       (boundify φ).Realize v zs ↔ φ.Realize (Sum.elim v (zs ∘ Fin.castAdd k)) (zs ∘ Fin.natAdd n)
   | _, .falsum, _ => Iff.rfl
@@ -402,8 +420,32 @@ def morleyEquiv (Φ : Set (Σ n, L.BoundedFormulaω Empty n)) {N : Type w} [L.St
         rw [show (⇑e ∘ Empty.elim : Empty → N) = Empty.elim from funext fun z => z.elim] at h
         exact h.symm)
 
-/-- The lifted isomorphism has the given underlying bijection: it restricts back to `e` along
-the inclusion. -/
+/-- **Restriction**: an isomorphism of the canonical expansions is an `L`-isomorphism with the
+same bijection, through the base symbols. -/
+def morleyEquivRestrict {N : Type w} [L.Structure N]
+    (g : @Language.Equiv (L.morleyize Φ) M N (morleyExpansion Φ M) (morleyExpansion Φ N)) :
+    M ≃[L] N where
+  toEquiv := @Language.Equiv.toEquiv (L.morleyize Φ) M N (morleyExpansion Φ M)
+    (morleyExpansion Φ N) g
+  map_fun' f x := @Language.Equiv.map_fun (L.morleyize Φ) M N (morleyExpansion Φ M)
+    (morleyExpansion Φ N) g _ f x
+  map_rel' R x := @Language.Equiv.map_rel (L.morleyize Φ) M N (morleyExpansion Φ M)
+    (morleyExpansion Φ N) g _ (Sum.inl R) x
+
+theorem morleyEquivRestrict_toEquiv {N : Type w} [L.Structure N]
+    (g : @Language.Equiv (L.morleyize Φ) M N (morleyExpansion Φ M) (morleyExpansion Φ N)) :
+    (morleyEquivRestrict g).toEquiv =
+      @Language.Equiv.toEquiv (L.morleyize Φ) M N (morleyExpansion Φ M) (morleyExpansion Φ N) g :=
+  rfl
+
+/-- **Isomorphism transport, both directions**: the canonical expansions are isomorphic iff the
+base structures are. -/
+theorem nonempty_morleyEquiv_iff {N : Type w} [L.Structure N] :
+    Nonempty (@Language.Equiv (L.morleyize Φ) M N (morleyExpansion Φ M) (morleyExpansion Φ N)) ↔
+      Nonempty (M ≃[L] N) :=
+  ⟨fun ⟨g⟩ => ⟨morleyEquivRestrict g⟩, fun ⟨e⟩ => ⟨morleyEquiv Φ e⟩⟩
+
+/-- The lifted isomorphism has the given underlying bijection. -/
 theorem morleyEquiv_toEquiv {N : Type w} [L.Structure N] (e : M ≃[L] N) :
     @Language.Equiv.toEquiv (L.morleyize Φ) M N (morleyExpansion Φ M) (morleyExpansion Φ N)
       (morleyEquiv Φ e) = e.toEquiv := rfl
