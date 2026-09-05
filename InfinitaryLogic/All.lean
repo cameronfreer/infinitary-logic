@@ -7,6 +7,7 @@ import InfinitaryLogic.ModelTheory.HanfSpectrum
 import InfinitaryLogic.ModelTheory.InfinitaryTypes
 import InfinitaryLogic.ModelTheory.SmallModels
 import InfinitaryLogic.ModelTheory.AElementary
+import InfinitaryLogic.ModelTheory.FragmentType
 import InfinitaryLogic.ModelTheory.FragmentLowenheimSkolem
 import InfinitaryLogic.ModelTheory.AElementaryChains
 import InfinitaryLogic.ModelTheory.TypeIsolation
