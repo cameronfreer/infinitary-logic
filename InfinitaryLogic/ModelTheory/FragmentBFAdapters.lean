@@ -29,10 +29,10 @@ with no successor.
   to be replaced by countability or generation of `F`.
 
 Neither adapter promotes a bounded level to fragment elementarity or to an extension theorem,
-and neither shortens "all levels" to "countable levels".  The successor-counting composition
-with extension spectra (`countable_bfTupleQuotient_succ`) is deliberately not here: it needs
-two separate countability inputs, classes of tuples and realized extension *spectra*, and is
-frozen in the audit for a later step.
+and neither shortens "all levels" to "countable levels".  The pairwise adapters do not supply
+countability of realized extension spectra; that second counting input is separate
+(`FragmentBFSuccessor.lean`).  B needs countability of the source carrier only, not of the
+target, and the two carriers may live in different universes.
 
 Classical background: Marker, *Lectures on Infinitary Model Theory* (Cambridge, 2016),
 Theorem 2.1.4 and Theorem 2.1.13 (agreement up to quantifier rank `≤ α` and back-and-forth
