@@ -17,7 +17,7 @@ bijection `ℕ ≃ M`), so through the generic bounded-spectrum endpoint
 * `aleph0_lt_Lomega1omegaHanfNumber` — `ℵ₀ < Hanf(L_{ω₁ω})`.
 
 Reference: Marker, *Lectures on Infinitary Model Theory*, Ch. 1. The powerset witness (ladder
-stage `α = 0`) and the Marker Exercise 5.3 `ℶ_{α+1}` ladder complete the chain in sibling files
+stage `α = 0`) and the Marker Exercise 5.0.6 `ℶ_{α+1}` ladder complete the chain in sibling files
 (endpoint: `Lomega1omegaHanfNumber_eq_beth_omega1`, `HanfSpectrum/BethLadder.lean`).
 Implementation helpers live in the `CountableSpectrum` namespace; only the sentence and the
 headline spectrum theorems are top-level.

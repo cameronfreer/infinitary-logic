@@ -43,7 +43,7 @@ countable `L`-structures is the model class of a single `L_ω₁ω`-sentence. -/
   (statement := /-- Over a countable relational vocabulary, every isomorphism-invariant Borel
     class $B$ of coded countable structures is the model class of a single
     $\Lomegaone$-sentence. -/)
-  (proof := /-- Marker's route (Theorem~4.25).  $B$ and its complement are Borel, hence
+  (proof := /-- Marker's route (Theorem~4.3.7 of the 2016 book).  $B$ and its complement are Borel, hence
     analytic, so each is the branch projection of a cylinder tree along the query code.  Each
     tree is coded by a sentence $\Theta$ over the base language expanded by two disjoint
     tagged copies of a functional witness vocabulary (a constant, the successor, the code and

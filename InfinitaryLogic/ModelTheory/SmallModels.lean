@@ -9,7 +9,7 @@ import InfinitaryLogic.Methods.UniformCollapse
 # Small models: public facade
 
 The stable entry point for the small-model theorem (Marker, *Lectures on Infinitary Model
-Theory*, Theorem 11.2). Importing this file (or the default `import InfinitaryLogic`) exposes:
+Theory*, Theorem 5.2.5). Importing this file (or the default `import InfinitaryLogic`) exposes:
 
 * `infinitaryType` / `RealizedInfinitaryTypes` / `Lomega1omegaSmall` — the complete-type API
   (`ModelTheory/InfinitaryTypes.lean`);

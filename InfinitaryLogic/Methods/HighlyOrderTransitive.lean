@@ -9,7 +9,7 @@ import Mathlib.Order.Fin.Basic
 /-!
 # Highly order-transitive linear orders
 
-The order-theoretic input of the countably-many-types project (issue #11, Marker Theorem 11.2):
+The order-theoretic input of the countably-many-types project (issue #11, Marker Theorem 5.2.5):
 a linear order is **highly order-transitive** when every isomorphism between two finite
 increasing tuples extends to an order automorphism. Combined with the local EM equivariance
 package (`Methods/LocalEMEquivariance.lean`), such automorphisms of the skeleton induce

@@ -10,7 +10,7 @@ import InfinitaryLogic.ModelTheory.HanfSpectrum.CardinalBounds
 # The ladder upper bound
 
 EVERY model of the six ladder clauses at stage `α` has size at most `ℶ_{α+1}` — the
-maximal-size half of the Marker Exercise 5.3 spectrum computation. The proof is well-founded
+maximal-size half of the Marker Exercise 5.0.6 spectrum computation. The proof is well-founded
 induction on the level index: `|U_i| ≤ ℶ_{idxVal i}` — the base level is enumerated by the
 constants (`≤ ℵ₀`), a covered level `E`-extensionally injects into the powerset of its
 predecessor (`≤ 2^ℶ = ℶ⁺`, `CardinalBounds.mk_le_two_power_of_injective_set`), and a limit
