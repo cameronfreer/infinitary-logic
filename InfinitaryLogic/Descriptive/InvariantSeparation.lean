@@ -21,12 +21,11 @@ Composed with López–Escobar (`lopez_escobar`), the invariant separator is the
 
 ## Classical background
 
-Marker, *Lectures on Infinitary Model Theory* (Fall 2013 notes,
-https://homepages.math.uic.edu/~marker/math512-F13/512_lecture_notes1.pdf): Corollary 4.24 and
-Theorem 4.25 for invariant separation and López–Escobar; Definition 3.11 and Corollary 3.20 for
-scatteredness. Marker's separation proof goes through interpolation; the proof here iterates
-ordinary analytic separation with saturation. No claim is made that these exact formulations occur
-in the notes.
+The separation argument is the same iterative separation-and-saturation construction as Gao,
+*Invariant Descriptive Set Theory* (CRC Press, 2009), Lemma 5.4.6, specialized to the
+isomorphism action.  Marker, *Lectures on Infinitary Model Theory* (Cambridge, 2016),
+Corollary 4.3.6 and Theorem 4.3.7, gives the invariant-separation and López–Escobar background
+through interpolation (Corollary 4.24 and Theorem 4.25 in the Fall 2013 lecture notes).
 -/
 
 namespace FirstOrder.Language

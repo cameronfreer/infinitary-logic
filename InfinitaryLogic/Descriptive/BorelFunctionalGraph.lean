@@ -11,7 +11,8 @@ import Mathlib.MeasureTheory.Constructions.Polish.Basic
 A **functional** Borel graph — a Borel `G ⊆ X × Y` with at most one `y` above each `x` — has a
 Borel domain, and the partial function it names is Borel measurable.
 
-Both facts are Lusin–Souslin, which Mathlib supplies; this file packages the argument so consumers
+Both facts are Lusin–Souslin (Gao, *Invariant Descriptive Set Theory*, CRC Press, 2009,
+Theorem 1.3.1), which Mathlib supplies; this file packages the argument so consumers
 never restate it.  Nothing here is model-theoretic.
 
 ## The results

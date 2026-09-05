@@ -10,7 +10,7 @@ import InfinitaryLogic.ModelTheory.MorleyHanf
 /-!
 # The beth ladder: sharpness of the Morley–Hanf bound
 
-The assembly of Marker's Exercise 5.3 ladder: for every `α < ω₁` the ladder sentence has the
+The assembly of Marker's Exercise 5.0.6 ladder: for every `α < ω₁` the ladder sentence has the
 von Neumann model of size exactly `ℶ_{α+1}` (`VonNeumannModel.lean`) and no larger models
 (`LadderBound.lean`), so through the generic bounded-spectrum endpoint each `ℶ_{α+1}` is a
 strict lower bound for the global Hanf number; the successor-cofinal supremum
@@ -20,7 +20,7 @@ upper bound `Lomega1omegaHanfNumber_le_beth_omega1`:
 * `Lomega1omegaHanfNumber_eq_beth_omega1` — **`Hanf(L_{ω₁ω}) = ℶ_{ω₁}`**, the exact Hanf
   number of `L_{ω₁ω}` over `Language.{0,0}`.
 
-Reference: Marker, *Lectures on Infinitary Model Theory*, Exercise 5.3 and Theorem 5.4.
+Reference: Marker, *Lectures on Infinitary Model Theory*, Exercise 5.0.6 and Theorem 5.4 (2013 notes numbering).
 -/
 
 namespace FirstOrder
@@ -36,7 +36,7 @@ model size exactly `ℶ_{α+1}`, so `ℶ_{α+1} < Lomega1omegaHanfNumber`. -/
   (statement := /-- For every $\alpha < \omegaone$ there is an $\Lomegaone$ sentence whose
     models have size exactly $\beth_{\alpha+1}$ at the maximum, so
     $\beth_{\alpha+1} < \mathrm{Hanf}(\Lomegaone)$. -/)
-  (proof := /-- Marker's Exercise 5.3 ladder sentence over the level order $(\alpha+2)$:
+  (proof := /-- Marker's Exercise 5.0.6 ladder sentence over the level order $(\alpha+2)$:
     countably many constants enumerate the base level, adjacent levels descend along an
     extensional edge relation, and limit levels are covered. The von Neumann stages
     $V_{\omega+\beta}$ (with Mathlib's $|V_o| = \beth^{\mathrm{pre}}_o$) give a model of

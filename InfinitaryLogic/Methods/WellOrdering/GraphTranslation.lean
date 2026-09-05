@@ -23,8 +23,8 @@ The `[L.IsRelational]` restriction removed through the Craig Layer-3 relationali
   `L`-model realizing `φ` via the capstone `realize_relationalize_reconstruct`.
 
 The four public **arbitrary-language** endpoints of issue #12 live here:
-`exists_model_relPreserving` (Marker Theorem 4.26), `wellFounded_boundedness`,
-`wellOrder_type_boundedness` (Marker Corollary 4.27), and `wellOrdering_undefinable`.
+`exists_model_relPreserving` (Marker Theorem 4.4.1), `wellFounded_boundedness`,
+`wellOrder_type_boundedness` (Marker Corollary 4.4.2), and `wellOrdering_undefinable`.
 -/
 
 namespace FirstOrder.Language
@@ -33,12 +33,12 @@ open FirstOrder Structure
 
 variable {L : Language.{0, 0}}
 
-/-- **Marker Theorem 4.26 (arbitrary language)**: if `φ` has models with `lt`-chains of
+/-- **Marker Theorem 4.4.1 (arbitrary language)**: if `φ` has models with `lt`-chains of
 every countable length, then some nonempty model of `φ` carries a relation-preserving map
 `f : ℚ → M` — the raw positive conclusion; injectivity is a corollary under irreflexivity
 (`RelPreserving.injective_of_irreflexive`). -/
 @[blueprint "thm:wellordering-map"
-  (title := /-- Rational embedding from long chains (Marker 4.26) -/)
+  (title := /-- Rational embedding from long chains (Marker 4.4.1) -/)
   (statement := /-- Let $\varphi$ be an $\Lomegaone$-sentence over an arbitrary language
     with a distinguished binary relation symbol $<$.  If for every $\alpha < \omega_1$ some
     model of $\varphi$ contains a strictly $<$-increasing chain of length $\alpha$, then
@@ -49,7 +49,7 @@ every countable length, then some nonempty model of `φ` carries a relation-pres
     core: members are the base diagram $\{\hat\varphi\} \cup \{d_q < d_r : q < r\}$ plus a
     finite remainder whose mentioned rational constants sit, for every $\alpha < \omega_1$,
     on a chain with $\alpha$-margins in an approximating model (the gap condition~$(*)$).
-    The fifteen closure fields are Marker's Exercise~4.28; the fair Henkin enumeration
+    The fifteen closure fields are Marker's Exercise~4.28 of the 2013 notes; the fair Henkin enumeration
     completes the base diagram; the quotient term model realizes it, and $q \mapsto d_q^M$
     is the map.  Symbol countability is removed by the two-sorted generated sublanguage,
     and function symbols by the Craig relationalization layer (graph relations, totality/
@@ -110,11 +110,11 @@ theorem wellFounded_boundedness (φ : L.Sentenceω) (lt : L.Relations 2)
   obtain ⟨M, instL, -, f, hφreal, hf⟩ := exists_model_relPreserving φ lt hchains
   exact not_relPreserving_of_wellFounded (hwf M instL hφreal) f hf
 
-/-- **Boundedness, order-type form (Marker Corollary 4.27, arbitrary language)**: if every
+/-- **Boundedness, order-type form (Marker Corollary 4.4.2, arbitrary language)**: if every
 model of `φ` interprets `lt` as a well-order, some countable ordinal strictly bounds every
 model's order type. -/
 @[blueprint "thm:wellordering-boundedness"
-  (title := /-- Boundedness of well-ordered models (Marker 4.27) -/)
+  (title := /-- Boundedness of well-ordered models (Marker 4.4.2) -/)
   (statement := /-- If every model of an $\Lomegaone$-sentence $\varphi$ interprets the
     distinguished relation $<$ as a well-order, then there is a single countable ordinal
     $\alpha$ strictly bounding the order type of every model's interpreted relation. -/)

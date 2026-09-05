@@ -26,11 +26,10 @@ needs the spectrum characterization and lives in `Conditional/SentenceSpectrum.l
 
 ## Classical background
 
-Marker, *Lectures on Infinitary Model Theory* (Fall 2013 notes,
-https://homepages.math.uic.edu/~marker/math512-F13/512_lecture_notes1.pdf): Corollary 4.24 and
-Theorem 4.25 for invariant separation and López–Escobar; Definition 3.11 and Corollary 3.20 for
-scatteredness. The observable-recovery statements are derived from the project's sentence-recovery
-API. No claim is made that these exact formulations occur in the notes.
+Countable separating families and Borel complete invariants: Gao, *Invariant Descriptive Set
+Theory* (CRC Press, 2009), Proposition 5.4.4.  The observable-recovery statements here are
+derived from the project's sentence-recovery API and are not claimed to occur in that form in
+the source.
 -/
 
 namespace FirstOrder.Language

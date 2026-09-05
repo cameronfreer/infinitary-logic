@@ -7,7 +7,7 @@ import InfinitaryLogic.Lomega1omega.CountableIndex
 import Mathlib.SetTheory.Ordinal.Arithmetic
 
 /-!
-# The beth-ladder syntax (Marker, Exercise 5.3)
+# The beth-ladder syntax (Marker, Exercise 5.0.6)
 
 The common sentence of the bounded-spectrum ladder: for an ordinal `α`, the language
 `ladderLang α` has constants `cₙ` (`n : ℕ`), unary level predicates `U_i` indexed by
@@ -146,7 +146,7 @@ def extC : (ladderLang α).Sentenceω :=
       ((BoundedFormulaω.all ((eAtom (bvar 2) (bvar 1)).imp (eAtom (bvar 2) (bvar 0)))).imp
         (BoundedFormulaω.equal (bvar 0) (bvar 1)))))
 
-/-- **The ladder sentence** (Marker, Exercise 5.3). -/
+/-- **The ladder sentence** (Marker, Exercise 5.0.6). -/
 noncomputable def ladderSentence : (ladderLang α).Sentenceω :=
   BoundedFormulaω.iInf fun k =>
     match k with

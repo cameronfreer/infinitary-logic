@@ -18,7 +18,7 @@ and supplies the two facts the non-Borelness argument needs about it:
   to it once it is assumed Borel;
 * `exists_code_type_eq` — **every countably infinite order type is realized in it**: for
   `ω ≤ β < ω₁` some code of the class has order type exactly `β`.  This is what contradicts the
-  uniform bound of Marker's Corollary 4.27.
+  uniform bound of Marker's Corollary 4.4.2.
 
 The comparison structures are the arbitrary-language ones already built for
 `wellOrdering_undefinable` (`ordinalStructureFull`), transported to the carrier `ℕ` by the

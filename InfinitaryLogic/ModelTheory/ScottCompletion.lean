@@ -207,7 +207,7 @@ arbitrarily large models admits a COMPLETE sentence entailing it, with a model o
   (statement := /-- If $\varphi$ has arbitrarily large models and is $\kappa$-categorical
     ($\kappa$ infinite), there is a complete $\psi \models \varphi$ with a model of
     cardinality exactly $\kappa$, and $\psi$ is itself $\kappa$-categorical
-    (Marker, Theorem 11.2 applications). -/)
+    (Marker, Theorem 5.2.5 applications). -/)
   (proof := /-- The small-model theorem supplies a $\kappa$-sized model of $\varphi$
     realizing countably many types; the complete-subclass intermediate provides its complete
     Scott completion; categoricity of $\varphi$ transfers to $\psi$ since every

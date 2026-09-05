@@ -27,7 +27,7 @@ The two-element order facts (`covBy_of_lt_index_zero`, `not_isSuccLimit_index_ze
 isolated here so they do not contaminate the model verification; the general-stage analogues
 (`typein`-recursion) belong to `BethLadder.lean`.
 
-Reference: Marker, *Lectures on Infinitary Model Theory*, Exercise 5.3 (the `φ_1` stage).
+Reference: Marker, *Lectures on Infinitary Model Theory*, Exercise 5.0.6 (the `φ_1` stage).
 -/
 
 namespace FirstOrder

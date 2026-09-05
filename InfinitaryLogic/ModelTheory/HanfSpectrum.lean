@@ -23,7 +23,7 @@ spectra are BOUNDED, each consumed through the generic endpoint
 * `HanfSpectrum/Countable.lean` — spectrum exactly `{ℵ₀}`:
   `aleph0_lt_Lomega1omegaHanfNumber`.
 * `HanfSpectrum/LadderSyntax.lean` — the common ladder language and sentence (Marker,
-  Exercise 5.3) with the semantic packaging `realize_ladderSentence_iff`/`IsLadderModel`.
+  Exercise 5.0.6) with the semantic packaging `realize_ladderSentence_iff`/`IsLadderModel`.
 * `HanfSpectrum/CardinalBounds.lean` — the consumer-shaped cardinal arithmetic: countable
   sigma/union bounds, powerset-injection bound, and `⨆_{α<ω₁} ℶ_{α+1} = ℶ_{ω₁}`.
 * `HanfSpectrum/Powerset.lean` — the α = 0 instance: maximal model `Set ℕ`,
