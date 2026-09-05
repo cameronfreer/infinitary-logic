@@ -63,6 +63,8 @@ import InfinitaryLogic.Descriptive.AnalyticWellOrderBoundedness
 import InfinitaryLogic.Descriptive.WellOrderRankedThinness
 import InfinitaryLogic.Descriptive.InvariantSeparation
 import InfinitaryLogic.Descriptive.SentenceRecovery
+import InfinitaryLogic.Descriptive.SentenceObservables
+import InfinitaryLogic.Descriptive.FragmentTail
 
 -- Counting theorems (depend on descriptive results)
 import InfinitaryLogic.ModelTheory.CountingCountable
