@@ -30,14 +30,14 @@ representative-free: each description contributes a subsingleton image, and cove
 image inside their countable union.  Descriptions may overlap.  Nothing about the cover is
 assumed beyond coverage and determination: no measurability, no disjointness, no selector.
 
-Tuple reindexing is *not* transport within the same fragment: the syntax has no bound-variable
-reindexing operation and `Fragment` has no reindexing closure.  `realizedType_reindex` states
-transport against an explicit reindexed family on the slices, whose existence is a hypothesis.
+Reindexing need not preserve fragment membership: the reindexed formula can be built from the
+existing operations (`openBounds`, `mapFreeVars`, `relabel`), but `Fragment` has no reindexing
+closure.  `realizedType_reindex` transports types through a supplied slice map satisfying the
+semantic reindexing identity; it asserts nothing about membership.
 
-Classical background: Marker, *Lectures on Infinitary Model Theory* (Fall 2013 notes,
-https://homepages.math.uic.edu/~marker/math512-F13/512_lecture_notes1.pdf), Definition 3.11
-and §3.3 for fragment types and scatteredness.  The slice-indexed presentation and the
-determining-cover kernel are the project's own.
+Classical background: fragment types are Marker, *Lectures on Infinitary Model Theory*
+(Cambridge, 2016), Definition 2.2.19; the Borel pointed-type map is his Lemma 3.3.2.  The
+intrinsic subtype interface and the determining-cover packaging are as implemented here.
 -/
 
 namespace Set
@@ -104,11 +104,10 @@ theorem realizedType_equiv (F : Fragment L) {M N : Type w} [L.Structure M] [L.St
   rw [show (⇑e ∘ Empty.elim : Empty → N) = Empty.elim from funext fun x => x.elim] at h
   exact h.symm
 
-/-- **Reindexing is not transport within `F`.**  The syntax has no bound-variable reindexing
-operation and `Fragment` has no reindexing closure, so transport along `σ : Fin m → Fin n` is
-stated against an explicit reindexed family `ρ` on the slices, with the semantic identity
-`hρ` as a hypothesis: whenever such a family exists, the type of `a ∘ σ` is the type of `a`
-read through `ρ`. -/
+/-- **Reindexing need not preserve fragment membership.**  This lemma transports types between
+two slices of the same `F` through a supplied slice map `ρ` satisfying the semantic reindexing
+identity `hρ` for `σ : Fin m → Fin n`: the type of `a ∘ σ` is the type of `a` read through `ρ`.
+Whether the reindexed formulas belong to `F` is exactly what `ρ` supplies. -/
 theorem realizedType_reindex (F : Fragment L) (M : Type w) [L.Structure M] {m n : ℕ}
     (σ : Fin m → Fin n) (ρ : F.slice m → F.slice n)
     (hρ : ∀ (φ : F.slice m) (a : Fin n → M),

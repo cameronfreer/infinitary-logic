@@ -32,9 +32,13 @@ For a fragment `F`, an arity `n`, and a class `C` of coded structures, the **rea
 Empty slices, empty fragments, empty classes, and repeated coordinates are all admitted; the
 regression guard `scripts/check_fragment_spectrum_regressions.lean` exercises them.  No
 isomorphism-invariance of `C` is assumed anywhere.  The relation between countable spectra at
-every arity and thinness (scatteredness) is not established here: the arity-zero direction
+every arity and thinness (scatteredness) is outside this module: the arity-zero direction
 follows from the sentence-spectrum characterization, and the pointed-to-unpointed bridge is a
-separate theorem with its own descriptive prerequisite.
+separate theorem.
+
+Classical background: fragment types are Marker, *Lectures on Infinitary Model Theory*
+(Cambridge, 2016), Definition 2.2.19, and the Borel pointed-type map his Lemma 3.3.2; the
+spectrum over a class and the determining-cover packaging are as implemented here.
 -/
 
 namespace FirstOrder.Language
@@ -190,7 +194,8 @@ theorem measurable_pointedType (F : Fragment L) (n : ℕ) :
 omit [Countable (Σ n, L.Relations n)] in
 /-- **The Cantor encoding is secondary.**  Through a surjective enumeration of the slice, the
 spectrum is countable iff its encoded image in Cantor space is: the encoding is injective on
-types. -/
+types.  The surjection `ℕ → F.slice n` excludes an empty slice from this particular comparison;
+the intrinsic API above handles empty slices directly, and no padded encoding is needed. -/
 theorem typeSpectrum_countable_iff_encoded (F : Fragment L) (n : ℕ) (C : Set (StructureSpace L))
     (s : ℕ → F.slice n) (hs : Function.Surjective s) :
     (F.typeSpectrum n C).Countable ↔
