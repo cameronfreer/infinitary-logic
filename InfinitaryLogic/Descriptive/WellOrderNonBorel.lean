@@ -30,7 +30,7 @@ finite models cannot escape:
   countable fragment-elementary substructure with the defect, transport it to the carrier `ℕ`,
   and the resulting code would be a member of `ModelsOf φ = WO` that is not a well-order.
 
-Marker's Corollary 4.27 then bounds the order types of all models of `φ ⊓ infiniteAxiom` by a
+Marker's Corollary 4.4.2 then bounds the order types of all models of `φ ⊓ infiniteAxiom` by a
 single countable ordinal, which `exists_code_type_eq` contradicts.
 -/
 
@@ -58,7 +58,7 @@ exactly of the well-ordered ones. -/
     substructure with those witnesses and the failure survives, while the added conjunct keeps
     the substructure infinite, so it transports to a code lying in the class without being a
     well-order — a contradiction.  Hence every model of the conjunction is well-ordered, and
-    Marker's Corollary 4.27 bounds all their order types by one countable $\alpha$; the
+    Marker's Corollary 4.4.2 bounds all their order types by one countable $\alpha$; the
     comparison structure of type $\alpha + \omega$ transported to $\mathbb{N}$ is a code of the
     class exceeding that bound. -/)
   (uses := ["thm:lopez-escobar", "thm:wellordering-boundedness"])]

@@ -6,7 +6,7 @@ Authors: Cameron Freer
 import InfinitaryLogic.Methods.WellOrdering.MarkExtension
 
 /-!
-# The closure fields (issue #12, commit 4b part 3 — Exercise 4.28)
+# The closure fields (issue #12, commit 4b part 3 — Exercise 4.28 of the 2013 notes)
 
 The fifteen closure rules of the well-ordering consistency property, as `WOMem`-preservation
 theorems, in the reviewed order: C0 and deterministic connectives; branching through the

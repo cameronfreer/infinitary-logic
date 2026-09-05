@@ -16,6 +16,12 @@ unions) consumes. Deliberately absent, per the audit: atomic-formula membership 
 countable fragments to have countable languages), formation closure under countable
 connectives (destroys countability), syntactic substitution closure (subsumed by semantic
 parameters), and formal-negation closure (an NNF concern, #14).
+
+This is therefore **not** a fragment in the sense of Gao, *Invariant Descriptive Set Theory*
+(CRC Press, 2009), Definition 11.2.3, which contains the first-order formulas and is closed
+under Boolean operations, quantification and changes of variables.  Results stated for such
+fragments — the fragment logic topology of Gao's Theorem 11.4.1, for instance — do not apply
+to a component-closed `Fragment` unless those closure hypotheses are supplied separately.
 -/
 
 namespace FirstOrder

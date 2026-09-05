@@ -12,7 +12,7 @@ import InfinitaryLogic.ModelTheory.Hanf
 /-!
 # Small models of every infinite size: the countable-symbol core (issue #11 unit 7a)
 
-**Marker, Theorem 11.2, countable-symbol core**: if `φ` has arbitrarily large models then for
+**Marker, Theorem 5.2.5, countable-symbol core**: if `φ` has arbitrarily large models then for
 every infinite `κ` it has a model of size EXACTLY `κ` realizing only countably many complete
 `L_{ω₁ω}`-types (`exists_small_model_of_hasArbLargeModels_countable_symbols`).
 
@@ -32,7 +32,7 @@ namespace FirstOrder.Language
 
 open Cardinal
 
-/-- **The countable-symbol small-model theorem** (Marker, Theorem 11.2 core): a sentence with
+/-- **The countable-symbol small-model theorem** (Marker, Theorem 5.2.5 core): a sentence with
 arbitrarily large models has, at every infinite `κ`, a model of size exactly `κ` realizing only
 countably many complete `L_{ω₁ω}`-types. -/
 theorem exists_small_model_of_hasArbLargeModels_countable_symbols {L' : Language.{0, 0}}

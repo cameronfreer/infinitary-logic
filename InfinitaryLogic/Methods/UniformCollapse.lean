@@ -170,7 +170,7 @@ theorem hasArbLargeModels_mapLanguage_uniformCollapse {φ : L.Sentenceω}
   rw [BoundedFormulaω.mapLanguage_uniformCollapse_eq φ (subset_refl _) (subset_refl _)]
   exact (BoundedFormulaω.realize_mapLanguage LHom.sumInl _ Empty.elim Fin.elim0).mpr h0
 
-/-- **The small-model theorem** (Marker, Theorem 11.2), over an ARBITRARY language: a sentence
+/-- **The small-model theorem** (Marker, Theorem 5.2.5), over an ARBITRARY language: a sentence
 with arbitrarily large models has, at every infinite `κ`, a model of size exactly `κ` realizing
 only countably many complete `L_{ω₁ω}`-types. The final structure is literally the reduct of
 the countable-language small model along `uniformCollapse φ`, so satisfaction is generic
@@ -181,7 +181,7 @@ and hence its cardinality are unchanged. -/
   (statement := /-- A sentence of $\Lomegaone$ with arbitrarily large models has, at every
     infinite cardinal $\kappa$, a model of cardinality exactly $\kappa$ realizing only
     countably many complete $\Lomegaone$-types over the empty set, across all finite
-    arities (Marker, Theorem~11.2). -/)
+    arities (Marker, Theorem~5.2.5). -/)
   (proof := /-- The schema term source of the Morley seed over a highly order-transitive
     skeleton of size $\kappa$ (every linear ordered field is highly order-transitive, by cut
     dilations; lexicographic Hahn-series subfields realize every infinite cardinality). The

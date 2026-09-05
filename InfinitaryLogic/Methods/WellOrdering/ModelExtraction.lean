@@ -75,7 +75,7 @@ theorem realize_ratLtAtom {M : Type} [inst : L[[ℕ]].Structure M] (q r : ℚ) :
 
 /-! ## The step-5 endpoint (relational/countable form) -/
 
-/-- **Step 5 endpoint, relational/countable form** (Marker, Theorem 4.26 at a relational
+/-- **Step 5 endpoint, relational/countable form** (Marker, Theorem 4.4.1 at a relational
 language with countable relational core): under the well-ordered-chains hypothesis, some
 nonempty model of `φ` carries a relation-preserving map `f : ℚ → M` — the rational map of
 the extracted expansion, through its reduct `L`-structure.  The raw positive conclusion
