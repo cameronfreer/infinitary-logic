@@ -61,6 +61,8 @@ import InfinitaryLogic.Descriptive.WellOrderNonBorel
 -- Boundedness for analytic families of coded well-orders (issue #64; the PC sandwich + #12 + #13)
 import InfinitaryLogic.Descriptive.AnalyticWellOrderBoundedness
 import InfinitaryLogic.Descriptive.WellOrderRankedThinness
+import InfinitaryLogic.Descriptive.InvariantSeparation
+import InfinitaryLogic.Descriptive.SentenceRecovery
 
 -- Counting theorems (depend on descriptive results)
 import InfinitaryLogic.ModelTheory.CountingCountable
