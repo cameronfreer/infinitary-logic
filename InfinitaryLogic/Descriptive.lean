@@ -65,6 +65,7 @@ import InfinitaryLogic.Descriptive.InvariantSeparation
 import InfinitaryLogic.Descriptive.SentenceRecovery
 import InfinitaryLogic.Descriptive.SentenceObservables
 import InfinitaryLogic.Descriptive.FragmentTail
+import InfinitaryLogic.Descriptive.FragmentSpectrum
 
 -- Counting theorems (depend on descriptive results)
 import InfinitaryLogic.ModelTheory.CountingCountable
