@@ -13,8 +13,10 @@ import InfinitaryLogic.Admissible.Barwise.GraphUniverse
 
 open Lean
 
-/-- Modules the graph-universe closure must not reach (existence is not required: a renamed
-module would be caught by the substring rule below). -/
+/-- Modules the graph-universe closure must not reach.  Existence is not required, and the rule
+is a substring match: it catches a module only while its name retains one of these substrings,
+so a rename that drops the substring escapes it.  The guard enforces the present boundary; it
+does not track renames. -/
 def forbiddenModuleSub : List String :=
   ["Inseparability", "BudgetedPair", "Lyndon", "CraigArbitrary", "CraigInterpolation",
    "Interpolation.Craig"]

@@ -31,7 +31,8 @@ the support.
 
 `Fragment.exists_countable_model_of_aconsistent_graphUniverse`: a theory in a countable fragment
 whose graph theory is consistent **in the graph universe** has a countable `L`-model.  Both
-symbol sigmas of `L` are assumed countable (the graph language's relation sigma is their sum);
+symbol sigmas of `L` are assumed countable (`graphLanguage_countable_relations`, with the graph
+language infrastructure);
 `L` need not be relational.  This is not the unrestricted arbitrary-language endpoint.  No
 derivation-level relationalization is attempted: consistency is hypothesised over the graph
 language, and the theorem is named for that hypothesis.
@@ -42,25 +43,6 @@ namespace FirstOrder.Language
 open FirstOrder Structure
 
 variable {L : Language.{0, 0}}
-
-/-! ## Graph-symbol countability -/
-
-/-- A graph relation symbol is a base relation or a function symbol. -/
-def graphRelCode :
-    (Σ n, (graphLanguage L).Relations n) → (Σ n, L.Relations n) ⊕ (Σ n, L.Functions n)
-  | ⟨_, .base R⟩ => Sum.inl ⟨_, R⟩
-  | ⟨_, .graph f⟩ => Sum.inr ⟨_, f⟩
-
-theorem graphRelCode_injective : Function.Injective (graphRelCode (L := L)) := by
-  rintro ⟨n, R⟩ ⟨m, S⟩ h
-  cases R <;> cases S <;> simp only [graphRelCode, Sum.inl.injEq, Sum.inr.injEq,
-    Sigma.mk.injEq, reduceCtorEq] at h ⊢
-  · obtain ⟨rfl, h⟩ := h; exact ⟨rfl, by subst h; rfl⟩
-  · obtain ⟨rfl, h⟩ := h; exact ⟨rfl, by subst h; rfl⟩
-
-instance graphLanguage_countable_relations [Countable (Σ l, L.Relations l)]
-    [Countable (Σ n, L.Functions n)] : Countable (Σ n, (graphLanguage L).Relations n) :=
-  graphRelCode_injective.countable
 
 /-! ## The translations -/
 
@@ -141,6 +123,17 @@ theorem relationalizeTheory_union_axioms_subset_sentenceSlice {F : Fragment L}
   rintro σ (⟨φ, hφ, rfl⟩ | rfl)
   · exact subset_henkinClosure _ (Or.inl ⟨⟨0, φ⟩, hT hφ, rfl⟩)
   · exact subset_henkinClosure _ (Or.inr rfl)
+
+/-- The graph universe is countable when both symbol sigmas are. -/
+theorem graphUniverse_countable [Countable (Σ l, L.Relations l)] [Countable (Σ n, L.Functions n)]
+    {F : Fragment L} (hF : F.toSet.Countable) : (F.graphUniverse hF).Countable :=
+  withNatConstantsSentences_countable (graphFragment_countable hF)
+
+/-- The graph theory lies in the graph universe. -/
+theorem graphTheory_subset_graphUniverse {F : Fragment L} (hF : F.toSet.Countable)
+    {T : L.Theoryω} (hT : T ⊆ F.sentenceSlice) :
+    F.graphTheory hF T ⊆ F.graphUniverse hF :=
+  mapLanguage_image_subset (relationalizeTheory_union_axioms_subset_sentenceSlice hF hT)
 
 /-- Every source sentence's function support lies in the support covered by the graph axioms. -/
 theorem functionsIn_subset_functionSupport_of_mem_sentenceSlice {F : Fragment L} {T : L.Theoryω}
