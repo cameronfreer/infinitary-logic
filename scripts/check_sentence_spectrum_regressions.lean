@@ -1,8 +1,8 @@
 /-
 Regression guard for the sentence-spectrum characterization of thinness.
 
-`thin_iff_countable_sentence_spectra` must admit the empty class and a non-invariant singleton
-class with no hidden nonemptiness or invariance premise, and the headline declarations must use
+`thin_iff_countable_sentence_spectra` must admit the empty class and an arbitrary singleton
+class, without assuming isomorphism-invariance or nonemptiness, and the headline declarations must use
 only the standard axioms.
 
 Run with: lake env lean scripts/check_sentence_spectrum_regressions.lean
@@ -18,7 +18,7 @@ theorem empty_class_regression : IsThinOn (structureIsoSetoid L) ∅ := by
   intro θ
   exact Set.countable_empty.image (sentenceTheory θ)
 
-/-- A singleton is not isomorphism-invariant; the characterization still applies. -/
+/-- An arbitrary singleton, with no invariance assumed: the characterization applies as is. -/
 theorem singleton_class_regression (c : StructureSpace L) :
     IsThinOn (structureIsoSetoid L) {c} := by
   apply (thin_iff_countable_sentence_spectra {c} (measurableSet_singleton c)).mpr
@@ -45,5 +45,5 @@ run_cmd do
     let axs ← Elab.Command.liftCoreM (collectAxioms n)
     let bad := axs.toList.filter fun a => !standardAxioms.contains a
     unless bad.isEmpty do throwError "[NONSTANDARD AXIOMS] {n} uses {bad}"
-  logInfo "sentence-spectrum regression guard: OK (empty and non-invariant singleton classes \
-    admitted; headline declarations on standard axioms)"
+  logInfo "sentence-spectrum regression guard: OK (empty and arbitrary singleton classes \
+    admitted without an invariance premise; headline declarations on standard axioms)"
