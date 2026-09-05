@@ -47,8 +47,8 @@ All three are **sentence-level**. The theory-level analogues are false for Lω�
 
 | Result | In Lean | Scope |
 |---|---|---|
-| Chains of every countable length force a model carrying a relation-preserving map from ℚ (Marker 4.26) | `exists_model_relPreserving` | arbitrary language; raw positive form, **no injectivity claimed** |
-| A uniform countable bound on the order types of well-ordered models (Marker 4.27) | `wellOrder_type_boundedness` | |
+| Chains of every countable length force a model carrying a relation-preserving map from ℚ (Marker 2016, Theorem 4.4.1) | `exists_model_relPreserving` | arbitrary language; raw positive form, **no injectivity claimed** |
+| A uniform countable bound on the order types of well-ordered models (Marker 2016, Corollary 4.4.2) | `wellOrder_type_boundedness` | |
 | No Lω₁ω-sentence has as models exactly the well-orders | `wellOrdering_undefinable` | |
 | **López–Escobar** — a class of coded countable structures is Borel and isomorphism-invariant **iff** it is the model class of a single Lω₁ω-sentence; equivalently the invariant Borel classes are exactly the range of `ModelsOf` | `lopezEscobar_iff`, `lopezEscobar_action_iff` | **countable relational vocabulary** |
 | The coded well-order class WO is not Borel in the logic space | `wellOrderClass_not_measurableSet` | the cheap half of Π¹₁-completeness; many-one hardness not claimed |
@@ -138,7 +138,11 @@ Operational notes on building and releasing are in
 - Keisler, H. J. (1971). *Model Theory for Infinitary Logic*. North-Holland.
 - López-Escobar, E. G. K. (1965). An interpolation theorem for denumerably long formulas. *Fundamenta Mathematicae*, 57, 253–272.
 - Keisler, H. J. & Knight, J. F. (2004). Barwise: Infinitary Logic and Admissible Sets. *Bulletin of Symbolic Logic*, 10(1), 4–36.
-- Marker, D. (2016). *Lectures on Infinitary Model Theory*. Cambridge University Press.
+- Gao, S. (2009). *Invariant Descriptive Set Theory*. CRC Press.
+- Keisler, H. J. (2017). Randomizations of scattered sentences. In J. Iovino (Ed.), *Beyond First Order Model Theory* (Ch. 6). CRC Press.
+- Larson, P. B. (2017). Scott processes. In J. Iovino (Ed.), *Beyond First Order Model Theory* (Ch. 2). CRC Press.
+- Marker, D. (2013). *Lectures on Infinitary Model Theory*. Lecture notes, Math 512, University of Illinois at Chicago, Fall 2013. Numbering differs from the 2016 book; historical audits in `docs/` cite the notes.
+- Marker, D. (2016). *Lectures on Infinitary Model Theory*. Cambridge University Press. https://doi.org/10.1017/9781316855560
 - Nadel, M. E. (1974). Scott sentences and admissible sets. *Annals of Mathematical Logic*, 7(2–3), 267–294.
 
 ## License & Citation

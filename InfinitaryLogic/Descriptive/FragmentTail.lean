@@ -33,11 +33,9 @@ remain inputs.  Nothing here establishes tail smallness for any particular class
 
 ## Classical background
 
-Marker, *Lectures on Infinitary Model Theory* (Fall 2013 notes,
-https://homepages.math.uic.edu/~marker/math512-F13/512_lecture_notes1.pdf): Corollary 4.24 and
-Theorem 4.25 for invariant separation and López–Escobar; Definition 3.11 and Corollary 3.20 for
-scatteredness. The arbitrary-rank tail lemma is derived from the project's sentence-recovery API. No
-claim is made that these exact formulations occur in the notes.
+Scatteredness: Marker, *Lectures on Infinitary Model Theory* (Cambridge, 2016),
+Definition 3.3.1 and Corollary 3.3.10.  The arbitrary-rank tail lemma is assembled here from the
+project's sentence-recovery API and does not occur in that form in the source.
 -/
 
 namespace FirstOrder.Language

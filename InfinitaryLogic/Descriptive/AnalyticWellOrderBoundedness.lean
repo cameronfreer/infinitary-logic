@@ -18,7 +18,9 @@ countable ordinal bounds all their order types.
 
 The classical statement is the boundedness theorem for `Σ¹₁` subsets of `WO`; here it is obtained
 through the project's López–Escobar machinery rather than through a rank analysis, by routing an
-analytic `A` into a single `L_{ω₁ω}` sentence and then invoking Marker's Corollary 4.27.
+analytic `A` into a single `L_{ω₁ω}` sentence and then invoking Marker's Corollary 4.4.2
+(Marker, *Lectures on Infinitary Model Theory*, Cambridge, 2016; Corollary 4.27 of the 2013
+notes).  Compare Gao, *Invariant Descriptive Set Theory* (CRC Press, 2009), Theorem 1.6.10.
 
 ## The route
 
@@ -69,7 +71,7 @@ which is what the sandwich `A ⊆ codeReduct '' ModelsOf Θ ⊆ wellOrderClass l
     take $W$ to be the well-order class, which is invariant and contains $A$ by hypothesis.  The
     upper gate then says every model of $\Theta$ is a coded well-order for the transported
     relation, the defect bridge in containment form lifts that to every model of $\Theta$
-    conjoined with the infiniteness axiom, and Corollary~4.27 bounds all those order types by one
+    conjoined with the infiniteness axiom, and Corollary~4.4.2 bounds all those order types by one
     countable $\alpha$.  The lower gate exhibits each code of $A$ as the reduct of such a model,
     and $\mathbb{N}$ is infinite, so the bound applies to it. -/)
   (uses := ["thm:wellordering-boundedness"])]
@@ -92,7 +94,7 @@ theorem analytic_wellOrder_type_boundedness {A : Set (StructureSpace L)} (lt : L
     intro d hd
     have hbase : codeReduct d ∈ wellOrderClass lt := hupper ⟨d, hd, rfl⟩
     exact hbase
-  -- the bridge lifts coded well-orderedness to every model, and Marker 4.27 bounds them
+  -- the bridge lifts coded well-orderedness to every model, and Marker 4.4.2 bounds them
   obtain ⟨β, hβ, hbound⟩ := wellOrder_type_boundedness
     ((pcSentence L .left T).and (infiniteAxiom (graphLanguage (KLang L))))
     (GraphRelation.base (Sum.inl lt))

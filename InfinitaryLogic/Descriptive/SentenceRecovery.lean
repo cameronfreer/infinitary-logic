@@ -36,12 +36,11 @@ countable sentence list has countably many realized truth sequences carries no s
 
 ## Classical background
 
-Marker, *Lectures on Infinitary Model Theory* (Fall 2013 notes,
-https://homepages.math.uic.edu/~marker/math512-F13/512_lecture_notes1.pdf): Corollary 4.24 and
-Theorem 4.25 for invariant separation and López–Escobar; Definition 3.11 and Corollary 3.20 for
-scatteredness. The relative López–Escobar theorem and the recovery of Cantor parameters are derived
-here from invariant separation; they are consequences assembled in this project. No claim is made
-that these exact formulations occur in the notes.
+López–Escobar is Marker, *Lectures on Infinitary Model Theory* (Cambridge, 2016),
+Theorem 4.3.7; Gao, *Invariant Descriptive Set Theory* (CRC Press, 2009), Theorem 11.3.6, is
+an alternative exposition.  The relative form on a Borel family and the recovery of Cantor
+parameters are derived here from invariant separation; these formulations are not claimed to
+occur in the sources.
 -/
 
 namespace FirstOrder.Language

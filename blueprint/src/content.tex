@@ -45,7 +45,7 @@ Headline results include:
     (Theorem~\ref{thm:morley-hanf}).
   \item \textbf{The exact Hanf number.}
     $\mathrm{Hanf}(\Lomegaone) = \beth_{\omegaone}$: the Morley--Hanf bound is
-    sharp, by Marker's Exercise~5.3 beth ladder over the von Neumann hierarchy
+    sharp, by Marker's Exercise~5.0.6~\cite{marker2016} beth ladder over the von Neumann hierarchy
     (Theorem~\ref{thm:hanf-exact}).
   \item \textbf{Small models of every infinite size.}
     A sentence with arbitrarily large models has, at every infinite $\kappa$, a
@@ -286,7 +286,7 @@ argument.
 
 \section{Small Models}
 
-\emph{Status: proved.}  Marker's Theorem~11.2
+\emph{Status: proved.}  Marker's Theorem~5.2.5~\cite{marker2016}
 (\texttt{exists\_small\_model\_of\_hasArbLargeModels}, \ref{thm:small-models}): a sentence
 with arbitrarily large models has models of every infinite size realizing only countably many
 complete $\Lomegaone$-types.  The witnesses are the local Ehrenfeucht--Mostowski quotients of
@@ -344,7 +344,8 @@ on the coding space for countable structures.
 
 \emph{Status: proved, both directions.}  The theorem is
 L\'opez--Escobar's~\cite{lopezescobar1965}.  The hard direction follows Marker's
-route (Theorem~4.25 of~\cite{marker2016}) rather than an induction on the Borel
+route (Theorem~4.3.7 of~\cite{marker2016}; Gao~\cite[Theorem~11.3.6]{gao2009} is an
+alternative exposition) rather than an induction on the Borel
 hierarchy, which would not preserve isomorphism invariance.  An invariant Borel
 class and its complement are analytic, hence branch projections of cylinder
 trees along the query code; each tree is coded as a projective ($PC$) class over
@@ -369,7 +370,7 @@ theorem's use of invariance stays concentrated in the disjointness lemma.
 
 \section{Complete Sentences and Categoricity}
 
-\emph{Status: proved.}  The payoff of the small-model theorem (Marker, Theorem~11.2
+\emph{Status: proved.}  The payoff of the small-model theorem (Marker, Theorem~5.2.5
 applications): a small model's countable companion — built from realized-type isolators, one
 countable controlling fragment, and the genuine fragment L\"owenheim--Skolem theorem — is
 back-and-forth equivalent to it at every ordinal, and the companion's canonical Scott sentence
@@ -490,9 +491,10 @@ relation coarser than isomorphism; the other recovers the Cantor parameter of an
 antichain by sentences, through invariant analytic separation and
 L\'opez--Escobar.  The class need not be isomorphism-invariant, and no
 Borelness of isomorphism is used (classical background: invariant separation and
-L\'opez--Escobar are Corollary~4.24 and Theorem~4.25 of Marker's 2013
-notes~\cite{marker2013notes}, scatteredness is their Definition~3.11 and
-Corollary~3.20; the spectrum formulation is assembled here).  Countable spectra
+L\'opez--Escobar are Corollary~4.3.6 and Theorem~4.3.7 of Marker~\cite{marker2016},
+scatteredness is his Definition~3.3.1 and Corollary~3.3.10; the iterated
+separation-and-saturation argument is that of Gao~\cite[Lemma~5.4.6]{gao2009};
+the spectrum formulation is assembled here).  Countable spectra
 quantify over every list;
 they do not supply one list that classifies isomorphism, which together with
 thinness would force countably many classes.
@@ -633,7 +635,7 @@ successor issue.
 
 \chapter{Undefinability of Well-Ordering}
 
-Marker's consistency-property construction (Theorem~4.26 and Corollary~4.27
+Marker's consistency-property construction (Theorem~4.4.1 and Corollary~4.4.2
 of~\cite{marker2016}): an $\Lomegaone$-sentence whose models
 contain well-ordered chains of every countable length has a model embedding the rationals
 positively into the distinguished relation.  Consequently the well-ordered models of any
@@ -670,7 +672,7 @@ $\mathbb{N}$ is not Borel.  Were it Borel it would be $\mathrm{ModelsOf}\
 escapes) and seeding a countable fragment-elementary substructure with the
 witnesses of any well-ordering defect --- two incomparable unequal elements, or
 an infinite descending chain --- transports that defect to a code of the class,
-so every model of the conjunction is in fact well-ordered.  Corollary~4.27 then
+so every model of the conjunction is in fact well-ordered.  Corollary~4.4.2 then
 bounds all their order types by one countable $\alpha$, which the comparison
 structure of type $\alpha + \omega$ exceeds.
 
@@ -699,6 +701,9 @@ has a well-ordered Kleene--Brouwer code, and its rank is at most the order type,
 the bound on order types becomes a bound on tree ranks.
 
 \inputleannode{thm:analytic-wellfounded-tree-boundedness}
+
+The two boundedness theorems are Theorems~1.6.10 and~1.6.11 of Gao~\cite{gao2009},
+whose Exercise~1.5.7 is the Kleene--Brouwer equivalence used to pass between them.
 
 That boundedness is what the thinness package of Section~\ref{sec:thinness}
 needs on a Cantor antichain, whenever the rank in question is the order type of

@@ -117,7 +117,7 @@ theorem wellFounded_boundedness_isRelational [L.IsRelational]
   obtain ⟨M, instL, -, f, hφreal, hf⟩ := exists_model_relPreserving_isRelational φ lt hchains
   exact not_relPreserving_of_wellFounded (hwf M instL hφreal) f hf
 
-/-- **Boundedness, order-type form, no symbol countability** (Marker Corollary 4.27 at any
+/-- **Boundedness, order-type form, no symbol countability** (Marker Corollary 4.4.2 at any
 relational language). -/
 theorem wellOrder_type_boundedness_isRelational [L.IsRelational]
     (φ : L.Sentenceω) (lt : L.Relations 2)

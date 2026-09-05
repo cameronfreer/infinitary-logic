@@ -40,12 +40,13 @@ argument.  This module lives in `Conditional/` beside
 
 ## Classical background
 
-Marker, *Lectures on Infinitary Model Theory* (Fall 2013 notes,
-https://homepages.math.uic.edu/~marker/math512-F13/512_lecture_notes1.pdf): Corollary 4.24 and
-Theorem 4.25 for invariant separation and López–Escobar; Definition 3.11 and Corollary 3.20 for
-scatteredness. The sentence-spectrum formulation of scatteredness, on an arbitrary Borel class and
-without a Borel isomorphism relation, is assembled here from the project's Silver adapter and its
-sentence-recovery API. No claim is made that these exact formulations occur in the notes.
+Scatteredness and its equivalent criteria: Marker, *Lectures on Infinitary Model Theory*
+(Cambridge, 2016), Definition 3.3.1 and Corollary 3.3.10; his Corollary 3.3.3 works with the
+relation of realizing the same fragment types.  Keisler, "Randomizations of scattered
+sentences" (in Iovino, ed., *Beyond First Order Model Theory*, CRC Press, 2017), §2, codes
+fragment truth in a similar way.  The sentence-spectrum formulation on an arbitrary Borel class,
+without a Borel isomorphism relation, is assembled here from the project's Silver adapter and
+its sentence-recovery API.
 -/
 
 namespace FirstOrder.Language

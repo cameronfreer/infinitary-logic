@@ -13,7 +13,7 @@ Importing this file — or any bundle containing it, including the default
 `import InfinitaryLogic` — exposes the four **arbitrary-language** endpoints (all proved in
 `Methods/WellOrdering/GraphTranslation.lean`, no hypotheses on `L`):
 
-* **`exists_model_relPreserving`** — Marker Theorem 4.26 (blueprint node
+* **`exists_model_relPreserving`** — Marker Theorem 4.4.1 (blueprint node
   `thm:wellordering-map`): if `φ` has models with `lt`-chains of every countable length,
   some nonempty model of `φ` carries a relation-preserving map `f : ℚ → M` (for all
   `q < r`, `RelMap lt ![f q, f r]`) — the raw positive conclusion.  Injectivity is the
@@ -21,7 +21,7 @@ Importing this file — or any bundle containing it, including the default
   Descent.lean`), not part of the raw theorem;
 * `wellFounded_boundedness` — if every model of `φ` interprets `lt` as a well-founded
   relation, some countable ordinal chains into no model of `φ`;
-* **`wellOrder_type_boundedness`** — Marker Corollary 4.27 (blueprint node
+* **`wellOrder_type_boundedness`** — Marker Corollary 4.4.2 (blueprint node
   `thm:wellordering-boundedness`): if every model of `φ` interprets `lt` as a well-order,
   some countable ordinal strictly bounds every model's order type;
 * **`wellOrdering_undefinable`** — (blueprint node `thm:wellordering-undefinable`): no

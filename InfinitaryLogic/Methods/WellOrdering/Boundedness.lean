@@ -9,7 +9,7 @@ import InfinitaryLogic.Methods.WellOrdering.Descent
 /-!
 # Boundedness of well-founded models (issue #12, step 6 layer 2)
 
-Marker Corollary 4.27 in relational/countable form, via the step-5 theorem contrapositively:
+Marker Corollary 4.4.2 in relational/countable form, via the step-5 theorem contrapositively:
 
 * `wellFounded_boundedness_relational` — if every model of `φ` interprets `lt` as a
   well-founded relation, then some countable ordinal `α` chains into **no** model of `φ`:
@@ -58,7 +58,7 @@ theorem wellFounded_boundedness_relational [L.IsRelational]
   obtain ⟨M, instL, -, f, hφreal, hf⟩ := exists_model_relPreserving_relational φ lt hchains
   exact not_relPreserving_of_wellFounded (hwf M instL hφreal) f hf
 
-/-- **Boundedness, order-type form** (Marker Corollary 4.27, relational/countable): if every
+/-- **Boundedness, order-type form** (Marker Corollary 4.4.2, relational/countable): if every
 model of `φ` interprets `lt` as a well-order, then some countable ordinal `α` strictly
 bounds the order type of every model's interpreted relation. -/
 theorem wellOrder_type_boundedness_relational [L.IsRelational]

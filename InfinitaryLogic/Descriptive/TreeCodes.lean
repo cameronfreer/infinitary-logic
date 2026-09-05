@@ -12,6 +12,9 @@ import Architect
 /-!
 # Tree codes, the continuous Kleene–Brouwer code, and analytic boundedness for well-founded trees
 
+Classical background: Gao, *Invariant Descriptive Set Theory* (CRC Press, 2009), Theorem 1.6.11
+(boundedness for well-founded trees) and Exercise 1.5.7 (the Kleene–Brouwer equivalence).
+
 The code-level form of the Kleene–Brouwer material (issue #73), on top of the raw combinatorics in
 `Descriptive/KleeneBrouwer.lean` and the analytic boundedness for coded well-orders (#64).
 
