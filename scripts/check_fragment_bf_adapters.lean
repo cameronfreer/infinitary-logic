@@ -58,6 +58,13 @@ theorem adapterC_empty_regression {L : Language.{0, 0}} [L.IsRelational]
     (fun _ : Unit => fun _ => True) (fun _ => ⟨(), trivial⟩)
     (fun _ x => x.1.2.elim)
 
+/-- The generic quotient lemma, nonempty and non-constant on classes: the identity on `ℕ` with
+the universal setoid.  Equal map values imply equivalence; the reverse direction is neither
+required nor true here. -/
+theorem quotient_lemma_nonempty_regression :
+    Countable (Quotient (⊤ : Setoid ℕ)) :=
+  countable_quotient_of_countable_range ⊤ id (Set.countable_range id) fun _ _ _ => trivial
+
 def headline : List Name :=
   [`FirstOrder.Language.qrank_openBounds,
    `FirstOrder.Language.Fragment.realizedType_eq_of_bfEquiv,
@@ -67,7 +74,8 @@ def headline : List Name :=
    `FirstOrder.Language.Fragment.countable_bfTupleQuotient_of_types,
    `FirstOrder.Language.Fragment.countable_bfExtensionSpectra_of_cover,
    `FirstOrder.Language.Fragment.countable_bfTupleQuotient_succ_of_types_and_cover,
-   `adapterA_empty_regression, `adapterB_generated_regression, `adapterC_empty_regression]
+   `adapterA_empty_regression, `adapterB_generated_regression, `adapterC_empty_regression,
+   `quotient_lemma_nonempty_regression]
 
 def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
 

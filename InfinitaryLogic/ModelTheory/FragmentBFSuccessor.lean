@@ -38,7 +38,8 @@ open Set
 variable {L : Language.{0, 0}} [L.IsRelational]
 
 /-- A quotient is countable when a map with countable range refines the relation: fibres of the
-map lie inside classes.  Representative-free apart from one choice per value. -/
+map lie inside classes.  The proof chooses one preimage for each value in the range (classical
+choice; not a Borel selector and not a choice of canonical structures). -/
 theorem countable_quotient_of_countable_range {X T : Type*} (s : Setoid X) (t : X → T)
     (hrange : (Set.range t).Countable) (h : ∀ x y, t x = t y → s.r x y) :
     Countable (Quotient s) := by
