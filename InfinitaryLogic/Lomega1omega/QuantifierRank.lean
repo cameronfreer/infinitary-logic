@@ -219,6 +219,25 @@ theorem BoundedFormulaω.qrank_relabel {α β : Type w} {p : ℕ} (g : α → β
     simp only [relabel, qrank_iInf]
     congr 1; funext i; exact ih i g
 
+/-- `openBounds` preserves quantifier rank: the universal case is `qrank_relabel`. -/
+theorem qrank_openBounds : ∀ {n : ℕ} (φ : L.BoundedFormulaω Empty n),
+    (BoundedFormulaω.openBounds φ).qrank = φ.qrank
+  | _, .falsum => rfl
+  | _, .equal _ _ => rfl
+  | _, .rel _ _ => rfl
+  | _, .imp φ ψ => by
+    simp only [BoundedFormulaω.openBounds, Formulaω.qrank, BoundedFormulaω.qrank_imp,
+      qrank_openBounds φ, qrank_openBounds ψ]
+  | _, .all φ => by
+    simp only [BoundedFormulaω.openBounds, Formulaω.qrank, BoundedFormulaω.qrank_all,
+      BoundedFormulaω.qrank_relabel, qrank_openBounds φ]
+  | _, .iSup φs => by
+    simp only [BoundedFormulaω.openBounds, Formulaω.qrank, BoundedFormulaω.qrank_iSup]
+    exact congrArg _ (funext fun i => qrank_openBounds (φs i))
+  | _, .iInf φs => by
+    simp only [BoundedFormulaω.openBounds, Formulaω.qrank, BoundedFormulaω.qrank_iInf]
+    exact congrArg _ (funext fun i => qrank_openBounds (φs i))
+
 /-! ### Equivalence up to Quantifier Rank -/
 
 /-- Two structures are equivalent up to quantifier rank α if they satisfy the same
