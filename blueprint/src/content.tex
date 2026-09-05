@@ -482,7 +482,20 @@ exhibiting a metric.
 direction above does not weaken those hypotheses: \texttt{isThinOn} consumes
 perfect $\to$ Cantor, the complete-metric direction.
 
-One \emph{generic} constructor of that package is supplied, from ranks computed
+Thinness also has a purely logical characterization, with no rank at all: a
+Borel class carries no perfect antichain exactly when every countable list of
+sentences realizes only countably many truth patterns on it.  One direction is
+Silver's dichotomy applied to equality of truth sequences, a Borel equivalence
+relation coarser than isomorphism; the other recovers the Cantor parameter of an
+antichain by sentences, through invariant analytic separation and
+L\'opez--Escobar.  The class need not be isomorphism-invariant, and no
+Borelness of isomorphism is used.  Countable spectra quantify over every list;
+they do not supply one list that classifies isomorphism, which together with
+thinness would force countably many classes.
+
+\inputleannode{thm:thin-iff-countable-sentence-spectra}
+
+A generic constructor of \texttt{ThinRankAnalysis} is supplied, from ranks computed
 by coded well-orders presented continuously on each Cantor antichain
 (Definition~\ref{def:wellorder-presentation-thinness}); it is the bridge from
 analytic boundedness to thinness.  No \emph{concrete} instance is supplied: no

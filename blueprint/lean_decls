@@ -76,6 +76,7 @@ FirstOrder.Language.Sentenceω.IsThinOnNatModels
 HasCantorAntichainOn.hasPerfectAntichainOn
 ThinRankAnalysis
 ThinRankAnalysis.isThinOn
+FirstOrder.Language.thin_iff_countable_sentence_spectra
 FirstOrder.Language.morley_counting_coded_or_perfect
 FirstOrder.Language.counting_fin_models_countable_or_perfect
 FirstOrder.Language.morley_counting_or_perfect
