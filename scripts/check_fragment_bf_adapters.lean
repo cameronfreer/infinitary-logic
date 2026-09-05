@@ -9,6 +9,7 @@ standard axioms.  No test derives fragment elementarity from either adapter.
 Run with: lake env lean scripts/check_fragment_bf_adapters.lean
 -/
 import InfinitaryLogic.ModelTheory.FragmentBFAdapters
+import InfinitaryLogic.ModelTheory.FragmentBFSuccessor
 
 open Lean FirstOrder Language
 
@@ -45,12 +46,36 @@ theorem adapterB_generated_regression [Countable (Σ l, L.Relations l)] {M : Typ
     BFEquiv (L := L) α n a b :=
   Fragment.bfEquiv_of_realizedType_eq _ hα (Fragment.subset_generated _ (Set.mem_singleton _)) h
 
+/-- C on the empty class: both counting inputs are vacuous, and the conclusion is at the
+successor level. -/
+theorem adapterC_empty_regression {L : Language.{0, 0}} [L.IsRelational]
+    [Countable (Σ l, L.Relations l)] (F : Fragment L) (φ : L.Sentenceω) (α : Ordinal.{0})
+    (hα : α < Ordinal.omega 1) (n : ℕ) :
+    Countable (Quotient (bfTupleSetoid φ (∅ : Set ↥(ModelsOf φ)) (Order.succ α) n)) :=
+  Fragment.countable_bfTupleQuotient_succ_of_types_and_cover F φ ∅ α n hα
+    (fun x => x.1.2.elim)
+    (by simp [Fragment.typeSpectrum])
+    (fun _ : Unit => fun _ => True) (fun _ => ⟨(), trivial⟩)
+    (fun _ x => x.1.2.elim)
+
+/-- The generic quotient lemma, nonempty and non-constant on classes: the identity on `ℕ` with
+the universal setoid.  Equal map values imply equivalence; the reverse direction is neither
+required nor true here. -/
+theorem quotient_lemma_nonempty_regression :
+    Countable (Quotient (⊤ : Setoid ℕ)) :=
+  countable_quotient_of_countable_range ⊤ id (Set.countable_range id) fun _ _ _ => trivial
+
 def headline : List Name :=
   [`FirstOrder.Language.qrank_openBounds,
    `FirstOrder.Language.Fragment.realizedType_eq_of_bfEquiv,
    `FirstOrder.Language.Fragment.realize_scottBounded_iff,
    `FirstOrder.Language.Fragment.bfEquiv_of_realizedType_eq,
-   `adapterA_empty_regression, `adapterB_generated_regression]
+   `FirstOrder.Language.countable_quotient_of_countable_range,
+   `FirstOrder.Language.Fragment.countable_bfTupleQuotient_of_types,
+   `FirstOrder.Language.Fragment.countable_bfExtensionSpectra_of_cover,
+   `FirstOrder.Language.Fragment.countable_bfTupleQuotient_succ_of_types_and_cover,
+   `adapterA_empty_regression, `adapterB_generated_regression, `adapterC_empty_regression,
+   `quotient_lemma_nonempty_regression]
 
 def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
 
@@ -62,4 +87,5 @@ run_cmd do
     let bad := axs.toList.filter fun a => !standardAxioms.contains a
     unless bad.isEmpty do throwError "[NONSTANDARD AXIOMS] {n} uses {bad}"
   logInfo "fragment BF-adapter guard: OK (A at level zero on an empty slice; B by membership in \
-    a generated fragment; headline declarations on standard axioms)"
+    a generated fragment; C on the empty class at the successor level; headline declarations on \
+    standard axioms)"
