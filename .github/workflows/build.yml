@@ -26,13 +26,39 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Root build cache: only the project's own oleans (.lake/build, ~350 MB), not the whole
+      # .lake that lean-action's GitHub cache stored (~2.7 GB per ref, including Mathlib, which
+      # the Mathlib cache already serves). Key: OS, arch, toolchain and manifest, plus the exact
+      # commit; the fallback drops the commit, so a new commit restores the most recently created
+      # compatible cache visible in its scope (default-branch caches are readable by branches).
+      # Master CI is the only writer; pull-request and docs runs restore. The build command stays
+      # unconditional: the cache supplies prior state, Lake decides freshness. Bump the version
+      # segment if the cached path or its layout changes.
+      - name: Restore root build cache
+        id: root-cache-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: .lake/build
+          key: lake-build-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
+          restore-keys: |
+            lake-build-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
+
       - name: Build Lean project and blueprint data
         uses: leanprover/lean-action@c544e89643240c6b398f14a431bcdc6309e36b3e
         with:
           build: true
           build-args: "InfinitaryLogic InfinitaryLogic.Everything :blueprint :blueprintJson InfinitaryLogicWIP"
-          use-github-cache: true
+          use-github-cache: false
           use-mathlib-cache: true
+
+      # Save right after a successful build, before the guards, so a guard failure cannot
+      # discard a valid cache; master only, so per-ref copies never crowd the cache store.
+      - name: Save root build cache
+        if: github.ref == 'refs/heads/master' && steps.root-cache-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .lake/build
+          key: ${{ steps.root-cache-restore.outputs.cache-primary-key }}
 
       - name: Run all guards (shared list with scripts/build_gate.sh)
         run: bash scripts/check_all_guards.sh
