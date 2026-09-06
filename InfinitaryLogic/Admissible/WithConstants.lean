@@ -35,8 +35,7 @@ compactness hypothesis. All closure fields are trivial because `formulas` is
 
 This is a **packaging** constructor: the hard content (compactness) is assumed
 as `hCompact`, not derived from any prior fragment or admissibility argument.
-Callers that have a `FullBarwiseFragment L` can supply `B.height` and
-`B.height_gt_omega` for the ordinal parameters. -/
+The ordinal parameters are supplied by the caller. -/
 noncomputable def admissibleFragmentOfUniv
     (height : Ordinal) (h_height : Ordinal.omega0 < height)
     (hCompact : ∀ S : Set L.Sentenceω,

@@ -10,7 +10,7 @@ additionally consume the constants-expanded universe, the basis, and the reduct 
 
 1. FORBIDDEN — no declaration in the cone may be a maximal-consistency lemma
    (`…MaximalConsistent…`), the maximal-consistency biconditional `truthLemma`, the
-   maximal→HenkinComplete bridge, or any of `FullBarwiseFragment`, `BarwiseFragment`,
+   maximal→HenkinComplete bridge, or any of the retired bridge names,
    `FiniteCompactFragment`, `AdmissibleFragmentCore`.
 2. REQUIRED — the endpoint's cone MUST contain `HenkinComplete`, `AConsistent`, `Derivable`,
    `exists_henkinComplete` and `truth_both`; the family constructor's cone MUST contain
@@ -29,7 +29,9 @@ import InfinitaryLogic.Admissible.Barwise.HenkinClosed
 import InfinitaryLogic.Admissible.Barwise.HenkinClosure
 import InfinitaryLogic.Admissible.Barwise.GraphUniverse
 import InfinitaryLogic.Admissible.Barwise.SourceFragment
-import InfinitaryLogic.Admissible.Barwise.ConsistencyBridge
+-- the surviving legacy fragment structures, imported explicitly so that the existence check on
+-- the forbidden names below stays meaningful (the retired bridge used to supply them transitively)
+import InfinitaryLogic.Admissible.Fragment
 import InfinitaryLogic.Methods.Henkin.Construction
 
 open Lean
@@ -76,14 +78,12 @@ def forbiddenExact : List Name :=
   [`FirstOrder.Language.truthLemma,
    `FirstOrder.Language.ConsistencyProperty.MaximalConsistent,
    `FirstOrder.Language.ConsistencyProperty.exists_maximal,
-   `FirstOrder.Language.FullBarwiseFragment,
-   `FirstOrder.Language.BarwiseFragment,
    `FirstOrder.Language.FiniteCompactFragment,
    `FirstOrder.Language.AdmissibleFragmentCore]
 
 /-- Forbidden by substring (catches the whole maximal-consistency namespace). -/
 def forbiddenSub : List String :=
-  ["MaximalConsistent", "FullBarwiseFragment", "BarwiseFragment", "FiniteCompactFragment",
+  ["MaximalConsistent", "FiniteCompactFragment",
    "AdmissibleFragmentCore", "henkinComplete_univ_of_maximal"]
 
 /-- Per-root required witnesses: the endpoint must run the fair enumeration and the forward
@@ -132,6 +132,30 @@ def guardedRoots : List (Name × List Name) :=
      `FirstOrder.Language.BoundedFormulaω.realize_mapLanguage])]
 
 def requiredWitness : List Name := (guardedRoots.map Prod.snd).flatten
+
+/-- Positive-controlled absence of the retired bridge names in the production environment
+imported above: a synthetic constant with the retired substring is declared here, the mechanism
+must see it, and the retired names themselves must be absent. -/
+def retiredSub : List String := ["FullBarwiseFragment", "BarwiseFragment"]
+
+def retiredExact : List Name :=
+  [`FirstOrder.Language.FullBarwiseFragment, `FirstOrder.Language.BarwiseFragment,
+   `FirstOrder.Language.consistencyPropertyOfFullFragment,
+   `FirstOrder.Language.barwise_completeness_II_syntactic_full]
+
+/-- Synthetic control carrying the retired substring. -/
+def retiredShapeControl_BarwiseFragment : Nat := 0
+
+def mentionsRetired (n : Name) : Bool :=
+  retiredSub.any fun s => (n.toString.splitOn s).length ≠ 1
+
+run_cmd do
+  let env ← getEnv
+  unless mentionsRetired `retiredShapeControl_BarwiseFragment do
+    throwError "positive control FAILED: the absence check cannot see the retired shape"
+  for n in retiredExact do
+    if (env.find? n).isSome then
+      throwError "[RETIRED NAME PRESENT] {n} has reappeared in the production environment"
 
 run_cmd do
   let env ← getEnv

@@ -3,12 +3,12 @@ Dependency guard for the proof-system core (issue #18, step 6 of the migration p
 
 Certifies that the proof calculus and its soundness are parameterized by a raw permitted
 sentence set and CANNOT reach any legacy fragment structure — the boundary established by
-the consumer audit (interface contract §8). `ConsistencyBridge` legitimately reaches
-`BarwiseFragment` and is deliberately NOT imported here.
+the consumer audit (interface contract §8). The former `ConsistencyBridge` layer is retired
+(`docs/migration-consistency-bridge.md`); its names must stay absent.
 
 Roots: `Derivable`, `AConsistent`, `Derivable.sound`, `AConsistent.of_has_model`.
-Forbidden in their cones: `FiniteCompactFragment`, `AdmissibleFragmentCore`,
-`BarwiseFragment`.
+Forbidden in their cones: `FiniteCompactFragment` and `AdmissibleFragmentCore`; the retired
+bridge names are checked absent below.
 
 POSITIVE sanity checks certify that theorem proof bodies are genuinely traversed (a
 forbidden-root failure test alone cannot show this): `Derivable.sound`'s cone must contain
@@ -56,7 +56,31 @@ def guardedRoots : List Name :=
    `FirstOrder.Language.AConsistent.of_has_model]
 
 def forbiddenSub : List String :=
-  ["FiniteCompactFragment", "AdmissibleFragmentCore", "BarwiseFragment"]
+  ["FiniteCompactFragment", "AdmissibleFragmentCore"]
+
+/-- Positive-controlled absence of the retired bridge names in the production environment
+imported above: a synthetic constant with the retired substring is declared here, the mechanism
+must see it, and the retired names themselves must be absent. -/
+def retiredSub : List String := ["FullBarwiseFragment", "BarwiseFragment"]
+
+def retiredExact : List Name :=
+  [`FirstOrder.Language.FullBarwiseFragment, `FirstOrder.Language.BarwiseFragment,
+   `FirstOrder.Language.consistencyPropertyOfFullFragment,
+   `FirstOrder.Language.barwise_completeness_II_syntactic_full]
+
+/-- Synthetic control carrying the retired substring. -/
+def retiredShapeControl_BarwiseFragment : Nat := 0
+
+def mentionsRetired (n : Name) : Bool :=
+  retiredSub.any fun s => (n.toString.splitOn s).length ≠ 1
+
+run_cmd do
+  let env ← getEnv
+  unless mentionsRetired `retiredShapeControl_BarwiseFragment do
+    throwError "positive control FAILED: the absence check cannot see the retired shape"
+  for n in retiredExact do
+    if (env.find? n).isSome then
+      throwError "[RETIRED NAME PRESENT] {n} has reappeared in the production environment"
 
 run_cmd do
   let env ← getEnv

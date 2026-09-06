@@ -38,7 +38,7 @@ subsets (where "A-finite" = ∈ A, not ordinary finiteness). See
 `BarwiseCompactnessData` for the literature-faithful version.
 
 This structure is retained for backward compatibility with existing consumers
-(`barwise_compactness`, `ConsistencyBridge`, `EMRealization`). -/
+(`barwise_compactness`, `EMRealization`). -/
 @[blueprint "def:admissible-fragment"
   (title := /-- Admissible fragment -/)
   (statement := /-- An admissible fragment of $\Lomegaone$: a collection of sentences

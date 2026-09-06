@@ -45,9 +45,6 @@ FirstOrder.Language.bounded_scottHeight_iso_eq_BFEquiv
 FirstOrder.Language.Derivable
 FirstOrder.Language.AConsistent
 FirstOrder.Language.Derivable.sound
-FirstOrder.Language.FullBarwiseFragment
-FirstOrder.Language.consistencyPropertyOfFullFragment
-FirstOrder.Language.barwise_completeness_II_syntactic_full
 FirstOrder.Language.StructureSpace
 FirstOrder.Language.modelsOf_measurableSet
 FirstOrder.Language.lopezEscobar_easy

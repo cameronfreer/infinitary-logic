@@ -1,0 +1,95 @@
+# Migration: retirement of `Admissible/Barwise/ConsistencyBridge.lean`
+
+Status: proposed breaking change, for review before any deletion is applied. No new
+mathematics, no release accompanies the proposal.
+
+## What is removed
+
+The whole module `InfinitaryLogic/Admissible/Barwise/ConsistencyBridge.lean` and nothing else:
+
+| Declaration | Kind | Blueprint node |
+| --- | --- | --- |
+| `BarwiseFragment L` (extends `FiniteCompactFragment L`; field `chain_closure_consistent`) | structure | — |
+| `FullBarwiseFragment L` (extends `BarwiseFragment L`; field `complete`) | structure | `def:full-barwise-fragment` |
+| `consistentSets P` | def | — |
+| `consistencyPropertyOfFullFragment B : ConsistencyPropertyEq L` | noncomputable def | `thm:consistency-property-full-fragment` |
+| `barwise_completeness_II_syntactic_full` | theorem | `thm:barwise-completeness-ii-syntactic` |
+| two private helper lemmas | — | — |
+
+`FiniteCompactFragment`, `AdmissibleFragmentCore`, `AdmissibleFragment`, `WithConstants`, and
+the ambient-HF layer are **not** touched: they appear in the bridge's ancestry, but retirement
+of the bridge is not a reason to remove them.
+
+There are no theorem consumers of the removed declarations anywhere in the tree (audit of
+2026-09-06). The live references are the bundle import, two docstring mentions, README, the
+interface contract §8, three blueprint nodes with their generated-declaration entries, and five
+guard scripts.
+
+## Why
+
+`BarwiseFragment.chain_closure_consistent` asserts that unions of chains of `P`-consistent sets
+are `P`-consistent. `scripts/check_chain_closure_counterexample.lean` proves this **false** for
+`P = Set.univ` over the constants-expanded language with one unary relation and ℕ constants
+(the ω-rule derives `⊥` from the union). Consequently `FullBarwiseFragment` is uninhabited **for
+that language**; the proper-formula-set `BarwiseFragment` is not shown uninhabited, and no claim
+is made for every language. The counterexample script stays, with its claim about the specified
+language, and is unchanged mathematically.
+
+The successor engine is the countable-completion kernel (`ConsistencyPropertyEqOn`, no
+`extension`, no `chain_closure`), reached through `HenkinClosedMin`.
+
+## Successor APIs, not equivalent replacements
+
+Each successor changes the language, universe, or consistency hypothesis. Consumers must
+re-establish the new hypothesis; none is derivable from the retired one.
+
+| Retired | Successor | Language / universe | Consistency hypothesis |
+| --- | --- | --- | --- |
+| `BarwiseFragment L` as the consumer contract | `HenkinClosedMin P` (`Admissible/Barwise/HenkinClosed.lean`) | `L : Language.{0,0}`, relational; `P ⊆ L[[ℕ]].Sentenceω` | no chain closure; the kernel's negated-target closure only |
+| `FullBarwiseFragment L` as a producer of the full universe | `Fragment.henkinClosure S` (`Admissible/Barwise/HenkinClosure.lean`), a fragment with a `HenkinBasis` | `Language.{0,0}`; source fragment of `L`, universe expanded by ℕ constants | consistency is stated **in the constants-expanded universe** `(henkinClosure S).withNatConstantsSentences` |
+| `consistencyPropertyOfFullFragment B : ConsistencyPropertyEq L` | `HenkinClosedMin.consistencyPropertyEqOn : ConsistencyPropertyEqOn P` | `Language.{0,0}`, relational base | family of `P`-bounded `P`-consistent sets; no extension field |
+| `barwise_completeness_II_syntactic_full` (any `L : Language.{u,v}` with countable symbol sigmas; `B : FullBarwiseFragment L`; `T ⊆ B.formulas`, `T.Countable`, `AConsistent B.formulas T`; model in `Type u`) | `HenkinClosed.exists_countable_model_of_aconsistent` | `Language.{0,0}`, **relational** base, countable relation sigma; model is an `L[[ℕ]]`-structure on a `Type` with the constants present | `AConsistent P T` with `P` Henkin-closed and countable; no countability of `T` |
+| same | `Fragment.exists_countable_model_of_aconsistent_withConstants` / `_henkinClosure` (`SourceFragment.lean`, `HenkinClosure.lean`) | `Language.{0,0}`, relational; countable source fragment; `L`-model recovered by reduct | consistency of `mapLanguage '' T` **in the expanded universe**, not of `T` in the base language |
+| same | `Fragment.exists_countable_model_of_aconsistent_graphUniverse` (`GraphUniverse.lean`) | `Language.{0,0}`, **not necessarily relational**, both symbol sigmas countable | consistency of the graph theory **in the graph universe**; nothing transports consistency across relationalization |
+
+None of the successors preserves the retired theorem's hypothesis "`T` is `A`-consistent in the
+base language over a full fragment". That hypothesis was only ever available where the retired
+structure was inhabited.
+
+## Documentation changes
+
+- README: the placeholder list no longer names `FullBarwiseFragment`.
+- Interface contract §8: the ConsistencyBridge row is replaced by a retirement row; the
+  proof-system boundary sentence lists the surviving legacy names.
+- Blueprint: the three `\inputleannode`s are removed and replaced by prose recording the
+  retirement and pointing at the successor nodes; the old completeness node is **not** retargeted
+  to any successor theorem, since their assumptions differ materially. The three
+  `blueprint/lean_decls` entries are removed in place.
+
+## Guard changes
+
+Forbidden-name checks that existence-checked the retired names (`[STALE GUARD]`) are replaced
+by **positive-controlled absence checks** in an explicitly imported production environment:
+each script imports the production bundle it protects, declares a synthetic constant whose name
+contains the retired substring, verifies that the absence check *would* flag it (the positive
+control), and then asserts the retired names are absent from the production environment. The
+replacement endpoints' assembly and cone checks (`check_henkin_closed_cone.lean`) are preserved
+unchanged apart from dropping the bridge import and the retired names.
+
+## Validation and falsification, to run on the applied patch
+
+1. Full local gate (build of every bundle, all guards, `checkdecls` on the updated `lean_decls`).
+2. `scripts/check_chain_closure_counterexample.lean` still passes with only `Soundness`
+   imported.
+3. Falsification of each new absence check: temporarily re-declare a constant named
+   `FirstOrder.Language.FullBarwiseFragment` in the script and confirm the check fails.
+4. No-deploy docs dispatch on the branch: blueprint builds, the freshness step passes with the
+   edited `lean_decls`.
+5. `grep -rn "ConsistencyBridge\|FullBarwiseFragment\|BarwiseFragment\b"` over `InfinitaryLogic`,
+   `scripts`, `docs`, `README.md`, `blueprint` returns only this migration note, the
+   counterexample script's historical wording, and the contract's retirement row.
+
+## Version
+
+Removing published declarations is breaking regardless of internal consumers: the next tag
+after this lands is a major version bump.

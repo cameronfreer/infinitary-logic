@@ -68,8 +68,32 @@ def assemblyRoots : List (Name × Name) :=
     `FirstOrder.Language.IsLomega1omegaIndiscernibleOnTail.templateTheoryOfSeq_isFinitelySatisfiable)]
 
 def forbiddenSub : List String :=
-  ["FiniteCompactFragment", "FullBarwiseFragment", "AdmissibleFragmentCore",
+  ["FiniteCompactFragment", "AdmissibleFragmentCore",
    "admissibleFragmentOfUniv", "barwise_compactness"]
+
+/-- Positive-controlled absence of the retired bridge names in the production environment
+imported above: a synthetic constant with the retired substring is declared here, the mechanism
+must see it, and the retired names themselves must be absent. -/
+def retiredSub : List String := ["FullBarwiseFragment", "BarwiseFragment"]
+
+def retiredExact : List Name :=
+  [`FirstOrder.Language.FullBarwiseFragment, `FirstOrder.Language.BarwiseFragment,
+   `FirstOrder.Language.consistencyPropertyOfFullFragment,
+   `FirstOrder.Language.barwise_completeness_II_syntactic_full]
+
+/-- Synthetic control carrying the retired substring. -/
+def retiredShapeControl_BarwiseFragment : Nat := 0
+
+def mentionsRetired (n : Name) : Bool :=
+  retiredSub.any fun s => (n.toString.splitOn s).length ≠ 1
+
+run_cmd do
+  let env ← getEnv
+  unless mentionsRetired `retiredShapeControl_BarwiseFragment do
+    throwError "positive control FAILED: the absence check cannot see the retired shape"
+  for n in retiredExact do
+    if (env.find? n).isSome then
+      throwError "[RETIRED NAME PRESENT] {n} has reappeared in the production environment"
 
 /-- Declarations deleted in the #18 EM tranche; their reappearance means the legacy spine
 was recreated rather than replaced. -/

@@ -13,7 +13,6 @@ import InfinitaryLogic.Admissible.Compactness
 import InfinitaryLogic.Admissible.Nadel
 import InfinitaryLogic.Admissible.Barwise.ProofSystem
 import InfinitaryLogic.Admissible.Barwise.Soundness
-import InfinitaryLogic.Admissible.Barwise.ConsistencyBridge
 import InfinitaryLogic.Admissible.Barwise.HenkinClosed
 import InfinitaryLogic.Admissible.Barwise.SourceFragment
 import InfinitaryLogic.Admissible.Barwise.HenkinClosure
