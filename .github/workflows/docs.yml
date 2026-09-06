@@ -41,12 +41,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Root build cache: only the project's own oleans (.lake/build, ~350 MB), not the whole
+      # .lake that lean-action's GitHub cache stored (~2.7 GB per ref, including Mathlib, which
+      # the Mathlib cache already serves). Key: OS, arch, toolchain and manifest, plus the exact
+      # commit; the fallback drops the commit, so a new commit restores the most recently created
+      # compatible cache visible in its scope (default-branch caches are readable by branches).
+      # This workflow only restores; master CI writes. The build command stays
+      # unconditional: the cache supplies prior state, Lake decides freshness. Bump the version
+      # segment if the cached path or its layout changes.
+      - name: Restore root build cache
+        id: root-cache-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: .lake/build
+          key: lake-build-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
+          restore-keys: |
+            lake-build-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
+
       - name: Build Lean project and blueprint
         uses: leanprover/lean-action@c544e89643240c6b398f14a431bcdc6309e36b3e
         with:
           build: true
           build-args: "InfinitaryLogic :blueprint :blueprintJson InfinitaryLogicWIP"
-          use-github-cache: true
+          use-github-cache: false
           use-mathlib-cache: true
 
       # doc-gen4's incremental state lives in docbuild/.lake (separate from the root .lake
@@ -56,7 +73,7 @@ jobs:
       # Key: OS, arch, toolchain, both manifests and the doc-gen4 pin, plus the exact commit;
       # the fallback drops only the commit, so a new commit restores the most recently created
       # matching cache visible in the current cache scope. Eviction is by last access, not
-      # size; the root .lake caches dominate storage. A future change to the cached path,
+      # size; keep the root build cache small so this one is not crowded out. A future change to the cached path,
       # doc-gen4 layout, or any untraced documentation input should add a version to the prefix.
       - name: Restore docbuild cache
         id: docbuild-cache-restore
