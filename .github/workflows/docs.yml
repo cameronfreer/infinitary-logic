@@ -66,8 +66,8 @@ jobs:
           use-github-cache: false
           use-mathlib-cache: true
 
-      # doc-gen4's incremental state lives in docbuild/.lake (separate from the root .lake
-      # that lean-action caches). Restore it before generation and save it immediately after
+      # doc-gen4's incremental state lives in docbuild/.lake (separate from the root .lake/build
+      # restored above). Restore it before generation and save it immediately after
       # successful generation, so a later TeX failure cannot discard a valid cache. The build
       # command stays unconditional: the cache supplies prior state, Lake decides freshness.
       # Key: OS, arch, toolchain, both manifests and the doc-gen4 pin, plus the exact commit;
