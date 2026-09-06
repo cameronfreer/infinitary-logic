@@ -41,12 +41,23 @@ theorem empty_slice_regression (C : Set (StructureSpace L)) (n : ℕ) :
       Bool) := ⟨fun f g => funext fun φ => (hempty φ).elim⟩
   exact Set.to_countable _
 
-/-- Arity zero: thinness gives countable sentence spectra through the fragment characterization,
-recovering the sentence interface. -/
+/-- Arity zero: thinness gives countable sentence spectra THROUGH the fragment bridge: the bound
+for `generatedTheory (Set.range θ)` at arity zero, transported by
+`pointedType_zero_eq_sentenceTheory`.  The old sentence characterization is not used. -/
 theorem arity_zero_regression (C : Set (StructureSpace L)) (hC : MeasurableSet C)
     (hthin : IsThinOn (structureIsoSetoid L) C) (θ : ℕ → L.Sentenceω) :
-    (sentenceTheory θ '' C).Countable :=
-  (thin_iff_countable_sentence_spectra C hC).mp hthin θ
+    (sentenceTheory θ '' C).Countable := by
+  have hθ : ∀ k, (⟨0, θ k⟩ : Σ n, L.BoundedFormulaω Empty n) ∈
+      Fragment.generatedTheory (Set.range θ) :=
+    fun k => Fragment.mem_generatedTheory ⟨k, rfl⟩
+  have hF := (Fragment.thin_iff_countable_fragment_spectra C hC).mp hthin
+    (Fragment.generatedTheory (Set.range θ))
+    (Fragment.generatedTheory_countable (Set.countable_range θ)) 0
+  refine (hF.image fun t : (Fragment.generatedTheory (Set.range θ)).slice 0 → Bool =>
+    fun k => t ⟨θ k, hθ k⟩).mono ?_
+  rintro _ ⟨c, hc, rfl⟩
+  exact ⟨_, Fragment.mem_typeSpectrum.mpr ⟨c, hc, Fin.elim0, rfl⟩,
+    (Fragment.pointedType_zero_eq_sentenceTheory _ θ hθ c).symm⟩
 
 def headline : List Name :=
   [`FirstOrder.Language.Fragment.measurableSet_sameRealizedSpectrum,
