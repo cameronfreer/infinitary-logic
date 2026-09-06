@@ -68,6 +68,8 @@ import InfinitaryLogic.Descriptive.FragmentTail
 import InfinitaryLogic.Descriptive.FragmentSpectrum
 import InfinitaryLogic.Descriptive.MorleyizationCode
 import InfinitaryLogic.Descriptive.RealizedSpectrum
+import InfinitaryLogic.Descriptive.AntichainTransport
+import InfinitaryLogic.Descriptive.MorleyizationThin
 
 -- Counting theorems (depend on descriptive results)
 import InfinitaryLogic.ModelTheory.CountingCountable
