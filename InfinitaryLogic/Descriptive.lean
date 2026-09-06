@@ -67,6 +67,7 @@ import InfinitaryLogic.Descriptive.SentenceObservables
 import InfinitaryLogic.Descriptive.FragmentTail
 import InfinitaryLogic.Descriptive.FragmentSpectrum
 import InfinitaryLogic.Descriptive.MorleyizationCode
+import InfinitaryLogic.Descriptive.RealizedSpectrum
 
 -- Counting theorems (depend on descriptive results)
 import InfinitaryLogic.ModelTheory.CountingCountable

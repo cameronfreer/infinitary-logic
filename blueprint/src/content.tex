@@ -501,6 +501,17 @@ thinness would force countably many classes.
 
 \inputleannode{thm:thin-iff-countable-sentence-spectra}
 
+The finite-arity form is the classical definition of scatteredness (Marker,
+Definition~3.3.1 and Corollary~3.3.10): a Borel class is thin exactly when every
+countable fragment realizes only countably many types of $n$-tuples on it, for
+every finite $n$.  The route is Marker's Corollary~3.3.3: for a fixed fragment
+and arity, ``realizing the same types'' is a Borel equivalence relation refined
+by isomorphism, so Silver's dichotomy either bounds the realized types or
+produces an isomorphism antichain.  No Baire-property theorem for analytic sets
+is needed.
+
+\inputleannode{thm:thin-iff-countable-fragment-spectra}
+
 A generic constructor of \texttt{ThinRankAnalysis} is supplied, from ranks computed
 by coded well-orders presented continuously on each Cantor antichain
 (Definition~\ref{def:wellorder-presentation-thinness}); it is the bridge from
