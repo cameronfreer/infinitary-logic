@@ -133,29 +133,6 @@ def guardedRoots : List (Name × List Name) :=
 
 def requiredWitness : List Name := (guardedRoots.map Prod.snd).flatten
 
-/-- Positive-controlled absence of the retired bridge names in the production environment
-imported above: a synthetic constant with the retired substring is declared here, the mechanism
-must see it, and the retired names themselves must be absent. -/
-def retiredSub : List String := ["FullBarwiseFragment", "BarwiseFragment"]
-
-def retiredExact : List Name :=
-  [`FirstOrder.Language.FullBarwiseFragment, `FirstOrder.Language.BarwiseFragment,
-   `FirstOrder.Language.consistencyPropertyOfFullFragment,
-   `FirstOrder.Language.barwise_completeness_II_syntactic_full]
-
-/-- Synthetic control carrying the retired substring. -/
-def retiredShapeControl_BarwiseFragment : Nat := 0
-
-def mentionsRetired (n : Name) : Bool :=
-  retiredSub.any fun s => (n.toString.splitOn s).length ≠ 1
-
-run_cmd do
-  let env ← getEnv
-  unless mentionsRetired `retiredShapeControl_BarwiseFragment do
-    throwError "positive control FAILED: the absence check cannot see the retired shape"
-  for n in retiredExact do
-    if (env.find? n).isSome then
-      throwError "[RETIRED NAME PRESENT] {n} has reappeared in the production environment"
 
 run_cmd do
   let env ← getEnv

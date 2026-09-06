@@ -8,7 +8,7 @@ the consumer audit (interface contract §8). The former `ConsistencyBridge` laye
 
 Roots: `Derivable`, `AConsistent`, `Derivable.sound`, `AConsistent.of_has_model`.
 Forbidden in their cones: `FiniteCompactFragment` and `AdmissibleFragmentCore`; the retired
-bridge names are checked absent below.
+bridge names are checked absent by `check_consistency_bridge_retired.lean`.
 
 POSITIVE sanity checks certify that theorem proof bodies are genuinely traversed (a
 forbidden-root failure test alone cannot show this): `Derivable.sound`'s cone must contain
@@ -58,29 +58,6 @@ def guardedRoots : List Name :=
 def forbiddenSub : List String :=
   ["FiniteCompactFragment", "AdmissibleFragmentCore"]
 
-/-- Positive-controlled absence of the retired bridge names in the production environment
-imported above: a synthetic constant with the retired substring is declared here, the mechanism
-must see it, and the retired names themselves must be absent. -/
-def retiredSub : List String := ["FullBarwiseFragment", "BarwiseFragment"]
-
-def retiredExact : List Name :=
-  [`FirstOrder.Language.FullBarwiseFragment, `FirstOrder.Language.BarwiseFragment,
-   `FirstOrder.Language.consistencyPropertyOfFullFragment,
-   `FirstOrder.Language.barwise_completeness_II_syntactic_full]
-
-/-- Synthetic control carrying the retired substring. -/
-def retiredShapeControl_BarwiseFragment : Nat := 0
-
-def mentionsRetired (n : Name) : Bool :=
-  retiredSub.any fun s => (n.toString.splitOn s).length ≠ 1
-
-run_cmd do
-  let env ← getEnv
-  unless mentionsRetired `retiredShapeControl_BarwiseFragment do
-    throwError "positive control FAILED: the absence check cannot see the retired shape"
-  for n in retiredExact do
-    if (env.find? n).isSome then
-      throwError "[RETIRED NAME PRESENT] {n} has reappeared in the production environment"
 
 run_cmd do
   let env ← getEnv

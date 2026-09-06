@@ -30,10 +30,17 @@ names, and the HF instance — the first-order image inside `Lω₁ω` — whose
 *derived* from Mathlib's first-order compactness rather than assumed. Compactness is deliberately
 not a field of any of these structures.
 
-**The legacy scaffolding** (`Fragment`, `Barwise/*`, `WithConstants`, `Compactness`, `Nadel`):
-conditional interfaces that package Barwise compactness and the Nadel bound as hypotheses rather
-than discharging them, plus proof system / derivability, soundness, and the consistency-property
-bridge. These are being replaced by the interface above.
+**The legacy scaffolding** (`Fragment`, `WithConstants`, `Compactness`, `Nadel`, and the
+`Barwise/Data` presentation layer): conditional interfaces that package Barwise compactness and
+the Nadel bound as hypotheses rather than discharging them. These are being replaced by the
+interface above. The former consistency-property bridge is retired
+(`docs/migration-consistency-bridge.md`).
+
+**The proof system and the fair-enumeration adapters** (`Barwise/ProofSystem`, `Soundness`,
+`HenkinClosed`, `SourceFragment`, `HenkinClosure`, `GraphUniverse`, `ConstantTransport`): the
+surviving syntactic layer — derivability and soundness over a raw permitted sentence set, and the
+countable-completion kernel adapters that give countable models of consistent theories in the
+constants-expanded or graph universe.
 The EM compactness-oracle layer is not part of this bundle: it assumes a
 `Theoryω.OrdinaryCompactness` oracle and mentions no admissible notion, so it belongs to
 `Countable` with the rest of the EM chain.
