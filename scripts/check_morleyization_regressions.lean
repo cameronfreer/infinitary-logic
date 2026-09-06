@@ -2,7 +2,8 @@
 Regression guard for the canonical definitional expansion (Morleyization).
 
 Required shapes: the empty family recovers the base structure by reduct; a relation defined by
-an atomic formula, by an existential formula with several possible witnesses, and by a countable
+an atomic formula, by an existential formula without a uniqueness assumption on witnesses, and
+by a countable
 conjunction each read off the truth lemma definitionally; the reduct after expansion is the
 identity; translated sentence families stay countable; the coded expansion is injective and its
 image is the class of models of the defining theory.  The lifted isomorphism has the given

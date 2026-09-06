@@ -5,6 +5,7 @@ import InfinitaryLogic.Conditional.GandyHarrington
 import InfinitaryLogic.Conditional.SilverAntichain
 import InfinitaryLogic.Conditional.MorleyPerfect
 import InfinitaryLogic.Conditional.SentenceSpectrum
+import InfinitaryLogic.Conditional.FragmentSpectrumThin
 import InfinitaryLogic.Conditional.SilverCategoryRoute
 
 /-!
@@ -46,6 +47,10 @@ intermediates and historical statement shapes.
   isomorphism iff every countable list of sentences has countably many realized truth
   sequences; Silver on the kernel of the truth-sequence map one way, invariant analytic
   separation and López–Escobar the other.  Here because it consumes the Silver adapter.
+- `FragmentSpectrumThin.lean`: **`thin_iff_countable_fragment_spectra`** — a Borel class is thin
+  for isomorphism iff every countable fragment realizes countably many types at every finite
+  arity; Silver on the Borel relation "same realized types" (Marker's Corollary 3.3.3 route),
+  arity zero through the sentence characterization the other way.
 - `MorleyPerfect.lean`: the tiered **`morley_counting_or_perfect`** — Morley counting
   with a perfect set of pairwise non-isomorphic models in place of the bare cardinal
   equation, at the `ℕ` and `Fin n` tiers, with the cardinal form as a corollary.
