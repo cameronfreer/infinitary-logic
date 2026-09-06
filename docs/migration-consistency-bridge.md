@@ -1,7 +1,7 @@
 # Migration: retirement of `Admissible/Barwise/ConsistencyBridge.lean`
 
-Status: proposed breaking change, for review before any deletion is applied. No new
-mathematics, no release accompanies the proposal.
+Status: **removed in v5.0.0; retained in v4.7.0.** The retirement is the production API change
+of v5.0.0; no new mathematics accompanies it.
 
 ## What is removed
 
@@ -20,8 +20,8 @@ The whole module `InfinitaryLogic/Admissible/Barwise/ConsistencyBridge.lean` and
 the ambient-HF layer are **not** touched: they appear in the bridge's ancestry, but retirement
 of the bridge is not a reason to remove them.
 
-There are no theorem consumers of the removed declarations anywhere in the tree (audit of
-2026-09-06). The live references are the bundle import, two docstring mentions, README, the
+Pre-retirement audit (2026-09-06, at v4.7.0): there were no theorem consumers of the removed
+declarations anywhere in the tree. The references that the retirement updated were the bundle import, two docstring mentions, README, the
 interface contract §8, `docs/leanarchitect-blueprint.md`, the bundle docstring, three blueprint
 nodes with their generated-declaration entries, and the forbidden-name lists of four guard scripts.
 
@@ -48,8 +48,8 @@ that consume them.
 
 | Retired | Successor | Language / universe | Consistency hypothesis |
 | --- | --- | --- | --- |
-| `BarwiseFragment L` as the consumer contract (an interface, not a theorem) | `HenkinClosedMin P` (`Admissible/Barwise/HenkinClosed.lean`), an interface on `P : Set L[[ℕ]].Sentenceω` | `L : Language.{0,0}`; the interface itself needs no relational or countability assumption | no chain closure; the kernel's negated-target closure only |
-| `FullBarwiseFragment L` as a producer of the full universe (an interface) | `Fragment.henkinClosure S` (`Admissible/Barwise/HenkinClosure.lean`), a producer: a fragment of `L` with a `HenkinBasis`; its countability needs `[Countable (Σ l, L.Relations l)]` | `Language.{0,0}`; source fragment of `L`, universe expanded by ℕ constants | consistency is stated **in the constants-expanded universe** `(henkinClosure S).withNatConstantsSentences` |
+| `BarwiseFragment L` as the consumer contract (an interface, not a theorem) | `HenkinClosedMin P` (`Admissible/Barwise/HenkinClosed.lean`), an interface on `P : Set L[[ℕ]].Sentenceω` | `L : Language.{0,0}`; the interface itself needs no relational or countability assumption | no chain closure; instead closure under connective components and constant instances, membership of the closed atoms (`constEq`, `relInst`), and the kernel's selected negated targets |
+| `FullBarwiseFragment L` as a producer of the full universe (an interface) | `Fragment.henkinClosure S` (`Admissible/Barwise/HenkinClosure.lean`), a producer: a fragment **of `L`** with a `HenkinBasis`, carrying no consistency premise; countable when the seed `S` and the relation symbols `Σ l, L.Relations l` are both countable | `Language.{0,0}`; a fragment of the base language | none at this level; the constants expansion and the expanded-universe consistency hypothesis belong to the subsequent model-existence application (`_henkinClosure` row below) |
 | `consistentSets P` (the family of `P`-consistent subsets of `P`) | `HenkinClosed.aconsistentSets P` | `Language.{0,0}`; `P : Set L[[ℕ]].Sentenceω` | definitionally the same family shape (`S ⊆ P ∧ AConsistent P S`) over the constants-expanded language |
 | `consistencyPropertyOfFullFragment B : ConsistencyPropertyEq L` | `HenkinClosedMin.consistencyPropertyEqOn : ConsistencyPropertyEqOn P` | `Language.{0,0}`, **relational** base (`[L.IsRelational]`) | family of `P`-bounded `P`-consistent sets; no extension field |
 | `barwise_completeness_II_syntactic_full` (any `L : Language.{u,v}` with countable symbol sigmas; `B : FullBarwiseFragment L`; `T ⊆ B.formulas`, `T.Countable`, `AConsistent B.formulas T`; model in `Type u`) | `HenkinClosed.exists_countable_model_of_aconsistent` | `Language.{0,0}`, **relational** base, countable relation sigma; model is an `L[[ℕ]]`-structure on a `Type` with the constants present | `AConsistent P T` with `P` Henkin-closed and countable; no countability of `T` |
@@ -83,7 +83,7 @@ fails the guard. The successor endpoints' assembly and cone checks stay in their
 (`check_henkin_closed_cone.lean` now imports `Admissible.Fragment` explicitly, which the bridge
 used to supply transitively).
 
-## Validation and falsification, to run on the applied patch
+## Validation and falsification, as run at the retirement
 
 1. Full local gate (build of every bundle, all guards, `checkdecls` on the updated `lean_decls`).
 2. `scripts/check_chain_closure_counterexample.lean` still passes with only `Soundness`
@@ -100,5 +100,5 @@ used to supply transitively).
 
 ## Version
 
-Removing published declarations is breaking regardless of internal consumers: the next tag
-after this lands is a major version bump.
+Removing published declarations is breaking regardless of internal consumers: the retirement
+is released as v5.0.0, the first tag after v4.7.0.
