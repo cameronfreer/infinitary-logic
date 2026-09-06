@@ -35,7 +35,8 @@ def guardedRoots : List Name :=
    `FirstOrder.Language.hfAmbient_compact]
 
 def forbiddenSub : List String :=
-  ["FiniteCompactFragment", "AdmissibleFragmentCore", "CodedIn", "BarwiseFragment"]
+  ["FiniteCompactFragment", "AdmissibleFragmentCore", "CodedIn"]
+
 
 run_cmd do
   let env ← getEnv

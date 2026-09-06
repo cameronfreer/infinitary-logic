@@ -233,7 +233,8 @@ whatsoever. The two lemmas that need negation membership (`AConsistent.no_contra
 `Derivable.inconsistent_of_both_extensions`) take `φ.not ∈ P` explicitly.
 
 `scripts/check_proof_system_boundary.lean` enforces it: the `Derivable`/soundness cone cannot reach
-`FiniteCompactFragment`, `AdmissibleFragmentCore` or `BarwiseFragment`.
+`FiniteCompactFragment` or `AdmissibleFragmentCore` (the former `BarwiseFragment` layer is retired;
+see `docs/migration-consistency-bridge.md`).
 
 **The consistency engine is the fair-enumeration kernel, not a maximal-consistent extension.**
 `Admissible/Barwise/HenkinClosed.lean` inhabits the countable-completion kernel's
@@ -311,7 +312,7 @@ remains a standalone result about languages with a closed term.
 |---|---|
 | `height` on presentations or fragments | whether it belongs to the presentation or is derived is unsettled; a field would permit a fragment whose height disagreed with its presentation's |
 | the full KP schema | the consuming proofs do not exist yet, so the required laws are not yet determined |
-| `Admissible/Barwise/ConsistencyBridge.lean` | the superseded full-fragment bridge over `FullBarwiseFragment`, whose chain-closure field fails for the full universe of a constants-expanded language; its retirement awaits the constants/conservativity design and will be a separate breaking change |
+| `Admissible/Barwise/ConsistencyBridge.lean` | **retired** (breaking change): `BarwiseFragment`, `FullBarwiseFragment`, `consistencyPropertyOfFullFragment`, `barwise_completeness_II_syntactic_full` are removed; the chain-closure field fails for the full universe of the constants-expanded counterexample language. Successors change the language, universe, and consistency hypothesis — see `docs/migration-consistency-bridge.md` |
 | model-universe generalization | #19B; §7 records where the boundary falls rather than moving it |
 | `AdmissibleFragmentCore.hf := Set.univ` | a quarantined placeholder — nothing may be proved from it |
 

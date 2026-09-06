@@ -75,7 +75,7 @@ An honest coded-fragment interface, with the HF fragment as its regression insta
 
 **Barwise compactness and the Nadel bound are not proved**, and are not claimed. The interfaces
 carrying them (`Admissible/Barwise/*`, `Admissible/Compactness.lean`, `Admissible/Nadel.lean`, and the
-placeholders `AdmissibleFragmentCore.hf`, `FullBarwiseFragment`, `FiniteCompactFragment.CodedIn`) package a hypothesis rather
+placeholders `AdmissibleFragmentCore.hf` and `FiniteCompactFragment.CodedIn`) package a hypothesis rather
 than discharging it, are labelled as such in source, and are being replaced by the interface above.
 Progress is tracked in [#18](https://github.com/cameronfreer/infinitary-logic/issues/18)–[#20](https://github.com/cameronfreer/infinitary-logic/issues/20).
 Malitz's relative preservation theorem (4.6) is likewise not proved

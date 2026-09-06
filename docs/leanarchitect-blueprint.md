@@ -43,9 +43,9 @@ theorem countableRefinementHypothesis : CountableRefinementHypothesis.{u, v, w} 
 The narrative in `blueprint/src/content.tex` uses `\inputleannode{<label>}` to pull in
 the statement text and dependency metadata from each annotated declaration.
 
-### Current annotated nodes (52 total)
+### Current annotated nodes (49 total)
 
-**Definitions (20):**
+**Definitions (19):**
 - `def:BFEquiv` — Back-and-forth equivalence
 - `def:scottFormula` — Scott formula
 - `def:stabilization-ordinal` — Stabilization ordinal
@@ -62,12 +62,11 @@ the statement text and dependency metadata from each annotated declaration.
 - `def:admissible-fragment` — Admissible fragment
 - `def:derivable` — Derivability in admissible-fragment proof system
 - `def:a-consistent` — A-consistency
-- `def:full-barwise-fragment` — Full Barwise fragment
 - `def:structure-space` — Coding space for countable structures
 - `def:silver-burgess-dichotomy` — Silver–Burgess dichotomy (hypothesis)
 - `def:iso-setoid` — Isomorphism setoid on coded models
 
-**Theorems (32):**
+**Theorems (30):**
 - `thm:scottFormula-iff` — Scott formula characterization
 - `thm:self-stabilization` — Self-stabilization
 - `thm:scott-characterizes-of` — Scott characterization (conditional)
@@ -88,8 +87,6 @@ the statement text and dependency metadata from each annotated declaration.
 - `thm:barwise-compactness` — conditional compactness interface (projects a structure field; see #18)
 - `thm:barwise-completeness-ii` — Barwise completeness II
 - `thm:proof-system-soundness` — Proof system soundness
-- `thm:consistency-property-full-fragment` — Consistency property for full fragment
-- `thm:barwise-completeness-ii-syntactic` — Barwise completeness II (syntactic)
 - `thm:satisfaction-borel` — Satisfaction is Borel
 - `thm:bfequiv-borel` — BF-equivalence is Borel
 - `thm:iso-borel` — Isomorphism is Borel under bounded Scott height

@@ -68,8 +68,9 @@ def assemblyRoots : List (Name × Name) :=
     `FirstOrder.Language.IsLomega1omegaIndiscernibleOnTail.templateTheoryOfSeq_isFinitelySatisfiable)]
 
 def forbiddenSub : List String :=
-  ["FiniteCompactFragment", "FullBarwiseFragment", "AdmissibleFragmentCore",
+  ["FiniteCompactFragment", "AdmissibleFragmentCore",
    "admissibleFragmentOfUniv", "barwise_compactness"]
+
 
 /-- Declarations deleted in the #18 EM tranche; their reappearance means the legacy spine
 was recreated rather than replaced. -/

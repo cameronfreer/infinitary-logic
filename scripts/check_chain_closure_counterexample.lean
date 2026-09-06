@@ -1,16 +1,19 @@
 /-
 Executable regression: chain closure is FALSE for `AConsistent`.
 
-The superseded engine (`BarwiseFragment.chain_closure_consistent`, a Zorn-style maximal
-consistent extension, still present in `ConsistencyBridge.lean`) assumed that the union of a
+The retired engine (`BarwiseFragment.chain_closure_consistent`, a Zorn-style maximal
+consistent extension, formerly in `ConsistencyBridge.lean`; see
+`docs/migration-consistency-bridge.md`) assumed that the union of a
 ⊆-chain of `P`-consistent sets is `P`-consistent. It is not, already for `P = Set.univ`: with
 one relation symbol `U` and ℕ many constants, `Sₙ := {¬⋀ₖ U(cₖ)} ∪ {U(cₖ) | k ≤ n}` are each
 consistent (model ℕ, `U` true exactly on `{0,…,n}`, every element named by its constant), form
 a chain, and the union derives `⊥` by the ω-rule `iInf_intro`.
 
 Consequences recorded here so the discarded architecture cannot return:
-* `FullBarwiseFragment LC` is uninhabited (its `complete` field forces `formulas = Set.univ`);
-  `BarwiseFragment LC` with a proper formula set is NOT shown uninhabited by this file.
+* The former `FullBarwiseFragment LC` was uninhabited (its `complete` field forced
+  `formulas = Set.univ`); the former `BarwiseFragment LC` with a proper formula set was NOT
+  shown uninhabited by this file.  The claim is about the language `LC` specified here, not
+  every language.
 * `Admissible/Barwise/HenkinClosed.lean` therefore routes through the fair-enumeration kernel,
   whose consistency property has no chain-closure field.
 
@@ -97,8 +100,8 @@ theorem union_inconsistent : ¬ AConsistent (Set.univ : Set LC.Sentenceω) (⋃�
     .assumption ⟨S 0, ⟨0, rfl⟩, Set.mem_insert _ _⟩ trivial
   exact .imp_elim hneg hinf
 
-/-- **Chain closure is false**, in exactly the form `BarwiseFragment.chain_closure_consistent`
-demands, already for `P = Set.univ`. -/
+/-- **Chain closure is false**, in exactly the form the retired
+`BarwiseFragment.chain_closure_consistent` demanded, already for `P = Set.univ`. -/
 theorem no_chain_closure :
     ¬ ∀ (chain : Set (Set LC.Sentenceω)),
         chain ⊆ {T | T ⊆ Set.univ ∧ AConsistent Set.univ T} →
