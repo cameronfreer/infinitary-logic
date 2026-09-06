@@ -4,7 +4,8 @@ specialization.
 
 Required shapes: the empty class transports (both sides thin); an isomorphism-respecting
 homeomorphic identity transports trivially; the Morleyization specialization admits the empty
-family and an arbitrary (non-Borel) class in its statement.  Headline declarations on standard
+family and an arbitrary class, not assumed Borel, in its statement (the check is the absence of
+the hypothesis, not a concrete non-Borel example).  Headline declarations on standard
 axioms.
 
 Run with: lake env lean scripts/check_antichain_transport_regressions.lean
