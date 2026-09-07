@@ -84,10 +84,37 @@ jobs:
           restore-keys: |
             docbuild-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'docbuild/lake-manifest.json', 'docbuild/lakefile.toml') }}-
 
+      # The restored cache carries doc-gen4's HTML-generation marker (`doc-data/*.docs_built`)
+      # from an OLDER commit. Lake replays the final `InfinitaryLogic:docs` job against that
+      # marker even after rebuilding the per-module docInfo rows, so the deployed HTML was the
+      # cached commit's (observed 2026-09-07: run 34160938501 rebuilt two new modules' docInfo,
+      # replayed `:docs`, and deployed v5.0.0's pages, retired module included). Drop the HTML
+      # and the marker so `fromDb` regenerates every page from the up-to-date database; the
+      # database and the per-module docInfo work stay cached.
       - name: Build API docs
         run: |
           cd docbuild
+          rm -rf .lake/build/doc .lake/build/doc-data .lake/build/doc-manifest.json
           lake build InfinitaryLogic:docs
+
+      # Evidence, not trust: every library module must have a page, and no page may exist for a
+      # module that is gone. A stale or partial regeneration fails here instead of deploying.
+      - name: Check API docs cover exactly the library modules
+        run: |
+          python3 - <<'EOF'
+          import pathlib, sys
+          src = {p.with_suffix('').as_posix()
+                 for p in pathlib.Path('InfinitaryLogic').rglob('*.lean')} | {'InfinitaryLogic'}
+          doc = pathlib.Path('docbuild/.lake/build/doc')
+          html = {p.relative_to(doc).with_suffix('').as_posix()
+                  for p in (doc / 'InfinitaryLogic').rglob('*.html')} | \
+                 ({'InfinitaryLogic'} if (doc / 'InfinitaryLogic.html').exists() else set())
+          missing = sorted(src - html)
+          stale = sorted(html - src)
+          if missing or stale:
+              print('missing pages:', missing); print('stale pages:', stale); sys.exit(1)
+          print(f'API docs cover exactly {len(src)} library modules')
+          EOF
 
       - name: Save docbuild cache
         if: steps.docbuild-cache-restore.outputs.cache-hit != 'true'
