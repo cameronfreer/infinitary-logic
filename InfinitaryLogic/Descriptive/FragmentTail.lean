@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Descriptive.SentenceRecovery
+import InfinitaryLogic.ModelTheory.FragmentType
 import InfinitaryLogic.Descriptive.RankedThinness
 import InfinitaryLogic.OrdinalUtil
 import Mathlib.SetTheory.Cardinal.Regular
@@ -25,6 +26,13 @@ list; the threshold may depend on the list.
 `fragment_tails_of_eventual_sentence_decision` supplies that hypothesis from a stronger,
 sentence-by-sentence input: each sentence eventually has constant truth on the rank tail.
 Thresholds may depend on the whole sentence, not merely its quantifier rank.
+
+`sentenceTheory_image_countable_of_determining_cover` is the named sentence-list specialization
+of the generic counting kernel `Set.countable_image_of_determining_cover`: a countable family of
+**predicates** on coded structures (not required to be formulas, Borel, invariant, or disjoint)
+that covers a set and determines the `θ`-theory on it makes the `θ`-spectrum of that set
+countable.  Applied to a rank tail it supplies the tail hypothesis above; coverage and
+determination remain the producer's obligations.
 
 `ThinRankAnalysis.bounded_refined_of_fragment_tails` discharges the refined
 boundedness field of `ThinRankAnalysis` with `e := id`: the bound holds on the whole antichain.
@@ -97,6 +105,21 @@ theorem fragment_tails_of_eventual_sentence_decision (C : Set (StructureSpace L)
   have hh := hp n c hc ((Ordinal.le_iSup b n).trans hr)
   simp only [sentenceTheory, hh]
   cases p n <;> rfl
+
+omit [Countable (Σ n, L.Relations n)] in
+/-- **Countable sentence spectrum from a determining predicate cover.**  The sentence-list
+specialization of `Set.countable_image_of_determining_cover`: descriptions are arbitrary
+predicates `P e` on coded structures; if they cover `C` and any two members of `C` satisfying one
+description have the same `θ`-theory, the `θ`-spectrum of `C` is countable.  No measurability,
+disjointness, invariance, selector, or symbol countability enters.  With `C` a rank tail
+`{c | c ∈ C ∧ b ≤ r c}` this is the tail hypothesis of `antichain_rank_bounded_of_fragment_tails`
+for one list. -/
+theorem sentenceTheory_image_countable_of_determining_cover (θ : ℕ → L.Sentenceω)
+    (C : Set (StructureSpace L)) {E : Type*} [Countable E] (P : E → StructureSpace L → Prop)
+    (cover : ∀ c ∈ C, ∃ e, P e c)
+    (det : ∀ e, ∀ c ∈ C, ∀ d ∈ C, P e c → P e d → sentenceTheory θ c = sentenceTheory θ d) :
+    (sentenceTheory θ '' C).Countable :=
+  Set.countable_image_of_determining_cover (sentenceTheory θ) C P cover det
 
 /-- **The refined boundedness field from tail smallness**, with `e := id`: the bound holds on the
 whole antichain, so no subcopy is needed.  The remaining fields of `ThinRankAnalysis` are not

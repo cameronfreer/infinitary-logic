@@ -117,7 +117,10 @@ below `ω₁`.
 **The bound is on a subcopy, not on the whole antichain.** That is exactly what the countability
 contradiction consumes: it runs on any Cantor subcopy, so demanding a bound everywhere would ask
 producers for more than the argument uses. The subcopy `e` is required to be continuous and
-injective, deliberately not an `IsEmbedding` — again, precisely what the consumers use.
+injective, deliberately not an `IsEmbedding`. Of those two clauses the contradiction consumes
+only injectivity (`no_cantorAntichain` discards the continuity proof); continuity is required
+because it is what makes `e` a genuine Cantor subcopy, which other consumers of the field may
+need.
 
 `no_cantorAntichain` and `isThinOn` are **derived theorems, not fields**. A structure whose fields
 already asserted thinness would prove nothing; the content is that this particular evidence
@@ -129,11 +132,34 @@ bound on the whole antichain, and `ThinRankAnalysis.of_full_wellOrderPresentatio
 presentation of the whole antichain. Only that direction holds; **no converse is claimed**, since a
 bound on some subcopy does not recover one on the whole antichain.
 
-**ThinRankAnalysis packages sufficient evidence for thinness, and `ThinRankAnalysis.isThinOn`
-proves the implication. One generic constructor is supplied — from ranks computed by coded
-well-orders presented continuously on each Cantor subcopy — but no concrete instance: no model
-class is exhibited whose isomorphism rank admits such presentations.** The repository provides the
-criterion, not an application of it.
+### Two routes to the refined boundedness field
+
+Two generic producers discharge `bounded_on_refined_cantor_antichains`; neither supplies the
+other fields (ranks `< ω₁` on the class, countable fixed-rank antichains), which remain inputs.
+
+- **Well-order presentations** (`Descriptive/WellOrderRankedThinness.lean`):
+  `ThinRankAnalysis.of_wellOrderPresentations` takes ranks computed by coded well-orders
+  presented continuously on each Cantor subcopy, and `of_full_wellOrderPresentations` the
+  whole-antichain version. Analytic boundedness of well-order types supplies the bound.
+- **Fragment tails** (`Descriptive/FragmentTail.lean`): if for every countable sentence list
+  `θ` some threshold `b < ω₁` (depending on `θ`) makes the `θ`-spectrum of the rank tail
+  `{c ∈ C | b ≤ r c}` countable, then `antichain_rank_bounded_of_fragment_tails` bounds `r`
+  below `ω₁` on every measurable Cantor isomorphism antichain in `C`, and
+  `ThinRankAnalysis.bounded_refined_of_fragment_tails` discharges the refined field with
+  `e := id`. The class `C` and rank `r` are fixed before `θ`; neither needs measurability or
+  isomorphism invariance; the rank must be `< ω₁` on `C`; the antichain map must be measurable;
+  and the conclusion bounds each antichain, never the whole class. The tail spectrum bound for
+  one list comes from a countable determining predicate cover of that tail
+  (`sentenceTheory_image_countable_of_determining_cover`, the sentence-list specialization of the
+  generic counting kernel `Set.countable_image_of_determining_cover`): descriptions are
+  arbitrary predicates, not required to be formulas, Borel, invariant, or disjoint. Coverage and
+  determination are the producer's obligations.
+
+**Antichain boundedness is one field, not the whole analysis.** Either route yields evidence
+for the refined field only; a complete `ThinRankAnalysis` still needs the rank bound on the
+class and countable fixed-rank antichains. `ThinRankAnalysis.isThinOn` then proves thinness.
+No concrete instance is exhibited: no model class is shown to admit well-order presentations or
+small fragment tails. The repository provides the criterion, not an application of it.
 
 Its `[MetricSpace] [CompleteSpace]` hypotheses are *not* relaxed by the cheap Hausdorff direction
 above: `isThinOn` consumes `IsThinOn.of_no_cantorAntichain`, which is the perfect → Cantor
