@@ -134,8 +134,8 @@ bound on some subcopy does not recover one on the whole antichain.
 
 ### Two routes to the refined boundedness field
 
-Two generic producers discharge `bounded_on_refined_cantor_antichains`; neither supplies the
-other fields (ranks `< ω₁` on the class, countable fixed-rank antichains), which remain inputs.
+Two generic producers derive the refined boundedness evidence; the other fields (ranks `< ω₁`
+on the class, countable fixed-rank antichains) remain hypotheses that the producer supplies.
 
 - **Well-order presentations** (`Descriptive/WellOrderRankedThinness.lean`):
   `ThinRankAnalysis.of_wellOrderPresentations` takes ranks computed by coded well-orders
@@ -148,16 +148,20 @@ other fields (ranks `< ω₁` on the class, countable fixed-rank antichains), wh
   `ThinRankAnalysis.bounded_refined_of_fragment_tails` discharges the refined field with
   `e := id`. The class `C` and rank `r` are fixed before `θ`; neither needs measurability or
   isomorphism invariance; the rank must be `< ω₁` on `C`; the antichain map must be measurable;
-  and the conclusion bounds each antichain, never the whole class. The tail spectrum bound for
+  and the conclusion bounds each antichain; it does not assert a uniform bound on the whole
+  class. The tail spectrum bound for
   one list comes from a countable determining predicate cover of that tail
   (`sentenceTheory_image_countable_of_determining_cover`, the sentence-list specialization of the
   generic counting kernel `Set.countable_image_of_determining_cover`): descriptions are
   arbitrary predicates, not required to be formulas, Borel, invariant, or disjoint. Coverage and
   determination are the producer's obligations.
 
-**Antichain boundedness is one field, not the whole analysis.** Either route yields evidence
-for the refined field only; a complete `ThinRankAnalysis` still needs the rank bound on the
-class and countable fixed-rank antichains. `ThinRankAnalysis.isThinOn` then proves thinness.
+**What is derived and what is returned.** Both routes derive the refined boundedness evidence.
+The well-order presentation constructor returns a complete `ThinRankAnalysis`, passing through
+the supplied rank-bound and fixed-rank-countability hypotheses. The fragment-tail helper
+returns the boundedness field for use in such an assembly; the rank bound on the class and
+countable fixed-rank antichains are still needed to complete it. `ThinRankAnalysis.isThinOn`
+then proves thinness.
 No concrete instance is exhibited: no model class is shown to admit well-order presentations or
 small fragment tails. The repository provides the criterion, not an application of it.
 
