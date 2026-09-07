@@ -91,7 +91,9 @@ jobs:
       # and deployed v5.0.0's pages, retired module included). Remove only the rendered output,
       # the manifest, and the HTML-generation markers; the per-module docInfo markers
       # (`doc-data/*.doc`, including dependencies and core) and the database stay cached, so the
-      # incremental extraction is reused and only `fromDb` (under a minute) reruns.
+      # incremental extraction is reused and only `fromDb` (under a minute) reruns. The bib
+      # prepass tracks `doc-data/references.json` but also writes `doc/references.bib`, which
+      # `fromDb` reads; drop its tracked output too so it reruns (it copies one file).
       #
       # The documented inventory is the import closure of `InfinitaryLogic.Everything`: the
       # default surface, the Conditional bundle, and the legacy off-path modules that CI builds.
@@ -101,6 +103,7 @@ jobs:
           cd docbuild
           rm -rf .lake/build/doc .lake/build/doc-manifest.json
           rm -f .lake/build/doc-data/*.docs_built .lake/build/doc-data/*.docs_built.trace
+          rm -f .lake/build/doc-data/references.json .lake/build/doc-data/references.json.trace
           lake build InfinitaryLogic.Everything:docs
 
       # Evidence, not trust: every module of the inventory has a page, no page survives its
