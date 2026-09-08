@@ -84,10 +84,36 @@ jobs:
           restore-keys: |
             docbuild-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'docbuild/lake-manifest.json', 'docbuild/lakefile.toml') }}-
 
+      # The restored cache carries doc-gen4's HTML-generation marker (`doc-data/*.docs_built`)
+      # from an OLDER commit. Lake replays the final `:docs` job against that marker even after
+      # rebuilding the per-module docInfo rows, so the deployed HTML was the cached commit's
+      # (observed 2026-09-07: run 34160938501 rebuilt two new modules' docInfo, replayed `:docs`,
+      # and deployed v5.0.0's pages, retired module included). Remove only the rendered output,
+      # the manifest, and the HTML-generation markers; the per-module docInfo markers
+      # (`doc-data/*.doc`, including dependencies and core) and the database stay cached, so the
+      # incremental extraction is reused and only `fromDb` (under a minute) reruns. The bib
+      # prepass tracks `doc-data/references.json` but also writes `doc/references.bib`, which
+      # `fromDb` reads; drop its tracked output too so it reruns (it copies one file).
+      #
+      # The documented inventory is the import closure of `InfinitaryLogic.Everything`: the
+      # default surface, the Conditional bundle, and the legacy off-path modules that CI builds.
+      # `InfinitaryLogic:docs` would document only the default root's closure.
       - name: Build API docs
         run: |
           cd docbuild
-          lake build InfinitaryLogic:docs
+          rm -rf .lake/build/doc .lake/build/doc-manifest.json
+          rm -f .lake/build/doc-data/*.docs_built .lake/build/doc-data/*.docs_built.trace
+          rm -f .lake/build/doc-data/references.json .lake/build/doc-data/references.json.trace
+          lake build InfinitaryLogic.Everything:docs
+
+      # Evidence, not trust: every module of the inventory has a page, no page survives its
+      # module, named recent declarations are present as anchors (an old copy of an existing
+      # page cannot pass), and retired pages are absent. The self-test first proves the checker
+      # fails on a missing page, a missing anchor, and a present retired page.
+      - name: Check API docs are complete and current
+        run: |
+          python3 scripts/api_docs_coverage.py --self-test
+          python3 scripts/api_docs_coverage.py docbuild/.lake/build/doc
 
       - name: Save docbuild cache
         if: steps.docbuild-cache-restore.outputs.cache-hit != 'true'
