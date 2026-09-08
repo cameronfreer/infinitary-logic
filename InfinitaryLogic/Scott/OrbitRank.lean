@@ -143,7 +143,10 @@ theorem orbitStable_upward {n : ℕ} {a : Fin n → M} {α β : Ordinal.{w}}
     (h : α ∈ orbitStable (L := L) a) (hαβ : α ≤ β) : β ∈ orbitStable (L := L) a :=
   fun b hb => h b (BFEquiv.monotone hαβ hb)
 
-/-- **Orbit rank** of a tuple: the least level at which its class is its orbit. -/
+/-- **Orbit rank** of a tuple: the least level `α` such that every tuple of `M` equivalent to `a`
+at level `α` is equivalent to `a` at every level.  For countable `M` over a relational language,
+that class is the automorphism orbit of `a` (`bfEquiv_orbitRank_iff_exists_automorphism`); in
+general it is the all-levels class. -/
 noncomputable def orbitRank {n : ℕ} (a : Fin n → M) : Ordinal.{w} :=
   sInf (orbitStable (L := L) a)
 
@@ -211,8 +214,9 @@ theorem orbitRank_map_equiv {M' : Type w} [L.Structure M'] (e : M ≃[L] M') {n 
 
 /-! ### Internal Scott rank -/
 
-/-- **Internal Scott rank** `SR(M) = ⨆ (r(a) + 1)` over all finite tuples (Marker Definition
-2.2.4). -/
+/-- **Internal Scott rank** `SR(M) = ⨆ (orbitRank a + 1)` over all finite tuples, with the
+all-levels orbit rank of this module (the Scott-rank survey's Definition 2.6 convention; see the
+module docstring for the discrepancy with Marker's printed Definition 2.2.4). -/
 noncomputable def internalScottRank (M : Type w) [L.Structure M] : Ordinal.{w} :=
   ⨆ x : (Σ n : ℕ, Fin n → M), orbitRank (L := L) x.2 + 1
 
