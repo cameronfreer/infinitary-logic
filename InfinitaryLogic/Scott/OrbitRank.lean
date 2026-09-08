@@ -13,23 +13,36 @@ import Mathlib.Data.Set.Finite.Range
 
 The **internal** finite-tuple invariant of a single structure `M`: for a tuple `a : Fin n → M`,
 its orbit rank `orbitRank a` is the least ordinal `α` such that every tuple `b` of `M` that is
-back-and-forth equivalent to `a` at level `α` is still equivalent at level `α + 1`.  This is
-Marker's `r(a)` (*Lectures on Infinitary Model Theory*, 2016, Definition 2.2.4), a comparison of
-tuples **inside `M`**.  The internal Scott rank `internalScottRank M = ⨆ (orbitRank a + 1)` is
-Marker's `SR(M)`.
+back-and-forth equivalent to `a` at level `α` is equivalent to `a` at **every** level.  For
+countable `M` that is exactly "the level-`α` class of `a` is its automorphism orbit"
+(`bfEquiv_orbitRank_iff_exists_automorphism`).  The internal Scott rank
+`internalScottRank M = ⨆ (orbitRank a + 1)` is the `SR(M)` convention.
+
+**Convention, and a source discrepancy.**  Marker (*Lectures on Infinitary Model Theory*, 2016,
+Definition 2.2.4) prints the one-step condition "`a ∼_α b ⇒ a ∼_{α+1} b`".  That condition does
+not define orbits: a class can pause for one level and split later (the graph `K₂ ⊔ K₃`: all
+vertices are equivalent at levels `0` and `1`, a `K₂`-vertex and a `K₃`-vertex are not
+automorphic and separate at level `2`; see `scripts/check_orbit_rank_regressions.lean`).  The
+production definition here is the all-levels form, as in the Scott-rank survey
+(arXiv:2011.03923, Definition 2.6), which is what the orbit reading requires.
 
 This is deliberately distinct from `elementRank`/`scottRank` (`Scott/Rank.lean`), which compare a
-singleton of `M` with tuples of arbitrary countable structures.  Nothing here replaces those; the
-two conventions are related only by theorems proved elsewhere, not by definition.
+singleton of `M` with tuples of arbitrary countable structures.  No comparison between the two
+conventions is supplied here.
 
 Contents:
 
-* `orbitStable a`: the levels at which the orbit of `a` has stabilized; nonempty for every
-  structure (`orbitStable_nonempty`, via the set-sized stabilization ordinal of `M` with itself),
-  so `orbitRank` is never an infimum over an empty set.
-* `orbitRank`, its membership and least-element lemmas.
-* `internalScottRank`: separate upper-bound and cofinal-lower-bound lemmas, then the exact-rank
-  criterion `internalScottRank_eq_iff`.
+* `orbitStable a`: the levels at which the orbit of `a` has stabilized (all-levels form);
+  upward closed; nonempty for every structure (`orbitStable_nonempty`, via the set-sized
+  stabilization ordinal of `M` with itself), so `orbitRank` is never an infimum over an empty
+  set.
+* `orbitRank`, its membership and least-element lemmas; for countable `M`, equivalence at the
+  orbit rank is equivalent to an automorphism carrying the tuple.
+* `internalScottRank`: the supremum API (`internalScottRank_le`, cofinal lower bound,
+  `internalScottRank_eq_iff`) and, on top of it, the **semantic exact-rank criterion**:
+  `internalScottRank_le_of_orbits_determined` (every tuple's orbit is determined at some level
+  below `α`) and `le_internalScottRank_of_not_automorphic` (below every `β < α` some
+  `β`-equivalent tuples are not automorphic), assembled in `internalScottRank_eq_of_orbits`.
 * Transport of `BFEquiv` along isomorphisms (`BFEquiv.map_equiv`) and isomorphism invariance of
   both ranks.
 * `exists_automorphism_of_bfEquiv_all`: for countable `M`, two tuples equivalent at **every**
@@ -113,18 +126,24 @@ theorem BFEquiv.map_equiv {M' : Type w} {N' : Type w'} [L.Structure M'] [L.Struc
 /-! ### Orbit rank -/
 
 /-- The levels at which the orbit of `a` inside `M` has stabilized: every `b` in `M` equivalent
-to `a` at level `α` is equivalent at level `α + 1`. -/
+to `a` at level `α` is equivalent to `a` at every level. -/
 def orbitStable {n : ℕ} (a : Fin n → M) : Set Ordinal.{w} :=
-  {α | ∀ b : Fin n → M, BFEquiv (L := L) α n a b → BFEquiv (L := L) (Order.succ α) n a b}
+  {α | ∀ b : Fin n → M, BFEquiv (L := L) α n a b → ∀ γ : Ordinal.{w}, BFEquiv (L := L) γ n a b}
 
 omit [L.IsRelational] in
 /-- **The stabilization set is never empty**: the set-sized stabilization ordinal of `M` with
 itself belongs to it.  No countability of `M` is needed. -/
 theorem orbitStable_nonempty {n : ℕ} (a : Fin n → M) : (orbitStable (L := L) a).Nonempty :=
   ⟨bfStabilizationOrdinal.{u, v, w} L M M, fun _ hb =>
-    (bfEquiv_bfStabilizationOrdinal_iff_all.mp hb) _⟩
+    bfEquiv_bfStabilizationOrdinal_iff_all.mp hb⟩
 
-/-- **Orbit rank** of a tuple: the least stabilization level (Marker Definition 2.2.4, `r(a)`). -/
+omit [L.IsRelational] in
+/-- Stabilization persists upward. -/
+theorem orbitStable_upward {n : ℕ} {a : Fin n → M} {α β : Ordinal.{w}}
+    (h : α ∈ orbitStable (L := L) a) (hαβ : α ≤ β) : β ∈ orbitStable (L := L) a :=
+  fun b hb => h b (BFEquiv.monotone hαβ hb)
+
+/-- **Orbit rank** of a tuple: the least level at which its class is its orbit. -/
 noncomputable def orbitRank {n : ℕ} (a : Fin n → M) : Ordinal.{w} :=
   sInf (orbitStable (L := L) a)
 
@@ -133,11 +152,11 @@ theorem orbitRank_mem {n : ℕ} (a : Fin n → M) : orbitRank (L := L) a ∈ orb
   csInf_mem (orbitStable_nonempty a)
 
 omit [L.IsRelational] in
-/-- The defining property at the orbit rank. -/
-theorem bfEquiv_succ_orbitRank {n : ℕ} {a b : Fin n → M}
-    (h : BFEquiv (L := L) (orbitRank (L := L) a) n a b) :
-    BFEquiv (L := L) (Order.succ (orbitRank (L := L) a)) n a b :=
-  orbitRank_mem a b h
+/-- The defining property at the orbit rank: equivalence there is equivalence at every level. -/
+theorem bfEquiv_all_of_bfEquiv_orbitRank {n : ℕ} {a b : Fin n → M}
+    (h : BFEquiv (L := L) (orbitRank (L := L) a) n a b) (γ : Ordinal.{w}) :
+    BFEquiv (L := L) γ n a b :=
+  orbitRank_mem a b h γ
 
 omit [L.IsRelational] in
 theorem orbitRank_le_of_mem {n : ℕ} {a : Fin n → M} {α : Ordinal.{w}}
@@ -145,14 +164,29 @@ theorem orbitRank_le_of_mem {n : ℕ} {a : Fin n → M} {α : Ordinal.{w}}
   csInf_le' h
 
 omit [L.IsRelational] in
-/-- Below the orbit rank, stabilization fails: some `b` is equivalent at that level but not at the
-next. -/
-theorem exists_not_succ_of_lt_orbitRank {n : ℕ} {a : Fin n → M} {β : Ordinal.{w}}
+theorem mem_orbitStable_iff_orbitRank_le {n : ℕ} {a : Fin n → M} {α : Ordinal.{w}} :
+    α ∈ orbitStable (L := L) a ↔ orbitRank (L := L) a ≤ α :=
+  ⟨orbitRank_le_of_mem, fun h => orbitStable_upward (orbitRank_mem a) h⟩
+
+omit [L.IsRelational] in
+/-- Below the orbit rank, stabilization fails: some `b` is equivalent at that level but not at
+every level. -/
+theorem exists_not_all_of_lt_orbitRank {n : ℕ} {a : Fin n → M} {β : Ordinal.{w}}
     (h : β < orbitRank (L := L) a) :
-    ∃ b : Fin n → M, BFEquiv (L := L) β n a b ∧ ¬ BFEquiv (L := L) (Order.succ β) n a b := by
+    ∃ b : Fin n → M, BFEquiv (L := L) β n a b ∧ ¬ ∀ γ : Ordinal.{w}, BFEquiv (L := L) γ n a b := by
   by_contra hcon
   push Not at hcon
   exact (not_le.mpr h) (orbitRank_le_of_mem fun b hb => hcon b hb)
+
+omit [L.IsRelational] in
+/-- Automorphic tuples are equivalent at every level. -/
+theorem bfEquiv_all_of_automorphism {n : ℕ} {a b : Fin n → M} (e : M ≃[L] M)
+    (he : ⇑e ∘ a = b) (γ : Ordinal.{w}) : BFEquiv (L := L) γ n a b := by
+  subst he
+  have := (BFEquiv.map_equiv (Language.Equiv.refl L M) e γ (a := a) (b := a)).mpr
+    (BFEquiv.refl γ a)
+  have hid : ⇑(Language.Equiv.refl L M) ∘ a = a := funext fun i => rfl
+  rwa [hid] at this
 
 omit [L.IsRelational] in
 /-- **Isomorphism invariance of the orbit rank.** -/
@@ -162,16 +196,16 @@ theorem orbitRank_map_equiv {M' : Type w} [L.Structure M'] (e : M ≃[L] M') {n 
   congr 1
   ext α
   constructor
-  · intro h b hb
-    have := h (⇑e ∘ b) ((BFEquiv.map_equiv e e α).mpr hb)
+  · intro h b hb γ
+    have := h (⇑e ∘ b) ((BFEquiv.map_equiv e e α).mpr hb) γ
     exact (BFEquiv.map_equiv e e _).mp this
-  · intro h b' hb'
+  · intro h b' hb' γ
     have hb : BFEquiv (L := L) α n a (⇑e.symm ∘ b') := by
       have := (BFEquiv.map_equiv e e α (a := a) (b := ⇑e.symm ∘ b')).mp
       apply this
       rwa [← Function.comp_assoc, show ⇑e ∘ ⇑e.symm = id from funext e.apply_symm_apply,
         Function.id_comp]
-    have := (BFEquiv.map_equiv e e _).mpr (h _ hb)
+    have := (BFEquiv.map_equiv e e _).mpr (h _ hb γ)
     rwa [← Function.comp_assoc, show ⇑e ∘ ⇑e.symm = id from funext e.apply_symm_apply,
       Function.id_comp] at this
 
@@ -288,6 +322,66 @@ theorem exists_automorphism_of_bfEquiv_all [Countable M] {n : ℕ} {a b : Fin n 
   show e (a j) = b j
   exact hdi.symm.trans (heq.mp hci.symm).symm
 
+/-! ### The orbit characterization and the semantic exact-rank criterion -/
+
+/-- **Equivalence at the orbit rank is automorphism.**  For countable `M`, `b` is equivalent to
+`a` at level `orbitRank a` iff an automorphism carries `a` to `b`. -/
+theorem bfEquiv_orbitRank_iff_exists_automorphism [Countable M] {n : ℕ} {a b : Fin n → M} :
+    BFEquiv (L := L) (orbitRank (L := L) a) n a b ↔ ∃ e : M ≃[L] M, ⇑e ∘ a = b :=
+  ⟨fun h => exists_automorphism_of_bfEquiv_all (bfEquiv_all_of_bfEquiv_orbitRank h),
+    fun ⟨e, he⟩ => bfEquiv_all_of_automorphism e he _⟩
+
+/-- Equivalence at every level is automorphism, for countable `M`. -/
+theorem bfEquiv_all_iff_exists_automorphism [Countable M] {n : ℕ} {a b : Fin n → M} :
+    (∀ γ : Ordinal.{w}, BFEquiv (L := L) γ n a b) ↔ ∃ e : M ≃[L] M, ⇑e ∘ a = b :=
+  ⟨exists_automorphism_of_bfEquiv_all, fun ⟨e, he⟩ => bfEquiv_all_of_automorphism e he⟩
+
+omit [L.IsRelational] in
+/-- A level at which the class of `a` is its automorphism orbit is a stabilization level. -/
+theorem mem_orbitStable_of_orbit_determined {n : ℕ} {a : Fin n → M} {β : Ordinal.{w}}
+    (h : ∀ b : Fin n → M, BFEquiv (L := L) β n a b → ∃ e : M ≃[L] M, ⇑e ∘ a = b) :
+    β ∈ orbitStable (L := L) a :=
+  fun b hb => let ⟨e, he⟩ := h b hb; bfEquiv_all_of_automorphism e he
+
+omit [L.IsRelational] in
+/-- **Semantic upper bound.**  If every tuple has some level below `α` at which its class is its
+automorphism orbit, the internal Scott rank is at most `α`. -/
+theorem internalScottRank_le_of_orbits_determined {α : Ordinal.{w}}
+    (h : ∀ (n : ℕ) (a : Fin n → M), ∃ β < α,
+      ∀ b : Fin n → M, BFEquiv (L := L) β n a b → ∃ e : M ≃[L] M, ⇑e ∘ a = b) :
+    internalScottRank (L := L) M ≤ α := by
+  refine internalScottRank_le fun n a => ?_
+  obtain ⟨β, hβ, hdet⟩ := h n a
+  exact Order.succ_le_of_lt
+    ((orbitRank_le_of_mem (mem_orbitStable_of_orbit_determined hdet)).trans_lt hβ)
+
+/-- **Semantic lower bound.**  If below every `β < α` some tuples are `β`-equivalent but not
+automorphic, the internal Scott rank is at least `α`.  Countability of `M` enters through the
+pointed automorphism theorem. -/
+theorem le_internalScottRank_of_not_automorphic [Countable M] {α : Ordinal.{w}}
+    (h : ∀ β < α, ∃ (n : ℕ) (a b : Fin n → M),
+      BFEquiv (L := L) β n a b ∧ ¬ ∃ e : M ≃[L] M, ⇑e ∘ a = b) :
+    α ≤ internalScottRank (L := L) M := by
+  refine le_of_forall_lt fun β hβ => ?_
+  obtain ⟨n, a, b, hab, hno⟩ := h β hβ
+  have hβa : β < orbitRank (L := L) a := by
+    by_contra hle
+    push Not at hle
+    exact hno (bfEquiv_orbitRank_iff_exists_automorphism.mp (BFEquiv.monotone hle hab))
+  exact lt_of_lt_of_le (lt_of_lt_of_le hβa (Order.le_succ _))
+    (orbitRank_add_one_le_internalScottRank a)
+
+/-- **Semantic exact-rank criterion**: the internal Scott rank is `α` when every tuple's orbit is
+determined below `α` and below every `β < α` some `β`-equivalent tuples are not automorphic. -/
+theorem internalScottRank_eq_of_orbits [Countable M] {α : Ordinal.{w}}
+    (hup : ∀ (n : ℕ) (a : Fin n → M), ∃ β < α,
+      ∀ b : Fin n → M, BFEquiv (L := L) β n a b → ∃ e : M ≃[L] M, ⇑e ∘ a = b)
+    (hlow : ∀ β < α, ∃ (n : ℕ) (a b : Fin n → M),
+      BFEquiv (L := L) β n a b ∧ ¬ ∃ e : M ≃[L] M, ⇑e ∘ a = b) :
+    internalScottRank (L := L) M = α :=
+  le_antisymm (internalScottRank_le_of_orbits_determined hup)
+    (le_internalScottRank_of_not_automorphic hlow)
+
 /-! ### Infinite pure sets -/
 
 section PureSet
@@ -367,9 +461,9 @@ theorem orbitRank_pureSet {n : ℕ} (a : Fin n → X) :
     orbitRank (L := Language.empty) (M := X) a = 0 := by
   apply le_antisymm _ (_root_.zero_le)
   apply orbitRank_le_of_mem
-  intro b hb
+  intro b hb γ
   exact bfEquiv_all_of_pattern a b
-    ((sameAtomicType_empty_iff a b).mp ((BFEquiv.zero _ _).mp hb)) _
+    ((sameAtomicType_empty_iff a b).mp ((BFEquiv.zero _ _).mp hb)) γ
 
 /-- **An infinite pure set has internal Scott rank `1`.** -/
 theorem internalScottRank_pureSet :
