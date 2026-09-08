@@ -268,10 +268,11 @@ private theorem PotentialIso.buildChain_coherent_snd_general
 
 This is a direct back-and-forth construction that doesn't go through Scott sentences
 or Karp's theorem, avoiding circular dependencies in the formalization. -/
-theorem PotentialIso.countable_toEquiv
+theorem PotentialIso.countable_toEquiv_graph
     {M : Type w} [L.Structure M] [Countable M]
     {N : Type w} [L.Structure N] [Countable N]
-    (P : PotentialIso L M N) : Nonempty (M ≃[L] N) := by
+    (P : PotentialIso L M N) :
+    ∃ e : M ≃[L] N, ∀ m : M, ∃ p ∈ P.family, ∃ i : Fin p.1, p.2.1 i = m ∧ p.2.2 i = e m := by
   classical
   -- Handle empty M
   by_cases hM : IsEmpty M
@@ -281,7 +282,7 @@ theorem PotentialIso.countable_toEquiv
     have hSAT₀ := P.compatible _ P.empty_mem
     refine ⟨⟨Equiv.equivOfIsEmpty M N,
       fun f' _ => (IsEmpty.false f').elim,
-      fun {k} r x => ?_⟩⟩
+      fun {k} r x => ?_⟩, fun m => (hM.false m).elim⟩
     -- x : Fin k → M with IsEmpty M forces k = 0
     have hk : k = 0 := by by_contra h; exact hM.elim (x ⟨0, Nat.pos_of_ne_zero h⟩)
     subst hk
@@ -352,8 +353,8 @@ theorem PotentialIso.countable_toEquiv
     left_inv := hgf
     right_inv := hfg
   }
-  -- Relation preservation
-  refine ⟨⟨e, fun f' _ => (IsEmpty.false f').elim, fun r x => ?_⟩⟩
+  -- Relation preservation, then the graph specification
+  refine ⟨⟨e, fun f' _ => (IsEmpty.false f').elim, fun r x => ?_⟩, fun m => ?_⟩
   -- Choose s large enough to contain all idxM(x i) positions
   let s := (Finset.sup Finset.univ (fun i : Fin _ => idxM (x i))) + 1
   have hi_lt : ∀ i, idxM (x i) < s :=
@@ -376,6 +377,21 @@ theorem PotentialIso.countable_toEquiv
       convert hx using 1; exact funext fun i => hM_eq i
     show RelMap r (fun i => f (x i))
     convert hRel.mp h1 using 1; exact (funext fun i => hN_eq i).symm
+  -- Graph specification: `m` sits at position `idxM m` of the chain member of length
+  -- `idxM m + 1`, whose right coordinate there is `f m` by construction.
+  · refine ⟨⟨idxM m + 1, (chain (idxM m + 1)).val.1, (chain (idxM m + 1)).val.2⟩,
+      (chain (idxM m + 1)).property, ⟨idxM m, Nat.lt_succ_self _⟩, ?_, ?_⟩
+    · exact (P.buildChain_coherent_fst_general enumM enumN (Nat.lt_succ_self _)).trans (hidxM m)
+    · exact P.buildChain_coherent_snd_general enumM enumN (Nat.lt_succ_self _)
+
+/-- Countable structures with a potential isomorphism are isomorphic: the projection of
+`countable_toEquiv_graph` that forgets where each element is sent. -/
+theorem PotentialIso.countable_toEquiv
+    {M : Type w} [L.Structure M] [Countable M]
+    {N : Type w} [L.Structure N] [Countable N]
+    (P : PotentialIso L M N) : Nonempty (M ≃[L] N) :=
+  let ⟨e, _⟩ := P.countable_toEquiv_graph
+  ⟨e⟩
 
 /-- Given a potential isomorphism, BFEquiv holds at every ordinal level for any pair
 in the family. This is the key inductive step for the (→) direction of the
