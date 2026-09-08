@@ -26,6 +26,7 @@ import InfinitaryLogic.Scott.AtomicDiagram
 import InfinitaryLogic.Scott.BackAndForth
 import InfinitaryLogic.Scott.Stabilization
 import InfinitaryLogic.Scott.OrbitRank
+import InfinitaryLogic.Scott.BlockBackAndForth
 import InfinitaryLogic.Scott.Formula
 import InfinitaryLogic.Scott.Sentence
 import InfinitaryLogic.Scott.RefinementCount
