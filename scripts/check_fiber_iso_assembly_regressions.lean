@@ -124,6 +124,14 @@ theorem nullary_restrict_regression :
     @Structure.RelMap Lc (Ce (restrictRows gid false) lab0) _ 0 CSym.c Fin.elim0 :=
   (restrict_lift0 gid false lab0 CSym.c).mp (show True from trivial)
 
+/-- **`restrictFiber` itself on the empty fiber**: the component isomorphism restricted to the
+empty fiber of row `false` exists and its nullary `map_rel` clause transports `c`.  This guards
+against an inhabited-fiber assumption entering `restrictFiber`. -/
+theorem restrictFiber_empty_regression :
+    @Structure.RelMap Lc (Ce (restrictRows gid false) lab0) _ 0 CSym.c
+      (⇑(restrictFiber gid false lab0) ∘ Fin.elim0) :=
+  ((restrictFiber gid false lab0).map_rel CSym.c Fin.elim0).mpr (show True from trivial)
+
 /-! ### Axiom hygiene -/
 
 def headline : List Name :=
@@ -141,7 +149,7 @@ def headline : List Name :=
    `FirstOrder.Language.FiberAssembly.restrictFiber_assemble_pt,
    `assemble_computation_regression, `restrictRows_regression, `restrictFiber_regression,
    `exact_lift_regression, `exact_own_lab_regression, `empty_fiber_regression,
-   `nullary_restrict_regression]
+   `nullary_restrict_regression, `restrictFiber_empty_regression]
 
 def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
 
@@ -154,4 +162,4 @@ run_cmd do
     unless bad.isEmpty do throwError "[NONSTANDARD AXIOMS] {n} uses {bad}"
   logInfo "fiber iso-assembly regression guard: OK (exact interpretation on canonical points, \
     assembly of a row swap with computation on rows and points, restriction round trips, nullary \
-    fact restricted at an empty fiber; headline declarations on standard axioms)"
+    fact and restrictFiber itself at an empty fiber; headline declarations on standard axioms)"

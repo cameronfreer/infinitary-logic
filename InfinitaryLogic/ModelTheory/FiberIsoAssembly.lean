@@ -10,10 +10,10 @@ import Mathlib.Tactic.FinCases
 /-!
 # Isomorphism assembly and restriction for row assemblies
 
-Item 2 of the fiber tranche, over arbitrary row types and fiber families.  Throughout,
-`R, S` are row types, `C : R → Label U → Type`, `D : S → Label U → Type` are fiber families
-with `Lc`-structures on every fiber, and the assembled structures are `Carrier R C`,
-`Carrier S D` (`ModelTheory/FiberAssembly.lean`).
+Over arbitrary row types and fiber families.  Throughout, `R, S` are row types,
+`C : R → Label U → Type`, `D : S → Label U → Type` are fiber families with `Lc`-structures on
+every fiber, and the assembled structures are `Carrier R C`, `Carrier S D`
+(`ModelTheory/FiberAssembly.lean`).
 
 1. **Exact interpretation on canonical fiber points** (`relMap_lift_pt`, `relMap_own_pt`,
    `relMap_lab_pt`, `relMap_lift0_row`): the lifted symbols evaluated on points of one fiber
@@ -24,14 +24,16 @@ with `Lc`-structures on every fiber, and the assembled structures are `Carrier R
    `pt r τ x ↦ pt (e r) τ (f r τ x)`.  No relationality of `Lc`, no inhabited fibers, and no
    order-preservation of `e` are assumed: the supplied component isomorphisms carry the
    component nullary facts through `map_rel` at arity `0`.
-3. **Restriction** (`restrictRows`, `restrictFiber`), under `[Lc.IsRelational]`: an arbitrary
-   assembled isomorphism `g` sends rows to rows and the fiber `(r, τ)` onto the fiber
-   `(restrictRows g r, τ)`, and the restrictions are component isomorphisms.  Relationality is
-   needed because the assembly encodes only relation symbols.  Nullary facts restrict too
-   (`restrict_lift0`), with no fiber point required.
+3. **Restriction**: an arbitrary assembled isomorphism `g` sends rows to rows
+   (`restrictRows g : R ≃ S`) and the fiber `(r, τ)` onto the fiber `(restrictRows g r, τ)`;
+   nullary facts restrict with no fiber point required (`restrict_lift0`).  Neither of these
+   needs relationality.  The restriction `restrictFiber g r τ : C r τ ≃[Lc] D (restrictRows g r) τ`
+   to a component isomorphism requires `[Lc.IsRelational]`, because the assembly encodes only
+   relation symbols; it too needs no fiber point.
 4. **Compatibility equations**: `assemble_row`, `assemble_pt` (definitional),
    `restrictRows_apply`, `restrictFiber_apply`, `restrictRows_assemble`, and
-   `restrictFiber_assemble_pt`.
+   `restrictFiber_assemble_pt`: restricting the assembled isomorphism returns the supplied
+   component isomorphism, as an equality of the images in the carrier.
 
 Full-profile bounds, companions, and effective presentations are outside this module.
 -/
@@ -121,11 +123,11 @@ variable {R S : Type u} {C : R → Label U → Type u} {D : S → Label U → Ty
   [∀ r τ, Lc.Structure (C r τ)] [∀ s τ, Lc.Structure (D s τ)]
 
 /-- The underlying map of the assembled isomorphism. -/
-def assembleFun (e : R ≃ S) (f : ∀ r τ, C r τ ≃[Lc] D (e r) τ) : Carrier R C → Carrier S D
+private def assembleFun (e : R ≃ S) (f : ∀ r τ, C r τ ≃[Lc] D (e r) τ) : Carrier R C → Carrier S D
   | Carrier.row r => Carrier.row (e r)
   | Carrier.pt r τ x => Carrier.pt (e r) τ (f r τ x)
 
-theorem assembleFun_injective (e : R ≃ S) (f : ∀ r τ, C r τ ≃[Lc] D (e r) τ) :
+private theorem assembleFun_injective (e : R ≃ S) (f : ∀ r τ, C r τ ≃[Lc] D (e r) τ) :
     Function.Injective (assembleFun e f) := by
   intro a b h
   cases a <;> cases b <;> simp only [assembleFun] at h
@@ -138,7 +140,7 @@ theorem assembleFun_injective (e : R ≃ S) (f : ∀ r τ, C r τ ≃[Lc] D (e r
     subst hr'
     rw [(f r τ).injective (eq_of_heq hx)]
 
-theorem assembleFun_surjective (e : R ≃ S) (f : ∀ r τ, C r τ ≃[Lc] D (e r) τ) :
+private theorem assembleFun_surjective (e : R ≃ S) (f : ∀ r τ, C r τ ≃[Lc] D (e r) τ) :
     Function.Surjective (assembleFun e f) := by
   rintro (s | ⟨s, τ, y⟩)
   · obtain ⟨r, rfl⟩ := e.surjective s
@@ -267,21 +269,21 @@ variable {R S : Type u} {C : R → Label U → Type u} {D : S → Label U → Ty
   [∀ r τ, Lc.Structure (C r τ)] [∀ s τ, Lc.Structure (D s τ)]
 
 /-- An assembled isomorphism sends rows to rows. -/
-theorem exists_row_eq (g : Carrier R C ≃[lang U Lc] Carrier S D) (r : R) :
+private theorem exists_row_eq (g : Carrier R C ≃[lang U Lc] Carrier S D) (r : R) :
     ∃ s, g (Carrier.row r) = Carrier.row s := by
   have h := (g.map_rel Sym.row ![Carrier.row r]).mpr (relMap_row_row r)
   obtain ⟨s, hs⟩ := h
   exact ⟨s, by simpa [Function.comp] using hs⟩
 
 /-- The row map of an assembled isomorphism. -/
-noncomputable def rowMap (g : Carrier R C ≃[lang U Lc] Carrier S D) (r : R) : S :=
+private noncomputable def rowMap (g : Carrier R C ≃[lang U Lc] Carrier S D) (r : R) : S :=
   (exists_row_eq g r).choose
 
-theorem rowMap_spec (g : Carrier R C ≃[lang U Lc] Carrier S D) (r : R) :
+private theorem rowMap_spec (g : Carrier R C ≃[lang U Lc] Carrier S D) (r : R) :
     g (Carrier.row r) = Carrier.row (rowMap g r) :=
   (exists_row_eq g r).choose_spec
 
-theorem rowMap_symm_rowMap (g : Carrier R C ≃[lang U Lc] Carrier S D) (r : R) :
+private theorem rowMap_symm_rowMap (g : Carrier R C ≃[lang U Lc] Carrier S D) (r : R) :
     rowMap g.symm (rowMap g r) = r := by
   have h1 := rowMap_spec g r
   have h2 := rowMap_spec g.symm (rowMap g r)
@@ -302,7 +304,7 @@ noncomputable def restrictRows (g : Carrier R C ≃[lang U Lc] Carrier S D) : R 
   rowMap_spec g r
 
 /-- An assembled isomorphism sends the fiber `(r, τ)` into the fiber `(restrictRows g r, τ)`. -/
-theorem exists_pt_eq (g : Carrier R C ≃[lang U Lc] Carrier S D) (r : R) (τ : Label U)
+private theorem exists_pt_eq (g : Carrier R C ≃[lang U Lc] Carrier S D) (r : R) (τ : Label U)
     (x : C r τ) : ∃ y : D (restrictRows g r) τ, g (Carrier.pt r τ x) = Carrier.pt _ τ y := by
   -- label preservation: the image is a fiber point with label `τ`
   have hlab := (g.map_rel (Sym.lab τ) ![Carrier.pt r τ x]).mpr
@@ -326,22 +328,24 @@ theorem exists_pt_eq (g : Carrier R C ≃[lang U Lc] Carrier S D) (r : R) (τ : 
   exact ⟨y, hy⟩
 
 /-- The fiber map of an assembled isomorphism. -/
-noncomputable def fiberMap (g : Carrier R C ≃[lang U Lc] Carrier S D) (r : R) (τ : Label U)
+private noncomputable def fiberMap (g : Carrier R C ≃[lang U Lc] Carrier S D) (r : R) (τ : Label U)
     (x : C r τ) : D (restrictRows g r) τ :=
   (exists_pt_eq g r τ x).choose
 
-theorem fiberMap_spec (g : Carrier R C ≃[lang U Lc] Carrier S D) (r : R) (τ : Label U)
+private theorem fiberMap_spec (g : Carrier R C ≃[lang U Lc] Carrier S D) (r : R) (τ : Label U)
     (x : C r τ) : g (Carrier.pt r τ x) = Carrier.pt (restrictRows g r) τ (fiberMap g r τ x) :=
   (exists_pt_eq g r τ x).choose_spec
 
-theorem fiberMap_injective (g : Carrier R C ≃[lang U Lc] Carrier S D) (r : R) (τ : Label U) :
+private theorem fiberMap_injective (g : Carrier R C ≃[lang U Lc] Carrier S D) (r : R)
+    (τ : Label U) :
     Function.Injective (fiberMap g r τ) := by
   intro x x' h
   have : g (Carrier.pt r τ x) = g (Carrier.pt r τ x') := by
     rw [fiberMap_spec g r τ x, fiberMap_spec g r τ x', h]
   exact Carrier.pt_inj_same (g.injective this)
 
-theorem fiberMap_surjective (g : Carrier R C ≃[lang U Lc] Carrier S D) (r : R) (τ : Label U) :
+private theorem fiberMap_surjective (g : Carrier R C ≃[lang U Lc] Carrier S D) (r : R)
+    (τ : Label U) :
     Function.Surjective (fiberMap g r τ) := by
   intro y
   -- pull `y` back along `g`; the preimage is a fiber point of the row `r`, since
@@ -357,9 +361,9 @@ theorem fiberMap_surjective (g : Carrier R C ≃[lang U Lc] Carrier S D) (r : R)
   rw [← hx', g.apply_symm_apply] at h1
   exact (Carrier.pt_inj_same h1).symm
 
-/-- **Restriction to a labeled fiber**, under relationality: the component isomorphism induced
-by an assembled isomorphism.  Relationality is needed because the assembly encodes only relation
-symbols; no fiber point is required. -/
+/-- **Restriction to a labeled fiber**: the component isomorphism induced by an assembled
+isomorphism.  This is the one construction needing `[Lc.IsRelational]`, because the assembly
+encodes only relation symbols; no fiber point is required. -/
 noncomputable def restrictFiber [Lc.IsRelational] (g : Carrier R C ≃[lang U Lc] Carrier S D)
     (r : R) (τ : Label U) : C r τ ≃[Lc] D (restrictRows g r) τ where
   toEquiv := Equiv.ofBijective (fiberMap g r τ)
@@ -421,8 +425,8 @@ theorem restrictRows_assemble (e : R ≃ S) (f : ∀ r τ, C r τ ≃[Lc] D (e r
   rw [assemble_row] at h
   exact (Carrier.row.inj h).symm
 
-/-- On fiber points, restricting the assembled isomorphism returns the supplied component
-isomorphism, stated at the carrier level to avoid a transport along `restrictRows_assemble`. -/
+/-- Restricting the assembled isomorphism returns the supplied component isomorphism: the two
+images of a fiber point in the carrier are equal. -/
 theorem restrictFiber_assemble_pt [Lc.IsRelational] (e : R ≃ S)
     (f : ∀ r τ, C r τ ≃[Lc] D (e r) τ) (r : R) (τ : Label U) (x : C r τ) :
     Carrier.pt (restrictRows (assemble e f) r) τ (restrictFiber (assemble e f) r τ x) =
