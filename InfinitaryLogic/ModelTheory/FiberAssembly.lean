@@ -9,44 +9,57 @@ import Mathlib.Data.List.Infix
 import Mathlib.Data.Countable.Basic
 
 /-!
-# The labeled-fiber language and the row assembly
+# The labeled-fiber language, the generic row assembly, and its prefix specialization
 
-The first piece of the fiber construction (design note: nondecreasing-prefix variant): the
-language of the assembled structure, its carrier, and the interpretation of every symbol.
-Nothing else is proved here; the assembly and restriction theorems come next.
+A **row assembly** glues a family of component structures into one structure: a set of rows,
+and for every row `r` and every label `τ` a fiber `C r τ` carrying a component structure.  The
+generic assembly is parameterized by an arbitrary row type `R` and fiber family
+`C : R → Label U → Type`, so that different row types (finite allowed words now, infinite
+allowed paths later) and different fiber families can be compared by the assembly theorems.
+The **prefix specialization** instantiates it with rows the allowed words and fibers chosen by
+the prefix rule.
 
-## Data
+## Labels and the language
 
-* a linear order `U` and **allowed sets** `A : ℕ → Set U`;
-* a relational **component language** `Lc`, a default component `B_*`, and components `B u`
-  for `u : U`, all `Lc`-structures.
+Labels are all nonempty words over a linear order `U`, admissible or not (`Label U`), so the
+signature does not depend on any allowed-word membership.  The language `lang U Lc` is
+relational, with equality and the symbols of `Sym U Lc`:
 
-## Rows, labels, fibers
+* `row`, arity 1: the element is a row.
+* `own`, arity 2: `own(x, r)` says `x` is a fiber point whose owner row is `r`.
+* `lab τ`, arity 1: the element is a fiber point with label `τ`.
+* `lift R`, arity `l + 1`, for a component symbol `R : Lc.Relations (l + 1)`: all arguments lie
+  in **one** fiber (same owner row, same label) and `R` holds there of their component
+  elements.  Mixed-fiber tuples and row arguments are false.
+* `lift0 R τ`, arity 1, for a component symbol `R : Lc.Relations 0`: `lift0 R τ (r)` says `r`
+  is a row and `R` holds in the fiber of `r` at label `τ`.  This lift is **owner-indexed**: the
+  nullary fact is read at the owner, so it is visible even when that fiber has no points.
 
-* A **row** is an allowed word: a nondecreasing list `p` over `U` with `p[i] ∈ A i`
-  (`IsAllowed`, `Row`).  The empty word is a row.
-* A **label** is a nonempty word `τ` over `U`, admissible or not (`Label`), so the signature
-  does not depend on allowed-word membership.
-* The fiber of row `p` at label `τ` is the component `B (last τ)` if `τ` is a prefix of `p`,
-  and `B_*` otherwise (`compIndex`, `Comp`).
+**Component-language boundary.**  The assembly encodes the **relation** symbols of `Lc` only;
+component function symbols are not encoded, so two component structures with the same
+relational data but different function interpretations assemble identically.  For that reason
+the restriction theorem that recovers component isomorphisms from an assembled isomorphism
+requires `[Lc.IsRelational]`; the definitions here do not, and no unused hypothesis is imposed.
 
-## Carrier and language
+## The generic assembly
 
-The carrier is the disjoint union of the rows and of all fibers (`Carrier`: constructors `row`
-and `pt`).  The language `lang U Lc` has, besides equality, the relation symbols
+`Carrier R C` is the disjoint union of the rows and of all fiber points (`Carrier.row`,
+`Carrier.pt`).  `instStructure` interprets every symbol as listed above (`relMap`), with one
+interpretation equation per symbol.
 
-| symbol | arity | interpretation |
-| --- | --- | --- |
-| `row` | 1 | the element is a row |
-| `own` | 2 | `own(x, r)`: `x` is a fiber point whose owner row is `r` |
-| `lab τ` | 1 | the element is a fiber point with label `τ` |
-| `lift R` for `R : Lc.Relations (l+1)` | `l+1` | all arguments lie in **one** fiber (same owner, same label) and `R` holds of their component elements there; mixed-fiber tuples are false |
-| `lift0 R τ` for `R : Lc.Relations 0` | 1 | `lift0 R τ (r)`: `r` is a row and `R` holds in the fiber of `r` at label `τ` (owner-indexed lift of a component nullary symbol) |
+## The prefix specialization
 
-The constructor uses allowed-word membership, order comparisons, prefixes, and the component
-family.  **No well-founded initial segment `W` appears anywhere**: the assembly is independent
-of `W` by construction.  The input order on rows and its successor relation are not symbols of
-`lang`.
+* A **row** is an allowed word: a nondecreasing list `p` over `U` with `p[i] ∈ A i` for the
+  allowed sets `A : ℕ → Set U` (`IsAllowed`, `Row A`); the empty word is a row.
+* The fiber of `p` at `τ` is the component `B (last τ)` if `τ` is a prefix of `p`, and the
+  default component `B_*` otherwise (`compIndex`, `Comp`, `prefixFiber`).  `compIndex` is
+  computable, so on concrete inputs the fiber type reduces definitionally; this is a convenience
+  for regressions and claims nothing about an effective presentation of the whole assembly.
+* `PrefixCarrier B_* B A := Carrier (Row A) (prefixFiber B_* B A)`.
+
+The construction uses allowed-word membership, order comparisons, prefixes, and the component
+family.  **No well-founded initial segment `W` appears anywhere.**  The input order on rows and
+its successor relation are not symbols of `lang`.
 
 The symbol set is countable when `U` and the component symbols are (`instCountableSigmaSym`).
 -/
@@ -57,7 +70,114 @@ namespace FiberAssembly
 
 universe u v w
 
-/-! ### Rows and labels -/
+/-! ### Labels -/
+
+/-- The labels: nonempty words over `U`, admissible or not. -/
+def Label (U : Type u) : Type u := {τ : List U // τ ≠ []}
+
+/-- The last letter of a label. -/
+def Label.last {U : Type u} (τ : Label U) : U := τ.1.getLast τ.2
+
+/-! ### The language -/
+
+/-- The relation symbols of the assembled language. -/
+inductive Sym (U : Type u) (Lc : Language.{v, w}) : ℕ → Type (max u w)
+  | row : Sym U Lc 1
+  | own : Sym U Lc 2
+  | lab (τ : Label U) : Sym U Lc 1
+  | lift {l : ℕ} (R : Lc.Relations (l + 1)) : Sym U Lc (l + 1)
+  | lift0 (R : Lc.Relations 0) (τ : Label U) : Sym U Lc 1
+
+/-- The assembled language: relational, with the symbols of `Sym`. -/
+def lang (U : Type u) (Lc : Language.{v, w}) : Language.{u, max u w} :=
+  ⟨fun _ => PEmpty, Sym U Lc⟩
+
+instance (U : Type u) (Lc : Language.{v, w}) : (lang U Lc).IsRelational :=
+  fun _ => inferInstanceAs (IsEmpty PEmpty)
+
+/-! ### The generic assembly -/
+
+/-- The assembled carrier over a row type `R` and a fiber family `C`: rows, and the points of
+every fiber. -/
+inductive Carrier {U : Type u} (R : Type u) (C : R → Label U → Type u) : Type u
+  | row (r : R)
+  | pt (r : R) (τ : Label U) (x : C r τ)
+
+section Generic
+
+variable {U : Type u} {Lc : Language.{v, w}} {R : Type u} {C : R → Label U → Type u}
+  [∀ r τ, Lc.Structure (C r τ)]
+
+/-- Interpretation of each symbol, by cases on the symbol. -/
+def relMap : ∀ {n : ℕ}, Sym U Lc n → (Fin n → Carrier R C) → Prop
+  | _, Sym.row, v => ∃ r, v 0 = Carrier.row r
+  | _, Sym.own, v => ∃ r τ x, v 0 = Carrier.pt r τ x ∧ v 1 = Carrier.row r
+  | _, Sym.lab τ, v => ∃ r x, v 0 = Carrier.pt r τ x
+  | _, @Sym.lift _ _ l S, v => ∃ (r : R) (τ : Label U) (y : Fin (l + 1) → C r τ),
+      (∀ i, v i = Carrier.pt r τ (y i)) ∧ Structure.RelMap S y
+  | _, Sym.lift0 S τ, v => ∃ r : R, v 0 = Carrier.row r ∧
+      @Structure.RelMap Lc (C r τ) _ 0 S Fin.elim0
+
+/-- The assembled structure. -/
+instance instStructure : (lang U Lc).Structure (Carrier R C) where
+  funMap f _ := (f : PEmpty).elim
+  RelMap S v := relMap S v
+
+/-! #### Interpretation equations, one per symbol -/
+
+theorem relMap_row (v : Fin 1 → Carrier R C) :
+    Structure.RelMap (L := lang U Lc) Sym.row v ↔ ∃ r, v 0 = Carrier.row r := Iff.rfl
+
+theorem relMap_own (v : Fin 2 → Carrier R C) :
+    Structure.RelMap (L := lang U Lc) Sym.own v ↔
+      ∃ r τ x, v 0 = Carrier.pt r τ x ∧ v 1 = Carrier.row r := Iff.rfl
+
+theorem relMap_lab (τ : Label U) (v : Fin 1 → Carrier R C) :
+    Structure.RelMap (L := lang U Lc) (Sym.lab τ) v ↔ ∃ r x, v 0 = Carrier.pt r τ x := Iff.rfl
+
+theorem relMap_lift {l : ℕ} (S : Lc.Relations (l + 1)) (v : Fin (l + 1) → Carrier R C) :
+    Structure.RelMap (L := lang U Lc) (Sym.lift S) v ↔
+      ∃ (r : R) (τ : Label U) (y : Fin (l + 1) → C r τ),
+        (∀ i, v i = Carrier.pt r τ (y i)) ∧ Structure.RelMap S y := Iff.rfl
+
+theorem relMap_lift0 (S : Lc.Relations 0) (τ : Label U) (v : Fin 1 → Carrier R C) :
+    Structure.RelMap (L := lang U Lc) (Sym.lift0 S τ) v ↔
+      ∃ r : R, v 0 = Carrier.row r ∧ @Structure.RelMap Lc (C r τ) _ 0 S Fin.elim0 := Iff.rfl
+
+/-- Lifted relations never hold of a row argument. -/
+theorem not_relMap_lift_of_row {l : ℕ} (S : Lc.Relations (l + 1)) (v : Fin (l + 1) → Carrier R C)
+    (i : Fin (l + 1)) (r : R) (hv : v i = Carrier.row r) :
+    ¬ Structure.RelMap (L := lang U Lc) (Sym.lift S) v := by
+  rintro ⟨q, τ, y, hy, -⟩
+  have := hy i
+  rw [hv] at this
+  cases this
+
+/-- **Mixed-fiber tuples are false**: a lifted relation holds only of arguments from one fiber,
+the same owner row and the same label. -/
+theorem relMap_lift_same_fiber {l : ℕ} (S : Lc.Relations (l + 1))
+    (v : Fin (l + 1) → Carrier R C) (h : Structure.RelMap (L := lang U Lc) (Sym.lift S) v)
+    (i j : Fin (l + 1)) :
+    ∃ (r : R) (τ : Label U) (x y : C r τ), v i = Carrier.pt r τ x ∧ v j = Carrier.pt r τ y := by
+  obtain ⟨r, τ, y, hy, -⟩ := h
+  exact ⟨r, τ, y i, y j, hy i, hy j⟩
+
+/-- The lift of a nullary symbol is read at the owner row; it does not require the fiber to
+have any point. -/
+theorem relMap_lift0_row (S : Lc.Relations 0) (τ : Label U) (r : R) :
+    Structure.RelMap (L := lang U Lc) (Sym.lift0 S τ)
+      (fun _ : Fin 1 => (Carrier.row r : Carrier R C)) ↔
+      @Structure.RelMap Lc (C r τ) _ 0 S Fin.elim0 := by
+  constructor
+  · rintro ⟨r', hr, h⟩
+    cases hr
+    exact h
+  · intro h
+    exact ⟨r, rfl, h⟩
+
+end Generic
+
+/-! ### The prefix specialization -/
 
 /-- An allowed word: nondecreasing, with the `i`-th letter in `A i`. -/
 def IsAllowed {U : Type u} [LinearOrder U] (A : ℕ → Set U) (p : List U) : Prop :=
@@ -66,21 +186,12 @@ def IsAllowed {U : Type u} [LinearOrder U] (A : ℕ → Set U) (p : List U) : Pr
 theorem isAllowed_nil {U : Type u} [LinearOrder U] (A : ℕ → Set U) : IsAllowed A [] :=
   ⟨List.Pairwise.nil, fun i h => absurd h (Nat.not_lt_zero i)⟩
 
-/-- The rows: allowed words, the empty word included. -/
+/-- The rows of the prefix specialization: allowed words, the empty word included. -/
 def Row {U : Type u} [LinearOrder U] (A : ℕ → Set U) : Type u := {p : List U // IsAllowed A p}
 
-/-- The labels: nonempty words over `U`, admissible or not. -/
-def Label (U : Type u) : Type u := {τ : List U // τ ≠ []}
-
-/-- The last letter of a label. -/
-def Label.last {U : Type u} (τ : Label U) : U := τ.1.getLast τ.2
-
-/-! ### Fibers -/
-
 /-- Which component sits at `(p, τ)`: `some (last τ)` if `τ` is a prefix of `p`, else `none`
-(the default component). -/
-def compIndex {U : Type u} [DecidableEq U] (p : List U) (τ : Label U) :
-    Option U :=
+(the default component).  Computable, so it reduces on concrete inputs. -/
+def compIndex {U : Type u} [DecidableEq U] (p : List U) (τ : Label U) : Option U :=
   if τ.1 <+: p then some τ.last else none
 
 theorem compIndex_of_prefix {U : Type u} [DecidableEq U] {p : List U} {τ : Label U}
@@ -104,96 +215,22 @@ instance instCompStructure {U : Type u} (Lc : Language.{v, w}) (Bstar : Type u) 
   | none => inferInstanceAs (Lc.Structure Bstar)
   | some u => inferInstanceAs (Lc.Structure (B u))
 
-/-! ### The carrier -/
+/-- The prefix fiber family: the component of `last τ` when `τ` is a prefix of the row, the
+default component otherwise. -/
+def prefixFiber {U : Type u} [LinearOrder U] (Bstar : Type u) (B : U → Type u)
+    (A : ℕ → Set U) : Row A → Label U → Type u :=
+  fun p τ => Comp Bstar B (compIndex p.1 τ)
 
-/-- The assembled carrier: rows, and the points of every fiber. -/
-inductive Carrier {U : Type u} [LinearOrder U] (Bstar : Type u) (B : U → Type u)
-    (A : ℕ → Set U) : Type u
-  | row (p : Row A)
-  | pt (p : Row A) (τ : Label U) (x : Comp Bstar B (compIndex p.1 τ))
+instance instPrefixFiberStructure {U : Type u} [LinearOrder U] (Lc : Language.{v, w})
+    (Bstar : Type u) (B : U → Type u) (A : ℕ → Set U)
+    [Lc.Structure Bstar] [∀ u, Lc.Structure (B u)] :
+    ∀ (p : Row A) (τ : Label U), Lc.Structure (prefixFiber Bstar B A p τ) :=
+  fun p τ => instCompStructure Lc Bstar B (compIndex p.1 τ)
 
-/-! ### The language -/
-
-/-- The relation symbols of the assembled language. -/
-inductive Sym (U : Type u) (Lc : Language.{v, w}) : ℕ → Type (max u w)
-  | row : Sym U Lc 1
-  | own : Sym U Lc 2
-  | lab (τ : Label U) : Sym U Lc 1
-  | lift {l : ℕ} (R : Lc.Relations (l + 1)) : Sym U Lc (l + 1)
-  | lift0 (R : Lc.Relations 0) (τ : Label U) : Sym U Lc 1
-
-/-- The assembled language: relational, with the symbols of `Sym`. -/
-def lang (U : Type u) (Lc : Language.{v, w}) : Language.{u, max u w} :=
-  ⟨fun _ => PEmpty, Sym U Lc⟩
-
-instance (U : Type u) (Lc : Language.{v, w}) : (lang U Lc).IsRelational :=
-  fun _ => inferInstanceAs (IsEmpty PEmpty)
-
-/-! ### The interpretation -/
-
-section Interpretation
-
-variable {U : Type u} [LinearOrder U] {Lc : Language.{v, w}} {Bstar : Type u} {B : U → Type u}
-  [Lc.Structure Bstar] [∀ u, Lc.Structure (B u)] {A : ℕ → Set U}
-
-/-- Interpretation of each symbol, by cases on the symbol. -/
-def relMap : ∀ {n : ℕ}, Sym U Lc n → (Fin n → Carrier Bstar B A) → Prop
-  | _, Sym.row, v => ∃ p, v 0 = Carrier.row p
-  | _, Sym.own, v => ∃ p τ x, v 0 = Carrier.pt p τ x ∧ v 1 = Carrier.row p
-  | _, Sym.lab τ, v => ∃ p x, v 0 = Carrier.pt p τ x
-  | _, @Sym.lift _ _ l R, v => ∃ (p : Row A) (τ : Label U)
-      (y : Fin (l + 1) → Comp Bstar B (compIndex p.1 τ)),
-      (∀ i, v i = Carrier.pt p τ (y i)) ∧ Structure.RelMap R y
-  | _, Sym.lift0 R τ, v => ∃ p : Row A, v 0 = Carrier.row p ∧
-      @Structure.RelMap Lc (Comp Bstar B (compIndex p.1 τ)) _ 0 R Fin.elim0
-
-/-- The assembled structure. -/
-instance instStructure : (lang U Lc).Structure (Carrier Bstar B A) where
-  funMap f _ := (f : PEmpty).elim
-  RelMap R v := relMap R v
-
-/-! ### Interpretation equations, one per symbol -/
-
-theorem relMap_row (v : Fin 1 → Carrier Bstar B A) :
-    Structure.RelMap (L := lang U Lc) Sym.row v ↔ ∃ p, v 0 = Carrier.row p := Iff.rfl
-
-theorem relMap_own (v : Fin 2 → Carrier Bstar B A) :
-    Structure.RelMap (L := lang U Lc) Sym.own v ↔
-      ∃ p τ x, v 0 = Carrier.pt p τ x ∧ v 1 = Carrier.row p := Iff.rfl
-
-theorem relMap_lab (τ : Label U) (v : Fin 1 → Carrier Bstar B A) :
-    Structure.RelMap (L := lang U Lc) (Sym.lab τ) v ↔ ∃ p x, v 0 = Carrier.pt p τ x := Iff.rfl
-
-theorem relMap_lift {l : ℕ} (R : Lc.Relations (l + 1)) (v : Fin (l + 1) → Carrier Bstar B A) :
-    Structure.RelMap (L := lang U Lc) (Sym.lift R) v ↔
-      ∃ (p : Row A) (τ : Label U) (y : Fin (l + 1) → Comp Bstar B (compIndex p.1 τ)),
-        (∀ i, v i = Carrier.pt p τ (y i)) ∧ Structure.RelMap R y := Iff.rfl
-
-theorem relMap_lift0 (R : Lc.Relations 0) (τ : Label U) (v : Fin 1 → Carrier Bstar B A) :
-    Structure.RelMap (L := lang U Lc) (Sym.lift0 R τ) v ↔
-      ∃ p : Row A, v 0 = Carrier.row p ∧
-        @Structure.RelMap Lc (Comp Bstar B (compIndex p.1 τ)) _ 0 R Fin.elim0 := Iff.rfl
-
-/-- Lifted relations never hold of a row argument. -/
-theorem not_relMap_lift_of_row {l : ℕ} (R : Lc.Relations (l + 1))
-    (v : Fin (l + 1) → Carrier Bstar B A) (i : Fin (l + 1)) (p : Row A)
-    (hv : v i = Carrier.row p) : ¬ Structure.RelMap (L := lang U Lc) (Sym.lift R) v := by
-  rintro ⟨q, τ, y, hy, -⟩
-  have := hy i
-  rw [hv] at this
-  cases this
-
-/-- **Mixed-fiber tuples are false**: a lifted relation holds only of arguments from one fiber
-(same owner row and same label). -/
-theorem relMap_lift_same_fiber {l : ℕ} (R : Lc.Relations (l + 1))
-    (v : Fin (l + 1) → Carrier Bstar B A)
-    (h : Structure.RelMap (L := lang U Lc) (Sym.lift R) v) (i j : Fin (l + 1)) :
-    ∃ (p : Row A) (τ : Label U) (x y : Comp Bstar B (compIndex p.1 τ)),
-      v i = Carrier.pt p τ x ∧ v j = Carrier.pt p τ y := by
-  obtain ⟨p, τ, y, hy, -⟩ := h
-  exact ⟨p, τ, y i, y j, hy i, hy j⟩
-
-end Interpretation
+/-- The carrier of the prefix specialization. -/
+abbrev PrefixCarrier {U : Type u} [LinearOrder U] (Bstar : Type u) (B : U → Type u)
+    (A : ℕ → Set U) : Type u :=
+  Carrier (Row A) (prefixFiber Bstar B A)
 
 /-! ### Countability of the symbols -/
 
@@ -207,8 +244,8 @@ instance instCountableSigmaSym (U : Type u) (Lc : Language.{v, w}) [Countable U]
       | ⟨_, Sym.row⟩ => Sum.inl ()
       | ⟨_, Sym.own⟩ => Sum.inr (Sum.inl ())
       | ⟨_, Sym.lab τ⟩ => Sum.inr (Sum.inr (Sum.inl τ))
-      | ⟨_, @Sym.lift _ _ l R⟩ => Sum.inr (Sum.inr (Sum.inr (Sum.inl ⟨l + 1, R⟩)))
-      | ⟨_, Sym.lift0 R τ⟩ => Sum.inr (Sum.inr (Sum.inr (Sum.inr (⟨0, R⟩, τ))))
+      | ⟨_, @Sym.lift _ _ l S⟩ => Sum.inr (Sum.inr (Sum.inr (Sum.inl ⟨l + 1, S⟩)))
+      | ⟨_, Sym.lift0 S τ⟩ => Sum.inr (Sum.inr (Sum.inr (Sum.inr (⟨0, S⟩, τ))))
   have : Countable (Label U) := Subtype.countable
   refine Function.Injective.countable (f := code) ?_
   rintro ⟨n₁, s₁⟩ ⟨n₂, s₂⟩ h
@@ -217,13 +254,13 @@ instance instCountableSigmaSym (U : Type u) (Lc : Language.{v, w}) [Countable U]
   · rfl
   · rfl
   · subst h; rfl
-  · obtain ⟨hl, hR⟩ := h
+  · obtain ⟨hl, hS⟩ := h
     have := Nat.succ_injective hl
     subst this
-    cases hR
+    cases hS
     rfl
-  · obtain ⟨⟨-, hR⟩, hτ⟩ := h
-    cases hR; subst hτ; rfl
+  · obtain ⟨⟨-, hS⟩, hτ⟩ := h
+    cases hS; subst hτ; rfl
 
 end FiberAssembly
 
