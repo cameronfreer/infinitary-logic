@@ -24,6 +24,7 @@ import InfinitaryLogic.ModelTheory.LyndonInterpolation
 import InfinitaryLogic.ModelTheory.MalitzInterpolation
 import InfinitaryLogic.ModelTheory.WellOrdering
 import InfinitaryLogic.ModelTheory.FiberAssembly
+import InfinitaryLogic.ModelTheory.FiberIsoAssembly
 
 /-!
 # All: the sorry-free library surface
