@@ -23,6 +23,7 @@ import InfinitaryLogic.ModelTheory.CraigInterpolation
 import InfinitaryLogic.ModelTheory.LyndonInterpolation
 import InfinitaryLogic.ModelTheory.MalitzInterpolation
 import InfinitaryLogic.ModelTheory.WellOrdering
+import InfinitaryLogic.ModelTheory.FiberAssembly
 
 /-!
 # All: the sorry-free library surface
