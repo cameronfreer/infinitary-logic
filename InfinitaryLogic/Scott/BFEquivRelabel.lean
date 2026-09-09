@@ -11,11 +11,11 @@ import InfinitaryLogic.Scott.BackAndForth
 `BFEquiv.relabel`: back-and-forth equivalence at any level is preserved under relabeling the
 index set by an arbitrary map `σ : Fin m → Fin n` (sub-tuples, repetitions, permutations), the
 back-and-forth analogue of `SameAtomicType.relabel`.  The successor step extends `σ` to the new
-last coordinate (`Fin.snoc_comp_lastCases`).
+last coordinate (a private helper).
 -/
 
 /-- Extending a relabeling to a new last coordinate. -/
-theorem Fin.snoc_comp_lastCases {α : Type*} {m n : ℕ} (a : Fin n → α) (x : α)
+private theorem Fin.snoc_comp_lastCases {α : Type*} {m n : ℕ} (a : Fin n → α) (x : α)
     (σ : Fin m → Fin n) :
     (Fin.snoc a x : Fin (n + 1) → α) ∘
       (Fin.lastCases (Fin.last n) (fun j => Fin.castSucc (σ j)) : Fin (m + 1) → Fin (n + 1)) =

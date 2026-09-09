@@ -373,7 +373,7 @@ theorem fiberBF_snoc_row {β : Ordinal} {hm : Matched e a b} (hf : FiberBF Lc β
 
 end Extend
 
-/-! ### The canonical enumeration of a fiber's coordinates -/
+/-! ### The canonical enumeration of a fiber's coordinates (proof-only) -/
 
 section Enum
 
@@ -381,33 +381,33 @@ variable {e : R ≃ S} {n : ℕ} {a : Fin n → Carrier R C} {b : Fin n → Carr
 
 open Classical in
 /-- The number of coordinates of `a` in the fiber `(r, τ)`. -/
-noncomputable def fiberCard (a : Fin n → Carrier R C) (r : R) (τ : Label U) : ℕ :=
+private noncomputable def fiberCard (a : Fin n → Carrier R C) (r : R) (τ : Label U) : ℕ :=
   Fintype.card {i : Fin n // InFiber a r τ i}
 
 open Classical in
 /-- The canonical enumeration of the coordinates of `a` in the fiber `(r, τ)`. -/
-noncomputable def fiberEnum (a : Fin n → Carrier R C) (r : R) (τ : Label U) :
+private noncomputable def fiberEnum (a : Fin n → Carrier R C) (r : R) (τ : Label U) :
     {i : Fin n // InFiber a r τ i} ≃ Fin (fiberCard a r τ) :=
   Fintype.equivFin _
 
 /-- The canonical component tuple of `a` in the fiber `(r, τ)`. -/
-noncomputable def fiberTuple (a : Fin n → Carrier R C) (r : R) (τ : Label U) :
+private noncomputable def fiberTuple (a : Fin n → Carrier R C) (r : R) (τ : Label U) :
     Fin (fiberCard a r τ) → C r τ :=
   fun j => elt ((fiberEnum a r τ).symm j).2
 
 /-- The canonical component tuple of `b` over the same coordinates. -/
-noncomputable def fiberTupleB (hm : Matched e a b) (r : R) (τ : Label U) :
+private noncomputable def fiberTupleB (hm : Matched e a b) (r : R) (τ : Label U) :
     Fin (fiberCard a r τ) → D (e r) τ :=
   fun j => hm.eltB ((fiberEnum a r τ).symm j).2
 
 /-- The canonical tuple at an enumerated coordinate is that coordinate's component element. -/
-theorem fiberTuple_enum (a : Fin n → Carrier R C) (r : R) (τ : Label U)
+private theorem fiberTuple_enum (a : Fin n → Carrier R C) (r : R) (τ : Label U)
     (i : {i : Fin n // InFiber a r τ i}) :
     fiberTuple a r τ (fiberEnum a r τ i) = elt i.2 := by
   simp only [fiberTuple]
   exact elt_eq _ (by rw [_root_.Equiv.symm_apply_apply (fiberEnum a r τ) i]; exact elt_spec i.2)
 
-theorem fiberTupleB_enum (hm : Matched e a b) (r : R) (τ : Label U)
+private theorem fiberTupleB_enum (hm : Matched e a b) (r : R) (τ : Label U)
     (i : {i : Fin n // InFiber a r τ i}) :
     fiberTupleB hm r τ (fiberEnum a r τ i) = hm.eltB i.2 := by
   simp only [fiberTupleB]
@@ -415,14 +415,14 @@ theorem fiberTupleB_enum (hm : Matched e a b) (r : R) (τ : Label U)
     rw [_root_.Equiv.symm_apply_apply (fiberEnum a r τ) i]
     exact hm.eltB_spec i.2)
 
-theorem fiberBF_fiberTuple {β : Ordinal} {hm : Matched e a b} (hf : FiberBF Lc β e hm) (r : R)
-    (τ : Label U) : BFEquiv (L := Lc) β _ (fiberTuple a r τ) (fiberTupleB hm r τ) :=
+private theorem fiberBF_fiberTuple {β : Ordinal} {hm : Matched e a b} (hf : FiberBF Lc β e hm)
+    (r : R) (τ : Label U) : BFEquiv (L := Lc) β _ (fiberTuple a r τ) (fiberTupleB hm r τ) :=
   hf r τ _ (fun j => ((fiberEnum a r τ).symm j).1) (fun j => ((fiberEnum a r τ).symm j).2)
 
 /-- The relabeling that sends a selection in the extended tuple, all in the fiber `(r, τ)` of
 the new point, to positions in `snoc (fiberTuple a r τ) x`: the new coordinate goes to the last
 position and an old coordinate to its position in the canonical enumeration. -/
-noncomputable def extendIdx (a : Fin n → Carrier R C) (r : R) (τ : Label U) (x : C r τ)
+private noncomputable def extendIdx (a : Fin n → Carrier R C) (r : R) (τ : Label U) (x : C r τ)
     {k : ℕ} (ι : Fin k → Fin (n + 1))
     (hι : ∀ j, InFiber (Fin.snoc a (Carrier.pt r τ x)) r τ (ι j)) :
     Fin k → Fin (fiberCard a r τ + 1) :=
@@ -434,7 +434,7 @@ noncomputable def extendIdx (a : Fin n → Carrier R C) (r : R) (τ : Label U) (
 /-- Fiber data survive a fiber-point move once the fiber's own move has been answered: the
 selections of the new point's fiber are relabelings of the extended canonical tuples, and the
 other fibers are unchanged. -/
-theorem fiberBF_snoc_pt {β : Ordinal} {hm : Matched e a b} (hf : FiberBF Lc β e hm)
+private theorem fiberBF_snoc_pt {β : Ordinal} {hm : Matched e a b} (hf : FiberBF Lc β e hm)
     (r : R) (τ : Label U) (x : C r τ) (y : D (e r) τ)
     (hxy : BFEquiv (L := Lc) β _ (Fin.snoc (fiberTuple a r τ) x)
       (Fin.snoc (fiberTupleB hm r τ) y)) :
