@@ -232,6 +232,38 @@ abbrev PrefixCarrier {U : Type u} [LinearOrder U] (Bstar : Type u) (B : U → Ty
     (A : ℕ → Set U) : Type u :=
   Carrier (Row A) (prefixFiber Bstar B A)
 
+/-! ### Countability of the carrier -/
+
+/-- The assembled carrier is countable when the rows, the labels, and every fiber are. -/
+instance instCountableCarrier {U : Type u} (R : Type u) (C : R → Label U → Type u)
+    [Countable R] [Countable U] [∀ r τ, Countable (C r τ)] : Countable (Carrier R C) := by
+  have : Countable (Label U) := Subtype.countable
+  let code : Carrier R C → (R ⊕ Σ (r : R) (τ : Label U), C r τ)
+    | Carrier.row r => Sum.inl r
+    | Carrier.pt r τ x => Sum.inr ⟨r, τ, x⟩
+  refine Function.Injective.countable (f := code) ?_
+  intro a b h
+  cases a <;> cases b <;> simp only [code, Sum.inl.injEq, Sum.inr.injEq, reduceCtorEq] at h
+  · rw [h]
+  · cases h
+    rfl
+
+/-- The rows of the prefix specialization are countable when `U` is. -/
+instance instCountableRow {U : Type u} [LinearOrder U] [Countable U] (A : ℕ → Set U) :
+    Countable (Row A) :=
+  inferInstanceAs (Countable {p : List U // IsAllowed A p})
+
+/-- Components are countable when the default and every `B u` are. -/
+instance instCountableComp {U : Type u} (Bstar : Type u) (B : U → Type u) [Countable Bstar]
+    [∀ u, Countable (B u)] : ∀ o : Option U, Countable (Comp Bstar B o)
+  | none => inferInstanceAs (Countable Bstar)
+  | some u => inferInstanceAs (Countable (B u))
+
+instance instCountablePrefixFiber {U : Type u} [LinearOrder U] (Bstar : Type u) (B : U → Type u)
+    (A : ℕ → Set U) [Countable Bstar] [∀ u, Countable (B u)] :
+    ∀ (p : Row A) (τ : Label U), Countable (prefixFiber Bstar B A p τ) :=
+  fun p τ => instCountableComp Bstar B (compIndex p.1 τ)
+
 /-! ### Countability of the symbols -/
 
 /-- Symbols are countable when `U` and the component symbols are. -/

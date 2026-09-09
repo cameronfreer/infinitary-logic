@@ -26,6 +26,7 @@ import InfinitaryLogic.ModelTheory.WellOrdering
 import InfinitaryLogic.ModelTheory.FiberAssembly
 import InfinitaryLogic.ModelTheory.FiberIsoAssembly
 import InfinitaryLogic.ModelTheory.FiberBFAssembly
+import InfinitaryLogic.ModelTheory.FiberTwoRow
 
 /-!
 # All: the sorry-free library surface
