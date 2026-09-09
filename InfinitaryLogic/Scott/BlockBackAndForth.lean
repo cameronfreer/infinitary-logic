@@ -26,8 +26,9 @@ Two conventions for symmetric back-and-forth with full atomic agreement at level
    (`bfEquiv_all_iff_blockBFEquiv_all`), so block stabilization reuses the orbit-rank machinery.
 4. Block orbit rank and block Scott rank with the inequalities `r_B ≤ r ≤ ω·r_B` and
    `R_B ≤ R ≤ ω·R_B`, which need no closure hypothesis, and the transfer of strict bounds below
-   `α` under the explicit hypothesis `∀ β < α, ω·β < α`, which is not implied by `α` being a
-   countable limit and is not assumed anywhere.
+   `α`.  The closure hypothesis `∀ β < α, ω·β < α` is required explicitly for the upward
+   strict-bound transfer; it is not a standing assumption, and it is not implied by `α` being a
+   countable limit.
 
 The `K₂ ⊔ K₃` regression in `scripts/check_block_backandforth_regressions.lean` shows the two
 hierarchies differ at the same level; it does not establish optimality of the `ω` factor.
@@ -180,7 +181,7 @@ private theorem omega_mul_add_nat_le {α β : Ordinal} (hβ : β < α) (k : ℕ)
 
 omit [L.IsRelational] in
 /-- Explicit-binder form of `BFEquiv.toBlock`, the shape the well-founded induction needs. -/
-theorem BFEquiv.toBlock_aux (α : Ordinal) :
+private theorem BFEquiv.toBlock_aux (α : Ordinal) :
     ∀ (n : ℕ) (a : Fin n → M) (b : Fin n → N),
       BFEquiv (L := L) (Ordinal.omega0 * α) n a b → BlockBFEquiv (L := L) α n a b := by
   refine WellFoundedLT.induction
@@ -303,9 +304,9 @@ theorem blockScottRank_lt_of_internalScottRank_lt {α : Ordinal.{w}}
   lt_of_le_of_lt blockScottRank_le_internalScottRank h
 
 omit [L.IsRelational] in
-/-- Strict bounds transfer upward under the explicit closure hypothesis `∀ β < α, ω·β < α`.
-This hypothesis is not implied by `α` being a countable limit (`ω·2`), and is not assumed
-anywhere in this module. -/
+/-- Strict bounds transfer upward under the closure hypothesis `∀ β < α, ω·β < α`, required
+explicitly here and not a standing assumption of the module.  It is not implied by `α` being a
+countable limit (`ω·2`). -/
 theorem internalScottRank_lt_of_blockScottRank_lt {α : Ordinal.{w}}
     (hcl : ∀ β < α, Ordinal.omega0 * β < α) (h : blockScottRank (L := L) M < α) :
     internalScottRank (L := L) M < α :=
