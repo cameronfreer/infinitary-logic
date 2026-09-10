@@ -4,7 +4,8 @@ Regression guard for nullary tags (`ModelTheory/NullaryTags.lean`).
 Checked: back-and-forth equivalence at every level is preserved and reflected by tagging with
 matching tags, at **arity zero** and on the **empty carrier**; with differing tags the expansions
 are inequivalent at level `0`, including on the empty carrier; isomorphisms transfer both ways
-and round-trip; orbit rank and internal Scott rank are unchanged.  Headline declarations use
+and round-trip, including over a language with a **function symbol**; orbit rank and
+internal Scott rank are unchanged.  Headline declarations use
 only the standard axioms.
 
 Run with: lake env lean scripts/check_nullary_tags_regressions.lean
@@ -69,6 +70,43 @@ theorem ranks_regression (X : Set ℕ) (a : Fin 2 → Tagged X Bool) :
       internalScottRank (L := Lg) (Tagged X Bool) :=
   ⟨orbitRank_tagged X a, internalScottRank_tagged X⟩
 
+/-! ### A language with a function symbol -/
+
+/-- One unary function symbol. -/
+inductive FSym : ℕ → Type
+  | f : FSym 1
+
+abbrev Lf : Language := ⟨FSym, fun _ => Empty⟩
+
+/-- `Bool` with the function symbol interpreted as negation. -/
+instance : Lf.Structure Bool where
+  funMap {n} g v := match n, g with
+    | _, FSym.f => !(v 0)
+  RelMap {_} R _ := (R : Empty).elim
+
+/-- Negation is an automorphism: it commutes with the function symbol. -/
+def notEquiv : Bool ≃[Lf] Bool where
+  toEquiv := ⟨not, not, Bool.not_not, Bool.not_not⟩
+  map_fun' := by
+    intro n g v
+    cases g
+    rfl
+  map_rel' := fun {_} R _ => (R : Empty).elim
+
+/-- **Function symbols are preserved through tagging**: the transported automorphism commutes
+with the function symbol, and the round trip returns it. -/
+theorem function_symbol_regression (X : Set ℕ) (x : Tagged X Bool) :
+    Equiv.toTagged X notEquiv (Structure.funMap (L := withTags Lf) (Sum.inl FSym.f) ![x]) =
+      Structure.funMap (L := withTags Lf) (Sum.inl FSym.f) ![Equiv.toTagged X notEquiv x] ∧
+    Equiv.ofTagged X (Equiv.toTagged X notEquiv) = notEquiv := by
+  refine ⟨?_, (taggedEquivEquiv X).right_inv notEquiv⟩
+  have := (Equiv.toTagged X notEquiv).map_fun (Sum.inl FSym.f) ![x]
+  rw [this]
+  congr 1
+  funext i
+  rw [Subsingleton.elim i 0]
+  rfl
+
 /-! ### Axiom hygiene -/
 
 def headline : List Name :=
@@ -77,7 +115,8 @@ def headline : List Name :=
    `FirstOrder.Language.Equiv.ofTagged, `FirstOrder.Language.taggedEquivEquiv,
    `FirstOrder.Language.orbitRank_tagged, `FirstOrder.Language.internalScottRank_tagged,
    `arity_zero_regression, `empty_carrier_regression, `differing_tags_empty_regression,
-   `differing_tags_regression, `iso_regression, `ranks_regression]
+   `differing_tags_regression, `iso_regression, `ranks_regression,
+   `function_symbol_regression]
 
 def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
 
@@ -90,4 +129,4 @@ run_cmd do
     unless bad.isEmpty do throwError "[NONSTANDARD AXIOMS] {n} uses {bad}"
   logInfo "nullary-tags regression guard: OK (arity zero and empty carrier with matching tags, \
     differing tags inequivalent at level 0 incl. the empty carrier, isomorphism round trip, ranks \
-    unchanged; headline declarations on standard axioms)"
+    unchanged, function symbols preserved through tagging; headline declarations on standard axioms)"
