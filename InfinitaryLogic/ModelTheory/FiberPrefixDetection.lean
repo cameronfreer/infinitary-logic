@@ -13,9 +13,10 @@ predicate `D : U → Prop` on a linear order (`u ≤ v → D u → D v`), read a
 default-like".  For a word `r`, its **non-default prefixes** are the nonempty prefixes `τ ⪯ r`
 with `¬ D (last τ)` (`ndPrefixes`).
 
-**Theorem** (`exists_short_distinguishing_prefix`): if two nondecreasing words `r` and `s` have
-different non-default prefix sets, there is a nonempty label `τ` of length at most
-`r.length + 1`, with `¬ D (last τ)`, that prefixes exactly one of them.
+**Theorem** (`exists_short_distinguishing_prefix`): if a word `r` and a **nondecreasing** word `s`
+have different non-default prefix sets, there is a nonempty label `τ` of length at most
+`r.length + 1`, with `¬ D (last τ)`, that prefixes exactly one of them.  The reference word `r`
+is arbitrary: only `s`, whose long prefix gets cut, needs to be nondecreasing.
 
 The extra position: a longer non-default prefix of `s` is cut down to length `r.length + 1`;
 the cut is still a prefix of `s`, is not a prefix of `r` (too long), and is non-default because
@@ -54,7 +55,7 @@ theorem last_le_last_of_prefix {p q : List U} (hq : q.Pairwise (· ≤ ·)) (hpq
   le_getLast_of_pairwise hq hq' (hpq.subset (List.getLast_mem hp))
 
 /-- Cutting a label to length `n + 1` yields a label. -/
-def cutLabel (τ : Label U) (n : ℕ) : Label U :=
+private def cutLabel (τ : Label U) (n : ℕ) : Label U :=
   ⟨τ.1.take (n + 1), by
     intro h
     have := congrArg List.length h
@@ -63,17 +64,17 @@ def cutLabel (τ : Label U) (n : ℕ) : Label U :=
     omega⟩
 
 omit [LinearOrder U] in
-theorem cutLabel_prefix (τ : Label U) (n : ℕ) : (cutLabel τ n).1 <+: τ.1 :=
+private theorem cutLabel_prefix (τ : Label U) (n : ℕ) : (cutLabel τ n).1 <+: τ.1 :=
   List.take_prefix _ _
 
 omit [LinearOrder U] in
-theorem cutLabel_length (τ : Label U) (n : ℕ) :
+private theorem cutLabel_length (τ : Label U) (n : ℕ) :
     (cutLabel τ n).1.length = min (n + 1) τ.1.length := by
   simp [cutLabel]
 
-/-- **Finite-prefix detection.**  Nondecreasing words with different non-default prefix sets are
-distinguished by a non-default label of length at most `r.length + 1` prefixing exactly one of
-them. -/
+/-- **Finite-prefix detection.**  If an arbitrary word `r` and a nondecreasing word `s` have
+different non-default prefix sets, a non-default label of length at most `r.length + 1` prefixes
+exactly one of them.  Only `s` needs to be nondecreasing. -/
 theorem exists_short_distinguishing_prefix {D : U → Prop} (hD : UpwardClosed D) {r s : List U}
     (hs : s.Pairwise (· ≤ ·)) (hne : ndPrefixes D r ≠ ndPrefixes D s) :
     ∃ τ : Label U, τ.1.length ≤ r.length + 1 ∧ ¬ D τ.last ∧

@@ -6,8 +6,9 @@ Over `U = ℕ` with the upward-closed predicate `D u := 5 ≤ u` ("default-like 
 length `1 = 0 + 1`); **different default tails with identical profiles** (`[1, 2, 7]` and
 `[1, 2, 9]` have the same non-default prefix sets, so no distinguishing prefix is claimed);
 and a distinguishing prefix **first appearing at length `r.length + 1`** (`r = [1]`,
-`s = [1, 2, 3]`, where `[1, 2]` of length `2` distinguishes although `s` also has the longer
-non-default prefix `[1, 2, 3]`).  Headline declarations use only the standard axioms.
+`s = [1, 2, 3]`: every label of length at most `r.length = 1` prefixes `r` iff it prefixes `s`,
+while `[1, 2]` of length `2` distinguishes although `s` also has the longer non-default prefix
+`[1, 2, 3]`).  Headline declarations use only the standard axioms.
 
 Run with: lake env lean scripts/check_fiber_prefix_detection_regressions.lean
 -/
@@ -67,16 +68,25 @@ def l12 : Label ℕ := ⟨[1, 2], by decide⟩
 def l123 : Label ℕ := ⟨[1, 2, 3], by decide⟩
 
 /-- **A distinguishing prefix first appearing at length `r.length + 1`**: with `r = [1]` and
-`s = [1, 2, 3]`, the theorem yields a distinguishing non-default label of length at most `2`,
-and `[1, 2]` is such a label, although the longer `[1, 2, 3]` is also a non-default prefix of
-`s`. -/
+`s = [1, 2, 3]`, every label of length at most `r.length` prefixes `r` iff it prefixes `s`, the
+theorem yields a distinguishing non-default label of length at most `2`, and `[1, 2]` is such a
+label, although the longer `[1, 2, 3]` is also a non-default prefix of `s`. -/
 theorem extra_position_regression :
+    (∀ τ : Label ℕ, τ.1.length ≤ [1].length → (τ.1 <+: [1] ↔ τ.1 <+: [1, 2, 3])) ∧
     (∃ τ : Label ℕ, τ.1.length ≤ [1].length + 1 ∧ ¬ D5 τ.last ∧
       ¬ (τ.1 <+: [1] ↔ τ.1 <+: [1, 2, 3])) ∧
     (l12.1.length = [1].length + 1 ∧ ¬ D5 l12.last ∧ ¬ (l12.1 <+: [1] ↔ l12.1 <+: [1, 2, 3])) ∧
     l123 ∈ ndPrefixes D5 [1, 2, 3] := by
-  refine ⟨exists_short_distinguishing_prefix upward_regression (by decide) (fun h => ?_),
-    ⟨rfl, by decide, fun h => ?_⟩, ⟨List.prefix_refl _, by decide⟩⟩
+  refine ⟨fun τ hτ => ?_, exists_short_distinguishing_prefix upward_regression (by decide)
+    (fun h => ?_), ⟨rfl, by decide, fun h => ?_⟩, ⟨List.prefix_refl _, by decide⟩⟩
+  · -- a nonempty label of length at most `1` is `[u]`; it prefixes either word iff `u = 1`
+    obtain ⟨u, hu⟩ : ∃ u, τ.1 = [u] := by
+      rcases hτ' : τ.1 with _ | ⟨u, _ | ⟨v, l⟩⟩
+      · exact absurd hτ' τ.2
+      · exact ⟨u, rfl⟩
+      · simp [hτ'] at hτ
+    rw [hu]
+    simp [List.cons_prefix_cons]
   · have : l12 ∈ ndPrefixes D5 [1, 2, 3] := ⟨⟨[3], rfl⟩, by decide⟩
     rw [← h] at this
     have := this.1.length_le
