@@ -131,8 +131,7 @@ theorem rows_not_zero_regression :
 /-! ### Axiom hygiene -/
 
 def headline : List Name :=
-  [`FirstOrder.Language.FiberAssembly.exists_pt_of_bfEquiv_snoc,
-   `FirstOrder.Language.FiberAssembly.sameAtomicType_of_rowPts,
+  [`FirstOrder.Language.FiberAssembly.sameAtomicType_of_rowPts,
    `FirstOrder.Language.FiberAssembly.bfEquiv_restrict_pointed,
    `FirstOrder.Language.FiberAssembly.bfEquiv_restrict_nil,
    `matched_pa_pb, `fiberBF_pa_pb, `assembled_one, `restriction_succ_regression,

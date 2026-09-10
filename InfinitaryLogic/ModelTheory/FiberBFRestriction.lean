@@ -19,7 +19,7 @@ language, then `ā ≡_β b̄` in the components, at the **same** level `β`.
 
 The owner row is kept throughout the induction because it is what forces responses into the
 correct fiber: a move by a point of the fiber `(r, τ)` is answered, by the `lab τ` and `own`
-atoms against the retained row, by a point of the fiber `(s, τ)`.  Owner-indexed nullary atoms
+atoms against the retained row, by a point of the fiber `(s, τ)` (a private lemma).  Owner-indexed nullary atoms
 (`lift0`) read at the row supply the component nullary facts, so **empty fibers** are handled
 with no fiber point.  At level zero the component atoms are exactly the assembled `eq`, `lift`,
 and `lift0` atoms on the canonical points (`relMap_lift_pt`, `relMap_lift0_row`).
@@ -66,7 +66,7 @@ theorem snoc_rowPts (r : R) (τ : Label U) {k : ℕ} (a : Fin k → C r τ) (x :
 
 /-- At any level, a point of the fiber `(r, τ)` matched against the retained rows is answered by
 a point of the fiber `(s, τ)`: the `lab τ` and `own` atoms force it. -/
-theorem exists_pt_of_bfEquiv_snoc {β : Ordinal} {r : R} {s : S} {τ : Label U} {k : ℕ}
+private theorem exists_pt_of_bfEquiv_snoc {β : Ordinal} {r : R} {s : S} {τ : Label U} {k : ℕ}
     {a : Fin k → C r τ} {b : Fin k → D s τ} {x : C r τ} {m : Carrier S D}
     (h : BFEquiv (L := lang U Lc) β (k + 1 + 1)
       (Fin.snoc (rowPts r τ a) (Carrier.pt r τ x)) (Fin.snoc (rowPts s τ b) m)) :
@@ -107,7 +107,7 @@ theorem exists_pt_of_bfEquiv_snoc {β : Ordinal} {r : R} {s : S} {τ : Label U} 
   exact ⟨y, hy⟩
 
 /-- The symmetric statement: a point of the fiber `(s, τ)` is answered by a point of `(r, τ)`. -/
-theorem exists_pt_of_bfEquiv_snoc' {β : Ordinal} {r : R} {s : S} {τ : Label U} {k : ℕ}
+private theorem exists_pt_of_bfEquiv_snoc' {β : Ordinal} {r : R} {s : S} {τ : Label U} {k : ℕ}
     {a : Fin k → C r τ} {b : Fin k → D s τ} {y : D s τ} {m : Carrier R C}
     (h : BFEquiv (L := lang U Lc) β (k + 1 + 1)
       (Fin.snoc (rowPts r τ a) m) (Fin.snoc (rowPts s τ b) (Carrier.pt s τ y))) :
