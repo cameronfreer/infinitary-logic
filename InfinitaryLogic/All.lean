@@ -28,6 +28,7 @@ import InfinitaryLogic.ModelTheory.FiberIsoAssembly
 import InfinitaryLogic.ModelTheory.FiberBFAssembly
 import InfinitaryLogic.ModelTheory.FiberTwoRow
 import InfinitaryLogic.ModelTheory.FiberBFRestriction
+import InfinitaryLogic.ModelTheory.FiberPrefixDetection
 import InfinitaryLogic.ModelTheory.NullaryTags
 
 /-!
