@@ -30,6 +30,8 @@ import InfinitaryLogic.ModelTheory.FiberTwoRow
 import InfinitaryLogic.ModelTheory.FiberBFRestriction
 import InfinitaryLogic.ModelTheory.FiberPrefixDetection
 import InfinitaryLogic.ModelTheory.FiberProfileBound
+import InfinitaryLogic.ModelTheory.FiberOwnerRows
+import InfinitaryLogic.ModelTheory.FiberProfilePerm
 import InfinitaryLogic.ModelTheory.NullaryTags
 
 /-!
