@@ -118,8 +118,8 @@ prefixes, so their fibers are isomorphic at every label. -/
 theorem default_tails_regression :
     ndPrefixes (DefaultLike Lp Bstar0 B0) (row1 7).1 =
       ndPrefixes (DefaultLike Lp Bstar0 B0) (row1 9).1 ∧
-    ∀ τ : Label ℕ,
-      Nonempty (prefixFiber Bstar0 B0 Aall (row1 7) τ ≃[Lp] prefixFiber Bstar0 B0 Aall (row1 9) τ) := by
+    ∀ τ : Label ℕ, Nonempty
+      (prefixFiber Bstar0 B0 Aall (row1 7) τ ≃[Lp] prefixFiber Bstar0 B0 Aall (row1 9) τ) := by
   have hnd : ∀ u, 5 ≤ u → ndPrefixes (DefaultLike Lp Bstar0 B0) (row1 u).1 = ∅ := by
     intro u hu
     ext τ
