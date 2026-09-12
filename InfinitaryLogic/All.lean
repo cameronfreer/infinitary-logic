@@ -33,6 +33,7 @@ import InfinitaryLogic.ModelTheory.FiberProfileBound
 import InfinitaryLogic.ModelTheory.FiberOwnerRows
 import InfinitaryLogic.ModelTheory.FiberProfilePerm
 import InfinitaryLogic.ModelTheory.FiberIsoCarrying
+import InfinitaryLogic.ModelTheory.FiberOrbitBound
 import InfinitaryLogic.ModelTheory.NullaryTags
 
 /-!
