@@ -172,6 +172,25 @@ theorem mem_orbitStable_iff_orbitRank_le {n : ℕ} {a : Fin n → M} {α : Ordin
   ⟨orbitRank_le_of_mem, fun h => orbitStable_upward (orbitRank_mem a) h⟩
 
 omit [L.IsRelational] in
+/-- The empty tuple has orbit rank `0`, in any carrier including the empty one. -/
+theorem orbitRank_elim0 : orbitRank (L := L) (Fin.elim0 : Fin 0 → M) = 0 := by
+  apply le_antisymm _ _root_.zero_le
+  apply orbitRank_le_of_mem
+  intro b _ γ
+  have : b = Fin.elim0 := funext fun i => i.elim0
+  rw [this]
+  exact BFEquiv.refl γ _
+
+omit [L.IsRelational] in
+/-- A tuple of length `0` has orbit rank `0`, for a length given by a count that is not
+syntactically `0`. -/
+theorem orbitRank_of_length_zero {m : ℕ} (hm : m = 0) (t : Fin m → M) :
+    orbitRank (L := L) t = 0 := by
+  subst hm
+  rw [show t = Fin.elim0 from funext fun i => i.elim0]
+  exact orbitRank_elim0
+
+omit [L.IsRelational] in
 /-- Below the orbit rank, stabilization fails: some `b` is equivalent at that level but not at
 every level. -/
 theorem exists_not_all_of_lt_orbitRank {n : ℕ} {a : Fin n → M} {β : Ordinal.{w}}

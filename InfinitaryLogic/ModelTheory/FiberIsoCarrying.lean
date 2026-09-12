@@ -21,7 +21,8 @@ on the finitely many occupied fibers so that the assembled automorphism carries 
   coverage is by position).  `FiberCover.ofTuple` constructs one from any tuple, with no
   countability; `FiberCover.pos_iff` says `0 < k r τ` iff the fiber contains a coordinate, so the
   occupied fibers form a finite set (`FiberCover.occupied_finite`).
-* `orbitRank_elim0`: the empty tuple has orbit rank `0`, in any carrier including the empty one.
+* The orbit-rank facts for empty tuples (`orbitRank_elim0`, `orbitRank_of_length_zero`) live in
+  `Scott/OrbitRank.lean`; generic rank users need no fiber machinery.
 * `exists_fiber_isos_carrying`: if `a ≡_β b`, and for every fiber the complete source tuple of
   the cover has orbit rank at most `β`, then there are fiber isomorphisms `f` with
   `assemble e f ∘ a = b`; `f` agrees with `f₀` on unoccupied fibers.
@@ -36,33 +37,6 @@ gives the adjusted isomorphism.  The premise on unoccupied fibers is automatic b
 
 namespace FirstOrder.Language
 
-/-! ### The empty tuple -/
-
-section EmptyTuple
-
-universe u v w
-
-variable {L : Language.{u, v}} {M : Type w} [L.Structure M]
-
-/-- The empty tuple has orbit rank `0`, in any carrier. -/
-theorem orbitRank_elim0 : orbitRank (L := L) (Fin.elim0 : Fin 0 → M) = 0 := by
-  apply le_antisymm _ _root_.zero_le
-  apply orbitRank_le_of_mem
-  intro b _ γ
-  have : b = Fin.elim0 := funext fun i => i.elim0
-  rw [this]
-  exact BFEquiv.refl γ _
-
-/-- A tuple of length `0` has orbit rank `0`; this is the form the unoccupied fibers of a cover
-take, where the length is a count that is not syntactically `0`. -/
-theorem orbitRank_of_length_zero {m : ℕ} (hm : m = 0) (t : Fin m → M) :
-    orbitRank (L := L) t = 0 := by
-  subst hm
-  rw [show t = Fin.elim0 from funext fun i => i.elim0]
-  exact orbitRank_elim0
-
-end EmptyTuple
-
 namespace FiberAssembly
 
 universe u' v' w'
@@ -75,7 +49,7 @@ variable {U : Type u'} {Lc : Language.{v', w'}} {R : Type u'} {C : R → Label U
 /-- One enumeration of all positions of `a` in each fiber; repeated values are kept and coverage
 is by position. -/
 structure FiberCover {n : ℕ} (a : Fin n → Carrier R C) where
-  /-- The number of positions in the fiber. -/
+  /-- The length of the covering enumeration (positions may be enumerated more than once). -/
   k : R → Label U → ℕ
   /-- The enumeration of positions. -/
   ι : ∀ r τ, Fin (k r τ) → Fin n
