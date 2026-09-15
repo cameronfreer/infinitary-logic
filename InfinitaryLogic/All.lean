@@ -35,6 +35,8 @@ import InfinitaryLogic.ModelTheory.FiberProfilePerm
 import InfinitaryLogic.ModelTheory.FiberIsoCarrying
 import InfinitaryLogic.ModelTheory.FiberOrbitBound
 import InfinitaryLogic.ModelTheory.FiberExactRank
+import InfinitaryLogic.ModelTheory.PureSetThreshold
+import InfinitaryLogic.ModelTheory.FiberExactOmega
 import InfinitaryLogic.ModelTheory.NullaryTags
 
 /-!
