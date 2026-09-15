@@ -1,11 +1,12 @@
 /-
 Regression guard for the finite-level thresholds and the concrete exact-`ω` instance
-(`ModelTheory/PureSetThreshold.lean`, `ModelTheory/FiberExactOmega.lean`).
+(`Scott/PureSetThreshold.lean`, `ModelTheory/FiberExactOmega.lean`).
 
 Checked: empty tuples of `ℕ` and `Fin m` are equivalent at `k` iff `k ≤ m`, with failure pinned
 at `m + 1`; the **empty finite set** `Fin 0` (level `0` only) and the **singleton** `Fin 1`
-(levels `≤ 1`); **repeated coordinates** (`![0, 0]` against `![x, x]` in `Fin (m + 1)` uses one
-spare: equivalent at `m`, not at `m + 1`); orbit rank `0` for tuples of a finite pure set with
+(levels `≤ 1`); **repeated coordinates** (`![0, 0]` against `![x, x]` in `Fin (m + 1)`: the
+repeated pair occupies one distinct element and leaves `m` spares, so equivalent at `m`, not at
+`m + 1`); orbit rank `0` for tuples of a finite pure set with
 a repeated coordinate; and the **unconditional endpoint**: the elementary assembled structure has
 internal Scott rank exactly `ω`.  Headline declarations use only the standard axioms.
 
@@ -54,7 +55,8 @@ theorem spare_pair (m : ℕ) (x : Fin (m + 1)) : spare (![x, x] : Fin 2 → Fin 
   simp only [Set.ncard_singleton, Nat.card_eq_fintype_card, Fintype.card_fin] at h1
   omega
 
-/-- **Repeated coordinates** use one spare: equivalent at `m`, not at `m + 1`. -/
+/-- **Repeated coordinates**: the pair occupies one distinct element, leaving `m` spares, so
+equivalent at `m` and not at `m + 1`. -/
 theorem repeated_regression (m : ℕ) (x : Fin (m + 1)) :
     BFEquiv (L := Language.empty) (M := ℕ) (N := Fin (m + 1)) (m : Ordinal.{0}) 2
       ![0, 0] ![x, x] ∧

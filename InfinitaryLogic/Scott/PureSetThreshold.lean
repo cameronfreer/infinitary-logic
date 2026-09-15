@@ -3,7 +3,8 @@ Copyright (c) 2026 Cameron Freer. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
-import InfinitaryLogic.ModelTheory.FiberProfilePerm
+import InfinitaryLogic.Scott.OrbitRank
+import InfinitaryLogic.Scott.FiniteMatching
 import Mathlib.Data.Set.Card
 
 /-!
@@ -15,8 +16,8 @@ Back-and-forth equivalence between an **infinite** pure set `X` and a **finite**
 
   `BFEquiv k n a b ↔ k ≤ spare b`,
 
-where `spare b` is the number of elements of `Y` outside the range of `b`
-(`bfEquiv_natCast_iff`).  The positive direction answers a fresh element on the infinite side
+where `spare b` is the number of elements of `Y` outside the range of `b` (as `Set.ncard`,
+meaningful for finite `Y`) (`bfEquiv_natCast_iff`).  The positive direction answers a fresh element on the infinite side
 by a spare one and an old element by its match; failure is pinned exactly at `spare b + 1`
 (`not_bfEquiv_spare_succ`): the infinite side plays a fresh element and the finite side must
 answer with a fresh one, using up a spare, until none is left.
@@ -28,14 +29,11 @@ Also: every tuple of **any** pure set has orbit rank `0` (`orbitRank_pure_eq_zer
 counterpart of `orbitRank_pureSet`: a tuple with the same pattern is the image under a
 permutation extended from the finite matching (`exists_equiv_of_matching` with the trivial
 equivalence relation).
+
+This module sits in the Scott layer: its import closure contains no fiber-assembly module.
 -/
 
 namespace FirstOrder.Language
-
-/-- The empty language is relational (Mathlib supplies this under an auto-generated name; the
-explicit instance here documents the dependency). -/
-instance instEmptyIsRelational : Language.empty.IsRelational :=
-  fun _ => inferInstanceAs (IsEmpty Empty)
 
 namespace PureSet
 
@@ -57,7 +55,9 @@ theorem sameAtomicType_iff {n : ℕ} (a : Fin n → X) (b : Fin n → Y) :
     | eq i j => simpa [AtomicIdx.holds] using h i j
     | rel R _ => exact (IsEmpty.false R).elim
 
-/-- The number of elements outside the range of a tuple. -/
+/-- The number of elements outside the range of a tuple, as `Set.ncard`.  On an infinite
+carrier `Set.ncard` of an infinite set is `0`, so the threshold theorems require a finite
+target `[Finite Y]`; the count is meaningful only there. -/
 noncomputable def spare {n : ℕ} (b : Fin n → Y) : ℕ := Set.ncard ((Set.range b)ᶜ : Set Y)
 
 omit [Language.empty.Structure Y] in

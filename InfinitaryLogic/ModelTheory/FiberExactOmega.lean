@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.ModelTheory.FiberExactRank
-import InfinitaryLogic.ModelTheory.PureSetThreshold
+import InfinitaryLogic.Scott.PureSetThreshold
 
 /-!
 # A concrete assembled structure of internal Scott rank exactly `ω`
