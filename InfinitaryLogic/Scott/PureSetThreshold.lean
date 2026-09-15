@@ -17,8 +17,9 @@ Back-and-forth equivalence between an **infinite** pure set `X` and a **finite**
   `BFEquiv k n a b ↔ k ≤ spare b`,
 
 where `spare b` is the number of elements of `Y` outside the range of `b` (as `Set.ncard`,
-meaningful for finite `Y`) (`bfEquiv_natCast_iff`).  The positive direction answers a fresh element on the infinite side
-by a spare one and an old element by its match; failure is pinned exactly at `spare b + 1`
+meaningful for finite `Y`) (`bfEquiv_natCast_iff`).  The positive direction answers a fresh
+element on the infinite side by a spare one and an old element by its match; failure is pinned
+exactly at `spare b + 1`
 (`not_bfEquiv_spare_succ`): the infinite side plays a fresh element and the finite side must
 answer with a fresh one, using up a spare, until none is left.
 
