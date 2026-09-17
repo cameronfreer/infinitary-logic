@@ -67,6 +67,7 @@ import InfinitaryLogic.Descriptive.SentenceRecovery
 import InfinitaryLogic.Descriptive.SentenceObservables
 import InfinitaryLogic.Descriptive.FragmentTail
 import InfinitaryLogic.Descriptive.FragmentSpectrum
+import InfinitaryLogic.Descriptive.FragmentSpectrumClassification
 import InfinitaryLogic.Descriptive.MorleyizationCode
 import InfinitaryLogic.Descriptive.RealizedSpectrum
 import InfinitaryLogic.Descriptive.AntichainTransport
