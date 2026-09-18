@@ -38,6 +38,7 @@ import InfinitaryLogic.ModelTheory.FiberIsoCarrying
 import InfinitaryLogic.ModelTheory.FiberOrbitBound
 import InfinitaryLogic.ModelTheory.FiberExactRank
 import InfinitaryLogic.ModelTheory.FiberExactOmega
+import InfinitaryLogic.ModelTheory.FiberCompanion
 import InfinitaryLogic.ModelTheory.NullaryTags
 
 /-!
