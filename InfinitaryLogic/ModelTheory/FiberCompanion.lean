@@ -21,8 +21,9 @@ row `ρ_π` follows the same prefix rule along `π` (`pathFiber`, `CompanionCarr
   `none` otherwise.
 * **Fiber-index equations**: `compIndex (pathPrefix π k) τ = pathIndex π τ` for labels of
   length `≤ k` and `= none` for longer labels (`compIndex_pathPrefix_of_le`,
-  `compIndex_pathPrefix_of_lt`); consecutive prefixes differ only at the label of length
-  `k + 1` (`compIndex_pathPrefix_succ_of_ne`), where the longer prefix gives `some (π k)` and the
+  `compIndex_pathPrefix_of_lt`); consecutive prefixes differ only at the single label
+  `prefixLabel π k` (`compIndex_pathPrefix_succ_of_ne`, with the length-based case split as
+  `compIndex_pathPrefix_succ_of_length_ne`), where the longer prefix gives `some (π k)` and the
   shorter gives `none`.  Hence `ρ_π` and `π|ₖ` have equal fibers at every label of length `≤ k`
   (`pathFiber_inl_prefixRow_of_le`).
 * Countability of the companion carrier from countable letters, default, and components.
@@ -160,14 +161,30 @@ theorem compIndex_pathPrefix_of_lt {π : ℕ → U} {τ : Label U} {k : ℕ} (h 
     compIndex (pathPrefix π k) τ = none :=
   compIndex_of_not_prefix (not_prefix_pathPrefix_of_lt h)
 
-/-- **Consecutive prefixes** differ only at the label of length `k + 1`. -/
-theorem compIndex_pathPrefix_succ_of_ne {π : ℕ → U} {τ : Label U} {k : ℕ}
+/-- Consecutive prefixes agree at every label whose length is not `k + 1` (a corollary of
+`compIndex_pathPrefix_succ_of_ne`, kept for the length-based case split). -/
+theorem compIndex_pathPrefix_succ_of_length_ne {π : ℕ → U} {τ : Label U} {k : ℕ}
     (h : τ.1.length ≠ k + 1) :
     compIndex (pathPrefix π (k + 1)) τ = compIndex (pathPrefix π k) τ := by
   rcases Nat.lt_or_ge k τ.1.length with hk | hk
   · have hk' : k + 1 < τ.1.length := by omega
     rw [compIndex_pathPrefix_of_lt hk, compIndex_pathPrefix_of_lt hk']
   · rw [compIndex_pathPrefix_of_le hk, compIndex_pathPrefix_of_le (Nat.le_succ_of_le hk)]
+
+/-- **Consecutive prefixes** differ only at the single label `prefixLabel π k`: at every other
+label, including off-path labels of length `k + 1`, they agree. -/
+theorem compIndex_pathPrefix_succ_of_ne {π : ℕ → U} {τ : Label U} {k : ℕ}
+    (h : τ ≠ prefixLabel π k) :
+    compIndex (pathPrefix π (k + 1)) τ = compIndex (pathPrefix π k) τ := by
+  by_cases hlen : τ.1.length = k + 1
+  · -- a label of the changed length that is not the changed label is off both prefixes
+    rw [compIndex_pathPrefix_of_lt (k := k) (by omega)]
+    apply compIndex_of_not_prefix
+    intro hp
+    apply h
+    apply Subtype.ext
+    exact hp.eq_of_length (by simp [hlen])
+  · exact compIndex_pathPrefix_succ_of_length_ne hlen
 
 /-- At the label of length `k + 1` on the path, the longer prefix gives `some (π k)`. -/
 theorem compIndex_pathPrefix_succ_prefixLabel (π : ℕ → U) (k : ℕ) :

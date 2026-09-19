@@ -7,10 +7,11 @@ letters **repeat** (`0, 0, 1, 1, 2, …`), it is nondecreasing, and `n / 2 ≤ n
 Checked: the **empty prefix** (`π|₀ = []` is the empty allowed row, and every label is off it, so
 its component index is the default); **repeated letters** (`[0]` and `[0, 0]` lie on the path
 with index `some 0`, `[0, 0, 0]` does not since `π 2 = 1`); **off-path labels** (`[1]` is not on
-the path: index `none`, and every prefix row gives the default there); the **consecutive-prefix**
-equation at a label of the wrong length; the path row and the prefix row `π|₂` have the same
-fiber at `[0, 0]`; distinct prefix rows; and countability of the companion carrier.  Headline
-declarations use only the standard axioms.
+the path: index `none`, and every prefix row gives the default there); the
+**consecutive-prefix** equation at a label of a different length and at the **same-length
+off-path label** `[0, 1]`, alongside the positive checks at the changed label `[0, 0]`; the
+path row and the prefix row `π|₂` have the same fiber at `[0, 0]`; distinct prefix rows; and
+countability of the companion carrier.  Headline declarations use only the standard axioms.
 
 Run with: lake env lean scripts/check_fiber_companion_regressions.lean
 -/
@@ -32,6 +33,7 @@ def l0 : Label ℕ := ⟨[0], by decide⟩
 def l00 : Label ℕ := ⟨[0, 0], by decide⟩
 def l000 : Label ℕ := ⟨[0, 0, 0], by decide⟩
 def l1 : Label ℕ := ⟨[1], by decide⟩
+def l01 : Label ℕ := ⟨[0, 1], by decide⟩
 
 /-- **Empty prefix**: `π|₀` is the empty row, and every label is off it. -/
 theorem empty_prefix_regression :
@@ -54,13 +56,25 @@ theorem off_path_regression :
   · rw [compIndex_pathPrefix_of_le (show l1.1.length ≤ k from hk)]
     exact pathIndex_of_not_isPathPrefix (by decide)
 
-/-- **Consecutive prefixes** agree at `[0]` (length `1 ≠ 2`) and differ at `[0, 0]`. -/
+/-- The same-length off-path label `[0, 1]` is not the changed label `[0, 0]`. -/
+theorem l01_ne_prefixLabel : l01 ≠ prefixLabel π 1 := fun h => by
+  have := congrArg (fun τ : Label ℕ => τ.1) h
+  exact absurd this (by decide)
+
+/-- **Consecutive prefixes** agree at `[0]` (a different length), agree at the **same-length
+off-path label** `[0, 1]` (both give the default), and differ at the changed label `[0, 0]`. -/
 theorem consecutive_regression :
     compIndex (pathPrefix π 2) l0 = compIndex (pathPrefix π 1) l0 ∧
+    (compIndex (pathPrefix π 2) l01 = compIndex (pathPrefix π 1) l01 ∧
+      compIndex (pathPrefix π 2) l01 = none) ∧
     compIndex (pathPrefix π 2) (prefixLabel π 1) = some 0 ∧
     compIndex (pathPrefix π 1) (prefixLabel π 1) = none :=
-  ⟨compIndex_pathPrefix_succ_of_ne (by decide), compIndex_pathPrefix_succ_prefixLabel π 1,
-    compIndex_pathPrefix_prefixLabel π 1⟩
+  ⟨compIndex_pathPrefix_succ_of_length_ne (by decide),
+    ⟨compIndex_pathPrefix_succ_of_ne l01_ne_prefixLabel,
+      by
+        rw [compIndex_pathPrefix_of_le (by decide)]
+        exact pathIndex_of_not_isPathPrefix (by decide)⟩,
+    compIndex_pathPrefix_succ_prefixLabel π 1, compIndex_pathPrefix_prefixLabel π 1⟩
 
 /-- The path row and `π|₂` have the same fiber at `[0, 0]`, for any components. -/
 theorem same_fiber_regression (Bstar : Type) (B : ℕ → Type) :
@@ -82,11 +96,12 @@ def headline : List Name :=
   [`FirstOrder.Language.FiberAssembly.compIndex_pathPrefix_of_le,
    `FirstOrder.Language.FiberAssembly.compIndex_pathPrefix_of_lt,
    `FirstOrder.Language.FiberAssembly.compIndex_pathPrefix_succ_of_ne,
+   `FirstOrder.Language.FiberAssembly.compIndex_pathPrefix_succ_of_length_ne,
    `FirstOrder.Language.FiberAssembly.isAllowed_pathPrefix,
    `FirstOrder.Language.FiberAssembly.prefixRow_injective,
    `FirstOrder.Language.FiberAssembly.pathFiber_inl_prefixRow_of_le,
    `path_regression, `empty_prefix_regression, `repeated_letters_regression,
-   `off_path_regression, `consecutive_regression, `same_fiber_regression,
+   `off_path_regression, `l01_ne_prefixLabel, `consecutive_regression, `same_fiber_regression,
    `distinct_rows_regression, `countable_regression]
 
 def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
