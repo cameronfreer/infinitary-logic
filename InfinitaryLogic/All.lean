@@ -41,6 +41,7 @@ import InfinitaryLogic.ModelTheory.FiberExactOmega
 import InfinitaryLogic.ModelTheory.FiberCompanion
 import InfinitaryLogic.ModelTheory.FiberCompanionShift
 import InfinitaryLogic.ModelTheory.FiberCompanionEquiv
+import InfinitaryLogic.ModelTheory.FiberCompanionIso
 import InfinitaryLogic.ModelTheory.NullaryTags
 
 /-!

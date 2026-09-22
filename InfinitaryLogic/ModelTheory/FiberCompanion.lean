@@ -124,6 +124,16 @@ theorem isPathPrefix_prefixLabel (π : ℕ → U) (k : ℕ) : IsPathPrefix π (p
   unfold IsPathPrefix
   simp
 
+/-- A prefix label of `π` is not on `σ` when the two paths differ at an earlier position. -/
+theorem not_isPathPrefix_prefixLabel_of_ne {π σ : ℕ → U} {k₀ k : ℕ} (h : π k₀ ≠ σ k₀)
+    (hk : k₀ ≤ k) : ¬ IsPathPrefix σ (prefixLabel π k) := by
+  intro hp
+  unfold IsPathPrefix at hp
+  simp only [prefixLabel_val, pathPrefix_length] at hp
+  have := List.getElem_of_eq hp (i := k₀) (by simp; omega)
+  simp only [pathPrefix_getElem] at this
+  exact h this
+
 section Index
 
 variable [DecidableEq U]
