@@ -42,6 +42,7 @@ import InfinitaryLogic.ModelTheory.FiberCompanion
 import InfinitaryLogic.ModelTheory.FiberCompanionShift
 import InfinitaryLogic.ModelTheory.FiberCompanionEquiv
 import InfinitaryLogic.ModelTheory.FiberCompanionIso
+import InfinitaryLogic.ModelTheory.FiberCantorFamily
 import InfinitaryLogic.ModelTheory.NullaryTags
 
 /-!
