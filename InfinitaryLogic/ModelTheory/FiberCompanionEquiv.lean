@@ -27,7 +27,9 @@ the base are equivalent as empty tuples.
 * `companion_bfEquiv`: below `α`, with the threshold chosen separately for each level.  No single
   bijection is claimed to work at every level.
 
-Hypotheses are the component structure instances only: no countability, relationality,
+Hypotheses: the ambient setup (letters, the default and component structures over `Lc`, and the
+allowed sets), allowedness of the path (`IsAllowedPath A π`), and the approximation hypothesis
+(`PathApproxAt` at the given level, or `PathApprox` below `α`); no countability, relationality,
 nesting, non-defaultness, rank bounds, or ordinal-limit assumption.
 -/
 
