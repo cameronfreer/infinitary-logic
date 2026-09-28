@@ -70,6 +70,7 @@ import InfinitaryLogic.Descriptive.SmallVocabulary
 import InfinitaryLogic.Descriptive.SmallVocabularyLift
 import InfinitaryLogic.Descriptive.SmallVocabularyTransport
 import InfinitaryLogic.Descriptive.ObservableConstancy
+import InfinitaryLogic.OrdinalCountability
 import InfinitaryLogic.Descriptive.SentenceObservables
 import InfinitaryLogic.Descriptive.FragmentTail
 import InfinitaryLogic.Descriptive.FragmentSpectrum
@@ -97,6 +98,10 @@ Silver's theorem.  Everything below is generic — pure Mathlib imports, no mode
 theory — except `StructureIsoSetoid`, which is deliberately the model-theoretic
 application of that vocabulary:
 
+- `OrdinalCountability` (top level, no logic): countability of a set equals boundedness of a
+  countable-fibre rank below `ω₁`, countable complements from countable successor losses under
+  an explicit limit hypothesis, exhaustion by antitone domains giving cardinality exactly `ℵ₁`,
+  and uncountability of Cantor space by cardinal arithmetic
 - `CantorAntichain`: Cantor-scheme → perfect-antichain extraction
   (`CantorScheme.exists_antichain_map` and the splitting-predicate builder);
 - `PerfectAntichain`: perfect/Cantor-antichain and thinness vocabulary, plus the perfect-set
