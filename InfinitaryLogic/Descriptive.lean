@@ -69,6 +69,8 @@ import InfinitaryLogic.Descriptive.SentenceSplits
 import InfinitaryLogic.Descriptive.SmallVocabulary
 import InfinitaryLogic.Descriptive.SmallVocabularyLift
 import InfinitaryLogic.Descriptive.SmallVocabularyTransport
+import InfinitaryLogic.Descriptive.ObservableConstancy
+import InfinitaryLogic.Descriptive.ScottDefinability
 import InfinitaryLogic.Descriptive.PerfectSetDichotomy
 import InfinitaryLogic.Descriptive.SentenceObservables
 import InfinitaryLogic.Descriptive.FragmentTail
@@ -116,9 +118,16 @@ application of that vocabulary:
   `SmallVocabularyTransport`: the `Language.{0, 0}` descriptive theorems (López–Escobar, the
   relative pullbacks, Cantor and observable recovery, the spectrum and splits thinness endpoints)
   transported to every countable relational `L : Language.{u, v}` through that presentation;
-  `PerfectSetDichotomy`: the `ℕ`-tier and all-countable perfect-set dichotomies and their
-  refutations from `ℕ`-tier thinness with explicit finite-tier premises
-  (`Sentenceω.not_perfectSetDichotomyAllCountable_of_thin`)
+  `ObservableConstancy`: Borel observations on a presentation of the classes are constant off
+  countably many presentation values (`constant_off_countable_of_borel_observation`), with
+  measurability on the composite only
+- `ScottDefinability`: Scott isolation of a surjective, satisfaction-compatible,
+  isomorphism-preserving presentation (`isolatedPresentation_of_surjective`); under the
+  single-sentence-split hypothesis, the sentence-definable sets of presentation values are exactly
+  the countable and the cocountable ones (`sentence_definable_iff_of_presentation`)
+- `PerfectSetDichotomy`: the `ℕ`-tier and all-countable perfect-set dichotomies and their
+  refutations from `ℕ`-tier thinness with uncountably many `ℕ`-isomorphism classes and explicit
+  finite-tier premises (`Sentenceω.not_perfectSetDichotomyAllCountable_of_thin`)
 - `RankedThinness`: the countable-ordinal rank route to thinness (`ThinRankAnalysis`), with
   the quotient-countability step (`Setoid.countable_antichain`);
 - `BorelFunctionalGraph`: Borel graphs with singleton vertical sections — Borel domain,
