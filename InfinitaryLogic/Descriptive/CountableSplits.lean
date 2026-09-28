@@ -8,15 +8,18 @@ import Mathlib.Data.Set.Countable
 /-!
 # Countably many predicates with countable truth sides
 
-Set-theoretic counting with no topology, nonemptiness, or uncountability assumption.  For
-countably many predicates `P i` on `X`, each with a countable truth side (`{x | P i x}` or
-`{x | ¬ P i x}` countable):
+Set-theoretic counting with no topology.  The first two lemmas assume nothing about `X` (no
+nonemptiness or uncountability); the third assumes `X` uncountable.  For countably many
+predicates `P i` on `X`, each with a countable truth side (`{x | P i x}` or `{x | ¬ P i x}`
+countable):
 
 * `exists_countable_exceptions_of_splits`: outside one countable exceptional set every `P i` is
   constant, so all the predicates are decided simultaneously off that set.
 * `countable_range_of_splits`: any map out of `X` that depends only on the truth values of the
   `P i` has countable range: the countable exceptional set contributes countably many values,
   and its complement contributes at most one.
+* `constant_off_countable_of_splits`: on an uncountable `X`, a map whose values are separated by
+  countably many tests, each with a countable side, is constant outside a countable set.
 
 The descriptive consumer is the sentence-splits bridge (`Descriptive/SentenceSplits.lean`), where
 the predicates are the truths of countably many sentences on a presentation of isomorphism
@@ -70,5 +73,22 @@ theorem countable_range_of_splits {Y : Type w} (g : X → Y)
   · refine (hE.image g).mono ?_
     rintro _ ⟨x, rfl⟩
     exact ⟨x, by_contra fun hx => h ⟨x, hx⟩, rfl⟩
+
+/-- **Constant off a countable set.**  On an uncountable domain, a map whose values are separated
+by countably many tests, each with a countable truth side along the map, agrees with one of its
+values outside a countable set. -/
+theorem constant_off_countable_of_splits {Y : Type w} (hX : ¬ Countable X) (f : X → Y)
+    (test : ι → Y → Prop) (hsep : ∀ y z, (∀ i, test i y ↔ test i z) → y = z)
+    (hsplit : ∀ i, ({x | test i (f x)} : Set X).Countable ∨
+      ({x | ¬ test i (f x)} : Set X).Countable) :
+    ∃ x₀, ({x | f x ≠ f x₀} : Set X).Countable := by
+  obtain ⟨E, hE, hconst⟩ := exists_countable_exceptions_of_splits (fun i x => test i (f x)) hsplit
+  have : ∃ x₀, x₀ ∉ E := by
+    by_contra h
+    exact hX (Set.countable_univ_iff.mp (hE.mono fun x _ => by_contra fun hx => h ⟨x, hx⟩))
+  obtain ⟨x₀, hx₀⟩ := this
+  refine ⟨x₀, hE.mono fun x hx => ?_⟩
+  by_contra hxE
+  exact hx (hsep _ _ (hconst x hxE x₀ hx₀))
 
 end CountableSplits
