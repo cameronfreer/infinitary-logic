@@ -4,8 +4,9 @@ Regression guard for descriptive transport through the small-vocabulary presenta
 
 Checked: the **truth-sequence equation** on a **repeated list**; **thinness transfer** along `code`
 in **both directions**; **López–Escobar** for the higher-universe language, both directions applied;
-**Cantor recovery**, **observable recovery**, and **observable encoding** applied to a concrete
-measurable family; **actual thinness composition**: the splits endpoint on a singleton class with a
+**Cantor recovery** as a conditional API composition (the family, its measurability, and the
+antichain condition are hypotheses); **observable recovery** and **observable encoding** applied to
+a concrete constant family; **actual thinness composition**: the splits endpoint on a singleton class with a
 **nonsurjective presentation** in `Bool`, the spectrum endpoint on the empty class, and the
 sentence-specific corollary as a conditional API composition.  Headline declarations use only the
 standard axioms.
@@ -46,7 +47,8 @@ theorem lopez_escobar_regression (B : Set (StructureSpace bigLang)) :
     ((∃ φ : bigLang.Sentenceω, B = ModelsOf φ) → MeasurableSet B ∧ IsomorphismInvariant B) :=
   ⟨(SmallVocabulary.lopezEscobar_iff bigLang).mp, (SmallVocabulary.lopezEscobar_iff bigLang).mpr⟩
 
-/-- **Cantor recovery** on a concrete family. -/
+/-- **Cantor recovery** as a conditional API composition: the family, its measurability, and the
+antichain condition are hypotheses. -/
 theorem cantor_recovery_regression (f : (ℕ → Bool) → StructureSpace bigLang) (hf : Measurable f)
     (hanti : ∀ x y, x ≠ y → ¬ (structureIsoSetoid bigLang).r (f x) (f y)) :
     ∃ θ : ℕ → bigLang.Sentenceω, ∀ x n, f x ∈ ModelsOf (θ n) ↔ x n = true :=
@@ -125,7 +127,7 @@ run_cmd do
     let bad := axs.toList.filter fun a => !standardAxioms.contains a
     unless bad.isEmpty do throwError "[NONSTANDARD AXIOMS] {n} uses {bad}"
   logInfo "small-vocabulary transport regression guard: OK (Language.{0, 1} with nullary symbols: \
-    repeated list, thinness transfer both ways, López–Escobar both ways, Cantor recovery, \
-    observable recovery and encoding, thinness composition on a nonsurjective presentation and \
+    repeated list, thinness transfer both ways, López–Escobar both ways, conditional Cantor \
+    recovery, observable recovery and encoding on a constant family, thinness composition on a nonsurjective presentation and \
     the empty class, conditional sentence-specific composition; headline declarations on \
     standard axioms)"
