@@ -26,8 +26,8 @@ theorems be applied to `L`:
   directions are `code_preserves_iso` and `code_reflects_iso`.
 
 The carrier `ℕ` and the relation interpretations do not change.  Formula transport is in
-`Descriptive/SmallVocabularyLift.lean`; the descriptive consequences are in
-`Descriptive/SmallVocabularyTransport.lean`.
+`Descriptive/SmallVocabularyLift.lean`; the descriptive consequences (truth-sequence transport and
+the higher-universe consumer wrappers) are a planned separate module, not part of this one.
 -/
 
 universe u v
