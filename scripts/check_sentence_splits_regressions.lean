@@ -6,10 +6,11 @@ Checked: the **counting helper** on an uncountable domain with **both choices of
 side** (a predicate whose true side is a singleton and one whose false side is a singleton) and a
 constant predicate; the **empty class**; a **nonempty class with a nonsurjective presentation**
 (a singleton class presented in `Bool` through the constant map to `true`, so `false` is not a
-value); **repeated sentences** (the constant list) through the bridge; and **composition through
-the thinness endpoint** (`isThinOn_of_countable_sentence_splits` and the sentence-specific
-corollary) on the nonsurjective presentation.  Headline declarations use only the standard
-axioms.
+value); **repeated sentences** (the constant list) through the bridge; **composition through the
+arbitrary-class thinness endpoint** (`isThinOn_of_countable_sentence_splits`) on that nonsurjective
+presentation; and a **conditional API-composition regression** for the sentence-specific corollary,
+presenting `ModelsOf φ` in `Unit` under an explicit decision hypothesis, with the split premise
+discharged directly since `Unit` is finite.  Headline declarations use only the standard axioms.
 
 Run with: lake env lean scripts/check_sentence_splits_regressions.lean
 -/
@@ -83,14 +84,15 @@ theorem endpoint_regression (c : StructureSpace L) : IsThinOn (structureIsoSetoi
   isThinOn_of_countable_sentence_splits {c} (constPres c) (constTruth c) (constTruth_htruth c)
     (constTruth_splits c)
 
-/-- The sentence-specific corollary applied to a presentation of `ModelsOf φ` in `Unit`. -/
+/-- **Conditional API composition** for the sentence-specific corollary: `ModelsOf φ` presented in
+`Unit`, under the explicit hypothesis that every sentence is decided uniformly on the models of `φ`.
+The split premise is discharged directly: every subset of `Unit` is countable. -/
 theorem sentence_endpoint_regression (φ : L.Sentenceω)
-    (hsplit : ∀ θ : L.Sentenceω, ({_q : Unit | ∀ c ∈ ModelsOf φ, c ∈ ModelsOf θ} : Set Unit).Countable ∨
-      ({_q : Unit | ¬ ∀ c ∈ ModelsOf φ, c ∈ ModelsOf θ} : Set Unit).Countable)
     (hdec : ∀ θ : L.Sentenceω, ∀ c ∈ ModelsOf φ, (c ∈ ModelsOf θ ↔ ∀ d ∈ ModelsOf φ, d ∈ ModelsOf θ)) :
     φ.IsThinOnNatModels :=
   φ.isThinOnNatModels_of_countable_sentence_splits (fun _ => ())
-    (fun θ _ => ∀ c ∈ ModelsOf φ, c ∈ ModelsOf θ) (fun θ c => (hdec θ c.1 c.2).symm) hsplit
+    (fun θ _ => ∀ c ∈ ModelsOf φ, c ∈ ModelsOf θ) (fun θ c => (hdec θ c.1 c.2).symm)
+    (fun _ => Or.inl (Set.to_countable _))
 
 /-! ### Axiom hygiene -/
 
@@ -115,4 +117,5 @@ run_cmd do
     unless bad.isEmpty do throwError "[NONSTANDARD AXIOMS] {n} uses {bad}"
   logInfo "sentence-splits regression guard: OK (both countable sides on an uncountable domain, \
     empty class, nonsurjective presentation, repeated sentences, composition through the \
-    thinness endpoints; headline declarations on standard axioms)"
+    arbitrary-class thinness endpoint, conditional API composition for the sentence-specific \
+    corollary; headline declarations on standard axioms)"

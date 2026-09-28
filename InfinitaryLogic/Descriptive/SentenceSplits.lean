@@ -25,8 +25,10 @@ truth sides contains only countably many points of `Q`.
 * `Sentenceω.isThinOnNatModels_of_countable_sentence_splits`: the sentence-specific corollary.
 
 `Q` is any type presenting `C`.  `classOf` need not be surjective, injective, or measurable; no
-σ-algebra on `Q` is assumed or produced; equality in `Q` need not reflect or preserve
-isomorphism.  Only `htruth` and `hsplit` are used.  Nothing here needs Silver, ranks, Scott
+σ-algebra on `Q` is assumed or produced.  No hypothesis that equality in `Q` reflects or preserves
+isomorphism is imposed or used (under the countable-signature endpoint's assumptions, satisfaction
+compatibility does imply reflection through Scott sentences; the proof neither establishes nor
+uses that).  Only `htruth` and `hsplit` are used.  Nothing here needs Silver, ranks, Scott
 isolation, or Borelness of `C`.
 -/
 
