@@ -68,6 +68,7 @@ import InfinitaryLogic.Descriptive.CountableSplits
 import InfinitaryLogic.Descriptive.SentenceSplits
 import InfinitaryLogic.Descriptive.SmallVocabulary
 import InfinitaryLogic.Descriptive.SmallVocabularyLift
+import InfinitaryLogic.Descriptive.SmallVocabularyTransport
 import InfinitaryLogic.Descriptive.SentenceObservables
 import InfinitaryLogic.Descriptive.FragmentTail
 import InfinitaryLogic.Descriptive.FragmentSpectrum
@@ -110,7 +111,10 @@ application of that vocabulary:
 - `SmallVocabulary`, `SmallVocabularyLift`: a chosen `Language.{0, 0}` presentation of a countable
   relational `L : Language.{u, v}` (relation symbols shrunk, the decoding `LHom`), the code
   homeomorphism with isomorphism preserved and reflected (`iso_code_iff`), and the formula lift
-  preserving realization and quantifier rank (`realize_liftFormula`, `qrank_liftFormula`)
+  preserving realization and quantifier rank (`realize_liftFormula`, `qrank_liftFormula`);
+  `SmallVocabularyTransport`: the `Language.{0, 0}` descriptive theorems (López–Escobar, the
+  relative pullbacks, Cantor and observable recovery, the spectrum and splits thinness endpoints)
+  transported to every countable relational `L : Language.{u, v}` through that presentation
 - `RankedThinness`: the countable-ordinal rank route to thinness (`ThinRankAnalysis`), with
   the quotient-countability step (`Setoid.countable_antichain`);
 - `BorelFunctionalGraph`: Borel graphs with singleton vertical sections — Borel domain,
