@@ -4,7 +4,8 @@ Regression guard for observable constancy (`Descriptive/CountableSplits.lean`,
 
 Checked: the **constant-off-countable corollary** on Cantor space with **both choices of countable
 side** (a map with a singleton true side and one with a singleton false side) and a **constant
-map**; **simultaneous constancy** of a repeated sentence family on a `Bool` presentation; and the
+map**; a **genuine countable-exception** regression (the exceptional set of the predicates `x = xs i`
+must contain every `xs i`); **simultaneous constancy** of a repeated sentence family on a `Bool` presentation; and the
 **Borel-observation theorem** as a conditional API composition on a `Language.{0, 1}` signature
 with nullary symbols and a presentation type carrying **no measurable structure**.  Headline
 declarations use only the standard axioms.
@@ -37,6 +38,23 @@ theorem corollary_regression (x₀ : ℕ → Bool) :
     constant_off_countable_of_splits not_countable_cantor (fun _ => true)
       (fun _ : Unit => fun b => b = true) (fun y z h => by cases y <;> cases z <;> simp_all)
       (fun _ => Or.inr (by simp))⟩
+
+/-- **Genuine countable exceptions**: for the predicates `x = xs i` (`i : ℕ`), every `xs i` lies
+in the exceptional set.  (If some `xs i` were outside it, constancy would force every point outside
+it to equal `xs i`, so the complement would be a subsingleton and Cantor space countable.) -/
+theorem exception_regression (xs : ℕ → (ℕ → Bool)) :
+    ∃ E : Set (ℕ → Bool), E.Countable ∧ (∀ x ∉ E, ∀ y ∉ E, ∀ i, x = xs i ↔ y = xs i) ∧
+      ∀ i, xs i ∈ E := by
+  obtain ⟨E, hE, hconst⟩ := exists_countable_exceptions_of_splits (fun i x => x = xs i)
+    (fun i => Or.inl (by simp))
+  refine ⟨E, hE, hconst, fun i => ?_⟩
+  by_contra hi
+  apply not_countable_cantor
+  apply Set.countable_univ_iff.mp
+  refine (hE.union (Set.countable_singleton (xs i))).mono fun y _ => ?_
+  by_cases hy : y ∈ E
+  · exact Or.inl hy
+  · exact Or.inr ((hconst y hy (xs i) hi i).mpr rfl)
 
 /-- A `Type 1` relational signature with a symbol at every arity, including arity `0`. -/
 def bigLang : Language.{0, 1} where
@@ -77,7 +95,7 @@ def headline : List Name :=
   [`constant_off_countable_of_splits,
    `FirstOrder.Language.sentences_constant_off_countable,
    `FirstOrder.Language.constant_off_countable_of_borel_observation,
-   `not_countable_cantor, `corollary_regression, `simultaneous_regression,
+   `not_countable_cantor, `corollary_regression, `exception_regression, `simultaneous_regression,
    `observation_regression]
 
 def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
@@ -90,6 +108,6 @@ run_cmd do
     let bad := axs.toList.filter fun a => !standardAxioms.contains a
     unless bad.isEmpty do throwError "[NONSTANDARD AXIOMS] {n} uses {bad}"
   logInfo "observable-constancy regression guard: OK (both countable sides and a constant map on \
-    Cantor space, simultaneous constancy of a repeated family, conditional Borel-observation \
+    Cantor space, genuine countable exceptions, simultaneous constancy of a repeated family, conditional Borel-observation \
     composition on Language.{0, 1} with no measurable structure on the presentation; headline \
     declarations on standard axioms)"

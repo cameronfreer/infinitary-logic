@@ -8,9 +8,10 @@ import Mathlib.Data.Set.Countable
 /-!
 # Countably many predicates with countable truth sides
 
-Set-theoretic counting with no topology, nonemptiness, or uncountability assumption.  For
-countably many predicates `P i` on `X`, each with a countable truth side (`{x | P i x}` or
-`{x | ¬ P i x}` countable):
+Set-theoretic counting with no topology.  The first two lemmas assume nothing about `X` (no
+nonemptiness or uncountability); the third assumes `X` uncountable.  For countably many
+predicates `P i` on `X`, each with a countable truth side (`{x | P i x}` or `{x | ¬ P i x}`
+countable):
 
 * `exists_countable_exceptions_of_splits`: outside one countable exceptional set every `P i` is
   constant, so all the predicates are decided simultaneously off that set.
