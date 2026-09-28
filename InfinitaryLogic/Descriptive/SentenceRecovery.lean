@@ -30,9 +30,11 @@ isomorphism compatibility is automatic, is a corollary.
 On a Borel Cantor isomorphism antichain, countably many sentences recover every parameter bit
 (`sentences_recover_cantor`, `sentenceTheory_eq_parameter`).  Hence a class on which every
 countable sentence list has countably many realized truth sequences carries no such antichain
-(`no_antichain_of_countable_sentence_spectra`), and a sentence with that property is thin
-(`thin_of_countable_sentence_spectra`).  The converse needs Silver and lives in
-`Conditional/SentenceSpectrum.lean`.
+(`no_antichain_of_countable_sentence_spectra`), so such a class is thin
+(`isThinOn_of_countable_sentence_spectra`), and a sentence with that property on its countable
+models is thin (`thin_of_countable_sentence_spectra`).  The converse needs Silver and lives in
+`Conditional/SentenceSpectrum.lean`; the single-sentence-split form on a presentation of the
+classes is `Descriptive/SentenceSplits.lean`.
 
 ## Classical background
 
@@ -160,13 +162,20 @@ theorem no_antichain_of_countable_sentence_spectra (C : Set (StructureSpace L))
   have he := congrFun hn n
   simp at he
 
-/-- **Countable sentence spectra give thinness**: the sufficient direction, without Silver. -/
-theorem thin_of_countable_sentence_spectra (φ : L.Sentenceω)
-    (hsmall : ∀ θ : ℕ → L.Sentenceω, (sentenceTheory θ '' ModelsOf φ).Countable) :
-    φ.IsThinOnNatModels := by
+/-- **Countable sentence spectra give thinness** on an arbitrary class: the sufficient direction,
+without Silver, and with no Borelness or invariance assumption on the class. -/
+theorem isThinOn_of_countable_sentence_spectra (C : Set (StructureSpace L))
+    (hsmall : ∀ θ : ℕ → L.Sentenceω, (sentenceTheory θ '' C).Countable) :
+    IsThinOn (structureIsoSetoid L) C := by
   let := TopologicalSpace.upgradeIsCompletelyMetrizable (StructureSpace L)
   intro hperfect
   obtain ⟨f, hf, hm, ha⟩ := hperfect.hasCantorAntichainOn
-  exact no_antichain_of_countable_sentence_spectra (ModelsOf φ) hsmall f hf.measurable hm ha
+  exact no_antichain_of_countable_sentence_spectra C hsmall f hf.measurable hm ha
+
+/-- **Countable sentence spectra give thinness**: the sufficient direction, without Silver. -/
+theorem thin_of_countable_sentence_spectra (φ : L.Sentenceω)
+    (hsmall : ∀ θ : ℕ → L.Sentenceω, (sentenceTheory θ '' ModelsOf φ).Countable) :
+    φ.IsThinOnNatModels :=
+  isThinOn_of_countable_sentence_spectra (ModelsOf φ) hsmall
 
 end FirstOrder.Language
