@@ -71,6 +71,7 @@ import InfinitaryLogic.Descriptive.SmallVocabularyLift
 import InfinitaryLogic.Descriptive.SmallVocabularyTransport
 import InfinitaryLogic.Descriptive.ObservableConstancy
 import InfinitaryLogic.Descriptive.ScottDefinability
+import InfinitaryLogic.Descriptive.PerfectSetDichotomy
 import InfinitaryLogic.Descriptive.SentenceObservables
 import InfinitaryLogic.Descriptive.FragmentTail
 import InfinitaryLogic.Descriptive.FragmentSpectrum
@@ -124,6 +125,9 @@ application of that vocabulary:
   isomorphism-preserving presentation (`isolatedPresentation_of_surjective`); under the
   single-sentence-split hypothesis, the sentence-definable sets of presentation values are exactly
   the countable and the cocountable ones (`sentence_definable_iff_of_presentation`)
+- `PerfectSetDichotomy`: the `ℕ`-tier and all-countable perfect-set dichotomies and their
+  refutations from `ℕ`-tier thinness with uncountably many `ℕ`-isomorphism classes and explicit
+  finite-tier premises (`Sentenceω.not_perfectSetDichotomyAllCountable_of_thin`)
 - `RankedThinness`: the countable-ordinal rank route to thinness (`ThinRankAnalysis`), with
   the quotient-countability step (`Setoid.countable_antichain`);
 - `BorelFunctionalGraph`: Borel graphs with singleton vertical sections — Borel domain,
