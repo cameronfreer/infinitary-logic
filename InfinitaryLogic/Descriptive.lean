@@ -66,6 +66,8 @@ import InfinitaryLogic.Descriptive.InvariantSeparation
 import InfinitaryLogic.Descriptive.SentenceRecovery
 import InfinitaryLogic.Descriptive.CountableSplits
 import InfinitaryLogic.Descriptive.SentenceSplits
+import InfinitaryLogic.Descriptive.SmallVocabulary
+import InfinitaryLogic.Descriptive.SmallVocabularyLift
 import InfinitaryLogic.Descriptive.SentenceObservables
 import InfinitaryLogic.Descriptive.FragmentTail
 import InfinitaryLogic.Descriptive.FragmentSpectrum
@@ -105,6 +107,10 @@ application of that vocabulary:
   (`countable_range_of_splits`); consumed by `SentenceSplits`, the thinness criterion from
   single-sentence splits on a presentation of the isomorphism classes
   (`isThinOn_of_countable_sentence_splits`)
+- `SmallVocabulary`, `SmallVocabularyLift`: a chosen `Language.{0, 0}` presentation of a countable
+  relational `L : Language.{u, v}` (relation symbols shrunk, the decoding `LHom`), the code
+  homeomorphism with isomorphism preserved and reflected (`iso_code_iff`), and the formula lift
+  preserving realization and quantifier rank (`realize_liftFormula`, `qrank_liftFormula`)
 - `RankedThinness`: the countable-ordinal rank route to thinness (`ThinRankAnalysis`), with
   the quotient-countability step (`Setoid.countable_antichain`);
 - `BorelFunctionalGraph`: Borel graphs with singleton vertical sections — Borel domain,
