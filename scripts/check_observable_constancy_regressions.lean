@@ -1,0 +1,95 @@
+/-
+Regression guard for observable constancy (`Descriptive/CountableSplits.lean`,
+`Descriptive/ObservableConstancy.lean`).
+
+Checked: the **constant-off-countable corollary** on Cantor space with **both choices of countable
+side** (a map with a singleton true side and one with a singleton false side) and a **constant
+map**; **simultaneous constancy** of a repeated sentence family on a `Bool` presentation; and the
+**Borel-observation theorem** as a conditional API composition on a `Language.{0, 1}` signature
+with nullary symbols and a presentation type carrying **no measurable structure**.  Headline
+declarations use only the standard axioms.
+
+Run with: lake env lean scripts/check_observable_constancy_regressions.lean
+-/
+import InfinitaryLogic.Descriptive.ObservableConstancy
+
+open Lean FirstOrder Language
+
+/-- Cantor space is uncountable (diagonal argument). -/
+theorem not_countable_cantor : ¬ Countable (ℕ → Bool) := fun _ => by
+  obtain ⟨g, hg⟩ := exists_surjective_nat (ℕ → Bool)
+  obtain ⟨n, hn⟩ := hg fun k => !(g k k)
+  have := congrFun hn n
+  simp at this
+
+open Classical in
+/-- **Both choices of countable side**, and a constant map. -/
+theorem corollary_regression (x₀ : ℕ → Bool) :
+    (∃ x₁, ({x | decide (x = x₀) ≠ decide (x₁ = x₀)} : Set (ℕ → Bool)).Countable) ∧
+    (∃ x₁, ({x | decide (x ≠ x₀) ≠ decide (x₁ ≠ x₀)} : Set (ℕ → Bool)).Countable) ∧
+    (∃ _x₁ : ℕ → Bool, ({_x | (true : Bool) ≠ true} : Set (ℕ → Bool)).Countable) :=
+  ⟨constant_off_countable_of_splits not_countable_cantor (fun x => decide (x = x₀))
+      (fun _ : Unit => fun b => b = true) (fun y z h => by cases y <;> cases z <;> simp_all)
+      (fun _ => Or.inl (by simp)),
+    constant_off_countable_of_splits not_countable_cantor (fun x => decide (x ≠ x₀))
+      (fun _ : Unit => fun b => b = true) (fun y z h => by cases y <;> cases z <;> simp_all)
+      (fun _ => Or.inr (by simp)),
+    constant_off_countable_of_splits not_countable_cantor (fun _ => true)
+      (fun _ : Unit => fun b => b = true) (fun y z h => by cases y <;> cases z <;> simp_all)
+      (fun _ => Or.inr (by simp))⟩
+
+/-- A `Type 1` relational signature with a symbol at every arity, including arity `0`. -/
+def bigLang : Language.{0, 1} where
+  Functions _ := Empty
+  Relations n := ULift.{1} (Fin (n + 1))
+
+instance : bigLang.IsRelational := fun _ => inferInstanceAs (IsEmpty Empty)
+
+instance : Countable (Σ n, bigLang.Relations n) :=
+  inferInstanceAs (Countable (Σ n, ULift.{1} (Fin (n + 1))))
+
+/-- **Simultaneous constancy** of a repeated family on a `Bool` presentation. -/
+theorem simultaneous_regression (c : StructureSpace bigLang) (φ : bigLang.Sentenceω) :
+    ∃ E : Set Bool, E.Countable ∧ ∀ q ∉ E, ∀ q' ∉ E, ∀ n : ℕ,
+      (fun (θ : bigLang.Sentenceω) (_ : Bool) => c ∈ ModelsOf θ) ((fun _ => φ) n) q ↔
+      (fun (θ : bigLang.Sentenceω) (_ : Bool) => c ∈ ModelsOf θ) ((fun _ => φ) n) q' :=
+  sentences_constant_off_countable (fun θ (_ : Bool) => c ∈ ModelsOf θ)
+    (fun _ => Or.inl (Set.to_countable _)) (fun _ => φ)
+
+/-- **Conditional API composition** of the Borel-observation theorem: `Q` carries no measurable
+structure, measurability sits on the composite, and the family, presentation, truth, and split
+hypotheses are explicit. -/
+theorem observation_regression {X : Type} [MeasurableSpace X] [StandardBorelSpace X]
+    (codes : X → StructureSpace bigLang) (hcodes : Measurable codes)
+    {Q : Type} (classOf : X → Q) (honto : Function.Surjective classOf)
+    (hiso : ∀ x y, (structureIsoSetoid bigLang).r (codes x) (codes y) → classOf x = classOf y)
+    (hQ : ¬ Countable Q) (truth : bigLang.Sentenceω → Q → Prop)
+    (htruth : ∀ φ x, truth φ (classOf x) ↔ codes x ∈ ModelsOf φ)
+    (hsplit : ∀ φ, ({q | truth φ q} : Set Q).Countable ∨ ({q | ¬ truth φ q} : Set Q).Countable)
+    (f : Q → Bool) (hf : Measurable (f ∘ classOf)) :
+    ∃ q₀, ({q | f q ≠ f q₀} : Set Q).Countable :=
+  constant_off_countable_of_borel_observation codes hcodes classOf honto hiso hQ truth htruth
+    hsplit f hf
+
+/-! ### Axiom hygiene -/
+
+def headline : List Name :=
+  [`constant_off_countable_of_splits,
+   `FirstOrder.Language.sentences_constant_off_countable,
+   `FirstOrder.Language.constant_off_countable_of_borel_observation,
+   `not_countable_cantor, `corollary_regression, `simultaneous_regression,
+   `observation_regression]
+
+def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
+
+run_cmd do
+  let env ← getEnv
+  for n in headline do
+    unless (env.find? n).isSome do throwError "headline declaration {n} not found"
+    let axs ← Elab.Command.liftCoreM (collectAxioms n)
+    let bad := axs.toList.filter fun a => !standardAxioms.contains a
+    unless bad.isEmpty do throwError "[NONSTANDARD AXIOMS] {n} uses {bad}"
+  logInfo "observable-constancy regression guard: OK (both countable sides and a constant map on \
+    Cantor space, simultaneous constancy of a repeated family, conditional Borel-observation \
+    composition on Language.{0, 1} with no measurable structure on the presentation; headline \
+    declarations on standard axioms)"
