@@ -64,6 +64,8 @@ import InfinitaryLogic.Descriptive.WellOrderRankedThinness
 import InfinitaryLogic.Descriptive.WellOrderThin
 import InfinitaryLogic.Descriptive.InvariantSeparation
 import InfinitaryLogic.Descriptive.SentenceRecovery
+import InfinitaryLogic.Descriptive.CountableSplits
+import InfinitaryLogic.Descriptive.SentenceSplits
 import InfinitaryLogic.Descriptive.SentenceObservables
 import InfinitaryLogic.Descriptive.FragmentTail
 import InfinitaryLogic.Descriptive.FragmentSpectrum
@@ -98,6 +100,11 @@ application of that vocabulary:
 - `StructureIsoSetoid`: **the application** — isomorphism defined once on the ambient
   `StructureSpace L`, `isoSetoid φ` as its restriction, and the sentence-level
   perfect-set/thinness predicates stated against it
+- `CountableSplits`: countably many predicates with countable truth sides are simultaneously
+  constant off one countable set, and any function of their truth values has countable range
+  (`countable_range_of_splits`); consumed by `SentenceSplits`, the thinness criterion from
+  single-sentence splits on a presentation of the isomorphism classes
+  (`isThinOn_of_countable_sentence_splits`)
 - `RankedThinness`: the countable-ordinal rank route to thinness (`ThinRankAnalysis`), with
   the quotient-countability step (`Setoid.countable_antichain`);
 - `BorelFunctionalGraph`: Borel graphs with singleton vertical sections — Borel domain,
