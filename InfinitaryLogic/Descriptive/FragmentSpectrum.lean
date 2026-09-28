@@ -181,7 +181,7 @@ omit [Countable (Σ n, L.Relations n)] in
 /-- The pointed type is jointly measurable in the code and the tuple. -/
 theorem measurable_pointedType (F : Fragment L) (n : ℕ) :
     Measurable fun p : StructureSpace L × (Fin n → ℕ) => F.pointedType p.1 p.2 := by
-  apply measurable_pi_lambda
+  apply Measurable.of_eval
   intro φ
   apply measurable_to_bool
   convert measurableSet_pointedRealize (L := L) φ.1 using 1

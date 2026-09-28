@@ -7,7 +7,7 @@ defaultTargets = ["InfinitaryLogic"]
 [[require]]
 name = "LeanArchitect"
 git = "https://github.com/hanwenzhu/LeanArchitect.git"
-rev = "d9013cc08bd2"
+rev = "f45833e26c68aa947044145184f8881a75392e30"
 
 [[require]]
 name = "checkdecls"
@@ -19,7 +19,7 @@ rev = "3d425859e73fcfbef85b9638c2a91708ef4a22d4"
 [[require]]
 name = "mathlib"
 git = "https://github.com/cameronfreer/mathlib4"
-rev = "4038001c613926e4d3f3791977380be96a19c192"
+rev = "346a4bd3f95e8591976c91259badc6d2c300f638"
 
 [[lean_lib]]
 name = "InfinitaryLogic"

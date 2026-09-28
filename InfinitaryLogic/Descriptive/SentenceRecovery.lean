@@ -59,7 +59,7 @@ noncomputable def sentenceTheory (θ : ℕ → L.Sentenceω) (c : StructureSpace
 
 omit [Countable (Σ n, L.Relations n)] in
 theorem measurable_sentenceTheory (θ : ℕ → L.Sentenceω) : Measurable (sentenceTheory θ) := by
-  apply measurable_pi_lambda
+  apply Measurable.of_eval
   intro n
   apply measurable_to_bool
   convert modelsOf_measurableSet (θ n) using 1

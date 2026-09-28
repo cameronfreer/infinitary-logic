@@ -351,7 +351,7 @@ theorem BFEquiv.ofOrdinalLift
   | zero =>
     rw [Ordinal.lift_zero, BFEquiv.zero] at *; exact h
   | add_one γ ih =>
-    rw [← Order.succ_eq_add_one, Ordinal.lift_succ, BFEquiv.succ] at *
+    rw [Ordinal.lift_add_one, ← Order.succ_eq_add_one, BFEquiv.succ] at *
     exact ⟨ih h.1,
            fun m => let ⟨n', hn'⟩ := h.2.1 m; ⟨n', ih hn'⟩,
            fun n' => let ⟨m, hm⟩ := h.2.2 n'; ⟨m, ih hm⟩⟩
@@ -374,7 +374,7 @@ theorem BFEquiv.toOrdinalLift
   | zero =>
     rw [Ordinal.lift_zero, BFEquiv.zero] at *; exact h
   | add_one γ ih =>
-    rw [← Order.succ_eq_add_one, Ordinal.lift_succ, BFEquiv.succ] at h
+    rw [Ordinal.lift_add_one, ← Order.succ_eq_add_one, BFEquiv.succ] at h
     rw [← Order.succ_eq_add_one, BFEquiv.succ]
     exact ⟨ih h.1,
            fun m => let ⟨n', hn'⟩ := h.2.1 m; ⟨n', ih hn'⟩,
