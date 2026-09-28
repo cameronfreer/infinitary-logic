@@ -121,9 +121,9 @@ application of that vocabulary:
   countably many presentation values (`constant_off_countable_of_borel_observation`), with
   measurability on the composite only
 - `ScottDefinability`: Scott isolation of a surjective, satisfaction-compatible,
-  isomorphism-preserving presentation (`isolatedPresentation_of_surjective`) and sentence
-  definability of exactly the countable and cocountable sets of presentation values
-  (`sentence_definable_iff_of_presentation`)
+  isomorphism-preserving presentation (`isolatedPresentation_of_surjective`); under the
+  single-sentence-split hypothesis, the sentence-definable sets of presentation values are exactly
+  the countable and the cocountable ones (`sentence_definable_iff_of_presentation`)
 - `RankedThinness`: the countable-ordinal rank route to thinness (`ThinRankAnalysis`), with
   the quotient-countability step (`Setoid.countable_antichain`);
 - `BorelFunctionalGraph`: Borel graphs with singleton vertical sections — Borel domain,
