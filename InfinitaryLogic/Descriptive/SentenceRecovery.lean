@@ -45,19 +45,26 @@ parameters are derived here from invariant separation; these formulations are no
 occur in the sources.
 -/
 
+universe u v
+
 namespace FirstOrder.Language
 
 open MeasureTheory Set
 
-variable {L : Language.{0, 0}} [L.IsRelational] [Countable (Σ n, L.Relations n)]
+/-! ## Truth sequences
 
-/-! ## Truth sequences -/
+The truth-sequence basics are stated for every `L : Language.{u, v}`: they use only `ModelsOf`,
+its measurability, and its isomorphism invariance, all of which are universe-polymorphic.  The
+recovery theorems below them stay at `Language.{0, 0}`. -/
+
+section TruthSequences
+
+variable {L : Language.{u, v}} [L.IsRelational]
 
 /-- The truth sequence of a countable list of sentences at a coded structure. -/
 noncomputable def sentenceTheory (θ : ℕ → L.Sentenceω) (c : StructureSpace L) : ℕ → Bool :=
   fun n => @decide (c ∈ ModelsOf (θ n)) (Classical.propDecidable _)
 
-omit [Countable (Σ n, L.Relations n)] in
 theorem measurable_sentenceTheory (θ : ℕ → L.Sentenceω) : Measurable (sentenceTheory θ) := by
   apply measurable_pi_lambda
   intro n
@@ -66,13 +73,16 @@ theorem measurable_sentenceTheory (θ : ℕ → L.Sentenceω) : Measurable (sent
   ext c
   simp [sentenceTheory]
 
-omit [Countable (Σ n, L.Relations n)] in
 theorem sentenceTheory_eq_of_iso (θ : ℕ → L.Sentenceω) {c d : StructureSpace L}
     (h : (structureIsoSetoid L).r c d) : sentenceTheory θ c = sentenceTheory θ d := by
   funext n
   simp only [sentenceTheory]
   congr 1
   exact propext ((isomorphismInvariant_modelsOf (θ n)) c d h)
+
+end TruthSequences
+
+variable {L : Language.{0, 0}} [L.IsRelational] [Countable (Σ n, L.Relations n)]
 
 /-! ## Relative López–Escobar -/
 

@@ -32,18 +32,19 @@ uses that).  Only `htruth` and `hsplit` are used.  Nothing here needs Silver, ra
 isolation, or Borelness of `C`.
 -/
 
-universe w
+universe u v w
 
 namespace FirstOrder.Language
 
 open Set
 
-variable {L : Language.{0, 0}} [L.IsRelational] [Countable (Σ n, L.Relations n)]
+section Bridge
 
-omit [Countable (Σ n, L.Relations n)] in
+variable {L : Language.{u, v}} [L.IsRelational]
+
 /-- **The bridge.**  If each single sentence has a countable truth side on a presentation of the
 classes of `C`, then every countable sentence list realizes countably many truth sequences
-on `C`.  No countability of the signature is consumed here. -/
+on `C`.  Stated for every `L : Language.{u, v}`; no countability of the signature is consumed. -/
 theorem countable_sentenceTheory_image_of_splits (C : Set (StructureSpace L)) {Q : Type w}
     (classOf : C → Q) (truth : L.Sentenceω → Q → Prop)
     (htruth : ∀ θ c, truth θ (classOf c) ↔ c.1 ∈ ModelsOf θ)
@@ -59,6 +60,10 @@ theorem countable_sentenceTheory_image_of_splits (C : Set (StructureSpace L)) {Q
   rintro _ ⟨c, hc, rfl⟩
   refine ⟨classOf ⟨c, hc⟩, funext fun n => ?_⟩
   exact decide_eq_decide.mpr (htruth (θ n) ⟨c, hc⟩)
+
+end Bridge
+
+variable {L : Language.{0, 0}} [L.IsRelational] [Countable (Σ n, L.Relations n)]
 
 /-- **Thinness from single-sentence splits** on a presentation of the classes of `C`. -/
 theorem isThinOn_of_countable_sentence_splits (C : Set (StructureSpace L)) {Q : Type w}
