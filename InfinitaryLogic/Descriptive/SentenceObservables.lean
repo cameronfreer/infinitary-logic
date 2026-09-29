@@ -32,6 +32,8 @@ derived from the project's sentence-recovery API and are not claimed to occur in
 the source.
 -/
 
+universe x y
+
 namespace FirstOrder.Language
 
 open MeasureTheory Set
@@ -40,7 +42,7 @@ variable {L : Language.{0, 0}} [L.IsRelational] [Countable (Σ n, L.Relations n)
 
 /-- **A Borel Cantor-valued invariant of a Borel family is a sequence of sentence truths** on
 that family.  The invariant need not be complete. -/
-theorem sentences_recover_observable {X : Type} [MeasurableSpace X] [StandardBorelSpace X]
+theorem sentences_recover_observable {X : Type x} [MeasurableSpace X] [StandardBorelSpace X]
     (f : X → StructureSpace L) (hf : Measurable f) (p : X → (ℕ → Bool)) (hp : Measurable p)
     (hiso : ∀ x y, (structureIsoSetoid L).r (f x) (f y) → p x = p y) :
     ∃ θ : ℕ → L.Sentenceω, ∀ x, sentenceTheory θ (f x) = p x := by
@@ -58,7 +60,7 @@ theorem sentences_recover_observable {X : Type} [MeasurableSpace X] [StandardBor
 
 /-- Countably separated targets: the chosen measurable injection encodes observables, not
 representatives of isomorphism classes. -/
-theorem sentences_encode_observable {X Y : Type} [MeasurableSpace X] [StandardBorelSpace X]
+theorem sentences_encode_observable {X : Type x} {Y : Type y} [MeasurableSpace X] [StandardBorelSpace X]
     [MeasurableSpace Y] [MeasurableSpace.CountablySeparated Y]
     (f : X → StructureSpace L) (hf : Measurable f) (p : X → Y) (hp : Measurable p)
     (hiso : ∀ x y, (structureIsoSetoid L).r (f x) (f y) → p x = p y) :
