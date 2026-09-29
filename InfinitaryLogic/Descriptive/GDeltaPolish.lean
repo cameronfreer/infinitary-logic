@@ -26,7 +26,7 @@ Hausdorffness.
 Only the implication "Gδ implies Polish" is provided; the converse is a different theorem.
 Nothing here refines a topology.  The root names follow Mathlib's `IsOpen.polishSpace`; a later
 Mathlib supplying the same theorems will clash at the dependency update, which is the signal to
-delete this module.
+remove the duplicate proofs and retain the module as a compatibility import.
 -/
 
 open Set Topology TopologicalSpace

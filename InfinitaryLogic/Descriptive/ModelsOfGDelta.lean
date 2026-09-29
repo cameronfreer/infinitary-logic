@@ -15,11 +15,12 @@ For a countable relational language `L` and a sentence `φ` whose coded model se
 from the code space (`polishSpace_modelsOf_of_isGδ`, from `IsGδ.polishSpace`).  This is
 **conditional on the Gδ hypothesis**: not every sentence has a Gδ model set (see below).
 
-The existing `modelsOf_standardBorel` gives a standard Borel structure on every model set by
-refining the topology of the code space; it says nothing about the inherited topology, in which
-the atomic conditions are clopen and convergence of codes is convergence of each relation on
-each tuple.  The two are not compared here, and nothing is said about isomorphism classes, the
-logic action, or orbits.
+The existing `modelsOf_standardBorel` already equips every model set with the **inherited
+measurable structure** as a standard Borel space, obtained by refining the topology of the code
+space.  What is new is Polishness of the **inherited topology** itself, in which the atomic
+conditions are clopen and convergence of codes is convergence of each relation on each tuple.
+The two are not compared here, and nothing is said about isomorphism classes, the logic action,
+or orbits.
 
 Closure lemmas make the hypothesis dischargeable clause by clause: `modelsOf_inf`,
 `modelsOf_inf_isGδ`, `modelsOf_iInf`, `modelsOf_iInf_isGδ` (and the `einf` forms over an
