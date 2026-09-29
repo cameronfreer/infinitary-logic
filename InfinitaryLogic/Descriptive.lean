@@ -3,6 +3,8 @@ import InfinitaryLogic.Descriptive.StructureSpace
 import InfinitaryLogic.Descriptive.Measurable
 import InfinitaryLogic.Descriptive.Topology
 import InfinitaryLogic.Descriptive.Polish
+import InfinitaryLogic.Descriptive.GDeltaPolish
+import InfinitaryLogic.Descriptive.ModelsOfGDelta
 import InfinitaryLogic.Descriptive.CodeTransport
 
 -- Satisfaction and equivalence Borel complexity
@@ -104,6 +106,11 @@ application of that vocabulary:
   countable-fibre rank below `ω₁`, countable complements from countable successor losses under
   an explicit limit hypothesis, exhaustion by antitone domains giving cardinality exactly `ℵ₁`,
   and uncountability of Cantor space by cardinal arithmetic
+- `GDeltaPolish` (Mathlib only): a Gδ subset of a Polish space is Polish, and standard Borel, in
+  its subspace topology (`IsGδ.polishSpace`, `IsGδ.standardBorelSpace`); `ModelsOfGDelta`: a Gδ
+  set of coded models is Polish in the inherited topology (`polishSpace_modelsOf_of_isGδ`,
+  conditional on the Gδ hypothesis, which is not automatic), with closure of the Gδ property
+  under finite, countable, and encodable conjunctions
 - `CantorAntichain`: Cantor-scheme → perfect-antichain extraction
   (`CantorScheme.exists_antichain_map` and the splitting-predicate builder);
 - `PerfectAntichain`: perfect/Cantor-antichain and thinness vocabulary, plus the perfect-set
