@@ -35,7 +35,7 @@ Names coincide with the small-universe originals inside the `SmallVocabulary` na
 originals are referred to fully qualified.
 -/
 
-universe u v w
+universe u v w x y
 
 namespace FirstOrder.Language.SmallVocabulary
 
@@ -130,7 +130,7 @@ theorem lopezEscobar_iff {B : Set (StructureSpace L)} :
     exact ⟨modelsOf_measurableSet φ, isomorphismInvariant_modelsOf φ⟩
 
 /-- **Relative López–Escobar for `L`.** -/
-theorem sentence_pullback_of_iso_compatible {X : Type} [MeasurableSpace X]
+theorem sentence_pullback_of_iso_compatible {X : Type x} [MeasurableSpace X]
     [StandardBorelSpace X] (f : X → StructureSpace L) (hf : Measurable f)
     (U : Set X) (hU : MeasurableSet U)
     (hiso : ∀ x y, (structureIsoSetoid L).r (f x) (f y) → (x ∈ U ↔ y ∈ U)) :
@@ -141,7 +141,7 @@ theorem sentence_pullback_of_iso_compatible {X : Type} [MeasurableSpace X]
   exact ⟨liftFormula L ψ, fun x => by rw [← code_mem_modelsOf_iff]; exact hψ x⟩
 
 /-- **Pullback on an antichain for `L`.** -/
-theorem sentence_pullback_on_antichain {X : Type} [MeasurableSpace X]
+theorem sentence_pullback_on_antichain {X : Type x} [MeasurableSpace X]
     [StandardBorelSpace X] (f : X → StructureSpace L) (hf : Measurable f)
     (hanti : ∀ x y, x ≠ y → ¬ (structureIsoSetoid L).r (f x) (f y))
     (U : Set X) (hU : MeasurableSet U) :
@@ -163,7 +163,7 @@ theorem sentences_recover_cantor (f : (ℕ → Bool) → StructureSpace L) (hf :
     rw [← code_mem_modelsOf_iff]; exact hψ x n⟩
 
 /-- **Observable recovery for `L`.** -/
-theorem sentences_recover_observable {X : Type} [MeasurableSpace X] [StandardBorelSpace X]
+theorem sentences_recover_observable {X : Type x} [MeasurableSpace X] [StandardBorelSpace X]
     (f : X → StructureSpace L) (hf : Measurable f) (p : X → (ℕ → Bool)) (hp : Measurable p)
     (hiso : ∀ x y, (structureIsoSetoid L).r (f x) (f y) → p x = p y) :
     ∃ θ : ℕ → L.Sentenceω, ∀ x, sentenceTheory θ (f x) = p x := by
@@ -172,7 +172,7 @@ theorem sentences_recover_observable {X : Type} [MeasurableSpace X] [StandardBor
   exact ⟨liftList L ψ, fun x => by rw [← sentenceTheory_code]; exact hψ x⟩
 
 /-- **Observable encoding for `L`.** -/
-theorem sentences_encode_observable {X Y : Type} [MeasurableSpace X] [StandardBorelSpace X]
+theorem sentences_encode_observable {X : Type x} {Y : Type y} [MeasurableSpace X] [StandardBorelSpace X]
     [MeasurableSpace Y] [MeasurableSpace.CountablySeparated Y]
     (f : X → StructureSpace L) (hf : Measurable f) (p : X → Y) (hp : Measurable p)
     (hiso : ∀ x y, (structureIsoSetoid L).r (f x) (f y) → p x = p y) :

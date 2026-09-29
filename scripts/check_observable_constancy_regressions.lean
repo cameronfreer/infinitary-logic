@@ -7,7 +7,11 @@ side** (a map with a singleton true side and one with a singleton false side) an
 map**; a **genuine countable-exception** regression (the exceptional set of the predicates `x = xs i`
 must contain every `xs i`); **simultaneous constancy** of a repeated sentence family on a `Bool` presentation; and the
 **Borel-observation theorem** as a conditional API composition on a `Language.{0, 1}` signature
-with nullary symbols and a presentation type carrying **no measurable structure**.  Headline
+with nullary symbols and a presentation type carrying **no measurable structure**; and the same theorem
+with a **`Type 1` parameter space** (the Borel model-class subtype of a sentence of that signature,
+standard Borel and with measurable inclusion by the library) and a **`Type y` target**, again with no
+measurable structure on the presentation type and no consumer-defined bridge, as conditional API
+composition.  Headline
 declarations use only the standard axioms.
 
 Run with: lake env lean scripts/check_observable_constancy_regressions.lean
@@ -15,6 +19,8 @@ Run with: lake env lean scripts/check_observable_constancy_regressions.lean
 import InfinitaryLogic.Descriptive.ObservableConstancy
 
 open Lean FirstOrder Language
+
+universe y
 
 /-- Cantor space is uncountable (diagonal argument). -/
 theorem not_countable_cantor : ¬ Countable (ℕ → Bool) := fun _ => by
@@ -89,6 +95,24 @@ theorem observation_regression {X : Type} [MeasurableSpace X] [StandardBorelSpac
   constant_off_countable_of_borel_observation codes hcodes classOf honto hiso hQ truth htruth
     hsplit f hf
 
+/-- **Higher-universe parameter and target spaces**, conditional API composition: the parameter space
+is the Borel model-class subtype `↥(ModelsOf φ)` of a sentence of the `Language.{0, 1}` signature (in
+`Type 1`), with its standard-Borel instance and the measurability of the inclusion supplied by the
+library, the target `Y : Type y` with its own measurable and countably separated assumptions, and a
+presentation type `Q` with no measurable-space instance.  No consumer-defined shrinking bridge; the
+split, uncountability, and presentation hypotheses remain hypotheses. -/
+theorem higher_universe_observation_regression {Y : Type y} [MeasurableSpace Y]
+    [MeasurableSpace.CountablySeparated Y] (φ : bigLang.Sentenceω)
+    {Q : Type} (classOf : ↥(ModelsOf φ) → Q) (honto : Function.Surjective classOf)
+    (hiso : ∀ x y : ↥(ModelsOf φ), (structureIsoSetoid bigLang).r x.1 y.1 → classOf x = classOf y)
+    (hQ : ¬ Countable Q) (truth : bigLang.Sentenceω → Q → Prop)
+    (htruth : ∀ ψ (x : ↥(ModelsOf φ)), truth ψ (classOf x) ↔ x.1 ∈ ModelsOf ψ)
+    (hsplit : ∀ ψ, ({q | truth ψ q} : Set Q).Countable ∨ ({q | ¬ truth ψ q} : Set Q).Countable)
+    (f : Q → Y) (hf : Measurable (f ∘ classOf)) :
+    ∃ q₀, ({q | f q ≠ f q₀} : Set Q).Countable :=
+  constant_off_countable_of_borel_observation (Subtype.val : ↥(ModelsOf φ) → StructureSpace bigLang)
+    measurable_subtype_coe classOf honto hiso hQ truth htruth hsplit f hf
+
 /-! ### Axiom hygiene -/
 
 def headline : List Name :=
@@ -96,7 +120,7 @@ def headline : List Name :=
    `FirstOrder.Language.sentences_constant_off_countable,
    `FirstOrder.Language.constant_off_countable_of_borel_observation,
    `not_countable_cantor, `corollary_regression, `exception_regression, `simultaneous_regression,
-   `observation_regression]
+   `observation_regression, `higher_universe_observation_regression]
 
 def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
 
@@ -109,5 +133,6 @@ run_cmd do
     unless bad.isEmpty do throwError "[NONSTANDARD AXIOMS] {n} uses {bad}"
   logInfo "observable-constancy regression guard: OK (both countable sides and a constant map on \
     Cantor space, genuine countable exceptions, simultaneous constancy of a repeated family, conditional Borel-observation \
-    composition on Language.{0, 1} with no measurable structure on the presentation; headline \
+    composition on Language.{0, 1} at parameter space Type and at the Type 1 model-class subtype \
+    with a Type y target, no measurable structure on the presentation; headline \
     declarations on standard axioms)"

@@ -45,7 +45,7 @@ parameters are derived here from invariant separation; these formulations are no
 occur in the sources.
 -/
 
-universe u v
+universe u v x
 
 namespace FirstOrder.Language
 
@@ -89,7 +89,7 @@ variable {L : Language.{0, 0}} [L.IsRelational] [Countable (Σ n, L.Relations n)
 /-- **Relative López–Escobar.**  A Borel predicate on a standard Borel family of structures that
 respects isomorphism of the outputs is the pullback of one sentence.  No antichain is required,
 and the family may have repetitions. -/
-theorem sentence_pullback_of_iso_compatible {X : Type} [MeasurableSpace X]
+theorem sentence_pullback_of_iso_compatible {X : Type x} [MeasurableSpace X]
     [StandardBorelSpace X] (f : X → StructureSpace L) (hf : Measurable f)
     (U : Set X) (hU : MeasurableSet U)
     (hiso : ∀ x y, (structureIsoSetoid L).r (f x) (f y) → (x ∈ U ↔ y ∈ U)) :
@@ -119,7 +119,7 @@ theorem sentence_pullback_of_iso_compatible {X : Type} [MeasurableSpace X]
 
 /-- On an isomorphism antichain every Borel predicate is the pullback of one sentence:
 compatibility with isomorphism is automatic. -/
-theorem sentence_pullback_on_antichain {X : Type} [MeasurableSpace X]
+theorem sentence_pullback_on_antichain {X : Type x} [MeasurableSpace X]
     [StandardBorelSpace X] (f : X → StructureSpace L) (hf : Measurable f)
     (hanti : ∀ x y, x ≠ y → ¬ (structureIsoSetoid L).r (f x) (f y))
     (U : Set X) (hU : MeasurableSet U) :

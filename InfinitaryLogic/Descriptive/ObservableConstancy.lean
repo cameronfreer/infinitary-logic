@@ -22,13 +22,15 @@ and every single sentence having a countable truth side on `Q`:
   relational `L : Language.{u, v}`), reads the encoding bits back to `Q` through surjectivity of
   `classOf` and `htruth`, and applies `constant_off_countable_of_splits`.
 
-Measurability is imposed on the composite `f ∘ classOf` only.  **No measurable structure on `Q` is
+The parameter space `X` and the target `Y` live in arbitrary universes; only the underlying language
+restriction remains, handled through the small-vocabulary transport.  Measurability is imposed on the
+composite `f ∘ classOf` only.  **No measurable structure on `Q` is
 assumed or produced**; `Q` is not claimed to be standard Borel.  Surjectivity of `classOf` is what
 transfers the recovered truth to every presentation value; isomorphism implying equal presentation
 values (`hiso`) is what makes the composite isomorphism-compatible.
 -/
 
-universe u v w
+universe u v w x y
 
 namespace FirstOrder.Language
 
@@ -48,7 +50,7 @@ theorem sentences_constant_off_countable {Q : Type w} (truth : L.Sentenceω → 
 /-- **Borel observations are constant off countably many classes.**  Measurability is on the
 composite `f ∘ classOf`; `Q` carries no measurable structure. -/
 theorem constant_off_countable_of_borel_observation
-    {X Y : Type} [MeasurableSpace X] [StandardBorelSpace X]
+    {X : Type x} {Y : Type y} [MeasurableSpace X] [StandardBorelSpace X]
     [MeasurableSpace Y] [MeasurableSpace.CountablySeparated Y]
     (codes : X → StructureSpace L) (hcodes : Measurable codes)
     {Q : Type w} (classOf : X → Q) (honto : Function.Surjective classOf)
