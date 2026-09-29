@@ -7,14 +7,17 @@ import InfinitaryLogic.Descriptive.CountableSplits
 import InfinitaryLogic.Descriptive.SmallVocabularyTransport
 
 /-!
-# Borel observations are constant off countably many classes
+# Borel observations are constant off countably many presentation values
 
-On a presentation `classOf : X → Q` of the isomorphism classes of a standard Borel family of codes
-`codes : X → StructureSpace L`, with `truth` actual satisfaction read back through `classOf`
-and every single sentence having a countable truth side on `Q`:
+On a surjective map `classOf : X → Q` from a standard Borel family of codes
+`codes : X → StructureSpace L` to a type `Q` of **presentation values**, with `truth` actual
+satisfaction read back through `classOf`.  The determination lemma needs nothing more; the
+constancy results additionally assume that every single sentence has a countable truth side on `Q`
+(single-sentence splits) and, in the nonempty form, that `Q` is nonempty:
 
-* `sentences_constant_off_countable`: a countable family of sentences is simultaneously constant
-  outside one countable set of presentation values (`exists_countable_exceptions_of_splits`).
+* `sentences_constant_off_countable` (under splits): a countable family of sentences is
+  simultaneously constant outside one countable set of presentation values
+  (`exists_countable_exceptions_of_splits`).
 * `sentences_determine_borel_observation`: an observation `f : Q → Y` into a countably separated
   space whose **composite with `classOf` is measurable** and which is invariant under isomorphism
   of the codes is determined by the truth values of countably many sentences.  No split or
