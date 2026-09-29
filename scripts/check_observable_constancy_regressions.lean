@@ -11,7 +11,10 @@ with nullary symbols and a presentation type carrying **no measurable structure*
 with a **`Type 1` parameter space** (the Borel model-class subtype of a sentence of that signature,
 standard Borel and with measurable inclusion by the library) and a **`Type y` target**, again with no
 measurable structure on the presentation type and no consumer-defined bridge, as conditional API
-composition.  Headline
+composition.  For the **weakened premises**: the nonempty form applied at a **countable nonempty**
+`Q := Unit` (where uncountability fails), at a **tagged presentation** `Unit × ℕ` whose labels are shown
+**not** isomorphism-invariant while the observation is, and the **determination** lemma as a
+conditional composition with no split or cardinality premise.  Headline
 declarations use only the standard axioms.
 
 Run with: lake env lean scripts/check_observable_constancy_regressions.lean
@@ -113,14 +116,62 @@ theorem higher_universe_observation_regression {Y : Type y} [MeasurableSpace Y]
   constant_off_countable_of_borel_observation (Subtype.val : ↥(ModelsOf φ) → StructureSpace bigLang)
     measurable_subtype_coe classOf honto hiso hQ truth htruth hsplit f hf
 
+/-! ### The weakened premises: nonempty countable `Q`, and a tagged presentation -/
+
+/-- The constant code on `ℕ` (a countable standard Borel parameter space). -/
+def constCodes (c : StructureSpace bigLang) : ℕ → StructureSpace bigLang := fun _ => c
+
+/-- **Countable nonempty `Q`**: the nonempty form applied with `Q := Unit`, where the old form's
+uncountability premise is false. -/
+theorem countable_presentation_regression (c : StructureSpace bigLang) (b : Bool) :
+    (∃ q₀ : Unit, ({q | (fun _ : Unit => b) q ≠ (fun _ : Unit => b) q₀} : Set Unit).Countable) ∧
+    ¬ ¬ Countable Unit :=
+  ⟨constant_off_countable_of_borel_observation_of_nonempty (constCodes c) measurable_const
+      (fun _ : ℕ => ()) (fun _ => ⟨0, rfl⟩) ⟨()⟩ (fun φ _ => c ∈ ModelsOf φ) (fun _ _ => Iff.rfl)
+      (fun _ => Or.inl (Set.to_countable _)) (fun _ => b) measurable_const (fun _ _ _ => rfl),
+    fun h => h inferInstance⟩
+
+/-- **A tagged presentation**: `Q := Unit × ℕ`, labels carry a redundant tag ignored by truth and by
+the observation.  The labels are **not** isomorphism-invariant (the constant codes are all
+isomorphic, yet `classOf 0 ≠ classOf 1`), so the label-compatible form does not apply; the
+observation is invariant, so the nonempty form does. -/
+theorem tagged_presentation_regression (c : StructureSpace bigLang) (b : Bool) :
+    ¬ (∀ x y : ℕ, (structureIsoSetoid bigLang).r (constCodes c x) (constCodes c y) →
+        (fun n : ℕ => ((), n)) x = (fun n : ℕ => ((), n)) y) ∧
+    ∃ q₀ : Unit × ℕ,
+      ({q | (fun _ : Unit × ℕ => b) q ≠ (fun _ : Unit × ℕ => b) q₀} : Set (Unit × ℕ)).Countable :=
+  ⟨fun h => by
+      have := h 0 1 ⟨@Language.Equiv.refl bigLang ℕ (constCodes c 0).toStructure⟩
+      simp at this,
+    constant_off_countable_of_borel_observation_of_nonempty (constCodes c) measurable_const
+      (fun n : ℕ => ((), n)) (fun ⟨_, n⟩ => ⟨n, rfl⟩) ⟨((), 0)⟩ (fun φ _ => c ∈ ModelsOf φ)
+      (fun _ _ => Iff.rfl) (fun _ => Or.inl (Set.to_countable _)) (fun _ => b) measurable_const
+      (fun _ _ _ => rfl)⟩
+
+/-- **Determination by countably many sentences**, conditional API composition with no split or
+cardinality premise. -/
+theorem determination_regression {X : Type} [MeasurableSpace X] [StandardBorelSpace X]
+    (codes : X → StructureSpace bigLang) (hcodes : Measurable codes)
+    {Q : Type} (classOf : X → Q) (honto : Function.Surjective classOf)
+    (truth : bigLang.Sentenceω → Q → Prop)
+    (htruth : ∀ φ x, truth φ (classOf x) ↔ codes x ∈ ModelsOf φ)
+    (f : Q → Bool) (hf : Measurable (f ∘ classOf))
+    (hobs : ∀ x y, (structureIsoSetoid bigLang).r (codes x) (codes y) →
+      f (classOf x) = f (classOf y)) :
+    ∃ θ : ℕ → bigLang.Sentenceω, ∀ q s : Q, (∀ i, truth (θ i) q ↔ truth (θ i) s) → f q = f s :=
+  sentences_determine_borel_observation codes hcodes classOf honto truth htruth f hf hobs
+
 /-! ### Axiom hygiene -/
 
 def headline : List Name :=
   [`constant_off_countable_of_splits,
    `FirstOrder.Language.sentences_constant_off_countable,
    `FirstOrder.Language.constant_off_countable_of_borel_observation,
+   `FirstOrder.Language.sentences_determine_borel_observation,
+   `FirstOrder.Language.constant_off_countable_of_borel_observation_of_nonempty,
    `not_countable_cantor, `corollary_regression, `exception_regression, `simultaneous_regression,
-   `observation_regression, `higher_universe_observation_regression]
+   `observation_regression, `higher_universe_observation_regression,
+   `countable_presentation_regression, `tagged_presentation_regression, `determination_regression]
 
 def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
 
@@ -134,5 +185,6 @@ run_cmd do
   logInfo "observable-constancy regression guard: OK (both countable sides and a constant map on \
     Cantor space, genuine countable exceptions, simultaneous constancy of a repeated family, conditional Borel-observation \
     composition on Language.{0, 1} at parameter space Type and at the Type 1 model-class subtype \
-    with a Type y target, no measurable structure on the presentation; headline \
+    with a Type y target, no measurable structure on the presentation; nonempty form at a countable Q \
+    and at a tagged presentation with non-invariant labels; determination lemma; headline \
     declarations on standard axioms)"
