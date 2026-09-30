@@ -12,8 +12,11 @@ two-generation there) and which has pair witnesses for every membership on a car
 while the `ℵ₁` bound fails, so pair witnesses must not replace whole-hull generation; and
 **compatibility with `mk_le_aleph_one`**: for an arbitrary two-generated closure, `#M ≤ ℵ₁` is
 derived from `mk_lt_aleph_of_generation` at `n = 2` and obtained from the original bound applied
-to the same hypotheses, and the constant closure on `Fin 3` is checked at `n = 0` and `n = 2`.
-Headline declarations use only the standard axioms.
+to the same hypotheses, and the constant closure on `Fin 3` is checked at `n = 0` and `n = 2`;
+the **closure API** (`fClosure` of `{0}` under the successor map is all of `ℕ`, the empty map
+fixes every set, the finite-set map keeps a countable set countable); and the **all-subsets
+definition**: for the non-monotone `spikeAtEmpty` on `ℕ`, `{0, 1}` passes the erase-only test
+but is not `FIndependent`. Headline declarations use only the standard axioms.
 
 Run with: lake env lean scripts/check_free_set_bound_regressions.lean
 -/
@@ -170,6 +173,7 @@ theorem top_closure_regression :
 /-- A non-monotone map: `f ∅ = {0}` and `f B = ∅` for nonempty `B`. -/
 def spikeAtEmpty (B : Finset ℕ) : Set ℕ := if B = ∅ then {0} else ∅
 
+/-- `spikeAtEmpty` is not monotone: `0 ∈ f ∅` but `0 ∉ f {1}`. -/
 theorem spikeAtEmpty_not_monotone : ¬ Monotone spikeAtEmpty := by
   intro h
   have h0 : (0 : ℕ) ∈ spikeAtEmpty ∅ := by simp [spikeAtEmpty]
@@ -179,11 +183,12 @@ theorem spikeAtEmpty_not_monotone : ¬ Monotone spikeAtEmpty := by
 /-- **Non-monotone case.**  On `A = {0, 1}` the erase-only condition `a ∉ f (A.erase a)` holds
 for both points (the erased sets are nonempty, so `f` is empty there), yet `A` is **not**
 `f`-independent: the subset `∅ ⊆ A` omits `0` and `0 ∈ f ∅`.  This is why `FIndependent`
-quantifies over all subsets and why the induction needs the two-summand auxiliary map. -/
+quantifies over all subsets.  As a consequence, the lifting step must also control subsets that
+omit the new point, which is what the `f A` summand of the auxiliary map does. -/
 theorem non_monotone_regression :
     (∀ a ∈ ({0, 1} : Finset ℕ), a ∉ spikeAtEmpty (({0, 1} : Finset ℕ).erase a)) ∧
     ¬ FIndependent spikeAtEmpty {0, 1} := by
-  refine ⟨fun a ha => ?_, fun h => ?_⟩
+  refine ⟨fun a ha ↦ ?_, fun h ↦ ?_⟩
   · have hne : ({0, 1} : Finset ℕ).erase a ≠ ∅ := by
       intro he
       have := Finset.card_erase_of_mem ha
@@ -192,6 +197,27 @@ theorem non_monotone_regression :
     simp [spikeAtEmpty, hne]
   · have := h ∅ (Finset.empty_subset _) 0 (by simp) (by simp)
     simp [spikeAtEmpty] at this
+
+/-! ### The closure API -/
+
+/-- **Closure API.**  Under the successor map `A ↦ {max A + 1}` the closure of `{0}` is all of
+`ℕ` (via `subset_fClosure` and `fClosure_closed`); the empty map fixes every set (minimality,
+`fClosure_subset`); and the finite-set map keeps every set of size at most `ℵ₀` within `ℵ₀`
+(`mk_fClosure_le`). -/
+theorem fClosure_regression :
+    fClosure (fun A : Finset ℕ ↦ {A.sup id + 1}) {0} = Set.univ ∧
+      (∀ Y₀ : Set ℕ, fClosure (fun _ ↦ ∅) Y₀ = Y₀) ∧
+      ∀ Y₀ : Set ℕ, #(fClosure (fun A : Finset ℕ ↦ (↑A : Set ℕ)) Y₀) ≤ ℵ₀ := by
+  refine ⟨Set.eq_univ_of_forall fun n ↦ ?_, fun Y₀ ↦ ?_, fun Y₀ ↦ ?_⟩
+  · induction n with
+    | zero => exact subset_fClosure _ _ rfl
+    | succ n ih =>
+      have := fClosure_closed (fun A : Finset ℕ ↦ {A.sup id + 1}) {0} (A := {n})
+        (by simpa using ih)
+      simpa using this
+  · exact (fClosure_subset _ le_rfl fun _ _ ↦ Set.empty_subset _).antisymm
+      (subset_fClosure _ _)
+  · exact mk_fClosure_le _ le_rfl (fun A ↦ A.finite_toSet.lt_aleph0.le) mk_le_aleph0
 
 /-! ### Axiom hygiene -/
 
@@ -205,7 +231,8 @@ def headline : List Name :=
    `InfinitaryLogic.FreeSet.exists_fIndependent,
    `InfinitaryLogic.FreeSet.not_fIndependent_of_generation,
    `InfinitaryLogic.FreeSet.mk_lt_aleph_of_generation,
-   `non_monotone_regression, `spikeAtEmpty_not_monotone, `base_case_regression,
+   `fClosure_regression, `non_monotone_regression, `spikeAtEmpty_not_monotone,
+   `base_case_regression,
    `uncountable_pair_regression, `singleton_generation_regression,
    `three_point_regression, `large_carrier_regression, `compatibility_regression,
    `top_closure_regression]
@@ -224,4 +251,5 @@ run_cmd do
     identity closure: independent triple on Fin 3 and pair witnesses with no bound on a large \
     carrier; ℵ₁ bound derived from the generation bound at n = 2 alongside the original, on an \
     arbitrary two-generated closure and on the constant closure, also checked at n = 0; \
-    headline declarations on standard axioms)"
+    closure API on the successor, empty and finite-set maps; non-monotone map where the \
+    erase-only test passes but FIndependent fails; headline declarations on standard axioms)"
