@@ -8,21 +8,31 @@ carriers are `(ℕ, <)`, `ULift.{w} ℕ` with the lifted order, `(Fin 3, <)`, an
 natural numbers with the equivalence relation whose classes are `{2k, 2k + 1}`.
 
 * **Empty tuple**: every tuple restricts along `Fin 0 ↪ Fin n` to the entry of the empty tuple
-  (`H_sf`), which is the unique sentence of every level of the process (`scottProcessOf_Φ`,
-  Proposition 3.5 via `existsUnique_mem_zero`).
+  (`H_sf`), which is the only sentence of every level of the process (`scottProcessOf_Φ`), and
+  is identified with the witness of Proposition 3.5 (`ScottProcess.existsUnique_mem_zero`).
 * **Permutation**: `H_sf` along the swap of `Fin 2` sends the entry of `(0, 1)` to that of
   `(1, 0)`, and the two differ already at level `0` (`sf_zero_eq_sf_zero_iff`).
-* **Forgotten coordinate**: `H_sf` along the non-surjective `Fin 1 ↪ Fin 2` hitting `1`.
-* **Repeated coordinates**: `exists_embedding_comp_eq` on the tuple `(5, 7, 5)`.
-* **Level `0`**: the atom `x_0 < x_1` read off `zeroEquiv_sf` for `(0, 1)`, and the equal
-  entries of `(0)` and `(1)` (`sf_zero_eq_sf_zero_iff`).
+* **Forgotten coordinate**: `H_sf` along the non-surjective `Fin 1 ↪ Fin 2` hitting `1`, and
+  its level-`0` form `H0_atomicType` on the atomic type of `(0, 1)`.
+* **Repeated coordinates**: `exists_embedding_comp_eq` on the tuple `(5, 7, 5)`, and
+  `exists_embedding_comp_eq_of_eq_iff` on `(5, 7, 5)` against `(1, 2, 1)` (one common `g`).
+* **Common injective extension**: `exists_common_injective_extension` on the overlapping tuples
+  `(0, 1)` and `(1, 2)`: `θ` has arity `4`, restricts to `(0, 1)` along `i_2`, satisfies
+  `θ ∘ j = (1, 2)`, and `j` sends `0` to `1`.
+* **Level `0`**: the atom `x_0 < x_1` read off `zeroEquiv_sf` and `atomicType_down_eq_true_iff`
+  for `(0, 1)`; `(0)` and `(1)` have equal atomic types (`atomicType_eq_atomicType_iff`) and
+  equal entries (`sf_zero_eq_sf_zero_iff`); the entry of `(0)` is the preimage of its
+  `atomicType` under `zeroEquiv` (`isSf_zero`, `IsSf.unique`, `isSf_sf`).
 * **Successor level**: `mem_E_sf_iff` in both directions on concrete one-point extensions;
   `(0)` and `(1)` have different entries at level `1` (the least element has no predecessor),
   with the same first component (`succEquiv_sf_fst`); a pair's entry lies in the extension set
   of its restriction's entry (`E_sf`); the extension set of the level-`1` entry
-  of `(0)` is computed (`E_sf_snoc`): it is the single level-`0` entry of `(0, 1)`.
+  of `(0)` is computed (`E_sf_snoc`): it is the single level-`0` entry of `(0, 1)`; so that
+  entry is `mkSucc` of its level-`0` entry and this singleton (`isSf_add_one`, `eq_sf_iff`).
 * **Level `ω`**: the entries of `(0)` and `(1)` in `(ℕ, <)` differ at level `ω` (`V_sf`,
-  `limEquiv_sf`); in `Pairs` they agree at every level, including `ω`, by isomorphism transport
+  `limEquiv_sf`); an element of `Ψ_ω` is the entry of `(0)` iff its projections below `ω` are
+  (`isSf_limit`, `eq_sf_iff`); the witness of `exists_isSf` at `ω` is that entry; in `Pairs`
+  the entries of `(0)` and `(1)` agree at every level, including `ω`, by isomorphism transport
   (`sf_trans_equiv`) along the involution swapping `2k` and `2k + 1`.
 * **Universes**: the entry of `(0)` in `ULift.{w} ℕ` equals the entry of `(0)` in `ℕ` over a
   language in universes `u, v` (`sf_trans_equiv` across carrier universes), and differs from
@@ -31,6 +41,9 @@ natural numbers with the equivalence relation whose classes are `{2k, 2k + 1}`.
   (`not_isSf_add_one_of_card`).
 * **The process**: the remark after Proposition 3.5 (`E_eq_of_mem_zero`) on
   `scottProcessOf binLang ℕ ω`, and Remark 3.4 (`image_H_eq`).
+* **Simp normal forms**: plain `simp` closes the composites of `V`, `H`, `succEquiv`,
+  `limEquiv` and `zeroEquiv` with `sf` (the `@[simp]` laws `V_sf`, `H_sf`, `succEquiv_sf_fst`,
+  `limEquiv_sf`, `zeroEquiv_sf`).
 
 The headline declarations use only the standard axioms.
 
@@ -95,14 +108,13 @@ def tup2 {M : Type*} {x y : M} (h : x ≠ y) : Fin 2 ↪ M := Function.Embedding
 /-- `0 ≠ 1` in `ℕ`. -/
 theorem h01 : (0 : ℕ) ≠ 1 := zero_ne_one
 
-open scoped Classical in
 /-- **Level `0`, read off `zeroEquiv_sf`**: the entry of `(0, 1)` assigns `true` to the atom
-`x_0 < x_1`. -/
+`x_0 < x_1` (`atomicType_down_eq_true_iff`). -/
 theorem level0_atom :
     (zeroEquiv (relAtomic binLang.{u, v}) 2 (sf binLang.{u, v} 0 (tup2 h01))).down
       ⟨.rel BinRel.R id, trivial⟩ = true := by
-  rw [zeroEquiv_sf]
-  exact decide_eq_true (show (0 : ℕ) < 1 from zero_lt_one)
+  rw [zeroEquiv_sf, atomicType_down_eq_true_iff]
+  exact (show (0 : ℕ) < 1 from zero_lt_one)
 
 /-- **Level `0`** (`sf_zero_eq_sf_zero_iff`): `(0, 1)` and `(1, 0)` have different entries. -/
 theorem level0_ne : sf binLang.{u, v} 0 (tup2 h01) ≠ sf binLang.{u, v} 0 (tup2 h01.symm) := by
@@ -111,16 +123,34 @@ theorem level0_ne : sf binLang.{u, v} 0 (tup2 h01) ≠ sf binLang.{u, v} 0 (tup2
   have := (h (.rel BinRel.R id)).1 (show (0 : ℕ) < 1 from zero_lt_one)
   exact absurd this (show ¬ (1 : ℕ) < 0 from Nat.not_lt_zero 1)
 
-/-- **Level `0`** (`sf_zero_eq_sf_zero_iff`): all one-element tuples of `(ℕ, <)` have the same
-entry. -/
-theorem level0_one_eq (x y : ℕ) : sf binLang.{u, v} 0 (tup1 x) = sf binLang.{u, v} 0 (tup1 y) := by
-  rw [sf_zero_eq_sf_zero_iff]
+/-- All one-element tuples of `(ℕ, <)` have the same atomic type. -/
+theorem sameAtomicType_one (x y : ℕ) :
+    SameAtomicType (L := binLang.{u, v}) ⇑(tup1 x) ⇑(tup1 y) := by
   intro idx
   cases idx with
   | eq i j => exact iff_of_true rfl rfl
   | rel r f =>
     cases r
     exact iff_of_false (lt_irrefl x) (lt_irrefl y)
+
+/-- **Level `0`** (`sf_zero_eq_sf_zero_iff`): all one-element tuples of `(ℕ, <)` have the same
+entry. -/
+theorem level0_one_eq (x y : ℕ) : sf binLang.{u, v} 0 (tup1 x) = sf binLang.{u, v} 0 (tup1 y) :=
+  (sf_zero_eq_sf_zero_iff _ _).2 (sameAtomicType_one x y)
+
+/-- **Atomic types of injective tuples** (`atomicType_eq_atomicType_iff`): `(0)` and `(1)` have
+the same atomic type. -/
+theorem atomicType_one_eq :
+    atomicType binLang.{u, v} ⇑(tup1 (0 : ℕ)) = atomicType binLang.{u, v} ⇑(tup1 (1 : ℕ)) :=
+  (atomicType_eq_atomicType_iff _ _).2 (sameAtomicType_one 0 1)
+
+/-- **Level `0`, as a witness** (`isSf_zero`, `IsSf.unique`, `isSf_sf`): the level-`0` entry of
+`(0)` is the element of `Ψ_0` that `zeroEquiv` sends to the atomic type of `(0)`. -/
+theorem sf_zero_eq_symm :
+    sf binLang.{u, v} 0 (tup1 (0 : ℕ)) =
+      (zeroEquiv (relAtomic binLang.{u, v}) 1).symm
+        (atomicType binLang.{u, v} ⇑(tup1 (0 : ℕ))) :=
+  (isSf_sf 0 _).unique ((isSf_zero _ _).2 (Equiv.apply_symm_apply _ _))
 
 /-! ### Projections: empty tuple, permutation, forgotten coordinate -/
 
@@ -156,6 +186,13 @@ theorem H_forget (α : Ordinal.{0}) :
   rw [H_sf]
   rfl
 
+/-- **Forgotten coordinate at level `0`** (`H0_atomicType`): the atomic type of `(0, 1)`
+restricted along `j1` is the atomic type of `(1)`. -/
+theorem H0_forget :
+    (relAtomic binLang.{u, v}).H0 2 1 j1 (atomicType binLang.{u, v} ⇑(tup2 h01)) =
+      atomicType binLang.{u, v} ⇑(tup1 (1 : ℕ)) :=
+  H0_atomicType j1 _
+
 /-! ### Repeated coordinates -/
 
 /-- **Repeated coordinates** (`exists_embedding_comp_eq`) on `(5, 7, 5)`: the factor `g` identifies
@@ -174,6 +211,38 @@ theorem factor_575 :
   · rintro (rfl | rfl)
     · exact ⟨0, rfl⟩
     · exact ⟨1, rfl⟩
+
+/-- **Repeated coordinates, two tuples** (`exists_embedding_comp_eq_of_eq_iff`): `(5, 7, 5)` and
+`(1, 2, 1)` have the same equality pattern, so they factor through one common `g`, which
+identifies the coordinates `0` and `2` and separates `0` and `1`. -/
+theorem factor_575_121 :
+    ∃ (k : ℕ) (e e' : Fin k ↪ ℕ) (g : Fin 3 → Fin k),
+      ⇑e ∘ g = ![5, 7, 5] ∧ ⇑e' ∘ g = ![1, 2, 1] ∧ g 0 = g 2 ∧ g 0 ≠ g 1 := by
+  obtain ⟨k, e, e', g, he, he'⟩ :=
+    exists_embedding_comp_eq_of_eq_iff (![5, 7, 5] : Fin 3 → ℕ) (![1, 2, 1] : Fin 3 → ℕ)
+      (by decide)
+  refine ⟨k, e, e', g, he, he', e.injective ((congrFun he 0).trans (congrFun he 2).symm),
+    fun h ↦ ?_⟩
+  have h12 : (1 : ℕ) = 2 := (congrFun he' 0).symm.trans ((congrArg e' h).trans (congrFun he' 1))
+  exact absurd h12 (by decide)
+
+/-! ### Common injective extension -/
+
+/-- `1 ≠ 2` in `ℕ`. -/
+theorem h12 : (1 : ℕ) ≠ 2 := by decide
+
+/-- **Common injective extension** (`exists_common_injective_extension`) of the overlapping
+tuples `(0, 1)` and `(1, 2)` of `ℕ`: `θ` has arity `4`, restricts to `(0, 1)` along `i_2`, and
+satisfies `θ ∘ j = (1, 2)`; the shared entry is detected, as `j` sends `0` to `1`. -/
+theorem common_ext :
+    ∃ (θ : Fin 4 ↪ ℕ) (j : Fin 2 ↪ Fin 4),
+      (Fin.castLEEmb (Nat.le_add_right 2 2)).trans θ = tup2 h01 ∧ j.trans θ = tup2 h12 ∧
+        θ 0 = 0 ∧ θ 1 = 1 ∧ θ (j 1) = 2 ∧ j 0 = 1 := by
+  obtain ⟨θ, j, hθ, hj⟩ := exists_common_injective_extension (tup2 h01) (tup2 h12)
+  have h0 : θ 0 = 0 := DFunLike.congr_fun hθ 0
+  have h1 : θ 1 = 1 := DFunLike.congr_fun hθ 1
+  have hj0 : θ (j 0) = 1 := DFunLike.congr_fun hj 0
+  exact ⟨θ, j, hθ, hj, h0, h1, DFunLike.congr_fun hj 1, θ.injective (hj0.trans h1.symm)⟩
 
 /-! ### Successor level -/
 
@@ -251,6 +320,18 @@ theorem E_zero_eq :
   · rintro rfl
     exact ⟨1, one_not_mem, congrArg _ (Function.Embedding.ext fun i ↦ by fin_cases i <;> rfl)⟩
 
+/-- **The successor unfolding** (`isSf_add_one`, `eq_sf_iff`, `isSf_sf`): the level-`1` entry
+of `(0)` is `mkSucc` of its level-`0` entry and the singleton computed in `E_zero_eq`. -/
+theorem sf_one_eq_mkSucc :
+    sf binLang.{u, v} (0 + 1) (tup1 (0 : ℕ)) =
+      mkSucc (sf binLang.{u, v} 0 (tup1 (0 : ℕ))) {sf binLang.{u, v} 0 (tup2 h01)}
+        (Set.singleton_nonempty _) := by
+  refine (eq_sf_iff.2 ((isSf_add_one 0 _ _).2 ⟨?_, ?_⟩)).symm
+  · rw [V_mkSucc]
+    exact isSf_sf 0 _
+  · rw [E_mkSucc, ← E_zero_eq]
+    exact ((isSf_add_one 0 _ _).1 (isSf_sf _ _)).2
+
 /-! ### Level `ω` -/
 
 /-- `0 + 1 ≤ ω`. -/
@@ -273,6 +354,24 @@ theorem levelω_entry (a : Fin 1 ↪ ℕ) :
     (limEquiv (relAtomic binLang.{u, v}) Ordinal.isSuccLimit_omega0 1
       (sf binLang.{u, v} Ordinal.omega0 a)).1 1 Ordinal.one_lt_omega0 = sf binLang.{u, v} 1 a :=
   limEquiv_sf Ordinal.isSuccLimit_omega0 Ordinal.one_lt_omega0 a
+
+/-- **The limit unfolding** (`isSf_limit`, `eq_sf_iff`): an element of `Ψ_ω` is the entry of
+`(0)` iff each of its vertical projections below `ω` is the entry of `(0)` at that level. -/
+theorem eq_sf_ω_iff (x : Ψ (relAtomic binLang.{u, v}) Ordinal.omega0 1) :
+    x = sf binLang.{u, v} Ordinal.omega0 (tup1 (0 : ℕ)) ↔
+      ∀ β (hβ : β < Ordinal.omega0), V hβ.le x = sf binLang.{u, v} β (tup1 (0 : ℕ)) := by
+  rw [eq_sf_iff, isSf_limit Ordinal.isSuccLimit_omega0]
+  exact forall₂_congr fun _ _ ↦ eq_sf_iff.symm
+
+/-- **Existence** (`exists_isSf`, `eq_sf_iff`): the witness of `exists_isSf` at level `ω` for
+`(0)` is the entry of `(0)`, and so differs from the entry of `(1)`. -/
+theorem exists_isSf_ω :
+    ∃ x, IsSf (L := binLang.{u, v}) Ordinal.omega0 (tup1 (0 : ℕ)) x ∧
+      x = sf binLang.{u, v} Ordinal.omega0 (tup1 (0 : ℕ)) ∧
+      x ≠ sf binLang.{u, v} Ordinal.omega0 (tup1 (1 : ℕ)) := by
+  obtain ⟨x, hx⟩ := exists_isSf (L := binLang.{u, v}) Ordinal.omega0 (tup1 (0 : ℕ))
+  have h := eq_sf_iff.2 hx
+  exact ⟨x, hx, h, fun h' ↦ levelω_ne (h.symm.trans h')⟩
 
 /-! ### Isomorphism transport -/
 
@@ -366,6 +465,13 @@ theorem Pℕ_sentence (α : Ordinal.{0}) (hα : α < Ordinal.omega0) :
   rintro ⟨a, rfl⟩
   exact congrArg _ (Function.Embedding.ext fun i ↦ i.elim0)
 
+/-- **Proposition 3.5 on the process** (`existsUnique_mem_zero`): the unique sentence of each
+level is the entry of the empty tuple. -/
+theorem Pℕ_sentence_unique (α : Ordinal.{0}) (hα : α < Ordinal.omega0)
+    {φ : Ψ (relAtomic binLang.{u, v}) α 0} (hφ : φ ∈ Pℕ.{u, v}.Φ α hα 0) :
+    φ = sf binLang.{u, v} α (Function.Embedding.ofIsEmpty : Fin 0 ↪ ℕ) :=
+  (Pℕ.existsUnique_mem_zero α hα).unique hφ ⟨_, rfl⟩
+
 /-- **The remark after Proposition 3.5 on the process** (`E_eq_of_mem_zero`): the extension set of
 the level-`1` sentence is the level-`0` column `1`, the single entry of any one-element tuple. -/
 theorem Pℕ_E_sentence :
@@ -384,12 +490,33 @@ theorem Pℕ_image_H :
     Pℕ.{u, v}.Φ 1 Ordinal.one_lt_omega0 1 = H j1 '' Pℕ.{u, v}.Φ 1 Ordinal.one_lt_omega0 2 :=
   Pℕ.image_H_eq 1 Ordinal.one_lt_omega0 j1
 
+/-! ### Simp normal forms -/
+
+/-- **Simp normal forms** (`@[simp]` on `V_sf`, `H_sf`, `succEquiv_sf_fst`, `limEquiv_sf`,
+`zeroEquiv_sf`): `simp` alone pushes vertical and horizontal projections, in either order,
+and the row equivalences through `sf`, without looping against `V_comp` and `H_comp`. -/
+theorem simp_normal_forms {α β γ : Ordinal.{0}} (h1 : γ ≤ β) (h2 : β ≤ α) {n m l : ℕ}
+    (j : Fin m ↪ Fin n) (k : Fin l ↪ Fin m) (a : Fin n ↪ ℕ) :
+    V h1 (V h2 (sf binLang.{u, v} α a)) = sf binLang.{u, v} γ a ∧
+      H k (H j (sf binLang.{u, v} α a)) = sf binLang.{u, v} α (k.trans (j.trans a)) ∧
+      V h2 (H j (sf binLang.{u, v} α a)) = sf binLang.{u, v} β (j.trans a) ∧
+      H j (V h2 (sf binLang.{u, v} α a)) = sf binLang.{u, v} β (j.trans a) ∧
+      (succEquiv (relAtomic binLang.{u, v}) α n (sf binLang.{u, v} (α + 1) a)).1 =
+        sf binLang.{u, v} α a ∧
+      (limEquiv (relAtomic binLang.{u, v}) Ordinal.isSuccLimit_omega0 n
+        (sf binLang.{u, v} Ordinal.omega0 a)).1 1 Ordinal.one_lt_omega0 =
+        sf binLang.{u, v} 1 a ∧
+      zeroEquiv (relAtomic binLang.{u, v}) n (sf binLang.{u, v} 0 a) =
+        atomicType binLang.{u, v} ⇑a := by
+  simp
+
 end
 
 /-! ### Axiom hygiene -/
 
 def headline : List Name :=
   [`InfinitaryLogic.ScottProcess.Semantic.atomicType,
+   `InfinitaryLogic.ScottProcess.Semantic.atomicType_down_eq_true_iff,
    `InfinitaryLogic.ScottProcess.Semantic.H0_atomicType,
    `InfinitaryLogic.ScottProcess.Semantic.atomicType_eq_atomicType_iff,
    `InfinitaryLogic.ScottProcess.Semantic.IsSf,
@@ -413,13 +540,16 @@ def headline : List Name :=
    `InfinitaryLogic.ScottProcess.Semantic.sf_trans_equiv,
    `InfinitaryLogic.ScottProcess.Semantic.exists_common_injective_extension,
    `InfinitaryLogic.ScottProcess.Semantic.exists_embedding_comp_eq,
+   `InfinitaryLogic.ScottProcess.Semantic.exists_embedding_comp_eq_of_eq_iff,
    `InfinitaryLogic.ScottProcess.Semantic.not_isSf_add_one_of_card,
    `InfinitaryLogic.ScottProcess.Semantic.scottProcessOf,
    `InfinitaryLogic.ScottProcess.Semantic.scottProcessOf_Φ,
-   `level0_atom, `level0_ne, `level0_one_eq, `H_empty, `H_swap, `H_forget, `factor_575,
-   `mem_E_one, `not_mem_E_zero, `level1_ne, `mem_E_restrict, `E_zero_eq, `levelω_ne,
-   `levelω_entry, `pairs_eq, `pairs_eq_ω, `ulift_entries, `fin3_no_succ, `Pℕ_sentence,
-   `Pℕ_E_sentence, `Pℕ_image_H]
+   `level0_atom, `level0_ne, `sameAtomicType_one, `level0_one_eq, `atomicType_one_eq,
+   `sf_zero_eq_symm, `H_empty, `H_swap, `H_forget, `H0_forget, `factor_575, `factor_575_121,
+   `common_ext, `mem_E_one, `not_mem_E_zero, `level1_ne, `mem_E_restrict, `E_zero_eq,
+   `sf_one_eq_mkSucc, `levelω_ne, `levelω_entry, `eq_sf_ω_iff, `exists_isSf_ω, `pairs_eq,
+   `pairs_eq_ω, `ulift_entries, `fin3_no_succ, `Pℕ_sentence, `Pℕ_sentence_unique,
+   `Pℕ_E_sentence, `Pℕ_image_H, `simp_normal_forms]
 
 def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
 
@@ -431,9 +561,15 @@ run_cmd do
     let bad := axs.toList.filter fun a => !standardAxioms.contains a
     unless bad.isEmpty do throwError "[NONSTANDARD AXIOMS] {n} uses {bad}"
   logInfo "semantic-entries regression guard: OK (applied: empty tuple, permutation and \
-    forgotten coordinate via H_sf; repeated-coordinate factoring on (5, 7, 5); level 0 of \
-    (N, <) via zeroEquiv_sf and sf_zero_eq_sf_zero_iff; E-membership both ways via \
-    mem_E_sf_iff, E_sf, E_sf_snoc; successor level via succEquiv_sf_fst; level omega via V_sf \
-    and limEquiv_sf; isomorphism transport on Pairs at every level and across carrier \
-    universes; the finite boundary on Fin 3; scottProcessOf with scottProcessOf_Φ, \
-    E_eq_of_mem_zero and image_H_eq; headline declarations on standard axioms)"
+    forgotten coordinate via H_sf, H0_atomicType on j1; Proposition 3.5 via \
+    existsUnique_mem_zero, its witness the empty-tuple entry; repeated-coordinate factoring \
+    on (5, 7, 5) via exists_embedding_comp_eq and against (1, 2, 1) via \
+    exists_embedding_comp_eq_of_eq_iff; exists_common_injective_extension on (0, 1) and \
+    (1, 2); level 0 of (N, <) via zeroEquiv_sf, atomicType_down_eq_true_iff, \
+    atomicType_eq_atomicType_iff, sf_zero_eq_sf_zero_iff, and isSf_zero with IsSf.unique and \
+    isSf_sf; E-membership both ways via mem_E_sf_iff, E_sf, E_sf_snoc; successor level via \
+    succEquiv_sf_fst, and sf 1 (0) as mkSucc via isSf_add_one and eq_sf_iff; level omega via \
+    V_sf, limEquiv_sf, isSf_limit and exists_isSf; isomorphism transport on Pairs at every \
+    level and across carrier universes; the finite boundary on Fin 3; scottProcessOf with \
+    scottProcessOf_Φ, E_eq_of_mem_zero and image_H_eq; simp normal forms of V, H, succEquiv, \
+    limEquiv and zeroEquiv on sf; headline declarations on standard axioms)"

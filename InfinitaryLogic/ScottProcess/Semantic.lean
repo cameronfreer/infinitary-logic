@@ -23,7 +23,8 @@ Definition 1.3.
 ## Main declarations
 
 * `atomicType L a`: the level-`0` entry of a tuple, the truth values of the relation atoms
-  `AtomicIdx.rel` of `Scott/AtomicDiagram.lean`; `H0_atomicType` (restriction) and
+  `AtomicIdx.rel` of `Scott/AtomicDiagram.lean`, characterized by
+  `atomicType_down_eq_true_iff`; `H0_atomicType` (restriction) and
   `atomicType_eq_atomicType_iff` (comparison with `SameAtomicType` for injective tuples).
 * `IsSf α a x`: `x ∈ Ψ^n_α` is the semantic entry of `a` at level `α`, defined by recursion on
   `α`, with the unfoldings `isSf_zero`, `isSf_add_one`, `isSf_limit`, uniqueness
@@ -32,12 +33,16 @@ Definition 1.3.
   `zeroEquiv_sf`, `succEquiv_sf_fst`, `E_sf`, `E_sf_snoc`, `limEquiv_sf` and `mem_E_sf_iff`;
   the projection laws `V_sf` (`V_{β,α}(sf α a) = sf β a`) and `H_sf`
   (`H^n_α(sf α a, j) = sf α (a ∘ j)`); and the level-`0` comparison
-  `sf_zero_eq_sf_zero_iff` with `SameAtomicType`.
+  `sf_zero_eq_sf_zero_iff` with `SameAtomicType`.  The projection laws and the unfoldings
+  through `zeroEquiv`, `succEquiv` and `limEquiv` are `@[simp]`; `E_sf` and `E_sf_snoc`, two
+  competing forms of the extension set, are not.
 * `sf_trans_equiv`: semantic entries are invariant under `L`-isomorphisms, across universes.
 * `exists_common_injective_extension`: two injective tuples of arities `n` and `m` are
   restrictions of one injective tuple of arity `n + m`, extending the first along `i_n`.
 * `exists_embedding_comp_eq`: every tuple `a : Fin n → M` factors as `e ∘ g` through an
-  enumeration `e : Fin k ↪ M` of its distinct entries, with `a i = a j ↔ g i = g j`.
+  enumeration `e : Fin k ↪ M` of its distinct entries, with `a i = a j ↔ g i = g j`;
+  `exists_embedding_comp_eq_of_eq_iff`: two tuples with the same equality pattern factor
+  through one common `g`.
 * `scottProcessOf L M δ hδ`: the Scott process of an infinite `M`, of length `δ > 0`.
 * `not_isSf_add_one_of_card`: an enumeration of a finite `M` has no entry at any successor
   level.
@@ -96,10 +101,11 @@ variable {M : Type w} [L.Structure M] {N : Type w'} [L.Structure N]
 
 /-! ### Tuples -/
 
-/-- `a ⌢ m` restricts to `a` along `i_n`. -/
+/-- `a ⌢ m` restricts to `a` along `i_n`: Mathlib's `Fin.Embedding.init_snoc`, since
+`(Fin.castLEEmb (Nat.le_succ n)).trans b` is `Fin.Embedding.init b` by definition. -/
 private theorem castLEEmb_trans_snoc {n : ℕ} (a : Fin n ↪ M) {m : M} (hm : m ∉ Set.range a) :
     (Fin.castLEEmb (Nat.le_succ n)).trans (Fin.Embedding.snoc a hm) = a :=
-  Function.Embedding.ext fun _ ↦ Fin.Embedding.snoc_castSucc (ha := hm)
+  Fin.Embedding.init_snoc a hm
 
 /-- The last entry of a one-point extension of `a` lies outside the range of `a`. -/
 private theorem last_not_mem_range {n : ℕ} {a : Fin n ↪ M} {b : Fin (n + 1) ↪ M}
@@ -112,12 +118,8 @@ private theorem last_not_mem_range {n : ℕ} {a : Fin n ↪ M} {b : Fin (n + 1) 
 private theorem eq_snoc {n : ℕ} {a : Fin n ↪ M} {b : Fin (n + 1) ↪ M}
     (hb : (Fin.castLEEmb (Nat.le_succ n)).trans b = a) :
     b = Fin.Embedding.snoc a (last_not_mem_range hb) := by
-  ext i
-  induction i using Fin.lastCases with
-  | last => rw [Fin.Embedding.snoc_last (ha := last_not_mem_range hb)]
-  | cast i =>
-    rw [Fin.Embedding.snoc_castSucc (ha := last_not_mem_range hb), ← hb]
-    rfl
+  subst hb
+  exact DFunLike.coe_injective (Fin.snoc_init_self (α := fun _ ↦ M) b).symm
 
 /-- **Repeated coordinates.** Every tuple `a : Fin n → M` factors as `e ∘ g`, where
 `e : Fin k ↪ M` enumerates the distinct entries of `a` and `g : Fin n → Fin k` records the
@@ -129,14 +131,33 @@ theorem exists_embedding_comp_eq {n : ℕ} (a : Fin n → M) :
   let e : Fin (Nat.card (Set.range a)) ↪ M :=
     σ.symm.toEmbedding.trans (Function.Embedding.subtype _)
   have he : ⇑e ∘ (σ ∘ Set.rangeFactorization a) = a := funext fun i ↦ by
-    change ((σ.symm (σ (Set.rangeFactorization a i)) : Set.range a) : M) = a i
-    rw [σ.symm_apply_apply, Set.rangeFactorization_coe]
+    rw [Function.comp_apply, Function.comp_apply, Function.Embedding.trans_apply,
+      Equiv.coe_toEmbedding, σ.symm_apply_apply, Function.Embedding.coe_subtype,
+      Set.rangeFactorization_coe]
   refine ⟨_, e, σ ∘ Set.rangeFactorization a, he, ?_, fun i j ↦ ?_⟩
   · rw [Function.Embedding.coe_trans, Set.range_comp, Equiv.coe_toEmbedding,
       σ.symm.range_eq_univ, Set.image_univ, Function.Embedding.coe_subtype,
       Subtype.range_coe]
   · rw [← congrFun he i, ← congrFun he j]
     exact e.injective.eq_iff
+
+/-- **Repeated coordinates, two tuples.** Tuples `a : Fin n → M` and `b : Fin n → N`, possibly
+of structures in different universes, with the same equality pattern
+(`a i = a j ↔ b i = b j`) factor through one common `g : Fin n → Fin k`, as `a = e ∘ g` and
+`b = e' ∘ g` with `e : Fin k ↪ M` and `e' : Fin k ↪ N` injective. -/
+theorem exists_embedding_comp_eq_of_eq_iff {n : ℕ} (a : Fin n → M) (b : Fin n → N)
+    (hab : ∀ i j, a i = a j ↔ b i = b j) :
+    ∃ (k : ℕ) (e : Fin k ↪ M) (e' : Fin k ↪ N) (g : Fin n → Fin k),
+      ⇑e ∘ g = a ∧ ⇑e' ∘ g = b := by
+  obtain ⟨k, e, g, he, hr, hp⟩ := exists_embedding_comp_eq a
+  have hg : Function.Surjective g := by
+    intro x
+    obtain ⟨i, hi⟩ : e x ∈ Set.range a := hr ▸ Set.mem_range_self x
+    exact ⟨i, e.injective (by rw [← hi, ← he, Function.comp_apply])⟩
+  refine ⟨k, e, ⟨fun x ↦ b (Function.surjInv hg x), fun x y h ↦ ?_⟩, g, he, funext fun i ↦ ?_⟩
+  · rw [← Function.surjInv_eq hg x, ← Function.surjInv_eq hg y]
+    exact (hp _ _).1 ((hab _ _).2 h)
+  · exact (hab _ _).1 ((hp _ _).2 (Function.surjInv_eq hg (g i)))
 
 section Infinite
 
@@ -158,10 +179,42 @@ private theorem exists_castLEEmb_trans_eq {m n : ℕ} (h : m ≤ n) (a : Fin m �
     rw [← hθ]
     exact Fin.Embedding.snoc_castSucc (ha := hx) (i := Fin.castLE hk i)
 
+/-- **One-point extension along an admissible extension.** If `c : Fin (m + 1) ↪ M` extends
+`a ∘ j` along `i_m`, then some one-point extension `b` of `a` and some admissible extension
+`j' ∈ extSet j` satisfy `c = b ∘ j'`.  The last entry of `c` is either an entry `a k` of `a`
+outside the image of `j`, reached by a fresh extension of `a` and the extension of `j` sending
+the new coordinate to `k`, or fresh for `a`, reached by `a ⌢ c_m` and `extLast j`. -/
+private theorem exists_snoc_extSet {n m : ℕ} (a : Fin n ↪ M) (j : Fin m ↪ Fin n)
+    (c : Fin (m + 1) ↪ M) (hc : (Fin.castLEEmb (Nat.le_succ m)).trans c = j.trans a) :
+    ∃ b : Fin (n + 1) ↪ M, ∃ j' ∈ extSet j,
+      (Fin.castLEEmb (Nat.le_succ n)).trans b = a ∧ j'.trans b = c := by
+  have hcj : ∀ i, c i.castSucc = a (j i) := fun i ↦ congrArg (fun e : Fin m ↪ M ↦ e i) hc
+  by_cases hp : ∃ k, a k = c (Fin.last m)
+  · obtain ⟨k, hk⟩ := hp
+    obtain ⟨y, hy⟩ := exists_not_mem_range ⇑a
+    have hkj : ∀ i, (k.castSucc : Fin (n + 1)) ≠ (j i).castSucc := by
+      intro i h
+      rw [Fin.castSucc_inj] at h
+      rw [h, ← hcj] at hk
+      exact Fin.castSucc_ne_last i (c.injective hk)
+    refine ⟨_, _, extTo_mem j _ hkj, castLEEmb_trans_snoc a hy,
+      Function.Embedding.ext fun i ↦ ?_⟩
+    induction i using Fin.lastCases with
+    | last => rw [Function.Embedding.trans_apply, extTo_last, Fin.Embedding.snoc_castSucc, hk]
+    | cast i =>
+      rw [Function.Embedding.trans_apply, extTo_castSucc, Fin.Embedding.snoc_castSucc, hcj]
+  · have hp' : c (Fin.last m) ∉ Set.range a := fun ⟨k, hk⟩ ↦ hp ⟨k, hk⟩
+    refine ⟨_, _, extLast_mem j, castLEEmb_trans_snoc a hp',
+      Function.Embedding.ext fun i ↦ ?_⟩
+    induction i using Fin.lastCases with
+    | last => rw [Function.Embedding.trans_apply, extLast_last, Fin.Embedding.snoc_last]
+    | cast i =>
+      rw [Function.Embedding.trans_apply, extLast_castSucc, Fin.Embedding.snoc_castSucc, hcj]
+
 /-- **Common injective extension.** For injective `a : Fin n ↪ M` and `b : Fin m ↪ M` in an
 infinite structure there are an injective `θ : Fin (n + m) ↪ M` extending `a` along `i_n` and
-an injection `j : Fin m ↪ Fin (n + m)` with `b = θ ∘ j`.  Positions of `θ` not needed for the
-entries of `b` are filled with fresh elements. -/
+an injection `j : Fin m ↪ Fin (n + m)` with `b = θ ∘ j`.  The arity `n + m` does not depend on
+how the ranges of `a` and `b` overlap. -/
 theorem exists_common_injective_extension {n m : ℕ} (a : Fin n ↪ M) (b : Fin m ↪ M) :
     ∃ (θ : Fin (n + m) ↪ M) (j : Fin m ↪ Fin (n + m)),
       (Fin.castLEEmb (Nat.le_add_right n m)).trans θ = a ∧ j.trans θ = b := by
@@ -170,35 +223,10 @@ theorem exists_common_injective_extension {n m : ℕ} (a : Fin n ↪ M) (b : Fin
       Function.Embedding.ext fun i ↦ i.elim0⟩
   | succ m ih =>
     obtain ⟨θ, j, hθ, hj⟩ := ih ((Fin.castLEEmb (Nat.le_succ m)).trans b)
-    have hθa : ∀ (y : M) (hy : y ∉ Set.range θ),
-        (Fin.castLEEmb (Nat.le_add_right n (m + 1))).trans (Fin.Embedding.snoc θ hy) = a :=
-      fun y hy ↦ Function.Embedding.ext fun i ↦ by
-        rw [← hθ]
-        exact Fin.Embedding.snoc_castSucc (ha := hy) (i := Fin.castLE (Nat.le_add_right n m) i)
-    have hjb : ∀ i : Fin m, θ (j i) = b i.castSucc := fun i ↦
-      congrArg (fun e : Fin m ↪ M ↦ e i) hj
-    by_cases hx : ∃ k, θ k = b (Fin.last m)
-    · obtain ⟨k, hk⟩ := hx
-      obtain ⟨y, hy⟩ := exists_not_mem_range θ
-      have hkj : ∀ i, (k.castSucc : Fin (n + m + 1)) ≠ (j i).castSucc := by
-        intro i h
-        rw [Fin.castSucc_inj] at h
-        rw [h, hjb] at hk
-        exact Fin.castSucc_ne_last i (b.injective hk)
-      refine ⟨Fin.Embedding.snoc θ hy, extTo j _ hkj, hθa y hy,
-        Function.Embedding.ext fun i ↦ ?_⟩
-      induction i using Fin.lastCases with
-      | last =>
-        rw [Function.Embedding.trans_apply, extTo_last, Fin.Embedding.snoc_castSucc, hk]
-      | cast i =>
-        rw [Function.Embedding.trans_apply, extTo_castSucc, Fin.Embedding.snoc_castSucc, hjb]
-    · have hx' : b (Fin.last m) ∉ Set.range θ := fun ⟨k, hk⟩ ↦ hx ⟨k, hk⟩
-      refine ⟨Fin.Embedding.snoc θ hx', extLast j, hθa _ hx',
-        Function.Embedding.ext fun i ↦ ?_⟩
-      induction i using Fin.lastCases with
-      | last => rw [Function.Embedding.trans_apply, extLast_last, Fin.Embedding.snoc_last]
-      | cast i =>
-        rw [Function.Embedding.trans_apply, extLast_castSucc, Fin.Embedding.snoc_castSucc, hjb]
+    obtain ⟨θ', j', -, hθ', hj'⟩ := exists_snoc_extSet θ j b hj.symm
+    refine ⟨θ', j', Function.Embedding.ext fun i ↦ ?_, hj'⟩
+    rw [← hθ, ← hθ']
+    rfl
 
 end Infinite
 
@@ -211,13 +239,18 @@ assigning to each relation atom `AtomicIdx.rel R f` its truth value at `a`. -/
 def atomicType {n : ℕ} (a : Fin n → M) : (relAtomic L).Ψ0 n :=
   ⟨fun i ↦ decide (i.1.holds a)⟩
 
-open scoped Classical in
+/-- The atomic type of `a` assigns `true` to exactly the relation atoms that hold at `a`. -/
+@[simp] theorem atomicType_down_eq_true_iff {n : ℕ} (a : Fin n → M) (i : AtomInst L n) :
+    (atomicType L a).down i = true ↔ i.1.holds a := by
+  classical
+  exact decide_eq_true_iff
+
 /-- Restricting the atomic type of `a` along `j` gives the atomic type of `a ∘ j`. -/
 theorem H0_atomicType {n m : ℕ} (j : Fin m ↪ Fin n) (a : Fin n → M) :
     (relAtomic L).H0 n m j (atomicType L a) = atomicType L (a ∘ j) := by
-  refine ULift.ext (funext fun i ↦ ?_)
-  change decide ((i.map j).1.holds a) = decide (i.1.holds (a ∘ j))
-  rw [AtomInst.coe_map, AtomicIdx.holds_comp_eq_holds_pushforward]
+  refine ULift.ext (funext fun i ↦ Bool.eq_iff_iff.2 ?_)
+  rw [relAtomic_H0_down, atomicType_down_eq_true_iff, atomicType_down_eq_true_iff,
+    AtomInst.coe_map, AtomicIdx.holds_comp_eq_holds_pushforward]
 
 /-- For injective tuples, equal atomic types is `SameAtomicType`: the equality atoms, which
 `atomicType` does not store, agree automatically. -/
@@ -228,19 +261,22 @@ theorem atomicType_eq_atomicType_iff {n : ℕ} (a : Fin n ↪ M) (b : Fin n ↪ 
     cases idx with
     | eq i j => simp only [AtomicIdx.holds, a.injective.eq_iff, b.injective.eq_iff]
     | rel R f =>
-      have := congrFun (congrArg ULift.down h) ⟨.rel R f, trivial⟩
-      simpa only [atomicType, decide_eq_decide] using this
+      have := Bool.eq_iff_iff.1 (congrFun (congrArg ULift.down h) ⟨.rel R f, trivial⟩)
+      rwa [atomicType_down_eq_true_iff, atomicType_down_eq_true_iff] at this
   · intro h
-    exact ULift.ext (funext fun i ↦ decide_eq_decide.2 (h i.1))
+    refine ULift.ext (funext fun i ↦ Bool.eq_iff_iff.2 ?_)
+    rw [atomicType_down_eq_true_iff, atomicType_down_eq_true_iff]
+    exact h i.1
 
 /-- An `L`-isomorphism preserves atomic types. -/
 private theorem atomicType_equiv (f : M ≃[L] N) {n : ℕ} (a : Fin n → M) :
     atomicType L (f ∘ a) = atomicType L a := by
-  refine ULift.ext (funext fun ⟨i, hi⟩ ↦ ?_)
+  refine ULift.ext (funext fun i ↦ Bool.eq_iff_iff.2 ?_)
+  rw [atomicType_down_eq_true_iff, atomicType_down_eq_true_iff]
+  obtain ⟨i, hi⟩ := i
   cases i with
   | eq => exact hi.elim
-  | rel R g =>
-    exact decide_eq_decide.2 (f.map_rel R (a ∘ g))
+  | rel R g => exact f.map_rel R (a ∘ g)
 
 /-! ### The predicate -/
 
@@ -362,17 +398,17 @@ theorem eq_sf_iff {α : Ordinal.{0}} {n : ℕ} {a : Fin n ↪ M} {x : Ψ (relAto
   ⟨fun h ↦ h ▸ isSf_sf α a, fun h ↦ h.unique (isSf_sf α a)⟩
 
 /-- Level `0`: the semantic entry is the atomic type. -/
-theorem zeroEquiv_sf {n : ℕ} (a : Fin n ↪ M) :
+@[simp] theorem zeroEquiv_sf {n : ℕ} (a : Fin n ↪ M) :
     zeroEquiv (relAtomic L) n (sf L 0 a) = atomicType L ⇑a :=
   (isSf_zero a _).1 (isSf_sf 0 a)
 
 /-- **Vertical projection law**: `V_{β,α}(sf α a) = sf β a`. -/
-theorem V_sf {α β : Ordinal.{0}} (h : β ≤ α) {n : ℕ} (a : Fin n ↪ M) :
+@[simp] theorem V_sf {α β : Ordinal.{0}} (h : β ≤ α) {n : ℕ} (a : Fin n ↪ M) :
     V h (sf L α a) = sf L β a :=
   eq_sf_iff.2 (isSf_V h (isSf_sf α a))
 
 /-- The first component of a successor-level entry is the entry one level down. -/
-theorem succEquiv_sf_fst (α : Ordinal.{0}) {n : ℕ} (a : Fin n ↪ M) :
+@[simp] theorem succEquiv_sf_fst (α : Ordinal.{0}) {n : ℕ} (a : Fin n ↪ M) :
     (succEquiv (relAtomic L) α n (sf L (α + 1) a)).1 = sf L α a := by
   rw [← V_succ_eq_fst, V_sf]
 
@@ -408,7 +444,7 @@ theorem mem_E_sf_iff {α : Ordinal.{0}} {n : ℕ} {a : Fin n ↪ M} {y : Ψ (rel
   exact ⟨fun ⟨⟨m, hm⟩, h⟩ ↦ ⟨m, hm, h⟩, fun ⟨m, hm, h⟩ ↦ ⟨⟨m, hm⟩, h⟩⟩
 
 /-- At a limit level, the entries of the thread `sf L λ a` are the lower entries. -/
-theorem limEquiv_sf {lam β : Ordinal.{0}} (hlam : IsSuccLimit lam) (hβ : β < lam) {n : ℕ}
+@[simp] theorem limEquiv_sf {lam β : Ordinal.{0}} (hlam : IsSuccLimit lam) (hβ : β < lam) {n : ℕ}
     (a : Fin n ↪ M) :
     (limEquiv (relAtomic L) hlam n (sf L lam a)).1 β hβ = sf L β a := by
   rw [← V_limit_eq_entry hlam hβ, V_sf]
@@ -429,40 +465,11 @@ private theorem isSf_H {α : Ordinal.{0}} {n m : ℕ} (j : Fin m ↪ Fin n) {a :
     constructor
     · rintro ⟨y, ⟨b, hb, hy⟩, j', hj', rfl⟩
       refine ⟨j'.trans b, Function.Embedding.ext fun i ↦ ?_, ih j' hy⟩
-      change b (j' i.castSucc) = a (j i)
-      rw [hj'.1 i, ← hb]
-      rfl
+      rw [Function.Embedding.trans_apply, Function.Embedding.trans_apply, Fin.castLEEmb_apply,
+        Function.Embedding.trans_apply, ← hb, Function.Embedding.trans_apply]
+      exact congrArg b (hj'.1 i)
     · rintro ⟨c, hc, hz⟩
-      have hcj : ∀ i, c i.castSucc = a (j i) := fun i ↦ congrArg (fun e : Fin m ↪ M ↦ e i) hc
-      -- The last entry of `c` is either an entry `a k` of `a` outside the image of `j`, reached
-      -- by a fresh extension of `a` and the extension of `j` sending the new coordinate to `k`,
-      -- or fresh for `a`, reached by `a ⌢ c_m` and the extension `extLast j`.
-      obtain ⟨b, j', hb, hj', hbc⟩ : ∃ (b : Fin (n + 1) ↪ M) (j' : Fin (m + 1) ↪ Fin (n + 1)),
-          (Fin.castLEEmb (Nat.le_succ n)).trans b = a ∧ j' ∈ extSet j ∧ j'.trans b = c := by
-        by_cases hp : ∃ k, a k = c (Fin.last m)
-        · obtain ⟨k, hk⟩ := hp
-          obtain ⟨e, he⟩ := exists_not_mem_range ⇑a
-          have hkj : ∀ i, (k.castSucc : Fin (n + 1)) ≠ (j i).castSucc := by
-            intro i h
-            rw [Fin.castSucc_inj] at h
-            rw [h, ← hcj] at hk
-            exact Fin.castSucc_ne_last i (c.injective hk)
-          refine ⟨_, _, castLEEmb_trans_snoc a he, extTo_mem j _ hkj,
-            Function.Embedding.ext fun i ↦ ?_⟩
-          induction i using Fin.lastCases with
-          | last =>
-            rw [Function.Embedding.trans_apply, extTo_last, Fin.Embedding.snoc_castSucc, hk]
-          | cast i =>
-            rw [Function.Embedding.trans_apply, extTo_castSucc, Fin.Embedding.snoc_castSucc,
-              hcj]
-        · have hp' : c (Fin.last m) ∉ Set.range a := fun ⟨k, hk⟩ ↦ hp ⟨k, hk⟩
-          refine ⟨_, _, castLEEmb_trans_snoc a hp', extLast_mem j,
-            Function.Embedding.ext fun i ↦ ?_⟩
-          induction i using Fin.lastCases with
-          | last => rw [Function.Embedding.trans_apply, extLast_last, Fin.Embedding.snoc_last]
-          | cast i =>
-            rw [Function.Embedding.trans_apply, extLast_castSucc, Fin.Embedding.snoc_castSucc,
-              hcj]
+      obtain ⟨b, j', hj', hb, hbc⟩ := exists_snoc_extSet a j c hc
       refine ⟨sf L α b, ⟨b, hb, isSf_sf α b⟩, j', hj', ?_⟩
       have := ih j' (isSf_sf (L := L) α b)
       rw [hbc] at this
@@ -474,7 +481,7 @@ private theorem isSf_H {α : Ordinal.{0}} {n m : ℕ} (j : Fin m ↪ Fin n) {a :
     exact ih β hβ j (hx β hβ)
 
 /-- **Horizontal projection law**: `H^n_α(sf α a, j) = sf α (a ∘ j)`. -/
-theorem H_sf (α : Ordinal.{0}) {n m : ℕ} (j : Fin m ↪ Fin n) (a : Fin n ↪ M) :
+@[simp] theorem H_sf (α : Ordinal.{0}) {n m : ℕ} (j : Fin m ↪ Fin n) (a : Fin n ↪ M) :
     H j (sf L α a) = sf L α (j.trans a) :=
   eq_sf_iff.2 (isSf_H j (isSf_sf α a))
 
@@ -502,16 +509,15 @@ theorem sf_trans_equiv [Infinite N] (f : M ≃[L] N) (α : Ordinal.{0}) {n : ℕ
     constructor
     · rintro ⟨b', hb', rfl⟩
       refine ⟨b'.trans f.toEquiv.symm.toEmbedding, Function.Embedding.ext fun i ↦ ?_, ?_⟩
-      · change f.toEquiv.symm (b' (Fin.castLEEmb _ i)) = a i
-        rw [show b' (Fin.castLEEmb _ i) = f (a i) from DFunLike.congr_fun hb' i]
-        exact f.toEquiv.symm_apply_apply (a i)
+      · rw [← Function.Embedding.trans_assoc, Function.Embedding.trans_apply, hb',
+          Function.Embedding.trans_apply, Equiv.coe_toEmbedding, Equiv.coe_toEmbedding,
+          f.toEquiv.symm_apply_apply]
       · rw [← ih]
         congr 1
         exact Function.Embedding.ext fun i ↦ f.toEquiv.apply_symm_apply (b' i)
     · rintro ⟨b, hb, rfl⟩
       refine ⟨b.trans f.toEquiv.toEmbedding, ?_, ih b⟩
-      change (Fin.castLEEmb _).trans (b.trans _) = _
-      rw [← Function.Embedding.trans_assoc, hb]
+      rw [Set.mem_ofPred_eq, ← Function.Embedding.trans_assoc, hb]
   | limit lam hlam ih =>
     exact Ψ.ext_limit hlam fun β hβ ↦ by rw [V_sf, V_sf, ih β hβ]
 
