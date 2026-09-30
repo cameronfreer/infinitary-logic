@@ -24,7 +24,7 @@ All ordinals live in `Ordinal.{w}`.  Any language, any structure: no relational 
 countability.  For an infinite structure over a relational language, a terminating Scott process
 of `M` has lifted rank `R` (`lift_rank_eq_iSup_orbitRank`), and
 `R ≤ internalScottRank M ≤ R + 1` with `internalScottRank M = ⨆ a, (orbitRank a + 1)`
-(`lift_rank_le_internalScottRank`, `internalScottRank_le_lift_rank_add_one`); all four are in
+(`lift_rank_le_internalScottRank`, `internalScottRank_le_lift_rank_add_one`); all three are in
 `ScottProcess/RankComparison.lean`.
 
 ## Main results
