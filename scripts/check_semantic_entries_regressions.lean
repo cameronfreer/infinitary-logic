@@ -44,7 +44,8 @@ natural numbers with the equivalence relation whose classes are `{2k, 2k + 1}`.
   `scottProcessOf binLang ℕ ω`, and Remark 3.4 (`image_H_eq`).
 * **Simp normal forms**: plain `simp` closes the composites of `V`, `H`, `succEquiv`,
   `limEquiv` and `zeroEquiv` with `sf` (the `@[simp]` laws `V_sf`, `H_sf`, `succEquiv_sf_fst`,
-  `limEquiv_sf`, `zeroEquiv_sf`).
+  `limEquiv_sf`, `zeroEquiv_sf`, and the reassociation `sf_trans_trans` that joins `H_sf` with
+  `H_comp`).
 
 The headline declarations use only the standard axioms.
 
@@ -495,8 +496,9 @@ theorem Pℕ_image_H :
 /-! ### Simp normal forms -/
 
 /-- **Simp normal forms** (`@[simp]` on `V_sf`, `H_sf`, `succEquiv_sf_fst`, `limEquiv_sf`,
-`zeroEquiv_sf`): `simp` alone pushes vertical and horizontal projections, in either order,
-and the row equivalences through `sf`, without looping against `V_comp` and `H_comp`. -/
+`zeroEquiv_sf` and `sf_trans_trans`): `simp` alone pushes vertical and horizontal projections,
+in either order, and the row equivalences through `sf`, without looping against `V_comp` and
+`H_comp`, and joins the `H_sf`/`H_comp` critical pair. -/
 theorem simp_normal_forms {α β γ : Ordinal.{0}} (h1 : γ ≤ β) (h2 : β ≤ α) {n m l : ℕ}
     (j : Fin m ↪ Fin n) (k : Fin l ↪ Fin m) (a : Fin n ↪ ℕ) :
     V h1 (V h2 (sf binLang.{u, v} α a)) = sf binLang.{u, v} γ a ∧

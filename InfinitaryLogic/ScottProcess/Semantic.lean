@@ -42,7 +42,7 @@ Definition 1.3.
 * `exists_embedding_comp_eq`: every tuple `a : Fin n → M` factors as `e ∘ g` through an
   enumeration `e : Fin k ↪ M` of its distinct entries, with `a i = a j ↔ g i = g j`;
   `exists_embedding_comp_eq_of_eq_iff`: two tuples with the same equality pattern factor
-  through one common `g`.
+  through one common surjective `g`, so the two enumerations cover exactly the two ranges.
 * `scottProcessOf L M δ hδ`: the Scott process of an infinite `M`, of length `δ > 0`.
 * `not_isSf_add_one_of_card`: an enumeration of a finite `M` has no entry at any successor
   level.
@@ -144,7 +144,8 @@ theorem exists_embedding_comp_eq {n : ℕ} (a : Fin n → M) :
 /-- **Repeated coordinates, two tuples.** Tuples `a : Fin n → M` and `b : Fin n → N`, possibly
 of structures in different universes, with the same equality pattern
 (`a i = a j ↔ b i = b j`) factor through one common `g : Fin n → Fin k`, as `a = e ∘ g` and
-`b = e' ∘ g` with `e : Fin k ↪ M` and `e' : Fin k ↪ N` injective. -/
+`b = e' ∘ g` with `e : Fin k ↪ M` and `e' : Fin k ↪ N` injective.  `g` is surjective, so `e`
+and `e'` enumerate exactly `Set.range a` and `Set.range b` (no padding). -/
 theorem exists_embedding_comp_eq_of_eq_iff {n : ℕ} (a : Fin n → M) (b : Fin n → N)
     (hab : ∀ i j, a i = a j ↔ b i = b j) :
     ∃ (k : ℕ) (e : Fin k ↪ M) (e' : Fin k ↪ N) (g : Fin n → Fin k),
