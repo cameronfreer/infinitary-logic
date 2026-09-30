@@ -18,6 +18,10 @@ back-and-forth equivalence, by relabeling back along a right inverse of `σ`.  A
 forgets a coordinate it does not: `(0, 1)` and `(1, 2)` in `ℕ` with the equivalence relation
 whose classes are `{2k, 2k + 1}` are not equivalent even at level `0`, while their first
 coordinates `(0)` and `(1)` are equivalent at every level.
+
+`BFEquiv.eq_iff_eq` and `mem_range_iff_of_bfEquiv`: equivalent tuples have the same equality
+pattern (the equality atoms of level `0`), so in equivalent one-point extensions a fresh point is
+answered by a fresh point.
 -/
 
 /-- Extending a relabeling to a new last coordinate. -/
@@ -73,5 +77,21 @@ theorem BFEquiv.comp_iff_of_surjective {α : Ordinal} {n m : ℕ} {σ : Fin m �
   have := BFEquiv.relabel α h (Function.surjInv hσ)
   rwa [Function.comp_assoc, Function.comp_assoc, (Function.rightInverse_surjInv hσ).comp_eq_id,
     Function.comp_id, Function.comp_id] at this
+
+/-- Back-and-forth equivalent tuples have the same equality pattern: the equality atoms of
+level `0`. -/
+theorem BFEquiv.eq_iff_eq {α : Ordinal} {n : ℕ} {a : Fin n → M} {b : Fin n → N}
+    (h : BFEquiv (L := L) α n a b) (i j : Fin n) : a i = a j ↔ b i = b j :=
+  (BFEquiv.zero a b).1 (BFEquiv.monotone zero_le h) (.eq i j)
+
+/-- **Fresh points answer fresh points.** If the one-point extensions `a ⌢ m` and `b ⌢ m'` are
+back-and-forth equivalent at some level, then `m` is an entry of `a` iff `m'` is an entry of
+`b`. -/
+theorem mem_range_iff_of_bfEquiv {α : Ordinal} {n : ℕ} {a : Fin n → M} {b : Fin n → N}
+    {m : M} {m' : N} (h : BFEquiv (L := L) α (n + 1) (Fin.snoc a m) (Fin.snoc b m')) :
+    m ∈ Set.range a ↔ m' ∈ Set.range b := by
+  have key : ∀ i, a i = m ↔ b i = m' := fun i ↦ by
+    simpa only [Fin.snoc_castSucc, Fin.snoc_last] using h.eq_iff_eq i.castSucc (Fin.last n)
+  exact exists_congr key
 
 end FirstOrder.Language

@@ -20,9 +20,6 @@ entries of their synchronized enumerations (`bfEquiv_iff_sf_eq_of_comp_eq`,
 
 ## Main declarations
 
-* `mem_range_iff_of_bfEquiv`: in back-and-forth equivalent one-point extensions `a ⌢ m` and
-  `b ⌢ m'`, the new point `m` repeats an entry of `a` iff `m'` repeats an entry of `b`; so fresh
-  points answer fresh points.
 * `sf_eq_iff_bfEquiv`: `sf L α a = sf L α b ↔ BFEquiv α n a b` for injective tuples of two
   infinite structures in independent universes, at every level `α`; `sf_eq_iff_bfEquiv_self`
   is the one-structure form.
@@ -40,9 +37,11 @@ entries of their synchronized enumerations (`bfEquiv_iff_sf_eq_of_comp_eq`,
   by `Ordinal.{0}`, as in `ScottProcess/FreeArray.lean`, so the bridge is stated for
   `BFEquiv` at `Ordinal.{0}`.  This is a universe boundary, not a countability restriction:
   every `α : Ordinal.{0}` is allowed, and the transfer to `Ordinal.{w}` for structures in
-  `Type w` is `BFEquiv.ofOrdinalLift`/`BFEquiv.toOrdinalLift`.  The general statements
-  `mem_range_iff_of_bfEquiv` and `BFEquiv.comp_iff_of_surjective` hold at every ordinal
-  universe.
+  `Type w` is `BFEquiv.ofOrdinalLift`/`BFEquiv.toOrdinalLift`, which needs both carriers in
+  one `Type w`; the cross-universe bridge therefore has no ordinal-universe transfer.  The
+  general `BFEquiv` facts this file uses (`BFEquiv.eq_iff_eq`, `mem_range_iff_of_bfEquiv`,
+  `BFEquiv.comp_iff_of_surjective`) live in `Scott/BFEquivRelabel.lean` and hold at every
+  ordinal universe.
 * **Fresh and repeated points.** In the successor step, a point `m` of `M` that already occurs
   in `a`, say `m = a i`, is answered by `b i`: the relabelling of `BFEquiv α n a b` along
   `Fin.snoc id i` (`BFEquiv.relabel`).  A fresh point `m ∉ range a` is answered through the
@@ -62,7 +61,11 @@ entries of their synchronized enumerations (`bfEquiv_iff_sf_eq_of_comp_eq`,
 * Paul B. Larson, *Scott processes*, in *Beyond First Order Model Theory*, vol. I
   (J. Iovino, ed.), CRC Press, 2017, ch. 2.  Numbering follows the book: Definition 1.1 (the
   Scott formula of a tuple), Theorem 1.2 (equal Scott formulas as equal theories of quantifier
-  depth `α`).
+  depth `α`), which Larson attributes to the induction of W. Hodges, *Model Theory*, Cambridge
+  University Press, 1993, Theorem 3.5.2.
+* In this library, `BFEquiv_implies_agreeQR` gives the forward direction from `BFEquiv` to
+  agreement on formulas of bounded quantifier rank at every level, and
+  `BFEquiv_iff_agree_formulas_omega` the equivalence for countable structures below `ω₁`.
 -/
 
 open Order FirstOrder FirstOrder.Language InfinitaryLogic.ScottProcess.FreeArray
@@ -73,27 +76,6 @@ namespace InfinitaryLogic.ScottProcess.Semantic
 
 variable {L : Language.{u, v}} [L.IsRelational]
 variable {M : Type w} [L.Structure M] {N : Type w'} [L.Structure N]
-
-/-! ### Equality atoms -/
-
-omit [L.IsRelational] in
-/-- Back-and-forth equivalent tuples have the same equality pattern: the equality atoms of
-level `0`. -/
-private theorem eq_iff_eq_of_bfEquiv {α : Ordinal} {n : ℕ} {a : Fin n → M} {b : Fin n → N}
-    (h : BFEquiv (L := L) α n a b) (i j : Fin n) : a i = a j ↔ b i = b j :=
-  (BFEquiv.zero a b).1 (BFEquiv.monotone zero_le h) (.eq i j)
-
-omit [L.IsRelational] in
-/-- **Fresh points answer fresh points.** If the one-point extensions `a ⌢ m` and `b ⌢ m'` are
-back-and-forth equivalent at some level, then `m` is an entry of `a` iff `m'` is an entry of
-`b`. -/
-theorem mem_range_iff_of_bfEquiv {α : Ordinal} {n : ℕ} {a : Fin n → M} {b : Fin n → N}
-    {m : M} {m' : N} (h : BFEquiv (L := L) α (n + 1) (Fin.snoc a m) (Fin.snoc b m')) :
-    m ∈ Set.range a ↔ m' ∈ Set.range b := by
-  have key : ∀ i, a i = m ↔ b i = m' := fun i ↦ by
-    simpa only [Fin.snoc_castSucc, Fin.snoc_last] using
-      eq_iff_eq_of_bfEquiv h i.castSucc (Fin.last n)
-  exact exists_congr key
 
 /-! ### The bridge -/
 
@@ -212,7 +194,7 @@ theorem bfEquiv_iff_exists_sf_eq (α : Ordinal.{0}) {n : ℕ} (a : Fin n → M) 
   constructor
   · intro h
     obtain ⟨k, e, e', g, he, he', hg⟩ :=
-      exists_embedding_comp_eq_of_eq_iff a b (eq_iff_eq_of_bfEquiv h)
+      exists_embedding_comp_eq_of_eq_iff a b h.eq_iff_eq
     exact ⟨k, e, e', g, he, he', (bfEquiv_iff_sf_eq_of_comp_eq α he he' hg).1 h⟩
   · rintro ⟨k, e, e', g, rfl, rfl, h⟩
     exact BFEquiv.relabel α ((sf_eq_iff_bfEquiv α e e').1 h) g

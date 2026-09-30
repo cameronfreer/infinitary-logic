@@ -414,7 +414,7 @@ end
 /-! ### Axiom hygiene -/
 
 def headline : List Name :=
-  [`InfinitaryLogic.ScottProcess.Semantic.mem_range_iff_of_bfEquiv,
+  [`FirstOrder.Language.mem_range_iff_of_bfEquiv, `FirstOrder.Language.BFEquiv.eq_iff_eq,
    `InfinitaryLogic.ScottProcess.Semantic.sf_eq_iff_bfEquiv,
    `InfinitaryLogic.ScottProcess.Semantic.sf_eq_iff_bfEquiv_self,
    `InfinitaryLogic.ScottProcess.Semantic.bfEquiv_iff_sf_eq_of_comp_eq,
