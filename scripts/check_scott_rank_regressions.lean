@@ -5,9 +5,10 @@ Every theorem below is *applied* to a concrete process, not only listed for its 
 processes are the toy processes `unitProcess δ` over the one-point level-`0` data, whose columns
 are singletons, so injectivity itself is trivial there: the checks pin down the statement
 shapes, the length conditions and the rank convention, not the combinatorics of the proofs.
-`unitProcess` is at present the only constructor of Scott processes, so every test process here
-is singleton-column and has rank `0`.  A positive-rank example (such as the graph of Larson's
-Remark 5.11, of rank `1`) follows once the Scott process of a structure exists (PR 2c).
+Every test process here is singleton-column and has rank `0`; the Scott process of a structure
+(`scottProcessOf`, in `ScottProcess/Semantic.lean`) is not exercised by this guard.  Positive-rank
+examples (such as the graph of Larson's Remark 5.11, of rank `1`), the infinite pure set and the
+exact-`ω` structure belong to the rank-comparison tranche that consumes this API.
 
 * **Rank convention** (no `+ 1`): `unitProcess δ` has rank `0` for every `δ > 1`
   (`unitProcess_isRank_zero`, `unitProcess_rank`, `IsRank.terminating`, `IsRank.rank_eq`,
