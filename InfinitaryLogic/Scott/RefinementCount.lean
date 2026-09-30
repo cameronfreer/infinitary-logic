@@ -51,30 +51,6 @@ forth/back witness at level α₀ already works at all higher levels (the "const
 argument). This avoids the need to count external BFEquiv types directly. -/
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
-/-- Internal BFEquiv upgrade: if BFEquiv α₀ holds internally (M vs M) at self-stabilization,
-it upgrades to all higher ordinals. -/
-private theorem BFEquiv_self_upgrade
-    {M : Type w} [L.Structure M]
-    {α₀ : Ordinal.{0}} (hstab : SelfStabilizesCompletely (L := L) M α₀)
-    {n : ℕ} {a a' : Fin n → M}
-    (h : BFEquiv (L := L) α₀ n a a') (β : Ordinal.{0}) (hβ : α₀ ≤ β) :
-    BFEquiv (L := L) β n a a' := by
-  induction β using Ordinal.limitRecOn generalizing n a a' with
-  | zero => rwa [le_antisymm hβ bot_le] at h
-  | add_one γ ih =>
-    rw [← Order.succ_eq_add_one] at hβ ⊢
-    rcases hβ.lt_or_eq with hlt | heq
-    · rw [Order.lt_succ_iff] at hlt
-      have h_succ := (hstab n a a').mp h
-      rw [BFEquiv.succ]; refine ⟨@ih n a a' h hlt, fun m => ?_, fun m' => ?_⟩
-      · let ⟨m', hm'⟩ := BFEquiv.forth h_succ m; exact ⟨m', @ih _ _ _ hm' hlt⟩
-      · let ⟨m, hm⟩ := BFEquiv.back h_succ m'; exact ⟨m, @ih _ _ _ hm hlt⟩
-    · exact heq ▸ h
-  | limit β _ ih =>
-    rw [BFEquiv.limit β ‹_›]; intro γ hγ
-    exact (le_or_gt α₀ γ).elim (@ih γ hγ n a a' h) (fun hαγ => BFEquiv.monotone hαγ.le h)
-
-omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- Chain-constant step: under self-stabilization at α₀, if BFEquiv ε holds at (n+1)-tuples
 and BFEquiv (succ(succ ε)) holds at n-tuples, then BFEquiv (succ ε) holds at (n+1)-tuples.
 
@@ -91,7 +67,7 @@ private theorem chain_step
     BFEquiv (L := L) (Order.succ ε) (n + 1) (Fin.snoc a m) (Fin.snoc b m') := by
   obtain ⟨mw, hmw⟩ := BFEquiv.back hBF_base m'
   exact BFEquiv.trans
-    (BFEquiv_self_upgrade hstab
+    (BFEquiv_upgrade_at_selfStabilization hstab
       (BFEquiv.monotone hε (BFEquiv.trans hBF_ext (BFEquiv.symm (BFEquiv.of_succ hmw))))
       (Order.succ ε) (le_of_lt (Order.lt_succ_of_le hε)))
     hmw

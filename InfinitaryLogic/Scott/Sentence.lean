@@ -150,6 +150,34 @@ def SelfStabilizesCompletely (M : Type w) [L.Structure M] (α : Ordinal) : Prop 
     BFEquiv (L := L) α n a a' ↔ BFEquiv (L := L) (Order.succ α) n a a'
 
 omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
+/-- **Upgrade at a self-stabilization level**: if `M` self-stabilizes completely at `α₀`, then
+back-and-forth equivalence at `α₀` of two tuples of `M` persists to every level `β ≥ α₀`.  The
+one-structure counterpart of `BFEquiv_upgrade_at_stabilization`; the ordinals and the carrier
+live in arbitrary universes, and no countability is assumed. -/
+theorem BFEquiv_upgrade_at_selfStabilization {M : Type w} [L.Structure M] {α₀ : Ordinal}
+    (hstab : SelfStabilizesCompletely (L := L) M α₀) {n : ℕ} {a a' : Fin n → M}
+    (h : BFEquiv (L := L) α₀ n a a') (β : Ordinal) (hβ : α₀ ≤ β) :
+    BFEquiv (L := L) β n a a' := by
+  induction β using Ordinal.limitRecOn generalizing n a a' with
+  | zero => rwa [le_antisymm hβ bot_le] at h
+  | add_one γ ih =>
+    rw [← Order.succ_eq_add_one] at hβ ⊢
+    rcases hβ.lt_or_eq with hlt | heq
+    · rw [Order.lt_succ_iff] at hlt
+      have h_succ := (hstab n a a').mp h
+      rw [BFEquiv.succ]
+      refine ⟨ih h hlt, fun m ↦ ?_, fun m' ↦ ?_⟩
+      · obtain ⟨m', hm'⟩ := BFEquiv.forth h_succ m
+        exact ⟨m', ih hm' hlt⟩
+      · obtain ⟨m, hm⟩ := BFEquiv.back h_succ m'
+        exact ⟨m, ih hm hlt⟩
+    · exact heq ▸ h
+  | limit β hlim ih =>
+    rw [BFEquiv.limit β hlim]
+    intro γ hγ
+    exact (le_or_gt α₀ γ).elim (ih γ hγ h) fun hαγ ↦ BFEquiv.monotone hαγ.le h
+
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
 /-- At a complete stabilization ordinal, BFEquiv upgrades to all higher ordinals.
 This is the key lemma that resolves the quantifier swap problem.
 

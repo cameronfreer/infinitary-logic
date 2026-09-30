@@ -51,6 +51,7 @@ import InfinitaryLogic.FreeSetBound
 import InfinitaryLogic.ScottProcess.FreeArray
 import InfinitaryLogic.ScottProcess.Basic
 import InfinitaryLogic.ScottProcess.Semantic
+import InfinitaryLogic.ScottProcess.SemanticBridge
 
 /-!
 # All: the sorry-free library surface
