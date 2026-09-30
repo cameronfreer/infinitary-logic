@@ -23,7 +23,7 @@ namespace FirstOrder
 
 namespace Language
 
-variable {L : Language.{u, v}} {M N P : Type w}
+variable {L : Language.{u, v}} {M : Type w} {N : Type w'} {P : Type w''}
   [L.Structure M] [L.Structure N] [L.Structure P]
 
 /-- **A-elementarity**: truth agreement on every fragment member, at every tuple, along an
