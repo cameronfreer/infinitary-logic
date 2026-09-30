@@ -277,6 +277,13 @@ theorem simp_normal_forms {α β δ : Ordinal.{0}} (hδ : δ ≤ β) (hβ : β �
       V hδ (V hβ (H k (H j x))) = V (hδ.trans hβ) (H (k.trans j) x) := by
   simp
 
+/-- `simp` also normalizes `H k (H j (mkSucc …))`, where `H_mkSucc` fires on the inner term before
+`H_comp` can (`image2_H_image2_H` closes the residual goal). -/
+theorem simp_normal_form_mkSucc {α : Ordinal.{0}} {n m l : ℕ} (j : Fin m ↪ Fin n)
+    (k : Fin l ↪ Fin m) (φ' : Ψ ExA α n) (E' : Set (Ψ ExA α (n + 1))) (hE : E'.Nonempty) :
+    H k (H j (mkSucc φ' E' hE)) = H (k.trans j) (mkSucc φ' E' hE) := by
+  simp
+
 /-! ### Row `ω` -/
 
 /-- `2 < ω`. -/
@@ -415,7 +422,8 @@ def headline : List Name :=
    `InfinitaryLogic.ScottProcess.unitProcess,
    `card_Ψ_zero, `card_Ψ_zero_two, `mk0_H, `H_level0_sentence, `H_level0_psi, `H_level0_phi,
    `ψ10'_ne_φ10', `H_comp_level0, `level1_E_V, `H_level1_psi, `H_level1_phi, `V_H_level1,
-   `E_H_level1, `H_id_level1, `exists_succ_level1, `simp_normal_forms, `row_omega_realized,
+   `E_H_level1, `H_id_level1, `exists_succ_level1, `simp_normal_forms, `simp_normal_form_mkSucc,
+   `row_omega_realized,
    `row_omega_readback, `row_omega_ext, `unitProcess_sentence, `unitProcess_E_V_eq,
    `unitProcess_image_H, `unitProcess_E_eq_of_mem_zero, `unitProcess_image_V_fiber,
    `unitProcess_biUnion_E, `unitProcess_E_V_add_one, `eq_unitProcess]
@@ -431,7 +439,8 @@ run_cmd do
     unless bad.isEmpty do throwError "[NONSTANDARD AXIOMS] {n} uses {bad}"
   logInfo "scott-process regression guard: OK (applied: Example 2.17 at level 0 via H_zero_rel \
     and at level 1 via mkSucc, V_mkSucc, E_mkSucc, H_mkSucc and Ψ.ext_succ; V_H_comm, E_H, \
-    H_comp, H_id and exists_succ_of_V_E on Example 2.17; simp normal forms H_id, H_comp, V_comp; \
+    H_comp, H_id and exists_succ_of_V_E on Example 2.17; simp normal forms H_id, H_comp, V_comp \
+    and H_comp through H_mkSucc; \
     row ω via exists_limit_of_thread, V_limit_eq_entry, H_limit_entry, V_comp and Ψ.ext_limit; \
     Proposition 3.5, Remark 3.4, the remark after Proposition 3.5, Propositions 4.1-4.4 and \
     ScottProcess.ext on the toy processes; headline declarations on standard axioms)"

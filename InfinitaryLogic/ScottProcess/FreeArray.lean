@@ -714,6 +714,21 @@ theorem H_limit_entry {lam β : Ordinal.{0}} (hlam : IsSuccLimit lam) (hβ : β 
     simp only [threadH_coe]
     exact ih β hβ _ _ _
 
+/-- The extension-set half of Remark 2.14(2): pushing an extension set along `j` and then along
+`k` is pushing it along `k.trans j`.  This is the normal form `simp` needs when `H_mkSucc` has
+already fired inside `H k (H j (mkSucc φ' E' hE))`. -/
+@[simp] theorem image2_H_image2_H {α : Ordinal.{0}} {n m l : ℕ} (j : Fin m ↪ Fin n)
+    (k : Fin l ↪ Fin m) (S : Set (Ψ A α (n + 1))) :
+    Set.image2 (fun ψ j' ↦ H j' ψ) (Set.image2 (fun ψ j' ↦ H j' ψ) S (extSet j)) (extSet k) =
+      Set.image2 (fun ψ j' ↦ H j' ψ) S (extSet (k.trans j)) := by
+  ext z
+  constructor
+  · rintro ⟨_, ⟨ψ, hψ, j', hj', rfl⟩, k', hk', rfl⟩
+    exact ⟨ψ, hψ, k'.trans j', trans_mem_extSet hj' hk', (H_comp j' k' ψ).symm⟩
+  · rintro ⟨ψ, hψ, i, hi, rfl⟩
+    obtain ⟨j', hj', k', hk', rfl⟩ := exists_trans_of_mem_extSet hi
+    exact ⟨_, ⟨ψ, hψ, j', hj', rfl⟩, k', hk', H_comp j' k' ψ⟩
+
 /-! ### The concrete level `0` for a relational language -/
 
 section Relational
@@ -768,7 +783,9 @@ variable (L) in
 /-- Level-`0` data for a relational language (Definition 2.1(1)): a complete atomic type on the
 `n` distinct variables `Fin n` is a truth value for every relation instance (equalities are
 fixed by distinctness and are not stored); `H^n_0(·, j)` restricts along `j`, through
-`AtomicIdx.pushforward`. -/
+`AtomicIdx.pushforward`.  The `[L.IsRelational]` instance is not used by the definition (only
+relation atoms are read, as in `SameAtomicType`); it is carried deliberately, to state the
+standing assumption of the source and of the Scott/Karp stack in the signature. -/
 def relAtomic [L.IsRelational] : AtomicData.{max u v} where
   Ψ0 n := ULift.{max u v + 1} (AtomInst L n → Bool)
   H0 _ _ j t := ⟨fun a ↦ t.down (a.map j)⟩
