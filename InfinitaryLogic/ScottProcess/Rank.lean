@@ -20,13 +20,15 @@ member of `Φ^n_β` (Definition 5.8, Proposition 5.13).
   `Φ_{β+1}`; `ScottProcess.stabilizesAt_iff_bijOn` restates it as a bijection
   `Φ^n_{β+1} → Φ^n_β` on every column.
 * `ScottProcess.Terminating`, `ScottProcess.IsRank`, `ScottProcess.rank` (Definition 5.6),
-  with `ScottProcess.isRank_rank`, `ScottProcess.IsRank.unique`, `ScottProcess.isRank_iff`.
+  with `ScottProcess.isRank_rank`, `ScottProcess.IsRank.unique`, `ScottProcess.IsRank.terminating`,
+  `ScottProcess.isRank_iff`.
 * `ScottProcess.stabilizesAt_of_le`: Proposition 5.5, stabilization propagates upward.
 * `ScottProcess.stabilizesAt_add_nat`: Remark 5.7.
 * `ScottProcess.InjectiveBeyond` (Definition 5.8) and
   `ScottProcess.stabilizesAt_of_injectiveBeyond` (Proposition 5.13).
-* `ScottProcess.unitProcess_terminating_iff`, `ScottProcess.unitProcess_rank`: the toy process
-  has rank `0` when `1 < δ`, and does not terminate at length `1`.
+* `ScottProcess.unitProcess_stabilizesAt_iff`, `ScottProcess.unitProcess_terminating_iff`,
+  `ScottProcess.unitProcess_rank` (all `@[simp]`): the toy process stabilizes at `β` iff
+  `β + 1 < δ`, so it has rank `0` when `1 < δ` and does not terminate at length `1`.
 
 Proposition 5.1(1), Corollaries 5.2 and 5.3 and the induction of Remark 5.9 are proved as
 private steps of the proofs above.
@@ -53,7 +55,10 @@ private steps of the proofs above.
   `β + n + 1`, so the two forms agree.
 * **Definition 5.8.** "`V_{β,β+1}^{-1}[{ψ}] ∩ Φ_{β+1}` is a singleton" is `∃!`; Larson's
   standing hypothesis `φ ∈ Φ^n_β` is kept out of the definition and assumed where it is used,
-  and his `m ∈ ω \ n` is implied by the existence of `j : Fin n ↪ Fin m`.
+  and his `m ∈ ω \ n` is implied by the existence of `j : Fin n ↪ Fin m`.  Without that
+  hypothesis `InjectiveBeyond` holds vacuously for `φ ∉ Φ^n_β` (by Remark 3.4 no `ψ ∈ Φ^m_β`
+  restricts to such a `φ`), so `stabilizesAt_of_injectiveBeyond` takes `φ ∈ Φ^n_β` as a
+  separate hypothesis.
 
 ## References
 
@@ -129,6 +134,24 @@ private theorem V_eq_V_of_le {α β γ : Ordinal.{0}} (hβ : β ≤ α) (hγ : �
     {x y : Ψ A α n} (h : V hβ x = V hβ y) : V (hγ.trans hβ) x = V (hγ.trans hβ) y := by
   rw [← V_comp hγ hβ, ← V_comp hγ hβ, h]
 
+/-- The step shared by Proposition 5.1(1), Proposition 5.5 and the induction of Remark 5.9: let
+`α < η` and `x, y ∈ Φ^n_{η+1}` with `V_{η,η+1}(x) = V_{η,η+1}(y)`, so that
+`V_{α,η}[E(x)] = V_{α,η}[E(y)]` (Proposition 4.3).  If for each `θ ∈ E(x)` the members of
+`Φ^{n+1}_η` with the same `V_{α,η}`-projection as `θ` are equal, then `E(x) ⊆ E(y)`. -/
+private theorem E_subset_of_fiber {α η : Ordinal.{0}} (hlt : α < η) (hη : η + 1 < δ) {n : ℕ}
+    {x y : Ψ A (η + 1) n} (hx : x ∈ P.Φ (η + 1) hη n) (hy : y ∈ P.Φ (η + 1) hη n)
+    (hV : V (lt_add_one η).le x = V (lt_add_one η).le y)
+    (h : ∀ θ ∈ E x, ∀ θ₁ ∈ P.Φ η ((lt_add_one η).trans hη) (n + 1),
+      ∀ θ₂ ∈ P.Φ η ((lt_add_one η).trans hη) (n + 1),
+      V hlt.le θ₁ = V hlt.le θ → V hlt.le θ₂ = V hlt.le θ → θ₁ = θ₂) :
+    E x ⊆ E y := by
+  intro θ hθ
+  obtain ⟨θ', hθ', he⟩ : V hlt.le θ ∈ V hlt.le '' E y := by
+    rw [← P.E_V_add_one_eq hlt.le hη hy,
+      ← V_eq_V_of_le (lt_add_one η).le (add_one_le_of_lt hlt) hV, P.E_V_add_one_eq hlt.le hη hx]
+    exact ⟨θ, hθ, rfl⟩
+  rwa [h θ hθ θ (P.E_subset η hη n x hx hθ) θ' (P.E_subset η hη n y hy hθ') rfl he]
+
 /-! ### Proposition 5.1(1) and Corollaries 5.2, 5.3 -/
 
 /-- Proposition 5.1(1), subsingleton form: if `V_{β,β+1}^{-1}[{ψ}] ∩ Φ_{β+1}` is a
@@ -137,23 +160,16 @@ private theorem fiber_subsingleton_of_forall_E {β : Ordinal.{0}} (hβ : β + 1 
     {φ : Ψ A (β + 1) n}
     (h : ∀ ψ ∈ E φ, (P.fiber (lt_add_one β).le ((lt_add_one _).trans hβ) ψ).Subsingleton) :
     (P.fiber (lt_add_one (β + 1)).le hβ φ).Subsingleton := by
-  -- `E(φ_i) ⊆ Φ_{β+1}` and `V_{β,β+1}[E(φ_i)] = E(φ)` (Proposition 4.3).
-  have key : ∀ φ₁ ∈ P.fiber (lt_add_one (β + 1)).le hβ φ,
-      ∀ φ₂ ∈ P.fiber (lt_add_one (β + 1)).le hβ φ, E φ₁ ⊆ E φ₂ := by
-    rintro φ₁ ⟨h₁, rfl⟩ φ₂ ⟨h₂, he⟩ θ hθ
-    have e₁ := P.E_V_add_one_eq (lt_add_one β).le hβ h₁
-    have e₂ := P.E_V_add_one_eq (lt_add_one β).le hβ h₂
-    obtain ⟨θ', hθ'E, hθθ'⟩ : V (lt_add_one β).le θ ∈ V (lt_add_one β).le '' E φ₂ := by
-      rw [← e₂, he, e₁]
-      exact ⟨θ, hθ, rfl⟩
-    have hmem : V (lt_add_one β).le θ ∈ E (V (lt_add_one (β + 1)).le φ₁) := by
-      rw [e₁]
-      exact ⟨θ, hθ, rfl⟩
-    rw [h _ hmem ⟨P.E_subset (β + 1) hβ n φ₁ h₁ hθ, rfl⟩
-      ⟨P.E_subset (β + 1) hβ n φ₂ h₂ hθ'E, hθθ'⟩]
-    exact hθ'E
-  intro φ₁ h₁ φ₂ h₂
-  exact Ψ.ext_succ (h₁.2.trans h₂.2.symm) ((key φ₁ h₁ φ₂ h₂).antisymm (key φ₂ h₂ φ₁ h₁))
+  -- For `θ ∈ E(φ₁)`, `V_{β,β+1}(θ) ∈ E(φ)` (Proposition 4.3), whose fiber is a subsingleton.
+  have key : ∀ {φ₁ φ₂}, φ₁ ∈ P.fiber (lt_add_one (β + 1)).le hβ φ →
+      φ₂ ∈ P.fiber (lt_add_one (β + 1)).le hβ φ → E φ₁ ⊆ E φ₂ := by
+    rintro φ₁ φ₂ ⟨h₁, rfl⟩ ⟨h₂, he⟩
+    refine P.E_subset_of_fiber (lt_add_one β) hβ h₁ h₂ he.symm
+      fun θ hθ θ₁ hθ₁ θ₂ hθ₂ e₁ e₂ ↦ h _ ?_ ⟨hθ₁, e₁⟩ ⟨hθ₂, e₂⟩
+    rw [P.E_V_add_one_eq (lt_add_one β).le hβ h₁]
+    exact ⟨θ, hθ, rfl⟩
+  exact fun φ₁ h₁ φ₂ h₂ ↦
+    Ψ.ext_succ (h₁.2.trans h₂.2.symm) ((key h₁ h₂).antisymm (key h₂ h₁))
 
 /-- Corollary 5.2: if `V_{β,β+1}` is injective on `Φ^{n+1}_{β+1}`, then `V_{β+1,β+2}` is
 injective on `Φ^n_{β+2}`. -/
@@ -224,17 +240,10 @@ private theorem stabilizesAt_of_injOn_V {β γ : Ordinal.{0}} (hβγ : β < γ) 
     (hinj : ∀ n,
       Set.InjOn (V (A := A) (n := n) hβγ.le) (P.Φ γ ((lt_add_one γ).trans hγ) n)) :
     P.StabilizesAt γ := by
-  refine ⟨hγ, fun n φ hφ φ' hφ' hV ↦ ?_⟩
-  have e1 := P.E_V_add_one_eq hβγ.le hγ hφ
-  have e2 := P.E_V_add_one_eq hβγ.le hγ hφ'
-  rw [V_eq_V_of_le (lt_add_one γ).le (add_one_le_of_lt hβγ) hV] at e1
-  have hE : V hβγ.le '' E φ = V hβγ.le '' E φ' := e1.symm.trans e2
-  have key : ∀ {x y : Ψ A (γ + 1) n}, x ∈ P.Φ (γ + 1) hγ n → y ∈ P.Φ (γ + 1) hγ n →
-      V hβγ.le '' E x = V hβγ.le '' E y → E x ⊆ E y := by
-    intro x y hx hy hxy ψ hψ
-    obtain ⟨ψ', hψ', he⟩ : V hβγ.le ψ ∈ V hβγ.le '' E y := hxy ▸ ⟨ψ, hψ, rfl⟩
-    rwa [hinj (n + 1) (P.E_subset γ hγ n x hx hψ) (P.E_subset γ hγ n y hy hψ') he.symm]
-  exact Ψ.ext_succ hV ((key hφ hφ' hE).antisymm (key hφ' hφ hE.symm))
+  refine ⟨hγ, fun n φ hφ φ' hφ' hV ↦ Ψ.ext_succ hV
+    ((P.E_subset_of_fiber hβγ hγ hφ hφ' hV ?_).antisymm
+      (P.E_subset_of_fiber hβγ hγ hφ' hφ hV.symm ?_))⟩ <;>
+  exact fun _ _ _ h₁ _ h₂ e₁ e₂ ↦ hinj (n + 1) h₁ h₂ (e₁.trans e₂.symm)
 
 /-- **Proposition 5.5** (Larson, Scott processes): stabilization propagates upward.  If the
 process stabilizes at `β`, `β ≤ γ` and `γ + 1 < δ`, then it stabilizes at `γ`. -/
@@ -281,7 +290,13 @@ theorem IsRank.unique {P : ScottProcess A δ} {β γ : Ordinal.{0}} (hβ : P.IsR
     (hγ : P.IsRank γ) : β = γ :=
   IsLeast.unique hβ hγ
 
-/-- A process with rank `β` is terminating, and `rank` computes `β`. -/
+/-- A process with a rank is terminating. -/
+theorem IsRank.terminating {P : ScottProcess A δ} {β : Ordinal.{0}} (hβ : P.IsRank β) :
+    P.Terminating :=
+  ⟨β, hβ.1⟩
+
+/-- If `β` is the rank, then `rank` computes `β` (for any proof of termination, for instance
+`IsRank.terminating`). -/
 theorem IsRank.rank_eq {P : ScottProcess A δ} {β : Ordinal.{0}} (hβ : P.IsRank β)
     (h : P.Terminating) : P.rank h = β :=
   (P.isRank_rank h).unique hβ
@@ -315,7 +330,7 @@ private theorem injAt_add_nat (n k : ℕ) (β : Ordinal.{0}) (hβ : β + k + 1 <
   | succ k ih =>
     intro m hm
     have e : β + 1 + (k : Ordinal.{0}) = β + ((k + 1 : ℕ) : Ordinal.{0}) := by
-      rw [add_assoc, ← Nat.cast_one, ← Nat.cast_add, Nat.add_comm]
+      rw [add_assoc]; congr 1; norm_cast; omega
     have hβ' : β + 1 + k + 1 < δ := by rwa [e]
     have h2 : β + 1 + 1 < δ := by
       refine lt_of_le_of_lt ?_ hβ
@@ -327,21 +342,26 @@ private theorem injAt_add_nat (n k : ℕ) (β : Ordinal.{0}) (hβ : β + k + 1 <
 
 /-- **Remark 5.7** (Larson, Scott processes): if `β + n + 1 < δ` and `V_{β,β+1}` is injective
 on `Φ^m_{β+1}` for every `m > n`, then the process stabilizes at `β + n`, so its rank is at most
-`β + n` (`rank_le`).  Column `0` is handled by Proposition 3.5. -/
+`β + n` (`rank_le`).  Column `0` is handled by Proposition 3.5.  The proof of `β + 1 < δ` in
+the hypothesis is derived from `hγ`; by proof irrelevance any other proof fits. -/
 theorem stabilizesAt_add_nat {β : Ordinal.{0}} {n : ℕ} (hγ : β + n + 1 < δ)
-    {hβ : β + 1 < δ}
-    (h : ∀ m, n < m → Set.InjOn (V (A := A) (n := m) (lt_add_one β).le) (P.Φ (β + 1) hβ m)) :
+    (h : ∀ m, n < m → Set.InjOn (V (A := A) (n := m) (lt_add_one β).le)
+      (P.Φ (β + 1) ((add_le_add_left le_self_add 1).trans_lt hγ) m)) :
     P.StabilizesAt (β + n) := by
   refine ⟨hγ, fun m ↦ ?_⟩
   rcases Nat.eq_zero_or_pos m with rfl | hm
   · exact fun _ hx _ hy _ ↦ P.subsingleton_zero _ hγ hx hy
-  · exact (P.injAt_add_nat 0 n β hγ (fun m hm ↦ ⟨hβ, h m (by simpa using hm)⟩) m hm).2
+  · exact (P.injAt_add_nat 0 n β hγ (fun m hm ↦ ⟨_, h m (by simpa using hm)⟩) m hm).2
 
 /-! ### Injectivity beyond a member of a level (Definition 5.8, Proposition 5.13) -/
 
 /-- **Definition 5.8** (Larson, Scott processes): for `β + 1 < δ` and `φ ∈ Ψ^n_β`, the process
 is **injective beyond `φ`** if for every `m`, every `j ∈ I_{n,m}` and every `ψ ∈ Φ^m_β` with
-`φ = H^m_β(ψ, j)`, the fiber `V_{β,β+1}^{-1}[{ψ}] ∩ Φ_{β+1}` is a singleton. -/
+`φ = H^m_β(ψ, j)`, the fiber `V_{β,β+1}^{-1}[{ψ}] ∩ Φ_{β+1}` is a singleton.
+
+Larson's standing hypothesis `φ ∈ Φ^n_β` is not part of the definition, so the predicate holds
+vacuously for `φ ∉ Φ^n_β`: by Remark 3.4 (`image_H_eq`), no `ψ ∈ Φ^m_β` has `H^m_β(ψ, j) = φ`.
+This is why `stabilizesAt_of_injectiveBeyond` assumes `φ ∈ Φ^n_β` separately. -/
 def InjectiveBeyond {β : Ordinal.{0}} (hβ : β + 1 < δ) {n : ℕ} (φ : Ψ A β n) : Prop :=
   ∀ m (j : Fin n ↪ Fin m), ∀ ψ ∈ P.Φ β ((lt_add_one β).trans hβ) m, φ = H j ψ →
     ∃! x, x ∈ P.Φ (β + 1) hβ m ∧ V (lt_add_one β).le x = ψ
@@ -363,36 +383,28 @@ private theorem fiber_subsingleton_of_injectiveBeyond {β : Ordinal.{0}} (hβ : 
     rcases hβη'.eq_or_lt with rfl | hlt'
     · exact fun x hx y hy ↦ (hinj m j ψ hψ hφψ).unique hx hy
     have hη' : η < δ := (lt_add_one η).trans hη
-    have h1 : β + 1 ≤ η := add_one_le_of_lt hlt'
     have hV : ∀ {x y}, x ∈ P.fiber hβη hη ψ → y ∈ P.fiber hβη hη ψ →
         V (lt_add_one η).le x = V (lt_add_one η).le y := by
       rintro x y ⟨hx, hxψ⟩ ⟨hy, hyψ⟩
       refine ih hβη' hη' j hψ hφψ hlt' ⟨P.V_mem _ hη hx, ?_⟩ ⟨P.V_mem _ hη hy, ?_⟩
       · rwa [V_comp]
       · rwa [V_comp]
+    -- For `θ ∈ E(x)`, `φ = H(V_{β,η}(θ), j ∘ i_m)`, so the fiber over `V_{β,η}(θ)` is a
+    -- subsingleton by the induction hypothesis.
     have key : ∀ {x y}, x ∈ P.fiber hβη hη ψ → y ∈ P.fiber hβη hη ψ → E x ⊆ E y := by
-      intro x y hxf hyf θ hθ
-      have hxy0 := hV hxf hyf
+      intro x y hxf hyf
       obtain ⟨hx, hxψ⟩ := hxf
-      obtain ⟨hy, -⟩ := hyf
-      have ex := P.E_V_add_one_eq hβη' hη hx
-      have ey := P.E_V_add_one_eq hβη' hη hy
-      obtain ⟨θ', hθ', he⟩ : V hβη' θ ∈ V hβη' '' E y := by
-        rw [← ey, ← V_eq_V_of_le (lt_add_one η).le h1 hxy0, ex]
-        exact ⟨θ, hθ, rfl⟩
+      refine P.E_subset_of_fiber hlt' hη hx hyf.1 (hV ⟨hx, hxψ⟩ hyf)
+        fun θ hθ θ₁ hθ₁ θ₂ hθ₂ e₁ e₂ ↦ ?_
       have hHθ : H (Fin.castLEEmb (Nat.le_succ m)) θ = V (lt_add_one η).le x := by
         rw [P.E_eq η hη m x hx] at hθ
         obtain ⟨ρ, ⟨-, hρ⟩, rfl⟩ := hθ
         rw [← V_H_comm, hρ]
       have hθβ : φ = H (j.trans (Fin.castLEEmb (Nat.le_succ m))) (V hβη' θ) := by
         rw [← H_comp, ← V_H_comm, hHθ, V_comp, hxψ, hφψ]
-      have hθm := P.E_subset η hη m x hx hθ
-      have hsub := ih hβη' hη' (j.trans (Fin.castLEEmb (Nat.le_succ m)))
-        (P.V_mem hβη' hη' hθm) hθβ hlt'
-      rw [hsub ⟨hθm, rfl⟩ ⟨P.E_subset η hη m y hy hθ', he⟩]
-      exact hθ'
-    intro x hx y hy
-    exact Ψ.ext_succ (hV hx hy) ((key hx hy).antisymm (key hy hx))
+      exact ih hβη' hη' _ (P.V_mem hβη' hη' (P.E_subset η hη m x hx hθ)) hθβ hlt'
+        ⟨hθ₁, e₁⟩ ⟨hθ₂, e₂⟩
+    exact fun x hx y hy ↦ Ψ.ext_succ (hV hx hy) ((key hx hy).antisymm (key hy hx))
   | limit η hηl ih =>
     rintro x ⟨hx, hxψ⟩ y ⟨hy, hyψ⟩
     refine Ψ.ext_limit hηl fun ζ hζ ↦ ?_
@@ -440,7 +452,7 @@ private theorem fiber_subsingleton_of_add_nat {β γ : Ordinal.{0}} (hγ : γ < 
       rw [P.E_eq (β + p) hlt k θ hθ]
       refine ⟨_, ⟨hρ₁, ?_⟩, rfl⟩
       rw [H_comp, hθρ]
-      rfl
+      exact congrArg (H · ρ) (Function.Embedding.ext fun _ ↦ Fin.ext rfl)
     have hsub := ih (β + p) rfl hη₀γ (k + 1) _ (P.V_mem _ hlt hρ₁) c (by omega)
       (V (lt_add_one (β + p)).le ρ) (P.V_mem _ hlt hρ) hkc1 le_self_add
       (by rwa [V_comp]) (V_H_comm _ _ _)
@@ -448,11 +460,14 @@ private theorem fiber_subsingleton_of_add_nat {β γ : Ordinal.{0}} (hγ : γ < 
 
 /-- **Proposition 5.13** (Larson, Scott processes): if `β + n + 1 < δ`, `φ ∈ Φ^n_β` and the
 process is injective beyond `φ`, then the process stabilizes at `β + n`; hence its rank is at
-most `β + n` (`rank_le`).  The proof `hβ : β + 1 < δ` in `InjectiveBeyond` is implicit: it is
-determined by `hinj`. -/
+most `β + n` (`rank_le`).  The proof of `β + 1 < δ` in `hφ` and `hinj` is derived from `hγ`;
+by proof irrelevance any other proof fits.  The hypothesis `hφ` is needed: `InjectiveBeyond`
+holds vacuously for `φ ∉ Φ^n_β`. -/
 theorem stabilizesAt_of_injectiveBeyond {β : Ordinal.{0}} {n : ℕ} (hγ : β + n + 1 < δ)
-    {hβ : β + 1 < δ} {φ : Ψ A β n} (hφ : φ ∈ P.Φ β ((lt_add_one β).trans hβ) n)
-    (hinj : P.InjectiveBeyond hβ φ) : P.StabilizesAt (β + n) := by
+    {φ : Ψ A β n}
+    (hφ : φ ∈ P.Φ β ((lt_add_one β).trans ((add_le_add_left le_self_add 1).trans_lt hγ)) n)
+    (hinj : P.InjectiveBeyond ((add_le_add_left le_self_add 1).trans_lt hγ) φ) :
+    P.StabilizesAt (β + n) := by
   have hβn : β ≤ β + n := le_self_add
   refine ⟨hγ, fun k ↦ ?_⟩
   rw [P.injOn_iff_fiber_subsingleton]
@@ -460,27 +475,33 @@ theorem stabilizesAt_of_injectiveBeyond {β : Ordinal.{0}} {n : ℕ} (hγ : β +
   obtain ⟨φn, hφn, hφnφ⟩ := P.fiber_nonempty hβn ((lt_add_one _).trans hγ) hφ
   obtain ⟨ρ, hρ, j, hθρ, hφnρ⟩ := P.amalgamate (β + n) _ k n θ hθ φn hφn
   have hρ0 : (P.fiber (hβn.trans (lt_add_one _).le) hγ (V hβn ρ)).Subsingleton := by
-    refine P.fiber_subsingleton_of_injectiveBeyond hβ hinj _ hγ j (P.V_mem hβn _ hρ) ?_
+    refine P.fiber_subsingleton_of_injectiveBeyond _ hinj _ hγ j (P.V_mem hβn _ hρ) ?_
     rw [← V_H_comm, ← hφnρ, hφnφ]
   exact P.fiber_subsingleton_of_add_nat hγ n (β + n) rfl (lt_add_one _).le k θ hθ (k + n) rfl
     ρ hρ (Nat.le_add_right k n) hβn hρ0 hθρ
 
 /-! ### The toy process -/
 
+/-- `unitProcess` of length `δ` stabilizes at exactly the levels `β` with `β + 1 < δ`: its
+columns are singletons, so only the length condition remains. -/
+@[simp] theorem unitProcess_stabilizesAt_iff {δ : Ordinal.{0}} (hδ : 0 < δ) (β : Ordinal.{0}) :
+    (unitProcess.{w} δ hδ).StabilizesAt β ↔ β + 1 < δ :=
+  ⟨fun ⟨h, _⟩ ↦ h, fun h ↦ ⟨h, fun _ x _ y _ _ ↦ Subsingleton.elim x y⟩⟩
+
 /-- `unitProcess` of length `δ` terminates iff `1 < δ`. -/
-theorem unitProcess_terminating_iff {δ : Ordinal.{0}} (hδ : 0 < δ) :
-    (unitProcess.{w} δ hδ).Terminating ↔ 1 < δ :=
-  ⟨fun ⟨β, h, _⟩ ↦ lt_of_le_of_lt (by simp) h,
-    fun h ↦ ⟨0, by simpa using h, fun _ x _ y _ _ ↦ Subsingleton.elim x y⟩⟩
+@[simp] theorem unitProcess_terminating_iff {δ : Ordinal.{0}} (hδ : 0 < δ) :
+    (unitProcess.{w} δ hδ).Terminating ↔ 1 < δ := by
+  simp only [Terminating, unitProcess_stabilizesAt_iff]
+  exact ⟨fun ⟨β, h⟩ ↦ lt_of_le_of_lt (by simp) h, fun h ↦ ⟨0, by simpa using h⟩⟩
 
 /-- `unitProcess` of length `δ > 1` has rank `0`. -/
 theorem unitProcess_isRank_zero {δ : Ordinal.{0}} (hδ : 0 < δ) (h1 : 1 < δ) :
     (unitProcess.{w} δ hδ).IsRank 0 :=
-  ⟨⟨by simpa using h1, fun _ x _ y _ _ ↦ Subsingleton.elim x y⟩,
-    fun _ _ ↦ zero_le⟩
+  ⟨(unitProcess_stabilizesAt_iff hδ 0).2 (by simpa using h1), fun _ _ ↦ zero_le⟩
 
 /-- The rank of `unitProcess` is `0` (whenever it terminates, that is, when `1 < δ`). -/
-theorem unitProcess_rank {δ : Ordinal.{0}} (hδ : 0 < δ) (h : (unitProcess.{w} δ hδ).Terminating) :
+@[simp] theorem unitProcess_rank {δ : Ordinal.{0}} (hδ : 0 < δ)
+    (h : (unitProcess.{w} δ hδ).Terminating) :
     (unitProcess.{w} δ hδ).rank h = 0 :=
   (unitProcess_isRank_zero hδ ((unitProcess_terminating_iff hδ).1 h)).rank_eq h
 
