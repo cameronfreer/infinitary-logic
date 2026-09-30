@@ -50,7 +50,8 @@ entries of their synchronized enumerations (`bfEquiv_iff_sf_eq_of_comp_eq`,
   point to be fresh (`mem_range_iff_of_bfEquiv`).
 * **Repeated coordinates.** `BFEquiv` compares arbitrary tuples `Fin n → M`, while entries exist
   for injective tuples only.  An equivalence at any level forces a common equality pattern
-  (the equality atoms at level `0`), so `exists_embedding_comp_eq_of_eq_iff` factors the two
+  (`BFEquiv.eq_iff_eq`, the equality atoms at level `0`), so
+  `exists_embedding_comp_eq_of_eq_iff` factors the two
   tuples through one surjective `g`.  Relabelling along any map preserves back-and-forth
   equivalence (`BFEquiv.relabel`), and along a surjective map it also reflects it
   (`BFEquiv.comp_iff_of_surjective`), with no further hypothesis; along a map that forgets a
@@ -61,8 +62,8 @@ entries of their synchronized enumerations (`bfEquiv_iff_sf_eq_of_comp_eq`,
 * Paul B. Larson, *Scott processes*, in *Beyond First Order Model Theory*, vol. I
   (J. Iovino, ed.), CRC Press, 2017, ch. 2.  Numbering follows the book: Definition 1.1 (the
   Scott formula of a tuple), Theorem 1.2 (equal Scott formulas as equal theories of quantifier
-  depth `α`), which Larson attributes to the induction of W. Hodges, *Model Theory*, Cambridge
-  University Press, 1993, Theorem 3.5.2.
+  depth `α`), which Larson calls a well-known fact provable by induction on `α`, referring to
+  W. Hodges, *Model Theory*, Cambridge University Press, 1993, Theorem 3.5.2.
 * In this library, `BFEquiv_implies_agreeQR` gives the forward direction from `BFEquiv` to
   agreement on formulas of bounded quantifier rank at every level, and
   `BFEquiv_iff_agree_formulas_omega` the equivalence for countable structures below `ω₁`.

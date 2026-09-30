@@ -1,7 +1,8 @@
 /-
 Regression guard for the bridge between semantic entries and back-and-forth equivalence
-(`InfinitaryLogic/ScottProcess/SemanticBridge.lean`), the reflection of back-and-forth
-equivalence along surjective relabelings (`BFEquiv.comp_iff_of_surjective` in
+(`InfinitaryLogic/ScottProcess/SemanticBridge.lean`), the equality-pattern and fresh-point facts
+and the reflection of back-and-forth equivalence along surjective relabelings
+(`BFEquiv.eq_iff_eq`, `mem_range_iff_of_bfEquiv`, `BFEquiv.comp_iff_of_surjective` in
 `InfinitaryLogic/Scott/BFEquivRelabel.lean`), and the upgrade at a self-stabilization level
 (`BFEquiv_upgrade_at_selfStabilization` in `InfinitaryLogic/Scott/Sentence.lean`).
 
@@ -386,6 +387,12 @@ def forget0 : Fin 1 → Fin 2 := fun _ ↦ 0
 /-- `1 ≠ 2` in `ℕ`. -/
 theorem h12 : (1 : ℕ) ≠ 2 := by decide
 
+/-- **Equality pattern** (`BFEquiv.eq_iff_eq`): `(0, 0)` and `(0, 1)` in `(ℕ, <)` are equivalent
+at no level, because their equality patterns differ. -/
+theorem eqPattern_not_bfEquiv (α : Ordinal) :
+    ¬ BFEquiv (L := binLang.{u, v}) α 2 ![(0 : ℕ), 0] ![(0 : ℕ), 1] :=
+  fun h ↦ absurd ((h.eq_iff_eq 0 1).1 rfl) (by decide)
+
 /-- **Forgetting does not reflect equivalence**: `(0, 1)` and `(1, 2)` in `Pairs` are not
 equivalent at any level (`0` and `1` are in one class, `1` and `2` are not), while their
 restrictions `(0)` and `(1)` along `forget0` are equivalent at every level. -/
@@ -424,7 +431,8 @@ def headline : List Name :=
    `pair_not_bfEquiv, `pair_sf_ne, `one_level0, `one_not_bfEquiv_one, `one_sf_ne_one,
    `mem_E_one, `not_mem_E_zero, `one_not_bfEquiv_one', `pairs_bfEquiv, `pairs_bfEquiv_ω,
    `ulift_bridge, `pairs_pair_bfEquiv, `pairs_fresh, `rep_bfEquiv_zero, `rep_not_bfEquiv_one,
-   `rep_bridge, `rep_exists, `pairs_02_13, `pairs_relabel, `forget_not_reflect, `nat_upgrade]
+   `rep_bridge, `rep_exists, `pairs_02_13, `pairs_relabel, `forget_not_reflect, `nat_upgrade,
+   `eqPattern_not_bfEquiv]
 
 def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
 
@@ -438,6 +446,7 @@ run_cmd do
   logInfo "semantic-bridge regression guard: OK (applied: sf_eq_iff_bfEquiv in both directions \
     at level 0 on (0, 1)/(1, 0) and (0)/(1) of (N, <), and at level 1 on (0)/(1) against a \
     direct non-equivalence and against the extension sets via mem_E_sf_iff; \
+    BFEquiv.eq_iff_eq on the differing equality patterns (0, 0)/(0, 1); \
     sf_eq_iff_bfEquiv_self at every level including omega on Pairs; across carrier universes \
     on ULift N against N in both directions; mem_range_iff_of_bfEquiv on the fresh extensions \
     (0, 1)/(1, 0) of Pairs; the repeated-coordinate bridge bfEquiv_iff_sf_eq_of_comp_eq and \
