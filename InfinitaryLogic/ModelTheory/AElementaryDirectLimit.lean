@@ -27,8 +27,8 @@ in `M` is pulled back to a common later component.  No countability of the fragm
 and `AElementary` is stated across carrier universes because the components (`Type w`) and the
 direct limit (`Type (max v' w)`) live in different ones.
 
-A directed family of substructures `S i` of one structure is a cocone over its union, with the
-inclusions `Substructure.inclusion (le_iSup S i)` as the `g i`, so the cocone form also gives
+A monotone family of substructures `S i` of one structure, over a nonempty directed index, is a
+cocone over its union, with the inclusions `Substructure.inclusion (le_iSup S i)` as the `g i`, so the cocone form also gives
 link-to-union elementarity from pairwise `A`-elementary links.  The ambient-model results in
 `ModelTheory/AElementaryChains.lean` are proved independently, by Tarski–Vaught, from the
 different hypothesis that every link is `A`-elementary in the ambient model:
@@ -59,8 +59,8 @@ each map of a compatible family of embeddings that jointly covers `M` is A-eleme
 
 The proof is Marker, *Lectures on Infinitary Model Theory* (Cambridge, 2016), Lemma 7.2.11
 (fixed fragment, identity fragment maps); the statement generalizes Lemma 3.19(3) of Baldwin,
-Friedman, Koerwien, Laskowski, *Three red herrings* (2014) to an arbitrary directed index and an
-arbitrary fragment, over a fixed vocabulary and a fixed fragment. -/
+Friedman, Koerwien, Laskowski, *Three red herrings* (2014) to an arbitrary directed index and
+any `Fragment` (no countability), held fixed, over a fixed vocabulary. -/
 theorem aElementary_of_cocone (hf : ∀ i j (h : i ≤ j), AElementary A (f i j h))
     (hg : ∀ i j (h : i ≤ j) x, g j (f i j h x) = g i x) (hcover : ∀ z : M, ∃ i x, g i x = z)
     (i : ι) : AElementary A (g i) := by
