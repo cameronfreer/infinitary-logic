@@ -6,7 +6,8 @@ Authors: Cameron Freer
 import Mathlib.ModelTheory.Basic
 import Mathlib.Data.List.Sort
 import Mathlib.Data.List.Infix
-import Mathlib.Data.Countable.Basic
+import Mathlib.Basic.Countable.Basic
+import Mathlib.Logic.Equiv.List
 
 /-!
 # The labeled-fiber language, the generic row assembly, and its prefix specialization

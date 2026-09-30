@@ -88,7 +88,7 @@ omit [Countable (Σ l, L.Relations l)] in
 /-- **The expansion code is Borel**: base coordinates are projections, defined coordinates are
 formula satisfaction. -/
 theorem measurable_morleyCode : Measurable (morleyCode Φ) := by
-  apply measurable_pi_lambda
+  apply Measurable.of_eval
   rintro ⟨⟨n, R | φ⟩, v⟩
   · exact measurable_pi_apply _
   · apply measurable_to_bool

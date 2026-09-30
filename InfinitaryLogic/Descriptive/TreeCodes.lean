@@ -244,15 +244,15 @@ well-foundedness proof; no default value on ill-founded codes. -/
 noncomputable def treeRank (mem : L.Relations 1) {c : StructureSpace L}
     (hwf : c ∈ wellFoundedTreeClass mem) : Ordinal :=
   @treeHeight (treeOf mem c hwf.choose)
-    ⟨(wellFounded_extBelow_iff_not_hasInfiniteBranch _).mpr hwf.choose_spec⟩
+    ((wellFounded_extBelow_iff_not_hasInfiniteBranch _).mpr hwf.choose_spec)
 
 /-- **The rank is at most the order type of the KB code.** -/
 private theorem treeRank_le_type_kbRel (mem : L.Relations 1) {c : StructureSpace L}
     (hwf : c ∈ wellFoundedTreeClass mem) :
     treeRank mem hwf ≤ @Ordinal.type ℕ (kbRel mem c) (isWellOrder_kbRel mem hwf) := by
   have hwo := isWellOrder_kbRel mem hwf
-  have : IsWellFounded ↥(treeOf mem c hwf.choose) (extBelow _) :=
-    ⟨(wellFounded_extBelow_iff_not_hasInfiniteBranch _).mpr hwf.choose_spec⟩
+  have : WellFounded (extBelow (treeOf mem c hwf.choose)) :=
+    (wellFounded_extBelow_iff_not_hasInfiniteBranch _).mpr hwf.choose_spec
   have hkb := isWellOrder_kbLT (treeOf mem c hwf.choose)
     ((wellFounded_extBelow_iff_not_hasInfiniteBranch _).mpr hwf.choose_spec)
   refine (treeHeight_le_type _).trans ?_
@@ -302,8 +302,8 @@ private def kbRelEmbedding (mem : L.Relations 1) (c : StructureSpace L) :
 theorem treeRank_le_type_kbCode (mem : L.Relations 1) {c : StructureSpace L}
     (hwf : c ∈ wellFoundedTreeClass mem) (h : IsWellOrder ℕ (kbCodeRel mem c)) :
     treeRank mem hwf ≤ @Ordinal.type ℕ (kbCodeRel mem c) h := by
-  have : IsWellFounded ↥(treeOf mem c hwf.choose) (extBelow _) :=
-    ⟨(wellFounded_extBelow_iff_not_hasInfiniteBranch _).mpr hwf.choose_spec⟩
+  have : WellFounded (extBelow (treeOf mem c hwf.choose)) :=
+    (wellFounded_extBelow_iff_not_hasInfiniteBranch _).mpr hwf.choose_spec
   have hkb := isWellOrder_kbLT (treeOf mem c hwf.choose)
     ((wellFounded_extBelow_iff_not_hasInfiniteBranch _).mpr hwf.choose_spec)
   refine (treeHeight_le_type _).trans ?_

@@ -178,7 +178,7 @@ theorem hasArbLargeModels_of_restricted_extraction
   intro κ
   -- Target linear order J of cardinality κ.
   let J : Type := (Cardinal.ord κ).ToType
-  have : LinearOrder J := linearOrder_toType _
+  let : LinearOrder J := inferInstance
   have hJ_card : Cardinal.mk J = κ := Cardinal.mk_ord_toType κ
   -- Apply the compact-oracle sequence stretching.
   obtain ⟨N, instN, b, hSeq⟩ :=
@@ -461,7 +461,7 @@ theorem hasArbLargeModels_of_seed_realizability
       (morleySeed_indiscernibleOn φ hPairwise)
   intro κ
   let J : Type := (Cardinal.ord κ).ToType
-  have : LinearOrder J := linearOrder_toType _
+  let : LinearOrder J := inferInstance
   have hJ_card : Cardinal.mk J = κ := Cardinal.mk_ord_toType κ
   obtain ⟨N, instN, b, hSeq⟩ :=
     IsLomega1omegaIndiscernibleOnTail.stretch_restricted_sequence_of_model (J := J)

@@ -411,7 +411,7 @@ noncomputable def ehmrChosen (cR : (Fin 2 ↪o Source κ) → C)
           (h.restrict (le_of_lt (by
             have hh := Ordinal.typein_lt_type (· < · : β.ToType → β.ToType → Prop) x
             rwa [Ordinal.type_toType] at hh)))) h).Nonempty then
-      (IsWellFounded.wf : WellFounded (· < · : Source κ → Source κ → Prop)).min _ hne
+      (wellFounded_lt : WellFounded (· < · : Source κ → Source κ → Prop)).min _ hne
     else
       Classical.arbitrary (Source κ)
 termination_by β
@@ -471,7 +471,7 @@ theorem ehmrChosen_mem (cR : (Fin 2 ↪o Source κ) → C) {β : Ordinal.{0}}
 theorem ehmrChosen_eq_min (cR : (Fin 2 ↪o Source κ) → C) {β : Ordinal.{0}}
     (h : EHMRNodeAt C β) (hlive : ehmrLive cR h) :
     ehmrChosen cR β h =
-      (IsWellFounded.wf : WellFounded (· < · : Source κ → Source κ → Prop)).min
+      (wellFounded_lt : WellFounded (· < · : Source κ → Source κ → Prop)).min
         (ehmrS cR h) hlive := by
   classical
   have hcond : (ehmrFiber cR
@@ -1246,7 +1246,8 @@ theorem treeChain_pair_homogeneous_ofBranch
   have h_pair_eq :
       (pairEmbed (treeCommitOfBranch_strictMono hκ B hδ hη hδη) :
         Fin 2 ↪o Source κ) = pairEmbed h_lt := by
-    ext k
+    apply DFunLike.ext
+    intro k
     match k with
     | ⟨0, _⟩ =>
       show treeCommitOfBranch hκ B δ hδ = B.prefixAt η hη x_η
