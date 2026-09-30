@@ -1,33 +1,42 @@
 /-
 Regression guard for the rank of the Scott process of a structure against the orbit ranks and the
-internal Scott rank (`InfinitaryLogic/ScottProcess/RankComparison.lean`).
+internal Scott rank (`InfinitaryLogic/ScottProcess/RankComparison.lean`), and for the Scott-layer
+descriptions of the supremum of the orbit ranks
+(`InfinitaryLogic/Scott/OrbitRankStabilization.lean`).
 
-Every theorem below is *applied* to a concrete structure, not only listed for its axioms.  The
-two conventions are `R = ⨆ a, orbitRank a` (the lifted process rank) and
+Every public theorem of both files is *applied* to a concrete structure, not only listed for its
+axioms.  The two conventions are `R = ⨆ a, orbitRank a` (the lifted process rank) and
 `S = ⨆ a, (orbitRank a + 1) = internalScottRank`.
 
 * **The infinite pure set** `ℕ` over the empty language: the process of length `δ > 1` has
   rank `0` (`isRank_iff_lift_eq_iSup_orbitRank`, from `orbitRank_pure_eq_zero`, and
-  `isRank_iff_of_not_isSuccLimit`, from `internalScottRank_pureSet`); the empty tuple attains
-  the supremum, so `internalScottRank ℕ = 1` is read off the rank through
+  `isRank_iff_lift_add_one_eq_internalScottRank_of_not_isSuccLimit`, from
+  `internalScottRank_pureSet`); the empty tuple attains the supremum, so
+  `internalScottRank ℕ = 1` is read off the rank through
   `lift_rank_add_one_eq_internalScottRank_iff`, and the non-attained equation fails
-  (`lift_rank_eq_internalScottRank_iff`).  The same on `ULift.{w} ℕ`, with
+  (`lift_rank_eq_internalScottRank_iff`); the stabilization ordinal of `ℕ` with itself is `0`
+  (`bfStabilizationOrdinal_self_eq_iSup_orbitRank`).  The same rank on `ULift.{w} ℕ`, with
   `Ordinal.lift.{w}` in `Ordinal.{w}`.
 * **The exact-`ω` carrier** `FiberExactOmega.Carrier'` over the relational `lang ℕ
   Language.empty`: from `internalScottRank_exactOmega` (a limit), the process of length `ω + 2`
-  has rank `ω` (`isRank_iff_of_isSuccLimit`); non-attainment (every orbit rank is finite) is
-  derived from `orbitRank_add_one_le_internalScottRank`, and the non-attained comparison
-  `lift_rank_eq_internalScottRank_iff` gives `internalScottRank = ω` back from the rank.  The
-  process stabilizes at `ω` and at no finite level.
+  has rank `ω` (`isRank_iff_lift_eq_internalScottRank_of_isSuccLimit`); non-attainment (every
+  orbit rank is finite) is derived from `orbitRank_add_one_le_internalScottRank`, and the
+  non-attained comparison `lift_rank_eq_internalScottRank_iff` gives `internalScottRank = ω`
+  back from the rank.  The process stabilizes at `ω` and at no finite level.
 * **Larson's Remark 5.11 graph** on `Bool × ℕ` (the `true` side an infinite clique, the `false`
   side infinitely many isolated nodes): every tuple has orbit rank at most `1` (same equality
   pattern and same sides is a back-and-forth system, and equivalence at level `1` detects the
   sides), `(true, 0)` has orbit rank `1` (it is equivalent to `(false, 0)` at level `0` and not at
   level `1`), so the process of length `3` stabilizes at `1` and not at `0` and has rank `1`
   (`stabilizesAt_iff_bfEquiv`, `stabilizesAt_iff_selfStabilizesCompletely`,
-  `isRank_iff_isLeast_selfStabilizesCompletely`, `isRank_iff_lift_eq_iSup_orbitRank`,
-  `sInf_selfStabilizesCompletely_eq_iSup_orbitRank`); the supremum is attained, so
-  `internalScottRank = 2` (`lift_rank_add_one_eq_internalScottRank_iff`), consistent with
+  `stabilizesAt_iff_orbitRank_le`, `isRank_iff_isLeast_selfStabilizesCompletely`,
+  `isRank_iff_lift_eq_iSup_orbitRank`); in the Scott layer, `M` self-stabilizes completely at `1`
+  (`selfStabilizesCompletely_iff_orbitRank_le`), and `1` is the least self-stabilization level,
+  the supremum of the orbit ranks and the stabilization ordinal of the graph with itself
+  (`sInf_selfStabilizesCompletely_eq_iSup_orbitRank`, `iSup_orbitRank_le_iff`,
+  `orbitRank_le_iSup_orbitRank`, `bfStabilizationOrdinal_self_eq_iSup_orbitRank`); the supremum
+  is attained, so `internalScottRank = 2` (`lift_rank_add_one_eq_internalScottRank_iff`,
+  `isRank_iff_lift_add_one_eq_internalScottRank_of_not_isSuccLimit`), consistent with
   `lift_rank_le_internalScottRank` and `internalScottRank_le_lift_rank_add_one`.
 * **Bound transport** (`stabilizesAt_of_orbitRank_le`, `orbitRank_le_of_stabilizesAt`,
   `rank_le_of_orbitRank_le`): on the graph, orbit ranks at most `1` give stabilization at `1`,
@@ -67,12 +76,14 @@ theorem nat_isRank_zero {δ : Ordinal.{0}} (hδ : 1 < δ) :
     (scottProcessOf Language.empty ℕ δ (zero_lt_one.trans hδ)).IsRank 0 :=
   isRank_iff_lift_eq_iSup_orbitRank.2 ⟨by rwa [zero_add], by rw [nat_iSup_orbitRank]; simp⟩
 
-/-- **The same rank from the internal Scott rank** (`isRank_iff_of_not_isSuccLimit`, with
+/-- **The same rank from the internal Scott rank**
+(`isRank_iff_lift_add_one_eq_internalScottRank_of_not_isSuccLimit`, with
 `internalScottRank_pureSet`). -/
 theorem nat_isRank_zero' {δ : Ordinal.{0}} (hδ : 1 < δ) :
     (scottProcessOf Language.empty ℕ δ (zero_lt_one.trans hδ)).IsRank 0 := by
   have hS : internalScottRank (L := Language.empty) ℕ = 1 := internalScottRank_pureSet
-  refine (isRank_iff_of_not_isSuccLimit (hS ▸ not_isSuccLimit_one)).2 ⟨by rwa [zero_add], ?_⟩
+  refine (isRank_iff_lift_add_one_eq_internalScottRank_of_not_isSuccLimit
+    (hS ▸ not_isSuccLimit_one)).2 ⟨by rwa [zero_add], ?_⟩
   rw [hS]
   simp
 
@@ -93,6 +104,12 @@ theorem nat_internalScottRank {δ : Ordinal.{0}} (hδ : 1 < δ) :
     Fin.elim0
   rw [PureSet.orbitRank_pure_eq_zero, hr, Ordinal.lift_zero] at this
   exact lt_irrefl _ this
+
+/-- **The stabilization ordinal of the pure set with itself is `0`**
+(`bfStabilizationOrdinal_self_eq_iSup_orbitRank`). -/
+theorem nat_bfStabilizationOrdinal :
+    bfStabilizationOrdinal.{0, 0, 0} Language.empty ℕ ℕ = 0 :=
+  bfStabilizationOrdinal_self_eq_iSup_orbitRank.trans nat_iSup_orbitRank
 
 /-- The empty-language structure on `ULift.{w} ℕ`. -/
 local instance instEmptyULift : Language.empty.Structure (ULift.{w} ℕ) := Language.emptyStructure
@@ -148,11 +165,11 @@ theorem omega_add_two_pos : 0 < Ordinal.omega0.{0} + 2 :=
 abbrev omegaProcess := scottProcessOf (lang ℕ Language.empty) Carrier' _ omega_add_two_pos
 
 /-- **The exact-`ω` carrier has process rank `ω`**, read off its internal Scott rank `ω`, a limit
-(`isRank_iff_of_isSuccLimit`). -/
+(`isRank_iff_lift_eq_internalScottRank_of_isSuccLimit`). -/
 theorem omega_isRank : omegaProcess.IsRank Ordinal.omega0 := by
   have hS := internalScottRank_exactOmega
-  refine (isRank_iff_of_isSuccLimit (hS ▸ Ordinal.isSuccLimit_omega0)).2
-    ⟨omega_add_one_lt, ?_⟩
+  refine (isRank_iff_lift_eq_internalScottRank_of_isSuccLimit
+    (hS ▸ Ordinal.isSuccLimit_omega0)).2 ⟨omega_add_one_lt, ?_⟩
   rw [hS, Ordinal.lift_id]
 
 /-- **Non-attainment** from the library bounds: every tuple of the exact-`ω` carrier has finite
@@ -231,6 +248,11 @@ instance instGraph : graphLang.Structure (Bool × ℕ) where
   RelMap {n} R v := match n, R with
     | _, GSym.adj => Adj (v 0) (v 1)
 
+/-- Adjacency in the graph of Remark 5.11 is `Adj`, by definition of the structure. -/
+@[simp] theorem relMap_adj (v : Fin 2 → Bool × ℕ) :
+    Structure.RelMap (L := graphLang) GSym.adj v ↔ Adj (v 0) (v 1) :=
+  Iff.rfl
+
 /-- Same equality pattern and same sides: the back-and-forth system of the graph. -/
 def SideInv {n : ℕ} (a b : Fin n → Bool × ℕ) : Prop :=
   (∀ i j, a i = a j ↔ b i = b j) ∧ ∀ i, (a i).1 = (b i).1
@@ -247,8 +269,7 @@ theorem SideInv.sameAtomicType {n : ℕ} {a b : Fin n → Bool × ℕ} (h : Side
   | eq i j => exact h.1 i j
   | rel R f =>
     cases R
-    show Adj (a (f 0)) (a (f 1)) ↔ Adj (b (f 0)) (b (f 1))
-    simp only [Adj, h.2, (h.1 _ _).not]
+    simp only [AtomicIdx.holds, relMap_adj, Function.comp_apply, Adj, h.2, (h.1 _ _).not]
 
 /-- `SideInv` is preserved by appending matched points on the same side. -/
 theorem SideInv.snoc {n : ℕ} {a b : Fin n → Bool × ℕ} (h : SideInv a b) {x y : Bool × ℕ}
@@ -295,11 +316,10 @@ theorem side_of_bfEquiv_one {n : ℕ} {a b : Fin n → Bool × ℕ}
   rw [one_eq_succ_zero] at h
   obtain ⟨m', hm'⟩ := h.forth (true, (a i).2 + 1)
   have hadj := ((BFEquiv.zero _ _).1 hm' (.rel GSym.adj ![i.castSucc, Fin.last n])).1 (by
-    show Adj _ _
-    simp only [Function.comp, Matrix.cons_val_zero, Matrix.cons_val_one, Fin.snoc_castSucc,
-      Fin.snoc_last]
+    simp only [AtomicIdx.holds, relMap_adj, Function.comp, Matrix.cons_val_zero,
+      Matrix.cons_val_one, Fin.snoc_castSucc, Fin.snoc_last]
     exact ⟨ha, rfl, fun e ↦ by simpa using congrArg Prod.snd e⟩)
-  change Adj _ _ at hadj
+  simp only [AtomicIdx.holds, relMap_adj] at hadj
   simpa [Fin.snoc_castSucc] using hadj.1
 
 /-- Equivalence at level `1` gives `SideInv`. -/
@@ -324,12 +344,10 @@ theorem vT_vF_zero : BFEquiv (L := graphLang) (0 : Ordinal.{0}) 1 vT vF := by
   refine (BFEquiv.zero _ _).2 fun idx ↦ ?_
   cases idx with
   | eq i j =>
-    show vT i = vT j ↔ vF i = vF j
-    simp [Subsingleton.elim i j]
+    simp [AtomicIdx.holds, Subsingleton.elim i j]
   | rel R f =>
     cases R
-    show Adj _ _ ↔ Adj _ _
-    simp [Adj, Subsingleton.elim (f 0) (f 1)]
+    simp [AtomicIdx.holds, Adj, Subsingleton.elim (f 0) (f 1)]
 
 /-- `(true, 0)` and `(false, 0)` are not equivalent at level `1`. -/
 theorem vT_vF_not_one : ¬ BFEquiv (L := graphLang) (1 : Ordinal.{0}) 1 vT vF := fun h ↦
@@ -384,6 +402,31 @@ theorem graph_per_level :
   · have := (stabilizesAt_iff_selfStabilizesCompletely.1 graph_stabilizesAt.1).2
     rwa [Ordinal.lift_id] at this
 
+/-- **The orbit-rank readings on the graph**: every orbit rank is at most `1`, so the graph
+self-stabilizes completely at `1` (`selfStabilizesCompletely_iff_orbitRank_le`); stabilization
+of the process at `0` would bound the orbit rank of `(true, 0)` by `0`
+(`stabilizesAt_iff_orbitRank_le`). -/
+theorem graph_orbit_readings :
+    SelfStabilizesCompletely (L := graphLang) (Bool × ℕ) (1 : Ordinal.{0}) ∧
+      ¬ graphProcess.StabilizesAt 0 := by
+  refine ⟨selfStabilizesCompletely_iff_orbitRank_le.2 fun _ a ↦ graph_orbitRank_le_one a,
+    fun h ↦ ?_⟩
+  have := (stabilizesAt_iff_orbitRank_le.1 h).2 1 vT
+  rw [vT_orbitRank, Ordinal.lift_id] at this
+  exact absurd this (by norm_num)
+
+/-- **The supremum of the orbit ranks of the graph, in the Scott layer**: it is `1`, bounded by
+`1` (`iSup_orbitRank_le_iff`) and attained at `(true, 0)` (`orbitRank_le_iSup_orbitRank`), and
+it is the stabilization ordinal of the graph with itself
+(`bfStabilizationOrdinal_self_eq_iSup_orbitRank`). -/
+theorem graph_iSup_readings :
+    (⨆ x : (Σ n : ℕ, Fin n → Bool × ℕ), orbitRank (L := graphLang) x.2) = 1 ∧
+      bfStabilizationOrdinal.{0, 0, 0} graphLang (Bool × ℕ) (Bool × ℕ) = 1 := by
+  have hR : (⨆ x : (Σ n : ℕ, Fin n → Bool × ℕ), orbitRank (L := graphLang) x.2) = 1 :=
+    (iSup_orbitRank_le_iff.2 fun _ a ↦ graph_orbitRank_le_one a).antisymm
+      (vT_orbitRank ▸ orbitRank_le_iSup_orbitRank vT)
+  exact ⟨hR, bfStabilizationOrdinal_self_eq_iSup_orbitRank.trans hR⟩
+
 /-- **The rank through self-stabilization and the orbit ranks**
 (`isRank_iff_isLeast_selfStabilizesCompletely`, `isRank_iff_lift_eq_iSup_orbitRank`,
 `sInf_selfStabilizesCompletely_eq_iSup_orbitRank`): `1` is the least self-stabilization level
@@ -400,7 +443,8 @@ theorem graph_rank_readings :
 
 /-- **Attained case on the graph**: `(true, 0)` has orbit rank `1 = rank`, so the internal Scott
 rank is `rank + 1 = 2` (`lift_rank_add_one_eq_internalScottRank_iff`), in agreement with the
-two unconditional bounds and with `isRank_iff_of_not_isSuccLimit`; `rank_le_of_orbitRank_le`
+two unconditional bounds and with
+`isRank_iff_lift_add_one_eq_internalScottRank_of_not_isSuccLimit`; `rank_le_of_orbitRank_le`
 gives `rank ≤ 1` from the orbit bounds. -/
 theorem graph_internalScottRank :
     internalScottRank (L := graphLang) (Bool × ℕ) = 2 ∧
@@ -422,7 +466,8 @@ theorem graph_internalScottRank :
   have hns : ¬ IsSuccLimit (internalScottRank (L := graphLang) (Bool × ℕ)) := by
     rw [hS, ← one_add_one_eq_two, ← succ_eq_add_one]
     exact not_isSuccLimit_succ 1
-  exact (isRank_iff_of_not_isSuccLimit hns).2 ⟨one_add_one_lt_three, by
+  exact (isRank_iff_lift_add_one_eq_internalScottRank_of_not_isSuccLimit hns).2
+    ⟨one_add_one_lt_three, by
     rw [hS, Ordinal.lift_id, one_add_one_eq_two]⟩
 
 end Graph
@@ -431,29 +476,43 @@ end
 
 /-! ### Axiom hygiene -/
 
+/-- The Scott-layer declarations, in `FirstOrder.Language` (`Scott/OrbitRankStabilization.lean`). -/
+def scottHeadline : List Name :=
+  ([`iSup_orbitRank_le_iff,
+    `orbitRank_le_iSup_orbitRank,
+    `selfStabilizesCompletely_iff_orbitRank_le,
+    `sInf_selfStabilizesCompletely_eq_iSup_orbitRank,
+    `bfStabilizationOrdinal_self_eq_iSup_orbitRank]).map
+    (`FirstOrder.Language ++ ·)
+
+/-- The process-layer declarations, in `InfinitaryLogic.ScottProcess.Semantic`
+(`ScottProcess/RankComparison.lean`). -/
+def processHeadline : List Name :=
+  ([`stabilizesAt_iff_bfEquiv,
+    `stabilizesAt_iff_selfStabilizesCompletely,
+    `stabilizesAt_iff_orbitRank_le,
+    `isRank_iff_isLeast_selfStabilizesCompletely,
+    `isRank_iff_lift_eq_iSup_orbitRank,
+    `lift_rank_eq_iSup_orbitRank,
+    `lift_rank_le_internalScottRank,
+    `internalScottRank_le_lift_rank_add_one,
+    `lift_rank_add_one_eq_internalScottRank_iff,
+    `lift_rank_eq_internalScottRank_iff,
+    `isRank_iff_lift_eq_internalScottRank_of_isSuccLimit,
+    `isRank_iff_lift_add_one_eq_internalScottRank_of_not_isSuccLimit,
+    `stabilizesAt_of_orbitRank_le,
+    `orbitRank_le_of_stabilizesAt,
+    `rank_le_of_orbitRank_le]).map
+    (`InfinitaryLogic.ScottProcess.Semantic ++ ·)
+
 /-- The declarations whose axioms are audited. -/
 def headline : List Name :=
-  [`InfinitaryLogic.ScottProcess.Semantic.selfStabilizesCompletely_iff_orbitRank_le,
-   `InfinitaryLogic.ScottProcess.Semantic.sInf_selfStabilizesCompletely_eq_iSup_orbitRank,
-   `InfinitaryLogic.ScottProcess.Semantic.stabilizesAt_iff_bfEquiv,
-   `InfinitaryLogic.ScottProcess.Semantic.stabilizesAt_iff_selfStabilizesCompletely,
-   `InfinitaryLogic.ScottProcess.Semantic.stabilizesAt_iff_orbitRank_le,
-   `InfinitaryLogic.ScottProcess.Semantic.isRank_iff_isLeast_selfStabilizesCompletely,
-   `InfinitaryLogic.ScottProcess.Semantic.isRank_iff_lift_eq_iSup_orbitRank,
-   `InfinitaryLogic.ScottProcess.Semantic.lift_rank_eq_iSup_orbitRank,
-   `InfinitaryLogic.ScottProcess.Semantic.lift_rank_le_internalScottRank,
-   `InfinitaryLogic.ScottProcess.Semantic.internalScottRank_le_lift_rank_add_one,
-   `InfinitaryLogic.ScottProcess.Semantic.lift_rank_add_one_eq_internalScottRank_iff,
-   `InfinitaryLogic.ScottProcess.Semantic.lift_rank_eq_internalScottRank_iff,
-   `InfinitaryLogic.ScottProcess.Semantic.isRank_iff_of_isSuccLimit,
-   `InfinitaryLogic.ScottProcess.Semantic.isRank_iff_of_not_isSuccLimit,
-   `InfinitaryLogic.ScottProcess.Semantic.stabilizesAt_of_orbitRank_le,
-   `InfinitaryLogic.ScottProcess.Semantic.orbitRank_le_of_stabilizesAt,
-   `InfinitaryLogic.ScottProcess.Semantic.rank_le_of_orbitRank_le,
-   `nat_isRank_zero, `nat_isRank_zero', `nat_internalScottRank, `ulift_isRank_zero,
-   `ulift_internalScottRank, `omega_isRank, `omega_rank_eq, `omega_bounds,
-   `omega_bound_transport, `graph_orbitRank_le_one, `vT_orbitRank, `graph_stabilizesAt,
-   `graph_isRank, `graph_per_level, `graph_rank_readings, `graph_internalScottRank]
+  scottHeadline ++ processHeadline ++
+  [`nat_isRank_zero, `nat_isRank_zero', `nat_internalScottRank, `nat_bfStabilizationOrdinal,
+   `ulift_isRank_zero, `ulift_internalScottRank, `omega_isRank, `omega_rank_eq, `omega_bounds,
+   `omega_bound_transport, `relMap_adj, `graph_orbitRank_le_one, `vT_orbitRank,
+   `graph_stabilizesAt, `graph_isRank, `graph_per_level, `graph_orbit_readings,
+   `graph_iSup_readings, `graph_rank_readings, `graph_internalScottRank]
 
 /-- The standard axioms. -/
 def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
@@ -466,13 +525,16 @@ run_cmd do
     let bad := axs.toList.filter fun a => !standardAxioms.contains a
     unless bad.isEmpty do throwError "[NONSTANDARD AXIOMS] {n} uses {bad}"
   logInfo "rank-comparison regression guard: OK (applied: the infinite pure set N has process \
-    rank 0 through isRank_iff_lift_eq_iSup_orbitRank and isRank_iff_of_not_isSuccLimit, and \
-    internalScottRank 1 read off the rank through the attained comparison, the non-attained one \
-    failing; the same on ULift N with Ordinal.lift; the exact-omega carrier has process rank \
-    omega through isRank_iff_of_isSuccLimit, non-attainment from the library bounds, \
-    internalScottRank omega back through the non-attained comparison, no finite stabilization \
-    level; Larson's Remark 5.11 graph has orbit ranks at most 1, process rank 1 through \
-    stabilizesAt_iff_bfEquiv, self-stabilization, the least self-stabilization level and the \
-    supremum of the orbit ranks, and internalScottRank 2 through the attained comparison; bound \
-    transport on the graph and, with strict bounds, on the exact-omega carrier; headline \
-    declarations on standard axioms)"
+    rank 0 through isRank_iff_lift_eq_iSup_orbitRank and \
+    isRank_iff_lift_add_one_eq_internalScottRank_of_not_isSuccLimit, internalScottRank 1 read off \
+    the rank through the attained comparison, the non-attained one failing, and stabilization \
+    ordinal 0 with itself; the same rank on ULift N with Ordinal.lift; the exact-omega carrier \
+    has process rank omega through isRank_iff_lift_eq_internalScottRank_of_isSuccLimit, \
+    non-attainment from the library bounds, internalScottRank omega back through the \
+    non-attained comparison, no finite stabilization level; Larson's Remark 5.11 graph has orbit \
+    ranks at most 1, process rank 1 through stabilizesAt_iff_bfEquiv, \
+    stabilizesAt_iff_orbitRank_le, self-stabilization (selfStabilizesCompletely_iff_orbitRank_le), \
+    the least self-stabilization level, the supremum of the orbit ranks and the stabilization \
+    ordinal of the graph with itself (bfStabilizationOrdinal_self_eq_iSup_orbitRank), and \
+    internalScottRank 2 through the attained comparison; bound transport on the graph and, with \
+    strict bounds, on the exact-omega carrier; headline declarations on standard axioms)"

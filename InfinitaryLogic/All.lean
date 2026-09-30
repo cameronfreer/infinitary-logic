@@ -33,6 +33,7 @@ import InfinitaryLogic.ModelTheory.FiberProfileBound
 import InfinitaryLogic.ModelTheory.FiberOwnerRows
 import InfinitaryLogic.Scott.FiniteMatching
 import InfinitaryLogic.Scott.PureSetThreshold
+import InfinitaryLogic.Scott.OrbitRankStabilization
 import InfinitaryLogic.ModelTheory.FiberProfilePerm
 import InfinitaryLogic.ModelTheory.FiberIsoCarrying
 import InfinitaryLogic.ModelTheory.FiberOrbitBound

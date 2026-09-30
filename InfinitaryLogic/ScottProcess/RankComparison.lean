@@ -5,11 +5,10 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.ScottProcess.SemanticBridge
 import InfinitaryLogic.ScottProcess.Rank
-import InfinitaryLogic.Scott.OrbitRank
-import InfinitaryLogic.Scott.Sentence
+import InfinitaryLogic.Scott.OrbitRankStabilization
 
 /-!
-# The rank of the Scott process of a structure, against the orbit and Scott ranks
+# The rank of the Scott process of a structure, against the orbit and internal Scott ranks
 
 For an infinite structure `M : Type w` over a relational language, the Scott process
 `scottProcessOf L M δ hδ` stabilizes at a level `β` exactly when back-and-forth equivalence of
@@ -17,13 +16,15 @@ tuples of `M` at level `β` implies equivalence at level `β + 1`, that is, when
 self-stabilizes completely at `β`, that is, when every tuple of `M` has orbit rank at most `β`
 (each time together with the length condition `β + 1 < δ`).  Hence the rank of the process
 (Larson, *Scott processes*, Definition 5.6) is the supremum of the orbit ranks of the tuples of
-`M`, and it differs from the internal Scott rank `internalScottRank M` by at most one.
+`M`, and it differs from the internal Scott rank `internalScottRank M` by at most one.  The
+comparison is with `internalScottRank` only; `scottRank` (`Scott/Rank.lean`) is not compared.
 
 ## Main declarations
 
-* `selfStabilizesCompletely_iff_orbitRank_le` and
-  `sInf_selfStabilizesCompletely_eq_iSup_orbitRank`: for any structure `M : Type w`, the least
-  self-stabilization level in `Ordinal.{w}` is `⨆ a, orbitRank a`.
+* Used from the Scott layer (`Scott/OrbitRankStabilization.lean`, namespace
+  `FirstOrder.Language`): `selfStabilizesCompletely_iff_orbitRank_le` and
+  `sInf_selfStabilizesCompletely_eq_iSup_orbitRank` (for any structure `M : Type w`, the least
+  self-stabilization level in `Ordinal.{w}` is `⨆ a, orbitRank a`).
 * Per level: `stabilizesAt_iff_bfEquiv` (equivalence at `β` implies equivalence at `β + 1`, for
   all tuples, repeated coordinates included), `stabilizesAt_iff_selfStabilizesCompletely` and
   `stabilizesAt_iff_orbitRank_le`.
@@ -32,8 +33,10 @@ self-stabilizes completely at `β`, that is, when every tuple of `M` has orbit r
 * Against `internalScottRank`: `lift_rank_le_internalScottRank`,
   `internalScottRank_le_lift_rank_add_one`, the attained case
   `lift_rank_add_one_eq_internalScottRank_iff`, the non-attained case
-  `lift_rank_eq_internalScottRank_iff`, and the forms `isRank_iff_of_isSuccLimit` and
-  `isRank_iff_of_not_isSuccLimit`, which read the rank off `internalScottRank M` alone.
+  `lift_rank_eq_internalScottRank_iff`, and the forms
+  `isRank_iff_lift_eq_internalScottRank_of_isSuccLimit` and
+  `isRank_iff_lift_add_one_eq_internalScottRank_of_not_isSuccLimit`, which read the rank off
+  `internalScottRank M` alone.
 * Bound transport: `stabilizesAt_of_orbitRank_le`, `orbitRank_le_of_stabilizesAt` and
   `rank_le_of_orbitRank_le`.
 
@@ -42,17 +45,22 @@ self-stabilizes completely at `β`, that is, when every tuple of `M` has orbit r
 * **Two conventions.** `R = ⨆ a, orbitRank a` is the least level at which the class of every
   tuple is its all-levels class; `S = ⨆ a, (orbitRank a + 1)` is `internalScottRank M`.  Both
   suprema range over all tuples `Σ n, Fin n → M`, repeated coordinates included, as in
-  `internalScottRank`.  The rank of the process, lifted, is `R` (`lift_rank_eq_iSup_orbitRank`),
-  so the infinite pure set has rank `0`.  Larson's remark after Definition 5.6 identifies the
-  rank of a long enough initial segment of the Scott process of `M` with the Scott rank of `M`;
-  here that identification holds for the convention `R`, while `S` is one more in the attained
-  case.  `R` is kept as an explicit supremum in the statements, not as a new definition.
+  `internalScottRank`.  In the Scott layer `R` is also the stabilization ordinal of `M` with
+  itself, `bfStabilizationOrdinal L M M` (`bfStabilizationOrdinal_self_eq_iSup_orbitRank`), and
+  the least self-stabilization level (`sInf_selfStabilizesCompletely_eq_iSup_orbitRank`).  The
+  rank of the process, lifted, is `R` (`lift_rank_eq_iSup_orbitRank`), so the infinite pure set
+  has rank `0`.  Larson's remark after Definition 5.6 identifies the rank of a long enough
+  initial segment of the Scott process of `M` with the Scott rank of `M`; here that
+  identification holds for the convention `R`, while `S` is one more in the attained case.  `R`
+  is kept as an explicit supremum in the statements, not as a new definition.
 * **Attained and non-attained.** `R ≤ S ≤ R + 1` always.  If some tuple has orbit rank `R`
   (attained), then `S = R + 1`: the infinite pure set (`R = 0`, `S = 1`) and the graph of
   Larson's Remark 5.11 (`R = 1`, `S = 2`).  If every orbit rank is below `R` (non-attained),
   then `S = R`, and `R` is a limit: the exact-`ω` carrier of `FiberExactOmega` (`R = S = ω`).
-  Conversely `S` is a limit exactly in the non-attained case, so `isRank_iff_of_isSuccLimit` and
-  `isRank_iff_of_not_isSuccLimit` decide the rank from `S` alone.
+  Conversely `S` is a limit exactly in the non-attained case, so
+  `isRank_iff_lift_eq_internalScottRank_of_isSuccLimit` and
+  `isRank_iff_lift_add_one_eq_internalScottRank_of_not_isSuccLimit` decide the rank from `S`
+  alone.
 * **Pointwise bounds give `≤`.** Strict pointwise bounds `orbitRank a < lift α` (as produced by
   orbit-isolation arguments such as `internalScottRank_le_of_orbits_determined`) give only
   `StabilizesAt α` and `rank ≤ α`, through `stabilizesAt_of_orbitRank_le` and
@@ -90,41 +98,6 @@ namespace InfinitaryLogic.ScottProcess.Semantic
 
 variable {L : Language.{u, v}} {M : Type w} [L.Structure M]
 
-/-! ### Self-stabilization and the supremum of the orbit ranks -/
-
-/-- `M` self-stabilizes completely at `α` iff every tuple of `M` has orbit rank at most `α`.
-Any structure, any `α : Ordinal.{w}`; no countability. -/
-theorem selfStabilizesCompletely_iff_orbitRank_le {α : Ordinal.{w}} :
-    SelfStabilizesCompletely (L := L) M α ↔ ∀ n (a : Fin n → M), orbitRank (L := L) a ≤ α := by
-  refine ⟨fun h n a ↦ orbitRank_le_of_mem fun b hb γ ↦ ?_, fun h n a b ↦
-    ⟨fun hab ↦ mem_orbitStable_iff_orbitRank_le.2 (h n a) b hab _, BFEquiv.of_succ⟩⟩
-  rcases le_or_gt α γ with hαγ | hγα
-  · exact BFEquiv_upgrade_at_selfStabilization h hb γ hαγ
-  · exact BFEquiv.monotone hγα.le hb
-
-/-- A bound on the supremum of the orbit ranks is a bound on each of them. -/
-private theorem iSup_orbitRank_le_iff {α : Ordinal.{w}} :
-    (⨆ x : (Σ n : ℕ, Fin n → M), orbitRank (L := L) x.2) ≤ α ↔
-      ∀ n (a : Fin n → M), orbitRank (L := L) a ≤ α :=
-  Ordinal.iSup_le_iff.trans ⟨fun h n a ↦ h ⟨n, a⟩, fun h x ↦ h x.1 x.2⟩
-
-/-- Every orbit rank is at most the supremum. -/
-private theorem orbitRank_le_iSup {n : ℕ} (a : Fin n → M) :
-    orbitRank (L := L) a ≤ ⨆ x : (Σ n : ℕ, Fin n → M), orbitRank (L := L) x.2 :=
-  iSup_orbitRank_le_iff.1 le_rfl n a
-
-/-- **The least self-stabilization level is the supremum of the orbit ranks**, in
-`Ordinal.{w}` for `M : Type w`: `sInf {α | SelfStabilizesCompletely M α} = ⨆ a, orbitRank a`.
-The set is nonempty (it contains the supremum), so the infimum is attained. -/
-theorem sInf_selfStabilizesCompletely_eq_iSup_orbitRank :
-    sInf {α : Ordinal.{w} | SelfStabilizesCompletely (L := L) M α} =
-      ⨆ x : (Σ n : ℕ, Fin n → M), orbitRank (L := L) x.2 := by
-  have hmem : (⨆ x : (Σ n : ℕ, Fin n → M), orbitRank (L := L) x.2) ∈
-      {α : Ordinal.{w} | SelfStabilizesCompletely (L := L) M α} :=
-    selfStabilizesCompletely_iff_orbitRank_le.2 fun _ a ↦ orbitRank_le_iSup a
-  exact le_antisymm (csInf_le' hmem) (iSup_orbitRank_le_iff.2
-    (selfStabilizesCompletely_iff_orbitRank_le.1 (csInf_mem ⟨_, hmem⟩)))
-
 /-! ### The two conventions -/
 
 /-- `⨆ a, orbitRank a ≤ internalScottRank M`. -/
@@ -136,7 +109,7 @@ private theorem iSup_orbitRank_le_internalScottRank :
 /-- `internalScottRank M ≤ (⨆ a, orbitRank a) + 1`. -/
 private theorem internalScottRank_le_iSup_orbitRank_add_one :
     internalScottRank (L := L) M ≤ (⨆ x : (Σ n : ℕ, Fin n → M), orbitRank (L := L) x.2) + 1 :=
-  internalScottRank_le fun _ a ↦ add_le_add_left (orbitRank_le_iSup a) 1
+  internalScottRank_le fun _ a ↦ add_le_add_left (orbitRank_le_iSup_orbitRank a) 1
 
 /-- Attained case: `(⨆ a, orbitRank a) + 1 = internalScottRank M` iff some tuple has orbit rank
 `⨆ a, orbitRank a`. -/
@@ -149,7 +122,7 @@ private theorem iSup_orbitRank_add_one_eq_internalScottRank_iff :
     push Not at hna
     have hlt : ∀ n (a : Fin n → M), orbitRank (L := L) a <
         ⨆ x : (Σ n : ℕ, Fin n → M), orbitRank (L := L) x.2 :=
-      fun n a ↦ (orbitRank_le_iSup a).lt_of_ne (hna n a)
+      fun n a ↦ (orbitRank_le_iSup_orbitRank a).lt_of_ne (hna n a)
     have := (internalScottRank_le (L := L) (M := M) fun n a ↦ add_one_le_of_lt (hlt n a)).trans_lt
       (lt_add_one _)
     exact this.ne h.symm
@@ -190,7 +163,7 @@ private theorem exists_orbitRank_eq_iSup_of_not_isSuccLimit
     have hle : ∀ m (b : Fin m → M), orbitRank (L := L) b ≤ γ := fun m b ↦
       lt_add_one_iff.1 (add_one_le_iff.1 ((orbitRank_add_one_le_internalScottRank b).trans hγ.ge))
     have hγa : γ = orbitRank (L := L) a := (hle n a).antisymm' (lt_add_one_iff.1 ha)
-    exact ⟨n, a, (orbitRank_le_iSup a).antisymm (hγa ▸ iSup_orbitRank_le_iff.2 hle)⟩
+    exact ⟨n, a, (orbitRank_le_iSup_orbitRank a).antisymm (hγa ▸ iSup_orbitRank_le_iff.2 hle)⟩
   · exact absurd hl hS
 
 /-! ### Stabilization of the process of a structure, level by level -/
@@ -226,10 +199,9 @@ private theorem bfEquiv_lift_iff {β : Ordinal.{0}} {n : ℕ} {a b : Fin n → M
   ⟨BFEquiv.toOrdinalLift, BFEquiv.ofOrdinalLift⟩
 
 /-- **Stabilization as a step of back-and-forth equivalence.**  The process of `M` stabilizes at
-`β` iff `β + 1 < δ` and any two tuples of `M` (repeated coordinates allowed) that are
-back-and-forth equivalent at level `β` are equivalent at level `β + 1`, both levels lifted to
-`Ordinal.{w}`.  Injective tuples go through the bridge `sf_eq_iff_bfEquiv_self`, arbitrary
-tuples through `bfEquiv_iff_exists_sf_eq`. -/
+`β` iff `β + 1 < δ` and any two tuples of `M` of the same length, injective or with repeated
+coordinates, that are back-and-forth equivalent at level `β` are equivalent at level `β + 1`,
+both levels lifted to `Ordinal.{w}`. -/
 theorem stabilizesAt_iff_bfEquiv {β : Ordinal.{0}} :
     (scottProcessOf L M δ hδ).StabilizesAt β ↔ β + 1 < δ ∧
       ∀ n (a b : Fin n → M), BFEquiv (L := L) (Ordinal.lift.{w} β) n a b →
@@ -327,8 +299,8 @@ theorem lift_rank_eq_internalScottRank_iff (h : (scottProcessOf L M δ hδ).Term
 /-- **The rank from a limit internal Scott rank.**  If `internalScottRank M` is a limit, then
 `β` is the rank of the process of `M` iff `β + 1 < δ` and `Ordinal.lift.{w} β` is the internal
 Scott rank. -/
-theorem isRank_iff_of_isSuccLimit (hS : IsSuccLimit (internalScottRank (L := L) M))
-    {β : Ordinal.{0}} :
+theorem isRank_iff_lift_eq_internalScottRank_of_isSuccLimit
+    (hS : IsSuccLimit (internalScottRank (L := L) M)) {β : Ordinal.{0}} :
     (scottProcessOf L M δ hδ).IsRank β ↔
       β + 1 < δ ∧ Ordinal.lift.{w} β = internalScottRank (L := L) M := by
   rw [isRank_iff_lift_eq_iSup_orbitRank, iSup_orbitRank_eq_internalScottRank_of_isSuccLimit hS]
@@ -336,8 +308,8 @@ theorem isRank_iff_of_isSuccLimit (hS : IsSuccLimit (internalScottRank (L := L) 
 /-- **The rank from a non-limit internal Scott rank.**  If `internalScottRank M` is not a limit,
 then `β` is the rank of the process of `M` iff `β + 1 < δ` and `Ordinal.lift.{w} β + 1` is the
 internal Scott rank. -/
-theorem isRank_iff_of_not_isSuccLimit (hS : ¬ IsSuccLimit (internalScottRank (L := L) M))
-    {β : Ordinal.{0}} :
+theorem isRank_iff_lift_add_one_eq_internalScottRank_of_not_isSuccLimit
+    (hS : ¬ IsSuccLimit (internalScottRank (L := L) M)) {β : Ordinal.{0}} :
     (scottProcessOf L M δ hδ).IsRank β ↔
       β + 1 < δ ∧ Ordinal.lift.{w} β + 1 = internalScottRank (L := L) M := by
   rw [isRank_iff_lift_eq_iSup_orbitRank, ← iSup_orbitRank_add_one_eq_internalScottRank_iff.2
