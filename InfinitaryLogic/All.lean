@@ -50,6 +50,7 @@ import InfinitaryLogic.ModelTheory.AElementaryDirectLimit
 import InfinitaryLogic.FreeSetBound
 import InfinitaryLogic.ScottProcess.FreeArray
 import InfinitaryLogic.ScottProcess.Basic
+import InfinitaryLogic.ScottProcess.Semantic
 
 /-!
 # All: the sorry-free library surface
