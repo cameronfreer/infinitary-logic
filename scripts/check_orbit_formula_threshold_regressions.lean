@@ -323,6 +323,13 @@ run_cmd do
   let hits := cl.toList.filter fun m => forbiddenCorePrefixes.any (·.isPrefixOf m)
   unless hits.isEmpty do
     throwError "[BROAD CONE] the closure of {target} reaches {hits}"
+  -- A1's host stays in the light quantifier-rank layer: no Scott, Karp or process module.
+  let host := `InfinitaryLogic.Lomega1omega.QuantifierRank
+  let hostHits := (importClosure env host).toList.filter fun m =>
+    [`InfinitaryLogic.Scott, `InfinitaryLogic.Karp, `InfinitaryLogic.ScottProcess].any
+      (·.isPrefixOf m)
+  unless hostHits.isEmpty do
+    throwError "[HEAVY HOST] the closure of {host} reaches {hostHits}"
 
 /-- The core declarations. -/
 def coreHeadline : List Name :=

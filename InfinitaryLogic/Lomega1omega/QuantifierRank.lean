@@ -248,10 +248,11 @@ stays below `ω`.  Any language (function symbols allowed), any free-variable ty
 theorem BoundedFormula.qrank_toLω_lt_omega0 {ι : Type*} {k : ℕ} (φ : L.BoundedFormula ι k) :
     φ.toLω.qrank < Ordinal.omega0 := by
   induction φ with
-  | falsum => exact Ordinal.omega0_pos
-  | equal => exact Ordinal.omega0_pos
-  | rel => exact Ordinal.omega0_pos
-  | imp _ _ ihφ ihψ => exact max_lt ihφ ihψ
+  | falsum | equal | rel =>
+    simp only [BoundedFormula.toLω, BoundedFormulaω.qrank_falsum, BoundedFormulaω.qrank_equal,
+      BoundedFormulaω.qrank_rel, Ordinal.omega0_pos]
+  | imp _ _ ihφ ihψ =>
+    simpa only [BoundedFormula.toLω, BoundedFormulaω.qrank_imp] using max_lt ihφ ihψ
   | all _ ih =>
     simpa only [BoundedFormula.toLω, BoundedFormulaω.qrank_all, ← Order.succ_eq_add_one] using
       Ordinal.isSuccLimit_omega0.succ_lt ih

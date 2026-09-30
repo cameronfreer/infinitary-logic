@@ -27,10 +27,12 @@ induction on the formula.
 
 ## Interpretation notes
 
-* **A property of a function.**  The hypothesis is only the displayed local agreement; `f` need
-  not be injective, an embedding, or surjective, and no homogeneity of `M` is assumed.  An
-  embedding that agrees locally with automorphisms is a special case.  Establishing the local
-  agreement for a particular map is left to the caller.
+* **A property of a function.**  The hypothesis is only the displayed local agreement, and no
+  homogeneity of `M` is assumed.  Injectivity and the embedding property are consequences, not
+  premises: apply the hypothesis to `![x, y]`, to `Fin.snoc xs (funMap F xs)` and to `xs`.
+  Surjectivity is not implied (the successor on the pure set `ℕ` agrees with a permutation on
+  every finite tuple).  The embedding form is a restatement for callers holding `g : M ↪[L] M`.
+  Establishing the local agreement for a particular map is left to the caller.
 * **No further premises.**  Any language (function symbols allowed), any carrier universe, no
   relationality, countability, infinitude or nonemptiness.
 * **Finitely many assigned variables.**  The simultaneous form assigns finitely many free
