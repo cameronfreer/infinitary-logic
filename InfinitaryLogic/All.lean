@@ -47,6 +47,7 @@ import InfinitaryLogic.ModelTheory.NullaryTags
 import InfinitaryLogic.FiniteSupportClosure
 import InfinitaryLogic.TwoGeneratorCardinality
 import InfinitaryLogic.ModelTheory.AElementaryDirectLimit
+import InfinitaryLogic.FreeSetBound
 
 /-!
 # All: the sorry-free library surface
