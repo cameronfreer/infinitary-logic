@@ -21,8 +21,11 @@ descriptions in the Scott layer:
   of pairs of tuples of `M` (`bfStabilizationOrdinal_self_eq_iSup_orbitRank`).
 
 All ordinals live in `Ordinal.{w}`.  Any language, any structure: no relational hypothesis and no
-countability.  `R` differs from `internalScottRank M = ⨆ a, (orbitRank a + 1)` by at most one;
-the rank of the Scott process of `M` is `R` (`ScottProcess/RankComparison.lean`).
+countability.  For an infinite structure over a relational language, a terminating Scott process
+of `M` has lifted rank `R` (`lift_rank_eq_iSup_orbitRank`), and
+`R ≤ internalScottRank M ≤ R + 1` with `internalScottRank M = ⨆ a, (orbitRank a + 1)`
+(`lift_rank_le_internalScottRank`, `internalScottRank_le_lift_rank_add_one`); all four are in
+`ScottProcess/RankComparison.lean`.
 
 ## Main results
 
@@ -39,7 +42,7 @@ namespace FirstOrder.Language
 
 variable {L : Language.{u, v}} {M : Type w} [L.Structure M]
 
-/-- A bound on the supremum of the orbit ranks is a bound on each of them. -/
+/-- `α` bounds the supremum of the orbit ranks iff it bounds each of them. -/
 theorem iSup_orbitRank_le_iff {α : Ordinal.{w}} :
     (⨆ x : (Σ n : ℕ, Fin n → M), orbitRank (L := L) x.2) ≤ α ↔
       ∀ n (a : Fin n → M), orbitRank (L := L) a ≤ α :=
@@ -73,9 +76,8 @@ theorem sInf_selfStabilizesCompletely_eq_iSup_orbitRank :
     (selfStabilizesCompletely_iff_orbitRank_le.1 (csInf_mem ⟨_, hmem⟩)))
 
 /-- **The stabilization ordinal of `M` with itself is the supremum of the orbit ranks**:
-`bfStabilizationOrdinal L M M = ⨆ a, orbitRank a` in `Ordinal.{w}`.  A least failure level of a
-pair `(a, b)` is at most `orbitRank a`, since equivalence at the orbit rank persists to every
-level; conversely equivalence at the stabilization ordinal is equivalence at every level. -/
+`bfStabilizationOrdinal L M M = ⨆ a, orbitRank a` in `Ordinal.{w}`: the supremum of the least
+failure levels of pairs of tuples of `M` equals the supremum of the orbit ranks. -/
 theorem bfStabilizationOrdinal_self_eq_iSup_orbitRank :
     bfStabilizationOrdinal.{u, v, w} L M M =
       ⨆ x : (Σ n : ℕ, Fin n → M), orbitRank (L := L) x.2 := by
