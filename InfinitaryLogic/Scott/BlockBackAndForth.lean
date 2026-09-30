@@ -116,7 +116,7 @@ theorem blockBFEquiv_iff (α : Ordinal) {n : ℕ} (a : Fin n → M) (b : Fin n �
         (∀ (k : ℕ) (d : Fin k → N), ∃ c : Fin k → M,
           BlockBFEquiv (L := L) β (n + k) (Fin.append a c) (Fin.append b d)) := by
   unfold BlockBFEquiv
-  rw [WellFounded.fix_eq]
+  rw [WellFoundedLT.fix_eq]
 
 omit [L.IsRelational] in
 theorem BlockBFEquiv.sameAtomicType {α : Ordinal} {n : ℕ} {a : Fin n → M} {b : Fin n → N}

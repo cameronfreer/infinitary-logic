@@ -132,8 +132,9 @@ theorem constant_off_countable_of_borel_observation
     (f : Q → Y) (hf : Measurable (f ∘ classOf)) :
     ∃ q₀, ({q | f q ≠ f q₀} : Set Q).Countable :=
   constant_off_countable_of_borel_observation_of_nonempty codes hcodes classOf honto
-    (not_isEmpty_iff.mp fun hempty => hQ (@Finite.to_countable Q (@Finite.of_subsingleton Q
-      (@IsEmpty.instSubsingleton Q hempty)))) truth htruth hsplit f hf
+    (not_isEmpty_iff.mp fun hempty => hQ (by
+      let := hempty
+      infer_instance)) truth htruth hsplit f hf
     (fun x y h => congrArg f (hiso x y h))
 
 end FirstOrder.Language

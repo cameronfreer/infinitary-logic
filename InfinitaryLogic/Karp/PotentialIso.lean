@@ -428,7 +428,7 @@ theorem PotentialIso.family_bfEquiv
 
 /-- Compatibility alias for `PotentialIso.family_bfEquiv`, which is stated without the
 countable-language hypothesis and for structures in different universes. -/
-@[deprecated PotentialIso.family_bfEquiv (since := "2026-08-14")]
+@[deprecated PotentialIso.family_bfEquiv +typeChanged (since := "2026-08-14")]
 theorem potentialIso_family_BFEquiv [Countable (Σ l, L.Relations l)]
     {M : Type w} [L.Structure M]
     {N : Type w} [L.Structure N]

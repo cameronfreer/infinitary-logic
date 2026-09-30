@@ -117,7 +117,7 @@ theorem exists_subcopy_continuous
   have hGres : G ∈ residual (ℕ → Bool) := by
     have : ∀ᶠ x in residual (ℕ → Bool), ∀ p : Σ i, C i, g p.1 x = p.2 ↔ x ∈ U p :=
       eventually_countable_forall.2 fun p =>
-        (eventuallyEq_set.1 (hUeq p)).mono fun x hx => by simpa using hx
+        (eventuallyEqSet_iff.1 (hUeq p)).mono fun x hx => by simpa using hx
     exact this
   have hGmeas : MeasurableSet G := by
     have : G = ⋂ p : Σ i, C i,

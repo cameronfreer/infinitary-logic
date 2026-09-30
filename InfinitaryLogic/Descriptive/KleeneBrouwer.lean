@@ -32,7 +32,7 @@ mathematics behind analytic boundedness for well-founded trees (issue #73).
   branch.
 * `treeHeight T` is the strict supremum of the ranks of the nodes under strict extension, and
   `treeHeight_le_type` bounds it by the KB order type, through the monotonicity of
-  `IsWellFounded.rank` in the relation (`InfinitaryLogic.rank_le_rank_of_imp`).
+  `WellFounded.rank` in the relation (`InfinitaryLogic.rank_le_rank_of_imp`).
 
 The encoding lands in `ℕ∞`, which is defined as `WithTop ℕ`; the named type is what carries the
 derived `WellFoundedLT` instance the chain condition uses.
@@ -240,23 +240,22 @@ theorem isWellOrder_kbLT (T : tree ℕ) (hT : WellFounded (extBelow T)) :
   haveI : Std.Trichotomous (kbLT T) :=
     ⟨fun _ _ h₁ h₂ => Subtype.ext (kbEncode_injective
       (le_antisymm (not_lt.mp h₂) (not_lt.mp h₁)))⟩
-  haveI : IsWellFounded ↥T (kbLT T) := ⟨wellFounded_kbLT T hT⟩
-  IsWellOrder.mk
+  { toTrichotomous := inferInstance, wf := wellFounded_kbLT T hT }
 
 /-- The height of the tree: the strict supremum of the ranks of its nodes under strict
 extension. -/
-noncomputable def treeHeight (T : tree ℕ) [IsWellFounded ↥T (extBelow T)] : Ordinal :=
-  ⨆ x : ↥T, Order.succ (IsWellFounded.rank (extBelow T) x)
+noncomputable def treeHeight (T : tree ℕ) [WellFounded (extBelow T)] : Ordinal :=
+  ⨆ x : ↥T, Order.succ (WellFounded.rank (extBelow T) x)
 
 /-- Given that KB is a well-order on `T`, the height is at most its order type. -/
-theorem treeHeight_le_type (T : tree ℕ) [IsWellFounded ↥T (extBelow T)]
+theorem treeHeight_le_type (T : tree ℕ) [WellFounded (extBelow T)]
     [IsWellOrder ↥T (kbLT T)] : treeHeight T ≤ Ordinal.type (kbLT T) := by
   refine Ordinal.iSup_le fun x => ?_
   rw [Order.succ_le_iff]
-  calc IsWellFounded.rank (extBelow T) x
-      ≤ IsWellFounded.rank (kbLT T) x :=
+  calc WellFounded.rank (extBelow T) x
+      ≤ WellFounded.rank (kbLT T) x :=
         InfinitaryLogic.rank_le_rank_of_imp (fun _ _ => kbLT_of_extBelow T) x
-    _ = Ordinal.typein (kbLT T) x := by rw [IsWellFounded.rank_eq_typein]
+    _ = Ordinal.typein (kbLT T) x := by rw [WellFounded.rank_eq_typein]
     _ < Ordinal.type (kbLT T) := Ordinal.typein_lt_type _ _
 
 end KleeneBrouwer
