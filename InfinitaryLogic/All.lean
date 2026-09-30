@@ -1,4 +1,5 @@
 import InfinitaryLogic.Core
+import InfinitaryLogic.Lomega1omega.LocalAutomorphism
 import InfinitaryLogic.Countable
 import InfinitaryLogic.Admissible
 import InfinitaryLogic.Descriptive
