@@ -57,34 +57,16 @@ theorem realize_of_embedding_signed {A B : Type} [L.Structure A] [L.Structure B]
     ∀ {n : ℕ} (φ : L.BoundedFormulaω α n) (v : α → A) (xs : Fin n → A),
       (IsUniversal φ → φ.Realize (⇑e ∘ v) (⇑e ∘ xs) → φ.Realize v xs) ∧
       (IsExistential φ → φ.Realize v xs → φ.Realize (⇑e ∘ v) (⇑e ∘ xs)) := by
-  have h_elim : ∀ {m : ℕ} (v : α → A) (xs : Fin m → A),
-      Sum.elim (⇑e ∘ v) (⇑e ∘ xs) = ⇑e ∘ Sum.elim v xs := by
-    intro m v xs
-    funext x
-    cases x with
-    | inl _ => rfl
-    | inr _ => rfl
   intro n φ
   induction φ with
   | falsum => exact fun _ _ => ⟨fun _ h => h, fun _ h => h⟩
   | equal t₁ t₂ =>
     intro v xs
-    have key : (t₁.realize (Sum.elim (⇑e ∘ v) (⇑e ∘ xs))
-          = t₂.realize (Sum.elim (⇑e ∘ v) (⇑e ∘ xs)))
-        ↔ (t₁.realize (Sum.elim v xs) = t₂.realize (Sum.elim v xs)) := by
-      rw [h_elim v xs, HomClass.realize_term, HomClass.realize_term]
-      exact e.injective.eq_iff
+    have key := e.realize_equal_comp (v := v) (xs := xs) t₁ t₂
     exact ⟨fun _ h => key.mp h, fun _ h => key.mpr h⟩
   | rel R ts =>
     intro v xs
-    have hts : (fun i => (ts i).realize (Sum.elim (⇑e ∘ v) (⇑e ∘ xs)))
-        = fun i => e ((ts i).realize (Sum.elim v xs)) := by
-      funext i
-      rw [h_elim v xs, HomClass.realize_term]
-    have key : (RelMap R fun i => (ts i).realize (Sum.elim (⇑e ∘ v) (⇑e ∘ xs)))
-        ↔ RelMap R fun i => (ts i).realize (Sum.elim v xs) := by
-      rw [hts]
-      exact e.map_rel R _
+    have key := e.realize_rel_comp (v := v) (xs := xs) R ts
     exact ⟨fun _ h => key.mp h, fun _ h => key.mpr h⟩
   | imp φ ψ ihφ ihψ =>
     intro v xs

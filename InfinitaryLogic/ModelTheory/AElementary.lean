@@ -23,7 +23,7 @@ namespace FirstOrder
 
 namespace Language
 
-variable {L : Language.{u, v}} {M N P : Type w}
+variable {L : Language.{u, v}} {M : Type w} {N : Type w'} {P : Type w''}
   [L.Structure M] [L.Structure N] [L.Structure P]
 
 /-- **A-elementarity**: truth agreement on every fragment member, at every tuple, along an
@@ -89,32 +89,13 @@ theorem aElementary_of_tarskiVaught {A : Fragment L} (f : N ↪[L] M)
       (∃ m : M, ¬φ.Realize Empty.elim (Fin.snoc (⇑f ∘ a) m)) →
       ∃ b : N, ¬φ.Realize Empty.elim (Fin.snoc (⇑f ∘ a) (f b))) :
     AElementary A f := by
-  have h_elim : ∀ {m : ℕ} (xs : Fin m → N),
-      Sum.elim (Empty.elim : Empty → M) (⇑f ∘ xs) = ⇑f ∘ Sum.elim Empty.elim xs := by
-    intro m xs
-    funext x
-    cases x with
-    | inl e => exact e.elim
-    | inr i => rfl
   intro n φ
   induction φ with
   | falsum => exact fun _ _ => Iff.rfl
-  | equal t u =>
-    intro _ a
-    show t.realize (Sum.elim Empty.elim (⇑f ∘ a)) = u.realize (Sum.elim Empty.elim (⇑f ∘ a))
-      ↔ t.realize (Sum.elim Empty.elim a) = u.realize (Sum.elim Empty.elim a)
-    rw [h_elim a, HomClass.realize_term, HomClass.realize_term]
-    exact f.injective.eq_iff
-  | rel R ts =>
-    intro _ a
-    have hts : (fun i => (ts i).realize (Sum.elim (Empty.elim : Empty → M) (⇑f ∘ a)))
-        = fun i => f ((ts i).realize (Sum.elim Empty.elim a)) := by
-      funext i
-      rw [h_elim a, HomClass.realize_term]
-    show Structure.RelMap R (fun i => (ts i).realize (Sum.elim Empty.elim (⇑f ∘ a)))
-      ↔ Structure.RelMap R (fun i => (ts i).realize (Sum.elim Empty.elim a))
-    rw [hts]
-    exact f.map_rel R _
+  -- atomic cases: the two parameter valuations `Empty → _` agree by subsingleton elimination,
+  -- which `convert` supplies
+  | equal t u => exact fun _ a => by convert f.realize_equal_comp t u
+  | rel R ts => exact fun _ a => by convert f.realize_rel_comp R ts
   | imp φ ψ ihφ ihψ =>
     intro hmem a
     exact imp_congr (ihφ (A.imp_left_mem hmem) a) (ihψ (A.imp_right_mem hmem) a)

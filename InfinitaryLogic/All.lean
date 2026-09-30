@@ -46,6 +46,7 @@ import InfinitaryLogic.ModelTheory.FiberCantorFamily
 import InfinitaryLogic.ModelTheory.NullaryTags
 import InfinitaryLogic.FiniteSupportClosure
 import InfinitaryLogic.TwoGeneratorCardinality
+import InfinitaryLogic.ModelTheory.AElementaryDirectLimit
 import InfinitaryLogic.FreeSetBound
 
 /-!
