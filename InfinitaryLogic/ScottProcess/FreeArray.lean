@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import Mathlib.SetTheory.Ordinal.Arithmetic
-import Mathlib.ModelTheory.Basic
+import InfinitaryLogic.Scott.AtomicDiagram
 
 /-!
 # The free array of a relational vocabulary
@@ -19,11 +19,14 @@ No formulas are built: an element of `Ψ^n_{α+1}` *is* the pair `(φ', E)` of D
 ## Main declarations
 
 * `AtomicData`: level-`0` data, a column family `Ψ0 n` with functorial restriction along
-  injections `Fin m ↪ Fin n`; `relAtomic L` is the instance for a relational language `L`.
+  injections `Fin m ↪ Fin n`; `relAtomic L` is the instance for a relational language `L`,
+  built on the relation instances `AtomicIdx.rel` of `Scott/AtomicDiagram.lean`.
 * `Ψ A α n`: the column `n` of row `α` (`α : Ordinal.{0}`, `n : ℕ`).
 * `H j`, `V h`, `E`: the horizontal projection along `j : Fin m ↪ Fin n`, the vertical
   projection to a lower row, and the extension set of a successor-row element.
-* `zeroEquiv`, `succEquiv`, `limEquiv`: the unfoldings of rows `0`, `α + 1` and `λ`.
+* `zeroEquiv`, `succEquiv`, `limEquiv`: the unfoldings of rows `0`, `α + 1` and `λ`;
+  `mkSucc φ' E hE` builds the successor-row element `(φ', E)`, and `Ψ.ext_succ`, `Ψ.ext_limit`
+  are the extensionality principles of successor and limit rows.
 * `V_H_comm` (Proposition 2.15), `V_comp` (Remark 2.8), `H_id` (Remark 2.13),
   `H_comp` (Remark 2.14(2)), `E_H` (Definition 2.11(3)), `H_limit_entry` (Definition 2.11(4)),
   and the fullness statements `exists_succ_of_V_E`, `exists_limit_of_thread`.
@@ -32,9 +35,18 @@ No formulas are built: an element of `Ψ^n_{α+1}` *is* the pair `(φ', E)` of D
 
 * **Abstract level `0`.** Row `0` is a parameter (`AtomicData`) rather than the set of
   complete atomic types; `relAtomic L` recovers Definition 2.1(1) for a relational `L`,
-  storing one truth value per relation instance on `Fin n` (equalities are fixed by
-  distinctness of the variables and are not stored).  Larson's standing assumption of a
-  `0`-ary relation (Remark 2.3) is not imposed.
+  storing one truth value per relation instance `AtomicIdx.rel R f` on `Fin n` (equalities
+  are fixed by distinctness of the variables and are not stored), and restricting along
+  `AtomicIdx.pushforward`.  Larson's standing assumption of a `0`-ary relation (Remark 2.3) is
+  not imposed.
+* **Universes and the row index.** Rows are indexed by `Ordinal.{0}`, and the columns live in
+  `Type (w + 1)`: a limit-row column is a type of threads, which quantifies over
+  `Ordinal.{0} : Type 1`, so no column can live in `Type 0`.  The level-`0` data is therefore
+  stated in `Type (w + 1)`, and `relAtomic` lifts its truth assignments with `ULift`.  The rank
+  invariants `orbitRank` and `internalScottRank` of `Scott/OrbitRank.lean` take values in
+  `Ordinal.{w}` for `M : Type w`; the intended bridge between them and the rows here is
+  `Ordinal.lift`, for countable (or otherwise small) structures.  The index universe is not
+  generalized.
 * **Indexing by `(α, n)`.** Columns are separate types `Ψ A α n` rather than subsets of one
   set `Ψ_α` of formulas; Larson's `Φ ∩ Ψ^n_α` becomes a family of sets indexed by `n`, and
   `Ψ_α = ⋃ n, Ψ^n_α` (Definition 2.1(4)) is not formed.
@@ -56,7 +68,15 @@ as a dependent pair `⟨row β as a package, value⟩`, where a package is a col
 with its horizontal maps. Because the target of `proj` is a single fixed type, the limit step
 can state the coherence conditions (a) and (b) for an arbitrary family of lower levels, with no
 casts between the lower rows. The global `V` then reads off the value, after a single transport
-along the proven identification of the recorded package with row `β`.
+along the proven identification of the recorded package with row `β`.  The lemmas computing
+the projection record, and the transport lemmas, are private: the downstream interface is `V`,
+`E`, `H` and their laws, with `V_eq_iff` characterizing `V` through the record.
+
+## References
+
+* Paul B. Larson, *Scott processes*, in *Beyond First Order Model Theory*, vol. I
+  (J. Iovino, ed.), CRC Press, 2017, ch. 2.  Numbering follows the book; it agrees with the
+  2016 preprint for §§2–4.
 -/
 
 open Order
@@ -131,47 +151,31 @@ def extSet {n m : ℕ} (j : Fin m ↪ Fin n) : Set (Fin (m + 1) ↪ Fin (n + 1))
 range of `j`. -/
 def extTo {n m : ℕ} (j : Fin m ↪ Fin n) (y : Fin (n + 1)) (hy : ∀ i, y ≠ (j i).castSucc) :
     Fin (m + 1) ↪ Fin (n + 1) :=
-  ⟨Fin.lastCases y (fun i ↦ (j i).castSucc), by
-    intro a b hab
-    induction a using Fin.lastCases with
-    | last =>
-      induction b using Fin.lastCases with
-      | last => rfl
-      | cast b =>
-        simp only [Fin.lastCases_last, Fin.lastCases_castSucc] at hab
-        exact absurd hab (hy b)
-    | cast a =>
-      induction b using Fin.lastCases with
-      | last =>
-        simp only [Fin.lastCases_last, Fin.lastCases_castSucc] at hab
-        exact absurd hab.symm (hy a)
-      | cast b =>
-        simp only [Fin.lastCases_castSucc, Fin.castSucc_inj] at hab
-        rw [j.injective hab]⟩
+  ⟨Fin.snoc (α := fun _ ↦ Fin (n + 1)) (fun i ↦ (j i).castSucc) y,
+    Fin.snoc_injective_iff.2
+      ⟨Fin.castSuccEmb.injective.comp j.injective, by rintro ⟨i, hi⟩; exact hy i hi.symm⟩⟩
+
+/-- `extTo j y` is `Fin.snoc` of `j` (followed by `Fin.castSucc`) and `y`. -/
+theorem coe_extTo {n m : ℕ} (j : Fin m ↪ Fin n) (y : Fin (n + 1))
+    (hy : ∀ i, y ≠ (j i).castSucc) :
+    ⇑(extTo j y hy) = Fin.snoc (α := fun _ ↦ Fin (n + 1)) (fun i ↦ (j i).castSucc) y :=
+  rfl
 
 /-- `extTo j y` agrees with `j` on the old coordinates. -/
 @[simp] theorem extTo_castSucc {n m : ℕ} (j : Fin m ↪ Fin n) (y : Fin (n + 1))
     (hy : ∀ i, y ≠ (j i).castSucc) (i : Fin m) :
-    extTo j y hy i.castSucc = (j i).castSucc :=
-  Fin.lastCases_castSucc (motive := fun _ ↦ Fin (n + 1)) i
+    extTo j y hy i.castSucc = (j i).castSucc := by
+  rw [coe_extTo, Fin.snoc_castSucc]
 
 /-- `extTo j y` sends the new coordinate to `y`. -/
 @[simp] theorem extTo_last {n m : ℕ} (j : Fin m ↪ Fin n) (y : Fin (n + 1))
-    (hy : ∀ i, y ≠ (j i).castSucc) : extTo j y hy (Fin.last m) = y :=
-  Fin.lastCases_last (motive := fun _ ↦ Fin (n + 1))
+    (hy : ∀ i, y ≠ (j i).castSucc) : extTo j y hy (Fin.last m) = y := by
+  rw [coe_extTo, Fin.snoc_last]
 
 /-- `extTo j y` is an admissible extension of `j`. -/
 theorem extTo_mem {n m : ℕ} (j : Fin m ↪ Fin n) (y : Fin (n + 1))
     (hy : ∀ i, y ≠ (j i).castSucc) : extTo j y hy ∈ extSet j :=
   ⟨fun i ↦ extTo_castSucc j y hy i, fun i ↦ by rw [extTo_last]; exact hy i⟩
-
-/-- Every admissible extension is `extTo j y` for its value `y` at the new coordinate. -/
-theorem eq_extTo_of_mem {n m : ℕ} {j : Fin m ↪ Fin n} {j' : Fin (m + 1) ↪ Fin (n + 1)}
-    (hj' : j' ∈ extSet j) : j' = extTo j (j' (Fin.last m)) hj'.2 := by
-  refine Function.Embedding.ext fun a ↦ ?_
-  induction a using Fin.lastCases with
-  | last => rw [extTo_last]
-  | cast a => rw [extTo_castSucc, hj'.1 a]
 
 /-- The extension sending the new coordinate to the new coordinate. -/
 def extLast {n m : ℕ} (j : Fin m ↪ Fin n) : Fin (m + 1) ↪ Fin (n + 1) :=
@@ -192,7 +196,7 @@ theorem extLast_mem {n m : ℕ} (j : Fin m ↪ Fin n) : extLast j ∈ extSet j :
   extTo_mem _ _ _
 
 /-- The admissible extensions of the identity: only the identity. -/
-theorem extSet_refl (n : ℕ) :
+@[simp] theorem extSet_refl (n : ℕ) :
     extSet (Function.Embedding.refl (Fin n)) = {Function.Embedding.refl (Fin (n + 1))} := by
   ext j'
   rw [Set.mem_singleton_iff]
@@ -260,6 +264,18 @@ def succH {α : Ordinal.{0}} (L : Level.{w} α) (n m : ℕ) (j : Fin m ↪ Fin n
     ⟨Set.image2 (fun ψ j' ↦ L.H (n + 1) (m + 1) j' ψ) x.2.1 (extSet j),
       x.2.2.image2 ⟨_, extLast_mem j⟩⟩)
 
+/-- The first component of `succH` is the horizontal map of the lower row. -/
+@[simp] theorem succH_fst {α : Ordinal.{0}} (L : Level.{w} α) (n m : ℕ) (j : Fin m ↪ Fin n)
+    (x : succΨ L n) : (succH L n m j x).1 = L.H n m j x.1 :=
+  rfl
+
+/-- The extension set of `succH` is the image of `E × extSet j` (Definition 2.11(3)). -/
+@[simp] theorem succH_snd {α : Ordinal.{0}} (L : Level.{w} α) (n m : ℕ) (j : Fin m ↪ Fin n)
+    (x : succΨ L n) :
+    (succH L n m j x).2.1 =
+      Set.image2 (fun ψ j' ↦ L.H (n + 1) (m + 1) j' ψ) x.2.1 (extSet j) :=
+  rfl
+
 /-- The successor row. -/
 def succLevel {α : Ordinal.{0}} (L : Level.{w} α) : Level.{w} (α + 1) where
   Ψ := succΨ L
@@ -273,6 +289,12 @@ def succLevel {α : Ordinal.{0}} (L : Level.{w} α) : Level.{w} (α + 1) where
     · rw [ite_eq_left h, ite_eq_left h]
       exact L.proj_H n m j x.1 β
     · rw [ite_eq_right h, ite_eq_right h]
+
+/-- The projection record of a successor row to `β ≤ α` is that of the first component. -/
+private theorem succLevel_proj_of_le {α : Ordinal.{0}} (L : Level.{w} α) {n : ℕ}
+    (x : succΨ L n) {β : Ordinal.{0}} (h : β ≤ α) :
+    (succLevel L).proj n x β = L.proj n x.1 β :=
+  ite_eq_left h
 
 /-! ### The limit step -/
 
@@ -294,6 +316,12 @@ def threadH (lam : Ordinal.{0}) (f : ∀ β < lam, Level.{w} β) (n m : ℕ) (j 
     · rw [(f (β + 1) h).proj_H, ψ.2.1 β h]
     · rw [(f β h).proj_H, ψ.2.2 β h hβ δ hδ]⟩
 
+/-- `threadH` acts entry-wise (Definition 2.11(4)). -/
+@[simp] theorem threadH_coe (lam : Ordinal.{0}) (f : ∀ β < lam, Level.{w} β) (n m : ℕ)
+    (j : Fin m ↪ Fin n) (ψ : Thread lam f n) :
+    (threadH lam f n m j ψ).1 = fun β h ↦ (f β h).H n m j (ψ.1 β h) :=
+  rfl
+
 /-- The limit row. -/
 def limLevel (lam : Ordinal.{0}) (f : ∀ β < lam, Level.{w} β) : Level.{w} lam where
   Ψ := Thread lam f
@@ -303,9 +331,14 @@ def limLevel (lam : Ordinal.{0}) (f : ∀ β < lam, Level.{w} β) : Level.{w} la
     simp only [not_lt.2 h, ↓reduceDIte]
   proj_H n m j x β := by
     by_cases h : β < lam
-    · rw [dite_eq_left h, dite_eq_left h]
-      rfl
+    · rw [dite_eq_left h, dite_eq_left h, threadH_coe]
     · rw [dite_eq_right h, dite_eq_right h]
+
+/-- The projection record of a limit row to `β < λ` is the `β`-th entry. -/
+private theorem limLevel_proj_of_lt (lam : Ordinal.{0}) (f : ∀ β < lam, Level.{w} β) {n : ℕ}
+    (x : Thread lam f n) {β : Ordinal.{0}} (h : β < lam) :
+    (limLevel lam f).proj n x β = ⟨(f β h).pkg, x.1 β h⟩ :=
+  dite_eq_left h
 
 /-! ### The recursion -/
 
@@ -327,24 +360,23 @@ theorem level_limit (A : AtomicData.{w}) {lam : Ordinal.{0}} (h : IsSuccLimit la
     level A lam = limLevel lam (fun β _ ↦ level A β) :=
   Ordinal.limitRecOn_limit _ _ _ _ h
 
-
 /-! ### Transport along equalities of levels -/
 
 namespace Level
 
 /-- The transport of a column along an equality of levels. -/
-theorem Ψ_congr {α : Ordinal.{0}} {L L' : Level.{w} α} (e : L = L') (n : ℕ) :
+private theorem Ψ_congr {α : Ordinal.{0}} {L L' : Level.{w} α} (e : L = L') (n : ℕ) :
     L.Ψ n = L'.Ψ n :=
   congrArg (fun K : Level.{w} α ↦ K.Ψ n) e
 
 /-- The projection record is invariant under transport along an equality of levels. -/
-theorem proj_cast {α : Ordinal.{0}} {L L' : Level.{w} α} (e : L = L') (n : ℕ) (x : L.Ψ n)
+private theorem proj_cast {α : Ordinal.{0}} {L L' : Level.{w} α} (e : L = L') (n : ℕ) (x : L.Ψ n)
     (β : Ordinal.{0}) : L.proj n x β = L'.proj n (cast (Ψ_congr e n) x) β := by
   subst e
   rfl
 
 /-- The horizontal maps commute with transport along an equality of levels. -/
-theorem H_cast {α : Ordinal.{0}} {L L' : Level.{w} α} (e : L = L') (n m : ℕ)
+private theorem H_cast {α : Ordinal.{0}} {L L' : Level.{w} α} (e : L = L') (n m : ℕ)
     (j : Fin m ↪ Fin n) (x : L.Ψ n) :
     cast (Ψ_congr e m) (L.H n m j x) = L'.H n m j (cast (Ψ_congr e n) x) := by
   subst e
@@ -358,7 +390,7 @@ theorem proj_self {α : Ordinal.{0}} (L : Level.{w} α) (n : ℕ) (x : L.Ψ n) :
 end Level
 
 /-- Reading a value out of a dependent pair whose package is known. -/
-theorem cast_snd_eq_iff {n : ℕ} {q : Pkg.{w}} (s : Σ p : Pkg.{w}, p.1 n) (e : s.1 = q)
+private theorem cast_snd_eq_iff {n : ℕ} {q : Pkg.{w}} (s : Σ p : Pkg.{w}, p.1 n) (e : s.1 = q)
     (y : q.1 n) : cast (congrArg (fun p : Pkg.{w} ↦ p.1 n) e) s.2 = y ↔ s = ⟨q, y⟩ := by
   obtain ⟨p, v⟩ := s
   subst e
@@ -378,7 +410,7 @@ abbrev H {α : Ordinal.{0}} {n m : ℕ} (j : Fin m ↪ Fin n) (φ : Ψ A α n) :
   (level A α).H n m j φ
 
 /-- The recorded package of every projection is the package of the target row. -/
-theorem proj_fst (α : Ordinal.{0}) (n : ℕ) (x : Ψ A α n) (β : Ordinal.{0}) (hβ : β ≤ α) :
+private theorem proj_fst (α : Ordinal.{0}) (n : ℕ) (x : Ψ A α n) (β : Ordinal.{0}) (hβ : β ≤ α) :
     ((level A α).proj n x β).1 = (level A β).pkg := by
   rcases hβ.eq_or_lt with rfl | hlt
   · rw [Level.proj_self]
@@ -387,23 +419,21 @@ theorem proj_fst (α : Ordinal.{0}) (n : ℕ) (x : Ψ A α n) (β : Ordinal.{0})
   | zero => simp at hlt
   | add_one α ih =>
     have hβα : β ≤ α := lt_add_one_iff.1 hlt
+    -- `Ψ A (α + 1) n` is the abbreviation `(level A (α + 1)).Ψ n`; it is restated in that form so
+    -- that `level_add_one` can rewrite `level` in the binder type as well.
     change ∀ x : (level A (α + 1)).Ψ n, _
     rw [level_add_one]
     intro x
-    change ((if β ≤ α then (level A α).proj n x.1 β else _).1 = _)
-    rw [ite_eq_left hβα]
+    rw [succLevel_proj_of_le _ x hβα]
     rcases hβα.eq_or_lt with rfl | h
     · rw [Level.proj_self]
     · exact ih h.le h x.1
   | limit lam hlam _ =>
+    -- As above, restated so that `level_limit` rewrites `level` in the binder type.
     change ∀ x : (level A lam).Ψ n, _
     rw [level_limit A hlam]
     intro x
-    have e : (limLevel lam (fun β _ ↦ level A β)).proj n x β =
-        ⟨(level A β).pkg, x.1 β hlt⟩ := by
-      unfold limLevel
-      exact dite_eq_left hlt
-    rw [e]
+    rw [limLevel_proj_of_lt _ _ x hlt]
 
 /-- The vertical projection `V_{β,α} : Ψ^n_α → Ψ^n_β` for `β ≤ α` (Definition 2.6). -/
 def V {α β : Ordinal.{0}} (h : β ≤ α) {n : ℕ} (x : Ψ A α n) : Ψ A β n :=
@@ -415,7 +445,7 @@ theorem V_eq_iff {α β : Ordinal.{0}} (h : β ≤ α) {n : ℕ} (x : Ψ A α n)
   cast_snd_eq_iff (q := (level A β).pkg) _ (proj_fst α n x β h) y
 
 /-- The projection record at `β ≤ α` is the value of `V`. -/
-theorem proj_eq_V {α β : Ordinal.{0}} (h : β ≤ α) {n : ℕ} (x : Ψ A α n) :
+private theorem proj_eq_V {α β : Ordinal.{0}} (h : β ≤ α) {n : ℕ} (x : Ψ A α n) :
     (level A α).proj n x β = ⟨(level A β).pkg, V h x⟩ :=
   (V_eq_iff h x _).1 rfl
 
@@ -451,17 +481,17 @@ theorem E_nonempty {α : Ordinal.{0}} {n : ℕ} (φ : Ψ A (α + 1) n) : (E φ).
 
 /-- At a successor row, the projection record to `β ≤ α` is read off the first
 component. -/
-theorem proj_succ {α β : Ordinal.{0}} (hβ : β ≤ α) {n : ℕ} (φ : Ψ A (α + 1) n) :
+private theorem proj_succ {α β : Ordinal.{0}} (hβ : β ≤ α) {n : ℕ} (φ : Ψ A (α + 1) n) :
     (level A (α + 1)).proj n φ β = (level A α).proj n (succEquiv A α n φ).1 β := by
   rw [Level.proj_cast (level_add_one A α)]
-  exact ite_eq_left hβ
+  exact succLevel_proj_of_le _ _ hβ
 
 /-- At a limit row, the projection record to `β < λ` is the `β`-th entry. -/
-theorem proj_limit {lam β : Ordinal.{0}} (hlam : IsSuccLimit lam) (hβ : β < lam) {n : ℕ}
-    (φ : Ψ A lam n) :
+private theorem proj_limit {lam β : Ordinal.{0}} (hlam : IsSuccLimit lam) (hβ : β < lam)
+    {n : ℕ} (φ : Ψ A lam n) :
     (level A lam).proj n φ β = ⟨(level A β).pkg, (limEquiv A hlam n φ).1 β hβ⟩ := by
   rw [Level.proj_cast (level_limit A hlam)]
-  exact dite_eq_left hβ
+  exact limLevel_proj_of_lt _ _ _ hβ
 
 /-- `V_{α,α+1}(φ)` is the first component `φ'` (Definition 2.6(2)). -/
 theorem V_succ_eq_fst {α : Ordinal.{0}} {n : ℕ} (φ : Ψ A (α + 1) n) :
@@ -503,13 +533,49 @@ theorem V_H_comm {α β : Ordinal.{0}} (h : β ≤ α) {n m : ℕ} (j : Fin m �
 `E(φ) × {j' extending j with the new coordinate sent outside range j}` under `H^{n+1}_α`. -/
 theorem E_H {α : Ordinal.{0}} {n m : ℕ} (j : Fin m ↪ Fin n) (φ : Ψ A (α + 1) n) :
     E (H j φ) = Set.image2 (fun ψ j' ↦ H j' ψ) (E φ) (extSet j) := by
-  rw [E, succEquiv_H]
-  rfl
+  rw [E, E, succEquiv_H, succH_snd]
 
-/-- Definition 2.11(3), first clause (the case `β = α`, `α + 1` of Proposition 2.15). -/
-theorem V_succ_H {α : Ordinal.{0}} {n m : ℕ} (j : Fin m ↪ Fin n) (φ : Ψ A (α + 1) n) :
-    V (lt_add_one α).le (H j φ) = H j (V (lt_add_one α).le φ) :=
-  V_H_comm _ j φ
+/-! ### Building and comparing successor and limit elements -/
+
+/-- The successor-row element `(φ', E')` with first component `φ'` and extension set `E'`
+(Definition 2.1(2)). -/
+def mkSucc {α : Ordinal.{0}} {n : ℕ} (φ' : Ψ A α n) (E' : Set (Ψ A α (n + 1)))
+    (hE : E'.Nonempty) : Ψ A (α + 1) n :=
+  (succEquiv A α n).symm (φ', ⟨E', hE⟩)
+
+/-- `V_{α,α+1}` of `mkSucc φ' E' hE` is `φ'`. -/
+@[simp] theorem V_mkSucc {α : Ordinal.{0}} {n : ℕ} (φ' : Ψ A α n) (E' : Set (Ψ A α (n + 1)))
+    (hE : E'.Nonempty) : V (lt_add_one α).le (mkSucc φ' E' hE) = φ' := by
+  rw [V_succ_eq_fst, mkSucc, Equiv.apply_symm_apply]
+
+/-- The extension set of `mkSucc φ' E' hE` is `E'`. -/
+@[simp] theorem E_mkSucc {α : Ordinal.{0}} {n : ℕ} (φ' : Ψ A α n) (E' : Set (Ψ A α (n + 1)))
+    (hE : E'.Nonempty) : E (mkSucc φ' E' hE) = E' := by
+  rw [E_eq_snd, mkSucc, Equiv.apply_symm_apply]
+
+/-- `H` on `mkSucc`, by Definition 2.11(3). -/
+@[simp] theorem H_mkSucc {α : Ordinal.{0}} {n m : ℕ} (j : Fin m ↪ Fin n) (φ' : Ψ A α n)
+    (E' : Set (Ψ A α (n + 1))) (hE : E'.Nonempty) :
+    H j (mkSucc φ' E' hE) =
+      mkSucc (H j φ') (Set.image2 (fun ψ j' ↦ H j' ψ) E' (extSet j))
+        (hE.image2 ⟨_, extLast_mem j⟩) := by
+  apply (succEquiv A α m).injective
+  rw [succEquiv_H, mkSucc, mkSucc, Equiv.apply_symm_apply, Equiv.apply_symm_apply]
+  exact Prod.ext (succH_fst ..) (Subtype.ext (succH_snd ..))
+
+/-- A successor-row element is determined by `V_{α,α+1}` and its extension set. -/
+theorem Ψ.ext_succ {α : Ordinal.{0}} {n : ℕ} {φ ψ : Ψ A (α + 1) n}
+    (hV : V (lt_add_one α).le φ = V (lt_add_one α).le ψ) (hE : E φ = E ψ) : φ = ψ := by
+  apply (succEquiv A α n).injective
+  rw [V_succ_eq_fst, V_succ_eq_fst] at hV
+  exact Prod.ext hV (Subtype.ext hE)
+
+/-- A limit-row element is determined by its vertical projections to the lower rows. -/
+theorem Ψ.ext_limit {lam : Ordinal.{0}} (hlam : IsSuccLimit lam) {n : ℕ} {φ ψ : Ψ A lam n}
+    (h : ∀ β (hβ : β < lam), V hβ.le φ = V hβ.le ψ) : φ = ψ := by
+  apply (limEquiv A hlam n).injective
+  refine Subtype.ext (funext fun β ↦ funext fun hβ ↦ ?_)
+  rw [← V_limit_eq_entry hlam hβ φ, ← V_limit_eq_entry hlam hβ ψ, h β hβ]
 
 /-! ### Composition of vertical projections -/
 
@@ -520,12 +586,12 @@ theorem V_succ_of_le {α β : Ordinal.{0}} (hβ : β ≤ α) {n : ℕ} (φ : Ψ 
 
 /-- At a successor row, the projection record to `β ≤ α` factors through
 `V_{α,α+1}`. -/
-theorem proj_succ' {α β : Ordinal.{0}} (hβ : β ≤ α) {n : ℕ} (φ : Ψ A (α + 1) n) :
+private theorem proj_succ' {α β : Ordinal.{0}} (hβ : β ≤ α) {n : ℕ} (φ : Ψ A (α + 1) n) :
     (level A (α + 1)).proj n φ β = (level A α).proj n (V (lt_add_one α).le φ) β := by
   rw [proj_succ hβ, V_succ_eq_fst]
 
 /-- Every thread is coherent between all pairs of its entries. -/
-theorem Thread.proj_entry {lam : Ordinal.{0}} {n : ℕ}
+private theorem Thread.proj_entry {lam : Ordinal.{0}} {n : ℕ}
     (t : Thread lam (fun β _ ↦ level A β) n) (β : Ordinal.{0}) (hβ : β < lam)
     (δ : Ordinal.{0}) (hδ : δ ≤ β) :
     (level A β).proj n (t.1 β hβ) δ = ⟨(level A δ).pkg, t.1 δ (hδ.trans_lt hβ)⟩ := by
@@ -546,7 +612,7 @@ theorem Thread.proj_entry {lam : Ordinal.{0}} {n : ℕ}
   | limit β hβl _ => exact t.2.2 β hβ hβl δ hlt
 
 /-- The projection record commutes with vertical projection. -/
-theorem proj_V {α β : Ordinal.{0}} (hβ : β ≤ α) {n : ℕ} (x : Ψ A α n) (δ : Ordinal.{0})
+private theorem proj_V {α β : Ordinal.{0}} (hβ : β ≤ α) {n : ℕ} (x : Ψ A α n) (δ : Ordinal.{0})
     (hδ : δ ≤ β) : (level A β).proj n (V hβ x) δ = (level A α).proj n x δ := by
   rcases hβ.eq_or_lt with rfl | hlt
   · rw [V_self]
@@ -563,7 +629,7 @@ theorem proj_V {α β : Ordinal.{0}} (hβ : β ≤ α) {n : ℕ} (x : Ψ A α n)
     exact Thread.proj_entry _ β hlt δ hδ
 
 /-- Remark 2.8: `V_{δ,α} = V_{δ,β} ∘ V_{β,α}` for `δ ≤ β ≤ α`. -/
-theorem V_comp {α β δ : Ordinal.{0}} (hδ : δ ≤ β) (hβ : β ≤ α) {n : ℕ} (x : Ψ A α n) :
+@[simp] theorem V_comp {α β δ : Ordinal.{0}} (hδ : δ ≤ β) (hβ : β ≤ α) {n : ℕ} (x : Ψ A α n) :
     V hδ (V hβ x) = V (hδ.trans hβ) x := by
   rw [V_eq_iff, proj_V hβ x δ hδ, proj_eq_V]
 
@@ -572,10 +638,8 @@ theorem V_comp {α β δ : Ordinal.{0}} (hδ : δ ≤ β) (hβ : β ≤ α) {n :
 /-- Every pair `(φ', E)` with `E` nonempty is realized at the successor row. -/
 theorem exists_succ_of_V_E {α : Ordinal.{0}} {n : ℕ} (φ' : Ψ A α n)
     (E' : Set (Ψ A α (n + 1))) (hE : E'.Nonempty) :
-    ∃ φ : Ψ A (α + 1) n, V (lt_add_one α).le φ = φ' ∧ E φ = E' := by
-  refine ⟨(succEquiv A α n).symm (φ', ⟨E', hE⟩), ?_, ?_⟩
-  · rw [V_succ_eq_fst, Equiv.apply_symm_apply]
-  · rw [E_eq_snd, Equiv.apply_symm_apply]
+    ∃ φ : Ψ A (α + 1) n, V (lt_add_one α).le φ = φ' ∧ E φ = E' :=
+  ⟨mkSucc φ' E' hE, V_mkSucc .., E_mkSucc ..⟩
 
 /-- Every family satisfying Definition 2.1(3)(a),(b) is realized at the limit row. -/
 theorem exists_limit_of_thread {lam : Ordinal.{0}} (hlam : IsSuccLimit lam) {n : ℕ}
@@ -597,11 +661,10 @@ theorem exists_limit_of_thread {lam : Ordinal.{0}} (hlam : IsSuccLimit lam) {n :
 theorem H_limit_entry {lam β : Ordinal.{0}} (hlam : IsSuccLimit lam) (hβ : β < lam)
     {n m : ℕ} (j : Fin m ↪ Fin n) (φ : Ψ A lam n) :
     (limEquiv A hlam m (H j φ)).1 β hβ = H j ((limEquiv A hlam n φ).1 β hβ) := by
-  rw [limEquiv_H]
-  rfl
+  rw [limEquiv_H, threadH_coe]
 
 /-- Remark 2.13: `H^n_α(φ, id) = φ`. -/
-theorem H_id {α : Ordinal.{0}} {n : ℕ} (φ : Ψ A α n) :
+@[simp] theorem H_id {α : Ordinal.{0}} {n : ℕ} (φ : Ψ A α n) :
     H (Function.Embedding.refl (Fin n)) φ = φ := by
   induction α using Ordinal.limitRecOn generalizing n with
   | zero =>
@@ -611,20 +674,19 @@ theorem H_id {α : Ordinal.{0}} {n : ℕ} (φ : Ψ A α n) :
     apply (succEquiv A α n).injective
     rw [succEquiv_H]
     generalize succEquiv A α n φ = x
-    refine Prod.ext (ih x.1) (Subtype.ext ?_)
-    change Set.image2 (fun ψ j' ↦ H j' ψ) x.2.1 (extSet _) = x.2.1
-    rw [extSet_refl, Set.image2_singleton_right]
+    refine Prod.ext ((succH_fst ..).trans (ih x.1)) (Subtype.ext ?_)
+    rw [succH_snd, extSet_refl, Set.image2_singleton_right]
     conv_rhs => rw [← Set.image_id x.2.1]
     exact Set.image_congr fun ψ _ ↦ ih ψ
   | limit lam hlam ih =>
     apply (limEquiv A hlam n).injective
     rw [limEquiv_H]
-    apply Subtype.ext
-    funext β hβ
+    refine Subtype.ext (funext fun β ↦ funext fun hβ ↦ ?_)
+    rw [threadH_coe]
     exact ih β hβ _
 
 /-- Remark 2.14(2): `H^m_α(H^n_α(φ, j), k) = H^n_α(φ, j ∘ k)`. -/
-theorem H_comp {α : Ordinal.{0}} {n m l : ℕ} (j : Fin m ↪ Fin n) (k : Fin l ↪ Fin m)
+@[simp] theorem H_comp {α : Ordinal.{0}} {n m l : ℕ} (j : Fin m ↪ Fin n) (k : Fin l ↪ Fin m)
     (φ : Ψ A α n) : H k (H j φ) = H (k.trans j) φ := by
   induction α using Ordinal.limitRecOn generalizing n m l with
   | zero =>
@@ -634,10 +696,10 @@ theorem H_comp {α : Ordinal.{0}} {n m l : ℕ} (j : Fin m ↪ Fin n) (k : Fin l
     apply (succEquiv A α l).injective
     rw [succEquiv_H, succEquiv_H, succEquiv_H]
     generalize succEquiv A α n φ = x
-    refine Prod.ext (ih j k x.1) (Subtype.ext ?_)
-    change Set.image2 (fun ψ k' ↦ H k' ψ)
-        (Set.image2 (fun ψ j' ↦ H j' ψ) x.2.1 (extSet j)) (extSet k) =
-      Set.image2 (fun ψ i ↦ H i ψ) x.2.1 (extSet (k.trans j))
+    refine Prod.ext ?_ (Subtype.ext ?_)
+    · rw [succH_fst, succH_fst, succH_fst]
+      exact ih j k x.1
+    rw [succH_snd, succH_snd, succH_snd]
     ext z
     constructor
     · rintro ⟨_, ⟨ψ, hψ, j', hj', rfl⟩, k', hk', rfl⟩
@@ -648,8 +710,8 @@ theorem H_comp {α : Ordinal.{0}} {n m l : ℕ} (j : Fin m ↪ Fin n) (k : Fin l
   | limit lam hlam ih =>
     apply (limEquiv A hlam l).injective
     rw [limEquiv_H, limEquiv_H, limEquiv_H]
-    apply Subtype.ext
-    funext β hβ
+    refine Subtype.ext (funext fun β ↦ funext fun hβ ↦ ?_)
+    simp only [threadH_coe]
     exact ih β hβ _ _ _
 
 /-! ### The concrete level `0` for a relational language -/
@@ -658,32 +720,75 @@ section Relational
 
 universe u v
 
-/-- Atomic relation instances `R(x_{a 0}, …, x_{a (l-1)})` on the variables `Fin n`. -/
-abbrev AtomInst (L : FirstOrder.Language.{u, v}) (n : ℕ) : Type v :=
-  Σ l, L.Relations l × (Fin l → Fin n)
+open FirstOrder.Language
 
-/-- Relabel an atomic instance along a map of variables. -/
-def AtomInst.map {L : FirstOrder.Language.{u, v}} {n m : ℕ} (f : Fin m → Fin n)
-    (a : AtomInst L m) : AtomInst L n :=
-  ⟨a.1, a.2.1, f ∘ a.2.2⟩
+variable {L : FirstOrder.Language.{u, v}}
 
-/-- Level-`0` data for a relational language: a complete atomic type on the `n` distinct
-variables `Fin n` is a truth value for every relation instance (equalities are fixed by
-distinctness and are not stored); `H^n_0(·, j)` restricts along `j`. -/
-def relAtomic (L : FirstOrder.Language.{u, v}) : AtomicData.{v} where
-  Ψ0 n := ULift.{v + 1} (AtomInst L n → Bool)
+/-- An atomic index is a relation instance `AtomicIdx.rel R f` (not an equality). -/
+def IsRelIdx {n : ℕ} : L.AtomicIdx n → Prop
+  | .eq _ _ => False
+  | .rel _ _ => True
+
+/-- `AtomicIdx.pushforward` sends relation instances to relation instances. -/
+theorem IsRelIdx.pushforward {n m : ℕ} {a : L.AtomicIdx m} (ha : IsRelIdx a)
+    (f : Fin m → Fin n) : IsRelIdx (a.pushforward f) := by
+  cases a with
+  | eq => exact ha.elim
+  | rel => trivial
+
+variable (L) in
+/-- Atomic relation instances `R(x_{f 0}, …, x_{f (l-1)})` on the variables `Fin n`: the
+`AtomicIdx.rel` indices of `Scott/AtomicDiagram.lean`. -/
+abbrev AtomInst (n : ℕ) : Type (max u v) :=
+  {a : L.AtomicIdx n // IsRelIdx a}
+
+/-- Relabel an atomic instance along a map of variables (`AtomicIdx.pushforward`). -/
+def AtomInst.map {n m : ℕ} (f : Fin m → Fin n) (a : AtomInst L m) : AtomInst L n :=
+  ⟨a.1.pushforward f, a.2.pushforward f⟩
+
+/-- The underlying atomic index of a relabelled instance is its pushforward. -/
+@[simp] theorem AtomInst.coe_map {n m : ℕ} (f : Fin m → Fin n) (a : AtomInst L m) :
+    (a.map f).1 = a.1.pushforward f :=
+  rfl
+
+/-- Relabelling along the identity is the identity. -/
+@[simp] theorem AtomInst.map_id {n : ℕ} (a : AtomInst L n) : a.map id = a := by
+  obtain ⟨_ | _, h⟩ := a
+  · exact h.elim
+  · rfl
+
+/-- Relabelling is functorial. -/
+theorem AtomInst.map_map {n m l : ℕ} (f : Fin m → Fin n) (g : Fin l → Fin m)
+    (a : AtomInst L l) : (a.map g).map f = a.map (f ∘ g) := by
+  obtain ⟨_ | _, h⟩ := a
+  · exact h.elim
+  · rfl
+
+variable (L) in
+/-- Level-`0` data for a relational language (Definition 2.1(1)): a complete atomic type on the
+`n` distinct variables `Fin n` is a truth value for every relation instance (equalities are
+fixed by distinctness and are not stored); `H^n_0(·, j)` restricts along `j`, through
+`AtomicIdx.pushforward`. -/
+def relAtomic [L.IsRelational] : AtomicData.{max u v} where
+  Ψ0 n := ULift.{max u v + 1} (AtomInst L n → Bool)
   H0 _ _ j t := ⟨fun a ↦ t.down (a.map j)⟩
-  H0_id _ _ := rfl
-  H0_comp _ _ _ _ _ _ := rfl
+  H0_id _ t := congrArg ULift.up (funext fun a ↦ congrArg t.down (AtomInst.map_id a))
+  H0_comp _ _ _ j k t :=
+    congrArg ULift.up (funext fun a ↦ congrArg t.down (AtomInst.map_map j k a))
+
+/-- The horizontal restriction of `relAtomic L`, read on an instance. -/
+@[simp] theorem relAtomic_H0_down [L.IsRelational] {n m : ℕ} (j : Fin m ↪ Fin n)
+    (t : (relAtomic L).Ψ0 n) (a : AtomInst L m) :
+    ((relAtomic L).H0 n m j t).down a = t.down (a.map j) :=
+  rfl
 
 /-- Definition 2.11(2) for the relational level `0`: `H^n_0(φ, j)` assigns to an instance on
 `Fin m` the value `φ` assigns to its relabelling along `j`. -/
-theorem H_zero_rel {L : FirstOrder.Language.{u, v}} {n m : ℕ} (j : Fin m ↪ Fin n)
+theorem H_zero_rel [L.IsRelational] {n m : ℕ} (j : Fin m ↪ Fin n)
     (φ : Ψ (relAtomic L) 0 n) (a : AtomInst L m) :
     (zeroEquiv (relAtomic L) m (H j φ)).down a =
       (zeroEquiv (relAtomic L) n φ).down (a.map j) := by
-  rw [H_zero_eq_restrict]
-  rfl
+  rw [H_zero_eq_restrict, relAtomic_H0_down]
 
 end Relational
 

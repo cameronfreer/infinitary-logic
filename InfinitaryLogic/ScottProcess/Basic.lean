@@ -51,6 +51,12 @@ remark following it, and Propositions 4.1–4.4.
 * **Proposition 4.2.** Larson's union over `ψ ∈ V_{α,α+1}^{-1}[{φ}]` ranges over `ψ ∈ Φ^n_{α+1}`
   (for `ψ` outside the process `E(ψ)` is unconstrained and the inclusion from left to right
   fails); the hypothesis `φ ∈ Φ^n_α` is not needed and is omitted.
+
+## References
+
+* Paul B. Larson, *Scott processes*, in *Beyond First Order Model Theory*, vol. I
+  (J. Iovino, ed.), CRC Press, 2017, ch. 2.  Numbering follows the book; it agrees with the
+  2016 preprint for §§2–4.
 -/
 
 open Order InfinitaryLogic.ScottProcess.FreeArray
@@ -63,8 +69,9 @@ namespace InfinitaryLogic
 
 /-- A **Scott process** of length `δ` over the level-`0` data `A` (Larson, Scott processes,
 Definition 3.1): a level `Φ α hα n ⊆ Ψ^n_α` for every `α < δ` and every column `n`, satisfying
-the formula conditions (1a)–(1e) and the coherence conditions (2a)–(2c). -/
-structure ScottProcess (A : AtomicData.{w}) (δ : Ordinal.{0}) where
+the formula conditions (1a)–(1e) and the coherence conditions (2a)–(2c).  A process is
+determined by its levels (`ScottProcess.ext`). -/
+@[ext] structure ScottProcess (A : AtomicData.{w}) (δ : Ordinal.{0}) where
   /-- The levels: `Φ α hα n` is Larson's `Φ^n_α = Φ_α ∩ Ψ^n_α`. -/
   Φ : ∀ α < δ, ∀ n, Set (Ψ A α n)
   /-- The length is nonzero. -/
@@ -104,7 +111,7 @@ variable {A : AtomicData.{w}} {δ : Ordinal.{0}} (P : ScottProcess A δ)
 /-! ### Projections within a process -/
 
 /-- Every injection `Fin m ↪ Fin n` is the inclusion `i_{m,n}` followed by a permutation. -/
-theorem exists_equiv_castLE_eq {m n : ℕ} (hmn : m ≤ n) (j : Fin m ↪ Fin n) :
+private theorem exists_equiv_castLE_eq {m n : ℕ} (hmn : m ≤ n) (j : Fin m ↪ Fin n) :
     ∃ e : Fin n ≃ Fin n, ∀ i : Fin m, e (Fin.castLE hmn i) = j i := by
   classical
   let f : Fin n → Fin n := fun i ↦ if h : (i : ℕ) < m then j ⟨i, h⟩ else i
@@ -257,7 +264,11 @@ end ScottProcess
 
 namespace ScottProcess
 
-/-- The one-point level-`0` data: a single atomic type in every column. -/
+/-- The one-point level-`0` data: a single atomic type in every column.  This is
+`relAtomic L` for a language `L` with no symbols, up to the unique equivalence of
+singletons: such an `L` has no relation instances, so `(relAtomic L).Ψ0 n` has exactly one
+element, the empty truth assignment.  It is stated directly so that it lives in every universe
+(Mathlib's `Language.empty` lives in `Language.{0, 0}`). -/
 def unitData : AtomicData.{w} where
   Ψ0 _ := PUnit
   H0 _ _ _ _ := PUnit.unit
