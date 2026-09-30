@@ -25,6 +25,8 @@ relation between structures.
 - `EquivQRω.refl`, `EquivQRω.symm`, `EquivQRω.trans`: Equivalence relation properties.
 - `EquivQRω.monotone`: Higher rank equivalence implies lower rank equivalence.
 - `qrank_einf`, `qrank_esup`: Quantifier rank of encoded infinitary connectives.
+- `BoundedFormula.qrank_toLω_lt_omega0`: the `Lω₁ω` image of a first-order formula has finite
+  quantifier rank.
 
 ## References
 
@@ -237,6 +239,22 @@ theorem qrank_openBounds : ∀ {n : ℕ} (φ : L.BoundedFormulaω Empty n),
   | _, .iInf φs => by
     simp only [BoundedFormulaω.openBounds, Formulaω.qrank, BoundedFormulaω.qrank_iInf]
     exact congrArg _ (funext fun i => qrank_openBounds (φs i))
+
+/-! ### The first-order image has finite rank -/
+
+/-- **The `Lω₁ω` image of a first-order bounded formula has finite quantifier rank.**  Atomic
+formulas have rank `0`, implication takes the maximum, and a universal quantifier adds one, which
+stays below `ω`.  Any language (function symbols allowed), any free-variable type. -/
+theorem BoundedFormula.qrank_toLω_lt_omega0 {ι : Type*} {k : ℕ} (φ : L.BoundedFormula ι k) :
+    φ.toLω.qrank < Ordinal.omega0 := by
+  induction φ with
+  | falsum => exact Ordinal.omega0_pos
+  | equal => exact Ordinal.omega0_pos
+  | rel => exact Ordinal.omega0_pos
+  | imp _ _ ihφ ihψ => exact max_lt ihφ ihψ
+  | all _ ih =>
+    simpa only [BoundedFormula.toLω, BoundedFormulaω.qrank_all, ← Order.succ_eq_add_one] using
+      Ordinal.isSuccLimit_omega0.succ_lt ih
 
 /-! ### Equivalence up to Quantifier Rank -/
 
