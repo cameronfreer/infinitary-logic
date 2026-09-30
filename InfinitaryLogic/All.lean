@@ -44,6 +44,8 @@ import InfinitaryLogic.ModelTheory.FiberCompanionEquiv
 import InfinitaryLogic.ModelTheory.FiberCompanionIso
 import InfinitaryLogic.ModelTheory.FiberCantorFamily
 import InfinitaryLogic.ModelTheory.NullaryTags
+import InfinitaryLogic.FiniteSupportClosure
+import InfinitaryLogic.TwoGeneratorCardinality
 
 /-!
 # All: the sorry-free library surface
