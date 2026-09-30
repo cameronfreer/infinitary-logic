@@ -53,6 +53,7 @@ import InfinitaryLogic.ScottProcess.Basic
 import InfinitaryLogic.ScottProcess.Semantic
 import InfinitaryLogic.ScottProcess.SemanticBridge
 import InfinitaryLogic.ScottProcess.Rank
+import InfinitaryLogic.ScottProcess.RankComparison
 
 /-!
 # All: the sorry-free library surface
