@@ -15,7 +15,8 @@ natural numbers with the equivalence relation whose classes are `{2k, 2k + 1}`.
 * **Forgotten coordinate**: `H_sf` along the non-surjective `Fin 1 ↪ Fin 2` hitting `1`, and
   its level-`0` form `H0_atomicType` on the atomic type of `(0, 1)`.
 * **Repeated coordinates**: `exists_embedding_comp_eq` on the tuple `(5, 7, 5)`, and
-  `exists_embedding_comp_eq_of_eq_iff` on `(5, 7, 5)` against `(1, 2, 1)` (one common `g`).
+  `exists_embedding_comp_eq_of_eq_iff` on `(5, 7, 5)` against `(1, 2, 1)` (one common surjective
+  `g`, so `e` enumerates exactly the range).
 * **Common injective extension**: `exists_common_injective_extension` on the overlapping tuples
   `(0, 1)` and `(1, 2)`: `θ` has arity `4`, restricts to `(0, 1)` along `i_2`, satisfies
   `θ ∘ j = (1, 2)`, and `j` sends `0` to `1`.
@@ -217,12 +218,13 @@ theorem factor_575 :
 identifies the coordinates `0` and `2` and separates `0` and `1`. -/
 theorem factor_575_121 :
     ∃ (k : ℕ) (e e' : Fin k ↪ ℕ) (g : Fin 3 → Fin k),
-      ⇑e ∘ g = ![5, 7, 5] ∧ ⇑e' ∘ g = ![1, 2, 1] ∧ g 0 = g 2 ∧ g 0 ≠ g 1 := by
-  obtain ⟨k, e, e', g, he, he'⟩ :=
+      ⇑e ∘ g = ![5, 7, 5] ∧ ⇑e' ∘ g = ![1, 2, 1] ∧ g 0 = g 2 ∧ g 0 ≠ g 1 ∧
+        Set.range e = Set.range ![5, 7, 5] := by
+  obtain ⟨k, e, e', g, he, he', hg⟩ :=
     exists_embedding_comp_eq_of_eq_iff (![5, 7, 5] : Fin 3 → ℕ) (![1, 2, 1] : Fin 3 → ℕ)
       (by decide)
   refine ⟨k, e, e', g, he, he', e.injective ((congrFun he 0).trans (congrFun he 2).symm),
-    fun h ↦ ?_⟩
+    fun h ↦ ?_, by rw [← he, Set.range_comp, hg.range_eq, Set.image_univ]⟩
   have h12 : (1 : ℕ) = 2 := (congrFun he' 0).symm.trans ((congrArg e' h).trans (congrFun he' 1))
   exact absurd h12 (by decide)
 
@@ -499,6 +501,7 @@ theorem simp_normal_forms {α β γ : Ordinal.{0}} (h1 : γ ≤ β) (h2 : β ≤
     (j : Fin m ↪ Fin n) (k : Fin l ↪ Fin m) (a : Fin n ↪ ℕ) :
     V h1 (V h2 (sf binLang.{u, v} α a)) = sf binLang.{u, v} γ a ∧
       H k (H j (sf binLang.{u, v} α a)) = sf binLang.{u, v} α (k.trans (j.trans a)) ∧
+      H k (H j (sf binLang.{u, v} α a)) = H (k.trans j) (sf binLang.{u, v} α a) ∧
       V h2 (H j (sf binLang.{u, v} α a)) = sf binLang.{u, v} β (j.trans a) ∧
       H j (V h2 (sf binLang.{u, v} α a)) = sf binLang.{u, v} β (j.trans a) ∧
       (succEquiv (relAtomic binLang.{u, v}) α n (sf binLang.{u, v} (α + 1) a)).1 =

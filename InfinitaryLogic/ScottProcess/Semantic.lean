@@ -148,13 +148,14 @@ of structures in different universes, with the same equality pattern
 theorem exists_embedding_comp_eq_of_eq_iff {n : ℕ} (a : Fin n → M) (b : Fin n → N)
     (hab : ∀ i j, a i = a j ↔ b i = b j) :
     ∃ (k : ℕ) (e : Fin k ↪ M) (e' : Fin k ↪ N) (g : Fin n → Fin k),
-      ⇑e ∘ g = a ∧ ⇑e' ∘ g = b := by
+      ⇑e ∘ g = a ∧ ⇑e' ∘ g = b ∧ Function.Surjective g := by
   obtain ⟨k, e, g, he, hr, hp⟩ := exists_embedding_comp_eq a
   have hg : Function.Surjective g := by
     intro x
     obtain ⟨i, hi⟩ : e x ∈ Set.range a := hr ▸ Set.mem_range_self x
     exact ⟨i, e.injective (by rw [← hi, ← he, Function.comp_apply])⟩
-  refine ⟨k, e, ⟨fun x ↦ b (Function.surjInv hg x), fun x y h ↦ ?_⟩, g, he, funext fun i ↦ ?_⟩
+  refine ⟨k, e, ⟨fun x ↦ b (Function.surjInv hg x), fun x y h ↦ ?_⟩, g, he, funext fun i ↦ ?_,
+    hg⟩
   · rw [← Function.surjInv_eq hg x, ← Function.surjInv_eq hg y]
     exact (hp _ _).1 ((hab _ _).2 h)
   · exact (hab _ _).1 ((hp _ _).2 (Function.surjInv_eq hg (g i)))
@@ -484,6 +485,14 @@ private theorem isSf_H {α : Ordinal.{0}} {n m : ℕ} (j : Fin m ↪ Fin n) {a :
 @[simp] theorem H_sf (α : Ordinal.{0}) {n m : ℕ} (j : Fin m ↪ Fin n) (a : Fin n ↪ M) :
     H j (sf L α a) = sf L α (j.trans a) :=
   eq_sf_iff.2 (isSf_H j (isSf_sf α a))
+
+/-- Reassociation of a composite relabelling under `sf`, by `rfl`.  It is the join of the critical
+pair `H_sf`/`H_comp`: `simp` rewrites `H k (H j (sf α a))` to the right-nested
+`sf α (k.trans (j.trans a))` and `H (k.trans j) (sf α a)` to the left-nested form, and
+Mathlib's `Function.Embedding.trans_assoc` is not a simp lemma. -/
+@[simp] theorem sf_trans_trans (α : Ordinal.{0}) {n m l : ℕ} (k : Fin l ↪ Fin m)
+    (j : Fin m ↪ Fin n) (a : Fin n ↪ M) :
+    sf L α ((k.trans j).trans a) = sf L α (k.trans (j.trans a)) := rfl
 
 /-- Level `0`: two injective tuples, possibly of different structures, have the same entry at
 level `0` iff they have the same atomic type. -/
