@@ -171,18 +171,10 @@ theorem BoundedFormulaω.realize_equiv {M N : Type w} [L.Structure M] [L.Structu
     (e : M ≃[L] N) {α : Type*} {n : ℕ} (φ : L.BoundedFormulaω α n)
     (v : α → M) (xs : Fin n → M) :
     φ.Realize v xs ↔ φ.Realize (e ∘ v) (e ∘ xs) := by
-  have h_elim : ∀ {m : ℕ} (v' : α → M) (xs' : Fin m → M),
-      Sum.elim (⇑e ∘ v') (⇑e ∘ xs') = ⇑e ∘ Sum.elim v' xs' := by
-    intro m v' xs'; funext x; cases x <;> rfl
   induction φ with
   | falsum => simp
-  | equal t₁ t₂ =>
-    simp only [BoundedFormulaInf.Realize, h_elim, HomClass.realize_term e]
-    exact e.injective.eq_iff.symm
-  | rel R ts =>
-    simp only [BoundedFormulaInf.Realize]
-    simp_rw [h_elim, HomClass.realize_term e]
-    exact (StrongHomClass.map_rel e R _).symm
+  | equal t₁ t₂ => exact (e.toEmbedding.realize_equal_comp t₁ t₂).symm
+  | rel R ts => exact (e.toEmbedding.realize_rel_comp R ts).symm
   | imp φ ψ ihφ ihψ =>
     simp only [BoundedFormulaInf.Realize]
     exact Iff.imp (ihφ xs) (ihψ xs)

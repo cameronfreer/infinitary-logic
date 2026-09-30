@@ -153,9 +153,13 @@ union `⨆ i, S_i` (Mathlib `Substructure` sSup / directed union, whose carrier 
   directedness — a tuple from the union lies in some single `S_i` (finitely many coordinates).
 - **ω-chain corollary** and **ω₁-chain corollary** (continuity at limits stated explicitly:
   for a chain (S_α)_{α<ω₁} with S_λ = ⨆_{α<λ} S_α at limits, every S_α ≺_A ⋃ and the union is
-  ≺_A M). This common-ambient form is what #16's iteration consumes; Marker's Ex 1.27
-  (abstract chains of structures, no ambient) is DEFERRED — abstract direct limits only if a
-  consumer demands them.
+  ≺_A M). This common-ambient form is what #16's iteration consumes. Marker's Ex 1.27
+  (Exercise 1.1.14 in the 2016 book; abstract chains of structures, no ambient) was deferred
+  until a consumer demanded it; it is now `ModelTheory/AElementaryDirectLimit.lean`, for a fixed
+  fragment over an arbitrary directed index: `aElementary_of_cocone` (compatible embeddings
+  jointly covering any target) and `aElementary_directLimit_of` (Mathlib's direct limit). The
+  gate was lifted on a consumer request for fixed-fragment direct limits (2026-09-30); varying
+  fragments and atomicity remain out of scope pending their own statement review.
 
 ## 8. Finite-arity `OmitsType`
 

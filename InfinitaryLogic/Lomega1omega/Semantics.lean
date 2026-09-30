@@ -32,14 +32,16 @@ would name the other one. Every later operation would then have to pick, and wou
   **explicit** argument convention (Mathlib states these with implicit arguments);
 - realization for the connectives Mathlib does not define: `and`/`or`/`iff` and the
   `Encodable`-indexed `einf`/`esup` with their explicit-encoding forms;
-- the `⊨ω` notation.
+- the `⊨ω` notation;
+- the atomic cases of transport along an embedding (`Embedding.realize_equal_comp`,
+  `Embedding.realize_rel_comp`), shared by every induction that moves realization along one.
 
 The gates at the end certify by `Iff.rfl` — no rewriting, no casts — that each alias *is* the
 Mathlib semantics, and that the historical `Fin.elim0` spellings of the arity-0 cases still
 agree with Mathlib's `default`.
 -/
 
-universe u v w u'
+universe u v w w' u'
 
 namespace FirstOrder
 
@@ -186,6 +188,32 @@ theorem realize_esup {ι : Type*} [Encodable ι] (φs : ι → L.BoundedFormula�
   @realize_esup L M _ α n v xs ι e φs
 
 end BoundedFormulaω
+
+/-! ### Atomic formulas along embeddings
+
+An embedding preserves and reflects atomic formulas: realizing one at the image valuations
+`⇑f ∘ v`, `⇑f ∘ xs` is the same as realizing it at `v`, `xs`. These are the base cases of every
+induction that transports realization along an embedding. -/
+
+namespace Embedding
+
+variable {N : Type w'} [L.Structure N] (f : M ↪[L] N) {v : α → M} {xs : Fin n → M}
+
+/-- An embedding preserves and reflects the atomic formula `t₁ = t₂`. -/
+theorem realize_equal_comp (t₁ t₂ : L.Term (α ⊕ Fin n)) :
+    (BoundedFormulaω.equal t₁ t₂).Realize (⇑f ∘ v) (⇑f ∘ xs) ↔
+      (BoundedFormulaω.equal t₁ t₂).Realize v xs := by
+  simp only [BoundedFormulaω.realize_equal, ← Sum.comp_elim, HomClass.realize_term]
+  exact f.injective.eq_iff
+
+/-- An embedding preserves and reflects the atomic formula `R ts`. -/
+theorem realize_rel_comp {l : ℕ} (R : L.Relations l) (ts : Fin l → L.Term (α ⊕ Fin n)) :
+    (BoundedFormulaω.rel R ts).Realize (⇑f ∘ v) (⇑f ∘ xs) ↔
+      (BoundedFormulaω.rel R ts).Realize v xs := by
+  simp only [BoundedFormulaω.realize_rel, ← Sum.comp_elim, HomClass.realize_term]
+  exact f.map_rel R _
+
+end Embedding
 
 namespace Formulaω
 

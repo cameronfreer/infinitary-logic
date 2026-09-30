@@ -14,7 +14,8 @@ common-ambient directed-union result — a nonempty directed family of A-element
 substructures of ONE model `M` has an A-elementary directed union (`aElementary_iSup`), and
 each link is A-elementary in the union (`aElementary_inclusion_iSup`, via two-out-of-three).
 The linearly-ordered chain corollary (`aElementary_iSup_of_monotone`) covers both the ω- and
-ω₁-chain forms that #16 consumes; abstract direct limits are deliberately deferred.
+ω₁-chain forms that #16 consumes. Abstract direct limits, with no common ambient model, are in
+`ModelTheory/AElementaryDirectLimit.lean` (fixed fragment, arbitrary directed index, cocone form).
 
 The finite-arity `OmitsFiniteType` API (unit 7): omission passes down to A-elementary substructures
 (`OmitsFiniteType.of_aElementary`) and through directed unions (`OmitsFiniteType.iSup`) when the type's
