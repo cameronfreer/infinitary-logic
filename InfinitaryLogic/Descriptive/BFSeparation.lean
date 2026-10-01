@@ -5,7 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Descriptive.BFTree
 import InfinitaryLogic.Descriptive.AnalyticTreeBoundedness
-import InfinitaryLogic.Descriptive.G0Dichotomy
+import InfinitaryLogic.Descriptive.AnalyticClosure
 
 /-!
 # Uniform back-and-forth separation of analytic sets of non-isomorphic pairs
@@ -46,8 +46,8 @@ well-orders is involved.
 * **Isomorphism.**  Non-isomorphism is stated through `structureIsoSetoid L`; no invariance
   predicate is assumed or produced.
 * **Products of analytic sets.**  Mathlib has no product lemma for analytic sets; the
-  two-set form uses `MeasureTheory.AnalyticSet.prod` from `G0Dichotomy` (Mathlib-only imports),
-  stated there for arbitrary topological spaces.
+  two-set form uses `MeasureTheory.AnalyticSet.prod` from `AnalyticClosure` (Mathlib-only
+  imports), stated there for arbitrary topological spaces.
 
 ## References
 

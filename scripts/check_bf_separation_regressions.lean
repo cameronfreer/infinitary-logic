@@ -302,7 +302,7 @@ def hasPCComponent (m : Name) : Bool :=
   m.components.any fun c ↦ c.toString.startsWith "PC"
 
 /-- The exact `InfinitaryLogic` import closure of the module.  Extending it is a deliberate
-decision: update this list together with the module docstring.  `G0Dichotomy` (Mathlib-only
+decision: update this list together with the module docstring.  `AnalyticClosure` (Mathlib-only
 imports) supplies `MeasureTheory.AnalyticSet.prod`. -/
 def allowedClosure : List Name :=
   [`InfinitaryLogic.Util, `InfinitaryLogic.OrdinalUtil,
@@ -316,8 +316,8 @@ def allowedClosure : List Name :=
    `InfinitaryLogic.Descriptive.PerfectAntichain, `InfinitaryLogic.Descriptive.CantorAntichain,
    `InfinitaryLogic.Descriptive.StructureIsoSetoid, `InfinitaryLogic.Descriptive.BFEquivBorel,
    `InfinitaryLogic.Descriptive.KleeneBrouwer, `InfinitaryLogic.Descriptive.BFTree,
-   `InfinitaryLogic.Descriptive.AnalyticTreeBoundedness, `InfinitaryLogic.Descriptive.G0Dichotomy,
-   `InfinitaryLogic.Descriptive.BFSeparation]
+   `InfinitaryLogic.Descriptive.AnalyticTreeBoundedness,
+   `InfinitaryLogic.Descriptive.AnalyticClosure, `InfinitaryLogic.Descriptive.BFSeparation]
 
 run_cmd do
   let env ← getEnv
