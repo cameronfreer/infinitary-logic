@@ -13,14 +13,22 @@ Every public theorem is *applied*, not only listed for its axioms.
 * **`(ℚ, <)`.**  Ultrahomogeneity is *derived* from B2 in pointed form: for the family of
   atomic diagrams over parameters `c`, the pointed sentence holds at any `d` of the same order
   type, by the one-point extension property of `ℚ` alone (B2 needs no hypothesis on the
-  family), so B2 produces an automorphism carrying `c` to `d`.  Then the atomic diagrams are
-  orbit formulas, and the sentence of `(ℚ, <)` fails in `(ℕ, <)`.
-* **A genuinely infinitary orbit formula.**  Countably many unary predicates `P i` on
+  family), so B2 produces an automorphism carrying `c` to `d`.  The pointed sentence is
+  verified by rewriting with the public clause-by-clause characterization
+  `realize_montalbanSentencePointed`, without unfolding the definitions.  Then the atomic
+  diagrams are orbit formulas, and the sentence of `(ℚ, <)` fails in `(ℕ, <)`.
+* **An infinitary orbit formula (semantic).**  Countably many unary predicates `P i` on
   `ℕ ⊕ ℕ`, `P i` true exactly at `inl i`: the orbit formula of an unlabelled point `inr j` is
   `⋀ᵢ ¬P i(x) = ¬⋁ᵢ P i(x)`, the negation of a countable disjunction of atoms.  (An outermost
   countable disjunction is never needed to define a single orbit: each disjunct defines an
   automorphism-invariant subset of the orbit, hence the orbit or nothing.)  The sentence fails in
-  `ℕ` with `P i` true exactly at `i`, where every point is labelled.
+  `ℕ` with `P i` true exactly at `i`, where every point is labelled.  This is a **semantic**
+  regression, not a complexity one: the orbit formula of an unlabelled point is `Π^in_1`, and
+  that orbit is not `Σ^in_1`-definable (by the invariance argument, a single disjunct `∃ȳ ψ`
+  would define it; `ψ` mentions only some `P 0, …, P N`, and swapping `inr 0` with `inl (N+1)`
+  is an automorphism of that reduct, so the disjunct cannot separate the two points).  The spec
+  §7 complexity item, a genuine countable `⋁` inside a `Σ^in_1` orbit formula, is deferred to
+  the B3 PR, where the back clause `∀y ⋁_{m ∈ M}` exercises A-5 at level 1.
 * **A finite structure**: `Bool` with a nullary `S` and a unary `P` true only at `true` is rigid;
   its atomic diagrams are orbit formulas, and B2 shows every countable model of the sentence has
   two elements.
@@ -39,8 +47,9 @@ Every public theorem is *applied*, not only listed for its axioms.
 * **`k = 0` compatibility** (`realize_montalbanSentence_iff_pointed`) on the pure set, and the
   pointed B2 at the empty parameter tuple.
 * **The empty tuple**: the seed `Φ 0 Fin.elim0` is a conjunct (the family `⊥` gives a sentence
-  true nowhere); the tuple quantifiers at length `0`; `existsTuple`, `forallTuple` and
-  `forallTupleFrom` on concrete formulas.
+  true nowhere, read off `realize_montalbanSentence`); the tuple quantifiers at length `0`;
+  `existsTuple`, `forallTuple` and `forallTupleFrom` on concrete formulas; and `simp` closing
+  `existsTuple`/`forallTuple` goals and a `forallTupleFrom` goal around a clause body.
 * **Import closure** of the module: it reaches `Karp/PotentialIso`, `Scott/Sentence` and
   `Lomega1omega/Theory`, and no Scott-process, descriptive, method, model-theory, admissible or
   conditional module.
@@ -267,12 +276,9 @@ abbrev ratΦ {k : ℕ} (c : Fin k → ℚ) : ∀ n, (Fin n → ℚ) → ltLang.F
 type, by the extension property alone (no orbit hypothesis). -/
 theorem rat_realize_pointed {k : ℕ} (c d : Fin k → ℚ) (h : SameAtomicType (L := ltLang) c d) :
     (montalbanSentencePointed c (ratΦ c)).Realize d := by
-  simp only [montalbanSentencePointed, montalbanClausePointed, Formulaω.realize_inf,
-    Formulaω.realize_einf, realize_forallTupleFrom, realize_montalbanClauseBody,
-    ← sameAtomicType_iff_realize_atomicDiagram, Fin.append_snoc]
-  refine ⟨?_, fun p b hb ↦ ⟨hb, fun m ↦ ?_, fun y ↦ ?_⟩⟩
-  · have hc : Fin.append c (Fin.elim0 : Fin 0 → ℚ) = c := funext fun i ↦ Fin.append_left c _ i
-    simpa only [hc] using h
+  rw [realize_montalbanSentencePointed]
+  simp only [ratΦ, ← sameAtomicType_iff_realize_atomicDiagram, Fin.append_snoc]
+  refine ⟨by simpa using h, fun p a b hb ↦ ⟨hb, fun m ↦ ?_, fun y ↦ ?_⟩⟩
   · exact rat_extend _ _ hb m
   · obtain ⟨m, hm⟩ := rat_extend _ _ hb.symm y
     exact ⟨m, hm.symm⟩
@@ -617,7 +623,8 @@ holds nowhere. -/
 theorem bot_seed (N : Type) :
     ¬ (montalbanSentence fun n (_ : Fin n → ℕ) ↦
       (⊥ : Language.empty.Formulaω (Fin n))).realize_as_sentence N := by
-  simp [montalbanSentence, Formulaω.realize_as_sentence]
+  rw [realize_montalbanSentence]
+  simp
 
 /-- `x₀ ≠ x₁`. -/
 def neq01 : Language.empty.Formulaω (Fin 2) :=
@@ -652,6 +659,24 @@ theorem tuple_zero (φ : Language.empty.Formulaω (Fin 0)) (N : Type) :
   rw [realize_forallTuple, realize_existsTuple]
   exact ⟨⟨fun h ↦ h _, fun h b ↦ Subsingleton.elim b Fin.elim0 ▸ h⟩,
     ⟨fun ⟨b, hb⟩ ↦ Subsingleton.elim b Fin.elim0 ▸ hb, fun h ↦ ⟨_, h⟩⟩⟩
+
+/-- **`simp` normal form**: the tuple quantifiers are `@[simp]`, so `simp` turns `existsTuple`
+and `forallTuple` into Lean quantifiers over tuples. -/
+theorem simp_tupleQuantifiers {N : Type} (n : ℕ) (φ ψ : Language.empty.Formulaω (Fin n))
+    (v : Fin 0 → N) :
+    (existsTuple n φ).Realize v ∧ (forallTuple n ψ).Realize v ↔
+      (∃ b : Fin n → N, φ.Realize b) ∧ ∀ b : Fin n → N, ψ.Realize b := by
+  simp
+
+/-- **`simp` normal form** for `forallTupleFrom`, here around a clause body, which `simp` also
+unfolds (`realize_montalbanClauseBody` is `@[simp]`). -/
+theorem simp_forallTupleFrom {N : Type} (k n : ℕ) (θ D : Language.empty.Formulaω (Fin (k + n)))
+    (ψ : ℕ → Language.empty.Formulaω (Fin (k + n + 1))) (d : Fin k → N) :
+    (forallTupleFrom k n (montalbanClauseBody θ D ψ)).Realize d ↔
+      ∀ b : Fin n → N, θ.Realize (Fin.append d b) → D.Realize (Fin.append d b) ∧
+        (∀ m, ∃ y, (ψ m).Realize (Fin.snoc (Fin.append d b) y)) ∧
+          ∀ y, ∃ m, (ψ m).Realize (Fin.snoc (Fin.append d b) y) := by
+  simp
 
 end Tuples
 
@@ -698,9 +723,10 @@ def moduleDecls : List Name :=
   [`forallTuple, `existsTuple, `forallTupleFrom, `realize_forallTuple, `realize_existsTuple,
    `realize_forallTupleFrom, `montalbanClauseBody, `realize_montalbanClauseBody,
    `montalbanClausePointed, `montalbanSentencePointed, `IsOrbitFormulaFamilyPointed,
-   `montalbanSentencePointed_self, `exists_equiv_of_realize_montalbanSentencePointed,
-   `montalbanSentencePointed_characterizes, `montalbanClause, `montalbanSentence,
-   `IsOrbitFormulaFamily, `realize_montalbanSentence_iff_pointed, `montalbanSentence_self,
+   `realize_montalbanSentencePointed, `montalbanSentencePointed_self,
+   `exists_equiv_of_realize_montalbanSentencePointed, `montalbanSentencePointed_characterizes,
+   `montalbanClause, `montalbanSentence, `IsOrbitFormulaFamily, `realize_montalbanSentence,
+   `realize_montalbanSentence_iff_pointed, `montalbanSentence_self,
    `nonempty_equiv_of_realize_montalbanSentence,
    `montalbanSentence_characterizes].map (`FirstOrder.Language ++ ·)
 
@@ -716,7 +742,8 @@ def guardDecls : List Name :=
    `empty_not_realizes_pempty, `unit_not_realizes_empty, `pure_isOrbitPointed,
    `pure_pointed_iff, `pure_pointed_of_pattern, `pointed_self_one, `pointed_one, `pointed_two,
    `pointed_repeated, `pointed_repeated_not, `compat_pure, `pointed_zero, `bot_seed,
-   `existsTuple_examples, `forallTuple_examples, `tuple_zero].map (`MontalbanGuard ++ ·)
+   `existsTuple_examples, `forallTuple_examples, `tuple_zero, `simp_tupleQuantifiers,
+   `simp_forallTupleFrom].map (`MontalbanGuard ++ ·)
 
 /-- The standard axioms. -/
 def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
@@ -738,5 +765,6 @@ run_cmd do
     Fin 0 positive, PEmpty with the nullary fact false negative in both directions, Unit \
     negative; pointed with one, two and a repeated parameter, the produced isomorphism carrying \
     them, and a repeated parameter not carried to distinct values; k = 0 compatibility; the \
-    empty-tuple seed and tuple quantifiers; import closure without Scott-process, descriptive, \
+    clause-by-clause characterizations used by rewriting; the empty-tuple seed and tuple \
+    quantifiers, closed by simp; import closure without Scott-process, descriptive, \
     method, model-theory, admissible or conditional modules; standard axioms)"

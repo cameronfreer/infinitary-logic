@@ -19,7 +19,8 @@ sentence** of the family is
                                           ∧ ∀y ⋁_{m ∈ M} Φ (n+1) (a⌢m) (x̄, y)),
 ```
 
-where `D_a` is the atomic diagram of `a`.  If `Φ n a` defines the automorphism orbit of `a` for
+where `D_a` is the atomic diagram of `a` (a countable conjunction of atoms; see the
+interpretation choices below).  If `Φ n a` defines the automorphism orbit of `a` for
 every tuple, the sentence holds in `M` (`montalbanSentence_self`).  For **every** family, a
 countable structure satisfying the sentence is isomorphic to `M`
 (`nonempty_equiv_of_realize_montalbanSentence`): in `N`, the relation
@@ -48,6 +49,8 @@ the compatibility lemma `realize_montalbanSentence_iff_pointed`.
 * `montalbanClausePointed`, `montalbanSentencePointed`, `IsOrbitFormulaFamilyPointed`,
   `montalbanSentencePointed_self`, `exists_equiv_of_realize_montalbanSentencePointed`,
   `montalbanSentencePointed_characterizes`: the pointed form.
+* `realize_montalbanSentence`, `realize_montalbanSentencePointed`: the two sentences clause by
+  clause, for any family; the form in which to verify a sentence in a given structure.
 * `realize_montalbanSentence_iff_pointed`: the unpointed sentence is the pointed sentence with
   no parameters, up to the transport of each `Φ n a` from `Fin n` to `Fin (0 + n)`.
 
@@ -66,10 +69,17 @@ the compatibility lemma `realize_montalbanSentence_iff_pointed`.
   conjunct is why `[Countable (Σ l, L.Relations l)]` is assumed; with uncountably many unary
   predicates no single `Lω₁ω` sentence pins down a one-point structure up to isomorphism, since
   a sentence mentions only countably many symbols.
+* **`D_a` differs from the source.**  In §II.2, `D(x̄) = D^A(ā)` is a finitary quantifier-free
+  formula over the finite sub-vocabulary `τ_{|ā|}`.  Here `atomicDiagram` is a countable
+  conjunction over all atomic indices, so it is `Π^in_1` rather than finitary, and stronger
+  clause by clause.  B1 and B2 are unaffected: both read `D_a(b)` only as full atomic agreement
+  of `a` and `b` (`sameAtomicType_iff_realize_atomicDiagram`), which `M` has at its own tuples
+  (B1) and which is what each stage of a `PotentialIso` requires (B2).  The difference matters
+  once the complexity of the sentence is bounded (B3), which this module does not do.
 * **The empty-tuple seed.**  The first conjunct is `Φ 0 Fin.elim0`, the orbit formula of the
-  empty tuple; it starts the back-and-forth system.  The clause at the empty tuple contributes
-  `D_⟨⟩`, which records the nullary relations, so an empty `M` is characterized among empty
-  structures with the same nullary facts.
+  empty tuple; it starts the back-and-forth system.  The sentence of an empty `M` holds in
+  exactly the empty structures with the same nullary facts (the back clause at `⟨⟩` is `∀y ⊥`,
+  and `D_⟨⟩` records the nullary relations).
 * **Minimal hypotheses for B2.**  `nonempty_equiv_of_realize_montalbanSentence` assumes nothing
   about the family: neither the orbit property nor any syntactic class.  It needs
   `[L.IsRelational]` (for `PotentialIso`), countable `M` and `N`, and `M` and `N` in one carrier
@@ -84,11 +94,11 @@ the compatibility lemma `realize_montalbanSentence_iff_pointed`.
   graph of `PotentialIso.countable_toEquiv_graph`, through the equality atoms between parameter
   and tuple coordinates in the atomic-diagram conjunct.
 * **What is not claimed.**  No complexity statement is made here: the syntactic class of the
-  family is unconstrained, and no class of the sentence is asserted.  The sentence is *a* Scott
-  sentence of `M`, not the canonical `scottSentence M`: both characterize `M` among countable
-  structures of its carrier universe, so they agree there, but they are not syntactically equal,
-  and no comparison lemma is stated here.  Constants named through `L.withConstants` are not
-  used: the pointed form replaces them.
+  family is unconstrained, and no class of the sentence is asserted.  For an orbit-formula
+  family, the sentence is *a* Scott sentence of `M`, not the canonical `scottSentence M`: both
+  characterize `M` among countable structures of its carrier universe, so they agree there, but
+  they are not syntactically equal, and no comparison lemma is stated here.  Constants named
+  through `L.withConstants` are not used: the pointed form replaces them.
 
 ## References
 
@@ -142,6 +152,7 @@ private theorem exists_snoc_iff {n : ℕ} {P : (Fin (n + 1) → N) → Prop} :
     fun ⟨b, h⟩ ↦ ⟨Fin.init b, b (Fin.last n), by simpa only [Fin.snoc_init_self] using h⟩⟩
 
 /-- `forallTuple n φ` holds iff `φ` holds of every `n`-tuple. -/
+@[simp]
 theorem realize_forallTuple :
     ∀ (n : ℕ) (φ : L.Formulaω (Fin n)) (v : Fin 0 → N),
       (forallTuple n φ).Realize v ↔ ∀ b : Fin n → N, φ.Realize b
@@ -151,6 +162,7 @@ theorem realize_forallTuple :
     exact forall_snoc_iff
 
 /-- `existsTuple n φ` holds iff `φ` holds of some `n`-tuple. -/
+@[simp]
 theorem realize_existsTuple :
     ∀ (n : ℕ) (φ : L.Formulaω (Fin n)) (v : Fin 0 → N),
       (existsTuple n φ).Realize v ↔ ∃ b : Fin n → N, φ.Realize b
@@ -161,13 +173,12 @@ theorem realize_existsTuple :
 
 /-- `forallTupleFrom k n φ` holds of the parameters `d` iff `φ` holds of `d` followed by every
 `n`-tuple. -/
+@[simp]
 theorem realize_forallTupleFrom (k : ℕ) :
     ∀ (n : ℕ) (φ : L.Formulaω (Fin (k + n))) (d : Fin k → N),
       (forallTupleFrom k n φ).Realize d ↔ ∀ b : Fin n → N, φ.Realize (Fin.append d b)
-  | 0, φ, d => by
-    have hd : ∀ b : Fin 0 → N, Fin.append d b = d := fun b ↦ funext fun i ↦ Fin.append_left d b i
-    simp only [hd]
-    exact ⟨fun h _ ↦ h, fun h ↦ h Fin.elim0⟩
+  | 0, φ, d => ⟨fun h b ↦ by simpa [forallTupleFrom, Subsingleton.elim b Fin.elim0] using h,
+      fun h ↦ by simpa [forallTupleFrom] using h Fin.elim0⟩
   | n + 1, φ, d => by
     simp only [forallTupleFrom, realize_forallTupleFrom k n, realize_forallLastVar,
       ← Fin.append_snoc]
@@ -191,6 +202,7 @@ noncomputable def montalbanClauseBody {j : ℕ} (θ D : L.Formulaω (Fin j))
   θ.imp (D ⊓ einf (fun m ↦ existsLastVar (ψ m)) ⊓ forallLastVar (esup ψ))
 
 /-- Realization of the clause body: forth for every `m ∈ M` and back for every `y`. -/
+@[simp]
 theorem realize_montalbanClauseBody {N : Type w'} [L.Structure N] {j : ℕ}
     (θ D : L.Formulaω (Fin j)) (ψ : M → L.Formulaω (Fin (j + 1))) (v : Fin j → N) :
     (montalbanClauseBody θ D ψ).Realize v ↔
@@ -234,13 +246,13 @@ def IsOrbitFormulaFamilyPointed {k : ℕ} (c : Fin k → M)
   ∀ n (a b : Fin n → M),
     (Φ n a).Realize (Fin.append c b) ↔ ∃ e : M ≃[L] M, ⇑e ∘ c = c ∧ ⇑e ∘ a = b
 
-/-- Appending the empty tuple. -/
-private theorem append_elim0 {α : Type*} {k : ℕ} (d : Fin k → α) :
-    Fin.append d (Fin.elim0 : Fin 0 → α) = d :=
-  funext fun i ↦ Fin.append_left d Fin.elim0 i
-
-/-- The semantics of the pointed sentence at `d`, clause by clause. -/
-private theorem realize_montalbanSentencePointed_iff {N : Type w'} [L.Structure N] {k : ℕ}
+/-- **The pointed sentence, clause by clause.**  The pointed sentence holds of `d` in `N` iff the
+seed `Φ 0 ⟨⟩` holds of `d` and, whenever `Φ n a` holds of `d⌢b`, the tuples `c⌢a` and `d⌢b`
+satisfy the same atomic formulas (the diagram conjunct), every `m ∈ M` has a witness `y` with
+`Φ (n+1) (a⌢m)` true of `d⌢b⌢y` (forth), and every `y ∈ N` is matched by some `m ∈ M` (back).
+No hypothesis on `Φ`: this is the form in which to verify the sentence in a given structure.
+Not `@[simp]`, as the right-hand side is large. -/
+theorem realize_montalbanSentencePointed {N : Type w'} [L.Structure N] {k : ℕ}
     (c : Fin k → M) (Φ : ∀ n, (Fin n → M) → L.Formulaω (Fin (k + n))) (d : Fin k → N) :
     (montalbanSentencePointed c Φ).Realize d ↔
       (Φ 0 Fin.elim0).Realize d ∧ ∀ (n : ℕ) (a : Fin n → M) (b : Fin n → N),
@@ -257,10 +269,10 @@ sentence in `M`. -/
 theorem montalbanSentencePointed_self {k : ℕ} {c : Fin k → M}
     {Φ : ∀ n, (Fin n → M) → L.Formulaω (Fin (k + n))} (hΦ : IsOrbitFormulaFamilyPointed c Φ) :
     (montalbanSentencePointed c Φ).Realize c := by
-  rw [realize_montalbanSentencePointed_iff]
+  rw [realize_montalbanSentencePointed]
   refine ⟨?_, fun n a b hb ↦ ?_⟩
   · have h := (hΦ 0 Fin.elim0 Fin.elim0).2 ⟨Equiv.refl L M, rfl, rfl⟩
-    rwa [append_elim0] at h
+    simpa using h
   obtain ⟨e, hec, rfl⟩ := (hΦ n a b).1 hb
   have happ : Fin.append c (⇑e ∘ a) = ⇑e ∘ Fin.append c a := by
     funext i
@@ -284,12 +296,12 @@ theorem exists_equiv_of_realize_montalbanSentencePointed [L.IsRelational] {k : �
     (c : Fin k → M) (Φ : ∀ n, (Fin n → M) → L.Formulaω (Fin (k + n)))
     (N : Type w) [L.Structure N] [Countable N] (d : Fin k → N)
     (h : (montalbanSentencePointed c Φ).Realize d) : ∃ e : M ≃[L] N, ⇑e ∘ c = d := by
-  obtain ⟨h0, hcl⟩ := (realize_montalbanSentencePointed_iff c Φ d).1 h
+  obtain ⟨h0, hcl⟩ := (realize_montalbanSentencePointed c Φ d).1 h
   let R : ∀ n, (Fin n → M) → (Fin n → N) → Prop := fun n a b ↦ (Φ n a).Realize (Fin.append d b)
   have hsat : ∀ {n a b}, R n a b → SameAtomicType (L := L) (Fin.append c a) (Fin.append d b) :=
     fun hR ↦ (hcl _ _ _ hR).1
   let P : PotentialIso L M N := PotentialIso.ofExtensionFamily R
-    (by simpa only [R, append_elim0] using h0)
+    (by simpa [R] using h0)
     (fun {n a b} hR ↦ by
       simpa only [Function.comp_def, Fin.append_right] using (hsat hR).relabel (Fin.natAdd k))
     (fun hR m ↦ (hcl _ _ _ hR).2.1 m) (fun hR y ↦ (hcl _ _ _ hR).2.2 y)
@@ -298,8 +310,7 @@ theorem exists_equiv_of_realize_montalbanSentencePointed [L.IsRelational] {k : �
   obtain ⟨⟨n, a, b⟩, hp, i, hai, hbi⟩ := he (c j)
   have hij := hsat (n := n) (a := a) (b := b) hp (AtomicIdx.eq (Fin.natAdd k i) (Fin.castAdd n j))
   simp only [AtomicIdx.holds, Fin.append_right, Fin.append_left] at hij
-  change e (c j) = d j
-  rw [← hbi]
+  rw [Function.comp_apply, ← hbi]
   exact hij.1 hai
 
 omit [Countable (Σ l, L.Relations l)] [Countable M] in
@@ -349,8 +360,12 @@ omit [Countable (Σ l, L.Relations l)] [Countable M] in
 def IsOrbitFormulaFamily (Φ : ∀ n, (Fin n → M) → L.Formulaω (Fin n)) : Prop :=
   ∀ n (a b : Fin n → M), (Φ n a).Realize b ↔ ∃ e : M ≃[L] M, ⇑e ∘ a = b
 
-/-- The semantics of the unpointed sentence, clause by clause. -/
-private theorem realize_montalbanSentence_iff {N : Type w'} [L.Structure N]
+/-- **Montalbán's sentence, clause by clause.**  The sentence holds in `N` iff the seed `Φ 0 ⟨⟩`
+holds and, whenever `Φ n a` holds of `b`, the tuples `a` and `b` satisfy the same atomic
+formulas, every `m ∈ M` has a witness `y` with `Φ (n+1) (a⌢m)` true of `b⌢y` (forth), and every
+`y ∈ N` is matched by some `m ∈ M` (back).  No hypothesis on `Φ`.  Not `@[simp]`, as the
+right-hand side is large. -/
+theorem realize_montalbanSentence {N : Type w'} [L.Structure N]
     (Φ : ∀ n, (Fin n → M) → L.Formulaω (Fin n)) :
     (montalbanSentence Φ).realize_as_sentence N ↔
       (Φ 0 Fin.elim0).Realize (Fin.elim0 : Fin 0 → N) ∧
@@ -394,9 +409,9 @@ theorem realize_montalbanSentence_iff_pointed {N : Type w'} [L.Structure N]
       (montalbanSentencePointed (Fin.elim0 : Fin 0 → M) fun n a ↦
         BoundedFormulaω.mapFreeVars (Fin.cast (Nat.zero_add n).symm) (Φ n a)).Realize
           (Fin.elim0 : Fin 0 → N) := by
-  rw [realize_montalbanSentence_iff, realize_montalbanSentencePointed_iff]
+  rw [realize_montalbanSentence, realize_montalbanSentencePointed]
   have h0 := realize_mapFreeVars_cast (Φ 0 Fin.elim0) (Fin.elim0 : Fin 0 → N)
-  rw [append_elim0] at h0
+  rw [show Fin.append (Fin.elim0 : Fin 0 → N) Fin.elim0 = Fin.elim0 from funext (·.elim0)] at h0
   simp only [realize_mapFreeVars_cast, sameAtomicType_elim0_append, h0]
 
 omit [Countable (Σ l, L.Relations l)] [Countable M] in
