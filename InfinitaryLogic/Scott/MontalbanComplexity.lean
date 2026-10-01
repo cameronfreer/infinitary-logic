@@ -36,6 +36,8 @@ keep the level `α + 1 ≥ 1`.
 * `isPiIn_montalbanClauseBody`: the clause body shared by both forms is `Π^in_{α+1}`.
 * `isPiIn_montalbanSentencePointed`, `isPiIn_montalbanSentence`: the two sentences are
   `Π^in_{α+1}` when the family is `Σ^in_α` and `1 ≤ α`.
+* `montalbanSentence_eq_pointed_elim0`: the unpointed sentence *is* the pointed sentence over the
+  empty parameter tuple, for the family transported along `0 + n = n` by `mapFreeVars`.
 * `exists_isPiIn_scottSentence_of_sigmaIn_orbits`,
   `exists_isPiIn_pointed_of_sigmaIn_orbits`: a `Π^in_{α+1}` Scott sentence (pointed: formula)
   from `Σ^in_α` orbit formulas, `1 ≤ α`.
@@ -64,18 +66,16 @@ keep the level `α + 1 ≥ 1`.
   indices, never level `0` (even in a finite language: the syntax does not record finiteness of
   an index), and `Π^in_1`; it is absorbed into `Π^in_{α+1}` because `α + 1 ≥ 1`.  In Montalbán's
   source the diagram is a finitary quantifier-free formula; the bound is the same.
-* **Pointed and unpointed: direct classification, not transfer.**  `IsPiIn` is syntactic, so the
-  semantic `k = 0` compatibility lemma `realize_montalbanSentence_iff_pointed` cannot transfer
-  it.  Nor is there an honest syntactic equation between the unpointed sentence and the pointed
-  sentence over the empty parameter tuple up to `mapFreeVars`: their atomic diagrams enumerate
-  the atomic indices over `Fin n` and over `Fin (0 + n)` through two unrelated
-  `Encodable.ofCountable` choices, so they agree only up to the order of conjuncts.  Both
-  constructions are therefore classified directly, through the shared clause-body lemma
-  `isPiIn_montalbanClauseBody` and the two block lemmas `isPiIn_forallTuple_iff` and
-  `isPiIn_forallTupleFrom_iff`.
+* **Pointed and unpointed: two routes.**  `IsPiIn` is syntactic, so the semantic `k = 0`
+  lemma `realize_montalbanSentence_iff_pointed` cannot transfer it.  Both constructions are
+  classified directly through the shared clause-body lemma `isPiIn_montalbanClauseBody` (with the
+  block lemmas `isPiIn_forallTuple_iff` and `isPiIn_forallTupleFrom_iff`); the syntactic
+  equation `montalbanSentence_eq_pointed_elim0` (transport along `0 + n = n`) gives a second
+  route, exercised in the guard.
 * **Hypotheses.**  The complexity theorems assume only the class of the family and `1 ≤ α`;
   they need neither `[L.IsRelational]` nor any orbit property, and are universe-polymorphic in the
-  language and the carrier.  The Scott-sentence corollaries add what B1 and B2 need:
+  language and the carrier.  The Scott-sentence corollaries add what `montalbanSentence_self` and
+  `nonempty_equiv_of_realize_montalbanSentence` (and their pointed forms) need:
   `[L.IsRelational]`, and countable structures in `M`'s carrier universe.
 
 ## References
@@ -133,17 +133,17 @@ theorem isPiIn_forallTupleFrom_iff (hα : 1 ≤ α) (k : ℕ) :
   | 0, _ => Iff.rfl
   | n + 1, _ => (isPiIn_forallTupleFrom_iff hα k n _).trans (isPiIn_forallLastVar_iff hα)
 
-/-- **The clause body is `Π^in_{α+1}`.**  In `θ → D ∧ ⋀_m ∃y ψ m ∧ ∀y ⋁_m ψ m`, a `Σ^in_α`
+/-- **The clause body is `Π^in_{α+1}`.**  In `θ → D ∧ ⋀_m ∃y ψ m ∧ ∀y ⋁_m ψ m`, a `Σ^in_{α+1}`
 antecedent, a `Π^in_{α+1}` diagram and `Σ^in_α` successors give `Π^in_{α+1}`, for `1 ≤ α`:
 `⋀_m ∃y ψ m` is a countable conjunction of `Σ^in_α ⊆ Π^in_{α+1}` formulas, and `∀y ⋁_m ψ m` a
 universal quantifier over a `Σ^in_α ⊆ Π^in_{α+1}` formula. -/
 theorem isPiIn_montalbanClauseBody {M : Type w} [Countable M] {j : ℕ} (hα : 1 ≤ α)
-    {θ D : L.Formulaω (Fin j)} {ψ : M → L.Formulaω (Fin (j + 1))} (hθ : IsSigmaIn α θ)
+    {θ D : L.Formulaω (Fin j)} {ψ : M → L.Formulaω (Fin (j + 1))} (hθ : IsSigmaIn (α + 1) θ)
     (hD : IsPiIn (α + 1) D) (hψ : ∀ m, IsSigmaIn α (ψ m)) :
     IsPiIn (α + 1) (montalbanClauseBody θ D ψ) := by
   have h1 : (1 : Ordinal.{0}) ≤ α + 1 := le_add_self
   let _ : Encodable M := Encodable.ofCountable M
-  refine isPiIn_imp (hθ.mono (le_add_of_nonneg_right zero_le_one)) ?_
+  refine isPiIn_imp hθ ?_
   refine isPiIn_inf (isPiIn_inf hD (isPiIn_einf h1 fun m ↦ ?_)) ?_
   · exact ((isSigmaIn_existsLastVar_iff hα).2 (hψ m)).isPiIn_add_one
   · exact (isPiIn_forallLastVar_iff h1).2 (isSigmaIn_esup hα hψ).isPiIn_add_one
@@ -156,29 +156,104 @@ section Sentences
 
 variable [Countable (Σ l, L.Relations l)] {M : Type w} [L.Structure M] [Countable M]
 
-/-- **B3, pointed.**  If every formula of the family is `Σ^in_α` with `1 ≤ α`, the pointed
-sentence over any parameter tuple is `Π^in_{α+1}`.  No orbit property is assumed. -/
+/-- **Complexity of the pointed sentence.**  If every formula of the family is `Σ^in_α` with
+`1 ≤ α`, the pointed sentence over any parameter tuple is `Π^in_{α+1}`.  No orbit property is
+assumed. -/
 theorem isPiIn_montalbanSentencePointed (hα : 1 ≤ α) {k : ℕ} (c : Fin k → M)
     {Φ : ∀ n, (Fin n → M) → L.Formulaω (Fin (k + n))} (hΦ : ∀ n a, IsSigmaIn α (Φ n a)) :
     IsPiIn (α + 1) (montalbanSentencePointed c Φ) := by
   have h1 : (1 : Ordinal.{0}) ≤ α + 1 := le_add_self
   let _ : Encodable (Σ n, Fin n → M) := Encodable.ofCountable _
   refine isPiIn_inf (hΦ 0 _).isPiIn_add_one (isPiIn_einf h1 fun p ↦ ?_)
-  exact (isPiIn_forallTupleFrom_iff h1 k p.1 _).2 <| isPiIn_montalbanClauseBody hα (hΦ _ _)
-    (isPiIn_atomicDiagram h1 _) fun _ ↦ hΦ _ _
+  exact (isPiIn_forallTupleFrom_iff h1 k p.1 _).2 <| isPiIn_montalbanClauseBody hα
+    ((hΦ _ _).mono le_self_add) (isPiIn_atomicDiagram h1 _) fun _ ↦ hΦ _ _
 
-/-- **B3.**  If every formula of the family is `Σ^in_α` with `1 ≤ α`, Montalbán's sentence of
-the family is `Π^in_{α+1}`.  No orbit property is assumed.  The hypothesis `1 ≤ α` cannot be
-dropped (see the module docstring). -/
+/-- **Complexity of the sentence.**  If every formula of the family is `Σ^in_α` with `1 ≤ α`,
+Montalbán's sentence of the family is `Π^in_{α+1}`.  No orbit property is assumed.  The
+hypothesis `1 ≤ α` cannot be dropped (see the module docstring).  The same bound also follows
+from `isPiIn_montalbanSentencePointed` through `montalbanSentence_eq_pointed_elim0`. -/
 theorem isPiIn_montalbanSentence (hα : 1 ≤ α) {Φ : ∀ n, (Fin n → M) → L.Formulaω (Fin n)}
     (hΦ : ∀ n a, IsSigmaIn α (Φ n a)) : IsPiIn (α + 1) (montalbanSentence Φ) := by
   have h1 : (1 : Ordinal.{0}) ≤ α + 1 := le_add_self
   let _ : Encodable (Σ n, Fin n → M) := Encodable.ofCountable _
   refine isPiIn_inf (hΦ 0 _).isPiIn_add_one (isPiIn_einf h1 fun p ↦ ?_)
-  exact (isPiIn_forallTuple_iff h1 p.1 _).2 <| isPiIn_montalbanClauseBody hα (hΦ _ _)
-    (isPiIn_atomicDiagram h1 _) fun _ ↦ hΦ _ _
+  exact (isPiIn_forallTuple_iff h1 p.1 _).2 <| isPiIn_montalbanClauseBody hα
+    ((hΦ _ _).mono le_self_add) (isPiIn_atomicDiagram h1 _) fun _ ↦ hΦ _ _
 
 end Sentences
+
+/-! ### Pointed and unpointed: the syntactic equation -/
+
+section Equation
+
+/-- Transport of a formula along `m = n` in the number of free variables. -/
+private def castF {m n : ℕ} (h : m = n) (φ : L.Formulaω (Fin m)) : L.Formulaω (Fin n) := h ▸ φ
+
+private theorem castF_castF_symm {m n : ℕ} (h : m = n) (φ : L.Formulaω (Fin n)) :
+    castF h (castF h.symm φ) = φ := by
+  subst h; rfl
+
+private theorem forallLastVar_castF {m n : ℕ} (h : m = n) (φ : L.Formulaω (Fin (m + 1))) :
+    castF h (forallLastVar φ) = forallLastVar (castF (congrArg (· + 1) h) φ) := by
+  subst h; rfl
+
+private theorem montalbanClauseBody_castF {M : Type w} [Countable M] {m n : ℕ} (h : m = n)
+    (θ D : L.Formulaω (Fin m)) (ψ : M → L.Formulaω (Fin (m + 1))) :
+    castF h (montalbanClauseBody θ D ψ) =
+      montalbanClauseBody (castF h θ) (castF h D) fun x ↦ castF (congrArg (· + 1) h) (ψ x) := by
+  subst h; rfl
+
+private theorem atomicDiagram_castF [Countable (Σ l, L.Relations l)] {M : Type w}
+    [L.Structure M] {m n : ℕ} (h : m = n) (a : Fin n → M) :
+    castF h (atomicDiagram (L := L) (a ∘ Fin.cast h)) = atomicDiagram (L := L) a := by
+  subst h; rfl
+
+private theorem forallTupleFrom_zero_eq :
+    ∀ (n : ℕ) (φ : L.Formulaω (Fin (0 + n))),
+      forallTupleFrom 0 n φ = forallTuple n (castF (Nat.zero_add n) φ)
+  | 0, _ => rfl
+  | n + 1, φ => by
+    rw [forallTupleFrom, forallTuple, forallTupleFrom_zero_eq n, forallLastVar_castF]
+
+private theorem mapFreeVars_id {β : Type*} :
+    ∀ {n} (φ : L.BoundedFormulaω β n), φ.mapFreeVars id = φ
+  | _, .falsum => rfl
+  | _, .equal t₁ t₂ => by simp [mapFreeVars, Sum.map_id_id, Term.relabel_id]
+  | _, .rel R ts => by simp [mapFreeVars, Sum.map_id_id, Term.relabel_id]
+  | _, .imp φ ψ => by simp [mapFreeVars, mapFreeVars_id φ, mapFreeVars_id ψ]
+  | _, .all φ => by simp [mapFreeVars, mapFreeVars_id φ]
+  | _, .iSup φs => by simp [mapFreeVars, mapFreeVars_id]
+  | _, .iInf φs => by simp [mapFreeVars, mapFreeVars_id]
+
+private theorem mapFreeVars_cast_eq_castF {m n : ℕ} (h : m = n) (φ : L.Formulaω (Fin m)) :
+    φ.mapFreeVars (Fin.cast h) = castF h φ := by
+  subst h; exact mapFreeVars_id φ
+
+variable [Countable (Σ l, L.Relations l)] {M : Type w} [L.Structure M] [Countable M]
+
+/-- **The unpointed sentence is the pointed sentence over the empty tuple**, syntactically: for
+the family transported from `Fin n` to `Fin (0 + n)` by `mapFreeVars`, the same family as in the
+semantic compatibility lemma `realize_montalbanSentence_iff_pointed`.  Every step is transport
+along `0 + n = n`; the atomic diagrams over `Fin n` and `Fin (0 + n)` use the same
+`Encodable.ofCountable` instance of `L.AtomicIdx`, transported, so their conjuncts agree in
+order.  With `inSigned_mapFreeVars` this derives `isPiIn_montalbanSentence` from
+`isPiIn_montalbanSentencePointed`. -/
+theorem montalbanSentence_eq_pointed_elim0 (Φ : ∀ n, (Fin n → M) → L.Formulaω (Fin n)) :
+    montalbanSentence Φ = montalbanSentencePointed (Fin.elim0 : Fin 0 → M)
+      (fun n a ↦ BoundedFormulaω.mapFreeVars (Fin.cast (Nat.zero_add n).symm) (Φ n a)) := by
+  simp only [mapFreeVars_cast_eq_castF]
+  unfold montalbanSentence montalbanSentencePointed
+  congr 2
+  funext p
+  obtain ⟨n, a⟩ := p
+  simp only [montalbanClause, montalbanClausePointed, forallTupleFrom_zero_eq,
+    montalbanClauseBody_castF]
+  congr 2
+  · exact (castF_castF_symm _ _).symm
+  · rw [Fin.elim0_append, atomicDiagram_castF]
+  · funext x; exact (castF_castF_symm _ _).symm
+
+end Equation
 
 /-! ### Scott sentences from `Σ^in_α` orbit formulas -/
 

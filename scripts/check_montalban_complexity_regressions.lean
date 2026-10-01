@@ -10,23 +10,28 @@ Every public theorem is *applied*, not only listed for its axioms.
   closures `forallTuple`/`forallTupleFrom` and a clause body on `x₀ ≠ x₁`.
 * **Equality patterns.**  A finitary equality pattern `eqPattern a` (a finite conjunction, so
   level `0`) defines the orbit of `a` in a pure set, without and with parameters.
-* **B3 at `α = 1` on the infinite pure set**: the equality-pattern family is level `0`, hence
-  `Σ^in_1` by monotonicity, and the sentence is `Π^in_2`.  **F2, syntactically:** the same
-  sentence is *not* in the signed class `Π^in_1` (its forth clause `∃y` is not `Π^in_1`).
-  The semantic impossibility of a `Π^in_1` Scott sentence is not claimed.
+* **The bound at `α = 1` on the infinite pure set**: the equality-pattern family is level `0`,
+  hence `Σ^in_1` by monotonicity, and the sentence is `Π^in_2`.  **Level `0` is not enough,
+  syntactically:** the same sentence is *not* in the signed class `Π^in_1` (its forth clause
+  `∃y` is not `Π^in_1`).  The semantic impossibility of a `Π^in_1` Scott sentence is not
+  claimed.
+* **The second route, through the syntactic equation**: `montalbanSentence_eq_pointed_elim0`
+  with `inSigned_mapFreeVars` derives the unpointed bound from the pointed one, in general and
+  on the pure set `ℕ`.
 * **The Scott-sentence corollaries on the pure set**: `ℕ` has a `Π^in_2` Scott sentence, from
   `α = 1` and from the level-`0` lemma; it holds in `ℤ` and fails in `Fin 3`.  The same on the
   `Type 1` carrier `ULift.{1} ℕ`, and for a countable pure set in an arbitrary universe.
 * **A genuine countable disjunction at level 1.**  On `ℕ ⊕ ℕ` with countably many unary labels
   `P i`, every `P i` true exactly at the left points: the orbit of a left point is "has some
   label", `⋁ᵢ Pᵢ(x)`, and the orbit formula family carries this countable `esup`.  Its formulas
-  are `Σ^in_1` through `isSigmaIn_esup` at level `1`, and **not** level `0`; B3 gives `Π^in_2`
+  are `Σ^in_1` through `isSigmaIn_esup` at level `1`, and **not** level `0`; the bound gives
+  `Π^in_2`
   and the corollary a `Π^in_2` Scott sentence, which fails in `ℕ` with every point labelled.
   (Any countable disjunction defining a single orbit is semantically redundant: each disjunct
   defines an automorphism-invariant subset of the orbit.  The regression is about the syntax the
   classification must traverse, which here contains the `esup`.)
 * **Pointed, repeated parameters**: over `c = (1, 1)` in `ℕ`, the pointed sentence of the
-  equality patterns is `Π^in_2` (B3, pointed), and the pointed corollary gives a `Π^in_2`
+  equality patterns is `Π^in_2` (the pointed bound), and the pointed corollary gives a `Π^in_2`
   formula holding at `(4, 4)` and failing at `(4, 5)`.
 * **Import closure** of the module: it reaches `Scott/MontalbanSentence` and
   `Lomega1omega/InHierarchy`, and no Scott-process, descriptive, method, model-theory,
@@ -136,14 +141,14 @@ abbrev pureΦ (X : Type w) : ∀ n, (Fin n → X) → Language.empty.Formulaω (
 theorem pureΦ_isSigmaIn_one (X : Type w) : ∀ n a, IsSigmaIn 1 (pureΦ X n a) :=
   fun _ a ↦ IsSigmaIn.mono zero_le_one (inSigned_eqPattern a false)
 
-/-- **B3 at `α = 1`** on the pure set `ℕ`: the sentence is `Π^in_2`. -/
+/-- **The bound at `α = 1`** on the pure set `ℕ`: the sentence is `Π^in_2`. -/
 theorem pure_isPiIn_two : IsPiIn 2 (montalbanSentence (pureΦ ℕ)) := by
   have := isPiIn_montalbanSentence le_rfl (pureΦ_isSigmaIn_one ℕ)
   rwa [one_add_one_eq_two] at this
 
-/-- **F2, syntactically**: the same sentence is not in the signed class `Π^in_1`.  Its forth
-clause at the empty tuple, `⋀_m ∃y …`, contains an existential quantifier, which is `Π^in_1`
-only through `Σ^in_b` with `1 ≤ b < 1`. -/
+/-- **Level `0` is not enough, syntactically**: the same sentence is not in the signed class
+`Π^in_1`.  Its forth clause at the empty tuple, `⋀_m ∃y …`, contains an existential quantifier,
+which is `Π^in_1` only through `Σ^in_b` with `1 ≤ b < 1`. -/
 theorem pure_not_isPiIn_one : ¬ IsPiIn 1 (montalbanSentence (pureΦ ℕ)) := by
   let _ : Encodable (Σ n, Fin n → ℕ) := Encodable.ofCountable _
   let _ : Encodable ℕ := Encodable.ofCountable ℕ
@@ -154,6 +159,23 @@ theorem pure_not_isPiIn_one : ¬ IsPiIn 1 (montalbanSentence (pureΦ ℕ)) := by
     ((inSigned_inf _ _ _ _).1 hbody).1).2).2 0
   obtain ⟨b, hb, hb1, -⟩ := (inSigned_ex_true _ _).1 hforth
   exact absurd (hb1.trans_lt hb) (lt_irrefl 1)
+
+/-- **The second route**: the unpointed bound from the pointed one, through the syntactic
+equation `montalbanSentence_eq_pointed_elim0` and the invariance of the classes under
+`mapFreeVars`. -/
+theorem isPiIn_montalbanSentence_of_pointed {L : Language.{u, v}}
+    [Countable (Σ l, L.Relations l)] {M : Type w} [L.Structure M] [Countable M]
+    {α : Ordinal.{0}} (hα : 1 ≤ α) {Φ : ∀ n, (Fin n → M) → L.Formulaω (Fin n)}
+    (hΦ : ∀ n a, IsSigmaIn α (Φ n a)) : IsPiIn (α + 1) (montalbanSentence Φ) := by
+  rw [montalbanSentence_eq_pointed_elim0]
+  exact isPiIn_montalbanSentencePointed hα _ fun n a ↦ (inSigned_mapFreeVars _ _ _ _).2 (hΦ n a)
+
+/-- **The second route on `ℕ`**: `Π^in_2` for the pure set's sentence, read off from the pointed
+sentence over the empty tuple. -/
+theorem pure_isPiIn_two_of_pointed : IsPiIn 2 (montalbanSentence (pureΦ ℕ)) := by
+  rw [montalbanSentence_eq_pointed_elim0, ← one_add_one_eq_two]
+  exact isPiIn_montalbanSentencePointed le_rfl _ fun n a ↦
+    (inSigned_mapFreeVars _ _ _ _).2 (pureΦ_isSigmaIn_one ℕ n a)
 
 end Pure
 
@@ -200,7 +222,7 @@ theorem clauseBody_level :
     IsPiIn (1 + 1) (montalbanClauseBody (eqPattern (L := Language.empty) (![0] : Fin 1 → ℕ))
       (atomicDiagram (L := Language.empty) (![0] : Fin 1 → ℕ))
       fun m : ℕ ↦ eqPattern (L := Language.empty) (Fin.snoc (![0] : Fin 1 → ℕ) m)) :=
-  isPiIn_montalbanClauseBody le_rfl (IsSigmaIn.mono zero_le_one (inSigned_eqPattern _ false))
+  isPiIn_montalbanClauseBody le_rfl (IsSigmaIn.mono zero_le (inSigned_eqPattern _ false))
     (isPiIn_atomicDiagram le_add_self _) fun _ ↦
       IsSigmaIn.mono zero_le_one (inSigned_eqPattern _ false)
 
@@ -236,7 +258,7 @@ theorem nat_scott_uses :
   obtain ⟨e⟩ := (hN (Fin 3)).1 h
   exact not_finite_iff_infinite.2 inferInstance (Finite.of_equiv _ e.toEquiv.symm : Finite ℕ)
 
-/-- **`Type 1` carrier**: B3 on `ULift.{1} ℕ`, and its `Π^in_2` Scott sentence holds in
+/-- **`Type 1` carrier**: the bound on `ULift.{1} ℕ`, and its `Π^in_2` Scott sentence holds in
 `ULift.{1} ℤ` and fails in `ULift.{1} (Fin 3)`. -/
 theorem ulift_scott :
     IsPiIn 2 (montalbanSentence (pureΦ (ULift.{1} ℕ))) ∧
@@ -252,8 +274,8 @@ theorem ulift_scott :
   obtain ⟨e⟩ := (hN _).1 h
   exact not_finite_iff_infinite.2 inferInstance (Finite.of_equiv _ e.toEquiv.symm)
 
-/-- **Universe-polymorphic carrier**: B3 and the level-`0` corollary for a countable pure set in
-an arbitrary universe `w`. -/
+/-- **Universe-polymorphic carrier**: the bound and the level-`0` corollary for a countable pure
+set in an arbitrary universe `w`. -/
 theorem pure_univ (X : Type w) [Countable X] :
     IsPiIn 2 (montalbanSentence (L := Language.empty) fun _ (a : Fin _ → X) ↦
       eqPattern a) ∧
@@ -265,12 +287,7 @@ theorem pure_univ (X : Type w) [Countable X] :
   · have := isPiIn_montalbanSentence (L := Language.empty) (M := X) le_rfl
       fun _ a ↦ IsSigmaIn.mono zero_le_one (inSigned_eqPattern a false)
     rwa [one_add_one_eq_two] at this
-  · rw [realize_eqPattern]
-    refine ⟨fun h ↦ ?_, fun ⟨e, he⟩ i j ↦ he ▸ e.injective.eq_iff.symm⟩
-    obtain ⟨e, he, -, -⟩ := FiberAssembly.exists_equiv_of_matching
-      (E := fun (_ _ : X) ↦ True) ⟨fun _ ↦ trivial, fun _ ↦ trivial, fun _ _ ↦ trivial⟩ _ a b h
-      (fun _ ↦ trivial)
-    exact ⟨{ toEquiv := e }, funext he⟩
+  · exact pure_orbit a b
 
 end PureScott
 
@@ -360,7 +377,7 @@ theorem sidedΦ_not_zero : ¬ IsSigmaIn 0 (sidedΦ 1 ![Sum.inl 0]) := fun h ↦ 
   have h2 := (inSigned_finConj _ _ _).1 ((inSigned_inf _ _ _ _).1 h).2 (hasLabel 0) (by simp)
   exact absurd ((isSigmaIn_esup_iff _).1 h2).1 (by simp)
 
-/-- **B3 with a countable disjunction inside the orbit formulas**: `Π^in_2`. -/
+/-- **The bound with a countable disjunction inside the orbit formulas**: `Π^in_2`. -/
 theorem sided_isPiIn_two : IsPiIn 2 (montalbanSentence sidedΦ) := by
   have := isPiIn_montalbanSentence le_rfl sidedΦ_isSigmaIn_one
   rwa [one_add_one_eq_two] at this
@@ -376,6 +393,7 @@ theorem sided_scott :
   refine ⟨σ, hσ, (hN _).2 ⟨Language.Equiv.refl _ _⟩, fun h ↦ ?_⟩
   obtain ⟨e⟩ := (hN ℕ).1 h
   have := (e.map_rel (LabelRel.P 0) fun _ ↦ Sum.inr 0).1 trivial
+  -- unfold the `RelMap` match of the `sided` instance
   change (Sum.inr 0 : ℕ ⊕ ℕ).isLeft = true at this
   simp at this
 
@@ -406,7 +424,7 @@ theorem pure_orbitPointed {k n : ℕ} (c : Fin k → ℕ) (a b : Fin n → ℕ) 
   · simpa [comp_append'] using congrFun he (Fin.castAdd n j)
   · simpa [comp_append'] using congrFun he (Fin.natAdd k i)
 
-/-- **B3, pointed, repeated parameters**: over `(1, 1)`, the pointed sentence is `Π^in_2`. -/
+/-- **The pointed bound, repeated parameters**: over `(1, 1)`, the pointed sentence is `Π^in_2`. -/
 theorem pointed_repeated_isPiIn_two :
     IsPiIn 2 (montalbanSentencePointed (![1, 1] : Fin 2 → ℕ) (pureΦc ![1, 1])) := by
   have := isPiIn_montalbanSentencePointed (Φ := pureΦc ![1, 1]) le_rfl (![1, 1] : Fin 2 → ℕ)
@@ -474,14 +492,15 @@ run_cmd do
 def moduleDecls : List Name :=
   [`isPiIn_atomicDiagram, `isPiIn_forallLastVar_iff, `isSigmaIn_existsLastVar_iff,
    `isPiIn_forallTuple_iff, `isPiIn_forallTupleFrom_iff, `isPiIn_montalbanClauseBody,
-   `isPiIn_montalbanSentencePointed, `isPiIn_montalbanSentence,
+   `isPiIn_montalbanSentencePointed, `isPiIn_montalbanSentence, `montalbanSentence_eq_pointed_elim0,
    `exists_isPiIn_scottSentence_of_sigmaIn_orbits, `exists_isPiIn_pointed_of_sigmaIn_orbits,
    `exists_isPiIn_two_scottSentence_of_sigmaIn_zero_orbits].map (`FirstOrder.Language ++ ·)
 
 /-- The guard's own declarations whose axioms are audited. -/
 def guardDecls : List Name :=
   [`realize_eqPattern, `inSigned_eqPattern, `pure_homogeneous, `pure_orbit, `pure_isPiIn_two,
-   `pure_not_isPiIn_one, `atomicDiagram_levels, `atomicDiagram_not_levels, `quantifier_steps,
+   `pure_not_isPiIn_one, `isPiIn_montalbanSentence_of_pointed, `pure_isPiIn_two_of_pointed,
+   `atomicDiagram_levels, `atomicDiagram_not_levels, `quantifier_steps,
    `clauseBody_level, `nat_scott_one, `nat_scott_zero, `nat_scott_uses, `ulift_scott, `pure_univ,
    `realize_sidedΦ, `sided_isOrbit, `sidedΦ_isSigmaIn_one, `sidedΦ_not_zero,
    `sided_isPiIn_two, `sided_scott, `pure_orbitPointed, `pointed_repeated_isPiIn_two,
@@ -497,15 +516,15 @@ run_cmd do
     let axs ← Elab.Command.liftCoreM (collectAxioms n)
     let bad := axs.toList.filter fun a ↦ !standardAxioms.contains a
     unless bad.isEmpty do throwError "[NONSTANDARD AXIOMS] {n} uses {bad}"
-  logInfo "Montalban-complexity regression guard: OK (applied: the atomic diagram Pi-in at \
-    levels 1 and 2, neither level 0 nor Sigma-in 1; the quantifier steps and tuple closures; a \
-    clause body; B3 at alpha = 1 on the level-0 equality patterns of N, giving Pi-in 2, and \
-    the same sentence not in the signed class Pi-in 1; Pi-in 2 Scott sentences of N from \
-    alpha = 1 and from the level-0 lemma, holding in N and Z and failing in Fin 3, and on the \
-    Type 1 carrier ULift N; B3 and the level-0 corollary for a pure set in arbitrary \
-    universes; orbit formulas with the countable disjunction 'has some label' on \
-    N + N, Sigma-in 1 and not level 0, a Pi-in 2 sentence and a Pi-in 2 Scott sentence failing \
-    where every point is labelled; the pointed sentence over the repeated parameters (1, 1) \
-    Pi-in 2, and the pointed corollary holding at (4, 4) and failing at (4, 5); import \
-    closure without Scott-process, descriptive, method, model-theory, admissible or \
-    conditional modules; standard axioms)"
+  logInfo "Montalban-complexity regression guard: OK (applied: the atomic diagram Pi-in at levels \
+    1 and 2, neither level 0 nor Sigma-in 1; the quantifier steps and tuple closures; a clause \
+    body; the bound at alpha = 1 on the level-0 equality patterns of N, giving Pi-in 2, and the \
+    same sentence not in the signed class Pi-in 1; the unpointed bound derived from the pointed \
+    one through the syntactic equation, in general and on N; Pi-in 2 Scott sentences of N from \
+    alpha = 1 and from the level-0 lemma, holding in N and Z and failing in Fin 3, and on the Type \
+    1 carrier ULift N; the bound and the level-0 corollary for a pure set in arbitrary universes; \
+    orbit formulas with the countable disjunction 'has some label' on N + N, Sigma-in 1 and not \
+    level 0, a Pi-in 2 sentence and a Pi-in 2 Scott sentence failing where every point is \
+    labelled; the pointed sentence over the repeated parameters (1, 1) Pi-in 2, and the pointed \
+    corollary holding at (4, 4) and failing at (4, 5); import closure without Scott-process, \
+    descriptive, method, model-theory, admissible or conditional modules; standard axioms)"
