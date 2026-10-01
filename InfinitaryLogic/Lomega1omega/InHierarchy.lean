@@ -69,8 +69,8 @@ at some level `β` with `1 ≤ β < α`.
 * **Closure within a level.** `Π^in_α` is closed under `∀` and countable conjunction, and
   `Σ^in_α` under `∃` and countable disjunction, at the same level, so a quantifier may sit over a
   countable connective of its own kind (`∀x ⋀ᵢ ψᵢ ≡ ⋀ᵢ ∀x ψᵢ`).  A node of the opposite kind drops
-  to a strictly smaller level: a countable conjunction of `Σ^in_β` formulas is `Π^in_{β+1}`, not
-  `Σ^in_{β+1}`.
+  to a strictly smaller level: a countable conjunction of `Σ^in_β` formulas is `Π^in_{β+1}`, and
+  not in general `Σ^in_{β+1}` (a conjunction of atoms is `Π^in_1`, hence also `Σ^in_2`).
 * **Relation to the normal forms.** `NormalFormIn` is Montalbán's literal syntax: a `Σ^in_α`
   normal form (`α ≥ 1`) is an `iSup` of existential blocks (finite iterations of `ex`) over
   `Π^in_β` normal forms with `β < α`, dually for `Π^in_α` with `iInf` and `all`, and level `0` is
