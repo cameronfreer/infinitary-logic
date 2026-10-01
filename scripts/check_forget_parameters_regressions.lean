@@ -16,8 +16,8 @@ characterization and the bound together, with positive and negative models.
 * **The successor graph `(ℕ, S)` with the parameter `0`.**  Over `0`, the element `m` is
   `Σ^in_1`-definable as the `m`-th successor of the parameter
   (`∃y (y = z + m ∧ S(y, x))`, recursively), so the orbits over `0` are `Σ^in_1`-definable
-  and `exists_isSigmaIn_three_scottSentence_of_pointed` gives a `Σ^in_3` Scott sentence of
-  `(ℕ, S)`; it holds in `ℕ` and fails in `(ℤ, S)` (every point has a predecessor) and in `Fin 3`.
+  and `exists_isSigmaIn_three_scottSentence_of_sigmaIn_one_orbits_over` gives a `Σ^in_3` Scott
+  sentence of `(ℕ, S)`; it holds in `ℕ` and fails in `(ℤ, S)` (every point has a predecessor) and in `Fin 3`.
   (Without the parameter, `0` is defined by "no predecessor", a universal formula; that the
   parameter-free orbits are not `Σ^in_1`-definable is not claimed here.)
 * **The empty tuple `k = 0`.**  `existsTuple 0 φ` is `φ` (by `rfl`); the block lemma at `k = 0`
@@ -32,8 +32,8 @@ characterization and the bound together, with positive and negative models.
 * **Explicit carrier universes.**  On `ULift.{1} ℕ` with the parameter `(0)`, the `Σ^in_3`
   Scott sentence from the composition holds in `ULift.{1} ℤ` and fails in `ULift.{1} (Fin 3)`;
   and for a countable pure set in an arbitrary universe `w`.
-* **The composition at a general level** (`exists_isSigmaIn_scottSentence_of_pointed`): at
-  `α = 1` on the pure set with a parameter, giving `Σ^in_{1+2}`, and at `α = 2` (orbit formulas
+* **The composition at a general level**
+  (`exists_isSigmaIn_scottSentence_of_sigmaIn_orbits_over`): at `α = 1` on the pure set with a parameter, giving `Σ^in_{1+2}`, and at `α = 2` (orbit formulas
   promoted by `IsSigmaIn.mono`), giving `Σ^in_4`; level-`0` equality patterns promoted to
   level `1` give the concrete `Σ^in_3` Scott sentence of `ℕ`.
 * **The block lemma both ways** on concrete formulas: `∃x₀ x₁ (x₀ ≠ x₁)` is `Σ^in_1`, and
@@ -344,8 +344,8 @@ image of `0` would be carried back to a predecessor of `0`) and in `Fin 3`. -/
 theorem succ_scott :
     ∃ σ : succLang.Formulaω (Fin 0), IsSigmaIn 3 σ ∧ σ.realize_as_sentence ℕ ∧
       ¬ σ.realize_as_sentence ℤ ∧ ¬ σ.realize_as_sentence (Fin 3) := by
-  obtain ⟨σ, hσ, hN⟩ := exists_isSigmaIn_three_scottSentence_of_pointed (M := ℕ) ![0]
-    fun n a ↦ ⟨succΦ n a, (inSigned_finConj _ _ _).2 fun φ hφ ↦ by
+  obtain ⟨σ, hσ, hN⟩ :=
+    exists_isSigmaIn_three_scottSentence_of_sigmaIn_one_orbits_over (M := ℕ) ![0] fun n a ↦ ⟨succΦ n a, (inSigned_finConj _ _ _).2 fun φ hφ ↦ by
       obtain ⟨i, rfl⟩ := List.mem_ofFn.1 hφ
       exact (inSigned_mapFreeVars _ _ _ _).2 (succForm_isSigmaIn_one _), succ_isOrbit a⟩
   refine ⟨σ, hσ, (hN ℕ).2 ⟨Language.Equiv.refl _ _⟩, fun h ↦ ?_, fun h ↦ ?_⟩
@@ -478,9 +478,9 @@ theorem general_levels :
       σ.realize_as_sentence ℤ ∧ ¬ σ.realize_as_sentence (Fin 3)) ∧
     ∃ σ : Language.empty.Formulaω (Fin 0), IsSigmaIn (2 + 2) σ ∧
       σ.realize_as_sentence ℤ ∧ ¬ σ.realize_as_sentence (Fin 3) := by
-  obtain ⟨σ₁, h₁, hN₁⟩ := exists_isSigmaIn_scottSentence_of_pointed (α := 1) le_rfl
+  obtain ⟨σ₁, h₁, hN₁⟩ := exists_isSigmaIn_scottSentence_of_sigmaIn_orbits_over (α := 1) le_rfl
     (![3] : Fin 1 → ℕ) fun n a ↦ ⟨_, pureΦc_isSigmaIn _ 1 n a, pure_orbitPointed _ a⟩
-  obtain ⟨σ₂, h₂, hN₂⟩ := exists_isSigmaIn_scottSentence_of_pointed (α := 2) one_le_two
+  obtain ⟨σ₂, h₂, hN₂⟩ := exists_isSigmaIn_scottSentence_of_sigmaIn_orbits_over (α := 2) one_le_two
     (![3] : Fin 1 → ℕ) fun n a ↦ ⟨_, pureΦc_isSigmaIn _ 2 n a, pure_orbitPointed _ a⟩
   exact ⟨⟨σ₁, h₁, (hN₁ ℤ).2 ⟨pureEquiv Equiv.intEquivNat.symm⟩,
       fun h ↦ not_equiv_fin3 ((hN₁ (Fin 3)).1 h)⟩,
@@ -493,7 +493,7 @@ parameters `(1, 1)`, level `0` promoted to level `1`; it holds in `ℕ` and `ℤ
 theorem nat_sigma_three :
     ∃ σ : Language.empty.Formulaω (Fin 0), IsSigmaIn 3 σ ∧ σ.realize_as_sentence ℕ ∧
       σ.realize_as_sentence ℤ ∧ ¬ σ.realize_as_sentence (Fin 3) := by
-  obtain ⟨σ, hσ, hN⟩ := exists_isSigmaIn_three_scottSentence_of_pointed c11
+  obtain ⟨σ, hσ, hN⟩ := exists_isSigmaIn_three_scottSentence_of_sigmaIn_one_orbits_over c11
     fun n a ↦ ⟨pureΦc c11 n a, IsSigmaIn.mono zero_le_one (inSigned_eqPattern _ false),
       pure_orbitPointed c11 a⟩
   exact ⟨σ, hσ, (hN ℕ).2 ⟨pureEquiv (Equiv.refl ℕ)⟩, (hN ℤ).2 ⟨pureEquiv Equiv.intEquivNat.symm⟩,
@@ -515,7 +515,7 @@ theorem ulift_scott :
     (montalbanSentencePointed_self fun n a b ↦ pure_orbitPointed _ a b)
     fun N _ _ d hd ↦ (exists_equiv_of_realize_montalbanSentencePointed _ _ N d hd).elim
       fun e _ ↦ ⟨e⟩
-  obtain ⟨σ, hσ, hN⟩ := exists_isSigmaIn_three_scottSentence_of_pointed.{0, 0, 1}
+  obtain ⟨σ, hσ, hN⟩ := exists_isSigmaIn_three_scottSentence_of_sigmaIn_one_orbits_over.{0, 0, 1}
     (![ULift.up 0] : Fin 1 → ULift.{1} ℕ) fun n a ↦
       ⟨_, pureΦc_isSigmaIn _ 1 n a, pure_orbitPointed _ a⟩
   exact ⟨(hS.2 _).2 hZ, σ, hσ, (hN _).2 hZ, fun h ↦ hF ((hN _).1 h)⟩
@@ -526,7 +526,7 @@ theorem pure_univ (X : Type w) [Countable X] (x : X) :
     ∃ σ : Language.empty.Formulaω (Fin 0), IsSigmaIn 3 σ ∧
       ∀ (N : Type w) [Language.empty.Structure N] [Countable N],
         σ.realize_as_sentence N ↔ Nonempty (X ≃[Language.empty] N) :=
-  exists_isSigmaIn_three_scottSentence_of_pointed (![x] : Fin 1 → X) fun n a ↦
+  exists_isSigmaIn_three_scottSentence_of_sigmaIn_one_orbits_over (![x] : Fin 1 → X) fun n a ↦
     ⟨_, pureΦc_isSigmaIn _ 1 n a, pure_orbitPointed _ a⟩
 
 /-- `x₀ ≠ x₁`. -/
@@ -585,8 +585,8 @@ run_cmd do
 /-- The public declarations of the module. -/
 def moduleDecls : List Name :=
   [`existsTuple_isScott, `existsTuple_isScott_of_pointed, `isSigmaIn_existsTuple_iff,
-   `isSigmaIn_existsTuple_of_isPiIn, `exists_isSigmaIn_scottSentence_of_pointed,
-   `exists_isSigmaIn_three_scottSentence_of_pointed].map (`FirstOrder.Language ++ ·)
+   `isSigmaIn_existsTuple_of_isPiIn, `exists_isSigmaIn_scottSentence_of_sigmaIn_orbits_over,
+   `exists_isSigmaIn_three_scottSentence_of_sigmaIn_one_orbits_over].map (`FirstOrder.Language ++ ·)
 
 /-- The guard's own declarations whose axioms are audited. -/
 def guardDecls : List Name :=

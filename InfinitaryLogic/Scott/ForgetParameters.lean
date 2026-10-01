@@ -17,8 +17,9 @@ sentence `existsTuple k φ`, is a Scott sentence of `M` among countable structur
 (`Scott/MontalbanComplexity.lean`), a countable structure in a countable relational language
 whose automorphism orbits over some finite tuple of parameters are `Σ^in_α`-definable over those
 parameters, `1 ≤ α`, has a `Σ^in_{α+2}` Scott sentence
-(`exists_isSigmaIn_scottSentence_of_pointed`), and `Σ^in_1`-definable orbits over parameters
-give a `Σ^in_3` Scott sentence (`exists_isSigmaIn_three_scottSentence_of_pointed`).
+(`exists_isSigmaIn_scottSentence_of_sigmaIn_orbits_over`), and `Σ^in_1`-definable orbits over
+parameters give a `Σ^in_3` Scott sentence
+(`exists_isSigmaIn_three_scottSentence_of_sigmaIn_one_orbits_over`).
 
 The module has three layers, kept apart:
 
@@ -32,17 +33,17 @@ The module has three layers, kept apart:
 
 ## Main declarations
 
-* `existsTuple_isScott`: the existential closure of a formula characterizing `(M, c)` among
-  countable pointed structures is a Scott sentence of `M` among countable structures.
+* `existsTuple_isScott`: the existential closure of a formula true of `c`, whose realizations
+  in a countable `N` force `N ≅ M`, is a Scott sentence of `M` among countable structures.
 * `existsTuple_isScott_of_pointed`: the same from the pointed characterization
   `φ.Realize d ↔ ∃ e : M ≃[L] N, ⇑e ∘ c = d`, for countable `M`.
 * `isSigmaIn_existsTuple_iff`: `existsTuple k φ` is `Σ^in_α` iff `φ` is, for `1 ≤ α`, every
   `k` including `0`.
 * `isSigmaIn_existsTuple_of_isPiIn`: a `Π^in_{α+1}` formula closes to a `Σ^in_{α+2}` sentence.
-* `exists_isSigmaIn_scottSentence_of_pointed`: `Σ^in_α` orbits over parameters, `1 ≤ α`, give a
-  `Σ^in_{α+2}` Scott sentence.
-* `exists_isSigmaIn_three_scottSentence_of_pointed`: `Σ^in_1` orbits over parameters give a
-  `Σ^in_3` Scott sentence.
+* `exists_isSigmaIn_scottSentence_of_sigmaIn_orbits_over`: `Σ^in_α` orbits over parameters,
+  `1 ≤ α`, give a `Σ^in_{α+2}` Scott sentence.
+* `exists_isSigmaIn_three_scottSentence_of_sigmaIn_one_orbits_over`: `Σ^in_1` orbits over
+  parameters give a `Σ^in_3` Scott sentence.
 
 ## Interpretation choices
 
@@ -188,7 +189,7 @@ for some parameter tuple `c`, the orbits of tuples under the automorphisms of `M
 defined over `c` by `Σ^in_α` formulas, then `M` has a `Σ^in_{α+2}` Scott sentence: a countable
 structure in `M`'s carrier universe satisfies it iff it is isomorphic to `M`.  The sentence is the
 existential closure of Montalbán's pointed sentence of the chosen orbit formulas. -/
-theorem exists_isSigmaIn_scottSentence_of_pointed (hα : 1 ≤ α) {k : ℕ} (c : Fin k → M)
+theorem exists_isSigmaIn_scottSentence_of_sigmaIn_orbits_over (hα : 1 ≤ α) {k : ℕ} (c : Fin k → M)
     (h : ∀ n (a : Fin n → M), ∃ φ : L.Formulaω (Fin (k + n)), IsSigmaIn α φ ∧
       ∀ b, φ.Realize (Fin.append c b) ↔ ∃ e : M ≃[L] M, ⇑e ∘ c = c ∧ ⇑e ∘ a = b) :
     ∃ σ : L.Formulaω (Fin 0), IsSigmaIn (α + 2) σ ∧
@@ -199,10 +200,11 @@ theorem exists_isSigmaIn_scottSentence_of_pointed (hα : 1 ≤ α) {k : ℕ} (c 
     (existsTuple_isScott_of_pointed c φ hchar).2⟩
 
 /-- **`Σ^in_1` orbits over parameters give a `Σ^in_3` Scott sentence**: the case `α = 1` of
-`exists_isSigmaIn_scottSentence_of_pointed`.  Quantifier-free (level-`0`) orbit formulas are
-promoted to level `1` by `IsSigmaIn.mono` and give `Σ^in_3` as well; level `0` is not a case of
-the general theorem, since the forth clauses of the pointed sentence quantify existentially. -/
-theorem exists_isSigmaIn_three_scottSentence_of_pointed {k : ℕ} (c : Fin k → M)
+`exists_isSigmaIn_scottSentence_of_sigmaIn_orbits_over`.  Quantifier-free (level-`0`) orbit
+formulas are promoted to level `1` by `IsSigmaIn.mono` and give `Σ^in_3` as well; level `0` is not
+a case of the general theorem, since the forth clauses of the pointed sentence quantify
+existentially. -/
+theorem exists_isSigmaIn_three_scottSentence_of_sigmaIn_one_orbits_over {k : ℕ} (c : Fin k → M)
     (h : ∀ n (a : Fin n → M), ∃ φ : L.Formulaω (Fin (k + n)), IsSigmaIn 1 φ ∧
       ∀ b, φ.Realize (Fin.append c b) ↔ ∃ e : M ≃[L] M, ⇑e ∘ c = c ∧ ⇑e ∘ a = b) :
     ∃ σ : L.Formulaω (Fin 0), IsSigmaIn 3 σ ∧
@@ -210,7 +212,7 @@ theorem exists_isSigmaIn_three_scottSentence_of_pointed {k : ℕ} (c : Fin k →
         σ.realize_as_sentence N ↔ Nonempty (M ≃[L] N) := by
   have h3 : (1 : Ordinal.{0}) + 2 = 3 := by
     rw [← one_add_one_eq_two, ← add_assoc, one_add_one_eq_two, two_add_one_eq_three]
-  simpa only [h3] using exists_isSigmaIn_scottSentence_of_pointed le_rfl c h
+  simpa only [h3] using exists_isSigmaIn_scottSentence_of_sigmaIn_orbits_over le_rfl c h
 
 end Composition
 
