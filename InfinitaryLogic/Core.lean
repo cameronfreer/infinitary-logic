@@ -20,6 +20,7 @@ import InfinitaryLogic.Lomega1omega.PolaritySemantics
 import InfinitaryLogic.Lomega1omega.QuantifierClass
 import InfinitaryLogic.Lomega1omega.QuantifierSemantics
 import InfinitaryLogic.Lomega1omega.QuantifierOccurrence
+import InfinitaryLogic.Lomega1omega.InHierarchy
 
 -- Scott sentences and ranks
 import InfinitaryLogic.Scott.AtomicDiagram
