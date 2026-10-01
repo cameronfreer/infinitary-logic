@@ -377,7 +377,14 @@ private theorem nonempty_equiv_of_branch {c d : StructureSpace L} {z : ℕ → �
 
 omit [L.IsRelational] in
 /-- An isomorphism preserves the atomic type of every tuple.  The structures are implicit
-arguments, not instances, so that two structures on the same carrier can be supplied. -/
+arguments, not instances, so that two structures on the same carrier can be supplied.
+
+This is the special case `(SameAtomicType.map_equiv (Language.Equiv.refl L M) e).mpr
+(SameAtomicType.refl a)` of the library lemma `SameAtomicType.map_equiv`
+(`Scott/OrbitRank.lean`).  It is restated here because `Scott/OrbitRank` imports
+`Scott.Stabilization` and `Karp.PotentialIso`, which lie outside this module's minimal import
+closure; moving `SameAtomicType.map_equiv` down to `Scott/AtomicDiagram.lean` would let this
+helper be replaced by that one line. -/
 private theorem sameAtomicType_comp_equiv {M N : Type*} {iM : L.Structure M}
     {iN : L.Structure N} (e : @Language.Equiv L M N iM iN) {n : ℕ} (a : Fin n → M) :
     @SameAtomicType L M iM n N iN a (e.toEquiv ∘ a) := by
@@ -406,8 +413,7 @@ private theorem branch_of_equiv {c d : StructureSpace L}
       f ∘ bfLeft (List.ofFn fun i : Fin n ↦ z i) := by
     funext j
     rw [Function.comp_apply, bfLeft_ofFn, bfRight_ofFn, hR]
-  show @SameAtomicType L ℕ c.toStructure _ ℕ d.toStructure _ _
-  rw [hfun]
+  rw [mem_bfTree_iff, hfun]
   exact sameAtomicType_comp_equiv e _
 
 /-- **Branches are isomorphisms**: the forced back-and-forth tree of `c` and `d` has an infinite

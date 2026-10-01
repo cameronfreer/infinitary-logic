@@ -5,6 +5,8 @@ Regression guard for the forced back-and-forth tree of a pair of coded structure
 
 Every public theorem is *applied*, not only listed for its axioms.
 
+* **Evaluation lemmas.**  Each of `bfLeft_two_mul`, `bfLeft_two_mul_add_one`, `bfRight_two_mul`
+  and `bfRight_two_mul_add_one` closes its own evaluation goal under plain `simp`.
 * **Nullary disagreement gives the empty tree.**  In a language with one nullary relation
   symbol, true in one code and false in the other, the root is not a node
   (`nil_mem_bfTree_iff`), the tree is `⊥` (`bfTree_eq_bot_iff`), its height is `0`, and
@@ -18,13 +20,17 @@ Every public theorem is *applied*, not only listed for its axioms.
   `(ℕ, <)` read through `hasInfiniteBranch_bfTree_iff` gives an isomorphism, and the identity
   isomorphism gives a branch; the nontrivial automorphism of the pairs structure
   (`E x y ↔ x / 2 = y / 2`) swapping `2 k ↔ 2 k + 1` gives a branch, read back as an
-  isomorphism.  The generic lemma `hasInfiniteBranch_iff_exists_seq` is applied to an arbitrary
-  tree.
+  isomorphism.  Between the *distinct* (`ev_ne_odd`) unary codes "even" and "odd", the swap
+  `2 k ↔ 2 k + 1` is an isomorphism; it gives a branch, read back as `uEven ≈ uOdd`, and the
+  explicit swap branch is read back the same way, so the read-back direction is not an instance
+  of reflexivity.  The generic lemma `hasInfiniteBranch_iff_exists_seq` is applied to an
+  arbitrary tree.
 * **Repeated coordinates.**  In a language with no relation symbols, a node is a node exactly
   when its two decoded tuples have the same equality pattern: `[0, 0]` and `[3, 1, 0, 3]`
   (which repeat an element on both sides at the same positions) are nodes, while `[5, 0]` and
-  `[3, 1, 7, 3]` (which repeat on the left only) are not.  The equality-pattern consequence is
-  also stated for every node of every tree.
+  `[3, 1, 7, 3]` (which repeat on the left only) are not.  `bfNodes_prefix` takes `[3, 1, 0, 3]`
+  down to its prefix `[3, 1, 0]`.  The equality-pattern consequence is also stated for every node
+  of every tree.
 * **Rank comparisons.**  For one unary symbol holding on the even numbers on the left and on
   `{0, 1}` on the right (not isomorphic, so the tree is well-founded): `BFEquiv 1` at the
   non-root node `[0]` gives rank at least `1` there (`le_rank_bfTree_of_bfEquiv`), and
@@ -70,6 +76,23 @@ theorem eq_pattern_of_mem {L : Language.{u, v}} [L.IsRelational] {c d : Structur
     {s : List ℕ} (hs : s ∈ bfTree c d) (i j : Fin s.length) :
     bfLeft s i = bfLeft s j ↔ bfRight s i = bfRight s j :=
   mem_bfTree_iff.mp hs (.eq i j)
+
+/-! ### The evaluation lemmas -/
+
+/-- `bfLeft_two_mul` fires under `simp`. -/
+example (s : List ℕ) (i : ℕ) (h : 2 * i < s.length) : bfLeft s ⟨2 * i, h⟩ = i := by simp
+
+/-- `bfLeft_two_mul_add_one` fires under `simp`. -/
+example (s : List ℕ) (i : ℕ) (h : 2 * i + 1 < s.length) :
+    bfLeft s ⟨2 * i + 1, h⟩ = s[2 * i + 1] := by simp
+
+/-- `bfRight_two_mul` fires under `simp`. -/
+example (s : List ℕ) (i : ℕ) (h : 2 * i < s.length) : bfRight s ⟨2 * i, h⟩ = s[2 * i] := by
+  simp
+
+/-- `bfRight_two_mul_add_one` fires under `simp`. -/
+example (s : List ℕ) (i : ℕ) (h : 2 * i + 1 < s.length) :
+    bfRight s ⟨2 * i + 1, h⟩ = i := by simp
 
 /-! ### Nullary disagreement: the empty tree -/
 
@@ -222,6 +245,7 @@ instance : Unique ↥(bfTree uAll uNone) where
 /-- **The height is `1`.** -/
 theorem root_treeHeight : treeHeight (bfTree uAll uNone) = 1 := by
   rw [treeHeight, ciSup_unique]
+  -- `default` of the `Unique` instance is the root node by definition
   change Order.succ (WellFounded.rank (extBelow (bfTree uAll uNone)) ⟨[], root_nil_mem⟩) = 1
   rw [root_rank, Order.succ_eq_add_one, zero_add]
 
@@ -391,6 +415,64 @@ theorem pair_branch_regression :
   have hb := (hasInfiniteBranch_bfTree_iff _ _).mpr ⟨pairAut⟩
   ⟨hb, (hasInfiniteBranch_bfTree_iff _ _).mp hb⟩
 
+/-! ### Distinct isomorphic codes -/
+
+/-- The predicate is "odd". -/
+abbrev uOdd : StructureSpace unaryLang := uCode fun m ↦ m % 2 = 1
+
+/-- **The codes "even" and "odd" are distinct**: they differ at the atom `P(0)`. -/
+theorem ev_ne_odd : uEven ≠ uOdd := by
+  intro h
+  have := congrFun h ⟨⟨1, uP⟩, fun _ ↦ 0⟩
+  revert this
+  decide
+
+/-- **The swap `2 k ↔ 2 k + 1` is an isomorphism from "even" to "odd".** -/
+def swIso : @Language.Equiv unaryLang ℕ ℕ uEven.toStructure uOdd.toStructure :=
+  @Language.Equiv.mk unaryLang ℕ ℕ uEven.toStructure uOdd.toStructure
+    (pairSwap_involutive.toPerm pairSwap) (fun f ↦ isEmptyElim f) (fun {l} R v ↦ by
+      have hl := R.2
+      subst hl
+      rw [relMap_uCode, relMap_uCode]
+      change pairSwap (v 0) % 2 = 1 ↔ v 0 % 2 = 0
+      unfold pairSwap
+      split_ifs <;> omega)
+
+/-- **Isomorphism → branch** between distinct codes. -/
+theorem distinct_branch : HasInfiniteBranch (bfTree uEven uOdd) :=
+  (hasInfiniteBranch_bfTree_iff _ _).mpr ⟨swIso⟩
+
+/-- **And back**: the branch read through `hasInfiniteBranch_bfTree_iff` relates two distinct
+codes, so this is not an instance of reflexivity. -/
+theorem distinct_iso_roundtrip : (structureIsoSetoid unaryLang).r uEven uOdd :=
+  (hasInfiniteBranch_bfTree_iff _ _).mp distinct_branch
+
+/-- The swap branch: `z (2 i) = z (2 i + 1) = pairSwap i` (the swap is its own inverse). -/
+def swBranch (j : ℕ) : ℕ := pairSwap (j / 2)
+
+/-- Along the swap branch the right tuple is the swap of the left tuple. -/
+theorem bfRight_swBranch (n : ℕ) :
+    bfRight (List.ofFn fun i : Fin n ↦ swBranch i) =
+      pairSwap ∘ bfLeft (List.ofFn fun i : Fin n ↦ swBranch i) := by
+  funext j
+  rw [Function.comp_apply]
+  simp only [bfLeft, bfRight, List.getElem_ofFn, swBranch]
+  split_ifs
+  · rfl
+  · exact (pairSwap_involutive _).symm
+
+/-- **Explicit branch → isomorphism** between distinct codes: every initial segment of the swap
+branch is a node, so `hasInfiniteBranch_bfTree_iff` reads it back as `uEven ≈ uOdd`. -/
+theorem distinct_iso_of_explicit_branch : (structureIsoSetoid unaryLang).r uEven uOdd :=
+  (hasInfiniteBranch_bfTree_iff _ _).mp ((hasInfiniteBranch_iff_exists_seq _).mpr
+    ⟨swBranch, fun n ↦ mem_bfTree_iff.mpr (by
+      rw [bfRight_swBranch]
+      refine (unary_sameAtomicType_iff _ _).mpr
+        ⟨fun i j ↦ pairSwap_involutive.injective.eq_iff.symm, fun i ↦ ?_⟩
+      simp only [Function.comp_apply]
+      unfold pairSwap
+      split_ifs <;> omega)⟩)
+
 /-! ### Repeated coordinates -/
 
 /-- No relation symbols at all. -/
@@ -424,6 +506,11 @@ theorem rep_not_mem_two : [5, 0] ∉ bfTree noRelCode noRelCode := fun h ↦
 sides. -/
 theorem rep_mem_four : [3, 1, 0, 3] ∈ bfTree noRelCode noRelCode :=
   (noRel_mem_iff _).mpr (by decide)
+
+/-- **One-step prefix** (`bfNodes_prefix`): `[3, 1, 0]`, the prefix of `rep_mem_four`, is a node;
+it decodes `(0, 1, 1)` and `(3, 0, 0)`. -/
+theorem rep_mem_three : [3, 1, 0] ∈ bfNodes noRelCode noRelCode :=
+  bfNodes_prefix noRelCode noRelCode (s := [3, 1, 0]) (a := 3) (mem_bfTree_iff.mp rep_mem_four)
 
 /-- `[3, 1, 7, 3]` decodes `(0, 1, 1, 3)` and `(3, 0, 7, 1)`: the left repetition at positions
 `1, 2` is not matched, so not a node. -/
@@ -512,7 +599,9 @@ def regressionHeadline : List Name :=
    `root_mem_iff, `root_rank, `root_treeHeight, `root_not_codeBFEquiv_one, `root_rank_regression,
    `even_not_iso, `node_rank_regression, `root_height_regression,
    `lt_iso_of_branch, `lt_branch_of_refl, `pairAut_nontrivial, `pair_branch_regression,
-   `rep_mem_two, `rep_not_mem_two, `rep_mem_four, `rep_not_mem_four, `topology_regression]
+   `ev_ne_odd, `distinct_branch, `distinct_iso_roundtrip, `distinct_iso_of_explicit_branch,
+   `rep_mem_two, `rep_not_mem_two, `rep_mem_four, `rep_mem_three, `rep_not_mem_four,
+   `topology_regression]
 
 /-- The standard axioms. -/
 def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
@@ -524,9 +613,12 @@ run_cmd do
     let axs ← Elab.Command.liftCoreM (collectAxioms n)
     let bad := axs.toList.filter fun a => !standardAxioms.contains a
     unless bad.isEmpty do throwError "[NONSTANDARD AXIOMS] {n} uses {bad}"
-  logInfo "forced back-and-forth tree regression guard: OK (nullary disagreement gives the \
-    empty tree, of height 0, with CodeBFEquiv failing at every level; agreement at level 0 \
-    with no first move gives the root-only tree, root rank 0, height 1; an explicit branch \
-    gives an isomorphism and a nontrivial automorphism gives a branch; repeated coordinates \
-    must repeat on both sides; node and root rank comparisons; closed, clopen and measurable \
-    node conditions; minimal import closure; standard axioms)"
+  logInfo "forced back-and-forth tree regression guard: OK (the four bfLeft/bfRight evaluation \
+    lemmas fire under simp; nullary disagreement gives the empty tree, of height 0, with \
+    CodeBFEquiv failing at every level; agreement at level 0 with no first move gives the \
+    root-only tree, root rank 0, height 1; an explicit branch gives an isomorphism and a \
+    nontrivial automorphism gives a branch; between the distinct codes even and odd, the swap \
+    gives a branch and both it and an explicit branch read back as even ≈ odd; repeated \
+    coordinates must repeat on both sides, and bfNodes_prefix takes [3, 1, 0, 3] to [3, 1, 0]; \
+    node and root rank comparisons; closed, clopen and measurable node conditions; minimal \
+    import closure; standard axioms)"
