@@ -19,8 +19,8 @@ sentence** of the family is
                                           ∧ ∀y ⋁_{m ∈ M} Φ (n+1) (a⌢m) (x̄, y)),
 ```
 
-where `D_a` is the atomic diagram of `a` (a countable conjunction of atoms; see the
-interpretation choices below).  If `Φ n a` defines the automorphism orbit of `a` for
+where `D_a` is the atomic diagram of `a` (a countable conjunction of atoms and negated atoms;
+see the interpretation choices below).  If `Φ n a` defines the automorphism orbit of `a` for
 every tuple, the sentence holds in `M` (`montalbanSentence_self`).  For **every** family, a
 countable structure satisfying the sentence is isomorphic to `M`
 (`nonempty_equiv_of_realize_montalbanSentence`): in `N`, the relation
@@ -77,9 +77,9 @@ the compatibility lemma `realize_montalbanSentence_iff_pointed`.
   (B1) and which is what each stage of a `PotentialIso` requires (B2).  The difference matters
   once the complexity of the sentence is bounded (B3), which this module does not do.
 * **The empty-tuple seed.**  The first conjunct is `Φ 0 Fin.elim0`, the orbit formula of the
-  empty tuple; it starts the back-and-forth system.  The sentence of an empty `M` holds in
-  exactly the empty structures with the same nullary facts (the back clause at `⟨⟩` is `∀y ⊥`,
-  and `D_⟨⟩` records the nullary relations).
+  empty tuple; it starts the back-and-forth system.  For an orbit-formula family, the sentence
+  of an empty `M` holds in exactly the empty structures with the same nullary facts (the back
+  clause at `⟨⟩` is `∀y ⊥`, and `D_⟨⟩` records the nullary relations).
 * **Minimal hypotheses for B2.**  `nonempty_equiv_of_realize_montalbanSentence` assumes nothing
   about the family: neither the orbit property nor any syntactic class.  It needs
   `[L.IsRelational]` (for `PotentialIso`), countable `M` and `N`, and `M` and `N` in one carrier
