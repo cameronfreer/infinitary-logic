@@ -14,7 +14,8 @@ consumes (`KleeneBrouwer`, `OrdinalUtil`).
   lists of length at most `n` height `n + 1`;
 * standard axioms (`propext`, `Classical.choice`, `Quot.sound`);
 * minimal imports: the module's import closure reaches no coding, separation, well-order,
-  interpolation, Henkin, Scott, Karp or infinitary-syntax module.
+  model-theory, methods, interpolation, Henkin, Scott, Karp or infinitary-syntax module, and
+  among `InfinitaryLogic` modules is exactly `OrdinalUtil`, `KleeneBrouwer` and this module.
 
 Run with: lake env lean scripts/check_analytic_tree_boundedness_regressions.lean
 -/

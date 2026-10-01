@@ -40,8 +40,8 @@ extending `u` has `s ∈ T (f y)`; it is prefix-closed because the trees `T (f y
   infinite branch of `T (f y)`, although `f y ∈ A`.
 * For `y : ℕ → ℕ`, the map `s ↦ (s, y|s.length)` is a homomorphism of strict extension from
   `T (f y)` to `W`, so `treeHeight (T (f y)) ≤ treeHeight W`; it is injective (the first
-  coordinates recover `s`), but `treeHeight_le_of_relHom` does not use injectivity.  As `W` is a well-founded tree on `ℕ`, `treeHeight W < ω₁`, and
-  `β = treeHeight W + 1` works.
+  coordinates recover `s`), but `treeHeight_le_of_relHom` does not use injectivity.  As `W` is a
+  well-founded tree on `ℕ`, `treeHeight W < ω₁`, and `β = treeHeight W + 1` works.
 
 ## Interpretation choices
 
