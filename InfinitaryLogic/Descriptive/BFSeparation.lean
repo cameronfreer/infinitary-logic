@@ -79,6 +79,11 @@ theorem exists_uniform_bfSeparation {A : Set (StructureSpace L × StructureSpace
   have := hwf p hp
   exact ((lt_treeHeight_bfTree_of_codeBFEquiv h).trans (hbound p hp)).false
 
+/-- `CodeBFEquiv` is antitone in the level. -/
+theorem CodeBFEquiv.monotone {α β : Ordinal.{0}} (hαβ : α ≤ β) {c d : StructureSpace L}
+    (h : CodeBFEquiv β c d) : CodeBFEquiv α c d :=
+  @BFEquiv.monotone L ℕ c.toStructure ℕ d.toStructure _ _ _ hαβ _ _ h
+
 /-- **Uniform separation persists upward**: the separating level of
 `exists_uniform_bfSeparation` separates every pair of `A` at every higher level too, since
 back-and-forth equivalence is antitone in the level. -/
@@ -87,8 +92,7 @@ theorem exists_uniform_bfSeparation_forall_ge {A : Set (StructureSpace L × Stru
     ∃ α : Ordinal.{0}, α < Ordinal.omega 1 ∧
       ∀ β, α ≤ β → ∀ p ∈ A, ¬ CodeBFEquiv β p.1 p.2 := by
   obtain ⟨α, hα, hsep⟩ := exists_uniform_bfSeparation hA hA_noniso
-  exact ⟨α, hα, fun β hαβ p hp h ↦ hsep p hp
-    (@BFEquiv.monotone L ℕ p.1.toStructure ℕ p.2.toStructure _ _ _ hαβ _ _ h)⟩
+  exact ⟨α, hα, fun β hαβ p hp h ↦ hsep p hp (CodeBFEquiv.monotone hαβ h)⟩
 
 /-- **Uniform separation of two analytic sets.**  If `B` and `C` are analytic and no element of
 `B` is isomorphic to an element of `C`, then one countable back-and-forth level separates every

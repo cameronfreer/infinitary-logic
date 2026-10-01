@@ -132,8 +132,7 @@ theorem nullQ_eq_of_iso {c d : StructureSpace nullLang} (h : (structureIsoSetoid
   obtain ⟨e⟩ := h
   have := @Language.Equiv.map_rel nullLang ℕ ℕ c.toStructure d.toStructure e 0 nullP Fin.elim0
   have hv : (⇑e ∘ (Fin.elim0 : Fin 0 → ℕ)) = Fin.elim0 := funext fun i ↦ i.elim0
-  rw [hv] at this
-  change d nullQ = true ↔ c nullQ = true at this
+  rw [hv, StructureSpace.relMap_toStructure, StructureSpace.relMap_toStructure] at this
   exact Bool.eq_iff_iff.mpr this.symm
 
 /-- No pair of `nullPairs` is isomorphic. -/
@@ -143,16 +142,16 @@ theorem nullPairs_noniso : ∀ p ∈ nullPairs, ¬ (structureIsoSetoid nullLang)
   rw [h₁, h₂] at this
   exact Bool.false_ne_true this.symm
 
-/-- **The closed set of pairs is separated at one countable level**, at every higher level, and
-in particular at the successor of the separating level. -/
+/-- **The closed set of pairs is separated at one countable level** `β`, read off the upward
+form, and in particular also at `β + 1`. -/
 theorem null_regression :
     ∃ α : Ordinal.{0}, α < Ordinal.omega 1 ∧ (∀ p ∈ nullPairs, ¬ CodeBFEquiv α p.1 p.2) ∧
       ∀ p ∈ nullPairs, ¬ CodeBFEquiv (α + 1) p.1 p.2 := by
-  obtain ⟨α, hα, hsep⟩ := exists_uniform_bfSeparation isClosed_nullPairs.analyticSet
-    nullPairs_noniso
   obtain ⟨β, hβ, hge⟩ := exists_uniform_bfSeparation_forall_ge isClosed_nullPairs.analyticSet
     nullPairs_noniso
-  exact ⟨β, hβ, hge β le_rfl, hge (β + 1) (le_add_of_nonneg_right zero_le)⟩
+  -- the successor level through the antitonicity lemma rather than the upward form
+  exact ⟨β, hβ, hge β le_rfl, fun p hp h ↦
+    hge β le_rfl p hp (CodeBFEquiv.monotone (le_add_of_nonneg_right zero_le) h)⟩
 
 /-! ### Two analytic sets: one unary symbol -/
 
@@ -202,8 +201,7 @@ theorem holdsEverywhere_of_iso {c d : StructureSpace unaryLang} (hc : c ∈ hold
     (fun _ ↦ m')
   have hv : (⇑e ∘ fun _ : Fin 1 ↦ m') = fun _ ↦ m :=
     funext fun _ ↦ @Language.Equiv.apply_symm_apply unaryLang ℕ ℕ c.toStructure d.toStructure e m
-  rw [hv] at this
-  change d (uQ m) = true ↔ c (uQ m') = true at this
+  rw [hv, StructureSpace.relMap_toStructure, StructureSpace.relMap_toStructure] at this
   exact this.mpr (hc _)
 
 /-- No element of `holdsEverywhere` is isomorphic to an element of `failsSomewhere`. -/
@@ -252,7 +250,8 @@ open BFSeparationRegressions
 
 /-- The declarations whose axioms are audited. -/
 def headline : List Name :=
-  [`FirstOrder.Language.exists_uniform_bfSeparation,
+  [`FirstOrder.Language.CodeBFEquiv.monotone,
+   `FirstOrder.Language.exists_uniform_bfSeparation,
    `FirstOrder.Language.exists_uniform_bfSeparation_forall_ge,
    `FirstOrder.Language.exists_uniform_bfSeparation_of_analyticSets,
    `MeasureTheory.AnalyticSet.prod,
