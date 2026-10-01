@@ -31,6 +31,7 @@ import InfinitaryLogic.Scott.BlockBackAndForth
 import InfinitaryLogic.Scott.BFEquivRelabel
 import InfinitaryLogic.Scott.Formula
 import InfinitaryLogic.Scott.Sentence
+import InfinitaryLogic.Scott.MontalbanSentence
 import InfinitaryLogic.Scott.RefinementCount
 import InfinitaryLogic.Scott.Rank
 import InfinitaryLogic.Scott.QuantifierRank
