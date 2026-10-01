@@ -17,7 +17,8 @@ characterization and the bound together, with positive and negative models.
   `Σ^in_1`-definable as the `m`-th successor of the parameter
   (`∃y (y = z + m ∧ S(y, x))`, recursively), so the orbits over `0` are `Σ^in_1`-definable
   and `exists_isSigmaIn_three_scottSentence_of_sigmaIn_one_orbits_over` gives a `Σ^in_3` Scott
-  sentence of `(ℕ, S)`; it holds in `ℕ` and fails in `(ℤ, S)` (every point has a predecessor) and in `Fin 3`.
+  sentence of `(ℕ, S)`; it holds in `ℕ` and fails in `(ℤ, S)` (every point has a predecessor)
+  and in `Fin 3`.
   (Without the parameter, `0` is defined by "no predecessor", a universal formula; that the
   parameter-free orbits are not `Σ^in_1`-definable is not claimed here.)
 * **The empty tuple `k = 0`.**  `existsTuple 0 φ` is `φ` (by `rfl`); the block lemma at `k = 0`
@@ -33,9 +34,10 @@ characterization and the bound together, with positive and negative models.
   Scott sentence from the composition holds in `ULift.{1} ℤ` and fails in `ULift.{1} (Fin 3)`;
   and for a countable pure set in an arbitrary universe `w`.
 * **The composition at a general level**
-  (`exists_isSigmaIn_scottSentence_of_sigmaIn_orbits_over`): at `α = 1` on the pure set with a parameter, giving `Σ^in_{1+2}`, and at `α = 2` (orbit formulas
-  promoted by `IsSigmaIn.mono`), giving `Σ^in_4`; level-`0` equality patterns promoted to
-  level `1` give the concrete `Σ^in_3` Scott sentence of `ℕ`.
+  (`exists_isSigmaIn_scottSentence_of_sigmaIn_orbits_over`): at `α = 1` on the pure set with a
+  parameter, giving `Σ^in_{1+2}`, and at `α = 2` (orbit formulas promoted by `IsSigmaIn.mono`),
+  giving `Σ^in_4`; level-`0` equality patterns promoted to level `1` give the concrete `Σ^in_3`
+  Scott sentence of `ℕ`.
 * **The block lemma both ways** on concrete formulas: `∃x₀ x₁ (x₀ ≠ x₁)` is `Σ^in_1`, and
   `Σ^in_1` of the closure gives back `Σ^in_1` of `x₀ ≠ x₁`.
 * **Import closure** of the module: it reaches `Scott/MontalbanComplexity`,
@@ -345,7 +347,8 @@ theorem succ_scott :
     ∃ σ : succLang.Formulaω (Fin 0), IsSigmaIn 3 σ ∧ σ.realize_as_sentence ℕ ∧
       ¬ σ.realize_as_sentence ℤ ∧ ¬ σ.realize_as_sentence (Fin 3) := by
   obtain ⟨σ, hσ, hN⟩ :=
-    exists_isSigmaIn_three_scottSentence_of_sigmaIn_one_orbits_over (M := ℕ) ![0] fun n a ↦ ⟨succΦ n a, (inSigned_finConj _ _ _).2 fun φ hφ ↦ by
+    exists_isSigmaIn_three_scottSentence_of_sigmaIn_one_orbits_over (M := ℕ) ![0] fun n a ↦
+    ⟨succΦ n a, (inSigned_finConj _ _ _).2 fun φ hφ ↦ by
       obtain ⟨i, rfl⟩ := List.mem_ofFn.1 hφ
       exact (inSigned_mapFreeVars _ _ _ _).2 (succForm_isSigmaIn_one _), succ_isOrbit a⟩
   refine ⟨σ, hσ, (hN ℕ).2 ⟨Language.Equiv.refl _ _⟩, fun h ↦ ?_, fun h ↦ ?_⟩
