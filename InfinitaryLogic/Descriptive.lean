@@ -31,6 +31,7 @@ import InfinitaryLogic.Descriptive.G0Fusion
 import InfinitaryLogic.Descriptive.CantorStabilization
 import InfinitaryLogic.Descriptive.KleeneBrouwer
 import InfinitaryLogic.Descriptive.AnalyticTreeBoundedness
+import InfinitaryLogic.Descriptive.BFTree
 import InfinitaryLogic.Descriptive.TreeCodes
 
 -- Counting dichotomy and finite carrier
@@ -158,6 +159,10 @@ application of that vocabulary:
 - `AnalyticTreeBoundedness`: an analytic family of well-founded trees on `ℕ` with closed node
   sets has heights bounded below `ω₁` (`KleeneBrouwer.analytic_tree_rank_bounded`), proved
   descriptively through one dominating witness tree, with no well-order boundedness theorem;
+- `BFTree` (model-theoretic, like `StructureIsoSetoid`): the forced back-and-forth tree of a pair
+  of coded structures, with closed node conditions, infinite branches exactly the isomorphisms
+  (`hasInfiniteBranch_bfTree_iff`), and back-and-forth levels bounding node ranks and the tree
+  height (`le_rank_bfTree_of_bfEquiv`, `lt_treeHeight_bfTree_of_codeBFEquiv`);
 - `TreeCodes`: tree codes over a countable alphabet, the closed tree class, the continuous
   Kleene–Brouwer code into `Language.order`, and analytic boundedness for well-founded trees
   (`analytic_wellFoundedTree_rank_boundedness`) with its domination adapter;
