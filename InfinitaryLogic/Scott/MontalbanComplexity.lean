@@ -36,8 +36,6 @@ keep the level `α + 1 ≥ 1`.
 * `isPiIn_montalbanClauseBody`: the clause body shared by both forms is `Π^in_{α+1}`.
 * `isPiIn_montalbanSentencePointed`, `isPiIn_montalbanSentence`: the two sentences are
   `Π^in_{α+1}` when the family is `Σ^in_α` and `1 ≤ α`.
-* `montalbanSentence_eq_pointed_elim0`: the unpointed sentence *is* the pointed sentence over the
-  empty parameter tuple, for the family transported along `0 + n = n` by `mapFreeVars`.
 * `exists_isPiIn_scottSentence_of_sigmaIn_orbits`,
   `exists_isPiIn_pointed_of_sigmaIn_orbits`: a `Π^in_{α+1}` Scott sentence (pointed: formula)
   from `Σ^in_α` orbit formulas, `1 ≤ α`.
@@ -70,8 +68,8 @@ keep the level `α + 1 ≥ 1`.
   lemma `realize_montalbanSentence_iff_pointed` cannot transfer it.  Both constructions are
   classified directly through the shared clause-body lemma `isPiIn_montalbanClauseBody` (with the
   block lemmas `isPiIn_forallTuple_iff` and `isPiIn_forallTupleFrom_iff`); the syntactic
-  equation `montalbanSentence_eq_pointed_elim0` (transport along `0 + n = n`) gives a second
-  route, exercised in the guard.
+  equation `montalbanSentence_eq_pointed_elim0` of `Scott/MontalbanSentence.lean` (transport
+  along `0 + n = n`) gives a second route, exercised in the guard.
 * **Hypotheses.**  The complexity theorems assume only the class of the family and `1 ≤ α`;
   they need neither `[L.IsRelational]` nor any orbit property, and are universe-polymorphic in the
   language and the carrier.  The Scott-sentence corollaries add what `montalbanSentence_self` and
@@ -181,79 +179,6 @@ theorem isPiIn_montalbanSentence (hα : 1 ≤ α) {Φ : ∀ n, (Fin n → M) →
     ((hΦ _ _).mono le_self_add) (isPiIn_atomicDiagram h1 _) fun _ ↦ hΦ _ _
 
 end Sentences
-
-/-! ### Pointed and unpointed: the syntactic equation -/
-
-section Equation
-
-/-- Transport of a formula along `m = n` in the number of free variables. -/
-private def castF {m n : ℕ} (h : m = n) (φ : L.Formulaω (Fin m)) : L.Formulaω (Fin n) := h ▸ φ
-
-private theorem castF_castF_symm {m n : ℕ} (h : m = n) (φ : L.Formulaω (Fin n)) :
-    castF h (castF h.symm φ) = φ := by
-  subst h; rfl
-
-private theorem forallLastVar_castF {m n : ℕ} (h : m = n) (φ : L.Formulaω (Fin (m + 1))) :
-    castF h (forallLastVar φ) = forallLastVar (castF (congrArg (· + 1) h) φ) := by
-  subst h; rfl
-
-private theorem montalbanClauseBody_castF {M : Type w} [Countable M] {m n : ℕ} (h : m = n)
-    (θ D : L.Formulaω (Fin m)) (ψ : M → L.Formulaω (Fin (m + 1))) :
-    castF h (montalbanClauseBody θ D ψ) =
-      montalbanClauseBody (castF h θ) (castF h D) fun x ↦ castF (congrArg (· + 1) h) (ψ x) := by
-  subst h; rfl
-
-private theorem atomicDiagram_castF [Countable (Σ l, L.Relations l)] {M : Type w}
-    [L.Structure M] {m n : ℕ} (h : m = n) (a : Fin n → M) :
-    castF h (atomicDiagram (L := L) (a ∘ Fin.cast h)) = atomicDiagram (L := L) a := by
-  subst h; rfl
-
-private theorem forallTupleFrom_zero_eq :
-    ∀ (n : ℕ) (φ : L.Formulaω (Fin (0 + n))),
-      forallTupleFrom 0 n φ = forallTuple n (castF (Nat.zero_add n) φ)
-  | 0, _ => rfl
-  | n + 1, φ => by
-    rw [forallTupleFrom, forallTuple, forallTupleFrom_zero_eq n, forallLastVar_castF]
-
-private theorem mapFreeVars_id {β : Type*} :
-    ∀ {n} (φ : L.BoundedFormulaω β n), φ.mapFreeVars id = φ
-  | _, .falsum => rfl
-  | _, .equal t₁ t₂ => by simp [mapFreeVars, Sum.map_id_id, Term.relabel_id]
-  | _, .rel R ts => by simp [mapFreeVars, Sum.map_id_id, Term.relabel_id]
-  | _, .imp φ ψ => by simp [mapFreeVars, mapFreeVars_id φ, mapFreeVars_id ψ]
-  | _, .all φ => by simp [mapFreeVars, mapFreeVars_id φ]
-  | _, .iSup φs => by simp [mapFreeVars, mapFreeVars_id]
-  | _, .iInf φs => by simp [mapFreeVars, mapFreeVars_id]
-
-private theorem mapFreeVars_cast_eq_castF {m n : ℕ} (h : m = n) (φ : L.Formulaω (Fin m)) :
-    φ.mapFreeVars (Fin.cast h) = castF h φ := by
-  subst h; exact mapFreeVars_id φ
-
-variable [Countable (Σ l, L.Relations l)] {M : Type w} [L.Structure M] [Countable M]
-
-/-- **The unpointed sentence is the pointed sentence over the empty tuple**, syntactically: for
-the family transported from `Fin n` to `Fin (0 + n)` by `mapFreeVars`, the same family as in the
-semantic compatibility lemma `realize_montalbanSentence_iff_pointed`.  Every step is transport
-along `0 + n = n`; the atomic diagrams over `Fin n` and `Fin (0 + n)` use the same
-`Encodable.ofCountable` instance of `L.AtomicIdx`, transported, so their conjuncts agree in
-order.  With `inSigned_mapFreeVars` this derives `isPiIn_montalbanSentence` from
-`isPiIn_montalbanSentencePointed`. -/
-theorem montalbanSentence_eq_pointed_elim0 (Φ : ∀ n, (Fin n → M) → L.Formulaω (Fin n)) :
-    montalbanSentence Φ = montalbanSentencePointed (Fin.elim0 : Fin 0 → M)
-      (fun n a ↦ BoundedFormulaω.mapFreeVars (Fin.cast (Nat.zero_add n).symm) (Φ n a)) := by
-  simp only [mapFreeVars_cast_eq_castF]
-  unfold montalbanSentence montalbanSentencePointed
-  congr 2
-  funext p
-  obtain ⟨n, a⟩ := p
-  simp only [montalbanClause, montalbanClausePointed, forallTupleFrom_zero_eq,
-    montalbanClauseBody_castF]
-  congr 2
-  · exact (castF_castF_symm _ _).symm
-  · rw [Fin.elim0_append, atomicDiagram_castF]
-  · funext x; exact (castF_castF_symm _ _).symm
-
-end Equation
 
 /-! ### Scott sentences from `Σ^in_α` orbit formulas -/
 

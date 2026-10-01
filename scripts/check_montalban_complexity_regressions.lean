@@ -492,7 +492,7 @@ run_cmd do
 def moduleDecls : List Name :=
   [`isPiIn_atomicDiagram, `isPiIn_forallLastVar_iff, `isSigmaIn_existsLastVar_iff,
    `isPiIn_forallTuple_iff, `isPiIn_forallTupleFrom_iff, `isPiIn_montalbanClauseBody,
-   `isPiIn_montalbanSentencePointed, `isPiIn_montalbanSentence, `montalbanSentence_eq_pointed_elim0,
+   `isPiIn_montalbanSentencePointed, `isPiIn_montalbanSentence,
    `exists_isPiIn_scottSentence_of_sigmaIn_orbits, `exists_isPiIn_pointed_of_sigmaIn_orbits,
    `exists_isPiIn_two_scottSentence_of_sigmaIn_zero_orbits].map (`FirstOrder.Language ++ ·)
 

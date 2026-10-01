@@ -44,7 +44,8 @@ Every public theorem is *applied*, not only listed for its axioms.
   and a repeated parameter (`(1, 1) ↦ (4, 4)`), each time reading off that the isomorphism
   produced by B2 carries the parameters; **negative:** `(1, 1)` is not carried to `(4, 5)`, so
   the pointed sentence fails there (B2 alone, through the equality atoms).
-* **`k = 0` compatibility** (`realize_montalbanSentence_iff_pointed`) on the pure set, and the
+* **`k = 0` compatibility** (`realize_montalbanSentence_iff_pointed`) on the pure set, the
+  syntactic equation `montalbanSentence_eq_pointed_elim0` used by rewriting there, and the
   pointed B2 at the empty parameter tuple.
 * **The empty tuple**: the seed `Φ 0 Fin.elim0` is a conjunct (the family `⊥` gives a sentence
   true nowhere, read off `realize_montalbanSentence`); the tuple quantifiers at length `0`;
@@ -608,6 +609,15 @@ theorem compat_pure (N : Type) :
           (Fin.elim0 : Fin 0 → N) :=
   realize_montalbanSentence_iff_pointed _
 
+/-- **`k = 0` as a syntactic equation** on the pure set: the pointed sentence over the empty
+tuple, read as a sentence, holds in `ℤ`, by rewriting it into the unpointed one. -/
+theorem eq_pointed_pure :
+    (montalbanSentencePointed (Fin.elim0 : Fin 0 → ℕ) fun n a ↦
+      BoundedFormulaω.mapFreeVars (Fin.cast (Nat.zero_add n).symm)
+        (pureΦ ℕ n a)).realize_as_sentence ℤ := by
+  rw [← montalbanSentence_eq_pointed_elim0]
+  exact int_realizes
+
 /-- The pointed B2 at the empty parameter tuple, through the compatibility lemma. -/
 theorem pointed_zero : ∃ e : ℕ ≃[Language.empty] ℤ, ⇑e ∘ (Fin.elim0 : Fin 0 → ℕ) = Fin.elim0 :=
   exists_equiv_of_realize_montalbanSentencePointed _ _ ℤ _ ((compat_pure ℤ).1 int_realizes)
@@ -728,7 +738,8 @@ def moduleDecls : List Name :=
    `montalbanClause, `montalbanSentence, `IsOrbitFormulaFamily, `realize_montalbanSentence,
    `realize_montalbanSentence_iff_pointed, `montalbanSentence_self,
    `nonempty_equiv_of_realize_montalbanSentence,
-   `montalbanSentence_characterizes].map (`FirstOrder.Language ++ ·)
+   `montalbanSentence_characterizes, `montalbanSentence_eq_pointed_elim0].map
+    (`FirstOrder.Language ++ ·)
 
 /-- The guard's own declarations whose axioms are audited. -/
 def guardDecls : List Name :=
@@ -741,9 +752,9 @@ def guardDecls : List Name :=
    `empty_isOrbit, `pempty_isOrbit, `empty_model, `fin0_realizes, `pempty_not_realizes,
    `empty_not_realizes_pempty, `unit_not_realizes_empty, `pure_isOrbitPointed,
    `pure_pointed_iff, `pure_pointed_of_pattern, `pointed_self_one, `pointed_one, `pointed_two,
-   `pointed_repeated, `pointed_repeated_not, `compat_pure, `pointed_zero, `bot_seed,
-   `existsTuple_examples, `forallTuple_examples, `tuple_zero, `simp_tupleQuantifiers,
-   `simp_forallTupleFrom].map (`MontalbanGuard ++ ·)
+   `pointed_repeated, `pointed_repeated_not, `compat_pure, `eq_pointed_pure, `pointed_zero,
+   `bot_seed, `existsTuple_examples, `forallTuple_examples, `tuple_zero,
+   `simp_tupleQuantifiers, `simp_forallTupleFrom].map (`MontalbanGuard ++ ·)
 
 /-- The standard axioms. -/
 def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
@@ -764,7 +775,8 @@ run_cmd do
     one point; the empty carrier, with models empty and satisfying the same nullary fact, \
     Fin 0 positive, PEmpty with the nullary fact false negative in both directions, Unit \
     negative; pointed with one, two and a repeated parameter, the produced isomorphism carrying \
-    them, and a repeated parameter not carried to distinct values; k = 0 compatibility; the \
-    clause-by-clause characterizations used by rewriting; the empty-tuple seed and tuple \
+    them, and a repeated parameter not carried to distinct values; k = 0 compatibility, \
+    semantic and as a syntactic equation; the clause-by-clause characterizations used by \
+    rewriting; the empty-tuple seed and tuple \
     quantifiers, closed by simp; import closure without Scott-process, descriptive, \
     method, model-theory, admissible or conditional modules; standard axioms)"

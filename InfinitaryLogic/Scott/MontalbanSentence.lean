@@ -53,6 +53,7 @@ the compatibility lemma `realize_montalbanSentence_iff_pointed`.
   clause, for any family; the form in which to verify a sentence in a given structure.
 * `realize_montalbanSentence_iff_pointed`: the unpointed sentence is the pointed sentence with
   no parameters, up to the transport of each `Φ n a` from `Fin n` to `Fin (0 + n)`.
+* `montalbanSentence_eq_pointed_elim0`: the same link as a syntactic equation of sentences.
 
 ## Interpretation choices
 
@@ -90,9 +91,11 @@ the compatibility lemma `realize_montalbanSentence_iff_pointed`.
   Scott formulas (`k + (n + 1)` is definitionally `(k + n) + 1`), where `Fin k ⊕ Fin n` would
   need new binder machinery.  The price is that `Fin (0 + n)` is not definitionally `Fin n`, so
   the unpointed sentence is a separate definition and the case `k = 0` is a semantic
-  compatibility lemma.  The pointed B2 reads the image of each parameter off the isomorphism
-  graph of `PotentialIso.countable_toEquiv_graph`, through the equality atoms between parameter
-  and tuple coordinates in the atomic-diagram conjunct.
+  compatibility lemma.  The `k = 0` link is also a syntactic equation,
+  `montalbanSentence_eq_pointed_elim0`, by transport along `0 + n = n`.  The pointed B2 reads
+  the image of each parameter off the isomorphism graph of `PotentialIso.countable_toEquiv_graph`,
+  through the equality atoms between parameter and tuple coordinates in the atomic-diagram
+  conjunct.
 * **What is not claimed.**  No complexity statement is made here: the syntactic class of the
   family is unconstrained, and no class of the sentence is asserted.  For an orbit-formula
   family, the sentence is *a* Scott sentence of `M`, not the canonical `scottSentence M`: both
@@ -450,5 +453,70 @@ theorem montalbanSentence_characterizes [L.IsRelational]
     rwa [comp_fin_elim0] at h⟩
 
 end Unpointed
+
+/-! ### Pointed and unpointed: the syntactic equation -/
+
+section Equation
+
+variable {L : Language.{u, v}}
+
+/-- Transport of a formula along `m = n` in the number of free variables. -/
+private def castF {m n : ℕ} (h : m = n) (φ : L.Formulaω (Fin m)) : L.Formulaω (Fin n) := h ▸ φ
+
+private theorem castF_castF_symm {m n : ℕ} (h : m = n) (φ : L.Formulaω (Fin n)) :
+    castF h (castF h.symm φ) = φ := by
+  subst h; rfl
+
+private theorem forallLastVar_castF {m n : ℕ} (h : m = n) (φ : L.Formulaω (Fin (m + 1))) :
+    castF h (forallLastVar φ) = forallLastVar (castF (congrArg (· + 1) h) φ) := by
+  subst h; rfl
+
+private theorem montalbanClauseBody_castF {M : Type w} [Countable M] {m n : ℕ} (h : m = n)
+    (θ D : L.Formulaω (Fin m)) (ψ : M → L.Formulaω (Fin (m + 1))) :
+    castF h (montalbanClauseBody θ D ψ) =
+      montalbanClauseBody (castF h θ) (castF h D) fun x ↦ castF (congrArg (· + 1) h) (ψ x) := by
+  subst h; rfl
+
+private theorem atomicDiagram_castF [Countable (Σ l, L.Relations l)] {M : Type w}
+    [L.Structure M] {m n : ℕ} (h : m = n) (a : Fin n → M) :
+    castF h (atomicDiagram (L := L) (a ∘ Fin.cast h)) = atomicDiagram (L := L) a := by
+  subst h; rfl
+
+private theorem forallTupleFrom_zero_eq :
+    ∀ (n : ℕ) (φ : L.Formulaω (Fin (0 + n))),
+      forallTupleFrom 0 n φ = forallTuple n (castF (Nat.zero_add n) φ)
+  | 0, _ => rfl
+  | n + 1, φ => by
+    rw [forallTupleFrom, forallTuple, forallTupleFrom_zero_eq n, forallLastVar_castF]
+
+private theorem mapFreeVars_cast_eq_castF {m n : ℕ} (h : m = n) (φ : L.Formulaω (Fin m)) :
+    φ.mapFreeVars (Fin.cast h) = castF h φ := by
+  subst h; exact mapFreeVars_id φ
+
+variable [Countable (Σ l, L.Relations l)] {M : Type w} [L.Structure M] [Countable M]
+
+/-- **The unpointed sentence is the pointed sentence over the empty tuple**, syntactically: for
+the family transported from `Fin n` to `Fin (0 + n)` by `mapFreeVars`, the same family as in the
+semantic compatibility lemma `realize_montalbanSentence_iff_pointed`.  Every step is transport
+along `0 + n = n`; the atomic diagrams over `Fin n` and `Fin (0 + n)` use the same
+`Encodable.ofCountable` instance of `L.AtomicIdx`, transported, so their conjuncts agree in
+order.  In `Scott/MontalbanComplexity.lean`, with `inSigned_mapFreeVars`, this derives
+`isPiIn_montalbanSentence` from `isPiIn_montalbanSentencePointed`. -/
+theorem montalbanSentence_eq_pointed_elim0 (Φ : ∀ n, (Fin n → M) → L.Formulaω (Fin n)) :
+    montalbanSentence Φ = montalbanSentencePointed (Fin.elim0 : Fin 0 → M)
+      (fun n a ↦ BoundedFormulaω.mapFreeVars (Fin.cast (Nat.zero_add n).symm) (Φ n a)) := by
+  simp only [mapFreeVars_cast_eq_castF]
+  unfold montalbanSentence montalbanSentencePointed
+  congr 2
+  funext p
+  obtain ⟨n, a⟩ := p
+  simp only [montalbanClause, montalbanClausePointed, forallTupleFrom_zero_eq,
+    montalbanClauseBody_castF]
+  congr 2
+  · exact (castF_castF_symm _ _).symm
+  · rw [Fin.elim0_append, atomicDiagram_castF]
+  · funext x; exact (castF_castF_symm _ _).symm
+
+end Equation
 
 end FirstOrder.Language
