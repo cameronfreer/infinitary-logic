@@ -306,6 +306,17 @@ theorem realize_mapFreeVars {M : Type*} [L.Structure M]
     simp only [mapFreeVars, realize_iInf]
     exact forall_congr' fun k => ih k xs
 
+/-- Renaming the free variables by the identity is the identity on formulas. -/
+@[simp]
+theorem mapFreeVars_id : ∀ {n} (φ : L.BoundedFormulaω α n), φ.mapFreeVars id = φ
+  | _, .falsum => rfl
+  | _, .equal t₁ t₂ => by simp [mapFreeVars, Sum.map_id_id, Term.relabel_id]
+  | _, .rel R ts => by simp [mapFreeVars, Sum.map_id_id, Term.relabel_id]
+  | _, .imp φ ψ => by simp [mapFreeVars, mapFreeVars_id φ, mapFreeVars_id ψ]
+  | _, .all φ => by simp [mapFreeVars, mapFreeVars_id φ]
+  | _, .iSup φs => by simp [mapFreeVars, mapFreeVars_id]
+  | _, .iInf φs => by simp [mapFreeVars, mapFreeVars_id]
+
 private theorem sum_elim_subst_tf {M : Type*} [L.Structure M]
     (tf : α → L.Term β) (v : β → M) (xs : Fin n → M) :
     (fun a : α ⊕ Fin n =>
