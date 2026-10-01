@@ -433,8 +433,8 @@ def swIso : @Language.Equiv unaryLang ℕ ℕ uEven.toStructure uOdd.toStructure
     (pairSwap_involutive.toPerm pairSwap) (fun f ↦ isEmptyElim f) (fun {l} R v ↦ by
       have hl := R.2
       subst hl
-      rw [relMap_uCode, relMap_uCode]
-      change pairSwap (v 0) % 2 = 1 ↔ v 0 % 2 = 0
+      rw [relMap_uCode, relMap_uCode, Function.comp_apply, Equiv.toFun_as_coe,
+        Function.Involutive.coe_toPerm]
       unfold pairSwap
       split_ifs <;> omega)
 
