@@ -19,7 +19,9 @@ mathematics behind analytic boundedness for well-founded trees (issue #73).
 
 * `HasInfiniteBranch T` is a **descending chain in strict extension** — a sequence of nodes each
   properly extending the previous — so "no infinite branch" is well-foundedness of `extBelow T`
-  on the nose (`wellFounded_extBelow_iff_not_hasInfiniteBranch`), with no appeal to König.
+  on the nose (`wellFounded_extBelow_iff_not_hasInfiniteBranch`), with no appeal to König;
+  `hasInfiniteBranch_iff_exists_seq` restates a branch as a sequence `z : ℕ → ℕ` all of whose
+  finite initial segments are nodes.
 * The Kleene–Brouwer order is the lexicographic order on `List ℕ∞` pulled back along
   `kbEncode x = x.map (↑) ++ [⊤]`: appending `⊤` makes every proper extension of a node *smaller*
   than the node, and among incomparable nodes the leftmost first difference decides.  Linearity is
@@ -78,6 +80,46 @@ theorem wellFounded_extBelow_iff_not_hasInfiniteBranch (T : tree ℕ) :
   · intro h
     refine ⟨fun e => h ⟨fun n => (e n : List ℕ), fun n => (e n).2, fun n => ?_⟩⟩
     exact e.map_rel_iff.mpr (Nat.lt_succ_self n)
+
+/-- **Branches as sequences**: `T` has an infinite branch iff some `z : ℕ → ℕ` has every
+finite initial segment `[z 0, …, z (n - 1)]` in `T`.  Forward: the `i`-th entry of the
+sequence is read off the `(i + 1)`-st node of the chain, whose length is at least `i + 1`;
+backward: the initial segments themselves form the chain. -/
+theorem hasInfiniteBranch_iff_exists_seq (T : tree ℕ) :
+    HasInfiniteBranch T ↔ ∃ z : ℕ → ℕ, ∀ n, List.ofFn (fun i : Fin n ↦ z i) ∈ T := by
+  constructor
+  · rintro ⟨f, hf, hstep⟩
+    have hmono : ∀ m k, f m <+: f (m + k) := by
+      intro m k
+      induction k with
+      | zero => exact List.prefix_refl _
+      | succ k ih => exact ih.trans (hstep (m + k)).1
+    have hlen : ∀ n, n ≤ (f n).length := by
+      intro n
+      induction n with
+      | zero => exact Nat.zero_le _
+      | succ n ih =>
+        have hle := (hstep n).1.length_le
+        have hne : (f n).length ≠ (f (n + 1)).length :=
+          fun h ↦ (hstep n).2 ((hstep n).1.eq_of_length h)
+        omega
+    refine ⟨fun i ↦ (f (i + 1)).getD i 0, fun n ↦ ?_⟩
+    have htake : List.ofFn (fun i : Fin n ↦ (f (i + 1)).getD i 0) = (f n).take n := by
+      refine List.ext_getElem (by simp [hlen n]) fun i h₁ h₂ ↦ ?_
+      have hi : i < n := by simpa using h₁
+      have hp : f (i + 1) <+: f n := by
+        simpa [show i + 1 + (n - (i + 1)) = n by omega] using hmono (i + 1) (n - (i + 1))
+      have hi' : i < (f (i + 1)).length := by have := hlen (i + 1); omega
+      rw [List.getElem_ofFn, List.getElem_take, List.getD_eq_getElem?_getD,
+        List.getElem?_eq_getElem hi', Option.getD_some]
+      exact hp.getElem hi'
+    rw [htake]
+    exact Tree.take_mem ⟨f n, hf n⟩
+  · rintro ⟨z, hz⟩
+    refine ⟨fun n ↦ List.ofFn (fun i : Fin n ↦ z i), hz, fun n ↦ ⟨?_, fun h ↦ ?_⟩⟩
+    · simp only [List.ofFn_succ_last]
+      exact List.prefix_append _ _
+    · simpa using congrArg List.length h
 
 /-! ## The Kleene–Brouwer order, via lexicographic order on `WithTop ℕ` -/
 
