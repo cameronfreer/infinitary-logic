@@ -15,12 +15,13 @@ quantifier-free formulas; for `α ≥ 1`, `Σ^in_α` consists of the countable d
 formulas `∃ȳ ψ` with `ψ ∈ Π^in_β` for some `β < α`, and `Π^in_α` dually of the countable
 conjunctions of `∀ȳ ψ` with `ψ ∈ Σ^in_β`, `β < α`.
 
-Here they are realized, without constructing any normal form, as one **signed traversal**
-`inSigned α s φ` with the design of `universalSigned` (`Lomega1omega/QuantifierClass.lean`): the
-sign `s` names the class being asked for, an antecedent flips it, and the mutual dependence of the
-two classes through negation is definitional.  A node of the asked kind (`all` or `iInf` at the
-`Π` sign, `iSup` at the `Σ` sign) keeps the level and needs `1 ≤ α`; a node of the other kind must
-lie entirely in the other class at some level `β` with `1 ≤ β < α`.
+Here they are approximated syntactically, without constructing any normal form, by one
+**signed traversal** `inSigned α s φ` with the design of `universalSigned`
+(`Lomega1omega/QuantifierClass.lean`): the sign `s` names the class being asked for, an
+antecedent flips it, and the mutual dependence of the two classes through negation is
+definitional.  A node of the asked kind (`all` or `iInf` at the `Π` sign, `iSup` at the `Σ` sign)
+keeps the level and needs `1 ≤ α`; a node of the other kind must lie entirely in the other class
+at some level `β` with `1 ≤ β < α`.
 
 ## Main declarations
 
@@ -28,7 +29,7 @@ lie entirely in the other class at some level `β` with `1 ≤ β < α`.
   `IsSigmaIn α φ := inSigned α false φ`.
 * Constructor equations `inSigned_imp`, `inSigned_all_true`, `inSigned_all_false`,
   `inSigned_iInf_true`, …, and for the derived connectives `inSigned_not`, `inSigned_and`,
-  `inSigned_or`, `inSigned_ex_true`, `inSigned_ex_false`.
+  `inSigned_or`, `inSigned_inf`, `inSigned_sup`, `inSigned_ex_true`, `inSigned_ex_false`.
 * Order: `inSigned_mono` (`IsSigmaIn.mono`, `IsPiIn.mono`) and `inSigned_of_lt`
   (`IsSigmaIn.isPiIn_add_one`, `IsPiIn.isSigmaIn_add_one`), so `Σ^in_α ∪ Π^in_α` lies in
   `Σ^in_{α+1} ∩ Π^in_{α+1}`; `inSigned_zero_iff` (`Σ^in_0 = Π^in_0`).
@@ -39,8 +40,9 @@ lie entirely in the other class at some level `β` with `1 ≤ β < α`.
   `isSigmaIn_imp`, `isPiIn_inf`, `isSigmaIn_sup`; one level up:
   `IsSigmaIn.isPiIn_add_one_all`, `IsPiIn.isSigmaIn_add_one_ex`.
 * Invariance under `castLE`, `relabel`, `subst`, `mapFreeVars`, `mapLanguage`.
-* Level one against `universalSigned`: `universalSigned_of_inSigned_one` and
-  `inSigned_one_toLω_iff`.
+* Level one against `universalSigned`: the exact characterization `inSigned_one_iff` through
+  `connectiveSigned`, the inclusion `universalSigned_of_inSigned_one`, and
+  `inSigned_one_toLω_iff_universalSigned`.
 * Montalbán's literal normal forms: `NormalFormIn`, `IsSigmaInNF`, `IsPiInNF`, with
   `isSigmaInNF_esup`, `isPiInNF_einf`; a normal form lies in the signed class
   (`NormalFormIn.inSigned`, `IsSigmaInNF.isSigmaIn`, `IsPiInNF.isPiIn`) and has quantifier rank
@@ -75,26 +77,32 @@ lie entirely in the other class at some level `β` with `1 ≤ β < α`.
   the finitary quantifier-free formulas.  Every normal form lies in the signed class of the same
   level and sign (`NormalFormIn.inSigned`).  Conversely, by the two equivalences above, each formula
   accepted by the traversal is logically equivalent to a normal form of the same level and kind;
-  that converse is the convention adopted here and is **not formalized**, so "`IsPiIn α`" always
-  means membership in the signed-traversal class.
+  that converse is **not formalized**; `IsPiIn α` always means membership in the signed-traversal
+  class.
 * **Finite quantifier blocks.** A block `∀ȳ` is a finite iteration of `all` (`forallBlock`), and
   `∃ȳ` of `ex` (`existsBlock`); there is no separate block constructor, and a block of any finite
   length stays at its level.
-* **Relation to `universalSigned`.** The level-one classes are *contained in* the `∀₁`/`∃₁`
-  classes of Harrison-Trainor–Kretschmer's convention (`universalSigned_of_inSigned_one`), and
-  *agree* with them on formulas without countable connectives (`inSigned_one_toLω_iff`).  They
-  differ exactly at countable connectives of the wrong sign: `universalSigned` does not count the
-  countable connectives and admits them at both signs, whereas `Σ^in_1` admits no `iInf` and
-  `Π^in_1` no `iSup`, under a quantifier or not.  A countable conjunction of atoms is `∃₁` but not
-  `Σ^in_1` (it is `Π^in_1`), and `∃x ⋀ᵢ ψᵢ` is `∃₁` but only `Σ^in_2`.  `universalSigned` is
+* **Relation to `universalSigned`.** The level-one classes are the `∀₁`/`∃₁` classes of
+  Harrison-Trainor–Kretschmer's convention cut down by one condition (`inSigned_one_iff`):
+  `inSigned 1 s φ ↔ universalSigned s φ ∧ connectiveSigned s φ`, where `connectiveSigned s φ`
+  says that no countable connective has the wrong sign (no `iSup` at the `Π` sign, no `iInf` at
+  the `Σ` sign), the sign traced through `imp` as in `universalSigned`.  So they are *contained
+  in* the `∀₁`/`∃₁` classes (`universalSigned_of_inSigned_one`), *agree* with them on formulas
+  without countable connectives (`inSigned_one_toLω_iff_universalSigned`), and differ exactly at
+  countable connectives of the wrong sign: `universalSigned` does not count the countable
+  connectives and admits them at both signs, whereas `Σ^in_1` admits no `iInf` and `Π^in_1` no
+  `iSup`, under a quantifier or not.  A countable conjunction of atoms is `∃₁` but not `Σ^in_1`
+  (it is `Π^in_1`), and `∃x ⋀ᵢ ψᵢ` is `∃₁` but only `Σ^in_2`.  `universalSigned` is
   stated over `Language.{0, 0}` and free variables in `Type`, so only this comparison is pinned
   there; everything else is universe-polymorphic.
 * **Quantifier rank.** The bound `qrank ≤ ω · α` holds for the normal forms
   (`IsSigmaInNF.qrank_le`, `IsPiInNF.qrank_le`; countable connectives are not counted, as in
-  `qrank`), and **fails for the signed classes** above level `0`: the closure of `Π^in_1` under
-  `∀` over `⋀` admits `∀x ⋀ₖ ∀y₁ … yₖ ψ` with `ψ` atomic, of rank `ω + 1 > ω · 1`, and iterating
-  the two steps gives `Π^in_1` sentences of unboundedly large countable rank.  For the signed
-  classes only level `0` is bounded (`qrank_eq_zero_of_inSigned_zero`).  Nor does the rank bound
+  `qrank`), and for the signed classes **fails at every countable level `a ≥ 1`**: the closure of
+  `Π^in_1` under `∀` over `⋀` admits `∀x ⋀ₖ ∀y₁ … yₖ ψ` with `ψ` atomic, of rank
+  `ω + 1 > ω · 1`, and iterating the two steps gives `Π^in_1 ⊆ Π^in_a` sentences of unboundedly
+  large countable rank.  (At levels `a ≥ ω₁` the bound holds trivially: `qrank` takes suprema of
+  `ℕ`-indexed families only, so every rank is countable.)  Below `ω₁`, level `0` is the only
+  bounded level of the signed classes (`qrank_eq_zero_of_inSigned_zero`).  Nor does the rank bound
   the level: quantifier-free formulas alternating `⋀` and `⋁` have rank `0` and unbounded level.
 
 ## References
@@ -110,8 +118,10 @@ namespace BoundedFormulaω
 
 variable {L : Language.{u, v}} {α β : Type u'}
 
-/-- **The signed `Σ^in`/`Π^in` traversal.**  `inSigned a true φ` says `φ ∈ Π^in_a` and
-`inSigned a false φ` says `φ ∈ Σ^in_a`.  Atoms are in every class; an antecedent flips the sign;
+/-- **The signed `Σ^in`/`Π^in` traversal.**  `inSigned a true φ` says that `φ` lies in the
+signed-traversal class `Π^in_a`, and `inSigned a false φ` in the signed-traversal class `Σ^in_a`
+(they contain Montalbán's normal forms, `NormalFormIn.inSigned`; they agree with them only up to
+logical equivalence, not formalized).  Atoms are in every class; an antecedent flips the sign;
 `all` and `iInf` keep the level at the `Π` sign and `iSup` at the `Σ` sign, provided `1 ≤ a`; at
 the other sign each of them must lie in the other class at some level `b` with `1 ≤ b < a`. -/
 def inSigned : ∀ {n : ℕ}, Ordinal.{0} → Bool → L.BoundedFormulaω α n → Prop
@@ -126,10 +136,14 @@ def inSigned : ∀ {n : ℕ}, Ordinal.{0} → Bool → L.BoundedFormulaω α n �
   | _, a, true, .iSup φs => ∃ b < a, 1 ≤ b ∧ ∀ i, inSigned b false (φs i)
   | _, a, false, .iSup φs => 1 ≤ a ∧ ∀ i, inSigned a false (φs i)
 
-/-- `φ` is **`Π^in_a`**: the `true` sign of `inSigned`. -/
+/-- `φ` lies in **the signed-traversal class `Π^in_a`** (contains Montalbán's normal forms,
+`NormalFormIn.inSigned`; agrees with them only up to logical equivalence, not formalized): the
+`true` sign of `inSigned`. -/
 abbrev IsPiIn {n : ℕ} (a : Ordinal.{0}) (φ : L.BoundedFormulaω α n) : Prop := inSigned a true φ
 
-/-- `φ` is **`Σ^in_a`**: the `false` sign of `inSigned`. -/
+/-- `φ` lies in **the signed-traversal class `Σ^in_a`** (contains Montalbán's normal forms,
+`NormalFormIn.inSigned`; agrees with them only up to logical equivalence, not formalized): the
+`false` sign of `inSigned`. -/
 abbrev IsSigmaIn {n : ℕ} (a : Ordinal.{0}) (φ : L.BoundedFormulaω α n) : Prop :=
   inSigned a false φ
 
@@ -178,34 +192,37 @@ variable {n : ℕ} {a b : Ordinal.{0}} {s : Bool}
 /-- Negation **exchanges** the two classes at every level. -/
 @[simp] theorem inSigned_not (a : Ordinal.{0}) (s : Bool) (φ : L.BoundedFormulaω α n) :
     inSigned a s φ.not ↔ inSigned a (!s) φ := by
-  show inSigned a (!s) φ ∧ inSigned a s (BoundedFormulaω.falsum : L.BoundedFormulaω α n) ↔ _
-  simp
+  simp [BoundedFormulaInf.not]
 
 @[simp] theorem inSigned_top (a : Ordinal.{0}) (s : Bool) :
     inSigned a s (⊤ : L.BoundedFormulaω α n) := ⟨trivial, trivial⟩
 
 @[simp] theorem inSigned_and (a : Ordinal.{0}) (s : Bool) (φ ψ : L.BoundedFormulaω α n) :
     inSigned a s (φ.and ψ) ↔ inSigned a s φ ∧ inSigned a s ψ := by
-  show inSigned a s ((φ.imp ψ.not).not) ↔ _
-  simp
+  simp [BoundedFormulaω.and]
 
 @[simp] theorem inSigned_or (a : Ordinal.{0}) (s : Bool) (φ ψ : L.BoundedFormulaω α n) :
     inSigned a s (φ.or ψ) ↔ inSigned a s φ ∧ inSigned a s ψ := by
-  show inSigned a s (φ.not.imp ψ) ↔ _
-  simp
+  simp [BoundedFormulaω.or]
+
+@[simp] theorem inSigned_inf (a : Ordinal.{0}) (s : Bool) (φ ψ : L.BoundedFormulaω α n) :
+    inSigned a s (φ ⊓ ψ) ↔ inSigned a s φ ∧ inSigned a s ψ :=
+  inSigned_and a s φ ψ
+
+@[simp] theorem inSigned_sup (a : Ordinal.{0}) (s : Bool) (φ ψ : L.BoundedFormulaω α n) :
+    inSigned a s (φ ⊔ ψ) ↔ inSigned a s φ ∧ inSigned a s ψ :=
+  inSigned_or a s φ ψ
 
 /-- An existential quantifier keeps the `Σ` level: `ex φ = (φ.not.all).not` meets its `all` at
 the `Π` sign. -/
 @[simp] theorem inSigned_ex_false (a : Ordinal.{0}) (φ : L.BoundedFormulaω α (n + 1)) :
     inSigned a false φ.ex ↔ 1 ≤ a ∧ inSigned a false φ := by
-  show inSigned a false (φ.not.all).not ↔ _
-  simp
+  simp [BoundedFormulaInf.ex]
 
 /-- An existential quantifier is `Π^in_a` only through `Σ^in_b` for some `1 ≤ b < a`. -/
 @[simp] theorem inSigned_ex_true (a : Ordinal.{0}) (φ : L.BoundedFormulaω α (n + 1)) :
     inSigned a true φ.ex ↔ ∃ b < a, 1 ≤ b ∧ inSigned b false φ := by
-  show inSigned a true (φ.not.all).not ↔ _
-  simp
+  simp [BoundedFormulaInf.ex]
 
 /-! ## Level `0` -/
 
@@ -341,12 +358,12 @@ theorem isSigmaIn_imp {φ ψ : L.BoundedFormulaω α n} (hφ : IsPiIn a φ) (hψ
 /-- `Π^in_a` is closed under binary conjunction. -/
 theorem isPiIn_inf {φ ψ : L.BoundedFormulaω α n} (hφ : IsPiIn a φ) (hψ : IsPiIn a ψ) :
     IsPiIn a (φ ⊓ ψ) :=
-  (inSigned_and a true φ ψ).2 ⟨hφ, hψ⟩
+  (inSigned_inf a true φ ψ).2 ⟨hφ, hψ⟩
 
 /-- `Σ^in_a` is closed under binary disjunction. -/
 theorem isSigmaIn_sup {φ ψ : L.BoundedFormulaω α n} (hφ : IsSigmaIn a φ) (hψ : IsSigmaIn a ψ) :
     IsSigmaIn a (φ ⊔ ψ) :=
-  (inSigned_or a false φ ψ).2 ⟨hφ, hψ⟩
+  (inSigned_sup a false φ ψ).2 ⟨hφ, hψ⟩
 
 /-! ## Quantifiers and finite blocks -/
 
@@ -387,7 +404,7 @@ theorem isSigmaIn_existsBlock_iff (ha : 1 ≤ a) :
 
 /-- `Π^in_a` membership of a countable conjunction, exactly; the `⊤` padding of `einf` is
 admitted. -/
-theorem isPiIn_einf_iff {ι : Type*} [Encodable ι] (φs : ι → L.BoundedFormulaω α n) :
+@[simp] theorem isPiIn_einf_iff {ι : Type*} [Encodable ι] (φs : ι → L.BoundedFormulaω α n) :
     IsPiIn a (BoundedFormulaω.einf φs) ↔ 1 ≤ a ∧ ∀ i, IsPiIn a (φs i) := by
   rw [BoundedFormulaω.einf, IsPiIn, inSigned_iInf_true]
   refine and_congr_right fun _ ↦ ⟨fun h i ↦ ?_, fun h k ↦ ?_⟩
@@ -398,7 +415,7 @@ theorem isPiIn_einf_iff {ι : Type*} [Encodable ι] (φs : ι → L.BoundedFormu
 
 /-- `Σ^in_a` membership of a countable disjunction, exactly; the `⊥` padding of `esup` is
 admitted. -/
-theorem isSigmaIn_esup_iff {ι : Type*} [Encodable ι] (φs : ι → L.BoundedFormulaω α n) :
+@[simp] theorem isSigmaIn_esup_iff {ι : Type*} [Encodable ι] (φs : ι → L.BoundedFormulaω α n) :
     IsSigmaIn a (BoundedFormulaω.esup φs) ↔ 1 ≤ a ∧ ∀ i, IsSigmaIn a (φs i) := by
   rw [BoundedFormulaω.esup, IsSigmaIn, inSigned_iSup_false]
   refine and_congr_right fun _ ↦ ⟨fun h i ↦ ?_, fun h k ↦ ?_⟩
@@ -662,6 +679,7 @@ theorem isSigmaInNF_esup {ι : Type*} [Encodable ι] {φs : ι → L.BoundedForm
   cases hd : Encodable.decode (α := ι) k with
   | none => exact .base (b := 0) (Order.one_le_iff_pos.1 ha) (.zero trivial)
   | some i => exact h i
+
 /-- A countable conjunction, over an `Encodable` index, of universal blocks at a level `a ≥ 1` is
 a `Π^in_a` normal form; the `⊤` padding of `einf` is a level-`0` block. -/
 theorem isPiInNF_einf {ι : Type*} [Encodable ι] {φs : ι → L.BoundedFormulaω α n}
@@ -673,8 +691,20 @@ theorem isPiInNF_einf {ι : Type*} [Encodable ι] {φs : ι → L.BoundedFormula
 
 /-! ## Level one against the `∀₁`/`∃₁` classes
 
-`universalSigned` lives over `Language.{0, 0}` and free variables in `Type`, so this section, and
-only this section, is stated there. -/
+`universalSigned` lives over `Language.{0, 0}` and free variables in `Type`, so the comparison
+section `LevelOne`, and only it, is stated there. -/
+
+/-- **No countable connective of the wrong sign**: `connectiveSigned true φ` says that `φ` has no
+`iSup` at the `Π` sign and `connectiveSigned false φ` no `iInf` at the `Σ` sign, the sign traced
+through `imp` as in `universalSigned`; quantifiers are not constrained. -/
+def connectiveSigned : ∀ {n : ℕ}, Bool → L.BoundedFormulaω α n → Prop
+  | _, _, .falsum => True
+  | _, _, .equal _ _ => True
+  | _, _, .rel _ _ => True
+  | _, s, .imp φ ψ => connectiveSigned (!s) φ ∧ connectiveSigned s ψ
+  | _, s, .all φ => connectiveSigned s φ
+  | _, s, .iSup φs => s = false ∧ ∀ i, connectiveSigned s (φs i)
+  | _, s, .iInf φs => s = true ∧ ∀ i, connectiveSigned s (φs i)
 
 section LevelOne
 
@@ -684,32 +714,31 @@ private theorem not_exists_lt_one {P : Ordinal.{0} → Prop} :
     ¬ ∃ b < (1 : Ordinal.{0}), 1 ≤ b ∧ P b :=
   fun ⟨_, hb, hb1, _⟩ ↦ (hb1.trans_lt hb).false
 
-/-- **`Σ^in_1 ⊆ ∃₁` and `Π^in_1 ⊆ ∀₁`**, at the same sign.  The inclusion is strict: the
-countable connectives of the wrong sign, which `universalSigned` admits, are excluded here. -/
-theorem universalSigned_of_inSigned_one {φ : L.BoundedFormulaω α n} (h : inSigned 1 s φ) :
-    universalSigned s φ := by
+/-- **Level one is `∀₁`/`∃₁` without wrong-sign countable connectives**: `Π^in_1` is exactly the
+`∀₁` formulas with no `iSup` at the `Π` sign, and `Σ^in_1` the `∃₁` formulas with no `iInf` at the
+`Σ` sign, the sign traced through `imp`. -/
+theorem inSigned_one_iff (s : Bool) (φ : L.BoundedFormulaω α n) :
+    inSigned 1 s φ ↔ universalSigned s φ ∧ connectiveSigned s φ := by
   induction φ generalizing s with
-  | falsum => trivial
-  | equal => trivial
-  | rel => trivial
-  | imp φ ψ ihφ ihψ => exact ⟨ihφ h.1, ihψ h.2⟩
-  | all φ ih =>
-    cases s
-    · exact (not_exists_lt_one h).elim
-    · exact ⟨rfl, ih h.2⟩
-  | iSup φs ih =>
-    cases s
-    · exact fun i ↦ ih i (h.2 i)
-    · exact (not_exists_lt_one h).elim
-  | iInf φs ih =>
-    cases s
-    · exact (not_exists_lt_one h).elim
-    · exact fun i ↦ ih i (h.2 i)
+  | falsum => exact iff_of_true trivial ⟨trivial, trivial⟩
+  | equal => exact iff_of_true trivial ⟨trivial, trivial⟩
+  | rel => exact iff_of_true trivial ⟨trivial, trivial⟩
+  | imp φ ψ ihφ ihψ => exact (and_congr (ihφ _) (ihψ _)).trans and_and_and_comm
+  | all φ ih => cases s <;> simp [connectiveSigned, ih]
+  | iSup φs ih => cases s <;> simp [connectiveSigned, ih, forall_and]
+  | iInf φs ih => cases s <;> simp [connectiveSigned, ih, forall_and]
+
+/-- **`Σ^in_1 ⊆ ∃₁` and `Π^in_1 ⊆ ∀₁`**, at the same sign.  The inclusion is strict: the
+countable connectives of the wrong sign, which `universalSigned` admits, are excluded here
+(`inSigned_one_iff`). -/
+theorem universalSigned_of_inSigned_one {φ : L.BoundedFormulaω α n} (h : inSigned 1 s φ) :
+    universalSigned s φ :=
+  ((inSigned_one_iff s φ).1 h).1
 
 /-- **On formulas without countable connectives the level-one classes are `∀₁`/`∃₁`**: for the
 image of a first-order formula, `Σ^in_1` is exactly `∃₁` and `Π^in_1` exactly `∀₁`.  In
 particular a finitary existential formula is `Σ^in_1` after `toLω`. -/
-theorem inSigned_one_toLω_iff (s : Bool) (φ : L.BoundedFormula α n) :
+theorem inSigned_one_toLω_iff_universalSigned (s : Bool) (φ : L.BoundedFormula α n) :
     inSigned 1 s φ.toLω ↔ universalSigned s φ.toLω := by
   induction φ generalizing s with
   | falsum => exact Iff.rfl

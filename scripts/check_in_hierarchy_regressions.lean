@@ -12,18 +12,23 @@ Regression guard for the ordinal-indexed `Σ^in_α` / `Π^in_α` hierarchy
   which is neither `Σ^in_1` nor `Π^in_1`;
 * negation duality on the concrete `Σ^in_1` formula;
 * the relation to `universalSigned`: agreement on the concrete `Σ^in_1` formula and on first-order
-  images (`inSigned_one_toLω_iff`, applied to the finitary existential `∃y x = y` and to every
-  `cardGe n`), and disagreement on `⋀ₙ x = cₙ` and on `∃y ⋀ₙ y = cₙ`, both `∃₁` and neither
-  `Σ^in_1`;
+  images (`inSigned_one_toLω_iff_universalSigned`, applied to the finitary existential `∃y x = y`
+  and to every `cardGe n`), and disagreement on `⋀ₙ x = cₙ` and on `∃y ⋀ₙ y = cₙ`, both `∃₁` and
+  neither `Σ^in_1`; the exact characterization `inSigned_one_iff` (`∀₁`/`∃₁` without wrong-sign
+  countable connectives) used in both directions: the converse proves `∃y ⋁ₙ y = cₙ` `Σ^in_1` and
+  `∀y ⋀ₙ y = cₙ` `Π^in_1`, and the wrong-sign `iInf` refutes `Σ^in_1` for `⋀ₙ x = cₙ` and
+  `∃y ⋀ₙ y = cₙ`;
 * quantifier rank: level `0` has rank `0`, and the `Π^in_1` sentence `∀x ⋀ₖ ∀y₁ … yₖ ⊤` has rank
   `ω + 1 > ω · 1`, so no `ω · α` bound holds for the signed classes (and that sentence is not a
   `Π^in_1` normal form);
 * normal forms: `⋀ₖ ∀y₁ … yₖ ⊤` is a `Π^in_1` normal form of rank `ω ≤ ω · 1`, a finite `esup` of
-  existential blocks is a `Σ^in_1` normal form, `σ1` is one, and `einf` over it is a `Π^in_2`
-  normal form of rank at most `ω · 2`; each lies in its signed class;
+  existential blocks is a `Σ^in_1` normal form, `σ1` is one, `NormalFormIn.iSup` applied directly
+  gives another, and `einf` over `σ1` is a `Π^in_2` normal form of rank at most `ω · 2`; each lies
+  in its signed class;
 * closure under `castLE`, `relabel`, `subst`, `mapFreeVars`, `mapLanguage`, `einf` and `all` at
   level `1`, `esup`, `imp`, `⊓`, `⊔`, finite blocks, and a quantifier raising the level, plus one
-  universe-polymorphic use;
+  universe-polymorphic use; `simp` closes `IsPiIn a (φ ⊓ ψ)`, `IsSigmaIn a (φ ⊔ ψ)` and the
+  `einf`/`esup` goals through the `@[simp]` lemmas;
 * standard axioms (`propext`, `Classical.choice`, `Quot.sound`);
 * minimal imports: the module's `InfinitaryLogic` import closure reaches no `Scott`, `Karp`,
   `ScottProcess`, `Descriptive`, `Methods` or `ModelTheory` module and is exactly the syntax
@@ -144,6 +149,25 @@ example : ¬ IsSigmaIn 1 δ' := by
   rintro ⟨-, b, hb, hb1, -⟩
   exact (hb1.trans_lt hb).false
 
+/-! ### The exact level-one characterization -/
+
+/-- The converse of the inclusion: `∃y ⋁ₙ y = cₙ` is `∃₁` with its `iSup` at the `Σ` sign, hence
+`Σ^in_1`. -/
+example : IsSigmaIn 1 ((iSup fun n ↦ equal (Term.var (Sum.inr 0)) (c n)).ex : Lc.Sentenceω) :=
+  (inSigned_one_iff false _).2 ⟨(isExistential_ex _).2 (by simp), by simp [connectiveSigned]⟩
+
+/-- The converse at the `Π` sign: `∀y ⋀ₙ y = cₙ` is `∀₁` with its `iInf` at the `Π` sign. -/
+example : IsPiIn 1 (all (iInf fun n ↦ equal (Term.var (Sum.inr 0)) (c n)) : Lc.Sentenceω) :=
+  (inSigned_one_iff true _).2 ⟨by simp, by simp [connectiveSigned]⟩
+
+/-- The wrong-sign `iInf` refutes `Σ^in_1`, with and without a quantifier over it (the sign is
+traced through the `imp` nodes of `ex`). -/
+example : ¬ IsSigmaIn 1 δ := fun h ↦ by
+  simpa [δ, connectiveSigned] using ((inSigned_one_iff false δ).1 h).2
+
+example : ¬ IsSigmaIn 1 δ' := fun h ↦ by
+  simpa [δ', connectiveSigned] using ((inSigned_one_iff false δ').1 h).2
+
 theorem isSigmaIn_two_δ' : IsSigmaIn 2 δ' := by
   have hπ : IsPiIn 1 (iInf fun n ↦ equal (Term.var (Sum.inr 0)) (c n) :
       Lc.BoundedFormulaω Empty 1) :=
@@ -155,10 +179,10 @@ def ε1 : Lc.Formula Unit :=
   ((Term.var (Sum.inl ()) : Lc.Term (Unit ⊕ Fin 1)).bdEqual (Term.var (Sum.inr 0))).ex
 
 theorem isSigmaIn_one_ε1 : IsSigmaIn 1 ε1.toLω :=
-  (inSigned_one_toLω_iff false _).2 ((isExistential_ex (L := Lc) _).2 trivial)
+  (inSigned_one_toLω_iff_universalSigned false _).2 ((isExistential_ex (L := Lc) _).2 trivial)
 
 example : ¬ IsPiIn 1 ε1.toLω := fun h ↦
-  not_isUniversal_ex (L := Lc) _ ((inSigned_one_toLω_iff true ε1).1 h)
+  not_isUniversal_ex (L := Lc) _ ((inSigned_one_toLω_iff_universalSigned true ε1).1 h)
 
 /-! ### Agreement on every first-order image -/
 
@@ -194,7 +218,7 @@ theorem isSigmaIn_one_cardGe (n : ℕ) : IsSigmaIn 1 (Sentence.cardGe L n).toLω
 
 /-- The agreement theorem, read on `cardGe`: `Σ^in_1` iff `∃₁`. -/
 example (n : ℕ) : IsExistential (Sentence.cardGe L n).toLω :=
-  (inSigned_one_toLω_iff false _).1 (isSigmaIn_one_cardGe n)
+  (inSigned_one_toLω_iff_universalSigned false _).1 (isSigmaIn_one_cardGe n)
 
 /-! ## A `Π^in_2` sentence: "infinite" -/
 
@@ -289,6 +313,10 @@ example : (esup fun n : Fin 4 ↦ (equal y (c n) : Lc.BoundedFormulaω Unit 1).e
 example : IsSigmaIn 1 (esup fun n : Fin 4 ↦ (equal y (c n) : Lc.BoundedFormulaω Unit 1).ex) :=
   isSigmaInNF_one_esup.isSigmaIn
 
+/-- `NormalFormIn.iSup` applied directly: a countable disjunction of existential blocks. -/
+example : IsSigmaInNF 1 (iSup fun _ ↦ (equal y x : Lc.BoundedFormulaω Unit 1).ex) :=
+  NormalFormIn.iSup fun _ ↦ .ex (.base zero_lt_one (.zero trivial))
+
 /-- The `Σ^in_1` formula `σ1` is literally a normal form. -/
 theorem isSigmaInNF_one_σ1 : IsSigmaInNF 1 σ1 :=
   isSigmaInNF_esup le_rfl fun _ ↦ .ex (.base zero_lt_one (.zero (by simp)))
@@ -362,6 +390,22 @@ example : IsSigmaIn 1 (δ.imp σ1) := isSigmaIn_imp isPiIn_one_δ isSigmaIn_one_
 example : IsPiIn 1 (δ ⊓ σ1.not) := isPiIn_inf isPiIn_one_δ (isPiIn_not_iff.2 isSigmaIn_one_σ1)
 example : IsSigmaIn 1 (σ1 ⊔ δ.not) :=
   isSigmaIn_sup isSigmaIn_one_σ1 (isSigmaIn_not_iff.2 isPiIn_one_δ)
+example : inSigned 1 true (δ ⊓ σ1.not) ↔ IsPiIn 1 δ ∧ IsPiIn 1 σ1.not := inSigned_inf 1 true _ _
+example : inSigned 1 false (σ1 ⊔ δ.not) ↔ IsSigmaIn 1 σ1 ∧ IsSigmaIn 1 δ.not :=
+  inSigned_sup 1 false _ _
+
+/-- `simp` sees through `⊓`, `⊔`, `einf` and `esup` (the `@[simp]` lemmas `inSigned_inf`,
+`inSigned_sup`, `isPiIn_einf_iff`, `isSigmaIn_esup_iff`). -/
+example {L : Language.{u, v}} {α : Type u'} {n : ℕ} {a : Ordinal.{0}}
+    (φ ψ : L.BoundedFormulaω α n) : IsPiIn a (φ ⊓ ψ) ↔ IsPiIn a φ ∧ IsPiIn a ψ := by simp
+example {L : Language.{u, v}} {α : Type u'} {n : ℕ} {a : Ordinal.{0}}
+    (φ ψ : L.BoundedFormulaω α n) : IsSigmaIn a (φ ⊔ ψ) ↔ IsSigmaIn a φ ∧ IsSigmaIn a ψ := by simp
+example : IsPiIn 1 (δ ⊓ σ1.not) := by simp [isPiIn_one_δ, isSigmaIn_one_σ1]
+example : IsSigmaIn 1 (σ1 ⊔ δ.not) := by simp [isPiIn_one_δ, isSigmaIn_one_σ1]
+example : IsPiIn 2 (einf fun _ : Fin 3 ↦ σ1) := by
+  simp [two ▸ isSigmaIn_one_σ1.isPiIn_add_one]
+example : IsSigmaIn 2 (esup fun _ : Bool ↦ δ) := by
+  simp [two ▸ isPiIn_one_δ.isSigmaIn_add_one]
 
 /-- Finite blocks: `∀y₁ y₂ (y₁ = y₂)` and `∃y₁ y₂ (y₁ = y₂ ∧ x = y₁)`. -/
 example : IsPiIn 1 (forallBlock (n := 0) (k := 2)
@@ -426,8 +470,8 @@ def headline : List Lean.Name :=
    ``inSigned_falsum, ``inSigned_bot, ``inSigned_equal, ``inSigned_rel, ``inSigned_imp,
    ``inSigned_all_true, ``inSigned_all_false, ``inSigned_iInf_true, ``inSigned_iInf_false,
    ``inSigned_iSup_true, ``inSigned_iSup_false,
-   ``inSigned_not, ``inSigned_top, ``inSigned_and, ``inSigned_or, ``inSigned_ex_false,
-   ``inSigned_ex_true,
+   ``inSigned_not, ``inSigned_top, ``inSigned_and, ``inSigned_or, ``inSigned_inf,
+   ``inSigned_sup, ``inSigned_ex_false, ``inSigned_ex_true,
    ``inSigned_zero_iff, ``qrank_eq_zero_of_inSigned_zero,
    ``inSigned_mono, ``inSigned_of_lt, ``IsSigmaIn.mono, ``IsPiIn.mono,
    ``IsSigmaIn.isPiIn_add_one, ``IsPiIn.isSigmaIn_add_one,
@@ -442,7 +486,8 @@ def headline : List Lean.Name :=
    ``NormalFormIn.all, ``NormalFormIn.iSup, ``NormalFormIn.iInf, ``IsSigmaInNF, ``IsPiInNF,
    ``NormalFormIn.inSigned, ``IsSigmaInNF.isSigmaIn, ``IsPiInNF.isPiIn, ``IsSigmaInNF.qrank_le,
    ``IsPiInNF.qrank_le, ``isSigmaInNF_esup, ``isPiInNF_einf,
-   ``universalSigned_of_inSigned_one, ``inSigned_one_toLω_iff]
+   ``connectiveSigned, ``inSigned_one_iff, ``universalSigned_of_inSigned_one,
+   ``inSigned_one_toLω_iff_universalSigned]
 
 /-- The guard's own load-bearing lemmas. -/
 def guardLemmas : List Lean.Name :=
@@ -544,8 +589,10 @@ run_cmd do
     Pi-in-2 and neither Sigma-in-1 nor Pi-in-1; negation duality; agreement with \
     universalSigned on that formula, on the finitary existential `exists y, x = y` and on every \
     cardGe n, disagreement on a countable conjunction with and without a quantifier over it; \
+    the exact level-one characterization through connectiveSigned in both directions; \
     rank 0 at level 0 and a Pi-in-1 sentence of rank omega + 1, not a normal form; normal forms \
     at levels 1 and 2 with their omega-multiple rank bounds and their signed classes; closure \
     under castLE, relabel, subst, mapFreeVars, mapLanguage, einf and all at level 1, esup, \
-    imp, inf, sup, finite blocks and quantifiers; every public declaration listed; standard \
+    imp, inf, sup, finite blocks and quantifiers; simp through inf, sup, einf and esup; \
+    NormalFormIn.iSup applied directly; every public declaration listed; standard \
     axioms; import closure {ilModules})"
