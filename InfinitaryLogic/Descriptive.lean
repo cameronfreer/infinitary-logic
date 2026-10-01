@@ -26,6 +26,7 @@ import InfinitaryLogic.Descriptive.RankedThinness
 import InfinitaryLogic.Descriptive.Mycielski
 import InfinitaryLogic.Descriptive.KuratowskiUlam
 import InfinitaryLogic.Descriptive.GSGraph
+import InfinitaryLogic.Descriptive.AnalyticClosure
 import InfinitaryLogic.Descriptive.G0Dichotomy
 import InfinitaryLogic.Descriptive.G0Fusion
 import InfinitaryLogic.Descriptive.CantorStabilization
@@ -176,6 +177,7 @@ application of that vocabulary:
   (`isMeagre_of_isMeagre_sections`);
 - `GSGraph`: the graphs `G_S(2^ℕ)` and Miller's independence lemma
   (`exists_gSGraph_edge_of_not_isMeagre`);
+- `AnalyticClosure`: intersections and products of analytic sets (`MeasureTheory.AnalyticSet.prod`);
 - `G0Dichotomy`: the KST independent-superset lemma
   (`exists_measurableSet_relIndependent_superset`) and the positivity
   ideals (`SmallFam`) with the combination lemma (`not_smallFam_comb_cross`);
