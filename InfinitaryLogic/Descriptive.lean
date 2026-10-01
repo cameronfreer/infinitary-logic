@@ -30,6 +30,7 @@ import InfinitaryLogic.Descriptive.G0Dichotomy
 import InfinitaryLogic.Descriptive.G0Fusion
 import InfinitaryLogic.Descriptive.CantorStabilization
 import InfinitaryLogic.Descriptive.KleeneBrouwer
+import InfinitaryLogic.Descriptive.AnalyticTreeBoundedness
 import InfinitaryLogic.Descriptive.TreeCodes
 
 -- Counting dichotomy and finite carrier
@@ -154,6 +155,9 @@ application of that vocabulary:
   well-foundedness of strict extension, KB is a well-order on a well-founded tree
   (`KleeneBrouwer.isWellOrder_kbLT`), and the tree height is bounded by the KB order type
   (`KleeneBrouwer.treeHeight_le_type`);
+- `AnalyticTreeBoundedness`: an analytic family of well-founded trees on `ℕ` with closed node
+  sets has heights bounded below `ω₁` (`KleeneBrouwer.analytic_tree_rank_bounded`), proved
+  descriptively through one dominating witness tree, with no well-order boundedness theorem;
 - `TreeCodes`: tree codes over a countable alphabet, the closed tree class, the continuous
   Kleene–Brouwer code into `Language.order`, and analytic boundedness for well-founded trees
   (`analytic_wellFoundedTree_rank_boundedness`) with its domination adapter;
