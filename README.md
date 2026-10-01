@@ -108,7 +108,7 @@ modules live in the separate non-default `InfinitaryLogicWIP` target, so they ne
 | Directory | Contents |
 |---|---|
 | `Lomega1omega/` | the Lω₁ω layer over Mathlib's fixed-carrier infinitary syntax — semantics, operations, fragments, polarity, quantifier rank, the `Σ^in_α`/`Π^in_α` hierarchy |
-| `Scott/`, `Karp/` | atomic diagrams, back-and-forth equivalence, Scott formulas and sentences, rank and height; Karp's theorem |
+| `Scott/`, `Karp/` | atomic diagrams, back-and-forth equivalence, Scott formulas and sentences, rank and height, and Montalbán's explicit Scott sentence from orbit formulas; Karp's theorem |
 | `ScottProcess/` | Larson's Scott processes: the free array (extension sets, vertical and horizontal projections, their laws), the Scott-process axioms with their first consequences, the semantic entries of tuples with the Scott process of an infinite relational structure and their bridge to back-and-forth equivalence, and the stabilization and rank of a process with its comparison to the orbit ranks and the internal Scott rank |
 | `Methods/` | the proof engines: the Henkin/consistency-property kernel, interpolation, the well-ordering machine, López–Escobar, Ehrenfeucht–Mostowski |
 | `ModelTheory/` | Löwenheim–Skolem, Hanf numbers and the Hanf spectrum, small models, counting |
