@@ -6,6 +6,7 @@ Authors: Cameron Freer
 import Mathlib.SetTheory.Descriptive.Tree
 import Mathlib.SetTheory.Ordinal.Rank
 import Mathlib.SetTheory.Ordinal.Family
+import Mathlib.SetTheory.Cardinal.Regular
 import Mathlib.Order.OrderIsoNat
 import Mathlib.Data.List.Lex
 import Mathlib.Data.ENat.Basic
@@ -19,9 +20,7 @@ mathematics behind analytic boundedness for well-founded trees (issue #73).
 
 * `HasInfiniteBranch T` is a **descending chain in strict extension** — a sequence of nodes each
   properly extending the previous — so "no infinite branch" is well-foundedness of `extBelow T`
-  on the nose (`wellFounded_extBelow_iff_not_hasInfiniteBranch`), with no appeal to König;
-  `hasInfiniteBranch_iff_exists_seq` restates a branch as a sequence `z : ℕ → ℕ` all of whose
-  finite initial segments are nodes.
+  on the nose (`wellFounded_extBelow_iff_not_hasInfiniteBranch`), with no appeal to König.
 * The Kleene–Brouwer order is the lexicographic order on `List ℕ∞` pulled back along
   `kbEncode x = x.map (↑) ++ [⊤]`: appending `⊤` makes every proper extension of a node *smaller*
   than the node, and among incomparable nodes the leftmost first difference decides.  Linearity is
@@ -35,6 +34,11 @@ mathematics behind analytic boundedness for well-founded trees (issue #73).
 * `treeHeight T` is the strict supremum of the ranks of the nodes under strict extension, and
   `treeHeight_le_type` bounds it by the KB order type, through the monotonicity of
   `WellFounded.rank` in the relation (`InfinitaryLogic.rank_le_rank_of_imp`).
+* Comparing and bounding heights: an infinite branch is a sequence with every initial segment in
+  the tree (`hasInfiniteBranch_iff_exists_seq`); a homomorphism of strict extension, injective or
+  not, bounds one height by another (`treeHeight_le_of_relHom`, through
+  `InfinitaryLogic.rank_le_rank_of_relHom`); and a well-founded tree on `ℕ` has height below `ω₁`
+  (`treeHeight_lt_omega1`), by regularity of `ℵ₁`.
 
 The encoding lands in `ℕ∞`, which is defined as `WithTop ℕ`; the named type is what carries the
 derived `WellFoundedLT` instance the chain condition uses.
@@ -80,46 +84,6 @@ theorem wellFounded_extBelow_iff_not_hasInfiniteBranch (T : tree ℕ) :
   · intro h
     refine ⟨fun e => h ⟨fun n => (e n : List ℕ), fun n => (e n).2, fun n => ?_⟩⟩
     exact e.map_rel_iff.mpr (Nat.lt_succ_self n)
-
-/-- **Branches as sequences**: `T` has an infinite branch iff some `z : ℕ → ℕ` has every
-finite initial segment `[z 0, …, z (n - 1)]` in `T`.  Forward: the `i`-th entry of the
-sequence is read off the `(i + 1)`-st node of the chain, whose length is at least `i + 1`;
-backward: the initial segments themselves form the chain. -/
-theorem hasInfiniteBranch_iff_exists_seq (T : tree ℕ) :
-    HasInfiniteBranch T ↔ ∃ z : ℕ → ℕ, ∀ n, List.ofFn (fun i : Fin n ↦ z i) ∈ T := by
-  constructor
-  · rintro ⟨f, hf, hstep⟩
-    have hmono : ∀ m k, f m <+: f (m + k) := by
-      intro m k
-      induction k with
-      | zero => exact List.prefix_refl _
-      | succ k ih => exact ih.trans (hstep (m + k)).1
-    have hlen : ∀ n, n ≤ (f n).length := by
-      intro n
-      induction n with
-      | zero => exact Nat.zero_le _
-      | succ n ih =>
-        have hle := (hstep n).1.length_le
-        have hne : (f n).length ≠ (f (n + 1)).length :=
-          fun h ↦ (hstep n).2 ((hstep n).1.eq_of_length h)
-        omega
-    refine ⟨fun i ↦ (f (i + 1)).getD i 0, fun n ↦ ?_⟩
-    have htake : List.ofFn (fun i : Fin n ↦ (f (i + 1)).getD i 0) = (f n).take n := by
-      refine List.ext_getElem (by simp [hlen n]) fun i h₁ h₂ ↦ ?_
-      have hi : i < n := by simpa using h₁
-      have hp : f (i + 1) <+: f n := by
-        simpa [show i + 1 + (n - (i + 1)) = n by omega] using hmono (i + 1) (n - (i + 1))
-      have hi' : i < (f (i + 1)).length := by have := hlen (i + 1); omega
-      rw [List.getElem_ofFn, List.getElem_take, List.getD_eq_getElem?_getD,
-        List.getElem?_eq_getElem hi', Option.getD_some]
-      exact hp.getElem hi'
-    rw [htake]
-    exact Tree.take_mem ⟨f n, hf n⟩
-  · rintro ⟨z, hz⟩
-    refine ⟨fun n ↦ List.ofFn (fun i : Fin n ↦ z i), hz, fun n ↦ ⟨?_, fun h ↦ ?_⟩⟩
-    · simp only [List.ofFn_succ_last]
-      exact List.prefix_append _ _
-    · simpa using congrArg List.length h
 
 /-! ## The Kleene–Brouwer order, via lexicographic order on `WithTop ℕ` -/
 
@@ -299,5 +263,69 @@ theorem treeHeight_le_type (T : tree ℕ) [WellFounded (extBelow T)]
         InfinitaryLogic.rank_le_rank_of_imp (fun _ _ => kbLT_of_extBelow T) x
     _ = Ordinal.typein (kbLT T) x := by rw [WellFounded.rank_eq_typein]
     _ < Ordinal.type (kbLT T) := Ordinal.typein_lt_type _ _
+
+/-! ## Branches as sequences -/
+
+/-- **Branches are sequences**: `T` has an infinite branch iff some `z : ℕ → ℕ` has every finite
+initial segment in `T`.  Forward, the `i`-th entry of the sequence is read off the `(i + 1)`-st
+node of the branch, all of whose nodes are prefixes of one another. -/
+theorem hasInfiniteBranch_iff_exists_seq (T : tree ℕ) :
+    HasInfiniteBranch T ↔ ∃ z : ℕ → ℕ, ∀ n, List.ofFn (fun i : Fin n ↦ z i) ∈ T := by
+  constructor
+  · rintro ⟨f, hf, hstep⟩
+    have hchain : ∀ m n, m ≤ n → f m <+: f n := by
+      intro m n hmn
+      induction n, hmn using Nat.le_induction with
+      | base => exact List.prefix_refl _
+      | succ n _ ih => exact ih.trans (hstep n).1
+    have hlen : ∀ n, n ≤ (f n).length := by
+      intro n
+      induction n with
+      | zero => exact Nat.zero_le _
+      | succ n ih =>
+        have hlt : (f n).length < (f (n + 1)).length :=
+          lt_of_le_of_ne (hstep n).1.length_le fun h ↦ (hstep n).2 ((hstep n).1.eq_of_length h)
+        omega
+    refine ⟨fun i ↦ (f (i + 1)).getD i 0, fun n ↦ ?_⟩
+    have heq : List.ofFn (fun i : Fin n ↦ (f (i + 1)).getD i 0) = (f n).take n := by
+      refine List.ext_getElem (by simp [hlen n]) fun i h₁ h₂ ↦ ?_
+      have hi : i < n := by simpa using h₁
+      have hi' : i < (f (i + 1)).length := lt_of_lt_of_le (Nat.lt_succ_self i) (hlen (i + 1))
+      simp only [List.getElem_ofFn, List.getElem_take, List.getD_eq_getElem?_getD,
+        List.getElem?_eq_getElem hi', Option.getD_some]
+      exact (hchain (i + 1) n hi).getElem hi'
+    rw [heq]
+    exact Tree.take_mem ⟨f n, hf n⟩
+  · rintro ⟨z, hz⟩
+    refine ⟨fun n ↦ List.ofFn (fun i : Fin n ↦ z i), hz, fun n ↦ ⟨?_, fun h ↦ ?_⟩⟩
+    · simp only [List.ofFn_succ_last]
+      exact List.prefix_append _ _
+    · simpa using congrArg List.length h
+
+/-! ## Comparing heights -/
+
+/-- **Rank domination between trees**: a homomorphism of strict extension from `S` to `T`
+bounds the height of `S` by the height of `T`.  Not necessarily injective: only the extension
+steps are transported. -/
+theorem treeHeight_le_of_relHom {S T : tree ℕ} [WellFounded (extBelow S)]
+    [WellFounded (extBelow T)] (f : extBelow S →r extBelow T) :
+    treeHeight S ≤ treeHeight T :=
+  Ordinal.iSup_le fun x ↦ (Order.succ_le_succ (InfinitaryLogic.rank_le_rank_of_relHom f x)).trans
+    (Ordinal.le_iSup (fun y : ↥T ↦ Order.succ (WellFounded.rank (extBelow T) y)) (f x))
+
+/-- Ranks in a well-founded relation on a countable type are countable. -/
+private theorem rank_lt_omega1 {α : Type} [Countable α] (r : α → α → Prop) [WellFounded r]
+    (a : α) : WellFounded.rank r a < Ordinal.omega 1 := by
+  induction a using WellFounded.induction' r with
+  | ind a ih =>
+    rw [WellFounded.rank_eq r]
+    exact Ordinal.iSup_lt_omega_one fun b ↦ (Cardinal.isSuccLimit_omega 1).succ_lt (ih b b.2)
+
+/-- **A well-founded tree on `ℕ` has countable height**: it has countably many nodes, each of
+countable rank, and `ℵ₁` is regular. -/
+theorem treeHeight_lt_omega1 (T : tree ℕ) [WellFounded (extBelow T)] :
+    treeHeight T < Ordinal.omega 1 :=
+  Ordinal.iSup_lt_omega_one fun x ↦
+    (Cardinal.isSuccLimit_omega 1).succ_lt (rank_lt_omega1 (extBelow T) x)
 
 end KleeneBrouwer
