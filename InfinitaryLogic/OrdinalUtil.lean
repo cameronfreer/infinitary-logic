@@ -12,8 +12,10 @@ import Mathlib.SetTheory.Ordinal.Family
 # Small ordinal facts
 
 Neutral helpers about countable ordinals, used by the Scott refinement count, the Borel
-`BFEquiv` analysis, and the ranked-thinness package. Nothing here is specific to infinitary
-logic, descriptive set theory, or any one of those consumers.
+`BFEquiv` analysis, and the ranked-thinness package, together with the comparison of
+`WellFounded.rank` along a relation homomorphism (`rank_le_rank_of_relHom`, not necessarily
+injective) used for tree heights. Nothing here is specific to infinitary logic, descriptive set
+theory, or any one of those consumers.
 
 Both shapes of the countability statement are provided: `Set.Countable (Set.Iio β)` and the
 `Countable` *instance* on the coercion, since consumers need one or the other and converting
@@ -57,17 +59,25 @@ theorem add_omega0_lt_omega1 {α : Ordinal.{0}} (hα : α < (Cardinal.aleph 1).o
     _ = Cardinal.aleph0 := Cardinal.aleph0_add_aleph0
     _ < Order.succ Cardinal.aleph0 := Order.lt_succ _
 
-/-! ## Rank is monotone in the relation -/
+/-! ## Rank is monotone along relation homomorphisms -/
 
-/-- If `r ⊆ s` are both well-founded, ranks under `r` are bounded by ranks under `s`. -/
-theorem rank_le_rank_of_imp {α : Type*} {r s : α → α → Prop} [WellFounded r]
-    [WellFounded s] (h : ∀ a b, r a b → s a b) (a : α) :
-    WellFounded.rank r a ≤ WellFounded.rank s a := by
+/-- **Rank under a relation homomorphism.**  If `f : r →r s` sends every `r`-step to an `s`-step,
+then the `r`-rank of `a` is at most the `s`-rank of `f a`.  No injectivity is assumed: distinct
+points may share an image, since only the steps below `a` are transported. -/
+theorem rank_le_rank_of_relHom {α β : Type u} {r : α → α → Prop} {s : β → β → Prop}
+    [WellFounded r] [WellFounded s] (f : r →r s) (a : α) :
+    WellFounded.rank r a ≤ WellFounded.rank s (f a) := by
   induction a using WellFounded.induction' r with
   | ind a ih =>
-    rw [WellFounded.rank_eq r, WellFounded.rank_eq s]
-    refine Ordinal.iSup_le fun b => ?_
-    exact (Order.succ_le_succ (ih b b.2)).trans
-      (Ordinal.le_iSup (fun c : {c // s c a} => Order.succ (WellFounded.rank s c)) ⟨b, h _ _ b.2⟩)
+    rw [WellFounded.rank_eq r]
+    refine Ordinal.iSup_le fun b ↦ Order.succ_le_of_lt ?_
+    exact (ih b b.2).trans_lt (WellFounded.rank_lt_of_rel (f.map_rel b.2))
+
+/-- If `r ⊆ s` are both well-founded, ranks under `r` are bounded by ranks under `s`: the
+identity case of `rank_le_rank_of_relHom`. -/
+theorem rank_le_rank_of_imp {α : Type*} {r s : α → α → Prop} [WellFounded r]
+    [WellFounded s] (h : ∀ a b, r a b → s a b) (a : α) :
+    WellFounded.rank r a ≤ WellFounded.rank s a :=
+  rank_le_rank_of_relHom ⟨id, h _ _⟩ a
 
 end InfinitaryLogic
