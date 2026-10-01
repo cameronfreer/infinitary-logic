@@ -313,26 +313,19 @@ theorem treeHeight_le_of_relHom {S T : tree ℕ} [WellFounded (extBelow S)]
   Ordinal.iSup_le fun x ↦ (Order.succ_le_succ (InfinitaryLogic.rank_le_rank_of_relHom f x)).trans
     (Ordinal.le_iSup (fun y : ↥T ↦ Order.succ (WellFounded.rank (extBelow T) y)) (f x))
 
-/-- A countably indexed supremum of countable ordinals is countable (regularity of `ℵ₁`). -/
-private theorem iSup_lt_omega1_of_countable {ι : Type} [Countable ι] (g : ι → Ordinal.{0})
-    (hg : ∀ i, g i < Ordinal.omega 1) : (⨆ i, g i) < Ordinal.omega 1 := by
-  refine Ordinal.iSup_lt_of_lt_cof ?_ hg
-  rw [← Cardinal.ord_aleph, Cardinal.isRegular_aleph_one.cof_ord]
-  exact Cardinal.mk_le_aleph0.trans_lt Cardinal.aleph0_lt_aleph_one
-
 /-- Ranks in a well-founded relation on a countable type are countable. -/
 private theorem rank_lt_omega1 {α : Type} [Countable α] (r : α → α → Prop) [WellFounded r]
     (a : α) : WellFounded.rank r a < Ordinal.omega 1 := by
   induction a using WellFounded.induction' r with
   | ind a ih =>
     rw [WellFounded.rank_eq r]
-    exact iSup_lt_omega1_of_countable _ fun b ↦ (Cardinal.isSuccLimit_omega 1).succ_lt (ih b b.2)
+    exact Ordinal.iSup_lt_omega_one fun b ↦ (Cardinal.isSuccLimit_omega 1).succ_lt (ih b b.2)
 
 /-- **A well-founded tree on `ℕ` has countable height**: it has countably many nodes, each of
 countable rank, and `ℵ₁` is regular. -/
 theorem treeHeight_lt_omega1 (T : tree ℕ) [WellFounded (extBelow T)] :
     treeHeight T < Ordinal.omega 1 :=
-  iSup_lt_omega1_of_countable _ fun x ↦
+  Ordinal.iSup_lt_omega_one fun x ↦
     (Cardinal.isSuccLimit_omega 1).succ_lt (rank_lt_omega1 (extBelow T) x)
 
 end KleeneBrouwer

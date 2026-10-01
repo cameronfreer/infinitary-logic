@@ -271,7 +271,14 @@ the present boundary and does not track renames. -/
 def forbiddenModuleSub : List String :=
   ["LopezEscobar", "InvariantSeparation", "PCSentence", "PCClass", "PCMem", "WellOrdering",
    "WellOrderBridge", "AnalyticWellOrderBoundedness", "TreeCodes", "SmallVocabulary",
-   "Interpolation", "Henkin", "Scott", "Karp", "Lomega1omega"]
+   "Interpolation", "Henkin", "Scott", "Karp", "Lomega1omega", "Methods", "ModelTheory",
+   "WellOrder", "Code"]
+
+/-- The exact `InfinitaryLogic` import closure of the module.  Extending it is a deliberate
+decision: update this list together with the module docstring. -/
+def allowedClosure : List Name :=
+  [`InfinitaryLogic.OrdinalUtil, `InfinitaryLogic.Descriptive.KleeneBrouwer,
+   `InfinitaryLogic.Descriptive.AnalyticTreeBoundedness]
 
 run_cmd do
   let env ← getEnv
@@ -287,6 +294,11 @@ run_cmd do
     forbiddenModuleSub.any fun s ↦ (m.toString.splitOn s).length ≠ 1
   unless hits.isEmpty do
     throwError "[BROAD CONE] the closure of {target} reaches {hits}"
+  let extra := ilModules.filter fun m ↦ !allowedClosure.contains m
+  let missing := allowedClosure.filter fun m ↦ !ilModules.contains m
+  unless extra.isEmpty && missing.isEmpty do
+    throwError "[CLOSURE DRIFT] the InfinitaryLogic closure of {target} is {ilModules}; \
+      update allowedClosure deliberately (extra {extra}, missing {missing})"
   logInfo m!"analytic tree boundedness regression guard: OK (applied: the empty family, a \
     constant family, and the nonconstant family of trees of length at most x 0 on Baire space, \
     whose bounds are all at least the limit omega while omega is a bound; exact heights 0, 1, 2 \
