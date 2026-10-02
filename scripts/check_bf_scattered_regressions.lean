@@ -372,9 +372,11 @@ def forbiddenPrefixes : List Name :=
 
 /-- The exact `InfinitaryLogic` import closure of the module: the closure of
 `Descriptive.BFSeparation` plus the module itself.  Extending it is a deliberate decision:
-update this list together with the module docstring.  `Scott.BFEquivRelabel` is not needed. -/
+update this list together with the module docstring.  `Scott.BFEquivRelabel` is not needed.
+`Topology.Perfect` is newly required through `PerfectAntichain` (it holds
+`Perfect.mk_eq_continuum`). -/
 def allowedClosure : List Name :=
-  [`InfinitaryLogic.Util, `InfinitaryLogic.OrdinalUtil,
+  [`InfinitaryLogic.Util, `InfinitaryLogic.OrdinalUtil, `InfinitaryLogic.Topology.Perfect,
    `InfinitaryLogic.Lomega1omega.Syntax, `InfinitaryLogic.Lomega1omega.Semantics,
    `InfinitaryLogic.Lomega1omega.Operations,
    `InfinitaryLogic.Scott.AtomicDiagram, `InfinitaryLogic.Scott.BackAndForth,
