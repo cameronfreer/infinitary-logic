@@ -221,6 +221,7 @@ theorem mk_eq_aleph_one_of_domains (D : Ordinal.{0} → Set X) (hanti : Antitone
 /-- The **tails** of a rank: `rankTail r η = {x | η ≤ r x}`, the points of rank at least `η`. -/
 def rankTail (r : X → Ordinal.{0}) (η : Ordinal.{0}) : Set X := {x | η ≤ r x}
 
+/-- Membership in a rank tail: `x ∈ rankTail r η` iff `η ≤ r x`. -/
 @[simp]
 theorem mem_rankTail {r : X → Ordinal.{0}} {η : Ordinal.{0}} {x : X} :
     x ∈ rankTail r η ↔ η ≤ r x :=
