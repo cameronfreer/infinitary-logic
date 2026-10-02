@@ -31,6 +31,7 @@ import InfinitaryLogic.Scott.BlockBackAndForth
 import InfinitaryLogic.Scott.BFEquivRelabel
 import InfinitaryLogic.Scott.Formula
 import InfinitaryLogic.Scott.Sentence
+import InfinitaryLogic.Scott.SentenceRecognition
 import InfinitaryLogic.Scott.MontalbanSentence
 import InfinitaryLogic.Scott.MontalbanComplexity
 import InfinitaryLogic.Scott.ForgetParameters
