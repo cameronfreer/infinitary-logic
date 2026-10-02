@@ -23,9 +23,10 @@ reused wherever it already has the fact; nothing here adds an instance.
 * **Suprema.**  `iSup_lt_omega1_of_forall_lt`: a sequence of countable ordinals has a countable
   supremum (regularity of `ℵ₁`).
 * **Rank and countability.**  `countable_iff_rank_bounded`: for a rank `r` with `r x < ω₁` and
-  countable fibres below `ω₁`, a set is countable iff its ranks are bounded below `ω₁`.  Forward:
-  enumerate the set and bound the supremum by regularity of `ℵ₁`; backward: a countable union of
-  countable fibres over a countable initial segment (`setCountable_Iio_of_lt_omega1`).
+  countable fibers below `ω₁`, a set is countable iff its ranks are bounded below `ω₁`.  Forward:
+  enumerate the set and bound the supremum by regularity of `ℵ₁`; backward
+  (`countable_of_forall_rank_lt`, which needs only the countable fibers): a countable union of
+  countable fibers over a countable initial segment (`setCountable_Iio_of_lt_omega1`).
 * **Countable complements from losses.**  `compl_countable_of_loss`: countable successor losses and
   a limit-continuity hypothesis give countable complements below `ω₁`, by transfinite induction.
   The limit hypothesis is explicit and necessary; no monotonicity is assumed.
@@ -34,21 +35,24 @@ reused wherever it already has the fact; nothing here adds an instance.
   `mk_eq_aleph_one_of_domains`: antitone such domains that are moreover nonempty below `ω₁` give
   `#X = ℵ₁`.  Both are universe-polymorphic (`aleph 1` in the universe of `X`;
   `Cardinal.lift_aleph` relates the universes).
-* **Rank tails.**  `rankTail r η = {x | η ≤ r x}`.  Unconditionally: `rankTail_zero`,
-  `rankTail_antitone`, `compl_rankTail`, `rankTail_diff_succ` (the successor loss at `η` is the
-  fibre at `η`) and `rankTail_eq_iInter_of_isSuccPrelimit` (continuity at every successor-prelimit,
-  `0` included; `rankTail_iInter` at limits).  Under `r x < ω₁` for all `x` and countable fibres
-  below `ω₁`, each lemma assuming only what it uses: countable complements below `ω₁`
-  (`rankTail_compl_countable`, fibres only), countable losses (`rankTail_loss_countable`), no
-  point in every tail below `ω₁` (`rankTail_persistent_eq_empty`, rank bound only), empty tails
-  from `ω₁` on (`rankTail_eq_empty_of_omega_one_le`, rank bound only), `#X ≤ ℵ₁`
-  (`mk_le_aleph_one_of_countable_fibres`), `#X = ℵ₁` for uncountable `X`
-  (`mk_eq_aleph_one_of_countable_fibres`), and nonempty losses cofinal below `ω₁` iff `X` is
+* **Rank tails.**  `rankTail r η = {x | η ≤ r x}`, with the simp lemma `mem_rankTail` and the
+  bridge `rankTail_eq_preimage_Ici`.  Unconditionally: `rankTail_zero`, `rankTail_antitone`,
+  `compl_rankTail`, `notMem_rankTail_succ` (a point leaves the tail just above its rank),
+  `rankTail_diff_succ` (the successor loss at `η` is the fiber at `η`) and
+  `rankTail_eq_iInter_of_isSuccPrelimit` (continuity at every successor-prelimit, `0` included;
+  `rankTail_eq_iInter_of_isSuccLimit` at limits).  Under `r x < ω₁` for all `x` and countable
+  fibers below `ω₁`, each lemma assuming only what it uses: countable complements below `ω₁`
+  (`rankTail_compl_countable`, fibers only), countable losses (`rankTail_loss_countable`), no
+  point in every tail below `ω₁` (`biInter_rankTail_eq_empty`, rank bound only), empty tails from
+  `ω₁` on (`rankTail_eq_empty_of_omega1_le`, rank bound only), `#X ≤ ℵ₁`
+  (`mk_le_aleph_one_of_countable_fibers`), `#X = ℵ₁` for uncountable `X`
+  (`mk_eq_aleph_one_of_countable_fibers`), and nonempty losses cofinal below `ω₁` iff `X` is
   uncountable (`rankTail_cofinal_losses_iff`).
-* **Least level of a cover.**  `leastLevel Q x = sInf {α | x ∈ Q α}`.  Under the explicit covering
-  hypothesis `⋃ α < ω₁, Q α = univ` (without it a point in no `Q α` gets level `sInf ∅ = 0`):
-  `leastLevel_mem`, `leastLevel_lt_omega1`, `setOf_leastLevel_eq_subset`,
-  `countable_fibres_leastLevel` (countable members below `ω₁` give countable fibres), and
+* **Least level of a cover.**  `leastLevel Q x = sInf {α | x ∈ Q α}`.  With no hypothesis on `Q`:
+  `leastLevel_le_of_mem`, and `leastLevel_mem_of_exists` for a point lying in some `Q α`.  Under
+  the explicit covering hypothesis `⋃ α < ω₁, Q α = univ` (without it a point in no `Q α` gets
+  level `sInf ∅ = 0`): `leastLevel_mem`, `leastLevel_lt_omega1`, `setOf_leastLevel_eq_subset`,
+  `countable_fibers_leastLevel` (countable members below `ω₁` give countable fibers), and
   `rankTail_leastLevel`: the tail at `η` is the complement of `⋃ α < η, Q α`.  So a cover by
   countable sets feeds the rank-tail lemmas.
 -/
@@ -82,6 +86,16 @@ theorem iSup_lt_omega1_of_forall_lt (f : ℕ → Ordinal.{0}) (hf : ∀ n, f n <
 
 variable {X : Type u}
 
+/-- **Bounded ranks give countability**: the backward half of `countable_iff_rank_bounded`.  It
+needs only countable fibers below `ω₁`, not the bound `r x < ω₁` on every rank. -/
+theorem countable_of_forall_rank_lt (r : X → Ordinal.{0})
+    (hfib : ∀ α < Ordinal.omega 1, Countable {x // r x = α}) {S : Set X} {β : Ordinal.{0}}
+    (hβ : β < Ordinal.omega 1) (hS : ∀ x ∈ S, r x < β) : S.Countable := by
+  have hsub : S ⊆ ⋃ α ∈ Set.Iio β, {x | r x = α} := fun x hx =>
+    Set.mem_iUnion₂.mpr ⟨r x, hS x hx, rfl⟩
+  refine (Set.Countable.biUnion (setCountable_Iio_of_lt_omega1 β hβ) fun α hα => ?_).mono hsub
+  exact Set.countable_coe_iff.mp (hfib α (lt_trans hα hβ))
+
 /-- **Countability equals boundedness below `ω₁`** for a rank into the countable ordinals with
 countable fibres. -/
 theorem countable_iff_rank_bounded (r : X → Ordinal.{0}) (hr : ∀ x, r x < Ordinal.omega 1)
@@ -100,10 +114,7 @@ theorem countable_iff_rank_bounded (r : X → Ordinal.{0}) (hr : ∀ x, r x < Or
       rintro _ ⟨n, rfl⟩
       exact (Order.lt_succ (r (g n))).trans_le (Ordinal.le_iSup (fun n => Order.succ (r (g n))) n)
   · rintro ⟨β, hβ, hS⟩
-    have hsub : S ⊆ ⋃ α ∈ Set.Iio β, {x | r x = α} := fun x hx =>
-      Set.mem_iUnion₂.mpr ⟨r x, hS x hx, rfl⟩
-    refine (Set.Countable.biUnion (setCountable_Iio_of_lt_omega1 β hβ) fun α hα => ?_).mono hsub
-    exact Set.countable_coe_iff.mp (hfib α (lt_trans hα hβ))
+    exact countable_of_forall_rank_lt r hfib hβ hS
 
 /-! ### Countable complements from successor losses -/
 
@@ -191,46 +202,61 @@ theorem mk_eq_aleph_one_of_domains (D : Ordinal.{0} → Set X) (hanti : Antitone
     (hne : ∀ β, β < Ordinal.omega 1 → (D β).Nonempty)
     (hleave : ∀ x, ∃ β, β < Ordinal.omega 1 ∧ x ∉ D β) :
     Cardinal.mk X = Cardinal.aleph 1 := by
+  refine le_antisymm (mk_le_aleph_one_of_domains D hcompl hleave) ?_
   classical
   choose β hβ hxβ using hleave
-  apply le_antisymm
-  · exact mk_le_aleph_one_of_domains D hcompl fun x => ⟨β x, hβ x, hxβ x⟩
-  · -- lower bound: uncountable, since a countable enumeration would leave every domain
-    rw [Cardinal.aleph_one_le_iff, ← not_le, Cardinal.mk_le_aleph0_iff]
-    intro hX
-    have : Nonempty X := (hne 0 (Ordinal.omega_pos 1)).elim fun x _ => ⟨x⟩
-    obtain ⟨g, hg⟩ := exists_surjective_nat X
-    have hs : (⨆ n, β (g n)) < Ordinal.omega 1 :=
-      iSup_lt_omega1_of_forall_lt _ fun n => hβ (g n)
-    obtain ⟨x, hx⟩ := hne _ hs
-    obtain ⟨n, rfl⟩ := hg x
-    exact hxβ (g n) (hanti (Ordinal.le_iSup (fun n => β (g n)) n) hx)
+  -- lower bound: uncountable, since a countable enumeration would leave every domain
+  rw [Cardinal.aleph_one_le_iff, ← not_le, Cardinal.mk_le_aleph0_iff]
+  intro hX
+  have : Nonempty X := (hne 0 (Ordinal.omega_pos 1)).elim fun x _ => ⟨x⟩
+  obtain ⟨g, hg⟩ := exists_surjective_nat X
+  have hs : (⨆ n, β (g n)) < Ordinal.omega 1 :=
+    iSup_lt_omega1_of_forall_lt _ fun n => hβ (g n)
+  obtain ⟨x, hx⟩ := hne _ hs
+  obtain ⟨n, rfl⟩ := hg x
+  exact hxβ (g n) (hanti (Ordinal.le_iSup (fun n => β (g n)) n) hx)
 
 /-! ### Rank tails -/
 
 /-- The **tails** of a rank: `rankTail r η = {x | η ≤ r x}`, the points of rank at least `η`. -/
 def rankTail (r : X → Ordinal.{0}) (η : Ordinal.{0}) : Set X := {x | η ≤ r x}
 
+@[simp]
+theorem mem_rankTail {r : X → Ordinal.{0}} {η : Ordinal.{0}} {x : X} :
+    x ∈ rankTail r η ↔ η ≤ r x :=
+  Iff.rfl
+
+/-- A tail is the preimage of a closed upper ray, the bridge to Mathlib's `Ici` API. -/
+theorem rankTail_eq_preimage_Ici (r : X → Ordinal.{0}) (η : Ordinal.{0}) :
+    rankTail r η = r ⁻¹' Set.Ici η :=
+  rfl
+
 section RankTail
 
 variable (r : X → Ordinal.{0})
 
 /-- Every point has rank at least `0`. -/
+@[simp]
 theorem rankTail_zero : rankTail r 0 = Set.univ :=
-  Set.eq_univ_of_forall fun x ↦ show (0 : Ordinal.{0}) ≤ r x from zero_le
+  Set.eq_univ_of_forall fun _ ↦ mem_rankTail.2 zero_le
 
 /-- The tails decrease. -/
 theorem rankTail_antitone : Antitone (rankTail r) := fun _ _ h _ hx ↦ h.trans hx
 
 /-- The complement of a tail is a strict initial segment of ranks. -/
+@[simp]
 theorem compl_rankTail (η : Ordinal.{0}) : (rankTail r η)ᶜ = {x | r x < η} := by
-  ext x; simp [rankTail]
+  ext x; simp
 
-/-- The **successor loss** at `η` is exactly the fibre of the rank at `η`. -/
+/-- A point leaves the tail just above its own rank. -/
+theorem notMem_rankTail_succ (x : X) : x ∉ rankTail r (Order.succ (r x)) :=
+  fun h ↦ (Order.lt_succ (r x)).not_ge (mem_rankTail.1 h)
+
+/-- The **successor loss** at `η` is exactly the fiber of the rank at `η`. -/
 theorem rankTail_diff_succ (η : Ordinal.{0}) :
     rankTail r η \ rankTail r (Order.succ η) = {x | r x = η} := by
   ext x
-  simp only [rankTail, mem_sdiff, mem_ofPred_eq, Order.succ_le_iff, not_lt]
+  simp only [mem_sdiff, mem_rankTail, mem_ofPred_eq, Order.succ_le_iff, not_lt]
   exact ⟨fun h ↦ le_antisymm h.2 h.1, fun h ↦ ⟨h.ge, h.le⟩⟩
 
 /-- **Continuity at prelimits**: the tail at a successor-prelimit `l` is the intersection of the
@@ -238,12 +264,12 @@ earlier tails.  This includes `l = 0`, where both sides are `univ`. -/
 theorem rankTail_eq_iInter_of_isSuccPrelimit {l : Ordinal.{0}} (hl : Order.IsSuccPrelimit l) :
     rankTail r l = ⋂ η < l, rankTail r η := by
   ext x
-  simp only [rankTail, mem_iInter, mem_ofPred_eq]
+  simp only [mem_rankTail, mem_iInter]
   refine ⟨fun h η hη ↦ hη.le.trans h, fun h ↦ not_lt.mp fun hlt ↦ ?_⟩
-  exact (Order.lt_succ (r x)).not_ge (h _ (hl.succ_lt hlt))
+  exact notMem_rankTail_succ r x (h _ (hl.succ_lt hlt))
 
 /-- **Continuity at limits**, the limit case of `rankTail_eq_iInter_of_isSuccPrelimit`. -/
-theorem rankTail_iInter (l : Ordinal.{0}) (hl : Order.IsSuccLimit l) :
+theorem rankTail_eq_iInter_of_isSuccLimit {l : Ordinal.{0}} (hl : Order.IsSuccLimit l) :
     rankTail r l = ⋂ η < l, rankTail r η :=
   rankTail_eq_iInter_of_isSuccPrelimit r hl.isSuccPrelimit
 
@@ -252,47 +278,43 @@ variable (hr : ∀ x, r x < Ordinal.omega 1)
 include hr hfib
 
 omit hr in
-/-- With countable fibres below `ω₁`, the complement of a tail below `ω₁` is countable. -/
+/-- With countable fibers below `ω₁`, the complement of a tail below `ω₁` is countable. -/
 theorem rankTail_compl_countable {η : Ordinal.{0}} (hη : η < Ordinal.omega 1) :
-    (rankTail r η)ᶜ.Countable := by
-  refine (Set.Countable.biUnion (setCountable_Iio_of_lt_omega1 η hη) fun α hα ↦
-    Set.countable_coe_iff.mp (hfib α (lt_trans hα hη))).mono fun x hx ↦ ?_
-  rw [compl_rankTail] at hx
-  exact Set.mem_iUnion₂.mpr ⟨r x, hx, rfl⟩
+    (rankTail r η)ᶜ.Countable :=
+  countable_of_forall_rank_lt r hfib hη fun x hx ↦ by simpa using hx
 
-/-- Every successor loss is countable: a fibre below `ω₁`, and empty from `ω₁` on. -/
+/-- Every successor loss is countable: a fiber below `ω₁`, and empty from `ω₁` on. -/
 theorem rankTail_loss_countable (η : Ordinal.{0}) :
     (rankTail r η \ rankTail r (Order.succ η)).Countable := by
   rw [rankTail_diff_succ]
   by_cases hη : η < Ordinal.omega 1
   · exact Set.countable_coe_iff.mp (hfib η hη)
   · refine Set.Subsingleton.countable fun x hx ↦ ?_
-    exact absurd ((show r x = η from hx) ▸ hr x) hη
+    exact absurd (Set.mem_ofPred.1 hx ▸ hr x) hη
 
 omit hfib in
 /-- **No persistent core**: no point lies in every tail below `ω₁`. -/
-theorem rankTail_persistent_eq_empty : (⋂ η < Ordinal.omega 1, rankTail r η) = ∅ := by
-  refine Set.eq_empty_iff_forall_notMem.mpr fun x hx ↦ ?_
-  have h := Set.mem_iInter₂.mp hx _ ((Cardinal.isSuccLimit_omega 1).succ_lt (hr x))
-  exact (Order.lt_succ (r x)).not_ge h
+theorem biInter_rankTail_eq_empty : (⋂ η < Ordinal.omega 1, rankTail r η) = ∅ :=
+  Set.eq_empty_iff_forall_notMem.mpr fun x hx ↦ notMem_rankTail_succ r x
+    (Set.mem_iInter₂.mp hx _ ((Cardinal.isSuccLimit_omega 1).succ_lt (hr x)))
 
 omit hfib in
 /-- The tails are empty from `ω₁` on. -/
-theorem rankTail_eq_empty_of_omega_one_le {η : Ordinal.{0}} (h : Ordinal.omega 1 ≤ η) :
+theorem rankTail_eq_empty_of_omega1_le {η : Ordinal.{0}} (h : Ordinal.omega 1 ≤ η) :
     rankTail r η = ∅ :=
-  Set.eq_empty_iff_forall_notMem.mpr fun x hx ↦ (hr x).not_ge (h.trans hx)
+  Set.eq_empty_iff_forall_notMem.mpr fun x hx ↦ (hr x).not_ge (h.trans (mem_rankTail.1 hx))
 
-/-- A rank into the countable ordinals with countable fibres bounds the type by `ℵ₁`, through
+/-- A rank into the countable ordinals with countable fibers bounds the type by `ℵ₁`, through
 `mk_le_aleph_one_of_domains` on the tails. -/
-theorem mk_le_aleph_one_of_countable_fibres : Cardinal.mk X ≤ Cardinal.aleph 1 :=
+theorem mk_le_aleph_one_of_countable_fibers : Cardinal.mk X ≤ Cardinal.aleph 1 :=
   mk_le_aleph_one_of_domains (rankTail r) (fun _ hβ ↦ rankTail_compl_countable r hfib hβ)
     fun x ↦ ⟨Order.succ (r x), (Cardinal.isSuccLimit_omega 1).succ_lt (hr x),
-      (Order.lt_succ (r x)).not_ge⟩
+      notMem_rankTail_succ r x⟩
 
 /-- An uncountable type with such a rank has cardinality exactly `ℵ₁`. -/
-theorem mk_eq_aleph_one_of_countable_fibres (hX : ¬ Countable X) :
+theorem mk_eq_aleph_one_of_countable_fibers (hX : ¬ Countable X) :
     Cardinal.mk X = Cardinal.aleph 1 := by
-  refine le_antisymm (mk_le_aleph_one_of_countable_fibres r hr hfib) ?_
+  refine le_antisymm (mk_le_aleph_one_of_countable_fibers r hr hfib) ?_
   rw [Cardinal.aleph_one_le_iff, ← not_le, Cardinal.mk_le_aleph0_iff]
   exact hX
 
@@ -307,7 +329,7 @@ theorem rankTail_cofinal_losses_iff :
   · obtain ⟨β, hβ, hb⟩ := hrb.mp hX
     obtain ⟨η, hβη, -, x, hx⟩ := h β hβ
     rw [rankTail_diff_succ] at hx
-    exact (hb x (mem_univ x)).not_ge (hβη.trans_eq (show r x = η from hx).symm)
+    exact (hb x (mem_univ x)).not_ge (hβη.trans_eq (Set.mem_ofPred.1 hx).symm)
   · by_contra hno
     refine hX (hrb.mpr ⟨γ, hγ, fun x _ ↦ not_le.mp fun hγx ↦ hno ?_⟩)
     exact ⟨r x, hγx, hr x, x, by rw [rankTail_diff_succ]; rfl⟩
@@ -324,28 +346,41 @@ variable (Q : Ordinal.{0} → Set X)
 lies in no `Q α` (`sInf ∅ = 0`), so the lemmas below assume that `Q` covers `X` below `ω₁`. -/
 noncomputable def leastLevel (x : X) : Ordinal.{0} := sInf {α | x ∈ Q α}
 
+variable {Q} in
+/-- The least level is at most every level containing the point (no covering hypothesis). -/
+theorem leastLevel_le_of_mem {x : X} {α : Ordinal.{0}} (h : x ∈ Q α) : leastLevel Q x ≤ α :=
+  csInf_le' h
+
+variable {Q} in
+/-- A point lying in some member of the family lies in the member at its least level. -/
+theorem leastLevel_mem_of_exists {x : X} (hx : ∃ α, x ∈ Q α) : x ∈ Q (leastLevel Q x) :=
+  csInf_mem hx
+
 variable (hcover : (⋃ α < Ordinal.omega 1, Q α) = Set.univ)
 include hcover
 
+/-- The covering hypothesis, pointwise. -/
+private theorem exists_lt_omega1_mem_of_cover (x : X) : ∃ α < Ordinal.omega 1, x ∈ Q α :=
+  let ⟨α, hα, hxα⟩ := Set.mem_iUnion₂.mp (hcover ▸ mem_univ x)
+  ⟨α, hα, hxα⟩
+
 /-- A point lies in the member of the cover at its least level. -/
-theorem leastLevel_mem (x : X) : x ∈ Q (leastLevel Q x) := by
-  have hx : x ∈ ⋃ α < Ordinal.omega 1, Q α := hcover ▸ mem_univ x
-  obtain ⟨α, -, hα⟩ := Set.mem_iUnion₂.mp hx
-  exact csInf_mem (s := {α | x ∈ Q α}) ⟨α, hα⟩
+theorem leastLevel_mem (x : X) : x ∈ Q (leastLevel Q x) :=
+  let ⟨α, _, hα⟩ := exists_lt_omega1_mem_of_cover Q hcover x
+  leastLevel_mem_of_exists ⟨α, hα⟩
 
 /-- The least level is countable. -/
-theorem leastLevel_lt_omega1 (x : X) : leastLevel Q x < Ordinal.omega 1 := by
-  have hx : x ∈ ⋃ α < Ordinal.omega 1, Q α := hcover ▸ mem_univ x
-  obtain ⟨α, hα, hxα⟩ := Set.mem_iUnion₂.mp hx
-  exact (csInf_le' (s := {α | x ∈ Q α}) hxα).trans_lt hα
+theorem leastLevel_lt_omega1 (x : X) : leastLevel Q x < Ordinal.omega 1 :=
+  let ⟨_, hα, hxα⟩ := exists_lt_omega1_mem_of_cover Q hcover x
+  (leastLevel_le_of_mem hxα).trans_lt hα
 
-/-- The fibre of the least level at `α` lies in `Q α`. -/
+/-- The fiber of the least level at `α` lies in `Q α`. -/
 theorem setOf_leastLevel_eq_subset (α : Ordinal.{0}) : {x | leastLevel Q x = α} ⊆ Q α := by
   rintro x rfl
   exact leastLevel_mem Q hcover x
 
-/-- A cover by countable sets gives the least level countable fibres below `ω₁`. -/
-theorem countable_fibres_leastLevel (hQ : ∀ α < Ordinal.omega 1, (Q α).Countable) :
+/-- A cover by countable sets gives the least level countable fibers below `ω₁`. -/
+theorem countable_fibers_leastLevel (hQ : ∀ α < Ordinal.omega 1, (Q α).Countable) :
     ∀ α < Ordinal.omega 1, Countable {x // leastLevel Q x = α} := fun α hα ↦
   ((hQ α hα).mono (setOf_leastLevel_eq_subset Q hcover α)).to_subtype
 
@@ -353,9 +388,9 @@ theorem countable_fibres_leastLevel (hQ : ∀ α < Ordinal.omega 1, (Q α).Count
 theorem rankTail_leastLevel (η : Ordinal.{0}) :
     rankTail (leastLevel Q) η = (⋃ α < η, Q α)ᶜ := by
   ext x
-  simp only [rankTail, mem_ofPred_eq, mem_compl_iff, mem_iUnion, not_exists]
+  simp only [mem_rankTail, mem_compl_iff, mem_iUnion, not_exists]
   refine ⟨fun h α hα hxα ↦ ?_, fun h ↦ not_lt.mp fun hlt ↦ h _ hlt (leastLevel_mem Q hcover x)⟩
-  exact (h.trans (csInf_le' (s := {α | x ∈ Q α}) hxα)).not_gt hα
+  exact (h.trans (leastLevel_le_of_mem hxα)).not_gt hα
 
 end Cover
 
