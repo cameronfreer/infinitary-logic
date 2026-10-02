@@ -37,8 +37,14 @@ open FirstOrder Structure Ordinal
 
 /-- The supremum of element ranks without the +1 adjustment.
 
-This is denoted `sr(M)` in some references (e.g., Marker). Compare with `scottRank`
-which is `⨆ m, elementRank m + 1` (denoted `SR(M)` or `α(M)`). -/
+Compare with `scottRank`, which is `⨆ m, elementRank m + 1`.  Like `elementRank`, this `sr` is
+element-based and cross-structure: each `elementRank m` compares the singleton `![m]` with
+tuples of other countable structures.  It is not an internal (orbit) rank defined from the
+automorphism orbits of `M` (for that, see `orbitRank` and `internalScottRank` in
+`Scott/OrbitRank.lean`); on the infinite pure set `ℕ` every element has `elementRank = ω`
+(`scripts/check_rank_convention_regressions.lean`), although every tuple has orbit rank `0`
+(`orbitRank_pureSet`).
+See the convention table in the module docstring of `Scott/Height/Defs.lean`. -/
 noncomputable def sr (M : Type w) [L.Structure M] [Countable M] : Ordinal.{0} :=
   ⨆ (m : M), elementRank (L := L) m
 

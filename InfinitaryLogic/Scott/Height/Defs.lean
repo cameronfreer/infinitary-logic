@@ -24,6 +24,47 @@ formula analysis stabilizes for all tuples simultaneously.
 - `scottHeight_lt_omega1`: Scott height is a countable ordinal.
 - `scottHeight_stabilizesCompletely`: At Scott height, all tuple sizes have stabilized.
 - `scottHeight_eq_of_equiv`: Scott height is invariant under L-isomorphism.
+
+## Rank conventions
+
+The library has two families of Scott-rank ordinals.  The **cross-structure** ones compare
+tuples of `M` with tuples of arbitrary countable `N` in `M`'s carrier universe and live in
+`Ordinal.{0}`; among them `elementRank`, `scottRank` and `sr` are element-based (singletons),
+`scottHeight` ranges over all tuples and `stabilizationOrdinal` over the empty tuple.  The
+**internal (orbit)** ones compare tuples of `M` with tuples of `M` itself (automorphism orbits)
+and live in `Ordinal.{w}` for `M : Type w`.
+
+| Ordinal | What is compared | Universe | Module |
+|---|---|---|---|
+| `elementRank m` | the singleton `![m]` against countable partners | `Ordinal.{0}` | `Scott/Rank` |
+| `scottRank M` | `⨆ m, elementRank m + 1` | `Ordinal.{0}` | `Scott/Rank` |
+| `sr M` | `⨆ m, elementRank m` | `Ordinal.{0}` | `Scott/Height/RankBounds` |
+| `scottHeight M` | all tuples of `M` against countable partners | `Ordinal.{0}` | here |
+| `stabilizationOrdinal M` | the empty tuple, up to isomorphism | `Ordinal.{0}` | `Scott/Sentence` |
+| `orbitRank a` | tuples of `M` against tuples of `M` | `Ordinal.{w}` | `Scott/OrbitRank` |
+| `internalScottRank M` | `⨆ a, orbitRank a + 1` | `Ordinal.{w}` | `Scott/OrbitRank` |
+
+Proved relations: `sr M ≤ scottRank M` (`sr_le_scottRank`), `sr M ≤ scottHeight M`
+(`sr_le_scottHeight_of`, with `countableRefinementHypothesis`), `scottRank M ≤ scottHeight M + 1`
+(`scottRank_le_scottHeight_succ_of`, with `countableRefinementHypothesis`), and
+`elementRank m ≤ α` at every complete stabilization level `α` (`elementRank_le_completeStab`);
+on the internal side, `orbitRank a + 1 ≤ internalScottRank M`
+(`orbitRank_add_one_le_internalScottRank`).  No comparison between the two
+families is proved in the library.
+
+Refuted relations (`scripts/check_rank_convention_regressions.lean`):
+
+* on the empty carrier, `scottRank = 0` while `scottHeight = stabilizationOrdinal = 1` and
+  `internalScottRank > 0`, so `scottHeight M ≤ scottRank M`,
+  `stabilizationOrdinal M ≤ scottRank M` and `internalScottRank M ≤ lift (scottRank M)` all
+  fail;
+* on the infinite pure set `ℕ`, `scottRank = ω + 1`, `stabilizationOrdinal = ω` and
+  `internalScottRank = 1` (`internalScottRank_pureSet`), so
+  `lift (stabilizationOrdinal M) ≤ internalScottRank M + n` fails for every finite `n` and
+  `lift (scottRank M) ≤ internalScottRank M + ω` fails.
+
+In particular `scottRank` and `stabilizationOrdinal` differ in both directions: one below on the
+empty carrier, one above on `ℕ`.
 -/
 
 universe u v w
@@ -47,13 +88,21 @@ and vice versa.
 Equivalently, this is the least α where BFEquiv α n a b implies BFEquiv (α + 1) n a b
 for all tuples.
 
-Scott height is related to but may differ from Scott rank. We always have
-scottHeight ≤ scottRank. -/
+The level lives in `Ordinal.{0}`, and the quantification ranges over all tuples `a` of `M` and
+all countable `N` in `M`'s carrier universe.  `scottHeight` is neither the element-based
+`scottRank`/`sr` (`Scott/Rank.lean`, `Scott/Height/RankBounds.lean`) nor the internal (orbit)
+finite-tuple `internalScottRank` (`Scott/OrbitRank.lean`).  Proved relations:
+`sr M ≤ scottHeight M` (`sr_le_scottHeight_of`, with `countableRefinementHypothesis`) and
+`scottRank M ≤ scottHeight M + 1` (`scottRank_le_scottHeight_succ_of`, with
+`countableRefinementHypothesis`).  The reverse `scottHeight M ≤ scottRank M` does **not**
+hold in general: on the empty carrier `scottRank = 0` (an empty supremum) while
+`scottHeight = 1` (`scripts/check_rank_convention_regressions.lean`).  See the module
+docstring for the full convention table. -/
 @[blueprint "def:scottHeight"
   (title := /-- Scott height -/)
   (statement := /-- The Scott height of a countable structure $M$: the least ordinal
     $\alpha$ such that $\BFEquiv_\alpha(a,b) \Rightarrow \BFEquiv_{\alpha+1}(a,b)$ for
-    all tuples $a,b$ in any countable structures. -/)]
+    all tuples $a$ of $M$ and $b$ of any countable $N$ in the carrier universe of $M$. -/)]
 noncomputable def scottHeight (M : Type w) [L.Structure M] [Countable M] : Ordinal.{0} :=
   sInf {α : Ordinal.{0} | ∀ {n : ℕ} (a : Fin n → M)
     (N : Type w) [L.Structure N] [Countable N] (b : Fin n → N),
