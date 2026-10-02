@@ -33,6 +33,7 @@ import InfinitaryLogic.Scott.Formula
 import InfinitaryLogic.Scott.Sentence
 import InfinitaryLogic.Scott.MontalbanSentence
 import InfinitaryLogic.Scott.MontalbanComplexity
+import InfinitaryLogic.Scott.ForgetParameters
 import InfinitaryLogic.Scott.RefinementCount
 import InfinitaryLogic.Scott.Rank
 import InfinitaryLogic.Scott.QuantifierRank
