@@ -21,12 +21,17 @@ Every public theorem is *applied*, not only listed for its axioms.
 * **Data-valued receipts.**  A receipt for `(a, b)` is a bijection `g : X ≃ Y` of pure sets with
   `g ∘ a = b` (a `Type`; receipts are far from unique); lowering keeps the receipt, extension
   answers `x` by `g x` and `y` by `g.symm y`.  Through `bfEquiv_of_gradedReceipt` (an actual
-  receipt) and `bfEquiv_of_gradedReceipts` (a `Nonempty` seed), `![3, 3]` in `ℕ` and its image
-  in `ℤ` are `BFEquiv` at every level.
+  receipt) and `bfEquiv_of_nonempty_gradedReceipt` (a `Nonempty` seed), `![3, 3]` in `ℕ` and
+  its image in `ℤ` are `BFEquiv` at every level.
 * **Negative control: the laws alone give nothing.**  `R := fun _ _ _ _ ↦ False` satisfies
   `atomic`, `lower`, `forth` and `back`; on `Unit` (nullary relation true) and `Bool` (false),
   the empty tuples are not `BFEquiv` at level `0`; hence no statement "laws imply `BFEquiv`"
   without a seed holds.
+* **`down` is load-bearing.**  `Empty` with `S` true and `PEmpty` with `S` false: the family
+  `R α _ _ _ := α = 1` satisfies the core's `atomic`, `limit`, `forth` and `back` at height `1`
+  (forth and back vacuously, the carriers being empty) and has a seed at level `1`, but fails
+  `down`; and the empty tuples are not `BFEquiv` at level `1`.  So the core's laws without
+  `down` imply nothing.
 * **Explicit universes.**  The `Type 1` carrier `ULift.{1} ℤ`, through
   `bfEquiv_of_gradedMatching.{0, 0, 0, 1, 0}` and `bfEquiv_of_gradedReceipt.{0, 0, 0, 1, 0, 1}`
   (receipts in `Type 1`).
@@ -188,11 +193,12 @@ theorem receipt_bfEquiv {X Y : Type*} (α : Ordinal.{uι}) {n : ℕ} {a : Fin n 
     (fun _ ρ x ↦ ⟨ρ.1 x, ⟨ρ.snoc x⟩⟩)
     (fun _ ρ y ↦ ⟨ρ.1.symm y, ⟨by simpa using ρ.snoc (ρ.1.symm y)⟩⟩) le_rfl ρ
 
-/-- **A `Nonempty` receipt gives `BFEquiv`**, through `bfEquiv_of_gradedReceipts`. -/
-theorem receipts_bfEquiv {X Y : Type*} (α : Ordinal.{uι}) {n : ℕ} {a : Fin n → X}
+/-- **A `Nonempty` receipt gives `BFEquiv`**, through `bfEquiv_of_nonempty_gradedReceipt`. -/
+theorem nonempty_receipt_bfEquiv {X Y : Type*} (α : Ordinal.{uι}) {n : ℕ} {a : Fin n → X}
     {b : Fin n → Y} (ρ : Nonempty (BijReceipt.{uι} X Y α n a b)) :
     BFEquiv (L := Language.empty) α n a b :=
-  bfEquiv_of_gradedReceipts (BijReceipt X Y) bijReceipt_atomic (fun _ _ ρ ↦ ⟨⟨ρ.1, ρ.2⟩⟩)
+  bfEquiv_of_nonempty_gradedReceipt (BijReceipt X Y) bijReceipt_atomic
+    (fun _ _ ρ ↦ ⟨⟨ρ.1, ρ.2⟩⟩)
     (fun _ ρ x ↦ ⟨ρ.1 x, ⟨ρ.snoc x⟩⟩)
     (fun _ ρ y ↦ ⟨ρ.1.symm y, ⟨by simpa using ρ.snoc (ρ.1.symm y)⟩⟩) le_rfl ρ
 
@@ -204,7 +210,7 @@ theorem concrete_receipts (α : Ordinal.{uι}) :
       BFEquiv (L := Language.empty) α 2 ![(3 : ℕ), 3]
         (fun i ↦ Equiv.intEquivNat.symm (![(3 : ℕ), 3] i)) :=
   ⟨receipt_bfEquiv α ⟨Equiv.intEquivNat.symm, fun _ ↦ rfl⟩,
-    receipts_bfEquiv α ⟨⟨Equiv.intEquivNat.symm, fun _ ↦ rfl⟩⟩⟩
+    nonempty_receipt_bfEquiv α ⟨⟨Equiv.intEquivNat.symm, fun _ ↦ rfl⟩⟩⟩
 
 /-! ### Explicit universes -/
 
@@ -248,6 +254,7 @@ abbrev nullStr (X : Type*) (s : Prop) : nullLang.Structure X where
 instance : nullLang.Structure Empty := nullStr Empty True
 instance : nullLang.Structure Unit := nullStr Unit True
 instance : nullLang.Structure Bool := nullStr Bool False
+instance : nullLang.Structure PEmpty.{1} := nullStr PEmpty False
 
 /-- The empty tuples of `Empty` and `Unit` (both with `S` true) have the same atomic type. -/
 theorem empty_unit_atomic :
@@ -321,6 +328,59 @@ theorem false_seed_only (height : Ordinal.{0}) (seed : falseR 0 0 ![] ![]) :
   bfEquiv_of_gradedMatching falseR false_atomic (false_lower (height := height)) false_forth
     false_back zero_le seed
 
+/-! #### `down` is load-bearing
+
+On empty carriers forth and back are vacuous, so without `down` nothing carries a level-`1`
+pair down to level `0`, where the nullary facts are compared. -/
+
+/-- The family relating exactly at level `1`. -/
+abbrev oneR : Ordinal.{0} → (n : ℕ) → (Fin n → Empty) → (Fin n → PEmpty.{1}) → Prop :=
+  fun α _ _ _ ↦ α = 1
+
+theorem one_atomic {n : ℕ} {a : Fin n → Empty} {b : Fin n → PEmpty.{1}} (h : oneR 0 n a b) :
+    SameAtomicType (L := nullLang) a b := absurd h (by simp)
+
+theorem one_limit {α : Ordinal.{0}} (hl : Order.IsSuccLimit α) (_ : α ≤ 1) {n : ℕ}
+    {a : Fin n → Empty} {b : Fin n → PEmpty.{1}} (h : oneR α n a b) (β : Ordinal.{0})
+    (_ : β < α) : oneR β n a b := by
+  subst h
+  exact absurd (by simpa using hl) (Order.not_isSuccLimit_succ (0 : Ordinal.{0}))
+
+theorem one_forth {α : Ordinal.{0}} {n : ℕ} {a : Fin n → Empty} {b : Fin n → PEmpty.{1}}
+    (_ : Order.succ α ≤ 1) (_ : oneR (Order.succ α) n a b) (x : Empty) :
+    ∃ y, oneR α (n + 1) (Fin.snoc a x) (Fin.snoc b y) := x.elim
+
+theorem one_back {α : Ordinal.{0}} {n : ℕ} {a : Fin n → Empty} {b : Fin n → PEmpty.{1}}
+    (_ : Order.succ α ≤ 1) (_ : oneR (Order.succ α) n a b) (y : PEmpty.{1}) :
+    ∃ x, oneR α (n + 1) (Fin.snoc a x) (Fin.snoc b y) := y.elim
+
+/-- The family fails `down` at the bottom: related at level `succ 0 = 1`, not at level `0`. -/
+theorem one_not_down : ¬ (oneR (Order.succ 0) 0 ![] ![] → oneR 0 0 ![] ![]) :=
+  fun h ↦ absurd (h (by simp)) (by simp)
+
+/-- `Empty` (with `S` true) and `PEmpty` (with `S` false) are not `BFEquiv` at level `1`. -/
+theorem empty_pempty_not_bfEquiv_one :
+    ¬ BFEquiv (L := nullLang) (1 : Ordinal.{0}) 0 (![] : Fin 0 → Empty)
+      (![] : Fin 0 → PEmpty.{1}) := fun h ↦ by
+  rw [show (1 : Ordinal.{0}) = Order.succ 0 by simp] at h
+  exact ((BFEquiv.zero _ _).1 (BFEquiv.of_succ h) (AtomicIdx.rel NullRel.S Fin.elim0)).1 trivial
+
+/-- **`down` is load-bearing**: over the core's law shapes at height `1`, `atomic`, `limit`,
+`forth`, `back` and a seed at level `1` do not imply `BFEquiv` at level `1`; `oneR` satisfies
+them all, on empty carriers with differing nullary facts. -/
+theorem down_needed :
+    ¬ ∀ R : Ordinal.{0} → (n : ℕ) → (Fin n → Empty) → (Fin n → PEmpty.{1}) → Prop,
+      (∀ {n a b}, R 0 n a b → SameAtomicType (L := nullLang) a b) →
+      (∀ {α}, Order.IsSuccLimit α → α ≤ 1 → ∀ {n a b}, R α n a b → ∀ β < α, R β n a b) →
+      (∀ {α n a b}, Order.succ α ≤ 1 → R (Order.succ α) n a b →
+        ∀ x, ∃ y, R α (n + 1) (Fin.snoc a x) (Fin.snoc b y)) →
+      (∀ {α n a b}, Order.succ α ≤ 1 → R (Order.succ α) n a b →
+        ∀ y, ∃ x, R α (n + 1) (Fin.snoc a x) (Fin.snoc b y)) →
+      R 1 0 ![] ![] →
+      BFEquiv (L := nullLang) (1 : Ordinal.{0}) 0 (![] : Fin 0 → Empty)
+        (![] : Fin 0 → PEmpty.{1}) :=
+  fun H ↦ empty_pempty_not_bfEquiv_one (H oneR one_atomic one_limit one_forth one_back rfl)
+
 end Nullary
 
 end GradedMatchingGuard
@@ -365,7 +425,7 @@ run_cmd do
 
 /-- The public declarations of the module. -/
 def moduleDecls : List Name :=
-  [`bfEquiv_of_gradedSystem, `bfEquiv_of_gradedMatching, `bfEquiv_of_gradedReceipts,
+  [`bfEquiv_of_gradedSystem, `bfEquiv_of_gradedMatching, `bfEquiv_of_nonempty_gradedReceipt,
    `bfEquiv_of_gradedReceipt].map (`FirstOrder.Language ++ ·)
 
 /-- The guard's own declarations whose axioms are audited. -/
@@ -373,9 +433,12 @@ def guardDecls : List Name :=
   [`self_system, `self_system_at_height, `self_matching, `sameAtomicType_of_samePattern,
    `samePattern_snoc, `samePattern_forth, `samePattern_back, `pure_bfEquiv, `empty_tuple,
    `repeated_tuple, `repeated_not_distinct, `bijReceipt_atomic, `receipt_bfEquiv,
-   `receipts_bfEquiv, `concrete_receipts, `ulift_matching, `ulift_receipt, `empty_unit_atomic,
+   `nonempty_receipt_bfEquiv, `concrete_receipts, `ulift_matching, `ulift_receipt,
+   `empty_unit_atomic,
    `height_zero, `not_height_one, `false_atomic, `false_lower, `false_forth, `false_back,
-   `unit_bool_not_bfEquiv_zero, `laws_alone_insufficient, `false_seed_only].map
+   `unit_bool_not_bfEquiv_zero, `laws_alone_insufficient, `false_seed_only, `one_atomic,
+   `one_limit, `one_forth, `one_back, `one_not_down, `empty_pempty_not_bfEquiv_one,
+   `down_needed].map
     (`GradedMatchingGuard ++ ·)
 
 /-- The standard axioms. -/
@@ -395,7 +458,9 @@ run_cmd do
     level 0; height zero with the empty carrier Empty against Unit, BFEquiv at level 0 and not \
     at level 1; bijection receipts (data, nonunique) through both receipt theorems; the \
     everywhere-false family satisfies every law while Unit and Bool, split by a nullary \
-    relation, are not BFEquiv at level 0, so the laws alone imply nothing; the Type 1 carrier \
+    relation, are not BFEquiv at level 0, so the laws alone imply nothing; down is load-bearing: \
+    alpha = 1 meets the other core laws at height 1 on Empty (S true) against PEmpty (S false) \
+    with a seed at level 1, which are not BFEquiv at level 1; the Type 1 carrier \
     ULift Z with explicit universes, receipts in Type 1; direct import only Scott.BackAndForth, \
     closure without Karp, Scott-formula, Scott-sentence, Montalban-sentence, refinement-count, \
     Scott-process, descriptive, method, model-theory, admissible or conditional modules; \

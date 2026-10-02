@@ -20,9 +20,8 @@ countable; countable budgets are the immediate application.
 
 No new notion of back-and-forth equivalence is introduced: the conclusion is the existing
 `BFEquiv` of `Scott/BackAndForth.lean`, unfolded through `BFEquiv.zero`, `BFEquiv.succ` and
-`BFEquiv.limit`.  The module is the foundation of the graded-system work (P2), not a second,
-competing interface: the later bundled graded-system and closure adapters reuse this one ordinal
-induction, with `height := α`.
+`BFEquiv.limit`.  Bundled graded systems are intended to instantiate this theorem with
+`height := α`.
 
 ## The seed is a separate premise
 
@@ -38,10 +37,13 @@ level of interest, and concludes `BFEquiv` only there.
   the one-law form `bfEquiv_of_gradedMatching` and the receipt forms state them as `α + 1`,
   which is `Order.succ α` by `Order.succ_eq_add_one`.
 * **Height.**  Every law is required only at levels `≤ height`.  The core theorem has separate
-  `down` and `limit` clauses, so that a family which is not antitone (only one-step lowering and
-  limit lowering) can be used, in particular with `height := α`.
+  `down` and `limit` clauses, the shape of a bundled graded system.  They imply lowering on
+  levels `≤ height`, but a consumer supplies them without its own ordinal induction, in
+  particular with `height := α`.
 * **Generality.**  The statements are proved without the `[L.IsRelational]` instance, because
-  `BFEquiv`'s own lemmas omit it.  The carrier universes `w` and `w'` are independent; there is
+  `BFEquiv`'s own lemmas omit it.  For languages with function symbols, `SameAtomicType` covers
+  only equalities and relation atoms on coordinates, so the conclusion is this repository's
+  `BFEquiv`, not `L∞ω`-equivalence.  The carrier universes `w` and `w'` are independent; there is
   no countability or nonemptiness assumption on `M`, `N` or `L`; tuples may be empty or have
   repeated coordinates; `R` need not be symmetric; and receipts need not be unique and may change
   under lowering.
@@ -55,8 +57,9 @@ level of interest, and concludes `BFEquiv` only there.
   `R α n a b`, conclude `BFEquiv α n a b`.
 * `bfEquiv_of_gradedMatching`: the same with one lowering law `lower` (`β ≤ α ≤ height` and
   `R α → R β`) in place of `down` and `limit`, and with successors written `α + 1`.
-* `bfEquiv_of_gradedReceipts`: for a `Type r`-valued family `Receipt` whose laws consume a receipt
-  and return `Nonempty` receipts, a seed `Nonempty (Receipt α n a b)` gives `BFEquiv α n a b`.
+* `bfEquiv_of_nonempty_gradedReceipt`: for a `Type r`-valued family `Receipt` whose laws consume
+  a receipt and return `Nonempty` receipts, a seed `Nonempty (Receipt α n a b)` gives
+  `BFEquiv α n a b`.
 * `bfEquiv_of_gradedReceipt`: the same from an actual receipt `Receipt α n a b`.
 
 ## Import boundary
@@ -64,6 +67,11 @@ level of interest, and concludes `BFEquiv` only there.
 The module imports only `Scott/BackAndForth.lean`: no Karp theory, no Scott-formula or
 Scott-sentence construction, no descriptive set theory, no model-theoretic, method, admissible
 or conditional module.
+
+## References
+
+- [Mar16]
+- [KK04]
 -/
 
 universe u v w w' uι r
@@ -76,7 +84,7 @@ variable {L : Language.{u, v}} {M : Type w} {N : Type w'} [L.Structure M] [L.Str
 `height`, that is atomic at level `0`, lowers one step at successors (`down`), lowers to every
 smaller level at successor limits (`limit`), and has the forth and back properties one level
 down at successors, relates only `BFEquiv` pairs: a seed `R α n a b` with `α ≤ height` gives
-`BFEquiv α n a b`.  This is the module's only ordinal induction. -/
+`BFEquiv α n a b`. -/
 theorem bfEquiv_of_gradedSystem
     (R : Ordinal.{uι} → (n : ℕ) → (Fin n → M) → (Fin n → N) → Prop) {height : Ordinal.{uι}}
     (atomic : ∀ {n a b}, R 0 n a b → SameAtomicType (L := L) a b)
@@ -106,8 +114,7 @@ theorem bfEquiv_of_gradedSystem
 /-- **Graded matching families give back-and-forth equivalence.**  A family `R`, graded by
 ordinals up to `height`, that is atomic at level `0`, lowers (`β ≤ α ≤ height` and `R α` give
 `R β`), and has the forth and back properties from level `α + 1 ≤ height` to level `α`, relates
-only `BFEquiv` pairs: a seed `R α n a b` with `α ≤ height` gives `BFEquiv α n a b`.  Derived
-from `bfEquiv_of_gradedSystem`. -/
+only `BFEquiv` pairs: a seed `R α n a b` with `α ≤ height` gives `BFEquiv α n a b`. -/
 theorem bfEquiv_of_gradedMatching
     (R : Ordinal.{uι} → (n : ℕ) → (Fin n → M) → (Fin n → N) → Prop) {height : Ordinal.{uι}}
     (atomic : ∀ {n a b}, R 0 n a b → SameAtomicType (L := L) a b)
@@ -127,9 +134,8 @@ theorem bfEquiv_of_gradedMatching
 /-- **Graded receipts give back-and-forth equivalence.**  `Receipt α n a b` is data witnessing
 that `a` and `b` match at level `α`; the laws consume a receipt and return `Nonempty` receipts,
 which need not be unique and may change under lowering.  A seed `Nonempty (Receipt α n a b)`
-with `α ≤ height` gives `BFEquiv α n a b`.  This is `bfEquiv_of_gradedMatching` applied to
-`fun α n a b ↦ Nonempty (Receipt α n a b)`. -/
-theorem bfEquiv_of_gradedReceipts
+with `α ≤ height` gives `BFEquiv α n a b`. -/
+theorem bfEquiv_of_nonempty_gradedReceipt
     (Receipt : Ordinal.{uι} → (n : ℕ) → (Fin n → M) → (Fin n → N) → Type r)
     {height : Ordinal.{uι}}
     (atomic : ∀ {n a b}, Receipt 0 n a b → SameAtomicType (L := L) a b)
@@ -144,8 +150,8 @@ theorem bfEquiv_of_gradedReceipts
     (fun ⟨ρ⟩ ↦ atomic ρ) (fun hβα h ⟨ρ⟩ ↦ lower hβα h ρ)
     (fun h ⟨ρ⟩ ↦ forth h ρ) (fun h ⟨ρ⟩ ↦ back h ρ) hα seed
 
-/-- **A graded receipt gives back-and-forth equivalence**: `bfEquiv_of_gradedReceipts` with an
-actual receipt `Receipt α n a b` as the seed. -/
+/-- **A graded receipt gives back-and-forth equivalence**: the laws of
+`bfEquiv_of_nonempty_gradedReceipt`, with an actual receipt `Receipt α n a b` as the seed. -/
 theorem bfEquiv_of_gradedReceipt
     (Receipt : Ordinal.{uι} → (n : ℕ) → (Fin n → M) → (Fin n → N) → Type r)
     {height : Ordinal.{uι}}
@@ -157,6 +163,6 @@ theorem bfEquiv_of_gradedReceipt
       ∀ y : N, ∃ x : M, Nonempty (Receipt α (n + 1) (Fin.snoc a x) (Fin.snoc b y)))
     {α : Ordinal.{uι}} {n : ℕ} {a : Fin n → M} {b : Fin n → N}
     (hα : α ≤ height) (seed : Receipt α n a b) : BFEquiv (L := L) α n a b :=
-  bfEquiv_of_gradedReceipts Receipt atomic lower forth back hα ⟨seed⟩
+  bfEquiv_of_nonempty_gradedReceipt Receipt atomic lower forth back hα ⟨seed⟩
 
 end FirstOrder.Language
