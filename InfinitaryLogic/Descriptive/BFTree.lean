@@ -380,22 +380,15 @@ omit [L.IsRelational] in
 arguments, not instances, so that two structures on the same carrier can be supplied.
 
 This is the special case `(SameAtomicType.map_equiv (Language.Equiv.refl L M) e).mpr
-(SameAtomicType.refl a)` of the library lemma `SameAtomicType.map_equiv`
-(`Scott/OrbitRank.lean`).  It is restated here because `Scott/OrbitRank` imports
-`Scott.Stabilization` and `Karp.PotentialIso`, which lie outside this module's minimal import
-closure; moving `SameAtomicType.map_equiv` down to `Scott/AtomicDiagram.lean` would let this
-helper be replaced by that one line. -/
+(SameAtomicType.refl a)` of the library lemma `SameAtomicType.map_equiv`, which lives in
+`Scott/AtomicDiagram.lean`, inside this module's minimal import closure; the proof is that one
+line.  The helper is kept only to fix the structures as implicit arguments. -/
 private theorem sameAtomicType_comp_equiv {M N : Type*} {iM : L.Structure M}
     {iN : L.Structure N} (e : @Language.Equiv L M N iM iN) {n : ℕ} (a : Fin n → M) :
     @SameAtomicType L M iM n N iN a (e.toEquiv ∘ a) := by
   let _ := iM
   let _ := iN
-  intro idx
-  cases idx with
-  | eq i j => exact e.injective.eq_iff.symm
-  | rel R f =>
-    simp only [AtomicIdx.holds]
-    exact (e.map_rel R (a ∘ f)).symm
+  exact (SameAtomicType.map_equiv (Language.Equiv.refl L M) e).mpr (SameAtomicType.refl a)
 
 /-- **An isomorphism gives a branch**: `z (2 i) = e i` answers element `i` of the left
 structure, `z (2 i + 1) = e⁻¹ i` answers element `i` of the right structure; every initial
