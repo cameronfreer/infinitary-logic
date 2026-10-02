@@ -14,6 +14,10 @@ only `InfinitaryLogic.Scott.BFEquivRelabel` and checks:
   the universes of the sources); neither needs `[L.IsRelational]`.  An `example : T := @lemma`
   checks the type up to definitional equality, which ignores binder kinds; binder kinds are
   exercised by the applications below.
+* **Positional universe order**, pinned by explicit instantiation with a distinct universe at
+  every position: `SameAtomicType.map_equiv.{v, u, w, w', _, _}` and
+  `BFEquiv.map_equiv.{v, u, w, w', _}` (relation universe first), the order both lemmas had in
+  `Scott/OrbitRank.lean`, so explicit instantiations written against it keep working.
 * **Applied**: in the pure set `ℕ`, the swap `0 ↔ 1` carries `(0, 1)` to `(1, 0)`, so the two
   tuples are back-and-forth equivalent at every level; the atomic type of `(0, 1)` is carried
   into `ULift.{1} ℕ`.
@@ -51,6 +55,30 @@ example : ∀ {L : Language.{u, v}} {M : Type w} [L.Structure M] {N : Type w'} [
     {b : Fin n → N},
     BFEquiv (L := L) α n (⇑e ∘ a) (⇑e' ∘ b) ↔ BFEquiv (L := L) α n a b :=
   @BFEquiv.map_equiv
+
+/-! ### Positional universe order, pinned by explicit instantiation -/
+
+section UniverseOrder
+
+variable {L₁ : Language.{0, 1}} {A : Type 2} {B : Type 3} {A' : Type 4} {B' : Type 5}
+  [L₁.Structure A] [L₁.Structure B] [L₁.Structure A'] [L₁.Structure B']
+
+/-- `SameAtomicType.map_equiv.{v, u, w, w', _, _}`: relation universe, function universe,
+the two sources, the two targets.  Every position carries a distinct universe, so any
+permutation of the list fails to typecheck. -/
+example (e : A ≃[L₁] A') (e' : B ≃[L₁] B') {n : ℕ} {a : Fin n → A} {b : Fin n → B} :
+    SameAtomicType (L := L₁) (⇑e ∘ a) (⇑e' ∘ b) ↔ SameAtomicType (L := L₁) a b :=
+  SameAtomicType.map_equiv.{1, 0, 2, 3, 4, 5} e e'
+
+/-- `BFEquiv.map_equiv.{v, u, w, w', _}`: relation universe, function universe, the two
+sources (the targets share them), the ordinal universe. -/
+example {A₂ : Type 2} {B₂ : Type 3} [L₁.Structure A₂] [L₁.Structure B₂]
+    (e : A ≃[L₁] A₂) (e' : B ≃[L₁] B₂) (α : Ordinal.{6}) {n : ℕ} {a : Fin n → A}
+    {b : Fin n → B} :
+    BFEquiv (L := L₁) α n (⇑e ∘ a) (⇑e' ∘ b) ↔ BFEquiv (L := L₁) α n a b :=
+  BFEquiv.map_equiv.{1, 0, 2, 3, 6} e e' α
+
+end UniverseOrder
 
 /-! ### Applied, in the pure set `ℕ` -/
 
@@ -166,8 +194,9 @@ run_cmd do
   logInfo "Map-equiv placement regression guard: OK (SameAtomicType.map_equiv in \
     Scott/AtomicDiagram and BFEquiv.map_equiv in Scott/BFEquivRelabel, argument order, types \
     and universe shapes pinned, without IsRelational, binder kinds exercised by the \
-    applications; applied: (0, 1) and (1, 0) back-and-forth equivalent at every \
-    level of the pure set N through the swap, the atomic type of (0, 1) carried into \
+    applications, positional universe order pinned by explicit instantiation; applied: \
+    (0, 1) and (1, 0) back-and-forth equivalent at every level of the pure set N through the \
+    swap, the atomic type of (0, 1) carried into \
     ULift.{1} N; InfinitaryLogic import closure of Scott/BFEquivRelabel exactly the 7 listed \
     modules, without Karp, descriptive, model-theory or method modules and without \
     Scott/OrbitRank; standard axioms)"
