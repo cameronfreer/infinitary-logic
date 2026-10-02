@@ -29,9 +29,10 @@ an extra hypothesis: it follows from *reflexivity* of the setoid, since distinct
 inequivalent images and every point is equivalent to itself.
 
 The file also carries the cardinal facts these statements are measured against: a nonempty
-perfect set in a complete metric space has size continuum (`Perfect.mk_eq_continuum`, which
-lives in the topology-only module `InfinitaryLogic/Topology/Perfect.lean`, imported here); a
-perfect transversal forces continuum-many classes (`continuum_classes_of_perfect_transversal`,
+perfect set in a complete, second-countable metric space has size continuum
+(`Perfect.mk_eq_continuum`, which lives in the topology-only module
+`InfinitaryLogic/Topology/Perfect.lean`, imported here); a perfect transversal forces
+continuum-many classes (`continuum_classes_of_perfect_transversal`,
 with its two-sided companion); and a Polish space, hence any quotient of one, has at most
 continuum-many points (`mk_le_continuum_of_polish`, `mk_quotient_le_continuum_of_polish`).
 None of them mentions a dichotomy, an equivalence relation being closed, or a splitting

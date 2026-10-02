@@ -38,7 +38,8 @@ example : ∀ {α : Type u} [MetricSpace α] [CompleteSpace α] [SecondCountable
     {C : Set α}, Perfect C → C.Nonempty → #C = Cardinal.continuum :=
   @Perfect.mk_eq_continuum
 
-/-- One universe parameter, the carrier's, pinned by explicit instantiation. -/
+/-- The carrier's universe is the first positional parameter, pinned by explicit instantiation;
+the count (exactly one) is checked by `levelParams` below. -/
 example {α : Type 3} [MetricSpace α] [CompleteSpace α] [SecondCountableTopology α]
     {C : Set α} (hperf : Perfect C) (hne : C.Nonempty) : #C = Cardinal.continuum.{3} :=
   Perfect.mk_eq_continuum.{3} hperf hne
@@ -117,8 +118,9 @@ run_cmd do
     let bad := axs.toList.filter fun a ↦ !standardAxioms.contains a
     unless bad.isEmpty do throwError "[NONSTANDARD AXIOMS] {n} uses {bad}"
   logInfo "Perfect placement regression guard: OK (Perfect.mk_eq_continuum in \
-    Topology/Perfect, statement and argument order pinned, one universe parameter pinned by \
-    explicit instantiation; applied: the real line has size continuum; InfinitaryLogic import \
+    Topology/Perfect, statement and argument order pinned, one universe parameter \
+    (level-parameter count), the carrier's first (explicit instantiation); applied: the real \
+    line has size continuum; InfinitaryLogic import \
     closure of Topology/Perfect exactly the module itself, without Scott, descriptive, \
     model-theory, Karp, Lomega1omega, methods, admissible or conditional modules; standard \
     axioms)"
