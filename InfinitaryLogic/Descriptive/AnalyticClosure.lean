@@ -10,8 +10,8 @@ import Mathlib.MeasureTheory.Constructions.Polish.Basic
 
 Closure properties of analytic sets that Mathlib lacks: finite intersections
 (`MeasureTheory.AnalyticSet.inter`, and `MeasureTheory.AnalyticSet.inter_measurableSet` for
-intersection with a Borel set), products (`MeasureTheory.AnalyticSet.prod`), and the
-off-diagonal of a closed subset of a Polish space (`MeasureTheory.analyticSet_offDiag`).  The
+intersection with a Borel set), products (`MeasureTheory.AnalyticSet.prod`), and off-diagonals
+in a Hausdorff space (`MeasureTheory.AnalyticSet.offDiag`).  The
 statements are Mathlib-shaped; they are used by the `G₀` dichotomy
 (`InfinitaryLogic/Descriptive/G0Dichotomy.lean`), by the back-and-forth separation
 (`InfinitaryLogic/Descriptive/BFSeparation.lean`), and by thinness from countably many
@@ -40,13 +40,24 @@ protected theorem AnalyticSet.prod {β : Type*} [TopologicalSpace β] {A : Set �
   rw [← Set.range_prodMap]
   exact analyticSet_range_of_polishSpace (hf.prodMap hg)
 
-/-- **The off-diagonal of a closed set is analytic** in a Polish space: it is `P ×ˢ P` minus the
-diagonal (`Set.prod_sdiff_diagonal`), the intersection of a closed set with the complement of the
-closed diagonal, and both are analytic in the Polish space `α × α`. -/
-theorem analyticSet_offDiag [PolishSpace α] {P : Set α} (hP : IsClosed P) :
+/-- **The off-diagonal of an analytic set is analytic** in a Hausdorff space: if `P` is the range
+of a continuous `f` on a Polish space, then `P.offDiag` is the image under `Prod.map f f` of the
+open set of pairs with distinct values. -/
+protected theorem AnalyticSet.offDiag [T2Space α] {P : Set α} (hP : AnalyticSet P) :
     AnalyticSet P.offDiag := by
-  rw [← Set.prod_sdiff_diagonal, Set.sdiff_eq]
-  refine (hP.prod hP).analyticSet.inter ?_
-  simpa using isClosed_diagonal.isOpen_compl.analyticSet_image continuous_id
+  obtain ⟨β, hβt, hβp, f, hf, rfl⟩ := analyticSet_iff_exists_polishSpace_range.mp hP
+  have hopen : IsOpen {q : β × β | f q.1 ≠ f q.2} :=
+    (isClosed_eq (hf.comp continuous_fst) (hf.comp continuous_snd)).isOpen_compl
+  have : (Set.range f).offDiag = Prod.map f f '' {q | f q.1 ≠ f q.2} := by
+    ext ⟨x, y⟩
+    constructor
+    · rintro ⟨⟨a, rfl⟩, ⟨b, rfl⟩, h⟩
+      exact ⟨(a, b), h, rfl⟩
+    · rintro ⟨⟨a, b⟩, h, he⟩
+      simp only [Prod.map, Prod.mk.injEq] at he
+      obtain ⟨rfl, rfl⟩ := he
+      exact ⟨⟨a, rfl⟩, ⟨b, rfl⟩, h⟩
+  rw [this]
+  exact hopen.analyticSet_image (hf.prodMap hf)
 
 end MeasureTheory

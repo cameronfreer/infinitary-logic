@@ -2,19 +2,23 @@
 Regression guard for thinness from countably many back-and-forth classes at every level
 (`InfinitaryLogic/Descriptive/BFScattered.lean`, its sentence form
 `InfinitaryLogic/Descriptive/BFScatteredSentence.lean`, and the off-diagonal lemma
-`MeasureTheory.analyticSet_offDiag` in `InfinitaryLogic/Descriptive/AnalyticClosure.lean`).
+`MeasureTheory.AnalyticSet.offDiag` in `InfinitaryLogic/Descriptive/AnalyticClosure.lean`).
 
 Every new public declaration is *applied*, not only listed for its axioms.
 
-* **Generic applications.**  `codeBFEquivSetoid`, `codeBFEquivSetoid_r_iff`, `offDiag_noniso`
-  and the definition of `BFScattered` for an arbitrary relational `Language.{u, v}` with no
-  countability instance in scope; `not_countable_of_perfect`,
-  `exists_forall_not_codeBFEquiv_of_isClosed`, `isThinOn_of_bfScattered`,
-  `not_hasCantorAntichainOn_of_bfScattered` and `isThinOnNatModels_of_bfScattered` with
-  countably many relation symbols; `analyticSet_offDiag` in an arbitrary Polish space;
+* **Generic applications.**  `codeBFEquivSetoid`, `codeBFEquivSetoid_r_iff`,
+  `not_structureIso_of_mem_offDiag`, the definition of `BFScattered`,
+  `exists_forall_not_codeBFEquiv_of_analyticSet` and `not_hasCantorAntichainOn_of_bfScattered`
+  for an arbitrary relational `Language.{u, v}` with no countability instance in scope;
+  `isThinOn_of_bfScattered` and `Sentenceω.isThinOnNatModels_of_bfScattered` with countably many
+  relation symbols; `AnalyticSet.offDiag` in an arbitrary Hausdorff space;
   `bfEquivSetoid_eq_comap` by `rfl`.
-* **Arbitrary class.**  `isThinOn_of_bfScattered` takes no analyticity, Borel or invariance
-  hypothesis on `K`: the generic application has none in scope.
+* **Signature generality.**  The separation lemma and the Cantor endpoint are also applied to a
+  language with uncountably many unary symbols (one for each point of Cantor space), and the
+  types of the new declarations are inspected: an instance `Countable (Σ l, L.Relations l)`
+  occurs exactly in `isThinOn_of_bfScattered` and `Sentenceω.isThinOnNatModels_of_bfScattered`.
+* **Arbitrary class.**  The Cantor endpoint and the thinness theorem take no analyticity, Borel
+  or invariance hypothesis on `K`: the generic applications have none in scope.
 * **Positive.**  A countable set of codes (for instance a single code) is back-and-forth
   scattered, hence thin and free of Cantor antichains; in the pure-set language (no symbols,
   universes `{1, 2}`) every sentence is thin through the sentence form.
@@ -22,12 +26,14 @@ Every new public declaration is *applied*, not only listed for its axioms.
   unary relation symbols, all codes agree at level `0` (there is no nullary symbol), so the set
   of all codes has exactly one `CodeBFEquiv 0`-class; but level `1` separates the codes of a
   continuous Cantor family (a unary symbol holds everywhere in one and nowhere in the other), so
-  the level-`1` quotient is uncountable, the set of all codes is not `BFScattered`, and it is
+  the level-`1` quotient is uncountable.  Directly from that, and not through the theorems under
+  test, the set of all codes is not `BFScattered`; and it carries a Cantor antichain, so it is
   not thin.  Countably many classes at level `0` alone does not give thinness.
-* **Level convention.**  The statement shape of `exists_forall_not_codeBFEquiv_of_isClosed` is
-  pinned by type ascription: an `Ordinal.{0}` below `Ordinal.omega 1`, used as
-  `CodeBFEquiv η` with no lift and no offset.  On the closed Cantor family above, the returned
-  level is at least `1` (level `0` separates nothing), and level `1` itself separates it.
+* **Level convention.**  The statement shape of `exists_forall_not_codeBFEquiv_of_analyticSet`
+  is pinned by type ascription: an `Ordinal.{0}` below `Ordinal.omega 1`, used as
+  `CodeBFEquiv η` with no lift and no offset.  On the Cantor family above, the returned level is
+  nonzero (level `0` separates nothing) and level `1` separates; this is consistent with the
+  convention but does not by itself pin it, since any level at least `1` also separates.
 * **Standard axioms** for the new declarations and the concrete regressions.
 * **Exact import closure** of `Descriptive.BFScattered`: the closure of `Descriptive.BFSeparation`
   plus the module itself.  It needs no `Scott.BFEquivRelabel`, and it contains no `Karp`,
@@ -64,34 +70,56 @@ theorem generic_offDiag_regression {L : Language.{u, v}} [L.IsRelational]
     {P : Set (StructureSpace L)}
     (hP : ∀ x ∈ P, ∀ y ∈ P, (structureIsoSetoid L).r x y → x = y) :
     ∀ p ∈ P.offDiag, ¬ (structureIsoSetoid L).r p.1 p.2 :=
-  offDiag_noniso hP
+  not_structureIso_of_mem_offDiag hP
 
-/-- The off-diagonal of a closed set in an arbitrary Polish space is analytic. -/
-theorem generic_analyticSet_offDiag_regression {X : Type*} [TopologicalSpace X] [PolishSpace X]
-    {P : Set X} (hP : IsClosed P) : AnalyticSet P.offDiag :=
-  analyticSet_offDiag hP
+/-- The off-diagonal of an analytic set in an arbitrary Hausdorff space is analytic, and so is
+that of a closed set in a Polish space. -/
+theorem generic_analyticSet_offDiag_regression {X : Type*} [TopologicalSpace X] [T2Space X]
+    {P : Set X} (hP : AnalyticSet P) {Y : Type*} [TopologicalSpace Y] [PolishSpace Y]
+    {Q : Set Y} (hQ : IsClosed Q) : AnalyticSet P.offDiag ∧ AnalyticSet Q.offDiag :=
+  ⟨hP.offDiag, hQ.analyticSet.offDiag⟩
 
-/-- A nonempty perfect set of codes is uncountable. -/
-theorem generic_perfect_regression {L : Language.{u, v}} [Countable (Σ l, L.Relations l)]
-    {P : Set (StructureSpace L)} (hperf : Perfect P) (hne : P.Nonempty) : ¬ P.Countable :=
-  not_countable_of_perfect hperf hne
-
-/-- **Level convention pinned by type ascription**: `Ordinal.{0}`, below `Ordinal.omega 1`,
-used as `CodeBFEquiv η` with no lift and no offset. -/
+/-- **Level convention pinned by type ascription**, with no countability: `Ordinal.{0}`, below
+`Ordinal.omega 1`, used as `CodeBFEquiv η` with no lift and no offset. -/
 theorem generic_level_regression {L : Language.{u, v}} [L.IsRelational]
-    [Countable (Σ l, L.Relations l)] {P : Set (StructureSpace L)} (hP : IsClosed P)
+    {P : Set (StructureSpace L)} (hP : AnalyticSet P)
     (hanti : ∀ x ∈ P, ∀ y ∈ P, (structureIsoSetoid L).r x y → x = y) :
     ∃ η : Ordinal.{0}, η < Ordinal.omega 1 ∧
       ∀ x ∈ P, ∀ y ∈ P, x ≠ y → ¬ CodeBFEquiv η x y :=
-  (exists_forall_not_codeBFEquiv_of_isClosed hP hanti :
+  (exists_forall_not_codeBFEquiv_of_analyticSet hP hanti :
     ∃ η : Ordinal.{0}, η < Ordinal.omega 1 ∧ ∀ x ∈ P, ∀ y ∈ P, x ≠ y → ¬ CodeBFEquiv η x y)
 
-/-- **Arbitrary class**: thinness and the Cantor-antichain form for any back-and-forth
-scattered `K`, with no definability hypothesis on `K` in scope. -/
+/-- **Arbitrary class, no countability**: no Cantor antichain on any back-and-forth scattered
+`K`, with no countability instance and no definability hypothesis on `K` in scope. -/
+theorem generic_cantor_regression {L : Language.{u, v}} [L.IsRelational]
+    {K : Set (StructureSpace L)} (hK : BFScattered K) :
+    ¬ HasCantorAntichainOn (structureIsoSetoid L) K :=
+  not_hasCantorAntichainOn_of_bfScattered hK
+
+/-- **Arbitrary class**: thinness for any back-and-forth scattered `K`, with countably many
+relation symbols and no definability hypothesis on `K` in scope. -/
 theorem generic_thin_regression {L : Language.{u, v}} [L.IsRelational]
     [Countable (Σ l, L.Relations l)] {K : Set (StructureSpace L)} (hK : BFScattered K) :
-    IsThinOn (structureIsoSetoid L) K ∧ ¬ HasCantorAntichainOn (structureIsoSetoid L) K :=
-  ⟨isThinOn_of_bfScattered hK, not_hasCantorAntichainOn_of_bfScattered hK⟩
+    IsThinOn (structureIsoSetoid L) K :=
+  isThinOn_of_bfScattered hK
+
+/-- Uncountably many unary relation symbols, one for each point of Cantor space. -/
+def bigLang : Language.{0, 0} where
+  Functions _ := Empty
+  Relations l := { _x : ℕ → Bool // l = 1 }
+
+instance : bigLang.IsRelational := fun _ ↦ inferInstanceAs (IsEmpty Empty)
+
+/-- **The separation lemma and the Cantor endpoint in a language with uncountably many
+symbols**: no `Countable` instance for its symbols exists or is assumed. -/
+theorem bigLang_regression {P K : Set (StructureSpace bigLang)} (hP : AnalyticSet P)
+    (hanti : ∀ x ∈ P, ∀ y ∈ P, (structureIsoSetoid bigLang).r x y → x = y)
+    (hK : BFScattered K) :
+    (∃ η : Ordinal.{0}, η < Ordinal.omega 1 ∧
+      ∀ x ∈ P, ∀ y ∈ P, x ≠ y → ¬ CodeBFEquiv η x y) ∧
+      ¬ HasCantorAntichainOn (structureIsoSetoid bigLang) K :=
+  ⟨exists_forall_not_codeBFEquiv_of_analyticSet hP hanti,
+    not_hasCantorAntichainOn_of_bfScattered hK⟩
 
 /-- The sentence form, and the sentence setoid as a restriction. -/
 theorem generic_sentence_regression {L : Language.{u, v}} [L.IsRelational]
@@ -99,7 +127,7 @@ theorem generic_sentence_regression {L : Language.{u, v}} [L.IsRelational]
     (h : ∀ η : Ordinal.{0}, η < Ordinal.omega 1 → Countable (Quotient (bfEquivSetoid φ η))) :
     φ.IsThinOnNatModels ∧ ∀ η : Ordinal.{0},
       bfEquivSetoid φ η = (codeBFEquivSetoid L η).comap (Subtype.val : ModelsOf φ → _) :=
-  ⟨isThinOnNatModels_of_bfScattered h, bfEquivSetoid_eq_comap φ⟩
+  ⟨Sentenceω.isThinOnNatModels_of_bfScattered h, bfEquivSetoid_eq_comap φ⟩
 
 /-! ### Positive: countable sets, and the pure-set language -/
 
@@ -134,7 +162,7 @@ instance : Subsingleton (StructureSpace pureLang) :=
 
 /-- **Positive regression, sentence form**: every sentence of the pure-set language is thin. -/
 theorem pureSet_sentence_regression (φ : pureLang.Sentenceω) : φ.IsThinOnNatModels :=
-  isThinOnNatModels_of_bfScattered fun _ _ ↦ inferInstance
+  Sentenceω.isThinOnNatModels_of_bfScattered fun _ _ ↦ inferInstance
 
 /-! ### Necessity: countably many unary symbols -/
 
@@ -214,23 +242,29 @@ theorem necessity_regression :
         (Subtype.val : ↥(univ : Set (StructureSpace unaryLang)) → _))) ∧
       ¬ BFScattered (univ : Set (StructureSpace unaryLang)) ∧
       ¬ IsThinOn (structureIsoSetoid unaryLang) univ := by
-  have hthin : ¬ IsThinOn (structureIsoSetoid unaryLang) univ :=
-    fun h ↦ h.no_cantorAntichain hasCantorAntichainOn_univ
-  refine ⟨codeBFEquiv_zero, ?_, fun h ↦ ?_, fun h ↦ hthin (isThinOn_of_bfScattered h), hthin⟩
-  · have : Subsingleton (Quotient ((codeBFEquivSetoid unaryLang 0).comap
-        (Subtype.val : ↥(univ : Set (StructureSpace unaryLang)) → _))) :=
-      ⟨fun a b ↦ Quotient.inductionOn₂ a b fun c d ↦ Quotient.sound (codeBFEquiv_zero c d)⟩
-    infer_instance
-  · refine not_countable_cantor (Function.Injective.countable
+  have h1 : ¬ Countable (Quotient ((codeBFEquivSetoid unaryLang 1).comap
+      (Subtype.val : ↥(univ : Set (StructureSpace unaryLang)) → _))) := by
+    intro _
+    refine not_countable_cantor (Function.Injective.countable
       (f := fun x ↦ (⟦⟨cantorCode x, trivial⟩⟧ : Quotient ((codeBFEquivSetoid unaryLang 1).comap
         (Subtype.val : ↥(univ : Set (StructureSpace unaryLang)) → _)))) fun x y hxy ↦ ?_)
     by_contra hne
     exact not_codeBFEquiv_one hne (Quotient.exact hxy)
+  -- `¬ BFScattered` directly from level `1`, not through the theorems under test
+  have h1ω : (1 : Ordinal.{0}) < Ordinal.omega 1 :=
+    Ordinal.one_lt_omega0.trans Ordinal.omega0_lt_omega_one
+  refine ⟨codeBFEquiv_zero, ?_, h1, fun h ↦ h1 (h 1 h1ω),
+    fun h ↦ h.no_cantorAntichain hasCantorAntichainOn_univ⟩
+  · have : Subsingleton (Quotient ((codeBFEquivSetoid unaryLang 0).comap
+        (Subtype.val : ↥(univ : Set (StructureSpace unaryLang)) → _))) :=
+      ⟨fun a b ↦ Quotient.inductionOn₂ a b fun c d ↦ Quotient.sound (codeBFEquiv_zero c d)⟩
+    infer_instance
 
-/-- **Level convention on a concrete closed antichain**: the range of the Cantor family is
-closed and pairwise non-isomorphic; the level returned by
-`exists_forall_not_codeBFEquiv_of_isClosed` is at least `1`, since level `0` separates nothing,
-and level `1` itself separates it. -/
+/-- **The returned level on a concrete antichain**: the range of the Cantor family is analytic
+and pairwise non-isomorphic; the level returned by `exists_forall_not_codeBFEquiv_of_analyticSet`
+is nonzero, since level `0` separates nothing, and level `1` itself separates the range.  This
+is consistent with the no-offset convention but does not by itself pin it: the type ascription
+in `generic_level_regression` does. -/
 theorem level_regression :
     (∃ η : Ordinal.{0}, η < Ordinal.omega 1 ∧ 1 ≤ η ∧
       ∀ x ∈ range cantorCode, ∀ y ∈ range cantorCode, x ≠ y → ¬ CodeBFEquiv η x y) ∧
@@ -241,8 +275,8 @@ theorem level_regression :
     by_contra hne
     exact cantorCode_noniso (fun hab ↦ hne (congrArg _ hab)) h
   obtain ⟨η, hη, hsep⟩ :=
-    exists_forall_not_codeBFEquiv_of_isClosed (isCompact_range continuous_cantorCode).isClosed
-      hanti
+    exists_forall_not_codeBFEquiv_of_analyticSet
+      (isCompact_range continuous_cantorCode).isClosed.analyticSet hanti
   refine ⟨⟨η, hη, Order.one_le_iff_ne_zero.mpr fun h0 ↦ ?_, hsep⟩, ?_⟩
   · subst h0
     have hne : cantorCode (fun _ ↦ true) ≠ cantorCode (fun _ ↦ false) := fun h ↦
@@ -262,17 +296,46 @@ open BFScatteredRegressions
 /-- The declarations whose axioms are audited. -/
 def headline : List Name :=
   [`FirstOrder.Language.codeBFEquivSetoid, `FirstOrder.Language.codeBFEquivSetoid_r_iff,
-   `FirstOrder.Language.BFScattered, `FirstOrder.Language.offDiag_noniso,
-   `FirstOrder.Language.not_countable_of_perfect,
-   `FirstOrder.Language.exists_forall_not_codeBFEquiv_of_isClosed,
-   `FirstOrder.Language.isThinOn_of_bfScattered,
+   `FirstOrder.Language.BFScattered, `FirstOrder.Language.not_structureIso_of_mem_offDiag,
+   `FirstOrder.Language.exists_forall_not_codeBFEquiv_of_analyticSet,
    `FirstOrder.Language.not_hasCantorAntichainOn_of_bfScattered,
+   `FirstOrder.Language.isThinOn_of_bfScattered,
    `FirstOrder.Language.bfEquivSetoid_eq_comap,
-   `FirstOrder.Language.isThinOnNatModels_of_bfScattered,
-   `MeasureTheory.analyticSet_offDiag,
+   `FirstOrder.Language.Sentenceω.isThinOnNatModels_of_bfScattered,
+   `MeasureTheory.AnalyticSet.offDiag,
    `BFScatteredRegressions.singleton_regression,
+   `BFScatteredRegressions.generic_cantor_regression,
+   `BFScatteredRegressions.bigLang_regression,
    `BFScatteredRegressions.pureSet_sentence_regression,
    `BFScatteredRegressions.necessity_regression, `BFScatteredRegressions.level_regression]
+
+/-- The new declarations whose types must not assume countably many relation symbols. -/
+def countabilityFree : List Name :=
+  [`FirstOrder.Language.codeBFEquivSetoid, `FirstOrder.Language.codeBFEquivSetoid_r_iff,
+   `FirstOrder.Language.BFScattered, `FirstOrder.Language.not_structureIso_of_mem_offDiag,
+   `FirstOrder.Language.exists_forall_not_codeBFEquiv_of_analyticSet,
+   `FirstOrder.Language.not_hasCantorAntichainOn_of_bfScattered,
+   `FirstOrder.Language.bfEquivSetoid_eq_comap, `MeasureTheory.AnalyticSet.offDiag]
+
+/-- The new declarations whose types assume countably many relation symbols. -/
+def countabilityUsing : List Name :=
+  [`FirstOrder.Language.isThinOn_of_bfScattered,
+   `FirstOrder.Language.Sentenceω.isThinOnNatModels_of_bfScattered]
+
+run_cmd do
+  let env ← getEnv
+  -- an instance `Countable (Σ l, _)`; a countable quotient in a hypothesis does not count
+  let mentionsCountableSigma (n : Name) : Elab.Command.CommandElabM Bool := do
+    let some ci := env.find? n | throwError "declaration {n} not found"
+    return (ci.type.find? fun e ↦
+      e.isAppOfArity ``Countable 1 && e.appArg!.isAppOf ``Sigma).isSome
+  for n in countabilityFree do
+    if ← mentionsCountableSigma n then
+      throwError "[COUNTABILITY DRIFT] the type of {n} assumes countably many symbols"
+  for n in countabilityUsing do
+    unless ← mentionsCountableSigma n do
+      throwError "[COUNTABILITY DRIFT] the type of {n} no longer assumes countably many \
+        symbols; update the guard and the module docstring"
 
 /-- The standard axioms. -/
 def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
@@ -344,13 +407,16 @@ run_cmd do
   unless extra.isEmpty && missing.isEmpty do
     throwError "[CLOSURE DRIFT] the InfinitaryLogic closure of {target} is {ilModules}; \
       update allowedClosure deliberately (extra {extra}, missing {missing})"
-  logInfo m!"bf scattered regression guard: OK (applied: the setoid, BFScattered and the \
-    off-diagonal lemma for an arbitrary relational Language.\{u, v} with no countability; \
-    analyticSet_offDiag in an arbitrary Polish space; the separating level pinned as an \
-    Ordinal.\{0} below omega 1 with no lift or offset; thinness and no Cantor antichain for an \
-    arbitrary BFScattered class; the sentence form; a single code and every pure-set sentence \
-    thin; necessity: countably many unary symbols, one level-0 class, uncountably many level-1 \
-    classes, not BFScattered, not thin, and a closed Cantor antichain separated at a level >= 1 \
-    and at level 1; standard axioms; import closure of {ilModules.length} InfinitaryLogic \
-    modules, exactly as listed, with no Karp, ModelTheory, Methods, Admissible, Conditional or \
-    ScottProcess module and no Scott.BFEquivRelabel)"
+  logInfo m!"bf scattered regression guard: OK (applied: the setoid, BFScattered, the \
+    off-diagonal lemma, the analytic separation lemma and the Cantor endpoint for an arbitrary \
+    relational Language.\{u, v} with no countability; the separation lemma and the Cantor \
+    endpoint in a language with uncountably many symbols; Countable (Σ l, _) in the types of \
+    exactly isThinOn_of_bfScattered and the sentence form; AnalyticSet.offDiag in an arbitrary \
+    Hausdorff space; the separating level pinned as an Ordinal.\{0} below omega 1 with no lift \
+    or offset; thinness for an arbitrary BFScattered class; the sentence form; a single code \
+    and every pure-set sentence thin; necessity: countably many unary symbols, one level-0 \
+    class, uncountably many level-1 classes, hence not BFScattered, and not thin; the returned \
+    level on the Cantor family is nonzero and level 1 separates it; standard axioms; import \
+    closure of {ilModules.length} InfinitaryLogic modules, exactly as listed, with no Karp, \
+    ModelTheory, Methods, Admissible, Conditional or ScottProcess module and no \
+    Scott.BFEquivRelabel)"

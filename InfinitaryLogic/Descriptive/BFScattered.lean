@@ -10,41 +10,44 @@ import InfinitaryLogic.Descriptive.BFSeparation
 
 A set `K` of codes of countable relational structures is **back-and-forth scattered**
 (`BFScattered K`) when, for every countable level `η < ω₁`, the restriction of `CodeBFEquiv η` to
-`K` has only countably many classes.  Such a `K` is thin: it contains no nonempty perfect set of
-pairwise non-isomorphic codes (`isThinOn_of_bfScattered`), and so it carries no Cantor antichain
-for isomorphism (`not_hasCantorAntichainOn_of_bfScattered`).  The class `K` is arbitrary; no
-analyticity, Borelness or isomorphism invariance of `K` is assumed.
+`K` has only countably many classes.  Such a `K` carries no Cantor antichain for isomorphism
+(`not_hasCantorAntichainOn_of_bfScattered`, for every relational language), and, for countably
+many relation symbols, it is thin: it contains no nonempty perfect set of pairwise
+non-isomorphic codes (`isThinOn_of_bfScattered`).  The class `K` is arbitrary; no analyticity,
+Borelness or isomorphism invariance of `K` is assumed.
 
 ## Main declarations
 
 * `codeBFEquivSetoid L η`: `CodeBFEquiv η` as an equivalence relation on all codes.
 * `BFScattered K`: every level `η < ω₁` has countably many classes on `K`.
-* `exists_forall_not_codeBFEquiv_of_isClosed`: a closed set of pairwise non-isomorphic codes is
-  separated pairwise at one level `η < ω₁`.
-* `not_countable_of_perfect`: a nonempty perfect set of codes is uncountable.
-* `isThinOn_of_bfScattered`, `not_hasCantorAntichainOn_of_bfScattered`: the thinness theorem
-  and its Cantor-antichain form.
+* `exists_forall_not_codeBFEquiv_of_analyticSet`: an analytic set of pairwise non-isomorphic
+  codes is separated pairwise at one level `η < ω₁`.
+* `not_hasCantorAntichainOn_of_bfScattered`: no Cantor antichain, with no countability of the
+  language.
+* `isThinOn_of_bfScattered`: thinness, for countably many relation symbols.
 
 The form for the models of a sentence, with the hypothesis read through `bfEquivSetoid φ η`, is
-`isThinOnNatModels_of_bfScattered` in `Descriptive/BFScatteredSentence.lean`, kept apart so that
-this module does not import the counting theory.
+`Sentenceω.isThinOnNatModels_of_bfScattered` in `Descriptive/BFScatteredSentence.lean`, kept
+apart so that this module does not import the counting theory.
 
 ## The proof
 
-Let `P ⊆ K` be nonempty, perfect, and pairwise non-isomorphic.
+Let `f` be a continuous map from Cantor space into `K` sending distinct points to
+non-isomorphic codes.
 
-1. The pairs of distinct points of `P` form the off-diagonal `P.offDiag`, which is analytic
-   because `P` is closed (`MeasureTheory.analyticSet_offDiag`), and which contains no isomorphic
-   pair (`offDiag_noniso`).
-2. Uniform back-and-forth separation (`exists_uniform_bfSeparation`) applied to `P.offDiag`
-   gives one level `η < ω₁` at which no two distinct points of `P` are back-and-forth
-   equivalent.
-3. Hence the class map of `codeBFEquivSetoid L η` is injective on `P`.  Its image lies among the
-   classes met by `K`, which correspond to the classes of the restriction to `K` by the second
-   isomorphism theorem (`Setoid.comapQuotientEquiv`); these are countable by hypothesis, so `P`
-   is countable.
-4. A nonempty perfect set of codes is uncountable (`not_countable_of_perfect`, from
-   `Perfect.mk_eq_continuum`), a contradiction.
+1. The range of `f` is analytic (a continuous image of the Polish space `ℕ → Bool`), so its
+   off-diagonal, the pairs of distinct points of the range, is analytic
+   (`MeasureTheory.AnalyticSet.offDiag`, in the Hausdorff space of codes), and it contains no
+   isomorphic pair (`not_structureIso_of_mem_offDiag`).
+2. Uniform back-and-forth separation (`exists_uniform_bfSeparation`) applied to that off-diagonal
+   gives one level `η < ω₁` at which no two distinct points of the range are back-and-forth
+   equivalent (`exists_forall_not_codeBFEquiv_of_analyticSet`).
+3. Hence `x ↦ [f x]`, the class of `f x` in the quotient of `K` by the restriction of
+   `codeBFEquivSetoid L η`, is injective.  That quotient is countable by hypothesis, while Cantor
+   space is not.
+
+Thinness follows: a perfect antichain in a complete metric space yields a Cantor antichain
+(`IsThinOn.of_no_cantorAntichain`).
 
 ## Interpretation choices
 
@@ -57,17 +60,19 @@ Let `P ⊆ K` be nonempty, perfect, and pairwise non-isomorphic.
 * **Levels.**  The separating level is exactly the one returned by
   `exists_uniform_bfSeparation`: an `Ordinal.{0}` below `Ordinal.omega 1`, with no lift and no
   offset.
-* **Countability of the language.**  `[Countable (Σ l, L.Relations l)]` is used only through the
-  Polish structure of the space of codes: for the analyticity of the off-diagonal (step 1) and
-  for the uncountability of nonempty perfect sets (step 4).  The setoid, the definition of
-  `BFScattered`, and `offDiag_noniso` need no countability.
-* **No definability of `K`.**  The analytic set fed to the separation theorem is the off-diagonal
-  of the closed set `P`, not anything built from `K`.
+* **Countability of the language.**  `[Countable (Σ l, L.Relations l)]` is used once, in
+  `isThinOn_of_bfScattered`, to equip the space of codes with a complete metric (it is Polish)
+  so that a perfect antichain yields a Cantor antichain.  The Cantor-antichain theorem, the
+  separation lemma, the setoid and `BFScattered` need no countability: analyticity of the
+  off-diagonal needs only that the space of codes is Hausdorff, and `exists_uniform_bfSeparation`
+  assumes no countability.
+* **No definability of `K`.**  The analytic set fed to the separation theorem is built from the
+  Cantor antichain, not from `K`.
 
 ## References
 
-* A. Montalbán, *Computable Structure Theory: Beyond the Arithmetic*, draft, §XII.1 (scattered
-  sentences: countably many classes at every countable level).
+* A. Montalbán, *Computable Structure Theory: Beyond the Arithmetic*, draft, Chapter XII,
+  §XII.1 (scattered sentences: countably many classes at every countable level).
 * A. S. Kechris, *Classical Descriptive Set Theory*, Graduate Texts in Mathematics 156,
   Springer, 1995, §31.A (the boundedness theorem behind `exists_uniform_bfSeparation`).
 
@@ -110,62 +115,76 @@ def BFScattered (K : Set (StructureSpace L)) : Prop :=
   ∀ η : Ordinal.{0}, η < Ordinal.omega 1 →
     Countable (Quotient ((codeBFEquivSetoid L η).comap (Subtype.val : K → StructureSpace L)))
 
-/-! ### The off-diagonal of a pairwise non-isomorphic set -/
+/-! ### Uniform separation of an analytic antichain -/
 
 /-- **The off-diagonal of a pairwise non-isomorphic set of codes has no isomorphic pair.**  The
 hypothesis is the antichain clause of `HasPerfectAntichainOn`. -/
-theorem offDiag_noniso {P : Set (StructureSpace L)}
+theorem not_structureIso_of_mem_offDiag {P : Set (StructureSpace L)}
     (hP : ∀ x ∈ P, ∀ y ∈ P, (structureIsoSetoid L).r x y → x = y) :
     ∀ p ∈ P.offDiag, ¬ (structureIsoSetoid L).r p.1 p.2 :=
   fun _ hp hr ↦ hp.2.2 (hP _ hp.1 _ hp.2.1 hr)
 
-/-! ### Thinness -/
-
-variable [Countable (Σ l, L.Relations l)]
-
 omit [L.IsRelational] in
-/-- **A nonempty perfect set of codes is uncountable**: it has the cardinality of the continuum
-(`Perfect.mk_eq_continuum`, for a complete metric inducing the Polish topology of the codes). -/
-theorem not_countable_of_perfect {P : Set (StructureSpace L)} (hperf : Perfect P)
-    (hne : P.Nonempty) : ¬ P.Countable := by
-  -- a complete metric compatible with the topology; `hperf` is unaffected
-  let := TopologicalSpace.upgradeIsCompletelyMetrizable (StructureSpace L)
-  rw [← le_aleph0_iff_set_countable, hperf.mk_eq_continuum hne, not_le]
-  exact aleph0_lt_continuum
+/-- The space of codes is Hausdorff for every language (a product of discrete spaces); with
+countably many relation symbols this also follows from the Polish instance. -/
+private theorem t2Space_structureSpace : T2Space (StructureSpace L) :=
+  inferInstanceAs (T2Space (StructureSpaceOn L ℕ))
 
-/-- **One back-and-forth level separates a closed antichain**: for a closed set `P` of pairwise
-non-isomorphic codes there is `η < ω₁` at which no two distinct points of `P` are back-and-forth
-equivalent.  This is `exists_uniform_bfSeparation` for the off-diagonal of `P`, and the level is
-the one it returns. -/
-theorem exists_forall_not_codeBFEquiv_of_isClosed {P : Set (StructureSpace L)}
-    (hP : IsClosed P) (hanti : ∀ x ∈ P, ∀ y ∈ P, (structureIsoSetoid L).r x y → x = y) :
+attribute [local instance] t2Space_structureSpace
+
+/-- **One back-and-forth level separates an analytic antichain**: for an analytic set `P` of
+pairwise non-isomorphic codes there is `η < ω₁` at which no two distinct points of `P` are
+back-and-forth equivalent.  This is `exists_uniform_bfSeparation` for the off-diagonal of `P`,
+and the level is the one it returns.  No countability of the relation symbols is assumed. -/
+theorem exists_forall_not_codeBFEquiv_of_analyticSet {P : Set (StructureSpace L)}
+    (hP : AnalyticSet P) (hanti : ∀ x ∈ P, ∀ y ∈ P, (structureIsoSetoid L).r x y → x = y) :
     ∃ η : Ordinal.{0}, η < Ordinal.omega 1 ∧
       ∀ x ∈ P, ∀ y ∈ P, x ≠ y → ¬ CodeBFEquiv η x y := by
   obtain ⟨η, hη, hsep⟩ :=
-    exists_uniform_bfSeparation (analyticSet_offDiag hP) (offDiag_noniso hanti)
+    exists_uniform_bfSeparation hP.offDiag (not_structureIso_of_mem_offDiag hanti)
   exact ⟨η, hη, fun x hx y hy hxy ↦ hsep (x, y) (mem_offDiag.mpr ⟨hx, hy, hxy⟩)⟩
 
-/-- **Thinness from countably many back-and-forth classes at every level**: a back-and-forth
-scattered set of codes contains no nonempty perfect set of pairwise non-isomorphic codes.  No
-definability of `K` is assumed. -/
-theorem isThinOn_of_bfScattered {K : Set (StructureSpace L)} (hK : BFScattered K) :
-    IsThinOn (structureIsoSetoid L) K := by
-  rintro ⟨P, hperf, hne, hPK, hanti⟩
-  obtain ⟨η, hη, hsep⟩ := exists_forall_not_codeBFEquiv_of_isClosed hperf.closed hanti
-  -- the classes met by `K` are the classes of the restriction (second isomorphism theorem)
-  have hcount := (Setoid.comapQuotientEquiv (Subtype.val : K → StructureSpace L)
-    (codeBFEquivSetoid L η)).symm.countable_iff.mpr (hK η hη)
-  rw [countable_coe_iff, range_comp, Subtype.range_coe] at hcount
-  refine not_countable_of_perfect hperf hne
-    (MapsTo.countable_of_injOn (fun x hx ↦ mem_image_of_mem _ (hPK hx))
-      (fun x hx y hy hxy ↦ ?_) hcount)
-  by_contra hne
-  exact hsep x hx y hy hne (Quotient.exact hxy)
+/-! ### No Cantor antichain, and thinness -/
 
-/-- **No Cantor antichain on a back-and-forth scattered set**: the Cantor-antichain form of
-`isThinOn_of_bfScattered`, through `IsThinOn.no_cantorAntichain`. -/
+/-- Cantor space is uncountable. -/
+private theorem not_countable_natBool : ¬ Countable (ℕ → Bool) := by
+  rw [← Cardinal.mk_le_aleph0_iff, not_le]
+  simp [Cardinal.aleph0_lt_continuum]
+
+/-- **No Cantor antichain on a back-and-forth scattered set**, for every relational language:
+the range of a Cantor antichain is analytic, so one level `η < ω₁` separates its points
+(`exists_forall_not_codeBFEquiv_of_analyticSet`), and the class map at that level injects Cantor
+space into the countable quotient of the restriction to `K`.  No countability of the relation
+symbols and no definability of `K` is assumed. -/
 theorem not_hasCantorAntichainOn_of_bfScattered {K : Set (StructureSpace L)}
-    (hK : BFScattered K) : ¬ HasCantorAntichainOn (structureIsoSetoid L) K :=
-  (isThinOn_of_bfScattered hK).no_cantorAntichain
+    (hK : BFScattered K) : ¬ HasCantorAntichainOn (structureIsoSetoid L) K := by
+  rintro ⟨f, hcont, hmem, hineq⟩
+  -- `PolishSpace (ℕ → Bool)` does not synthesize; both parents do
+  have : PolishSpace (ℕ → Bool) := PolishSpace.mk
+  have hanti : ∀ x ∈ range f, ∀ y ∈ range f, (structureIsoSetoid L).r x y → x = y := by
+    rintro _ ⟨a, rfl⟩ _ ⟨b, rfl⟩ h
+    by_contra hne
+    exact hineq a b (fun hab ↦ hne (congrArg f hab)) h
+  obtain ⟨η, hη, hsep⟩ :=
+    exists_forall_not_codeBFEquiv_of_analyticSet (analyticSet_range_of_polishSpace hcont) hanti
+  -- the class map at level `η` is injective on the Cantor copy
+  have := hK η hη
+  refine not_countable_natBool (Function.Injective.countable
+    (f := fun x ↦ (⟦⟨f x, hmem x⟩⟧ :
+      Quotient ((codeBFEquivSetoid L η).comap (Subtype.val : K → StructureSpace L)))) ?_)
+  intro x y hxy
+  by_contra hne
+  have hfne : f x ≠ f y := fun h ↦ hineq x y hne (h ▸ (structureIsoSetoid L).refl _)
+  exact hsep _ ⟨x, rfl⟩ _ ⟨y, rfl⟩ hfne (Quotient.exact hxy)
+
+/-- **Thinness from countably many back-and-forth classes at every level**: with countably many
+relation symbols, a back-and-forth scattered set of codes contains no nonempty perfect set of
+pairwise non-isomorphic codes.  Countability is used only to give the space of codes a complete
+metric, in which a perfect antichain yields a Cantor antichain. -/
+theorem isThinOn_of_bfScattered [Countable (Σ l, L.Relations l)] {K : Set (StructureSpace L)}
+    (hK : BFScattered K) : IsThinOn (structureIsoSetoid L) K := by
+  -- a complete metric compatible with the topology; the statement is unaffected
+  let := TopologicalSpace.upgradeIsCompletelyMetrizable (StructureSpace L)
+  exact IsThinOn.of_no_cantorAntichain (not_hasCantorAntichainOn_of_bfScattered hK)
 
 end FirstOrder.Language
