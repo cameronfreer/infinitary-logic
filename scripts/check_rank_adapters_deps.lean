@@ -15,12 +15,14 @@ names are not taken as evidence of proof independence, nor the converse.
 * **Required dependencies.**  The part-A cones contain the forward Karp lemma
   `BFEquiv_implies_agreeQR` and `BFEquiv.toOrdinalLift`, and, as each root needs,
   `orbitRank_le_of_mem`, `mem_orbitStable_of_orbit_determined` and
-  `internalScottRank_le_of_orbits_determined`.  The part-B cones contain
+  `internalScottRank_le_of_orbits_determined`.  The part-B `Sentenceω` cones contain
   `BFEquiv_implies_agreeQR`, `qrank_openBounds`, `realize_openBounds` and
-  `equiv_implies_BFEquiv`; the least-ordinal bound goes through `recognition_of_sentence_rank`
-  and `csInf_le'`.  The first-order adapters `orbit_determined_of_orbitFormula`,
-  `orbitRank_le_lift_qrank_of_orbitFormula` and `internalScottRank_le_omega0_of_orbitFormulas`
-  go through the infinitary ones.
+  `equiv_implies_BFEquiv`; the least-ordinal bound goes through `stabilizesAt_of_sentence_rank`
+  and `csInf_le'`.  The `Formulaω (Fin 0)` companions contain `BFEquiv_implies_agreeQR` and
+  `equiv_implies_BFEquiv`, their least-ordinal bound going through
+  `stabilizesAt_of_formula_rank` and `csInf_le'`.  The first-order adapters
+  `orbit_determined_of_orbitFormula`, `orbitRank_le_lift_qrank_of_orbitFormula` and
+  `internalScottRank_le_omega0_of_orbitFormulas` go through the infinitary ones.
 * **Part B avoids orbit ranks and heights.**  No constant in a part-B cone is declared in
   `Scott/OrbitRank`, `Scott/OrbitRankStabilization`, `Scott/OrbitFormulaThreshold`,
   `Scott/Height*` or `Scott/Rank`.  The forbidden modules are asserted to be in the environment,
@@ -54,8 +56,9 @@ def partARoots : List Name :=
 
 /-- The part-B roots: recognition from an absolute Scott sentence. -/
 def partBRoots : List Name :=
-  fol [`recognition_of_sentence_rank, `stabilizationOrdinal_le_of_sentence_rank,
-    `stabilizationOrdinal_le_qrank_of_sentence]
+  fol [`stabilizesAt_of_sentence_rank, `stabilizationOrdinal_le_of_sentence_rank,
+    `stabilizationOrdinal_le_qrank_of_sentence, `stabilizesAt_of_formula_rank,
+    `stabilizationOrdinal_le_of_formula_rank, `stabilizationOrdinal_le_qrank_of_formula]
 
 /-- The first-order adapters, now corollaries of part A. -/
 def firstOrderRoots : List Name :=
@@ -75,14 +78,20 @@ def required : List (Name × List Name) :=
    (`FirstOrder.Language.internalScottRank_le_of_infinitaryOrbitFormulas,
       [karp] ++ fol [`BFEquiv.toOrdinalLift, `internalScottRank_le_of_orbits_determined,
         `orbit_determined_of_infinitaryOrbitFormula]),
-   (`FirstOrder.Language.recognition_of_sentence_rank,
+   (`FirstOrder.Language.stabilizesAt_of_sentence_rank,
       [karp] ++ fol [`qrank_openBounds, `realize_openBounds, `equiv_implies_BFEquiv]),
    (`FirstOrder.Language.stabilizationOrdinal_le_of_sentence_rank,
       [karp, `csInf_le'] ++ fol [`qrank_openBounds, `realize_openBounds,
-        `recognition_of_sentence_rank]),
+        `stabilizesAt_of_sentence_rank]),
    (`FirstOrder.Language.stabilizationOrdinal_le_qrank_of_sentence,
       [karp] ++ fol [`qrank_openBounds, `realize_openBounds,
         `stabilizationOrdinal_le_of_sentence_rank]),
+   (`FirstOrder.Language.stabilizesAt_of_formula_rank,
+      [karp] ++ fol [`equiv_implies_BFEquiv]),
+   (`FirstOrder.Language.stabilizationOrdinal_le_of_formula_rank,
+      [karp, `csInf_le'] ++ fol [`stabilizesAt_of_formula_rank]),
+   (`FirstOrder.Language.stabilizationOrdinal_le_qrank_of_formula,
+      [karp] ++ fol [`stabilizationOrdinal_le_of_formula_rank]),
    (`FirstOrder.Language.orbit_determined_of_orbitFormula,
       [karp] ++ fol [`orbit_determined_of_infinitaryOrbitFormula]),
    (`FirstOrder.Language.orbitRank_le_lift_qrank_of_orbitFormula,
@@ -236,8 +245,9 @@ run_cmd do
         unless hits.any (fun (_, m) ↦ m == `InfinitaryLogic.Scott.OrbitRank) do
           throwError "[VACUOUS] the module check does not flag Scott.OrbitRank in {root}"
   logInfo m!"rank adapters dependency guard: OK (cones {sizes.toList}; part A through the \
-    forward Karp lemma and the orbit-rank API; part B through the forward Karp lemma and \
-    openBounds, with no constant from the orbit-rank, threshold, height or rank modules; the \
+    forward Karp lemma and the orbit-rank API; part B through the forward Karp lemma (and \
+    openBounds for the Sentence forms), with no constant from the orbit-rank, threshold, \
+    height or rank modules; the \
     first-order adapters through the infinitary ones; standard axioms from the cones, agreeing \
     with collectAxioms; the custom-axiom controls in a proof, an opaque body and a type are \
     flagged)"

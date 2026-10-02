@@ -30,13 +30,20 @@ Every exported theorem is *applied*, not only listed for its axioms.
   `⊤` defines the empty-tuple orbit, of orbit rank `0`; the internal rank is at most `1`, and at
   least `1` by the plus-one convention, so `0` would be false.
 * **A singleton carrier** `PUnit : Type 1` with the repeated tuple `![x, x]`.
-* **Recognition** (`recognition_of_sentence_rank`, `stabilizationOrdinal_le_of_sentence_rank`,
+* **Stabilization from a sentence** (`stabilizesAt_of_sentence_rank`,
+  `stabilizationOrdinal_le_of_sentence_rank`,
   `stabilizationOrdinal_le_qrank_of_sentence`): the rank-one sentence `∀x ⊥` holds exactly in
   the empty structures and is an absolute Scott specification of every empty structure in a
   language without relation symbols (the actual satisfaction/isomorphism equivalence, for every
   target on the carrier universe).  Applied in the empty language on `Empty`; on the empty
   carrier `PEmpty : Type 3`; in the explicit `Language.{1, 2}` on `Type 3`; and with the
   uncountable comparison ordinal `ω₁`, so no countability premise on `β` can be present.
+* **The `Formulaω (Fin 0)` companions** (`stabilizesAt_of_formula_rank`,
+  `stabilizationOrdinal_le_of_formula_rank`, `stabilizationOrdinal_le_qrank_of_formula`), with
+  the characterization through `realize_as_sentence`: on the `Fin 0` form of `∀x ⊥` in
+  `Language.{1, 2}` on `PEmpty : Type 3`, also at `ω₁`; and on a library Scott sentence,
+  `montalbanSentence` of the infinite pure set `ℕ` built from the infinitary pattern formulas,
+  whose characterization is exactly `montalbanSentence_characterizes`.
 * **Import closure** of `Scott.SentenceRecognition`: exactly the listed `InfinitaryLogic` modules
   (`[CLOSURE DRIFT]` otherwise), none of `Scott/OrbitRank`, `Scott/OrbitRankStabilization`,
   `Scott/OrbitFormulaThreshold`, `Scott/Height*`, `Scott/Rank` (all present in this
@@ -49,6 +56,7 @@ Run with: lake env lean scripts/check_rank_adapters_regressions.lean
 -/
 import InfinitaryLogic.Scott.OrbitFormulaThreshold
 import InfinitaryLogic.Scott.SentenceRecognition
+import InfinitaryLogic.Scott.MontalbanSentence
 import InfinitaryLogic.Scott.OrbitRankStabilization
 import InfinitaryLogic.Scott.Height
 import InfinitaryLogic.Scott.Rank
@@ -172,6 +180,8 @@ together with the countable disjunction `towers`. -/
 def orbitω {n : ℕ} (a : Fin n → X) : Language.empty.Formulaω (Fin n) := patternω a ⊓ towers
 
 theorem qrank_orbitω {n : ℕ} (a : Fin n → X) : (orbitω a).qrank = Ordinal.omega0 := by
+  -- `⊓` is definitionally `BoundedFormulaω.and` (`Lomega1omega/Syntax.lean`); there is no
+  -- `qrank_inf`, so unfold to `and` and use `qrank_and`
   show (BoundedFormulaω.and (patternω a) towers).qrank = _
   rw [qrank_and]
   exact (congrArg₂ max (qrank_patternω a) qrank_towers).trans (max_eq_right zero_le)
@@ -186,6 +196,7 @@ has rank exactly `n`. -/
 def graded {n : ℕ} (a : Fin n → X) : Language.empty.Formulaω (Fin n) := patternω a ⊓ tower n 0
 
 theorem qrank_graded {n : ℕ} (a : Fin n → X) : (graded a).qrank = n := by
+  -- `⊓` is definitionally `BoundedFormulaω.and`; see `qrank_orbitω`
   show (BoundedFormulaω.and (patternω a) (tower n 0)).qrank = _
   rw [qrank_and]
   exact (congrArg₂ max (qrank_patternω a) (qrank_tower n 0)).trans (max_eq_right zero_le)
@@ -382,7 +393,7 @@ theorem emptyModelSentence_spec [L.IsRelational] [∀ l, IsEmpty (L.Relations l)
   rw [realize_emptyModelSentence]
   exact ⟨fun _ ↦ ⟨emptyEquiv M N⟩, fun ⟨e⟩ ↦ ⟨fun y ↦ isEmptyElim (e.symm y)⟩⟩
 
-/-- **Recognition in the empty language** on the carrier `Empty`: `recognition_of_sentence_rank`
+/-- **Recognition in the empty language** on the carrier `Empty`: `stabilizesAt_of_sentence_rank`
 at the actual rank `1`, the bound `stabilizationOrdinal_le_of_sentence_rank`, and the
 specialization `stabilizationOrdinal_le_qrank_of_sentence`. -/
 theorem empty_recognition :
@@ -390,7 +401,7 @@ theorem empty_recognition :
       stabilizationOrdinal (L := Language.empty) Empty ≤ 1 ∧
       stabilizationOrdinal (L := Language.empty) Empty ≤
         (emptyModelSentence Language.empty).qrank :=
-  ⟨recognition_of_sentence_rank _ (fun N _ _ ↦ emptyModelSentence_spec Empty N)
+  ⟨stabilizesAt_of_sentence_rank _ (fun N _ _ ↦ emptyModelSentence_spec Empty N)
       qrank_emptyModelSentence.le,
     stabilizationOrdinal_le_of_sentence_rank _ (fun N _ _ ↦ emptyModelSentence_spec Empty N)
       qrank_emptyModelSentence.le,
@@ -401,7 +412,7 @@ theorem empty_recognition :
 theorem pempty_recognition :
     StabilizesAt (L := Language.empty) PEmpty.{4} (1 : Ordinal.{0}) ∧
       stabilizationOrdinal (L := Language.empty) PEmpty.{4} ≤ 1 :=
-  ⟨recognition_of_sentence_rank _ (fun N _ _ ↦ emptyModelSentence_spec PEmpty.{4} N)
+  ⟨stabilizesAt_of_sentence_rank _ (fun N _ _ ↦ emptyModelSentence_spec PEmpty.{4} N)
       qrank_emptyModelSentence.le,
     stabilizationOrdinal_le_of_sentence_rank _
       (fun N _ _ ↦ emptyModelSentence_spec PEmpty.{4} N) qrank_emptyModelSentence.le⟩
@@ -410,7 +421,7 @@ theorem pempty_recognition :
 theorem lang12_recognition :
     StabilizesAt (L := lang12) PEmpty.{4} (1 : Ordinal.{0}) ∧
       stabilizationOrdinal (L := lang12) PEmpty.{4} ≤ 1 :=
-  ⟨recognition_of_sentence_rank (emptyModelSentence lang12)
+  ⟨stabilizesAt_of_sentence_rank (emptyModelSentence lang12)
       (fun N _ _ ↦ emptyModelSentence_spec PEmpty.{4} N) qrank_emptyModelSentence.le,
     stabilizationOrdinal_le_of_sentence_rank (emptyModelSentence lang12)
       (fun N _ _ ↦ emptyModelSentence_spec PEmpty.{4} N) qrank_emptyModelSentence.le⟩
@@ -425,13 +436,68 @@ theorem omega1_recognition :
     StabilizesAt (L := lang12) PEmpty.{4} (Ordinal.omega.{0} 1) ∧
       stabilizationOrdinal (L := lang12) PEmpty.{4} ≤ Ordinal.omega 1 ∧
       ¬ Ordinal.omega.{0} 1 < Ordinal.omega 1 :=
-  ⟨recognition_of_sentence_rank (emptyModelSentence lang12)
+  ⟨stabilizesAt_of_sentence_rank (emptyModelSentence lang12)
       (fun N _ _ ↦ emptyModelSentence_spec PEmpty.{4} N)
       (qrank_emptyModelSentence.trans_le one_le_omega_one),
     stabilizationOrdinal_le_of_sentence_rank (emptyModelSentence lang12)
       (fun N _ _ ↦ emptyModelSentence_spec PEmpty.{4} N)
       (qrank_emptyModelSentence.trans_le one_le_omega_one),
     lt_irrefl _⟩
+
+/-! #### The `Formulaω (Fin 0)` companions -/
+
+/-- **The rank-one empty-model sentence as a formula on `Fin 0`**: `∀x ⊥`. -/
+def emptyModelFormula (L : Language.{u, v}) : L.Formulaω (Fin 0) :=
+  (⊥ : L.BoundedFormulaω (Fin 0) 1).all
+
+theorem qrank_emptyModelFormula : (emptyModelFormula L).qrank = 1 := by
+  simp [emptyModelFormula, Formulaω.qrank]
+
+/-- **The actual satisfaction/isomorphism equivalence through `realize_as_sentence`**, in the
+shape `montalbanSentence_characterizes` produces. -/
+theorem emptyModelFormula_spec [L.IsRelational] [∀ l, IsEmpty (L.Relations l)]
+    (M : Type w) [IsEmpty M] [L.Structure M] (N : Type w) [L.Structure N] :
+    (emptyModelFormula L).realize_as_sentence N ↔ Nonempty (M ≃[L] N) := by
+  have h : (emptyModelFormula L).realize_as_sentence N ↔ IsEmpty N := by
+    simp [Formulaω.realize_as_sentence, Formulaω.realize_def, emptyModelFormula, isEmpty_iff]
+  rw [h]
+  exact ⟨fun _ ↦ ⟨emptyEquiv M N⟩, fun ⟨e⟩ ↦ ⟨fun y ↦ isEmptyElim (e.symm y)⟩⟩
+
+/-- **The companions on the empty-model formula**: `stabilizesAt_of_formula_rank`,
+`stabilizationOrdinal_le_of_formula_rank` and `stabilizationOrdinal_le_qrank_of_formula` on
+`PEmpty : Type 3` in `Language.{1, 2}`, the bound also at `ω₁`. -/
+theorem lang12_formula_recognition :
+    StabilizesAt (L := lang12) PEmpty.{4} (1 : Ordinal.{0}) ∧
+      stabilizationOrdinal (L := lang12) PEmpty.{4} ≤ Ordinal.omega 1 ∧
+      stabilizationOrdinal (L := lang12) PEmpty.{4} ≤ (emptyModelFormula lang12).qrank :=
+  ⟨stabilizesAt_of_formula_rank (emptyModelFormula lang12)
+      (fun N _ _ ↦ emptyModelFormula_spec PEmpty.{4} N) qrank_emptyModelFormula.le,
+    stabilizationOrdinal_le_of_formula_rank (emptyModelFormula lang12)
+      (fun N _ _ ↦ emptyModelFormula_spec PEmpty.{4} N)
+      (qrank_emptyModelFormula.trans_le one_le_omega_one),
+    stabilizationOrdinal_le_qrank_of_formula (emptyModelFormula lang12)
+      (fun N _ _ ↦ emptyModelFormula_spec PEmpty.{4} N)⟩
+
+instance : Countable (Σ l, Language.empty.Relations l) :=
+  (inferInstance : Countable (Σ _ : ℕ, Empty))
+
+/-- The infinitary pattern formulas form an orbit-formula family on the pure set `ℕ`. -/
+theorem nat_isOrbitFormulaFamily :
+    IsOrbitFormulaFamily (L := Language.empty) (M := ℕ) fun _ a ↦ patternω a :=
+  fun _ a b ↦ patternω_orbit a b
+
+/-- **A library Scott sentence**: Montalbán's sentence of the infinite pure set `ℕ`, built from
+the infinitary pattern formulas, characterizes `ℕ` through `montalbanSentence_characterizes`,
+and the three companions apply to it directly at its own rank. -/
+theorem nat_montalban_recognition :
+    StabilizesAt (L := Language.empty) ℕ
+        (montalbanSentence (L := Language.empty) (M := ℕ) fun _ a ↦ patternω a).qrank ∧
+      stabilizationOrdinal (L := Language.empty) ℕ ≤
+        (montalbanSentence (L := Language.empty) (M := ℕ) fun _ a ↦ patternω a).qrank :=
+  ⟨stabilizesAt_of_formula_rank _
+      (fun N _ _ ↦ montalbanSentence_characterizes nat_isOrbitFormulaFamily N) le_rfl,
+    stabilizationOrdinal_le_qrank_of_formula _
+      (fun N _ _ ↦ montalbanSentence_characterizes nat_isOrbitFormulaFamily N)⟩
 
 end Recognition
 
@@ -502,9 +568,12 @@ def exported : List Name :=
   [`orbit_determined_of_infinitaryOrbitFormula,
    `orbitRank_le_lift_qrank_of_infinitaryOrbitFormula,
    `internalScottRank_le_of_infinitaryOrbitFormulas,
-   `recognition_of_sentence_rank,
+   `stabilizesAt_of_sentence_rank,
    `stabilizationOrdinal_le_of_sentence_rank,
-   `stabilizationOrdinal_le_qrank_of_sentence].map (`FirstOrder.Language ++ ·)
+   `stabilizationOrdinal_le_qrank_of_sentence,
+   `stabilizesAt_of_formula_rank,
+   `stabilizationOrdinal_le_of_formula_rank,
+   `stabilizationOrdinal_le_qrank_of_formula].map (`FirstOrder.Language ++ ·)
 
 /-- The guard's own declarations whose axioms are audited. -/
 def guardDecls : List Name :=
@@ -516,7 +585,9 @@ def guardDecls : List Name :=
    `general_empty_tuple, `top_orbit_pempty, `pempty_ranks, `punit_repeated,
    `qrank_emptyModelSentence, `realize_emptyModelSentence, `emptyModelSentence_spec,
    `empty_recognition, `pempty_recognition, `lang12_recognition, `one_le_omega_one,
-   `omega1_recognition].map (`RankAdaptersGuard ++ ·)
+   `omega1_recognition, `qrank_emptyModelFormula, `emptyModelFormula_spec,
+   `lang12_formula_recognition, `nat_isOrbitFormulaFamily, `nat_montalban_recognition].map
+    (`RankAdaptersGuard ++ ·)
 
 /-- The standard axioms. -/
 def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
@@ -536,4 +607,5 @@ run_cmd do
     relational language on a Type 3 carrier; the empty carrier, orbit rank 0 and internal rank \
     exactly 1; the singleton with a repeated tuple; recognition from the rank-one empty-model \
     sentence in the empty language, on PEmpty at Type 3, in Language.{1, 2}, and at omega 1; \
-    exact import closure of Scott.SentenceRecognition; standard axioms)"
+    the Fin 0 companions on the empty-model formula and on the Montalban sentence of N built from \
+    the pattern formulas; exact import closure of Scott.SentenceRecognition; standard axioms)"
