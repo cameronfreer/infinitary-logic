@@ -1,10 +1,10 @@
 /-
-Regression guard for the rank conventions of the Scott layer: the element-based ordinals
-`sr`, `scottRank`, `elementRank` (`Scott/Rank.lean`, `Scott/Height/RankBounds.lean`),
-`scottHeight` (`Scott/Height/Defs.lean`) and `stabilizationOrdinal` (`Scott/Sentence.lean`),
-all in `Ordinal.{0}`, against the internal finite-tuple `internalScottRank`
-(`Scott/OrbitRank.lean`, `Ordinal.{w}`).  The convention table lives in the module docstring
-of `Scott/Height/Defs.lean`.
+Regression guard for the rank conventions of the Scott layer: the cross-structure ordinals
+(the element-based `sr`, `scottRank`, `elementRank` of `Scott/Rank.lean` and
+`Scott/Height/RankBounds.lean`, the all-tuples `scottHeight` of `Scott/Height/Defs.lean` and the
+empty-tuple `stabilizationOrdinal` of `Scott/Sentence.lean`), all in `Ordinal.{0}`, against the
+internal (orbit) finite-tuple `internalScottRank` (`Scott/OrbitRank.lean`, `Ordinal.{w}`).
+The convention table lives in the module docstring of `Scott/Height/Defs.lean`.
 
 These are the empty-carrier and pure-set counterexamples behind the docstring corrections
 there and in `Scott/Rank.lean`; everything is proved from existing API, no library declaration
@@ -21,23 +21,27 @@ is added.
   singleton `![m]` is `k`- but not `(k + 1)`-equivalent to `![0]` in `Fin (k + 1)`, while it is
   equivalent at every level to itself; at `ω` the partner structure is infinite, so an
   isomorphism carries `m` to the partner point), hence `scottRank ℕ = ω + 1`; and
-  `stabilizationOrdinal ℕ = ω`.  So on `ℕ` the element-based `scottRank` exceeds
+  `stabilizationOrdinal ℕ = ω`.  So on `ℕ` the cross-structure `scottRank` exceeds
   `stabilizationOrdinal` by one, while on the empty carrier it is one below.  Against the
   internal rank `internalScottRank ℕ = 1` (`internalScottRank_pureSet`):
   `lift stabilizationOrdinal ≤ internalScottRank + n` fails for every finite `n`, and
   `lift scottRank ≤ internalScottRank + ω` fails.
-* **Sharpness role.**  The infinite pure set, with internal rank `1`, is the sharpness example
-  for an additive `+ ω` comparison between the internal rank and the element-based ordinals:
-  `stabilizationOrdinal ℕ = ω = 1 + ω` while no finite offset suffices.  That comparison is not
-  stated here.
+* **A prospective `+ ω` offset.**  On `ℕ`, `lift (stabilizationOrdinal ℕ) =
+  internalScottRank ℕ + ω` (`lift_stabilizationOrdinal_nat_eq`, as `1 + ω = ω`) while no finite
+  offset suffices.  A prospective `+ ω` bound for `stabilizationOrdinal`, `sr` or `scottHeight`
+  over the internal rank (not for `scottRank`, which needs `+ ω + 1` here) would be attained on
+  `ℕ`.  No such bound is stated or proved.
 * **The documented relations, applied.**  `sr_le_scottRank`, `sr_le_scottHeight_of` and
   `scottRank_le_scottHeight_succ_of` are applied on `ℕ` (giving `ω ≤ scottHeight ℕ`), and
   `elementRank_le_completeStab` at the Scott height; the exact values are instantiated at an
   explicit `Type 1` empty carrier.
 
-No new module is introduced, so there is no import closure to check.  The guard's declarations
-and `scottRank`, `scottHeight`, `sr`, `stabilizationOrdinal`, `internalScottRank`,
-`elementRank` use only the standard axioms.
+No new module is introduced, so there is no import closure to check.  The guard's declarations,
+the six definitions `scottRank`, `scottHeight`, `sr`, `stabilizationOrdinal`,
+`internalScottRank`, `elementRank`, and the cited relations (`sr_le_scottRank`,
+`sr_le_scottHeight_of`, `scottRank_le_scottHeight_succ_of`, `elementRank_le_completeStab`,
+`orbitRank_add_one_le_internalScottRank`, `internalScottRank_pureSet`, with
+`countableRefinementHypothesis`) use only the standard axioms.
 
 Run with: lake env lean scripts/check_rank_convention_regressions.lean
 -/
@@ -76,10 +80,8 @@ theorem isEmpty_of_bfEquiv_one_pempty {N : Type w} [Language.empty.Structure N]
 
 /-- The empty-language isomorphism between the empty carrier and an empty structure. -/
 def pemptyEquiv (N : Type w) [Language.empty.Structure N] [IsEmpty N] :
-    PEmpty.{w + 1} ≃[Language.empty] N where
-  toEquiv := Equiv.equivOfIsEmpty _ _
-  map_fun' := fun {_} f _ ↦ (IsEmpty.false f).elim
-  map_rel' := fun {_} R _ ↦ (IsEmpty.false R).elim
+    PEmpty.{w + 1} ≃[Language.empty] N :=
+  { toEquiv := Equiv.equivOfIsEmpty _ _ }
 
 theorem scottHeight_pempty_ne_zero :
     scottHeight (L := Language.empty) PEmpty.{w + 1} ≠ 0 := by
@@ -95,8 +97,8 @@ theorem not_scottHeight_le_scottRank_pempty :
       scottRank (L := Language.empty) PEmpty.{w + 1} := by
   rw [scottRank_pempty, nonpos_iff_eq_zero]; exact scottHeight_pempty_ne_zero
 
-/-- `1` is a complete stabilization level of the empty carrier. -/
-theorem one_mem_scottHeight_set {n : ℕ} (a : Fin n → PEmpty.{w + 1}) (N : Type w)
+/-- On the empty carrier every level-`1` equivalence upgrades to level `2`. -/
+theorem bfEquiv_succ_one_of_bfEquiv_one_pempty {n : ℕ} (a : Fin n → PEmpty.{w + 1}) (N : Type w)
     [Language.empty.Structure N] (b : Fin n → N)
     (h : BFEquiv (L := Language.empty) (1 : Ordinal.{0}) n a b) :
     BFEquiv (L := Language.empty) (Order.succ (1 : Ordinal.{0})) n a b := by
@@ -113,7 +115,7 @@ theorem one_mem_scottHeight_set {n : ℕ} (a : Fin n → PEmpty.{w + 1}) (N : Ty
 theorem scottHeight_pempty : scottHeight (L := Language.empty) PEmpty.{w + 1} = 1 := by
   refine le_antisymm (csInf_le' ?_) (Order.one_le_iff_ne_zero.2 scottHeight_pempty_ne_zero)
   intro n a N _ _ b h
-  exact one_mem_scottHeight_set a N b h
+  exact bfEquiv_succ_one_of_bfEquiv_one_pempty a N b h
 
 theorem stabilizationOrdinal_pempty_ne_zero :
     stabilizationOrdinal (L := Language.empty) PEmpty.{w + 1} ≠ 0 := by
@@ -194,9 +196,8 @@ theorem omega0_le_elementRank_nat (m : ℕ) :
   by_contra hlt
   push Not at hlt
   obtain ⟨k, hk⟩ := Ordinal.lt_omega0.1 hlt
-  have hk' : elementRank (L := Language.empty) (M := ℕ) m = (k : Ordinal.{0}) := hk
-  change elementRank (L := Language.empty) (M := ℕ) m ∈ _ at hmem
-  rw [hk'] at hmem
+  unfold elementRank at hk
+  rw [hk] at hmem
   have hpat : ∀ i j : Fin 1, (![m] : Fin 1 → ℕ) i = ![m] j ↔
       (![0] : Fin 1 → Fin (k + 1)) i = ![0] j := fun i j ↦ by
     simp [Subsingleton.elim i j]
@@ -245,10 +246,7 @@ theorem exists_natEquiv (N : Type) [Language.empty.Structure N] [Countable N] [I
   classical
   obtain ⟨d⟩ := nonempty_denumerable N
   let e0 : ℕ ≃ N := (Denumerable.eqv N).symm
-  refine ⟨{ toEquiv := e0.trans (Equiv.swap (e0 m) y)
-            map_fun' := fun {_} f _ ↦ (IsEmpty.false f).elim
-            map_rel' := fun {_} R _ ↦ (IsEmpty.false R).elim }, ?_⟩
-  change Equiv.swap (e0 m) y (e0 m) = y
+  refine ⟨{ toEquiv := e0.trans (Equiv.swap (e0 m) y) }, ?_⟩
   exact Equiv.swap_apply_left _ _
 
 /-- **Exact value**: the stabilization ordinal of `ℕ` is `ω`. -/
@@ -282,6 +280,12 @@ theorem scottRank_nat : scottRank (L := Language.empty) ℕ = ω + 1 := by
   have : Small.{0} ℕ := Countable.toSmall ℕ
   exact Ordinal.iSup_le fun m ↦ by rw [elementRank_nat]
 
+/-- On `ℕ` the stabilization ordinal equals the internal rank plus `ω` (`1 + ω = ω`). -/
+theorem lift_stabilizationOrdinal_nat_eq :
+    Ordinal.lift.{0} (stabilizationOrdinal (L := Language.empty) ℕ) =
+      internalScottRank (L := Language.empty) ℕ + ω := by
+  rw [internalScottRank_pureSet, Ordinal.lift_id, Ordinal.one_add_omega0, stabilizationOrdinal_nat]
+
 end Pure
 
 /-! ### The documented relations, applied -/
@@ -290,7 +294,7 @@ section Relations
 
 /-- On the empty carrier the element-based `scottRank` is one **below** the stabilization
 ordinal; on `ℕ` it is one **above**. -/
-theorem scottRank_vs_stabilizationOrdinal :
+theorem scottRank_add_one_eq_stabilizationOrdinal_pempty_and_nat :
     scottRank (L := Language.empty) PEmpty.{w + 1} + 1 =
         stabilizationOrdinal (L := Language.empty) PEmpty.{w + 1} ∧
       scottRank (L := Language.empty) ℕ =
@@ -318,7 +322,7 @@ theorem documented_relations_nat :
     exact Order.le_of_succ_le_succ h
 
 /-- The empty-carrier values at an explicit `Type 1` carrier. -/
-theorem pempty_type_one :
+theorem pempty_type_one_values :
     scottRank (L := Language.empty) PEmpty.{2} = 0 ∧
       scottHeight (L := Language.empty) PEmpty.{2} = 1 ∧
       stabilizationOrdinal (L := Language.empty) PEmpty.{2} = 1 ∧
@@ -334,14 +338,16 @@ end Relations
 def libraryDecls : List Name :=
   [`scottRank, `scottHeight, `sr, `stabilizationOrdinal, `internalScottRank, `elementRank,
    `sr_le_scottRank, `sr_le_scottHeight_of, `scottRank_le_scottHeight_succ_of,
-   `elementRank_le_completeStab, `internalScottRank_pureSet].map
+   `elementRank_le_completeStab, `orbitRank_add_one_le_internalScottRank,
+   `internalScottRank_pureSet, `countableRefinementHypothesis].map
     (`FirstOrder.Language ++ ·)
 
 /-- The guard's own declarations whose axioms are audited. -/
 def guardDecls : List Name :=
   [`scottRank_pempty, `bfEquiv_zero_pempty_punit, `isEmpty_of_bfEquiv_one_pempty,
    `pemptyEquiv, `scottHeight_pempty_ne_zero, `not_scottHeight_le_scottRank_pempty,
-   `one_mem_scottHeight_set, `scottHeight_pempty, `stabilizationOrdinal_pempty_ne_zero,
+   `bfEquiv_succ_one_of_bfEquiv_one_pempty, `scottHeight_pempty,
+   `stabilizationOrdinal_pempty_ne_zero,
    `stabilizationOrdinal_pempty, `not_stabilizationOrdinal_le_scottRank_pempty,
    `internalScottRank_pempty_pos, `not_internalScottRank_le_lift_scottRank_pempty,
    `omega0_le_stabilizationOrdinal_nat,
@@ -349,7 +355,9 @@ def guardDecls : List Name :=
    `omega0_le_elementRank_nat, `omega0_add_one_le_scottRank_nat,
    `not_lift_scottRank_le_internalScottRank_add_omega0_nat, `infinite_of_bfEquiv_omega0,
    `exists_natEquiv, `stabilizationOrdinal_nat, `elementRank_nat, `scottRank_nat,
-   `scottRank_vs_stabilizationOrdinal, `documented_relations_nat, `pempty_type_one].map
+   `lift_stabilizationOrdinal_nat_eq,
+   `scottRank_add_one_eq_stabilizationOrdinal_pempty_and_nat, `documented_relations_nat,
+   `pempty_type_one_values].map
     (`RankConventionGuard ++ ·)
 
 /-- The standard axioms. -/
@@ -367,7 +375,8 @@ run_cmd do
     stabilizationOrdinal <= scottRank and internalScottRank <= lift scottRank, also at Type 1; \
     pure set N: elementRank = omega, scottRank = omega + 1, stabilizationOrdinal = omega, \
     refuting lift stabilizationOrdinal <= internalScottRank + n for finite n and \
-    lift scottRank <= internalScottRank + omega; the documented relations applied on N; \
+    lift scottRank <= internalScottRank + omega, with lift stabilizationOrdinal = \
+    internalScottRank + omega; the documented relations applied on N; \
     standard axioms)"
 
 end RankConventionGuard

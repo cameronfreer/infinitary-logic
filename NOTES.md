@@ -33,7 +33,6 @@
 - `scottSentence_characterizes` - main theorem, uses `equiv_between_cg` from `Mathlib/ModelTheory/PartialEquiv.lean`
 
 ### Rank.lean
-- `stabilizationOrdinal_le_scottRank` - elementRank bounds stabilization
 - `scottRank_lt_omega1` - supremum of countably many countable ordinals
   - **Hint**: Use `Ordinal.iSup_sequence_lt_omega_one`
 - `scottSentence_eq_scottFormula_rank` - equality at rank level

@@ -33,8 +33,9 @@ This is **not** the same ordinal as `stabilizationOrdinal` (`Scott/Sentence.lean
 are not ordered either way: on the empty carrier `scottRank = 0` (an empty supremum) while
 `stabilizationOrdinal = 1`, and on the infinite pure set `ℕ` `scottRank = ω + 1` while
 `stabilizationOrdinal = ω` (`scripts/check_rank_convention_regressions.lean`).  Both are
-element-based and live in `Ordinal.{0}`; the convention table, with the tuple-based
-`internalScottRank`, is in the module docstring of `Scott/Height/Defs.lean`.
+cross-structure and live in `Ordinal.{0}` (`scottRank` is moreover element-based); the
+convention table, with the internal (orbit) `internalScottRank`, is in the module docstring of
+`Scott/Height/Defs.lean`.
 -/
 
 universe u v w
@@ -53,9 +54,9 @@ partners of the singleton `![m]` agree one level up.  Precisely: whenever `b : F
 `b' : Fin 1 → N'` (with `N`, `N'` countable, in `M`'s carrier universe) are both
 `α`-equivalent to `![m]`, then `b` is `succ α`-equivalent to `![m]` iff `b'` is.
 
-This is element-based and compares `M` with other structures; it is not the tuple-based,
-internal `orbitRank` of `Scott/OrbitRank.lean` (see the convention table in the module docstring
-of `Scott/Height/Defs.lean`).
+This is element-based and cross-structure (it compares `M` with other structures); it is not
+the internal (orbit) `orbitRank` of `Scott/OrbitRank.lean` (see the convention table in the
+module docstring of `Scott/Height/Defs.lean`).
 
 We use Ordinal.{0} for consistency with stabilizationOrdinal and BFEquiv in formulas. -/
 noncomputable def elementRank {M : Type w} [L.Structure M] (m : M) : Ordinal.{0} :=
