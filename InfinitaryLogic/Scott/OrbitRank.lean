@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Scott.BackAndForth
+import InfinitaryLogic.Scott.BFEquivRelabel
 import InfinitaryLogic.Scott.Stabilization
 import InfinitaryLogic.Karp.PotentialIso
 import Mathlib.Data.Set.Finite.Range
@@ -43,8 +44,8 @@ Contents:
   `internalScottRank_le_of_orbits_determined` (every tuple's orbit is determined at some level
   below `α`) and `le_internalScottRank_of_not_automorphic` (below every `β < α` some
   `β`-equivalent tuples are not automorphic), assembled in `internalScottRank_eq_of_orbits`.
-* Transport of `BFEquiv` along isomorphisms (`BFEquiv.map_equiv`) and isomorphism invariance of
-  both ranks.
+* Isomorphism invariance of both ranks, from the transport lemmas `SameAtomicType.map_equiv`
+  (`Scott/AtomicDiagram.lean`) and `BFEquiv.map_equiv` (`Scott/BFEquivRelabel.lean`).
 * `exists_automorphism_of_bfEquiv_all`: for countable `M`, two tuples equivalent at **every**
   level are carried to each other by an automorphism (pointed Karp).  The proof builds a pointed
   potential isomorphism and reads the tuple off the graph specification of the countable
@@ -61,67 +62,6 @@ open Fin Ordinal
 
 variable {L : Language.{u, v}} [L.IsRelational]
 variable {M : Type w} [L.Structure M] {N : Type w'} [L.Structure N]
-
-/-! ### Transport along isomorphisms -/
-
-omit [L.IsRelational] in
-/-- Atomic types are transported along isomorphisms. -/
-theorem SameAtomicType.map_equiv {M' : Type*} {N' : Type*} [L.Structure M'] [L.Structure N']
-    (e : M ≃[L] M') (e' : N ≃[L] N') {n : ℕ} {a : Fin n → M} {b : Fin n → N} :
-    SameAtomicType (L := L) (⇑e ∘ a) (⇑e' ∘ b) ↔ SameAtomicType (L := L) a b := by
-  constructor <;> intro h idx <;> have hidx := h idx <;> cases idx with
-  | eq i j =>
-    simp only [AtomicIdx.holds, Function.comp] at hidx ⊢
-    first
-    | exact ⟨fun hij => e'.injective (hidx.mp (congrArg e hij)),
-        fun hij => e.injective (hidx.mpr (congrArg e' hij))⟩
-    | exact ⟨fun hij => congrArg e' (hidx.mp (e.injective hij)),
-        fun hij => congrArg e (hidx.mpr (e'.injective hij))⟩
-  | rel R f =>
-    simp only [AtomicIdx.holds] at hidx ⊢
-    first
-    | rwa [Function.comp_assoc, Function.comp_assoc, e.map_rel, e'.map_rel] at hidx
-    | rwa [Function.comp_assoc, Function.comp_assoc, e.map_rel, e'.map_rel]
-
-omit [L.IsRelational] in
-/-- Back-and-forth equivalence is transported along isomorphisms of both sides. -/
-theorem BFEquiv.map_equiv {M' : Type w} {N' : Type w'} [L.Structure M'] [L.Structure N']
-    (e : M ≃[L] M') (e' : N ≃[L] N') (α : Ordinal) {n : ℕ} {a : Fin n → M} {b : Fin n → N} :
-    BFEquiv (L := L) α n (⇑e ∘ a) (⇑e' ∘ b) ↔ BFEquiv (L := L) α n a b := by
-  induction α using Ordinal.limitRecOn generalizing n a b with
-  | zero =>
-    rw [BFEquiv.zero, BFEquiv.zero]
-    exact SameAtomicType.map_equiv e e'
-  | add_one β ih =>
-    rw [← Order.succ_eq_add_one, BFEquiv.succ, BFEquiv.succ]
-    refine and_congr (ih) (and_congr ?_ ?_)
-    · constructor
-      · intro h m
-        obtain ⟨n', hn'⟩ := h (e m)
-        refine ⟨e'.symm n', ?_⟩
-        have := (ih (a := snoc a m) (b := snoc b (e'.symm n'))).mp
-        rw [Fin.comp_snoc, Fin.comp_snoc, Equiv.apply_symm_apply] at this
-        exact this hn'
-      · intro h m'
-        obtain ⟨n', hn'⟩ := h (e.symm m')
-        refine ⟨e' n', ?_⟩
-        have := (ih (a := snoc a (e.symm m')) (b := snoc b n')).mpr hn'
-        rwa [Fin.comp_snoc, Fin.comp_snoc, Equiv.apply_symm_apply] at this
-    · constructor
-      · intro h n'
-        obtain ⟨m, hm⟩ := h (e' n')
-        refine ⟨e.symm m, ?_⟩
-        have := (ih (a := snoc a (e.symm m)) (b := snoc b n')).mp
-        rw [Fin.comp_snoc, Fin.comp_snoc, Equiv.apply_symm_apply] at this
-        exact this hm
-      · intro h n''
-        obtain ⟨m, hm⟩ := h (e'.symm n'')
-        refine ⟨e m, ?_⟩
-        have := (ih (a := snoc a m) (b := snoc b (e'.symm n''))).mpr hm
-        rwa [Fin.comp_snoc, Fin.comp_snoc, Equiv.apply_symm_apply] at this
-  | limit β hβ ih =>
-    rw [BFEquiv.limit β hβ, BFEquiv.limit β hβ]
-    exact forall_congr' fun γ => forall_congr' fun hγ => ih γ hγ
 
 /-! ### Orbit rank -/
 
