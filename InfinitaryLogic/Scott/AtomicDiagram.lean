@@ -202,6 +202,26 @@ theorem SameAtomicType.relabel {N : Type w'} [L.Structure N] {n m : ℕ}
   rw [AtomicIdx.holds_comp_eq_holds_pushforward, AtomicIdx.holds_comp_eq_holds_pushforward]
   exact h (idx.pushforward σ)
 
+omit [L.IsRelational] in
+variable {N : Type w'} [L.Structure N] in
+/-- Atomic types are transported along isomorphisms. -/
+theorem SameAtomicType.map_equiv {M' : Type*} {N' : Type*} [L.Structure M'] [L.Structure N']
+    (e : M ≃[L] M') (e' : N ≃[L] N') {n : ℕ} {a : Fin n → M} {b : Fin n → N} :
+    SameAtomicType (L := L) (⇑e ∘ a) (⇑e' ∘ b) ↔ SameAtomicType (L := L) a b := by
+  constructor <;> intro h idx <;> have hidx := h idx <;> cases idx with
+  | eq i j =>
+    simp only [AtomicIdx.holds, Function.comp] at hidx ⊢
+    first
+    | exact ⟨fun hij => e'.injective (hidx.mp (congrArg e hij)),
+        fun hij => e.injective (hidx.mpr (congrArg e' hij))⟩
+    | exact ⟨fun hij => congrArg e' (hidx.mp (e.injective hij)),
+        fun hij => congrArg e (hidx.mpr (e'.injective hij))⟩
+  | rel R f =>
+    simp only [AtomicIdx.holds] at hidx ⊢
+    first
+    | rwa [Function.comp_assoc, Function.comp_assoc, e.map_rel, e'.map_rel] at hidx
+    | rwa [Function.comp_assoc, Function.comp_assoc, e.map_rel, e'.map_rel]
+
 end Language
 
 end FirstOrder
