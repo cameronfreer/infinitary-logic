@@ -9,15 +9,19 @@ and `Scott.Stabilization`; a module that must keep `Karp` out of its closure (fo
 `Descriptive/BFSeparation`, through `Descriptive/BFTree`) could not use them.  This file imports
 only `InfinitaryLogic.Scott.BFEquivRelabel` and checks:
 
-* **Statements**: both lemmas, at their exact binder and universe shapes (the targets of
-  `SameAtomicType.map_equiv` in arbitrary universes, those of `BFEquiv.map_equiv` in the
-  universes of the sources); neither needs `[L.IsRelational]`.
+* **Statements**: both lemmas, pinned in argument order, types and universe shapes (the
+  targets of `SameAtomicType.map_equiv` in arbitrary universes, those of `BFEquiv.map_equiv` in
+  the universes of the sources); neither needs `[L.IsRelational]`.  An `example : T := @lemma`
+  checks the type up to definitional equality, which ignores binder kinds; binder kinds are
+  exercised by the applications below.
 * **Applied**: in the pure set `ℕ`, the swap `0 ↔ 1` carries `(0, 1)` to `(1, 0)`, so the two
   tuples are back-and-forth equivalent at every level; the atomic type of `(0, 1)` is carried
   into `ULift.{1} ℕ`.
 * **Home modules**: each lemma is declared in the module named above.
-* **Import closure** of `Scott/BFEquivRelabel`: no `Karp`, descriptive, model-theory or method
-  module, and not `Scott/OrbitRank`.
+* **Import closure** of `Scott/BFEquivRelabel`: its `InfinitaryLogic` closure is exactly
+  `Util`, `Lomega1omega.{Syntax, Semantics, Operations}`, `Scott.AtomicDiagram`,
+  `Scott.BackAndForth` and the module itself; as an extra, no `Karp`, descriptive, model-theory
+  or method module, and not `Scott/OrbitRank`.
 
 The declarations use only the standard axioms.
 
@@ -31,7 +35,7 @@ universe u v w w' x y z
 
 namespace MapEquivPlacementGuard
 
-/-! ### Statements, at their exact shapes -/
+/-! ### Statements: argument order, types and universe shapes -/
 
 /-- The atomic-type transport: targets in arbitrary universes, no `IsRelational`. -/
 example : ∀ {L : Language.{u, v}} {M : Type w} [L.Structure M] {N : Type w'} [L.Structure N]
@@ -104,6 +108,17 @@ def forbiddenPrefixes : List Name :=
   [`InfinitaryLogic.Karp, `InfinitaryLogic.Descriptive, `InfinitaryLogic.ModelTheory,
    `InfinitaryLogic.Methods]
 
+/-- The exact `InfinitaryLogic` import closure of `Scott/BFEquivRelabel`.  Extending it is a
+deliberate decision: a consumer under an exact-closure guard (such as `Descriptive/BFSeparation`)
+reaches the transport lemmas by adding these modules.  Update this list together with the module
+docstring. -/
+def allowedClosure : List Name :=
+  [`InfinitaryLogic.Util,
+   `InfinitaryLogic.Lomega1omega.Syntax, `InfinitaryLogic.Lomega1omega.Semantics,
+   `InfinitaryLogic.Lomega1omega.Operations,
+   `InfinitaryLogic.Scott.AtomicDiagram, `InfinitaryLogic.Scott.BackAndForth,
+   `InfinitaryLogic.Scott.BFEquivRelabel]
+
 /-- Each lemma and the module it must be declared in. -/
 def homes : List (Name × Name) :=
   [(`FirstOrder.Language.SameAtomicType.map_equiv, `InfinitaryLogic.Scott.AtomicDiagram),
@@ -125,6 +140,12 @@ run_cmd do
     forbiddenPrefixes.any (·.isPrefixOf m) || m == `InfinitaryLogic.Scott.OrbitRank
   unless hits.isEmpty do
     throwError "[BROAD CONE] the closure of {target} reaches {hits}"
+  let ilModules := cl.toList.filter fun m ↦ (`InfinitaryLogic).isPrefixOf m
+  let extra := ilModules.filter fun m ↦ !allowedClosure.contains m
+  let missing := allowedClosure.filter fun m ↦ !ilModules.contains m
+  unless extra.isEmpty && missing.isEmpty do
+    throwError "[CLOSURE DRIFT] the InfinitaryLogic closure of {target} is {ilModules}; \
+      update allowedClosure deliberately (extra {extra}, missing {missing})"
 
 /-- The audited declarations. -/
 def auditedDecls : List Name :=
@@ -143,8 +164,10 @@ run_cmd do
     let bad := axs.toList.filter fun a ↦ !standardAxioms.contains a
     unless bad.isEmpty do throwError "[NONSTANDARD AXIOMS] {n} uses {bad}"
   logInfo "Map-equiv placement regression guard: OK (SameAtomicType.map_equiv in \
-    Scott/AtomicDiagram and BFEquiv.map_equiv in Scott/BFEquivRelabel, at their exact shapes \
-    and without IsRelational; applied: (0, 1) and (1, 0) back-and-forth equivalent at every \
+    Scott/AtomicDiagram and BFEquiv.map_equiv in Scott/BFEquivRelabel, argument order, types \
+    and universe shapes pinned, without IsRelational, binder kinds exercised by the \
+    applications; applied: (0, 1) and (1, 0) back-and-forth equivalent at every \
     level of the pure set N through the swap, the atomic type of (0, 1) carried into \
-    ULift.{1} N; import closure of Scott/BFEquivRelabel without Karp, descriptive, \
-    model-theory or method modules and without Scott/OrbitRank; standard axioms)"
+    ULift.{1} N; InfinitaryLogic import closure of Scott/BFEquivRelabel exactly the 7 listed \
+    modules, without Karp, descriptive, model-theory or method modules and without \
+    Scott/OrbitRank; standard axioms)"
