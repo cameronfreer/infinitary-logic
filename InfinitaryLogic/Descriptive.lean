@@ -34,6 +34,7 @@ import InfinitaryLogic.Descriptive.KleeneBrouwer
 import InfinitaryLogic.Descriptive.AnalyticTreeBoundedness
 import InfinitaryLogic.Descriptive.BFTree
 import InfinitaryLogic.Descriptive.BFSeparation
+import InfinitaryLogic.Descriptive.BFScattered
 import InfinitaryLogic.Descriptive.TreeCodes
 
 -- Counting dichotomy and finite carrier
@@ -93,6 +94,7 @@ import InfinitaryLogic.ModelTheory.MorleyCounting
 import InfinitaryLogic.ModelTheory.BFExtensionSpectrum
 import InfinitaryLogic.ModelTheory.BFLimitIsolation
 import InfinitaryLogic.ModelTheory.BFSmallCounting
+import InfinitaryLogic.Descriptive.BFScatteredSentence
 
 /-!
 # Descriptive: descriptive set theory of Lω₁ω model classes
@@ -170,6 +172,10 @@ application of that vocabulary:
   sets of codes with no isomorphism between them
   (`exists_uniform_bfSeparation_of_analyticSets`), by tree boundedness for the forced
   back-and-forth trees, with no countability of the relation symbols;
+- `BFScattered`: a set of codes with countably many `CodeBFEquiv η`-classes at every level
+  `η < ω₁` (`BFScattered`) is thin for isomorphism (`isThinOn_of_bfScattered`), with no
+  definability hypothesis on the set; `BFScatteredSentence` is the form for the models of a
+  sentence (`isThinOnNatModels_of_bfScattered`);
 - `TreeCodes`: tree codes over a countable alphabet, the closed tree class, the continuous
   Kleene–Brouwer code into `Language.order`, and analytic boundedness for well-founded trees
   (`analytic_wellFoundedTree_rank_boundedness`) with its domination adapter;
@@ -177,7 +183,8 @@ application of that vocabulary:
   (`isMeagre_of_isMeagre_sections`);
 - `GSGraph`: the graphs `G_S(2^ℕ)` and Miller's independence lemma
   (`exists_gSGraph_edge_of_not_isMeagre`);
-- `AnalyticClosure`: intersections and products of analytic sets (`MeasureTheory.AnalyticSet.prod`);
+- `AnalyticClosure`: intersections and products of analytic sets (`MeasureTheory.AnalyticSet.prod`),
+  and the off-diagonal of a closed subset of a Polish space (`MeasureTheory.analyticSet_offDiag`);
 - `G0Dichotomy`: the KST independent-superset lemma
   (`exists_measurableSet_relIndependent_superset`) and the positivity
   ideals (`SmallFam`) with the combination lemma (`not_smallFam_comb_cross`);
