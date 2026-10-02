@@ -25,9 +25,16 @@ for countable structures.
 
 ## Implementation Notes
 
-We define Scott rank as sup {elementRank a + 1 : a ∈ M}, where elementRank a is the
-least ordinal α such that any tuple extending with a is determined by its α-type.
-This is equivalent to the stabilization ordinal approach but more compositional.
+We define Scott rank as sup {elementRank m + 1 : m ∈ M}, where elementRank m is the least
+ordinal α such that, for countable partners `b`, `b'` (in `M`'s carrier universe) that are both
+α-equivalent to the singleton `![m]`, `b` is `succ α`-equivalent to `![m]` iff `b'` is.
+
+This is **not** the same ordinal as `stabilizationOrdinal` (`Scott/Sentence.lean`), and the two
+are not ordered either way: on the empty carrier `scottRank = 0` (an empty supremum) while
+`stabilizationOrdinal = 1`, and on the infinite pure set `ℕ` `scottRank = ω + 1` while
+`stabilizationOrdinal = ω` (`scripts/check_rank_convention_regressions.lean`).  Both are
+element-based and live in `Ordinal.{0}`; the convention table, with the tuple-based
+`internalScottRank`, is in the module docstring of `Scott/Height/Defs.lean`.
 -/
 
 universe u v w
@@ -41,9 +48,14 @@ variable [Countable (Σ l, L.Relations l)]
 
 open FirstOrder Structure Ordinal
 
-/-- The rank of an element m in a structure M: the least ordinal α such that
-for any tuple a containing m, the α-type of a determines whether any extension
-has a back-and-forth equivalent extension.
+/-- The rank of an element m in a structure M: the least ordinal α such that any two
+partners of the singleton `![m]` agree one level up.  Precisely: whenever `b : Fin 1 → N` and
+`b' : Fin 1 → N'` (with `N`, `N'` countable, in `M`'s carrier universe) are both
+`α`-equivalent to `![m]`, then `b` is `succ α`-equivalent to `![m]` iff `b'` is.
+
+This is element-based and compares `M` with other structures; it is not the tuple-based,
+internal `orbitRank` of `Scott/OrbitRank.lean` (see the convention table in the module docstring
+of `Scott/Height/Defs.lean`).
 
 We use Ordinal.{0} for consistency with stabilizationOrdinal and BFEquiv in formulas. -/
 noncomputable def elementRank {M : Type w} [L.Structure M] (m : M) : Ordinal.{0} :=
