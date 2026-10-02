@@ -20,6 +20,7 @@ import InfinitaryLogic.Descriptive.ModelClassStandardBorel
 -- Cantor scheme / perfect antichain extraction (pure Mathlib infrastructure)
 import InfinitaryLogic.Descriptive.BorelFunctionalGraph
 import InfinitaryLogic.Descriptive.CantorAntichain
+import InfinitaryLogic.Topology.Perfect
 import InfinitaryLogic.Descriptive.PerfectAntichain
 import InfinitaryLogic.Descriptive.StructureIsoSetoid
 import InfinitaryLogic.Descriptive.RankedThinness
@@ -34,6 +35,7 @@ import InfinitaryLogic.Descriptive.KleeneBrouwer
 import InfinitaryLogic.Descriptive.AnalyticTreeBoundedness
 import InfinitaryLogic.Descriptive.BFTree
 import InfinitaryLogic.Descriptive.BFSeparation
+import InfinitaryLogic.Descriptive.BFScattered
 import InfinitaryLogic.Descriptive.TreeCodes
 
 -- Counting dichotomy and finite carrier
@@ -93,6 +95,7 @@ import InfinitaryLogic.ModelTheory.MorleyCounting
 import InfinitaryLogic.ModelTheory.BFExtensionSpectrum
 import InfinitaryLogic.ModelTheory.BFLimitIsolation
 import InfinitaryLogic.ModelTheory.BFSmallCounting
+import InfinitaryLogic.Descriptive.BFScatteredSentence
 
 /-!
 # Descriptive: descriptive set theory of Lω₁ω model classes
@@ -117,8 +120,10 @@ application of that vocabulary:
   under finite, countable, and encodable conjunctions
 - `CantorAntichain`: Cantor-scheme → perfect-antichain extraction
   (`CantorScheme.exists_antichain_map` and the splitting-predicate builder);
-- `PerfectAntichain`: perfect/Cantor-antichain and thinness vocabulary, plus the perfect-set
-  and Polish-quotient cardinal facts
+- `Topology.Perfect` (Mathlib only, no logic): a nonempty perfect subset of a complete,
+  second-countable metric space has cardinality continuum (`Perfect.mk_eq_continuum`)
+- `PerfectAntichain`: perfect/Cantor-antichain and thinness vocabulary, plus the
+  perfect-transversal and Polish-quotient cardinal facts
 - `StructureIsoSetoid`: **the application** — isomorphism defined once on the ambient
   `StructureSpace L`, `isoSetoid φ` as its restriction, and the sentence-level
   perfect-set/thinness predicates stated against it
@@ -170,6 +175,12 @@ application of that vocabulary:
   sets of codes with no isomorphism between them
   (`exists_uniform_bfSeparation_of_analyticSets`), by tree boundedness for the forced
   back-and-forth trees, with no countability of the relation symbols;
+- `BFScattered`: a set of codes with countably many `CodeBFEquiv η`-classes at every level
+  `η < ω₁` (`BFScattered`) carries no Cantor antichain for isomorphism
+  (`not_hasCantorAntichainOn_of_bfScattered`, for every relational language) and, for countably
+  many relation symbols, is thin (`isThinOn_of_bfScattered`), with no definability hypothesis on
+  the set; `BFScatteredSentence` is the form for the models of a sentence
+  (`Sentenceω.isThinOnNatModels_of_bfScattered`);
 - `TreeCodes`: tree codes over a countable alphabet, the closed tree class, the continuous
   Kleene–Brouwer code into `Language.order`, and analytic boundedness for well-founded trees
   (`analytic_wellFoundedTree_rank_boundedness`) with its domination adapter;
@@ -177,7 +188,8 @@ application of that vocabulary:
   (`isMeagre_of_isMeagre_sections`);
 - `GSGraph`: the graphs `G_S(2^ℕ)` and Miller's independence lemma
   (`exists_gSGraph_edge_of_not_isMeagre`);
-- `AnalyticClosure`: intersections and products of analytic sets (`MeasureTheory.AnalyticSet.prod`);
+- `AnalyticClosure`: intersections and products of analytic sets (`MeasureTheory.AnalyticSet.prod`),
+  and off-diagonals in a Hausdorff space (`MeasureTheory.AnalyticSet.offDiag`);
 - `G0Dichotomy`: the KST independent-superset lemma
   (`exists_measurableSet_relIndependent_superset`) and the positivity
   ideals (`SmallFam`) with the combination lemma (`not_smallFam_comb_cross`);

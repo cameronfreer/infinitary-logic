@@ -22,6 +22,10 @@ coordinates `(0)` and `(1)` are equivalent at every level.
 `BFEquiv.eq_iff_eq` and `mem_range_iff_of_bfEquiv`: equivalent tuples have the same equality
 pattern (the equality atoms of level `0`), so in equivalent one-point extensions a fresh point is
 answered by a fresh point.
+
+`BFEquiv.map_equiv`: back-and-forth equivalence at every level is transported along isomorphisms
+of both sides, by induction on the level from `SameAtomicType.map_equiv`
+(`Scott/AtomicDiagram.lean`).  Neither lemma needs anything from `Karp`.
 -/
 
 /-- Extending a relabeling to a new last coordinate. -/
@@ -93,5 +97,47 @@ theorem mem_range_iff_of_bfEquiv {α : Ordinal} {n : ℕ} {a : Fin n → M} {b :
   have key : ∀ i, a i = m ↔ b i = m' := fun i ↦ by
     simpa only [Fin.snoc_castSucc, Fin.snoc_last] using h.eq_iff_eq i.castSucc (Fin.last n)
   exact exists_congr key
+
+/-! ### Transport along isomorphisms -/
+
+open Fin in
+/-- Back-and-forth equivalence is transported along isomorphisms of both sides. -/
+theorem BFEquiv.map_equiv {M' : Type w} {N' : Type w'} [L.Structure M'] [L.Structure N']
+    (e : M ≃[L] M') (e' : N ≃[L] N') (α : Ordinal) {n : ℕ} {a : Fin n → M} {b : Fin n → N} :
+    BFEquiv (L := L) α n (⇑e ∘ a) (⇑e' ∘ b) ↔ BFEquiv (L := L) α n a b := by
+  induction α using Ordinal.limitRecOn generalizing n a b with
+  | zero =>
+    rw [BFEquiv.zero, BFEquiv.zero]
+    exact SameAtomicType.map_equiv e e'
+  | add_one β ih =>
+    rw [← Order.succ_eq_add_one, BFEquiv.succ, BFEquiv.succ]
+    refine and_congr (ih) (and_congr ?_ ?_)
+    · constructor
+      · intro h m
+        obtain ⟨n', hn'⟩ := h (e m)
+        refine ⟨e'.symm n', ?_⟩
+        have := (ih (a := snoc a m) (b := snoc b (e'.symm n'))).mp
+        rw [Fin.comp_snoc, Fin.comp_snoc, Equiv.apply_symm_apply] at this
+        exact this hn'
+      · intro h m'
+        obtain ⟨n', hn'⟩ := h (e.symm m')
+        refine ⟨e' n', ?_⟩
+        have := (ih (a := snoc a (e.symm m')) (b := snoc b n')).mpr hn'
+        rwa [Fin.comp_snoc, Fin.comp_snoc, Equiv.apply_symm_apply] at this
+    · constructor
+      · intro h n'
+        obtain ⟨m, hm⟩ := h (e' n')
+        refine ⟨e.symm m, ?_⟩
+        have := (ih (a := snoc a (e.symm m)) (b := snoc b n')).mp
+        rw [Fin.comp_snoc, Fin.comp_snoc, Equiv.apply_symm_apply] at this
+        exact this hm
+      · intro h n''
+        obtain ⟨m, hm⟩ := h (e'.symm n'')
+        refine ⟨e m, ?_⟩
+        have := (ih (a := snoc a m) (b := snoc b (e'.symm n''))).mpr hm
+        rwa [Fin.comp_snoc, Fin.comp_snoc, Equiv.apply_symm_apply] at this
+  | limit β hβ ih =>
+    rw [BFEquiv.limit β hβ, BFEquiv.limit β hβ]
+    exact forall_congr' fun γ => forall_congr' fun hγ => ih γ hγ
 
 end FirstOrder.Language

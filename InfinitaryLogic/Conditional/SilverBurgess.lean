@@ -22,8 +22,9 @@ equivalence relations on Polish spaces; the Borel case and the full
 ## Main Results
 
 The perfect-set and Polish-quotient cardinal facts this file used to open with now live in
-`InfinitaryLogic/Descriptive/PerfectAntichain.lean` (`Perfect.mk_eq_continuum`,
-`continuum_classes_of_perfect_transversal`, and the three companions).  The names are the same,
+`InfinitaryLogic/Topology/Perfect.lean` (`Perfect.mk_eq_continuum`) and
+`InfinitaryLogic/Descriptive/PerfectAntichain.lean` (`continuum_classes_of_perfect_transversal`,
+and the three companions).  The names are the same,
 but the statements are not identical: several now assume less than they did here — in
 particular `continuum_classes_of_perfect_transversal` no longer requires second countability.
 None of them mentions a dichotomy or a splitting hypothesis.
