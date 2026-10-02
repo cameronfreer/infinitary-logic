@@ -114,6 +114,13 @@ At successor α + 1: same atomic type, plus:
   - (forth) for every m in M, there exists n in N with BFEquiv α (snoc a m) (snoc b n)
   - (back) for every n in N, there exists m in M with BFEquiv α (snoc a m) (snoc b n)
 At limit λ: BFEquiv β for all β < λ.
+
+The definition itself needs no relational language: the section's `[L.IsRelational]` variable
+does not enter it, and `BFEquiv.zero`, `succ`, `limit`, `of_succ`, `forth`, `back` and
+`monotone` (like `refl`, `symm`, `trans` and the ordinal-lift transports) carry
+`omit [L.IsRelational] in`.  Relationality is required by the consumers that compare `BFEquiv`
+with agreement on formulas of bounded quantifier rank, e.g. `BFEquiv_implies_agreeQR`
+(`Karp/CarrierTheorem.lean`), whose proof reduces every term to a variable.
 -/
 @[blueprint "def:BFEquiv"
   (title := /-- Back-and-forth equivalence -/)

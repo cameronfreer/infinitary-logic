@@ -303,9 +303,10 @@ def hasPCComponent (m : Name) : Bool :=
 
 /-- The exact `InfinitaryLogic` import closure of the module.  Extending it is a deliberate
 decision: update this list together with the module docstring.  `AnalyticClosure` (Mathlib-only
-imports) supplies `MeasureTheory.AnalyticSet.prod`. -/
+imports) supplies `MeasureTheory.AnalyticSet.prod`.  `Topology.Perfect` (Mathlib-only imports) is
+newly required: `Perfect.mk_eq_continuum` moved there from `PerfectAntichain`, which imports it. -/
 def allowedClosure : List Name :=
-  [`InfinitaryLogic.Util, `InfinitaryLogic.OrdinalUtil,
+  [`InfinitaryLogic.Util, `InfinitaryLogic.OrdinalUtil, `InfinitaryLogic.Topology.Perfect,
    `InfinitaryLogic.Lomega1omega.Syntax, `InfinitaryLogic.Lomega1omega.Semantics,
    `InfinitaryLogic.Lomega1omega.Operations,
    `InfinitaryLogic.Scott.AtomicDiagram, `InfinitaryLogic.Scott.BackAndForth,

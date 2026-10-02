@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Descriptive.CantorAntichain
+import InfinitaryLogic.Topology.Perfect
 import Architect
 import Mathlib.Topology.DerivedSet
 import Mathlib.Topology.MetricSpace.Perfect
@@ -28,7 +29,8 @@ an extra hypothesis: it follows from *reflexivity* of the setoid, since distinct
 inequivalent images and every point is equivalent to itself.
 
 The file also carries the cardinal facts these statements are measured against: a nonempty
-perfect set in a complete metric space has size continuum (`Perfect.mk_eq_continuum`); a
+perfect set in a complete metric space has size continuum (`Perfect.mk_eq_continuum`, which
+lives in the topology-only module `InfinitaryLogic/Topology/Perfect.lean`, imported here); a
 perfect transversal forces continuum-many classes (`continuum_classes_of_perfect_transversal`,
 with its two-sided companion); and a Polish space, hence any quotient of one, has at most
 continuum-many points (`mk_le_continuum_of_polish`, `mk_quotient_le_continuum_of_polish`).
@@ -258,35 +260,6 @@ theorem HasPerfectAntichainOn.hasCantorAntichainOn {α : Type u} [MetricSpace α
 theorem IsThinOn.of_no_cantorAntichain {α : Type u} [MetricSpace α] [CompleteSpace α]
     {r : Setoid α} {A : Set α} (h : ¬HasCantorAntichainOn r A) : IsThinOn r A :=
   fun hp => h hp.hasCantorAntichainOn
-
-/-! ### Perfect set cardinality
-
-This is where second countability genuinely enters, and only for the upper bound. -/
-
-/-- A nonempty perfect subset of a Polish space has cardinality = continuum.
-Lower bound via `Perfect.exists_nat_bool_injection`; upper bound via
-second-countability of Polish spaces. -/
-theorem Perfect.mk_eq_continuum {α : Type u} [MetricSpace α] [CompleteSpace α]
-    [SecondCountableTopology α]
-    {C : Set α} (hperf : Perfect C) (hne : C.Nonempty) :
-    #C = Cardinal.continuum := by
-  apply le_antisymm
-  · -- Upper bound: #C ≤ 𝔠
-    calc #C ≤ #α := mk_set_le C
-      _ ≤ Cardinal.continuum := by
-        have : Nonempty α := let ⟨x, _⟩ := hne; ⟨x⟩
-        obtain ⟨f, _, hf_surj⟩ := PolishSpace.exists_nat_nat_continuous_surjective α
-        have h1 := lift_mk_le_lift_mk_of_surjective hf_surj
-        simp only [lift_uzero] at h1
-        exact h1.trans (by simp [aleph0_power_aleph0])
-  · -- Lower bound: 𝔠 ≤ #C
-    obtain ⟨f, hf_range, _, hf_inj⟩ := hperf.exists_nat_bool_injection hne
-    let g : (ℕ → Bool) → C := fun x => ⟨f x, hf_range (mem_range_self x)⟩
-    have hg_inj : Function.Injective g := fun a b hab => hf_inj (Subtype.mk.inj hab)
-    have h1 := lift_mk_le_lift_mk_of_injective hg_inj
-    simp only [lift_uzero] at h1
-    rw [show lift.{u} #(ℕ → Bool) = Cardinal.continuum from by simp] at h1
-    exact h1
 
 /-! ### Perfect transversal → continuum classes -/
 
