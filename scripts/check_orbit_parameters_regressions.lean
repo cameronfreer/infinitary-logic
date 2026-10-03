@@ -30,7 +30,10 @@ Every public theorem is *applied*, not only listed for its axioms.
   with the atomic diagrams as orbit formulas: the eliminated formula of `a = (1, 2)` holds at
   `(4, 7)` and **fails** at `(4, 4)`.
 * **Import closure** of the module: exactly the expected `InfinitaryLogic` modules
-  (`[CLOSURE DRIFT]` otherwise).
+  (`[CLOSURE DRIFT]` otherwise), `Karp/PotentialIso` and `Karp/CarrierTheorem` included (through
+  `Scott/MontalbanQuantifierRank` and `Scott/QuantifierRank`); proof-term independence from Karp
+  is the separate concern of `check_orbit_parameters_deps.lean`.  The closure check and the
+  axiom audit share one command, so the final OK line is printed only if both pass.
 * **Standard axioms** for every public declaration added by the tranche (the base-layer and
   Montalbán-module additions included) and for the guard's own theorems.
 
@@ -348,12 +351,6 @@ theorem pure_homogeneous {X : Type w} {n : ℕ} (a b : Fin n → X)
     (fun i j ↦ h (AtomicIdx.eq i j)) (fun _ ↦ trivial)
   exact ⟨{ toEquiv := e }, funext he⟩
 
-/-- Composition commutes with appending. -/
-theorem comp_append' {α β : Type*} (f : α → β) {k n : ℕ} (c : Fin k → α) (a : Fin n → α) :
-    f ∘ Fin.append c a = Fin.append (f ∘ c) (f ∘ a) := by
-  funext i
-  refine Fin.addCases (fun j ↦ ?_) (fun j ↦ ?_) i <;> simp
-
 /-- The atomic diagram of a tuple of `ℕ` defines its orbit. -/
 theorem pure_hθ {k : ℕ} (c₀ c : Fin k → ℕ) :
     (atomicDiagram (L := Language.empty) c₀).Realize c ↔
@@ -373,13 +370,13 @@ theorem pure_isOrbitPointed {k : ℕ} (c₀ : Fin k → ℕ) :
   constructor
   · intro h
     obtain ⟨e, he⟩ := pure_homogeneous _ _ h
-    rw [comp_append'] at he
+    rw [Fin.comp_append] at he
     refine ⟨e, funext fun j ↦ ?_, funext fun i ↦ ?_⟩
     · simpa using congrFun he (Fin.castAdd n j)
     · simpa using congrFun he (Fin.natAdd k i)
   · rintro ⟨e, hec, rfl⟩
     have := sameAtomicType_comp e (Fin.append c₀ a)
-    rwa [comp_append', hec] at this
+    rwa [Fin.comp_append, hec] at this
 
 /-- The eliminated formula of `(1, 2)` over the repeated parameters `(1, 1)`. -/
 abbrev pureφ : Language.empty.Formulaω (Fin 2) :=
@@ -388,7 +385,7 @@ abbrev pureφ : Language.empty.Formulaω (Fin 2) :=
 
 /-- Positive: `(4, 7)` is in the orbit of `(1, 2)`. -/
 theorem pure_pos : pureφ.Realize (![4, 7] : Fin 2 → ℕ) :=
-  (realize_existsOrbitParams_of_isOrbitFormulaFamilyPointed (pure_hθ ![1, 1])
+  (realize_existsOrbitParams_iff_orbit_of_isOrbitFormulaFamilyPointed (pure_hθ ![1, 1])
     (pure_isOrbitPointed ![1, 1]) 2 ![1, 2] ![4, 7]).2
     (pure_homogeneous _ _ fun idx ↦ by
       cases idx with
@@ -398,7 +395,7 @@ theorem pure_pos : pureφ.Realize (![4, 7] : Fin 2 → ℕ) :=
 
 /-- Negative: `(4, 4)` is not (an automorphism is injective). -/
 theorem pure_neg : ¬ pureφ.Realize (![4, 4] : Fin 2 → ℕ) := by
-  rw [realize_existsOrbitParams_of_isOrbitFormulaFamilyPointed (pure_hθ ![1, 1])
+  rw [realize_existsOrbitParams_iff_orbit_of_isOrbitFormulaFamilyPointed (pure_hθ ![1, 1])
     (pure_isOrbitPointed ![1, 1])]
   rintro ⟨g, hg⟩
   have h := (congrFun hg 0).trans (congrFun hg 1).symm
@@ -438,31 +435,22 @@ def expectedClosure : List Name :=
    `InfinitaryLogic.Scott.Formula, `InfinitaryLogic.Scott.Sentence,
    `InfinitaryLogic.Scott.Stabilization, `InfinitaryLogic.Scott.OrbitRank,
    `InfinitaryLogic.Scott.MontalbanSentence, `InfinitaryLogic.Scott.QuantifierRank,
+   `InfinitaryLogic.Scott.MontalbanQuantifierRank,
    `InfinitaryLogic.Karp.PotentialIso, `InfinitaryLogic.Karp.CarrierTheorem,
    `InfinitaryLogic.Scott.OrbitParameters]
 
-run_cmd do
-  let env ← getEnv
-  let target := `InfinitaryLogic.Scott.OrbitParameters
-  unless (env.getModuleIdx? target).isSome do
-    throwError "module {target} is not in the environment"
-  let cl := importClosure env target
-  let il := cl.toList.filter (`InfinitaryLogic).isPrefixOf
-  let extra := il.filter fun m ↦ !expectedClosure.contains m
-  let missing := expectedClosure.filter fun m ↦ !cl.contains m
-  unless extra.isEmpty && missing.isEmpty do
-    throwError "[CLOSURE DRIFT] the closure of {target}: unexpected {extra}, missing {missing}"
-
 /-- The public declarations added by the tranche, in every module it touches. -/
 def trancheDecls : List Name :=
-  [`Fin.append_comp_finAddFlip, `Fin.append_comp_natAdd] ++
+  [`Fin.append_comp_finAddFlip, `Fin.append_comp_natAdd, `Fin.comp_append] ++
   ([`BoundedFormulaω.qrank_mapFreeVars, `BoundedFormulaω.qrank_inf, `BoundedFormulaω.qrank_sup,
-    `Formulaω.realize_mapFreeVars, `existsTupleFrom, `realize_existsTupleFrom,
+    `Formulaω.realize_mapFreeVars, `Formulaω.realize_comp_equiv, `existsTupleFrom,
+    `realize_existsTupleFrom,
     `qrank_existsTupleFrom, `qrank_forallTupleFrom, `qrank_forallTuple, `qrank_existsTuple,
     `existsOrbitParams, `realize_existsOrbitParams, `qrank_existsOrbitParams,
     `qrank_existsOrbitParams_le, `realize_existsOrbitParams_iff_orbit,
     `realize_existsOrbitParams_iff_orbit',
-    `realize_existsOrbitParams_of_isOrbitFormulaFamilyPointed].map (`FirstOrder.Language ++ ·))
+    `realize_existsOrbitParams_iff_orbit_of_isOrbitFormulaFamilyPointed].map
+      (`FirstOrder.Language ++ ·))
 
 /-- The guard's own theorems whose axioms are audited. -/
 def guardDecls : List Name :=
@@ -476,8 +464,19 @@ def guardDecls : List Name :=
 /-- The standard axioms. -/
 def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
 
+-- The closure check and the axiom audit run in one command, so that the final OK line is
+-- printed only when both pass.
 run_cmd do
   let env ← getEnv
+  let target := `InfinitaryLogic.Scott.OrbitParameters
+  unless (env.getModuleIdx? target).isSome do
+    throwError "module {target} is not in the environment"
+  let cl := importClosure env target
+  let il := cl.toList.filter (`InfinitaryLogic).isPrefixOf
+  let extra := il.filter fun m ↦ !expectedClosure.contains m
+  let missing := expectedClosure.filter fun m ↦ !cl.contains m
+  unless extra.isEmpty && missing.isEmpty do
+    throwError "[CLOSURE DRIFT] the closure of {target}: unexpected {extra}, missing {missing}"
   for n in trancheDecls ++ guardDecls do
     unless (env.find? n).isSome do throwError "declaration {n} not found"
     let axs ← Elab.Command.liftCoreM (collectAxioms n)

@@ -26,6 +26,8 @@ in Lω₁ω (countable infinitary logic with countable conjunctions/disjunctions
 - `Theoryω.Model.mono`: Models are monotone: if T ⊆ T' and M ⊨ T', then M ⊨ T.
 - `LomegaEquiv.refl`, `LomegaEquiv.symm`, `LomegaEquiv.trans`: LomegaEquiv is an equivalence relation.
 - `LomegaEquiv.of_equiv`: Isomorphic structures are Lω₁ω-equivalent.
+- `BoundedFormulaω.realize_equiv`, `Formulaω.realize_comp_equiv`: realization is invariant under
+  isomorphisms.
 
 ## References
 
@@ -194,6 +196,14 @@ theorem BoundedFormulaω.realize_equiv {M N : Type w} [L.Structure M] [L.Structu
   | iInf φs ih =>
     simp only [BoundedFormulaInf.Realize]
     exact forall_congr' fun i => ih i xs
+
+/-- `BoundedFormulaω.realize_equiv` at the level of formulas: truth of a formula is transported
+along an isomorphism `e : M ≃[L] N`, the assignment composed with `e`. -/
+theorem Formulaω.realize_comp_equiv {M N : Type w} [L.Structure M] [L.Structure N]
+    (e : M ≃[L] N) {β : Type*} (φ : L.Formulaω β) (v : β → M) :
+    φ.Realize v ↔ φ.Realize (⇑e ∘ v) := by
+  simpa only [Formulaω.realize_def, comp_fin_elim0] using
+    BoundedFormulaω.realize_equiv e φ v Fin.elim0
 
 /-! ### Lω₁ω Elementary Equivalence -/
 

@@ -336,13 +336,6 @@ theorem exists_equiv_of_realize_montalbanSentencePointed [L.IsRelational] {k : �
   rw [Function.comp_apply, ← hbi]
   exact hij.1 hai
 
-omit [Countable (Σ l, L.Relations l)] [Countable M] in
-/-- Transport of `Formulaω` truth along an isomorphism. -/
-private theorem realize_comp_equiv {N : Type w} [L.Structure N] (e : M ≃[L] N) {β : Type*}
-    (φ : L.Formulaω β) (v : β → M) : φ.Realize v ↔ φ.Realize (⇑e ∘ v) := by
-  simpa only [Formulaω.realize_def, comp_fin_elim0] using
-    BoundedFormulaω.realize_equiv e φ v Fin.elim0
-
 /-- **The pointed sentence characterizes `(M, c)`.**  For an orbit-formula family over `c`, a
 countable `N` satisfies the pointed sentence at `d` iff some isomorphism carries `c` to `d`. -/
 theorem montalbanSentencePointed_characterizes [L.IsRelational] {k : ℕ} {c : Fin k → M}
@@ -350,7 +343,7 @@ theorem montalbanSentencePointed_characterizes [L.IsRelational] {k : ℕ} {c : F
     (N : Type w) [L.Structure N] [Countable N] (d : Fin k → N) :
     (montalbanSentencePointed c Φ).Realize d ↔ ∃ e : M ≃[L] N, ⇑e ∘ c = d :=
   ⟨exists_equiv_of_realize_montalbanSentencePointed c Φ N d, fun ⟨e, he⟩ ↦
-    he ▸ (realize_comp_equiv e _ c).1 (montalbanSentencePointed_self hΦ)⟩
+    he ▸ (Formulaω.realize_comp_equiv e _ c).1 (montalbanSentencePointed_self hΦ)⟩
 
 end Pointed
 
@@ -469,7 +462,7 @@ theorem montalbanSentence_characterizes [L.IsRelational]
     (N : Type w) [L.Structure N] [Countable N] :
     (montalbanSentence Φ).realize_as_sentence N ↔ Nonempty (M ≃[L] N) :=
   ⟨nonempty_equiv_of_realize_montalbanSentence Φ N, fun ⟨e⟩ ↦ by
-    have h := (realize_comp_equiv e _ _).1 (montalbanSentence_self hΦ)
+    have h := (Formulaω.realize_comp_equiv e _ _).1 (montalbanSentence_self hΦ)
     rwa [comp_fin_elim0] at h⟩
 
 end Unpointed

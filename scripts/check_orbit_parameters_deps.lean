@@ -13,13 +13,19 @@ vacuously; import names are not taken as evidence of proof independence, nor the
   the environment stops the guard (`[UNKNOWN ROOT]`, `[NOT A THEOREM]`, `[UNKNOWN CONSTANT]`).
 * **Satisfaction invariance is the route.**  The cones of
   `realize_existsOrbitParams_iff_orbit`, `realize_existsOrbitParams_iff_orbit'` and
-  `realize_existsOrbitParams_of_isOrbitFormulaFamilyPointed` contain
-  `BoundedFormulaω.realize_equiv` and the realization lemma `realize_existsOrbitParams`.
+  `realize_existsOrbitParams_iff_orbit_of_isOrbitFormulaFamilyPointed` contain
+  `BoundedFormulaω.realize_equiv`, its formula-level form `Formulaω.realize_comp_equiv`, and the
+  realization lemma `realize_existsOrbitParams`.
 * **No Karp, no rank.**  No constant in those cones is declared in a module under
   `InfinitaryLogic.Karp`, and no constant in them has a name with a component containing
   `qrank`.  Both checks have positive controls: the Karp modules are asserted to be in the
   environment, and the module check must flag the cone of the forward Karp lemma
   `BFEquiv_implies_agreeQR`; the name check must flag the cone of `qrank_existsOrbitParams`.
+  A third control, `controlTransitive`, is declared in this file and reaches Karp only
+  **transitively**: it refers to `BFEquiv_implies_agree_formulas_omega`
+  (`Scott/QuantifierRank`), none of its direct references is declared in a Karp module, and the
+  module check must still flag its cone, so the check tests the walk and not only the module
+  of the root or of its direct references.
 * **Standard axioms**, read off the cone itself (every `axiom` reached through a type or a body,
   opaque bodies included) and cross-checked against `collectAxioms`: only `propext`,
   `Classical.choice` and `Quot.sound`.
@@ -42,11 +48,11 @@ def fol (l : List Name) : List Name := l.map (`FirstOrder.Language ++ ·)
 /-- The semantic roots. -/
 def roots : List Name :=
   fol [`realize_existsOrbitParams_iff_orbit, `realize_existsOrbitParams_iff_orbit',
-    `realize_existsOrbitParams_of_isOrbitFormulaFamilyPointed]
+    `realize_existsOrbitParams_iff_orbit_of_isOrbitFormulaFamilyPointed]
 
 /-- The dependencies every root's cone must contain. -/
 def required : List Name :=
-  fol [`BoundedFormulaω.realize_equiv, `realize_existsOrbitParams]
+  fol [`BoundedFormulaω.realize_equiv, `Formulaω.realize_comp_equiv, `realize_existsOrbitParams]
 
 /-- The module prefix no constant of a root's cone may be declared under. -/
 def karpPrefix : Name := `InfinitaryLogic.Karp
@@ -151,6 +157,11 @@ noncomputable opaque OrbitParametersDeps.controlOpaque : ℕ :=
 theorem OrbitParametersDeps.controlType :
     OrbitParametersDeps.nonstandardAxiom = OrbitParametersDeps.nonstandardAxiom := rfl
 
+/-- **Transitive positive control**: declared outside the Karp modules, referring to a
+`Scott/QuantifierRank` theorem whose proof uses the forward Karp lemma. -/
+theorem OrbitParametersDeps.controlTransitive : True :=
+  (fun _ ↦ trivial) @FirstOrder.Language.BFEquiv_implies_agree_formulas_omega.{0, 0, 0}
+
 open OrbitParametersDeps
 
 run_cmd do
@@ -185,6 +196,19 @@ run_cmd do
   let (cK, _) ← audit karpControl
   if (karpHits env cK).isEmpty then
     throwError "[VACUOUS] the module check does not flag the cone of {karpControl}"
+  let tc := `OrbitParametersDeps.controlTransitive
+  let some tci := env.find? tc | throwError "positive control: {tc} is missing"
+  let direct := (refs tci).toList
+  unless direct.contains `FirstOrder.Language.BFEquiv_implies_agree_formulas_omega do
+    throwError "positive control: {tc} no longer refers to BFEquiv_implies_agree_formulas_omega"
+  let directKarp := karpHits env (.ofList direct)
+  unless directKarp.isEmpty do
+    throwError "positive control: {tc} refers to a Karp constant directly: {directKarp}"
+  let (cT, _) ← audit tc
+  unless cT.contains karpControl do
+    throwError "[VACUOUS] the cone of {tc} does not reach {karpControl}"
+  if (karpHits env cT).isEmpty then
+    throwError "[VACUOUS] the module check does not flag the transitive cone of {tc}"
   let (cQ, _) ← audit qrankControl
   if (qrankHits cQ).isEmpty then
     throwError "[VACUOUS] the name check does not flag the cone of {qrankControl}"
@@ -206,7 +230,9 @@ run_cmd do
     unless qh.isEmpty do
       throwError "[QRANK] the cone of {root} reaches {qh.take 10}"
   logInfo m!"orbit-parameters dependency guard: OK (cones {sizes.toList}; each through \
-    BoundedFormulaω.realize_equiv and realize_existsOrbitParams, with no constant from a Karp \
-    module and no qrank declaration; both checks flag their positive controls; standard axioms \
+    BoundedFormulaω.realize_equiv, Formulaω.realize_comp_equiv and realize_existsOrbitParams, \
+    with no constant from a Karp module and no qrank declaration; both checks flag their \
+    positive controls, the Karp check also through a guard-local control reaching Karp only \
+    transitively; standard axioms \
     from the cones, agreeing with collectAxioms; the custom-axiom controls in a proof, an opaque \
     body and a type are flagged)"

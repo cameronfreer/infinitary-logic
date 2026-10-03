@@ -34,6 +34,7 @@ import InfinitaryLogic.Scott.Sentence
 import InfinitaryLogic.Scott.SentenceRecognition
 import InfinitaryLogic.Scott.MontalbanSentence
 import InfinitaryLogic.Scott.MontalbanComplexity
+import InfinitaryLogic.Scott.MontalbanQuantifierRank
 import InfinitaryLogic.Scott.ForgetParameters
 import InfinitaryLogic.Scott.OrbitParameters
 import InfinitaryLogic.Scott.GradedMatching

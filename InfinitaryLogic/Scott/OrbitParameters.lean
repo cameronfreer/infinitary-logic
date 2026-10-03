@@ -3,8 +3,7 @@ Copyright (c) 2026 Cameron Freer. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
-import InfinitaryLogic.Scott.MontalbanSentence
-import InfinitaryLogic.Scott.QuantifierRank
+import InfinitaryLogic.Scott.MontalbanQuantifierRank
 
 /-!
 # Eliminating orbit parameters
@@ -30,12 +29,11 @@ quantifier rank is exactly `max θ.qrank ψ.qrank + k`, with `k` added on the ri
   `qrank_existsOrbitParams_le`, the bound `α + k` from `θ.qrank ≤ α` and `ψ.qrank ≤ α`.
 * `realize_existsOrbitParams_iff_orbit`: the orbit theorem, with the relative hypothesis in the
   pointwise form `∀ i, f (c₀ i) = c₀ i`; `realize_existsOrbitParams_iff_orbit'`, the same with
-  `⇑f ∘ c₀ = c₀`; and `realize_existsOrbitParams_of_isOrbitFormulaFamilyPointed`, which feeds a
-  pointed orbit-formula family `IsOrbitFormulaFamilyPointed c₀ Φ` in directly.
-* The tuple-block rank family `qrank_existsTupleFrom`, `qrank_forallTupleFrom`,
-  `qrank_existsTuple`, `qrank_forallTuple`: each block of `n` quantifiers adds `n` on the right.
+  `⇑f ∘ c₀ = c₀`; and `realize_existsOrbitParams_iff_orbit_of_isOrbitFormulaFamilyPointed`,
+  which feeds a pointed orbit-formula family `IsOrbitFormulaFamilyPointed c₀ Φ` in directly.
 * `Fin.append_comp_finAddFlip`, `Fin.append_comp_natAdd`: the two coordinate identities that
-  read the block back in the parameters-first layout.
+  read the block back in the parameters-first layout; `Fin.comp_append`: composition commutes
+  with appending.
 
 ## Interpretation choices
 
@@ -57,11 +55,14 @@ quantifier rank is exactly `max θ.qrank ψ.qrank + k`, with `k` added on the ri
   automorphism `e` with `⇑e ∘ c₀ = c`, the relative orbit property applies there, and the two
   automorphisms compose.  The converse is invariance of satisfaction under automorphisms.
 * **Satisfaction invariance, not back-and-forth.**  The semantic theorems are proved from
-  `BoundedFormulaω.realize_equiv` alone; neither Karp's theorem nor any rank comparison enters.
-  The rank identity is a separate syntactic computation.
+  `BoundedFormulaω.realize_equiv` alone, through its formula-level form
+  `Formulaω.realize_comp_equiv`; neither Karp's theorem nor any rank comparison enters.  The rank
+  identity is a separate syntactic computation, from the tuple-block rank lemmas of
+  `Scott/MontalbanQuantifierRank.lean` (`qrank_existsTupleFrom`).
 * **Proof terms versus imports.**  Freedom from Karp is a property of the *proof terms* of the
   semantic theorems, not of this module's import closure.  The closure does contain
-  `Karp/CarrierTheorem`, through `Scott/QuantifierRank`, which the rank lemmas need.  The two are
+  `Karp/CarrierTheorem`, through `Scott/MontalbanQuantifierRank` and `Scott/QuantifierRank`,
+  which the rank lemmas need.  The two are
   audited separately: `scripts/check_orbit_parameters_regressions.lean` asserts the exact import
   closure as it is, and `scripts/check_orbit_parameters_deps.lean` asserts that the proof-term
   cones of the semantic theorems contain `realize_equiv` and no constant from a Karp module and
@@ -69,10 +70,6 @@ quantifier rank is exactly `max θ.qrank ψ.qrank + k`, with `k` added on the ri
 * **Hypotheses deliberately absent.**  No countability (of `M` or of the symbols), no
   `[L.IsRelational]` (function symbols are handled by `realize_equiv`), no `Nonempty M`, and no
   injectivity of `c₀` or `a`.  The language and carrier universes are independent.
-* **Owned helpers.**  The tuple-block rank lemmas live here because `Scott/QuantifierRank.lean`
-  does not import `Scott/MontalbanSentence.lean`, and adding that import would widen the cone of
-  every module downstream of the quantifier-rank file; they are stated for the blocks of
-  `Scott/MontalbanSentence.lean` in general, not only for this construction.
 
 ## What is not claimed
 
@@ -102,6 +99,12 @@ theorem append_comp_natAdd {α : Sort*} {k n : ℕ} (c : Fin k → α) (b : Fin 
   funext i
   simp
 
+/-- Composition commutes with appending. -/
+theorem comp_append {α β : Sort*} {k n : ℕ} (g : α → β) (c : Fin k → α) (b : Fin n → α) :
+    g ∘ append c b = append (g ∘ c) (g ∘ b) := by
+  funext i
+  refine addCases (fun j ↦ ?_) (fun j ↦ ?_) i <;> simp
+
 end Fin
 
 namespace FirstOrder.Language
@@ -109,45 +112,6 @@ namespace FirstOrder.Language
 open Structure BoundedFormulaω
 
 variable {L : Language.{u, v}}
-
-/-! ### The tuple-block rank family -/
-
-section TupleRank
-
-private theorem one_add_natCast (n : ℕ) : (1 : Ordinal.{0}) + n = ((n + 1 : ℕ) : Ordinal) := by
-  exact_mod_cast Nat.add_comm 1 n
-
-/-- A block of `n` existential quantifiers adds `n` to the rank, on the right. -/
-theorem qrank_existsTupleFrom (k : ℕ) :
-    ∀ (n : ℕ) (φ : L.Formulaω (Fin (k + n))), (existsTupleFrom k n φ).qrank = φ.qrank + n
-  | 0, φ => by simp [existsTupleFrom]
-  | n + 1, φ => by
-    simp only [existsTupleFrom, qrank_existsTupleFrom k n, qrank_existsLastVar, add_assoc,
-      one_add_natCast]
-
-/-- A block of `n` universal quantifiers adds `n` to the rank, on the right. -/
-theorem qrank_forallTupleFrom (k : ℕ) :
-    ∀ (n : ℕ) (φ : L.Formulaω (Fin (k + n))), (forallTupleFrom k n φ).qrank = φ.qrank + n
-  | 0, φ => by simp [forallTupleFrom]
-  | n + 1, φ => by
-    simp only [forallTupleFrom, qrank_forallTupleFrom k n, qrank_forallLastVar, add_assoc,
-      one_add_natCast]
-
-/-- The universal closure of `n` free variables adds `n` to the rank, on the right. -/
-theorem qrank_forallTuple :
-    ∀ (n : ℕ) (φ : L.Formulaω (Fin n)), (forallTuple n φ).qrank = φ.qrank + n
-  | 0, φ => by simp [forallTuple]
-  | n + 1, φ => by
-    simp only [forallTuple, qrank_forallTuple n, qrank_forallLastVar, add_assoc, one_add_natCast]
-
-/-- The existential closure of `n` free variables adds `n` to the rank, on the right. -/
-theorem qrank_existsTuple :
-    ∀ (n : ℕ) (φ : L.Formulaω (Fin n)), (existsTuple n φ).qrank = φ.qrank + n
-  | 0, φ => by simp [existsTuple]
-  | n + 1, φ => by
-    simp only [existsTuple, qrank_existsTuple n, qrank_existsLastVar, add_assoc, one_add_natCast]
-
-end TupleRank
 
 /-! ### The syntax -/
 
@@ -190,18 +154,6 @@ section Orbit
 
 variable {M : Type w} [L.Structure M]
 
-/-- Composition commutes with appending. -/
-private theorem comp_append {α β : Type*} {k n : ℕ} (g : α → β) (c : Fin k → α)
-    (b : Fin n → α) : g ∘ Fin.append c b = Fin.append (g ∘ c) (g ∘ b) := by
-  funext i
-  refine Fin.addCases (fun j ↦ ?_) (fun j ↦ ?_) i <;> simp
-
-/-- Transport of `Formulaω` truth along an automorphism. -/
-private theorem realize_comp_aut (e : M ≃[L] M) {β : Type*} (φ : L.Formulaω β) (v : β → M) :
-    φ.Realize v ↔ φ.Realize (⇑e ∘ v) := by
-  simpa only [Formulaω.realize_def, comp_fin_elim0] using
-    BoundedFormulaω.realize_equiv e φ v Fin.elim0
-
 /-- **Eliminating orbit parameters.**  If `θ` defines the automorphism orbit of `c₀`, and `ψ`,
 read at `c₀⌢b`, defines the orbit of `a` under the automorphisms fixing `c₀` pointwise, then
 `existsOrbitParams θ ψ = ∃z̄ (θ(z̄) ∧ ψ(z̄, x̄))` defines the automorphism orbit of `a`.
@@ -225,8 +177,8 @@ theorem realize_existsOrbitParams_iff_orbit {k n : ℕ} {θ : L.Formulaω (Fin k
   constructor
   · rintro ⟨c, hc, hcb⟩
     obtain ⟨e, rfl⟩ := (hθ c).1 hc
-    have h' := (realize_comp_aut e.symm ψ _).1 hcb
-    rw [comp_append, ← Function.comp_assoc] at h'
+    have h' := (Formulaω.realize_comp_equiv e.symm ψ _).1 hcb
+    rw [Fin.comp_append, ← Function.comp_assoc] at h'
     have hsym : ⇑e.symm ∘ ⇑e = id := funext fun x ↦ e.symm_apply_apply x
     rw [hsym, Function.id_comp] at h'
     obtain ⟨f, -, hfa⟩ := (hψ _).1 h'
@@ -236,8 +188,9 @@ theorem realize_existsOrbitParams_iff_orbit {k n : ℕ} {θ : L.Formulaω (Fin k
     rw [Language.Equiv.comp_apply, this, e.apply_symm_apply]
   · rintro ⟨g, rfl⟩
     refine ⟨⇑g ∘ c₀, (hθ _).2 ⟨g, rfl⟩, ?_⟩
-    rw [← comp_append]
-    exact (realize_comp_aut g ψ _).1 ((hψ a).2 ⟨Language.Equiv.refl L M, fun _ ↦ rfl, rfl⟩)
+    rw [← Fin.comp_append]
+    exact (Formulaω.realize_comp_equiv g ψ _).1
+      ((hψ a).2 ⟨Language.Equiv.refl L M, fun _ ↦ rfl, rfl⟩)
 
 /-- `realize_existsOrbitParams_iff_orbit` with the relative hypothesis in the composite form
 `⇑f ∘ c₀ = c₀`, the form of `IsOrbitFormulaFamilyPointed`. -/
@@ -252,8 +205,8 @@ theorem realize_existsOrbitParams_iff_orbit' {k n : ℕ} {θ : L.Formulaω (Fin 
 /-- A pointed orbit-formula family over `c₀` and an orbit formula `θ` of `c₀` give an orbit
 formula of every tuple: `existsOrbitParams θ (Φ n a)` defines the automorphism orbit of `a`.
 No countability is assumed. -/
-theorem realize_existsOrbitParams_of_isOrbitFormulaFamilyPointed {k : ℕ} {c₀ : Fin k → M}
-    {θ : L.Formulaω (Fin k)} {Φ : ∀ n, (Fin n → M) → L.Formulaω (Fin (k + n))}
+theorem realize_existsOrbitParams_iff_orbit_of_isOrbitFormulaFamilyPointed {k : ℕ}
+    {c₀ : Fin k → M} {θ : L.Formulaω (Fin k)} {Φ : ∀ n, (Fin n → M) → L.Formulaω (Fin (k + n))}
     (hθ : ∀ c, θ.Realize c ↔ ∃ e : M ≃[L] M, ⇑e ∘ c₀ = c)
     (hΦ : IsOrbitFormulaFamilyPointed c₀ Φ) (n : ℕ) (a b : Fin n → M) :
     (existsOrbitParams θ (Φ n a)).Realize b ↔ ∃ g : M ≃[L] M, ⇑g ∘ a = b :=
