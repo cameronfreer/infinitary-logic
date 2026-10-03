@@ -30,8 +30,8 @@ is added.
   internalScottRank ℕ + ω` (`lift_stabilizationOrdinal_nat_eq`, as `1 + ω = ω`) while no finite
   offset suffices.  The `+ ω` bounds for `stabilizationOrdinal` and `scottHeight` over the
   internal rank (not for `scottRank`, which needs `+ ω + 1` here) are proved in
-  `Scott/RankConventions.lean` and attained on `ℕ`; their guard is
-  `check_rank_conventions_regressions.lean`.  This guard does not use them.
+  `Scott/InternalRankBounds.lean` and attained on `ℕ`; their guard is
+  `check_internal_rank_bounds_regressions.lean`.  This guard does not use them.
 * **The documented relations, applied.**  `sr_le_scottRank`, `sr_le_scottHeight_of` and
   `scottRank_le_scottHeight_succ_of` are applied on `ℕ` (giving `ω ≤ scottHeight ℕ`), and
   `elementRank_le_completeStab` at the Scott height; the exact values are instantiated at an

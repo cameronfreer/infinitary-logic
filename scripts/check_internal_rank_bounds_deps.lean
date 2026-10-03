@@ -1,10 +1,11 @@
 /-
-Proof-dependency guard for the `+ ω` bounds of `InfinitaryLogic/Scott/RankConventions.lean`.
+Proof-dependency guard for the `+ ω` bounds of
+`InfinitaryLogic/Scott/InternalRankBounds.lean`.
 
-The regression guard `check_rank_conventions_regressions.lean` applies every theorem, derives the
-Scott-height bound a second time through the pointed sentence, and checks the **import** closure
-of `Scott.RankConventions`.  This guard checks, at the level of **proof terms** and against the
-full library, which route the library bounds take.
+The regression guard `check_internal_rank_bounds_regressions.lean` applies every theorem,
+derives the Scott-height bound a second time through the pointed sentence, and checks the
+**import** closure of `Scott.InternalRankBounds`.  This guard checks, at the level of **proof
+terms** and against the full library, which route the library bounds take.
 
 * **Fail-closed cone walk.**  For each root, the transitive constant cone follows types, values
   (theorem, definition and opaque bodies), constructors, recursor rules and inductive families.
@@ -32,26 +33,27 @@ full library, which route the library bounds take.
   constant directly.
 * **Standard axioms**, read off the cone itself (every `axiom` reached through a type or a body,
   opaque bodies included) and cross-checked against `collectAxioms`, for every public
-  declaration of the module and the two promoted comparisons: only `propext`,
+  declaration of the module, the two promoted comparisons and the three additions to
+  `Scott/Height/RankBounds.lean`: only `propext`,
   `Classical.choice` and `Quot.sound`.
 * **Nonstandard-axiom negative controls.**  The guard declares a custom `axiom` and three
   declarations using it: in a theorem body, in an `opaque` body, and in a theorem type.  The same
   audit must flag each of them, and `collectAxioms` must agree; otherwise the guard fails.
 
 Run *after* `lake build`, so the oleans it resolves against are current:
-lake env lean scripts/check_rank_conventions_deps.lean
+lake env lean scripts/check_internal_rank_bounds_deps.lean
 -/
 import InfinitaryLogic
 
 open Lean
 
-namespace RankConventionsDeps
+namespace InternalRankBoundsDeps
 
 /-- Prefix a list of names with `FirstOrder.Language`. -/
 def fol (l : List Name) : List Name := l.map (`FirstOrder.Language ++ ·)
 
-/-- Every public declaration of `Scott.RankConventions`, with the two comparisons promoted
-into `Scott.OrbitRankStabilization`. -/
+/-- Every public declaration of `Scott.InternalRankBounds`, with the two comparisons promoted
+into `Scott.OrbitRankStabilization` and the three additions to `Scott.Height.RankBounds`. -/
 def roots : List Name :=
   fol [`iSup_orbitRank_le_internalScottRank, `internalScottRank_le_iSup_orbitRank_add_one,
     `internalScottRank_add_omega0_eq, `orbitRank_le_lift_scottHeight,
@@ -59,7 +61,7 @@ def roots : List Name :=
     `isOrbitFormulaFamilyPointed_scottFormula, `stabilizationOrdinal_le_scottHeight,
     `scottHeight_le_max_of_orbitRank_le, `lift_scottHeight_eq_max,
     `internalScottRank_le_lift_scottHeight_add_one, `sr_le_scottHeight,
-    `scottRank_le_scottHeight_add_one, `lift_stabilizationOrdinal_le_iSup_orbitRank_add_omega0,
+    `scottRank_le_scottHeight_succ, `lift_stabilizationOrdinal_le_iSup_orbitRank_add_omega0,
     `lift_stabilizationOrdinal_le_internalScottRank_add_omega0,
     `lift_scottHeight_le_iSup_orbitRank_add_omega0,
     `lift_scottHeight_le_internalScottRank_add_omega0]
@@ -163,48 +165,49 @@ def audit (n : Name) : Elab.Command.CommandElabM (NameSet × List Name) := do
 /-- **The nonstandard axiom of the negative controls.** -/
 axiom nonstandardAxiom : (2 : ℕ) + 2 = 4
 
-end RankConventionsDeps
+end InternalRankBoundsDeps
 
 /-- **Negative control 1**: a clean statement whose *proof* uses the custom axiom. -/
-theorem RankConventionsDeps.controlBody : (2 : ℕ) + 2 = 4 := RankConventionsDeps.nonstandardAxiom
+theorem InternalRankBoundsDeps.controlBody : (2 : ℕ) + 2 = 4 :=
+  InternalRankBoundsDeps.nonstandardAxiom
 
 /-- **Negative control 2**: an `opaque` constant whose *body* uses the custom axiom. -/
-noncomputable opaque RankConventionsDeps.controlOpaque : ℕ :=
-  (fun _ : (2 : ℕ) + 2 = 4 ↦ 0) RankConventionsDeps.nonstandardAxiom
+noncomputable opaque InternalRankBoundsDeps.controlOpaque : ℕ :=
+  (fun _ : (2 : ℕ) + 2 = 4 ↦ 0) InternalRankBoundsDeps.nonstandardAxiom
 
 /-- **Negative control 3**: the custom axiom in a *type*. -/
-theorem RankConventionsDeps.controlType :
-    RankConventionsDeps.nonstandardAxiom = RankConventionsDeps.nonstandardAxiom := rfl
+theorem InternalRankBoundsDeps.controlType :
+    InternalRankBoundsDeps.nonstandardAxiom = InternalRankBoundsDeps.nonstandardAxiom := rfl
 
 /-- **Transitive positive control**: declared here, referring to a library theorem whose proof
 uses `montalbanSentencePointed_characterizes`, but to no pointed constant directly. -/
-theorem RankConventionsDeps.controlTransitive : True :=
+theorem InternalRankBoundsDeps.controlTransitive : True :=
   (fun _ ↦ trivial) @FirstOrder.Language.exists_isPiIn_pointed_of_sigmaIn_orbits.{0, 0, 0}
 
-open RankConventionsDeps
+open InternalRankBoundsDeps
 
 run_cmd do
   let env ← getEnv
-  let ax := `RankConventionsDeps.nonstandardAxiom
+  let ax := `InternalRankBoundsDeps.nonstandardAxiom
   -- NEGATIVE CONTROLS: the custom axiom sits where intended, and the audit flags it
-  let some (.thmInfo body) := env.find? `RankConventionsDeps.controlBody
+  let some (.thmInfo body) := env.find? `InternalRankBoundsDeps.controlBody
     | throwError "negative control: controlBody is missing or not a theorem"
   if body.type.getUsedConstants.contains ax then
     throwError "negative control: controlBody is no longer proof-only"
   unless body.value.getUsedConstants.contains ax do
     throwError "negative control: the axiom is absent from controlBody's proof"
-  let some (.opaqueInfo op) := env.find? `RankConventionsDeps.controlOpaque
+  let some (.opaqueInfo op) := env.find? `InternalRankBoundsDeps.controlOpaque
     | throwError "negative control: controlOpaque is missing or not opaque"
   if op.type.getUsedConstants.contains ax then
     throwError "negative control: controlOpaque's type mentions the axiom"
   unless op.value.getUsedConstants.contains ax do
     throwError "negative control: the axiom is absent from controlOpaque's body"
-  let some (.thmInfo ty) := env.find? `RankConventionsDeps.controlType
+  let some (.thmInfo ty) := env.find? `InternalRankBoundsDeps.controlType
     | throwError "negative control: controlType is missing or not a theorem"
   unless ty.type.getUsedConstants.contains ax do
     throwError "negative control: the axiom is absent from controlType's type"
-  for ctl in [`RankConventionsDeps.controlBody, `RankConventionsDeps.controlOpaque,
-      `RankConventionsDeps.controlType] do
+  for ctl in [`InternalRankBoundsDeps.controlBody, `InternalRankBoundsDeps.controlOpaque,
+      `InternalRankBoundsDeps.controlType] do
     let (_, bad) ← audit ctl
     unless bad == [ax] do
       throwError "negative control FAILED: the audit of {ctl} reports {bad}, not [{ax}]"
@@ -215,7 +218,7 @@ run_cmd do
   let (cP, _) ← audit pointedControl
   if (pointedHits cP).isEmpty then
     throwError "[VACUOUS] the absence check does not flag the cone of {pointedControl}"
-  let tc := `RankConventionsDeps.controlTransitive
+  let tc := `InternalRankBoundsDeps.controlTransitive
   let some tci := env.find? tc | throwError "positive control: {tc} is missing"
   let direct := refs tci
   unless direct.contains pointedControl do
@@ -248,7 +251,7 @@ run_cmd do
         throwError "[POINTED] the cone of {root} reaches {hits}"
   unless required.all (fun (r, _) ↦ roots.contains r) && heightRoots.all roots.contains do
     throwError "an audited bound is not among the roots"
-  logInfo m!"rank conventions dependency guard: OK (cones {sizes.toList}; the stabilization \
+  logInfo m!"internal rank bounds dependency guard: OK (cones {sizes.toList}; the stabilization \
     bounds through stabilizationOrdinal_le_of_formula_rank, montalbanSentence_characterizes \
     and qrank_montalbanSentence_le; the Scott-height bounds through lift_scottHeight_eq_max, \
     with no montalbanSentencePointed_characterizes or isOrbitFormulaFamilyPointed_scottFormula \

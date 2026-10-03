@@ -1,15 +1,17 @@
 /-
-Regression guard for `InfinitaryLogic/Scott/RankConventions.lean`: the comparisons between the
+Regression guard for `InfinitaryLogic/Scott/InternalRankBounds.lean`: the comparisons between the
 cross-structure ranks (`stabilizationOrdinal`, `scottHeight`, `sr`, `scottRank`, in
 `Ordinal.{0}`) and the internal (orbit) ranks (`orbitRank`, `internalScottRank`, in
 `Ordinal.{w}`), and the derived bounds
 `lift (stabilizationOrdinal M) ≤ internalScottRank M + ω` and
 `lift (scottHeight M) ≤ internalScottRank M + ω`.  (The counterexample guard for the
-conventions themselves is `check_rank_convention_regressions.lean`; the namespaces differ.)
+conventions themselves is `check_rank_convention_regressions.lean`.)
 
 * **Every new theorem applied**, on the infinite pure set `ℕ` over `Language.empty`, with the
   promoted `iSup_orbitRank_le_internalScottRank` and
-  `internalScottRank_le_iSup_orbitRank_add_one` (`Scott/OrbitRankStabilization.lean`).
+  `internalScottRank_le_iSup_orbitRank_add_one` (`Scott/OrbitRankStabilization.lean`) and the
+  three additions to `Scott/Height/RankBounds.lean` (`stabilizationOrdinal_le_scottHeight`,
+  `sr_le_scottHeight`, `scottRank_le_scottHeight_succ`).
 * **A second derivation of the Scott-height bound** through the pointed sentence, declared
   here and not in the library: the pointed recognition link
   `scottHeight_le_of_pointed_characterizes_of_qrank_le` (uniformly bounded pointed Scott
@@ -18,23 +20,24 @@ conventions themselves is `check_rank_convention_regressions.lean`; the namespac
   from the identity `lift_scottHeight_eq_max` instead.
 * **Sharpness on `ℕ`** (internal rank `1`): `lift (stabilizationOrdinal ℕ) =
   internalScottRank ℕ + ω` and the same for `scottHeight`, the upper bounds coming from the new
-  theorems and only the lower bound `ω ≤ stabilizationOrdinal ℕ` proved here; no finite offset
-  suffices for either; the exact values `internalScottRank ℕ = 1` and
+  theorems and only the lower bound `ω ≤ stabilizationOrdinal ℕ` proved here (a copy of the
+  #155 guard's theorem); no finite offset suffices for either, read off the two equalities;
+  the exact values `internalScottRank ℕ = 1` and
   `stabilizationOrdinal ℕ = scottHeight ℕ = ω`; the orbit-rank supremum is `0` and the `R` form
   is an equality too.
 * **A `Type 1` carrier**, `ULift.{1} ℕ`: all four bounds, the identity
   `lift_scottHeight_eq_max` and the pointed route, with `Ordinal.lift.{1}` on the left.
 * **The empty carrier** `PEmpty` in an arbitrary universe: the two internal-rank bounds (no
   `Nonempty` hypothesis).
-* **Import closure** of `Scott.RankConventions`: exactly the 27 expected `InfinitaryLogic`
+* **Import closure** of `Scott.InternalRankBounds`: exactly the 27 expected `InfinitaryLogic`
   modules (`[CLOSURE DRIFT]` otherwise).  The closure check and the axiom audit share one
   command, so the final OK line is printed only if both pass.
 * **Standard axioms** for every public declaration of the module, the two promoted
   comparisons, and the guard's own theorems.
 
-Run with: lake env lean scripts/check_rank_conventions_regressions.lean
+Run with: lake env lean scripts/check_internal_rank_bounds_regressions.lean
 -/
-import InfinitaryLogic.Scott.RankConventions
+import InfinitaryLogic.Scott.InternalRankBounds
 import InfinitaryLogic.Scott.PureSetThreshold
 
 set_option warningAsError true
@@ -45,7 +48,7 @@ universe u v w
 
 noncomputable section
 
-namespace RankConventionsGuard
+namespace InternalRankBoundsGuard
 
 /-! ### The second route: the pointed sentence -/
 
@@ -141,7 +144,7 @@ theorem height_applied_nat :
     stabilizationOrdinal_le_scottHeight ℕ,
     scottHeight_le_max_of_orbitRank_le fun _ a ↦ by rw [orbitRank_pureSet, Ordinal.lift_zero],
     lift_scottHeight_eq_max ℕ, internalScottRank_le_lift_scottHeight_add_one ℕ,
-    sr_le_scottHeight ℕ, scottRank_le_scottHeight_add_one ℕ⟩
+    sr_le_scottHeight ℕ, scottRank_le_scottHeight_succ ℕ⟩
 
 /-- The orbit-formula families of Scott formulas on `ℕ` at level `0`, unpointed and over the
 repeated parameters `(3, 3)`. -/
@@ -184,8 +187,11 @@ section Sharpness
 
 open PureSet
 
-/-- The lower bound `ω ≤ stabilizationOrdinal ℕ` (as in `check_rank_convention_regressions`):
-a finite level `k` cannot tell `ℕ` from `Fin k`. -/
+-- Copy of `RankConventionGuard.omega0_le_stabilizationOrdinal_nat` (the original is in
+-- `check_rank_convention_regressions.lean`): a library home would add imports to
+-- `Scott/PureSetThreshold.lean`, which does not reach `Scott/RefinementCount.lean`.
+/-- The lower bound `ω ≤ stabilizationOrdinal ℕ`: a finite level `k` cannot tell `ℕ` from
+`Fin k`. -/
 theorem omega0_le_stabilizationOrdinal_nat :
     ω ≤ stabilizationOrdinal (L := Language.empty) ℕ := by
   have hmem := stabilizationOrdinal_stabilizes (L := Language.empty) ℕ
@@ -226,21 +232,17 @@ theorem nat_values :
   rw [internalScottRank_pureSet, Ordinal.lift_id, Ordinal.one_add_omega0] at h1 h2
   exact ⟨internalScottRank_pureSet, h1, h2⟩
 
-/-- **No finite offset suffices** for the stabilization ordinal. -/
-theorem not_lift_stabilizationOrdinal_le_internalScottRank_add_nat (n : ℕ) :
+/-- **No finite offset suffices**, for the stabilization ordinal and for the Scott height:
+read off the two equalities `lift_stabilizationOrdinal_nat_eq` and `lift_scottHeight_nat_eq`,
+as `1 + ω = ω > 1 + n`. -/
+theorem not_le_internalScottRank_add_nat (n : ℕ) :
     ¬ Ordinal.lift.{0} (stabilizationOrdinal (L := Language.empty) ℕ) ≤
-      internalScottRank (L := Language.empty) ℕ + n := by
-  rw [internalScottRank_pureSet, Ordinal.lift_id]
-  intro h
-  exact absurd (omega0_le_stabilizationOrdinal_nat.trans h)
-    (not_le.2 (by exact_mod_cast Ordinal.natCast_lt_omega0 (1 + n)))
-
-/-- **No finite offset suffices** for the Scott height. -/
-theorem not_lift_scottHeight_le_internalScottRank_add_nat (n : ℕ) :
-    ¬ Ordinal.lift.{0} (scottHeight (L := Language.empty) ℕ) ≤
-      internalScottRank (L := Language.empty) ℕ + n := fun h ↦
-  not_lift_stabilizationOrdinal_le_internalScottRank_add_nat n
-    ((Ordinal.lift_le.2 (stabilizationOrdinal_le_scottHeight ℕ)).trans h)
+        internalScottRank (L := Language.empty) ℕ + n ∧
+      ¬ Ordinal.lift.{0} (scottHeight (L := Language.empty) ℕ) ≤
+        internalScottRank (L := Language.empty) ℕ + n := by
+  rw [lift_stabilizationOrdinal_nat_eq, lift_scottHeight_nat_eq, internalScottRank_pureSet,
+    Ordinal.one_add_omega0, and_self]
+  exact not_le.2 (by exact_mod_cast Ordinal.natCast_lt_omega0 (1 + n))
 
 /-- The `R` form is an equality on `ℕ` as well: `R = 0` and `lift (stabilizationOrdinal ℕ) =
 lift (scottHeight ℕ) = 0 + ω`. -/
@@ -295,7 +297,7 @@ theorem pempty_bounds :
 
 end Universes
 
-end RankConventionsGuard
+end InternalRankBoundsGuard
 
 end
 
@@ -303,7 +305,7 @@ end
 
 /-- The modules transitively imported by `m` (including `m`), read from the environment
 header. -/
-partial def RankConventionsGuard.importClosure (env : Environment) (m : Name) : NameSet :=
+partial def InternalRankBoundsGuard.importClosure (env : Environment) (m : Name) : NameSet :=
   go [m] {}
 where
   go : List Name → NameSet → NameSet
@@ -316,9 +318,9 @@ where
           | none => []
         go (deps ++ rest) (seen.insert m)
 
-namespace RankConventionsGuard
+namespace InternalRankBoundsGuard
 
-/-- The exact `InfinitaryLogic` part of the import closure of `Scott.RankConventions`:
+/-- The exact `InfinitaryLogic` part of the import closure of `Scott.InternalRankBounds`:
 27 modules, the 19 of `Scott.MontalbanQuantifierRank` and eight more. -/
 def expectedClosure : List Name :=
   [`InfinitaryLogic.Util, `InfinitaryLogic.OrdinalUtil, `InfinitaryLogic.Lomega1omega.Syntax,
@@ -333,10 +335,10 @@ def expectedClosure : List Name :=
    `InfinitaryLogic.Scott.MontalbanQuantifierRank, `InfinitaryLogic.Scott.SentenceRecognition,
    `InfinitaryLogic.Scott.OrbitRankStabilization, `InfinitaryLogic.Scott.Rank,
    `InfinitaryLogic.Scott.RefinementCount, `InfinitaryLogic.Scott.Height.Defs,
-   `InfinitaryLogic.Scott.Height.RankBounds, `InfinitaryLogic.Scott.RankConventions]
+   `InfinitaryLogic.Scott.Height.RankBounds, `InfinitaryLogic.Scott.InternalRankBounds]
 
-/-- The public declarations of `Scott.RankConventions` and the two promoted comparisons of
-`Scott.OrbitRankStabilization`. -/
+/-- The public declarations of `Scott.InternalRankBounds`, the two promoted comparisons of
+`Scott.OrbitRankStabilization`, and the three additions to `Scott.Height.RankBounds`. -/
 def libraryDecls : List Name :=
   [`iSup_orbitRank_le_internalScottRank, `internalScottRank_le_iSup_orbitRank_add_one,
    `internalScottRank_add_omega0_eq, `orbitRank_le_lift_scottHeight,
@@ -344,7 +346,7 @@ def libraryDecls : List Name :=
    `isOrbitFormulaFamilyPointed_scottFormula, `stabilizationOrdinal_le_scottHeight,
    `scottHeight_le_max_of_orbitRank_le, `lift_scottHeight_eq_max,
    `internalScottRank_le_lift_scottHeight_add_one, `sr_le_scottHeight,
-   `scottRank_le_scottHeight_add_one, `lift_stabilizationOrdinal_le_iSup_orbitRank_add_omega0,
+   `scottRank_le_scottHeight_succ, `lift_stabilizationOrdinal_le_iSup_orbitRank_add_omega0,
    `lift_stabilizationOrdinal_le_internalScottRank_add_omega0,
    `lift_scottHeight_le_iSup_orbitRank_add_omega0,
    `lift_scottHeight_le_internalScottRank_add_omega0].map (`FirstOrder.Language ++ ·)
@@ -356,21 +358,20 @@ def guardDecls : List Name :=
    `iSup_orbitRank_nat, `internal_applied_nat, `height_applied_nat,
    `orbitFamilies_applied_nat, `bounds_applied_nat, `omega0_le_stabilizationOrdinal_nat,
    `lift_stabilizationOrdinal_nat_eq, `lift_scottHeight_nat_eq, `nat_values,
-   `not_lift_stabilizationOrdinal_le_internalScottRank_add_nat,
-   `not_lift_scottHeight_le_internalScottRank_add_nat, `nat_iSup_orbitRank_add_omega0,
-   `ulift_bounds, `pempty_bounds].map (`RankConventionsGuard ++ ·)
+   `not_le_internalScottRank_add_nat, `nat_iSup_orbitRank_add_omega0,
+   `ulift_bounds, `pempty_bounds].map (`InternalRankBoundsGuard ++ ·)
 
 /-- The standard axioms. -/
 def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
 
-end RankConventionsGuard
+end InternalRankBoundsGuard
 
-open RankConventionsGuard in
+open InternalRankBoundsGuard in
 -- The closure check and the axiom audit run in one command, so that the final OK line is
 -- printed only when both pass.
 run_cmd do
   let env ← getEnv
-  let target := `InfinitaryLogic.Scott.RankConventions
+  let target := `InfinitaryLogic.Scott.InternalRankBounds
   unless (env.getModuleIdx? target).isSome do
     throwError "module {target} is not in the environment"
   let cl := importClosure env target
@@ -387,7 +388,7 @@ run_cmd do
     let axs ← Elab.Command.liftCoreM (collectAxioms n)
     let bad := axs.toList.filter fun a ↦ !standardAxioms.contains a
     unless bad.isEmpty do throwError "[NONSTANDARD AXIOMS] {n} uses {bad}"
-  logInfo "Rank-conventions regression guard: OK (every new comparison applied on N, with the \
+  logInfo "Internal-rank-bounds regression guard: OK (every new comparison applied on N, with the \
     promoted internal comparisons; the Scott-height bound derived a second time through the \
     pointed sentence and the guard-local pointed link; on N: lift stabilizationOrdinal = \
     lift scottHeight = internalScottRank + omega, internalScottRank = 1, \

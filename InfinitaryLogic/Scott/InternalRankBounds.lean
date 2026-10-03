@@ -37,7 +37,7 @@ hypothesis is needed.
 **The `+ ω` is needed, and the bounds are attained.**  On the infinite pure set `ℕ`,
 `internalScottRank ℕ = 1` (`internalScottRank_pureSet`) while
 `stabilizationOrdinal ℕ = scottHeight ℕ = ω`: both bounds are equalities there, and no finite
-offset `internalScottRank M + n` suffices (`scripts/check_rank_conventions_regressions.lean`).
+offset `internalScottRank M + n` suffices (`scripts/check_internal_rank_bounds_regressions.lean`).
 
 **Route.**
 * *Descent.*  Every orbit rank is at most the lifted Scott height
@@ -65,10 +65,10 @@ offset `internalScottRank M + n` suffices (`scripts/check_rank_conventions_regre
   `iSup_orbitRank_le_internalScottRank` and `internalScottRank_le_iSup_orbitRank_add_one` from
   `Scott/OrbitRankStabilization.lean`).
 * Through `scottHeight`: `orbitRank_le_lift_scottHeight`, `exists_lift_eq_iSup_orbitRank`,
-  `internalScottRank_le_lift_scottHeight_add_one`, `stabilizationOrdinal_le_scottHeight`,
-  `scottHeight_le_max_of_orbitRank_le`, `lift_scottHeight_eq_max`.
+  `internalScottRank_le_lift_scottHeight_add_one`, `scottHeight_le_max_of_orbitRank_le`,
+  `lift_scottHeight_eq_max` (with `stabilizationOrdinal_le_scottHeight` from
+  `Scott/Height/RankBounds.lean`).
 * Orbit formulas: `isOrbitFormulaFamily_scottFormula`, `isOrbitFormulaFamilyPointed_scottFormula`.
-* Unconditional element-based wrappers: `sr_le_scottHeight`, `scottRank_le_scottHeight_add_one`.
 * The `+ ω` bounds: `lift_stabilizationOrdinal_le_internalScottRank_add_omega0`,
   `lift_scottHeight_le_internalScottRank_add_omega0`, and their `R` forms
   `lift_stabilizationOrdinal_le_iSup_orbitRank_add_omega0`,
@@ -97,6 +97,12 @@ offset `internalScottRank M + n` suffices (`scripts/check_rank_conventions_regre
   would need a type-omitting argument and is out of scope.
 * For a structure whose internal rank is `ω` (such as the exact-`ω` carrier of
   `FiberExactOmega`), the bounds give only `≤ ω + ω`; nothing sharper is claimed there.
+
+## References
+
+* A. Montalbán, *A robuster Scott rank*, Proc. Amer. Math. Soc. 143 (2015).
+* A. Montalbán, *Computable Structure Theory: Beyond the Arithmetic*, draft, Chapter II,
+  §II.2 (the explicit Scott sentence from orbit formulas, and the rank of the result).
 -/
 
 universe u v w
@@ -184,14 +190,6 @@ theorem isOrbitFormulaFamilyPointed_scottFormula {M : Type w} [L.Structure M] [C
     · simpa using congrFun hc j
     · simpa using congrFun ha j
 
-/-- Whole-model recognition happens no later than complete stabilization:
-`stabilizationOrdinal M ≤ scottHeight M`. -/
-theorem stabilizationOrdinal_le_scottHeight (M : Type w) [L.Structure M] [Countable M] :
-    stabilizationOrdinal (L := L) M ≤ scottHeight (L := L) M := by
-  refine csInf_le' fun N _ _ ↦ ⟨BFEquiv_stabilization_implies_equiv
-    (scottHeight_stabilizesCompletely M), fun ⟨e⟩ ↦ ?_⟩
-  simpa only [comp_fin_elim0] using equiv_implies_BFEquiv e (scottHeight (L := L) M) 0 Fin.elim0
-
 /-- **Unpointed height bound**: if `β` bounds every orbit rank (after the lift), then
 `scottHeight M ≤ max (stabilizationOrdinal M) β`.  A pair of tuples equivalent at that level is
 equivalent at the empty tuple, so the structures are isomorphic; inside `M` the remaining pair
@@ -202,8 +200,7 @@ theorem scottHeight_le_max_of_orbitRank_le {M : Type w} [L.Structure M] [Countab
   refine csInf_le' ?_
   intro n a N _ _ b hab
   have h0 := hab.relabel _ (Fin.elim0 : Fin 0 → Fin n)
-  rw [show a ∘ Fin.elim0 = Fin.elim0 from funext (·.elim0),
-    show b ∘ Fin.elim0 = Fin.elim0 from funext (·.elim0)] at h0
+  simp only [comp_fin_elim0] at h0
   obtain ⟨e⟩ := (stabilizationOrdinal_stabilizes (L := L) M N).1
     (BFEquiv.monotone (le_max_left _ _) h0)
   have hb' : BFEquiv (L := L) (max (stabilizationOrdinal (L := L) M) β) n a (e.symm ∘ b) :=
@@ -225,35 +222,17 @@ theorem lift_scottHeight_eq_max (M : Type w) [L.Structure M] [Countable M] :
     Ordinal.lift.{w} (scottHeight (L := L) M) =
       max (Ordinal.lift.{w} (stabilizationOrdinal (L := L) M))
         (⨆ x : (Σ n, Fin n → M), orbitRank (L := L) x.2) := by
-  have hle : (⨆ x : (Σ n, Fin n → M), orbitRank (L := L) x.2) ≤
-      Ordinal.lift.{w} (scottHeight (L := L) M) :=
-    iSup_orbitRank_le_iff.2 fun _ a ↦ orbitRank_le_lift_scottHeight a
-  obtain ⟨β, hβ⟩ := Ordinal.mem_range_lift_of_le hle
-  refine le_antisymm ?_ (max_le (Ordinal.lift_le.2 (stabilizationOrdinal_le_scottHeight M)) hle)
-  have h := Ordinal.lift_le.{w}.2 (scottHeight_le_max_of_orbitRank_le (L := L) (M := M)
-    fun _ a ↦ hβ ▸ orbitRank_le_iSup_orbitRank a)
-  rw [← hβ]
-  rcases le_total (stabilizationOrdinal (L := L) M) β with h' | h'
-  · rw [max_eq_right h'] at h; rwa [max_eq_right (Ordinal.lift_le.2 h')]
-  · rw [max_eq_left h'] at h; rwa [max_eq_left (Ordinal.lift_le.2 h')]
+  obtain ⟨β, hβsh, hβ⟩ := exists_lift_eq_iSup_orbitRank (L := L) (M := M)
+  rw [← hβ, ← Monotone.map_max (f := Ordinal.lift.{w}) fun _ _ h ↦ Ordinal.lift_le.2 h]
+  exact Ordinal.lift_inj.2 (le_antisymm
+    (scottHeight_le_max_of_orbitRank_le fun _ a ↦ hβ ▸ orbitRank_le_iSup_orbitRank a)
+    (max_le (stabilizationOrdinal_le_scottHeight M) hβsh))
 
 /-- The internal Scott rank is at most the lifted Scott height plus one. -/
 theorem internalScottRank_le_lift_scottHeight_add_one (M : Type w) [L.Structure M]
     [Countable M] :
     internalScottRank (L := L) M ≤ Ordinal.lift.{w} (scottHeight (L := L) M) + 1 :=
   internalScottRank_le fun _ a ↦ add_le_add_left (orbitRank_le_lift_scottHeight a) 1
-
-/-- `sr M ≤ scottHeight M`: the unconditional form of `sr_le_scottHeight_of`, through
-`countableRefinementHypothesis`. -/
-theorem sr_le_scottHeight (M : Type w) [L.Structure M] [Countable M] :
-    sr (L := L) M ≤ scottHeight (L := L) M :=
-  sr_le_scottHeight_of countableRefinementHypothesis M
-
-/-- `scottRank M ≤ scottHeight M + 1`: the unconditional form of
-`scottRank_le_scottHeight_succ_of`, through `countableRefinementHypothesis`. -/
-theorem scottRank_le_scottHeight_add_one (M : Type w) [L.Structure M] [Countable M] :
-    scottRank (L := L) M ≤ scottHeight (L := L) M + 1 :=
-  scottRank_le_scottHeight_succ_of countableRefinementHypothesis M
 
 /-! ### The `+ ω` bounds -/
 

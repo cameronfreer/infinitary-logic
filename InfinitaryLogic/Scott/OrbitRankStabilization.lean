@@ -27,7 +27,7 @@ countability.  Against `internalScottRank M = ⨆ a, (orbitRank a + 1)`, always
 language, a terminating Scott process of `M` has lifted rank `R` (`lift_rank_eq_iSup_orbitRank`,
 in `ScottProcess/RankComparison.lean`, which uses the two comparisons above).  The comparisons
 with the cross-structure ranks (`stabilizationOrdinal`, `scottHeight`) are in
-`Scott/RankConventions.lean`.
+`Scott/InternalRankBounds.lean`.
 
 ## Main results
 

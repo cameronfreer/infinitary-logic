@@ -69,7 +69,7 @@ contributes `1` even when the disjunction is empty.
   a given family.  No comparison between the Scott ranks of the library (`scottHeight`,
   `stabilizationOrdinal`, `orbitRank`, `internalScottRank`, …) is made here; the comparisons,
   including the `+ ω` bounds that apply `qrank_montalbanSentence_le` to the Scott formulas at a
-  uniform level, are in `Scott/RankConventions.lean`.
+  uniform level, are in `Scott/InternalRankBounds.lean`.
 * **Pointed and unpointed.**  The pointed bound is proved through the exact clause-by-clause
   rank.  The unpointed bound is derived from it through the syntactic equation
   `montalbanSentence_eq_pointed_elim0` and `BoundedFormulaω.qrank_mapFreeVars`, and so is the

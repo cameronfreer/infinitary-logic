@@ -52,17 +52,18 @@ on the internal side, `orbitRank a + 1 ≤ internalScottRank M`
 (`orbitRank_add_one_le_internalScottRank`) and, with `R = ⨆ a, orbitRank a`,
 `R ≤ internalScottRank M ≤ R + 1` (`Scott/OrbitRankStabilization`).
 
-Between the two families (`Scott/RankConventions`, relational language with countably many
+Between the two families (`Scott/InternalRankBounds`, relational language with countably many
 relation symbols, `M` countable, lifts on the `Ordinal.{0}` side):
 `orbitRank a ≤ lift (scottHeight M)` (`orbitRank_le_lift_scottHeight`),
-`internalScottRank M ≤ lift (scottHeight M) + 1`,
-`stabilizationOrdinal M ≤ scottHeight M`, the identity
+`internalScottRank M ≤ lift (scottHeight M) + 1`, the identity
 `lift (scottHeight M) = max (lift (stabilizationOrdinal M)) R` (`lift_scottHeight_eq_max`), and
 `lift (stabilizationOrdinal M) ≤ internalScottRank M + ω` and
 `lift (scottHeight M) ≤ internalScottRank M + ω`
 (`lift_stabilizationOrdinal_le_internalScottRank_add_omega0`,
-`lift_scottHeight_le_internalScottRank_add_omega0`; `internalScottRank M + ω = R + ω`).  The
-module also has the unconditional `sr_le_scottHeight` and `scottRank_le_scottHeight_add_one`.
+`lift_scottHeight_le_internalScottRank_add_omega0`; `internalScottRank M + ω = R + ω`).
+Within the cross-structure family, `Scott/Height/RankBounds` has
+`stabilizationOrdinal M ≤ scottHeight M` (`stabilizationOrdinal_le_scottHeight`) and the
+unconditional `sr_le_scottHeight` and `scottRank_le_scottHeight_succ`.
 No bound of `internalScottRank` by `lift (stabilizationOrdinal M)` plus a constant is proved.
 
 Refuted relations (`scripts/check_rank_convention_regressions.lean`):
