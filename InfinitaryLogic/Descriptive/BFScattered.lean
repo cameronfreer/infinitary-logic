@@ -25,6 +25,11 @@ Borelness or isomorphism invariance of `K` is assumed.
 * `not_hasCantorAntichainOn_of_bfScattered`: no Cantor antichain, with no countability of the
   language.
 * `isThinOn_of_bfScattered`: thinness, for countably many relation symbols.
+* `bfScattered_of_countable_bfObservations`: observation maps with countably many realized
+  values at every level, whose equal values imply `CodeBFEquiv`, give `BFScattered`; with the
+  two endpoints `not_hasCantorAntichainOn_of_countable_bfObservations` and
+  `isThinOn_of_countable_bfObservations`.  These are adapters over `BFScattered`, not a new
+  proof of the separation route.
 
 The form for the models of a sentence, with the hypothesis read through `bfEquivSetoid φ η`, is
 `Sentenceω.isThinOnNatModels_of_bfScattered` in `Descriptive/BFScatteredSentence.lean`, kept
@@ -61,11 +66,16 @@ Thinness follows: a perfect antichain in a complete metric space yields a Cantor
   `exists_uniform_bfSeparation`: an `Ordinal.{0}` below `Ordinal.omega 1`, with no lift and no
   offset.
 * **Countability of the language.**  `[Countable (Σ l, L.Relations l)]` is used once, in
-  `isThinOn_of_bfScattered`, to equip the space of codes with a complete metric (it is Polish)
-  so that a perfect antichain yields a Cantor antichain.  The Cantor-antichain theorem, the
-  separation lemma, the setoid and `BFScattered` need no countability: analyticity of the
-  off-diagonal needs only that the space of codes is Hausdorff, and `exists_uniform_bfSeparation`
-  assumes no countability.
+  `isThinOn_of_bfScattered` (and passed on by its adapter
+  `isThinOn_of_countable_bfObservations`), to equip the space of codes with a complete metric
+  (it is Polish) so that a perfect antichain yields a Cantor antichain.  The Cantor-antichain
+  theorem, the separation lemma, the setoid and `BFScattered` need no countability: analyticity
+  of the off-diagonal needs only that the space of codes is Hausdorff, and
+  `exists_uniform_bfSeparation` assumes no countability; nor do the observation bridge and its
+  Cantor-antichain corollary.
+* **Observations.**  The observation adapters use only that equal observations imply
+  `CodeBFEquiv η` and that the realized values are countable: no measurable structure on the
+  target, no invariance, no surjectivity, no countability of the whole target type.
 * **No definability of `K`.**  The analytic set fed to the separation theorem is built from the
   Cantor antichain, not from `K`.
 
@@ -79,7 +89,7 @@ Thinness follows: a perfect antichain in a complete metric space yields a Cantor
 The composition was offered for upstreaming by a consumer of this library.
 -/
 
-universe u v
+universe u v w'
 
 namespace FirstOrder.Language
 
@@ -186,5 +196,60 @@ theorem isThinOn_of_bfScattered [Countable (Σ l, L.Relations l)] {K : Set (Stru
   -- a complete metric compatible with the topology; the statement is unaffected
   let := TopologicalSpace.upgradeIsCompletelyMetrizable (StructureSpace L)
   exact IsThinOn.of_no_cantorAntichain (not_hasCantorAntichainOn_of_bfScattered hK)
+
+/-! ### Countable observations -/
+
+/-- **Countably many observed values at every level give back-and-forth scatteredness.**  For
+each `η < ω₁`, let `obs η : C → Q η` be an observation whose realized values on `C` form a
+countable set, and suppose that equal observations at level `η` imply `CodeBFEquiv η`.  Then `C`
+is back-and-forth scattered.
+
+Only the forward implication (equal observations imply back-and-forth equivalence) is used; the
+converse is not assumed, so `obs η` need not descend to the back-and-forth classes.  At each
+level this is `countable_quotient_of_countable_range` for the restriction of
+`codeBFEquivSetoid L η` to `C`: the countable set of realized values surjects onto its classes,
+each class being hit by the observation of any of its members.
+
+Hypotheses deliberately absent:
+* No countability of the relation symbols.
+* No measurability or analyticity of `C`.
+* No measurable structure on `Q η`, and no measurability of `obs η`.
+* No invariance of observations under isomorphism.
+* No countability of the whole target type: only its realized image is countable.
+* No surjectivity, nonemptiness, sentence recovery, or orbit definability.
+* No assertion that equality of observations is equivalent to BF equivalence: only the
+  displayed forward implication is needed.
+
+The target universe `w'` is independent of the universes of the language. -/
+theorem bfScattered_of_countable_bfObservations (C : Set (StructureSpace L))
+    {Q : Ordinal.{0} → Type w'} (obs : ∀ η, C → Q η)
+    (hc : ∀ η < Ordinal.omega 1, (Set.range (obs η)).Countable)
+    (hobs : ∀ η < Ordinal.omega 1, ∀ c d : C, obs η c = obs η d → CodeBFEquiv η c.1 d.1) :
+    BFScattered C := fun η hη ↦
+  countable_quotient_of_countable_range _ (obs η) (hc η hη) (hobs η hη)
+
+/-- **No Cantor antichain from countable back-and-forth observations**, for every relational
+language: `not_hasCantorAntichainOn_of_bfScattered` through
+`bfScattered_of_countable_bfObservations`.  The hypotheses on `obs` are those of the bridge, and
+none of the hypotheses listed there as absent is assumed; in particular no countability of the
+relation symbols. -/
+theorem not_hasCantorAntichainOn_of_countable_bfObservations (C : Set (StructureSpace L))
+    {Q : Ordinal.{0} → Type w'} (obs : ∀ η, C → Q η)
+    (hc : ∀ η < Ordinal.omega 1, (Set.range (obs η)).Countable)
+    (hobs : ∀ η < Ordinal.omega 1, ∀ c d : C, obs η c = obs η d → CodeBFEquiv η c.1 d.1) :
+    ¬ HasCantorAntichainOn (structureIsoSetoid L) C :=
+  not_hasCantorAntichainOn_of_bfScattered (bfScattered_of_countable_bfObservations C obs hc hobs)
+
+/-- **Thinness from countable back-and-forth observations**: `isThinOn_of_bfScattered` through
+`bfScattered_of_countable_bfObservations`.  Countability of the relation symbols enters only
+here, as in `isThinOn_of_bfScattered`: it makes the space of codes Polish, so that a perfect
+antichain yields a Cantor antichain.  The bridge and the Cantor-antichain conclusion need no
+countability. -/
+theorem isThinOn_of_countable_bfObservations [Countable (Σ l, L.Relations l)]
+    (C : Set (StructureSpace L)) {Q : Ordinal.{0} → Type w'} (obs : ∀ η, C → Q η)
+    (hc : ∀ η < Ordinal.omega 1, (Set.range (obs η)).Countable)
+    (hobs : ∀ η < Ordinal.omega 1, ∀ c d : C, obs η c = obs η d → CodeBFEquiv η c.1 d.1) :
+    IsThinOn (structureIsoSetoid L) C :=
+  isThinOn_of_bfScattered (bfScattered_of_countable_bfObservations C obs hc hobs)
 
 end FirstOrder.Language
