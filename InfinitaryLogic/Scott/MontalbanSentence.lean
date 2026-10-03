@@ -76,8 +76,11 @@ the compatibility lemma `realize_montalbanSentence_iff_pointed`.
   conjunction over all atomic indices, so it is `Π^in_1` rather than finitary, and stronger
   clause by clause.  B1 and B2 are unaffected: both read `D_a(b)` only as full atomic agreement
   of `a` and `b` (`sameAtomicType_iff_realize_atomicDiagram`), which `M` has at its own tuples
-  (B1) and which is what each stage of a `PotentialIso` requires (B2).  The difference matters
-  once the complexity of the sentence is bounded (B3), which this module does not do.
+  (B1) and which is what each stage of a `PotentialIso` requires (B2).  The difference does not
+  affect the complexity bounds either: `atomicDiagram` is `Π^in_1`, absorbed into the signed
+  class `Π^in_{α+1}` of `Scott/MontalbanComplexity.lean`, and it has quantifier rank `0`
+  (`atomicDiagram_qrank_eq_zero`), so it does not change the quantifier rank computed in
+  `Scott/MontalbanQuantifierRank.lean`.
 * **The empty-tuple seed.**  The first conjunct is `Φ 0 Fin.elim0`, the orbit formula of the
   empty tuple; it starts the back-and-forth system.  For an orbit-formula family, the sentence
   of an empty `M` holds in exactly the empty structures with the same nullary facts (the back
@@ -98,11 +101,14 @@ the compatibility lemma `realize_montalbanSentence_iff_pointed`.
   through the equality atoms between parameter and tuple coordinates in the atomic-diagram
   conjunct.
 * **What is not claimed.**  No complexity statement is made here: the syntactic class of the
-  family is unconstrained, and no class of the sentence is asserted.  For an orbit-formula
-  family, the sentence is *a* Scott sentence of `M`, not the canonical `scottSentence M`: both
-  characterize `M` among countable structures of its carrier universe, so they agree there, but
-  they are not syntactically equal, and no comparison lemma is stated here.  Constants named
-  through `L.withConstants` are not used: the pointed form replaces them.
+  family is unconstrained, and no class of the sentence is asserted.  The complexity of the
+  sentence is bounded in two separate modules, from the corresponding bound on the family: its
+  signed class in `Scott/MontalbanComplexity.lean` (`Σ^in_α` with `1 ≤ α` gives `Π^in_{α+1}`),
+  and its quantifier rank in `Scott/MontalbanQuantifierRank.lean` (rank `≤ α` gives rank `≤ α + ω`).
+  For an orbit-formula family, the sentence is *a* Scott sentence of `M`, not the canonical
+  `scottSentence M`: both characterize `M` among countable structures of its carrier universe,
+  so they agree there, but they are not syntactically equal, and no comparison lemma is stated
+  here.  Constants named through `L.withConstants` are not used: the pointed form replaces them.
 
 ## References
 
