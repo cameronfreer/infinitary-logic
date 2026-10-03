@@ -40,15 +40,21 @@ Every new public declaration is *applied*, not only listed for its axioms.
   Applied generically, with the observation target `Q : Ordinal.{0} → Type w` in a universe
   independent of the language's `{u, v}` and with no countability for the bridge and the Cantor
   endpoint; in the uncountable language; on the empty class (target `PEmpty`); with the pure-set
-  language in `{1, 2}` observed in a bare `Type 2` structure `BareTag` on which no
+  language in `{1, 2}` observed in a bare `Type 3` structure `BareTag` on which no
   `MeasurableSpace`, `TopologicalSpace` or `Countable` instance synthesizes (checked); with a
-  non-surjective constant observation of a single code into the uncountable `ℕ → Bool`; and with
-  an observation that does not descend to the back-and-forth classes (two codes that are
-  `CodeBFEquiv 0`-equivalent, observed as themselves).  Necessity, proved directly: on all
+  non-surjective constant observation `constObs` of a single code into the uncountable
+  `ℕ → Bool`; and with an observation `selfObs` that does not descend to the back-and-forth
+  classes (two codes that are `CodeBFEquiv 0`-equivalent, observed as themselves).  The
+  non-surjectivity and non-descent conjuncts are stated about the same top-level definitions
+  that are passed to the thinness theorem.  Necessity, proved directly: on all
   codes of the countably-many-unary-symbols language the constant observation satisfies the
   level-`0` hypotheses, but no observation whose equal values imply `CodeBFEquiv 1` has a
   countable image.  `Countable (Σ l, _)` occurs in `isThinOn_of_countable_bfObservations` and
   not in the bridge or the Cantor corollary.
+* **Shared quotient lemma.**  The bridge is `countable_quotient_of_countable_range` levelwise;
+  that lemma is checked to be declared in `Descriptive.PerfectAntichain` (it moved there,
+  verbatim, from `ModelTheory.FragmentBFSuccessor`), and its universe order (domain, then
+  target) is pinned by explicit instantiation.
 * **Standard axioms** for the new declarations and the concrete regressions.
 * **Exact import closure** of `Descriptive.BFScattered`: the closure of `Descriptive.BFSeparation`
   plus the module itself.  It needs no `Scott.BFEquivRelabel`, and it contains no `Karp`,
@@ -307,6 +313,14 @@ theorem codeBFEquiv_refl {L : Language.{u, v}} [L.IsRelational] (η : Ordinal.{0
     (c : StructureSpace L) : CodeBFEquiv η c c :=
   (codeBFEquivSetoid L η).iseqv.refl c
 
+/-- **Universe-order pin for `countable_quotient_of_countable_range`**, which the bridge reduces
+to and which moved verbatim from `ModelTheory/FragmentBFSuccessor.lean` to
+`Descriptive/PerfectAntichain.lean`: explicitly instantiated, its first universe parameter is
+that of the domain `X` and its second that of the target `T`, as before the move. -/
+theorem countable_quotient_universe_pin (X : Type 2) (T : Type 5) (s : Setoid X) (t : X → T)
+    (hr : (range t).Countable) (h : ∀ x y, t x = t y → s.r x y) : Countable (Quotient s) :=
+  @countable_quotient_of_countable_range.{2, 5} X T s t hr h
+
 /-- **Generic applications of the observation bridge and the Cantor endpoint**: an arbitrary
 relational `Language.{u, v}`, an observation target in an independent universe `w`, and no
 countability instance, no structure on the target and no definability of `C` in scope. -/
@@ -351,15 +365,17 @@ theorem empty_observations_regression {L : Language.{u, v}} [L.IsRelational]
     not_hasCantorAntichainOn_of_countable_bfObservations _ obs hc hobs,
     isThinOn_of_countable_bfObservations _ obs hc hobs⟩
 
-/-- A bare observation target in `Type 2`: a structure with no instances at all (no measurable,
-topological or countability structure; checked below). -/
-structure BareTag : Type 2 where
+/-- A bare observation target in `Type 3`, outside the pure-set language's universes `{1, 2}`: a
+structure with no instances at all (no measurable, topological or countability structure; checked
+below). -/
+structure BareTag : Type 3 where
   /-- The observed value. -/
   val : ℕ
 
 /-- **Independent target universe, no structure on the target**: the pure-set language lives in
-universes `{1, 2}`, the observation target `BareTag` in `Type 2`, and `BareTag` carries no
-measurable or topological structure.  The class of all codes is thin. -/
+universes `{1, 2}`, the observation target `BareTag` in `Type 3`, so the target universe is
+neither of the language's, nor their maximum; and `BareTag` carries no measurable or topological
+structure.  The class of all codes is thin. -/
 theorem bareTag_observations_regression :
     IsThinOn (structureIsoSetoid pureLang) univ ∧
       ¬ HasCantorAntichainOn (structureIsoSetoid pureLang) univ := by
@@ -383,48 +399,48 @@ def codeF : StructureSpace unaryLang := cantorCode fun _ ↦ false
 theorem codeT_ne_codeF : codeT ≠ codeF := fun h ↦
   Bool.false_ne_true (congrFun h ⟨⟨1, uR 0⟩, fun _ ↦ 0⟩).symm
 
+/-- The constant observation of the single code `codeT`: at every level, `fun _ ↦ false`. -/
+def constObs (_ : Ordinal.{0}) (_ : ↥({codeT} : Set (StructureSpace unaryLang))) : ℕ → Bool :=
+  fun _ ↦ false
+
 /-- **A non-surjective observation into an uncountable target**, and a positive example through
-an explicit observation: the single code `codeT`, observed at every level as the constant
-`fun _ ↦ false : ℕ → Bool`.  The target is uncountable and the observation is not surjective;
-only the realized image (one point) is countable.  The single code is thin. -/
+an explicit observation: the single code `codeT`, observed by `constObs`.  The target `ℕ → Bool`
+is uncountable and `constObs η` is not surjective; only the realized image (one point) is
+countable.  The same `constObs` is passed to the thinness theorem. -/
 theorem nonSurjective_observations_regression :
-    ¬ Countable (ℕ → Bool) ∧
-      ¬ Function.Surjective
-        (fun _ : ↥({codeT} : Set (StructureSpace unaryLang)) ↦ (fun _ ↦ false : ℕ → Bool)) ∧
+    ¬ Countable (ℕ → Bool) ∧ (∀ η, ¬ Function.Surjective (constObs η)) ∧
       IsThinOn (structureIsoSetoid unaryLang) {codeT} := by
-  let obs : ∀ _ : Ordinal.{0}, ↥({codeT} : Set (StructureSpace unaryLang)) → (ℕ → Bool) :=
-    fun _ _ _ ↦ false
-  have hc : ∀ η < Ordinal.omega 1, (range (obs η)).Countable := fun _ _ ↦
-    (countable_singleton _).mono range_const_subset
+  have hc : ∀ η < Ordinal.omega 1, (range (constObs η)).Countable := fun _ _ ↦
+    (countable_singleton fun _ ↦ false).mono (by rintro _ ⟨_, rfl⟩; rfl)
   have hobs : ∀ η < Ordinal.omega 1, ∀ c d : ↥({codeT} : Set (StructureSpace unaryLang)),
-      obs η c = obs η d → CodeBFEquiv η c.1 d.1 := fun η _ c d _ ↦ by
+      constObs η c = constObs η d → CodeBFEquiv η c.1 d.1 := fun η _ c d _ ↦ by
     rw [mem_singleton_iff.mp c.2, mem_singleton_iff.mp d.2]
     exact codeBFEquiv_refl η codeT
-  refine ⟨not_countable_cantor, fun hsurj ↦ ?_,
-    isThinOn_of_countable_bfObservations _ obs hc hobs⟩
+  refine ⟨not_countable_cantor, fun η hsurj ↦ ?_,
+    isThinOn_of_countable_bfObservations _ constObs hc hobs⟩
   obtain ⟨_, h⟩ := hsurj fun _ ↦ true
   exact Bool.false_ne_true (congrFun h 0)
 
+/-- Each code of the pair `{codeT, codeF}` observed as itself, at every level. -/
+def selfObs (_ : Ordinal.{0}) (c : ↥({codeT, codeF} : Set (StructureSpace unaryLang))) :
+    StructureSpace unaryLang :=
+  c.1
+
 /-- **Observations need not descend to the back-and-forth classes**: on the two codes `codeT`
-and `codeF`, observe each code as itself (`Subtype.val`, at every level).  Equal observations
-mean equal codes, so the bridge applies and the pair is thin; but the two codes are
-`CodeBFEquiv 0`-equivalent and have different level-`0` observations. -/
+and `codeF`, observed by `selfObs`.  Equal observations mean equal codes, so the bridge applies
+and the pair is thin; but the two codes are `CodeBFEquiv 0`-equivalent and have different
+level-`0` observations under the same `selfObs` that is passed to the thinness theorem. -/
 theorem nonDescending_observations_regression :
-    CodeBFEquiv 0 codeT codeF ∧
-      (fun c : ↥({codeT, codeF} : Set (StructureSpace unaryLang)) ↦ c.1)
-          ⟨codeT, by simp⟩ ≠
-        (fun c : ↥({codeT, codeF} : Set (StructureSpace unaryLang)) ↦ c.1) ⟨codeF, by simp⟩ ∧
+    CodeBFEquiv 0 codeT codeF ∧ selfObs 0 ⟨codeT, by simp⟩ ≠ selfObs 0 ⟨codeF, by simp⟩ ∧
       IsThinOn (structureIsoSetoid unaryLang) {codeT, codeF} := by
-  let obs : ∀ _ : Ordinal.{0}, ↥({codeT, codeF} : Set (StructureSpace unaryLang)) →
-      StructureSpace unaryLang := fun _ c ↦ c.1
-  have hc : ∀ η < Ordinal.omega 1, (range (obs η)).Countable := fun _ _ ↦
+  have hc : ∀ η < Ordinal.omega 1, (range (selfObs η)).Countable := fun _ _ ↦
     (toFinite _).countable.mono (by rintro _ ⟨c, rfl⟩; exact c.2)
   have hobs : ∀ η < Ordinal.omega 1, ∀ c d : ↥({codeT, codeF} : Set (StructureSpace unaryLang)),
-      obs η c = obs η d → CodeBFEquiv η c.1 d.1 := fun η _ c d h ↦ by
-    simp only [obs] at h
-    rw [h]
+      selfObs η c = selfObs η d → CodeBFEquiv η c.1 d.1 := fun η _ c d h ↦ by
+    rw [show c.1 = d.1 from h]
     exact codeBFEquiv_refl η d.1
-  exact ⟨codeBFEquiv_zero _ _, codeT_ne_codeF, isThinOn_of_countable_bfObservations _ obs hc hobs⟩
+  exact ⟨codeBFEquiv_zero _ _, codeT_ne_codeF,
+    isThinOn_of_countable_bfObservations _ selfObs hc hobs⟩
 
 /-- **Necessity of the countable-image hypothesis at a positive level**, directly and not through
 the theorems under test: on the set of all codes of the countably-many-unary-symbols language,
@@ -475,7 +491,9 @@ def headline : List Name :=
    `BFScatteredRegressions.bareTag_observations_regression,
    `BFScatteredRegressions.nonSurjective_observations_regression,
    `BFScatteredRegressions.nonDescending_observations_regression,
-   `BFScatteredRegressions.observations_necessity_regression]
+   `BFScatteredRegressions.observations_necessity_regression,
+   `FirstOrder.Language.countable_quotient_of_countable_range,
+   `BFScatteredRegressions.countable_quotient_universe_pin]
 
 /-- The new declarations whose types must not assume countably many relation symbols. -/
 def countabilityFree : List Name :=
@@ -507,6 +525,15 @@ run_cmd do
     unless ← mentionsCountableSigma n do
       throwError "[COUNTABILITY DRIFT] the type of {n} no longer assumes countably many \
         symbols; update the guard and the module docstring"
+
+-- the generic quotient lemma lives in `Descriptive.PerfectAntichain`, inside the closure
+run_cmd do
+  let env ← getEnv
+  let n := ``FirstOrder.Language.countable_quotient_of_countable_range
+  let some idx := env.getModuleIdxFor? n | throwError "{n} has no module"
+  let m := env.header.moduleNames[idx.toNat]!
+  unless m == `InfinitaryLogic.Descriptive.PerfectAntichain do
+    throwError "[PLACEMENT DRIFT] {n} is declared in {m}, not Descriptive.PerfectAntichain"
 
 -- the observation target `BareTag` carries no measurable, topological or countability structure
 run_cmd Elab.Command.liftTermElabM do
@@ -600,10 +627,11 @@ run_cmd do
     class, uncountably many level-1 classes, hence not BFScattered, and not thin; the returned \
     level on the Cantor family is nonzero and level 1 separates it; the observation bridge and \
     both observation endpoints, generically with a target in an independent universe, in the \
-    uncountable language, on the empty class, with a Type 2 target carrying no structure, with \
+    uncountable language, on the empty class, with a Type 3 target carrying no structure, with \
     a non-surjective observation into the uncountable ℕ → Bool, with an observation that does \
     not descend to the level-0 classes; necessity: no countable-image observation meets the \
-    level-1 hypothesis on all codes; standard axioms; import \
+    level-1 hypothesis on all codes; the shared quotient lemma placed in \
+    Descriptive.PerfectAntichain with its universe order pinned; standard axioms; import \
     closure of {ilModules.length} InfinitaryLogic modules, exactly as listed, with no Karp, \
     ModelTheory, Methods, Admissible, Conditional or ScottProcess module and no \
     Scott.BFEquivRelabel)"

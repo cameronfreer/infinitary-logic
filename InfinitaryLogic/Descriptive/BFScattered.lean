@@ -205,12 +205,13 @@ countable set, and suppose that equal observations at level `η` imply `CodeBFEq
 is back-and-forth scattered.
 
 Only the forward implication (equal observations imply back-and-forth equivalence) is used; the
-converse is not assumed, so `obs η` need not descend to the back-and-forth classes.  The proof
-maps each realized value `q` to the class of a code observed as `q`: every class is hit, by the
-observation of any of its members, so the countable set of realized values surjects onto the
-quotient of the restriction of `codeBFEquivSetoid L η` to `C`.
+converse is not assumed, so `obs η` need not descend to the back-and-forth classes.  At each
+level this is `countable_quotient_of_countable_range` for the restriction of
+`codeBFEquivSetoid L η` to `C`: the countable set of realized values surjects onto its classes,
+each class being hit by the observation of any of its members.
 
 Hypotheses deliberately absent:
+* No countability of the relation symbols.
 * No measurability or analyticity of `C`.
 * No measurable structure on `Q η`, and no measurability of `obs η`.
 * No invariance of observations under isomorphism.
@@ -224,14 +225,8 @@ theorem bfScattered_of_countable_bfObservations (C : Set (StructureSpace L))
     {Q : Ordinal.{0} → Type w'} (obs : ∀ η, C → Q η)
     (hc : ∀ η < Ordinal.omega 1, (Set.range (obs η)).Countable)
     (hobs : ∀ η < Ordinal.omega 1, ∀ c d : C, obs η c = obs η d → CodeBFEquiv η c.1 d.1) :
-    BFScattered C := by
-  intro η hη
-  have := (hc η hη).to_subtype
-  -- each realized value goes to the class of one code observed as that value
-  refine Function.Surjective.countable (f := fun q : Set.range (obs η) ↦
-    (⟦q.2.choose⟧ : Quotient ((codeBFEquivSetoid L η).comap (Subtype.val : C → _)))) ?_
-  refine Quotient.ind fun c ↦ ⟨⟨obs η c, c, rfl⟩, Quotient.sound (hobs η hη _ _ ?_)⟩
-  exact (⟨obs η c, c, rfl⟩ : Set.range (obs η)).2.choose_spec
+    BFScattered C := fun η hη ↦
+  countable_quotient_of_countable_range _ (obs η) (hc η hη) (hobs η hη)
 
 /-- **No Cantor antichain from countable back-and-forth observations**, for every relational
 language: `not_hasCantorAntichainOn_of_bfScattered` through
