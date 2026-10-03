@@ -65,10 +65,11 @@ contributes `1` even when the disjunction is empty.
   signed `Σ^in`/`Π^in` classification of `Scott/MontalbanComplexity.lean`
   (`isPiIn_montalbanSentence`), which needs `1 ≤ α`; no conversion between the two is stated or
   used.
-* **No rank comparison.**  The bounds are statements about the syntax of the sentence of a
-  given family.  No comparison between the Scott ranks of the library (`scottHeight`,
-  `stabilizationOrdinal`, `orbitRank`, `internalScottRank`, …) is made here, and no bound of the
-  form `+ ω` on any of them is claimed.
+* **No rank comparison here.**  The bounds are statements about the syntax of the sentence of
+  a given family.  No comparison between the Scott ranks of the library (`scottHeight`,
+  `stabilizationOrdinal`, `orbitRank`, `internalScottRank`, …) is made here; the comparisons,
+  including the `+ ω` bounds that apply `qrank_montalbanSentence_le` to the Scott formulas at a
+  uniform level, are in `Scott/RankConventions.lean`.
 * **Pointed and unpointed.**  The pointed bound is proved through the exact clause-by-clause
   rank.  The unpointed bound is derived from it through the syntactic equation
   `montalbanSentence_eq_pointed_elim0` and `BoundedFormulaω.qrank_mapFreeVars`, and so is the

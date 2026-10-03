@@ -49,8 +49,21 @@ Proved relations: `sr M ≤ scottRank M` (`sr_le_scottRank`), `sr M ≤ scottHei
 (`scottRank_le_scottHeight_succ_of`, with `countableRefinementHypothesis`), and
 `elementRank m ≤ α` at every complete stabilization level `α` (`elementRank_le_completeStab`);
 on the internal side, `orbitRank a + 1 ≤ internalScottRank M`
-(`orbitRank_add_one_le_internalScottRank`).  No comparison between the two
-families is proved in the library.
+(`orbitRank_add_one_le_internalScottRank`) and, with `R = ⨆ a, orbitRank a`,
+`R ≤ internalScottRank M ≤ R + 1` (`Scott/OrbitRankStabilization`).
+
+Between the two families (`Scott/RankConventions`, relational language with countably many
+relation symbols, `M` countable, lifts on the `Ordinal.{0}` side):
+`orbitRank a ≤ lift (scottHeight M)` (`orbitRank_le_lift_scottHeight`),
+`internalScottRank M ≤ lift (scottHeight M) + 1`,
+`stabilizationOrdinal M ≤ scottHeight M`, the identity
+`lift (scottHeight M) = max (lift (stabilizationOrdinal M)) R` (`lift_scottHeight_eq_max`), and
+`lift (stabilizationOrdinal M) ≤ internalScottRank M + ω` and
+`lift (scottHeight M) ≤ internalScottRank M + ω`
+(`lift_stabilizationOrdinal_le_internalScottRank_add_omega0`,
+`lift_scottHeight_le_internalScottRank_add_omega0`; `internalScottRank M + ω = R + ω`).  The
+module also has the unconditional `sr_le_scottHeight` and `scottRank_le_scottHeight_add_one`.
+No bound of `internalScottRank` by `lift (stabilizationOrdinal M)` plus a constant is proved.
 
 Refuted relations (`scripts/check_rank_convention_regressions.lean`):
 

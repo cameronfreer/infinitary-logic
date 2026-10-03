@@ -21,15 +21,19 @@ descriptions in the Scott layer:
   of pairs of tuples of `M` (`bfStabilizationOrdinal_self_eq_iSup_orbitRank`).
 
 All ordinals live in `Ordinal.{w}`.  Any language, any structure: no relational hypothesis and no
-countability.  For an infinite structure over a relational language, a terminating Scott process
-of `M` has lifted rank `R` (`lift_rank_eq_iSup_orbitRank`), and
-`R ≤ internalScottRank M ≤ R + 1` with `internalScottRank M = ⨆ a, (orbitRank a + 1)`
-(`lift_rank_le_internalScottRank`, `internalScottRank_le_lift_rank_add_one`); all three are in
-`ScottProcess/RankComparison.lean`.
+countability.  Against `internalScottRank M = ⨆ a, (orbitRank a + 1)`, always
+`R ≤ internalScottRank M ≤ R + 1` (`iSup_orbitRank_le_internalScottRank`,
+`internalScottRank_le_iSup_orbitRank_add_one`).  For an infinite structure over a relational
+language, a terminating Scott process of `M` has lifted rank `R` (`lift_rank_eq_iSup_orbitRank`,
+in `ScottProcess/RankComparison.lean`, which uses the two comparisons above).  The comparisons
+with the cross-structure ranks (`stabilizationOrdinal`, `scottHeight`) are in
+`Scott/RankConventions.lean`.
 
 ## Main results
 
 * `iSup_orbitRank_le_iff` and `orbitRank_le_iSup_orbitRank`: the supremum API.
+* `iSup_orbitRank_le_internalScottRank` and `internalScottRank_le_iSup_orbitRank_add_one`:
+  `R ≤ internalScottRank M ≤ R + 1`.
 * `selfStabilizesCompletely_iff_orbitRank_le`: `M` self-stabilizes completely at `α` iff every
   orbit rank is at most `α`.
 * `sInf_selfStabilizesCompletely_eq_iSup_orbitRank`: the least self-stabilization level is `R`.
@@ -52,6 +56,17 @@ theorem iSup_orbitRank_le_iff {α : Ordinal.{w}} :
 theorem orbitRank_le_iSup_orbitRank {n : ℕ} (a : Fin n → M) :
     orbitRank (L := L) a ≤ ⨆ x : (Σ n : ℕ, Fin n → M), orbitRank (L := L) x.2 :=
   iSup_orbitRank_le_iff.1 le_rfl n a
+
+/-- `⨆ a, orbitRank a ≤ internalScottRank M`.  Any language, any structure. -/
+theorem iSup_orbitRank_le_internalScottRank :
+    (⨆ x : (Σ n : ℕ, Fin n → M), orbitRank (L := L) x.2) ≤ internalScottRank (L := L) M :=
+  iSup_orbitRank_le_iff.2 fun _ a ↦
+    (lt_add_one _).le.trans (orbitRank_add_one_le_internalScottRank a)
+
+/-- `internalScottRank M ≤ (⨆ a, orbitRank a) + 1`.  Any language, any structure. -/
+theorem internalScottRank_le_iSup_orbitRank_add_one :
+    internalScottRank (L := L) M ≤ (⨆ x : (Σ n : ℕ, Fin n → M), orbitRank (L := L) x.2) + 1 :=
+  internalScottRank_le fun _ a ↦ add_le_add_left (orbitRank_le_iSup_orbitRank a) 1
 
 /-- `M` self-stabilizes completely at `α` iff every tuple of `M` has orbit rank at most `α`.
 Any structure, any `α : Ordinal.{w}`; no countability. -/

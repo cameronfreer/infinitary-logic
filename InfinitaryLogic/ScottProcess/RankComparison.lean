@@ -24,7 +24,8 @@ comparison is with `internalScottRank` only; `scottRank` (`Scott/Rank.lean`) is 
 * Used from the Scott layer (`Scott/OrbitRankStabilization.lean`, namespace
   `FirstOrder.Language`): `selfStabilizesCompletely_iff_orbitRank_le` and
   `sInf_selfStabilizesCompletely_eq_iSup_orbitRank` (for any structure `M : Type w`, the least
-  self-stabilization level in `Ordinal.{w}` is `⨆ a, orbitRank a`).
+  self-stabilization level in `Ordinal.{w}` is `⨆ a, orbitRank a`), and the two comparisons
+  `iSup_orbitRank_le_internalScottRank` and `internalScottRank_le_iSup_orbitRank_add_one`.
 * Per level: `stabilizesAt_iff_bfEquiv` (equivalence at `β` implies equivalence at `β + 1`, for
   all tuples, repeated coordinates included), `stabilizesAt_iff_selfStabilizesCompletely` and
   `stabilizesAt_iff_orbitRank_le`.
@@ -100,16 +101,8 @@ variable {L : Language.{u, v}} {M : Type w} [L.Structure M]
 
 /-! ### The two conventions -/
 
-/-- `⨆ a, orbitRank a ≤ internalScottRank M`. -/
-private theorem iSup_orbitRank_le_internalScottRank :
-    (⨆ x : (Σ n : ℕ, Fin n → M), orbitRank (L := L) x.2) ≤ internalScottRank (L := L) M :=
-  iSup_orbitRank_le_iff.2 fun _ a ↦
-    (lt_add_one _).le.trans (orbitRank_add_one_le_internalScottRank a)
-
-/-- `internalScottRank M ≤ (⨆ a, orbitRank a) + 1`. -/
-private theorem internalScottRank_le_iSup_orbitRank_add_one :
-    internalScottRank (L := L) M ≤ (⨆ x : (Σ n : ℕ, Fin n → M), orbitRank (L := L) x.2) + 1 :=
-  internalScottRank_le fun _ a ↦ add_le_add_left (orbitRank_le_iSup_orbitRank a) 1
+-- `R ≤ internalScottRank M ≤ R + 1` is `iSup_orbitRank_le_internalScottRank` and
+-- `internalScottRank_le_iSup_orbitRank_add_one`, from `Scott/OrbitRankStabilization.lean`.
 
 /-- Attained case: `(⨆ a, orbitRank a) + 1 = internalScottRank M` iff some tuple has orbit rank
 `⨆ a, orbitRank a`. -/
