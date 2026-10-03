@@ -21,7 +21,8 @@ reused wherever it already has the fact; nothing here adds an instance.
 * **Cantor space.**  `not_countable_univ_cantor`: Cantor space is uncountable, from
   `#(ℕ → Bool) = 𝔠` and `ℵ₀ < 𝔠`.
 * **Suprema.**  `iSup_lt_omega1_of_forall_lt`: a sequence of countable ordinals has a countable
-  supremum (regularity of `ℵ₁`).
+  supremum (regularity of `ℵ₁`).  `iSup_add_one_lt_omega1`: over any countable index type, the
+  supremum of the successors of countable ordinals is countable.
 * **Rank and countability.**  `countable_iff_rank_bounded`: for a rank `r` with `r x < ω₁` and
   countable fibers below `ω₁`, a set is countable iff its ranks are bounded below `ω₁`.  Forward:
   enumerate the set and bound the supremum by regularity of `ℵ₁`; backward
@@ -81,6 +82,12 @@ theorem iSup_lt_omega1_of_forall_lt (f : ℕ → Ordinal.{0}) (hf : ∀ n, f n <
   rw [Ordinal.lift_id, ← Cardinal.ord_aleph, Cardinal.isRegular_aleph_one.cof_ord, Cardinal.lift_id,
     Cardinal.mk_nat]
   exact Cardinal.aleph0_lt_aleph_one
+
+/-- **Countable supremum of successors**: over a countable index type, the supremum of the
+successors of countable ordinals is countable. -/
+theorem iSup_add_one_lt_omega1 {C : Type*} [Countable C] (α : C → Ordinal.{0})
+    (hα : ∀ c, α c < Ordinal.omega 1) : (⨆ c, (α c + 1)) < Ordinal.omega 1 :=
+  Ordinal.iSup_lt_omega_one fun c ↦ (Cardinal.isSuccLimit_omega 1).add_one_lt (hα c)
 
 /-! ### Rank and countability -/
 

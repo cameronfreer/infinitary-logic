@@ -19,9 +19,12 @@ unpack an occurrence, `labelRank_le_iff`), and checks:
   `EventuallyInvariant` by `Iff.rfl`; the uniform-fixation shape (guarded stage correctness,
   conclusion `∃ A < ω₁, ∀ β, β < ω₁ → ∀ ℓ, Adm β ℓ → S.FixedAt A ℓ`) is
   `exists_uniform_fixing_stage` by `exact`; the rank shape is `labelRank_le_iff`;
-* **`ω₁` spelled `(aleph 1).ord`**: the same shapes with that spelling, through the single
-  rewrite `Cardinal.ord_aleph` (the documented variant; the library spells `ω₁` as
-  `Ordinal.omega 1`).
+* **`ω₁` spelled `(aleph 1).ord`**: the same shapes, and the consumer itself
+  (`classwise_labelRank_bound_aleph`), with that spelling, through the single rewrite
+  `Cardinal.ord_aleph` (the library spells `ω₁` as `Ordinal.omega 1`);
+* **`uniform_presentation_bound`**: the presentation-level form, one countable `A` bounding
+  `⨆ c, labelRank (ℓ c)` (the least simultaneous fixing stage) of every admissible presentation,
+  on a law-only system, through `forall_fixed_iff_iSup_labelRank_le_of_exists`.
 
 Nothing downstream is modified; this file is the scratch client.  All declarations of this
 guard use only the standard axioms.
@@ -126,6 +129,34 @@ theorem uniform_shape_aleph {D : Type w} [Countable D] (S : CountablyFixedProjec
   rw [Cardinal.ord_aleph] at hstage hev ⊢
   exact S.exists_uniform_fixing_stage Adm hstage hev
 
+/-- **The consumer with `ω₁` spelled `(aleph 1).ord`**: one rewrite, then the same steps. -/
+theorem classwise_labelRank_bound_aleph [∀ q, Countable (C q)] (S : CountablyFixedProjection I)
+    (Adm : ∀ q, Ordinal.{0} → (C q → I) → Prop)
+    (hstage : ∀ q α, α < (Cardinal.aleph 1).ord → ∀ ℓ, Adm q α ℓ → S.FixedAt α ℓ)
+    (hev : ∀ q c, ∃ α < (Cardinal.aleph 1).ord, ∃ ℓ : C q → I, Adm q α ℓ ∧
+      ∀ β, α < β → β < (Cardinal.aleph 1).ord → ∀ ℓ', Adm q β ℓ' → ℓ' c = ℓ c) :
+    ∀ q, ∃ A < (Cardinal.aleph 1).ord, ∀ i, (∃ β < (Cardinal.aleph 1).ord, ∃ ℓ, Adm q β ℓ ∧
+      ∃ c, ℓ c = i) → S.labelRank i ≤ A := by
+  simp only [Cardinal.ord_aleph] at hstage hev ⊢
+  intro q
+  obtain ⟨A, hA, h⟩ := S.exists_uniform_fixing_stage (Adm q) (hstage q) (hev q)
+  refine ⟨A, hA, fun i hi => ?_⟩
+  obtain ⟨β, hβ, ℓ, hℓ, c, rfl⟩ := hi
+  exact S.labelRank_le_iff.mpr (h β hβ ℓ hℓ c)
+
+/-- **The presentation-level bound**: one countable `A` bounds the least simultaneous fixing
+stage `⨆ c, labelRank (ℓ c)` of every admissible presentation, on a law-only system (stage
+correctness supplies the existence premise of the leastness lemma). -/
+theorem uniform_presentation_bound {D : Type w} [Countable D] (S : StageProjection I)
+    (Adm : Ordinal.{0} → (D → I) → Prop)
+    (hstage : ∀ α, α < Ordinal.omega 1 → ∀ ℓ, Adm α ℓ → S.FixedAt α ℓ)
+    (hev : ∀ c, StageProjection.EventuallyInvariant Adm c) :
+    ∃ A < Ordinal.omega 1, ∀ β, β < Ordinal.omega 1 → ∀ ℓ, Adm β ℓ →
+      (⨆ c, S.labelRank (ℓ c)) ≤ A := by
+  obtain ⟨A, hA, h⟩ := S.exists_uniform_fixing_stage Adm hstage hev
+  exact ⟨A, hA, fun β hβ ℓ hℓ ↦ (S.forall_fixed_iff_iSup_labelRank_le_of_exists ℓ
+    fun c ↦ ⟨β, hstage β hβ ℓ hℓ c⟩).mp (h β hβ ℓ hℓ)⟩
+
 end UniformFixationClient
 
 /-! ### Axiom audit -/
@@ -134,7 +165,8 @@ end UniformFixationClient
 def clientDecls : List Name :=
   [`Occurs, `classwise_labelRank_bound, `classwise_labelRank_bound_of_stageProjection,
    `ofBundle, `eventuallyInvariant_shape, `uniform_shape, `fixedAt_shape, `rank_shape,
-   `ofBundleAleph, `eventuallyInvariant_shape_aleph, `uniform_shape_aleph].map
+   `ofBundleAleph, `eventuallyInvariant_shape_aleph, `uniform_shape_aleph,
+   `classwise_labelRank_bound_aleph, `uniform_presentation_bound].map
     (`UniformFixationClient ++ ·)
 
 /-- The standard axioms. -/
@@ -151,4 +183,5 @@ run_cmd do
     the exports with its three-line proof, also for a law-only projection system; the bundled \
     projection, eventual-invariance, uniform-fixation, fixed-at and rank shapes are instances \
     of the exports, with omega_1 spelled Ordinal.omega 1 and, through Cardinal.ord_aleph, \
-    (aleph 1).ord; standard axioms)"
+    (aleph 1).ord, including the consumer itself; the presentation-level bound on the least \
+    simultaneous fixing stage for a law-only system; standard axioms)"

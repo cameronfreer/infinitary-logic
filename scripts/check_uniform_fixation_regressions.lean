@@ -6,6 +6,10 @@ Every public theorem is *applied*, not only listed for its axioms.  The concrete
 system is truncation on the countable ordinals: labels `CO = Set.Iio ω₁` (as a subtype),
 `project α i = min α i`, so the label rank of `i` is `i` itself.
 
+* **The API on the truncation system.**  The projection law normalizes by `simp` (idempotence and
+  triple compositions); the bundled and law-only label-rank lemmas agree; rank and fixedness are
+  dual (`exists_labelRank_gt_iff`: every countable stage is exceeded by some label rank).
+
 * **(R1) Empty coordinates.**  Every presentation is fixed at `0`; the explicit stage
   `⨆ c, (α c + 1)` is `0` and Theorem 2's explicit form fixes at `0`; Theorem 2 applies with a
   vacuous eventual-invariance premise; the least fixing stage of Theorem 1 is `0`.
@@ -14,7 +18,9 @@ system is truncation on the countable ordinals: labels `CO = Set.Iio ω₁` (as 
   distinct witnesses).  No presentation is admissible at `ω`.  The uniform stages are exactly the
   `A ≥ ω`; the explicit stage of the witnesses is `ω` (both the `⨆ (α + 1)` and the `⨆ α`
   forms); realized label ranks are `min m n`; the classwise label-rank bounds are exactly the
-  `A ≥ ω`; the least simultaneous fixing stage of the labels `n ↦ n` is `ω`.
+  `A ≥ ω`; the least simultaneous fixing stage of the labels `n ↦ n` is `ω`, and leastness of
+  `⨆ n, labelRank (ℓ n)` holds on the law-only structure for every admissible presentation
+  (`forall_fixed_iff_iSup_labelRank_le_of_exists`, premise from stage correctness).
 * **(R3) Negative, uncountable `C = Iio ω₁`.**  Stage correctness and eventual invariance hold,
   yet there is no countable uniform stage, no countable fixing stage of the identity
   presentation (Theorem 1 fails) and no countable classwise label-rank bound; so the coordinate
@@ -41,16 +47,18 @@ Two separate tests about the eventual-invariance premise, which must not be conf
   uniform across presentations; it does not by itself show that the admissible witness is needed.
 * **(W2) The admissible witness pins the EXPLICIT bound.**  With only a bare eventual value
   (label `2` after threshold `0`, where no presentation is admissible), a uniform stage still
-  exists (`exists_uniform_fixing_stage_of_eventually_const`, and the explicit
-  `uniform_fixing_of_eventual_values` stage, here `2`), but the formula `⨆ c, (α_c + 1) = 1` is
-  NOT a uniform stage.  Existence alone does not need the witness.
+  exists (`exists_uniform_fixing_stage_of_eventually_const`; the explicit eventual-value stage,
+  here `2`, countable in the bundled `uniform_fixing_of_eventual_values` and also reached by the
+  law-only version), but the formula `⨆ c, (α_c + 1) = 1` is NOT a uniform stage.  Existence
+  alone does not need the witness.
 
 * **Import closure.**  The `InfinitaryLogic` closure of the module is exactly `UniformFixation`,
   `OrdinalCountability` and `OrdinalUtil` (`[CLOSURE DRIFT]` otherwise), with no `Scott`,
   `Descriptive`, `ModelTheory`, `Karp` or `Lomega1omega` module.
 
 Every declaration of the module (enumerated from the environment, and a fixed list that must
-be present) and every declaration of this guard uses only the standard axioms.
+be present) and every declaration of this guard uses only the standard axioms.  The closure
+check and the axiom audit run in one command, so the OK line is printed only when both pass.
 
 Run with: lake env lean scripts/check_uniform_fixation_regressions.lean
 -/
@@ -78,6 +86,7 @@ def P : CountablyFixedProjection CO where
   eventually_fixed i := ⟨i.1, i.2, Subtype.ext (min_self i.1)⟩
 
 theorem P_fixed_iff {α : Ordinal.{0}} {i : CO} : P.project α i = i ↔ i.1 ≤ α := by
+  -- `P.project α i` is the subtype element `⟨min α i.1, _⟩` by definition of `P`.
   change (⟨min α i.1, _⟩ : CO) = i ↔ _
   rw [Subtype.ext_iff]
   exact min_eq_right_iff
@@ -103,6 +112,19 @@ theorem P_labelRank_api (i : CO) (α : Ordinal.{0}) :
   ⟨P.labelRank_le_iff, labelRank_le_iff_of_exists ⟨_, P.fixed_labelRank i⟩,
     P.labelRank_lt_omega1 i, P.iUnion_fixedLabels_eq_univ⟩
 
+/-- The projection law is a `simp` lemma: idempotence and triple compositions normalize. -/
+theorem simp_law (S : StageProjection CO) (α β γ : Ordinal.{0}) (i : CO) :
+    S.project α (S.project α i) = S.project α i ∧
+      S.project α (S.project β (S.project γ i)) = S.project (min α (min β γ)) i := by
+  simp
+
+/-- Rank and fixedness are dual: above every countable `A` some label has larger rank, and `A`
+fails to fix some label. -/
+theorem P_rank_gt (A : Ordinal.{0}) (hA : A < Ordinal.omega 1) :
+    (∃ i, A < P.labelRank i) ∧ ∃ i, P.project A i ≠ i :=
+  have h : ∃ i, P.project A i ≠ i := ⟨_, P_not_fixed_succ A (succ_lt_omega1 hA)⟩
+  ⟨(P.exists_labelRank_gt_iff A).mpr h, h⟩
+
 theorem natCast_lt_omega1 (n : ℕ) : (n : Ordinal.{0}) < Ordinal.omega 1 :=
   (Ordinal.natCast_lt_omega0 n).trans Ordinal.omega0_lt_omega_one
 
@@ -121,8 +143,8 @@ theorem empty_explicit (I : Type u) (S : StageProjection I)
     (Adm : Ordinal.{0} → (Empty → I) → Prop)
     (hstage : ∀ α, α < Ordinal.omega 1 → ∀ ℓ, Adm α ℓ → S.FixedAt α ℓ) :
     ∀ β, β < Ordinal.omega 1 → ∀ ℓ, Adm β ℓ → S.FixedAt 0 ℓ := by
-  have h := S.uniform_fixing_of_witnesses Adm hstage isEmptyElim isEmptyElim isEmptyElim
-    isEmptyElim isEmptyElim
+  have h := S.uniform_fixing_at_iSup_add_one_of_witnesses Adm hstage isEmptyElim isEmptyElim
+    isEmptyElim isEmptyElim isEmptyElim
   rwa [empty_explicit_bound] at h
 
 /-- Theorem 2 at empty `C`, the eventual-invariance premise vacuous. -/
@@ -196,17 +218,18 @@ theorem nat_explicit_bound : (⨆ n : ℕ, ((n : Ordinal.{0}) + 1)) = Ordinal.om
   · exact (lt_add_one (n : Ordinal.{0})).le.trans
       (Ordinal.le_iSup (fun n : ℕ ↦ (n : Ordinal.{0}) + 1) n)
 
-/-- Both explicit forms of Theorem 2 give the stage `ω` for these witnesses, the least one. -/
+/-- Both explicit forms of Theorem 2 give the stage `ω` for these witnesses, the least one:
+`⨆ n, (n + 1) = ω` and `⨆ n, n = ω`. -/
 theorem nat_explicit :
     (∀ β, β < Ordinal.omega 1 → ∀ ℓ, natAdm β ℓ → P.FixedAt Ordinal.omega0 ℓ) ∧
-      (⨆ n : ℕ, (n : Ordinal.{0})) = Ordinal.omega0 := by
-  have h := P.uniform_fixing_of_witnesses natAdm natAdm_stage (fun n ↦ n) natCast_lt_omega1
-    natPres (fun n ↦ ⟨n, rfl, rfl⟩) natAdm_agree
+      (∀ β, β < Ordinal.omega 1 → ∀ ℓ, natAdm β ℓ → P.FixedAt Ordinal.omega0 ℓ) := by
+  have h := P.uniform_fixing_at_iSup_add_one_of_witnesses natAdm natAdm_stage (fun n ↦ n)
+    natCast_lt_omega1 natPres (fun n ↦ ⟨n, rfl, rfl⟩) natAdm_agree
   have h' := P.uniform_fixing_at_iSup_of_witnesses natAdm natAdm_stage (fun n ↦ n)
     natCast_lt_omega1 natPres (fun n ↦ ⟨n, rfl, rfl⟩) natAdm_agree
   rw [nat_explicit_bound] at h
   rw [Ordinal.iSup_natCast] at h'
-  exact ⟨h, Ordinal.iSup_natCast⟩
+  exact ⟨h, h'⟩
 
 /-- Realized label ranks: coordinate `n` at stage `m` has rank `min m n`. -/
 theorem nat_labelRank (m n : ℕ) : P.labelRank (natPres m n) = (min m n : ℕ) :=
@@ -242,6 +265,14 @@ theorem presentation_rank_rfl (ℓ : ℕ → CO) (c : ℕ) :
     leastLevel (fun α ↦ {c : ℕ | P.project α (ℓ c) = ℓ c}) c = P.labelRank (ℓ c) :=
   rfl
 
+/-- Leastness on the law-only structure: the least simultaneous fixing stage of the admissible
+presentation at stage `m` is `⨆ n, labelRank (natPres m n) = m`. -/
+theorem nat_least_law_only (m : ℕ) (A : Ordinal.{0}) :
+    (∀ n, P.project A (natPres m n) = natPres m n) ↔
+      (⨆ n, P.labelRank (natPres m n)) ≤ A :=
+  P.toStageProjection.forall_fixed_iff_iSup_labelRank_le_of_exists (natPres m)
+    fun n ↦ ⟨m, natAdm_stage m (natCast_lt_omega1 m) _ ⟨m, rfl, rfl⟩ n⟩
+
 /-- Theorem 1 per coordinate, through the parent API. -/
 theorem nat_theorem1 : ∃ A < Ordinal.omega 1, P.FixedAt A natLabel :=
   P.exists_fixing_stage_of_forall natLabel fun n ↦
@@ -264,8 +295,7 @@ def coAdm (β : Ordinal.{0}) (ℓ : CO → CO) : Prop := β < Ordinal.omega 1 �
 
 theorem coAdm_stage : ∀ α, α < Ordinal.omega 1 → ∀ ℓ, coAdm α ℓ → P.FixedAt α ℓ := by
   rintro β - _ ⟨-, rfl⟩ c
-  change P.project β (P.project β c) = P.project β c
-  rw [P.project_project, min_self]
+  simp [coPres]
 
 theorem coAdm_ev : ∀ c, EventuallyInvariant coAdm c := by
   intro c
@@ -344,11 +374,9 @@ def constFalse : StageProjection Bool where
 theorem junk_labelRank : constFalse.labelRank true = 0 ∧
     ¬ (constFalse.labelRank true ≤ 0 ↔ constFalse.project 0 true = true) := by
   have h : constFalse.labelRank true = 0 := by
-    have hempty : {α : Ordinal.{0} | true ∈ {i : Bool | constFalse.project α i = i}} = ∅ := by
-      ext α
-      simp [constFalse]
-    change sInf {α : Ordinal.{0} | true ∈ {i : Bool | constFalse.project α i = i}} = 0
-    rw [hempty, Ordinal.sInf_empty]
+    -- The junk value is read through the definitions: `labelRank` is `leastLevel`, an `sInf`
+    -- of the empty set of stages fixing `true`.
+    simp [StageProjection.labelRank, leastLevel, constFalse]
   refine ⟨h, fun hiff ↦ ?_⟩
   exact Bool.false_ne_true (hiff.mp h.le)
 
@@ -417,12 +445,17 @@ theorem twoAdm_no_zero_witness : ∀ ℓ, ¬ twoAdm 0 ℓ := by
 /-- Existence survives with a bare value, both without and with an explicit stage. -/
 theorem two_uniform :
     (∃ A < Ordinal.omega 1, ∀ β, β < Ordinal.omega 1 → ∀ ℓ, twoAdm β ℓ → P.FixedAt A ℓ) ∧
+      ((⨆ _ : Unit, max (0 : Ordinal.{0}) (P.labelRank two)) < Ordinal.omega 1 ∧
+        ∀ β, β < Ordinal.omega 1 → ∀ ℓ, twoAdm β ℓ →
+          P.FixedAt (⨆ _ : Unit, max (0 : Ordinal.{0}) (P.labelRank two)) ℓ) ∧
       ∀ β, β < Ordinal.omega 1 → ∀ ℓ, twoAdm β ℓ →
         P.FixedAt (⨆ _ : Unit, max (0 : Ordinal.{0}) (P.labelRank two)) ℓ :=
   ⟨P.exists_uniform_fixing_stage_of_eventually_const twoAdm twoAdm_stage
       fun c ↦ ⟨0, Ordinal.omega_pos 1, two, twoAdm_const c⟩,
-    P.uniform_fixing_of_eventual_values twoAdm twoAdm_stage (fun _ ↦ 0) (fun _ ↦ two)
-      twoAdm_const⟩
+    P.uniform_fixing_of_eventual_values twoAdm twoAdm_stage (fun _ ↦ 0)
+      (fun _ ↦ Ordinal.omega_pos 1) (fun _ ↦ two) twoAdm_const,
+    P.toStageProjection.uniform_fixing_of_eventual_values twoAdm twoAdm_stage (fun _ ↦ 0)
+      (fun _ ↦ two) (fun _ ↦ ⟨_, P.fixed_labelRank two⟩) twoAdm_const⟩
 
 /-- The explicit stage there is `2`. -/
 theorem two_explicit_stage :
@@ -479,11 +512,56 @@ def allowedClosure : List Name :=
   [`InfinitaryLogic.UniformFixation, `InfinitaryLogic.OrdinalCountability,
    `InfinitaryLogic.OrdinalUtil]
 
+/-- The public declarations of the module that must be present. -/
+def moduleDecls : List Name :=
+  [`StageProjection, `StageProjection.project_project, `CountablyFixedProjection,
+   `StageProjection.fixed_mono, `StageProjection.FixedAt, `StageProjection.FixedAt.mono,
+   `StageProjection.exists_fixing_stage_of_forall, `StageProjection.labelRank,
+   `StageProjection.labelRank_le_of_fixed, `StageProjection.fixed_labelRank_of_exists,
+   `StageProjection.labelRank_le_iff_of_exists, `StageProjection.iUnion_fixedLabels_eq_univ_iff,
+   `StageProjection.forall_fixed_iff_iSup_labelRank_le_of_exists,
+   `StageProjection.EventuallyInvariant,
+   `StageProjection.uniform_fixing_at_iSup_add_one_of_witnesses,
+   `StageProjection.uniform_fixing_at_iSup_of_witnesses,
+   `StageProjection.uniform_fixing_of_eventual_values,
+   `StageProjection.exists_uniform_fixing_stage,
+   `StageProjection.exists_uniform_fixing_stage_of_eventually_const,
+   `StageProjection.labelRank_le_stage_of_adm, `StageProjection.labelRank_le_of_adm,
+   `StageProjection.uniform_fixed_iff_labelRank_le,
+   `StageProjection.exists_classwise_labelRank_bound,
+   `CountablyFixedProjection.iUnion_fixedLabels_eq_univ,
+   `CountablyFixedProjection.fixed_labelRank, `CountablyFixedProjection.labelRank_lt_omega1,
+   `CountablyFixedProjection.labelRank_le_iff, `CountablyFixedProjection.exists_labelRank_gt_iff,
+   `CountablyFixedProjection.exists_fixing_stage_of_countable,
+   `CountablyFixedProjection.iSup_labelRank_lt_omega1,
+   `CountablyFixedProjection.forall_fixed_iff_iSup_labelRank_le,
+   `CountablyFixedProjection.uniform_fixing_of_eventual_values].map (`InfinitaryLogic ++ ·)
+
+/-- The guard's own declarations whose axioms are audited. -/
+def guardDecls : List Name :=
+  [`P, `P_fixed_iff, `P_labelRank, `P_labelRank_api, `simp_law, `P_rank_gt, `empty_fixed,
+   `empty_explicit_bound,
+   `empty_explicit, `empty_uniform, `empty_least, `natAdm_ev, `natPres_injective,
+   `natAdm_no_infinite_stage, `nat_uniform, `nat_uniform_iff, `nat_explicit_bound,
+   `nat_explicit, `nat_labelRank, `nat_classwise_iff, `nat_classwise, `nat_least_fixing_stage,
+   `presentation_rank_rfl, `nat_least_law_only, `nat_theorem1, `nat_shared, `coAdm_ev,
+   `co_no_uniform, `co_not_countable,
+   `co_no_fixing_stage, `co_no_classwise_bound, `zeroAdm_ev, `zeroAdm_not_stage,
+   `zeroAdm_no_uniform, `uniform_of_unguarded, `eventuallyInvariant_iff, `junk_labelRank,
+   `not_swappedOrderStatement, `ladder_not_ev, `twoAdm_no_zero_witness, `two_uniform,
+   `two_explicit_stage, `bare_value_explicit_bound_fails, `two_ev, `two_witnessed].map
+    (`UniformFixationGuard ++ ·)
+
+/-- The standard axioms. -/
+def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
+
+-- The closure check and the axiom audit run in one command, so that the final OK line is
+-- printed only when both pass.
 run_cmd do
   let env ← getEnv
   let target := `InfinitaryLogic.UniformFixation
-  unless (env.getModuleIdx? target).isSome do
-    throwError "module {target} is not in the environment"
+  let some idx := env.getModuleIdx? target
+    | throwError "module {target} is not in the environment"
   let cl := importClosure env target
   let ilModules := cl.toList.filter fun m ↦ (`InfinitaryLogic).isPrefixOf m
   let hits := ilModules.filter fun m ↦ forbiddenPrefixes.any (·.isPrefixOf m)
@@ -494,49 +572,6 @@ run_cmd do
   unless extra.isEmpty && missing.isEmpty do
     throwError "[CLOSURE DRIFT] the InfinitaryLogic closure of {target} is {ilModules}; \
       update allowedClosure deliberately (extra {extra}, missing {missing})"
-
-/-- The public declarations of the module that must be present. -/
-def moduleDecls : List Name :=
-  [`iSup_add_one_lt_omega1, `StageProjection, `CountablyFixedProjection,
-   `StageProjection.fixed_mono, `StageProjection.FixedAt, `StageProjection.FixedAt.mono,
-   `StageProjection.exists_fixing_stage_of_forall, `StageProjection.labelRank,
-   `StageProjection.labelRank_le_of_fixed, `StageProjection.fixed_labelRank_of_exists,
-   `StageProjection.labelRank_le_iff_of_exists, `StageProjection.iUnion_fixedLabels_eq_univ_iff,
-   `StageProjection.EventuallyInvariant, `StageProjection.uniform_fixing_of_witnesses,
-   `StageProjection.uniform_fixing_at_iSup_of_witnesses,
-   `StageProjection.exists_uniform_fixing_stage,
-   `StageProjection.exists_uniform_fixing_stage_of_eventually_const,
-   `StageProjection.labelRank_le_stage_of_adm, `StageProjection.labelRank_le_of_adm,
-   `StageProjection.uniform_fixed_iff_labelRank_le,
-   `StageProjection.exists_classwise_labelRank_bound,
-   `CountablyFixedProjection.iUnion_fixedLabels_eq_univ,
-   `CountablyFixedProjection.fixed_labelRank, `CountablyFixedProjection.labelRank_lt_omega1,
-   `CountablyFixedProjection.labelRank_le_iff,
-   `CountablyFixedProjection.exists_fixing_stage_of_countable,
-   `CountablyFixedProjection.iSup_labelRank_lt_omega1,
-   `CountablyFixedProjection.forall_fixed_iff_iSup_labelRank_le,
-   `CountablyFixedProjection.uniform_fixing_of_eventual_values].map (`InfinitaryLogic ++ ·)
-
-/-- The guard's own declarations whose axioms are audited. -/
-def guardDecls : List Name :=
-  [`P, `P_fixed_iff, `P_labelRank, `P_labelRank_api, `empty_fixed, `empty_explicit_bound,
-   `empty_explicit, `empty_uniform, `empty_least, `natAdm_ev, `natPres_injective,
-   `natAdm_no_infinite_stage, `nat_uniform, `nat_uniform_iff, `nat_explicit_bound,
-   `nat_explicit, `nat_labelRank, `nat_classwise_iff, `nat_classwise, `nat_least_fixing_stage,
-   `presentation_rank_rfl, `nat_theorem1, `nat_shared, `coAdm_ev, `co_no_uniform, `co_not_countable,
-   `co_no_fixing_stage, `co_no_classwise_bound, `zeroAdm_ev, `zeroAdm_not_stage,
-   `zeroAdm_no_uniform, `uniform_of_unguarded, `eventuallyInvariant_iff, `junk_labelRank,
-   `not_swappedOrderStatement, `ladder_not_ev, `twoAdm_no_zero_witness, `two_uniform,
-   `two_explicit_stage, `bare_value_explicit_bound_fails, `two_ev, `two_witnessed].map
-    (`UniformFixationGuard ++ ·)
-
-/-- The standard axioms. -/
-def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
-
-run_cmd do
-  let env ← getEnv
-  let some idx := env.getModuleIdx? `InfinitaryLogic.UniformFixation
-    | throwError "module InfinitaryLogic.UniformFixation is not in the environment"
   let enumerated := (env.header.moduleData[idx.toNat]!).constNames.toList
   for n in moduleDecls do
     unless enumerated.contains n do throwError "declaration {n} not found in the module"
@@ -545,13 +580,15 @@ run_cmd do
     let axs ← Elab.Command.liftCoreM (collectAxioms n)
     let bad := axs.toList.filter fun a ↦ !standardAxioms.contains a
     unless bad.isEmpty do throwError "[NONSTANDARD AXIOMS] {n} uses {bad}"
-  logInfo m!"Uniform fixation regression guard: OK (applied: empty coordinates with bound 0; \
+  logInfo m!"Uniform fixation regression guard: OK (applied: the simp law, rank/fixedness \
+    duality, law-only leastness of the label-rank supremum; empty coordinates with bound 0; \
     C = N with per-coordinate witnesses at different stages, uniform stages exactly >= omega, \
     explicit stage omega in both forms, realized label ranks min m n, classwise bound iff \
     omega <= A, least fixing stage omega; uncountable C = Iio omega_1 negative for the uniform \
     stage, Theorem 1 and the classwise bound; stage correctness dropped gives no uniform stage; \
     one stage for presentations at different stages; the contract premise forms; the junk \
     label rank; swapped quantifier order refuted (uniformity across presentations); bare \
-    value: existence survives, the explicit formula fails (the witness pins the explicit \
-    bound); import closure exactly {allowedClosure}; standard axioms on \
+    value: existence survives, also at the explicit eventual-value stage (countable when \
+    bundled), the explicit formula fails (the witness pins the explicit bound); import \
+    closure exactly {allowedClosure}; standard axioms on \
     {enumerated.length} module declarations and {guardDecls.length} guard declarations)"

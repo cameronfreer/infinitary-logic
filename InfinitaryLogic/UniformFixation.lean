@@ -10,31 +10,30 @@ import InfinitaryLogic.OrdinalCountability
 
 A single label type `I` carries projections `project α : I → I` indexed by stages
 `α : Ordinal.{0}`, subject to the projection law
-`project α (project β i) = project (min α β) i` (`StageProjection`).  A label `i` is *fixed at*
-`α` when `project α i = i`, and a presentation `ℓ : C → I` is fixed at `α`
+`project α (project β i) = project (min α β) i` (`StageProjection`; a `simp` lemma).  A label `i`
+is *fixed at* `α` when `project α i = i`, and a presentation `ℓ : C → I` is fixed at `α`
 (`StageProjection.FixedAt`) when every coordinate is.  `CountablyFixedProjection` adds that every
-label is fixed at some countable stage.  No logic is involved; `ω₁` is `Ordinal.omega 1`.
+label is fixed at some countable stage.  No logic is involved.
 
 ## Main results
 
-* `StageProjection.fixed_mono`: fixedness is upward closed (the projection law alone).
+* `StageProjection.fixed_mono`: fixedness is upward closed.
 * **Theorem 1** (one presentation).  `StageProjection.exists_fixing_stage_of_forall`: if each
   coordinate of a countable presentation is fixed at some countable stage, all are fixed at one
   countable stage; `CountablyFixedProjection.exists_fixing_stage_of_countable` is the instance
-  under global eventual fixation.  The bound depends on `ℓ`.  The countable supremum is Mathlib's
-  `Ordinal.iSup_lt_omega_one`, which takes an arbitrary countable index type, empty included; the
-  `ℕ`-indexed `iSup_lt_omega1_of_forall_lt` would need an enumeration and an empty-case split.
-* **The label rank.**  `StageProjection.labelRank S i` is the least stage fixing `i`, defined
-  through `leastLevel` of the family `α ↦ {i | project α i = i}`.  Without an existence premise it
+  under global eventual fixation.  The stage depends on `ℓ`.
+* **The label rank.**  `StageProjection.labelRank S i` is the least stage fixing `i`, the least
+  level (`leastLevel`) of the family `α ↦ {i | project α i = i}`.  Without an existence premise it
   means nothing (junk value `0` for a label fixed at no stage), so every lemma beyond
   `labelRank_le_of_fixed` assumes one: `fixed_labelRank_of_exists` and
   `labelRank_le_iff_of_exists` for one label; `iUnion_fixedLabels_eq_univ_iff` identifies the
   covering hypothesis of `leastLevel` with global eventual fixation, under which
-  (`CountablyFixedProjection`) `fixed_labelRank`, `labelRank_lt_omega1` and `labelRank_le_iff`
-  hold with no further premise.  The least simultaneous fixing stage of one countable
-  presentation is `⨆ c, labelRank (ℓ c)` (`forall_fixed_iff_iSup_labelRank_le`).  The fixing rank
-  of coordinate `c` in a presentation `ℓ`, the least level of `α ↦ {c | project α (ℓ c) = ℓ c}`,
-  is *definitionally* `labelRank (ℓ c)`, so no separate presentation rank is defined.
+  (`CountablyFixedProjection`) `fixed_labelRank`, `labelRank_lt_omega1`, `labelRank_le_iff` and
+  `exists_labelRank_gt_iff` hold with no further premise.  The least simultaneous fixing stage of
+  a countable presentation whose coordinates are each fixed at some stage is
+  `⨆ c, labelRank (ℓ c)` (`forall_fixed_iff_iSup_labelRank_le_of_exists`; bundled:
+  `forall_fixed_iff_iSup_labelRank_le`).  The fixing rank of coordinate `c` in a presentation `ℓ`,
+  the least level of `α ↦ {c | project α (ℓ c) = ℓ c}`, is *definitionally* `labelRank (ℓ c)`.
 * **Theorem 2** (uniform fixation; `StageProjection.exists_uniform_fixing_stage`).  Let
   `Adm : Ordinal.{0} → (C → I) → Prop` single out the admissible presentations at each stage, `C`
   countable.  Assume *stage correctness* (an admissible presentation at a countable stage `β` is
@@ -43,11 +42,10 @@ label is fixed at some countable stage.  No logic is involved; `ω₁` is `Ordin
   countable stage `β > α_c` agrees with `ℓ_c` at `c` (quantifier order `∀ c ∃ α_c ℓ_c ∀ β ℓ`; the
   witnesses are per coordinate, and no single presentation need contain them all).  Then one
   countable stage `A` fixes every coordinate of every admissible presentation at every countable
-  stage.  Explicitly `A = ⨆ c, (α_c + 1)` (`uniform_fixing_of_witnesses`): at `β ≤ A` stage
-  correctness and monotonicity apply; at `β > A` the label is the witness value, which is fixed
-  at `α_c < A` by stage correctness *of the witness*.  `⨆ c, α_c` also works
-  (`uniform_fixing_at_iSup_of_witnesses`).  No admissible presentation is assumed to exist at
-  any high stage, and empty `C` gives `A = 0`.
+  stage.  The advertised explicit stage is `A = ⨆ c, (α_c + 1)`
+  (`uniform_fixing_at_iSup_add_one_of_witnesses`); the smaller stage `⨆ c, α_c` also fixes
+  (`uniform_fixing_at_iSup_of_witnesses`).  No admissible presentation is assumed to exist at any
+  high stage, and empty `C` gives `A = 0`.
 * **Classwise label-rank bounds.**  `labelRank_le_stage_of_adm`, `labelRank_le_of_adm`,
   `uniform_fixed_iff_labelRank_le` and `exists_classwise_labelRank_bound`: one countable `A`
   bounds the label rank of every coordinate of every admissible presentation.  None of these
@@ -59,69 +57,59 @@ label is fixed at some countable stage.  No logic is involved; `ω₁` is `Ordin
 The witness `ℓ_c` at stage `α_c` justifies fixation of the eventual value at the threshold
 `α_c`, and hence the *advertised* explicit bound `⨆ c, (α_c + 1)`, a term in the thresholds
 alone.  It is not indispensable for every existential formulation: with global eventual
-fixation of every label, merely supplying an eventual value `v_c` per coordinate still yields
-*some* uniform stage, by including the values' fixing stages in the supremum
+fixation of every label, merely supplying an eventual value `v_c` per coordinate still yields a
+countable uniform stage, by including the values' fixing stages in the supremum
 (`CountablyFixedProjection.uniform_fixing_of_eventual_values`, stage
-`⨆ c, max α_c (labelRank v_c)`); `exists_uniform_fixing_stage_of_eventually_const` gives that
-existence even without global eventual fixation.  With a bare value the formula
-`⨆ c, (α_c + 1)` itself can fail.  Separately, the *quantifier
-order* is what makes the stage uniform across presentations: with `∀ c ∀ β ℓ ∃ α_c ℓ_c` the
-premise holds trivially and no uniform stage need exist; that counterexample tests uniformity
-across presentations and does not by itself show that the admissible witness is needed.  These
-are two different tests and the regression guard keeps them apart.
+`⨆ c, max α_c (labelRank v_c)`; `StageProjection.uniform_fixing_of_eventual_values` gives the
+fixation at that stage when only the values are fixed at some stage, without countability);
+`exists_uniform_fixing_stage_of_eventually_const` gives a countable uniform stage even without
+global eventual fixation.  With a bare value the formula `⨆ c, (α_c + 1)` itself can fail.
+Separately, the *quantifier order* is what makes the stage uniform across presentations: with
+`∀ c ∀ β ℓ ∃ α_c ℓ_c` the premise holds trivially and no uniform stage need exist; that
+counterexample tests uniformity across presentations and does not by itself show that the
+admissible witness is needed.  These are two different tests and the regression guard keeps
+them apart.
 
-## Relation to the reference shapes
+## Conventions
 
-The exports are shaped so that a client stated for a bundled projection carrying eventual
-fixation is instantiated with no glue: `CountablyFixedProjection` bundles `project`, the law
-`project_project` and `eventually_fixed`; `FixedAt`, `EventuallyInvariant`, the stage-correctness
-premise `∀ α, α < ω₁ → ∀ ℓ, Adm α ℓ → S.FixedAt α ℓ` and the conclusion
-`∃ A < ω₁, ∀ β, β < ω₁ → ∀ ℓ, Adm β ℓ → S.FixedAt A ℓ` are stated with exactly that binder
-structure, and `labelRank_le_iff` has the shape `S.labelRank i ≤ α ↔ S.project α i = i`.  The
-deliberate differences:
+* Stage correctness is assumed at countable stages: `∀ α, α < ω₁ → ∀ ℓ, Adm α ℓ → S.FixedAt α ℓ`.
+  The unguarded form `∀ β ℓ, Adm β ℓ → ∀ c, project β (ℓ c) = ℓ c` is the special case
+  `fun β _ ℓ h ↦ hcorrect β ℓ h`.
+* `ω₁` is `Ordinal.omega 1`, as in `OrdinalCountability`; `Cardinal.ord_aleph` rewrites
+  `(aleph 1).ord` to it.
+* Theorem 2 and the classwise bounds are stated for `StageProjection` (the law alone) and apply to
+  a `CountablyFixedProjection` through its parent structure.
+* `EventuallyInvariant` uses the strict threshold `α_c < β`, the guard `β < ω₁`, and a witness at
+  the threshold `α_c` itself.
+* There is no separate rank of a whole presentation: its least simultaneous fixing stage is
+  `⨆ c, labelRank (ℓ c)`.
 
-* stage correctness is assumed only at countable stages (`α < ω₁ →`).  An unguarded premise
-  `∀ β ℓ, Adm β ℓ → ∀ c, project β (ℓ c) = ℓ c` is the special case `fun β _ ℓ h ↦ hcorrect β ℓ h`;
-* `ω₁` is spelled `Ordinal.omega 1`; `Cardinal.ord_aleph` rewrites `(aleph 1).ord` to it;
-* Theorem 2 and the classwise bounds live on `StageProjection` (the law alone), so they apply to a
-  `CountablyFixedProjection` through its parent, and need no eventual fixation;
-* the eventual-agreement premise of `EventuallyInvariant` is exactly the specified one: strict
-  `α_c < β`, the guard `β < ω₁`, and the witness at the threshold `α_c` itself;
-* no least fixing stage of a whole presentation is defined: it is `⨆ c, labelRank (ℓ c)`.
+## Retraction-preservation formulations
 
-## Relation to the retraction-preservation reading
-
-An earlier reading assumed, coordinate by coordinate, that from some stage on retracting an
-admissible presentation preserves the coordinate (invariance as a hypothesis), and concluded
-simultaneous preservation from a countable supremum.  Here invariance is *derived*: stage
-correctness plus eventual agreement with an admissible witness yield the uniform stage.  Neither
-statement is an instance of the other without an adapter (pointwise projection is a coherent
-retraction only on stage-correct presentations), and nothing here is stated in terms of
-retractions.
+A retraction-preservation formulation (per-coordinate invariance under retraction from some
+stage on, assembled by a countable supremum) is a different statement: there invariance is a
+hypothesis, while here it is *derived* from stage correctness plus eventual agreement with an
+admissible witness.  Neither statement is an instance of the other without an adapter (pointwise
+projection is a coherent retraction only on stage-correct presentations), and nothing here is
+stated in terms of retractions.
 
 ## Non-claims
 
 * No admissible presentation is shown to exist at any (high) stage.
 * No maximality or leastness of the uniform stage `A` of Theorem 2; leastness is proved only for
-  the simultaneous fixing stage of one presentation (`forall_fixed_iff_iSup_labelRank_le`).
+  the simultaneous fixing stage of one presentation
+  (`forall_fixed_iff_iSup_labelRank_le_of_exists`).
 * No identification of `labelRank` with any model-theoretic rank (Scott rank included).
 * `labelRank` has no meaning without an existence or covering premise (junk value `0`).
 * Nothing for uncountable `C`: Theorems 1 and 2 and the classwise bound fail for `C = Iio ω₁`.
 * Nothing about stages `≥ ω₁`: the premises and conclusions quantify over countable stages.
 * Empty `C` is allowed; the explicit bound is then `0`.
 -/
-
 universe u v
 
 open Set
 
 namespace InfinitaryLogic
-
-/-- **Countable supremum of successors.**  Countably many countable ordinals have a countable
-supremum of successors (`ω₁` is a successor limit). -/
-theorem iSup_add_one_lt_omega1 {C : Type v} [Countable C] (α : C → Ordinal.{0})
-    (hα : ∀ c, α c < Ordinal.omega 1) : (⨆ c, (α c + 1)) < Ordinal.omega 1 :=
-  Ordinal.iSup_lt_omega_one fun c ↦ (Cardinal.isSuccLimit_omega 1).add_one_lt (hα c)
 
 /-- **Stage projections** on a label type `I`: `project α` for every stage `α : Ordinal.{0}`,
 with the projection law `project α (project β i) = project (min α β) i`.  No eventual fixation
@@ -131,6 +119,8 @@ structure StageProjection (I : Type u) where
   project : Ordinal.{0} → I → I
   /-- The projection law. -/
   project_project : ∀ α β i, project α (project β i) = project (min α β) i
+
+attribute [simp] StageProjection.project_project
 
 /-- Stage projections under which every label is fixed at some countable stage. -/
 structure CountablyFixedProjection (I : Type u) extends StageProjection I where
@@ -143,7 +133,7 @@ variable {I : Type u} {C : Type v} (S : StageProjection I)
 
 /-! ### Fixedness -/
 
-/-- **Fixedness is upward closed**; only the projection law is used. -/
+/-- **Fixedness is upward closed.** -/
 theorem fixed_mono {α β : Ordinal.{0}} (h : α ≤ β) {i : I} (hi : S.project α i = i) :
     S.project β i = i :=
   calc S.project β i = S.project β (S.project α i) := by rw [hi]
@@ -165,10 +155,12 @@ variable (S)
 /-! ### Theorem 1: one presentation -/
 
 /-- **Theorem 1, per coordinate.**  If each coordinate of a countable presentation is fixed at
-some countable stage, all coordinates are fixed at one countable stage (the supremum). -/
+some countable stage, all coordinates are fixed at one countable stage. -/
 theorem exists_fixing_stage_of_forall [Countable C] (ℓ : C → I)
     (hfix : ∀ c, ∃ α < Ordinal.omega 1, S.project α (ℓ c) = ℓ c) :
     ∃ A < Ordinal.omega 1, S.FixedAt A ℓ := by
+  -- `Ordinal.iSup_lt_omega_one` takes any countable index type (empty included), so no
+  -- enumeration by `ℕ` and no empty-case split is needed.
   choose σ hσ hσfix using hfix
   exact ⟨⨆ c, σ c, Ordinal.iSup_lt_omega_one hσ,
     fun c ↦ S.fixed_mono (Ordinal.le_iSup σ c) (hσfix c)⟩
@@ -176,7 +168,7 @@ theorem exists_fixing_stage_of_forall [Countable C] (ℓ : C → I)
 /-! ### The label rank, through `leastLevel` -/
 
 /-- The **label rank** of `i`: the least stage fixing `i`, as the least level of the family
-`α ↦ {i | project α i = i}`.  Junk value `0` for a label fixed at no stage, so the lemmas below
+`α ↦ {i | project α i = i}`.  Junk value `0` for a label fixed at no stage; the lemmas below
 assume an existence premise (or, on `CountablyFixedProjection`, global eventual fixation).  For
 a presentation `ℓ`, the least level of `α ↦ {c | project α (ℓ c) = ℓ c}` at `c` is
 `labelRank (ℓ c)` by `rfl`. -/
@@ -207,6 +199,15 @@ theorem iUnion_fixedLabels_eq_univ_iff :
       ∀ i, ∃ α < Ordinal.omega 1, S.project α i = i := by
   simp only [Set.eq_univ_iff_forall, Set.mem_iUnion, Set.mem_ofPred_eq, exists_prop]
 
+/-- **The least simultaneous fixing stage** of a countable presentation whose coordinates are
+each fixed at some stage is `⨆ c, labelRank (ℓ c)`: a stage fixes every coordinate iff it is at
+least that supremum. -/
+theorem forall_fixed_iff_iSup_labelRank_le_of_exists [Countable C] (ℓ : C → I)
+    (h : ∀ c, ∃ α, S.project α (ℓ c) = ℓ c) {A : Ordinal.{0}} :
+    (∀ c, S.project A (ℓ c) = ℓ c) ↔ (⨆ c, S.labelRank (ℓ c)) ≤ A := by
+  rw [Ordinal.iSup_le_iff]
+  exact forall_congr' fun c ↦ (labelRank_le_iff_of_exists (h c)).symm
+
 /-! ### Theorem 2: uniform fixation -/
 
 /-- A coordinate `c` is **eventually invariant** across the admissible presentations: there is
@@ -222,7 +223,8 @@ variable (S)
 /-- **Theorem 2, explicit stage.**  Given per-coordinate admissible witnesses `w c` at countable
 stages `α c` with eventual agreement, the stage `⨆ c, (α c + 1)`, a term in `α` alone and
 independent of `β` and `ℓ`, fixes every admissible presentation at every countable stage. -/
-theorem uniform_fixing_of_witnesses [Countable C] (Adm : Ordinal.{0} → (C → I) → Prop)
+theorem uniform_fixing_at_iSup_add_one_of_witnesses [Countable C]
+    (Adm : Ordinal.{0} → (C → I) → Prop)
     (hstage : ∀ α, α < Ordinal.omega 1 → ∀ ℓ, Adm α ℓ → S.FixedAt α ℓ)
     (α : C → Ordinal.{0}) (hα : ∀ c, α c < Ordinal.omega 1) (w : C → C → I)
     (hw : ∀ c, Adm (α c) (w c))
@@ -235,8 +237,8 @@ theorem uniform_fixing_of_witnesses [Countable C] (Adm : Ordinal.{0} → (C → 
   · rw [hagree c β ((lt_add_one (α c)).trans_le (hαA.trans hAβ.le)) hβ ℓ hℓ]
     exact S.fixed_mono ((lt_add_one (α c)).le.trans hαA) (hstage _ (hα c) _ (hw c) c)
 
-/-- **Theorem 2 at the sharper stage `⨆ c, α c`.**  Split on `β ≤ α c` rather than on
-`β ≤ ⨆ c, (α c + 1)`; the successor is not needed. -/
+/-- **Theorem 2, smaller explicit stage.**  The same conclusion as
+`uniform_fixing_at_iSup_add_one_of_witnesses` at the stage `⨆ c, α c`. -/
 theorem uniform_fixing_at_iSup_of_witnesses [Countable C] (Adm : Ordinal.{0} → (C → I) → Prop)
     (hstage : ∀ α, α < Ordinal.omega 1 → ∀ ℓ, Adm α ℓ → S.FixedAt α ℓ)
     (α : C → Ordinal.{0}) (hα : ∀ c, α c < Ordinal.omega 1) (w : C → C → I)
@@ -252,24 +254,21 @@ theorem uniform_fixing_at_iSup_of_witnesses [Countable C] (Adm : Ordinal.{0} →
 /-- **Theorem 2 (uniform fixation).**  Stage correctness at countable stages and eventual
 invariance of every coordinate (an admissible witness per coordinate, order `∀ c ∃ α_c ℓ_c ∀ β ℓ`)
 give one countable stage fixing every admissible presentation at every countable stage.  The
-stage is `⨆ c, (α_c + 1)` (`uniform_fixing_of_witnesses`), `0` for empty `C`; no admissible
-presentation at any high stage is assumed to exist. -/
+stage is `⨆ c, (α_c + 1)` (`uniform_fixing_at_iSup_add_one_of_witnesses`), `0` for empty `C`;
+no admissible presentation at any high stage is assumed to exist. -/
 theorem exists_uniform_fixing_stage [Countable C] (Adm : Ordinal.{0} → (C → I) → Prop)
     (hstage : ∀ α, α < Ordinal.omega 1 → ∀ ℓ, Adm α ℓ → S.FixedAt α ℓ)
     (hev : ∀ c, EventuallyInvariant Adm c) :
     ∃ A < Ordinal.omega 1, ∀ β, β < Ordinal.omega 1 → ∀ ℓ, Adm β ℓ → S.FixedAt A ℓ := by
   choose α hα w hw hagree using hev
   exact ⟨⨆ c, (α c + 1), iSup_add_one_lt_omega1 α hα,
-    S.uniform_fixing_of_witnesses Adm hstage α hα w hw hagree⟩
+    S.uniform_fixing_at_iSup_add_one_of_witnesses Adm hstage α hα w hw hagree⟩
 
-/-- **Existence without the admissible witness.**  The witness is not indispensable for an
-existential bound: with global eventual fixation of every label, merely supplying an eventual
-value `v_c` per coordinate still yields *some* uniform stage, by including the values' fixing
-stages in the supremum (`CountablyFixedProjection.uniform_fixing_of_eventual_values`).  This
-statement does not even assume global eventual fixation: the fixing stage used for `v_c` is the
-stage of any admissible presentation above `α_c` (stage correctness fixes `v_c` there), or `α_c`
-itself when there is none.  What the actual witness of `EventuallyInvariant` adds is fixation at
-the threshold, hence the advertised explicit bound `⨆ c, (α_c + 1)` in the thresholds alone. -/
+/-- **Existence without the admissible witness.**  Stage correctness and an eventual value `v_c`
+per coordinate after a countable threshold `α_c`, with no admissible presentation required at
+`α_c` and no global eventual fixation, give a countable uniform fixing stage.  No explicit stage
+in the thresholds alone is asserted; that is what the witness of `EventuallyInvariant` adds
+(`exists_uniform_fixing_stage`, stage `⨆ c, (α_c + 1)`). -/
 theorem exists_uniform_fixing_stage_of_eventually_const [Countable C]
     (Adm : Ordinal.{0} → (C → I) → Prop)
     (hstage : ∀ α, α < Ordinal.omega 1 → ∀ ℓ, Adm α ℓ → S.FixedAt α ℓ)
@@ -294,6 +293,24 @@ theorem exists_uniform_fixing_stage_of_eventually_const [Countable C]
   choose s hs hsfix using hcoord
   exact ⟨⨆ c, s c, Ordinal.iSup_lt_omega_one hs,
     fun β hβ ℓ hℓ c ↦ S.fixed_mono (Ordinal.le_iSup s c) (hsfix c β hβ ℓ hℓ)⟩
+
+/-- **Eventual values, explicit stage.**  If every admissible presentation at a countable stage
+above `α c` carries the value `v c` at `c`, and each `v c` is fixed at some stage, then the stage
+`⨆ c, max (α c) (labelRank (v c))` fixes every admissible presentation at every countable stage.
+(Its countability needs countable thresholds and countable label ranks; see
+`CountablyFixedProjection.uniform_fixing_of_eventual_values`.) -/
+theorem uniform_fixing_of_eventual_values [Countable C] (Adm : Ordinal.{0} → (C → I) → Prop)
+    (hstage : ∀ α, α < Ordinal.omega 1 → ∀ ℓ, Adm α ℓ → S.FixedAt α ℓ)
+    (α : C → Ordinal.{0}) (v : C → I) (hv : ∀ c, ∃ γ, S.project γ (v c) = v c)
+    (hconst : ∀ c, ∀ β, α c < β → β < Ordinal.omega 1 → ∀ ℓ, Adm β ℓ → ℓ c = v c) :
+    ∀ β, β < Ordinal.omega 1 → ∀ ℓ, Adm β ℓ →
+      S.FixedAt (⨆ c, max (α c) (S.labelRank (v c))) ℓ := by
+  intro β hβ ℓ hℓ c
+  have hle := Ordinal.le_iSup (fun c ↦ max (α c) (S.labelRank (v c))) c
+  rcases le_or_gt β (α c) with hβα | hαβ
+  · exact S.fixed_mono (hβα.trans ((le_max_left _ _).trans hle)) (hstage β hβ ℓ hℓ c)
+  · rw [hconst c β hαβ hβ ℓ hℓ]
+    exact S.fixed_mono ((le_max_right _ _).trans hle) (fixed_labelRank_of_exists (hv c))
 
 /-! ### Classwise label-rank bounds -/
 
@@ -366,29 +383,31 @@ theorem iSup_labelRank_lt_omega1 [Countable C] (ℓ : C → I) :
     (⨆ c, S.labelRank (ℓ c)) < Ordinal.omega 1 :=
   Ordinal.iSup_lt_omega_one fun c ↦ S.labelRank_lt_omega1 (ℓ c)
 
+/-- **Rank and fixedness are dual**: some label has rank above `α` iff `α` fails to fix some
+label. -/
+theorem exists_labelRank_gt_iff (α : Ordinal.{0}) :
+    (∃ i, α < S.labelRank i) ↔ ∃ i, S.project α i ≠ i := by
+  simp only [lt_iff_not_ge, S.labelRank_le_iff]
+
 /-- **The least simultaneous fixing stage** of a countable presentation is
 `⨆ c, labelRank (ℓ c)`: a stage fixes every coordinate iff it is at least that supremum. -/
 theorem forall_fixed_iff_iSup_labelRank_le [Countable C] (ℓ : C → I) {A : Ordinal.{0}} :
-    (∀ c, S.project A (ℓ c) = ℓ c) ↔ (⨆ c, S.labelRank (ℓ c)) ≤ A := by
-  rw [Ordinal.iSup_le_iff]
-  exact forall_congr' fun c ↦ S.labelRank_le_iff.symm
+    (∀ c, S.project A (ℓ c) = ℓ c) ↔ (⨆ c, S.labelRank (ℓ c)) ≤ A :=
+  S.forall_fixed_iff_iSup_labelRank_le_of_exists ℓ fun c ↦ ⟨_, S.fixed_labelRank (ℓ c)⟩
 
-/-- **Existence without the witness, explicit stage under global eventual fixation.**  With an
-eventual value `v c` per coordinate after threshold `α c`, the stage
-`⨆ c, max (α c) (labelRank (v c))` is uniform: the values' own fixing stages enter the supremum
-in place of an admissible witness at the threshold. -/
+/-- **Eventual values under global eventual fixation.**  With an eventual value `v c` per
+coordinate after a countable threshold `α c`, the stage `⨆ c, max (α c) (labelRank (v c))` is
+countable and fixes every admissible presentation at every countable stage. -/
 theorem uniform_fixing_of_eventual_values [Countable C] (Adm : Ordinal.{0} → (C → I) → Prop)
     (hstage : ∀ α, α < Ordinal.omega 1 → ∀ ℓ, Adm α ℓ → S.FixedAt α ℓ)
-    (α : C → Ordinal.{0}) (v : C → I)
+    (α : C → Ordinal.{0}) (hα : ∀ c, α c < Ordinal.omega 1) (v : C → I)
     (hconst : ∀ c, ∀ β, α c < β → β < Ordinal.omega 1 → ∀ ℓ, Adm β ℓ → ℓ c = v c) :
-    ∀ β, β < Ordinal.omega 1 → ∀ ℓ, Adm β ℓ →
-      S.FixedAt (⨆ c, max (α c) (S.labelRank (v c))) ℓ := by
-  intro β hβ ℓ hℓ c
-  have hle := Ordinal.le_iSup (fun c ↦ max (α c) (S.labelRank (v c))) c
-  rcases le_or_gt β (α c) with hβα | hαβ
-  · exact S.fixed_mono (hβα.trans ((le_max_left _ _).trans hle)) (hstage β hβ ℓ hℓ c)
-  · rw [hconst c β hαβ hβ ℓ hℓ]
-    exact S.fixed_mono ((le_max_right _ _).trans hle) (S.fixed_labelRank (v c))
+    (⨆ c, max (α c) (S.labelRank (v c))) < Ordinal.omega 1 ∧
+      ∀ β, β < Ordinal.omega 1 → ∀ ℓ, Adm β ℓ →
+        S.FixedAt (⨆ c, max (α c) (S.labelRank (v c))) ℓ :=
+  ⟨Ordinal.iSup_lt_omega_one fun c ↦ max_lt (hα c) (S.labelRank_lt_omega1 (v c)),
+    S.toStageProjection.uniform_fixing_of_eventual_values Adm hstage α v
+      (fun c ↦ ⟨_, S.fixed_labelRank (v c)⟩) hconst⟩
 
 end CountablyFixedProjection
 
