@@ -347,7 +347,8 @@ run_cmd do
 
 /-- The public declarations of the module (old and new). -/
 def moduleDecls : List Name :=
-  [`not_countable_univ_cantor, `iSup_lt_omega1_of_forall_lt, `countable_of_forall_rank_lt,
+  [`not_countable_univ_cantor, `iSup_lt_omega1_of_forall_lt, `iSup_add_one_lt_omega1,
+   `countable_of_forall_rank_lt,
    `countable_iff_rank_bounded, `compl_countable_of_loss, `mk_le_aleph_one_of_domains,
    `mk_eq_aleph_one_of_domains, `rankTail, `mem_rankTail, `rankTail_eq_preimage_Ici,
    `rankTail_zero, `rankTail_antitone, `compl_rankTail, `notMem_rankTail_succ,

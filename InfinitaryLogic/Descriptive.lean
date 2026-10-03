@@ -81,6 +81,7 @@ import InfinitaryLogic.Descriptive.ObservableConstancy
 import InfinitaryLogic.Descriptive.ScottDefinability
 import InfinitaryLogic.Descriptive.PerfectSetDichotomy
 import InfinitaryLogic.OrdinalCountability
+import InfinitaryLogic.UniformFixation
 import InfinitaryLogic.Descriptive.SentenceObservables
 import InfinitaryLogic.Descriptive.FragmentTail
 import InfinitaryLogic.Descriptive.FragmentSpectrum
@@ -113,6 +114,11 @@ application of that vocabulary:
   countable-fibre rank below `ω₁`, countable complements from countable successor losses under
   an explicit limit hypothesis, exhaustion by antitone domains giving cardinality exactly `ℵ₁`,
   and uncountability of Cantor space by cardinal arithmetic
+- `UniformFixation` (top level, no logic): stage projections on one label type with the
+  projection law; a countable presentation is fixed at one countable stage, the label rank
+  through `leastLevel`, and uniform fixation of all admissible presentations from stage
+  correctness plus per-coordinate eventual invariance with an admissible witness (explicit stage
+  `⨆ c, (α_c + 1)`), with the classwise label-rank bound
 - `GDeltaPolish` (Mathlib only): a Gδ subset of a Polish space is Polish, and standard Borel, in
   its subspace topology (`IsGδ.polishSpace`, `IsGδ.standardBorelSpace`); `ModelsOfGDelta`: a Gδ
   set of coded models is Polish in the inherited topology (`polishSpace_modelsOf_of_isGδ`,
