@@ -789,6 +789,12 @@ theorem realize_toSentenceω {M : Type*} [L.Structure M]
   rw [comp_fin_elim0] at h
   exact h
 
+/-- Realization commutes with free-variable renaming, at the level of formulas. -/
+theorem realize_mapFreeVars {M : Type*} [L.Structure M] (f : α → β) (φ : L.Formulaω α)
+    (v : β → M) : Formulaω.Realize (φ.mapFreeVars f) v ↔ φ.Realize (v ∘ f) := by
+  simp only [Formulaω.realize_def]
+  exact BoundedFormulaω.realize_mapFreeVars f φ v _
+
 end Formulaω
 
 /-! ### Closed-term substitution -/

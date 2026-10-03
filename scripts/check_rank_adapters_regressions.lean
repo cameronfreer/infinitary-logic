@@ -180,10 +180,7 @@ together with the countable disjunction `towers`. -/
 def orbitω {n : ℕ} (a : Fin n → X) : Language.empty.Formulaω (Fin n) := patternω a ⊓ towers
 
 theorem qrank_orbitω {n : ℕ} (a : Fin n → X) : (orbitω a).qrank = Ordinal.omega0 := by
-  -- `⊓` is definitionally `BoundedFormulaω.and` (`Lomega1omega/Syntax.lean`); there is no
-  -- `qrank_inf`, so unfold to `and` and use `qrank_and`
-  show (BoundedFormulaω.and (patternω a) towers).qrank = _
-  rw [qrank_and]
+  rw [orbitω, Formulaω.qrank, qrank_inf]
   exact (congrArg₂ max (qrank_patternω a) qrank_towers).trans (max_eq_right zero_le)
 
 theorem orbitω_orbit {n : ℕ} (a b : Fin n → X) :
