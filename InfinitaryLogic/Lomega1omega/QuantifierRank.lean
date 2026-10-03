@@ -25,6 +25,8 @@ relation between structures.
 - `EquivQRω.refl`, `EquivQRω.symm`, `EquivQRω.trans`: Equivalence relation properties.
 - `EquivQRω.monotone`: Higher rank equivalence implies lower rank equivalence.
 - `qrank_einf`, `qrank_esup`: Quantifier rank of encoded infinitary connectives.
+- `qrank_castLE`, `BoundedFormulaω.qrank_relabel`, `BoundedFormulaω.qrank_mapFreeVars`: the
+  variable operations preserve quantifier rank.
 - `BoundedFormula.qrank_toLω_lt_omega0`: the `Lω₁ω` image of a first-order formula has finite
   quantifier rank.
 
@@ -34,7 +36,7 @@ relation between structures.
 - [KK04]
 -/
 
-universe u v w w'
+universe u v w w' u'
 
 namespace FirstOrder
 
@@ -140,6 +142,18 @@ theorem qrank_or (φ ψ : L.BoundedFormulaω α n) :
     (φ.or ψ).qrank = max φ.qrank ψ.qrank := by
   simp only [BoundedFormulaω.or, qrank_not, qrank_imp]
 
+/-- `qrank_and` for the lattice notation `⊓`. -/
+@[simp]
+theorem qrank_inf (φ ψ : L.BoundedFormulaω α n) :
+    (φ ⊓ ψ).qrank = max φ.qrank ψ.qrank :=
+  qrank_and φ ψ
+
+/-- `qrank_or` for the lattice notation `⊔`. -/
+@[simp]
+theorem qrank_sup (φ ψ : L.BoundedFormulaω α n) :
+    (φ ⊔ ψ).qrank = max φ.qrank ψ.qrank :=
+  qrank_or φ ψ
+
 /-- Existential quantification adds 1 to rank. Kept in `+ 1` form, as for `qrank_all`. -/
 theorem qrank_ex (φ : L.BoundedFormulaω α (n + 1)) :
     φ.ex.qrank = φ.qrank + 1 := by
@@ -220,6 +234,20 @@ theorem BoundedFormulaω.qrank_relabel {α β : Type w} {p : ℕ} (g : α → β
   | iInf φs ih =>
     simp only [relabel, qrank_iInf]
     congr 1; funext i; exact ih i g
+
+open BoundedFormulaω in
+/-- `mapFreeVars` preserves quantifier rank: it renames free variables and leaves the bound
+structure, so unlike `qrank_relabel` there is no `castLE` case. -/
+theorem BoundedFormulaω.qrank_mapFreeVars {α β : Type u'} (f : α → β) {n : ℕ}
+    (φ : L.BoundedFormulaω α n) : (φ.mapFreeVars f).qrank = φ.qrank := by
+  induction φ with
+  | falsum => rfl
+  | equal => rfl
+  | rel => rfl
+  | imp φ ψ ihφ ihψ => simp only [mapFreeVars, qrank_imp, ihφ, ihψ]
+  | all φ ih => simp only [mapFreeVars, qrank_all, ih]
+  | iSup φs ih => simp only [mapFreeVars, qrank_iSup, ih]
+  | iInf φs ih => simp only [mapFreeVars, qrank_iInf, ih]
 
 /-- `openBounds` preserves quantifier rank: the universal case is `qrank_relabel`. -/
 theorem qrank_openBounds : ∀ {n : ℕ} (φ : L.BoundedFormulaω Empty n),

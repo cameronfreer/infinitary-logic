@@ -39,8 +39,9 @@ the compatibility lemma `realize_montalbanSentence_iff_pointed`.
 
 ## Main declarations
 
-* `forallTuple`, `existsTuple`, `forallTupleFrom`: universal and existential closure of all free
-  variables of a formula, and of the last `n` of `k + n`, with their realization lemmas.
+* `forallTuple`, `existsTuple`, `forallTupleFrom`, `existsTupleFrom`: universal and existential
+  closure of all free variables of a formula, and of the last `n` of `k + n`, with their
+  realization lemmas.
 * `montalbanClauseBody`: the body `θ → D ∧ ⋀_m ∃y ψ m ∧ ∀y ⋁_m ψ m` shared by both forms.
 * `montalbanClause`, `montalbanSentence`, `IsOrbitFormulaFamily`: the unpointed sentence and
   the orbit hypothesis.
@@ -140,6 +141,12 @@ def forallTupleFrom (k : ℕ) : ∀ n : ℕ, L.Formulaω (Fin (k + n)) → L.For
   | 0, φ => φ
   | n + 1, φ => forallTupleFrom k n (forallLastVar φ)
 
+/-- Existentially close the last `n` of the `k + n` free variables of a formula, keeping the
+first `k` free; the dual of `forallTupleFrom`. -/
+def existsTupleFrom (k : ℕ) : ∀ n : ℕ, L.Formulaω (Fin (k + n)) → L.Formulaω (Fin k)
+  | 0, φ => φ
+  | n + 1, φ => existsTupleFrom k n (existsLastVar φ)
+
 variable {N : Type w'} [L.Structure N]
 
 /-- A tuple of length `n + 1` quantified as its initial segment and its last entry. -/
@@ -186,6 +193,19 @@ theorem realize_forallTupleFrom (k : ℕ) :
     simp only [forallTupleFrom, realize_forallTupleFrom k n, realize_forallLastVar,
       ← Fin.append_snoc]
     exact forall_snoc_iff (P := fun b ↦ φ.Realize (Fin.append d b))
+
+/-- `existsTupleFrom k n φ` holds of the parameters `d` iff `φ` holds of `d` followed by some
+`n`-tuple. -/
+@[simp]
+theorem realize_existsTupleFrom (k : ℕ) :
+    ∀ (n : ℕ) (φ : L.Formulaω (Fin (k + n))) (d : Fin k → N),
+      (existsTupleFrom k n φ).Realize d ↔ ∃ b : Fin n → N, φ.Realize (Fin.append d b)
+  | 0, φ, d => ⟨fun h ↦ ⟨Fin.elim0, by simpa [existsTupleFrom] using h⟩,
+      fun ⟨b, h⟩ ↦ by simpa [existsTupleFrom, Subsingleton.elim b Fin.elim0] using h⟩
+  | n + 1, φ, d => by
+    simp only [existsTupleFrom, realize_existsTupleFrom k n, realize_existsLastVar,
+      ← Fin.append_snoc]
+    exact exists_snoc_iff (P := fun b ↦ φ.Realize (Fin.append d b))
 
 end TupleQuantifiers
 
