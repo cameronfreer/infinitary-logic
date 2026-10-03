@@ -36,7 +36,8 @@ continuum-many classes (`continuum_classes_of_perfect_transversal`,
 with its two-sided companion); and a Polish space, hence any quotient of one, has at most
 continuum-many points (`mk_le_continuum_of_polish`, `mk_quotient_le_continuum_of_polish`).
 None of them mentions a dichotomy, an equivalence relation being closed, or a splitting
-hypothesis.
+hypothesis.  It also carries the purely set-theoretic `countable_quotient_of_countable_range`: a
+quotient is countable when a map with countable range refines the relation.
 
 **Hypotheses are kept minimal, and the ordering below is what makes that possible.**  Only three
 results need `SecondCountableTopology`: the two Polish cardinality bounds and the *upper* half of
@@ -339,3 +340,23 @@ theorem CantorScheme.hasCantorAntichainOn_of_splitting {α : Type u} [MetricSpac
   obtain ⟨f, hcont, -, hmem, hineq⟩ :=
     CantorScheme.exists_antichain_map_of_splitting r P hcl hne hE hsplit
   exact ⟨f, hcont, hmem, hineq⟩
+
+/-! ### Countable quotients from countable ranges -/
+
+namespace FirstOrder.Language
+
+/-- A quotient is countable when a map with countable range refines the relation: fibres of the
+map lie inside classes.  The proof chooses one preimage for each value in the range (classical
+choice; not a Borel selector and not a choice of canonical structures). -/
+theorem countable_quotient_of_countable_range {X T : Type*} (s : Setoid X) (t : X → T)
+    (hrange : (Set.range t).Countable) (h : ∀ x y, t x = t y → s.r x y) :
+    Countable (Quotient s) := by
+  classical
+  have : Countable (Set.range t) := hrange.to_subtype
+  refine Function.Surjective.countable (f := fun v : Set.range t => Quotient.mk s v.2.choose) ?_
+  intro q
+  induction q using Quotient.inductionOn with | _ x =>
+  refine ⟨⟨t x, x, rfl⟩, Quotient.sound (h _ _ ?_)⟩
+  exact (⟨x, rfl⟩ : t x ∈ Set.range t).choose_spec
+
+end FirstOrder.Language
