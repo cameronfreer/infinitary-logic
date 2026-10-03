@@ -20,8 +20,12 @@ and `AttainedScottRank`, and proves bounds relating `sr`, `scottRank`, and
 ## Main Results
 
 - `sr_le_scottRank`: sr ≤ scottRank always.
-- `sr_le_scottHeight_of`: sr ≤ scottHeight (conditional on CRH).
-- `scottRank_le_scottHeight_succ_of`: scottRank ≤ scottHeight + 1 (conditional on CRH).
+- `sr_le_scottHeight_of`: sr ≤ scottHeight (conditional on CRH), and the unconditional
+  `sr_le_scottHeight` (through `countableRefinementHypothesis`).
+- `scottRank_le_scottHeight_succ_of`: scottRank ≤ scottHeight + 1 (conditional on CRH), and the
+  unconditional `scottRank_le_scottHeight_succ`.
+- `stabilizationOrdinal_le_scottHeight`: whole-model recognition happens no later than complete
+  stabilization.
 -/
 
 universe u v w
@@ -75,6 +79,12 @@ theorem sr_le_scottHeight_of
   intro m
   exact elementRank_le_completeStab (scottHeight_stabilizesCompletely_of hcount M) m
 
+/-- `sr M ≤ scottHeight M`: the unconditional form of `sr_le_scottHeight_of`, through
+`countableRefinementHypothesis`. -/
+theorem sr_le_scottHeight (M : Type w) [L.Structure M] [Countable M] :
+    sr (L := L) M ≤ scottHeight (L := L) M :=
+  sr_le_scottHeight_of countableRefinementHypothesis M
+
 /-- `scottRank M ≤ scottHeight M + 1`.
 
 Since `scottRank M = ⨆ m, elementRank m + 1` and each `elementRank m ≤ scottHeight M`
@@ -92,6 +102,20 @@ theorem scottRank_le_scottHeight_succ_of
   have h_bound := elementRank_le_completeStab (scottHeight_stabilizesCompletely_of hcount M) m
   have h := (Ordinal.add_le_add_iff_right 1).mpr h_bound
   convert h using 2 <;> simp [Nat.cast_one]
+
+/-- `scottRank M ≤ scottHeight M + 1`: the unconditional form of
+`scottRank_le_scottHeight_succ_of`, through `countableRefinementHypothesis`. -/
+theorem scottRank_le_scottHeight_succ (M : Type w) [L.Structure M] [Countable M] :
+    scottRank (L := L) M ≤ scottHeight (L := L) M + 1 :=
+  scottRank_le_scottHeight_succ_of countableRefinementHypothesis M
+
+/-- Whole-model recognition happens no later than complete stabilization:
+`stabilizationOrdinal M ≤ scottHeight M`. -/
+theorem stabilizationOrdinal_le_scottHeight (M : Type w) [L.Structure M] [Countable M] :
+    stabilizationOrdinal (L := L) M ≤ scottHeight (L := L) M := by
+  refine csInf_le' fun N _ _ ↦ ⟨BFEquiv_stabilization_implies_equiv
+    (scottHeight_stabilizesCompletely M), fun ⟨e⟩ ↦ ?_⟩
+  simpa only [comp_fin_elim0] using equiv_implies_BFEquiv e (scottHeight (L := L) M) 0 Fin.elim0
 
 /-- A structure has attained Scott rank if some element achieves the supremum `sr`.
 

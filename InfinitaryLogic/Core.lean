@@ -42,6 +42,7 @@ import InfinitaryLogic.Scott.RefinementCount
 import InfinitaryLogic.Scott.Rank
 import InfinitaryLogic.Scott.QuantifierRank
 import InfinitaryLogic.Scott.Height
+import InfinitaryLogic.Scott.InternalRankBounds
 
 -- Karp's theorem
 import InfinitaryLogic.Karp.PotentialIso

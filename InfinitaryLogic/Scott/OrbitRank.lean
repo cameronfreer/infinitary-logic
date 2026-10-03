@@ -29,9 +29,10 @@ production definition here is the all-levels form, as in the Scott-rank survey
 
 This is deliberately distinct from `elementRank`/`scottRank` (`Scott/Rank.lean`), which compare a
 singleton of `M` with tuples of arbitrary countable structures.  No comparison between the two
-conventions is supplied here; the cross-structure versus internal (orbit) convention, the
-comparisons that are proved, and the ones that are refuted on the empty carrier and the
-infinite pure set are documented in the module docstring of `Scott/Height/Defs.lean`.
+conventions is supplied here (they are proved in `Scott/InternalRankBounds.lean`); the
+cross-structure versus internal (orbit) convention, the comparisons that are proved, and the
+ones that are refuted on the empty carrier and the infinite pure set are documented in the
+module docstring of `Scott/Height/Defs.lean`.
 
 Contents:
 
