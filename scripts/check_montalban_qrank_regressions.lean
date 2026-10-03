@@ -13,6 +13,10 @@ Every public theorem is *applied*, not only listed for its axioms.
   formula of rank exactly `α`; its sentence has rank exactly `(ω + 1) + ω = ω + ω`.  This is
   strictly above `α`, and it is **not** `ω + (ω + 1)`: the `ω` is added on the right.  The same
   attainment at the `Type 1` carrier `ULift.{1} ℕ`, unpointed and pointed.
+* **The general exact value `max (Φ 0 ⟨⟩).qrank (α + ω)`** (`..._eq_max`).  On `ℕ`, a seed of
+  rank `ω + 1` over equality patterns at positive lengths (`α = 0`) gives rank exactly `ω + 1`,
+  not `0 + ω`: the seed dominates, unpointed and pointed over `(1, 1)`.  At the padded family
+  the general value agrees with the attainment above.
 * **Finite levels give `ω`.**  For any family of rank at most a natural number `k`, the
   sentence has rank at most `ω`; the family `∃ 3-tuple ⊤` on `ℕ` gives exactly `ω`.
 * **The infinite pure set.**  The equality patterns (rank `0`) define the orbits of `ℕ`, so
@@ -114,8 +118,7 @@ theorem qrank_deep (n m : ℕ) : (deep (L := L) n m).qrank = m := by
 def deepω (n : ℕ) : L.Formulaω (Fin n) := BoundedFormulaω.iInf fun m ↦ deep n m
 
 theorem qrank_deepω (n : ℕ) : (deepω (L := L) n).qrank = Ordinal.omega0 := by
-  show (BoundedFormulaω.iInf _).qrank = _
-  rw [qrank_iInf]
+  rw [deepω, Formulaω.qrank, qrank_iInf]
   exact (congrArg _root_.iSup (funext fun m ↦ qrank_deep (L := L) n m)).trans
     Ordinal.iSup_natCast
 
@@ -174,7 +177,7 @@ theorem attain_nat :
     Ordinal.omega0 + 1 < (montalbanSentence (L := Language.empty) (M := ℕ)
       fun _ a ↦ padΦ a).qrank := by
   have h := qrank_montalbanSentence_eq_add_omega0 (L := Language.empty) (M := ℕ)
-    (α := Ordinal.omega0 + 1) (Φ := fun _ a ↦ padΦ a) (fun _ a ↦ (qrank_padΦ a).le)
+    (α := Ordinal.omega0 + 1) (Φ := fun _ a ↦ padΦ a) (qrank_padΦ _).le
     fun _ a ↦ qrank_padΦ a
   rw [h, omega_add_one_add_omega.1]
   exact ⟨rfl, omega_add_one_add_omega.2⟩
@@ -193,7 +196,7 @@ theorem attain_ulift :
       Ordinal.omega0 + 1 + Ordinal.omega0 := by
   refine ⟨?_, qrank_montalbanSentence_le fun _ a ↦ (qrank_padΦ a).le⟩
   rw [qrank_montalbanSentence_eq_add_omega0 (α := Ordinal.omega0 + 1)
-    (fun _ a ↦ (qrank_padΦ a).le) fun _ a ↦ qrank_padΦ a, omega_add_one_add_omega.1]
+    (qrank_padΦ _).le fun _ a ↦ qrank_padΦ a, omega_add_one_add_omega.1]
 
 /-! ### Finite levels -/
 
@@ -212,7 +215,7 @@ theorem finite_level {L : Language.{u, v}} [Countable (Σ l, L.Relations l)] {M 
 theorem finite_level_exact :
     (montalbanSentence (L := Language.empty) (M := ℕ) fun n _ ↦ deep n 3).qrank =
       Ordinal.omega0 := by
-  rw [qrank_montalbanSentence_eq_add_omega0 (α := 3) (fun n _ ↦ (qrank_deep n 3).le)
+  rw [qrank_montalbanSentence_eq_add_omega0 (α := 3) (qrank_deep 0 3).le
     fun n _ ↦ qrank_deep (n + 1) 3]
   exact Ordinal.natCast_add_omega0 3
 
@@ -252,7 +255,7 @@ theorem pure_nat :
   have hS := montalbanSentence_characterizes (pure_isOrbit ℕ)
   refine ⟨?_, qrank_montalbanSentence_le fun _ a ↦ (qrank_eqPattern a).le,
     (hS ℤ).2 hZ, fun h ↦ hF ((hS (Fin 3)).1 h)⟩
-  rw [qrank_montalbanSentence_eq_add_omega0 (α := 0) (fun _ a ↦ (qrank_eqPattern a).le)
+  rw [qrank_montalbanSentence_eq_add_omega0 (α := 0) (qrank_eqPattern _).le
     fun _ a ↦ qrank_eqPattern a, zero_add]
 
 /-! ### The empty carrier -/
@@ -289,7 +292,7 @@ theorem repeated_nat :
       (montalbanSentencePointed (![1, 1] : Fin 2 → ℕ) (pureΦc ![1, 1])).qrank := by
   refine ⟨?_, qrank_montalbanSentencePointed_le _ fun _ _ ↦ (qrank_eqPattern _).le, ?_⟩
   · rw [qrank_montalbanSentencePointed_eq_add_omega0 (α := 0) _
-      (fun _ _ ↦ (qrank_eqPattern _).le) fun _ _ ↦ qrank_eqPattern _, zero_add]
+      (qrank_eqPattern _).le fun _ _ ↦ qrank_eqPattern _, zero_add]
   · rw [qrank_montalbanSentencePointed]
     exact le_max_left _ _
 
@@ -301,7 +304,51 @@ theorem repeated_ulift :
       fun _ a ↦ padΦ (Fin.append ![ULift.up 1, ULift.up 1, ULift.up 1] a)).qrank =
       Ordinal.omega0 + Ordinal.omega0 := by
   rw [qrank_montalbanSentencePointed_eq_add_omega0 (α := Ordinal.omega0 + 1) _
-    (fun _ _ ↦ (qrank_padΦ _).le) fun _ _ ↦ qrank_padΦ _, omega_add_one_add_omega.1]
+    (qrank_padΦ _).le fun _ _ ↦ qrank_padΦ _, omega_add_one_add_omega.1]
+
+/-! ### The general exact value: a seed that dominates -/
+
+/-- The padded seed `pad (k + 0)` at the empty tuple, the equality patterns of `c⌢a` at
+positive lengths. -/
+def seedΦc {X : Type w} {k : ℕ} (c : Fin k → X) :
+    ∀ n, (Fin n → X) → Language.empty.Formulaω (Fin (k + n))
+  | 0, _ => pad (k + 0)
+  | _ + 1, a => eqPattern (Fin.append c a)
+
+/-- The same family without parameters. -/
+def seedΦ {X : Type w} : ∀ n, (Fin n → X) → Language.empty.Formulaω (Fin n)
+  | 0, _ => pad 0
+  | _ + 1, a => eqPattern a
+
+/-- **The seed dominates** on the nonempty carrier `ℕ`: the seed has rank `ω + 1`, the positive
+lengths rank exactly `0`, and the general exact value `max (ω + 1) (0 + ω)` is `ω + 1`, not
+`0 + ω`; unpointed, and pointed over the repeated parameters `(1, 1)`.  On the empty carrier the
+same seed gives `ω + 1` through `qrank_montalbanSentence_of_isEmpty` (`empty_carrier`). -/
+theorem seed_dominates :
+    (montalbanSentence (L := Language.empty) (M := ℕ) seedΦ).qrank = Ordinal.omega0 + 1 ∧
+    (montalbanSentence (L := Language.empty) (M := ℕ) seedΦ).qrank ≠ 0 + Ordinal.omega0 ∧
+    (montalbanSentencePointed (![1, 1] : Fin 2 → ℕ) (seedΦc ![1, 1])).qrank =
+      Ordinal.omega0 + 1 := by
+  have hω : max (Ordinal.omega0.{0} + 1) (0 + Ordinal.omega0) = Ordinal.omega0 + 1 := by
+    rw [zero_add, max_eq_left le_self_add]
+  refine ⟨?_, ?_, ?_⟩
+  · rw [qrank_montalbanSentence_eq_max (Φ := seedΦ) (α := 0) fun _ a ↦ qrank_eqPattern a]
+    exact (congrArg (max · _) (qrank_pad 0)).trans hω
+  · rw [qrank_montalbanSentence_eq_max (Φ := seedΦ) (α := 0) fun _ a ↦ qrank_eqPattern a,
+      zero_add]
+    exact ne_of_gt (lt_max_of_lt_left ((qrank_pad 0).symm ▸ Order.lt_succ _ :
+      Ordinal.omega0 < (pad (L := Language.empty) 0).qrank))
+  · rw [qrank_montalbanSentencePointed_eq_max (Φ := seedΦc ![1, 1]) (α := 0) _
+      fun _ _ ↦ qrank_eqPattern _]
+    exact (congrArg (max · _) (qrank_pad 2)).trans hω
+
+/-- The general exact value at the padded family on `ℕ` (seed rank `ω + 1 = α`): it agrees with
+`attain_nat`. -/
+theorem eq_max_nat :
+    (montalbanSentence (L := Language.empty) (M := ℕ) fun _ a ↦ padΦ a).qrank =
+      max (Ordinal.omega0 + 1) (Ordinal.omega0 + 1 + Ordinal.omega0) := by
+  rw [qrank_montalbanSentence_eq_max (α := Ordinal.omega0 + 1) fun _ a ↦ qrank_padΦ a]
+  exact congrArg (max · _) (qrank_padΦ _)
 
 /-- The seed is below the rank, through the exact unpointed form. -/
 theorem seed_le_nat :
@@ -348,7 +395,8 @@ def expectedClosure : List Name :=
 /-- The public declarations added by the tranche. -/
 def trancheDecls : List Name :=
   [`qrank_montalbanClauseBody, `qrank_montalbanClauseBody_le, `qrank_montalbanSentencePointed,
-   `qrank_montalbanSentencePointed_le, `qrank_montalbanSentencePointed_eq_add_omega0,
+   `qrank_montalbanSentencePointed_le, `qrank_montalbanSentencePointed_eq_max,
+   `qrank_montalbanSentencePointed_eq_add_omega0, `qrank_montalbanSentence_eq_max,
    `qrank_montalbanSentence, `qrank_montalbanSentence_le,
    `qrank_montalbanSentence_eq_add_omega0, `qrank_montalbanSentence_of_isEmpty].map
     (`FirstOrder.Language ++ ·)
@@ -359,7 +407,8 @@ def guardDecls : List Name :=
    `qrank_deep, `qrank_deepω, `qrank_pad, `qrank_padΦ, `omega_add_one_add_omega,
    `clauseBody_empty, `clauseBody_le, `attain_nat, `bound_nat, `attain_ulift, `finite_level,
    `finite_level_exact, `pure_homogeneous, `pure_isOrbit, `pure_nat, `empty_carrier,
-   `repeated_nat, `repeated_ulift, `seed_le_nat].map (`MontalbanQRankGuard ++ ·)
+   `repeated_nat, `repeated_ulift, `seed_dominates, `eq_max_nat, `seed_le_nat].map
+    (`MontalbanQRankGuard ++ ·)
 
 /-- The standard axioms. -/
 def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
@@ -392,5 +441,7 @@ run_cmd do
     Scott sentence of N, holding in Z and failing in Fin 3, of rank exactly omega; the empty \
     carrier, rank 1 and omega + 1 with a padded seed, below omega + 1 + omega; repeated \
     parameters (1, 1) in N with rank omega and (1, 1, 1) in ULift N with rank omega + omega; \
-    the seed below the rank through both exact forms; exact import closure of 19 modules; \
-    standard axioms)"
+    the general exact value max seed (alpha + omega), with a seed of rank omega + 1 dominating \
+    on N, unpointed and pointed over (1, 1), and agreeing with the attainment at the padded \
+    family; the seed below the rank through both exact forms; exact import closure of 19 \
+    modules; standard axioms)"

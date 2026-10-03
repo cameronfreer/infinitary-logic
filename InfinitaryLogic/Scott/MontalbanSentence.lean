@@ -104,7 +104,7 @@ the compatibility lemma `realize_montalbanSentence_iff_pointed`.
   family is unconstrained, and no class of the sentence is asserted.  The complexity of the
   sentence is bounded in two separate modules, from the corresponding bound on the family: its
   signed class in `Scott/MontalbanComplexity.lean` (`Σ^in_α` with `1 ≤ α` gives `Π^in_{α+1}`),
-  and its quantifier rank in `Scott/MontalbanQuantifierRank.lean` (rank `α` gives `α + ω`).
+  and its quantifier rank in `Scott/MontalbanQuantifierRank.lean` (rank `≤ α` gives rank `≤ α + ω`).
   For an orbit-formula family, the sentence is *a* Scott sentence of `M`, not the canonical
   `scottSentence M`: both characterize `M` among countable structures of its carrier universe,
   so they agree there, but they are not syntactically equal, and no comparison lemma is stated

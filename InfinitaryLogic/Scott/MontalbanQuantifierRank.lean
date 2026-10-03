@@ -19,8 +19,7 @@ parameters (`qrank_montalbanSentencePointed_le`).
 which adds `1` to the quantifier rank (`qrank_existsLastVar`, `qrank_forallLastVar`).  A block of
 `n` quantifiers therefore adds `n`, **on the right**:
 `(existsTupleFrom k n φ).qrank = φ.qrank + n`, and likewise for `forallTupleFrom`, `existsTuple`
-and `forallTuple`.  For ordinals the side
-matters at limits: `ω + 1 ≠ 1 + ω`.
+and `forallTuple`.  For ordinals the side matters at limits: `ω + 1 ≠ 1 + ω`.
 
 **Clauses.**  The clause body `θ → D ∧ ⋀_m ∃y ψ m ∧ ∀y ⋁_m ψ m` has rank
 `max θ.qrank (max (max D.qrank (⨆ m, (ψ m).qrank + 1)) ((⨆ m, (ψ m).qrank) + 1))`
@@ -32,8 +31,10 @@ without adding `1`, each quantifier adds `1`.  The atomic diagram `D_a` has rank
 
 **The sentence.**  Each clause has rank at most `α + (n + 1)`; the `+ ω` comes only from the
 supremum over the tuple lengths `n`.  The bound is sharp: on a nonempty carrier, if every
-`Φ (n + 1) a` has rank exactly `α`, the rank is exactly `α + ω`
-(`qrank_montalbanSentence_eq_add_omega0`, `qrank_montalbanSentencePointed_eq_add_omega0`).
+`Φ (n + 1) a` has rank exactly `α`, the rank is exactly `max (Φ 0 ⟨⟩).qrank (α + ω)`
+(`qrank_montalbanSentence_eq_max`, `qrank_montalbanSentencePointed_eq_max`), so exactly `α + ω`
+when the seed also has rank at most `α` (`qrank_montalbanSentence_eq_add_omega0`,
+`qrank_montalbanSentencePointed_eq_add_omega0`).
 On an empty carrier only the clause at the empty tuple exists, and the rank is exactly
 `max (Φ 0 ⟨⟩).qrank 1` (`qrank_montalbanSentence_of_isEmpty`): the back conjunct `∀y ⋁_m`
 contributes `1` even when the disjunction is empty.
@@ -48,9 +49,11 @@ contributes `1` even when the disjunction is empty.
 * `qrank_montalbanSentencePointed`, `qrank_montalbanSentence`: the exact rank of the two
   sentences, clause by clause.
 * `qrank_montalbanSentencePointed_le`, `qrank_montalbanSentence_le`: the bound `α + ω`.
+* `qrank_montalbanSentencePointed_eq_max`, `qrank_montalbanSentence_eq_max`: the exact rank
+  `max (Φ 0 ⟨⟩).qrank (α + ω)` on a nonempty carrier when the family has rank exactly `α` at
+  positive lengths.
 * `qrank_montalbanSentencePointed_eq_add_omega0`, `qrank_montalbanSentence_eq_add_omega0`: the
-  bound is attained on a nonempty carrier when the family has rank exactly `α` at positive
-  lengths.
+  bound `α + ω` is attained when, in addition, the seed has rank at most `α`.
 * `qrank_montalbanSentence_of_isEmpty`: the exact rank on an empty carrier.
 
 ## Interpretation choices
@@ -68,8 +71,9 @@ contributes `1` even when the disjunction is empty.
   form `+ ω` on any of them is claimed.
 * **Pointed and unpointed.**  The pointed bound is proved through the exact clause-by-clause
   rank.  The unpointed bound is derived from it through the syntactic equation
-  `montalbanSentence_eq_pointed_elim0` and `BoundedFormulaω.qrank_mapFreeVars`.  The parameters
-  are not closed in the pointed sentence, so its rank does not depend on their number.
+  `montalbanSentence_eq_pointed_elim0` and `BoundedFormulaω.qrank_mapFreeVars`, and so is the
+  unpointed exact value.  The parameters are not closed in the pointed sentence, so the bound
+  `α + ω` is uniform in their number `k`.
 
 ## Implementation notes
 
@@ -177,23 +181,45 @@ theorem qrank_montalbanSentencePointed_le {k : ℕ} (c : Fin k → M)
     _ = α + ((p.1 + 1 : ℕ) : Ordinal) := by rw [add_assoc, one_add_natCast]
     _ ≤ α + Ordinal.omega0 := add_le_add_right (Ordinal.natCast_lt_omega0 _).le _
 
-/-- **The bound `α + ω` is attained**: on a nonempty carrier, if every `Φ n a` has rank at most
-`α` and every `Φ (n + 1) a` has rank exactly `α`, the pointed sentence has rank exactly
-`α + ω`, whatever `k` and `c` are. -/
+/-- **Exact rank on a nonempty carrier**: if every `Φ (n + 1) a` has rank exactly `α`, the
+pointed sentence has rank exactly `max (Φ 0 ⟨⟩).qrank (α + ω)`, whatever `k` and `c` are.  The
+clause at the empty tuple contributes `max (Φ 0 ⟨⟩).qrank (α + 1)`, the clauses at length
+`n + 1` contribute `α + (n + 2)`, and some tuple of every length exists. -/
+theorem qrank_montalbanSentencePointed_eq_max [Nonempty M] {k : ℕ} (c : Fin k → M)
+    {Φ : ∀ n, (Fin n → M) → L.Formulaω (Fin (k + n))} {α : Ordinal.{0}}
+    (hΦ' : ∀ n a, (Φ (n + 1) a).qrank = α) :
+    (montalbanSentencePointed c Φ).qrank = max (Φ 0 Fin.elim0).qrank (α + Ordinal.omega0) := by
+  rw [qrank_montalbanSentencePointed]
+  refine le_antisymm (max_le (le_max_left _ _) (Ordinal.iSup_le fun ⟨n, a⟩ ↦ ?_))
+    (max_le_max le_rfl ?_)
+  · rw [qrank_montalbanClauseBody]
+    simp only [hΦ', ciSup_const, atomicDiagram_qrank_eq_zero]
+    rw [max_eq_right zero_le, max_self]
+    cases n with
+    | zero =>
+      rw [Subsingleton.elim a Fin.elim0, Nat.cast_zero, add_zero]
+      exact max_le_max le_rfl (add_le_add_right Ordinal.one_lt_omega0.le _)
+    | succ n =>
+      rw [hΦ', max_eq_right le_self_add, add_assoc, one_add_natCast]
+      exact le_max_of_le_right (add_le_add_right (Ordinal.natCast_lt_omega0 _).le _)
+  · rw [← Ordinal.iSup_add_natCast]
+    refine Ordinal.iSup_le fun n ↦ ?_
+    obtain ⟨x⟩ := ‹Nonempty M›
+    refine le_trans ?_ (Ordinal.le_iSup _ ⟨n, fun _ ↦ x⟩)
+    rw [qrank_montalbanClauseBody]
+    simp only [hΦ', ciSup_const]
+    calc α + (n : Ordinal) ≤ α + 1 + n := add_le_add_left le_self_add _
+      _ ≤ _ := add_le_add_left (le_max_of_le_right (le_max_right _ _)) _
+
+/-- **The bound `α + ω` is attained**: on a nonempty carrier, if the seed `Φ 0 ⟨⟩` has rank at
+most `α` and every `Φ (n + 1) a` has rank exactly `α`, the pointed sentence has rank exactly
+`α + ω`, whatever `k` and `c` are.  A seed of larger rank can dominate
+(`qrank_montalbanSentencePointed_eq_max`). -/
 theorem qrank_montalbanSentencePointed_eq_add_omega0 [Nonempty M] {k : ℕ} (c : Fin k → M)
     {Φ : ∀ n, (Fin n → M) → L.Formulaω (Fin (k + n))} {α : Ordinal.{0}}
-    (hΦ : ∀ n a, (Φ n a).qrank ≤ α) (hΦ' : ∀ n a, (Φ (n + 1) a).qrank = α) :
+    (h0 : (Φ 0 Fin.elim0).qrank ≤ α) (hΦ' : ∀ n a, (Φ (n + 1) a).qrank = α) :
     (montalbanSentencePointed c Φ).qrank = α + Ordinal.omega0 := by
-  refine le_antisymm (qrank_montalbanSentencePointed_le c hΦ) ?_
-  rw [← Ordinal.iSup_add_natCast]
-  refine Ordinal.iSup_le fun n ↦ ?_
-  obtain ⟨x⟩ := ‹Nonempty M›
-  rw [qrank_montalbanSentencePointed]
-  refine le_max_of_le_right (le_trans ?_ (Ordinal.le_iSup _ ⟨n, fun _ ↦ x⟩))
-  rw [qrank_montalbanClauseBody]
-  simp only [hΦ', ciSup_const]
-  calc α + (n : Ordinal) ≤ α + 1 + n := add_le_add_left le_self_add _
-    _ ≤ _ := add_le_add_left (le_max_of_le_right (le_max_right _ _)) _
+  rw [qrank_montalbanSentencePointed_eq_max c hΦ', max_eq_right (h0.trans le_self_add)]
 
 end Pointed
 
@@ -226,17 +252,25 @@ theorem qrank_montalbanSentence_le {Φ : ∀ n, (Fin n → M) → L.Formulaω (F
   exact qrank_montalbanSentencePointed_le _ fun n a ↦
     (BoundedFormulaω.qrank_mapFreeVars _ (Φ n a)).trans_le (hΦ n a)
 
-/-- **The bound `α + ω` is attained**: on a nonempty carrier, if every `Φ n a` has rank at most
-`α` and every `Φ (n + 1) a` has rank exactly `α`, Montalbán's sentence has rank exactly
-`α + ω`. -/
+/-- **Exact rank on a nonempty carrier**: if every `Φ (n + 1) a` has rank exactly `α`,
+Montalbán's sentence has rank exactly `max (Φ 0 ⟨⟩).qrank (α + ω)`.  Derived from
+`qrank_montalbanSentencePointed_eq_max` through `montalbanSentence_eq_pointed_elim0`. -/
+theorem qrank_montalbanSentence_eq_max [Nonempty M]
+    {Φ : ∀ n, (Fin n → M) → L.Formulaω (Fin n)} {α : Ordinal.{0}}
+    (hΦ' : ∀ n a, (Φ (n + 1) a).qrank = α) :
+    (montalbanSentence Φ).qrank = max (Φ 0 Fin.elim0).qrank (α + Ordinal.omega0) := by
+  rw [montalbanSentence_eq_pointed_elim0, qrank_montalbanSentencePointed_eq_max _
+    fun n a ↦ (BoundedFormulaω.qrank_mapFreeVars _ (Φ (n + 1) a)).trans (hΦ' n a)]
+  exact congrArg (max · _) (BoundedFormulaω.qrank_mapFreeVars _ (Φ 0 Fin.elim0))
+
+/-- **The bound `α + ω` is attained**: on a nonempty carrier, if the seed `Φ 0 ⟨⟩` has rank at
+most `α` and every `Φ (n + 1) a` has rank exactly `α`, Montalbán's sentence has rank exactly
+`α + ω`.  A seed of larger rank can dominate (`qrank_montalbanSentence_eq_max`). -/
 theorem qrank_montalbanSentence_eq_add_omega0 [Nonempty M]
     {Φ : ∀ n, (Fin n → M) → L.Formulaω (Fin n)} {α : Ordinal.{0}}
-    (hΦ : ∀ n a, (Φ n a).qrank ≤ α) (hΦ' : ∀ n a, (Φ (n + 1) a).qrank = α) :
+    (h0 : (Φ 0 Fin.elim0).qrank ≤ α) (hΦ' : ∀ n a, (Φ (n + 1) a).qrank = α) :
     (montalbanSentence Φ).qrank = α + Ordinal.omega0 := by
-  rw [montalbanSentence_eq_pointed_elim0]
-  exact qrank_montalbanSentencePointed_eq_add_omega0 _
-    (fun n a ↦ (BoundedFormulaω.qrank_mapFreeVars _ (Φ n a)).trans_le (hΦ n a))
-    (fun n a ↦ (BoundedFormulaω.qrank_mapFreeVars _ (Φ (n + 1) a)).trans (hΦ' n a))
+  rw [qrank_montalbanSentence_eq_max hΦ', max_eq_right (h0.trans le_self_add)]
 
 /-- **Empty carrier**: the only clause is at the empty tuple, and its back conjunct `∀y ⋁_m`
 contributes `1` although the disjunction is empty, so the rank is exactly
