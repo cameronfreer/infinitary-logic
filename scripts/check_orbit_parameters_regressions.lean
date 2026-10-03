@@ -7,13 +7,16 @@ Every public theorem is *applied*, not only listed for its axioms.
 * **The right-addition rank test at a limit.**  `deepω := ⋀_m existsTupleFrom 1 m ⊤` has rank
   exactly `ω`; with one parameter, `existsOrbitParams deepω ⊤` has rank `ω + 1`, which is
   **not** `1 + ω` (`= ω`): the parameter quantifiers are added on the right.  The bound
-  `qrank_existsOrbitParams_le` at `α = ω`, and the tuple-block rank family on concrete blocks.
+  `qrank_existsOrbitParams_le` at `α = ω`, the tuple-block rank family on concrete blocks, and
+  `qrank_sup` on `⊤ ⊔ deepω`.
 * **`k = 0`.**  `existsOrbitParams θ ψ` unfolds by `rfl` to the conjunction of the two renamed
   formulas (no quantifier); the orbit theorem at `c₀ := Fin.elim0`, where the hypothesis on `θ`
   is just "`θ` holds" and the relative orbit is the orbit.
 * **`n = 0`.**  The conclusion makes the sentence true at `Fin.elim0`.
-* **The empty carrier.**  `PEmpty` with `k = n = 0`, no `Nonempty`, in an arbitrary carrier
-  universe.
+* **The empty carrier.**  `PEmpty` with `k = n = 0` and `θ = ψ = ⊤`, for any structure on
+  it, no `Nonempty`, in an arbitrary carrier universe: both orbit hypotheses are discharged and
+  the theorem gives the concrete statement; on the empty pure set the formula holds at the empty
+  tuple.
 * **Independent universes.**  The theorem at `Language.{3, 4}` and a `Type 2` carrier.
 * **Test A, a function symbol.**  `(Bool, f = not)`, automorphisms `id` and `not`; over
   `c₀ = (true)`, `ψ(z, x) := x = f(z)` defines the relative orbit of `a = (false)`, and the
@@ -110,6 +113,11 @@ theorem block_ranks :
   · rw [qrank_existsTupleFrom, Formulaω.qrank, qrank_mapFreeVars]
     simp [qrank_deepω]
 
+/-- `qrank_sup` on a disjunction of ranks `0` and `ω`. -/
+theorem sup_rank : ((⊤ : L.Formulaω (Fin 1)) ⊔ deepω).qrank = Ordinal.omega0 := by
+  rw [Formulaω.qrank, qrank_sup, qrank_top]
+  exact (max_eq_right zero_le).trans qrank_deepω
+
 end RankTest
 
 /-! ### Zero-length tuples, empty carrier, independent universes -/
@@ -143,16 +151,24 @@ theorem n_zero {k : ℕ} {θ : L.Formulaω (Fin k)} {ψ : L.Formulaω (Fin (k + 
     (existsOrbitParams θ ψ).Realize (Fin.elim0 : Fin 0 → M) :=
   (realize_existsOrbitParams_iff_orbit hθ hψ _).2 ⟨Language.Equiv.refl L M, Subsingleton.elim _ _⟩
 
-/-- Empty carrier, `k = n = 0`, in an arbitrary carrier universe; no `Nonempty`. -/
-theorem empty_carrier [L.Structure PEmpty.{w + 1}] {θ : L.Formulaω (Fin 0)}
-    {ψ : L.Formulaω (Fin (0 + 0))}
-    (hθ : ∀ c, θ.Realize c ↔ ∃ e : PEmpty.{w + 1} ≃[L] PEmpty, ⇑e ∘ Fin.elim0 = c)
-    (hψ : ∀ b, ψ.Realize (Fin.append Fin.elim0 b) ↔
-      ∃ f : PEmpty.{w + 1} ≃[L] PEmpty, (∀ i, f (Fin.elim0 i) = Fin.elim0 i) ∧
-        ⇑f ∘ Fin.elim0 = b) :
-    ∀ b, (existsOrbitParams θ ψ).Realize b ↔
-      ∃ g : PEmpty.{w + 1} ≃[L] PEmpty, ⇑g ∘ Fin.elim0 = b :=
-  realize_existsOrbitParams_iff_orbit hθ hψ
+/-- Empty carrier, `k = n = 0`, `θ = ψ = ⊤`, in an arbitrary carrier universe and for any
+structure on `PEmpty`; no `Nonempty`.  Both orbit hypotheses are discharged (the identity
+witnesses the empty tuple), and the theorem gives the concrete statement. -/
+theorem empty_carrier [L.Structure PEmpty.{w + 1}] (b : Fin 0 → PEmpty.{w + 1}) :
+    (existsOrbitParams (⊤ : L.Formulaω (Fin 0)) (⊤ : L.Formulaω (Fin (0 + 0)))).Realize b ↔
+      ∃ g : PEmpty.{w + 1} ≃[L] PEmpty, ⇑g ∘ (Fin.elim0 : Fin 0 → PEmpty.{w + 1}) = b :=
+  realize_existsOrbitParams_iff_orbit (c₀ := Fin.elim0)
+    (fun _ ↦ ⟨fun _ ↦ ⟨Language.Equiv.refl L _, Subsingleton.elim _ _⟩, fun _ ↦ by simp⟩)
+    (fun _ ↦ ⟨fun _ ↦ ⟨Language.Equiv.refl L _, fun i ↦ i.elim0, Subsingleton.elim _ _⟩,
+      fun _ ↦ by simp⟩) b
+
+/-- The concrete conclusion on the empty pure set: the formula holds at the empty tuple. -/
+theorem empty_carrier_holds :
+    letI := Language.emptyStructure (M := PEmpty.{w + 1})
+    (existsOrbitParams (⊤ : Language.empty.Formulaω (Fin 0))
+      (⊤ : Language.empty.Formulaω (Fin (0 + 0)))).Realize (Fin.elim0 : Fin 0 → PEmpty.{w + 1}) :=
+  letI := Language.emptyStructure (M := PEmpty.{w + 1})
+  (empty_carrier _).2 ⟨Language.Equiv.refl _ _, Subsingleton.elim _ _⟩
 
 end Generic
 
@@ -455,7 +471,8 @@ def trancheDecls : List Name :=
 /-- The guard's own theorems whose axioms are audited. -/
 def guardDecls : List Name :=
   [`qrank_deep, `qrank_deepω, `rank_omega_add_one, `rank_ne_one_add_omega, `rank_le,
-   `block_ranks, `k_zero_rfl, `k_zero, `n_zero, `empty_carrier, `universes, `aut_false,
+   `block_ranks, `sup_rank, `k_zero_rfl, `k_zero, `n_zero, `empty_carrier, `empty_carrier_holds,
+   `universes, `aut_false,
    `exists_aut, `realize_ψA, `hθA, `hψA, `testA, `testA', `realize_ψB, `hθB, `hψB, `testB_pos,
    `testB_neg, `aut_fin2, `hθC, `hψC, `testC_uniform_fails, `testC, `sameAtomicType_comp,
    `pure_homogeneous, `pure_hθ, `pure_isOrbitPointed, `pure_pos, `pure_neg].map
@@ -483,8 +500,9 @@ run_cmd do
     let bad := axs.toList.filter fun a ↦ !standardAxioms.contains a
     unless bad.isEmpty do throwError "[NONSTANDARD AXIOMS] {n} uses {bad}"
   logInfo "Orbit-parameters regression guard: OK (applied: rank omega + 1 at one parameter over \
-    a rank-omega orbit formula, not 1 + omega, the bound at omega, the tuple-block rank family; \
-    k = 0 by rfl and through the theorem at Fin.elim0; n = 0; the empty carrier PEmpty; \
+    a rank-omega orbit formula, not 1 + omega, the bound at omega, the tuple-block rank family, \
+    qrank_sup; k = 0 by rfl and through the theorem at Fin.elim0; n = 0; the empty carrier \
+    PEmpty with theta = psi = top and both hypotheses discharged, holding at the empty tuple; \
     Language.{3, 4} with a Type 2 carrier; a unary function symbol on (Bool, not), with the \
     composite-form variant; repeated coordinates (true, true) positive and (true, false) \
     negative; the uniform relative hypothesis refuted on the rigid (Fin 2, f = 1) while the \
