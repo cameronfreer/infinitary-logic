@@ -37,6 +37,7 @@ import InfinitaryLogic.Descriptive.BFTree
 import InfinitaryLogic.Descriptive.BFSeparation
 import InfinitaryLogic.Descriptive.BFScattered
 import InfinitaryLogic.Descriptive.BFConcentration
+import InfinitaryLogic.Descriptive.ScatteredCounting
 import InfinitaryLogic.Descriptive.TreeCodes
 
 -- Counting dichotomy and finite carrier
@@ -197,6 +198,14 @@ application of that vocabulary:
   split meets only countably many isomorphism classes
   (`ConcentratedAtBFLevels.countable_isoClasses_or_of_analyticSets`, with the relatively Borel
   form `ConcentratedAtBFLevels.countable_isoClasses_or` for countably many relation symbols);
+- `ScatteredCounting`: an isolating rank on codes (`IsIsolatingRank`: isomorphism invariant,
+  below `ω₁`, and `CodeBFEquiv` at its value decides isomorphism), instantiated by
+  `codeStabilizationOrdinal` for countably many relation symbols; for any isolating rank, a set
+  of codes meeting countably many isomorphism classes has one countable isolating level
+  (`IsIsolatingRank.exists_isolating_codeLevel`), and a back-and-forth scattered class meets at
+  most `ℵ₁` isomorphism classes, countably many iff the rank is bounded below `ω₁`
+  (`IsIsolatingRank.mk_isoClasses_le_aleph_one`,
+  `IsIsolatingRank.countable_isoClasses_iff_bounded`);
 - `TreeCodes`: tree codes over a countable alphabet, the closed tree class, the continuous
   Kleene–Brouwer code into `Language.order`, and analytic boundedness for well-founded trees
   (`analytic_wellFoundedTree_rank_boundedness`) with its domination adapter;

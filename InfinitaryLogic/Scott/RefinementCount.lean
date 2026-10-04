@@ -218,6 +218,14 @@ theorem stabilizationOrdinal_spec (M : Type w) [L.Structure M] [Countable M]
     BFEquiv0 (L := L) M N (stabilizationOrdinal (L := L) M) ↔ Nonempty (M ≃[L] N) :=
   stabilizationOrdinal_stabilizes M N
 
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
+/-- **Isomorphic structures have the same stabilization ordinal**, for every language: their
+sets of stabilizing levels agree (`stabilizesAt_of_equiv` in both directions). -/
+theorem stabilizationOrdinal_eq_of_equiv {M M' : Type w} [L.Structure M] [L.Structure M']
+    [Countable M] [Countable M'] (e : M ≃[L] M') :
+    stabilizationOrdinal (L := L) M = stabilizationOrdinal (L := L) M' :=
+  congrArg sInf (Set.ext fun α ↦ ⟨stabilizesAt_of_equiv e α, stabilizesAt_of_equiv e.symm α⟩)
+
 /-- The Scott sentence of M characterizes M up to isomorphism among countable structures. -/
 @[blueprint "thm:scott-characterizes"
   (title := /-- Scott characterization -/)
