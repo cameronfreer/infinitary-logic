@@ -4,6 +4,7 @@ import InfinitaryLogic.Conditional.SilverBurgess
 import InfinitaryLogic.Conditional.GandyHarrington
 import InfinitaryLogic.Conditional.SilverAntichain
 import InfinitaryLogic.Conditional.MorleyPerfect
+import InfinitaryLogic.Conditional.BFScatteredSilver
 import InfinitaryLogic.Conditional.SentenceSpectrum
 import InfinitaryLogic.Conditional.FragmentSpectrumThin
 import InfinitaryLogic.Conditional.SilverCategoryRoute
@@ -54,6 +55,11 @@ intermediates and historical statement shapes.
 - `MorleyPerfect.lean`: the tiered **`morley_counting_or_perfect`** — Morley counting
   with a perfect set of pairwise non-isomorphic models in place of the bare cardinal
   equation, at the `ℕ` and `Fin n` tiers, with the cardinal form as a corollary.
+- `BFScatteredSilver.lean`: **`Sentenceω.bfScattered_of_isThinOnNatModels`** — a thin sentence
+  has back-and-forth scattered models (Silver on each level's Borel relation `bfEquivSetoid`),
+  with the equivalence `Sentenceω.bfScattered_iff_isThinOnNatModels` and the corollary
+  `Sentenceω.bfScattered_modelsOf_of_lt_continuum`; rank-free, and it does not import
+  `Descriptive/ScatteredCounting.lean`.
 
 There are no sorries anywhere in the project; the historical sorry-bearing
 `Combinatorics/ErdosRado.lean` exploration is preserved on the

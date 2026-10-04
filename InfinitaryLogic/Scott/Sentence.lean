@@ -117,6 +117,24 @@ theorem equiv_implies_BFEquiv {M N : Type w} [L.Structure M] [L.Structure N]
     intro γ hγ
     exact ih γ hγ n a
 
+omit [L.IsRelational] [Countable (Σ l, L.Relations l)] in
+/-- **`StabilizesAt` is invariant under isomorphism.**  If `BFEquiv0` at level `α` characterizes
+isomorphism with `M` among countable structures, it also characterizes isomorphism with any
+`M' ≃[L] M`: `M` and `M'` are `BFEquiv0` at every level (`equiv_implies_BFEquiv`), so
+`BFEquiv0 M' N α` gives `BFEquiv0 M N α` by transitivity, hence an isomorphism `M ≃[L] N`, which
+composes with `e.symm`.  No relational or countability hypothesis on the language is used. -/
+theorem stabilizesAt_of_equiv {M M' : Type w} [L.Structure M] [L.Structure M'] (e : M ≃[L] M')
+    (α : Ordinal) : StabilizesAt (L := L) M α → StabilizesAt (L := L) M' α := by
+  intro h N _ _
+  have hMM' : BFEquiv0 (L := L) M M' α := by
+    unfold BFEquiv0; rw [← comp_fin_elim0 e]; exact equiv_implies_BFEquiv e α 0 Fin.elim0
+  constructor
+  · intro hBF
+    obtain ⟨f⟩ := (h N).mp (BFEquiv.trans hMM' hBF)
+    exact ⟨f.comp e.symm⟩
+  · rintro ⟨f⟩
+    unfold BFEquiv0; rw [← comp_fin_elim0 f]; exact equiv_implies_BFEquiv f α 0 Fin.elim0
+
 /-! ### Stabilization Theory
 
 The key insight is that for countable structures, the BFEquiv equivalence classes form
