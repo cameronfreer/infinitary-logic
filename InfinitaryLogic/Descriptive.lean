@@ -36,6 +36,7 @@ import InfinitaryLogic.Descriptive.AnalyticTreeBoundedness
 import InfinitaryLogic.Descriptive.BFTree
 import InfinitaryLogic.Descriptive.BFSeparation
 import InfinitaryLogic.Descriptive.BFScattered
+import InfinitaryLogic.Descriptive.BFConcentration
 import InfinitaryLogic.Descriptive.TreeCodes
 
 -- Counting dichotomy and finite carrier
@@ -187,6 +188,13 @@ application of that vocabulary:
   many relation symbols, is thin (`isThinOn_of_bfScattered`), with no definability hypothesis on
   the set; `BFScatteredSentence` is the form for the models of a sentence
   (`Sentenceω.isThinOnNatModels_of_bfScattered`);
+- `BFConcentration`: a set of codes concentrated at back-and-forth levels (at each level
+  `α < ω₁`, all but countably many isomorphism classes in one `CodeBFEquiv α`-class) is
+  back-and-forth scattered (`ConcentratedAtBFLevels.bfScattered`), hence free of Cantor
+  antichains and thin; an isomorphism-invariant split with analytic sides is saturated from a
+  countable level on (`exists_bfLevel_saturated_of_analyticSets`), and for a concentrated class
+  one side of such a split meets only countably many isomorphism classes
+  (`ConcentratedAtBFLevels.countable_isoClasses_or`);
 - `TreeCodes`: tree codes over a countable alphabet, the closed tree class, the continuous
   Kleene–Brouwer code into `Language.order`, and analytic boundedness for well-founded trees
   (`analytic_wellFoundedTree_rank_boundedness`) with its domination adapter;
