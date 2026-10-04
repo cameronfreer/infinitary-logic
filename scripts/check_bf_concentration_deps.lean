@@ -18,9 +18,13 @@ the module goes through the landed descriptive route.
   `invariant_of_bfLevel_saturated` (which is stated through isomorphism and needs
   `CodeBFEquiv.of_iso`).  It is **not** in the cones of the saturation theorems
   `exists_bfLevel_saturated_of_analyticSets` and `exists_bfLevel_saturated`, of the core
-  `ConcentratedAtBFLevels.countable_isoClasses_of_saturatedAt`, or of the counting forms
+  `ConcentratedAtBFLevels.countable_isoClasses_or_of_saturatedAt`, or of the counting forms
   `ConcentratedAtBFLevels.countable_isoClasses_or_of_analyticSets` and
-  `ConcentratedAtBFLevels.countable_isoClasses_or`; nor is `CodeBFEquiv.of_iso`.
+  `ConcentratedAtBFLevels.countable_isoClasses_or`; nor is `CodeBFEquiv.of_iso`, nor any
+  constant declared in the module `Scott.BFEquivRelabel` (a module-level check, shown to flag
+  the necessity lemma).
+* **Every public declaration is audited.**  The roots and the definition are exactly the
+  public declarations of `Descriptive.BFConcentration` (`[ROOT DRIFT]`).
 * **The descriptive route.**  `exists_uniform_bfSeparation_of_analyticSets` is in the cones of
   both saturation theorems and both counting forms, which also contain the core.  The core is
   purely combinatorial: its cone contains neither `exists_uniform_bfSeparation_of_analyticSets`
@@ -67,7 +71,8 @@ def ofIso : Name := `FirstOrder.Language.CodeBFEquiv.of_iso
 def sepAnalytic : Name := `FirstOrder.Language.exists_uniform_bfSeparation_of_analyticSets
 
 /-- The core. -/
-def core : Name := `FirstOrder.Language.ConcentratedAtBFLevels.countable_isoClasses_of_saturatedAt
+def core : Name :=
+  `FirstOrder.Language.ConcentratedAtBFLevels.countable_isoClasses_or_of_saturatedAt
 
 /-- Roots whose cones must contain `BFEquiv.map_equiv`. -/
 def mapEquivRoots : List Name :=
@@ -85,6 +90,18 @@ def mapEquivFreeRoots : List Name :=
 def roots : List Name :=
   mapEquivRoots ++ fol [`ConcentratedAtBFLevels.mono, `concentratedAtBFLevels_of_countable] ++
     mapEquivFreeRoots
+
+/-- The module under audit. -/
+def targetModule : Name := `InfinitaryLogic.Descriptive.BFConcentration
+
+/-- The module of `BFEquiv.map_equiv`, newly added to the closure. -/
+def relabelModule : Name := `InfinitaryLogic.Scott.BFEquivRelabel
+
+/-- The constants of a cone declared in `relabelModule`. -/
+def relabelHits (env : Environment) (c : NameSet) : List Name :=
+  c.toList.filter fun n ↦ match env.getModuleIdxFor? n with
+    | some idx => env.header.moduleNames[idx.toNat]! == relabelModule
+    | none => false
 
 /-- The definition, audited for axioms and forbidden dependencies only. -/
 def defRoot : Name := `FirstOrder.Language.ConcentratedAtBFLevels
@@ -289,6 +306,18 @@ run_cmd do
   let forbiddenMods := env.header.moduleNames.toList.filter forbiddenModule
   if forbiddenMods.isEmpty then
     throwError "[VACUOUS] no forbidden InfinitaryLogic module is in the environment"
+  -- the roots and the definition are exactly the public declarations of the module
+  let some midx := env.getModuleIdx? targetModule | throwError "module {targetModule} not found"
+  let pub := (env.header.moduleData[midx.toNat]!).constNames.toList.filter fun n ↦
+    !n.isInternalDetail && !(n.getString!.endsWith "congr_simp")
+  let audited := defRoot :: roots
+  let unaudited := pub.filter fun n ↦ !audited.contains n
+  let foreign := audited.filter fun n ↦ !pub.contains n
+  unless unaudited.isEmpty && foreign.isEmpty do
+    throwError "[ROOT DRIFT] the public declarations of {targetModule} are not the audited \
+      roots (unaudited {unaudited}, not declared there {foreign})"
+  unless (env.getModuleIdx? relabelModule).isSome do
+    throwError "[VACUOUS] module {relabelModule} is not in the environment"
   -- the definition
   let some (.defnInfo _) := env.find? defRoot | throwError "[UNKNOWN ROOT] {defRoot}"
   let (dc, dbad) ← audit defRoot
@@ -323,6 +352,10 @@ run_cmd do
         if c.contains w then
           throwError "[MAP_EQUIV DRIFT] the cone of {root} contains {w}; only the bridge, its \
             endpoints and the necessity lemma may use Scott.BFEquivRelabel"
+      let hitsR := relabelHits env c
+      unless hitsR.isEmpty do
+        throwError "[MAP_EQUIV DRIFT] the cone of {root} reaches {relabelModule} through \
+          {hitsR.take 10}"
     if root == core then
       for w in coreForbidden do
         unless (env.find? w).isSome do throwError "[UNKNOWN] {w}"
@@ -345,9 +378,12 @@ run_cmd do
     | throwError "no cone for the necessity lemma"
   unless necCone.contains mapEquiv do
     throwError "[VACUOUS] the map_equiv check flags no root"
+  if (relabelHits env necCone).isEmpty then
+    throwError "[VACUOUS] the module-level Scott.BFEquivRelabel check flags no root"
   logInfo m!"bf concentration dependency guard: OK (cones {sizes.toList}; BFEquiv.map_equiv in \
-    the cones of of_iso, the bridge, its two endpoints and the necessity lemma, and not in the \
-    saturation theorems, the core or the counting forms; \
+    the cones of of_iso, the bridge, its two endpoints and the necessity lemma, and no \
+    Scott.BFEquivRelabel constant in the saturation theorems, the core or the counting forms; \
+    roots and definition exactly the {pub.length} public declarations of the module; \
     exists_uniform_bfSeparation_of_analyticSets in both saturation theorems and both counting \
     forms; the core free of separation and of map_equiv; \
     not_hasCantorAntichainOn_of_bfScattered in both endpoints; transitive controls through \

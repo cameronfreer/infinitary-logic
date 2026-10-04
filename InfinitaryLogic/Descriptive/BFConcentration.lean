@@ -24,7 +24,9 @@ This module proves two things about such a class, with no isolating rank anywher
 2. **One side of an invariant split has countably many classes.**  If `B ⊆ C` is closed under
    isomorphism within `C` and both `B` and `C \ B` are analytic (for instance `B` relatively
    Borel in an analytic `C`, with countably many relation symbols), then `B` or `C \ B` meets
-   only countably many isomorphism classes (`ConcentratedAtBFLevels.countable_isoClasses_or`).
+   only countably many isomorphism classes
+   (`ConcentratedAtBFLevels.countable_isoClasses_or_of_analyticSets`; the relatively Borel form
+   is `ConcentratedAtBFLevels.countable_isoClasses_or`).
 
 ## Main declarations
 
@@ -37,7 +39,7 @@ This module proves two things about such a class, with no isolating rank anywher
   sides is a union of `CodeBFEquiv β`-classes within `C` for all `β` from some `α < ω₁` on;
   `exists_bfLevel_saturated` is the relatively Borel form in an analytic `C`.
 * `invariant_of_bfLevel_saturated`: saturation at any single level forces invariance within `C`.
-* `ConcentratedAtBFLevels.countable_isoClasses_of_saturatedAt`: the combinatorial core, from
+* `ConcentratedAtBFLevels.countable_isoClasses_or_of_saturatedAt`: the combinatorial core, from
   saturation at one level, with no invariance and no analyticity.
 * `ConcentratedAtBFLevels.countable_isoClasses_or_of_analyticSets` and
   `ConcentratedAtBFLevels.countable_isoClasses_or`: one side of an invariant split has countably
@@ -85,8 +87,9 @@ This module proves two things about such a class, with no isolating rank anywher
   perfect antichain yields a Cantor antichain in the Polish space of codes),
   `exists_bfLevel_saturated` and `ConcentratedAtBFLevels.countable_isoClasses_or` (where the
   Polish and Borel structure of the space of codes makes relatively Borel subsets of an
-  analytic set analytic).  The bridge, the Cantor-antichain endpoint, the analytic-sides forms
-  and the core need no countability.
+  analytic set analytic).  In the last two the assumption is sufficient for that step; it is
+  not shown to be necessary.  The bridge, the Cantor-antichain endpoint, the analytic-sides
+  forms and the core need no countability.
 * **Dependency on `Scott.BFEquivRelabel`.**  This module adds exactly `Scott.BFEquivRelabel` to
   the import closure of `Descriptive.BFScattered`.  Its only use is `BFEquiv.map_equiv` in
   `CodeBFEquiv.of_iso`, which serves the bridge and the necessity lemma; the saturation theorems
@@ -94,10 +97,18 @@ This module proves two things about such a class, with no isolating rank anywher
 
 ## Scope
 
-* No concentrated class with uncountably many isomorphism classes is exhibited here, so the
-  one-side-countable result is not shown to be non-vacuous; such an example (and a scattered,
-  non-concentrated class with an invariant Borel split whose two sides both have uncountably
-  many classes) is recorded as a follow-up.
+* **Non-vacuity is not shown.**  Both counting forms force `C` to be analytic (the relatively
+  Borel form assumes it; with `B ⊆ C`, the analytic-sides form gives `C = B ∪ (C \ B)`
+  analytic).  No *analytic* concentrated class with uncountably many isomorphism classes is
+  exhibited here, so the one-side-countable result is not shown to be non-vacuous.  Such a
+  class, and an analytic, back-and-forth scattered, non-concentrated class with an invariant
+  relatively Borel split whose two sides both have uncountably many classes, are recorded as
+  follow-ups.  With countably many relation symbols, a witness that is Borel and isomorphism
+  invariant would be a thin Borel invariant class with uncountably many isomorphism classes,
+  which would settle a well-known open problem; witnesses have to be sought among analytic
+  classes that are not Borel invariant.  A class of codes of well-orders of unbounded order
+  types cannot serve, since it is never analytic (`analytic_wellOrder_type_boundedness`); such a
+  class can only illustrate the thinness side, which needs no analyticity.
 * No isolating rank, Scott rank or stabilization ordinal is used or defined.
 
 ## References
@@ -106,6 +117,8 @@ This module proves two things about such a class, with no isolating rank anywher
   §XII.1 (scattered sentences: countably many classes at every countable level).
 * A. S. Kechris, *Classical Descriptive Set Theory*, Graduate Texts in Mathematics 156,
   Springer, 1995, §31.A (the boundedness theorem behind `exists_uniform_bfSeparation`).
+
+The composition was offered for upstreaming by a consumer of this library.
 -/
 
 universe u v
@@ -124,11 +137,24 @@ variable {L : Language.{u, v}} [L.IsRelational]
 theorem CodeBFEquiv.of_iso {c d : StructureSpace L} (h : (structureIsoSetoid L).r c d)
     (α : Ordinal.{0}) : CodeBFEquiv α c d := by
   obtain ⟨e⟩ := h
+  -- the decoded structures are supplied explicitly: `c.toStructure` and `d.toStructure` are
+  -- two structures on the same carrier `ℕ`, so instance resolution cannot tell them apart
   have key := (@BFEquiv.map_equiv L ℕ c.toStructure ℕ c.toStructure ℕ ℕ c.toStructure
     d.toStructure (@Language.Equiv.refl L ℕ c.toStructure) e α 0 Fin.elim0 Fin.elim0).mpr
     (@BFEquiv.refl L ℕ c.toStructure 0 α Fin.elim0)
   unfold CodeBFEquiv
   rwa [comp_fin_elim0, comp_fin_elim0] at key
+
+/-- `CodeBFEquiv α` is symmetric (`codeBFEquivSetoid`).  Kept private: a dot-notation shorthand
+for the chains in this module. -/
+private theorem CodeBFEquiv.symm {α : Ordinal.{0}} {c d : StructureSpace L}
+    (h : CodeBFEquiv α c d) : CodeBFEquiv α d c :=
+  (codeBFEquivSetoid L α).iseqv.symm h
+
+/-- `CodeBFEquiv α` is transitive (`codeBFEquivSetoid`).  Kept private, as `CodeBFEquiv.symm`. -/
+private theorem CodeBFEquiv.trans {α : Ordinal.{0}} {c d e : StructureSpace L}
+    (h₁ : CodeBFEquiv α c d) (h₂ : CodeBFEquiv α d e) : CodeBFEquiv α c e :=
+  (codeBFEquivSetoid L α).iseqv.trans h₁ h₂
 
 /-! ### Concentration and the bridge to `BFScattered` -/
 
@@ -172,10 +198,12 @@ theorem ConcentratedAtBFLevels.bfScattered {C : Set (StructureSpace L)}
     · simp only [hx, ite_false]
       exact Or.inr ⟨_, ⟨x.1, ⟨x.2, hx⟩, rfl⟩, rfl⟩
   · intro x y hxy
+    -- the pulled-back relation `(codeBFEquivSetoid L α).comap Subtype.val` is, by definition,
+    -- `CodeBFEquiv α` on the underlying codes
     change CodeBFEquiv α x.1 y.1
     by_cases hx : CodeBFEquiv α x.1 k <;> by_cases hy : CodeBFEquiv α y.1 k <;>
       simp only [hx, hy, ite_true, ite_false, reduceCtorEq, Option.some.injEq] at hxy
-    · exact (codeBFEquivSetoid L α).iseqv.trans hx ((codeBFEquivSetoid L α).iseqv.symm hy)
+    · exact hx.trans hy.symm
     · exact CodeBFEquiv.of_iso (Quotient.exact hxy) α
 
 /-- **No Cantor antichain on a concentrated class**, for every relational language:
@@ -212,13 +240,13 @@ theorem exists_bfLevel_saturated_of_analyticSets {B C : Set (StructureSpace L)}
   · by_contra hyB
     exact hsep x hxB y ⟨hy, hyB⟩ (CodeBFEquiv.monotone hβ hxy)
   · by_contra hxB
-    exact hsep y hyB x ⟨hx, hxB⟩
-      (CodeBFEquiv.monotone hβ ((codeBFEquivSetoid L β).iseqv.symm hxy))
+    exact hsep y hyB x ⟨hx, hxB⟩ (CodeBFEquiv.monotone hβ hxy.symm)
 
 /-- **Saturation, relatively Borel form**: `exists_bfLevel_saturated_of_analyticSets` for
 `B = C ∩ D` with `D` Borel and `C` analytic.  Countably many relation symbols make the space of
 codes Polish with its Borel structure, so both `C ∩ D` and `C \ (C ∩ D) = C ∩ Dᶜ` are analytic;
-this is the only use of countability. -/
+this is the only use of countability.  The assumption is sufficient for this step; it is not
+shown to be necessary. -/
 theorem exists_bfLevel_saturated [Countable (Σ l, L.Relations l)]
     {B C : Set (StructureSpace L)} (hC : AnalyticSet C)
     (hB : ∃ D : Set (StructureSpace L), MeasurableSet D ∧ B = C ∩ D)
@@ -245,7 +273,7 @@ at one level `α < ω₁` in the one-sided sense (members of `C` equivalent to a
 `B`), then `B` or `C \ B` meets only countably many isomorphism classes.  With the centre `k` at
 level `α`: if some member of `B` is equivalent to `k`, all of `C \ B` lies off the centre;
 otherwise all of `B` does.  No invariance, no analyticity and no countability is assumed. -/
-theorem ConcentratedAtBFLevels.countable_isoClasses_of_saturatedAt
+theorem ConcentratedAtBFLevels.countable_isoClasses_or_of_saturatedAt
     {B C : Set (StructureSpace L)} (hC : ConcentratedAtBFLevels C) (hBC : B ⊆ C)
     {α : Ordinal.{0}} (hα : α < Ordinal.omega 1)
     (hsat : ∀ x ∈ B, ∀ y ∈ C, CodeBFEquiv α x y → y ∈ B) :
@@ -256,8 +284,7 @@ theorem ConcentratedAtBFLevels.countable_isoClasses_of_saturatedAt
   · obtain ⟨x, hxB, hxk⟩ := h
     refine Or.inr (hk.mono (image_mono ?_))
     rintro y ⟨hyC, hyB⟩
-    exact ⟨hyC, fun hyk ↦ hyB (hsat x hxB y hyC
-      ((codeBFEquivSetoid L α).iseqv.trans hxk ((codeBFEquivSetoid L α).iseqv.symm hyk)))⟩
+    exact ⟨hyC, fun hyk ↦ hyB (hsat x hxB y hyC (hxk.trans hyk.symm))⟩
   · exact Or.inl (hk.mono (image_mono fun x hx ↦ by exact ⟨hBC hx, fun hxk ↦ h ⟨x, hx, hxk⟩⟩))
 
 /-- **One side of an invariant split with analytic sides has countably many isomorphism
@@ -271,13 +298,14 @@ theorem ConcentratedAtBFLevels.countable_isoClasses_or_of_analyticSets
     (Quotient.mk (structureIsoSetoid L) '' B).Countable ∨
       (Quotient.mk (structureIsoSetoid L) '' (C \ B)).Countable := by
   obtain ⟨α, hα, hsat⟩ := exists_bfLevel_saturated_of_analyticSets hB hCB hinv
-  exact hC.countable_isoClasses_of_saturatedAt hBC hα
+  exact hC.countable_isoClasses_or_of_saturatedAt hBC hα
     fun x hx y hy hxy ↦ (hsat α le_rfl x (hBC hx) y hy hxy).mp hx
 
 /-- **One side of an invariant relatively Borel split has countably many isomorphism classes**:
 for a concentrated analytic `C` and `B = C ∩ D` with `D` Borel, closed under isomorphism within
 `C`, either `B` or `C \ B` meets only countably many isomorphism classes.  The core at the level
-of `exists_bfLevel_saturated`; countability of the relation symbols enters only there. -/
+of `exists_bfLevel_saturated`; countability of the relation symbols enters only there, as a
+sufficient assumption not shown to be necessary. -/
 theorem ConcentratedAtBFLevels.countable_isoClasses_or [Countable (Σ l, L.Relations l)]
     {B C : Set (StructureSpace L)} (hC : ConcentratedAtBFLevels C) (hCa : AnalyticSet C)
     (hB : ∃ D : Set (StructureSpace L), MeasurableSet D ∧ B = C ∩ D)
@@ -286,7 +314,7 @@ theorem ConcentratedAtBFLevels.countable_isoClasses_or [Countable (Σ l, L.Relat
       (Quotient.mk (structureIsoSetoid L) '' (C \ B)).Countable := by
   obtain ⟨α, hα, hsat⟩ := exists_bfLevel_saturated hCa hB hinv
   have hBC : B ⊆ C := by obtain ⟨D, -, rfl⟩ := hB; exact inter_subset_left
-  exact hC.countable_isoClasses_of_saturatedAt hBC hα
+  exact hC.countable_isoClasses_or_of_saturatedAt hBC hα
     fun x hx y hy hxy ↦ (hsat α le_rfl x (hBC hx) y hy hxy).mp hx
 
 end FirstOrder.Language

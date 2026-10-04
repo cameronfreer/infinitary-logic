@@ -11,7 +11,7 @@ Every new public declaration is *applied*, not only listed for its axioms.
   `exists_bfLevel_saturated_of_analyticSets` and
   `ConcentratedAtBFLevels.countable_isoClasses_or_of_analyticSets`, the necessity lemma
   `invariant_of_bfLevel_saturated` and the core
-  `ConcentratedAtBFLevels.countable_isoClasses_of_saturatedAt` are applied for an arbitrary
+  `ConcentratedAtBFLevels.countable_isoClasses_or_of_saturatedAt` are applied for an arbitrary
   relational `Language.{u, v}` with no countability instance in scope; the bridge, the Cantor
   endpoint and both analytic-sides forms also in a language with uncountably many unary symbols.
   The three countable-symbol declarations (`ConcentratedAtBFLevels.isThinOn`,
@@ -37,7 +37,10 @@ Every new public declaration is *applied*, not only listed for its axioms.
   split `splitB = isoClassC0 ∩ {c | the 0-th symbol holds at 0}` is cut out by a clopen set,
   contains `c0` and not `c1`, all members of `isoClassC0` are `CodeBFEquiv α`-equivalent at every
   level, and no level saturates it.  The class `isoClassC0` meets one isomorphism class, so it is
-  concentrated (`concentratedAtBFLevels_of_countable`), and so is `splitB` (`.mono`).
+  concentrated (`concentratedAtBFLevels_of_countable`), and so is `splitB` (`.mono`).  With
+  `C = univ` instead, the split `splitUniv = univ ∩ p0At0` meets every hypothesis of
+  `exists_bfLevel_saturated` except invariance (all codes form an analytic set, `p0At0` is
+  Borel), and again no level saturates it: invariance is the only missing hypothesis.
 * **Standard axioms** for every new public declaration and the concrete regressions.
 * **Exact import closure** of `Descriptive.BFConcentration`: the closure of
   `Descriptive.BFScattered` (25 `InfinitaryLogic` modules) plus `Scott.BFEquivRelabel`, the one
@@ -124,7 +127,7 @@ theorem generic_core_regression {L : Language.{u, v}} [L.IsRelational]
     (hsat : ∀ x ∈ B, ∀ y ∈ C, CodeBFEquiv α x y → y ∈ B) :
     (Quotient.mk (structureIsoSetoid L) '' B).Countable ∨
       (Quotient.mk (structureIsoSetoid L) '' (C \ B)).Countable :=
-  hC.countable_isoClasses_of_saturatedAt hBC hα hsat
+  hC.countable_isoClasses_or_of_saturatedAt hBC hα hsat
 
 /-- **One side countable, analytic sides, no countability.** -/
 theorem generic_split_regression {L : Language.{u, v}} [L.IsRelational]
@@ -303,7 +306,6 @@ theorem mem_emptyP0_of_codeBFEquiv_one {x y : StructureSpace unaryLang}
   rw [hx m] at hat
   simpa using hat
 
-
 /-- Saturation of `emptyP0` at every level `β ≥ 1`, directly: monotonicity down to level `1`,
 then the back step in both directions. -/
 theorem emptyP0_saturated {β : Ordinal.{0}} (hβ : 1 ≤ β) :
@@ -444,6 +446,32 @@ theorem isoClass_concentrated_regression :
   have hC := concentratedAtBFLevels_of_countable hcount
   exact ⟨hcount, hC, hC.mono inter_subset_left⟩
 
+/-- The split `p0At0` of all codes (`univ ∩ p0At0`), relatively Borel in the analytic set of all
+codes. -/
+def splitUniv : Set (StructureSpace unaryLang) := univ ∩ p0At0
+
+/-- **Invariance is the only missing hypothesis (RA-4(b), `C = univ`)**: the set of all codes is
+analytic and `splitUniv = univ ∩ p0At0` with `p0At0` clopen, hence Borel, so every hypothesis
+of `exists_bfLevel_saturated` other than invariance holds; `c0 ∈ splitUniv`, `c1 ∉ splitUniv`
+and `c0 ≅ c1`, so invariance fails, and by `invariant_of_bfLevel_saturated` no level saturates
+`splitUniv` within all codes. -/
+theorem nonInvariant_univ_split_regression :
+    AnalyticSet (univ : Set (StructureSpace unaryLang)) ∧
+      (∃ D : Set (StructureSpace unaryLang), MeasurableSet D ∧ splitUniv = univ ∩ D) ∧
+      c0 ∈ splitUniv ∧ c1 ∉ splitUniv ∧ (structureIsoSetoid unaryLang).r c0 c1 ∧
+      ¬ (∀ x ∈ splitUniv, ∀ y ∈ (univ : Set (StructureSpace unaryLang)),
+        (structureIsoSetoid unaryLang).r x y → y ∈ splitUniv) ∧
+      ∀ α : Ordinal.{0}, ¬ ∀ x ∈ (univ : Set (StructureSpace unaryLang)),
+        ∀ y ∈ (univ : Set (StructureSpace unaryLang)),
+          CodeBFEquiv α x y → (x ∈ splitUniv ↔ y ∈ splitUniv) := by
+  have hiso : (structureIsoSetoid unaryLang).r c0 c1 := c1_mem_isoClassC0
+  have hnoninv : ¬ (∀ x ∈ splitUniv, ∀ y ∈ (univ : Set (StructureSpace unaryLang)),
+      (structureIsoSetoid unaryLang).r x y → y ∈ splitUniv) := fun h ↦
+    c1_not_mem_p0At0 (h c0 ⟨trivial, c0_mem_p0At0⟩ c1 trivial hiso).2
+  exact ⟨isClosed_univ.analyticSet, ⟨p0At0, (isClopen_relHolds _).isClosed.measurableSet, rfl⟩,
+    ⟨trivial, c0_mem_p0At0⟩, fun h ↦ c1_not_mem_p0At0 h.2, hiso, hnoninv,
+    fun _ hsat ↦ hnoninv (invariant_of_bfLevel_saturated hsat (subset_univ _))⟩
+
 end BFConcentrationRegressions
 
 end
@@ -461,7 +489,7 @@ def countabilityFree : List Name :=
   fol [`CodeBFEquiv.of_iso, `ConcentratedAtBFLevels, `ConcentratedAtBFLevels.mono,
     `concentratedAtBFLevels_of_countable, `ConcentratedAtBFLevels.bfScattered,
     `ConcentratedAtBFLevels.not_hasCantorAntichainOn, `exists_bfLevel_saturated_of_analyticSets,
-    `invariant_of_bfLevel_saturated, `ConcentratedAtBFLevels.countable_isoClasses_of_saturatedAt,
+    `invariant_of_bfLevel_saturated, `ConcentratedAtBFLevels.countable_isoClasses_or_of_saturatedAt,
     `ConcentratedAtBFLevels.countable_isoClasses_or_of_analyticSets]
 
 /-- The public declarations of the module whose types assume countably many relation symbols:
@@ -520,7 +548,8 @@ def headline : List Name :=
      `BFConcentrationRegressions.univ_not_concentrated_regression,
      `BFConcentrationRegressions.pair_split_regression,
      `BFConcentrationRegressions.nonInvariant_split_regression,
-     `BFConcentrationRegressions.isoClass_concentrated_regression]
+     `BFConcentrationRegressions.isoClass_concentrated_regression,
+     `BFConcentrationRegressions.nonInvariant_univ_split_regression]
 
 /-- The standard axioms. -/
 def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
@@ -615,7 +644,8 @@ run_cmd do
     invariant split emptyP0 in countably many unary symbols: level 0 does not saturate, every \
     level ≥ 1 does, the returned level is nonzero, all codes not concentrated; the counting \
     form on a concentrated pair; a clopen non-invariant split inside one isomorphism class with \
-    no saturating level, its class concentrated and the split by mono; import closure of \
+    no saturating level, its class concentrated and the split by mono; the same split of all \
+    codes, with invariance the only failing hypothesis; import closure of \
     {ilModules.length} InfinitaryLogic modules, exactly BFScattered's 25 plus \
     Scott.BFEquivRelabel plus the module, with no Karp, ModelTheory, Methods, Admissible, \
     Conditional or ScottProcess module; standard axioms for {headline.length} declarations)"

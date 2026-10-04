@@ -191,10 +191,12 @@ application of that vocabulary:
 - `BFConcentration`: a set of codes concentrated at back-and-forth levels (at each level
   `α < ω₁`, all but countably many isomorphism classes in one `CodeBFEquiv α`-class) is
   back-and-forth scattered (`ConcentratedAtBFLevels.bfScattered`), hence free of Cantor
-  antichains and thin; an isomorphism-invariant split with analytic sides is saturated from a
-  countable level on (`exists_bfLevel_saturated_of_analyticSets`), and for a concentrated class
-  one side of such a split meets only countably many isomorphism classes
-  (`ConcentratedAtBFLevels.countable_isoClasses_or`);
+  antichains and, for countably many relation symbols, thin; an isomorphism-invariant split with
+  analytic sides is saturated from a countable level on
+  (`exists_bfLevel_saturated_of_analyticSets`), and for a concentrated class one side of such a
+  split meets only countably many isomorphism classes
+  (`ConcentratedAtBFLevels.countable_isoClasses_or_of_analyticSets`, with the relatively Borel
+  form `ConcentratedAtBFLevels.countable_isoClasses_or` for countably many relation symbols);
 - `TreeCodes`: tree codes over a countable alphabet, the closed tree class, the continuous
   Kleene–Brouwer code into `Language.order`, and analytic boundedness for well-founded trees
   (`analytic_wellFoundedTree_rank_boundedness`) with its domination adapter;
