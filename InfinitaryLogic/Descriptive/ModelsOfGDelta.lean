@@ -24,8 +24,9 @@ or orbits.
 
 Closure lemmas make the hypothesis dischargeable clause by clause: `modelsOf_inf`,
 `modelsOf_inf_isGδ`, `modelsOf_iInf`, `modelsOf_iInf_isGδ` (and the `einf` forms over an
-encodable index).  They need no countability of the language; only the Polish corollary does,
-through the instance `PolishSpace (StructureSpace L)`.
+encodable index); `modelsOf_not` records the coded models of a negation as the complement.
+They need no countability of the language; only the Polish corollary does, through the instance
+`PolishSpace (StructureSpace L)`.
 
 **The hypothesis is not automatic.**  In the language of one unary relation `P`, the sentence
 "only finitely many elements satisfy `P`" has as coded models the codes with finitely many `P`-true
@@ -51,6 +52,10 @@ theorem polishSpace_modelsOf_of_isGδ [Countable (Σ l, L.Relations l)] {φ : L.
 theorem modelsOf_inf (φ ψ : L.Sentenceω) : ModelsOf (φ ⊓ ψ) = ModelsOf φ ∩ ModelsOf ψ :=
   Set.ext fun c => @BoundedFormulaω.realize_inf L ℕ c.toStructure Empty 0 Empty.elim
     Fin.elim0 φ ψ
+
+/-- The coded models of a negation are the complement. -/
+theorem modelsOf_not (φ : L.Sentenceω) : ModelsOf φ.not = (ModelsOf φ)ᶜ := by
+  ext c; simp [ModelsOf, ModelsOfBounded]
 
 /-- Finite conjunction preserves the Gδ property of the coded model set. -/
 theorem modelsOf_inf_isGδ {φ ψ : L.Sentenceω} (hφ : IsGδ (ModelsOf φ))

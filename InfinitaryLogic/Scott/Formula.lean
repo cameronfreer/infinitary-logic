@@ -18,11 +18,15 @@ equivalence at each ordinal level.
 ## Main Definitions
 
 - `scottFormula`: The Scott formula for a tuple at a given ordinal level.
+- `scottSentenceAt`: the Scott formula of the empty tuple of a structure at a given level, as a
+  sentence.
 
 ## Main Results
 
 - `realize_scottFormula_iff_BFEquiv`: A tuple b satisfies the Scott formula for a at level α
   if and only if a and b are BF-equivalent at level α.
+- `realize_scottSentenceAt_iff_BFEquiv`: for `α < ω₁`, a structure satisfies
+  `scottSentenceAt M α` iff it is BF-equivalent to `M` at level `α` on the empty tuple.
 
 ## Implementation Notes
 
@@ -233,6 +237,44 @@ theorem realize_scottFormula_iff_BFEquiv
     simp only [hα, dite_true, Formulaω.realize_einf]
     exact ⟨fun h γ hγ => (ih γ hγ a b (lt_trans hγ hα)).mp (h ⟨γ, hγ⟩),
            fun h ⟨γ, hγ⟩ => (ih γ hγ a b (lt_trans hγ hα)).mpr (h γ hγ)⟩
+
+end Language
+
+/-! ### The Scott sentence of a structure at a level -/
+
+namespace Language
+
+/-- **The level-`α` Scott sentence of `M`**: `scottFormula` of the empty tuple of `M` at level
+`α`, as a sentence.  For `α < ω₁` it axiomatizes the structures that are back-and-forth
+equivalent to `M` at level `α` on the empty tuple (`realize_scottSentenceAt_iff_BFEquiv`).  The
+equivalence is this library's `BFEquiv` (single-element extension steps); no other hierarchy of
+infinitary equivalence is meant.  At limit levels `α ≥ ω₁` the formula is `⊤`, so the
+characterization needs `α < ω₁`.
+
+`scottSentence M` (`Scott/Sentence.lean`, which imports `Karp.PotentialIso`) is the case
+`α = stabilizationOrdinal M`, as a `Formulaω (Fin 0)`.  No relational instance is needed.
+
+The universe parameters are explicit, in the order: function symbols, relation symbols, the
+carrier of `M`, the level. -/
+noncomputable def scottSentenceAt.{uL, vL, wM, uO} {L : Language.{uL, vL}}
+    [Countable (Σ l, L.Relations l)] (M : Type wM) [L.Structure M] [Countable M]
+    (α : Ordinal.{uO}) : L.Sentenceω :=
+  (scottFormula (L := L) (Fin.elim0 : Fin 0 → M) α).toSentenceω
+
+/-- **A structure satisfies the level-`α` Scott sentence of `M` iff it is back-and-forth
+equivalent to `M` at level `α`** on the empty tuple, for `α < ω₁`.  The carrier universe of `N`
+is independent of that of `M`, and the level lives in any ordinal universe.  The hypothesis
+`α < ω₁` is the one of `realize_scottFormula_iff_BFEquiv`; at `α = ω₁` the sentence is `⊤`.
+
+The universe parameters are explicit, in the order: function symbols, relation symbols, the
+carrier of `M`, the carrier of `N`, the level. -/
+theorem realize_scottSentenceAt_iff_BFEquiv.{uL, vL, wM, wN, uO} {L : Language.{uL, vL}}
+    [Countable (Σ l, L.Relations l)] (M : Type wM) [L.Structure M] [Countable M]
+    (N : Type wN) [L.Structure N] {α : Ordinal.{uO}} (hα : α < Ordinal.omega 1) :
+    (scottSentenceAt (L := L) M α).Realize N ↔
+      BFEquiv (L := L) α 0 (Fin.elim0 : Fin 0 → M) (Fin.elim0 : Fin 0 → N) := by
+  rw [scottSentenceAt, Formulaω.realize_toSentenceω]
+  exact realize_scottFormula_iff_BFEquiv _ _ α hα
 
 end Language
 
