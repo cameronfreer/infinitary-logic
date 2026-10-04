@@ -23,9 +23,14 @@ that closure each declaration actually uses.
   `stabilizationOrdinal`, and no constant declared in `Scott.Sentence`, `Scott.RefinementCount`,
   `Scott.IsolatingLevel`, `Scott.BFEquivRelabel`, `Descriptive.BFConcentration` or any `Karp`
   module (`[CONTRACT DRIFT]`).  `stabilizationOrdinal_spec` and `stabilizationOrdinal_lt_omega1'`
-  are in the cone of the instance `isIsolatingRank_codeStabilizationOrdinal`;
-  `codeStabilizationOrdinal_congr` reaches `stabilizesAt_of_equiv` but no constant of
-  `Scott.RefinementCount` (it needs no countability).
+  are in the cone of the instance `isIsolatingRank_codeStabilizationOrdinal`.  Generically, for
+  every root, `stabilizationOrdinal_spec` and `stabilizationOrdinal_lt_omega1'` are in its cone
+  **iff** the root is the instance or the family bridge (`[SPEC DRIFT]`; this covers the
+  structural roots, `codeStabilizationOrdinal` and `codeStabilizationOrdinal_def` too).
+  `codeStabilizationOrdinal_congr` goes through `stabilizationOrdinal_eq_of_equiv` and
+  `stabilizesAt_of_equiv`; the only `Scott.RefinementCount` constant in its cone is
+  `stabilizationOrdinal_eq_of_equiv`, and `countableRefinementHypothesis` is not in it (it
+  needs no countability, `[CONGR DRIFT]`).
 * **`OrdinalCountability` exactly in the cardinal and boundedness forms.**
   `mk_le_aleph_one_of_countable_fibers`, `mk_eq_aleph_one_of_countable_fibers` and
   `countable_iff_rank_bounded` are in the cones of `mk_isoClasses_le_aleph_one`,
@@ -93,7 +98,7 @@ def congrRoot : Name := `FirstOrder.Language.codeStabilizationOrdinal_congr
 /-- The contract-layer theorems: the API, the code form and the counting statements. -/
 def contractTheorems : List Name :=
   iir [`isolates_of_le, `lift_mk, `lift_lt_omega1, `of_le, `exists_isolating_codeLevel,
-    `not_countable_isoClasses_of_forall_unisolated, `countable_fibers,
+    `not_countable_isoClasses_of_forall_unisolated, `countable_fiber, `countable_fibers,
     `mk_isoClasses_le_aleph_one, `mk_isoClasses_eq_aleph_one,
     `countable_isoClasses_iff_bounded]
 
@@ -104,7 +109,8 @@ def contractStructural : List Name :=
     iir [`mk, `rec, `casesOn, `recOn, `iso_invariant, `lt_omega1, `isolates, `lift]
 
 /-- The roots audited as theorems. -/
-def theoremRoots : List Name := contractTheorems ++ [congrRoot, inst, bridge]
+def theoremRoots : List Name :=
+  contractTheorems ++ [congrRoot, inst, bridge, `FirstOrder.Language.codeStabilizationOrdinal_def]
 
 /-- The roots audited for axioms and forbidden dependencies only. -/
 def structuralRoots : List Name :=
@@ -134,8 +140,12 @@ def required : List (Name × List Name) :=
       iir [`isolates_of_le, `lift_lt_omega1] ++ [`Ordinal.iSup_lt_omega_one]),
    (`FirstOrder.Language.IsIsolatingRank.not_countable_isoClasses_of_forall_unisolated,
       iir [`exists_isolating_codeLevel]),
+   (`FirstOrder.Language.IsIsolatingRank.countable_fiber,
+      iir [`isolates, `lift_mk] ++ fol [`codeBFEquivSetoid]),
    (`FirstOrder.Language.IsIsolatingRank.countable_fibers,
-      iir [`isolates] ++ fol [`BFScattered, `codeBFEquivSetoid]),
+      iir [`countable_fiber] ++ fol [`BFScattered]),
+   (`FirstOrder.Language.codeStabilizationOrdinal_def,
+      fol [`codeStabilizationOrdinal, `stabilizationOrdinal]),
    (`FirstOrder.Language.IsIsolatingRank.mk_isoClasses_le_aleph_one,
       iir [`countable_fibers] ++ [`InfinitaryLogic.mk_le_aleph_one_of_countable_fibers]),
    (`FirstOrder.Language.IsIsolatingRank.mk_isoClasses_eq_aleph_one,
@@ -143,7 +153,8 @@ def required : List (Name × List Name) :=
         `InfinitaryLogic.mk_le_aleph_one_of_countable_fibers]),
    (`FirstOrder.Language.IsIsolatingRank.countable_isoClasses_iff_bounded,
       iir [`countable_fibers] ++ [`InfinitaryLogic.countable_iff_rank_bounded]),
-   (congrRoot, fol [`stabilizesAt_of_equiv, `stabilizationOrdinal, `equiv_implies_BFEquiv]),
+   (congrRoot, fol [`stabilizationOrdinal_eq_of_equiv, `stabilizesAt_of_equiv,
+      `stabilizationOrdinal, `equiv_implies_BFEquiv]),
    (inst, [spec, congrRoot] ++ fol [`stabilizationOrdinal_lt_omega1', `stabilizesAt_of_equiv,
       `codeStabilizationOrdinal]),
    (bridge, [familyLevel, spec] ++ fol [`CodeBFEquiv.of_iso, `BFEquiv.map_equiv])]
@@ -352,6 +363,8 @@ run_cmd do
   let forbiddenMods := env.header.moduleNames.toList.filter forbiddenModule
   if forbiddenMods.isEmpty then
     throwError "[VACUOUS] no forbidden InfinitaryLogic module is in the environment"
+  unless (env.find? `FirstOrder.Language.countableRefinementHypothesis).isSome do
+    throwError "[VACUOUS] countableRefinementHypothesis is not in the environment"
   for m in contractForbiddenModules ++ [`InfinitaryLogic.OrdinalCountability] do
     unless (env.getModuleIdx? m).isSome do throwError "[VACUOUS] module {m} not found"
   -- the roots are exactly the public declarations of the module
@@ -401,9 +414,15 @@ run_cmd do
         throwError "[CONTRACT DRIFT] the cone of {root} reaches Karp: {karp.take 10}"
     -- the congruence lemma needs no countability: nothing from RefinementCount
     if root == congrRoot then
-      let hitsR := moduleHits env c (ilm [`Scott.RefinementCount, `Scott.IsolatingLevel])
-      unless hitsR.isEmpty && !c.contains spec do
+      let hitsR := (moduleHits env c (ilm [`Scott.RefinementCount, `Scott.IsolatingLevel])).filter
+        (· != `FirstOrder.Language.stabilizationOrdinal_eq_of_equiv)
+      unless hitsR.isEmpty && !c.contains `FirstOrder.Language.countableRefinementHypothesis do
         throwError "[CONGR DRIFT] the cone of {root} reaches {hitsR.take 10}"
+    -- generically: spec and lt_omega1' are reached iff the root is the instance or the bridge
+    for w in [spec, `FirstOrder.Language.stabilizationOrdinal_lt_omega1'] do
+      unless c.contains w == (root == inst || root == bridge) do
+        throwError "[SPEC DRIFT] {w} in the cone of {root}: {c.contains w}; expected exactly \
+          for the instance and the bridge"
     -- OrdinalCountability exactly in the cardinal and boundedness forms
     let oc := moduleHits env c [`InfinitaryLogic.OrdinalCountability]
     if ordinalCountabilityRoots.contains root then
@@ -447,11 +466,13 @@ run_cmd do
       !(prefixHits env bridgeCone `InfinitaryLogic.Karp).isEmpty do
     throwError "[VACUOUS] the family and Karp checks flag no root"
   logInfo m!"scattered counting dependency guard: OK (cones {sizes.toList}; roots exactly the \
-    {pub.length} public declarations of the module; the contract API, the code form and the \
+    {pub.length} public declarations of the module; stabilizationOrdinal_spec and \
+    stabilizationOrdinal_lt_omega1' reached iff the root is the instance or the bridge; the \
+    contract API, the code form and the \
     counting statements free of the stabilization ordinal and of Scott.Sentence, \
     RefinementCount, IsolatingLevel, BFEquivRelabel, BFConcentration and Karp constants; \
-    stabilizationOrdinal_spec and stabilizationOrdinal_lt_omega1' in the instance; the \
-    congruence lemma through stabilizesAt_of_equiv without RefinementCount; \
+    the congruence lemma through stabilizationOrdinal_eq_of_equiv, without \
+    countableRefinementHypothesis; \
     OrdinalCountability exactly in mk_isoClasses_le_aleph_one, mk_isoClasses_eq_aleph_one and \
     countable_isoClasses_iff_bounded; exists_isolating_level, CodeBFEquiv.of_iso and \
     BFEquiv.map_equiv only in the family bridge; Karp.PotentialIso only in the instance and the \

@@ -4,6 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Descriptive.BFConcentration
+-- `Scott.IsolatingLevel` already imports it; listed for the instance's direct uses
+-- (`stabilizationOrdinal_spec`, `stabilizationOrdinal_lt_omega1'`,
+-- `stabilizationOrdinal_eq_of_equiv`)
 import InfinitaryLogic.Scott.RefinementCount
 import InfinitaryLogic.Scott.IsolatingLevel
 import InfinitaryLogic.OrdinalCountability
@@ -42,12 +45,13 @@ from it alone.
 
 * `IsIsolatingRank`, with `IsIsolatingRank.isolates_of_le`, `IsIsolatingRank.lift`,
   `IsIsolatingRank.lift_mk`, `IsIsolatingRank.lift_lt_omega1` and `IsIsolatingRank.of_le`.
-* `codeStabilizationOrdinal`, `codeStabilizationOrdinal_congr`,
+* `codeStabilizationOrdinal`, `codeStabilizationOrdinal_def`, `codeStabilizationOrdinal_congr`,
   `isIsolatingRank_codeStabilizationOrdinal`.
 * `IsIsolatingRank.exists_isolating_codeLevel`,
   `IsIsolatingRank.not_countable_isoClasses_of_forall_unisolated`, and the bridge
   `exists_isolating_codeLevel_of_family`.
-* `IsIsolatingRank.countable_fibers`, `IsIsolatingRank.mk_isoClasses_le_aleph_one`,
+* `IsIsolatingRank.countable_fiber` (one level), `IsIsolatingRank.countable_fibers`,
+  `IsIsolatingRank.mk_isoClasses_le_aleph_one`,
   `IsIsolatingRank.mk_isoClasses_eq_aleph_one`, `IsIsolatingRank.countable_isoClasses_iff_bounded`.
 
 ## The contract is abstract
@@ -56,8 +60,10 @@ from it alone.
   (`IsIsolatingRank.countable_fibers`, `IsIsolatingRank.countable_isoClasses_iff_bounded`, both
   under `BFScattered K`), not fields of the contract.
 * **The contract does not pin the rank.**  `IsIsolatingRank.of_le`: any isomorphism-invariant
-  map below `ω₁` lying above an isolating rank is again one.  So nothing proved from the
-  contract depends on which isolating rank is used, and no least isolating rank is asserted.
+  map below `ω₁` lying above an isolating rank is again one.  So the contract has many instances
+  (the regression guard exhibits `Order.succ ∘ codeStabilizationOrdinal`, different from the
+  instance at every code), every result derived here from the contract applies to each of them,
+  and no least isolating rank is asserted.
 * **`codeStabilizationOrdinal` is not the least isolating level among codes.**  The
   stabilization ordinal of `c` is the least `α` with `StabilizesAt c α`, and `StabilizesAt`
   quantifies over *all* countable structures `N`, not only over codes; nothing here says that
@@ -74,7 +80,9 @@ from it alone.
 `stabilizationOrdinal_spec`, and the bridge `exists_isolating_codeLevel_of_family`, through
 `exists_isolating_level`.  `codeStabilizationOrdinal`, its congruence lemma, the contract, the
 code form of the isolating level and the counting statements are proved for every relational
-`Language.{u, v}`.  That countability is necessary for the instance is not claimed.
+`Language.{u, v}`.  That countability is necessary for the instance is not claimed, and no
+isolating rank is exhibited for uncountably many relation symbols: there the contract's
+consequences hold for any isolating rank one is given.
 
 ## A countable family of representatives, not a countable set of codes
 
@@ -110,16 +118,17 @@ countable, not that `S` is.
 
 ## Proofs
 
-* **`countable_fibers`.**  Choose a representative `r q ∈ K` of each class `q` of `K`.  On the
-  fibre over `α`, send `q` to the `CodeBFEquiv α`-class of `r q` within `K`.  This is injective:
-  equal images give `CodeBFEquiv α (r q) (r q')` at `α = ρ (r q)`, hence `r q ≅ r q'` by
-  `isolates`.  So the fibre injects into the level-`α` quotient of `K`, which is countable by
-  `BFScattered K`.
+* **`countable_fiber`** (one level; `countable_fibers` applies it at every level).  Choose a
+  representative `r q ∈ K` of each class `q` of `K`.  On the fibre over `α`, send `q` to the
+  `CodeBFEquiv α`-class of `r q` within `K`.  This is injective: equal images give
+  `CodeBFEquiv α (r q) (r q')` at `α = ρ (r q)`, hence `r q ≅ r q'` by `isolates`.  So the
+  fibre injects into the level-`α` quotient of `K`, which is countable by hypothesis (by
+  `BFScattered K` in `countable_fibers`).
 * **The cardinal and boundedness statements** are `mk_le_aleph_one_of_countable_fibers`,
   `mk_eq_aleph_one_of_countable_fibers` and `countable_iff_rank_bounded` from
   `OrdinalCountability`, applied to the lifted rank on the classes of `K`.
-* **`codeStabilizationOrdinal_congr`** uses `stabilizesAt_of_equiv`: the set of stabilizing
-  levels of isomorphic structures is the same, so their infima agree.
+* **`codeStabilizationOrdinal_congr`** is `stabilizationOrdinal_eq_of_equiv`
+  (`Scott/RefinementCount.lean`), which needs no countability.
 
 ## Scope
 
@@ -129,6 +138,16 @@ countable, not that `S` is.
 * The Silver-side statement that a thin sentence has back-and-forth scattered models is in
   `Conditional/BFScatteredSilver.lean`; it does not use an isolating rank and does not import
   this module, and this module imports nothing from `Conditional`.
+
+## References
+
+* M. Morley, "The number of countable models", *J. Symbolic Logic* 35 (1970), 14–18 (the
+  counting argument: a rank below `ω₁` with countable fibres bounds the number of classes by
+  `ℵ₁`, and boundedness of the rank gives countably many).
+* A. Montalbán, *Computable Structure Theory: Beyond the Arithmetic*, draft, Chapter XII,
+  §XII.1 (scattered sentences: countably many classes at every countable level).
+
+The composition was offered for upstreaming by a consumer of this library.
 -/
 
 universe u v
@@ -218,14 +237,13 @@ theorem not_countable_isoClasses_of_forall_unisolated (hρ : IsIsolatingRank ρ)
 
 /-! ### Counting the isomorphism classes of a back-and-forth scattered class -/
 
-/-- **Countable fibres.**  On a back-and-forth scattered class `K`, each fibre of the rank on the
-isomorphism classes of `K` over a countable ordinal is countable: it injects into the
-`CodeBFEquiv α`-quotient of `K`. -/
-theorem countable_fibers (hρ : IsIsolatingRank ρ) (hK : BFScattered K) :
-    ∀ α < Ordinal.omega 1,
-      Countable {q : ↥(Quotient.mk (structureIsoSetoid L) '' K) // hρ.lift q.1 = α} := by
-  intro α hα
-  have := hK α hα
+/-- **A countable fibre from one countable level.**  If `K` has countably many
+`CodeBFEquiv α`-classes, then the fibre over `α` of the rank on the isomorphism classes of `K`
+is countable: it injects into the `CodeBFEquiv α`-quotient of `K`. -/
+theorem countable_fiber (hρ : IsIsolatingRank ρ) {α : Ordinal.{0}}
+    (hα : Countable (Quotient ((codeBFEquivSetoid L α).comap
+      (Subtype.val : K → StructureSpace L)))) :
+    Countable {q : ↥(Quotient.mk (structureIsoSetoid L) '' K) // hρ.lift q.1 = α} := by
   have hrep : ∀ q : ↥(Quotient.mk (structureIsoSetoid L) '' K),
       ∃ x : K, Quotient.mk (structureIsoSetoid L) x.1 = q.1 :=
     fun q ↦ let ⟨x, hx, h⟩ := q.2; ⟨⟨x, hx⟩, h⟩
@@ -236,11 +254,19 @@ theorem countable_fibers (hρ : IsIsolatingRank ρ) (hK : BFScattered K) :
         (Subtype.val : K → StructureSpace L)))) ?_
   rintro ⟨q, hq⟩ ⟨q', hq'⟩ h
   have hbf : CodeBFEquiv α (r q).1 (r q').1 := Quotient.exact h
-  have hρq : ρ (r q).1 = α := by rw [← hq, ← hr q]; rfl
+  have hρq : ρ (r q).1 = α := by rw [← hq, ← hr q, lift_mk]
   have hiso := hρ.isolates (hρq ▸ hbf)
   apply Subtype.ext; apply Subtype.ext
   rw [← hr q, ← hr q']
   exact Quotient.sound hiso
+
+/-- **Countable fibres.**  On a back-and-forth scattered class `K`, each fibre of the rank on the
+isomorphism classes of `K` over a countable ordinal is countable (`countable_fiber` at each
+level). -/
+theorem countable_fibers (hρ : IsIsolatingRank ρ) (hK : BFScattered K) :
+    ∀ α < Ordinal.omega 1,
+      Countable {q : ↥(Quotient.mk (structureIsoSetoid L) '' K) // hρ.lift q.1 = α} :=
+  fun α hα ↦ hρ.countable_fiber (hK α hα)
 
 /-- **At most `ℵ₁` isomorphism classes** in a back-and-forth scattered class. -/
 theorem mk_isoClasses_le_aleph_one (hρ : IsIsolatingRank ρ) (hK : BFScattered K) :
@@ -281,29 +307,36 @@ decoded from `c`.  It is an isolating rank for countably many relation symbols
 (`isIsolatingRank_codeStabilizationOrdinal`).  It is not claimed to be the least isolating level
 among codes: `StabilizesAt` quantifies over all countable structures, not only codes. -/
 noncomputable def codeStabilizationOrdinal (c : StructureSpace L) : Ordinal.{0} :=
+  -- the decoded structure is supplied explicitly: it is a definition, not an instance
   @stabilizationOrdinal L ℕ c.toStructure _
 
-/-- Isomorphic codes have the same stabilization ordinal (`stabilizesAt_of_equiv`), for every
-relational language. -/
+/-- The defining equation of `codeStabilizationOrdinal`, for transporting `stabilizationOrdinal`
+facts to codes. -/
+theorem codeStabilizationOrdinal_def (c : StructureSpace L) :
+    codeStabilizationOrdinal c = @stabilizationOrdinal L ℕ c.toStructure _ :=
+  rfl
+
+/-- Isomorphic codes have the same stabilization ordinal (`stabilizationOrdinal_eq_of_equiv`), for
+every relational language. -/
 theorem codeStabilizationOrdinal_congr {c d : StructureSpace L}
     (h : (structureIsoSetoid L).r c d) :
-    codeStabilizationOrdinal c = codeStabilizationOrdinal d := by
-  obtain ⟨e⟩ := h
-  have key : ∀ α : Ordinal.{0}, @StabilizesAt L ℕ c.toStructure α ↔
-      @StabilizesAt L ℕ d.toStructure α := fun α ↦
-    ⟨@stabilizesAt_of_equiv L ℕ ℕ c.toStructure d.toStructure e α,
-      @stabilizesAt_of_equiv L ℕ ℕ d.toStructure c.toStructure
-        (@Language.Equiv.symm L ℕ ℕ c.toStructure d.toStructure e) α⟩
-  simp only [codeStabilizationOrdinal, stabilizationOrdinal]
-  exact congrArg sInf (Set.ext key)
+    codeStabilizationOrdinal c = codeStabilizationOrdinal d :=
+  let ⟨e⟩ := h
+  -- the decoded structures are supplied explicitly: both live on the carrier `ℕ`, so instance
+  -- resolution cannot tell them apart
+  @stabilizationOrdinal_eq_of_equiv L ℕ ℕ c.toStructure d.toStructure _ _ e
 
 /-- **The stabilization ordinal is an isolating rank** for countably many relation symbols: it
 is countable (`stabilizationOrdinal_lt_omega1'`) and decides isomorphism at its own level
-(`stabilizationOrdinal_spec`).  This is the one place in the contract layer where countability
-of the language is used. -/
+(`stabilizationOrdinal_spec`).  Together with the family bridge
+`exists_isolating_codeLevel_of_family` (whose countability is forced by the landed
+`exists_isolating_level`), this is one of the two declarations of the module that assume
+countably many relation symbols. -/
 theorem isIsolatingRank_codeStabilizationOrdinal [Countable (Σ l, L.Relations l)] :
     IsIsolatingRank (codeStabilizationOrdinal (L := L)) where
   iso_invariant _ _ h := codeStabilizationOrdinal_congr h
+  -- the decoded structures are supplied explicitly: `c.toStructure` and `d.toStructure` are two
+  -- structures on the same carrier `ℕ`, so instance resolution cannot tell them apart
   lt_omega1 c := @stabilizationOrdinal_lt_omega1' L _ _ ℕ c.toStructure _
   isolates c d h := (@stabilizationOrdinal_spec L _ _ ℕ c.toStructure _ ℕ d.toStructure _).mp h
 
@@ -324,6 +357,7 @@ theorem exists_isolating_codeLevel_of_family [Countable (Σ l, L.Relations l)]
   have := hS.to_subtype
   obtain ⟨γ, hγ, hiso⟩ := @exists_isolating_level L _ _
     ↥(Quotient.mk (structureIsoSetoid L) '' S) _ (fun _ ↦ ℕ)
+    -- the representatives' structures are passed explicitly, all on the carrier `ℕ`
     (fun q ↦ (Quotient.out q.1 : StructureSpace L).toStructure) (fun _ ↦ inferInstance)
   refine ⟨γ, hγ, fun x hx y hy h ↦ ?_⟩
   have hxo : (structureIsoSetoid L).r (Quotient.out (Quotient.mk (structureIsoSetoid L) x)) x :=

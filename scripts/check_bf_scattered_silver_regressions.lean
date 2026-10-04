@@ -12,17 +12,27 @@ All three public theorems are *applied*, not only listed for their axioms.
   most one isomorphism class of coded models, fewer than continuum many, so
   `Sentenceω.bfScattered_modelsOf_of_lt_continuum` makes its models back-and-forth scattered,
   and the iff turns that into thinness.
-* **Rank-free and separate from the counting layer.**  The `InfinitaryLogic` import closure of
+* **Rank-free proof cones (checked), with the Scott modules present only in the import
+  closure.**  A fail-closed walk of the proof cones of the three theorems (types, values,
+  constructors, recursor rules; an unknown constant stops the guard) finds no constant whose
+  name contains `stabilizationOrdinal`, `StabilizesAt`, `scottRank`, `scottHeight`,
+  `IsIsolatingRank` or `codeStabilizationOrdinal`, and no constant declared in `Scott.Rank`,
+  `Scott.Height*`, `Scott.RefinementCount`, `Scott.IsolatingLevel` or
+  `Descriptive.ScatteredCounting` (`[RANK IN CONE]`).  Positive control: a theorem with a clean
+  statement whose proof uses `stabilizationOrdinal_spec` is flagged by both the name and the
+  module checks, so the check cannot pass vacuously.  Those Scott modules are nevertheless in the
+  import closure, through `ModelTheory.MorleyCounting`.
+* **Separate from the counting layer.**  The `InfinitaryLogic` import closure of
   `Conditional.BFScatteredSilver` is exactly the pinned list `allowedClosure` (57 modules,
-  `[CLOSURE DRIFT]` otherwise); it does **not** contain `Descriptive.ScatteredCounting` or
-  `Scott.IsolatingLevel` (`[LAYERING]`).  The converse import boundary, that
-  `Descriptive.ScatteredCounting` reaches no `Conditional` module, is asserted by
+  `[CLOSURE DRIFT]` otherwise); it does **not** contain
+  `Descriptive.ScatteredCounting` or `Scott.IsolatingLevel` (`[LAYERING]`).  The converse import
+  boundary, that `Descriptive.ScatteredCounting` reaches no `Conditional` module, is asserted by
   `check_scattered_counting_regressions.lean`.
 * **Axioms.**  The three theorems go through Silver's theorem
-  (`silver_countable_or_cantorAntichain`, hence `silverBurgessDichotomy` and the Gandy–Harrington
-  machinery); the axioms reported by `collectAxioms` for them and for every declaration of this
-  guard are printed and must be among `propext`, `Classical.choice` and `Quot.sound`.  The OK
-  line is printed only after the closure and axiom checks.
+  (`silver_countable_or_cantorAntichain`, through the Gandy–Harrington machinery); the axioms
+  reported by `collectAxioms` for them and for every declaration of this guard are printed and
+  must be among `propext`, `Classical.choice` and `Quot.sound`.  The OK line is printed only
+  after the cone, closure and axiom checks.
 
 Run with: lake env lean scripts/check_bf_scattered_silver_regressions.lean
 -/
@@ -70,6 +80,12 @@ theorem pureSet_regression (Θ : pureLang.Sentenceω) :
   have hK := Sentenceω.bfScattered_modelsOf_of_lt_continuum hlt
   exact ⟨hlt, hK, Sentenceω.bfScattered_iff_isThinOnNatModels.mp hK⟩
 
+/-- **Positive control for the rank-free cone check**: a clean statement whose proof uses
+`stabilizationOrdinal_spec`. -/
+theorem controlRank : True := by
+  have _h := @stabilizationOrdinal_spec.{0, 0, 0}
+  trivial
+
 end BFScatteredSilverRegressions
 
 end
@@ -93,6 +109,66 @@ where
 
 /-- The module under test. -/
 def targetModule : Name := `InfinitaryLogic.Conditional.BFScatteredSilver
+
+/-- The three theorems of the module. -/
+def silverTheorems : List Name :=
+  [`Sentenceω.bfScattered_of_isThinOnNatModels, `Sentenceω.bfScattered_iff_isThinOnNatModels,
+   `Sentenceω.bfScattered_modelsOf_of_lt_continuum].map (`FirstOrder.Language ++ ·)
+
+/-- Name substrings no constant in a rank-free cone may contain. -/
+def rankSubstrings : List String :=
+  ["stabilizationOrdinal", "StabilizesAt", "scottRank", "scottHeight", "IsIsolatingRank",
+   "codeStabilizationOrdinal"]
+
+/-- Module prefixes no constant in a rank-free cone may be declared in. -/
+def rankModules : List Name :=
+  [`InfinitaryLogic.Scott.Rank, `InfinitaryLogic.Scott.Height,
+   `InfinitaryLogic.Scott.RefinementCount, `InfinitaryLogic.Scott.IsolatingLevel,
+   `InfinitaryLogic.Descriptive.ScatteredCounting]
+
+/-- The constants a declaration refers to: its type, its value (theorem, definition and opaque
+bodies alike), and the constructors, recursor rules and mutual families of inductive data. -/
+def refs (ci : ConstantInfo) : NameSet := Id.run do
+  let mut s := ci.type.getUsedConstantsAsSet
+  match ci with
+  | .defnInfo v => s := s ++ v.value.getUsedConstantsAsSet
+  | .thmInfo v => s := s ++ v.value.getUsedConstantsAsSet
+  | .opaqueInfo v => s := s ++ v.value.getUsedConstantsAsSet
+  | .inductInfo v => s := s ++ .ofList v.ctors ++ .ofList v.all
+  | .ctorInfo v => s := s.insert v.induct
+  | .recInfo v =>
+    s := s ++ .ofList v.all
+    for r in v.rules do s := s ++ r.rhs.getUsedConstantsAsSet
+  | .axiomInfo _ | .quotInfo _ => pure ()
+  return s
+
+/-- The transitive constant cone of `root`, failing closed on any constant that is not in the
+environment. -/
+def cone (env : Environment) (root : Name) : Except String NameSet := do
+  let mut visited : NameSet := {}
+  let mut stack : Array Name := #[root]
+  while !stack.isEmpty do
+    let n := stack.back!
+    stack := stack.pop
+    if visited.contains n then
+      continue
+    visited := visited.insert n
+    let some ci := env.find? n
+      | throw s!"[UNKNOWN CONSTANT] {n} (reached from {root}) is not in the environment"
+    for m in refs ci do
+      unless visited.contains m do
+        stack := stack.push m
+  return visited
+
+/-- The rank constants of a cone: by name, and by declaring module. -/
+def rankHits (env : Environment) (c : NameSet) : List Name × List (Name × Name) :=
+  let names := c.toList.filter fun n ↦
+    rankSubstrings.any fun sub ↦ (n.toString.splitOn sub).length ≠ 1
+  let mods := c.toList.filterMap fun n ↦ do
+    let idx ← env.getModuleIdxFor? n
+    let m := env.header.moduleNames[idx.toNat]!
+    if rankModules.any (·.isPrefixOf m) then some (n, m) else none
+  (names, mods)
 
 /-- Modules the closure must not contain: the counting layer and the family isolating level. -/
 def layeringForbidden : List Name :=
@@ -138,7 +214,8 @@ def allowedClosure : List Name :=
 def audited : List Name :=
   [`Sentenceω.bfScattered_of_isThinOnNatModels, `Sentenceω.bfScattered_iff_isThinOnNatModels,
    `Sentenceω.bfScattered_modelsOf_of_lt_continuum].map (`FirstOrder.Language ++ ·) ++
-  [`generic_regression, `pureLang, `pureSet_regression].map (`BFScatteredSilverRegressions ++ ·)
+  [`generic_regression, `pureLang, `pureSet_regression,
+   `controlRank].map (`BFScatteredSilverRegressions ++ ·)
 
 /-- The standard axioms. -/
 def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
@@ -160,9 +237,29 @@ run_cmd do
   -- the three theorems are exactly the public declarations of the module
   let pub := (env.header.moduleData[idx.toNat]!).constNames.toList.filter fun n ↦
     !n.isInternalDetail
-  let mainDecls := audited.take 3
+  let mainDecls := silverTheorems
   unless pub.all mainDecls.contains && mainDecls.all pub.contains do
     throwError "[ROOT DRIFT] the public declarations of {targetModule} are {pub}"
+  -- rank-free proof cones, with a positive control
+  let control := `BFScatteredSilverRegressions.controlRank
+  let some (.thmInfo ctl) := env.find? control | throwError "positive control missing"
+  if ctl.type.getUsedConstants.contains `FirstOrder.Language.stabilizationOrdinal_spec then
+    throwError "positive control: controlRank is no longer proof-only"
+  for root in silverTheorems ++ [control] do
+    let c ← match cone env root with
+      | .ok c => pure c
+      | .error e => throwError e
+    let (names, mods) := rankHits env c
+    if root == control then
+      if names.isEmpty || mods.isEmpty then
+        throwError "positive control FAILED: the rank-free check does not flag {control} \
+          (names {names.take 5}, modules {mods.take 5})"
+    else unless names.isEmpty && mods.isEmpty do
+      throwError "[RANK IN CONE] the cone of {root} contains {names.take 10} {mods.take 10}"
+  for m in [`InfinitaryLogic.Scott.Rank, `InfinitaryLogic.Scott.Height.Defs,
+      `InfinitaryLogic.Scott.RefinementCount] do
+    unless ilModules.contains m do
+      throwError "[CLOSURE DRIFT] {m} is no longer in the import closure; update the docstrings"
   let mut seen : NameSet := {}
   for n in audited do
     unless (env.find? n).isSome do throwError "declaration {n} not found"
@@ -172,7 +269,11 @@ run_cmd do
     seen := seen ++ .ofList axs.toList
   logInfo m!"bf scattered silver regression guard: OK (applied: thin implies back-and-forth \
     scattered, the iff in both directions and the below-continuum form for an arbitrary \
-    countable relational Language.\{u, v}; concretely, every pure-set sentence has fewer than \
+    countable relational Language.\{u, v}; rank-free proof cones (no stabilization ordinal, \
+    StabilizesAt, Scott rank or height, isolating rank, nor any constant of Scott.Rank, \
+    Scott.Height, RefinementCount, IsolatingLevel or ScatteredCounting), the check flagging \
+    a proof-only control, with those Scott modules present in the import closure; \
+    concretely, every pure-set sentence has fewer than \
     continuum many classes, hence back-and-forth scattered models, hence is thin; exact \
     import closure ({ilModules.length} InfinitaryLogic modules) without \
     Descriptive.ScatteredCounting or Scott.IsolatingLevel; axioms reported for the \

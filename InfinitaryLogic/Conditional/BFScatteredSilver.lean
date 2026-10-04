@@ -36,10 +36,18 @@ clause of `BFScattered` (`bfEquivSetoid_eq_comap`), or a Cantor antichain for is
 `ModelsOf Θ`, which gives a perfect set of pairwise non-isomorphic models
 (`Sentenceω.hasPerfectSet_of_ambient_cantorAntichain`) and contradicts thinness.
 
+The same per-level step is inlined in the proof of `morley_counting_coded_or_perfect`
+(`Conditional/MorleyPerfect.lean`).  Extracting it there as one named lemma, used by both, is a
+recorded follow-up; `MorleyPerfect.lean` is not changed here.
+
 ## Scope
 
-* **Rank-free.**  No isolating rank, Scott rank or stabilization ordinal is used.  These
-  statements compose with any isolating rank: from `BFScattered (ModelsOf Θ)` and an
+* **Rank-free proof cones (checked).**  The proofs use no isolating rank, Scott rank, Scott
+  height or stabilization ordinal: `check_bf_scattered_silver_regressions.lean` walks the proof
+  cones of the three theorems and finds none of those constants.  The Scott modules that define
+  them (`Scott.RefinementCount`, `Scott.Rank`, `Scott.Height`) are present only in the import
+  closure, through `ModelTheory/MorleyCounting.lean`.
+* **Composition with an isolating rank.**  From `BFScattered (ModelsOf Θ)` and an
   `IsIsolatingRank ρ`, the counting statements of `Descriptive/ScatteredCounting.lean` give at
   most `ℵ₁` isomorphism classes, exactly `ℵ₁` when uncountably many, and countably many iff the
   rank is bounded.  That composition is left to the consumer: this module does **not** import
@@ -49,6 +57,16 @@ clause of `BFScattered` (`bfEquivSetoid_eq_comap`), or a Cantor antichain for is
   Polish and `bfEquivSetoid` Borel, for Silver's theorem.
 * **Why `Conditional`.**  The module consumes Silver's theorem through
   `Conditional/SilverAntichain.lean`.
+
+## References
+
+* M. Morley, "The number of countable models", *J. Symbolic Logic* 35 (1970), 14–18 (the
+  level-by-level analysis of the back-and-forth stratification; here each level is handled by
+  Silver's dichotomy).
+* J. H. Silver, "Counting the number of equivalence classes of Borel and coanalytic equivalence
+  relations", *Ann. Math. Logic* 18 (1980), 1–28.
+
+The composition was offered for upstreaming by a consumer of this library.
 -/
 
 universe u v
@@ -58,9 +76,8 @@ namespace FirstOrder.Language
 variable {L : Language.{u, v}} [L.IsRelational] [Countable (Σ l, L.Relations l)]
 
 /-- **A thin sentence has back-and-forth scattered models.**  If `Θ` is thin on its coded models,
-then at every level `η < ω₁` its coded models fall into countably many `CodeBFEquiv η`-classes:
-Silver's theorem applied to the Borel relation `bfEquivSetoid Θ η`, which is coarser than
-isomorphism, leaves only that alternative. -/
+then at every level `η < ω₁` its coded models fall into countably many `CodeBFEquiv η`-classes.
+The per-level step is the one inlined in `morley_counting_coded_or_perfect`. -/
 theorem Sentenceω.bfScattered_of_isThinOnNatModels {Θ : L.Sentenceω}
     (h : Θ.IsThinOnNatModels) : BFScattered (ModelsOf Θ) := by
   intro η hη

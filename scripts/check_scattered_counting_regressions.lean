@@ -1,19 +1,23 @@
 /-
 Regression guard for counting isomorphism classes through an isolating rank
-(`InfinitaryLogic/Descriptive/ScatteredCounting.lean`) and for its one addition to the Scott
-layer, `stabilizesAt_of_equiv` (`InfinitaryLogic/Scott/Sentence.lean`).
+(`InfinitaryLogic/Descriptive/ScatteredCounting.lean`) and for its two additions to the Scott
+layer, `stabilizesAt_of_equiv` (`InfinitaryLogic/Scott/Sentence.lean`) and
+`stabilizationOrdinal_eq_of_equiv` (`InfinitaryLogic/Scott/RefinementCount.lean`).
 
 Every public declaration of the module is *applied*, not only listed for its axioms.
 
 * **Generic applications, no countability.**  The contract `IsIsolatingRank` (its three fields),
   `isolates_of_le`, `lift`, `lift_mk`, `lift_lt_omega1`, `of_le`, `codeStabilizationOrdinal`,
-  `codeStabilizationOrdinal_congr`, the code form `exists_isolating_codeLevel` with its
+  `codeStabilizationOrdinal_def`, `codeStabilizationOrdinal_congr`, the per-level
+  `countable_fiber`, the code form `exists_isolating_codeLevel` with its
   contrapositive `not_countable_isoClasses_of_forall_unisolated`, and the four counting
   statements `countable_fibers`, `mk_isoClasses_le_aleph_one`, `mk_isoClasses_eq_aleph_one`,
   `countable_isoClasses_iff_bounded` are applied for an arbitrary relational `Language.{u, v}`
   with no countability instance in scope, and the code form and counting statements again in a
-  language with uncountably many unary symbols.  `stabilizesAt_of_equiv` is applied for an
-  arbitrary `Language.{u, v}` with neither a relational nor a countability instance.
+  language with uncountably many unary symbols.  There the isolating rank is a hypothesis: no
+  isolating rank is exhibited for uncountably many relation symbols.  `stabilizesAt_of_equiv`
+  and `stabilizationOrdinal_eq_of_equiv` are applied for an arbitrary `Language.{u, v}` with
+  neither a relational nor a countability instance.
 * **The contract is abstract (decision 6).**  For countably many symbols the successor of the
   stabilization ordinal, `Order.succ ∘ codeStabilizationOrdinal`, is an isolating rank (by
   `of_le` from the instance) that differs from `codeStabilizationOrdinal` at every code.  In the
@@ -39,8 +43,9 @@ Every public declaration of the module is *applied*, not only listed for its axi
   inspected: an instance `Countable (Σ l, _)` occurs in exactly
   `isIsolatingRank_codeStabilizationOrdinal` (the instance) and the family bridge
   `exists_isolating_codeLevel_of_family` (`[COUNTABILITY DRIFT]`), and every public declaration
-  of the module is classified; `stabilizesAt_of_equiv` mentions neither `Countable` nor
-  `IsRelational`.
+  of the module is classified; `stabilizesAt_of_equiv` and `stabilizationOrdinal_eq_of_equiv`
+  mention neither `Countable (Σ l, _)` nor `IsRelational`, and are declared in `Scott.Sentence`
+  and `Scott.RefinementCount` respectively.
 * **Exact import closures.**  The `InfinitaryLogic` closure of `Descriptive.ScatteredCounting`
   is exactly `allowedClosure` (35 modules: the 27 of `Descriptive.BFConcentration`, the 13 of
   `Scott.IsolatingLevel`, the 2 of `OrdinalCountability`, overlapping in 8, plus the module),
@@ -48,10 +53,10 @@ Every public declaration of the module is *applied*, not only listed for its axi
   `Conditional`, `ScottProcess` or `WIP` module and neither `Descriptive.BFScatteredSentence`
   nor `ModelTheory.MorleyCounting` (`[BROAD CONE]`, `[CLOSURE DRIFT]`).  (There is no module
   `Descriptive.MorleyCounting`; the counting theory is `ModelTheory.MorleyCounting`.)  The
-  closure of `Scott.Sentence` is pinned exactly (10 modules), so `stabilizesAt_of_equiv` added
-  no import.
+  closures of `Scott.Sentence` (10 modules) and `Scott.RefinementCount` (12 modules) are pinned
+  exactly, so the two Scott-layer additions added no import.
 * **Standard axioms** for every declaration of the module (enumerated from the environment),
-  `stabilizesAt_of_equiv`, and every declaration of this guard.  The OK line is printed only
+  the two Scott-layer additions, and every declaration of this guard.  The OK line is printed only
   after the closure and axiom checks.
 
 Run with: lake env lean scripts/check_scattered_counting_regressions.lean
@@ -127,6 +132,24 @@ theorem generic_stabilizesAt_regression {L : Language.{u, v}} {M M' : Type w} [L
     StabilizesAt (L := L) M' α :=
   stabilizesAt_of_equiv e α h
 
+/-- **`stabilizationOrdinal_eq_of_equiv` for an arbitrary language**, with neither a relational
+nor a countability instance. -/
+theorem generic_stabilizationOrdinal_regression {L : Language.{u, v}} {M M' : Type w}
+    [L.Structure M] [L.Structure M'] [Countable M] [Countable M'] (e : M ≃[L] M') :
+    stabilizationOrdinal (L := L) M = stabilizationOrdinal (L := L) M' :=
+  stabilizationOrdinal_eq_of_equiv e
+
+/-- **The defining equation and the per-level fibre**, for an arbitrary relational language with
+no countability: one countable level gives one countable fibre. -/
+theorem generic_def_fiber_regression {L : Language.{u, v}} [L.IsRelational]
+    {ρ : StructureSpace L → Ordinal.{0}} (hρ : IsIsolatingRank ρ) {K : Set (StructureSpace L)}
+    {α : Ordinal.{0}} (c : StructureSpace L)
+    (hα : Countable (Quotient ((codeBFEquivSetoid L α).comap
+      (Subtype.val : K → StructureSpace L)))) :
+    codeStabilizationOrdinal c = @stabilizationOrdinal L ℕ c.toStructure _ ∧
+      Countable {q : ↥(Quotient.mk (structureIsoSetoid L) '' K) // hρ.lift q.1 = α} :=
+  ⟨codeStabilizationOrdinal_def c, hρ.countable_fiber hα⟩
+
 /-- Uncountably many unary relation symbols, one for each point of Cantor space. -/
 def bigLang : Language.{0, 0} where
   Functions _ := Empty
@@ -135,7 +158,8 @@ def bigLang : Language.{0, 0} where
 instance : bigLang.IsRelational := fun _ ↦ inferInstanceAs (IsEmpty Empty)
 
 /-- **The code form and the counting statements in a language with uncountably many symbols**:
-no `Countable` instance for its symbols exists or is assumed. -/
+no `Countable` instance for its symbols exists or is assumed.  The isolating rank `hρ` is a
+hypothesis; no isolating rank is exhibited for this language. -/
 theorem bigLang_regression {ρ : StructureSpace bigLang → Ordinal.{0}} (hρ : IsIsolatingRank ρ)
     {K : Set (StructureSpace bigLang)} (hK : BFScattered K)
     (hKc : (Quotient.mk (structureIsoSetoid bigLang) '' K).Countable) :
@@ -241,6 +265,7 @@ theorem swapAt_div (x : ℕ → Bool) (m : ℕ) : swapAt x m / 2 = m / 2 := by
 
 theorem swapAt_involutive (x : ℕ → Bool) : Function.Involutive (swapAt x) := by
   intro m
+  -- unfold only the outer `swapAt`, so that `swapAt_div` can rewrite its test
   change (if x (swapAt x m / 2) then _ else _) = m
   rw [swapAt_div]
   unfold swapAt
@@ -344,10 +369,11 @@ def countabilityFree : List Name :=
     `IsIsolatingRank.lift_mk, `IsIsolatingRank.lift_lt_omega1, `IsIsolatingRank.of_le,
     `IsIsolatingRank.exists_isolating_codeLevel,
     `IsIsolatingRank.not_countable_isoClasses_of_forall_unisolated,
-    `IsIsolatingRank.countable_fibers, `IsIsolatingRank.mk_isoClasses_le_aleph_one,
+    `IsIsolatingRank.countable_fiber, `IsIsolatingRank.countable_fibers,
+    `IsIsolatingRank.mk_isoClasses_le_aleph_one,
     `IsIsolatingRank.mk_isoClasses_eq_aleph_one,
     `IsIsolatingRank.countable_isoClasses_iff_bounded, `codeStabilizationOrdinal,
-    `codeStabilizationOrdinal_congr]
+    `codeStabilizationOrdinal_def, `codeStabilizationOrdinal_congr]
 
 /-- The public declarations of the module whose types assume countably many relation symbols:
 exactly the instance and the family bridge. -/
@@ -357,8 +383,10 @@ def countabilityUsing : List Name :=
 /-- The module under test. -/
 def targetModule : Name := `InfinitaryLogic.Descriptive.ScatteredCounting
 
-/-- The Scott-layer addition. -/
-def stabEquiv : Name := `FirstOrder.Language.stabilizesAt_of_equiv
+/-- The Scott-layer additions, with their modules. -/
+def scottAdditions : List (Name × Name) :=
+  [(`FirstOrder.Language.stabilizesAt_of_equiv, `InfinitaryLogic.Scott.Sentence),
+   (`FirstOrder.Language.stabilizationOrdinal_eq_of_equiv, `InfinitaryLogic.Scott.RefinementCount)]
 
 run_cmd do
   let env ← getEnv
@@ -384,14 +412,16 @@ run_cmd do
   unless unclassified.isEmpty && absent.isEmpty do
     throwError "[COUNTABILITY DRIFT] the public declarations of {targetModule} changed \
       (unclassified {unclassified}, not declared there {absent}); classify them"
-  -- the Scott-layer addition assumes neither countability nor a relational language
-  let some se := env.find? stabEquiv | throwError "declaration {stabEquiv} not found"
-  if (se.type.find? fun e ↦ e.isAppOf ``Countable ||
-      e.isAppOf ``FirstOrder.Language.IsRelational).isSome then
-    throwError "[COUNTABILITY DRIFT] the type of {stabEquiv} assumes Countable or IsRelational"
-  let some sidx := env.getModuleIdxFor? stabEquiv | throwError "no module for {stabEquiv}"
-  unless env.header.moduleNames[sidx.toNat]! == `InfinitaryLogic.Scott.Sentence do
-    throwError "[PLACEMENT] {stabEquiv} is not declared in Scott.Sentence"
+  -- the Scott-layer additions assume neither countably many symbols nor a relational language
+  -- (`stabilizationOrdinal_eq_of_equiv` does assume countable carriers)
+  for (n, m) in scottAdditions do
+    let some se := env.find? n | throwError "declaration {n} not found"
+    if (se.type.find? fun e ↦ (e.isAppOfArity ``Countable 1 && e.appArg!.isAppOf ``Sigma) ||
+        e.isAppOf ``FirstOrder.Language.IsRelational).isSome then
+      throwError "[COUNTABILITY DRIFT] the type of {n} assumes Countable (Σ …) or IsRelational"
+    let some sidx := env.getModuleIdxFor? n | throwError "no module for {n}"
+    unless env.header.moduleNames[sidx.toNat]! == m do
+      throwError "[PLACEMENT] {n} is not declared in {m}"
 
 /-! ### Exact import closures and axiom hygiene -/
 
@@ -414,8 +444,11 @@ where
 def ilClosure (env : Environment) (m : Name) : List Name :=
   (importClosure env m).toList.filter fun n ↦ (`InfinitaryLogic).isPrefixOf n
 
-/-- Module prefixes the closure of `Descriptive.ScatteredCounting` may not reach, and two exact
-modules: the sentence form of `BFScattered` and the counting theory it brings in. -/
+/-- Module prefixes the closure of `Descriptive.ScatteredCounting` may not reach, and three exact
+entries: the sentence form of `BFScattered`, the counting theory it brings in, and
+`Descriptive.MorleyCounting`.  The last is listed defensively: no module of that name exists
+(the counting theory is `ModelTheory.MorleyCounting`), and the entry guards against a future
+one. -/
 def forbiddenPrefixes : List Name :=
   [`InfinitaryLogic.ModelTheory, `InfinitaryLogic.Methods, `InfinitaryLogic.Admissible,
    `InfinitaryLogic.Conditional, `InfinitaryLogic.ScottProcess, `InfinitaryLogic.WIP,
@@ -457,10 +490,16 @@ def sentenceClosure : List Name :=
    `InfinitaryLogic.Scott.AtomicDiagram, `InfinitaryLogic.Scott.BackAndForth,
    `InfinitaryLogic.Scott.Formula, `InfinitaryLogic.Scott.Sentence]
 
+/-- The exact `InfinitaryLogic` import closure of `Scott.RefinementCount`, unchanged by
+`stabilizationOrdinal_eq_of_equiv`. -/
+def refinementCountClosure : List Name :=
+  sentenceClosure ++ [`InfinitaryLogic.OrdinalUtil, `InfinitaryLogic.Scott.RefinementCount]
+
 /-- The guard's own declarations whose axioms are audited. -/
 def guardDecls : List Name :=
   [`generic_contract_regression, `generic_ofLe_regression, `generic_codeStabilization_regression,
    `generic_codeLevel_regression, `generic_counting_regression, `generic_stabilizesAt_regression,
+   `generic_stabilizationOrdinal_regression, `generic_def_fiber_regression,
    `bigLang, `bigLang_regression, `shifted_rank_regression, `pureLang, `pureCode,
    `constant_rank_regression,
    `constant_rank_codeLevel_regression, `unaryLang, `relabel, `relabel_iso, `codeE, `isoClassE,
@@ -504,9 +543,11 @@ run_cmd do
   -- the Scott-layer closure is unchanged
   checkExact `InfinitaryLogic.Scott.Sentence (ilClosure env `InfinitaryLogic.Scott.Sentence)
     sentenceClosure
+  checkExact `InfinitaryLogic.Scott.RefinementCount
+    (ilClosure env `InfinitaryLogic.Scott.RefinementCount) refinementCountClosure
   -- axioms: every declaration of the module, the Scott addition and the guard's declarations
   let enumerated := (env.header.moduleData[idx.toNat]!).constNames.toList
-  let audited := enumerated ++ [stabEquiv] ++ guardDecls
+  let audited := enumerated ++ scottAdditions.map (·.1) ++ guardDecls
   for n in audited do
     unless (env.find? n).isSome do throwError "declaration {n} not found"
     let axs ← Elab.Command.liftCoreM (collectAxioms n)
@@ -515,7 +556,9 @@ run_cmd do
   logInfo m!"scattered counting regression guard: OK (applied: the contract and its API, the \
     code form and its contrapositive, and the four counting statements for an arbitrary \
     relational Language.\{u, v} with no countability, and in a language with uncountably many \
-    symbols; stabilizesAt_of_equiv with no relational or countability instance; the contract \
+    symbols, there with the rank as a hypothesis (none exhibited); stabilizesAt_of_equiv and \
+    stabilizationOrdinal_eq_of_equiv with no relational or countability instance; the defining \
+    equation and the per-level fibre; the contract \
     is abstract: the shifted rank succ ∘ codeStabilizationOrdinal is isolating and differs \
     everywhere, and a constant rank is isolating in the pure-set language; on the isomorphism \
     class of one code, uncountable as a set of codes but meeting one class, the code form from \
@@ -525,5 +568,6 @@ run_cmd do
     declaration classified; exact import closure ({ilModules.length} modules, the union of \
     BFConcentration, IsolatingLevel and OrdinalCountability plus the module) with no \
     ModelTheory, Methods, Admissible, Conditional, ScottProcess, WIP, BFScatteredSentence or \
-    MorleyCounting module; Scott.Sentence closure unchanged \
-    ({sentenceClosure.length} modules); standard axioms for {audited.length} declarations)"
+    MorleyCounting module; Scott.Sentence and Scott.RefinementCount closures unchanged \
+    ({sentenceClosure.length} and {refinementCountClosure.length} modules); standard axioms \
+    for {audited.length} declarations)"

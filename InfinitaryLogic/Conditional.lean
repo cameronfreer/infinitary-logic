@@ -58,8 +58,10 @@ intermediates and historical statement shapes.
 - `BFScatteredSilver.lean`: **`Sentenceω.bfScattered_of_isThinOnNatModels`** — a thin sentence
   has back-and-forth scattered models (Silver on each level's Borel relation `bfEquivSetoid`),
   with the equivalence `Sentenceω.bfScattered_iff_isThinOnNatModels` and the corollary
-  `Sentenceω.bfScattered_modelsOf_of_lt_continuum`; rank-free, and it does not import
-  `Descriptive/ScatteredCounting.lean`.
+  `Sentenceω.bfScattered_modelsOf_of_lt_continuum`; rank-free proof cones (checked), with the
+  Scott modules present only in the import closure, and it does not import
+  `Descriptive/ScatteredCounting.lean`.  Its per-level Silver step is the one inlined in
+  `morley_counting_coded_or_perfect` (`MorleyPerfect.lean`).
 
 There are no sorries anywhere in the project; the historical sorry-bearing
 `Combinatorics/ErdosRado.lean` exploration is preserved on the
