@@ -37,7 +37,8 @@ cuts `K` into two unbounded sides; see the regression guard).
   `Sentenceω.minimallyUncountable_iff_inf`.
 * `modelsOf_scottSentenceAt` (an analogue of [Mon, Lemma XII.5] on codes): for `α < ω₁`, the
   codes of the models of `scottSentenceAt` of the structure decoded from `c`, at level `α`, are
-  exactly the codes `CodeBFEquiv α`-equivalent to `c`.  Every back-and-forth class is therefore a sentence cut
+  exactly the codes `CodeBFEquiv α`-equivalent to `c`.  Every back-and-forth class is therefore a
+  sentence cut
   (`MinimallyUncountableOn.countable_bfClass_or_compl`).
 * `exists_bfClass_compl_of_sentenceCuts`: for any notion of smallness closed under subsets and
   countable unions, if `K` is not small but every sentence cut has a small side, then at a level
