@@ -39,6 +39,7 @@ import InfinitaryLogic.Scott.ForgetParameters
 import InfinitaryLogic.Scott.OrbitParameters
 import InfinitaryLogic.Scott.GradedMatching
 import InfinitaryLogic.Scott.RefinementCount
+import InfinitaryLogic.Scott.IsolatingLevel
 import InfinitaryLogic.Scott.Rank
 import InfinitaryLogic.Scott.QuantifierRank
 import InfinitaryLogic.Scott.Height
