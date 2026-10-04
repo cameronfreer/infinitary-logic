@@ -2,7 +2,7 @@
 Regression guard for the family-level isolating theorem
 (`InfinitaryLogic/Scott/IsolatingLevel.lean`).
 
-Both public theorems are *applied*, not only listed for their axioms.
+All three public theorems are *applied*, not only listed for their axioms.
 
 * **Pure sets: the level separates exactly.**  The family `Option ℕ → Type` sending `none` to
   `ℕ` and `some n` to `Fin n`, as pure sets (the empty language).  At the level returned by
@@ -12,19 +12,28 @@ Both public theorems are *applied*, not only listed for their axioms.
   `BFEquiv0` at that level.
 * **Negative: level `0` does not isolate the pure family.**  `ℕ` and `Fin 3` are `BFEquiv0` at
   level `0` (the empty tuple has no atomic formulas over the empty language) but are not
-  isomorphic, so the returned level is positive.
+  isomorphic, so no isolating level of this family is `0` (`pure_level_pos`); applied to the
+  level returned by `exists_isolating_level`, that level is positive
+  (`pure_returned_level_pos`).
 * **The empty family.**  `ι := Empty`: the theorem applies, and every level, in particular `0`,
   isolates vacuously.
 * **Two isomorphic members.**  The family `Bool → Type` with `ℕ` and `ℤ` as pure sets: at the
   returned level the two members are `BFEquiv0` (isomorphic structures are back-and-forth
-  equivalent at every level), and the theorem returns an isomorphism.
+  equivalent at every level), and the theorem returns an isomorphism; `exists_isolating_level_iff`
+  gives the `BFEquiv0` side directly.
+* **A nonempty language, constant carrier.**  The code-form consumer's shape: carrier `ℕ` for
+  every index, structures `S : ι → L.Structure ℕ` varying with the index, instance arguments
+  passed explicitly (`constant_carrier`, generic `L`).  Concretely, over a language with one
+  binary relation symbol, `ℕ` read with `≤` and with `≥` are not isomorphic and are separated at
+  the returned level (`order_separated`).
 * **The contrapositive.**
-  - *Conditional uncountable family.*  Given a ladder `P γ false`, `P γ true` of countable
-    structures that are `BFEquiv0` at `γ` but not isomorphic, for each `γ < ω₁`, the family
-    indexed by `{γ // γ < ω₁} × Bool` is not countable, derived from
-    `not_countable_of_forall_unisolated` (not from a cardinality computation on the index).
-    The ladder itself (unbounded back-and-forth rank among countable structures, e.g. through
-    well-orders) is a hypothesis here: no concrete ladder is constructed in this library.
+  - *Generic-signature plumbing check, not an uncountability test.*  `ladder_not_countable`
+    applies `not_countable_of_forall_unisolated` at a generic `L : Language.{u, v}` with generic
+    `Type w` carriers, to a family indexed by `{γ // γ < ω₁} × Bool` built from a hypothetical
+    ladder of non-isomorphic pairs `BFEquiv0` at each `γ`.  It checks only that the hypothesis
+    shape matches: its conclusion holds **without** the ladder hypothesis, as
+    `ordinalIndex_not_countable` proves outright.  No concrete family with an unisolated pair at
+    every countable level (unbounded back-and-forth rank) is constructed here.
   - *Concrete countable family.*  For the pure family, which is countable, the contrapositive
     shows that some level below `ω₁` has no unisolated pair.
 * **A `Type 1` carrier universe.**  The pure family lifted to `ULift.{1}`, with explicit
@@ -106,13 +115,14 @@ theorem sameAtomicType_elim0 (M N : Type) [Language.empty.Structure M]
   | rel R _ => exact isEmptyElim R
 
 /-- **Negative: level `0` does not isolate the pure family.**  `ℕ` and `Fin 3` are `BFEquiv0` at
-level `0` but not isomorphic, so the returned level is positive. -/
+level `0` but not isomorphic, so no isolating level of this family is `0`. -/
 theorem pure_level_zero_unisolated :
     BFEquiv0 (L := Language.empty) (pure none) (pure (some 3)) (0 : Ordinal.{0}) ∧
       IsEmpty (pure none ≃[Language.empty] pure (some 3)) :=
   ⟨(BFEquiv.zero_iff_sameAtomicType _ _).mpr (sameAtomicType_elim0 _ _),
     ⟨fun e ↦ by simpa using pure_eq_of_equiv e⟩⟩
 
+/-- Every isolating level of the pure family is positive. -/
 theorem pure_level_pos :
     ∀ γ : Ordinal.{0}, (∀ i j, BFEquiv0 (L := Language.empty) (pure i) (pure j) γ →
       Nonempty (pure i ≃[Language.empty] pure j)) → 0 < γ := by
@@ -120,6 +130,15 @@ theorem pure_level_pos :
   rw [pos_iff_ne_zero]
   rintro rfl
   exact pure_level_zero_unisolated.2.false (h _ _ pure_level_zero_unisolated.1).some
+
+/-- **The returned level is positive**: `pure_level_pos` applied to the level returned by
+`exists_isolating_level`. -/
+theorem pure_returned_level_pos :
+    ∃ γ : Ordinal.{0}, γ < Ordinal.omega 1 ∧ 0 < γ ∧
+      ∀ i j, BFEquiv0 (L := Language.empty) (pure i) (pure j) γ →
+        Nonempty (pure i ≃[Language.empty] pure j) := by
+  obtain ⟨γ, hγ, h⟩ := exists_isolating_level (L := Language.empty) pure
+  exact ⟨γ, hγ, pure_level_pos γ h, h⟩
 
 /-! ### The empty family -/
 
@@ -175,11 +194,86 @@ theorem iso_members :
     simpa only [comp_fin_elim0] using equiv_implies_BFEquiv natIntEquiv γ 0 Fin.elim0
   exact ⟨γ, hγ, hbf, hiso false true hbf⟩
 
+/-- **Both directions at the returned level**: `exists_isolating_level_iff` on the isomorphic
+members gives `BFEquiv0` at its level from the isomorphism. -/
+theorem iso_members_iff :
+    ∃ γ : Ordinal.{0}, γ < Ordinal.omega 1 ∧
+      BFEquiv0 (L := Language.empty) (twoInf false) (twoInf true) γ := by
+  obtain ⟨γ, hγ, h⟩ := exists_isolating_level_iff (L := Language.empty) twoInf
+  exact ⟨γ, hγ, (h false true).mpr ⟨natIntEquiv⟩⟩
+
+/-! ### A nonempty language, constant carrier -/
+
+/-- **The code-form consumer's shape**: constant carrier `ℕ`, structures varying with the index,
+instance arguments passed explicitly, over a generic countable relational language. -/
+theorem constant_carrier {ι : Type} [Countable ι] {L : Language.{u, v}} [L.IsRelational]
+    [Countable (Σ l, L.Relations l)] (S : ι → L.Structure ℕ) :
+    ∃ γ : Ordinal.{0}, γ < Ordinal.omega 1 ∧
+      ∀ i j, @BFEquiv0 L ℕ ℕ (S i) (S j) γ → Nonempty (@Language.Equiv L ℕ ℕ (S i) (S j)) :=
+  @exists_isolating_level L _ _ ι _ (fun _ ↦ ℕ) S (fun _ ↦ inferInstance)
+
+/-- One binary relation symbol. -/
+inductive LeRel : ℕ → Type
+  | le : LeRel 2
+
+/-- The language with one binary relation symbol and no function symbols. -/
+def leLang : Language.{0, 0} := ⟨fun _ ↦ Empty, LeRel⟩
+
+instance : leLang.IsRelational := fun _ ↦ inferInstanceAs (IsEmpty Empty)
+
+instance : Countable (Σ l, leLang.Relations l) :=
+  Function.Injective.countable (f := fun x : Σ l, LeRel l ↦ x.1)
+    (by rintro ⟨_, ⟨⟩⟩ ⟨_, ⟨⟩⟩ _; rfl)
+
+/-- `ℕ` with the relation symbol read as `≤` (`false`) or as `≥` (`true`). -/
+@[instance_reducible]
+def ordS (b : Bool) : leLang.Structure ℕ where
+  RelMap
+    | LeRel.le, x => if b then x 1 ≤ x 0 else x 0 ≤ x 1
+
+/-- `(ℕ, ≤)` and `(ℕ, ≥)` are not isomorphic: an isomorphism would send `0` to a greatest
+element. -/
+theorem ordS_not_equiv : IsEmpty (@Language.Equiv leLang ℕ ℕ (ordS false) (ordS true)) := by
+  refine ⟨fun e ↦ ?_⟩
+  have key : ∀ x y : ℕ, x ≤ y ↔ e y ≤ e x := fun x y ↦
+    (@Language.Equiv.map_rel leLang ℕ ℕ (ordS false) (ordS true) e 2 LeRel.le ![x, y]).symm
+  let f : ℕ ≃ ℕ := @Language.Equiv.toEquiv leLang ℕ ℕ (ordS false) (ordS true) e
+  have hf : ∀ x, f x = e x := fun _ ↦ rfl
+  have h := (key 0 (f.symm (e 0 + 1))).mp (Nat.zero_le _)
+  rw [← hf, Equiv.apply_symm_apply] at h
+  omega
+
+/-- **A nonempty language**: the returned level separates `(ℕ, ≤)` from `(ℕ, ≥)`, and identifies
+each with itself. -/
+theorem order_separated :
+    ∃ γ : Ordinal.{0}, γ < Ordinal.omega 1 ∧
+      ¬ @BFEquiv0 leLang ℕ ℕ (ordS false) (ordS true) γ ∧
+      @BFEquiv0 leLang ℕ ℕ (ordS true) (ordS true) γ := by
+  obtain ⟨γ, hγ, h⟩ := @exists_isolating_level_iff leLang _ _ Bool _ (fun _ ↦ ℕ) ordS
+    (fun _ ↦ inferInstance)
+  exact ⟨γ, hγ, fun hb ↦ ordS_not_equiv.false ((h false true).mp hb).some,
+    (h true true).mpr ⟨@Language.Equiv.refl leLang ℕ (ordS true)⟩⟩
+
 /-! ### The contrapositive -/
 
-/-- **Conditional uncountable family.**  A ladder of non-isomorphic pairs that are `BFEquiv0`
-at each countable level makes the family indexed by `{γ // γ < ω₁} × Bool` uncountable, through
-`not_countable_of_forall_unisolated`.  The ladder is a hypothesis. -/
+/-- **The index of the plumbing check is uncountable outright**, with no ladder: a countable set
+of countable ordinals has a countable supremum, which is not above its own successor. -/
+theorem ordinalIndex_not_countable :
+    ¬ Countable ({γ : Ordinal.{0} // γ < Ordinal.omega 1} × Bool) := by
+  intro h
+  have : Countable {γ : Ordinal.{0} // γ < Ordinal.omega 1} :=
+    Function.Injective.countable (f := fun x ↦ (x, false)) (fun a b hab ↦ by simpa using hab)
+  have hs : ∀ x : {γ : Ordinal.{0} // γ < Ordinal.omega 1}, Order.succ x.1 < Ordinal.omega 1 :=
+    fun x ↦ (Cardinal.isSuccLimit_omega 1).succ_lt x.2
+  have hle := Ordinal.le_iSup (fun x : {γ : Ordinal.{0} // γ < Ordinal.omega 1} ↦
+    Order.succ x.1) ⟨_, Ordinal.iSup_lt_omega_one hs⟩
+  exact (Order.lt_succ _).not_ge hle
+
+/-- **Generic-signature plumbing check, not an uncountability test.**  Applies
+`not_countable_of_forall_unisolated` at a generic `L` and generic `Type w` carriers, to a family
+built from a hypothetical ladder of non-isomorphic pairs that are `BFEquiv0` at each countable
+level.  It checks only that the hypothesis shape matches: the conclusion holds without `hP`
+(`ordinalIndex_not_countable`). -/
 theorem ladder_not_countable {L : Language.{u, v}} [L.IsRelational]
     [Countable (Σ l, L.Relations l)] (P : Ordinal.{0} → Bool → Type w)
     [∀ γ b, L.Structure (P γ b)] [∀ γ b, Countable (P γ b)]
@@ -257,13 +351,16 @@ def allowedClosure : List Name :=
 
 /-- The public declarations of the module that must be present. -/
 def moduleDecls : List Name :=
-  [`exists_isolating_level, `not_countable_of_forall_unisolated].map (`FirstOrder.Language ++ ·)
+  [`exists_isolating_level, `exists_isolating_level_iff,
+   `not_countable_of_forall_unisolated].map (`FirstOrder.Language ++ ·)
 
 /-- The guard's own declarations whose axioms are audited. -/
 def guardDecls : List Name :=
   [`pure_eq_of_equiv, `pure_level, `pure_separated, `sameAtomicType_elim0,
-   `pure_level_zero_unisolated, `pure_level_pos, `empty_family, `emptyFam, `empty_family_concrete,
-   `natIntEquiv, `iso_members, `ladder_not_countable, `pure_not_forall_unisolated,
+   `pure_level_zero_unisolated, `pure_level_pos, `pure_returned_level_pos, `empty_family,
+   `emptyFam, `empty_family_concrete, `natIntEquiv, `iso_members, `iso_members_iff,
+   `constant_carrier, `leLang, `ordS, `ordS_not_equiv, `order_separated,
+   `ordinalIndex_not_countable, `ladder_not_countable, `pure_not_forall_unisolated,
    `lift_separated].map (`IsolatingLevelGuard ++ ·)
 
 /-- The standard axioms. -/
@@ -296,9 +393,13 @@ run_cmd do
     unless bad.isEmpty do throwError "[NONSTANDARD AXIOMS] {n} uses {bad}"
   logInfo m!"Isolating-level regression guard: OK (applied: on the pure family N, Fin n the \
     returned level makes BFEquiv0 equality of indices, separating N from Fin 3 and Fin 2 from \
-    Fin 3, while level 0 leaves N and Fin 3 unisolated; the empty family, isolated vacuously \
-    at 0; N and Z as isomorphic members, identified at the returned level; the contrapositive \
-    on a ladder-indexed family over the countable ordinals (the ladder a hypothesis) and on \
-    the countable pure family; Type 1 carriers with explicit universes; exact import closure \
+    Fin 3, while level 0 leaves N and Fin 3 unisolated, so the returned level is positive; \
+    the empty family, isolated vacuously at 0; N and Z as isomorphic members, identified at \
+    the returned level, also through the iff form; the constant-carrier shape over a generic \
+    language, and (N, <=) separated from (N, >=) over a one-relation language; a \
+    generic-signature plumbing check of the contrapositive on a ladder-indexed family, whose \
+    conclusion also holds outright without the ladder (not an uncountability test); the \
+    contrapositive on the countable pure family; Type 1 carriers with explicit universes; \
+    exact import closure \
     ({ilModules.length} modules) without Scott-process, descriptive, method, model-theory, \
     admissible, conditional or WIP modules; standard axioms)"
