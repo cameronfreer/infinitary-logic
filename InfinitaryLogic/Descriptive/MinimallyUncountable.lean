@@ -27,10 +27,12 @@ cuts `K` into two unbounded sides; see the regression guard).
 
 ## Main declarations
 
-* `BoundedRankOn ρ K`, `UnboundedRankOn ρ K`: a map `ρ : StructureSpace L → Ordinal.{0}` is
-  bounded below `ω₁` on `K`, or takes values on `K` cofinal in `ω₁` (the shape of [Mon,
-  Def XII.1]); with `mono`, the empty class, and countable unions.  These definitions take an
-  arbitrary `ρ`, with no isolating-rank contract, and no relational instance.
+* `BoundedRankOn ρ K`, `UnboundedRankOn ρ K`: for a map `ρ : StructureSpace L → Ordinal.{0}`,
+  some `β < ω₁` exceeds every value of `ρ` on `K`, or every threshold `β < ω₁` is met or
+  exceeded by the value of some member of `K` (the shape of [Mon, Def XII.1]; the values
+  themselves need not be below `ω₁`); with `mono`, the empty class, and countable unions.
+  These definitions take an arbitrary `ρ`, with no isolating-rank contract, and no relational
+  instance.
 * Sentence cuts are read through `modelsOf_inf` and `modelsOf_inf_not`
   (`Descriptive/ModelsOfGDelta.lean`): `ModelsOf (Θ ⊓ θ) = ModelsOf Θ ∩ ModelsOf θ` and
   `ModelsOf (Θ ⊓ θ.not) = ModelsOf Θ \ ModelsOf θ`.
@@ -103,12 +105,19 @@ section Bounded
 
 variable {L : Language.{u, v}} (ρ : StructureSpace L → Ordinal.{0})
 
-/-- The map `ρ` is **bounded below `ω₁` on `K`**.  The empty class is bounded. -/
+/-- The map `ρ` is **bounded below `ω₁` on `K`**: some threshold `β < ω₁` exceeds `ρ c` for
+every member `c ∈ K`, so in particular every value of `ρ` on `K` is below `ω₁`.  The empty class
+is bounded.  This is the negation of `UnboundedRankOn ρ K`
+(`unboundedRankOn_iff_not_boundedRankOn`). -/
 def BoundedRankOn (K : Set (StructureSpace L)) : Prop :=
   ∃ β < Ordinal.omega 1, ∀ c ∈ K, ρ c < β
 
-/-- The map `ρ` is **unbounded below `ω₁` on `K`**: `K` has members of arbitrarily high value
-below `ω₁` (the shape of [Mon, Def XII.1]). -/
+/-- The map `ρ` is **unbounded below `ω₁` on `K`**: every threshold `β < ω₁` is met or exceeded
+by some member, `β ≤ ρ c` for some `c ∈ K` (the shape of [Mon, Def XII.1]).  Only the thresholds
+range below `ω₁`: the values `ρ c` themselves need not be below `ω₁`, and a single member with
+`ω₁ ≤ ρ c` already makes `ρ` unbounded on `K`.  For an isolating rank (`IsIsolatingRank`, in
+`Descriptive/ScatteredCounting.lean`) every value is below `ω₁` (its field `lt_omega1`), so
+there the two readings agree: `K` has members of arbitrarily high value below `ω₁`. -/
 def UnboundedRankOn (K : Set (StructureSpace L)) : Prop :=
   ∀ β < Ordinal.omega 1, ∃ c ∈ K, β ≤ ρ c
 
@@ -169,7 +178,10 @@ theorem Sentenceω.minimallyUncountable_iff_inf (Θ : L.Sentenceω) :
     Set.sdiff_eq]
 
 /-- Isomorphic codes satisfy the same sentences (`BoundedFormulaω.realize_equiv`).  Private, so
-that this module reaches `Lomega1omega.Theory` and no López–Escobar module. -/
+that this module reaches `Lomega1omega.Theory` and no López–Escobar module.  The public form is
+`modelsOf_mem_iff_of_equiv` (`Descriptive/LopezEscobarEasy.lean`); no other module of this
+import closure has both `ModelsOf` and `realize_equiv` in scope, so moving that form below
+`LopezEscobarEasy` would add an import to its new home. -/
 private theorem modelsOf_mem_of_iso (θ : L.Sentenceω) {c d : StructureSpace L}
     (h : (structureIsoSetoid L).r c d) (hc : c ∈ ModelsOf θ) : d ∈ ModelsOf θ := by
   obtain ⟨e⟩ := h
@@ -228,7 +240,8 @@ it can be dropped in general is not settled here.  For the models of a minimally
 sentence it is dischargeable: `MinimallyUncountableOn.isThinOn`
 (`Descriptive/MinimallyUncountableThin.lean`) with the landed
 `Sentenceω.bfScattered_of_isThinOnNatModels` (`Conditional/BFScatteredSilver.lean`) gives
-`BFScattered`; that composition is the deferred `Conditional` headline. -/
+`BFScattered`; that composition is the sentence headline
+`Sentenceω.minimallyUncountable_iff` (`Conditional/MinimallyUncountableHeadline.lean`). -/
 theorem exists_bfClass_compl_of_sentence_cuts (P : Set (StructureSpace L) → Prop)
     (hmono : ∀ ⦃s t : Set (StructureSpace L)⦄, s ⊆ t → P t → P s)
     (hU : ∀ S : Set (Set (StructureSpace L)), S.Countable → (∀ s ∈ S, P s) → P (⋃₀ S))

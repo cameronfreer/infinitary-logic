@@ -5,6 +5,7 @@ import InfinitaryLogic.Conditional.GandyHarrington
 import InfinitaryLogic.Conditional.SilverAntichain
 import InfinitaryLogic.Conditional.MorleyPerfect
 import InfinitaryLogic.Conditional.BFScatteredSilver
+import InfinitaryLogic.Conditional.MinimallyUncountableHeadline
 import InfinitaryLogic.Conditional.SentenceSpectrum
 import InfinitaryLogic.Conditional.FragmentSpectrumThin
 import InfinitaryLogic.Conditional.SilverCategoryRoute
@@ -62,6 +63,12 @@ intermediates and historical statement shapes.
   Scott modules present only in the import closure, and it does not import
   `Descriptive/ScatteredCounting.lean`.  Its per-level Silver step is the one inlined in
   `morley_counting_coded_or_perfect` (`MorleyPerfect.lean`).
+- `MinimallyUncountableHeadline.lean`: **`Sentenceω.minimallyUncountable_iff`** — the models of
+  a sentence are minimally uncountable iff they are back-and-forth scattered and the sentence is
+  minimally unbounded for any isolating rank (the analogue of [Mon, Def XII.4]), with the
+  concentrated form `Sentenceω.minimallyUncountable_iff_concentrated`.  Here because the
+  scatteredness step consumes the Silver chain (through `BFScatteredSilver.lean`); its proof
+  cones also reach López–Escobar (through `MinimallyUncountableOn.isThinOn`).
 
 There are no sorries anywhere in the project; the historical sorry-bearing
 `Combinatorics/ErdosRado.lean` exploration is preserved on the
