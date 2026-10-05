@@ -34,7 +34,7 @@ would name the other one. Every later operation would then have to pick, and wou
   `Encodable`-indexed `einf`/`esup` with their explicit-encoding forms;
 - the `⊨ω` notation;
 - the atomic cases of transport along an embedding (`Embedding.realize_equal_comp`,
-  `Embedding.realize_rel_comp`), shared by every induction that moves realization along one.
+  `Embedding.realize_rel_comp`), shared by every induction that moves realization along one;
 - isomorphism invariance of realization (`BoundedFormulaω.realize_equiv`), the induction built on
   those atomic cases.
 

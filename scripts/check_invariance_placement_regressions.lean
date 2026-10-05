@@ -35,6 +35,10 @@ same fully qualified names.  This file imports `Descriptive.MinimallyUncountable
   `Descriptive.MinimallyUncountable` has 33 modules, none with `LopezEscobar` in its name
   (`[CLOSURE DRIFT]`).  `Descriptive.SatisfactionBorel` does not reach `Lomega1omega.Theory`
   (`[BROAD CONE]`): the lemma moved down, the import did not move up.
+  The 11 and 33 pins count a direct `import InfinitaryLogic.Lomega1omega.Theory` that this move
+  left unused in both modules, kept to stay import-neutral; dropping it would give 9 (no
+  `Lomega1omega.Theory`, no `Util`) and 32 (no `Lomega1omega.Theory`), so a later import cleanup
+  must update these pins deliberately.
 
 The declarations use only the standard axioms.
 
