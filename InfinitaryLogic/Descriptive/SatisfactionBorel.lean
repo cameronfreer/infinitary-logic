@@ -22,6 +22,8 @@ This file proves that for a countable relational language L, the set of codes in
 - `modelsOfBounded_measurableSet`: Satisfaction of any bounded Lω₁ω formula is measurable.
 - `modelsOf_measurableSet`: Satisfaction of any Lω₁ω sentence is measurable.
 - `mem_modelsOf_iff_realize`: membership in `ModelsOf` is realization in the decoded structure.
+- `modelsOf_mem_iff_of_equiv`: membership in `ModelsOf` is invariant under isomorphism of the
+  decoded structures.
 -/
 
 universe u v u'
@@ -178,6 +180,27 @@ theorem modelsOf_measurableSet (φ : L.Sentenceω) :
   modelsOfBounded_measurableSet φ Empty.elim Fin.elim0
 
 end Measurability
+
+section Invariance
+
+-- The explicit list `.{vL, uL}` pins the universe parameters to the order this theorem had in
+-- `Descriptive/LopezEscobarEasy.lean` (relation universe first); `u` and `v` are declared above,
+-- so in this file the auto-bound names `[v, u]` of that module cannot be reused.
+/-- Membership in a sentence's model class is isomorphism-invariant: an `L`-isomorphism of the
+decoded structures transports satisfaction. -/
+theorem modelsOf_mem_iff_of_equiv.{vL, uL} {L : Language.{uL, vL}} [L.IsRelational]
+    (φ : L.Sentenceω) {c d : StructureSpace L}
+    (e : @Language.Equiv L ℕ ℕ c.toStructure d.toStructure) :
+    c ∈ ModelsOf φ ↔ d ∈ ModelsOf φ := by
+  let : L.Structure ℕ := c.toStructure
+  show @BoundedFormulaω.Realize L ℕ c.toStructure Empty 0 φ Empty.elim Fin.elim0
+    ↔ @BoundedFormulaω.Realize L ℕ d.toStructure Empty 0 φ Empty.elim Fin.elim0
+  have h := @BoundedFormulaω.realize_equiv L ℕ ℕ c.toStructure d.toStructure e Empty 0 φ
+    Empty.elim Fin.elim0
+  rwa [show (⇑e ∘ Empty.elim : Empty → ℕ) = Empty.elim from funext fun x => x.elim,
+    show (⇑e ∘ Fin.elim0 : Fin 0 → ℕ) = Fin.elim0 from funext fun i => i.elim0] at h
+
+end Invariance
 
 end Language
 

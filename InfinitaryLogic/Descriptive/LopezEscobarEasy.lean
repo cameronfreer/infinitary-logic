@@ -37,19 +37,6 @@ def IsomorphismInvariant (B : Set (StructureSpace L)) : Prop :=
   ∀ c d : StructureSpace L,
     Nonempty (@Language.Equiv L ℕ ℕ c.toStructure d.toStructure) → (c ∈ B ↔ d ∈ B)
 
-/-- Membership in a sentence's model class is isomorphism-invariant: an `L`-isomorphism of the
-decoded structures transports satisfaction. -/
-theorem modelsOf_mem_iff_of_equiv (φ : L.Sentenceω) {c d : StructureSpace L}
-    (e : @Language.Equiv L ℕ ℕ c.toStructure d.toStructure) :
-    c ∈ ModelsOf φ ↔ d ∈ ModelsOf φ := by
-  let : L.Structure ℕ := c.toStructure
-  show @BoundedFormulaω.Realize L ℕ c.toStructure Empty 0 φ Empty.elim Fin.elim0
-    ↔ @BoundedFormulaω.Realize L ℕ d.toStructure Empty 0 φ Empty.elim Fin.elim0
-  have h := @BoundedFormulaω.realize_equiv L ℕ ℕ c.toStructure d.toStructure e Empty 0 φ
-    Empty.elim Fin.elim0
-  rwa [show (⇑e ∘ Empty.elim : Empty → ℕ) = Empty.elim from funext fun x => x.elim,
-    show (⇑e ∘ Fin.elim0 : Fin 0 → ℕ) = Fin.elim0 from funext fun i => i.elim0] at h
-
 theorem isomorphismInvariant_modelsOf (φ : L.Sentenceω) :
     IsomorphismInvariant (ModelsOf φ) :=
   fun _ _ ⟨e⟩ => modelsOf_mem_iff_of_equiv φ e

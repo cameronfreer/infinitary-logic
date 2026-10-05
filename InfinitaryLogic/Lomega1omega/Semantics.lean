@@ -34,7 +34,9 @@ would name the other one. Every later operation would then have to pick, and wou
   `Encodable`-indexed `einf`/`esup` with their explicit-encoding forms;
 - the `⊨ω` notation;
 - the atomic cases of transport along an embedding (`Embedding.realize_equal_comp`,
-  `Embedding.realize_rel_comp`), shared by every induction that moves realization along one.
+  `Embedding.realize_rel_comp`), shared by every induction that moves realization along one;
+- isomorphism invariance of realization (`BoundedFormulaω.realize_equiv`), the induction built on
+  those atomic cases.
 
 The gates at the end certify by `Iff.rfl` — no rewriting, no casts — that each alias *is* the
 Mathlib semantics, and that the historical `Fin.elim0` spellings of the arity-0 cases still
@@ -214,6 +216,42 @@ theorem realize_rel_comp {l : ℕ} (R : L.Relations l) (ts : Fin l → L.Term (�
   exact f.map_rel R _
 
 end Embedding
+
+/-! ### Isomorphism invariance of realization -/
+
+-- The explicit list `.{u_1}`, with `u, v, w` declared at the top of this file, pins the universe
+-- parameters to `[u, v, w, u_1]`: the order this theorem had in `Lomega1omega/Theory.lean`.
+/-- Realization of Lω₁ω formulas is preserved by language isomorphisms.
+
+Given an isomorphism `e : M ≃[L] N`, a formula realized in M with variable assignments
+`v` and `xs` is also realized in N with the transported assignments `e ∘ v` and `e ∘ xs`. -/
+theorem BoundedFormulaω.realize_equiv.{u_1} {M N : Type w} [L.Structure M] [L.Structure N]
+    (e : M ≃[L] N) {α : Type u_1} {n : ℕ} (φ : L.BoundedFormulaω α n)
+    (v : α → M) (xs : Fin n → M) :
+    φ.Realize v xs ↔ φ.Realize (e ∘ v) (e ∘ xs) := by
+  induction φ with
+  | falsum => simp
+  | equal t₁ t₂ => exact (e.toEmbedding.realize_equal_comp t₁ t₂).symm
+  | rel R ts => exact (e.toEmbedding.realize_rel_comp R ts).symm
+  | imp φ ψ ihφ ihψ =>
+    simp only [BoundedFormulaInf.Realize]
+    exact Iff.imp (ihφ xs) (ihψ xs)
+  | all φ ih =>
+    simp only [BoundedFormulaInf.Realize]
+    constructor
+    · intro h y
+      have h1 := (ih (Fin.snoc xs (e.symm y))).mp (h (e.symm y))
+      rwa [Fin.comp_snoc, e.apply_symm_apply] at h1
+    · intro h x
+      have h1 := h (e x)
+      rw [← Fin.comp_snoc] at h1
+      exact (ih (Fin.snoc xs x)).mpr h1
+  | iSup φs ih =>
+    simp only [BoundedFormulaInf.Realize]
+    exact exists_congr fun i => ih i xs
+  | iInf φs ih =>
+    simp only [BoundedFormulaInf.Realize]
+    exact forall_congr' fun i => ih i xs
 
 namespace Formulaω
 

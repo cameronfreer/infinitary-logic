@@ -7,6 +7,7 @@ import InfinitaryLogic.Lomega1omega.Semantics
 import InfinitaryLogic.Lomega1omega.Operations
 import Mathlib.ModelTheory.Infinitary.QuantifierRank
 import Mathlib.SetTheory.Ordinal.Family
+import Mathlib.SetTheory.Cardinal.Regular
 
 /-!
 # Lω₁ω Quantifier Rank
@@ -29,6 +30,8 @@ relation between structures.
   variable operations preserve quantifier rank.
 - `BoundedFormula.qrank_toLω_lt_omega0`: the `Lω₁ω` image of a first-order formula has finite
   quantifier rank.
+- `BoundedFormulaω.qrank_lt_omega1`, `Sentenceω.qrank_lt_omega1`: every `Lω₁ω` formula has
+  countable quantifier rank, for every language.
 
 ## References
 
@@ -60,7 +63,8 @@ This is an `abbrev`, so it is the upstream rank rather than a parallel copy of i
 proposition-level change. Only code that relied on the old definition unfolding by `rfl` is
 affected.
 
-Note: For Lω₁ω, the quantifier rank is always a countable ordinal (< ω₁). -/
+The quantifier rank of an `Lω₁ω` formula is always a countable ordinal (`< ω₁`):
+`BoundedFormulaω.qrank_lt_omega1`. -/
 noncomputable abbrev BoundedFormulaω.qrank : L.BoundedFormulaω α n → Ordinal.{0} :=
   BoundedFormulaInf.qrank
 
@@ -284,6 +288,34 @@ theorem BoundedFormula.qrank_toLω_lt_omega0 {ι : Type*} {k : ℕ} (φ : L.Boun
   | all _ ih =>
     simpa only [BoundedFormula.toLω, BoundedFormulaω.qrank_all, ← Order.succ_eq_add_one] using
       Ordinal.isSuccLimit_omega0.succ_lt ih
+
+/-! ### The rank is countable -/
+
+/-- **Every `Lω₁ω` formula has countable quantifier rank.**  Atoms have rank `0`, implication
+takes the maximum, a quantifier adds one, and the countable connectives take a supremum over `ℕ`,
+which stays below `ω₁` by regularity of `ℵ₁`.  No hypothesis on the language. -/
+theorem BoundedFormulaω.qrank_lt_omega1 {α : Type*} :
+    ∀ {n : ℕ} (φ : L.BoundedFormulaω α n), φ.qrank < Ordinal.omega 1
+  | _, .falsum => Ordinal.omega_pos 1
+  | _, .equal _ _ => Ordinal.omega_pos 1
+  | _, .rel _ _ => Ordinal.omega_pos 1
+  | _, .imp φ ψ => by
+    rw [qrank_imp]
+    exact max_lt (qrank_lt_omega1 φ) (qrank_lt_omega1 ψ)
+  | _, .all φ => by
+    rw [qrank_all]
+    exact (Cardinal.isSuccLimit_omega 1).add_one_lt (qrank_lt_omega1 φ)
+  | _, .iSup φs => by
+    rw [qrank_iSup]
+    exact Ordinal.iSup_lt_omega_one fun k ↦ qrank_lt_omega1 (φs k)
+  | _, .iInf φs => by
+    rw [qrank_iInf]
+    exact Ordinal.iSup_lt_omega_one fun k ↦ qrank_lt_omega1 (φs k)
+
+/-- **Every `Lω₁ω` sentence has countable quantifier rank**: `BoundedFormulaω.qrank_lt_omega1`
+for sentences. -/
+theorem Sentenceω.qrank_lt_omega1 (φ : L.Sentenceω) : φ.qrank < Ordinal.omega 1 :=
+  BoundedFormulaω.qrank_lt_omega1 φ
 
 /-! ### Equivalence up to Quantifier Rank -/
 
