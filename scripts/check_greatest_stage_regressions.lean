@@ -15,11 +15,21 @@ stage is `3`, and `5` is not a stage); **greatest stage zero** (`P α ↔ α = 0
 the statement, not a proof route, see `limit_bound_regression`); a **`Type 1` instance** of the
 general form on `Ordinal.{1}`; the **`ω₁` form** at a bound `A = ω` with `A + 1` not a stage,
 its conclusion holding for all `ξ`, not only below `ω₁`; an **`IsGreatest` application**
-returning `3`; the **derivation**: the constant cones of the `ω₁` form and of the `IsGreatest`
-form contain the general lemma; the **exact import closure** of `OrdinalUtil` (itself only: no
-other `InfinitaryLogic` module, Mathlib only); **standard axioms** for the three exports and
-every guard declaration.  The OK line is printed only after the cone, closure and axiom
-checks.
+returning `3`; the **consumer's contract shape** (`exists_greatest_countable_stage`, guard-only,
+in the `(Cardinal.aleph 1).ord` notation with the conclusion restricted to countable `ξ`)
+derived from the `ω₁` form by `Cardinal.ord_aleph`; an **existential presentation predicate**
+(`ToyStage`), destructured exactly as the consumer's call, recovering an actual presentation at
+the greatest stage `ω` on the literal base, with none at its successor; through the contract
+shape, `P α ↔ α ≤ κ` returning `κ` for every countable `κ ≤ A`, and a **limit with a loose
+bound** (`κ = ω`, `A = ω + 1`); **negative controls**, each proving which hypotheses hold and
+refuting the conclusion: without `P 0` (the empty predicate), without downward closure (the
+stages `0, 2, 3, …`), and without a countable bound (`ξ < ω₁`, where every bound is at least
+`ω₁`, and `A = ω₁` leaves limit closure at `ω₁` failing); the **derivation**: the constant
+cones of the `ω₁` form and of the `IsGreatest` form contain the general lemma, and the cone of
+the guard's contract shape contains the `ω₁` form (it is not a second proof); the **exact
+import closure** of `OrdinalUtil` (itself only: no other `InfinitaryLogic` module, Mathlib
+only); **standard axioms** for the three exports and every guard declaration.  The OK line is
+printed only after the cone, closure and axiom checks.
 
 Run with: lake env lean scripts/check_greatest_stage_regressions.lean
 -/
@@ -164,6 +174,218 @@ theorem isGreatest_regression :
     (le_isSuccLimit_closed 3) (A := 5) (fun _ h ↦ h.trans h35)
   exact ⟨ρ, hρ5, hρ, hρ.unique isGreatest_Iic⟩
 
+/-! ### The consumer's contract shape -/
+
+/-- **The consumer's contract shape**, verbatim from the handoff: the binders and conclusion in
+the `(Cardinal.aleph 1).ord` notation, with the conclusion restricted to countable `ξ`.  It is
+derived from the library's `exists_greatest_stage_lt_omega1` by `Cardinal.ord_aleph` and
+specialisation, with no second proof.  The library form is stronger: its conclusion
+`∀ ξ, P ξ ↔ ξ ≤ ρ` is unrestricted.  This name is guard-only; it is not exported. -/
+theorem exists_greatest_countable_stage
+    (P : Ordinal.{0} → Prop)
+    (hzero : P 0)
+    (hdown : ∀ {α β}, α ≤ β → P β → P α)
+    (hlim : ∀ l, Order.IsSuccLimit l →
+      l < (Cardinal.aleph 1).ord →
+      (∀ ξ, ξ < l → P ξ) → P l)
+    {A : Ordinal.{0}}
+    (hA : A < (Cardinal.aleph 1).ord)
+    (hbound : ∀ ξ, ξ < (Cardinal.aleph 1).ord → P ξ → ξ ≤ A) :
+    ∃ ρ, ρ ≤ A ∧ P ρ ∧
+      ∀ ξ, ξ < (Cardinal.aleph 1).ord → (P ξ ↔ ξ ≤ ρ) := by
+  rw [Cardinal.ord_aleph] at hlim hA hbound ⊢
+  obtain ⟨ρ, hρA, hρ, hiff⟩ := exists_greatest_stage_lt_omega1 P hzero hdown hlim hA hbound
+  exact ⟨ρ, hρA, hρ, fun ξ _ ↦ hiff ξ⟩
+
+/-- `succ ρ` is countable when `ρ` is, in the contract's `(Cardinal.aleph 1).ord` notation. -/
+theorem succ_lt_aleph_one_ord {ρ : Ordinal.{0}} (hρ : ρ < (Cardinal.aleph 1).ord) :
+    Order.succ ρ < (Cardinal.aleph 1).ord := by
+  rw [Cardinal.ord_aleph] at hρ ⊢
+  exact (Cardinal.isSuccLimit_omega 1).succ_lt hρ
+
+/-- `ω` is countable, in the contract's `(Cardinal.aleph 1).ord` notation. -/
+theorem omega0_lt_aleph_one_ord : Ordinal.omega0 < (Cardinal.aleph 1).ord := by
+  rw [Cardinal.ord_aleph]
+  exact Ordinal.omega0_lt_omega_one
+
+/-! ### Consumer migration shape: an existential presentation predicate -/
+
+/-- A toy presentation at stage `ξ`: a literal base object together with the evidence that the
+stage is admissible for it (here: `ξ ≤ ω`).  Presentations exist exactly at the stages `ξ ≤ ω`,
+so the greatest stage is the limit `ω`. -/
+structure ToyPresentation (ξ : Ordinal.{0}) where
+  /-- The literal base object the presentation is on. -/
+  base : ℕ
+  /-- The stage is admissible. -/
+  fits : ξ ≤ Ordinal.omega0
+
+/-- Validity of a toy presentation: its base is nonzero. -/
+def ToyValid (ξ : Ordinal.{0}) (w : ToyPresentation ξ) : Prop := 0 < w.base
+
+/-- The fixed base object. -/
+def toyBase : ℕ := 7
+
+/-- A presentation on the literal base `toyBase` is valid, at every admissible stage. -/
+theorem toyValid_toyBase {ξ : Ordinal.{0}} (h : ξ ≤ Ordinal.omega0) :
+    ToyValid ξ ⟨toyBase, h⟩ :=
+  show 0 < 7 by norm_num
+
+/-- The consumer's predicate shape: a valid presentation at stage `ξ` on the literal base. -/
+def ToyStage (ξ : Ordinal.{0}) : Prop :=
+  ∃ w : ToyPresentation ξ, ToyValid ξ w ∧ w.base = toyBase
+
+/-- **Consumer migration shape.**  The four hypotheses are supplied for `ToyStage` (the
+presentation at zero; reduction to lower stages preserving the literal base; existence at a
+countable nonzero limit from all lower stages; a countable bound on every presentation), the
+contract theorem is destructured exactly as the consumer's call does, and the destructured
+witness `w` is used: it is an actual presentation at the greatest stage `ρ = ω`, on the literal
+base `toyBase`, and there is no presentation at `succ ρ`. -/
+theorem existential_presentation_regression :
+    ∃ ρ : Ordinal.{0}, ρ = Ordinal.omega0 ∧
+      (∃ w : ToyPresentation ρ, ToyValid ρ w ∧ w.base = toyBase) ∧
+      ¬ ToyStage (Order.succ ρ) := by
+  have hzero : ToyStage 0 := ⟨_, toyValid_toyBase zero_le, rfl⟩
+  have hdown : ∀ {α β : Ordinal.{0}}, α ≤ β → ToyStage β → ToyStage α :=
+    fun hle ⟨w, hw, hb⟩ ↦ ⟨⟨w.base, hle.trans w.fits⟩, hw, hb⟩
+  have hlimit : ∀ l, Order.IsSuccLimit l → l < (Cardinal.aleph 1).ord →
+      (∀ ξ, ξ < l → ToyStage ξ) → ToyStage l := fun l hl _ hall ↦
+    ⟨_, toyValid_toyBase (le_isSuccLimit_closed _ l hl fun ξ hξ ↦
+      let ⟨w, _⟩ := hall ξ hξ; w.fits), rfl⟩
+  have hA : Ordinal.omega0 < (Cardinal.aleph 1).ord := omega0_lt_aleph_one_ord
+  have hbound : ∀ ξ, ξ < (Cardinal.aleph 1).ord → ToyStage ξ → ξ ≤ Ordinal.omega0 :=
+    fun _ _ ⟨w, _, _⟩ ↦ w.fits
+  obtain ⟨ρ, hρ, ⟨w, hw, hbase⟩, hstages⟩ :=
+    exists_greatest_countable_stage ToyStage hzero hdown hlimit hA hbound
+  have hρω : ρ = Ordinal.omega0 :=
+    le_antisymm hρ ((hstages _ hA).mp ⟨_, toyValid_toyBase le_rfl, rfl⟩)
+  refine ⟨ρ, hρω, ⟨w, hw, hbase⟩, fun hs ↦ ?_⟩
+  exact (Order.lt_succ ρ).not_ge
+    ((hstages _ (succ_lt_aleph_one_ord (hρ.trans_lt hA))).mp hs)
+
+/-! ### Positive cases through the contract shape -/
+
+/-- `P ξ ↔ ξ ≤ κ` through the contract shape, for any countable `κ ≤ A`: the returned stage is
+`κ`, whatever the (possibly loose) bound `A`.  The successor case with a loose bound
+(`unattained_bound_regression`, `κ = 3`, `A = 5`) and the zero case
+(`greatest_stage_zero_regression`) are already pinned above; the limit case with a loose bound is
+new, below. -/
+theorem Iic_contract_regression (κ A : Ordinal.{0}) (hκA : κ ≤ A)
+    (hA : A < (Cardinal.aleph 1).ord) :
+    ∃ ρ, ρ = κ ∧ ρ ≤ A ∧ ∀ ξ, ξ < (Cardinal.aleph 1).ord → (ξ ≤ κ ↔ ξ ≤ ρ) := by
+  obtain ⟨ρ, hρA, hρ, hiff⟩ := exists_greatest_countable_stage (fun ξ ↦ ξ ≤ κ) zero_le
+    (fun hle h ↦ hle.trans h) (fun l hl _ hall ↦ le_isSuccLimit_closed κ l hl hall) hA
+    (fun _ _ h ↦ h.trans hκA)
+  exact ⟨ρ, le_antisymm hρ ((hiff κ (hκA.trans_lt hA)).mp le_rfl), hρA, hiff⟩
+
+/-- **Limit stage, loose bound.**  `P ξ ↔ ξ ≤ ω` with `A = ω + 1`: the returned stage is the
+limit `ω`, not `ω + 1`, and `ω + 1` is not a stage. -/
+theorem limit_stage_contract_regression :
+    Order.IsSuccLimit (Ordinal.omega0 : Ordinal.{0}) ∧
+      (∃ ρ : Ordinal.{0}, ρ = Ordinal.omega0 ∧ ρ ≤ Ordinal.omega0 + 1 ∧
+        ∀ ξ, ξ < (Cardinal.aleph 1).ord → (ξ ≤ Ordinal.omega0 ↔ ξ ≤ ρ)) ∧
+      ¬ (Ordinal.omega0 + 1 : Ordinal.{0}) ≤ Ordinal.omega0 := by
+  refine ⟨Ordinal.isSuccLimit_omega0, Iic_contract_regression _ _ (le_add_right le_rfl) ?_,
+    (lt_add_one _).not_ge⟩
+  rw [← Order.succ_eq_add_one]
+  exact succ_lt_aleph_one_ord omega0_lt_aleph_one_ord
+
+/-! ### Negative controls: each isolates one hypothesis -/
+
+/-- The empty stage predicate, for the control without `hzero`. -/
+def emptyStage (_ : Ordinal.{0}) : Prop := False
+
+/-- **Control: `hzero` is needed.**  The empty predicate is downward closed, closed at countable
+nonzero limits (vacuously, since the premise fails at `0 < l`) and bounded by `A = 0 < ω₁`, but
+fails at `0` and has no attained stage at all. -/
+theorem empty_stages_only_zero_fails :
+    (∀ {α β : Ordinal.{0}}, α ≤ β → emptyStage β → emptyStage α) ∧
+      (∀ l : Ordinal.{0}, Order.IsSuccLimit l → l < Ordinal.omega 1 →
+        (∀ ξ, ξ < l → emptyStage ξ) → emptyStage l) ∧
+      (0 : Ordinal.{0}) < Ordinal.omega 1 ∧
+      (∀ ξ : Ordinal.{0}, ξ < Ordinal.omega 1 → emptyStage ξ → ξ ≤ 0) ∧
+      ¬ emptyStage 0 ∧ ¬ ∃ ρ, emptyStage ρ :=
+  ⟨fun _ h ↦ h, fun _ hl _ hall ↦ hall 0 hl.bot_lt, Ordinal.omega_pos 1, fun _ _ h ↦ h.elim,
+    id, fun ⟨_, h⟩ ↦ h⟩
+
+/-- The gapped stage predicate `{0} ∪ [2, ω)`, for the control without downward closure. -/
+def gapStage (ξ : Ordinal.{0}) : Prop := ξ = 0 ∨ (2 ≤ ξ ∧ ξ < Ordinal.omega0)
+
+/-- `1` is not a stage of `gapStage`. -/
+theorem not_gapStage_one : ¬ gapStage 1 := by
+  rintro (h | ⟨h, -⟩)
+  · exact one_ne_zero h
+  · exact absurd (by exact_mod_cast h : (2 : ℕ) ≤ 1) (by norm_num)
+
+/-- **Control: downward closure is needed.**  `gapStage` (the stages `0, 2, 3, …`) holds at `0`,
+is closed at countable nonzero limits (vacuously: every nonzero limit exceeds the missing stage
+`1`) and is bounded by `A = ω < ω₁`, but is not downward closed (`2` is a stage, `1` is not)
+and has no greatest stage. -/
+theorem gap_stages_only_downward_closure_fails :
+    gapStage 0 ∧
+      (∀ l : Ordinal.{0}, Order.IsSuccLimit l → l < Ordinal.omega 1 →
+        (∀ ξ, ξ < l → gapStage ξ) → gapStage l) ∧
+      Ordinal.omega0 < Ordinal.omega 1 ∧
+      (∀ ξ : Ordinal.{0}, ξ < Ordinal.omega 1 → gapStage ξ → ξ ≤ Ordinal.omega0) ∧
+      ((1 : Ordinal.{0}) ≤ 2 ∧ gapStage 2 ∧ ¬ gapStage 1) ∧
+      ¬ ∃ ρ, IsGreatest {ξ | gapStage ξ} ρ := by
+  have h2ω : (2 : Ordinal.{0}) < Ordinal.omega0 := Ordinal.natCast_lt_omega0 2
+  refine ⟨Or.inl rfl, fun l hl _ hall ↦ ?_, Ordinal.omega0_lt_omega_one,
+    fun ξ _ h ↦ ?_, ⟨by exact_mod_cast (show (1 : ℕ) ≤ 2 by norm_num),
+      Or.inr ⟨le_rfl, h2ω⟩, not_gapStage_one⟩, ?_⟩
+  · have h1 : (1 : Ordinal.{0}) < l := by
+      simpa using hl.succ_lt hl.bot_lt
+    exact (not_gapStage_one (hall 1 h1)).elim
+  · rcases h with rfl | ⟨-, h⟩
+    · exact zero_le
+    · exact h.le
+  · rintro ⟨ρ, hρ, hmax⟩
+    rcases hρ with rfl | ⟨h2, hω⟩
+    · have h20 : (2 : Ordinal.{0}) ≤ 0 := hmax (Or.inr ⟨le_rfl, h2ω⟩)
+      simp at h20
+    · exact (Order.lt_succ ρ).not_ge (hmax (Or.inr ⟨h2.trans (Order.le_succ ρ),
+        Ordinal.isSuccLimit_omega0.succ_lt hω⟩))
+
+/-- The countable stage predicate `ξ < ω₁`, for the control without a countable bound. -/
+def countableStage (ξ : Ordinal.{0}) : Prop := ξ < Ordinal.omega 1
+
+/-- **Control: the countable bound is needed.**  `countableStage` (`ξ < ω₁`) holds at `0`, is
+downward closed and is closed at countable nonzero limits, but no countable `A` bounds it and
+there is no greatest countable stage. -/
+theorem countable_stages_only_bound_fails :
+    countableStage 0 ∧
+      (∀ {α β : Ordinal.{0}}, α ≤ β → countableStage β → countableStage α) ∧
+      (∀ l : Ordinal.{0}, Order.IsSuccLimit l → l < Ordinal.omega 1 →
+        (∀ ξ, ξ < l → countableStage ξ) → countableStage l) ∧
+      (¬ ∃ A < Ordinal.omega 1, ∀ ξ, ξ < Ordinal.omega 1 → countableStage ξ → ξ ≤ A) ∧
+      ¬ ∃ ρ < Ordinal.omega 1, ∀ ξ, ξ < Ordinal.omega 1 → (countableStage ξ ↔ ξ ≤ ρ) := by
+  have hs : ∀ {A : Ordinal.{0}}, A < Ordinal.omega 1 → Order.succ A < Ordinal.omega 1 :=
+    (Cardinal.isSuccLimit_omega 1).succ_lt
+  refine ⟨Ordinal.omega_pos 1, fun hle h ↦ hle.trans_lt h, fun _ _ h _ ↦ h, ?_, ?_⟩
+  · rintro ⟨A, hA, hbound⟩
+    exact (Order.lt_succ A).not_ge (hbound _ (hs hA) (hs hA))
+  · rintro ⟨ρ, hρ, hiff⟩
+    exact (Order.lt_succ ρ).not_ge ((hiff _ (hs hρ)).mp (hs hρ))
+
+/-- **Control: an uncountable bound does not repair it.**  For `countableStage`, every bound on
+the countable stages is at least `ω₁`; `A = ω₁` is such a bound, and then closure at the limit
+`ω₁` is what fails, so that even with the unrestricted conclusion there is no greatest stage. -/
+theorem countable_stages_uncountable_bound :
+    (∀ A : Ordinal.{0}, (∀ ξ, ξ < Ordinal.omega 1 → countableStage ξ → ξ ≤ A) →
+        Ordinal.omega 1 ≤ A) ∧
+      (∀ ξ : Ordinal.{0}, countableStage ξ → ξ ≤ Ordinal.omega 1) ∧
+      (Order.IsSuccLimit (Ordinal.omega 1 : Ordinal.{0}) ∧
+        (∀ ξ, ξ < Ordinal.omega 1 → countableStage ξ) ∧ ¬ countableStage (Ordinal.omega 1)) ∧
+      ¬ ∃ ρ : Ordinal.{0}, ∀ ξ, countableStage ξ ↔ ξ ≤ ρ := by
+  have hs : ∀ {A : Ordinal.{0}}, A < Ordinal.omega 1 → Order.succ A < Ordinal.omega 1 :=
+    (Cardinal.isSuccLimit_omega 1).succ_lt
+  refine ⟨fun A hbound ↦ ?_, fun _ h ↦ h.le, ⟨Cardinal.isSuccLimit_omega 1, fun _ h ↦ h,
+    lt_irrefl _⟩, ?_⟩
+  · by_contra hA
+    exact (Order.lt_succ A).not_ge (hbound _ (hs (lt_of_not_ge hA)) (hs (lt_of_not_ge hA)))
+  · rintro ⟨ρ, hiff⟩
+    have hρ : ρ < Ordinal.omega 1 := (hiff ρ).mpr le_rfl
+    exact (Order.lt_succ ρ).not_ge ((hiff _).mp (hs hρ))
+
 end GreatestStageRegressions
 
 /-! ### Axiom hygiene and exact import closure -/
@@ -185,7 +407,26 @@ def headline : List Name :=
    `GreatestStageRegressions.limit_bound_regression,
    `GreatestStageRegressions.universe_one_regression,
    `GreatestStageRegressions.omega1_bound_regression,
-   `GreatestStageRegressions.isGreatest_regression]
+   `GreatestStageRegressions.isGreatest_regression,
+   `GreatestStageRegressions.exists_greatest_countable_stage,
+   `GreatestStageRegressions.succ_lt_aleph_one_ord,
+   `GreatestStageRegressions.omega0_lt_aleph_one_ord,
+   `GreatestStageRegressions.ToyPresentation,
+   `GreatestStageRegressions.ToyValid,
+   `GreatestStageRegressions.toyBase,
+   `GreatestStageRegressions.toyValid_toyBase,
+   `GreatestStageRegressions.ToyStage,
+   `GreatestStageRegressions.existential_presentation_regression,
+   `GreatestStageRegressions.Iic_contract_regression,
+   `GreatestStageRegressions.limit_stage_contract_regression,
+   `GreatestStageRegressions.emptyStage,
+   `GreatestStageRegressions.empty_stages_only_zero_fails,
+   `GreatestStageRegressions.gapStage,
+   `GreatestStageRegressions.not_gapStage_one,
+   `GreatestStageRegressions.gap_stages_only_downward_closure_fails,
+   `GreatestStageRegressions.countableStage,
+   `GreatestStageRegressions.countable_stages_only_bound_fails,
+   `GreatestStageRegressions.countable_stages_uncountable_bound]
 
 /-- The standard axioms. -/
 def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
@@ -247,6 +488,12 @@ def derivedExports : List Name :=
   [`InfinitaryLogic.exists_isGreatest_setOf_of_bounded_of_isSuccLimit_closed,
    `InfinitaryLogic.exists_greatest_stage_lt_omega1]
 
+/-- The library's `ω₁` form, which the guard's contract shape must quote. -/
+def omega1Form : Name := `InfinitaryLogic.exists_greatest_stage_lt_omega1
+
+/-- The guard's copy of the consumer's contract shape. -/
+def contractShape : Name := `GreatestStageRegressions.exists_greatest_countable_stage
+
 /-- The exact `InfinitaryLogic` import closure of `OrdinalUtil`: the module itself, so that it
 stays Mathlib-only.  Extending it is a deliberate decision.  The forbidden-prefix rule (no
 `InfinitaryLogic` module other than `OrdinalUtil` itself) coincides with the `extra` half of this
@@ -267,6 +514,12 @@ run_cmd do
       | .error e => throwError e
     unless c.contains generalLemma do
       throwError "[NOT DERIVED] the cone of {n} does not contain {generalLemma}"
+  -- the guard's contract shape quotes the library's omega 1 form, not a second proof
+  let cc ← match cone env contractShape with
+    | .ok c => pure c
+    | .error e => throwError e
+  unless cc.contains omega1Form do
+    throwError "[NOT DERIVED] the cone of {contractShape} does not contain {omega1Form}"
   -- control: the general lemma's own cone contains neither derived export
   let cg ← match cone env generalLemma with
     | .ok c => pure c
@@ -292,7 +545,18 @@ run_cmd do
     hypothesis that fails (at ω), the others holding; unattained bound P α ↔ α ≤ 3 with A = 5 \
     returns 3, and 5 is not a stage; greatest stage zero with A = 0; limit bound A = ω with \
     P α ↔ α ≤ ω returns ω, itself a limit; a Type 1 instance on Ordinal.\{1}; the omega 1 form \
-    at A = ω with A + 1 not a stage returns ω; the IsGreatest form returns 3; the cones of the \
-    IsGreatest and omega 1 forms contain the general lemma, and not conversely; import \
+    at A = ω with A + 1 not a stage returns ω; the IsGreatest form returns 3; the consumer's \
+    contract shape in the (Cardinal.aleph 1).ord notation derived from the omega 1 form by \
+    Cardinal.ord_aleph; the existential presentation predicate destructured as the consumer's \
+    call, recovering a presentation at the greatest stage ω on the literal base, with none at \
+    its successor; through the contract shape, P α ↔ α ≤ κ returns κ for every countable \
+    κ ≤ A, and the limit ω with the loose bound A = ω + 1 returns ω; controls: \
+    the empty predicate has every hypothesis but P 0 and no stage, the gapped stages 0, 2, \
+    3, … have every hypothesis but downward closure and no greatest member, and ξ < ω₁ has \
+    every hypothesis but a countable bound, no greatest countable stage, every bound at \
+    least ω₁, and no greatest stage even with A = ω₁, where limit closure at ω₁ fails; the \
+    cones of the IsGreatest and omega 1 forms contain the general lemma, and not conversely, \
+    and the cone of the contract shape contains the omega 1 form; \
+    import \
     closure of {ilModules.length} InfinitaryLogic module, OrdinalUtil itself (Mathlib-only); \
     standard axioms for the three exports and all {headline.length - 3} guard declarations)"
