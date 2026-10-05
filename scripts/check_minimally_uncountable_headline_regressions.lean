@@ -21,10 +21,9 @@ Both theorems are *applied*, not only listed for their axioms.
   `silver_countable_or_cantorAntichain` and `silver_core_polish`, entering through the per-level
   step `Sentenceω.countable_bfClasses_of_isThinOnNatModels` (`Conditional/MorleyPerfect.lean`,
   quoted by `Sentenceω.bfScattered_of_isThinOnNatModels`), which is itself required; these are
-  required
-  dependencies (`[DEPENDENCY DRIFT]` otherwise), checked separately from the axiom audit.  The
-  concentrated form's type mentions no `IsIsolatingRank`; the two theorems are exactly the
-  public declarations of the module (`[ROOT DRIFT]`).
+  required dependencies (`[DEPENDENCY DRIFT]` otherwise), checked separately from the axiom
+  audit.  The concentrated form's type mentions no `IsIsolatingRank`; the two theorems are
+  exactly the public declarations of the module (`[ROOT DRIFT]`).
 * **Statement shape.**  Both left sides are the sentence wrapper `Θ.MinimallyUncountable`
   (`[SHAPE DRIFT]` otherwise), and the headline rewrites a goal stated with it (`rw`) and a
   hypothesis stated with it (`simp only … at`).

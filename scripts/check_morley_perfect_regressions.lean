@@ -5,11 +5,13 @@ Regression guard for the witnessed Morley counting theorems and the per-level Si
 * **Statement pins.**  The four previously exported theorems, `morley_counting_coded_or_perfect`,
   `counting_fin_models_countable_or_perfect`, `morley_counting_or_perfect` and
   `morley_counting_or_perfect_cardinal`, and the per-level step
-  `Sentenceω.countable_bfClasses_of_isThinOnNatModels` are restated verbatim here as `pin_*`
-  theorems proved by the originals; each original's type must be equal as an expression (up to
-  binder names and normalization of universe levels) to its copy's, with the same universe
-  parameters (`[STATEMENT DRIFT]` otherwise).  A change of statement therefore has to change the
-  copy in this file too.
+  `Sentenceω.countable_bfClasses_of_isThinOnNatModels` are restated here as `pin_*` theorems
+  proved by the originals.  What is compared: each original's type must equal its copy's as an
+  expression up to binder names and normalization of universe levels, with the same universe
+  parameters (`[STATEMENT DRIFT]` otherwise), and the binder kinds (explicit, implicit,
+  instance-implicit, strict-implicit) along the `∀`-telescope must agree (`[BINDER DRIFT]`
+  otherwise; expression equality alone ignores them).  A change of statement or of binder kinds
+  therefore has to change the copy in this file too.
 * **The per-level step, applied.**  Generically, for an arbitrary relational `Language.{u, v}`
   with countably many relation symbols and an arbitrary thin sentence, including its composition
   with the Scott-height bound `mk_isoSetoid_quotient_le_aleph_one`; and to a thin class: in the
@@ -26,13 +28,18 @@ Regression guard for the witnessed Morley counting theorems and the per-level Si
   step contains `silver_countable_or_cantorAntichain` and `silver_core_polish`, and the cones of
   the three `ℕ`-tier theorems contain the step.  Within `Conditional.MorleyPerfect`, the public
   declarations whose own proof (the declaration and the auxiliary declarations of the module it
-  reaches, but no other public declaration) mentions `silver_countable_or_cantorAntichain` are
-  exactly the step and the `Fin n`-tier theorem `counting_fin_models_countable_or_perfect`, which
-  applies Silver to isomorphism itself (`[DUPLICATED STEP]` otherwise).
+  reaches, but no other public declaration) mentions a form of Silver's theorem
+  (`silver_countable_or_cantorAntichain`, `silver_countable_or_cantorAntichain_of_isClosed` or
+  `silver_core_polish`) are exactly the step and the `Fin n`-tier theorem
+  `counting_fin_models_countable_or_perfect`, which applies Silver to isomorphism itself
+  (`[DUPLICATED STEP]` otherwise).
 * **Import closure unchanged.**  The `InfinitaryLogic` closure of `Conditional.MorleyPerfect` has
   exactly 51 modules, as before the step was extracted (`[CLOSURE DRIFT]` otherwise).
 * **Standard axioms** (`propext`, `Classical.choice`, `Quot.sound`) for the five declarations and
-  every declaration of this guard.  The OK line is printed only after all checks.
+  the declarations listed in `guardDecls`; the remaining helpers of this guard (`uR`, `symIdx`,
+  `continuous_cantorCode`, `not_countable_cantor`) are not listed and are covered indirectly,
+  through the axioms of `thinness_needed_regression`, whose proof uses them.  The OK line is
+  printed only after all checks.
 
 Run with: lake env lean scripts/check_morley_perfect_regressions.lean
 -/
@@ -47,7 +54,7 @@ noncomputable section
 
 namespace MorleyPerfectRegressions
 
-/-! ### Statement pins: verbatim copies, compared by expression below -/
+/-! ### Statement pins: copies compared below by expression and by binder kinds -/
 
 theorem pin_morley_counting_coded_or_perfect {L : Language.{u, v}} [L.IsRelational]
     [Countable (Σ l, L.Relations l)] (φ : L.Sentenceω) :
@@ -227,7 +234,7 @@ def targetModule : Name := `InfinitaryLogic.Conditional.MorleyPerfect
 /-- The per-level Silver step. -/
 def step : Name := `FirstOrder.Language.Sentenceω.countable_bfClasses_of_isThinOnNatModels
 
-/-- Each pinned declaration with its verbatim copy. -/
+/-- Each pinned declaration with its copy. -/
 def pins : List (Name × Name) :=
   [(`FirstOrder.Language.morley_counting_coded_or_perfect,
       `MorleyPerfectRegressions.pin_morley_counting_coded_or_perfect),
@@ -248,12 +255,20 @@ def natTier : List Name :=
 /-- The Silver chain, which the step's cone must contain. -/
 def silverChain : List Name := [`silver_countable_or_cantorAntichain, `silver_core_polish]
 
+/-- Silver's theorem in each of its three forms: for a Borel subset, for a closed subset, and the
+Polish core.  A declaration mentioning any of them applies Silver directly. -/
+def silverFamily : List Name :=
+  [`silver_countable_or_cantorAntichain, `silver_countable_or_cantorAntichain_of_isClosed,
+   `silver_core_polish]
+
 /-- The declarations of the module allowed to apply Silver directly: the step, and the `Fin n`
 tier, which applies Silver to isomorphism itself. -/
 def directSilver : List Name :=
   [step, `FirstOrder.Language.counting_fin_models_countable_or_perfect]
 
-/-- The guard's own declarations whose axioms are audited. -/
+/-- The guard's own declarations whose axioms are audited.  The helpers `uR`, `symIdx`,
+`continuous_cantorCode` and `not_countable_cantor` are covered indirectly, through
+`thinness_needed_regression`. -/
 def guardDecls : List Name :=
   [`pin_morley_counting_coded_or_perfect, `pin_counting_fin_models_countable_or_perfect,
    `pin_morley_counting_or_perfect, `pin_morley_counting_or_perfect_cardinal,
@@ -264,6 +279,14 @@ def guardDecls : List Name :=
 
 /-- The standard axioms. -/
 def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
+
+/-- The binder kinds (explicit, implicit, instance-implicit, strict-implicit) of the leading
+`∀`-telescope of a type, looking through metadata.  `Expr` equality ignores them, so they are
+compared separately. -/
+partial def binderKinds : Expr → List BinderInfo
+  | .forallE _ _ b bi => bi :: binderKinds b
+  | .mdata _ e => binderKinds e
+  | _ => []
 
 /-- An expression with every universe level normalized: elaboration may leave `max (v+1) 1`
 where a restatement has `v+1`, and the two are the same level. -/
@@ -343,13 +366,17 @@ run_cmd do
   let env ← getEnv
   let some idx := env.getModuleIdx? targetModule
     | throwError "module {targetModule} is not in the environment"
-  -- STATEMENT PINS: each original's type is its verbatim copy's, with the same universes
+  -- STATEMENT PINS: each original's type is its copy's (up to binder names and level
+  -- normalization), with the same universes and the same binder kinds
   for (orig, copy) in pins do
     let some o := env.find? orig | throwError "{orig} not found"
     let some c := env.find? copy | throwError "{copy} not found"
     unless normLevels o.type == normLevels c.type && o.levelParams == c.levelParams do
       throwError "[STATEMENT DRIFT] the statement of {orig} is no longer its pinned copy \
         {copy}: {o.type}"
+    unless binderKinds o.type == binderKinds c.type do
+      throwError "[BINDER DRIFT] {orig} has binder kinds {repr (binderKinds o.type)}, its \
+        pinned copy {copy} has {repr (binderKinds c.type)}"
   unless env.getModuleIdxFor? step == some idx do
     throwError "[HOME DRIFT] {step} is not declared in {targetModule}"
   -- CONES (positive): the step reaches Silver, and the `ℕ`-tier theorems reach the step
@@ -370,11 +397,12 @@ run_cmd do
   -- ONE ENTRY POINT: the declarations of the module applying Silver directly
   let decls := (env.header.moduleData[idx.toNat]!).constNames.toList.filter fun n ↦
     !n.isInternalDetail
-  let direct := decls.filter fun n ↦
-    (localRefs env n).contains `silver_countable_or_cantorAntichain
+  for d in silverFamily do
+    unless (env.find? d).isSome do throwError "[VACUOUS] {d} is not in the environment"
+  let direct := decls.filter fun n ↦ silverFamily.any (localRefs env n).contains
   unless direct.all directSilver.contains && directSilver.all direct.contains do
-    throwError "[DUPLICATED STEP] the declarations of {targetModule} applying \
-      silver_countable_or_cantorAntichain directly are {direct}, not {directSilver}"
+    throwError "[DUPLICATED STEP] the declarations of {targetModule} applying a form of \
+      Silver's theorem directly are {direct}, not {directSilver}"
   -- CLOSURE: unchanged by the extraction
   let ilModules := (importClosure env targetModule).toList.filter fun m ↦
     (`InfinitaryLogic).isPrefixOf m
@@ -390,12 +418,14 @@ run_cmd do
     let bad := axs.toList.filter fun a ↦ !standardAxioms.contains a
     unless bad.isEmpty do throwError "[NONSTANDARD AXIOMS] {n} uses {bad}"
     seen := seen ++ .ofList axs.toList
-  logInfo m!"morley perfect regression guard: OK (statements of the {pins.length} pinned \
-    declarations equal to their verbatim copies; the per-level step applied generically, \
+  logInfo m!"morley perfect regression guard: OK (types of the {pins.length} pinned \
+    declarations equal to their copies up to binder names and level normalization, with the \
+    same universe parameters and binder kinds; the per-level step applied generically, \
     composed with the Scott-height bound, as an equivalence with its converse, and to every \
     pure-set sentence; thinness needed: a perfect set forces an uncountable level generically, \
     and concretely for ⊤ over countably many unary symbols at level 1; Silver chain in the \
     step's cone and the step in the cones of the {natTier.length} ℕ-tier theorems; the \
-    declarations applying Silver directly are exactly {directSilver}; import closure \
+    declarations applying a form of Silver's theorem directly are exactly {directSilver}; \
+    import closure \
     {ilModules.length} InfinitaryLogic modules, unchanged; axioms reported for the \
     {audited.length} audited declarations: {seen.toList}, all standard)"

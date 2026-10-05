@@ -40,6 +40,14 @@ differ only in which relation Silver is applied to:
 
 `morley_counting` itself is left untouched: it remains the statement parameterized by the
 dichotomy, and nothing here is a replacement for it.
+
+## References
+
+* M. Morley, "The number of countable models", *J. Symbolic Logic* 35 (1970), 14–18 (the
+  level-by-level analysis of the back-and-forth stratification; here each level is handled by
+  Silver's dichotomy, in `Sentenceω.countable_bfClasses_of_isThinOnNatModels`).
+* J. H. Silver, "Counting the number of equivalence classes of Borel and coanalytic equivalence
+  relations", *Ann. Math. Logic* 18 (1980), 1–28.
 -/
 
 open Cardinal
