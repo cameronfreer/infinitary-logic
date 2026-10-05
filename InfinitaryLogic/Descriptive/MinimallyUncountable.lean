@@ -177,22 +177,6 @@ theorem Sentenceω.minimallyUncountable_iff_inf (Θ : L.Sentenceω) :
   simp only [Sentenceω.MinimallyUncountable, MinimallyUncountableOn, modelsOf_inf, modelsOf_not,
     Set.sdiff_eq]
 
--- The public form is `modelsOf_mem_iff_of_equiv` (`Descriptive/LopezEscobarEasy.lean`).  While
--- `realize_equiv` lives in `Lomega1omega.Theory`, no other module of this closure has both it
--- and `ModelsOf` in scope.  Moving `realize_equiv` down to `Lomega1omega/Semantics.lean` would
--- let `modelsOf_mem_iff_of_equiv` move to `SatisfactionBorel` with no import or closure change,
--- retiring this copy; that relocation is a recorded follow-up.
-/-- Isomorphic codes satisfy the same sentences (`BoundedFormulaω.realize_equiv`).  Private, so
-that this module reaches `Lomega1omega.Theory` and no López–Escobar module. -/
-private theorem modelsOf_mem_of_iso (θ : L.Sentenceω) {c d : StructureSpace L}
-    (h : (structureIsoSetoid L).r c d) (hc : c ∈ ModelsOf θ) : d ∈ ModelsOf θ := by
-  obtain ⟨e⟩ := h
-  have key := @BoundedFormulaω.realize_equiv L ℕ ℕ c.toStructure d.toStructure e Empty 0 θ
-    Empty.elim Fin.elim0
-  rw [show (⇑e ∘ Empty.elim : Empty → ℕ) = Empty.elim from funext fun x ↦ x.elim,
-    show (⇑e ∘ Fin.elim0 : Fin 0 → ℕ) = Fin.elim0 from funext fun i ↦ i.elim0] at key
-  exact key.mp hc
-
 end Minimal
 
 /-! ### Back-and-forth classes are sentence cuts -/
@@ -312,7 +296,7 @@ theorem ConcentratedAtBFLevels.minimallyUncountableOn (hC : ConcentratedAtBFLeve
     MinimallyUncountableOn K := by
   refine ⟨hunc, fun θ ↦ ?_⟩
   have := hC.countable_isoClasses_or hKa ⟨ModelsOf θ, modelsOf_measurableSet θ, rfl⟩
-    fun x hx y hy hxy ↦ ⟨hy, modelsOf_mem_of_iso θ hxy hx.2⟩
+    fun x hx y hy ⟨e⟩ ↦ ⟨hy, (modelsOf_mem_iff_of_equiv θ e).mp hx.2⟩
   rwa [sdiff_self_inter] at this
 
 /-- **The concentration equivalence**, for an analytic class and with no other hypothesis:

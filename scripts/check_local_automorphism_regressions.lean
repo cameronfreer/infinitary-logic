@@ -15,7 +15,8 @@ Every public theorem is *applied*, not only listed for its axioms.
 * **Empty and repeated tuples**, the **identity map**, and a **finite simultaneous valuation**
   (two free variables and one bound variable, one automorphism for the combined tuple), including
   a concrete formula evaluated on both sides.
-* **Import closure**: the module reaches `Lomega1omega/Theory` (the isomorphism invariance
+* **Import closure**: the module reaches `Lomega1omega/Theory` (and through it
+  `Lomega1omega/Semantics`, the home of the isomorphism invariance
   `BoundedFormulaω.realize_equiv`) and no Scott-analysis, Karp, rank, Löwenheim–Skolem,
   model-theory, method, descriptive, admissible or Scott-process module.
 

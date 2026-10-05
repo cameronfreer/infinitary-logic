@@ -217,7 +217,8 @@ bridge is one dedicated lemma (`pc_disjoint_of_no_countable_common_model`-shaped
 consumer of #13 in the arc. The carrier transport needs **no new framework**: Mathlib's
 `nonempty_equiv_of_countable` (instance, `Logic/Denumerable.lean`; `Countable` + `Infinite`
 on both sides) supplies the bijection, and the repository's `BoundedFormulaω.realize_equiv`
-(`Lomega1omega/Theory.lean`) transports realization along it.
+(`Lomega1omega/Semantics.lean`, formerly `Lomega1omega/Theory.lean`) transports realization
+along it.
 
 ### D7 — orientation of `craig_pcSeparation_relational`
 
