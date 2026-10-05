@@ -45,6 +45,8 @@ from it alone.
 
 * `IsIsolatingRank`, with `IsIsolatingRank.isolates_of_le`, `IsIsolatingRank.lift`,
   `IsIsolatingRank.lift_mk`, `IsIsolatingRank.lift_lt_omega1` and `IsIsolatingRank.of_le`.
+* `IsIsolatingRank.exists_unbounded_of_not_countable` (inflation) and
+  `IsIsolatingRank.exists_bound_of_countable`, both with no scatteredness.
 * `codeStabilizationOrdinal`, `codeStabilizationOrdinal_def`, `codeStabilizationOrdinal_congr`,
   `isIsolatingRank_codeStabilizationOrdinal`.
 * `IsIsolatingRank.exists_isolating_codeLevel`,
@@ -64,6 +66,14 @@ from it alone.
   (the regression guard exhibits `Order.succ ∘ codeStabilizationOrdinal`, different from the
   instance at every code), every result derived here from the contract applies to each of them,
   and no least isolating rank is asserted.
+* **Off countably many classes, the contract does not pin boundedness either.**
+  `IsIsolatingRank.exists_unbounded_of_not_countable`: on a set meeting uncountably many
+  isomorphism classes, every isolating rank lies below one that is unbounded below `ω₁` there.
+  Countably many classes always give a bound (`IsIsolatingRank.exists_bound_of_countable`).  So
+  boundedness is rank-independent on such a set exactly when no isolating rank is bounded on it;
+  `BFScattered` forces that (`countable_isoClasses_iff_bounded`).  The regression guard of
+  `Descriptive/MinimallyUnbounded.lean` exhibits a class that is not back-and-forth scattered
+  and carries a bounded and an unbounded isolating rank.
 * **`codeStabilizationOrdinal` is not the least isolating level among codes.**  The
   stabilization ordinal of `c` is the least `α` with `StabilizesAt c α`, and `StabilizesAt`
   quantifies over *all* countable structures `N`, not only over codes; nothing here says that
@@ -177,6 +187,39 @@ structure IsIsolatingRank (ρ : StructureSpace L → Ordinal.{0}) : Prop where
   /-- Back-and-forth equivalence at the rank of `c` decides isomorphism with `c`. -/
   isolates : ∀ ⦃c d : StructureSpace L⦄, CodeBFEquiv (ρ c) c d → (structureIsoSetoid L).r c d
 
+/-- An uncountable set maps onto the countable ordinals: some `f` with values below `ω₁` takes
+every value `β < ω₁` at a point of `S` (`¬ S.Countable` gives `ℵ₁ ≤ #S`, hence an embedding of
+`(ω₁).ToType` into `S`). -/
+private theorem exists_onto_omega_one_of_not_countable {α : Type*} {S : Set α}
+    (hS : ¬ S.Countable) :
+    ∃ f : α → Ordinal.{0}, (∀ x, f x < Ordinal.omega 1) ∧
+      ∀ β < Ordinal.omega 1, ∃ x ∈ S, f x = β := by
+  classical
+  have h1 : Cardinal.lift (Cardinal.mk (Ordinal.omega.{0} 1).ToType) ≤
+      Cardinal.lift.{0} (Cardinal.mk S) := by
+    rw [Cardinal.mk_toType, Ordinal.card_omega, Cardinal.lift_aleph, Cardinal.lift_uzero,
+      Ordinal.lift_one, Cardinal.aleph_one_le_iff, ← not_le,
+      Cardinal.le_aleph0_iff_set_countable]
+    exact hS
+  obtain ⟨e⟩ := Cardinal.lift_mk_le'.mp h1
+  let f : α → Ordinal.{0} := fun x ↦
+    if h : ∃ t, (e t : α) = x then
+      Ordinal.typein (α := (Ordinal.omega.{0} 1).ToType) (· < ·) h.choose
+    else 0
+  refine ⟨f, fun x ↦ ?_, fun β hβ ↦ ?_⟩
+  · simp only [f]
+    split_ifs
+    · exact Ordinal.typein_lt_self _
+    · exact Ordinal.omega_pos 1
+  · have hβ' : β < Ordinal.type (α := (Ordinal.omega.{0} 1).ToType) (· < ·) := by
+      rwa [Ordinal.type_toType]
+    let t := Ordinal.enum (α := (Ordinal.omega.{0} 1).ToType) (· < ·) ⟨β, hβ'⟩
+    refine ⟨e t, (e t).2, ?_⟩
+    have h : ∃ t', (e t' : α) = e t := ⟨t, rfl⟩
+    have ht : h.choose = t := e.injective (Subtype.ext h.choose_spec)
+    simp only [f, h, ↓reduceDIte, ht, t]
+    exact Ordinal.typein_enum _ hβ'
+
 namespace IsIsolatingRank
 
 variable {ρ : StructureSpace L → Ordinal.{0}} {K : Set (StructureSpace L)}
@@ -205,6 +248,38 @@ theorem of_le (hρ : IsIsolatingRank ρ) {ρ' : StructureSpace L → Ordinal.{0}
     (hinv : ∀ ⦃c d : StructureSpace L⦄, (structureIsoSetoid L).r c d → ρ' c = ρ' d)
     (hlt : ∀ c, ρ' c < Ordinal.omega 1) : IsIsolatingRank ρ' :=
   ⟨hinv, hlt, fun _ _ h ↦ hρ.isolates_of_le (hle _) h⟩
+
+/-- **Boundedness is not pinned off countably many classes either.**  On a set `K` meeting
+uncountably many isomorphism classes, every isolating rank lies below an isolating rank that is
+unbounded below `ω₁` on `K`: take `max ρ (f ∘ Quotient.mk _)` with `f` a map of the classes onto
+the countable ordinals, and apply `of_le`.  No scatteredness and no countability of the language
+is assumed; under `BFScattered K` the counting statements below make every isolating rank
+unbounded on such a `K`, so the comparison of boundedness across isolating ranks holds there.
+The conclusion is the shape of `UnboundedRankOn ρ' K` (`Descriptive/MinimallyUncountable.lean`). -/
+theorem exists_unbounded_of_not_countable (hρ : IsIsolatingRank ρ)
+    (hK : ¬ (Quotient.mk (structureIsoSetoid L) '' K).Countable) :
+    ∃ ρ' : StructureSpace L → Ordinal.{0}, IsIsolatingRank ρ' ∧ (∀ c, ρ c ≤ ρ' c) ∧
+      ∀ β < Ordinal.omega 1, ∃ c ∈ K, β ≤ ρ' c := by
+  obtain ⟨f, hf, hsurj⟩ := exists_onto_omega_one_of_not_countable hK
+  refine ⟨fun c ↦ max (ρ c) (f (Quotient.mk _ c)), hρ.of_le (fun c ↦ le_max_left _ _)
+    (fun c d h ↦ by simp only [hρ.iso_invariant h, Quotient.sound h])
+    (fun c ↦ max_lt (hρ.lt_omega1 c) (hf _)), fun c ↦ le_max_left _ _, fun β hβ ↦ ?_⟩
+  obtain ⟨_, ⟨c, hc, rfl⟩, hcβ⟩ := hsurj β hβ
+  exact ⟨c, hc, hcβ ▸ le_max_right _ _⟩
+
+/-- **Countably many classes give a bound**, for any isolating rank and any set of codes, with
+no scatteredness: the supremum of the rank over the countably many classes of `K` is below `ω₁`.
+This is the forward direction of `countable_isoClasses_iff_bounded` without `BFScattered`.  The
+conclusion is the shape of `BoundedRankOn ρ K` (`Descriptive/MinimallyUncountable.lean`). -/
+theorem exists_bound_of_countable (hρ : IsIsolatingRank ρ)
+    (hK : (Quotient.mk (structureIsoSetoid L) '' K).Countable) :
+    ∃ β < Ordinal.omega 1, ∀ c ∈ K, ρ c < β := by
+  have := hK.to_subtype
+  let f : ↥(Quotient.mk (structureIsoSetoid L) '' K) → Ordinal.{0} := fun q ↦ hρ.lift q.1
+  refine ⟨Order.succ (⨆ q, f q), (Cardinal.isSuccLimit_omega 1).succ_lt
+    (Ordinal.iSup_lt_omega_one fun q ↦ hρ.lift_lt_omega1 q.1), fun c hc ↦ ?_⟩
+  exact Order.lt_succ_iff.mpr
+    (le_ciSup (f := f) Ordinal.bddAbove_of_small ⟨Quotient.mk _ c, c, hc, rfl⟩)
 
 /-! ### The code form of the isolating level -/
 

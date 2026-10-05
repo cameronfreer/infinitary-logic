@@ -16,7 +16,9 @@ that closure each declaration actually uses.
   structure `IsIsolatingRank` with its constructor, recursors and fields, `IsIsolatingRank.lift`
   and `codeStabilizationOrdinal`) are exactly the public declarations of the module
   (`[ROOT DRIFT]`).
-* **The contract layer uses no stabilization ordinal.**  The cones of the contract API, the code
+* **The contract layer uses no stabilization ordinal.**  The cones of the contract API (with
+  the inflation `exists_unbounded_of_not_countable` and the bound `exists_bound_of_countable`,
+  which reach no `OrdinalCountability` constant either), the code
   form `IsIsolatingRank.exists_isolating_codeLevel` with its contrapositive, and the counting
   statements (`countable_fibers`, `mk_isoClasses_le_aleph_one`, `mk_isoClasses_eq_aleph_one`,
   `countable_isoClasses_iff_bounded`) contain neither `stabilizationOrdinal_spec` nor
@@ -97,7 +99,8 @@ def congrRoot : Name := `FirstOrder.Language.codeStabilizationOrdinal_congr
 
 /-- The contract-layer theorems: the API, the code form and the counting statements. -/
 def contractTheorems : List Name :=
-  iir [`isolates_of_le, `lift_mk, `lift_lt_omega1, `of_le, `exists_isolating_codeLevel,
+  iir [`isolates_of_le, `lift_mk, `lift_lt_omega1, `of_le, `exists_unbounded_of_not_countable,
+    `exists_bound_of_countable, `exists_isolating_codeLevel,
     `not_countable_isoClasses_of_forall_unisolated, `countable_fiber, `countable_fibers,
     `mk_isoClasses_le_aleph_one, `mk_isoClasses_eq_aleph_one,
     `countable_isoClasses_iff_bounded]
@@ -136,6 +139,10 @@ def required : List (Name × List Name) :=
    (`FirstOrder.Language.IsIsolatingRank.lift_mk, iir [`lift]),
    (`FirstOrder.Language.IsIsolatingRank.lift_lt_omega1, iir [`lift, `lt_omega1]),
    (`FirstOrder.Language.IsIsolatingRank.of_le, iir [`isolates_of_le]),
+   (`FirstOrder.Language.IsIsolatingRank.exists_unbounded_of_not_countable,
+      iir [`of_le, `lt_omega1, `iso_invariant] ++ [`Cardinal.lift_mk_le', `Ordinal.typein_enum]),
+   (`FirstOrder.Language.IsIsolatingRank.exists_bound_of_countable,
+      iir [`lift_lt_omega1] ++ [`Ordinal.iSup_lt_omega_one]),
    (`FirstOrder.Language.IsIsolatingRank.exists_isolating_codeLevel,
       iir [`isolates_of_le, `lift_lt_omega1] ++ [`Ordinal.iSup_lt_omega_one]),
    (`FirstOrder.Language.IsIsolatingRank.not_countable_isoClasses_of_forall_unisolated,
