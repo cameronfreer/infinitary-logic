@@ -7,7 +7,9 @@ layer, `stabilizesAt_of_equiv` (`InfinitaryLogic/Scott/Sentence.lean`) and
 Every public declaration of the module is *applied*, not only listed for its axioms.
 
 * **Generic applications, no countability.**  The contract `IsIsolatingRank` (its three fields),
-  `isolates_of_le`, `lift`, `lift_mk`, `lift_lt_omega1`, `of_le`, `codeStabilizationOrdinal`,
+  `isolates_of_le`, `lift`, `lift_mk`, `lift_lt_omega1`, `of_le`, the inflation
+  `exists_unbounded_of_not_countable` and the bound `exists_bound_of_countable` (both with no
+  `BFScattered`), `codeStabilizationOrdinal`,
   `codeStabilizationOrdinal_def`, `codeStabilizationOrdinal_congr`, the per-level
   `countable_fiber`, the code form `exists_isolating_codeLevel` with its
   contrapositive `not_countable_isoClasses_of_forall_unisolated`, and the four counting
@@ -90,6 +92,18 @@ theorem generic_ofLe_regression {L : Language.{u, v}} [L.IsRelational]
     (hinv : ∀ ⦃c d : StructureSpace L⦄, (structureIsoSetoid L).r c d → ρ' c = ρ' d)
     (hlt : ∀ c, ρ' c < Ordinal.omega 1) : IsIsolatingRank ρ' :=
   hρ.of_le hle hinv hlt
+
+/-- **Inflation and the scatteredness-free bound for an arbitrary relational language**, no
+countability and no `BFScattered` in scope: off countably many classes some isolating rank above
+`ρ` is unbounded below `ω₁`; on countably many classes `ρ` is bounded below `ω₁`. -/
+theorem generic_inflation_regression {L : Language.{u, v}} [L.IsRelational]
+    {ρ : StructureSpace L → Ordinal.{0}} (hρ : IsIsolatingRank ρ) {K : Set (StructureSpace L)} :
+    (¬ (Quotient.mk (structureIsoSetoid L) '' K).Countable →
+      ∃ ρ' : StructureSpace L → Ordinal.{0}, IsIsolatingRank ρ' ∧ (∀ c, ρ c ≤ ρ' c) ∧
+        ∀ β < Ordinal.omega 1, ∃ c ∈ K, β ≤ ρ' c) ∧
+      ((Quotient.mk (structureIsoSetoid L) '' K).Countable →
+        ∃ β < Ordinal.omega 1, ∀ c ∈ K, ρ c < β) :=
+  ⟨hρ.exists_unbounded_of_not_countable, hρ.exists_bound_of_countable⟩
 
 /-- **`codeStabilizationOrdinal` and its congruence lemma for an arbitrary relational
 language**, no countability in scope. -/
@@ -360,14 +374,16 @@ open ScatteredCountingRegressions
 def fol (l : List Name) : List Name := l.map (`FirstOrder.Language ++ ·)
 
 /-- The public declarations of the module whose types must not assume countably many relation
-symbols: the contract with its generated declarations, the code form, the counting statements,
-`codeStabilizationOrdinal` and its congruence lemma. -/
+symbols: the contract with its generated declarations, inflation and the scatteredness-free
+bound, the code form, the counting statements, `codeStabilizationOrdinal` and its congruence
+lemma. -/
 def countabilityFree : List Name :=
   fol [`IsIsolatingRank, `IsIsolatingRank.mk, `IsIsolatingRank.rec, `IsIsolatingRank.casesOn,
     `IsIsolatingRank.recOn, `IsIsolatingRank.iso_invariant, `IsIsolatingRank.lt_omega1,
     `IsIsolatingRank.isolates, `IsIsolatingRank.isolates_of_le, `IsIsolatingRank.lift,
     `IsIsolatingRank.lift_mk, `IsIsolatingRank.lift_lt_omega1, `IsIsolatingRank.of_le,
-    `IsIsolatingRank.exists_isolating_codeLevel,
+    `IsIsolatingRank.exists_unbounded_of_not_countable,
+    `IsIsolatingRank.exists_bound_of_countable, `IsIsolatingRank.exists_isolating_codeLevel,
     `IsIsolatingRank.not_countable_isoClasses_of_forall_unisolated,
     `IsIsolatingRank.countable_fiber, `IsIsolatingRank.countable_fibers,
     `IsIsolatingRank.mk_isoClasses_le_aleph_one,
@@ -497,7 +513,8 @@ def refinementCountClosure : List Name :=
 
 /-- The guard's own declarations whose axioms are audited. -/
 def guardDecls : List Name :=
-  [`generic_contract_regression, `generic_ofLe_regression, `generic_codeStabilization_regression,
+  [`generic_contract_regression, `generic_ofLe_regression, `generic_inflation_regression,
+   `generic_codeStabilization_regression,
    `generic_codeLevel_regression, `generic_counting_regression, `generic_stabilizesAt_regression,
    `generic_stabilizationOrdinal_regression, `generic_def_fiber_regression,
    `bigLang, `bigLang_regression, `shifted_rank_regression, `pureLang, `pureCode,
@@ -553,8 +570,9 @@ run_cmd do
     let axs ← Elab.Command.liftCoreM (collectAxioms n)
     let bad := axs.toList.filter fun a ↦ !standardAxioms.contains a
     unless bad.isEmpty do throwError "[NONSTANDARD AXIOMS] {n} uses {bad}"
-  logInfo m!"scattered counting regression guard: OK (applied: the contract and its API, the \
-    code form and its contrapositive, and the four counting statements for an arbitrary \
+  logInfo m!"scattered counting regression guard: OK (applied: the contract and its API, \
+    inflation and the bound from countably many classes with no BFScattered, the code form \
+    and its contrapositive, and the four counting statements for an arbitrary \
     relational Language.\{u, v} with no countability, and in a language with uncountably many \
     symbols, there with the rank as a hypothesis (none exhibited); stabilizesAt_of_equiv and \
     stabilizationOrdinal_eq_of_equiv with no relational or countability instance; the defining \
