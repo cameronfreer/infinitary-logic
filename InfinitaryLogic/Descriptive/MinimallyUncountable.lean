@@ -177,11 +177,13 @@ theorem Sentenceω.minimallyUncountable_iff_inf (Θ : L.Sentenceω) :
   simp only [Sentenceω.MinimallyUncountable, MinimallyUncountableOn, modelsOf_inf, modelsOf_not,
     Set.sdiff_eq]
 
+-- The public form is `modelsOf_mem_iff_of_equiv` (`Descriptive/LopezEscobarEasy.lean`).  While
+-- `realize_equiv` lives in `Lomega1omega.Theory`, no other module of this closure has both it
+-- and `ModelsOf` in scope.  Moving `realize_equiv` down to `Lomega1omega/Semantics.lean` would
+-- let `modelsOf_mem_iff_of_equiv` move to `SatisfactionBorel` with no import or closure change,
+-- retiring this copy; that relocation is a recorded follow-up.
 /-- Isomorphic codes satisfy the same sentences (`BoundedFormulaω.realize_equiv`).  Private, so
-that this module reaches `Lomega1omega.Theory` and no López–Escobar module.  The public form is
-`modelsOf_mem_iff_of_equiv` (`Descriptive/LopezEscobarEasy.lean`); no other module of this
-import closure has both `ModelsOf` and `realize_equiv` in scope, so moving that form below
-`LopezEscobarEasy` would add an import to its new home. -/
+that this module reaches `Lomega1omega.Theory` and no López–Escobar module. -/
 private theorem modelsOf_mem_of_iso (θ : L.Sentenceω) {c d : StructureSpace L}
     (h : (structureIsoSetoid L).r c d) (hc : c ∈ ModelsOf θ) : d ∈ ModelsOf θ := by
   obtain ⟨e⟩ := h

@@ -23,6 +23,9 @@ Both theorems are *applied*, not only listed for their axioms.
   dependencies (`[DEPENDENCY DRIFT]` otherwise), checked separately from the axiom audit.  The
   concentrated form's type mentions no `IsIsolatingRank`; the two theorems are exactly the
   public declarations of the module (`[ROOT DRIFT]`).
+* **Statement shape.**  Both left sides are the sentence wrapper `Θ.MinimallyUncountable`
+  (`[SHAPE DRIFT]` otherwise), and the headline rewrites a goal stated with it (`rw`) and a
+  hypothesis stated with it (`simp only … at`).
 * **Exact import closure.**  The `InfinitaryLogic` closure of
   `Conditional.MinimallyUncountableHeadline` is exactly `allowedClosure` (161 modules),
   checked to be the union of the closures of `Conditional.BFScatteredSilver` (57),
@@ -50,13 +53,13 @@ arbitrary sentence and an arbitrary isolating rank. -/
 theorem generic_regression {L : Language.{u, v}} [L.IsRelational]
     [Countable (Σ l, L.Relations l)] {ρ : StructureSpace L → Ordinal.{0}}
     (hρ : IsIsolatingRank ρ) (Θ : L.Sentenceω) :
-    (MinimallyUncountableOn (ModelsOf Θ) → BFScattered (ModelsOf Θ) ∧ Θ.MinimallyUnbounded ρ) ∧
-      (BFScattered (ModelsOf Θ) ∧ Θ.MinimallyUnbounded ρ → MinimallyUncountableOn (ModelsOf Θ)) ∧
-      (MinimallyUncountableOn (ModelsOf Θ) → ConcentratedAtBFLevels (ModelsOf Θ) ∧
+    (Θ.MinimallyUncountable → BFScattered (ModelsOf Θ) ∧ Θ.MinimallyUnbounded ρ) ∧
+      (BFScattered (ModelsOf Θ) ∧ Θ.MinimallyUnbounded ρ → Θ.MinimallyUncountable) ∧
+      (Θ.MinimallyUncountable → ConcentratedAtBFLevels (ModelsOf Θ) ∧
         ¬ (Quotient.mk (structureIsoSetoid L) '' ModelsOf Θ).Countable) ∧
       (ConcentratedAtBFLevels (ModelsOf Θ) ∧
         ¬ (Quotient.mk (structureIsoSetoid L) '' ModelsOf Θ).Countable →
-          MinimallyUncountableOn (ModelsOf Θ)) :=
+          Θ.MinimallyUncountable) :=
   ⟨(Sentenceω.minimallyUncountable_iff hρ Θ).mp, (Sentenceω.minimallyUncountable_iff hρ Θ).mpr,
     (Sentenceω.minimallyUncountable_iff_concentrated Θ).mp,
     (Sentenceω.minimallyUncountable_iff_concentrated Θ).mpr⟩
@@ -76,9 +79,21 @@ theorem rank_independence_regression {L : Language.{u, v}} [L.IsRelational]
 /-- **The landed instance**: the headline at `codeStabilizationOrdinal`. -/
 theorem instance_regression {L : Language.{u, v}} [L.IsRelational]
     [Countable (Σ l, L.Relations l)] (Θ : L.Sentenceω) :
-    MinimallyUncountableOn (ModelsOf Θ) ↔
+    Θ.MinimallyUncountable ↔
       BFScattered (ModelsOf Θ) ∧ Θ.MinimallyUnbounded codeStabilizationOrdinal :=
   Sentenceω.minimallyUncountable_iff isIsolatingRank_codeStabilizationOrdinal Θ
+
+/-- **The headline rewrites goals stated with the sentence wrapper**: `rw` on a goal and
+`simp only` at a hypothesis, both stated as `Θ.MinimallyUncountable`. -/
+theorem rewrite_regression {L : Language.{u, v}} [L.IsRelational]
+    [Countable (Σ l, L.Relations l)] {ρ : StructureSpace L → Ordinal.{0}}
+    (hρ : IsIsolatingRank ρ) (Θ : L.Sentenceω) (h : Θ.MinimallyUncountable) :
+    (Θ.MinimallyUncountable ↔ BFScattered (ModelsOf Θ) ∧ Θ.MinimallyUnbounded ρ) ∧
+      ConcentratedAtBFLevels (ModelsOf Θ) := by
+  constructor
+  · rw [Sentenceω.minimallyUncountable_iff hρ]
+  · simp only [Sentenceω.minimallyUncountable_iff_concentrated] at h
+    exact h.1
 
 /-- The pure-set language: no function or relation symbols, in universes `{1, 2}`. -/
 def pureLang : Language.{1, 2} where
@@ -105,12 +120,12 @@ its models are back-and-forth scattered, so by the headline it is not minimally 
 `codeStabilizationOrdinal`, nor for any isolating rank; and the concentrated form fails on its
 uncountability conjunct. -/
 theorem pureSet_regression (Θ : pureLang.Sentenceω) :
-    ¬ MinimallyUncountableOn (ModelsOf Θ) ∧ BFScattered (ModelsOf Θ) ∧
+    ¬ Θ.MinimallyUncountable ∧ BFScattered (ModelsOf Θ) ∧
       ¬ Θ.MinimallyUnbounded codeStabilizationOrdinal ∧
       (∀ ρ, IsIsolatingRank ρ → ¬ Θ.MinimallyUnbounded ρ) ∧
       ¬ (ConcentratedAtBFLevels (ModelsOf Θ) ∧
         ¬ (Quotient.mk (structureIsoSetoid pureLang) '' ModelsOf Θ).Countable) := by
-  have hnot : ¬ MinimallyUncountableOn (ModelsOf Θ) := fun h ↦ h.1 (pure_classes_countable _)
+  have hnot : ¬ Θ.MinimallyUncountable := fun h ↦ h.1 (pure_classes_countable _)
   have hK : BFScattered (ModelsOf Θ) :=
     (concentratedAtBFLevels_of_countable (pure_classes_countable _)).bfScattered
   have hall : ∀ ρ, IsIsolatingRank ρ → ¬ Θ.MinimallyUnbounded ρ :=
@@ -307,8 +322,8 @@ def allowedClosure : List Name :=
 
 /-- The guard's own declarations whose axioms are audited. -/
 def guardDecls : List Name :=
-  [`generic_regression, `rank_independence_regression, `instance_regression, `pureLang,
-   `pure_classes_countable, `pureSet_regression].map
+  [`generic_regression, `rank_independence_regression, `instance_regression,
+   `rewrite_regression, `pureLang, `pure_classes_countable, `pureSet_regression].map
     (`MinimallyUncountableHeadlineRegressions ++ ·)
 
 /-- The standard axioms. -/
@@ -331,6 +346,14 @@ run_cmd do
     !n.isInternalDetail
   unless pub.all exports.contains && exports.all pub.contains do
     throwError "[ROOT DRIFT] the public declarations of {targetModule} are {pub}"
+  -- SHAPE: both left sides are the sentence wrapper `Sentenceω.MinimallyUncountable`
+  for n in exports do
+    let some ci := env.find? n | throwError "{n} not found"
+    let lhsOk ← Elab.Command.liftTermElabM <| Meta.forallTelescope ci.type fun _ body ↦
+      pure <| body.isAppOfArity ``Iff 2 &&
+        body.appFn!.appArg!.isAppOf `FirstOrder.Language.Sentenceω.MinimallyUncountable
+    unless lhsOk do
+      throwError "[SHAPE DRIFT] the left side of {n} is not Sentenceω.MinimallyUncountable"
   -- the concentrated form mentions no isolating rank
   let some conc := env.find? exports[1]! | throwError "{exports[1]!} not found"
   if (conc.type.find? (·.isConstOf `FirstOrder.Language.IsIsolatingRank)).isSome then
@@ -338,7 +361,7 @@ run_cmd do
   -- DEPENDENCY CHECK (positive): López–Escobar and the Silver chain are in both proof cones
   for d in requiredDeps do
     unless (env.find? d).isSome do throwError "[VACUOUS] {d} is not in the environment"
-  let mut sizes : Array (Name × Nat) := #[]
+  let mut sizes : Array String := #[]
   for n in exports do
     let some (.thmInfo _) := env.find? n | throwError "[NOT A THEOREM] {n}"
     let c ← match cone env n with
@@ -348,7 +371,7 @@ run_cmd do
       unless c.contains d do
         throwError "[DEPENDENCY DRIFT] {d} is no longer in the cone of {n}; the module \
           docstring states it is, update both"
-    sizes := sizes.push (n.componentsRev.head!, c.size)
+    sizes := sizes.push s!"{n.componentsRev.head!} {c.size}"
   -- CLOSURE CHECK: exact, the predicted union, and no broad cone
   let ilModules := ilClosure env targetModule
   let hits := ilModules.filter fun m ↦ forbiddenPrefixes.any (·.isPrefixOf m) ||
@@ -385,9 +408,10 @@ run_cmd do
     models are back-and-forth scattered, it is minimally unbounded for no isolating rank, and \
     the concentrated form fails; dependencies: lopez_escobar, \
     silver_countable_or_cantorAntichain and silver_core_polish in both proof cones \
-    (cones {sizes.toList}); the concentrated form mentions no isolating rank; \
-    exact import closure ({ilModules.length} \
+    (cone sizes {", ".intercalate sizes.toList}); both left sides stated through \
+    Sentenceω.MinimallyUncountable, rewriting by rw and simp only; the concentrated form \
+    mentions no isolating rank; exact import closure ({ilModules.length} \
     modules, the union of BFScatteredSilver, MinimallyUnbounded and MinimallyUncountableThin \
     plus the module) with no Admissible, ScottProcess or WIP module and no Conditional module \
     outside the Silver chain; axioms reported for the {audited.length} audited declarations: \
-    {seen.toList}, all standard)"
+    {", ".intercalate (seen.toList.map toString)}, all standard)"

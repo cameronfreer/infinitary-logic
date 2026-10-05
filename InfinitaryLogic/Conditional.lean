@@ -65,7 +65,7 @@ intermediates and historical statement shapes.
   `morley_counting_coded_or_perfect` (`MorleyPerfect.lean`).
 - `MinimallyUncountableHeadline.lean`: **`Sentenceω.minimallyUncountable_iff`** — the models of
   a sentence are minimally uncountable iff they are back-and-forth scattered and the sentence is
-  minimally unbounded for any isolating rank (the analogue of [Mon, Def XII.4]), with the
+  minimally unbounded for any isolating rank (the analogue of Montalbán's Def XII.4), with the
   concentrated form `Sentenceω.minimallyUncountable_iff_concentrated`.  Here because the
   scatteredness step consumes the Silver chain (through `BFScatteredSilver.lean`); its proof
   cones also reach López–Escobar (through `MinimallyUncountableOn.isThinOn`).

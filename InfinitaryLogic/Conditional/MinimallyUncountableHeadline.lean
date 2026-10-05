@@ -20,13 +20,16 @@ coded models (`Sentenceω.minimallyUncountable_iff_concentrated`).
 ## Main declarations
 
 * `Sentenceω.minimallyUncountable_iff`: for an isolating rank `ρ`,
-  `MinimallyUncountableOn (ModelsOf Θ) ↔ BFScattered (ModelsOf Θ) ∧ Θ.MinimallyUnbounded ρ`.
+  `Θ.MinimallyUncountable ↔ BFScattered (ModelsOf Θ) ∧ Θ.MinimallyUnbounded ρ`.  Both left sides
+  are stated through the sentence wrapper `Sentenceω.MinimallyUncountable`
+  (`Descriptive/MinimallyUncountable.lean`), so they rewrite goals stated with it.
   The right side does not depend on `ρ` among isolating ranks.  The landed instance is
   `codeStabilizationOrdinal` (`isIsolatingRank_codeStabilizationOrdinal`,
   `Descriptive/ScatteredCounting.lean`).
-* `Sentenceω.minimallyUncountable_iff_concentrated`: `MinimallyUncountableOn (ModelsOf Θ)` iff
+* `Sentenceω.minimallyUncountable_iff_concentrated`: `Θ.MinimallyUncountable` iff
   `ConcentratedAtBFLevels (ModelsOf Θ)` and the coded models meet uncountably many isomorphism
-  classes.  No rank occurs.
+  classes.  No rank occurs.  This, not `Sentenceω.minimallyUncountable_iff`, is the sentence case
+  of `minimallyUncountableOn_iff` (whose scatteredness hypothesis it discharges).
 
 ## Proof
 
@@ -57,9 +60,12 @@ minimally uncountable sentence, the per-level countability hypothesis of
 
 ## Scope
 
-Of [Mon, Lemma XII.8] only the first half is formalized
-(`MinimallyUncountableOn.exists_bfClass_compl_countable`), and it enters only the concentrated
-form.  No minimally uncountable sentence is exhibited.
+Of [Mon, Lemma XII.8] only the first half is formalized, in its countable form
+(`MinimallyUncountableOn.exists_bfClass_compl_countable`, which enters only the concentrated
+form) and its bounded form (`MinimallyUnboundedOn.exists_bfClass_compl_bounded`,
+`Descriptive/MinimallyUnbounded.lean`, not used here).  Not formalized: the second half of
+Lemma XII.8 (the club of levels), [Mon, Lemma XII.6] and [Mon, Lemma XII.7].  No minimally
+uncountable sentence is exhibited.
 
 ## References
 
@@ -81,20 +87,22 @@ variable {L : Language.{u, v}} [L.IsRelational] [Countable (Σ l, L.Relations l)
 minimally uncountable iff they are back-and-forth scattered and `Θ` is minimally unbounded for
 `ρ` (the analogue of [Mon, Def XII.4]).  The scatteredness half goes through Silver's theorem
 (`Sentenceω.bfScattered_of_isThinOnNatModels`) and López–Escobar
-(`MinimallyUncountableOn.isThinOn`). -/
+(`MinimallyUncountableOn.isThinOn`).  This is not the sentence case of
+`minimallyUncountableOn_iff` (whose right side is the concentrated form); that is
+`Sentenceω.minimallyUncountable_iff_concentrated`. -/
 theorem Sentenceω.minimallyUncountable_iff {ρ : StructureSpace L → Ordinal.{0}}
     (hρ : IsIsolatingRank ρ) (Θ : L.Sentenceω) :
-    MinimallyUncountableOn (ModelsOf Θ) ↔
-      BFScattered (ModelsOf Θ) ∧ Θ.MinimallyUnbounded ρ := by
+    Θ.MinimallyUncountable ↔ BFScattered (ModelsOf Θ) ∧ Θ.MinimallyUnbounded ρ := by
   refine ⟨fun h ↦ ?_, fun ⟨hK, h⟩ ↦ (minimallyUnboundedOn_iff_minimallyUncountableOn hρ hK).mp h⟩
   have hK := Sentenceω.bfScattered_of_isThinOnNatModels h.isThinOn
   exact ⟨hK, (minimallyUnboundedOn_iff_minimallyUncountableOn hρ hK).mpr h⟩
 
 /-- **Minimally uncountable sentences, through concentration**: the models of `Θ` are minimally
 uncountable iff they are concentrated at back-and-forth levels and meet uncountably many
-isomorphism classes.  No rank occurs. -/
+isomorphism classes.  No rank occurs.  This is the sentence case of `minimallyUncountableOn_iff`,
+with its `BFScattered` hypothesis discharged through Silver's theorem. -/
 theorem Sentenceω.minimallyUncountable_iff_concentrated (Θ : L.Sentenceω) :
-    MinimallyUncountableOn (ModelsOf Θ) ↔ ConcentratedAtBFLevels (ModelsOf Θ) ∧
+    Θ.MinimallyUncountable ↔ ConcentratedAtBFLevels (ModelsOf Θ) ∧
       ¬ (Quotient.mk (structureIsoSetoid L) '' ModelsOf Θ).Countable := by
   have hKa : AnalyticSet (ModelsOf Θ) := (modelsOf_measurableSet Θ).analyticSet
   refine ⟨fun h ↦ ?_, fun h ↦ ((bfScattered_and_minimallyUncountableOn_iff hKa).mpr h).2⟩
