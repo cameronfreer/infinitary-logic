@@ -33,7 +33,7 @@ that the module's declarations use none of it.
 * **Required dependencies** per root: the definitions through `BoundedRankOn`,
   `UnboundedRankOn` and `ModelsOf`; the literal form through `modelsOf_inf` and `modelsOf_not`;
   the back-and-forth statements through `modelsOf_scottSentenceAt`, `scottFormula` and (for the
-  first half of Lemma XII.8) the engine `exists_bfClass_compl_of_sentenceCuts`; the
+  first half of Lemma XII.8) the engine `exists_bfClass_compl_of_sentence_cuts`; the
   rank-independence statements through the counting statement, and the minimality iff through
   `BFScattered.mono`.
 * **No `Conditional` constant**, none of the Silver declarations, and none of the forbidden
@@ -106,7 +106,7 @@ def required : List (Name × List Name) :=
       fol [`modelsOf_scottSentenceAt, `scottSentenceAt, `scottFormula,
         `realize_scottFormula_iff_BFEquiv]),
    (`FirstOrder.Language.MinimallyUnboundedOn.exists_bfClass_compl_bounded,
-      fol [`exists_bfClass_compl_of_sentenceCuts, `boundedRankOn_sUnion,
+      fol [`exists_bfClass_compl_of_sentence_cuts, `boundedRankOn_sUnion,
         `modelsOf_scottSentenceAt, `scottFormula]),
    (`FirstOrder.Language.IsIsolatingRank.boundedRankOn_iff_countable, [counting]),
    (`FirstOrder.Language.boundedRankOn_iff_of_isIsolatingRank,

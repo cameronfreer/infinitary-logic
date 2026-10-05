@@ -33,7 +33,7 @@ Every public declaration of the module is *applied*, not only listed for its axi
   declaration is classified.
 * **Exact import closure.**  The `InfinitaryLogic` closure of `Descriptive.MinimallyUnbounded` is
   exactly `allowedClosure` (40 modules: the closures of `Descriptive.ScatteredCounting` (35) and
-  `Descriptive.MinimallyUncountable` (33), overlapping in 30, plus the module), and it is checked
+  `Descriptive.MinimallyUncountable` (33), overlapping in 29, plus the module), and it is checked
   to be that union.  `Karp.PotentialIso` is in it, through `ScatteredCounting` and
   `Scott.Sentence`; it is the only `Karp` module.  The proofs of the module do not use it (see
   `check_minimally_unbounded_deps.lean`).  The closure contains no `ModelTheory`, `Methods`,

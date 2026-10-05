@@ -134,6 +134,8 @@ theorem BFScattered.mono {J K : Set (StructureSpace L)} (hK : BFScattered K) (hJ
   countable_quotient_of_countable_range _
     (fun x : J ↦ (Quotient.mk _ ⟨x.1, hJK x.2⟩ :
       Quotient ((codeBFEquivSetoid L η).comap (Subtype.val : K → StructureSpace L))))
+    -- `Quotient.exact h` is the pulled-back relation on `K`, which unfolds to `CodeBFEquiv η`
+    -- of the underlying codes, the relation pulled back to `J`
     (Set.to_countable _) fun _ _ h ↦ by have := Quotient.exact h; exact this
 
 /-! ### Uniform separation of an analytic antichain -/

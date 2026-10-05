@@ -126,7 +126,10 @@ theorem MinimallyUnboundedOn.bounded_bfClass_or_compl (h : MinimallyUnboundedOn 
 in this form): at a level `α < ω₁` where a minimally unbounded `K` has countably many
 `CodeBFEquiv α`-classes, `ρ` is unbounded on the class of some `a ∈ K` and bounded on its
 complement in `K`.  No isolating rank and no bound `ρ < ω₁` is used; the per-level countability
-is the scatteredness hypothesis that the book's statement omits. -/
+is the scatteredness hypothesis that the book's statement omits.  This is the engine
+`exists_bfClass_compl_of_sentence_cuts` with `P := BoundedRankOn ρ`.  The level relation is
+`CodeBFEquiv α`, not the book's `≡_α` (see the Conventions of
+`Descriptive/MinimallyUncountable.lean`). -/
 theorem MinimallyUnboundedOn.exists_bfClass_compl_bounded (h : MinimallyUnboundedOn ρ K)
     {α : Ordinal.{0}} (hα : α < Ordinal.omega 1)
     (hKα : Countable (Quotient ((codeBFEquivSetoid L α).comap
@@ -134,7 +137,7 @@ theorem MinimallyUnboundedOn.exists_bfClass_compl_bounded (h : MinimallyUnbounde
     ∃ a ∈ K, UnboundedRankOn ρ (K ∩ {d | CodeBFEquiv α a d}) ∧
       BoundedRankOn ρ (K \ {d | CodeBFEquiv α a d}) := by
   simpa only [unboundedRankOn_iff_not_boundedRankOn] using
-    exists_bfClass_compl_of_sentenceCuts (BoundedRankOn ρ) (fun _ _ hJK h ↦ h.mono hJK)
+    exists_bfClass_compl_of_sentence_cuts (BoundedRankOn ρ) (fun _ _ hJK h ↦ h.mono hJK)
       (fun _ hS h ↦ boundedRankOn_sUnion hS h) (unboundedRankOn_iff_not_boundedRankOn.mp h.1)
       h.2 hα hKα
 

@@ -11,11 +11,11 @@ import InfinitaryLogic.Scott.Formula
 /-!
 # Minimally uncountable classes of codes, and cuts by sentences
 
-This module is the rank-free half of an analogue of the minimality notion of [Mon, §XII.2]
-(Def XII.4).  A set `K` of codes of countable relational structures is **minimally
-uncountable** (`MinimallyUncountableOn K`) when it meets uncountably many isomorphism classes,
-but every **sentence cut** of `K`, the pair `K ∩ ModelsOf θ` / `K \ ModelsOf θ` for a sentence
-`θ`, has a side meeting only countably many.  For a sentence `Θ`,
+This module is the contract-free half (no isolating rank) of an analogue of the minimality
+notion of [Mon, §XII.2] (Def XII.4).  A set `K` of codes of countable relational structures
+is **minimally uncountable** (`MinimallyUncountableOn K`) when it meets uncountably many
+isomorphism classes, but every **sentence cut** of `K`, the pair `K ∩ ModelsOf θ` /
+`K \ ModelsOf θ` for a sentence `θ`, has a side meeting only countably many.  For a sentence `Θ`,
 `Sentenceω.MinimallyUncountable Θ` is the case `K = ModelsOf Θ`, and
 `Sentenceω.minimallyUncountable_iff_inf` restates it with the literal sentences `Θ ⊓ θ` and
 `Θ ⊓ θ.not`.
@@ -31,21 +31,22 @@ cuts `K` into two unbounded sides; see the regression guard).
   bounded below `ω₁` on `K`, or takes values on `K` cofinal in `ω₁` (the shape of [Mon,
   Def XII.1]); with `mono`, the empty class, and countable unions.  These definitions take an
   arbitrary `ρ`, with no isolating-rank contract, and no relational instance.
-* `modelsOf_inf_not`: the second side of a sentence cut, `ModelsOf (Θ ⊓ θ.not)`, is
-  `ModelsOf Θ \ ModelsOf θ` (the first is `modelsOf_inf`).
+* Sentence cuts are read through `modelsOf_inf` and `modelsOf_inf_not`
+  (`Descriptive/ModelsOfGDelta.lean`): `ModelsOf (Θ ⊓ θ) = ModelsOf Θ ∩ ModelsOf θ` and
+  `ModelsOf (Θ ⊓ θ.not) = ModelsOf Θ \ ModelsOf θ`.
 * `MinimallyUncountableOn K`, `Sentenceω.MinimallyUncountable Θ`, and the literal form
   `Sentenceω.minimallyUncountable_iff_inf`.
 * `modelsOf_scottSentenceAt` (an analogue of [Mon, Lemma XII.5] on codes): for `α < ω₁`, the
   codes of the models of `scottSentenceAt` of the structure decoded from `c`, at level `α`, are
-  exactly the codes `CodeBFEquiv α`-equivalent to `c`.  Every back-and-forth class is therefore a
-  sentence cut
-  (`MinimallyUncountableOn.countable_bfClass_or_compl`).
-* `exists_bfClass_compl_of_sentenceCuts`: for any notion of smallness closed under subsets and
+  exactly the codes `CodeBFEquiv α`-equivalent to `c`.  Every back-and-forth class is therefore
+  a sentence cut (`MinimallyUncountableOn.countable_bfClass_or_compl`).
+* `exists_bfClass_compl_of_sentence_cuts`: for any notion of smallness closed under subsets and
   countable unions, if `K` is not small but every sentence cut has a small side, then at a level
   `α < ω₁` where `K` has countably many `CodeBFEquiv α`-classes, one class is not small and its
   complement in `K` is small.  `MinimallyUncountableOn.exists_bfClass_compl_countable` is the
   case "meets countably many isomorphism classes" (the first half of [Mon, Lemma XII.8], in this
-  form).
+  form); `MinimallyUnboundedOn.exists_bfClass_compl_bounded` (`Descriptive/MinimallyUnbounded.lean`)
+  is the case "`ρ` is bounded".
 * `MinimallyUncountableOn.concentratedAtBFLevels`: a minimally uncountable, back-and-forth
   scattered class is concentrated at back-and-forth levels; conversely
   `ConcentratedAtBFLevels.minimallyUncountableOn`: an analytic concentrated class meeting
@@ -59,8 +60,8 @@ cuts `K` into two unbounded sides; see the regression guard).
 * `[Countable (Σ l, L.Relations l)]` enters through `scottSentenceAt` (in
   `modelsOf_scottSentenceAt`, the cut by a back-and-forth class, the generic engine and its
   consumers), and through the Borel step of `ConcentratedAtBFLevels.countable_isoClasses_or` (in
-  the converse and the two equivalences).  The definitions, the rank lemmas and
-  `modelsOf_inf_not` need no countability of the relation symbols.
+  the converse and the two equivalences).  The definitions and the rank lemmas need no
+  countability of the relation symbols.
 * The first half of [Mon, Lemma XII.8] is stated with the per-level hypothesis
   `Countable (Quotient ((codeBFEquivSetoid L α).comap Subtype.val))`.  The book's statement
   omits a scatteredness hypothesis that its proof uses (countably many classes at the level,
@@ -146,12 +147,6 @@ section Minimal
 
 variable {L : Language.{u, v}} [L.IsRelational]
 
-/-- **The second side of a sentence cut**: the coded models of `Θ ⊓ θ.not` are those of `Θ`
-outside those of `θ`.  The first side is `modelsOf_inf`. -/
-theorem modelsOf_inf_not (Θ θ : L.Sentenceω) :
-    ModelsOf (Θ ⊓ θ.not) = ModelsOf Θ \ ModelsOf θ := by
-  rw [modelsOf_inf, modelsOf_not, Set.sdiff_eq]
-
 /-- **Minimally uncountable on `K`**: `K` meets uncountably many isomorphism classes, and every
 sentence cut `K ∩ ModelsOf θ` / `K \ ModelsOf θ` has a side meeting only countably many.  The
 cut ranges over sentences, not arbitrary invariant subsets. -/
@@ -213,15 +208,29 @@ theorem MinimallyUncountableOn.countable_bfClass_or_compl (h : MinimallyUncounta
       (Quotient.mk (structureIsoSetoid L) '' (K \ {d | CodeBFEquiv α c d})).Countable := by
   rw [← modelsOf_scottSentenceAt c hα]; exact h.2 _
 
-/-- **One back-and-forth class with a small complement** (generic engine).  Let `P` be a notion
-of smallness for sets of codes, closed under subsets and countable unions.  If `K` is not small
-and every sentence cut of `K` has a small side, then at any level `α < ω₁` where `K` has
-countably many `CodeBFEquiv α`-classes, the class of some `a ∈ K` is not small and its
-complement in `K` is small.
+/-- **One back-and-forth class with a small complement** (generic engine).
 
-The per-level countability is a hypothesis; without it the class need not exist. -/
-theorem exists_bfClass_compl_of_sentenceCuts (P : Set (StructureSpace L) → Prop)
-    (hmono : ∀ ⦃J K : Set (StructureSpace L)⦄, J ⊆ K → P K → P J)
+* **Parameter.**  A smallness predicate `P` on sets of codes, closed under subsets (`hmono`) and
+  under countable unions (`hU`).
+* **Hypotheses.**  `K` is not small (`hK`), and every sentence cut of `K` has a small side
+  (`hcut`: `P (K ∩ ModelsOf θ) ∨ P (K \ ModelsOf θ)` for every sentence `θ`).  At the level
+  `α < ω₁`, the restriction of `CodeBFEquiv α` to `K` has countably many classes (`hKα`).
+* **Conclusion.**  For some `a ∈ K`, the class `K ∩ {d | CodeBFEquiv α a d}` is not small and
+  its complement in `K` is small.
+
+The two instantiations are `MinimallyUncountableOn.exists_bfClass_compl_countable` (`P` = "meets
+countably many isomorphism classes", below) and
+`MinimallyUnboundedOn.exists_bfClass_compl_bounded` (`P` = "`ρ` is bounded below `ω₁`", in
+`Descriptive/MinimallyUnbounded.lean`).
+
+The per-level countability is a hypothesis, used to cover `K` by countably many classes; whether
+it can be dropped in general is not settled here.  For the models of a minimally uncountable
+sentence it is dischargeable: `MinimallyUncountableOn.isThinOn`
+(`Descriptive/MinimallyUncountableThin.lean`) with the landed
+`Sentenceω.bfScattered_of_isThinOnNatModels` (`Conditional/BFScatteredSilver.lean`) gives
+`BFScattered`; that composition is the deferred `Conditional` headline. -/
+theorem exists_bfClass_compl_of_sentence_cuts (P : Set (StructureSpace L) → Prop)
+    (hmono : ∀ ⦃s t : Set (StructureSpace L)⦄, s ⊆ t → P t → P s)
     (hU : ∀ S : Set (Set (StructureSpace L)), S.Countable → (∀ s ∈ S, P s) → P (⋃₀ S))
     (hK : ¬ P K) (hcut : ∀ θ : L.Sentenceω, P (K ∩ ModelsOf θ) ∨ P (K \ ModelsOf θ))
     {α : Ordinal.{0}} (hα : α < Ordinal.omega 1)
@@ -257,7 +266,7 @@ theorem MinimallyUncountableOn.exists_bfClass_compl_countable (h : MinimallyUnco
       (Subtype.val : K → StructureSpace L)))) :
     ∃ a ∈ K, ¬ (Quotient.mk (structureIsoSetoid L) '' (K ∩ {d | CodeBFEquiv α a d})).Countable ∧
       (Quotient.mk (structureIsoSetoid L) '' (K \ {d | CodeBFEquiv α a d})).Countable :=
-  exists_bfClass_compl_of_sentenceCuts
+  exists_bfClass_compl_of_sentence_cuts
     (fun s ↦ (Quotient.mk (structureIsoSetoid L) '' s).Countable)
     (fun _ _ hJK h ↦ h.mono (image_mono hJK))
     (fun _ hS h ↦ by rw [sUnion_eq_biUnion, image_iUnion₂]; exact hS.biUnion h) h.1 h.2 hα hKα
@@ -272,7 +281,7 @@ variable {L : Language.{u, v}} [L.IsRelational] [Countable (Σ l, L.Relations l)
   {K : Set (StructureSpace L)}
 
 /-- **Minimal and scattered gives concentration**: a minimally uncountable, back-and-forth
-scattered class is concentrated at back-and-forth levels, with centres in `K`. -/
+scattered class is concentrated at back-and-forth levels. -/
 theorem MinimallyUncountableOn.concentratedAtBFLevels (h : MinimallyUncountableOn K)
     (hK : BFScattered K) : ConcentratedAtBFLevels K := by
   intro α hα

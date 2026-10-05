@@ -66,14 +66,16 @@ theorem pure_classes_countable (S : Set (StructureSpace pureLang)) :
   (countable_singleton (Quotient.mk (structureIsoSetoid pureLang) fun _ ↦ false)).mono
     (by rintro _ ⟨x, -, rfl⟩; exact congrArg _ (Subsingleton.elim _ _))
 
-/-- **The pure-set language**: all codes are thin, through the sentence cuts and through the
-landed `isThinOn_of_bfScattered`. -/
+/-- **The pure-set language**: all codes are thin through the sentence cuts (first conjunct);
+they are also back-and-forth scattered, hence thin through the landed `isThinOn_of_bfScattered`
+(second and third conjuncts). -/
 theorem pure_regression :
     IsThinOn (structureIsoSetoid pureLang) (univ : Set (StructureSpace pureLang)) ∧
+      BFScattered (univ : Set (StructureSpace pureLang)) ∧
       IsThinOn (structureIsoSetoid pureLang) (univ : Set (StructureSpace pureLang)) :=
-  ⟨isThinOn_of_sentence_cuts fun _ ↦ Or.inl (pure_classes_countable _),
-    isThinOn_of_bfScattered
-      (concentratedAtBFLevels_of_countable (pure_classes_countable univ)).bfScattered⟩
+  have hK := (concentratedAtBFLevels_of_countable (pure_classes_countable univ)).bfScattered
+  ⟨isThinOn_of_sentence_cuts fun _ ↦ Or.inl (pure_classes_countable _), hK,
+    isThinOn_of_bfScattered hK⟩
 
 end MinimallyUncountableThinRegressions
 

@@ -2,10 +2,10 @@
 Regression guard for minimally uncountable classes and sentence cuts
 (`InfinitaryLogic/Descriptive/MinimallyUncountable.lean`), for the level-`α` Scott sentence
 (`scottSentenceAt` and `realize_scottSentenceAt_iff_BFEquiv` in
-`InfinitaryLogic/Scott/Formula.lean`), and for three small additions beside existing
+`InfinitaryLogic/Scott/Formula.lean`), and for four small additions beside existing
 declarations: `mem_modelsOf_iff_realize` (`Descriptive/SatisfactionBorel.lean`, implicit `L`),
-`modelsOf_not` (`Descriptive/ModelsOfGDelta.lean`) and `BFScattered.mono`
-(`Descriptive/BFScattered.lean`).
+`modelsOf_not` and `modelsOf_inf_not` (`Descriptive/ModelsOfGDelta.lean`) and
+`BFScattered.mono` (`Descriptive/BFScattered.lean`).
 
 Every public declaration of the module and every addition is *applied*, not only listed for its
 axioms.
@@ -18,7 +18,7 @@ axioms.
   `BFScattered.mono`, `MinimallyUncountableOn`, `Sentenceω.MinimallyUncountable`,
   `Sentenceω.minimallyUncountable_iff_inf`) for an arbitrary relational language with no
   countability; the back-and-forth classes (`modelsOf_scottSentenceAt`,
-  `MinimallyUncountableOn.countable_bfClass_or_compl`, `exists_bfClass_compl_of_sentenceCuts`,
+  `MinimallyUncountableOn.countable_bfClass_or_compl`, `exists_bfClass_compl_of_sentence_cuts`,
   `MinimallyUncountableOn.exists_bfClass_compl_countable`) and the concentration equivalence
   (`MinimallyUncountableOn.concentratedAtBFLevels`,
   `ConcentratedAtBFLevels.minimallyUncountableOn`, `bfScattered_and_minimallyUncountableOn_iff`,
@@ -130,7 +130,7 @@ theorem bfClass_regression {L : Language.{u, v}} [L.IsRelational]
         ¬ (Quotient.mk (structureIsoSetoid L) '' (K ∩ {d | CodeBFEquiv α a d})).Countable ∧
           (Quotient.mk (structureIsoSetoid L) '' (K \ {d | CodeBFEquiv α a d})).Countable :=
   ⟨modelsOf_scottSentenceAt c hα, h.countable_bfClass_or_compl c hα,
-    exists_bfClass_compl_of_sentenceCuts (BoundedRankOn ρ) (fun _ _ hJK h ↦ h.mono hJK)
+    exists_bfClass_compl_of_sentence_cuts (BoundedRankOn ρ) (fun _ _ hJK h ↦ h.mono hJK)
       (fun _ hS h ↦ boundedRankOn_sUnion hS h) hρK hρcut hα hKα,
     h.exists_bfClass_compl_countable hα hKα⟩
 
@@ -333,7 +333,7 @@ symbols. -/
 def countabilityFree : List Name :=
   fol [`BoundedRankOn, `UnboundedRankOn, `unboundedRankOn_iff_not_boundedRankOn,
     `BoundedRankOn.mono, `boundedRankOn_empty, `boundedRankOn_sUnion, `BoundedRankOn.union,
-    `modelsOf_inf_not, `MinimallyUncountableOn, `Sentenceω.MinimallyUncountable,
+    `MinimallyUncountableOn, `Sentenceω.MinimallyUncountable,
     `Sentenceω.minimallyUncountable_iff_inf]
 
 /-- The public declarations of the module whose types assume countably many relation symbols:
@@ -341,7 +341,7 @@ those that cut by a back-and-forth class (through `scottSentenceAt`) and those t
 Borel step of `ConcentratedAtBFLevels.countable_isoClasses_or`. -/
 def countabilityUsing : List Name :=
   fol [`modelsOf_scottSentenceAt, `MinimallyUncountableOn.countable_bfClass_or_compl,
-    `exists_bfClass_compl_of_sentenceCuts, `MinimallyUncountableOn.exists_bfClass_compl_countable,
+    `exists_bfClass_compl_of_sentence_cuts, `MinimallyUncountableOn.exists_bfClass_compl_countable,
     `MinimallyUncountableOn.concentratedAtBFLevels, `ConcentratedAtBFLevels.minimallyUncountableOn,
     `bfScattered_and_minimallyUncountableOn_iff, `minimallyUncountableOn_iff]
 
@@ -351,6 +351,7 @@ def additions : List (Name × Name) :=
    (`FirstOrder.Language.realize_scottSentenceAt_iff_BFEquiv, `InfinitaryLogic.Scott.Formula),
    (`FirstOrder.Language.mem_modelsOf_iff_realize, `InfinitaryLogic.Descriptive.SatisfactionBorel),
    (`FirstOrder.Language.modelsOf_not, `InfinitaryLogic.Descriptive.ModelsOfGDelta),
+   (`FirstOrder.Language.modelsOf_inf_not, `InfinitaryLogic.Descriptive.ModelsOfGDelta),
    (`FirstOrder.Language.BFScattered.mono, `InfinitaryLogic.Descriptive.BFScattered)]
 
 run_cmd do
@@ -478,7 +479,7 @@ def satisfactionBorelClosure : List Name :=
    `InfinitaryLogic.Descriptive.SatisfactionBorelOn, `InfinitaryLogic.Descriptive.SatisfactionBorel]
 
 /-- The exact `InfinitaryLogic` import closure of `Descriptive.ModelsOfGDelta`, unchanged by
-`modelsOf_not`. -/
+`modelsOf_not` and `modelsOf_inf_not`. -/
 def modelsOfGDeltaClosure : List Name :=
   satisfactionBorelClosure ++
     [`InfinitaryLogic.Descriptive.GDeltaPolish, `InfinitaryLogic.Descriptive.ModelsOfGDelta]
@@ -549,7 +550,8 @@ run_cmd do
     unless bad.isEmpty do throwError "[NONSTANDARD AXIOMS] {n} uses {bad}"
   logInfo m!"minimally uncountable regression guard: OK (applied: the rank layer for an \
     arbitrary Language.\{u, v} with no relational or countability instance; the sentence-cut \
-    layer, mem_modelsOf_iff_realize with L implicit, modelsOf_not and BFScattered.mono with no \
+    layer, mem_modelsOf_iff_realize with L implicit, modelsOf_not, modelsOf_inf_not and \
+    BFScattered.mono with no \
     countability; the back-and-forth classes, the generic engine with an arbitrary rank and no \
     isolating rank, and the concentration equivalence with countably many symbols; \
     realize_scottSentenceAt_iff_BFEquiv with no relational instance and independent carrier \
