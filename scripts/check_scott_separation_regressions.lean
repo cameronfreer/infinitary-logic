@@ -35,8 +35,10 @@ Every exported declaration is *applied*, not only listed for its axioms.
 * **Semantic layer.**  `qrank_lt_omega1` on a quantified formula; the wrapper on an abstract
   isolated presentation; the consumer's call shape through the landed producer
   `isolatedPresentation_of_surjective` as a direct application; the per-class shape with local
-  loss-plus-survivor witnesses, exclusion at the isolating sentence's rank and a strict bound at
-  every stage.
+  loss-plus-survivor witnesses at countable stages, exclusion at the isolating sentence's rank and
+  a strict bound at every stage; the same witnesses demanded at every ordinal are inconsistent
+  with the other premises (`global_loss_inconsistent`), so that premise would make the regression
+  vacuous.
 * **Import closures.**  The `InfinitaryLogic` closure of `OrdinalCountability` is exactly
   `{OrdinalCountability, OrdinalUtil}`, that of `Lomega1omega.QuantifierRank` and that of
   `Descriptive.ScottDefinability` are pinned exactly (`[CLOSURE DRIFT]`).
@@ -477,9 +479,9 @@ theorem consumer_call_shape {L : Language.{u, v}} [L.IsRelational]
   (isolatedPresentation_of_surjective codes classOf honto hiso truth htruth)
     |>.exists_countable_strict_stage_bound D hanti hagree htwo q
 
-/-- **The per-class shape** with local loss-plus-survivor witnesses at `θ := σ.qrank` and the
-successor index `θ + 1`: exclusion at the isolating sentence's rank, and a strict bound at every
-stage, countable or not. -/
+/-- **The per-class shape** with local loss-plus-survivor witnesses at countable stages, used at
+`θ := σ.qrank` and the successor index `θ + 1`: exclusion at the isolating sentence's rank, and a
+strict bound at every stage, countable or not. -/
 theorem consumer_per_class {L : Language.{u, v}} [L.IsRelational]
     [Countable (Σ l, L.Relations l)] {X : Type u} {Q : Type w}
     (codes : X → StructureSpace L) (classOf : X → Q) (honto : Function.Surjective classOf)
@@ -489,17 +491,42 @@ theorem consumer_per_class {L : Language.{u, v}} [L.IsRelational]
     (D : Ordinal.{0} → Set Q) (hanti : Antitone D)
     (hagree : ∀ η, η < Ordinal.omega 1 → ∀ φ : L.Sentenceω, φ.qrank ≤ η →
       ∀ ⦃x y⦄, x ∈ D η → y ∈ D η → (truth φ x ↔ truth φ y))
-    (hloss : ∀ θ, ∃ a b, a ∈ D θ ∧ a ∉ D (θ + 1) ∧ b ∈ D (θ + 1)) (q : Q) :
+    (hloss : ∀ θ, θ < Ordinal.omega 1 →
+      ∃ a b, a ∈ D θ ∧ a ∉ D (θ + 1) ∧ b ∈ D (θ + 1)) (q : Q) :
     ∃ σ : L.Sentenceω, σ.qrank < Ordinal.omega 1 ∧ q ∉ D σ.qrank ∧
       ∀ η, q ∈ D η → η < σ.qrank := by
   obtain ⟨σ, hσ⟩ := isolatedPresentation_of_surjective codes classOf honto hiso truth htruth q
   have hσω : σ.qrank < Ordinal.omega 1 := Sentenceω.qrank_lt_omega1 σ
-  obtain ⟨a, b, ha, ha', hb⟩ := hloss σ.qrank
+  obtain ⟨a, b, ha, ha', hb⟩ := hloss σ.qrank hσω
   have htwo : (D σ.qrank).Nontrivial := nontrivial_of_succ_loss hanti ha ha' hb
   exact ⟨σ, hσω,
     notMem_of_isolating_of_uniform truth hσ (hagree σ.qrank hσω σ le_rfl) htwo,
     fun η hq ↦ stage_lt_rank_of_isolating truth (fun φ ↦ φ.qrank) D hanti hσ
       (hagree σ.qrank hσω σ le_rfl) htwo hq⟩
+
+/-- **The loss premise must be restricted to countable stages.**  Loss-plus-survivor witnesses at
+every ordinal are inconsistent with the other premises of `consumer_per_class`: they make every
+countable domain nonsingleton, so the countable bound puts each point of `D ω₁` below a countable
+ordinal, while `hloss ω₁` supplies such a point.  A per-class regression with that premise would
+be vacuous. -/
+theorem global_loss_inconsistent {L : Language.{u, v}} [L.IsRelational]
+    [Countable (Σ l, L.Relations l)] {X : Type u} {Q : Type w}
+    (codes : X → StructureSpace L) (classOf : X → Q) (honto : Function.Surjective classOf)
+    (hiso : ∀ x y, (structureIsoSetoid L).r (codes x) (codes y) → classOf x = classOf y)
+    (truth : L.Sentenceω → Q → Prop)
+    (htruth : ∀ φ x, truth φ (classOf x) ↔ codes x ∈ ModelsOf φ)
+    (D : Ordinal.{0} → Set Q) (hanti : Antitone D)
+    (hagree : ∀ η, η < Ordinal.omega 1 → ∀ φ : L.Sentenceω, φ.qrank ≤ η →
+      ∀ ⦃x y⦄, x ∈ D η → y ∈ D η → (truth φ x ↔ truth φ y))
+    (hloss : ∀ θ, ∃ a b, a ∈ D θ ∧ a ∉ D (θ + 1) ∧ b ∈ D (θ + 1)) : False := by
+  have htwo : ∀ η, η < Ordinal.omega 1 → (D η).Nontrivial := fun η _ ↦
+    let ⟨_, _, ha, ha', hb⟩ := hloss η
+    nontrivial_of_succ_loss hanti ha ha' hb
+  obtain ⟨a, _, ha, -, -⟩ := hloss (Ordinal.omega 1)
+  obtain ⟨θ, hθ, hbound⟩ :=
+    (isolatedPresentation_of_surjective codes classOf honto hiso truth htruth)
+      |>.exists_countable_strict_stage_bound D hanti hagree htwo a
+  exact lt_irrefl _ ((hbound _ ha).trans hθ)
 
 /-- **Positive control** for the cone checks: a theorem whose proof uses
 `scottSentence_characterizes`. -/
@@ -644,7 +671,8 @@ def guardDecls : List Name :=
    `mk_eq_aleph_one_of_isolation, `neg_singleton, `neg_uniformity, `neg_isolation,
    `neg_antitone, `neg_rank_endpoint, `exists_countable_bound_strict_convention,
    `bound_depends_on_choice, `qrank_countable, `wrapper_abstract,
-   `consumer_call_shape, `consumer_per_class, `scott_control].map (`ScottSeparationGuard ++ ·)
+   `consumer_call_shape, `consumer_per_class, `global_loss_inconsistent,
+   `scott_control].map (`ScottSeparationGuard ++ ·)
 
 /-- The standard axioms. -/
 def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
@@ -795,7 +823,8 @@ run_cmd do
     negative: singleton domain, uniformity, isolation, antitonicity, the strict rank endpoint \
     with the countable bound surviving at rank + 1, choice dependence on the nonvacuity instance \
     (the bound is not the least strict bound); semantic: countable rank, the wrapper, the \
-    consumer call shape and the per-class shape through isolatedPresentation_of_surjective; \
+    consumer call shape and the per-class shape (loss witnesses at countable stages) through \
+    isolatedPresentation_of_surjective, the global loss premise shown inconsistent; \
     exact closures of OrdinalCountability, Lomega1omega.QuantifierRank and \
     Descriptive.ScottDefinability; generic cones logic-free and wrapper cones Scott-free, with \
     positive controls; placement; standard axioms)"
