@@ -385,7 +385,8 @@ run_cmd do
     models are back-and-forth scattered, it is minimally unbounded for no isolating rank, and \
     the concentrated form fails; dependencies: lopez_escobar, \
     silver_countable_or_cantorAntichain and silver_core_polish in both proof cones \
-    (cones {sizes.toList}); the concentrated form mentions no isolating rank; exact import closure ({ilModules.length} \
+    (cones {sizes.toList}); the concentrated form mentions no isolating rank; \
+    exact import closure ({ilModules.length} \
     modules, the union of BFScatteredSilver, MinimallyUnbounded and MinimallyUncountableThin \
     plus the module) with no Admissible, ScottProcess or WIP module and no Conditional module \
     outside the Silver chain; axioms reported for the {audited.length} audited declarations: \
