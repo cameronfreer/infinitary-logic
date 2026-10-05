@@ -26,8 +26,8 @@ in Lω₁ω (countable infinitary logic with countable conjunctions/disjunctions
 - `Theoryω.Model.mono`: Models are monotone: if T ⊆ T' and M ⊨ T', then M ⊨ T.
 - `LomegaEquiv.refl`, `LomegaEquiv.symm`, `LomegaEquiv.trans`: LomegaEquiv is an equivalence relation.
 - `LomegaEquiv.of_equiv`: Isomorphic structures are Lω₁ω-equivalent.
-- `BoundedFormulaω.realize_equiv`, `Formulaω.realize_comp_equiv`: realization is invariant under
-  isomorphisms.
+- `Formulaω.realize_comp_equiv`: realization of a formula is invariant under isomorphisms, the
+  formula-level form of `BoundedFormulaω.realize_equiv` (`Lomega1omega/Semantics.lean`).
 
 ## References
 
@@ -164,38 +164,6 @@ theorem realize_conjunction_iff (T : L.Theoryω) (hT : T.Countable)
 end Theoryω
 
 /-! ### Isomorphism Invariance of Realization -/
-
-/-- Realization of Lω₁ω formulas is preserved by language isomorphisms.
-
-Given an isomorphism `e : M ≃[L] N`, a formula realized in M with variable assignments
-`v` and `xs` is also realized in N with the transported assignments `e ∘ v` and `e ∘ xs`. -/
-theorem BoundedFormulaω.realize_equiv {M N : Type w} [L.Structure M] [L.Structure N]
-    (e : M ≃[L] N) {α : Type*} {n : ℕ} (φ : L.BoundedFormulaω α n)
-    (v : α → M) (xs : Fin n → M) :
-    φ.Realize v xs ↔ φ.Realize (e ∘ v) (e ∘ xs) := by
-  induction φ with
-  | falsum => simp
-  | equal t₁ t₂ => exact (e.toEmbedding.realize_equal_comp t₁ t₂).symm
-  | rel R ts => exact (e.toEmbedding.realize_rel_comp R ts).symm
-  | imp φ ψ ihφ ihψ =>
-    simp only [BoundedFormulaInf.Realize]
-    exact Iff.imp (ihφ xs) (ihψ xs)
-  | all φ ih =>
-    simp only [BoundedFormulaInf.Realize]
-    constructor
-    · intro h y
-      have h1 := (ih (Fin.snoc xs (e.symm y))).mp (h (e.symm y))
-      rwa [Fin.comp_snoc, e.apply_symm_apply] at h1
-    · intro h x
-      have h1 := h (e x)
-      rw [← Fin.comp_snoc] at h1
-      exact (ih (Fin.snoc xs x)).mpr h1
-  | iSup φs ih =>
-    simp only [BoundedFormulaInf.Realize]
-    exact exists_congr fun i => ih i xs
-  | iInf φs ih =>
-    simp only [BoundedFormulaInf.Realize]
-    exact forall_congr' fun i => ih i xs
 
 /-- `BoundedFormulaω.realize_equiv` at the level of formulas: truth of a formula is transported
 along an isomorphism `e : M ≃[L] N`, the assignment composed with `e`. -/
