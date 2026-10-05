@@ -27,7 +27,7 @@ For a presentation `truth : L.Sentenceω → Q → Prop` of a family of isomorph
   `Q`, no Borelness of the family.  The corollaries `exists_sentence_of_countable_of_presentation`
   and `sentence_definable_iff_of_presentation` assemble the two layers.
 * **Strict stage bounds** (abstract layer): on an isolated presentation, the isolating sentences
-  have countable quantifier rank (`IsolatedPresentation.exists_qrank_lt`, from
+  have countable quantifier rank (`IsolatedPresentation.exists_qrank_lt_omega1`, from
   `Sentenceω.qrank_lt_omega1`), so antitone domains of presentation values that are nonsingleton
   and agree on every sentence of quantifier rank at most `η` at every countable `η` bound every
   value's stages strictly by a countable ordinal
@@ -124,7 +124,7 @@ theorem sentence_definable_iff {truth : L.Sentenceω → Q → Prop}
 value is isolated by a sentence of rank below `ω₁` (every `Lω₁ω` sentence has countable rank,
 `Sentenceω.qrank_lt_omega1`).  The `hisolate` premise of
 `InfinitaryLogic.exists_countable_strict_stage_bound_of_isolation`. -/
-theorem IsolatedPresentation.exists_qrank_lt {truth : L.Sentenceω → Q → Prop}
+theorem IsolatedPresentation.exists_qrank_lt_omega1 {truth : L.Sentenceω → Q → Prop}
     (hisol : IsolatedPresentation truth) (q : Q) :
     ∃ σ : L.Sentenceω, σ.qrank < Ordinal.omega 1 ∧ ∀ s, truth σ s ↔ s = q :=
   let ⟨σ, hσ⟩ := hisol q
@@ -144,7 +144,7 @@ theorem IsolatedPresentation.exists_countable_strict_stage_bound
     (htwo : ∀ η, η < Ordinal.omega 1 → (D η).Nontrivial) (q : Q) :
     ∃ θ, θ < Ordinal.omega 1 ∧ ∀ η, q ∈ D η → η < θ :=
   InfinitaryLogic.exists_countable_strict_stage_bound_of_isolation truth (fun φ ↦ φ.qrank) D hanti
-    huniform htwo hisol.exists_qrank_lt q
+    huniform htwo hisol.exists_qrank_lt_omega1 q
 
 end Abstract
 

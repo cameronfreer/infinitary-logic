@@ -15,17 +15,23 @@ Every exported declaration is *applied*, not only listed for its axioms.
   observations) with no `Nonempty`; the empty class space (no `Nonempty` instance is needed to
   state or apply the countable bound); a stage with no countability hypothesis (`ω₁` itself is
   excluded); the loss-plus-survivor adapter at the exact successor index `θ + 1`, feeding the
-  ordinal bound; a `ℤ`-indexed instance of the general bound (stages with no least element and no
-  ordinal) and a generic `Type 1` linear order of stages; nonvacuity of the countable bound on the
-  countable ordinals.
+  ordinal bound; the rank form is the index form at `ζ := rank φ` (`rfl`), and the ordinal form
+  the instance of the rank form (`rfl`); a `ℤ`-indexed instance of the general bound (stages with
+  no least element and no ordinal) and a generic `Type 1` linear order of stages; nonvacuity of
+  the countable bound on the countable ordinals.
 * **Consequences of the countable bound.**  Under antitonicity its conclusion is equivalent to
   leaving the domain at `θ`; its hypotheses force an uncountable class space; with countable
   complements (not a hypothesis) it composes with `mk_eq_aleph_one_of_domains` to give `#X = ℵ₁`.
-* **Negative controls, as actual counterexamples.**  (1) Singleton domain: nonemptiness and an
-  ambient `Nontrivial` type do not suffice.  (2) Uniformity dropped.  (3) Isolation dropped.
-  (4) Antitonicity dropped: the point returns at a later stage.  (5) Rank endpoint: under the
-  convention "agreement for ranks strictly below the stage" the strict bound fails on `Bool`.
-  (6) The bound is not attained and depends on the chosen isolating observation.
+* **Negative controls, each a concrete instance refuting the weakened or altered statement.**
+  (1) Singleton domain: nonemptiness and an ambient `Nontrivial` type do not suffice.
+  (2) Uniformity dropped.  (3) Isolation dropped.  (4) Antitonicity dropped: the point returns at
+  a later stage.  (5) Rank endpoint: under the
+  convention "agreement for ranks strictly below the stage" the bound at the isolating
+  observation's rank fails on `Bool`; positively, a countable strict bound then survives at
+  `rank φ + 1` (`exists_countable_bound_strict_convention`).  (6) Choice dependence: on the
+  nonvacuity instance, with every hypothesis of the countable bound holding, two observations of
+  different ranks isolate the same point, and the larger rank is a strict bound that is not the
+  least one; the point's last stage is attained strictly below both.
 * **Semantic layer.**  `qrank_lt_omega1` on a quantified formula; the wrapper on an abstract
   isolated presentation; the consumer's call shape through the landed producer
   `isolatedPresentation_of_surjective` as a direct application; the per-class shape with local
@@ -180,6 +186,16 @@ theorem type1_instance {ι : Type 1} [LinearOrder ι] {X : Type} {F : Type 2} (S
     (huniform : ∀ ⦃x y⦄, x ∈ D (rank φ) → y ∈ D (rank φ) → (Sat φ x ↔ Sat φ y))
     (htwo : (D (rank φ)).Nontrivial) {η : ι} (hq : q ∈ D η) : η < rank φ :=
   lt_rank_of_isolating_of_antitone Sat rank D hanti hiso huniform htwo hq
+
+/-- The rank form is literally the index form at `ζ := rank φ`. -/
+theorem rank_is_index {ι : Type w} [LinearOrder ι] {X : Type u} {F : Type v}
+    (Sat : F → X → Prop) (rank : F → ι) (D : ι → Set X) (hanti : Antitone D) {q : X} {φ : F}
+    (hiso : ∀ x, Sat φ x ↔ x = q)
+    (huniform : ∀ ⦃x y⦄, x ∈ D (rank φ) → y ∈ D (rank φ) → (Sat φ x ↔ Sat φ y))
+    (htwo : (D (rank φ)).Nontrivial) {η : ι} (hq : q ∈ D η) :
+    lt_rank_of_isolating_of_antitone Sat rank D hanti hiso huniform htwo hq =
+      lt_index_of_isolating_of_antitone (ζ := rank φ) Sat D hanti hiso huniform htwo hq :=
+  rfl
 
 /-- The ordinal form is literally the instance of the general one. -/
 theorem ordinal_is_instance {X : Type u} {F : Type v} (Sat : F → X → Prop)
@@ -357,20 +373,67 @@ theorem neg_rank_endpoint :
     ⟨true, (le_refl (1 : Ordinal.{0})), false, (le_refl (1 : Ordinal.{0})), by decide⟩,
     (le_refl (1 : Ordinal.{0})), lt_irrefl _⟩
 
-/-- **(6) A bound, not an attained stage, and not intrinsic.**  On `Unit` with `D η = univ` iff
-`η = 0`, every `n : ℕ` (an observation of rank `n`) isolates the point.  The point's stages stop
-at `0`, while the bound from the observation `7` is `7`: the bound depends on the chosen
-isolating observation and is not attained. -/
-theorem bound_not_attained :
-    let D : Ordinal.{0} → Set Unit := fun η ↦ {_x | η = 0}
-    Antitone D ∧ (∀ (_n : ℕ) (x : Unit), x = () ↔ x = ()) ∧ () ∈ D 0 ∧
-      (∀ η, () ∈ D η → η = 0) ∧ ((7 : ℕ) : Ordinal.{0}) = 7 ∧ ¬ () ∈ D 7 := by
-  intro D
-  refine ⟨fun a b hab x hx ↦ ?_, fun _ _ ↦ Iff.rfl, rfl, fun _ h ↦ h, rfl, fun h ↦ ?_⟩
-  · have hb : b = 0 := hx
-    subst hb
-    exact le_antisymm hab zero_le
-  · exact OfNat.ofNat_ne_zero _ (h : (7 : Ordinal.{0}) = 0)
+/-- **(6) A bound, not the least one, and not intrinsic.**  On the nonvacuity instance (the
+countable ordinals with their rank tails), observations `(φ, b)` isolate `φ`, with rank `φ + 1`
+for `b = false` and `φ + 2` for `b = true`.  Every hypothesis of
+`exists_countable_strict_stage_bound_of_isolation` holds, with both observations of countable
+rank.  The point `q` lies in `D q`, so its stages stop at `q`; the observation `(q, true)` gives
+the strict bound `q + 2`, while `q` already leaves at `q + 1`, the rank of `(q, false)`.  So the
+bound depends on the chosen isolating observation and need not be the least strict bound. -/
+theorem bound_depends_on_choice :
+    let X := Set.Iio (Ordinal.omega 1 : Ordinal.{0})
+    let D : Ordinal.{0} → Set X := rankTail (fun x : X ↦ x.1)
+    let Sat : X × Bool → X → Prop := fun φ x ↦ x = φ.1
+    let rank : X × Bool → Ordinal.{0} := fun φ ↦ φ.1.1 + 1 + (if φ.2 then 1 else 0)
+    Antitone D ∧
+      (∀ η, η < Ordinal.omega 1 → ∀ φ, rank φ ≤ η → ∀ ⦃x y⦄, x ∈ D η → y ∈ D η →
+        (Sat φ x ↔ Sat φ y)) ∧
+      (∀ η, η < Ordinal.omega 1 → (D η).Nontrivial) ∧
+      ∀ q : X, (∀ x, Sat (q, true) x ↔ x = q) ∧ (∀ x, Sat (q, false) x ↔ x = q) ∧
+        rank (q, true) < Ordinal.omega 1 ∧ rank (q, false) < rank (q, true) ∧
+        q ∈ D q.1 ∧ q ∉ D (rank (q, false)) := by
+  intro X D Sat rank
+  have hlim := Cardinal.isSuccLimit_omega (1 : Ordinal)
+  refine ⟨rankTail_antitone (fun x : X ↦ x.1), ?_, ?_, ?_⟩
+  · intro η _ φ hφ x y hx hy
+    have hx' : η ≤ x.1 := hx
+    have hy' : η ≤ y.1 := hy
+    have hφη : φ.1.1 < η :=
+      ((Order.lt_add_one_iff.mpr le_rfl).trans_le le_self_add).trans_le hφ
+    constructor
+    · intro h; exact absurd (h ▸ hx' : η ≤ φ.1.1) (not_le.mpr hφη)
+    · intro h; exact absurd (h ▸ hy' : η ≤ φ.1.1) (not_le.mpr hφη)
+  · intro η hη
+    refine ⟨⟨η, hη⟩, (le_refl η : η ≤ η), ⟨η + 1, hlim.add_one_lt hη⟩,
+      (Order.le_succ η : η ≤ η + 1), ?_⟩
+    intro h
+    exact (Order.lt_add_one_iff.mpr le_rfl).ne (congrArg Subtype.val h)
+  · intro q
+    refine ⟨fun _ ↦ Iff.rfl, fun _ ↦ Iff.rfl, ?_, ?_, (le_refl q.1 : q.1 ≤ q.1), ?_⟩
+    · simp only [rank, ↓reduceIte]
+      exact hlim.add_one_lt (hlim.add_one_lt q.2)
+    · simp only [rank, Bool.false_eq_true, ↓reduceIte, add_zero]
+      exact Order.lt_add_one_iff.mpr le_rfl
+    · intro h
+      have : q.1 + 1 + 0 ≤ q.1 := h
+      simp only [add_zero] at this
+      exact (Order.lt_add_one_iff.mpr le_rfl).not_ge this
+
+/-- **The strict convention, positively.**  With agreement at `η` only for observations of rank
+strictly below `η`, the bound at `rank φ` is lost (control 5), but a countable strict bound
+survives with `θ := rank φ + 1`, using agreement and nonsingletonness at that later stage. -/
+theorem exists_countable_bound_strict_convention {X : Type u} {F : Type v} (Sat : F → X → Prop)
+    (rank : F → Ordinal.{0}) (D : Ordinal.{0} → Set X) (hanti : Antitone D)
+    (huniform : ∀ η, η < Ordinal.omega 1 → ∀ φ, rank φ < η →
+      ∀ ⦃x y⦄, x ∈ D η → y ∈ D η → (Sat φ x ↔ Sat φ y))
+    (htwo : ∀ η, η < Ordinal.omega 1 → (D η).Nontrivial)
+    (hisolate : ∀ q, ∃ φ, rank φ < Ordinal.omega 1 ∧ ∀ x, Sat φ x ↔ x = q) (q : X) :
+    ∃ φ, (∀ x, Sat φ x ↔ x = q) ∧ rank φ + 1 < Ordinal.omega 1 ∧
+      ∀ η, q ∈ D η → η < rank φ + 1 := by
+  obtain ⟨φ, hφ, hiso⟩ := hisolate q
+  have h1 : rank φ + 1 < Ordinal.omega 1 := (Cardinal.isSuccLimit_omega 1).add_one_lt hφ
+  exact ⟨φ, hiso, h1, fun η hq ↦ lt_index_of_isolating_of_antitone Sat D hanti hiso
+    (huniform _ h1 φ (Order.lt_add_one_iff.mpr le_rfl)) (htwo _ h1) hq⟩
 
 end Negative
 
@@ -394,7 +457,8 @@ theorem wrapper_abstract {L : Language.{u, v}} {Q : Type w} {truth : L.Sentence�
     (htwo : ∀ η, η < Ordinal.omega 1 → (D η).Nontrivial) (q : Q) :
     (∃ σ : L.Sentenceω, σ.qrank < Ordinal.omega 1 ∧ ∀ s, truth σ s ↔ s = q) ∧
       ∃ θ, θ < Ordinal.omega 1 ∧ ∀ η, q ∈ D η → η < θ :=
-  ⟨hisol.exists_qrank_lt q, hisol.exists_countable_strict_stage_bound D hanti huniform htwo q⟩
+  ⟨hisol.exists_qrank_lt_omega1 q,
+    hisol.exists_countable_strict_stage_bound D hanti huniform htwo q⟩
 
 /-- **The consumer's call shape** through the landed producer `isolatedPresentation_of_surjective`:
 the presentation data, the uniform-agreement theorem and the nonsingleton domains, as one direct
@@ -542,7 +606,8 @@ def scottDefinabilityClosure : List Name := ilm
 
 /-- The generic declarations (section "Separation by an isolating observation"). -/
 def genericRoots : List Name :=
-  ilm [`notMem_of_isolating_of_uniform, `lt_rank_of_isolating_of_antitone,
+  ilm [`notMem_of_isolating_of_uniform, `lt_index_of_isolating_of_antitone,
+    `lt_rank_of_isolating_of_antitone,
     `stage_lt_rank_of_isolating, `exists_countable_strict_stage_bound_of_isolation]
 
 /-- The countable-rank declarations. -/
@@ -551,7 +616,7 @@ def qrankRoots : List Name :=
 
 /-- The wrapper declarations. -/
 def wrapperRoots : List Name :=
-  fol [`IsolatedPresentation.exists_qrank_lt,
+  fol [`IsolatedPresentation.exists_qrank_lt_omega1,
     `IsolatedPresentation.exists_countable_strict_stage_bound]
 
 /-- Where each export must be declared. -/
@@ -574,10 +639,11 @@ def guardDecls : List Name :=
   [`two_point_false, `satisfiable_outside, `rank_zero_excluded, `independent_universes,
    `empty_space, `uncountable_stage_excluded, `nontrivial_of_loss_of_survivor,
    `nontrivial_of_succ_loss, `loss_survivor_bound, `Dz_antitone, `int_instance, `type1_instance,
-   `ordinal_is_instance, `c_nonvacuous, `c_nonvacuous_applied, `forall_lt_iff_notMem,
-   `not_countable_of_strict_stage_bounds, `not_countable_of_isolation,
+   `rank_is_index, `ordinal_is_instance, `c_nonvacuous, `c_nonvacuous_applied,
+   `forall_lt_iff_notMem, `not_countable_of_strict_stage_bounds, `not_countable_of_isolation,
    `mk_eq_aleph_one_of_isolation, `neg_singleton, `neg_uniformity, `neg_isolation,
-   `neg_antitone, `neg_rank_endpoint, `bound_not_attained, `qrank_countable, `wrapper_abstract,
+   `neg_antitone, `neg_rank_endpoint, `exists_countable_bound_strict_convention,
+   `bound_depends_on_choice, `qrank_countable, `wrapper_abstract,
    `consumer_call_shape, `consumer_per_class, `scott_control].map (`ScottSeparationGuard ++ ·)
 
 /-- The standard axioms. -/
@@ -726,9 +792,10 @@ run_cmd do
     omega_1 excluded, the loss-plus-survivor adapter at theta + 1, a Z-indexed and a Type 1 \
     instance of the general bound, nonvacuity on the countable ordinals; consequences: the \
     leaving form, uncountability forced, cardinality aleph_1 with countable complements; \
-    negative: singleton domain, uniformity, isolation, antitonicity, the strict rank endpoint, \
-    the bound not attained; semantic: countable rank, the wrapper, the consumer call shape and \
-    the per-class shape through isolatedPresentation_of_surjective; exact closures of \
-    OrdinalCountability, Lomega1omega.QuantifierRank and Descriptive.ScottDefinability; generic \
-    cones logic-free and wrapper cones Scott-free, with positive controls; placement; standard \
-    axioms)"
+    negative: singleton domain, uniformity, isolation, antitonicity, the strict rank endpoint \
+    with the countable bound surviving at rank + 1, choice dependence on the nonvacuity instance \
+    (the bound is not the least strict bound); semantic: countable rank, the wrapper, the \
+    consumer call shape and the per-class shape through isolatedPresentation_of_surjective; \
+    exact closures of OrdinalCountability, Lomega1omega.QuantifierRank and \
+    Descriptive.ScottDefinability; generic cones logic-free and wrapper cones Scott-free, with \
+    positive controls; placement; standard axioms)"

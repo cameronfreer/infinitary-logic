@@ -38,10 +38,11 @@ reused wherever it already has the fact; nothing here adds an instance.
   `Cardinal.lift_aleph` relates the universes).
 * **Separation by an isolating observation.**  For an abstract satisfaction relation
   `Sat : F → X → Prop`: `notMem_of_isolating_of_uniform`, a point isolated by `φ` lies in no
-  nonsingleton set on which `φ` is constant; `lt_rank_of_isolating_of_antitone` (any linear
-  order of stages) and its `Ordinal.{0}` form `stage_lt_rank_of_isolating`, for antitone domains
-  that are nonsingleton and agree on `φ` at the index `rank φ`, every stage containing the point
-  lies strictly below `rank φ`; `exists_countable_strict_stage_bound_of_isolation`, isolating
+  nonsingleton set on which `φ` is constant; `lt_index_of_isolating_of_antitone` (any linear
+  order of stages), for antitone domains that are nonsingleton and agree on `φ` at an index `ζ`,
+  every stage containing the point lies strictly below `ζ`, with the rank form
+  `lt_rank_of_isolating_of_antitone` (`ζ := rank φ`) and its `Ordinal.{0}` form
+  `stage_lt_rank_of_isolating`; `exists_countable_strict_stage_bound_of_isolation`, isolating
   observations of countable rank and rank-uniform nonsingleton domains below `ω₁` bound every
   point's stages by a countable ordinal.  See the section for the conventions.
 * **Rank tails.**  `rankTail r η = {x | η ≤ r x}`, with the simp lemma `mem_rankTail` and the
@@ -235,13 +236,17 @@ theorem mk_eq_aleph_one_of_domains (D : Ordinal.{0} → Set X) (hanti : Antitone
 
 `Sat : F → X → Prop` is an abstract satisfaction relation between observations and points, and
 `φ` **isolates** `q` when `∀ x, Sat φ x ↔ x = q`.  No logic, order on `X`, topology or
-countability enters the first two statements.
+countability enters `notMem_of_isolating_of_uniform`, `lt_index_of_isolating_of_antitone`,
+`lt_rank_of_isolating_of_antitone` or `stage_lt_rank_of_isolating`.
 
 * **Rank convention.**  Agreement at a stage `η` is for observations of rank **at most** `η`
   (`rank φ ≤ η` in `exists_countable_strict_stage_bound_of_isolation`, as in `EquivQRω`), and the
   strict exclusion happens at the isolating observation's own rank.  Under the convention
-  "agreement for ranks strictly below `η`" the strict bound fails: an isolating observation of
-  rank exactly `η` need not agree on the domain at `η`.
+  "agreement for ranks strictly below `η`", the bound **at** `rank φ` (the conclusion of
+  `stage_lt_rank_of_isolating`) is lost: an isolating observation of rank exactly `η` need not
+  agree on the domain at `η`.  A countable strict bound as in
+  `exists_countable_strict_stage_bound_of_isolation` still holds there, with `θ := rank φ + 1`,
+  but it needs agreement and nonsingletonness at that later stage.
 * **What the bound is.**  It is the rank of a *chosen* isolating observation, so it depends on
   that choice.  It is not an internal Scott rank, and it is not an attained stage: attainment of
   a greatest stage needs further closure hypotheses and is `exists_greatest_stage_lt_omega1` in
@@ -283,10 +288,21 @@ theorem notMem_of_isolating_of_uniform (Sat : F → X → Prop) {D : Set X} {q :
   hxy (((hiso x).mp ((huniform hq hx).mp ((hiso q).mpr rfl))).trans
     ((hiso y).mp ((huniform hq hy).mp ((hiso q).mpr rfl))).symm)
 
-/-- **Strict stage bound, over any linear order of stages.**  For antitone domains `D` that are
-nonsingleton and agree on an observation `φ` isolating `q` at the single index `rank φ`, every
-stage containing `q` lies strictly below `rank φ`: otherwise antitonicity puts `q` in
-`D (rank φ)`, contradicting `notMem_of_isolating_of_uniform`.  Agreement is needed only for `φ`
+/-- **Strict stage bound at an index, over any linear order of stages.**  For antitone domains
+`D` such that `D ζ` is nonsingleton and agrees on an observation `φ` isolating `q`, every stage
+containing `q` lies strictly below `ζ`: otherwise antitonicity puts `q` in `D ζ`, contradicting
+`notMem_of_isolating_of_uniform`.  Agreement is needed only for `φ` and only at `ζ`; nothing is
+assumed about `η`. -/
+theorem lt_index_of_isolating_of_antitone {ι : Type w} [LinearOrder ι] (Sat : F → X → Prop)
+    (D : ι → Set X) (hanti : Antitone D) {q : X} {φ : F} {ζ : ι}
+    (hiso : ∀ x, Sat φ x ↔ x = q)
+    (huniform : ∀ ⦃x y⦄, x ∈ D ζ → y ∈ D ζ → (Sat φ x ↔ Sat φ y))
+    (htwo : (D ζ).Nontrivial) {η : ι} (hq : q ∈ D η) :
+    η < ζ :=
+  lt_of_not_ge fun hle ↦ notMem_of_isolating_of_uniform Sat hiso huniform htwo (hanti hle hq)
+
+/-- **Strict stage bound at the rank of an isolating observation**, over any linear order of
+stages: `lt_index_of_isolating_of_antitone` at `ζ := rank φ`.  Agreement is needed only for `φ`
 and only at `rank φ`; nothing is assumed about `η`. -/
 theorem lt_rank_of_isolating_of_antitone {ι : Type w} [LinearOrder ι] (Sat : F → X → Prop)
     (rank : F → ι) (D : ι → Set X) (hanti : Antitone D) {q : X} {φ : F}
@@ -294,7 +310,7 @@ theorem lt_rank_of_isolating_of_antitone {ι : Type w} [LinearOrder ι] (Sat : F
     (huniform : ∀ ⦃x y⦄, x ∈ D (rank φ) → y ∈ D (rank φ) → (Sat φ x ↔ Sat φ y))
     (htwo : (D (rank φ)).Nontrivial) {η : ι} (hq : q ∈ D η) :
     η < rank φ :=
-  lt_of_not_ge fun hle ↦ notMem_of_isolating_of_uniform Sat hiso huniform htwo (hanti hle hq)
+  lt_index_of_isolating_of_antitone Sat D hanti hiso huniform htwo hq
 
 /-- **Strict stage bound for one isolating observation**, with `Ordinal.{0}` stages: the instance
 of `lt_rank_of_isolating_of_antitone`.  No countability of `η` or of `rank φ`, and no positivity
