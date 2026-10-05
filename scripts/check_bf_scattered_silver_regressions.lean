@@ -22,17 +22,35 @@ All three public theorems are *applied*, not only listed for their axioms.
   statement whose proof uses `stabilizationOrdinal_spec` is flagged by both the name and the
   module checks, so the check cannot pass vacuously.  Those Scott modules are nevertheless in the
   import closure, through `ModelTheory.MorleyCounting`.
+* **One Silver step, quoted (checked positively).**  The per-level Silver step is
+  `Sentenceω.countable_bfClasses_of_isThinOnNatModels` (`Conditional/MorleyPerfect.lean`): it is
+  in the proof cone of each of the three theorems, and so are `silver_countable_or_cantorAntichain`
+  and `silver_core_polish` (`[DEPENDENCY DRIFT]` otherwise).
+* **Statement pins, and no second copy of the step.**  The three statements are restated as
+  `pin_*` theorems proved by the originals.  What is compared: each original's type must equal
+  its copy's as an expression up to binder names and normalization of universe levels, with the
+  same universe parameters (`[STATEMENT DRIFT]` otherwise), and the binder kinds (explicit,
+  implicit, instance-implicit, strict-implicit) along the `∀`-telescope must agree
+  (`[BINDER DRIFT]` otherwise; expression equality alone ignores them).  Negative control
+  (`[BINDER CONTROL]`): `binderControl_bfScattered_iff_isThinOnNatModels` restates
+  `Sentenceω.bfScattered_iff_isThinOnNatModels` with `(Θ)` in place of `{Θ}`; expression
+  equality accepts it, and the binder-kind comparison must reject it.  No declaration of the
+  module, together with its auxiliary declarations in the module, mentions a form of Silver's
+  theorem (`silver_countable_or_cantorAntichain`, `silver_countable_or_cantorAntichain_of_isClosed`
+  or `silver_core_polish`) directly (`[DUPLICATED STEP]`): Silver enters only through the step.
+  Positive control: the same check sees the step itself apply Silver.
 * **Separate from the counting layer.**  The `InfinitaryLogic` import closure of
-  `Conditional.BFScatteredSilver` is exactly the pinned list `allowedClosure` (57 modules,
-  `[CLOSURE DRIFT]` otherwise); it does **not** contain
+  `Conditional.BFScatteredSilver` is exactly the pinned list `allowedClosure` (58 modules,
+  `[CLOSURE DRIFT]` otherwise; 57 before the per-level step moved to `Conditional.MorleyPerfect`,
+  which is the one module added); it does **not** contain
   `Descriptive.ScatteredCounting` or `Scott.IsolatingLevel` (`[LAYERING]`).  The converse import
   boundary, that `Descriptive.ScatteredCounting` reaches no `Conditional` module, is asserted by
   `check_scattered_counting_regressions.lean`.
 * **Axioms.**  The three theorems go through Silver's theorem
   (`silver_countable_or_cantorAntichain`, through the Gandy–Harrington machinery); the axioms
-  reported by `collectAxioms` for them and for every declaration of this guard are printed and
-  must be among `propext`, `Classical.choice` and `Quot.sound`.  The OK line is printed only
-  after the cone, closure and axiom checks.
+  reported by `collectAxioms` for them, for the per-level step and for every declaration of this
+  guard are printed and must be among `propext`, `Classical.choice` and `Quot.sound`.  The OK
+  line is printed only after the cone, closure and axiom checks.
 
 Run with: lake env lean scripts/check_bf_scattered_silver_regressions.lean
 -/
@@ -54,6 +72,32 @@ theorem generic_regression {L : Language.{u, v}} [L.IsRelational]
       (Cardinal.mk (Quotient (isoSetoid Θ)) < Cardinal.continuum → BFScattered (ModelsOf Θ)) :=
   ⟨Sentenceω.bfScattered_of_isThinOnNatModels, Sentenceω.bfScattered_iff_isThinOnNatModels.mp,
     Sentenceω.bfScattered_modelsOf_of_lt_continuum⟩
+
+/-! ### Statement pins: copies compared below by expression and by binder kinds -/
+
+theorem pin_bfScattered_of_isThinOnNatModels {L : Language.{u, v}} [L.IsRelational]
+    [Countable (Σ l, L.Relations l)] {Θ : L.Sentenceω}
+    (h : Θ.IsThinOnNatModels) : BFScattered (ModelsOf Θ) :=
+  Sentenceω.bfScattered_of_isThinOnNatModels h
+
+theorem pin_bfScattered_iff_isThinOnNatModels {L : Language.{u, v}} [L.IsRelational]
+    [Countable (Σ l, L.Relations l)] {Θ : L.Sentenceω} :
+    BFScattered (ModelsOf Θ) ↔ Θ.IsThinOnNatModels :=
+  Sentenceω.bfScattered_iff_isThinOnNatModels
+
+theorem pin_bfScattered_modelsOf_of_lt_continuum {L : Language.{u, v}} [L.IsRelational]
+    [Countable (Σ l, L.Relations l)] {Θ : L.Sentenceω}
+    (h : Cardinal.mk (Quotient (isoSetoid Θ)) < Cardinal.continuum) :
+    BFScattered (ModelsOf Θ) :=
+  Sentenceω.bfScattered_modelsOf_of_lt_continuum h
+
+/-- **Binder-kind control**: `Sentenceω.bfScattered_iff_isThinOnNatModels` with its implicit `{Θ}`
+flipped to `(Θ)`.  Its type is the original's up to binder kinds only; the comparison below must
+flag it. -/
+theorem binderControl_bfScattered_iff_isThinOnNatModels {L : Language.{u, v}} [L.IsRelational]
+    [Countable (Σ l, L.Relations l)] (Θ : L.Sentenceω) :
+    BFScattered (ModelsOf Θ) ↔ Θ.IsThinOnNatModels :=
+  Sentenceω.bfScattered_iff_isThinOnNatModels
 
 /-- The pure-set language: no function or relation symbols, in universes `{1, 2}`. -/
 def pureLang : Language.{1, 2} where
@@ -115,6 +159,29 @@ def silverTheorems : List Name :=
   [`Sentenceω.bfScattered_of_isThinOnNatModels, `Sentenceω.bfScattered_iff_isThinOnNatModels,
    `Sentenceω.bfScattered_modelsOf_of_lt_continuum].map (`FirstOrder.Language ++ ·)
 
+/-- The per-level Silver step, which every one of the three proof cones must contain, together
+with the Silver chain it applies. -/
+def requiredDeps : List Name :=
+  [`FirstOrder.Language.Sentenceω.countable_bfClasses_of_isThinOnNatModels,
+   `silver_countable_or_cantorAntichain, `silver_core_polish]
+
+/-- Silver's theorem in each of its three forms: for a Borel subset, for a closed subset, and the
+Polish core.  A declaration mentioning any of them applies Silver directly. -/
+def silverFamily : List Name :=
+  [`silver_countable_or_cantorAntichain, `silver_countable_or_cantorAntichain_of_isClosed,
+   `silver_core_polish]
+
+/-- Each of the three theorems with its copy. -/
+def pins : List (Name × Name) :=
+  silverTheorems.zip
+    ([`pin_bfScattered_of_isThinOnNatModels, `pin_bfScattered_iff_isThinOnNatModels,
+      `pin_bfScattered_modelsOf_of_lt_continuum].map (`BFScatteredSilverRegressions ++ ·))
+
+/-- Binder-kind controls: a pinned declaration with a copy differing in one binder kind only. -/
+def binderControls : List (Name × Name) :=
+  [(`FirstOrder.Language.Sentenceω.bfScattered_iff_isThinOnNatModels,
+      `BFScatteredSilverRegressions.binderControl_bfScattered_iff_isThinOnNatModels)]
+
 /-- Name substrings no constant in a rank-free cone may contain. -/
 def rankSubstrings : List String :=
   ["stabilizationOrdinal", "StabilizesAt", "scottRank", "scottHeight", "IsIsolatingRank",
@@ -125,6 +192,18 @@ def rankModules : List Name :=
   [`InfinitaryLogic.Scott.Rank, `InfinitaryLogic.Scott.Height,
    `InfinitaryLogic.Scott.RefinementCount, `InfinitaryLogic.Scott.IsolatingLevel,
    `InfinitaryLogic.Descriptive.ScatteredCounting]
+
+/-- The binder kinds (explicit, implicit, instance-implicit, strict-implicit) of the leading
+`∀`-telescope of a type, looking through metadata.  `Expr` equality ignores them, so they are
+compared separately. -/
+partial def binderKinds : Expr → List BinderInfo
+  | .forallE _ _ b bi => bi :: binderKinds b
+  | .mdata _ e => binderKinds e
+  | _ => []
+
+/-- An expression with every universe level normalized: elaboration may leave `max (v+1) 1`
+where a restatement has `v+1`, and the two are the same level. -/
+def normLevels (e : Expr) : Expr := e.replaceLevel fun l ↦ some l.normalize
 
 /-- The constants a declaration refers to: its type, its value (theorem, definition and opaque
 bodies alike), and the constructors, recursor rules and mutual families of inductive data. -/
@@ -160,6 +239,27 @@ def cone (env : Environment) (root : Name) : Except String NameSet := do
         stack := stack.push m
   return visited
 
+/-- The constants mentioned by `root` and by the auxiliary (internal) declarations of its own
+module that it reaches through such declarations: expansion stops at every public declaration
+and at the module boundary. -/
+def localRefs (env : Environment) (root : Name) : NameSet := Id.run do
+  let home := env.getModuleIdxFor? root
+  let mut visited : NameSet := {}
+  let mut out : NameSet := {}
+  let mut stack : Array Name := #[root]
+  while !stack.isEmpty do
+    let n := stack.back!
+    stack := stack.pop
+    if visited.contains n then
+      continue
+    visited := visited.insert n
+    let some ci := env.find? n | continue
+    for m in refs ci do
+      out := out.insert m
+      if m.isInternalDetail && env.getModuleIdxFor? m == home then
+        stack := stack.push m
+  return out
+
 /-- The rank constants of a cone: by name, and by declaring module. -/
 def rankHits (env : Environment) (c : NameSet) : List Name × List (Name × Name) :=
   let names := c.toList.filter fun n ↦
@@ -175,10 +275,12 @@ def layeringForbidden : List Name :=
   [`InfinitaryLogic.Descriptive.ScatteredCounting, `InfinitaryLogic.Scott.IsolatingLevel]
 
 /-- The exact `InfinitaryLogic` import closure of the module: the Silver chain
-(`Conditional.SilverAntichain` and what it imports), the sentence form of `BFScattered` with the
-counting theory it brings in, and the module itself. -/
+(`Conditional.SilverAntichain` and what it imports), `Conditional.MorleyPerfect` (home of the
+per-level Silver step), the sentence form of `BFScattered` with the counting theory it brings in,
+and the module itself. -/
 def allowedClosure : List Name :=
   [`InfinitaryLogic.Conditional.BFScatteredSilver, `InfinitaryLogic.Conditional.GandyHarrington,
+   `InfinitaryLogic.Conditional.MorleyPerfect,
    `InfinitaryLogic.Conditional.SilverAntichain, `InfinitaryLogic.Conditional.SilverBurgess,
    `InfinitaryLogic.Conditional.SilverCategoryRoute,
    `InfinitaryLogic.Descriptive.AnalyticClosure,
@@ -210,12 +312,16 @@ def allowedClosure : List Name :=
    `InfinitaryLogic.Scott.RefinementCount, `InfinitaryLogic.Scott.Sentence,
    `InfinitaryLogic.Topology.Perfect, `InfinitaryLogic.Util]
 
-/-- The declarations whose axioms are audited: the three theorems and the guard's own. -/
+/-- The declarations whose axioms are audited: the three theorems, the per-level step and the
+guard's own. -/
 def audited : List Name :=
   [`Sentenceω.bfScattered_of_isThinOnNatModels, `Sentenceω.bfScattered_iff_isThinOnNatModels,
-   `Sentenceω.bfScattered_modelsOf_of_lt_continuum].map (`FirstOrder.Language ++ ·) ++
-  [`generic_regression, `pureLang, `pureSet_regression,
-   `controlRank].map (`BFScatteredSilverRegressions ++ ·)
+   `Sentenceω.bfScattered_modelsOf_of_lt_continuum,
+   `Sentenceω.countable_bfClasses_of_isThinOnNatModels].map (`FirstOrder.Language ++ ·) ++
+  [`generic_regression, `pureLang, `pureSet_regression, `controlRank,
+   `pin_bfScattered_of_isThinOnNatModels, `pin_bfScattered_iff_isThinOnNatModels,
+   `pin_bfScattered_modelsOf_of_lt_continuum,
+   `binderControl_bfScattered_iff_isThinOnNatModels].map (`BFScatteredSilverRegressions ++ ·)
 
 /-- The standard axioms. -/
 def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
@@ -234,12 +340,59 @@ run_cmd do
   unless extra.isEmpty && missing.isEmpty do
     throwError "[CLOSURE DRIFT] the InfinitaryLogic closure of {targetModule} is {ilModules}; \
       update allowedClosure deliberately (extra {extra}, missing {missing})"
+  unless ilModules.length == 58 do
+    throwError "[CLOSURE DRIFT] expected 58 InfinitaryLogic modules, found {ilModules.length}"
   -- the three theorems are exactly the public declarations of the module
   let pub := (env.header.moduleData[idx.toNat]!).constNames.toList.filter fun n ↦
     !n.isInternalDetail
   let mainDecls := silverTheorems
   unless pub.all mainDecls.contains && mainDecls.all pub.contains do
     throwError "[ROOT DRIFT] the public declarations of {targetModule} are {pub}"
+  -- STATEMENT PINS: each original's type is its copy's (up to binder names and level
+  -- normalization), with the same universes and the same binder kinds
+  for (orig, copy) in pins do
+    let some o := env.find? orig | throwError "{orig} not found"
+    let some c := env.find? copy | throwError "{copy} not found"
+    unless normLevels o.type == normLevels c.type && o.levelParams == c.levelParams do
+      throwError "[STATEMENT DRIFT] the statement of {orig} is no longer its pinned copy \
+        {copy}: {o.type}"
+    unless binderKinds o.type == binderKinds c.type do
+      throwError "[BINDER DRIFT] {orig} has binder kinds {repr (binderKinds o.type)}, its \
+        pinned copy {copy} has {repr (binderKinds c.type)}"
+  -- BINDER CONTROL (negative): each control copy flips one binder kind of a pinned statement;
+  -- expression equality alone must accept it and the binder-kind comparison must reject it
+  for (orig, ctl) in binderControls do
+    let some o := env.find? orig | throwError "{orig} not found"
+    let some c := env.find? ctl | throwError "{ctl} not found"
+    unless normLevels o.type == normLevels c.type && o.levelParams == c.levelParams do
+      throwError "[BINDER CONTROL] {ctl} differs from {orig} in more than a binder kind"
+    if binderKinds o.type == binderKinds c.type then
+      throwError "[BINDER CONTROL] the binder-kind comparison does not flag {ctl}, whose binder \
+        kinds differ from those of {orig}"
+  -- NO SECOND COPY OF THE STEP: no declaration of the module applies Silver directly; positive
+  -- control: the same check does see the step itself apply Silver
+  for d in silverFamily do
+    unless (env.find? d).isSome do throwError "[VACUOUS] {d} is not in the environment"
+  unless (localRefs env requiredDeps[0]!).contains `silver_countable_or_cantorAntichain do
+    throwError "positive control FAILED: the direct-application check does not see \
+      {requiredDeps[0]!} apply silver_countable_or_cantorAntichain"
+  for n in pub do
+    let direct := silverFamily.filter (localRefs env n).contains
+    unless direct.isEmpty do
+      throwError "[DUPLICATED STEP] {n} applies {direct} directly; quote \
+        Sentenceω.countable_bfClasses_of_isThinOnNatModels instead"
+  -- DEPENDENCY CHECK (positive): the per-level Silver step and the Silver chain are in all three
+  -- proof cones
+  for d in requiredDeps do
+    unless (env.find? d).isSome do throwError "[VACUOUS] {d} is not in the environment"
+  for root in silverTheorems do
+    let c ← match cone env root with
+      | .ok c => pure c
+      | .error e => throwError e
+    for d in requiredDeps do
+      unless c.contains d do
+        throwError "[DEPENDENCY DRIFT] {d} is not in the cone of {root}; the module docstring \
+          states the per-level step is quoted there, update both"
   -- rank-free proof cones, with a positive control
   let control := `BFScatteredSilverRegressions.controlRank
   let some (.thmInfo ctl) := env.find? control | throwError "positive control missing"
@@ -269,7 +422,14 @@ run_cmd do
     seen := seen ++ .ofList axs.toList
   logInfo m!"bf scattered silver regression guard: OK (applied: thin implies back-and-forth \
     scattered, the iff in both directions and the below-continuum form for an arbitrary \
-    countable relational Language.\{u, v}; rank-free proof cones (no stabilization ordinal, \
+    countable relational Language.\{u, v}; the per-level step \
+    Sentenceω.countable_bfClasses_of_isThinOnNatModels, silver_countable_or_cantorAntichain and \
+    silver_core_polish in all three proof cones, and no form of Silver's theorem applied \
+    directly by any declaration of the module; the three \
+    statements' types equal to their copies up to binder names and level normalization, \
+    with the same universe parameters and binder kinds, the binder-kind comparison flagging \
+    a \{Θ}-to-(Θ) control that expression equality accepts; rank-free proof cones (no \
+    stabilization ordinal, \
     StabilizesAt, Scott rank or height, isolating rank, nor any constant of Scott.Rank, \
     Scott.Height, RefinementCount, IsolatingLevel or ScatteredCounting), the check flagging \
     a proof-only control, with those Scott modules present in the import closure; \

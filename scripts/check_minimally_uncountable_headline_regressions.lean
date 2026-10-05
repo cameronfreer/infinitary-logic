@@ -18,17 +18,19 @@ Both theorems are *applied*, not only listed for their axioms.
   concentrated form fails on its uncountability conjunct.
 * **Dependencies, stated positively.**  The proof cones of both theorems contain `lopez_escobar`
   (through `MinimallyUncountableOn.isThinOn`) and the Silver chain,
-  `silver_countable_or_cantorAntichain` and `silver_core_polish` (through
-  `Sentenceω.bfScattered_of_isThinOnNatModels`); these are required
-  dependencies (`[DEPENDENCY DRIFT]` otherwise), checked separately from the axiom audit.  The
-  concentrated form's type mentions no `IsIsolatingRank`; the two theorems are exactly the
-  public declarations of the module (`[ROOT DRIFT]`).
+  `silver_countable_or_cantorAntichain` and `silver_core_polish`, entering through the per-level
+  step `Sentenceω.countable_bfClasses_of_isThinOnNatModels` (`Conditional/MorleyPerfect.lean`,
+  quoted by `Sentenceω.bfScattered_of_isThinOnNatModels`), which is itself required; these are
+  required dependencies (`[DEPENDENCY DRIFT]` otherwise), checked separately from the axiom
+  audit.  The concentrated form's type mentions no `IsIsolatingRank`; the two theorems are
+  exactly the public declarations of the module (`[ROOT DRIFT]`).
 * **Statement shape.**  Both left sides are the sentence wrapper `Θ.MinimallyUncountable`
   (`[SHAPE DRIFT]` otherwise), and the headline rewrites a goal stated with it (`rw`) and a
   hypothesis stated with it (`simp only … at`).
 * **Exact import closure.**  The `InfinitaryLogic` closure of
-  `Conditional.MinimallyUncountableHeadline` is exactly `allowedClosure` (161 modules),
-  checked to be the union of the closures of `Conditional.BFScatteredSilver` (57),
+  `Conditional.MinimallyUncountableHeadline` is exactly `allowedClosure` (162 modules; 161 before
+  the per-level Silver step moved to `Conditional.MorleyPerfect`, the one module added),
+  checked to be the union of the closures of `Conditional.BFScatteredSilver` (58),
   `Descriptive.MinimallyUnbounded` (40) and `Descriptive.MinimallyUncountableThin` (129) plus
   the module; it contains no `Admissible`, `ScottProcess` or `WIP` module and no `Conditional`
   module outside the Silver chain (`[BROAD CONE]`).
@@ -147,10 +149,12 @@ def exports : List Name :=
   [`FirstOrder.Language.Sentenceω.minimallyUncountable_iff,
    `FirstOrder.Language.Sentenceω.minimallyUncountable_iff_concentrated]
 
-/-- Required dependencies of both proof cones: López–Escobar and the Silver chain (the Borel
-subset form and the Polish core of Silver's theorem). -/
+/-- Required dependencies of both proof cones: López–Escobar, the per-level Silver step, and the
+Silver chain (the Borel subset form and the Polish core of Silver's theorem). -/
 def requiredDeps : List Name :=
-  [`FirstOrder.Language.lopez_escobar, `silver_countable_or_cantorAntichain, `silver_core_polish]
+  [`FirstOrder.Language.lopez_escobar,
+   `FirstOrder.Language.Sentenceω.countable_bfClasses_of_isThinOnNatModels,
+   `silver_countable_or_cantorAntichain, `silver_core_polish]
 
 /-- The constants a declaration refers to: its type, its value (theorem, definition and opaque
 bodies alike), and the constructors, recursor rules and mutual families of inductive data. -/
@@ -209,9 +213,11 @@ def ilClosure (env : Environment) (m : Name) : List Name :=
 def forbiddenPrefixes : List Name :=
   [`InfinitaryLogic.Admissible, `InfinitaryLogic.ScottProcess, `InfinitaryLogic.WIP]
 
-/-- The `Conditional` modules the closure may reach: the Silver chain and the module. -/
+/-- The `Conditional` modules the closure may reach: the Silver chain, the home of the per-level
+Silver step, and the module. -/
 def allowedConditional : List Name :=
   [`InfinitaryLogic.Conditional.BFScatteredSilver, `InfinitaryLogic.Conditional.GandyHarrington,
+   `InfinitaryLogic.Conditional.MorleyPerfect,
    `InfinitaryLogic.Conditional.SilverAntichain, `InfinitaryLogic.Conditional.SilverBurgess,
    `InfinitaryLogic.Conditional.SilverCategoryRoute,
    `InfinitaryLogic.Conditional.MinimallyUncountableHeadline]
@@ -225,6 +231,7 @@ def allowedClosure : List Name :=
    `InfinitaryLogic.Combinatorics.PairErdosRadoGeneral,
    `InfinitaryLogic.Conditional.BFScatteredSilver, `InfinitaryLogic.Conditional.GandyHarrington,
    `InfinitaryLogic.Conditional.MinimallyUncountableHeadline,
+   `InfinitaryLogic.Conditional.MorleyPerfect,
    `InfinitaryLogic.Conditional.SilverAntichain, `InfinitaryLogic.Conditional.SilverBurgess,
    `InfinitaryLogic.Conditional.SilverCategoryRoute, `InfinitaryLogic.Descriptive.AnalyticClosure,
    `InfinitaryLogic.Descriptive.AnalyticTree, `InfinitaryLogic.Descriptive.AnalyticTreeBoundedness,
@@ -379,15 +386,15 @@ run_cmd do
   unless hits.isEmpty do
     throwError "[BROAD CONE] the closure of {targetModule} reaches {hits}"
   checkExact targetModule ilModules allowedClosure
-  unless ilModules.length == 161 do
-    throwError "[CLOSURE DRIFT] expected 161 InfinitaryLogic modules, found \
+  unless ilModules.length == 162 do
+    throwError "[CLOSURE DRIFT] expected 162 InfinitaryLogic modules, found \
       {ilModules.length}"
   let parts := [`InfinitaryLogic.Conditional.BFScatteredSilver,
     `InfinitaryLogic.Descriptive.MinimallyUnbounded,
     `InfinitaryLogic.Descriptive.MinimallyUncountableThin]
   let psizes := parts.map fun p ↦ (ilClosure env p).length
-  unless psizes == [57, 40, 129] do
-    throwError "[CLOSURE DRIFT] the closures of {parts} have sizes {psizes}, not [57, 40, 129]"
+  unless psizes == [58, 40, 129] do
+    throwError "[CLOSURE DRIFT] the closures of {parts} have sizes {psizes}, not [58, 40, 129]"
   let union := (parts.foldl (fun s p ↦ s ++ .ofList (ilClosure env p)) ({} : NameSet)).insert
     targetModule
   checkExact targetModule ilModules union.toList
@@ -406,8 +413,9 @@ run_cmd do
     back-and-forth scattered models through the headline; the headline at \
     codeStabilizationOrdinal; concretely, no pure-set sentence is minimally uncountable, its \
     models are back-and-forth scattered, it is minimally unbounded for no isolating rank, and \
-    the concentrated form fails; dependencies: lopez_escobar, \
-    silver_countable_or_cantorAntichain and silver_core_polish in both proof cones \
+    the concentrated form fails; dependencies: lopez_escobar, the per-level step \
+    Sentenceω.countable_bfClasses_of_isThinOnNatModels, silver_countable_or_cantorAntichain \
+    and silver_core_polish in both proof cones \
     (cone sizes {", ".intercalate sizes.toList}); both left sides stated through \
     Sentenceω.MinimallyUncountable, rewriting by rw and simp only; the concentrated form \
     mentions no isolating rank; exact import closure ({ilModules.length} \
