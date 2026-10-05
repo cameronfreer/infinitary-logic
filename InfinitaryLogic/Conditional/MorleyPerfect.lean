@@ -50,6 +50,37 @@ namespace FirstOrder.Language
 
 variable {L : Language.{u, v}} [L.IsRelational] [Countable (Σ l, L.Relations l)]
 
+/-! ### The per-level Silver step -/
+
+/-- **A thin sentence has countably many back-and-forth classes at every countable level.**  If
+`φ` is thin on its coded models, then for every `η < ω₁` the coded models of `φ` fall into
+countably many classes of `bfEquivSetoid φ η`.
+
+This is the only place Silver's theorem enters the `ℕ`-tier counting chain.  At each level,
+`silver_countable_or_cantorAntichain` (hence `silver_core_polish`) is applied to the Borel
+relation `bfEquivSetoid φ η` (`bfEquivSetoid_measurableSet`) on the Borel set `ModelsOf φ`, a
+relation that isomorphism refines; the alternative, a Cantor antichain for isomorphism, gives a
+perfect set of pairwise non-isomorphic models and contradicts thinness.  Both
+`morley_counting_coded_or_perfect` and `Sentenceω.bfScattered_of_isThinOnNatModels`
+(`Conditional/BFScatteredSilver.lean`) quote this lemma rather than repeating the step.  The
+`Fin n` tier is separate: it applies Silver to isomorphism itself
+(`counting_fin_models_countable_or_perfect`).
+
+The levels are those of `BFScattered` (`Descriptive/BFScattered.lean`): an `Ordinal.{0}` below
+`Ordinal.omega 1`, with no lift and no offset, and `bfEquivSetoid φ η` is by definition the
+restriction to `ModelsOf φ` of the level-`η` relation there (`bfEquivSetoid_eq_comap`,
+`Descriptive/BFScatteredSentence.lean`).  The conclusion is the hypothesis of the converse,
+`Sentenceω.isThinOnNatModels_of_bfScattered`. -/
+theorem Sentenceω.countable_bfClasses_of_isThinOnNatModels {φ : L.Sentenceω}
+    (h : φ.IsThinOnNatModels) :
+    ∀ η : Ordinal.{0}, η < Ordinal.omega 1 → Countable (Quotient (bfEquivSetoid φ η)) := by
+  intro η hη
+  rcases silver_countable_or_cantorAntichain (modelsOf_measurableSet φ) (structureIsoSetoid L)
+      (bfEquivSetoid φ η) (fun _ _ h ↦ isoSetoid_refines_bfEquivSetoid φ η h)
+      (bfEquivSetoid_measurableSet φ η hη) with hcount | hcantor
+  · exact hcount
+  · exact absurd (Sentenceω.hasPerfectSet_of_ambient_cantorAntichain hcantor) h
+
 /-! ### The two tiers -/
 
 /-- **Morley counting for `ℕ`-coded models, with a witness.**  Either at most `ℵ₁` isomorphism
@@ -74,12 +105,9 @@ theorem morley_counting_coded_or_perfect (φ : L.Sentenceω) :
   by_cases hperf : φ.HasPerfectSetOfPairwiseNonisomorphicNatModels
   · exact Or.inr hperf
   refine Or.inl (mk_isoSetoid_quotient_le_aleph_one φ fun α hα => ?_)
-  rcases silver_countable_or_cantorAntichain (modelsOf_measurableSet φ) (structureIsoSetoid L)
-      (bfEquivSetoid φ α) (fun _ _ h => isoSetoid_refines_bfEquivSetoid φ α h)
-      (bfEquivSetoid_measurableSet φ α hα) with hcount | hcantor
-  · have := hcount
-    exact Cardinal.mk_le_aleph0
-  · exact absurd (Sentenceω.hasPerfectSet_of_ambient_cantorAntichain hcantor) hperf
+  have := Sentenceω.countable_bfClasses_of_isThinOnNatModels
+    (Sentenceω.isThinOnNatModels_iff.mpr hperf) α hα
+  exact Cardinal.mk_le_aleph0
 
 /-- **Finite-carrier counting, with a witness.**  Either countably many isomorphism classes among
 the `Fin n`-models, or a perfect set of pairwise non-isomorphic ones.

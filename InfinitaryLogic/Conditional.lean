@@ -55,14 +55,18 @@ intermediates and historical statement shapes.
   arity zero through the sentence characterization the other way.
 - `MorleyPerfect.lean`: the tiered **`morley_counting_or_perfect`** — Morley counting
   with a perfect set of pairwise non-isomorphic models in place of the bare cardinal
-  equation, at the `ℕ` and `Fin n` tiers, with the cardinal form as a corollary.
+  equation, at the `ℕ` and `Fin n` tiers, with the cardinal form as a corollary.  Its
+  `Sentenceω.countable_bfClasses_of_isThinOnNatModels` (a thin sentence has countably many
+  back-and-forth classes at every level `η < ω₁`) is the one place Silver enters the `ℕ`-tier
+  counting chain.
 - `BFScatteredSilver.lean`: **`Sentenceω.bfScattered_of_isThinOnNatModels`** — a thin sentence
   has back-and-forth scattered models (Silver on each level's Borel relation `bfEquivSetoid`),
   with the equivalence `Sentenceω.bfScattered_iff_isThinOnNatModels` and the corollary
   `Sentenceω.bfScattered_modelsOf_of_lt_continuum`; rank-free proof cones (checked), with the
   Scott modules present only in the import closure, and it does not import
-  `Descriptive/ScatteredCounting.lean`.  Its per-level Silver step is the one inlined in
-  `morley_counting_coded_or_perfect` (`MorleyPerfect.lean`).
+  `Descriptive/ScatteredCounting.lean`.  Its per-level Silver step is
+  `Sentenceω.countable_bfClasses_of_isThinOnNatModels` (`MorleyPerfect.lean`), shared with
+  `morley_counting_coded_or_perfect`.
 - `MinimallyUncountableHeadline.lean`: **`Sentenceω.minimallyUncountable_iff`** — the models of
   a sentence are minimally uncountable iff they are back-and-forth scattered and the sentence is
   minimally unbounded for any isolating rank (the analogue of Montalbán's Def XII.4), with the

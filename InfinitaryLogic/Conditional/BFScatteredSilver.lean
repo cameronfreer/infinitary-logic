@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Descriptive.BFScatteredSentence
-import InfinitaryLogic.Conditional.SilverAntichain
+import InfinitaryLogic.Conditional.MorleyPerfect
 
 /-!
 # A thin sentence has back-and-forth scattered models
@@ -28,17 +28,15 @@ isomorphism classes of coded models also give back-and-forth scatteredness
 
 ## Proof
 
-At a level `η < ω₁`, `bfEquivSetoid Θ η` is a Borel equivalence relation on the Borel set
-`ModelsOf Θ` (`bfEquivSetoid_measurableSet`) that is coarser than isomorphism
-(`isoSetoid_refines_bfEquivSetoid`).  Silver's theorem for a Borel subset
-(`silver_countable_or_cantorAntichain`) gives countably many classes, which is the level-`η`
-clause of `BFScattered` (`bfEquivSetoid_eq_comap`), or a Cantor antichain for isomorphism in
-`ModelsOf Θ`, which gives a perfect set of pairwise non-isomorphic models
-(`Sentenceω.hasPerfectSet_of_ambient_cantorAntichain`) and contradicts thinness.
-
-The same per-level step is inlined in the proof of `morley_counting_coded_or_perfect`
-(`Conditional/MorleyPerfect.lean`).  Extracting it there as one named lemma, used by both, is a
-recorded follow-up; `MorleyPerfect.lean` is not changed here.
+The per-level step is `Sentenceω.countable_bfClasses_of_isThinOnNatModels`
+(`Conditional/MorleyPerfect.lean`), the single entry point of Silver's theorem into the counting
+chain, also quoted by `morley_counting_coded_or_perfect`.  At a level `η < ω₁` it applies
+Silver's theorem for a Borel subset (`silver_countable_or_cantorAntichain`) to the Borel relation
+`bfEquivSetoid Θ η` on the Borel set `ModelsOf Θ`, which isomorphism refines: a Cantor antichain
+for isomorphism would give a perfect set of pairwise non-isomorphic models and contradict
+thinness, so the quotient is countable.  That is the level-`η` clause of `BFScattered`, since
+`bfEquivSetoid Θ η` is the restriction of `codeBFEquivSetoid L η` to `ModelsOf Θ`
+(`bfEquivSetoid_eq_comap`).
 
 ## Scope
 
@@ -56,7 +54,8 @@ recorded follow-up; `MorleyPerfect.lean` is not changed here.
 * **Countable language.**  `[Countable (Σ l, L.Relations l)]` is used to make the space of codes
   Polish and `bfEquivSetoid` Borel, for Silver's theorem.
 * **Why `Conditional`.**  The module consumes Silver's theorem through
-  `Conditional/SilverAntichain.lean`.
+  `Sentenceω.countable_bfClasses_of_isThinOnNatModels` (`Conditional/MorleyPerfect.lean`), which
+  applies `Conditional/SilverAntichain.lean`.
 
 ## References
 
@@ -77,15 +76,11 @@ variable {L : Language.{u, v}} [L.IsRelational] [Countable (Σ l, L.Relations l)
 
 /-- **A thin sentence has back-and-forth scattered models.**  If `Θ` is thin on its coded models,
 then at every level `η < ω₁` its coded models fall into countably many `CodeBFEquiv η`-classes.
-The per-level step is the one inlined in `morley_counting_coded_or_perfect`. -/
+The per-level step is `Sentenceω.countable_bfClasses_of_isThinOnNatModels`, read through
+`bfEquivSetoid_eq_comap`. -/
 theorem Sentenceω.bfScattered_of_isThinOnNatModels {Θ : L.Sentenceω}
-    (h : Θ.IsThinOnNatModels) : BFScattered (ModelsOf Θ) := by
-  intro η hη
-  rcases silver_countable_or_cantorAntichain (modelsOf_measurableSet Θ) (structureIsoSetoid L)
-      (bfEquivSetoid Θ η) (fun _ _ h ↦ isoSetoid_refines_bfEquivSetoid Θ η h)
-      (bfEquivSetoid_measurableSet Θ η hη) with hc | hcantor
-  · rw [← bfEquivSetoid_eq_comap]; exact hc
-  · exact absurd (Sentenceω.hasPerfectSet_of_ambient_cantorAntichain hcantor) h
+    (h : Θ.IsThinOnNatModels) : BFScattered (ModelsOf Θ) := fun η hη ↦
+  bfEquivSetoid_eq_comap Θ η ▸ Sentenceω.countable_bfClasses_of_isThinOnNatModels h η hη
 
 /-- **Thin iff back-and-forth scattered**, for the coded models of a sentence: the converse
 direction is `isThinOn_of_bfScattered`. -/
