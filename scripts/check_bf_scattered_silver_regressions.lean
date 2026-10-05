@@ -31,7 +31,10 @@ All three public theorems are *applied*, not only listed for their axioms.
   its copy's as an expression up to binder names and normalization of universe levels, with the
   same universe parameters (`[STATEMENT DRIFT]` otherwise), and the binder kinds (explicit,
   implicit, instance-implicit, strict-implicit) along the `∀`-telescope must agree
-  (`[BINDER DRIFT]` otherwise; expression equality alone ignores them).  No declaration of the
+  (`[BINDER DRIFT]` otherwise; expression equality alone ignores them).  Negative control
+  (`[BINDER CONTROL]`): `binderControl_bfScattered_iff_isThinOnNatModels` restates
+  `Sentenceω.bfScattered_iff_isThinOnNatModels` with `(Θ)` in place of `{Θ}`; expression
+  equality accepts it, and the binder-kind comparison must reject it.  No declaration of the
   module, together with its auxiliary declarations in the module, mentions a form of Silver's
   theorem (`silver_countable_or_cantorAntichain`, `silver_countable_or_cantorAntichain_of_isClosed`
   or `silver_core_polish`) directly (`[DUPLICATED STEP]`): Silver enters only through the step.
@@ -87,6 +90,14 @@ theorem pin_bfScattered_modelsOf_of_lt_continuum {L : Language.{u, v}} [L.IsRela
     (h : Cardinal.mk (Quotient (isoSetoid Θ)) < Cardinal.continuum) :
     BFScattered (ModelsOf Θ) :=
   Sentenceω.bfScattered_modelsOf_of_lt_continuum h
+
+/-- **Binder-kind control**: `Sentenceω.bfScattered_iff_isThinOnNatModels` with its implicit `{Θ}`
+flipped to `(Θ)`.  Its type is the original's up to binder kinds only; the comparison below must
+flag it. -/
+theorem binderControl_bfScattered_iff_isThinOnNatModels {L : Language.{u, v}} [L.IsRelational]
+    [Countable (Σ l, L.Relations l)] (Θ : L.Sentenceω) :
+    BFScattered (ModelsOf Θ) ↔ Θ.IsThinOnNatModels :=
+  Sentenceω.bfScattered_iff_isThinOnNatModels
 
 /-- The pure-set language: no function or relation symbols, in universes `{1, 2}`. -/
 def pureLang : Language.{1, 2} where
@@ -165,6 +176,11 @@ def pins : List (Name × Name) :=
   silverTheorems.zip
     ([`pin_bfScattered_of_isThinOnNatModels, `pin_bfScattered_iff_isThinOnNatModels,
       `pin_bfScattered_modelsOf_of_lt_continuum].map (`BFScatteredSilverRegressions ++ ·))
+
+/-- Binder-kind controls: a pinned declaration with a copy differing in one binder kind only. -/
+def binderControls : List (Name × Name) :=
+  [(`FirstOrder.Language.Sentenceω.bfScattered_iff_isThinOnNatModels,
+      `BFScatteredSilverRegressions.binderControl_bfScattered_iff_isThinOnNatModels)]
 
 /-- Name substrings no constant in a rank-free cone may contain. -/
 def rankSubstrings : List String :=
@@ -304,7 +320,8 @@ def audited : List Name :=
    `Sentenceω.countable_bfClasses_of_isThinOnNatModels].map (`FirstOrder.Language ++ ·) ++
   [`generic_regression, `pureLang, `pureSet_regression, `controlRank,
    `pin_bfScattered_of_isThinOnNatModels, `pin_bfScattered_iff_isThinOnNatModels,
-   `pin_bfScattered_modelsOf_of_lt_continuum].map (`BFScatteredSilverRegressions ++ ·)
+   `pin_bfScattered_modelsOf_of_lt_continuum,
+   `binderControl_bfScattered_iff_isThinOnNatModels].map (`BFScatteredSilverRegressions ++ ·)
 
 /-- The standard axioms. -/
 def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
@@ -342,6 +359,16 @@ run_cmd do
     unless binderKinds o.type == binderKinds c.type do
       throwError "[BINDER DRIFT] {orig} has binder kinds {repr (binderKinds o.type)}, its \
         pinned copy {copy} has {repr (binderKinds c.type)}"
+  -- BINDER CONTROL (negative): each control copy flips one binder kind of a pinned statement;
+  -- expression equality alone must accept it and the binder-kind comparison must reject it
+  for (orig, ctl) in binderControls do
+    let some o := env.find? orig | throwError "{orig} not found"
+    let some c := env.find? ctl | throwError "{ctl} not found"
+    unless normLevels o.type == normLevels c.type && o.levelParams == c.levelParams do
+      throwError "[BINDER CONTROL] {ctl} differs from {orig} in more than a binder kind"
+    if binderKinds o.type == binderKinds c.type then
+      throwError "[BINDER CONTROL] the binder-kind comparison does not flag {ctl}, whose binder \
+        kinds differ from those of {orig}"
   -- NO SECOND COPY OF THE STEP: no declaration of the module applies Silver directly; positive
   -- control: the same check does see the step itself apply Silver
   for d in silverFamily do
@@ -400,7 +427,8 @@ run_cmd do
     silver_core_polish in all three proof cones, and no form of Silver's theorem applied \
     directly by any declaration of the module; the three \
     statements' types equal to their copies up to binder names and level normalization, \
-    with the same universe parameters and binder kinds; rank-free proof cones (no \
+    with the same universe parameters and binder kinds, the binder-kind comparison flagging \
+    a \{Θ}-to-(Θ) control that expression equality accepts; rank-free proof cones (no \
     stabilization ordinal, \
     StabilizesAt, Scott rank or height, isolating rank, nor any constant of Scott.Rank, \
     Scott.Height, RefinementCount, IsolatingLevel or ScatteredCounting), the check flagging \

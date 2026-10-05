@@ -11,7 +11,10 @@ Regression guard for the witnessed Morley counting theorems and the per-level Si
   parameters (`[STATEMENT DRIFT]` otherwise), and the binder kinds (explicit, implicit,
   instance-implicit, strict-implicit) along the `∀`-telescope must agree (`[BINDER DRIFT]`
   otherwise; expression equality alone ignores them).  A change of statement or of binder kinds
-  therefore has to change the copy in this file too.
+  therefore has to change the copy in this file too.  Negative control (`[BINDER CONTROL]`):
+  `binderControl_morley_counting_coded_or_perfect` restates `morley_counting_coded_or_perfect`
+  with `{φ}` in place of `(φ)`; expression equality accepts it, and the binder-kind comparison
+  must reject it.
 * **The per-level step, applied.**  Generically, for an arbitrary relational `Language.{u, v}`
   with countably many relation symbols and an arbitrary thin sentence, including its composition
   with the Scott-height bound `mk_isoSetoid_quotient_le_aleph_one`; and to a thin class: in the
@@ -85,6 +88,14 @@ theorem pin_countable_bfClasses_of_isThinOnNatModels {L : Language.{u, v}} [L.Is
     [Countable (Σ l, L.Relations l)] {φ : L.Sentenceω} (h : φ.IsThinOnNatModels) :
     ∀ η : Ordinal.{0}, η < Ordinal.omega 1 → Countable (Quotient (bfEquivSetoid φ η)) :=
   Sentenceω.countable_bfClasses_of_isThinOnNatModels h
+
+/-- **Binder-kind control**: `morley_counting_coded_or_perfect` with its explicit `(φ)` flipped to
+`{φ}`.  Its type is the original's up to binder kinds only; the comparison below must flag it. -/
+theorem binderControl_morley_counting_coded_or_perfect {L : Language.{u, v}} [L.IsRelational]
+    [Countable (Σ l, L.Relations l)] {φ : L.Sentenceω} :
+    #(Quotient (isoSetoid φ)) ≤ Cardinal.aleph 1 ∨
+      φ.HasPerfectSetOfPairwiseNonisomorphicNatModels :=
+  morley_counting_coded_or_perfect φ
 
 /-! ### The per-level step, applied -/
 
@@ -246,6 +257,11 @@ def pins : List (Name × Name) :=
       `MorleyPerfectRegressions.pin_morley_counting_or_perfect_cardinal),
    (step, `MorleyPerfectRegressions.pin_countable_bfClasses_of_isThinOnNatModels)]
 
+/-- Binder-kind controls: a pinned declaration with a copy differing in one binder kind only. -/
+def binderControls : List (Name × Name) :=
+  [(`FirstOrder.Language.morley_counting_coded_or_perfect,
+      `MorleyPerfectRegressions.binderControl_morley_counting_coded_or_perfect)]
+
 /-- The `ℕ`-tier theorems, whose cones must contain the step. -/
 def natTier : List Name :=
   [`FirstOrder.Language.morley_counting_coded_or_perfect,
@@ -272,7 +288,8 @@ def directSilver : List Name :=
 def guardDecls : List Name :=
   [`pin_morley_counting_coded_or_perfect, `pin_counting_fin_models_countable_or_perfect,
    `pin_morley_counting_or_perfect, `pin_morley_counting_or_perfect_cardinal,
-   `pin_countable_bfClasses_of_isThinOnNatModels, `generic_regression,
+   `pin_countable_bfClasses_of_isThinOnNatModels,
+   `binderControl_morley_counting_coded_or_perfect, `generic_regression,
    `generic_thinness_needed, `pureLang, `pureSet_regression, `unaryLang, `cantorCode,
    `not_codeBFEquiv_one, `cantorCode_noniso, `mem_modelsOf_top,
    `thinness_needed_regression].map (`MorleyPerfectRegressions ++ ·)
@@ -377,6 +394,16 @@ run_cmd do
     unless binderKinds o.type == binderKinds c.type do
       throwError "[BINDER DRIFT] {orig} has binder kinds {repr (binderKinds o.type)}, its \
         pinned copy {copy} has {repr (binderKinds c.type)}"
+  -- BINDER CONTROL (negative): each control copy flips one binder kind of a pinned statement;
+  -- expression equality alone must accept it and the binder-kind comparison must reject it
+  for (orig, ctl) in binderControls do
+    let some o := env.find? orig | throwError "{orig} not found"
+    let some c := env.find? ctl | throwError "{ctl} not found"
+    unless normLevels o.type == normLevels c.type && o.levelParams == c.levelParams do
+      throwError "[BINDER CONTROL] {ctl} differs from {orig} in more than a binder kind"
+    if binderKinds o.type == binderKinds c.type then
+      throwError "[BINDER CONTROL] the binder-kind comparison does not flag {ctl}, whose binder \
+        kinds differ from those of {orig}"
   unless env.getModuleIdxFor? step == some idx do
     throwError "[HOME DRIFT] {step} is not declared in {targetModule}"
   -- CONES (positive): the step reaches Silver, and the `ℕ`-tier theorems reach the step
@@ -420,7 +447,8 @@ run_cmd do
     seen := seen ++ .ofList axs.toList
   logInfo m!"morley perfect regression guard: OK (types of the {pins.length} pinned \
     declarations equal to their copies up to binder names and level normalization, with the \
-    same universe parameters and binder kinds; the per-level step applied generically, \
+    same universe parameters and binder kinds, the binder-kind comparison flagging a \
+    (φ)-to-\{φ} control that expression equality accepts; the per-level step applied generically, \
     composed with the Scott-height bound, as an equivalence with its converse, and to every \
     pure-set sentence; thinness needed: a perfect set forces an uncountable level generically, \
     and concretely for ⊤ over countably many unary symbols at level 1; Silver chain in the \
