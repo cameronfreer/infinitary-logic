@@ -156,7 +156,10 @@ application of that vocabulary:
 - `ScottDefinability`: Scott isolation of a surjective, satisfaction-compatible,
   isomorphism-preserving presentation (`isolatedPresentation_of_surjective`); under the
   single-sentence-split hypothesis, the sentence-definable sets of presentation values are exactly
-  the countable and the cocountable ones (`sentence_definable_iff_of_presentation`)
+  the countable and the cocountable ones (`sentence_definable_iff_of_presentation`); antitone,
+  rank-uniform, nonsingleton domains of presentation values bound every value's stages strictly
+  by the countable quantifier rank of an isolating sentence
+  (`IsolatedPresentation.exists_countable_strict_stage_bound`)
 - `PerfectSetDichotomy`: the `ℕ`-tier and all-countable perfect-set dichotomies and their
   refutations from `ℕ`-tier thinness with uncountably many `ℕ`-isomorphism classes and explicit
   finite-tier premises (`Sentenceω.not_perfectSetDichotomyAllCountable_of_thin`)

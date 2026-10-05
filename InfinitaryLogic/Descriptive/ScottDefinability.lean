@@ -5,6 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Descriptive.SmallVocabularyTransport
 import InfinitaryLogic.Scott.RefinementCount
+import InfinitaryLogic.OrdinalCountability
 
 /-!
 # Scott isolation and countable/cocountable definability on a presentation
@@ -25,6 +26,36 @@ For a presentation `truth : L.Sentenceω → Q → Prop` of a family of isomorph
   representative isolates its class.  No reverse-isomorphism premise, no measurable structure on
   `Q`, no Borelness of the family.  The corollaries `exists_sentence_of_countable_of_presentation`
   and `sentence_definable_iff_of_presentation` assemble the two layers.
+* **Strict stage bounds** (abstract layer): on an isolated presentation, the isolating sentences
+  have countable quantifier rank (`IsolatedPresentation.exists_qrank_lt`, from
+  `Sentenceω.qrank_lt_omega1`), so antitone domains of presentation values that are nonsingleton
+  and agree on every sentence of quantifier rank at most `η` at every countable `η` bound every
+  value's stages strictly by a countable ordinal
+  (`IsolatedPresentation.exists_countable_strict_stage_bound`, the instance of
+  `InfinitaryLogic.exists_countable_strict_stage_bound_of_isolation` in `OrdinalCountability`).
+
+## Strict stage bounds: what is and is not claimed
+
+* The bound is the quantifier rank of *some* isolating sentence.  It is not identified with an
+  internal Scott rank, nor with the stabilization ordinal of a representative, and it is not an
+  attained stage (attainment is `exists_greatest_stage_lt_omega1` in `OrdinalUtil`, under further
+  closure hypotheses).
+* Agreement at stage `η` is for sentences of quantifier rank **at most** `η`, the convention of
+  `EquivQRω`; exclusion is at the isolating sentence's own rank.
+* Nonsingletonness of the domains is essential, and no countability of exceptional classes is
+  assumed.  The hypotheses force the presentation type to be uncountable, so the bound applies
+  to a countable presentation only vacuously.
+* **Where Scott theory enters.**  Only through `IsolatedPresentation`.  The generic layer in
+  `OrdinalCountability` mentions no logic: its proofs use no `FirstOrder` constant.  The wrapper
+  over an abstract `IsolatedPresentation` adds only the syntactic fact
+  `Sentenceω.qrank_lt_omega1`: its proof uses no Scott, Karp or back-and-forth constant, although
+  this module imports them.  A consumer that obtains isolation from
+  `isolatedPresentation_of_surjective` does reach `scottSentence_characterizes` and the Karp
+  theory in its proof.
+* Isolation concerns the given presentation, a space of isomorphism classes of countable codes;
+  a Scott sentence is not claimed to isolate a structure among arbitrary uncountable ones.
+
+The strict stage bounds were offered for upstreaming by a consumer of this library.
 -/
 
 universe u v w x
@@ -88,6 +119,32 @@ theorem sentence_definable_iff {truth : L.Sentenceω → Q → Prop}
     · exact exists_sentence_of_countable hisol hesup hbot h
     · obtain ⟨φ, hφ⟩ := exists_sentence_of_countable hisol hesup hbot h
       exact ⟨φ.not, fun q => by rw [hnot, hφ, Set.mem_compl_iff, not_not]⟩
+
+/-- **Isolating sentences have countable quantifier rank**: on an isolated presentation every
+value is isolated by a sentence of rank below `ω₁` (every `Lω₁ω` sentence has countable rank,
+`Sentenceω.qrank_lt_omega1`).  The `hisolate` premise of
+`InfinitaryLogic.exists_countable_strict_stage_bound_of_isolation`. -/
+theorem IsolatedPresentation.exists_qrank_lt {truth : L.Sentenceω → Q → Prop}
+    (hisol : IsolatedPresentation truth) (q : Q) :
+    ∃ σ : L.Sentenceω, σ.qrank < Ordinal.omega 1 ∧ ∀ s, truth σ s ↔ s = q :=
+  let ⟨σ, hσ⟩ := hisol q
+  ⟨σ, Sentenceω.qrank_lt_omega1 σ, hσ⟩
+
+/-- **Strict stage bounds on an isolated presentation.**  Antitone domains `D` of presentation
+values that are nonsingleton below `ω₁` and agree, at every countable `η`, on every sentence of
+quantifier rank at most `η`, bound the stages of every value `q` strictly by a countable ordinal
+`θ`, the quantifier rank of a sentence isolating `q`.  The bound covers every stage, countable or
+not.  It is not an internal Scott rank and not an attained stage; the hypotheses force `Q` to be
+uncountable.  Scott theory enters only through `hisol`. -/
+theorem IsolatedPresentation.exists_countable_strict_stage_bound
+    {truth : L.Sentenceω → Q → Prop} (hisol : IsolatedPresentation truth)
+    (D : Ordinal.{0} → Set Q) (hanti : Antitone D)
+    (huniform : ∀ η, η < Ordinal.omega 1 → ∀ φ : L.Sentenceω, φ.qrank ≤ η →
+      ∀ ⦃x y⦄, x ∈ D η → y ∈ D η → (truth φ x ↔ truth φ y))
+    (htwo : ∀ η, η < Ordinal.omega 1 → (D η).Nontrivial) (q : Q) :
+    ∃ θ, θ < Ordinal.omega 1 ∧ ∀ η, q ∈ D η → η < θ :=
+  InfinitaryLogic.exists_countable_strict_stage_bound_of_isolation truth (fun φ ↦ φ.qrank) D hanti
+    huniform htwo hisol.exists_qrank_lt q
 
 end Abstract
 
