@@ -79,8 +79,9 @@ then at every level `η < ω₁` its coded models fall into countably many `Code
 The per-level step is `Sentenceω.countable_bfClasses_of_isThinOnNatModels`, read through
 `bfEquivSetoid_eq_comap`. -/
 theorem Sentenceω.bfScattered_of_isThinOnNatModels {Θ : L.Sentenceω}
-    (h : Θ.IsThinOnNatModels) : BFScattered (ModelsOf Θ) := fun η hη ↦
-  bfEquivSetoid_eq_comap Θ η ▸ Sentenceω.countable_bfClasses_of_isThinOnNatModels h η hη
+    (h : Θ.IsThinOnNatModels) : BFScattered (ModelsOf Θ) := by
+  intro η hη
+  exact bfEquivSetoid_eq_comap Θ η ▸ Sentenceω.countable_bfClasses_of_isThinOnNatModels h η hη
 
 /-- **Thin iff back-and-forth scattered**, for the coded models of a sentence: the converse
 direction is `isThinOn_of_bfScattered`. -/
