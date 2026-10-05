@@ -42,8 +42,8 @@ Every public declaration of the module is *applied*, not only listed for its axi
   `BFScattered` for the minimal-unboundedness comparison
   (`minimallyUnboundedOn_iff_of_isIsolatingRank`) is not witnessed; it is a recorded follow-up.
   `nullLang` cannot witness it: no isomorphism-invariant map whose values are below `ω₁` is
-  minimally unbounded on any set of codes in this language (the countably many tag cuts pin
-  down one class; not proved here); for isolating ranks the value bound follows from the
+  minimally unbounded on any set of codes in this language (not proved here; the countably
+  many tag cuts pin down one class); for isolating ranks the value bound follows from the
   contract (`lt_omega1`).  A candidate is a class of well-orders of type `ω^δ` beside the
   nullary part, which needs a back-and-forth analysis of ordinals that the library lacks.
 * **Signature checks.**  The types of all public declarations of the module are inspected: an
@@ -216,6 +216,9 @@ def tagOf (c : StructureSpace nullLang) (n : ℕ) : Bool :=
 def codeOfTags (X : ℕ → Bool) : StructureSpace nullLang
   | ⟨⟨_, NSym.p n⟩, _⟩ => X n
 
+/-- The tags of `codeOfTags X` are `X`, by definition. -/
+theorem tagOf_codeOfTags (X : ℕ → Bool) : tagOf (codeOfTags X) = X := rfl
+
 /-- Isomorphic codes carry the same tags. -/
 theorem tagOf_congr {c d : StructureSpace nullLang} (h : (structureIsoSetoid nullLang).r c d) :
     tagOf c = tagOf d := by
@@ -263,11 +266,9 @@ theorem not_countable_isoClasses_univ :
   have hinj : Function.Injective fun X : ℕ → Bool ↦
       (⟨Quotient.mk _ (codeOfTags X), codeOfTags X, mem_univ _, rfl⟩ :
         ↥(Quotient.mk (structureIsoSetoid nullLang) ''
-          (univ : Set (StructureSpace nullLang)))) := fun X Y hXY ↦
-    tagOf_congr (Quotient.exact (congrArg Subtype.val hXY))
-  have : Countable (ℕ → Bool) := hinj.countable
-  rw [← Cardinal.mk_le_aleph0_iff] at this
-  exact absurd this (by simp [Cardinal.aleph0_lt_continuum])
+          (univ : Set (StructureSpace nullLang)))) := fun X Y hXY ↦ by
+    simpa only [tagOf_codeOfTags] using tagOf_congr (Quotient.exact (congrArg Subtype.val hXY))
+  exact InfinitaryLogic.not_countable_univ_cantor (Set.countable_univ_iff.mpr hinj.countable)
 
 /-- **`BFScattered` is necessary for the boundedness comparison.**  On the set of all codes of
 `nullLang` there are two isolating ranks, the constant `0` and its inflation
@@ -442,8 +443,9 @@ def guardDecls : List Name :=
   [`generic_definition_regression, `generic_bfClass_regression,
    `generic_rankIndependence_regression, `shifted_isIsolatingRank, `instance_regression,
    `pureLang, `constant_rank, `pure_classes_countable, `pure_regression, `nullLang,
-   `tagOf, `codeOfTags, `tagOf_congr, `iso_of_codeBFEquiv_zero, `zero_isIsolatingRank,
-   `zero_boundedRankOn, `not_countable_isoClasses_univ, `bfScattered_necessary,
+   `tagOf, `codeOfTags, `tagOf_codeOfTags, `tagOf_congr, `iso_of_codeBFEquiv_zero,
+   `zero_isIsolatingRank, `zero_boundedRankOn, `not_countable_isoClasses_univ,
+   `bfScattered_necessary,
    `boundedRankOn_iff_of_isIsolatingRank_needs_bfScattered,
    `boundedRankOn_iff_countable_needs_bfScattered, `boundedRankOn_rankIndependent_iff].map
     (`MinimallyUnboundedRegressions ++ ·)

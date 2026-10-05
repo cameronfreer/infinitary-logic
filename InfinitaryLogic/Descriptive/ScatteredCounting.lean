@@ -70,10 +70,12 @@ from it alone.
   `IsIsolatingRank.exists_unbounded_of_not_countable`: on a set meeting uncountably many
   isomorphism classes, every isolating rank lies below one that is unbounded below `ω₁` there.
   Countably many classes always give a bound (`IsIsolatingRank.exists_bound_of_countable`).  So
-  boundedness is rank-independent on such a set exactly when no isolating rank is bounded on it;
-  `BFScattered` forces that (`countable_isoClasses_iff_bounded`).  The regression guard of
-  `Descriptive/MinimallyUnbounded.lean` exhibits a class that is not back-and-forth scattered
-  and carries a bounded and an unbounded isolating rank.
+  boundedness is rank-independent on such a set exactly when no isolating rank is bounded on it
+  (`boundedRankOn_rankIndependent_iff`, proved in
+  `scripts/check_minimally_unbounded_regressions.lean`); `BFScattered` forces that
+  (`countable_isoClasses_iff_bounded`).  The same guard exhibits a class that is not
+  back-and-forth scattered and carries a bounded and an unbounded isolating rank
+  (`bfScattered_necessary`).
 * **`codeStabilizationOrdinal` is not the least isolating level among codes.**  The
   stabilization ordinal of `c` is the least `α` with `StabilizesAt c α`, and `StabilizesAt`
   quantifies over *all* countable structures `N`, not only over codes; nothing here says that

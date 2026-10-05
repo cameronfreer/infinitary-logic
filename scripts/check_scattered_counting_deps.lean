@@ -18,8 +18,8 @@ that closure each declaration actually uses.
   (`[ROOT DRIFT]`).
 * **The contract layer uses no stabilization ordinal.**  The cones of the contract API (with
   the inflation `exists_unbounded_of_not_countable` and the bound `exists_bound_of_countable`,
-  which reach no `OrdinalCountability` constant either), the code
-  form `IsIsolatingRank.exists_isolating_codeLevel` with its contrapositive, and the counting
+  which reach no `OrdinalCountability` constant either), the code form
+  `IsIsolatingRank.exists_isolating_codeLevel` with its contrapositive, and the counting
   statements (`countable_fibers`, `mk_isoClasses_le_aleph_one`, `mk_isoClasses_eq_aleph_one`,
   `countable_isoClasses_iff_bounded`) contain neither `stabilizationOrdinal_spec` nor
   `stabilizationOrdinal`, and no constant declared in `Scott.Sentence`, `Scott.RefinementCount`,
