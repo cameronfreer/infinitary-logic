@@ -23,9 +23,29 @@ Every public declaration of the module is *applied*, not only listed for its axi
   (built from the three fields) and `codeStabilizationOrdinal` are both bounded on it, agree
   through `boundedRankOn_iff_of_isIsolatingRank`, and no sentence of that language is minimally
   unbounded for either rank.
-* **Not exhibited.**  No minimally unbounded class is exhibited, and no class with two isolating
-  ranks that disagree on boundedness in the absence of `BFScattered` (that necessity example is
-  a recorded follow-up; the generic signature checks do not replace it).
+* **`BFScattered` is necessary for the boundedness comparison.**  In the language `nullLang` of
+  countably many nullary relation symbols (universes `{0, 0}`), level `0` already decides
+  isomorphism among codes, since every code is countably infinite, so the constant rank `0` is
+  isolating (built from the three fields) and bounded on every set of codes.  The set of all
+  codes meets uncountably many isomorphism classes (Cantor space injects through the tags), so
+  the inflation `IsIsolatingRank.exists_unbounded_of_not_countable` gives an isolating rank
+  above `0` that is unbounded on it (`bfScattered_necessary`).  That the set is not
+  back-and-forth scattered is derived from the contract, not computed.  Hence
+  `boundedRankOn_iff_of_isIsolatingRank` and `IsIsolatingRank.boundedRankOn_iff_countable` are
+  false without `BFScattered` (`…_needs_bfScattered`).  For an arbitrary relational language,
+  `boundedRankOn_rankIndependent_iff` characterizes the sets on which boundedness is
+  rank-independent, from `IsIsolatingRank.exists_unbounded_of_not_countable` and
+  `IsIsolatingRank.exists_bound_of_countable` (both in `ScatteredCounting`, with no
+  `BFScattered`); it stays in this guard, since the module's rank statements all take
+  `BFScattered` (`[RANK DRIFT]`).
+* **Not exhibited.**  No minimally unbounded class is exhibited, and the necessity of
+  `BFScattered` for the minimal-unboundedness comparison
+  (`minimallyUnboundedOn_iff_of_isIsolatingRank`) is not witnessed; it is a recorded follow-up.
+  `nullLang` cannot witness it: no isomorphism-invariant map whose values are below `ω₁` is
+  minimally unbounded on any set of codes in this language (not proved here; the countably
+  many tag cuts pin down one class); for isolating ranks the value bound follows from the
+  contract (`lt_omega1`).  A candidate is a class of well-orders of type `ω^δ` beside the
+  nullary part, which needs a back-and-forth analysis of ordinals that the library lacks.
 * **Signature checks.**  The types of all public declarations of the module are inspected: an
   instance `Countable (Σ l, _)` occurs in exactly the two statements about back-and-forth
   classes, and `IsIsolatingRank` in exactly the four rank-independence statements, each of which
@@ -177,6 +197,131 @@ theorem pure_regression :
   · exact unboundedRankOn_iff_not_boundedRankOn.mp h.1 (h5.mono (subset_univ _))
   · exact unboundedRankOn_iff_not_boundedRankOn.mp h.1 (hcs.mono (subset_univ _))
 
+/-! ### `BFScattered` is necessary for the boundedness comparison: nullary symbols -/
+
+/-- Countably many nullary relation symbols and nothing else. -/
+inductive NSym : ℕ → Type
+  | p : ℕ → NSym 0
+
+/-- The language of countably many nullary relation symbols, in universes `{0, 0}`. -/
+def nullLang : Language.{0, 0} := ⟨fun _ ↦ Empty, NSym⟩
+
+instance : nullLang.IsRelational := fun _ ↦ inferInstanceAs (IsEmpty Empty)
+
+/-- The tag of index `n` of a code: the truth value of the `n`-th nullary symbol. -/
+def tagOf (c : StructureSpace nullLang) (n : ℕ) : Bool :=
+  c ⟨⟨0, NSym.p n⟩, Fin.elim0⟩
+
+/-- The code with tag function `X`. -/
+def codeOfTags (X : ℕ → Bool) : StructureSpace nullLang
+  | ⟨⟨_, NSym.p n⟩, _⟩ => X n
+
+/-- The tags of `codeOfTags X` are `X`, by definition. -/
+theorem tagOf_codeOfTags (X : ℕ → Bool) : tagOf (codeOfTags X) = X := rfl
+
+/-- Isomorphic codes carry the same tags. -/
+theorem tagOf_congr {c d : StructureSpace nullLang} (h : (structureIsoSetoid nullLang).r c d) :
+    tagOf c = tagOf d := by
+  obtain ⟨e⟩ := h
+  funext n
+  have := @Language.Equiv.map_rel nullLang ℕ ℕ c.toStructure d.toStructure e 0
+    (NSym.p n) Fin.elim0
+  have hv : (e ∘ (Fin.elim0 : Fin 0 → ℕ)) = Fin.elim0 := Subsingleton.elim _ _
+  rw [hv] at this
+  exact Bool.eq_iff_iff.mpr this.symm
+
+/-- **Level `0` decides isomorphism among codes**: equal tags make the identity of `ℕ` an
+isomorphism.  Every code is countably infinite, so no level is spent on the size. -/
+theorem iso_of_codeBFEquiv_zero {c d : StructureSpace nullLang} (h : CodeBFEquiv 0 c d) :
+    (structureIsoSetoid nullLang).r c d := by
+  have h0 := (@BFEquiv.zero nullLang ℕ c.toStructure ℕ d.toStructure 0 Fin.elim0 Fin.elim0).mp h
+  refine ⟨@Language.Equiv.mk nullLang ℕ ℕ c.toStructure d.toStructure (_root_.Equiv.refl ℕ)
+    (fun f _ ↦ isEmptyElim f) ?_⟩
+  intro l R x
+  match l, R with
+  | _, NSym.p n =>
+    have hx : x = Fin.elim0 := Subsingleton.elim _ _
+    subst hx
+    exact (h0 (AtomicIdx.rel (NSym.p n) Fin.elim0)).symm
+
+/-- **The constant rank `0` is isolating** in `nullLang`, built from the three fields. -/
+theorem zero_isIsolatingRank :
+    IsIsolatingRank (fun _ : StructureSpace nullLang ↦ (0 : Ordinal.{0})) where
+  iso_invariant _ _ _ := rfl
+  lt_omega1 _ := Ordinal.omega_pos 1
+  isolates _ _ h := iso_of_codeBFEquiv_zero h
+
+/-- The constant rank `0` is bounded below `ω₁` on every set of codes. -/
+theorem zero_boundedRankOn (K : Set (StructureSpace nullLang)) :
+    BoundedRankOn (fun _ : StructureSpace nullLang ↦ (0 : Ordinal.{0})) K :=
+  ⟨1, Ordinal.one_lt_omega0.trans Ordinal.omega0_lt_omega_one, fun _ _ ↦ zero_lt_one⟩
+
+/-- **Uncountably many classes** among the codes of `nullLang`: `X ↦ ⟦codeOfTags X⟧` injects
+Cantor space. -/
+theorem not_countable_isoClasses_univ :
+    ¬ (Quotient.mk (structureIsoSetoid nullLang) ''
+      (univ : Set (StructureSpace nullLang))).Countable := by
+  intro hc
+  have := hc.to_subtype
+  have hinj : Function.Injective fun X : ℕ → Bool ↦
+      (⟨Quotient.mk _ (codeOfTags X), codeOfTags X, mem_univ _, rfl⟩ :
+        ↥(Quotient.mk (structureIsoSetoid nullLang) ''
+          (univ : Set (StructureSpace nullLang)))) := fun X Y hXY ↦ by
+    simpa only [tagOf_codeOfTags] using tagOf_congr (Quotient.exact (congrArg Subtype.val hXY))
+  exact InfinitaryLogic.not_countable_univ_cantor (Set.countable_univ_iff.mpr hinj.countable)
+
+/-- **`BFScattered` is necessary for the boundedness comparison.**  On the set of all codes of
+`nullLang` there are two isolating ranks, the constant `0` and its inflation
+`max 0 (f ∘ Quotient.mk _)` (`IsIsolatingRank.exists_unbounded_of_not_countable`), one bounded
+below `ω₁` and one not.  That the set is not back-and-forth scattered is derived from the
+contract, not computed: otherwise `IsIsolatingRank.boundedRankOn_iff_countable` would turn the
+bounded rank into countably many classes. -/
+theorem bfScattered_necessary :
+    ∃ ρ₁ ρ₂ : StructureSpace nullLang → Ordinal.{0},
+      IsIsolatingRank ρ₁ ∧ IsIsolatingRank ρ₂ ∧
+      BoundedRankOn ρ₁ (univ : Set (StructureSpace nullLang)) ∧
+      ¬ BoundedRankOn ρ₂ (univ : Set (StructureSpace nullLang)) ∧
+      ¬ BFScattered (univ : Set (StructureSpace nullLang)) := by
+  obtain ⟨ρ₂, hρ₂, -, hu⟩ :=
+    zero_isIsolatingRank.exists_unbounded_of_not_countable not_countable_isoClasses_univ
+  refine ⟨_, ρ₂, zero_isIsolatingRank, hρ₂, zero_boundedRankOn univ,
+    unboundedRankOn_iff_not_boundedRankOn.mp hu, fun hK ↦ not_countable_isoClasses_univ ?_⟩
+  exact (zero_isIsolatingRank.boundedRankOn_iff_countable hK).mp (zero_boundedRankOn univ)
+
+/-- **Dropping `BFScattered` from `boundedRankOn_iff_of_isIsolatingRank` is false.** -/
+theorem boundedRankOn_iff_of_isIsolatingRank_needs_bfScattered :
+    ¬ ∀ (ρ ρ' : StructureSpace nullLang → Ordinal.{0}) (K : Set (StructureSpace nullLang)),
+      IsIsolatingRank ρ → IsIsolatingRank ρ' → (BoundedRankOn ρ K ↔ BoundedRankOn ρ' K) := by
+  intro h
+  obtain ⟨ρ₁, ρ₂, h₁, h₂, hb, hnb, -⟩ := bfScattered_necessary
+  exact hnb ((h ρ₁ ρ₂ univ h₁ h₂).mp hb)
+
+/-- **Dropping `BFScattered` from `IsIsolatingRank.boundedRankOn_iff_countable` is false.** -/
+theorem boundedRankOn_iff_countable_needs_bfScattered :
+    ¬ ∀ (ρ : StructureSpace nullLang → Ordinal.{0}) (K : Set (StructureSpace nullLang)),
+      IsIsolatingRank ρ →
+        (BoundedRankOn ρ K ↔ (Quotient.mk (structureIsoSetoid nullLang) '' K).Countable) :=
+  fun h ↦ not_countable_isoClasses_univ
+    ((h _ univ zero_isIsolatingRank).mp (zero_boundedRankOn univ))
+
+/-- **When boundedness is rank-independent**, on an arbitrary set of codes in an arbitrary
+relational language: all isolating ranks agree on boundedness on `K` iff `K` meets countably
+many classes or no isolating rank is bounded on `K`.  `BFScattered K` forces the second disjunct
+whenever the first fails.  Kept here as a regression of the two `ScatteredCounting` lemmas, not
+in the module, whose rank-independence statements all take `BFScattered`. -/
+theorem boundedRankOn_rankIndependent_iff {L : Language.{u, v}} [L.IsRelational]
+    {K : Set (StructureSpace L)} :
+    (∀ ρ ρ' : StructureSpace L → Ordinal.{0}, IsIsolatingRank ρ → IsIsolatingRank ρ' →
+        (BoundedRankOn ρ K ↔ BoundedRankOn ρ' K)) ↔
+      (Quotient.mk (structureIsoSetoid L) '' K).Countable ∨
+        ∀ ρ, IsIsolatingRank ρ → ¬ BoundedRankOn ρ K := by
+  refine ⟨fun h ↦ or_iff_not_imp_left.mpr fun hK ρ hρ hb ↦ ?_, ?_⟩
+  · obtain ⟨ρ', hρ', -, hu⟩ := hρ.exists_unbounded_of_not_countable hK
+    exact unboundedRankOn_iff_not_boundedRankOn.mp hu ((h ρ ρ' hρ hρ').mp hb)
+  · rintro (hK | hK) ρ ρ' hρ hρ'
+    · exact iff_of_true (hρ.exists_bound_of_countable hK) (hρ'.exists_bound_of_countable hK)
+    · exact iff_of_false (hK ρ hρ) (hK ρ' hρ')
+
 end MinimallyUnboundedRegressions
 
 end
@@ -297,7 +442,12 @@ def allowedClosure : List Name :=
 def guardDecls : List Name :=
   [`generic_definition_regression, `generic_bfClass_regression,
    `generic_rankIndependence_regression, `shifted_isIsolatingRank, `instance_regression,
-   `pureLang, `constant_rank, `pure_classes_countable, `pure_regression].map
+   `pureLang, `constant_rank, `pure_classes_countable, `pure_regression, `nullLang,
+   `tagOf, `codeOfTags, `tagOf_codeOfTags, `tagOf_congr, `iso_of_codeBFEquiv_zero,
+   `zero_isIsolatingRank, `zero_boundedRankOn, `not_countable_isoClasses_univ,
+   `bfScattered_necessary,
+   `boundedRankOn_iff_of_isIsolatingRank_needs_bfScattered,
+   `boundedRankOn_iff_countable_needs_bfScattered, `boundedRankOn_rankIndependent_iff].map
     (`MinimallyUnboundedRegressions ++ ·)
 
 /-- The standard axioms. -/
@@ -356,6 +506,9 @@ run_cmd do
     ({ilModules.length} modules, the union of ScatteredCounting and MinimallyUncountable plus \
     the module), Karp.PotentialIso its only Karp module (by import), no ModelTheory, Methods, \
     Admissible, Conditional, ScottProcess, WIP, BFScatteredSentence, LopezEscobar or \
-    SmallVocabulary module; standard axioms for {audited.length} declarations; not exhibited: \
-    a minimally unbounded class, and two isolating ranks disagreeing on boundedness without \
-    BFScattered)"
+    SmallVocabulary module; standard axioms for {audited.length} declarations; BFScattered \
+    necessary for the boundedness comparison: in the language of countably many nullary \
+    symbols, the constant rank 0 and its inflation are isolating, one bounded and one not on \
+    all codes, so the boundedness comparison and boundedRankOn_iff_countable fail without \
+    BFScattered; not exhibited: a minimally unbounded class, and the necessity of BFScattered \
+    for the minimal-unboundedness comparison)"
