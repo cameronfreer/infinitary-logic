@@ -21,6 +21,7 @@ This file proves that for a countable relational language L, the set of codes in
 
 - `modelsOfBounded_measurableSet`: Satisfaction of any bounded Lω₁ω formula is measurable.
 - `modelsOf_measurableSet`: Satisfaction of any Lω₁ω sentence is measurable.
+- `mem_modelsOf_iff_realize`: membership in `ModelsOf` is realization in the decoded structure.
 -/
 
 universe u v u'
@@ -47,6 +48,16 @@ def ModelsOfBounded
 /-- The set of codes where a sentence is realized. -/
 def ModelsOf (φ : L.Sentenceω) : Set (StructureSpace L) :=
   ModelsOfBounded φ Empty.elim Fin.elim0
+
+omit [Countable (Σ l, L.Relations l)] in
+/-- Membership in `ModelsOf` is realization of the sentence in the decoded structure (the empty
+valuation is unique).  No countability of the relation symbols is needed. -/
+theorem mem_modelsOf_iff_realize (c : StructureSpace L) (φ : L.Sentenceω) :
+    c ∈ ModelsOf φ ↔ @Sentenceω.Realize L φ ℕ c.toStructure := by
+  change @BoundedFormulaω.Realize L ℕ c.toStructure Empty 0 φ Empty.elim Fin.elim0 ↔
+    @BoundedFormulaω.Realize L ℕ c.toStructure Empty 0 φ Empty.elim _
+  exact iff_of_eq (congrArg (@BoundedFormulaω.Realize L ℕ c.toStructure Empty 0 φ Empty.elim)
+    (Subsingleton.elim _ _))
 
 omit [Countable (Σ l, L.Relations l)] in
 private theorem modelsOfBounded_falsum {α : Type u'} {n : ℕ}

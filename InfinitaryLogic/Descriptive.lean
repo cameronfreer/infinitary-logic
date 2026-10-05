@@ -38,6 +38,8 @@ import InfinitaryLogic.Descriptive.BFSeparation
 import InfinitaryLogic.Descriptive.BFScattered
 import InfinitaryLogic.Descriptive.BFConcentration
 import InfinitaryLogic.Descriptive.ScatteredCounting
+import InfinitaryLogic.Descriptive.MinimallyUncountable
+import InfinitaryLogic.Descriptive.MinimallyUnbounded
 import InfinitaryLogic.Descriptive.TreeCodes
 
 -- Counting dichotomy and finite carrier
@@ -79,6 +81,7 @@ import InfinitaryLogic.Descriptive.SentenceSplits
 import InfinitaryLogic.Descriptive.SmallVocabulary
 import InfinitaryLogic.Descriptive.SmallVocabularyLift
 import InfinitaryLogic.Descriptive.SmallVocabularyTransport
+import InfinitaryLogic.Descriptive.MinimallyUncountableThin
 import InfinitaryLogic.Descriptive.ObservableConstancy
 import InfinitaryLogic.Descriptive.ScottDefinability
 import InfinitaryLogic.Descriptive.PerfectSetDichotomy
@@ -206,6 +209,26 @@ application of that vocabulary:
   most `ℵ₁` isomorphism classes, countably many iff the rank is bounded below `ω₁`
   (`IsIsolatingRank.mk_isoClasses_le_aleph_one`,
   `IsIsolatingRank.countable_isoClasses_iff_bounded`);
+- `MinimallyUncountable` (no isolating rank; no `Karp` module in its import closure): ranks
+  bounded or unbounded below `ω₁` on a set of codes (`BoundedRankOn`, `UnboundedRankOn`), and
+  minimally uncountable classes (`MinimallyUncountableOn`, `Sentenceω.MinimallyUncountable`):
+  uncountably many isomorphism classes, but every sentence cut `K ∩ ModelsOf θ` /
+  `K \ ModelsOf θ` has a side meeting countably many; every back-and-forth class below `ω₁` is
+  the set of models of a sentence (`modelsOf_scottSentenceAt`), so at a level with countably many
+  back-and-forth classes one class has a countable complement
+  (`MinimallyUncountableOn.exists_bfClass_compl_countable`), and for an analytic class,
+  back-and-forth scattered and minimally uncountable iff concentrated with uncountably many
+  classes (`bfScattered_and_minimallyUncountableOn_iff`);
+- `MinimallyUnbounded`: the rank-parametric analogue of minimal unboundedness
+  (`MinimallyUnboundedOn ρ`, `Sentenceω.MinimallyUnbounded`), one unbounded back-and-forth class
+  with a bounded complement at a level with countably many classes
+  (`MinimallyUnboundedOn.exists_bfClass_compl_bounded`, no isolating rank), and, on a
+  back-and-forth scattered class, independence of the isolating rank
+  (`minimallyUnboundedOn_iff_minimallyUncountableOn`,
+  `minimallyUnboundedOn_iff_of_isIsolatingRank`);
+- `MinimallyUncountableThin`: sentence cuts with a countable side give thinness, with no
+  scatteredness hypothesis (`isThinOn_of_sentence_cuts`, `MinimallyUncountableOn.isThinOn`);
+  its proof goes through the transported splits criterion and reaches López–Escobar;
 - `TreeCodes`: tree codes over a countable alphabet, the closed tree class, the continuous
   Kleene–Brouwer code into `Language.order`, and analytic boundedness for well-founded trees
   (`analytic_wellFoundedTree_rank_boundedness`) with its domination adapter;

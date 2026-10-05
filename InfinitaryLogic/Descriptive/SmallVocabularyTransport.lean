@@ -62,13 +62,11 @@ theorem sentenceTheory_image_code (θ : ℕ → (lang L).Sentenceω) (C : Set (S
 
 omit [Countable (Σ n, L.Relations n)] in
 /-- Membership in `ModelsOf` is realization of the sentence in the decoded structure (the empty
-valuation is unique). -/
+valuation is unique).  A restatement, with `L` explicit, of the root
+`FirstOrder.Language.mem_modelsOf_iff_realize` (`Descriptive/SatisfactionBorel.lean`). -/
 theorem mem_modelsOf_iff_realize (c : StructureSpace L) (φ : L.Sentenceω) :
-    c ∈ ModelsOf φ ↔ @Sentenceω.Realize L φ ℕ c.toStructure := by
-  change @BoundedFormulaω.Realize L ℕ c.toStructure Empty 0 φ Empty.elim Fin.elim0 ↔
-    @BoundedFormulaω.Realize L ℕ c.toStructure Empty 0 φ Empty.elim _
-  exact iff_of_eq (congrArg (@BoundedFormulaω.Realize L ℕ c.toStructure Empty 0 φ Empty.elim)
-    (Subsingleton.elim _ _))
+    c ∈ ModelsOf φ ↔ @Sentenceω.Realize L φ ℕ c.toStructure :=
+  FirstOrder.Language.mem_modelsOf_iff_realize c φ
 
 /-- **Equal truth sequences from agreement on the lifted sentences**: two codes whose decoded
 structures satisfy the same lifted sentences have the same truth sequence along the list. -/

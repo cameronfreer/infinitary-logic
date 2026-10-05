@@ -19,7 +19,8 @@ Borelness or isomorphism invariance of `K` is assumed.
 ## Main declarations
 
 * `codeBFEquivSetoid L η`: `CodeBFEquiv η` as an equivalence relation on all codes.
-* `BFScattered K`: every level `η < ω₁` has countably many classes on `K`.
+* `BFScattered K`: every level `η < ω₁` has countably many classes on `K`; it passes to subsets
+  (`BFScattered.mono`).
 * `exists_forall_not_codeBFEquiv_of_analyticSet`: an analytic set of pairwise non-isomorphic
   codes is separated pairwise at one level `η < ω₁`.
 * `not_hasCantorAntichainOn_of_bfScattered`: no Cantor antichain, with no countability of the
@@ -124,6 +125,18 @@ infinitary equivalence is made. -/
 def BFScattered (K : Set (StructureSpace L)) : Prop :=
   ∀ η : Ordinal.{0}, η < Ordinal.omega 1 →
     Countable (Quotient ((codeBFEquivSetoid L η).comap (Subtype.val : K → StructureSpace L)))
+
+/-- **`BFScattered` passes to subsets**: at each level the class map of `J` factors through that
+of `K`, and equal classes in `K` mean `CodeBFEquiv η` of the underlying codes. -/
+theorem BFScattered.mono {J K : Set (StructureSpace L)} (hK : BFScattered K) (hJK : J ⊆ K) :
+    BFScattered J := fun η hη ↦
+  have := hK η hη
+  countable_quotient_of_countable_range _
+    (fun x : J ↦ (Quotient.mk _ ⟨x.1, hJK x.2⟩ :
+      Quotient ((codeBFEquivSetoid L η).comap (Subtype.val : K → StructureSpace L))))
+    -- `Quotient.exact h` is the pulled-back relation on `K`, which unfolds to `CodeBFEquiv η`
+    -- of the underlying codes, the relation pulled back to `J`
+    (Set.to_countable _) fun _ _ h ↦ by have := Quotient.exact h; exact this
 
 /-! ### Uniform separation of an analytic antichain -/
 
