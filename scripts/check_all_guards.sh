@@ -12,7 +12,8 @@
 #   A guard is a file matching `scripts/check_*.lean`, `scripts/check_*.py` or
 #   `scripts/check_*.sh`. Name it that way and it runs — locally and in CI, with no edit to
 #   this script, to build_gate.sh, or to the workflow. Name it anything else and it is not
-#   registered with the shared local/CI gate.
+#   registered with the shared local/CI gate. A `check_X.lean` that has a same-named
+#   `check_X.sh` wrapper is run through that wrapper only (not a second time on its own).
 #
 # That filename pattern is the whole registration mechanism. The anti-drift property is this
 # single DISCOVERY RULE, not a single list, so resist replacing it with an allowlist. Resist
@@ -49,8 +50,10 @@ done
 run lake exe checkdecls blueprint/lean_decls
 
 # Lean cone / surface guards. `lake env lean` exits 0 on `logInfo` and nonzero on `throwError`.
+# A `check_X.lean` with a same-named `check_X.sh` wrapper already ran through the wrapper above.
 for f in scripts/check_*.lean; do
   [ -e "$f" ] || continue
+  [ -e "${f%.lean}.sh" ] && continue
   run lake env lean "$f"
 done
 
