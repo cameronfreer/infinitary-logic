@@ -41,6 +41,11 @@ cat > "$TMPDIR/everything.lean" <<'EOF'
 import InfinitaryLogic.Everything
 #print axioms gandy_harrington_for_relation
 #print axioms FirstOrder.Language.silverBurgessDichotomy
+#print axioms CategoryTheory.GrothendieckTopology.mem_atomic_iff
+#print axioms CategoryTheory.GrothendieckTopology.dense_covering_nonempty
+#print axioms CategoryTheory.GrothendieckTopology.atomic_eq_dense
+#print axioms CategoryTheory.GrothendieckTopology.atomic_jointlySurjective_iff
+#print axioms CategoryTheory.GrothendieckTopology.Point.fiber_map_surjective
 EOF
 
 check_file () {

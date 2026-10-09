@@ -1,5 +1,6 @@
 import InfinitaryLogic.All
 import InfinitaryLogic.Conditional
+import InfinitaryLogic.CategoryTheory.Sites.AtomicPoint
 -- Legacy off-path modules (not reachable from the `All`/`Conditional` roots):
 -- legacy FormulaCode API, superseded by the decoupled Scott pipeline
 import InfinitaryLogic.Scott.Code
