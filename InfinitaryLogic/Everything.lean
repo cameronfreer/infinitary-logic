@@ -12,6 +12,11 @@ import InfinitaryLogic.Methods.Interpolation.ConsistencyPropertyEqOn
 import InfinitaryLogic.Methods.Interpolation.FairEnumeration
 import InfinitaryLogic.Methods.Interpolation.QuotientTermModel
 import InfinitaryLogic.Methods.Interpolation.QuotientTruthLemma
+-- L∞κ block-quantifier layer (exposed through Everything only during L0–L1)
+import InfinitaryLogic.LinfKappa.Syntax
+import InfinitaryLogic.LinfKappa.Semantics
+import InfinitaryLogic.LinfKappa.Substitution
+import InfinitaryLogic.LinfKappa.Unary
 
 /-!
 # Everything: the full library including conditional results and legacy modules
