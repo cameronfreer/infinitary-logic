@@ -43,4 +43,8 @@ construction, and the extraction side by `morleyHanfExtractionTail_holds`.
 
 `InfinitaryLogic.All` remains the default bundle; it now includes the
 Morley–Hanf facade and its supporting chain.
+
+The `L∞κ` block-quantifier layer (`LinfKappa/`: syntax, semantics, substitution and the unary
+bridge) is exposed through `Everything` only during its first tranches; it is not part of
+`InfinitaryLogic.All`.
 -/

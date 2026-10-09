@@ -9,10 +9,13 @@ Every exported theorem the guard relies on is *applied*, not only listed for its
    in `Type w`.
 2. **Universe pins.**  `levelParams` of `BlockSlots` (`[uQ, w]`), `BlockFormula`
    (`[u, v, uι, uQ, w, u']`), `BlockFormula.Realize` (`[u, v, uι, uQ, w, u', wM]`) and of the main
-   theorems are exactly the frozen lists; `[UNIVERSE DRIFT]` otherwise.
+   theorems are exactly the frozen lists; `[UNIVERSE DRIFT]` otherwise.  **Mutation control:** the
+   same check must flag the swapped list `[w, uQ]` for `BlockSlots`.
 3. **Binder-kind pins.**  The `BinderInfo` sequence of `realize_allBlock`, `realize_closeAll`,
    `realize_mapSlots`, `realize_substSlots`, `realize_reassoc`, `realize_ofInf` and
    `reassocEquiv_left`/`_middle`/`_right` is the frozen one; `[BINDER DRIFT]` otherwise.
+   The pins also cover the slot maps `appendEquiv`, `inl`, `inr`, `reassocEquiv`, `finToSlots`
+   (where `V` is explicit), `mapSlots_id`, `mapSlots_mapSlots` and `comp_finToSlots_succ`.
    **Mutation control:** a local copy of `realize_allBlock` with one binder made explicit must be
    reported by the same check.
 4. **Transparency.**  `BlockSlots` is `@[reducible]`; the step `rw [realize_mapSlots]` at a slot
@@ -23,8 +26,9 @@ Every exported theorem the guard relies on is *applied*, not only listed for its
    `ℕ`-shaped block: realized iff there is an injection `ℕ → M`, true in `ℕ`, false in `Fin 3`, and
    false in `Unit`, where its inequality-free variant `∃ (yₙ)ₙ ⊤` is true (so the two are
    separated).  The `κ = ω` instance: with `finShapes`, the sentence `∃_2 x ∀_3 y (x₀ ≠ x₁ ∧ some
-   two of x₀, x₁, y₀, y₁, y₂ coincide)` is characterized, true on `Fin 4` and false on `Fin 1`; the
-   canonical `InitCode ℵ₀` blocks are finite.
+   two of x₀, x₁, y₀, y₁, y₂ coincide)` is characterized, true on `Fin 4`, false on `Fin 1` and
+   false on `Fin 5` (so the `∀_3` block is universal, not existential); the canonical
+   `InitCode ℵ₀` blocks are finite.
 6. **Substitution under nested binders.**  In a language with a constant `zero` and a unary
    function `succ`, the formula `∃ y ∀ z (z = s → succ y = z)` with the outer slot `s` substituted
    by the closed term `succ zero` is true in `ℕ` by direct evaluation and through
@@ -43,11 +47,18 @@ Every exported theorem the guard relies on is *applied*, not only listed for its
     exactly: `Syntax` none; `Semantics` `{Syntax}`; `Substitution` and `Unary`
     `{Syntax, Semantics}` (`[CLOSURE DRIFT]`).  No closure contains
     `Mathlib.SetTheory.Cardinal.HasCardinalLT` or an `InfinitaryLogic.Lomega1omega`, `Scott` or
-    `Karp` module (`[BROAD CONE]`).
+    `Karp` module (`[BROAD CONE]`).  **Mutation controls:** the closure check must flag the
+    closure of `Substitution` against the pin of `Syntax`, and the cone check must flag the
+    prefix `Mathlib.ModelTheory.Syntax`, which the closure of `Syntax` does reach.
 11. **Positive cone.**  The dependency cone of `realize_iInfAlong`, theorem bodies included (via
     `.thmInfo`), contains `FirstOrder.IndexCoding.pad`.
 12. **Axiom audit.**  Every exported declaration and every guard declaration uses only `propext`,
     `Classical.choice`, `Quot.sound`.
+
+Out-of-tree negative controls (run once, not part of the guard): a copy of this file with the
+frozen list of `BlockSlots` changed to `[w, uQ]` fails with `[UNIVERSE DRIFT]`; a copy with the
+closure pin of `Semantics` emptied fails with `[CLOSURE DRIFT]`; with `BlockSlots` made
+semireducible in copies of the modules, the binder-case `rw` regression fails.
 
 The final `run_cmd` performs checks 2, 3, 4 (reducibility), 10, 11 and 12, and checks that every
 named guard declaration exists, before printing OK.
@@ -56,6 +67,7 @@ Run with: lake env lean scripts/check_linfkappa_syntax_regressions.lean
 -/
 import InfinitaryLogic.LinfKappa.Substitution
 import InfinitaryLogic.LinfKappa.Unary
+import Mathlib.Tactic.FinCases
 
 open Lean Meta Elab Command FirstOrder FirstOrder.Language
 
@@ -292,6 +304,27 @@ theorem not_finSentence_fin1 : ¬ finSentence.Realize (Fin 1) := by
   rw [realize_finSentence]
   rintro ⟨x, hx⟩
   exact (hx 0).1 (Subsingleton.elim _ _)
+
+/-- On `Fin 5` the universal block can always avoid repetitions: the three elements outside
+`{x₀, x₁}` make the five values distinct.  This separates `∀_3` from a misread `∃_3`. -/
+theorem not_finSentence_fin5 : ¬ finSentence.Realize (Fin 5) := by
+  classical
+  rw [realize_finSentence]
+  rintro ⟨x, hx⟩
+  have hne : x 0 ≠ x 1 := (hx 0).1
+  set s : Finset (Fin 5) := Finset.univ \ {x 0, x 1} with hs
+  have hcard : s.card = 3 := by
+    rw [hs, Finset.card_sdiff_of_subset (Finset.subset_univ _), Finset.card_univ,
+      Fintype.card_fin, Finset.card_pair hne]
+  let y : Fin 3 → Fin 5 := fun j ↦ (s.equivFin.symm (Fin.cast hcard.symm j) : Fin 5)
+  have hy : ∀ j, y j ∈ s := fun j ↦ (s.equivFin.symm (Fin.cast hcard.symm j)).2
+  refine (hx y).2 (Fin.append_injective_iff.2 ⟨fun i j hij ↦ ?_, fun j k hjk ↦ ?_,
+    fun i j hij ↦ ?_⟩)
+  · fin_cases i <;> fin_cases j <;> simp_all [eq_comm]
+  · exact Fin.cast_injective _ (s.equivFin.symm.injective (Subtype.ext hjk))
+  · have := hy j
+    rw [hs, ← hij] at this
+    fin_cases i <;> simp at this
 
 /-- The canonical `κ = ω` codes give finite blocks. -/
 theorem initSeg_aleph0_finite (q : InitCode Cardinal.aleph0.{0}) :
@@ -564,6 +597,14 @@ def levelPins : List (Name × List Name) :=
    (``BlockFormula.iInfAlong, [`u, `v, `uι, `uQ, `w, `u', `uκ]),
    (``InitCode, [`w]), (``initSeg, [`w])]
 
+/-- `some` message when the `levelParams` of `n` differ from `frozen`. -/
+def levelDrift? (env : Environment) (n : Name) (frozen : List Name) :
+    Except String (Option String) :=
+  match env.find? n with
+  | none => .error s!"declaration {n} not found"
+  | some ci => .ok <| if ci.levelParams == frozen then none
+      else some s!"{n} has levelParams {ci.levelParams}, frozen {frozen}"
+
 /-- Binder kinds as a string: `i` implicit, `e` explicit, `s` instance, `t` strict implicit. -/
 def binderCode (n : Name) : MetaM String := do
   let ci ← getConstInfo n
@@ -584,7 +625,16 @@ def binderPins : List (Name × String) :=
    (``BlockFormula.realize_ofInf, "iiiiiisesieee"),
    (``BlockSlots.reassocEquiv_left, "iieeee"),
    (``BlockSlots.reassocEquiv_middle, "iieeee"),
-   (``BlockSlots.reassocEquiv_right, "iieeee")]
+   (``BlockSlots.reassocEquiv_right, "iieeee"),
+   -- `V` explicit on the slot maps
+   (``BlockSlots.appendEquiv, "ieee"),
+   (``BlockSlots.inl, "ieeee"),
+   (``BlockSlots.inr, "ieeee"),
+   (``BlockSlots.reassocEquiv, "ieeee"),
+   (``BlockSlots.finToSlots, "ieesee"),
+   (``BlockFormula.mapSlots_id, "iiiiiie"),
+   (``BlockFormula.mapSlots_mapSlots, "iiiiiiiieee"),
+   (``BlockSlots.comp_finToSlots_succ, "iiieseee")]
 
 /-- `some` message when the binder kinds of `n` differ from `frozen`. -/
 def binderDrift? (n : Name) (frozen : String) : MetaM (Option String) := do
@@ -614,6 +664,18 @@ def closurePins : List (Name × List Name) :=
      [`InfinitaryLogic.LinfKappa.Semantics, `InfinitaryLogic.LinfKappa.Syntax]),
    (`InfinitaryLogic.LinfKappa.Unary,
      [`InfinitaryLogic.LinfKappa.Semantics, `InfinitaryLogic.LinfKappa.Syntax])]
+
+/-- `some` message when the `InfinitaryLogic` modules of the closure of `m` (other than `m`)
+differ from `expected`. -/
+def closureDrift? (env : Environment) (m : Name) (expected : List Name) : Option String :=
+  let il := ((importClosure env m).toList.filter fun x ↦
+    (`InfinitaryLogic).isPrefixOf x && x != m).toArray |>.qsort Name.lt |>.toList
+  if il == expected then none
+  else some s!"the InfinitaryLogic closure of {m} is {il}, pinned {expected}"
+
+/-- The modules of the closure of `m` that have one of the `prefixes`. -/
+def broadHits (env : Environment) (m : Name) (prefixes : List Name) : List Name :=
+  (importClosure env m).toList.filter fun x ↦ prefixes.any (·.isPrefixOf x)
 
 /-- Module-name prefixes no closure may reach. -/
 def forbiddenPrefixes : List Name :=
@@ -681,7 +743,7 @@ def guardDecls : List Name :=
    `not_pairwiseDistinctOmega_fin3, `not_pairwiseDistinctOmega_unit, `inequalityFreeOmega_unit,
    `pairwiseDistinct_separated_from_inequalityFree, `fiveVars, `finBody, `finSentence,
    `realize_fiveVars, `realize_equal_fiveVars, `realize_finSentence, `finSentence_fin4,
-   `not_finSentence_fin1,
+   `not_finSentence_fin1, `not_finSentence_fin5,
    `initSeg_aleph0_finite, `aleph0Slots, `zsLang, `predFormula, `σOne, `σZero,
    `realize_predFormula, `substOne_direct, `substOne_via, `substOne_true, `substZero_false,
    `predFormula_mapSlots_id, `predFormula_mapSlots_mapSlots, `reassoc_left, `reassoc_middle,
@@ -696,11 +758,14 @@ def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
 
 run_cmd do
   let env ← getEnv
-  -- 2. universe pins
+  -- 2. universe pins, with a mutation control (a swapped list must be flagged)
   for (n, ls) in levelPins do
-    let some ci := env.find? n | throwError "declaration {n} not found"
-    unless ci.levelParams == ls do
-      throwError "[UNIVERSE DRIFT] {n} has levelParams {ci.levelParams}, frozen {ls}"
+    match levelDrift? env n ls with
+    | .error e => throwError e
+    | .ok (some msg) => throwError "[UNIVERSE DRIFT] {msg}"
+    | .ok none => pure ()
+  unless (levelDrift? env ``BlockSlots [`w, `uQ]) matches .ok (some _) do
+    throwError "[MUTATION CONTROL] the universe check did not flag a swapped list"
   -- 3. binder pins, with the mutation control
   for (n, s) in binderPins do
     if let some msg ← liftTermElabM (binderDrift? n s) then
@@ -715,14 +780,15 @@ run_cmd do
   -- 10. closure pins
   for (m, expected) in closurePins do
     unless env.getModuleIdx? m |>.isSome do throwError "module {m} is not in the environment"
-    let cl := importClosure env m
-    let il := (cl.toList.filter fun x ↦ (`InfinitaryLogic).isPrefixOf x && x != m).toArray
-      |>.qsort Name.lt |>.toList
-    unless il == expected do
-      throwError "[CLOSURE DRIFT] the InfinitaryLogic closure of {m} is {il}, pinned {expected}"
-    let hits := cl.toList.filter fun x ↦ forbiddenPrefixes.any (·.isPrefixOf x)
+    if let some msg := closureDrift? env m expected then throwError "[CLOSURE DRIFT] {msg}"
+    let hits := broadHits env m forbiddenPrefixes
     unless hits.isEmpty do
       throwError "[BROAD CONE] the closure of {m} reaches {hits}"
+  -- mutation controls: Substitution against Syntax's pin, and a prefix the closure does reach
+  unless (closureDrift? env `InfinitaryLogic.LinfKappa.Substitution []).isSome do
+    throwError "[MUTATION CONTROL] the closure check did not flag a wrong pin"
+  if (broadHits env `InfinitaryLogic.LinfKappa.Syntax [`Mathlib.ModelTheory.Syntax]).isEmpty then
+    throwError "[MUTATION CONTROL] the cone check did not flag a reached prefix"
   -- 11. positive cone
   unless (transitiveDeps env ``BlockFormula.realize_iInfAlong).contains
       ``FirstOrder.IndexCoding.pad do
@@ -736,10 +802,11 @@ run_cmd do
     let bad := axs.toList.filter fun a ↦ !standardAxioms.contains a
     unless bad.isEmpty do throwError "[NONSTANDARD AXIOMS] {n} uses {bad}"
   logInfo m!"L∞κ block-syntax regression guard: OK ({moduleDecls.length} exported and \
-    {localGuard.length} guard declarations audited; universe gates and pins; binder pins with \
-    the mutation control flagged; BlockSlots reducible and the binder-case rw regression; empty, \
-    singleton and pairwise-distinct omega blocks (true in N, false in Fin 3 and in Unit, where \
-    the inequality-free variant is true); finShapes sentence true on Fin 4, false on Fin 1; \
+    {localGuard.length} guard declarations audited; universe gates and pins; binder pins; \
+    mutation controls for the universe, binder, closure and cone checks flagged; BlockSlots \
+    reducible and the binder-case rw regression; empty, singleton and pairwise-distinct omega \
+    blocks (true in N, false in Fin 3 and in Unit, where the inequality-free variant is true); \
+    finShapes sentence true on Fin 4, false on Fin 1 and Fin 5; \
     finite InitCode aleph0 blocks; substitution of succ zero and zero under nested binders; \
     reassociation components, values and inverses; ofInf on BoundedFormulaOmega with no cast \
     and the head-block orientation; independent universes; exact closures without \

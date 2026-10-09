@@ -36,6 +36,12 @@ binder case of the renaming lemma `realize_mapSlots` fails, because `rw` checks 
 `scripts/check_linfkappa_syntax_regressions.lean` pins the reducibility status and keeps the
 failing `rw` as a regression.
 
+A limit of the reducible definition: the discrimination-tree key of a `simp` lemma whose left
+side mentions slots of a concrete context, such as `BlockSlots finShapes [3, 2]`, is computed
+from the unfolded sum `Fin 3 ⊕ (Fin 2 ⊕ PEmpty)`, and such a lemma was observed not to fire on
+the goals produced by `realize_allBlock`, although `rw` with it works.  State such lemmas at the
+formula level (the guard does so for its finite-block test) or use `rw`.
+
 ## Main definitions
 
 * `BlockSlots`, `BlockFormula`, `BlockSentence`.
@@ -56,6 +62,13 @@ failing `rw` as a regression.
 * There is no quantifier rank, no back-and-forth relation, and no relation to the finite-block
   ranks or to any Scott rank.
 * The canonical shapes are abbreviations only; no cardinality law about them is proved here.
+
+## References
+
+* M. A. Dickmann, *Larger infinitary languages*, in *Model-Theoretic Logics* (J. Barwise and
+  S. Feferman, eds.), Springer-Verlag, 1985, ch. IX, pp. 317–363.  The formation rules of
+  `L_{κλ}` are those of §1 (p. 317); here the block bound and the conjunction bound are not part
+  of the syntax.
 -/
 
 set_option autoImplicit false

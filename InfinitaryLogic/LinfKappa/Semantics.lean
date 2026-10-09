@@ -15,7 +15,10 @@ of the free variables and a valuation `xs : BlockSlots V Γ → M` of the slots 
 
 The block binder is interpreted by `Sum.elim`: `(allBlock q φ).Realize v xs` holds iff
 `φ.Realize v (Sum.elim b xs)` for every block valuation `b : V q → M`.  This is a definitional
-equation (`realize_allBlock` is `Iff.rfl`), with no cast, because `BlockSlots` is reducible.
+equation (`realize_allBlock` is `Iff.rfl`), with no cast.  The equation itself would hold for a
+semireducible `BlockSlots` as well; reducibility is what the later `rw` and `simp` steps need,
+for instance in `realize_closeAll` here and in the renaming and substitution lemmas of
+`LinfKappa/Substitution.lean`.
 
 ## Main definitions and results
 
@@ -90,6 +93,7 @@ theorem realize_allBlock.{u, v, uι, uQ, w, u', wM} {L : Language.{u, v}} {ι : 
     (allBlock q φ).Realize v xs ↔ ∀ b : V q → M, φ.Realize v (Sum.elim b xs) :=
   Iff.rfl
 
+/-- Realization of a disjunction: one equation, generic in the carrier and its universe. -/
 @[simp]
 theorem realize_iSup.{u, v, uι, uQ, w, u', wM} {L : Language.{u, v}} {ι : Type uι}
     {Q : Type uQ} {V : Q → Type w} {α : Type u'} {M : Type wM} [L.Structure M] {Γ : List Q}
@@ -97,6 +101,7 @@ theorem realize_iSup.{u, v, uι, uQ, w, u', wM} {L : Language.{u, v}} {ι : Type
     (iSup φs).Realize v xs ↔ ∃ i, (φs i).Realize v xs :=
   Iff.rfl
 
+/-- Realization of a conjunction: one equation, generic in the carrier and its universe. -/
 @[simp]
 theorem realize_iInf.{u, v, uι, uQ, w, u', wM} {L : Language.{u, v}} {ι : Type uι}
     {Q : Type uQ} {V : Q → Type w} {α : Type u'} {M : Type wM} [L.Structure M] {Γ : List Q}
@@ -125,6 +130,8 @@ theorem realize_bot.{u, v, uι, uQ, w, u', wM} {L : Language.{u, v}} {ι : Type 
     (⊥ : L.BlockFormula ι V α Γ).Realize v xs ↔ False :=
   Iff.rfl
 
+/-- The derived block existential `¬ ∀ (block) ¬ φ` holds iff some valuation of the block
+satisfies `φ`. -/
 @[simp]
 theorem realize_exBlock.{u, v, uι, uQ, w, u', wM} {L : Language.{u, v}} {ι : Type uι}
     {Q : Type uQ} {V : Q → Type w} {α : Type u'} {M : Type wM} [L.Structure M] {Γ : List Q}
@@ -143,8 +150,7 @@ theorem realize_closeAll.{u, v, uι, uQ, w, u', wM} {L : Language.{u, v}} {ι : 
   induction Γ with
   | nil => exact ⟨fun h xs ↦ by rwa [Subsingleton.elim xs PEmpty.elim], fun h ↦ h _⟩
   | cons q Γ ih =>
-    change (closeAll (allBlock q φ)).Realize v _ ↔ _
-    rw [ih]
+    rw [closeAll, ih]
     refine ⟨fun h ys ↦ ?_, fun h xs b ↦ h _⟩
     have e : (Sum.elim (fun x ↦ ys (Sum.inl x)) (fun s ↦ ys (Sum.inr s)) :
         BlockSlots V (q :: Γ) → M) = ys := by
@@ -168,6 +174,8 @@ def iSupAlong.{u, v, uι, uQ, w, u', uκ} {L : Language.{u, v}} {ι : Type uι} 
     (φs : κ → L.BlockFormula ι V α Γ) : L.BlockFormula ι V α Γ :=
   .iSup (c.pad ⊥ φs)
 
+/-- The coded conjunction holds iff every member of the `κ`-indexed family holds: the padding
+`⊤` at undecodable indices is harmless. -/
 @[simp]
 theorem realize_iInfAlong.{u, v, uι, uQ, w, u', wM, uκ} {L : Language.{u, v}} {ι : Type uι}
     {Q : Type uQ} {V : Q → Type w} {α : Type u'} {M : Type wM} [L.Structure M] {Γ : List Q}
@@ -180,6 +188,8 @@ theorem realize_iInfAlong.{u, v, uι, uQ, w, u', wM, uκ} {L : Language.{u, v}} 
   · rw [IndexCoding.pad_of_decode_none c hd]; simp
   · rw [IndexCoding.pad_of_decode_some c hd]; exact h k
 
+/-- The coded disjunction holds iff some member of the `κ`-indexed family holds: the padding
+`⊥` at undecodable indices is never satisfied. -/
 @[simp]
 theorem realize_iSupAlong.{u, v, uι, uQ, w, u', wM, uκ} {L : Language.{u, v}} {ι : Type uι}
     {Q : Type uQ} {V : Q → Type w} {α : Type u'} {M : Type wM} [L.Structure M] {Γ : List Q}

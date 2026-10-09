@@ -18,9 +18,14 @@ import InfinitaryLogic.LinfKappa.Semantics
   (`BlockSlots.reassocEquiv_left` and its siblings, in `LinfKappa/Syntax.lean`) show that the map
   is the intended reassociation.
 
-The binder cases of `realize_mapSlots` and `realize_substSlots` rewrite with the induction
-hypothesis at a slot valuation `Sum.elim b ys`; that `rw` goes through only because
-`BlockSlots` is reducible (see `LinfKappa/Syntax.lean`).
+The binder case of `realize_mapSlots` rewrites with the induction hypothesis at the lifted
+renaming `Sum.map id ρ` and the slot valuation `Sum.elim b ys`; that `rw` goes through only
+because `BlockSlots` is reducible (see `LinfKappa/Syntax.lean`).  `mapSlots_id`,
+`mapSlots_mapSlots` and `realize_substSlots` also fail for a semireducible `BlockSlots`.  The
+binder case of `realize_substSlots` chains the induction hypothesis with `Iff.trans` rather than
+rewriting with it: there `rw [ih]` is rejected ("expected an equality or iff proof") for a reason
+unrelated to transparency, even with reducible slots, while `Iff.trans` (or `simp only [ih]`)
+works.
 
 ## Non-claims
 
@@ -67,6 +72,7 @@ theorem realize_mapSlots.{u, v, uι, uQ, w, u', wM} {L : Language.{u, v}} {ι : 
   | iInf φs ih => exact forall_congr' fun i ↦ ih i ρ ys
 
 /-- Renaming along the identity does nothing. -/
+@[simp]
 theorem mapSlots_id.{u, v, uι, uQ, w, u'} {L : Language.{u, v}} {ι : Type uι} {Q : Type uQ}
     {V : Q → Type w} {α : Type u'} {Γ : List Q} (φ : L.BlockFormula ι V α Γ) :
     φ.mapSlots id = φ := by
@@ -80,6 +86,7 @@ theorem mapSlots_id.{u, v, uι, uQ, w, u'} {L : Language.{u, v}} {ι : Type uι}
   | iInf φs ih => simp [mapSlots, ih]
 
 /-- Renamings compose. -/
+@[simp]
 theorem mapSlots_mapSlots.{u, v, uι, uQ, w, u'} {L : Language.{u, v}} {ι : Type uι}
     {Q : Type uQ} {V : Q → Type w} {α : Type u'} {Γ Δ Ε : List Q} (φ : L.BlockFormula ι V α Γ)
     (ρ : BlockSlots V Γ → BlockSlots V Δ) (ρ' : BlockSlots V Δ → BlockSlots V Ε) :
