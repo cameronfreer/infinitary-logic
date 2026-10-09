@@ -119,9 +119,9 @@ modules live in the separate non-default `InfinitaryLogicWIP` target, so they ne
 
 ## Verification
 
-The tree is sorry-free, and the headline results depend on exactly `propext`, `Classical.choice` and
-`Quot.sound`. CI builds the public and frontier targets and enforces both the proof boundary and the
-axiom boundary on every commit.
+The library tree is sorry-free, and the headline results depend on exactly `propext`,
+`Classical.choice` and `Quot.sound`. CI builds the public and frontier targets and enforces both the
+proof boundary and the axiom boundary on every commit.
 
 Three dependency-cone guards additionally certify *proof architecture*, where an axiom scan cannot
 reach: that the Henkin route consumes no maximal-consistency machinery, that the Morley–Hanf cone

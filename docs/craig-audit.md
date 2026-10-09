@@ -4,7 +4,7 @@
 > (no hypotheses on `L`) is proved in `Methods/Interpolation/CraigArbitrary.lean` (blueprint
 > node `thm:craig`), with the PC-separation form `craig_pcSeparation`; both are exposed on the
 > default surface via `ModelTheory/CraigInterpolation.lean` and guarded by
-> `scripts/check_headline_axioms.sh`. The §9b relationalization landed as gated Units 1–7:
+> `scripts/check_headline_axioms.lean`. The §9b relationalization landed as gated Units 1–7:
 > `GraphLanguage` (graph relations + shared-vocab identity `relSym_inter`),
 > `Lomega1omega/FiniteQuantification` (existsBlock/forallBlock), `TermGraph`
 > (context-polymorphic term flattening), `Relationalize` (formula translation + exact `relSym`
