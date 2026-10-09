@@ -7,17 +7,16 @@ Every exported theorem the guard relies on is *applied*, not only listed for its
 1. **Universe gates.**  `L.BlockFormula ι V α Γ : Type (max u v uι uQ w u')` (no `+1`); the
    short-tuple carrier `Σ q : InitCode κ, (initSeg κ q → M)` and `BlockSlots (initSeg κ) Γ` stay
    in `Type w`.
-2. **Universe pins.**  `levelParams` of `BlockSlots` (`[uQ, w]`), `BlockFormula`
-   (`[u, v, uι, uQ, w, u']`), `BlockFormula.Realize` (`[u, v, uι, uQ, w, u', wM]`) and of the main
-   theorems are exactly the frozen lists; `[UNIVERSE DRIFT]` otherwise.  **Mutation control:** the
-   same check must flag the swapped list `[w, uQ]` for `BlockSlots`.
-3. **Binder-kind pins.**  The `BinderInfo` sequence of `realize_allBlock`, `realize_closeAll`,
-   `realize_mapSlots`, `realize_substSlots`, `realize_reassoc`, `realize_ofInf` and
-   `reassocEquiv_left`/`_middle`/`_right` is the frozen one; `[BINDER DRIFT]` otherwise.
-   The pins also cover the slot maps `appendEquiv`, `inl`, `inr`, `reassocEquiv`, `finToSlots`
-   (where `V` is explicit), `mapSlots_id`, `mapSlots_mapSlots` and `comp_finToSlots_succ`.
-   **Mutation control:** a local copy of `realize_allBlock` with one binder made explicit must be
-   reported by the same check.
+2. **Universe pins.**  The `levelParams` of **every** exported declaration (all 63, in source
+   order) are exactly the frozen lists, among them `BlockSlots` (`[uQ, w]`), `BlockFormula`
+   (`[u, v, uι, uQ, w, u']`) and `BlockFormula.Realize` (`[u, v, uι, uQ, w, u', wM]`);
+   `[UNIVERSE DRIFT]` otherwise.  Both pin tables must list exactly the exports, in order
+   (`[PIN COVERAGE]`).  **Mutation control:** the same check must flag the swapped list
+   `[w, uQ]` for `BlockSlots`.
+3. **Binder-kind pins.**  The `BinderInfo` sequence of the type of **every** exported declaration
+   is the frozen one; `[BINDER DRIFT]` otherwise.  In particular `V` is explicit on the slot maps
+   `appendEquiv`, `inl`, `inr`, `reassocEquiv` and `finToSlots`.  **Mutation control:** a local
+   copy of `realize_allBlock` with one binder made explicit must be reported by the same check.
 4. **Transparency.**  `BlockSlots` is `@[reducible]`; the step `rw [realize_mapSlots]` at a slot
    valuation `Sum.elim b ys` and a renaming `Sum.map id ρ` (the binder case, which fails for a
    semireducible `BlockSlots`) succeeds; `realize_allBlock` is `Iff.rfl`.
@@ -584,18 +583,74 @@ end Universes
 
 /-! ### Meta checks (2, 3, 4, 10, 11, 12) -/
 
-/-- The frozen universe lists. -/
+/-- The frozen universe lists of all exported declarations (namespace `FirstOrder.Language`
+omitted), in source order. -/
 def levelPins : List (Name × List Name) :=
-  let r := [`u, `v, `uι, `uQ, `w, `u', `wM]
-  [(``BlockSlots, [`uQ, `w]), (``BlockFormula, [`u, `v, `uι, `uQ, `w, `u']),
-   (``BlockFormula.Realize, r), (``BlockFormula.realize_ofInf, r),
-   (``BlockFormula.realize_substSlots, r), (``BlockFormula.realize_reassoc, r),
-   (``BlockFormula.realize_mapSlots, r), (``BlockFormula.realize_allBlock, r),
-   (``BlockFormula.realize_closeAll, r), (``BlockSentence, [`u, `v, `uι, `uQ, `w]),
-   (``BlockSlots.appendEquiv, [`uQ, `w]), (``BlockSlots.reassocEquiv, [`uQ, `w]),
-   (``BlockSlots.finToSlots, [`uQ, `w]), (``BlockFormula.ofInf, [`u, `v, `uι, `uQ, `w, `u']),
-   (``BlockFormula.iInfAlong, [`u, `v, `uι, `uQ, `w, `u', `uκ]),
-   (``InitCode, [`w]), (``initSeg, [`w])]
+  let r6 := [`u, `v, `uι, `uQ, `w, `u']
+  let r7 := r6 ++ [`wM]
+  [(`BlockSlots, [`uQ, `w]),
+   (`BlockFormula, r6),
+   (`BlockFormula.falsum, r6),
+   (`BlockFormula.equal, r6),
+   (`BlockFormula.rel, r6),
+   (`BlockFormula.imp, r6),
+   (`BlockFormula.allBlock, r6),
+   (`BlockFormula.iSup, r6),
+   (`BlockFormula.iInf, r6),
+   (`BlockSentence, [`u, `v, `uι, `uQ, `w]),
+   (`BlockFormula.not, r6),
+   (`BlockFormula.verum, r6),
+   (`BlockFormula.instBot, r6),
+   (`BlockFormula.instTop, r6),
+   (`BlockFormula.instInhabited, r6),
+   (`BlockFormula.exBlock, r6),
+   (`BlockFormula.closeAll, r6),
+   (`BlockSlots.appendEquiv, [`uQ, `w]),
+   (`BlockSlots.inl, [`uQ, `w]),
+   (`BlockSlots.inr, [`uQ, `w]),
+   (`BlockSlots.appendEquiv_cons_inl, [`uQ, `w]),
+   (`BlockSlots.appendEquiv_cons_inr, [`uQ, `w]),
+   (`BlockSlots.appendEquiv_nil, [`uQ, `w]),
+   (`BlockSlots.reassocEquiv, [`uQ, `w]),
+   (`BlockSlots.reassocEquiv_left, [`uQ, `w]),
+   (`BlockSlots.reassocEquiv_middle, [`uQ, `w]),
+   (`BlockSlots.reassocEquiv_right, [`uQ, `w]),
+   (`BlockSlots.reassocEquiv_symm_apply_apply, [`uQ, `w]),
+   (`BlockSlots.reassocEquiv_apply_symm_apply, [`uQ, `w]),
+   (`InitCode, [`w]),
+   (`initSeg, [`w]),
+   (`finShapes, []),
+   (`unitShape, []),
+   (`BlockFormula.Realize, r7),
+   (`BlockFormula.realize_falsum, r7),
+   (`BlockFormula.realize_equal, r7),
+   (`BlockFormula.realize_rel, r7),
+   (`BlockFormula.realize_imp, r7),
+   (`BlockFormula.realize_allBlock, r7),
+   (`BlockFormula.realize_iSup, r7),
+   (`BlockFormula.realize_iInf, r7),
+   (`BlockFormula.realize_not, r7),
+   (`BlockFormula.realize_top, r7),
+   (`BlockFormula.realize_bot, r7),
+   (`BlockFormula.realize_exBlock, r7),
+   (`BlockFormula.realize_closeAll, r7),
+   (`BlockFormula.iInfAlong, [`u, `v, `uι, `uQ, `w, `u', `uκ]),
+   (`BlockFormula.iSupAlong, [`u, `v, `uι, `uQ, `w, `u', `uκ]),
+   (`BlockFormula.realize_iInfAlong, [`u, `v, `uι, `uQ, `w, `u', `wM, `uκ]),
+   (`BlockFormula.realize_iSupAlong, [`u, `v, `uι, `uQ, `w, `u', `wM, `uκ]),
+   (`BlockSentence.Realize, [`u, `v, `uι, `uQ, `w, `wM]),
+   (`BlockFormula.mapSlots, r6),
+   (`BlockFormula.realize_mapSlots, r7),
+   (`BlockFormula.mapSlots_id, r6),
+   (`BlockFormula.mapSlots_mapSlots, r6),
+   (`BlockFormula.liftSubst, [`u, `v, `uQ, `w, `u']),
+   (`BlockFormula.substSlots, r6),
+   (`BlockFormula.realize_substSlots, r7),
+   (`BlockFormula.realize_reassoc, r7),
+   (`BlockSlots.finToSlots, [`uQ, `w]),
+   (`BlockSlots.comp_finToSlots_succ, [`uQ, `w, `wM]),
+   (`BlockFormula.ofInf, r6),
+   (`BlockFormula.realize_ofInf, r7)].map fun (n, ls) ↦ (`FirstOrder.Language ++ n, ls)
 
 /-- `some` message when the `levelParams` of `n` differ from `frozen`. -/
 def levelDrift? (env : Environment) (n : Name) (frozen : List Name) :
@@ -615,26 +670,72 @@ def binderCode (n : Name) : MetaM String := do
         | .implicit => "i" | .default => "e" | .instImplicit => "s" | .strictImplicit => "t"
     return s
 
-/-- The frozen binder kinds. -/
+/-- The frozen binder kinds of all exported declarations (namespace omitted), in source order.
+`V` is explicit on the slot maps `appendEquiv`, `inl`, `inr`, `reassocEquiv`, `finToSlots`. -/
 def binderPins : List (Name × String) :=
-  [(``BlockFormula.realize_allBlock, "iiiiiisiiiii"),
-   (``BlockFormula.realize_closeAll, "iiiiiisiii"),
-   (``BlockFormula.realize_mapSlots, "iiiiiisiieeee"),
-   (``BlockFormula.realize_substSlots, "iiiiiisiieeee"),
-   (``BlockFormula.realize_reassoc, "iiiiiisiiieee"),
-   (``BlockFormula.realize_ofInf, "iiiiiisesieee"),
-   (``BlockSlots.reassocEquiv_left, "iieeee"),
-   (``BlockSlots.reassocEquiv_middle, "iieeee"),
-   (``BlockSlots.reassocEquiv_right, "iieeee"),
-   -- `V` explicit on the slot maps
-   (``BlockSlots.appendEquiv, "ieee"),
-   (``BlockSlots.inl, "ieeee"),
-   (``BlockSlots.inr, "ieeee"),
-   (``BlockSlots.reassocEquiv, "ieeee"),
-   (``BlockSlots.finToSlots, "ieesee"),
-   (``BlockFormula.mapSlots_id, "iiiiiie"),
-   (``BlockFormula.mapSlots_mapSlots, "iiiiiiiieee"),
-   (``BlockSlots.comp_finToSlots_succ, "iiieseee")]
+  [(`BlockSlots, "iee"),
+   (`BlockFormula, "eeieee"),
+   (`BlockFormula.falsum, "iiiiii"),
+   (`BlockFormula.equal, "iiiiiiee"),
+   (`BlockFormula.rel, "iiiiiiiee"),
+   (`BlockFormula.imp, "iiiiiiee"),
+   (`BlockFormula.allBlock, "iiiiiiee"),
+   (`BlockFormula.iSup, "iiiiiie"),
+   (`BlockFormula.iInf, "iiiiiie"),
+   (`BlockSentence, "eeie"),
+   (`BlockFormula.not, "iiiiiie"),
+   (`BlockFormula.verum, "iiiiii"),
+   (`BlockFormula.instBot, "iiiiii"),
+   (`BlockFormula.instTop, "iiiiii"),
+   (`BlockFormula.instInhabited, "iiiiii"),
+   (`BlockFormula.exBlock, "iiiiiiee"),
+   (`BlockFormula.closeAll, "iiiiiie"),
+   (`BlockSlots.appendEquiv, "ieee"),
+   (`BlockSlots.inl, "ieeee"),
+   (`BlockSlots.inr, "ieeee"),
+   (`BlockSlots.appendEquiv_cons_inl, "iieeee"),
+   (`BlockSlots.appendEquiv_cons_inr, "iieeee"),
+   (`BlockSlots.appendEquiv_nil, "iiee"),
+   (`BlockSlots.reassocEquiv, "ieeee"),
+   (`BlockSlots.reassocEquiv_left, "iieeee"),
+   (`BlockSlots.reassocEquiv_middle, "iieeee"),
+   (`BlockSlots.reassocEquiv_right, "iieeee"),
+   (`BlockSlots.reassocEquiv_symm_apply_apply, "iieeee"),
+   (`BlockSlots.reassocEquiv_apply_symm_apply, "iieeee"),
+   (`InitCode, "e"),
+   (`initSeg, "ee"),
+   (`finShapes, "e"),
+   (`unitShape, "e"),
+   (`BlockFormula.Realize, "iiiiiisieee"),
+   (`BlockFormula.realize_falsum, "iiiiiisiii"),
+   (`BlockFormula.realize_equal, "iiiiiisiiiii"),
+   (`BlockFormula.realize_rel, "iiiiiisiiiiii"),
+   (`BlockFormula.realize_imp, "iiiiiisiiiii"),
+   (`BlockFormula.realize_allBlock, "iiiiiisiiiii"),
+   (`BlockFormula.realize_iSup, "iiiiiisiiii"),
+   (`BlockFormula.realize_iInf, "iiiiiisiiii"),
+   (`BlockFormula.realize_not, "iiiiiisiiii"),
+   (`BlockFormula.realize_top, "iiiiiisiii"),
+   (`BlockFormula.realize_bot, "iiiiiisiii"),
+   (`BlockFormula.realize_exBlock, "iiiiiisiiiii"),
+   (`BlockFormula.realize_closeAll, "iiiiiisiii"),
+   (`BlockFormula.iInfAlong, "iiiiiiiee"),
+   (`BlockFormula.iSupAlong, "iiiiiiiee"),
+   (`BlockFormula.realize_iInfAlong, "iiiiiisiiiiii"),
+   (`BlockFormula.realize_iSupAlong, "iiiiiisiiiiii"),
+   (`BlockSentence.Realize, "iiiiees"),
+   (`BlockFormula.mapSlots, "iiiiiieie"),
+   (`BlockFormula.realize_mapSlots, "iiiiiisiieeee"),
+   (`BlockFormula.mapSlots_id, "iiiiiie"),
+   (`BlockFormula.mapSlots_mapSlots, "iiiiiiiieee"),
+   (`BlockFormula.liftSubst, "iiiiiieee"),
+   (`BlockFormula.substSlots, "iiiiiieie"),
+   (`BlockFormula.realize_substSlots, "iiiiiisiieeee"),
+   (`BlockFormula.realize_reassoc, "iiiiiisiiieee"),
+   (`BlockSlots.finToSlots, "ieesee"),
+   (`BlockSlots.comp_finToSlots_succ, "iiieseee"),
+   (`BlockFormula.ofInf, "iiiiiesie"),
+   (`BlockFormula.realize_ofInf, "iiiiiisesieee")].map fun (n, b) ↦ (`FirstOrder.Language ++ n, b)
 
 /-- `some` message when the binder kinds of `n` differ from `frozen`. -/
 def binderDrift? (n : Name) (frozen : String) : MetaM (Option String) := do
@@ -758,7 +859,10 @@ def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
 
 run_cmd do
   let env ← getEnv
-  -- 2. universe pins, with a mutation control (a swapped list must be flagged)
+  -- 2. universe pins on every export, with a mutation control (a swapped list must be flagged)
+  unless levelPins.map (·.1) == moduleDecls && binderPins.map (·.1) == moduleDecls do
+    throwError "[PIN COVERAGE] the universe and binder tables must pin exactly the \
+      {moduleDecls.length} exports, in order (they pin {levelPins.length} and {binderPins.length})"
   for (n, ls) in levelPins do
     match levelDrift? env n ls with
     | .error e => throwError e
@@ -802,8 +906,9 @@ run_cmd do
     let bad := axs.toList.filter fun a ↦ !standardAxioms.contains a
     unless bad.isEmpty do throwError "[NONSTANDARD AXIOMS] {n} uses {bad}"
   logInfo m!"L∞κ block-syntax regression guard: OK ({moduleDecls.length} exported and \
-    {localGuard.length} guard declarations audited; universe gates and pins; binder pins; \
-    mutation controls for the universe, binder, closure and cone checks flagged; BlockSlots \
+    {localGuard.length} guard declarations audited; universe gates; universe and binder \
+    pins on all exports; mutation controls for the universe, binder, closure and cone checks \
+    flagged; BlockSlots \
     reducible and the binder-case rw regression; empty, singleton and pairwise-distinct omega \
     blocks (true in N, false in Fin 3 and in Unit, where the inequality-free variant is true); \
     finShapes sentence true on Fin 4, false on Fin 1 and Fin 5; \
