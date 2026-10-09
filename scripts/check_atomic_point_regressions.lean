@@ -17,9 +17,9 @@ It checks:
   condition holds (`W := max`), every restriction map is surjective (extend by `false`), so the
   atomic covering condition holds by `atomic_jointlySurjective_iff`. Its category of elements
   is NOT cofiltered (incompatible prefixes have no common refinement), proved here as a
-  negative control, so it is not the fiber of any point. A Fraïssé positive case (ℚ as the limit of finite linear orders) is
-  not cheap here, since it needs the category of finite substructures; it is deferred to the
-  joining-point tranche.
+  negative control, so it is not the fiber of any point. A Fraïssé positive case (ℚ as the
+  limit of finite linear orders) is not cheap here, since it needs the category of finite
+  substructures; it is deferred to the joining-point tranche.
 * **Negative control**: `Fin 2` as a preorder category (right Ore with `W := min`) and the
   functor sending `0` to an empty type and `1` to a one-point type (as `PLift (i = 1)`). Its map
   `0 ⟶ 1` is not surjective, so the atomic covering condition fails, and no atomic point has
