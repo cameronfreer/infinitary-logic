@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
-"""Verify no syntactic `sorry` (or `sorryAx`) appears anywhere in the Lean
-tree. There are no exempt regions: the whole repository is sorry-free (the
-historical sorry-bearing `Combinatorics/ErdosRado.lean` is preserved only on
-the `archive/legacy-erdos-rado` branch).
+"""Verify no syntactic `sorry` (or `sorryAx`) appears anywhere in the library
+tree (`InfinitaryLogic.lean` and `InfinitaryLogic/`). There are no exempt
+regions: the whole library tree is sorry-free (the historical sorry-bearing
+`Combinatorics/ErdosRado.lean` is preserved only on the
+`archive/legacy-erdos-rado` branch). Guard scripts under `scripts/` are outside
+the library tree; the one deliberate `sorry` there is the negative control of
+`scripts/check_headline_axioms.lean`, which must be flagged by that guard.
 
 Strips Lean comments (line `--` and block `/- ... -/`, including the docstring
 variants `/-- ... -/` and `/-! ... -/`) before searching, so docstring and
@@ -77,7 +80,7 @@ def main() -> int:
             print(f"  {excl}")
         return 1
 
-    print("OK: no 'sorry' anywhere in the Lean tree (no exempt regions).")
+    print("OK: no 'sorry' anywhere in the library tree (no exempt regions).")
     return 0
 
 

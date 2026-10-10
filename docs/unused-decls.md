@@ -10,7 +10,7 @@ candidates, 6 deleted, the rest classified below).
 - `@[simp]`/`@[blueprint]` declarations are consumed without being named (`simp` closure,
   blueprint web). Never delete a simp lemma on a zero-reference count alone.
 - The CI guards reference names reflectively (`scripts/check_truth_lemma_cone.lean` — including
-  its *forbidden* list — `check_morley_hanf_deps.lean`, `check_headline_axioms.sh`), as do
+  its *forbidden* list — `check_morley_hanf_deps.lean`, `check_headline_axioms.lean`), as do
   `blueprint/lean_decls`, `README.md`, and `docs/*.md`.
 - Reachability from a headline theorem is not the same as mathematical uselessness
   (maintainer ruling, 2026-07-14).
