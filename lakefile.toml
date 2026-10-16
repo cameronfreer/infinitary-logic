@@ -7,19 +7,27 @@ defaultTargets = ["InfinitaryLogic"]
 [[require]]
 name = "LeanArchitect"
 git = "https://github.com/hanwenzhu/LeanArchitect.git"
-rev = "f45833e26c68aa947044145184f8881a75392e30"
+rev = "9f3bb53916b9d6fa05b7777389e1844f82b1c9a6"
 
 [[require]]
 name = "checkdecls"
 git = "https://github.com/PatrickMassot/checkdecls.git"
 rev = "3d425859e73fcfbef85b9638c2a91708ef4a22d4"
 
+# The infinitary syntax, semantics and index codings (`TauCeti.ModelTheory.Infinitary.*`).
+# Pinned to a full revision whose own Mathlib pin is the one below.
+[[require]]
+name = "TauCeti"
+git = "https://github.com/TauCetiProject/TauCeti"
+rev = "097067f7f49ad5b97b6e0bb696f4a99575516e54"
+
 # Mathlib last so its dependency versions take precedence over transitive ones
-# (e.g. batteries / Cli pulled in by LeanArchitect), per Mathlib's lake update guidance.
+# (e.g. batteries / Cli pulled in by LeanArchitect, and TauCeti's floating `master`),
+# per Mathlib's lake update guidance.
 [[require]]
 name = "mathlib"
-git = "https://github.com/cameronfreer/mathlib4"
-rev = "346a4bd3f95e8591976c91259badc6d2c300f638"
+git = "https://github.com/leanprover-community/mathlib4"
+rev = "cfc55fc58714a59dc06e6e79edc6d1d95140d3c2"
 
 [[lean_lib]]
 name = "InfinitaryLogic"
