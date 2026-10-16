@@ -3,10 +3,8 @@ Copyright (c) 2026 Cameron Freer. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
-module
-
-public import Mathlib.ModelTheory.Infinitary.Reindex
-public import Mathlib.SetTheory.Ordinal.Family
+import InfinitaryLogic.Infinitary.Reindex
+import Mathlib.SetTheory.Ordinal.Family
 
 /-!
 # Quantifier rank of infinitary formulas
@@ -36,11 +34,18 @@ statement holds for empty carriers too, where every branch is padding.
 - `qrank_alls`, `qrank_exs`: closing all free bound-variable slots adds exactly `n`.
 - `qrank_toInf`: the finitary embedding's rank is carrier-independent (up to `Ordinal.lift`),
   since a finitary formula has no infinitary nodes.
+
+## Provenance
+
+Moved from `Mathlib/ModelTheory/Infinitary/QuantifierRank.lean` of the Mathlib fork
+`cameronfreer/mathlib4` (revision `346a4bd3f95e8591976c91259badc6d2c300f638`), importing the
+carrier transport of `InfinitaryLogic/Infinitary/Reindex.lean`. Declaration names and
+namespaces are unchanged; `IndexCoding` is TauCeti's, hence the `open TauCeti` below.
 -/
 
-@[expose] public section
-
 universe u v u' uι uκ w
+
+open TauCeti
 
 namespace FirstOrder
 

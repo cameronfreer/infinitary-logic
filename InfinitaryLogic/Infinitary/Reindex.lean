@@ -3,16 +3,15 @@ Copyright (c) 2026 Cameron Freer. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
-module
-
-public import Mathlib.ModelTheory.Infinitary.Semantics
-public import Mathlib.ModelTheory.Infinitary.IndexCoding
+import TauCeti.ModelTheory.Infinitary.Semantics
+import TauCeti.ModelTheory.Infinitary.IndexCoding
 
 /-!
 # Carrier transport for infinitary formulas
 
-Infinitary formulas fix one branching carrier per formula (`Infinitary/Syntax.lean`); this
-file provides the transport layer between carriers, along `IndexCoding`s:
+Infinitary formulas fix one branching carrier per formula
+(`TauCeti.ModelTheory.Infinitary.Syntax`); this file provides the transport layer between
+carriers, along `IndexCoding`s:
 
 - `BoundedFormulaInf.iInfAlong`, `iSupAlong`: an `ι`-indexed conjunction/disjunction at a
   larger carrier `κ`, padding undecodable branches with `⊤`/`⊥` — semantically neutral
@@ -27,11 +26,19 @@ file provides the transport layer between carriers, along `IndexCoding`s:
 
 Karp's theorem is the motivating consumer: its `M`-indexed and `N`-indexed separating
 conjunctions are `iInfAlong` at the two sum codings into the single carrier `M ⊕ N`.
+
+## Provenance
+
+Moved from `Mathlib/ModelTheory/Infinitary/Reindex.lean` of the Mathlib fork
+`cameronfreer/mathlib4` (revision `346a4bd3f95e8591976c91259badc6d2c300f638`), with its
+imports retargeted to TauCeti's syntax, semantics and index codings. Declaration names and
+namespaces are unchanged; `IndexCoding` itself is now `TauCeti.IndexCoding` (it was
+`FirstOrder.IndexCoding`), hence the `open TauCeti` below.
 -/
 
-@[expose] public section
-
 universe u v u' uι uκ uμ w
+
+open TauCeti
 
 namespace FirstOrder
 
@@ -198,7 +205,10 @@ preserves semantics but pads; an equivalence coding round-trips. -/
 @[simp]
 theorem reindex_ofEquiv_symm_reindex_ofEquiv (e : ι ≃ κ) (φ : L.BoundedFormulaInf ι α n) :
     reindex (.ofEquiv e.symm) (reindex (.ofEquiv e) φ) = φ := by
-  rw [← reindex_trans, IndexCoding.ofEquiv_trans_ofEquiv_symm, reindex_id]
+  -- The fork's `IndexCoding.ofEquiv_trans_ofEquiv_symm` is not in TauCeti's API; its proof is
+  -- inlined here, at its only use.
+  rw [← reindex_trans, ← IndexCoding.ofEquiv_trans, Equiv.self_trans_symm,
+    IndexCoding.ofEquiv_refl, reindex_id]
 
 /-- Carrier equivalences are actual syntax equivalences. In particular
 `reindexEquiv Equiv.ulift.symm` is the universe-lift operation on formulas, packaged with its
