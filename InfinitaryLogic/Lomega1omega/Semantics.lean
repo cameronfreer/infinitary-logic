@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Lomega1omega.Syntax
-import Mathlib.ModelTheory.Infinitary.Semantics
+import TauCeti.ModelTheory.Infinitary.Semantics
 
 /-!
 # Lω₁ω Semantics — compatibility facade over the fixed-carrier semantics

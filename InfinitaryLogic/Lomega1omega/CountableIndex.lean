@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Lomega1omega.Semantics
-import Mathlib.ModelTheory.Infinitary.Reindex
+import InfinitaryLogic.Infinitary.Reindex
 
 /-!
 # Countable connectives over arbitrary countable index types

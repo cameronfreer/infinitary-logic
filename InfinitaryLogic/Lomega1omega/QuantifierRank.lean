@@ -5,7 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Lomega1omega.Semantics
 import InfinitaryLogic.Lomega1omega.Operations
-import Mathlib.ModelTheory.Infinitary.QuantifierRank
+import InfinitaryLogic.Infinitary.QuantifierRank
 import Mathlib.SetTheory.Ordinal.Family
 import Mathlib.SetTheory.Cardinal.Regular
 

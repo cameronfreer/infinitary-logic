@@ -6,7 +6,7 @@ Authors: Cameron Freer
 import InfinitaryLogic.Karp.PotentialIso
 import InfinitaryLogic.Scott.AtomicDiagram
 import InfinitaryLogic.Scott.BackAndForth
-import Mathlib.ModelTheory.Infinitary.QuantifierRank
+import InfinitaryLogic.Infinitary.QuantifierRank
 import Architect
 
 /-!
@@ -62,7 +62,7 @@ namespace Language
 
 variable {L : Language.{u, v}} {ι : Type uι} {κ : Type uκ}
 
-open FirstOrder Structure BoundedFormulaInf
+open FirstOrder Structure BoundedFormulaInf TauCeti
 
 /-! ### Equivalence at a carrier -/
 
