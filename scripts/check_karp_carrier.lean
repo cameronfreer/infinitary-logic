@@ -42,6 +42,9 @@ namespace FirstOrder
 
 namespace Language
 
+-- `IndexCoding` is TauCeti's `TauCeti.IndexCoding` (the Mathlib fork had `FirstOrder.IndexCoding`).
+open TauCeti
+
 section Gates
 
 variable {L : Language.{u, v}} [L.IsRelational]
@@ -163,12 +166,13 @@ def forbiddenExact : List Name := removedNames
 /-- POSITIVE assertion: the fixed-carrier machinery the argument must actually run on. Without
 this a cone guard is satisfied by a theorem that proves nothing. -/
 def requiredWitness : List Name :=
-  [`FirstOrder.IndexCoding,
+  [`TauCeti.IndexCoding,
    `FirstOrder.Language.BoundedFormulaInf.iInfAlong,
    `FirstOrder.Language.BoundedFormulaInf.realize_iInfAlong,
    `FirstOrder.Language.BoundedFormulaInf]
 
-/-- The agreement theorem must run on the UPSTREAM rank, not a local copy of it. -/
+/-- The agreement theorem must run on the carrier-generic rank `BoundedFormulaInf.qrank`
+(`InfinitaryLogic/Infinitary/QuantifierRank.lean`), not on an ω-only copy of it. -/
 def rankWitness : List Name :=
   [`FirstOrder.Language.BoundedFormulaInf.qrank,
    `FirstOrder.Language.BFEquiv]

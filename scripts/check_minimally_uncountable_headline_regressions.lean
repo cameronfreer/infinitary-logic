@@ -28,10 +28,11 @@ Both theorems are *applied*, not only listed for their axioms.
   (`[SHAPE DRIFT]` otherwise), and the headline rewrites a goal stated with it (`rw`) and a
   hypothesis stated with it (`simp only … at`).
 * **Exact import closure.**  The `InfinitaryLogic` closure of
-  `Conditional.MinimallyUncountableHeadline` is exactly `allowedClosure` (162 modules; 161 before
-  the per-level Silver step moved to `Conditional.MorleyPerfect`, the one module added),
-  checked to be the union of the closures of `Conditional.BFScatteredSilver` (58),
-  `Descriptive.MinimallyUnbounded` (40) and `Descriptive.MinimallyUncountableThin` (129) plus
+  `Conditional.MinimallyUncountableHeadline` is exactly `allowedClosure` (164 modules; 161 before
+  the per-level Silver step moved to `Conditional.MorleyPerfect`, which added one module, and 162
+  before carrier transport and quantifier rank moved into `Infinitary/`, which added two),
+  checked to be the union of the closures of `Conditional.BFScatteredSilver` (60),
+  `Descriptive.MinimallyUnbounded` (40) and `Descriptive.MinimallyUncountableThin` (131) plus
   the module; it contains no `Admissible`, `ScottProcess` or `WIP` module and no `Conditional`
   module outside the Silver chain (`[BROAD CONE]`).
 * **Standard axioms** (`propext`, `Classical.choice`, `Quot.sound`) for both theorems and every
@@ -267,6 +268,7 @@ def allowedClosure : List Name :=
    `InfinitaryLogic.Lomega1omega.Fragment, `InfinitaryLogic.Lomega1omega.OpenBoundsSemantics,
    `InfinitaryLogic.Lomega1omega.Operations, `InfinitaryLogic.Lomega1omega.QuantifierClass,
    `InfinitaryLogic.Lomega1omega.QuantifierRank, `InfinitaryLogic.Lomega1omega.Semantics,
+   `InfinitaryLogic.Infinitary.QuantifierRank, `InfinitaryLogic.Infinitary.Reindex,
    `InfinitaryLogic.Lomega1omega.Syntax, `InfinitaryLogic.Lomega1omega.Theory,
    `InfinitaryLogic.Methods.ConstantAbstraction, `InfinitaryLogic.Methods.ConstantInstances,
    `InfinitaryLogic.Methods.ConstantSupport, `InfinitaryLogic.Methods.EM.FragmentAdapter,
@@ -386,15 +388,15 @@ run_cmd do
   unless hits.isEmpty do
     throwError "[BROAD CONE] the closure of {targetModule} reaches {hits}"
   checkExact targetModule ilModules allowedClosure
-  unless ilModules.length == 162 do
-    throwError "[CLOSURE DRIFT] expected 162 InfinitaryLogic modules, found \
+  unless ilModules.length == 164 do
+    throwError "[CLOSURE DRIFT] expected 164 InfinitaryLogic modules, found \
       {ilModules.length}"
   let parts := [`InfinitaryLogic.Conditional.BFScatteredSilver,
     `InfinitaryLogic.Descriptive.MinimallyUnbounded,
     `InfinitaryLogic.Descriptive.MinimallyUncountableThin]
   let psizes := parts.map fun p ↦ (ilClosure env p).length
-  unless psizes == [58, 40, 129] do
-    throwError "[CLOSURE DRIFT] the closures of {parts} have sizes {psizes}, not [58, 40, 129]"
+  unless psizes == [60, 40, 131] do
+    throwError "[CLOSURE DRIFT] the closures of {parts} have sizes {psizes}, not [60, 40, 131]"
   let union := (parts.foldl (fun s p ↦ s ++ .ofList (ilClosure env p)) ({} : NameSet)).insert
     targetModule
   checkExact targetModule ilModules union.toList

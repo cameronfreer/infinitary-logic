@@ -29,7 +29,7 @@ conventions themselves is `check_rank_convention_regressions.lean`.)
   `lift_scottHeight_eq_max` and the pointed route, with `Ordinal.lift.{1}` on the left.
 * **The empty carrier** `PEmpty` in an arbitrary universe: the two internal-rank bounds (no
   `Nonempty` hypothesis).
-* **Import closure** of `Scott.InternalRankBounds`: exactly the 27 expected `InfinitaryLogic`
+* **Import closure** of `Scott.InternalRankBounds`: exactly the 29 expected `InfinitaryLogic`
   modules (`[CLOSURE DRIFT]` otherwise).  The closure check and the axiom audit share one
   command, so the final OK line is printed only if both pass.
 * **Standard axioms** for every public declaration of the module, the two promoted
@@ -321,11 +321,12 @@ where
 namespace InternalRankBoundsGuard
 
 /-- The exact `InfinitaryLogic` part of the import closure of `Scott.InternalRankBounds`:
-27 modules, the 19 of `Scott.MontalbanQuantifierRank` and eight more. -/
+29 modules, the 21 of `Scott.MontalbanQuantifierRank` and eight more. -/
 def expectedClosure : List Name :=
   [`InfinitaryLogic.Util, `InfinitaryLogic.OrdinalUtil, `InfinitaryLogic.Lomega1omega.Syntax,
    `InfinitaryLogic.Lomega1omega.Semantics, `InfinitaryLogic.Lomega1omega.Operations,
    `InfinitaryLogic.Lomega1omega.OpenBoundsSemantics, `InfinitaryLogic.Lomega1omega.QuantifierRank,
+   `InfinitaryLogic.Infinitary.QuantifierRank, `InfinitaryLogic.Infinitary.Reindex,
    `InfinitaryLogic.Lomega1omega.Theory, `InfinitaryLogic.Scott.AtomicDiagram,
    `InfinitaryLogic.Scott.BackAndForth, `InfinitaryLogic.Scott.BFEquivRelabel,
    `InfinitaryLogic.Scott.Formula, `InfinitaryLogic.Scott.Sentence,
@@ -394,5 +395,5 @@ run_cmd do
     lift scottHeight = internalScottRank + omega, internalScottRank = 1, \
     stabilizationOrdinal = scottHeight = omega, the orbit-rank supremum 0, and no finite offset \
     suffices for either; at ULift.{1} N the four bounds, the max identity and the pointed route; \
-    on PEmpty in any universe the two internal-rank bounds; exact import closure of 27 \
+    on PEmpty in any universe the two internal-rank bounds; exact import closure of 29 \
     modules; standard axioms)"
