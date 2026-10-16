@@ -10,9 +10,14 @@ import TauCeti.ModelTheory.Infinitary.Semantics
 # Lω₁ω Semantics — compatibility facade over the fixed-carrier semantics
 
 The three realization *definitions* are no longer given here. They come from
-`Mathlib.ModelTheory.Infinitary.Semantics`, whose `BoundedFormulaInf.Realize` is the single
+`TauCeti.ModelTheory.Infinitary.Semantics`, whose `BoundedFormulaInf.Realize` is the single
 structural recursion serving every index carrier. This file re-exports that semantics under the
-qualified names the project already uses, and keeps only what Mathlib does not provide.
+qualified names the project already uses, and keeps only what TauCeti does not provide.
+
+TauCeti does not expose the bodies of `Realize`, `FormulaInf.Realize` or `SentenceInf.Realize`:
+reason about them through the realization lemmas (`realize_imp`, `realize_all`, …) and the
+bridges `FormulaInf.realize_def`/`SentenceInf.realize_def` (simp lemmas there), never by
+unfolding.
 
 ## Why the definitions had to be adopted, not merely paralleled
 
@@ -26,11 +31,11 @@ would name the other one. Every later operation would then have to pick, and wou
 
 - the qualified `Realize` names, as **reducible aliases** — 100-odd files name
   `BoundedFormulaω.Realize` / `Formulaω.Realize` / `Sentenceω.Realize` explicitly, many in
-  `@`-applied form, so the aliases reproduce Mathlib's semantics at the project's historical
+  `@`-applied form, so the aliases reproduce TauCeti's semantics at the project's historical
   argument order;
 - compatibility wrappers carrying the project's realization theorem names, with the project's
-  **explicit** argument convention (Mathlib states these with implicit arguments);
-- realization for the connectives Mathlib does not define: `and`/`or`/`iff` and the
+  **explicit** argument convention (TauCeti states these with implicit arguments);
+- realization for the connectives TauCeti does not name: `and`/`or` and the
   `Encodable`-indexed `einf`/`esup` with their explicit-encoding forms;
 - the `⊨ω` notation;
 - the atomic cases of transport along an embedding (`Embedding.realize_equal_comp`,
@@ -39,8 +44,8 @@ would name the other one. Every later operation would then have to pick, and wou
   those atomic cases.
 
 The gates at the end certify by `Iff.rfl` — no rewriting, no casts — that each alias *is* the
-Mathlib semantics, and that the historical `Fin.elim0` spellings of the arity-0 cases still
-agree with Mathlib's `default`.
+TauCeti semantics, and that the historical `Fin.elim0` spellings of the arity-0 cases still
+agree with TauCeti's `default`.
 -/
 
 universe u v w w' u'
@@ -58,7 +63,7 @@ open FirstOrder Structure Fin
 namespace BoundedFormulaω
 
 /-- Realization of a bounded Lω₁ω formula, as a qualified name.
-`Mathlib`'s `BoundedFormulaInf.Realize` is the definition; this alias is `@[reducible]` and
+TauCeti's `BoundedFormulaInf.Realize` is the definition; this alias is `@[reducible]` and
 reproduces the project's historical argument order `L M inst α n φ v xs`. -/
 abbrev Realize (φ : L.BoundedFormulaω α n) (v : α → M) (xs : Fin n → M) : Prop :=
   BoundedFormulaInf.Realize φ v xs
@@ -67,7 +72,7 @@ variable {v : α → M} {xs : Fin n → M}
 
 /-! ### Primitive connectives
 
-Mathlib states each of these with implicit arguments; the project's consumers supply them
+TauCeti states each of these with implicit arguments; the project's consumers supply them
 explicitly (`realize_rel R ts`, `realize_imp φ ψ`, …), so the wrappers keep that convention. -/
 
 @[simp]
@@ -135,7 +140,7 @@ theorem realize_and (φ ψ : L.BoundedFormulaω α n) :
 @[simp]
 theorem realize_inf (φ ψ : L.BoundedFormulaω α n) :
     (φ ⊓ ψ).Realize v xs ↔ φ.Realize v xs ∧ ψ.Realize v xs :=
-  realize_and φ ψ
+  BoundedFormulaInf.realize_inf
 
 @[simp]
 theorem realize_or (φ ψ : L.BoundedFormulaω α n) :
@@ -146,12 +151,12 @@ theorem realize_or (φ ψ : L.BoundedFormulaω α n) :
 @[simp]
 theorem realize_sup (φ ψ : L.BoundedFormulaω α n) :
     (φ ⊔ ψ).Realize v xs ↔ φ.Realize v xs ∨ ψ.Realize v xs :=
-  realize_or φ ψ
+  BoundedFormulaInf.realize_sup
 
 @[simp]
 theorem realize_iff (φ ψ : L.BoundedFormulaω α n) :
-    (φ.iff ψ).Realize v xs ↔ (φ.Realize v xs ↔ ψ.Realize v xs) := by
-  simp only [BoundedFormulaω.iff, realize_inf, realize_imp, iff_def]
+    (φ.iff ψ).Realize v xs ↔ (φ.Realize v xs ↔ ψ.Realize v xs) :=
+  BoundedFormulaInf.realize_iff
 
 @[simp]
 theorem realize_einf {ι : Type*} [Encodable ι] (φs : ι → L.BoundedFormulaω α n) :
@@ -234,10 +239,10 @@ theorem BoundedFormulaω.realize_equiv.{u_1} {M N : Type w} [L.Structure M] [L.S
   | equal t₁ t₂ => exact (e.toEmbedding.realize_equal_comp t₁ t₂).symm
   | rel R ts => exact (e.toEmbedding.realize_rel_comp R ts).symm
   | imp φ ψ ihφ ihψ =>
-    simp only [BoundedFormulaInf.Realize]
+    simp only [BoundedFormulaInf.realize_imp]
     exact Iff.imp (ihφ xs) (ihψ xs)
   | all φ ih =>
-    simp only [BoundedFormulaInf.Realize]
+    simp only [BoundedFormulaInf.realize_all]
     constructor
     · intro h y
       have h1 := (ih (Fin.snoc xs (e.symm y))).mp (h (e.symm y))
@@ -247,17 +252,17 @@ theorem BoundedFormulaω.realize_equiv.{u_1} {M N : Type w} [L.Structure M] [L.S
       rw [← Fin.comp_snoc] at h1
       exact (ih (Fin.snoc xs x)).mpr h1
   | iSup φs ih =>
-    simp only [BoundedFormulaInf.Realize]
+    simp only [BoundedFormulaInf.realize_iSup]
     exact exists_congr fun i => ih i xs
   | iInf φs ih =>
-    simp only [BoundedFormulaInf.Realize]
+    simp only [BoundedFormulaInf.realize_iInf]
     exact forall_congr' fun i => ih i xs
 
 namespace Formulaω
 
-/-- Realization of an Lω₁ω formula, as a qualified name. Mathlib's `FormulaInf.Realize` is the
-definition; it fills the arity-0 valuation with `default`, which is definitionally the project's
-historical `Fin.elim0` (gated below). -/
+/-- Realization of an Lω₁ω formula, as a qualified name. TauCeti's `FormulaInf.Realize` is the
+definition; it fills the arity-0 valuation with `default`, which is the project's historical
+`Fin.elim0` (gated below). -/
 abbrev Realize (φ : L.Formulaω α) (v : α → M) : Prop :=
   FormulaInf.Realize φ v
 
@@ -267,13 +272,16 @@ variable {φ : L.Formulaω α} {v : α → M}
 tuple.
 
 `FormulaInf.Realize` is a plain definition upstream, not a reducible abbreviation (matching the
-finitary `Formula.Realize`), so neither `rw` nor `simp` can see a `BoundedFormulaω` realization
-lemma through it. Supply this lemma explicitly — `simp only [Formulaω.realize_def, realize_not]` —
-in place of unfolding `Formulaω.Realize`, which lands on the opaque `FormulaInf.Realize` and makes
-every bounded-formula lemma inapplicable. Deliberately not `@[simp]`: the formula-level lemmas
-below are the normal interface, and this escape hatch should be visible where it is used. -/
+finitary `Formula.Realize`), and its body is not exposed, so neither `rw` nor `simp` can see a
+`BoundedFormulaω` realization lemma through it. Supply this lemma explicitly —
+`simp only [Formulaω.realize_def, realize_not]` — in place of unfolding `Formulaω.Realize`.
+Deliberately not `@[simp]`: the formula-level lemmas below are the normal interface, and this
+escape hatch should be visible where it is used. (TauCeti's own bridge `FormulaInf.realize_def`
+*is* a simp lemma, stated at `default` rather than `Fin.elim0`.) -/
 theorem realize_def (φ : L.Formulaω α) (v : α → M) :
-    Realize φ v ↔ BoundedFormulaω.Realize φ v Fin.elim0 := Iff.rfl
+    Realize φ v ↔ BoundedFormulaω.Realize φ v Fin.elim0 :=
+  (FormulaInf.realize_def φ v).trans
+    (iff_of_eq (congrArg (BoundedFormulaInf.Realize φ v) (Subsingleton.elim _ _)))
 
 @[simp]
 theorem realize_not : Realize φ.not v ↔ ¬Realize φ v := BoundedFormulaω.realize_not φ
@@ -308,7 +316,7 @@ end Formulaω
 
 namespace Sentenceω
 
-/-- Truth of an Lω₁ω sentence in a structure, as a qualified name. Mathlib's
+/-- Truth of an Lω₁ω sentence in a structure, as a qualified name. TauCeti's
 `SentenceInf.Realize` is the definition. -/
 abbrev Realize (φ : L.Sentenceω) (M : Type w) [L.Structure M] : Prop :=
   SentenceInf.Realize φ M
@@ -317,7 +325,9 @@ abbrev Realize (φ : L.Sentenceω) (M : Type w) [L.Structure M] : Prop :=
 valuation and the empty tuple. See `Formulaω.realize_def` for why this is needed and why it is
 not a `simp` lemma. -/
 theorem realize_def (φ : L.Sentenceω) (M : Type w) [L.Structure M] :
-    Realize φ M ↔ BoundedFormulaω.Realize φ (Empty.elim : Empty → M) Fin.elim0 := Iff.rfl
+    Realize φ M ↔ BoundedFormulaω.Realize φ (Empty.elim : Empty → M) Fin.elim0 :=
+  (SentenceInf.realize_def φ M).trans <| (FormulaInf.realize_def (M := M) φ Empty.elim).trans
+    (iff_of_eq (congrArg (BoundedFormulaInf.Realize φ Empty.elim) (Subsingleton.elim _ _)))
 
 /-- Notation for a structure satisfying a sentence. -/
 scoped notation:51 M " ⊨ω " φ:51 => Sentenceω.Realize φ M
@@ -327,29 +337,34 @@ end Sentenceω
 /-! ## Facade semantics gates
 
 Each must close by `Iff.rfl` — no `change`, no rewriting, no explicit cast. That is what
-certifies that the qualified ω names *are* Mathlib's semantics rather than a parallel copy of
+certifies that the qualified ω names *are* TauCeti's semantics rather than a parallel copy of
 it, and that the arity-0 spellings the project has used throughout (`Fin.elim0`, `Empty.elim`)
-still agree with Mathlib's `default`. -/
+still agree with TauCeti's `default`.
+
+The two arity-0 spelling gates see through `FormulaInf.Realize`/`SentenceInf.Realize`, whose
+bodies TauCeti does not expose. They hold because this project's files are not `module`s: a
+non-module file imports every dependency in full, hidden bodies included. They are kept as
+canaries for the many `show` steps in the tower that rely on the same unfolding. -/
 
 section Gates
 
 variable {v : α → M} {xs : Fin n → M}
 
-/-- The bounded alias is Mathlib's realization. -/
+/-- The bounded alias is TauCeti's realization. -/
 example (φ : L.BoundedFormulaω α n) :
     BoundedFormulaω.Realize φ v xs ↔ BoundedFormulaInf.Realize φ v xs := Iff.rfl
 
-/-- The formula alias is Mathlib's realization. -/
+/-- The formula alias is TauCeti's realization. -/
 example (φ : L.Formulaω α) : Formulaω.Realize φ v ↔ FormulaInf.Realize φ v := Iff.rfl
 
-/-- The sentence alias is Mathlib's realization. -/
+/-- The sentence alias is TauCeti's realization. -/
 example (φ : L.Sentenceω) : Sentenceω.Realize φ M ↔ SentenceInf.Realize φ M := Iff.rfl
 
 /-- Dot-notation, which resolves through the head symbol `BoundedFormulaInf`, agrees with the
 qualified alias. -/
 example (φ : L.BoundedFormulaω α n) : φ.Realize v xs ↔ BoundedFormulaω.Realize φ v xs := Iff.rfl
 
-/-- The historical arity-0 spelling: Mathlib's `default : Fin 0 → M` is `Fin.elim0`. -/
+/-- The historical arity-0 spelling: TauCeti's `default : Fin 0 → M` is `Fin.elim0`. -/
 example (φ : L.Formulaω α) :
     Formulaω.Realize φ v ↔ BoundedFormulaω.Realize φ v Fin.elim0 := Iff.rfl
 

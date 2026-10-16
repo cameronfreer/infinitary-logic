@@ -214,7 +214,7 @@ theorem realize_relabel_sumInr {n : ℕ} :
     φ.Realize (xs ∘ Fin.castAdd k) (xs ∘ Fin.natAdd n) := by
   intro k φ
   induction φ with
-  | falsum => intro xs; simp [relabel, Realize]
+  | falsum => intro xs; simp [relabel, realize_falsum]
   | equal t₁ t₂ =>
     intro xs
     simp only [relabel, realize_equal, Term.realize_relabel, sum_elim_relabelAux_sumInr]
@@ -286,7 +286,7 @@ theorem realize_mapFreeVars {M : Type*} [L.Structure M]
     (f : α → β) (φ : L.BoundedFormulaω α n) (v : β → M) (xs : Fin n → M) :
     (φ.mapFreeVars f).Realize v xs ↔ φ.Realize (v ∘ f) xs := by
   induction φ with
-  | falsum => simp [mapFreeVars, Realize]
+  | falsum => simp [mapFreeVars, realize_falsum]
   | equal t₁ t₂ =>
     simp only [mapFreeVars, realize_equal, Term.realize_relabel, Sum.elim_comp_map,
       Function.comp_id]
@@ -336,7 +336,7 @@ theorem realize_subst {M : Type*} [L.Structure M]
     (tf : α → L.Term β) (φ : L.BoundedFormulaω α n) (v : β → M) (xs : Fin n → M) :
     (φ.subst tf).Realize v xs ↔ φ.Realize (fun a => (tf a).realize v) xs := by
   induction φ with
-  | falsum => simp [subst, Realize]
+  | falsum => simp [subst, realize_falsum]
   | equal t₁ t₂ =>
     simp only [subst, realize_equal, Term.realize_subst, sum_elim_subst_tf]
   | rel R ts =>

@@ -88,8 +88,9 @@ def InfEquivW (L : Language.{u, v}) (M N : Type w) [L.Structure M] [L.Structure 
 every `ι`-branching sentence, so agreement at the larger carrier implies agreement at the
 smaller. -/
 theorem InfEquivAt.of_reindex {M : Type w} {N : Type w'} [L.Structure M] [L.Structure N]
-    (c : IndexCoding ι κ) (h : InfEquivAt L κ M N) : InfEquivAt L ι M N := fun φ =>
-  ((realize_reindex c φ _ _).symm.trans (h (reindex c φ))).trans (realize_reindex c φ _ _)
+    (c : IndexCoding ι κ) (h : InfEquivAt L κ M N) : InfEquivAt L ι M N := fun φ => by
+  simpa only [SentenceInf.realize_def, FormulaInf.realize_def, realize_reindex] using
+    h (reindex c φ)
 
 section KarpAtCarrier
 

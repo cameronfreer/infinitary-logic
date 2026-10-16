@@ -107,14 +107,14 @@ theorem modelsOfBoundedOn_measurableSet [Countable α]
       ext c
       simp only [Set.mem_ofPred_eq, ModelsOfBoundedOn, Set.mem_univ, iff_true]
       let := StructureSpaceOn.toStructure c
-      simp [BoundedFormulaω.Realize, Term.realize, h]
+      simp [BoundedFormulaω.realize_equal, Term.realize, h]
     · convert MeasurableSet.empty (α := StructureSpaceOn L α)
       ext c
       simp only [Set.mem_ofPred_eq, ModelsOfBoundedOn, Set.mem_empty_iff_false, iff_false]
       intro hc
       apply h
       let := StructureSpaceOn.toStructure c
-      simp [BoundedFormulaω.Realize, Term.realize] at hc
+      simp [BoundedFormulaω.realize_equal, Term.realize] at hc
       exact hc
   | @rel _ l R ts =>
     choose xs' hxs' using fun i => Term.eq_var_of_isRelational (ts i)

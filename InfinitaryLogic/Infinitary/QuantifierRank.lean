@@ -100,11 +100,12 @@ theorem qrank_not {φ : L.BoundedFormulaInf ι α n} : φ.not.qrank = φ.qrank :
   max_bot_right _
 
 @[simp]
-theorem qrank_bot : (⊥ : L.BoundedFormulaInf ι α n).qrank = 0 := rfl
+theorem qrank_bot : (⊥ : L.BoundedFormulaInf ι α n).qrank = 0 := by
+  rw [bot_def, qrank_falsum]
 
 @[simp]
-theorem qrank_top : (⊤ : L.BoundedFormulaInf ι α n).qrank = 0 :=
-  max_self 0
+theorem qrank_top : (⊤ : L.BoundedFormulaInf ι α n).qrank = 0 := by
+  rw [top_def, qrank_not, qrank_falsum]
 
 @[simp]
 theorem qrank_ex {φ : L.BoundedFormulaInf ι α (n + 1)} :
@@ -124,16 +125,16 @@ private theorem add_succ_natCast (a : Ordinal) (n : ℕ) :
 @[simp]
 theorem qrank_alls : ∀ {n} {φ : L.BoundedFormulaInf ι α n},
     φ.alls.qrank = φ.qrank + n
-  | 0, φ => by simp [alls]
+  | 0, φ => by simp only [alls_zero, Nat.cast_zero, add_zero]
   | n + 1, φ => by
-    rw [alls, qrank_alls, qrank_all, Order.succ_eq_add_one, add_succ_natCast]
+    rw [alls_succ, qrank_alls, qrank_all, Order.succ_eq_add_one, add_succ_natCast]
 
 @[simp]
 theorem qrank_exs : ∀ {n} {φ : L.BoundedFormulaInf ι α n},
     φ.exs.qrank = φ.qrank + n
-  | 0, φ => by simp [exs]
+  | 0, φ => by simp only [exs_zero, Nat.cast_zero, add_zero]
   | n + 1, φ => by
-    rw [exs, qrank_exs, qrank_ex, Order.succ_eq_add_one, add_succ_natCast]
+    rw [exs_succ, qrank_exs, qrank_ex, Order.succ_eq_add_one, add_succ_natCast]
 
 end Closure
 
@@ -217,22 +218,16 @@ theorem qrank_toInf : ∀ {n} (φ : L.BoundedFormula α n),
       Ordinal.lift.{uι} (BoundedFormula.toInf (ι := κ) φ).qrank := by
   intro n φ
   induction φ with
-  | falsum =>
-    change Ordinal.lift.{uκ} (0 : Ordinal.{uι}) = Ordinal.lift.{uι} (0 : Ordinal.{uκ})
-    simp
-  | equal t₁ t₂ =>
-    change Ordinal.lift.{uκ} (0 : Ordinal.{uι}) = Ordinal.lift.{uι} (0 : Ordinal.{uκ})
-    simp
-  | rel R ts =>
-    change Ordinal.lift.{uκ} (0 : Ordinal.{uι}) = Ordinal.lift.{uι} (0 : Ordinal.{uκ})
-    simp
+  | falsum => simp only [BoundedFormula.toInf_falsum, qrank_falsum, Ordinal.lift_zero]
+  | equal t₁ t₂ => simp only [BoundedFormula.toInf_equal, qrank_equal, Ordinal.lift_zero]
+  | rel R ts => simp only [BoundedFormula.toInf_rel, qrank_rel, Ordinal.lift_zero]
   | imp φ ψ ihφ ihψ =>
-    change Ordinal.lift.{uκ} (max _ _) = Ordinal.lift.{uι} (max _ _)
+    simp only [BoundedFormula.toInf_imp, qrank_imp]
     rw [Monotone.map_max (fun _ _ h => Ordinal.lift_le.mpr h),
       Monotone.map_max (fun _ _ h => Ordinal.lift_le.mpr h), ihφ, ihψ]
   | all φ ih =>
-    change Ordinal.lift.{uκ} (Order.succ _) = Ordinal.lift.{uι} (Order.succ _)
-    simp only [Order.succ_eq_add_one, Ordinal.lift_add_one, ih]
+    simp only [BoundedFormula.toInf_all, qrank_all, Order.succ_eq_add_one,
+      Ordinal.lift_add_one, ih]
 
 end Finitary
 

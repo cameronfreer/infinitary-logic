@@ -232,8 +232,9 @@ theorem realize_scottFormula_iff_BFEquiv
     rw [BFEquiv.limit β hβlimit]
     unfold scottFormula
     rw [Ordinal.limitRecOn_limit _ _ _ _ hβlimit]
-    -- do not unfold `Formulaω.Realize`: that exposes the raw ℕ-indexed `iInf` and loses the
-    -- `Set.Iio`-style index type of the limit conjunction
+    -- do not reduce `Formulaω.Realize` to bounded realization (`Formulaω.realize_def`, or
+    -- TauCeti's simp lemma `FormulaInf.realize_def`): that exposes the raw ℕ-indexed `iInf` and
+    -- loses the `Set.Iio`-style index type of the limit conjunction
     simp only [hα, dite_true, Formulaω.realize_einf]
     exact ⟨fun h γ hγ => (ih γ hγ a b (lt_trans hγ hα)).mp (h ⟨γ, hγ⟩),
            fun h ⟨γ, hγ⟩ => (ih γ hγ a b (lt_trans hγ hα)).mpr (h γ hγ)⟩

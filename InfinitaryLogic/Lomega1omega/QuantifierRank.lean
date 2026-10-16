@@ -97,7 +97,7 @@ variable {α : Type*} {n : ℕ}
 theorem qrank_falsum : (falsum : L.BoundedFormulaω α n).qrank = 0 := rfl
 
 @[simp]
-theorem qrank_bot : (⊥ : L.BoundedFormulaω α n).qrank = 0 := rfl
+theorem qrank_bot : (⊥ : L.BoundedFormulaω α n).qrank = 0 := BoundedFormulaInf.qrank_bot
 
 @[simp]
 theorem qrank_equal (t₁ t₂ : L.Term (α ⊕ Fin n)) : (equal t₁ t₂).qrank = 0 := rfl
@@ -127,9 +127,7 @@ theorem qrank_iInf (φs : ℕ → L.BoundedFormulaω α n) :
 
 /-- The top formula has rank 0. -/
 @[simp]
-theorem qrank_top : (⊤ : L.BoundedFormulaω α n).qrank = 0 := by
-  simp only [Top.top, BoundedFormulaInf.verum, BoundedFormulaInf.not, qrank_imp,
-    qrank_falsum, max_self]
+theorem qrank_top : (⊤ : L.BoundedFormulaω α n).qrank = 0 := BoundedFormulaInf.qrank_top
 
 /-- Negation preserves quantifier rank. -/
 @[simp]
@@ -149,14 +147,16 @@ theorem qrank_or (φ ψ : L.BoundedFormulaω α n) :
 /-- `qrank_and` for the lattice notation `⊓`. -/
 @[simp]
 theorem qrank_inf (φ ψ : L.BoundedFormulaω α n) :
-    (φ ⊓ ψ).qrank = max φ.qrank ψ.qrank :=
-  qrank_and φ ψ
+    (φ ⊓ ψ).qrank = max φ.qrank ψ.qrank := by
+  rw [BoundedFormulaInf.inf_def]
+  exact qrank_and φ ψ
 
 /-- `qrank_or` for the lattice notation `⊔`. -/
 @[simp]
 theorem qrank_sup (φ ψ : L.BoundedFormulaω α n) :
-    (φ ⊔ ψ).qrank = max φ.qrank ψ.qrank :=
-  qrank_or φ ψ
+    (φ ⊔ ψ).qrank = max φ.qrank ψ.qrank := by
+  rw [BoundedFormulaInf.sup_def]
+  exact qrank_or φ ψ
 
 /-- Existential quantification adds 1 to rank. Kept in `+ 1` form, as for `qrank_all`. -/
 theorem qrank_ex (φ : L.BoundedFormulaω α (n + 1)) :

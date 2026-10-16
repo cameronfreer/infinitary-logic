@@ -61,8 +61,8 @@ def iSupAlong (c : IndexCoding ι κ) (φs : ι → L.BoundedFormulaInf κ α n)
   .iSup (c.pad ⊥ φs)
 
 /-- Transport a formula along a coding of its carrier. Together with `reindex_id` and
-`reindex_trans` this makes carrier transport functorial; `realize_reindex` (in
-`Infinitary/Semantics.lean`) shows it is semantics-preserving. -/
+`reindex_trans` this makes carrier transport functorial; `realize_reindex` (below) shows it is
+semantics-preserving. -/
 def reindex (c : IndexCoding ι κ) : ∀ {n}, L.BoundedFormulaInf ι α n → L.BoundedFormulaInf κ α n
   | _, .falsum => .falsum
   | _, .equal t₁ t₂ => .equal t₁ t₂
@@ -121,12 +121,12 @@ theorem reindex_ex (φ : L.BoundedFormulaInf ι α (n + 1)) :
   rfl
 
 @[simp]
-theorem reindex_top : reindex c (⊤ : L.BoundedFormulaInf ι α n) = ⊤ :=
-  rfl
+theorem reindex_top : reindex c (⊤ : L.BoundedFormulaInf ι α n) = ⊤ := by
+  rw [top_def, top_def, reindex_not, reindex_falsum]
 
 @[simp]
-theorem reindex_bot : reindex c (⊥ : L.BoundedFormulaInf ι α n) = ⊥ :=
-  rfl
+theorem reindex_bot : reindex c (⊥ : L.BoundedFormulaInf ι α n) = ⊥ := by
+  rw [bot_def, bot_def, reindex_falsum]
 
 end ReindexEqs
 
@@ -139,27 +139,28 @@ theorem reindex_id : ∀ {n} (φ : L.BoundedFormulaInf ι α n), reindex (.id ι
   | rel R ts => rfl
   | imp φ ψ ihφ ihψ => rw [reindex_imp, ihφ, ihψ]
   | all φ ih => rw [reindex_all, ih]
-  | iSup φs ih => exact congrArg BoundedFormulaInf.iSup (funext fun i ↦ ih i)
-  | iInf φs ih => exact congrArg BoundedFormulaInf.iInf (funext fun i ↦ ih i)
+  | iSup φs ih =>
+    rw [reindex_iSup, iSupAlong, IndexCoding.id_pad]
+    exact congrArg BoundedFormulaInf.iSup (funext fun i ↦ ih i)
+  | iInf φs ih =>
+    rw [reindex_iInf, iInfAlong, IndexCoding.id_pad]
+    exact congrArg BoundedFormulaInf.iInf (funext fun i ↦ ih i)
 
 /-- The universal bound-variable closure commutes with carrier transport, syntactically. -/
 @[simp]
 theorem reindex_alls (c : IndexCoding ι κ) :
     ∀ {n} (φ : L.BoundedFormulaInf ι α n), reindex c φ.alls = (reindex c φ).alls
-  | 0, _ => rfl
+  | 0, φ => by rw [alls_zero φ, alls_zero (reindex c φ)]
   | _ + 1, φ => by
-    rw [show (φ.alls : L.FormulaInf ι α) = φ.all.alls from rfl, reindex_alls c φ.all,
-      reindex_all]
-    rfl
+    rw [alls_succ φ, reindex_alls c φ.all, reindex_all, alls_succ (reindex c φ)]
 
 /-- The existential bound-variable closure commutes with carrier transport, syntactically. -/
 @[simp]
 theorem reindex_exs (c : IndexCoding ι κ) :
     ∀ {n} (φ : L.BoundedFormulaInf ι α n), reindex c φ.exs = (reindex c φ).exs
-  | 0, _ => rfl
+  | 0, φ => by rw [exs_zero φ, exs_zero (reindex c φ)]
   | _ + 1, φ => by
-    rw [show (φ.exs : L.FormulaInf ι α) = φ.ex.exs from rfl, reindex_exs c φ.ex, reindex_ex]
-    rfl
+    rw [exs_succ φ, reindex_exs c φ.ex, reindex_ex, exs_succ (reindex c φ)]
 
 /-- Reindexing along a composite coding is the composite of the reindexings — syntactically,
 not merely up to semantic equivalence. This is the coherence law that lets carrier transports
@@ -310,11 +311,11 @@ theorem BoundedFormulaInf.reindex_toInf (c : IndexCoding ι κ) :
       BoundedFormulaInf.reindex c (BoundedFormula.toInf φ) = BoundedFormula.toInf φ := by
   intro n φ
   induction φ with
-  | falsum => rfl
-  | equal t₁ t₂ => rfl
-  | rel R ts => rfl
-  | imp φ ψ ihφ ihψ => exact congrArg₂ BoundedFormulaInf.imp ihφ ihψ
-  | all φ ih => exact congrArg BoundedFormulaInf.all ih
+  | falsum => simp only [BoundedFormula.toInf_falsum, reindex_falsum]
+  | equal t₁ t₂ => simp only [BoundedFormula.toInf_equal, reindex_equal]
+  | rel R ts => simp only [BoundedFormula.toInf_rel, reindex_rel]
+  | imp φ ψ ihφ ihψ => simp only [BoundedFormula.toInf_imp, reindex_imp, ihφ, ihψ]
+  | all φ ih => simp only [BoundedFormula.toInf_all, reindex_all, ih]
 
 end Language
 
