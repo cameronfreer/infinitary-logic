@@ -273,6 +273,9 @@ theorem truth_both (hsc : HenkinComplete U S) :
         rwa [snoc_elim0_const] at h
   termination_by σ => σ.depth
   decreasing_by
+    -- The `iInf` goals are closed by `depth_lt_iSup`: the `iSup` and `iInf` clauses of
+    -- `BoundedFormulaω.depth` (`Lomega1omega/Depth.lean`) coincide, so `depth_lt_iInf` is
+    -- redundant.
     all_goals first
       | exact depth_lt_imp_left
       | exact depth_lt_imp_right
