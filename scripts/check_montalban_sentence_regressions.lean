@@ -641,7 +641,7 @@ def neq01 : Language.empty.Formulaω (Fin 2) :=
   (BoundedFormulaω.equal (Term.var (Sum.inl 0)) (Term.var (Sum.inl 1))).not
 
 theorem realize_neq01 {N : Type} (b : Fin 2 → N) : neq01.Realize b ↔ b 0 ≠ b 1 := by
-  simp [neq01, Formulaω.realize_def]
+  simp [neq01]
 
 /-- `existsTuple`: two distinct points exist in `ℕ` and not in `Unit`. -/
 theorem existsTuple_examples :

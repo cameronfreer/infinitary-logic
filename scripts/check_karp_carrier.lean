@@ -214,6 +214,7 @@ run_cmd do
       throwError "[FORBIDDEN] {root} depends on the legacy syntax or embedding: {hits}"
     let missing := rankWitness.filter fun r => !deps.contains r
     unless missing.isEmpty do
-      throwError "[MISSING WITNESS] {root} does not consume the upstream rank: {missing}"
+      throwError "[MISSING WITNESS] {root} does not consume the carrier-generic rank \
+        (Infinitary/QuantifierRank.lean): {missing}"
   logInfo "Karp carrier guard: OK (elaboration gates pass; old implementation absent; cones \
     consume IndexCoding/iInfAlong and no legacy syntax)"
