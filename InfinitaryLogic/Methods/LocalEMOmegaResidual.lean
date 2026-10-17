@@ -364,6 +364,7 @@ def badSentence : Lang.Sentenceω := conj.not.ex
 
 /-- `badSentence` holds in the height model: every element has finite height. -/
 theorem realize_badSentence : Sentenceω.Realize badSentence Carrier := by
+  rw [Sentenceω.realize_def]
   show BoundedFormulaω.Realize (conj.not.ex) (Empty.elim : Empty → Carrier) Fin.elim0
   rw [BoundedFormulaω.realize_ex]
   exact ⟨a 0, by rw [BoundedFormulaω.realize_not]; exact not_realize_conj _ _⟩

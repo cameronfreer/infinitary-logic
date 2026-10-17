@@ -56,10 +56,7 @@ omit [Countable (Σ l, L.Relations l)] in
 valuation is unique).  No countability of the relation symbols is needed. -/
 theorem mem_modelsOf_iff_realize (c : StructureSpace L) (φ : L.Sentenceω) :
     c ∈ ModelsOf φ ↔ @Sentenceω.Realize L φ ℕ c.toStructure := by
-  change @BoundedFormulaω.Realize L ℕ c.toStructure Empty 0 φ Empty.elim Fin.elim0 ↔
-    @BoundedFormulaω.Realize L ℕ c.toStructure Empty 0 φ Empty.elim _
-  exact iff_of_eq (congrArg (@BoundedFormulaω.Realize L ℕ c.toStructure Empty 0 φ Empty.elim)
-    (Subsingleton.elim _ _))
+  exact (@Sentenceω.realize_def L φ ℕ c.toStructure).symm
 
 omit [Countable (Σ l, L.Relations l)] in
 private theorem modelsOfBounded_falsum {α : Type u'} {n : ℕ}
@@ -117,14 +114,14 @@ theorem modelsOfBounded_measurableSet
       ext c
       simp only [Set.mem_ofPred_eq, ModelsOfBounded, Set.mem_univ, iff_true]
       let := c.toStructure
-      simp [BoundedFormulaω.Realize, Term.realize, h]
+      simp [Term.realize, h]
     · convert MeasurableSet.empty (α := StructureSpace L)
       ext c
       simp only [Set.mem_ofPred_eq, ModelsOfBounded, Set.mem_empty_iff_false, iff_false]
       intro hc
       apply h
       let := c.toStructure
-      simp [BoundedFormulaω.Realize, Term.realize] at hc
+      simp [Term.realize] at hc
       exact hc
   | @rel _ l R ts =>
     -- Each term ts i is a variable; extract the variable index for each i
@@ -148,14 +145,13 @@ theorem modelsOfBounded_measurableSet
     · intro hc
       let := c.toStructure
       have hrel : @Structure.RelMap L ℕ c.toStructure l R
-          (fun i => (ts i).realize (Sum.elim v xs)) := hc
+          (fun i => (ts i).realize (Sum.elim v xs)) :=
+        (@BoundedFormulaω.realize_rel L ℕ c.toStructure _ _ v xs l R ts).mp hc
       rw [StructureSpace.relMap_toStructure] at hrel
       rwa [htup] at hrel
     · intro hc
       let := c.toStructure
-      show @Structure.RelMap L ℕ c.toStructure l R
-          (fun i => (ts i).realize (Sum.elim v xs))
-      rw [StructureSpace.relMap_toStructure, htup]
+      rw [@BoundedFormulaω.realize_rel L ℕ c.toStructure, StructureSpace.relMap_toStructure, htup]
       exact hc
   | imp φ ψ ih_φ ih_ψ =>
     rw [modelsOfBounded_imp]; exact (ih_φ xs).compl.union (ih_ψ xs)

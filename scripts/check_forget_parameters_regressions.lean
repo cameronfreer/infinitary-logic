@@ -73,8 +73,10 @@ def finConj {β : Type*} (l : List (L.Formulaω β)) : L.Formulaω β := l.foldr
 theorem realize_finConj {β : Type*} {M : Type*} [L.Structure M] (l : List (L.Formulaω β))
     (v : β → M) : (finConj l).Realize v ↔ ∀ φ ∈ l, φ.Realize v := by
   induction l with
-  | nil => simp [finConj, Formulaω.realize_def]
-  | cons φ l ih => simp [finConj, Formulaω.realize_inf, ← ih]
+  | nil => exact iff_of_true (Formulaω.realize_top.mpr trivial) fun _ h => by simp at h
+  | cons φ l ih =>
+    simp only [finConj, List.foldr_cons, Formulaω.realize_inf, List.forall_mem_cons]
+    exact and_congr_right fun _ => ih
 
 theorem inSigned_finConj {β : Type*} (a : Ordinal.{0}) (s : Bool) (l : List (L.Formulaω β)) :
     inSigned a s (finConj l) ↔ ∀ φ ∈ l, inSigned a s φ := by
@@ -88,7 +90,7 @@ def eqAtom {n : ℕ} (i j : Fin n) : L.Formulaω (Fin n) :=
 
 theorem realize_eqAtom {M : Type*} [L.Structure M] {n : ℕ} (i j : Fin n) (b : Fin n → M) :
     (eqAtom (L := L) i j).Realize b ↔ b i = b j := by
-  simp [eqAtom, Formulaω.realize_def]
+  simp [eqAtom]
 
 /-- The **equality pattern** of a tuple: the finite conjunction of `xᵢ = xⱼ` or `xᵢ ≠ xⱼ`. -/
 def eqPattern {X : Type*} {n : ℕ} (a : Fin n → X) : L.Formulaω (Fin n) := by
@@ -102,8 +104,8 @@ theorem realize_eqPattern {X M : Type*} [L.Structure M] {n : ℕ} (a : Fin n →
   simp only [eqPattern, realize_finConj, List.forall_mem_ofFn_iff]
   refine forall_congr' fun i ↦ forall_congr' fun j ↦ ?_
   split_ifs with h
-  · simp [realize_eqAtom, h]
-  · simp [Formulaω.realize_not, realize_eqAtom, h]
+  · simp only [realize_eqAtom]; simp [h]
+  · simp only [Formulaω.realize_not, realize_eqAtom]; simp [h]
 
 /-- An equality pattern is level `0`, at both signs. -/
 theorem inSigned_eqPattern {X : Type*} {n : ℕ} (a : Fin n → X) (s : Bool) :

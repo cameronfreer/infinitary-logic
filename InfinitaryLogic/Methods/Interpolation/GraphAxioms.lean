@@ -96,6 +96,7 @@ theorem realize_graphTotality {n : ℕ} (f : L.Functions n) :
       rw [Fin.snoc_castSucc, Fin.snoc_castSucc]
       show Fin.append (Fin.append Fin.elim0 ws) ys (Fin.castAdd 1 (Fin.natAdd 0 j)) = ws j
       rw [Fin.append_left, Fin.append_right]
+  simp only [SentenceInf.realize_def, FormulaInf.realize_def]
   show BoundedFormulaω.Realize _ _ _ ↔ _
   rw [graphTotality, BoundedFormulaω.realize_forallBlock]
   refine forall_congr' fun ws => ?_
@@ -141,6 +142,7 @@ theorem realize_graphFunctionality {n : ℕ} (f : L.Functions n) :
     intro us b
     show Fin.append Fin.elim0 us (Fin.natAdd 0 (Fin.natAdd n b)) = us (Fin.natAdd n b)
     exact Fin.append_right _ _ _
+  simp only [SentenceInf.realize_def, FormulaInf.realize_def]
   show BoundedFormulaω.Realize _ _ _ ↔ _
   rw [graphFunctionality, BoundedFormulaω.realize_forallBlock]
   constructor
@@ -166,6 +168,7 @@ theorem realize_graphAxioms_iff (F : Set (Σ n, L.Functions n)) [Countable ↥F]
     Sentenceω.Realize (graphAxioms F) M ↔
       ∀ p : ↥F, Sentenceω.Realize (graphTotality p.1.2) M ∧ Sentenceω.Realize (graphFunctionality p.1.2) M := by
   let : Encodable ↥F := Encodable.ofCountable _
+  simp only [SentenceInf.realize_def, FormulaInf.realize_def]
   show BoundedFormulaω.Realize _ _ _ ↔ _
   rw [graphAxioms, BoundedFormulaω.realize_einf]
   exact forall_congr' fun p => BoundedFormulaω.realize_and _ _

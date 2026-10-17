@@ -92,10 +92,13 @@ theorem realize_backTranslateFormula :
         @BoundedFormulaω.Realize (graphLanguage L) M (graphExpansion L M) α n θ v xs
   | _, .falsum, _, _ => Iff.rfl
   | _, .equal t u, v, xs => by
+    refine (BoundedFormulaω.realize_equal _ _).trans (Iff.trans ?_
+      (@BoundedFormulaω.realize_equal (graphLanguage L) M (graphExpansion L M) _ _ _ _ _ _).symm)
     show (ungraphTerm t).realize _ = (ungraphTerm u).realize _ ↔ _
     rw [realize_ungraphTerm (graphExpansion L M) t, realize_ungraphTerm (graphExpansion L M) u]
-    exact Iff.rfl
   | _, .rel (GraphRelation.base R₀) ts, v, xs => by
+    refine (BoundedFormulaω.realize_rel _ _).trans (Iff.trans ?_
+      (@BoundedFormulaω.realize_rel (graphLanguage L) M (graphExpansion L M) _ _ _ _ _ _ _).symm)
     show RelMap R₀ _ ↔ (graphExpansion L M).RelMap (GraphRelation.base R₀) _
     rw [graphExpansion_relMap_base]
     rw [show (fun i => @Term.realize (graphLanguage L) M (graphExpansion L M) _
@@ -112,11 +115,14 @@ theorem realize_backTranslateFormula :
             (Sum.elim v xs) (ts j)) =
           @Term.realize (graphLanguage L) M (graphExpansion L M) _
             (Sum.elim v xs) (ts (Fin.last _))) := by
+      refine (BoundedFormulaω.realize_equal _ _).trans ?_
       show (Term.func f (Fin.init fun i => ungraphTerm (ts i))).realize (Sum.elim v xs) =
           (ungraphTerm (ts (Fin.last _))).realize (Sum.elim v xs) ↔ _
       rw [Term.realize_func, hinit,
         realize_ungraphTerm (graphExpansion L M) (ts (Fin.last _))]
     rw [hL]
+    refine Iff.trans ?_
+      (@BoundedFormulaω.realize_rel (graphLanguage L) M (graphExpansion L M) _ _ _ _ _ _ _).symm
     show _ ↔ (graphExpansion L M).RelMap (GraphRelation.graph f) fun i =>
       @Term.realize (graphLanguage L) M (graphExpansion L M) _ (Sum.elim v xs) (ts i)
     rw [graphExpansion_relMap_graph]

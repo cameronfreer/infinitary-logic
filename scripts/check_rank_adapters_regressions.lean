@@ -142,7 +142,7 @@ theorem realize_patternω {n : ℕ} (a b : Fin n → X) :
   simp only [patternω, Formulaω.realize_einf, Prod.forall]
   refine forall₂_congr fun i j ↦ ?_
   unfold clause
-  split_ifs with h <;> simp [Formulaω.realize_def, h]
+  split_ifs with h <;> simp [h]
 
 /-- Tuples with the same equality pattern are carried to each other by a permutation, in any
 type: extend the finite partial bijection `a i ↦ b i`. -/
@@ -372,7 +372,7 @@ theorem qrank_emptyModelSentence : (emptyModelSentence L).qrank = 1 := by
 /-- `∀x ⊥` holds exactly in the empty structures. -/
 theorem realize_emptyModelSentence (N : Type*) [L.Structure N] :
     (emptyModelSentence L).Realize N ↔ IsEmpty N := by
-  simp [Sentenceω.realize_def, emptyModelSentence, isEmpty_iff]
+  simp [emptyModelSentence, isEmpty_iff]
 
 /-- Two empty structures in a language without relation symbols are isomorphic. -/
 def emptyEquiv [L.IsRelational] [∀ l, IsEmpty (L.Relations l)] (M N : Type*) [IsEmpty M]
@@ -456,7 +456,7 @@ theorem emptyModelFormula_spec [L.IsRelational] [∀ l, IsEmpty (L.Relations l)]
     (M : Type w) [IsEmpty M] [L.Structure M] (N : Type w) [L.Structure N] :
     (emptyModelFormula L).realize_as_sentence N ↔ Nonempty (M ≃[L] N) := by
   have h : (emptyModelFormula L).realize_as_sentence N ↔ IsEmpty N := by
-    simp [Formulaω.realize_as_sentence, Formulaω.realize_def, emptyModelFormula, isEmpty_iff]
+    simp [Formulaω.realize_as_sentence, emptyModelFormula, isEmpty_iff]
   rw [h]
   exact ⟨fun _ ↦ ⟨emptyEquiv M N⟩, fun ⟨e⟩ ↦ ⟨fun y ↦ isEmptyElim (e.symm y)⟩⟩
 
@@ -522,6 +522,7 @@ def expectedRecognitionClosure : List Name :=
   [`InfinitaryLogic.Util, `InfinitaryLogic.Lomega1omega.Syntax,
    `InfinitaryLogic.Lomega1omega.Semantics, `InfinitaryLogic.Lomega1omega.Operations,
    `InfinitaryLogic.Lomega1omega.OpenBoundsSemantics, `InfinitaryLogic.Lomega1omega.QuantifierRank,
+   `InfinitaryLogic.Infinitary.QuantifierRank, `InfinitaryLogic.Infinitary.Reindex,
    `InfinitaryLogic.Scott.AtomicDiagram, `InfinitaryLogic.Scott.BackAndForth,
    `InfinitaryLogic.Scott.Formula, `InfinitaryLogic.Scott.Sentence,
    `InfinitaryLogic.Karp.PotentialIso, `InfinitaryLogic.Karp.CarrierTheorem,

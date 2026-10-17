@@ -28,7 +28,7 @@ Every public theorem is *applied*, not only listed for its axioms.
 * **Repeated parameters.**  Over `c = (1, 1)` in `ℕ`, the pointed equality patterns give a
   pointed sentence of rank exactly `ω`; over `c = (1, 1, 1)` in `ULift.{1} ℕ` with the padding,
   rank exactly `ω + ω`.  The seed is below the rank, through the exact clause-by-clause forms.
-* **Import closure** of the module: exactly the 19 expected `InfinitaryLogic` modules
+* **Import closure** of the module: exactly the 21 expected `InfinitaryLogic` modules
   (`[CLOSURE DRIFT]` otherwise).  The closure check and the axiom audit share one command, so
   the final OK line is printed only if both pass.
 * **Standard axioms** for every public declaration added by the tranche and for the guard's own
@@ -63,8 +63,10 @@ def finConj {β : Type*} (l : List (L.Formulaω β)) : L.Formulaω β := l.foldr
 theorem realize_finConj {β : Type*} {M : Type*} [L.Structure M] (l : List (L.Formulaω β))
     (v : β → M) : (finConj l).Realize v ↔ ∀ φ ∈ l, φ.Realize v := by
   induction l with
-  | nil => simp [finConj, Formulaω.realize_def]
-  | cons φ l ih => simp [finConj, Formulaω.realize_inf, ← ih]
+  | nil => exact iff_of_true (Formulaω.realize_top.mpr trivial) fun _ h => by simp at h
+  | cons φ l ih =>
+    simp only [finConj, List.foldr_cons, Formulaω.realize_inf, List.forall_mem_cons]
+    exact and_congr_right fun _ => ih
 
 theorem qrank_finConj {β : Type*} (l : List (L.Formulaω β)) (h : ∀ φ ∈ l, φ.qrank = 0) :
     (finConj l).qrank = 0 := by
@@ -81,7 +83,7 @@ def eqAtom {n : ℕ} (i j : Fin n) : L.Formulaω (Fin n) :=
 
 theorem realize_eqAtom {M : Type*} [L.Structure M] {n : ℕ} (i j : Fin n) (b : Fin n → M) :
     (eqAtom (L := L) i j).Realize b ↔ b i = b j := by
-  simp [eqAtom, Formulaω.realize_def]
+  simp [eqAtom]
 
 /-- The **equality pattern** of a tuple: the finite conjunction of `xᵢ = xⱼ` or `xᵢ ≠ xⱼ`. -/
 def eqPattern {X : Type*} {n : ℕ} (a : Fin n → X) : L.Formulaω (Fin n) := by
@@ -95,8 +97,8 @@ theorem realize_eqPattern {X M : Type*} [L.Structure M] {n : ℕ} (a : Fin n →
   simp only [eqPattern, realize_finConj, List.forall_mem_ofFn_iff]
   refine forall_congr' fun i ↦ forall_congr' fun j ↦ ?_
   split_ifs with h
-  · simp [realize_eqAtom, h]
-  · simp [Formulaω.realize_not, realize_eqAtom, h]
+  · simp only [realize_eqAtom]; simp [h]
+  · simp only [Formulaω.realize_not, realize_eqAtom]; simp [h]
 
 /-- An equality pattern has quantifier rank `0`. -/
 theorem qrank_eqPattern {X : Type*} {n : ℕ} (a : Fin n → X) :
@@ -379,11 +381,12 @@ where
         go (deps ++ rest) (seen.insert m)
 
 /-- The exact `InfinitaryLogic` part of the import closure of `Scott.MontalbanQuantifierRank`:
-19 modules. -/
+21 modules. -/
 def expectedClosure : List Name :=
   [`InfinitaryLogic.Util, `InfinitaryLogic.Lomega1omega.Syntax,
    `InfinitaryLogic.Lomega1omega.Semantics, `InfinitaryLogic.Lomega1omega.Operations,
    `InfinitaryLogic.Lomega1omega.OpenBoundsSemantics, `InfinitaryLogic.Lomega1omega.QuantifierRank,
+   `InfinitaryLogic.Infinitary.QuantifierRank, `InfinitaryLogic.Infinitary.Reindex,
    `InfinitaryLogic.Lomega1omega.Theory, `InfinitaryLogic.Scott.AtomicDiagram,
    `InfinitaryLogic.Scott.BackAndForth, `InfinitaryLogic.Scott.BFEquivRelabel,
    `InfinitaryLogic.Scott.Formula, `InfinitaryLogic.Scott.Sentence,
@@ -426,8 +429,8 @@ run_cmd do
   let missing := expectedClosure.filter fun m ↦ !cl.contains m
   unless extra.isEmpty && missing.isEmpty do
     throwError "[CLOSURE DRIFT] the closure of {target}: unexpected {extra}, missing {missing}"
-  unless il.length == 19 do
-    throwError "[CLOSURE DRIFT] the closure of {target} has {il.length} modules, not 19"
+  unless il.length == 21 do
+    throwError "[CLOSURE DRIFT] the closure of {target} has {il.length} modules, not 21"
   for n in trancheDecls ++ guardDecls do
     unless (env.find? n).isSome do throwError "declaration {n} not found"
     let axs ← Elab.Command.liftCoreM (collectAxioms n)
@@ -443,5 +446,5 @@ run_cmd do
     parameters (1, 1) in N with rank omega and (1, 1, 1) in ULift N with rank omega + omega; \
     the general exact value max seed (alpha + omega), with a seed of rank omega + 1 dominating \
     on N, unpointed and pointed over (1, 1), and agreeing with the attainment at the padded \
-    family; the seed below the rank through both exact forms; exact import closure of 19 \
+    family; the seed below the rank through both exact forms; exact import closure of 21 \
     modules; standard axioms)"

@@ -344,12 +344,11 @@ theorem BoundedFormulaω.realize_congr_symbolsIn {M : Type} (S S' : L.Structure 
       @BoundedFormulaω.Realize L M S α n φ v xs ↔ @BoundedFormulaω.Realize L M S' α n φ v xs
   | _, .falsum, _, _, _, _ => Iff.rfl
   | _, .equal t₁ t₂, hf, _, v, xs => by
-    show @Term.realize L M S _ _ t₁ = @Term.realize L M S _ _ t₂
-      ↔ @Term.realize L M S' _ _ t₁ = @Term.realize L M S' _ _ t₂
+    rw [@BoundedFormulaω.realize_equal L M S, @BoundedFormulaω.realize_equal L M S']
     rw [Term.realize_congr_functionsIn S S' t₁ (fun p hp => hf p (Set.mem_union_left _ hp)),
       Term.realize_congr_functionsIn S S' t₂ (fun p hp => hf p (Set.mem_union_right _ hp))]
   | _, .rel R ts, hf, hr, v, xs => by
-    show @Structure.RelMap L M S _ R _ ↔ @Structure.RelMap L M S' _ R _
+    rw [@BoundedFormulaω.realize_rel L M S, @BoundedFormulaω.realize_rel L M S']
     rw [show (fun i => @Term.realize L M S _ _ (ts i))
         = (fun i => @Term.realize L M S' _ _ (ts i)) from funext fun i =>
           Term.realize_congr_functionsIn S S' (ts i)

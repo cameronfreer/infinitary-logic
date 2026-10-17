@@ -3,16 +3,16 @@ Copyright (c) 2026 Cameron Freer. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
-import Mathlib.ModelTheory.Infinitary.Syntax
+import TauCeti.ModelTheory.Infinitary.Syntax
 import Mathlib.Logic.Encodable.Basic
 
 /-!
 # Lω₁ω Syntax — compatibility facade over the fixed-carrier syntax
 
 `BoundedFormulaω`, `Formulaω` and `Sentenceω` are no longer declared here. They come from
-`Mathlib.ModelTheory.Infinitary.Syntax`, where `BoundedFormulaω L α n` is an **abbrev** for
+`TauCeti.ModelTheory.Infinitary.Syntax`, where `BoundedFormulaω L α n` is an **abbrev** for
 `BoundedFormulaInf L ℕ α n`. This file re-exports that syntax under the module path and namespace
-the project already uses, and adds only what Mathlib does not provide.
+the project already uses, and adds only what TauCeti does not provide.
 
 ## Why an abbrev and not a `def`
 
@@ -27,15 +27,18 @@ or explicit cast — their *absence* is the certification.
 - the qualified `BoundedFormulaω.*` constructor surface, for consumers that name constructors
   explicitly rather than through dot-notation (dot-notation resolves through the head symbol
   `BoundedFormulaInf` and needs no help);
-- the derived connectives Mathlib does not define: `and`, `or`, `iff`, with their `Min`/`Max`
-  instances;
+- the named binary connectives `and` and `or` (TauCeti provides only the `Min`/`Max` instances,
+  `⊓`/`⊔`, with the same bodies), and the qualified alias `BoundedFormulaω.iff` of TauCeti's
+  `BoundedFormulaInf.iff`;
 - the `Encodable`-indexed connectives `einf`/`esup` and their explicit-encoding forms
   `einfWith`/`esupWith`;
 - the scoped notation.
 
-`Bot`, `Top`, `Inhabited`, `not` and `ex` now come from Mathlib and are deliberately **not**
-redeclared. `BoundedFormulaInf.verum` plays the role of the old `top` and is definitionally equal to it
-(`not falsum` reduces to `imp falsum falsum`).
+`Bot`, `Top`, `Min`, `Max`, `Inhabited`, `not`, `ex` and `iff` now come from TauCeti and are
+deliberately **not** redeclared. TauCeti does not expose its definition bodies (other than those
+of `not` and `ex`); its defining equations `bot_def`, `top_def`, `inf_def`, `sup_def` and
+`iff_def` are the stable interface to them. `BoundedFormulaInf.verum` plays the role of the old
+`top` and is definitionally equal to it (`not falsum` reduces to `imp falsum falsum`).
 -/
 
 universe u v u'
@@ -84,36 +87,36 @@ The constructors live in the `BoundedFormulaInf` namespace. Dot-notation on a
 @[match_pattern] protected abbrev ex (φ : L.BoundedFormulaω α (n + 1)) : L.BoundedFormulaω α n :=
   BoundedFormulaInf.ex φ
 
-/-- The true formula. Mathlib calls it `verum`; this is the project's historical name for it, and
+/-- The true formula. TauCeti calls it `verum`; this is the project's historical name for it, and
 the two are definitionally equal (`not falsum` reduces to `imp falsum falsum`). -/
 protected abbrev top : L.BoundedFormulaω α n := BoundedFormulaInf.verum
 
-/-! Production's `not` and `ex` were `@[match_pattern]`; Mathlib's are not, and the attribute
-**cannot** be added downstream ("cannot add attribute to a declaration in an imported module").
-The qualified `BoundedFormulaω.not`/`.ex` above are declared here and so do carry it, which covers
-consumers that name them explicitly; dot-notation *patterns* (`| .not φ => …`) resolve through the
-head symbol to `BoundedFormulaInf.not` and are therefore not available. If a consumer needs them,
-the fix belongs upstream on the fork, not here. -/
+/-! TauCeti's `BoundedFormulaInf.not` and `.ex` are `@[match_pattern]` (and exposed), so
+dot-notation patterns (`| .not φ => …`) resolve through the head symbol to them; the qualified
+`BoundedFormulaω.not`/`.ex` above carry the attribute as well, for consumers that name them
+explicitly. -/
 
-/-! ### Derived connectives Mathlib does not provide -/
+/-! ### Named binary connectives
+
+`φ ⊓ ψ` and `φ ⊔ ψ` are TauCeti's instances on `BoundedFormulaInf`, with exactly the bodies of
+`and` and `or` below; the project no longer declares its own `Min`/`Max` instances, which would
+have been a second, syntactically distinct instance on the same type. Relate the two through
+`BoundedFormulaInf.inf_def`/`sup_def`, not by unfolding the instances. -/
 
 /-- Conjunction of two formulas, defined via De Morgan. -/
 @[match_pattern]
 protected def and (φ ψ : L.BoundedFormulaω α n) : L.BoundedFormulaω α n :=
   (φ.imp ψ.not).not
 
-instance : Min (L.BoundedFormulaω α n) := ⟨BoundedFormulaω.and⟩
-
 /-- Disjunction of two formulas. -/
 @[match_pattern]
 protected def or (φ ψ : L.BoundedFormulaω α n) : L.BoundedFormulaω α n :=
   φ.not.imp ψ
 
-instance : Max (L.BoundedFormulaω α n) := ⟨BoundedFormulaω.or⟩
-
-/-- Biconditional between formulas. -/
-protected def iff (φ ψ : L.BoundedFormulaω α n) : L.BoundedFormulaω α n :=
-  (φ.imp ψ) ⊓ (ψ.imp φ)
+/-- Biconditional between formulas, as a qualified name. TauCeti's `BoundedFormulaInf.iff`
+(`φ.imp ψ ⊓ ψ.imp φ`) is the definition. -/
+protected abbrev iff (φ ψ : L.BoundedFormulaω α n) : L.BoundedFormulaω α n :=
+  BoundedFormulaInf.iff φ ψ
 
 /-- Indexed conjunction over any `Encodable` type. This extends `iInf` from ℕ-indexed
 to general countable indices by encoding. -/
@@ -171,7 +174,8 @@ scoped[Lomega1omega] infixl:61 " ⇔ω " => FirstOrder.Language.BoundedFormulaω
 
 /-! ## Facade transparency gates
 
-These must elaborate with **no** `change`, rewrite, or explicit cast. That is precisely what
+These must elaborate with **no** `change`, rewrite, or explicit cast. They involve only the
+`abbrev` chain and the inductive itself, never a hidden TauCeti body. That is precisely what
 certifies that the ω names remain a definitional specialization — the property Lean 4.34's
 `implicit`-transparency requirement makes load-bearing for every `rw`/`simp` in the ω tower. -/
 

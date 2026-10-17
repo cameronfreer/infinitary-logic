@@ -1,6 +1,8 @@
 import InfinitaryLogic.Util
 
--- L∞ω (arbitrary infinitary logic)
+-- L∞ω (arbitrary infinitary logic): carrier transport and quantifier rank over TauCeti's syntax
+import InfinitaryLogic.Infinitary.Reindex
+import InfinitaryLogic.Infinitary.QuantifierRank
 
 -- Lω₁ω (countable infinitary logic)
 import InfinitaryLogic.Lomega1omega.Syntax
@@ -58,12 +60,13 @@ model-existence machinery, admissible-set theory, or descriptive set theory.
 
 ## One syntax, fixed at a branching carrier
 
-The infinitary syntax comes from the pinned Mathlib dependency. It is **proposed
-upstream, not yet accepted** — the pin is a fork branch, and names or packaging may
-change under review. Project-level facades (`Lomega1omega/Syntax.lean`,
-`Semantics.lean`, `QuantifierRank.lean`, `CountableIndex.lean`, and
-`Karp/CarrierTheorem.lean`) exist so that such a change is absorbed there rather
-than across the theorem files.
+The infinitary syntax, its semantics and the index codings come from the pinned TauCeti
+dependency (`TauCeti.ModelTheory.Infinitary.Syntax`, `Semantics`, `IndexCoding`); carrier
+transport and quantifier rank, which TauCeti does not provide, live in this project under
+`Infinitary/` (`Reindex.lean`, `QuantifierRank.lean`). Names or packaging upstream may
+still change. Project-level facades (`Lomega1omega/Syntax.lean`, `Semantics.lean`,
+`QuantifierRank.lean`, `CountableIndex.lean`, and `Karp/CarrierTheorem.lean`) exist so that
+such a change is absorbed there rather than across the theorem files.
 
 There is a single infinitary syntax, `BoundedFormulaInf ι α n`, whose
 `iSup`/`iInf` nodes branch over a carrier `ι` fixed once for the whole formula

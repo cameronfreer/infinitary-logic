@@ -178,11 +178,12 @@ where
         go (deps ++ rest) (seen.insert m)
 
 /-- Module-name prefixes the closure may not have: Scott analysis (Scott sentences, ranks,
-back-and-forth), Karp, the quantifier-rank module, Löwenheim–Skolem and the rest of the model
-theory, and every later layer. -/
+back-and-forth), Karp, the quantifier-rank modules (the ω facade and the carrier-generic rank it
+specializes), Löwenheim–Skolem and the rest of the model theory, and every later layer. -/
 def forbiddenPrefixes : List Name :=
   [`InfinitaryLogic.Scott, `InfinitaryLogic.ScottProcess, `InfinitaryLogic.Karp,
-   `InfinitaryLogic.Lomega1omega.QuantifierRank, `InfinitaryLogic.ModelTheory,
+   `InfinitaryLogic.Lomega1omega.QuantifierRank, `InfinitaryLogic.Infinitary.QuantifierRank,
+   `InfinitaryLogic.ModelTheory,
    `InfinitaryLogic.Methods, `InfinitaryLogic.Descriptive, `InfinitaryLogic.Admissible,
    `InfinitaryLogic.Conditional, `InfinitaryLogic.WIP]
 

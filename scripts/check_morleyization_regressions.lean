@@ -73,10 +73,11 @@ theorem backtranslation_repeated_regression {Φ : Set (Σ n, L.BoundedFormulaω 
     Sentenceω.Realize (unMorleyize ((BoundedFormulaω.rel (Sum.inr ⟨φ, h⟩ :
         (L.morleyize Φ).Relations 2) fun _ => Term.var (Sum.inr 0)).all)) M ↔
       ∀ y : M, φ.Realize Empty.elim ![y, y] := by
-  show (unMorleyize _).Realize Empty.elim Fin.elim0 ↔ _
-  rw [realize_unMorleyize]
+  rw [Sentenceω.realize_def, realize_unMorleyize]
   simp only [BoundedFormulaω.realize_all]
   refine forall_congr' fun y => ?_
+  refine (@BoundedFormulaω.realize_rel (L.morleyize Φ) M (morleyExpansion Φ M)
+    _ _ _ _ _ _ _).trans ?_
   show φ.Realize Empty.elim (fun _ => (Fin.snoc (Fin.elim0 : Fin 0 → M) y : Fin 1 → M) 0) ↔
     φ.Realize Empty.elim ![y, y]
   exact Iff.of_eq (congrArg _ (funext fun i => by fin_cases i <;> rfl))
@@ -90,8 +91,7 @@ theorem backtranslation_functionTerm_regression {Φ : Set (Σ n, L.BoundedFormul
         (Sum.inr ⟨φ, h⟩ : (L.morleyize Φ).Relations 1)
         fun _ => Term.func (L := L.morleyize Φ) f fun _ => Term.var (Sum.inr 0)).all)) M ↔
       ∀ y : M, φ.Realize Empty.elim (fun _ => Structure.funMap f fun _ => y) := by
-  show (unMorleyize _).Realize Empty.elim Fin.elim0 ↔ _
-  rw [realize_unMorleyize]
+  rw [Sentenceω.realize_def, realize_unMorleyize]
   simp only [BoundedFormulaω.realize_all]
   refine forall_congr' fun y => ?_
   exact Iff.rfl

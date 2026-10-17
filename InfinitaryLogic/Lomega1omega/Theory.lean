@@ -145,8 +145,7 @@ theorem realize_conjunction_iff (T : L.Theoryω) (hT : T.Countable)
   split_ifs with h
   · have hrange : T = Set.range (hT.exists_eq_range h).choose :=
       (hT.exists_eq_range h).choose_spec
-    show BoundedFormulaω.Realize _ (Empty.elim : Empty → M) Fin.elim0 ↔ _
-    rw [BoundedFormulaω.realize_iInf]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_iInf]
     constructor
     · intro hall σ hσ
       rw [hrange] at hσ
@@ -157,8 +156,7 @@ theorem realize_conjunction_iff (T : L.Theoryω) (hT : T.Countable)
   · rw [Set.not_nonempty_iff_eq_empty] at h
     subst h
     refine iff_of_true ?_ (Model.empty M)
-    show BoundedFormulaω.Realize _ (Empty.elim : Empty → M) Fin.elim0
-    rw [BoundedFormulaω.realize_imp]
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_imp]
     exact fun hf => hf
 
 end Theoryω
@@ -204,6 +202,7 @@ theorem of_equiv {M N : Type w} [L.Structure M] [L.Structure N] (e : M ≃[L] N)
     LomegaEquiv L M N := by
   intro φ
   have h := BoundedFormulaω.realize_equiv e φ (Empty.elim : Empty → M) (Fin.elim0 : Fin 0 → M)
+  rw [Sentenceω.realize_def φ M, Sentenceω.realize_def φ N]
   rwa [comp_empty_elim e, comp_fin_elim0 e] at h
 
 end LomegaEquiv

@@ -902,6 +902,8 @@ theorem budgetedPairInsep_relCongr_mixed {l : ℕ} (R : L.Relations l) (g : Fin 
         · subst hji
           rw [Function.update_self, Function.update_self]
         · rw [Function.update_of_ne hji, Function.update_of_ne (hgb j)]
+      refine (@BoundedFormulaω.realize_rel L[[ℕ]] N (wc base (Function.update hm b (hm (g i))))
+        _ _ _ _ _ _ _).mpr ?_
       show @Structure.RelMap L N base l R
         (fun j => Function.update hm b (hm (g i)) (Function.update g i b j))
       rw [hval]
@@ -1711,9 +1713,12 @@ private theorem entails_substConst_constEq (hac : a ≠ c) (hmem : constEq (L :=
         ↔ @BoundedFormulaω.Realize L[[ℕ]] N (wc base hm) Empty 0 ρ Empty.elim Fin.elim0 :=
     fun ρ => ambient_realize_iff_wc (S := instN) ρ Empty.elim Fin.elim0
   refine (bridge _).mpr ((realize_substConst base hm c b (constEq a c)).mpr ?_)
+  refine (@BoundedFormulaω.realize_equal L[[ℕ]] N (wc base (Function.update hm c (hm b)))
+    _ _ _ _ _ _).mpr ?_
   show Function.update hm c (hm b) a = Function.update hm c (hm b) c
   rw [Function.update_of_ne hac, Function.update_self]
-  exact (bridge _).mp (hmodel _ hmem)
+  exact (@BoundedFormulaω.realize_equal L[[ℕ]] N (wc base hm) _ _ _ _ _ _).mp
+    ((bridge _).mp (hmodel _ hmem))
 
 /-- **Mixed transitivity, remote right endpoint.**  `a = b` on the left, `b = d` on the right, `d`
 absent from the left: insert `a = d` on the left, substituting the pivot `b` for `d`. -/
@@ -1767,9 +1772,12 @@ theorem budgetedPairInsep_eq_trans_mixed_left (hab : constEq (L := L) a b ∈ Δ
           ↔ @BoundedFormulaω.Realize L[[ℕ]] N (wc base hm) Empty 0 ρ Empty.elim Fin.elim0 :=
       fun ρ => ambient_realize_iff_wc (S := instN) ρ Empty.elim Fin.elim0
     refine (bridge _).mpr ((realize_substConst base hm a b (constEq a d)).mpr ?_)
+    refine (@BoundedFormulaω.realize_equal L[[ℕ]] N (wc base (Function.update hm a (hm b)))
+      _ _ _ _ _ _).mpr ?_
     show Function.update hm a (hm b) a = Function.update hm a (hm b) d
     rw [Function.update_self, Function.update_of_ne hda]
-    exact (bridge _).mp (hmodel _ hbd)
+    exact (@BoundedFormulaω.realize_equal L[[ℕ]] N (wc base hm) _ _ _ _ _ _).mp
+      ((bridge _).mp (hmodel _ hbd))
   refine budgetedPairInsep_substCut_left b a _ haΓ hbΓ hbΔ hΔeq ?_ ?_ hΓψ h
   · refine (sentenceJConsts_constEq_subset a d).trans ?_
     intro k hk

@@ -565,6 +565,7 @@ def allowedClosure : List Name :=
   [`InfinitaryLogic.Util, `InfinitaryLogic.Lomega1omega.Syntax,
    `InfinitaryLogic.Lomega1omega.Semantics, `InfinitaryLogic.Lomega1omega.Operations,
    `InfinitaryLogic.Lomega1omega.QuantifierClass, `InfinitaryLogic.Lomega1omega.QuantifierRank,
+   `InfinitaryLogic.Infinitary.QuantifierRank, `InfinitaryLogic.Infinitary.Reindex,
    `InfinitaryLogic.Lomega1omega.FiniteQuantification, `InfinitaryLogic.Lomega1omega.InHierarchy]
 
 run_cmd do

@@ -199,7 +199,10 @@ example : ∃ β : Ordinal.{0}, β < Ordinal.omega 1 ∧ 4 < β := by
 /-- The nonconstant family `x ↦ boundedTree (x 0)` on Baire space: node sets are clopen. -/
 theorem isClosed_boundedTree_family (s : List ℕ) :
     IsClosed {x : ℕ → ℕ | s ∈ boundedTree (x 0)} :=
-  (isClosed_discrete {m : ℕ | s.length ≤ m}).preimage (continuous_apply 0)
+  -- `Set` is a structure upstream, so the `setOf` no longer unifies with the preimage of an
+  -- unknown set; state the preimage form explicitly.
+  show IsClosed ((fun x : ℕ → ℕ ↦ x 0) ⁻¹' {m : ℕ | s.length ≤ m}) from
+    (isClosed_discrete {m : ℕ | s.length ≤ m}).preimage (continuous_apply 0)
 
 /-- **The nonconstant family**: every bound produced by the theorem is at least `ω`, since the
 heights `n + 1` are unbounded below `ω`, while `ω`, a limit, is itself a bound. -/

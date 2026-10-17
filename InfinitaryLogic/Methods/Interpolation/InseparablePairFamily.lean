@@ -242,7 +242,7 @@ theorem realize_instConst_ambient_iff (c : ℕ) (φ : L[[ℕ]].BoundedFormulaω 
     @Sentenceω.Realize L[[ℕ]] (instConst c φ) M S ↔
       @BoundedFormulaω.Realize L[[ℕ]] M S Empty 1 φ Empty.elim
         (fun _ => ambientConstMap (L := L) M c) := by
-  show @BoundedFormulaω.Realize L[[ℕ]] M S Empty 0 (instConst c φ) Empty.elim Fin.elim0 ↔ _
+  rw [@Sentenceω.realize_def L[[ℕ]] _ M S]
   rw [ambient_realize_iff_wc (S := S) (instConst c φ) Empty.elim Fin.elim0, realize_instConst,
     ambient_realize_iff_wc (S := S) φ Empty.elim (fun _ => ambientConstMap (L := L) M c)]
 

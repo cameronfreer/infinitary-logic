@@ -76,8 +76,8 @@ theorem realize_templateSentence_of_structure
             Fin.elim0 : L[[J]].Term Empty).realize (Empty.elim : Empty → N)) := by
   let : L.Structure N := (L.lhomWithConstants J).reduct N
   have : (L.lhomWithConstants J).IsExpansionOn N := LHom.isExpansionOn_reduct _ _
-  show BoundedFormulaω.Realize _ Empty.elim Fin.elim0 ↔ _
-  rw [Lomega1omegaTemplate.templateSentence, BoundedFormulaω.realize_subst]
+  rw [Sentenceω.realize_def, Lomega1omegaTemplate.templateSentence,
+    BoundedFormulaω.realize_subst]
   exact (realize_openBounds _ _).trans
         (BoundedFormulaω.realize_mapLanguage _ _ _ _)
 

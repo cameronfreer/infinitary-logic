@@ -431,7 +431,7 @@ noncomputable def ehmrRep (cR : (Fin 2 ↪o Source κ) → C) {β : Ordinal.{0}}
       rwa [Ordinal.type_toType] at hh)))
 
 /-- `S(h)` as a set, via `ehmrRep`. -/
-def ehmrS (cR : (Fin 2 ↪o Source κ) → C) {β : Ordinal.{0}} (h : EHMRNodeAt C β) :
+noncomputable def ehmrS (cR : (Fin 2 ↪o Source κ) → C) {β : Ordinal.{0}} (h : EHMRNodeAt C β) :
     Set (Source κ) := ehmrFiber cR (ehmrRep cR h) h
 
 /-- A node is **live** iff its successor set is nonempty. -/

@@ -1040,9 +1040,7 @@ theorem T_counterexample : ¬ TailTemplateRealizable (L' := HeightCex.Lang) := b
     have hneg' : ¬ Sentenceω.Realize
         (Lomega1omegaTemplate.templateSentence HeightCex.conj t) N := by
       have := hneg
-      rw [show Sentenceω.Realize (Lomega1omegaTemplate.templateSentence HeightCex.conj t).not N
-          ↔ ¬ Sentenceω.Realize (Lomega1omegaTemplate.templateSentence HeightCex.conj t) N from
-        BoundedFormulaω.realize_not _] at this
+      rw [Sentenceω.realize_def, BoundedFormulaω.realize_not, ← Sentenceω.realize_def] at this
       exact this
     exact hneg' ((realize_templateSentence_of_structure (L := HeightCex.Lang) (J := ℕ)
       (N := N) HeightCex.conj t).mpr hc)

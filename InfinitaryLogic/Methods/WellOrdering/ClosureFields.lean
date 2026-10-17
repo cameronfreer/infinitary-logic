@@ -605,9 +605,7 @@ theorem WOMem.all_inst {S : Set L[[ℕ]].Sentenceω} (hS : WOMem φ lt S)
     intro Γ' α' W hloc
     let : L[[ℕ]].Structure W.M := wc W.inst W.h
     have hall := W.realize_source hloc
-    rw [show @Sentenceω.Realize L[[ℕ]] ψ.all W.M (wc W.inst W.h) =
-      @BoundedFormulaω.Realize L[[ℕ]] W.M (wc W.inst W.h) Empty 0 ψ.all
-        Empty.elim Fin.elim0 from rfl, BoundedFormulaω.realize_all] at hall
+    rw [@Sentenceω.realize_def L[[ℕ]] _ W.M (wc W.inst W.h), BoundedFormulaω.realize_all] at hall
     refine (realize_instConst W.inst W.h c ψ).mpr ?_
     have := hall (W.h c)
     rwa [snoc_elim0_eq_const] at this

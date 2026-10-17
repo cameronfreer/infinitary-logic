@@ -70,12 +70,14 @@ theorem realize_mono_of_signed [L.IsRelational] :
   | falsum => intro S₁ S₂ _ _ v xs h; exact h
   | equal t₁ t₂ =>
     intro S₁ S₂ _ _ v xs h
-    show @Term.realize L M S₂ _ _ t₁ = @Term.realize L M S₂ _ _ t₂
+    rw [@BoundedFormulaω.realize_equal L M S₁] at h
+    rw [@BoundedFormulaω.realize_equal L M S₂]
     rw [← realize_term_of_isRelational S₁ S₂ _ t₁, ← realize_term_of_isRelational S₁ S₂ _ t₂]
     exact h
   | rel R ts =>
     intro S₁ S₂ hpos _ v xs h
-    show @Structure.RelMap L M S₂ _ R fun i => @Term.realize L M S₂ _ _ (ts i)
+    rw [@BoundedFormulaω.realize_rel L M S₁] at h
+    rw [@BoundedFormulaω.realize_rel L M S₂]
     have hterm : (fun i => @Term.realize L M S₂ _ (Sum.elim v xs) (ts i)) =
         fun i => @Term.realize L M S₁ _ (Sum.elim v xs) (ts i) :=
       funext fun i => (realize_term_of_isRelational S₁ S₂ _ (ts i)).symm

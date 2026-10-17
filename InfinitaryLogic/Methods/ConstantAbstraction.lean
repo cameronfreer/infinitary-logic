@@ -65,18 +65,17 @@ theorem BoundedFormulaω.realize_congr_instances (S S' : L.Structure M)
   | falsum => intro v xs; exact Iff.rfl
   | equal t₁ t₂ =>
     intro v xs
-    show @Term.realize L M S _ _ t₁ = @Term.realize L M S _ _ t₂
-      ↔ @Term.realize L M S' _ _ t₁ = @Term.realize L M S' _ _ t₂
+    rw [@BoundedFormulaω.realize_equal L M S, @BoundedFormulaω.realize_equal L M S']
     rw [Term.realize_congr_instances S S' hf, Term.realize_congr_instances S S' hf]
   | rel R ts =>
     intro v xs
-    show @Structure.RelMap L M S _ R _ ↔ @Structure.RelMap L M S' _ R _
+    rw [@BoundedFormulaω.realize_rel L M S, @BoundedFormulaω.realize_rel L M S']
     rw [show (fun i => @Term.realize L M S _ _ (ts i)) = (fun i => @Term.realize L M S' _ _ (ts i))
         from funext fun i => Term.realize_congr_instances S S' hf _ _]
     exact hr R _
   | imp φ ψ ihφ ihψ =>
     intro v xs
-    show (_ → _) ↔ (_ → _)
+    rw [@BoundedFormulaω.realize_imp L M S, @BoundedFormulaω.realize_imp L M S']
     -- apply the induction hypotheses rather than rewriting: they are stated through the reducible
     -- `BoundedFormulaω.Realize` alias, which `rw` cannot key against the unfolded goal
     exact imp_congr (ihφ v xs) (ihψ v xs)
@@ -179,15 +178,16 @@ theorem BoundedFormulaω.realize_congr_const (base : L.Structure M) {h h' : ℕ 
   | falsum => intro _ v xs; exact Iff.rfl
   | equal t₁ t₂ =>
     intro hagree v xs
-    show @Term.realize L[[ℕ]] M (wc base h) _ _ t₁ = @Term.realize L[[ℕ]] M (wc base h) _ _ t₂
-      ↔ @Term.realize L[[ℕ]] M (wc base h') _ _ t₁ = @Term.realize L[[ℕ]] M (wc base h') _ _ t₂
+    rw [@BoundedFormulaω.realize_equal L[[ℕ]] M (wc base h),
+      @BoundedFormulaω.realize_equal L[[ℕ]] M (wc base h')]
     rw [Term.realize_congr_const base t₁
         (fun k hk => hagree k (Set.mem_union_left _ hk)),
       Term.realize_congr_const base t₂
         (fun k hk => hagree k (Set.mem_union_right _ hk))]
   | rel R ts =>
     intro hagree v xs
-    show @Structure.RelMap L[[ℕ]] M (wc base h) _ R _ ↔ @Structure.RelMap L[[ℕ]] M (wc base h') _ R _
+    rw [@BoundedFormulaω.realize_rel L[[ℕ]] M (wc base h),
+      @BoundedFormulaω.realize_rel L[[ℕ]] M (wc base h')]
     rw [show (fun i => @Term.realize L[[ℕ]] M (wc base h) _ (Sum.elim v xs) (ts i))
           = (fun i => @Term.realize L[[ℕ]] M (wc base h') _ (Sum.elim v xs) (ts i))
         from funext fun i => Term.realize_congr_const base (ts i)
@@ -197,7 +197,8 @@ theorem BoundedFormulaω.realize_congr_const (base : L.Structure M) {h h' : ℕ 
     · exact isEmptyElim e
   | imp φ ψ ihφ ihψ =>
     intro hagree v xs
-    show (_ → _) ↔ (_ → _)
+    rw [@BoundedFormulaω.realize_imp L[[ℕ]] M (wc base h),
+      @BoundedFormulaω.realize_imp L[[ℕ]] M (wc base h')]
     exact imp_congr (ihφ (fun k hk => hagree k (sentenceJConsts_imp_left _ _ hk)) v xs)
       (ihψ (fun k hk => hagree k (sentenceJConsts_imp_right _ _ hk)) v xs)
   | all φ ih =>
@@ -292,6 +293,8 @@ theorem BoundedFormulaω.realize_abstractConst (base : L.Structure M) (h : ℕ �
   | falsum => intro xs; exact Iff.rfl
   | equal t u =>
     intro xs
+    refine (@BoundedFormulaω.realize_equal L[[ℕ]] M (wc base h) _ _ _ _ _ _).trans (Iff.trans ?_
+      (@BoundedFormulaω.realize_equal L[[ℕ]] M (wc base (Function.update h j a)) _ _ _ _ _ _).symm)
     show @Term.realize L[[ℕ]] M (wc base h) _ _ (t.abstractConst j)
         = @Term.realize L[[ℕ]] M (wc base h) _ _ (u.abstractConst j)
       ↔ @Term.realize L[[ℕ]] M (wc base (Function.update h j a)) _ _ t
@@ -299,6 +302,8 @@ theorem BoundedFormulaω.realize_abstractConst (base : L.Structure M) (h : ℕ �
     rw [Term.realize_abstractConst base h j a xs t, Term.realize_abstractConst base h j a xs u]
   | rel R ts =>
     intro xs
+    refine (@BoundedFormulaω.realize_rel L[[ℕ]] M (wc base h) _ _ _ _ _ _ _).trans (Iff.trans ?_
+      (@BoundedFormulaω.realize_rel L[[ℕ]] M (wc base (Function.update h j a)) _ _ _ _ _ _ _).symm)
     show @Structure.RelMap L[[ℕ]] M (wc base h) _ R _
       ↔ @Structure.RelMap L[[ℕ]] M (wc base (Function.update h j a)) _ R _
     rw [show (fun i => @Term.realize L[[ℕ]] M (wc base h) _
@@ -311,7 +316,8 @@ theorem BoundedFormulaω.realize_abstractConst (base : L.Structure M) (h : ℕ �
     · exact isEmptyElim e
   | imp φ ψ ihφ ihψ =>
     intro xs
-    show (_ → _) ↔ (_ → _)
+    refine (@BoundedFormulaω.realize_imp L[[ℕ]] M (wc base h) _ _ _ _ _ _).trans (Iff.trans ?_
+      (@BoundedFormulaω.realize_imp L[[ℕ]] M (wc base (Function.update h j a)) _ _ _ _ _ _).symm)
     exact imp_congr (ihφ xs) (ihψ xs)
   | all φ ih =>
     intro xs

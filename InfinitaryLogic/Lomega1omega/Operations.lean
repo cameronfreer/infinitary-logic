@@ -21,7 +21,8 @@ This file defines operations on Lω₁ω formulas including relabeling, casting,
 ## Implementation Notes
 
 These are the ω-facing operations, defined over `BoundedFormulaInf ℕ`. An operation that makes
-sense at an arbitrary branching carrier belongs upstream on `BoundedFormulaInf`; `IndexCoding`
+sense at an arbitrary branching carrier belongs on `BoundedFormulaInf` itself (in TauCeti, or in
+the carrier-generic `Infinitary/` modules of this repository); `IndexCoding`
 handles transport between carriers.
 -/
 
@@ -214,7 +215,7 @@ theorem realize_relabel_sumInr {n : ℕ} :
     φ.Realize (xs ∘ Fin.castAdd k) (xs ∘ Fin.natAdd n) := by
   intro k φ
   induction φ with
-  | falsum => intro xs; simp [relabel, Realize]
+  | falsum => intro xs; simp [relabel]
   | equal t₁ t₂ =>
     intro xs
     simp only [relabel, realize_equal, Term.realize_relabel, sum_elim_relabelAux_sumInr]
@@ -286,7 +287,7 @@ theorem realize_mapFreeVars {M : Type*} [L.Structure M]
     (f : α → β) (φ : L.BoundedFormulaω α n) (v : β → M) (xs : Fin n → M) :
     (φ.mapFreeVars f).Realize v xs ↔ φ.Realize (v ∘ f) xs := by
   induction φ with
-  | falsum => simp [mapFreeVars, Realize]
+  | falsum => simp [mapFreeVars]
   | equal t₁ t₂ =>
     simp only [mapFreeVars, realize_equal, Term.realize_relabel, Sum.elim_comp_map,
       Function.comp_id]
@@ -336,7 +337,7 @@ theorem realize_subst {M : Type*} [L.Structure M]
     (tf : α → L.Term β) (φ : L.BoundedFormulaω α n) (v : β → M) (xs : Fin n → M) :
     (φ.subst tf).Realize v xs ↔ φ.Realize (fun a => (tf a).realize v) xs := by
   induction φ with
-  | falsum => simp [subst, Realize]
+  | falsum => simp [subst]
   | equal t₁ t₂ =>
     simp only [subst, realize_equal, Term.realize_subst, sum_elim_subst_tf]
   | rel R ts =>
@@ -843,7 +844,7 @@ namespace Formula
 /-- Embeds a first-order formula into Lω₁ω. -/
 def toLω (φ : L.Formula α) : L.Formulaω α := BoundedFormula.toLω φ
 
-@[simp]
+@[simp high] -- outranks TauCeti's simp `FormulaInf.realize_def`, which would pre-empt it
 theorem realize_toLω {M : Type*} [L.Structure M] {v : α → M} (φ : L.Formula α) :
     Formulaω.Realize φ.toLω v ↔ φ.Realize v :=
   BoundedFormula.realize_toLω φ
@@ -855,7 +856,7 @@ namespace Sentence
 /-- Embeds a first-order sentence into Lω₁ω. -/
 def toLω (φ : L.Sentence) : L.Sentenceω := Formula.toLω φ
 
-@[simp]
+@[simp high] -- outranks TauCeti's simp `SentenceInf.realize_def`, which would pre-empt it
 theorem realize_toLω {M : Type*} [L.Structure M] [Nonempty M] (φ : L.Sentence) :
     Sentenceω.Realize φ.toLω M ↔ M ⊨ φ := by
   -- M ⊨ φ uses `default : Empty → M`, while Sentenceω.Realize uses `Empty.elim`

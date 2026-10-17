@@ -185,7 +185,7 @@ theorem IsLomega1omegaIndiscernibleOnTail.templateTheoryOn_finitelySatisfiable
     show (phiOf τ').Realize (Empty.elim : Empty → M) (a ∘ (fun i => f (t'Of τ' i)))
     exact (hcutOf τ' _ (ft'_strictMono τ') (ft'_deep τ')).mp hpos
   · rw [heq]
-    show ¬ Sentenceω.Realize (Lomega1omegaTemplate.templateSentence (phiOf τ') (tOf τ')) M
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not, ← Sentenceω.realize_def]
     rw [realize_templateSentence σ (phiOf τ') (tOf τ')]
     rw [show (σ ∘ ⇑(tOf τ') : Fin (nOf τ') → M) = (fun i => a (f (t'Of τ' i))) from
         sigma_eq τ']

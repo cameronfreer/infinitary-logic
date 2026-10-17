@@ -166,8 +166,8 @@ theorem hasArbLargeModels_mapLanguage_uniformCollapse {φ : L.Sentenceω}
       (Empty.elim : Empty → M) Fin.elim0
     rw [BoundedFormulaω.mapLanguage_restrictSymbols] at h
     exact h.mp hφM
-  show BoundedFormulaω.Realize (φ.mapLanguage (uniformCollapse φ)) Empty.elim Fin.elim0
-  rw [BoundedFormulaω.mapLanguage_uniformCollapse_eq φ (subset_refl _) (subset_refl _)]
+  rw [Sentenceω.realize_def,
+    BoundedFormulaω.mapLanguage_uniformCollapse_eq φ (subset_refl _) (subset_refl _)]
   exact (BoundedFormulaω.realize_mapLanguage LHom.sumInl _ Empty.elim Fin.elim0).mpr h0
 
 /-- **The small-model theorem** (Marker, Theorem 5.2.5), over an ARBITRARY language: a sentence

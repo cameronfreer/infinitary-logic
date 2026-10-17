@@ -260,6 +260,7 @@ theorem realize_ψB (c b : Fin 2 → Bool) :
 
 theorem hθB (c : Fin 2 → Bool) :
     θB.Realize c ↔ ∃ e : Bool ≃[Lf] Bool, ⇑e ∘ ![true, true] = c := by
+  rw [θB, Formulaω.realize_def, BoundedFormulaω.realize_equal]
   show c 0 = c 1 ↔ _
   constructor
   · intro h
@@ -319,6 +320,7 @@ def θC : Lf.Formulaω (Fin 1) :=
 def ψC : Lf.Formulaω (Fin (1 + 1)) := (equal (Term.var (Sum.inl 1)) (Term.var (Sum.inl 0))).not
 
 theorem hθC (c : Fin 1 → Fin 2) : θC.Realize c ↔ ∃ e : Fin 2 ≃[Lf] Fin 2, ⇑e ∘ ![1] = c := by
+  rw [θC, Formulaω.realize_def, BoundedFormulaω.realize_equal]
   show c 0 = 1 ↔ _
   constructor
   · intro h
@@ -327,6 +329,7 @@ theorem hθC (c : Fin 1 → Fin 2) : θC.Realize c ↔ ∃ e : Fin 2 ≃[Lf] Fin
 
 theorem hψC (b : Fin 1 → Fin 2) : ψC.Realize (Fin.append ![1] b) ↔
     ∃ f : Fin 2 ≃[Lf] Fin 2, (∀ i, f (![1] i) = ![1] i) ∧ ⇑f ∘ ![0] = b := by
+  rw [ψC, Formulaω.realize_not, Formulaω.realize_def, BoundedFormulaω.realize_equal]
   show ¬ b 0 = 1 ↔ _
   constructor
   · intro h
@@ -446,6 +449,7 @@ def expectedClosure : List Name :=
   [`InfinitaryLogic.Util, `InfinitaryLogic.Lomega1omega.Syntax,
    `InfinitaryLogic.Lomega1omega.Semantics, `InfinitaryLogic.Lomega1omega.Operations,
    `InfinitaryLogic.Lomega1omega.OpenBoundsSemantics, `InfinitaryLogic.Lomega1omega.QuantifierRank,
+   `InfinitaryLogic.Infinitary.QuantifierRank, `InfinitaryLogic.Infinitary.Reindex,
    `InfinitaryLogic.Lomega1omega.Theory, `InfinitaryLogic.Scott.AtomicDiagram,
    `InfinitaryLogic.Scott.BackAndForth, `InfinitaryLogic.Scott.BFEquivRelabel,
    `InfinitaryLogic.Scott.Formula, `InfinitaryLogic.Scott.Sentence,

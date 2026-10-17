@@ -81,8 +81,7 @@ theorem nat_models :
     letI : (constantsOn ℕ).Structure ℕ := constantsOn.structure id
     Sentenceω.Realize countableSpectrumSentence ℕ := by
   let : (constantsOn ℕ).Structure ℕ := constantsOn.structure id
-  show BoundedFormulaω.Realize _ (Empty.elim : Empty → ℕ) Fin.elim0
-  rw [countableSpectrumSentence, BoundedFormulaω.realize_iInf]
+  rw [Sentenceω.realize_def, countableSpectrumSentence, BoundedFormulaω.realize_iInf]
   intro n
   match n with
   | 0 =>

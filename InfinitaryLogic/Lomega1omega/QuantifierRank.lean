@@ -5,7 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Lomega1omega.Semantics
 import InfinitaryLogic.Lomega1omega.Operations
-import Mathlib.ModelTheory.Infinitary.QuantifierRank
+import InfinitaryLogic.Infinitary.QuantifierRank
 import Mathlib.SetTheory.Ordinal.Family
 import Mathlib.SetTheory.Cardinal.Regular
 
@@ -57,11 +57,11 @@ open FirstOrder Structure Ordinal
 Because the rank is valued in the carrier's own ordinal universe, the `ℕ` specialization
 lands in `Ordinal.{0}` exactly — no lifting, which is what Scott analysis needs.
 
-This is an `abbrev`, so it is the upstream rank rather than a parallel copy of it (gated by
-`rfl` below). The ω-facing lemmas beneath keep their historical statements: `qrank_all` and
-`qrank_ex` are still stated with `+ 1` rather than `Order.succ`, so downstream sees no
-proposition-level change. Only code that relied on the old definition unfolding by `rfl` is
-affected.
+This is an `abbrev`, so it is the carrier-generic rank of `Infinitary/QuantifierRank.lean`
+rather than a parallel copy of it (gated by `rfl` below). The ω-facing lemmas beneath keep their
+historical statements: `qrank_all` and `qrank_ex` are still stated with `+ 1` rather than
+`Order.succ`, so downstream sees no proposition-level change. Only code that relied on the old
+definition unfolding by `rfl` is affected.
 
 The quantifier rank of an `Lω₁ω` formula is always a countable ordinal (`< ω₁`):
 `BoundedFormulaω.qrank_lt_omega1`. -/
@@ -76,7 +76,7 @@ noncomputable abbrev Formulaω.qrank (φ : L.Formulaω α) : Ordinal.{0} :=
 noncomputable abbrev Sentenceω.qrank (φ : L.Sentenceω) : Ordinal.{0} :=
   BoundedFormulaω.qrank φ
 
-/-! ### Gate: the ω rank IS the upstream rank
+/-! ### Gate: the ω rank IS the carrier-generic rank
 
 Must close by `rfl` — that is what certifies this is the carrier-generic rank specialized at `ℕ`
 rather than a parallel recursive copy that happens to agree. -/
@@ -97,7 +97,7 @@ variable {α : Type*} {n : ℕ}
 theorem qrank_falsum : (falsum : L.BoundedFormulaω α n).qrank = 0 := rfl
 
 @[simp]
-theorem qrank_bot : (⊥ : L.BoundedFormulaω α n).qrank = 0 := rfl
+theorem qrank_bot : (⊥ : L.BoundedFormulaω α n).qrank = 0 := BoundedFormulaInf.qrank_bot
 
 @[simp]
 theorem qrank_equal (t₁ t₂ : L.Term (α ⊕ Fin n)) : (equal t₁ t₂).qrank = 0 := rfl
@@ -110,8 +110,8 @@ theorem qrank_rel {l : ℕ} (R : L.Relations l) (ts : Fin l → L.Term (α ⊕ F
 theorem qrank_imp (φ ψ : L.BoundedFormulaω α n) :
     (imp φ ψ).qrank = max φ.qrank ψ.qrank := rfl
 
-/-- Universal quantification adds 1. Kept in `+ 1` form: upstream states it with
-`Order.succ`, and the two agree for ordinals. -/
+/-- Universal quantification adds 1. Kept in `+ 1` form: the carrier-generic
+`BoundedFormulaInf.qrank_all` states it with `Order.succ`, and the two agree for ordinals. -/
 @[simp]
 theorem qrank_all (φ : L.BoundedFormulaω α (n + 1)) :
     (all φ).qrank = φ.qrank + 1 :=
@@ -127,9 +127,7 @@ theorem qrank_iInf (φs : ℕ → L.BoundedFormulaω α n) :
 
 /-- The top formula has rank 0. -/
 @[simp]
-theorem qrank_top : (⊤ : L.BoundedFormulaω α n).qrank = 0 := by
-  simp only [Top.top, BoundedFormulaInf.verum, BoundedFormulaInf.not, qrank_imp,
-    qrank_falsum, max_self]
+theorem qrank_top : (⊤ : L.BoundedFormulaω α n).qrank = 0 := BoundedFormulaInf.qrank_top
 
 /-- Negation preserves quantifier rank. -/
 @[simp]
@@ -149,14 +147,16 @@ theorem qrank_or (φ ψ : L.BoundedFormulaω α n) :
 /-- `qrank_and` for the lattice notation `⊓`. -/
 @[simp]
 theorem qrank_inf (φ ψ : L.BoundedFormulaω α n) :
-    (φ ⊓ ψ).qrank = max φ.qrank ψ.qrank :=
-  qrank_and φ ψ
+    (φ ⊓ ψ).qrank = max φ.qrank ψ.qrank := by
+  rw [BoundedFormulaInf.inf_def]
+  exact qrank_and φ ψ
 
 /-- `qrank_or` for the lattice notation `⊔`. -/
 @[simp]
 theorem qrank_sup (φ ψ : L.BoundedFormulaω α n) :
-    (φ ⊔ ψ).qrank = max φ.qrank ψ.qrank :=
-  qrank_or φ ψ
+    (φ ⊔ ψ).qrank = max φ.qrank ψ.qrank := by
+  rw [BoundedFormulaInf.sup_def]
+  exact qrank_or φ ψ
 
 /-- Existential quantification adds 1 to rank. Kept in `+ 1` form, as for `qrank_all`. -/
 theorem qrank_ex (φ : L.BoundedFormulaω α (n + 1)) :

@@ -68,11 +68,14 @@ theorem realize_liftFormula {ι : Type uι} {γ : Type u'} (c : StructureSpace L
   induction φ with
   | falsum => exact Iff.rfl
   | equal t₁ t₂ =>
-    change @Term.realize L ℕ c.toStructure _ _ (liftTerm L t₁) =
-        @Term.realize L ℕ c.toStructure _ _ (liftTerm L t₂) ↔ _
+    refine (@BoundedFormulaInf.realize_equal L ι γ _ ℕ c.toStructure v xs _ _).trans
+      (Iff.trans ?_
+        (@BoundedFormulaInf.realize_equal (lang L) ι γ _ ℕ (code L c).toStructure v xs _ _).symm)
     rw [realize_liftTerm, realize_liftTerm]
-    exact Iff.rfl
   | rel R ts =>
+    refine (@BoundedFormulaInf.realize_rel L ι γ _ ℕ c.toStructure v xs _ _ _).trans
+      (Iff.trans ?_
+        (@BoundedFormulaInf.realize_rel (lang L) ι γ _ ℕ (code L c).toStructure v xs _ _ _).symm)
     change c ⟨⟨_, (shrinkRel L _).symm R⟩,
         fun i => @Term.realize L ℕ c.toStructure _ _ (liftTerm L (ts i))⟩ = true ↔
       code L c ⟨⟨_, R⟩, fun i => @Term.realize (lang L) ℕ (code L c).toStructure _ _ (ts i)⟩ = true
