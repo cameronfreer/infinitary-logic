@@ -166,7 +166,7 @@ theorem truth_both (hsc : HenkinComplete U S) :
       (σ ∈ S → @Sentenceω.Realize L[[ℕ]] σ (QModel hsc) (qModelStructure hsc)) ∧
       (σ.not ∈ S → ¬ @Sentenceω.Realize L[[ℕ]] σ (QModel hsc) (qModelStructure hsc))
   | .falsum =>
-      ⟨fun hmem => absurd hmem hsc.no_falsum, fun _ => by simp [Sentenceω.realize_def]⟩
+      ⟨fun hmem => absurd hmem hsc.no_falsum, fun _ => by simp⟩
   | .equal t₁ t₂ => by
       refine ⟨fun hmem => ?_, fun hmem => ?_⟩
       · -- positive: `equal t₁ t₂ ∈ S` gives the equality of classes
@@ -268,7 +268,6 @@ theorem truth_both (hsc : HenkinComplete U S) :
       | exact depth_lt_imp_left
       | exact depth_lt_imp_right
       | exact depth_lt_iSup _
-      | exact depth_lt_iInf _
       | exact depth_instConst_lt _ _
 
 /-- **Forward truth lemma, positive polarity** (open form).  If the constant closure `closeBy φ τ`

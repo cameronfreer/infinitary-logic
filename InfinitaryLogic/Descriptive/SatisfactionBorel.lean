@@ -117,14 +117,14 @@ theorem modelsOfBounded_measurableSet
       ext c
       simp only [Set.mem_ofPred_eq, ModelsOfBounded, Set.mem_univ, iff_true]
       let := c.toStructure
-      simp [BoundedFormulaω.realize_equal, Term.realize, h]
+      simp [Term.realize, h]
     · convert MeasurableSet.empty (α := StructureSpace L)
       ext c
       simp only [Set.mem_ofPred_eq, ModelsOfBounded, Set.mem_empty_iff_false, iff_false]
       intro hc
       apply h
       let := c.toStructure
-      simp [BoundedFormulaω.realize_equal, Term.realize] at hc
+      simp [Term.realize] at hc
       exact hc
   | @rel _ l R ts =>
     -- Each term ts i is a variable; extract the variable index for each i
