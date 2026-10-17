@@ -80,7 +80,7 @@ theorem pointedType_zero_eq_sentenceTheory (F : Fragment L) (θ : ℕ → L.Sent
 
 /-- **The realized spectrum** of `F` at arity `n` on a class `C`: the types of all `n`-tuples of
 all members, counted across the class. -/
-def typeSpectrum (F : Fragment L) (n : ℕ) (C : Set (StructureSpace L)) :
+noncomputable def typeSpectrum (F : Fragment L) (n : ℕ) (C : Set (StructureSpace L)) :
     Set (F.slice n → Bool) :=
   (fun p : StructureSpace L × (Fin n → ℕ) => F.pointedType p.1 p.2) '' (C ×ˢ Set.univ)
 

@@ -89,7 +89,9 @@ theorem spare_snoc_of_notMem [Finite Y] {n : ℕ} (b : Fin n → Y) {y : Y}
     ext z
     simp only [Set.mem_compl_iff, Set.mem_insert_iff, Set.mem_sdiff, Set.mem_singleton_iff, not_or]
     exact and_comm
-  rw [range_snoc, hT, ← Set.ncard_insert_of_notMem (fun h => h.2 rfl), Set.insert_sdiff_singleton,
+  rw [range_snoc, hT,
+    ← Set.ncard_insert_of_notMem (a := y) (s := (Set.range b)ᶜ \ {y})
+      (fun h => ((Set.mem_sdiff y).mp h).2 (Set.mem_singleton y)), Set.insert_sdiff_singleton,
     Set.insert_eq_of_mem (Set.mem_compl hy)]
 
 omit [Language.empty.Structure X] [Language.empty.Structure Y] in

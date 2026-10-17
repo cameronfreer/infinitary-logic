@@ -311,7 +311,7 @@ noncomputable def nodeRep (G : (Fin (n + 2) ↪o Source lam) → C) {β : Ordina
       rwa [Ordinal.type_toType] at hh)))
 
 /-- `S(h)` as a set, via `nodeRep`. -/
-def nodeS (G : (Fin (n + 2) ↪o Source lam) → C) {β : Ordinal.{0}} (h : NodeAt C n β) :
+noncomputable def nodeS (G : (Fin (n + 2) ↪o Source lam) → C) {β : Ordinal.{0}} (h : NodeAt C n β) :
     Set (Source lam) := nodeFiber G (nodeRep G h) h
 
 /-- A node is **live** iff its successor set is nonempty. -/

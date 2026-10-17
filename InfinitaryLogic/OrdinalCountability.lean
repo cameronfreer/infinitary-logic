@@ -481,7 +481,7 @@ theorem leastLevel_le_of_mem {x : X} {α : Ordinal.{0}} (h : x ∈ Q α) : least
 variable {Q} in
 /-- A point lying in some member of the family lies in the member at its least level. -/
 theorem leastLevel_mem_of_exists {x : X} (hx : ∃ α, x ∈ Q α) : x ∈ Q (leastLevel Q x) :=
-  csInf_mem hx
+  csInf_mem (s := {α | x ∈ Q α}) hx
 
 variable (hcover : (⋃ α < Ordinal.omega 1, Q α) = Set.univ)
 include hcover

@@ -45,7 +45,8 @@ theorem slice_countable {F : Fragment L} (hF : F.toSet.Countable) (n : ℕ) :
     exact Subtype.ext h).countable
 
 /-- **The realized spectrum** of a code at arity `n`: the `F`-types of its `n`-tuples. -/
-def realizedSpectrum (F : Fragment L) (n : ℕ) (c : StructureSpace L) : Set (F.slice n → Bool) :=
+noncomputable def realizedSpectrum (F : Fragment L) (n : ℕ) (c : StructureSpace L) :
+    Set (F.slice n → Bool) :=
   Set.range fun a : Fin n → ℕ => F.pointedType c a
 
 omit [Countable (Σ n, L.Relations n)] in

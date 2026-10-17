@@ -96,7 +96,8 @@ theorem exists_classCondensationPt_of_uncountable {α : Type u}
     intro q ⟨y, hy_U, hy_eq⟩
     obtain ⟨B, hB_mem, hB_y, hB_count⟩ := h_cover y hy_U
     exact Set.mem_biUnion (show B ∈ S from ⟨hB_mem, hB_count⟩) ⟨y, ⟨hy_U, hB_y⟩, hy_eq⟩
-  exact ((hbasis_count.mono (fun _ h => h.1)).biUnion (fun B hB => hB.2)).mono h_sub'
+  have hS_count : S.Countable := hbasis_count.mono fun _ (h : _ ∈ S) => h.1
+  exact (hS_count.biUnion fun B (hB : B ∈ S) => hB.2).mono h_sub'
 
 /-- In a second-countable space, if U meets uncountably many E-classes,
 then uncountably many classes have a condensation point representative in U. -/
@@ -140,7 +141,7 @@ theorem uncountable_classCondensationPt_classes {α : Type u}
       exact hV_count.mono (fun q hq => by
         obtain ⟨z, ⟨hz_U, hz_B⟩, hz_eq⟩ := hq
         exact ⟨z, ⟨hz_U, hB_sub hz_B⟩, hz_eq⟩)
-    exact Set.mem_biUnion ⟨hB_mem, hB_count⟩ ⟨y, ⟨hy_U, hB_y⟩, hy_eq⟩
+    exact Set.mem_iUnion₂.mpr ⟨B, ⟨hB_mem, hB_count⟩, ⟨y, ⟨hy_U, hB_y⟩, hy_eq⟩⟩
 
 /-- **Splitting lemma** for closed equivalence relations on metric spaces.
 If a closed set U meets uncountably many classes of a closed equivalence
