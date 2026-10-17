@@ -21,7 +21,8 @@ This file defines operations on Lω₁ω formulas including relabeling, casting,
 ## Implementation Notes
 
 These are the ω-facing operations, defined over `BoundedFormulaInf ℕ`. An operation that makes
-sense at an arbitrary branching carrier belongs upstream on `BoundedFormulaInf`; `IndexCoding`
+sense at an arbitrary branching carrier belongs on `BoundedFormulaInf` itself (in TauCeti, or in
+the carrier-generic `Infinitary/` modules of this repository); `IndexCoding`
 handles transport between carriers.
 -/
 

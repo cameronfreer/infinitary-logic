@@ -57,11 +57,11 @@ open FirstOrder Structure Ordinal
 Because the rank is valued in the carrier's own ordinal universe, the `ℕ` specialization
 lands in `Ordinal.{0}` exactly — no lifting, which is what Scott analysis needs.
 
-This is an `abbrev`, so it is the upstream rank rather than a parallel copy of it (gated by
-`rfl` below). The ω-facing lemmas beneath keep their historical statements: `qrank_all` and
-`qrank_ex` are still stated with `+ 1` rather than `Order.succ`, so downstream sees no
-proposition-level change. Only code that relied on the old definition unfolding by `rfl` is
-affected.
+This is an `abbrev`, so it is the carrier-generic rank of `Infinitary/QuantifierRank.lean`
+rather than a parallel copy of it (gated by `rfl` below). The ω-facing lemmas beneath keep their
+historical statements: `qrank_all` and `qrank_ex` are still stated with `+ 1` rather than
+`Order.succ`, so downstream sees no proposition-level change. Only code that relied on the old
+definition unfolding by `rfl` is affected.
 
 The quantifier rank of an `Lω₁ω` formula is always a countable ordinal (`< ω₁`):
 `BoundedFormulaω.qrank_lt_omega1`. -/
@@ -76,7 +76,7 @@ noncomputable abbrev Formulaω.qrank (φ : L.Formulaω α) : Ordinal.{0} :=
 noncomputable abbrev Sentenceω.qrank (φ : L.Sentenceω) : Ordinal.{0} :=
   BoundedFormulaω.qrank φ
 
-/-! ### Gate: the ω rank IS the upstream rank
+/-! ### Gate: the ω rank IS the carrier-generic rank
 
 Must close by `rfl` — that is what certifies this is the carrier-generic rank specialized at `ℕ`
 rather than a parallel recursive copy that happens to agree. -/
@@ -110,8 +110,8 @@ theorem qrank_rel {l : ℕ} (R : L.Relations l) (ts : Fin l → L.Term (α ⊕ F
 theorem qrank_imp (φ ψ : L.BoundedFormulaω α n) :
     (imp φ ψ).qrank = max φ.qrank ψ.qrank := rfl
 
-/-- Universal quantification adds 1. Kept in `+ 1` form: upstream states it with
-`Order.succ`, and the two agree for ordinals. -/
+/-- Universal quantification adds 1. Kept in `+ 1` form: the carrier-generic
+`BoundedFormulaInf.qrank_all` states it with `Order.succ`, and the two agree for ordinals. -/
 @[simp]
 theorem qrank_all (φ : L.BoundedFormulaω α (n + 1)) :
     (all φ).qrank = φ.qrank + 1 :=

@@ -21,8 +21,8 @@ is a subtype of realized types, landing in `Type (max u v)` — be universe-poly
 
 Both definitions are noncomputable: `Encodable.ofCountable` upgrades `[Countable ι]` to an
 encoding by choice. Padding handles the empty index uniformly, an empty `ι` padding every
-branch, so no case split is needed and each realization lemma is the upstream one applied
-directly.
+branch, so no case split is needed and each realization lemma is `realize_iInfAlong` or
+`realize_iSupAlong` (`Infinitary/Reindex.lean`) applied directly.
 
 Only the realization lemmas are provided. No syntactic naturality API is built here: the
 encoding is noncanonical, so definitional commutation statements would be unpleasant —

@@ -3,7 +3,7 @@
 ![CI](https://github.com/cameronfreer/infinitary-logic/actions/workflows/build.yml/badge.svg)
 [![Latest release](https://img.shields.io/github/v/release/cameronfreer/infinitary-logic?label=release)](https://github.com/cameronfreer/infinitary-logic/releases/latest)
 
-A Lean 4 formalization of infinitary logic (L∞ω and Lω₁ω), Scott sentences, and classical results in infinitary model theory, building on [Mathlib](https://leanprover-community.github.io/mathlib4_docs/).
+A Lean 4 formalization of infinitary logic (L∞ω and Lω₁ω), Scott sentences, and classical results in infinitary model theory, building on [Mathlib](https://leanprover-community.github.io/mathlib4_docs/) and on the infinitary syntax and semantics of [TauCeti](https://github.com/TauCetiProject/TauCeti).
 
 - **[Project page](https://cameronfreer.github.io/infinitary-logic/)**
 - **[Blueprint (web)](https://cameronfreer.github.io/infinitary-logic/blueprint/)** · **[Blueprint (pdf)](https://cameronfreer.github.io/infinitary-logic/blueprint/blueprint.pdf)**
@@ -107,7 +107,8 @@ modules live in the separate non-default `InfinitaryLogicWIP` target, so they ne
 
 | Directory | Contents |
 |---|---|
-| `Lomega1omega/` | the Lω₁ω layer over Mathlib's fixed-carrier infinitary syntax — semantics, operations, fragments, polarity, quantifier rank, the `Σ^in_α`/`Π^in_α` hierarchy |
+| `Infinitary/` | carrier transport (`reindex`, `iInfAlong`) and the carrier-generic quantifier rank, moved from the former Mathlib fork |
+| `Lomega1omega/` | the Lω₁ω layer over [TauCeti](https://github.com/TauCetiProject/TauCeti)'s fixed-carrier infinitary syntax and semantics — operations, fragments, polarity, quantifier rank, the `Σ^in_α`/`Π^in_α` hierarchy |
 | `Scott/`, `Karp/` | atomic diagrams, back-and-forth equivalence, Scott formulas and sentences, rank and height, and Montalbán's explicit Scott sentence from orbit formulas; Karp's theorem |
 | `ScottProcess/` | Larson's Scott processes: the free array (extension sets, vertical and horizontal projections, their laws), the Scott-process axioms with their first consequences, the semantic entries of tuples with the Scott process of an infinite relational structure and their bridge to back-and-forth equivalence, and the stabilization and rank of a process with its comparison to the orbit ranks and the internal Scott rank |
 | `Methods/` | the proof engines: the Henkin/consistency-property kernel, interpolation, the well-ordering machine, López–Escobar, Ehrenfeucht–Mostowski |
