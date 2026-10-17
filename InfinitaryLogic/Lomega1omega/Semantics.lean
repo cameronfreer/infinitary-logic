@@ -16,8 +16,11 @@ qualified names the project already uses, and keeps only what TauCeti does not p
 
 TauCeti does not expose the bodies of `Realize`, `FormulaInf.Realize` or `SentenceInf.Realize`:
 reason about them through the realization lemmas (`realize_imp`, `realize_all`, …) and the
-bridges `FormulaInf.realize_def`/`SentenceInf.realize_def` (simp lemmas there), never by
-unfolding.
+bridges `FormulaInf.realize_def`/`SentenceInf.realize_def` (simp lemmas there), or
+`Formulaω.realize_def`/`Sentenceω.realize_def` below, not by unfolding. No `show` or `change`
+step in this repository crosses these bodies. Other definitional uses remain (term-mode proofs
+across the formula/bounded levels, `intro`/`rcases` through a connective, `Iff.rfl`); they
+compile only because this project's files are not `module`s.
 
 ## Why the definitions had to be adopted, not merely paralleled
 
@@ -268,10 +271,21 @@ abbrev Realize (φ : L.Formulaω α) (v : α → M) : Prop :=
 
 variable {φ : L.Formulaω α} {v : α → M}
 
+/-! #### Simp normal form at the formula level
+
+TauCeti's `FormulaInf.realize_def` is a `@[simp]` lemma, so a plain `simp` rewrites
+`Formulaω.Realize φ v` for an opaque `φ` to `BoundedFormulaInf.Realize φ v default`; likewise
+`SentenceInf.realize_def` for `Sentenceω.Realize`. The project's formula-level normal form is kept
+only for the 17 lemmas tagged `@[simp high]`: the eight below, and nine in
+`Lomega1omega/Operations.lean`, `Lomega1omega/InfiniteAxiom.lean`,
+`Scott/MontalbanSentence.lean` and `Scott/OrbitParameters.lean`. A formula-level lemma at
+default priority, or a formula-level hypothesis `h` in `simp [h]`, loses to the bridge; apply it
+with `rw` or `simp only` before a full `simp`. -/
+
 /-- The level-crossing lemma: formula realization *is* bounded-formula realization at the empty
 tuple.
 
-`FormulaInf.Realize` is a plain definition upstream, not a reducible abbreviation (matching the
+`FormulaInf.Realize` is a plain definition in TauCeti, not a reducible abbreviation (matching the
 finitary `Formula.Realize`), and its body is not exposed, so neither `rw` nor `simp` can see a
 `BoundedFormulaω` realization lemma through it. Supply this lemma explicitly —
 `simp only [Formulaω.realize_def, realize_not]` — in place of unfolding `Formulaω.Realize`.
@@ -344,7 +358,8 @@ still agree with TauCeti's `default`.
 The two arity-0 spelling gates see through `FormulaInf.Realize`/`SentenceInf.Realize`, whose
 bodies TauCeti does not expose. They hold because this project's files are not `module`s: a
 non-module file imports every dependency in full, hidden bodies included. They are kept as
-canaries for the many `show` steps in the tower that rely on the same unfolding. -/
+canaries for the definitional uses of these bodies that remain elsewhere (see the module
+docstring); no `show` or `change` step relies on them. -/
 
 section Gates
 
@@ -368,7 +383,7 @@ example (φ : L.BoundedFormulaω α n) : φ.Realize v xs ↔ BoundedFormulaω.Re
 example (φ : L.Formulaω α) :
     Formulaω.Realize φ v ↔ BoundedFormulaω.Realize φ v Fin.elim0 := Iff.rfl
 
-/-- The historical sentence spelling, on which many `show` steps in the tower depend. -/
+/-- The historical sentence spelling, stated as an equation by `Sentenceω.realize_def`. -/
 example (φ : L.Sentenceω) :
     Sentenceω.Realize φ M ↔
       BoundedFormulaω.Realize φ (Empty.elim : Empty → M) Fin.elim0 := Iff.rfl
