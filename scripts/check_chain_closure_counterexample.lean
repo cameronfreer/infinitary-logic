@@ -67,8 +67,7 @@ theorem realize_atom (n k : ℕ) : Sentenceω.Realize (atom k) (M n) ↔ k ≤ n
 theorem model_S (n : ℕ) : Theoryω.Model (S n) (M n) := by
   intro φ hφ
   rcases hφ with rfl | ⟨k, hk, rfl⟩
-  · show BoundedFormulaω.Realize _ (Empty.elim : Empty → M n) Fin.elim0
-    rw [BoundedFormulaω.realize_not, BoundedFormulaω.realize_iInf]
+  · rw [Sentenceω.realize_def, BoundedFormulaω.realize_not, BoundedFormulaω.realize_iInf]
     intro h
     have h' := (realize_atom n (n + 1)).mp (h (n + 1))
     omega

@@ -73,8 +73,7 @@ theorem realize_genEx_instConst_iff_ex (c : ℕ) (ψ : L[[ℕ]].BoundedFormulaω
     (M : Type) [S : L[[ℕ]].Structure M] :
     @Sentenceω.Realize L[[ℕ]] (genEx c (instConst c ψ)) M S
       ↔ @Sentenceω.Realize L[[ℕ]] ψ.ex M S := by
-  show @BoundedFormulaω.Realize L[[ℕ]] M S Empty 0 (genEx c (instConst c ψ)) Empty.elim Fin.elim0
-    ↔ @BoundedFormulaω.Realize L[[ℕ]] M S Empty 0 ψ.ex Empty.elim Fin.elim0
+  rw [@Sentenceω.realize_def L[[ℕ]] _ M S, @Sentenceω.realize_def L[[ℕ]] _ M S]
   rw [ambient_realize_iff_wc (S := S) (genEx c (instConst c ψ)) Empty.elim Fin.elim0,
     ambient_realize_iff_wc (S := S) ψ.ex Empty.elim Fin.elim0]
   exact realize_genEx_instConst _ _ c ψ hfresh

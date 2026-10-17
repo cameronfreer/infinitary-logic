@@ -45,7 +45,10 @@ private theorem mem_modelsOf_ofStructure {Θ : (graphLanguage (KLang L)).Sentenc
     {S' : (graphLanguage (KLang L)).Structure ℕ}
     (h : @Sentenceω.Realize (graphLanguage (KLang L)) Θ ℕ S') :
     StructureSpaceOn.ofStructure S' ∈ ModelsOf Θ := by
-  show @Sentenceω.Realize (graphLanguage (KLang L)) Θ ℕ (StructureSpaceOn.ofStructure S').toStructure
+  refine (mem_modelsOf_iff_realize _ _).mpr ?_
+  -- restate the decoded instance through `StructureSpaceOn.toStructure` for the rewrite
+  show @Sentenceω.Realize (graphLanguage (KLang L)) Θ ℕ
+    (StructureSpaceOn.ofStructure S').toStructure
   rw [toStructure_ofStructure_graph]; exact h
 
 omit [Countable (Σ l, L.Relations l)] in

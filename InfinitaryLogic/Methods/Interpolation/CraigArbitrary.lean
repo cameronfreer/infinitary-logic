@@ -75,8 +75,7 @@ theorem entails_graphTranslation (r₁ r₂ : L.Sentenceω) (h : Sentenceω.Enta
   rw [Sentenceω.entails_iff]
   intro M instM neM hA
   obtain ⟨hAx₁, hr₁⟩ := (BoundedFormulaω.realize_and _ _).mp hA
-  show BoundedFormulaω.Realize _ _ _
-  rw [BoundedFormulaω.realize_imp]
+  rw [Sentenceω.realize_def, BoundedFormulaω.realize_imp]
   intro hAx₂
   let : Countable ↥(r₁.functionsIn ∪ r₂.functionsIn) :=
     ((Set.countable_coe_iff.mp inferInstance).union

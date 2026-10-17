@@ -130,9 +130,8 @@ theorem realize_pcSentence_iff {N : Type} [(graphLanguage (KLang L)).Structure N
     Sentenceω.Realize (pcSentence L side T) N ↔
       (Sentenceω.Realize (graphAxioms (sideFunsSet L side)) N ∧
         Sentenceω.Realize (relationalizeFormula (functionalPCSentence L side T)) N) := by
-  show BoundedFormulaω.Realize _ _ _ ↔ _
-  rw [pcSentence, BoundedFormulaω.realize_and]
-  rfl
+  rw [Sentenceω.realize_def, pcSentence, BoundedFormulaω.realize_and, Sentenceω.realize_def,
+    Sentenceω.realize_def]
 
 /-- **Gate (a)**: the graph expansion of a functional model satisfies the PC sentence. -/
 theorem graphExpansion_realizes_pcSentence {M : Type} [Nonempty M]

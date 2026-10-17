@@ -103,8 +103,8 @@ theorem realize_templateSentence
       φ.Realize (Empty.elim : Empty → M) (σ ∘ t) := by
   let : (constantsOn J).Structure M := constantsOn.structure σ
   -- Unfold templateSentence and Sentenceω.Realize
-  show BoundedFormulaω.Realize _ Empty.elim Fin.elim0 ↔ _
-  rw [Lomega1omegaTemplate.templateSentence, BoundedFormulaω.realize_subst]
+  rw [Sentenceω.realize_def, Lomega1omegaTemplate.templateSentence,
+    BoundedFormulaω.realize_subst]
   -- The substituted function is definitionally `σ ∘ t` because each constant
   -- term `Sum.inr (t i)` evaluates to `σ (t i)` via `constantsOn.structure σ`.
   -- Now we need to dispose of the `openBounds` and `mapLanguage` layers.
@@ -285,7 +285,7 @@ theorem IsLomega1omegaIndiscernible.templateTheory_finitelySatisfiable
     exact (h.template_truth_iff (phiOf τ') (ft'_strictMono τ')).mp hpos
   · -- negative case: τ = (templateSentence (phiOf τ') (tOf τ')).not
     rw [heq]
-    show ¬ Sentenceω.Realize (Lomega1omegaTemplate.templateSentence (phiOf τ') (tOf τ')) M
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not, ← Sentenceω.realize_def]
     rw [realize_templateSentence σ (phiOf τ') (tOf τ')]
     rw [show (σ ∘ ⇑(tOf τ') : Fin (nOf τ') → M) = (fun i => a (f (t'Of τ' i))) from
         sigma_eq τ']
@@ -374,7 +374,7 @@ theorem IsLomega1omegaIndiscernibleOn.templateTheoryOn_finitelySatisfiable
     show (phiOf τ').Realize (Empty.elim : Empty → M) (a ∘ (fun i => f (t'Of τ' i)))
     exact (h.templateOfSeq_truth_iff (hΓOf τ') (ft'_strictMono τ')).mp hpos
   · rw [heq]
-    show ¬ Sentenceω.Realize (Lomega1omegaTemplate.templateSentence (phiOf τ') (tOf τ')) M
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_not, ← Sentenceω.realize_def]
     rw [realize_templateSentence σ (phiOf τ') (tOf τ')]
     rw [show (σ ∘ ⇑(tOf τ') : Fin (nOf τ') → M) = (fun i => a (f (t'Of τ' i))) from
         sigma_eq τ']

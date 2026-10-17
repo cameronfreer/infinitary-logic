@@ -93,9 +93,8 @@ theorem realize_closeBy (hsc : HenkinComplete U S) (φ : L[[ℕ]].BoundedFormula
     @Sentenceω.Realize L[[ℕ]] (closeBy φ τ) (QModel hsc) (qModelStructure hsc)
       ↔ @BoundedFormulaω.Realize L[[ℕ]] (QModel hsc) (qModelStructure hsc) Empty n φ Empty.elim
           (fun i => qmk hsc (constTerm (τ i))) := by
-  show @BoundedFormulaω.Realize L[[ℕ]] (QModel hsc) (qModelStructure hsc) Empty 0 (closeBy φ τ)
-      Empty.elim Fin.elim0 ↔ _
-  rw [closeBy, BoundedFormulaω.realize_subst]
+  rw [@Sentenceω.realize_def L[[ℕ]] _ (QModel hsc) (qModelStructure hsc), closeBy,
+    BoundedFormulaω.realize_subst]
   rw [show (fun i => Term.realize (Empty.elim : Empty → QModel hsc) (constTerm (τ i)))
         = (fun i => qmk hsc (constTerm (τ i))) from funext fun i => qterm_realize_eq_mk hsc _]
   exact realize_openBounds φ (fun i => qmk hsc (constTerm (τ i)))
@@ -170,6 +169,8 @@ theorem truth_both (hsc : HenkinComplete U S) :
   | .equal t₁ t₂ => by
       refine ⟨fun hmem => ?_, fun hmem => ?_⟩
       · -- positive: `equal t₁ t₂ ∈ S` gives the equality of classes
+        rw [@Sentenceω.realize_def L[[ℕ]] _ (QModel hsc) (qModelStructure hsc),
+          @BoundedFormulaω.realize_equal L[[ℕ]] (QModel hsc) (qModelStructure hsc)]
         show t₁.realize (Sum.elim (Empty.elim : Empty → QModel hsc) Fin.elim0)
             = t₂.realize (Sum.elim (Empty.elim : Empty → QModel hsc) Fin.elim0)
         rw [Term.realize_toGround t₁, Term.realize_toGround t₂,
@@ -181,6 +182,8 @@ theorem truth_both (hsc : HenkinComplete U S) :
           simp only [constEq, constTermS_qtConst_toGround]
         rw [heq]; exact hmem
       · -- negative: `(equal t₁ t₂).not ∈ S` gives the disequality of classes
+        rw [@Sentenceω.realize_def L[[ℕ]] _ (QModel hsc) (qModelStructure hsc),
+          @BoundedFormulaω.realize_equal L[[ℕ]] (QModel hsc) (qModelStructure hsc)]
         show ¬ t₁.realize (Sum.elim (Empty.elim : Empty → QModel hsc) Fin.elim0)
             = t₂.realize (Sum.elim (Empty.elim : Empty → QModel hsc) Fin.elim0)
         rw [Term.realize_toGround t₁, Term.realize_toGround t₂,
@@ -199,6 +202,9 @@ theorem truth_both (hsc : HenkinComplete U S) :
           funext i; rw [hg]; exact (constTermS_qtConst_toGround (ts i)).symm
         refine ⟨fun hmem => ?_, fun hmem => ?_⟩
         · -- positive: `rel (Sum.inl R) ts ∈ S` gives `RelMap`
+          rw [@Sentenceω.realize_def L[[ℕ]] _ (QModel hsc) (qModelStructure hsc)]
+          refine (@BoundedFormulaω.realize_rel L[[ℕ]] (QModel hsc) (qModelStructure hsc)
+            _ _ _ _ _ _ _).mpr ?_
           show (qModelStructure hsc).RelMap (Sum.inl R)
               (fun i => (ts i).realize (Sum.elim (Empty.elim : Empty → QModel hsc) Fin.elim0))
           have hval : (fun i => (ts i).realize
@@ -211,6 +217,9 @@ theorem truth_both (hsc : HenkinComplete U S) :
           refine relMap_of_mem hsc R g ?_
           rw [relInst, ← hts]; exact hmem
         · -- negative: `(rel (Sum.inl R) ts).not ∈ S` gives `¬ RelMap`
+          rw [@Sentenceω.realize_def L[[ℕ]] _ (QModel hsc) (qModelStructure hsc)]
+          refine mt (@BoundedFormulaω.realize_rel L[[ℕ]] (QModel hsc) (qModelStructure hsc)
+            _ _ _ _ _ _ _).mp ?_
           show ¬ (qModelStructure hsc).RelMap (Sum.inl R)
               (fun i => (ts i).realize (Sum.elim (Empty.elim : Empty → QModel hsc) Fin.elim0))
           have hval : (fun i => (ts i).realize

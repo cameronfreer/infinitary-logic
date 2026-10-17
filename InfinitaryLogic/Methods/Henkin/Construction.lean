@@ -784,8 +784,9 @@ theorem truthLemma :
         -- IH backward: Realize (φs k) M → φs k ∈ S, contradicting (φs k).not ∈ S
         exact absurd ((truthLemma (φs k)).mpr (h k)) ((hmax.not_mem_iff (φs k)).mp hkn)
   | .equal t₁ t₂ => by
-    -- `SentenceInf.Realize` is a plain definition upstream, so bridge to the term equation with
-    -- `show` rather than trying to rewrite with a bounded-formula realization lemma
+    -- `SentenceInf.Realize` is a plain definition in TauCeti: cross to bounded realization with
+    -- `Sentenceω.realize_def`, then read off the term equation
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_equal]
     show (BoundedFormulaω.equal t₁ t₂ ∈ S) ↔
       t₁.realize (Sum.elim (Empty.elim : Empty → TermModel C S hmax) Fin.elim0) =
         t₂.realize (Sum.elim (Empty.elim : Empty → TermModel C S hmax) Fin.elim0)
@@ -806,6 +807,7 @@ theorem truthLemma :
   | .rel R ts => by
     -- Goal: rel R ts ∈ S ↔ Sentenceω.Realize (rel R ts) (TermModel C S hmax)
     -- RHS unfolds to RelMap R (fun i => (ts i).realize (Sum.elim Empty.elim Fin.elim0))
+    rw [Sentenceω.realize_def, BoundedFormulaω.realize_rel]
     show (BoundedFormulaω.rel R ts ∈ S) ↔
       Structure.RelMap R (fun i => (ts i).realize
         (Sum.elim (Empty.elim : Empty → TermModel C S hmax) Fin.elim0))

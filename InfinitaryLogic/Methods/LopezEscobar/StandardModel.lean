@@ -269,8 +269,7 @@ theorem forwardCode_mem_modelsOf (side : PCSide)
       ((fun i : Fin n => queryCode c (i : ℕ)), (fun i : Fin n => g (i : ℕ))) ∈ T n) :
     forwardCode c g T ∈ ModelsOf (pcSentence L side T) := by
   let := standardK c g T
-  show @Sentenceω.Realize (graphLanguage (KLang L)) (pcSentence L side T) ℕ
-    (forwardCode c g T).toStructure
+  rw [mem_modelsOf_iff_realize]
   rw [forwardCode_toStructure]
   exact graphExpansion_realizes_pcSentence side T (standardK_models_pc c g T side hbranch)
 

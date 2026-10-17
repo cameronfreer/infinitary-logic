@@ -404,11 +404,8 @@ theorem LocalEMContext.templateTheoryOn_seed_model_of_skolemUniversal (s₀ : Lo
     φ hmem t
   rcases hcase with ⟨htruth, rfl⟩ | ⟨htruth, rfl⟩
   · exact hkey.mpr htruth
-  · show BoundedFormulaω.Realize
-      ((Lomega1omegaTemplate.templateSentence φ t).not : (s₀.Lang)[[J]].Sentenceω)
-      (Empty.elim : Empty → ctx.Carrier) Fin.elim0
-    rw [BoundedFormulaω.realize_not]
-    exact fun hreal => htruth (hkey.mp hreal)
+  · refine (Sentenceω.realize_def _ _).mpr ((BoundedFormulaω.realize_not _).mpr ?_)
+    exact fun hreal => htruth (hkey.mp ((Sentenceω.realize_def _ _).mpr hreal))
 
 /-- **The key realization equivalence**: in the local EM term model (over any context with
 `ΓEMlocal`-closure and `OmegaComplete`), a template sentence over the seed language holds iff
@@ -538,11 +535,8 @@ theorem LocalEMContext.templateTheoryOn_seed_model (s₀ : LocalStage) (J : Type
   have hkey := realize_templateSentence_localEM_iff s₀ J ctx hΓ hc φ hmem t
   rcases hcase with ⟨htruth, rfl⟩ | ⟨htruth, rfl⟩
   · exact hkey.mpr htruth
-  · show BoundedFormulaω.Realize
-      ((Lomega1omegaTemplate.templateSentence φ t).not : (s₀.Lang)[[J]].Sentenceω)
-      (Empty.elim : Empty → ctx.Carrier) Fin.elim0
-    rw [BoundedFormulaω.realize_not]
-    exact fun hreal => htruth (hkey.mp hreal)
+  · refine (Sentenceω.realize_def _ _).mpr ((BoundedFormulaω.realize_not _).mpr ?_)
+    exact fun hreal => htruth (hkey.mp ((Sentenceω.realize_def _ _).mpr hreal))
 
 /-! ## Full indiscernibility restores Ω-completeness
 

@@ -235,8 +235,7 @@ theorem realize_ladderSentence_iff :
         Sentenceω.Realize (topC α) M ∧ Sentenceω.Realize (nestedC α) M ∧
         Sentenceω.Realize (limitC α) M ∧ Sentenceω.Realize (predC α) M ∧
         Sentenceω.Realize (extC α) M) := by
-    show BoundedFormulaω.Realize _ (Empty.elim : Empty → M) Fin.elim0 ↔ _
-    rw [ladderSentence, BoundedFormulaω.realize_iInf]
+    rw [Sentenceω.realize_def, ladderSentence, BoundedFormulaω.realize_iInf]
     constructor
     · intro h
       exact ⟨h 0, h 1, h 2, h 3, h 4, h 5, h 6⟩
@@ -253,14 +252,12 @@ theorem realize_ladderSentence_iff :
   -- per-group semantic characterizations
   have hbaseIn : Sentenceω.Realize (baseInC α) M ↔
       ∀ n : ℕ, Level α ⊥ (constVal α n : M) := by
-    show BoundedFormulaω.Realize _ (Empty.elim : Empty → M) Fin.elim0 ↔ _
-    rw [baseInC, BoundedFormulaω.realize_iInf]
+    rw [Sentenceω.realize_def, baseInC, BoundedFormulaω.realize_iInf]
     refine forall_congr' fun n => ?_
     rw [realize_levelAtom, realize_const]
   have hbaseOut : Sentenceω.Realize (baseOutC α) M ↔
       ∀ x : M, Level α ⊥ x → ∃ n, x = constVal α n := by
-    show BoundedFormulaω.Realize _ (Empty.elim : Empty → M) Fin.elim0 ↔ _
-    rw [baseOutC, BoundedFormulaω.realize_all]
+    rw [Sentenceω.realize_def, baseOutC, BoundedFormulaω.realize_all]
     refine forall_congr' fun x => ?_
     rw [BoundedFormulaω.realize_imp, realize_levelAtom, BoundedFormulaω.realize_iSup]
     refine imp_congr ?_ (exists_congr fun n => ?_)
@@ -268,15 +265,13 @@ theorem realize_ladderSentence_iff :
     · rw [BoundedFormulaω.realize_equal, realize_const,
         realize_bvar1 x]
   have htop : Sentenceω.Realize (topC α) M ↔ ∀ x : M, Level α ⊤ x := by
-    show BoundedFormulaω.Realize _ (Empty.elim : Empty → M) Fin.elim0 ↔ _
-    rw [topC, BoundedFormulaω.realize_all]
+    rw [Sentenceω.realize_def, topC, BoundedFormulaω.realize_all]
     refine forall_congr' fun x => ?_
     rw [realize_levelAtom,
       realize_bvar1 x]
   have hnested : Sentenceω.Realize (nestedC α) M ↔
       ∀ {i j : Index α}, i < j → ∀ x : M, Level α i x → Level α j x := by
-    show BoundedFormulaω.Realize _ (Empty.elim : Empty → M) Fin.elim0 ↔ _
-    rw [nestedC, BoundedFormulaω.realize_ciInf]
+    rw [Sentenceω.realize_def, nestedC, BoundedFormulaω.realize_ciInf]
     constructor
     · intro h i j hij x
       have hx := (BoundedFormulaω.realize_all _).mp (h ⟨(i, j), hij⟩) x
@@ -292,8 +287,7 @@ theorem realize_ladderSentence_iff :
   have hlimit : Sentenceω.Realize (limitC α) M ↔
       ∀ {j : Index α}, Order.IsSuccLimit j → ∀ x : M,
         Level α j x → ∃ i < j, Level α i x := by
-    show BoundedFormulaω.Realize _ (Empty.elim : Empty → M) Fin.elim0 ↔ _
-    rw [limitC, BoundedFormulaω.realize_ciInf]
+    rw [Sentenceω.realize_def, limitC, BoundedFormulaω.realize_ciInf]
     constructor
     · intro h j hj x
       have hx := (BoundedFormulaω.realize_all _).mp (h ⟨j, hj⟩) x
@@ -333,8 +327,7 @@ theorem realize_ladderSentence_iff :
   have hpred : Sentenceω.Realize (predC α) M ↔
       ∀ {i j : Index α}, i ⋖ j → ∀ x y : M,
         Level α j x → Edge α y x → Level α i y := by
-    show BoundedFormulaω.Realize _ (Empty.elim : Empty → M) Fin.elim0 ↔ _
-    rw [predC, BoundedFormulaω.realize_ciInf]
+    rw [Sentenceω.realize_def, predC, BoundedFormulaω.realize_ciInf]
     have hstep : ∀ (p : {p : Index α × Index α // p.1 ⋖ p.2}),
         (BoundedFormulaω.all (BoundedFormulaω.all
           ((levelAtom p.1.2 (bvar 0)).imp
@@ -357,8 +350,7 @@ theorem realize_ladderSentence_iff :
       exact (hstep p).mpr (h p.2)
   have hext : Sentenceω.Realize (extC α) M ↔
       ∀ y z : M, (∀ x : M, Edge α x y ↔ Edge α x z) → y = z := by
-    show BoundedFormulaω.Realize _ (Empty.elim : Empty → M) Fin.elim0 ↔ _
-    rw [extC, BoundedFormulaω.realize_all]
+    rw [Sentenceω.realize_def, extC, BoundedFormulaω.realize_all]
     refine forall_congr' fun y => ?_
     rw [BoundedFormulaω.realize_all]
     refine forall_congr' fun z => ?_

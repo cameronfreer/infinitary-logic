@@ -133,14 +133,14 @@ theorem modelsOfBoundedOn_measurableSet [Countable α]
     · intro hc
       let := StructureSpaceOn.toStructure c
       have hrel : @Structure.RelMap L α (StructureSpaceOn.toStructure c) l R
-          (fun i => (ts i).realize (Sum.elim v xs)) := hc
+          (fun i => (ts i).realize (Sum.elim v xs)) :=
+        (@BoundedFormulaω.realize_rel L α (StructureSpaceOn.toStructure c) _ _ v xs l R ts).mp hc
       rw [StructureSpaceOn.relMap_toStructure] at hrel
       rwa [htup] at hrel
     · intro hc
       let := StructureSpaceOn.toStructure c
-      show @Structure.RelMap L α (StructureSpaceOn.toStructure c) l R
-          (fun i => (ts i).realize (Sum.elim v xs))
-      rw [StructureSpaceOn.relMap_toStructure, htup]
+      rw [@BoundedFormulaω.realize_rel L α (StructureSpaceOn.toStructure c),
+        StructureSpaceOn.relMap_toStructure, htup]
       exact hc
   | imp φ ψ ih_φ ih_ψ =>
     rw [modelsOfBoundedOn_imp]; exact (ih_φ xs).compl.union (ih_ψ xs)

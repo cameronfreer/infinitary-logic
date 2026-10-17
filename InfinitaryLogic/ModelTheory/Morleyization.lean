@@ -128,6 +128,7 @@ theorem realize_alls {L' : Language.{u', v'}} {N : Type w'} [L'.Structure N] :
     ∀ {n : ℕ} (φ : L'.BoundedFormulaω Empty n),
       Sentenceω.Realize (alls φ) N ↔ ∀ xs : Fin n → N, φ.Realize (Empty.elim : Empty → N) xs
   | 0, φ => by
+    rw [Sentenceω.realize_def]
     show φ.Realize Empty.elim Fin.elim0 ↔ _
     exact ⟨fun h xs => by rwa [Subsingleton.elim xs Fin.elim0], fun h => h _⟩
   | n + 1, φ => by
@@ -183,10 +184,11 @@ theorem realize_liftMorleyize_of_isExpansionOn {S : (L.morleyize Φ).Structure M
       @BoundedFormulaω.Realize (L.morleyize Φ) M S α k (liftMorleyize Φ φ) v xs ↔ φ.Realize v xs
   | _, .falsum, _, _ => Iff.rfl
   | _, .equal t u, v, xs => by
-    show @Term.realize (L.morleyize Φ) M S _ _ (liftTerm Φ t) = Term.realize _ (liftTerm Φ u) ↔ _
+    simp only [liftMorleyize, BoundedFormulaω.realize_equal]
     rw [realize_liftTerm_of_isExpansionOn hS, realize_liftTerm_of_isExpansionOn hS]
-    rfl
   | _, .rel R ts, v, xs => by
+    refine (@BoundedFormulaω.realize_rel (L.morleyize Φ) M S α _ v xs _ (Sum.inl R) _).trans ?_
+    rw [BoundedFormulaω.realize_rel]
     show @Structure.RelMap (L.morleyize Φ) M S _ (Sum.inl R)
       (fun i => @Term.realize (L.morleyize Φ) M S _ _ (liftTerm Φ (ts i))) ↔ _
     rw [show (fun i => @Term.realize (L.morleyize Φ) M S _ (Sum.elim v xs) (liftTerm Φ (ts i)))
