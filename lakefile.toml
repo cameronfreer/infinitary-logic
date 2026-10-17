@@ -3,6 +3,12 @@ version = "0.1.0"
 keywords = ["math"]
 license = "Apache-2.0"
 defaultTargets = ["InfinitaryLogic"]
+# Deliberate compatibility choice for the TauCeti migration: this package's files are not
+# module-system files (`module` header), while upstream Mathlib declares itself designed for the
+# module system. Lake would otherwise warn on every such import. This opt-out suppresses exactly
+# that warning class (Lake's `allowNonModules`, Lake/Config/LeanConfig.lean at v4.35.0) and nothing
+# else; converting this package to the module system is a separate decision.
+allowNonModules = true
 
 [[require]]
 name = "LeanArchitect"
