@@ -283,32 +283,32 @@ theorem realize_def (φ : L.Formulaω α) (v : α → M) :
   (FormulaInf.realize_def φ v).trans
     (iff_of_eq (congrArg (BoundedFormulaInf.Realize φ v) (Subsingleton.elim _ _)))
 
-@[simp]
+@[simp high] -- outranks TauCeti's simp `FormulaInf.realize_def`, which would pre-empt it
 theorem realize_not : Realize φ.not v ↔ ¬Realize φ v := BoundedFormulaω.realize_not φ
 
-@[simp]
+@[simp high] -- outranks TauCeti's simp `FormulaInf.realize_def`, which would pre-empt it
 theorem realize_bot : Realize (⊥ : L.Formulaω α) v ↔ False := BoundedFormulaω.realize_bot
 
-@[simp]
+@[simp high] -- outranks TauCeti's simp `FormulaInf.realize_def`, which would pre-empt it
 theorem realize_top : Realize (⊤ : L.Formulaω α) v ↔ True := BoundedFormulaω.realize_top
 
-@[simp]
+@[simp high] -- outranks TauCeti's simp `FormulaInf.realize_def`, which would pre-empt it
 theorem realize_imp (φ ψ : L.Formulaω α) :
     Realize (φ.imp ψ) v ↔ (Realize φ v → Realize ψ v) := BoundedFormulaω.realize_imp φ ψ
 
-@[simp]
+@[simp high] -- outranks TauCeti's simp `FormulaInf.realize_def`, which would pre-empt it
 theorem realize_inf (φ ψ : L.Formulaω α) :
     Realize (φ ⊓ ψ) v ↔ Realize φ v ∧ Realize ψ v := BoundedFormulaω.realize_inf φ ψ
 
-@[simp]
+@[simp high] -- outranks TauCeti's simp `FormulaInf.realize_def`, which would pre-empt it
 theorem realize_sup (φ ψ : L.Formulaω α) :
     Realize (φ ⊔ ψ) v ↔ Realize φ v ∨ Realize ψ v := BoundedFormulaω.realize_sup φ ψ
 
-@[simp]
+@[simp high] -- outranks TauCeti's simp `FormulaInf.realize_def`, which would pre-empt it
 theorem realize_einf {ι : Type*} [Encodable ι] (φs : ι → L.Formulaω α) :
     Realize (BoundedFormulaω.einf φs) v ↔ ∀ i, Realize (φs i) v := BoundedFormulaω.realize_einf φs
 
-@[simp]
+@[simp high] -- outranks TauCeti's simp `FormulaInf.realize_def`, which would pre-empt it
 theorem realize_esup {ι : Type*} [Encodable ι] (φs : ι → L.Formulaω α) :
     Realize (BoundedFormulaω.esup φs) v ↔ ∃ i, Realize (φs i) v := BoundedFormulaω.realize_esup φs
 
