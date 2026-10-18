@@ -843,7 +843,7 @@ namespace Formula
 /-- Embeds a first-order formula into Lω₁ω. -/
 def toLω (φ : L.Formula α) : L.Formulaω α := BoundedFormula.toLω φ
 
-@[simp high] -- outranks TauCeti's simp `FormulaInf.realize_def`, which would pre-empt it
+@[simp]
 theorem realize_toLω {M : Type*} [L.Structure M] {v : α → M} (φ : L.Formula α) :
     Formulaω.Realize φ.toLω v ↔ φ.Realize v :=
   BoundedFormula.realize_toLω φ
@@ -855,7 +855,7 @@ namespace Sentence
 /-- Embeds a first-order sentence into Lω₁ω. -/
 def toLω (φ : L.Sentence) : L.Sentenceω := Formula.toLω φ
 
-@[simp high] -- outranks TauCeti's simp `SentenceInf.realize_def`, which would pre-empt it
+@[simp]
 theorem realize_toLω {M : Type*} [L.Structure M] [Nonempty M] (φ : L.Sentence) :
     Sentenceω.Realize φ.toLω M ↔ M ⊨ φ := by
   -- M ⊨ φ uses `default : Empty → M`, while Sentenceω.Realize uses `Empty.elim`

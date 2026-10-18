@@ -168,7 +168,7 @@ private theorem exists_snoc_iff {n : ℕ} {P : (Fin (n + 1) → N) → Prop} :
     fun ⟨b, h⟩ ↦ ⟨Fin.init b, b (Fin.last n), by simpa only [Fin.snoc_init_self] using h⟩⟩
 
 /-- `forallTuple n φ` holds iff `φ` holds of every `n`-tuple. -/
-@[simp high] -- outranks TauCeti's simp `FormulaInf.realize_def`, which would pre-empt it
+@[simp]
 theorem realize_forallTuple :
     ∀ (n : ℕ) (φ : L.Formulaω (Fin n)) (v : Fin 0 → N),
       (forallTuple n φ).Realize v ↔ ∀ b : Fin n → N, φ.Realize b
@@ -178,7 +178,7 @@ theorem realize_forallTuple :
     exact forall_snoc_iff
 
 /-- `existsTuple n φ` holds iff `φ` holds of some `n`-tuple. -/
-@[simp high] -- outranks TauCeti's simp `FormulaInf.realize_def`, which would pre-empt it
+@[simp]
 theorem realize_existsTuple :
     ∀ (n : ℕ) (φ : L.Formulaω (Fin n)) (v : Fin 0 → N),
       (existsTuple n φ).Realize v ↔ ∃ b : Fin n → N, φ.Realize b
@@ -189,7 +189,7 @@ theorem realize_existsTuple :
 
 /-- `forallTupleFrom k n φ` holds of the parameters `d` iff `φ` holds of `d` followed by every
 `n`-tuple. -/
-@[simp high] -- outranks TauCeti's simp `FormulaInf.realize_def`, which would pre-empt it
+@[simp]
 theorem realize_forallTupleFrom (k : ℕ) :
     ∀ (n : ℕ) (φ : L.Formulaω (Fin (k + n))) (d : Fin k → N),
       (forallTupleFrom k n φ).Realize d ↔ ∀ b : Fin n → N, φ.Realize (Fin.append d b)
@@ -202,7 +202,7 @@ theorem realize_forallTupleFrom (k : ℕ) :
 
 /-- `existsTupleFrom k n φ` holds of the parameters `d` iff `φ` holds of `d` followed by some
 `n`-tuple. -/
-@[simp high] -- outranks TauCeti's simp `FormulaInf.realize_def`, which would pre-empt it
+@[simp]
 theorem realize_existsTupleFrom (k : ℕ) :
     ∀ (n : ℕ) (φ : L.Formulaω (Fin (k + n))) (d : Fin k → N),
       (existsTupleFrom k n φ).Realize d ↔ ∃ b : Fin n → N, φ.Realize (Fin.append d b)
@@ -231,7 +231,7 @@ noncomputable def montalbanClauseBody {j : ℕ} (θ D : L.Formulaω (Fin j))
   θ.imp (D ⊓ einf (fun m ↦ existsLastVar (ψ m)) ⊓ forallLastVar (esup ψ))
 
 /-- Realization of the clause body: forth for every `m ∈ M` and back for every `y`. -/
-@[simp high] -- outranks TauCeti's simp `FormulaInf.realize_def`, which would pre-empt it
+@[simp]
 theorem realize_montalbanClauseBody {N : Type w'} [L.Structure N] {j : ℕ}
     (θ D : L.Formulaω (Fin j)) (ψ : M → L.Formulaω (Fin (j + 1))) (v : Fin j → N) :
     (montalbanClauseBody θ D ψ).Realize v ↔
