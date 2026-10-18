@@ -179,13 +179,31 @@ where
 
 /-- Module-name prefixes the closure may not have: Scott analysis (Scott sentences, ranks,
 back-and-forth), Karp, the quantifier-rank modules (the ω facade and the carrier-generic rank it
-specializes), Löwenheim–Skolem and the rest of the model theory, and every later layer. -/
+specializes, now upstream in TauCeti), Löwenheim–Skolem and the rest of the model theory, and
+every later layer. -/
 def forbiddenPrefixes : List Name :=
   [`InfinitaryLogic.Scott, `InfinitaryLogic.ScottProcess, `InfinitaryLogic.Karp,
-   `InfinitaryLogic.Lomega1omega.QuantifierRank, `InfinitaryLogic.Infinitary.QuantifierRank,
+   `InfinitaryLogic.Lomega1omega.QuantifierRank, `TauCeti.ModelTheory.Infinitary.QuantifierRank,
    `InfinitaryLogic.ModelTheory,
    `InfinitaryLogic.Methods, `InfinitaryLogic.Descriptive, `InfinitaryLogic.Admissible,
    `InfinitaryLogic.Conditional, `InfinitaryLogic.WIP]
+
+/-- The matcher of the closure check: a module is forbidden when a forbidden prefix is a
+component-wise prefix of its name. The closure walk is over all module names, `TauCeti.*`
+included. -/
+def isForbiddenModule (m : Name) : Bool := forbiddenPrefixes.any (·.isPrefixOf m)
+
+/- Control on the matcher itself: it flags both quantifier-rank modules, TauCeti's included,
+and does not flag the sibling module `TauCeti.ModelTheory.Infinitary.Semantics`. Without this a
+stale prefix (such as the name of a deleted module) would match nothing and pass silently. -/
+run_cmd do
+  for m in [`TauCeti.ModelTheory.Infinitary.QuantifierRank,
+      `InfinitaryLogic.Lomega1omega.QuantifierRank] do
+    unless isForbiddenModule m do
+      throwError "[CONTROL] the forbidden-prefix matcher does not flag {m}"
+  if isForbiddenModule `TauCeti.ModelTheory.Infinitary.Semantics then
+    throwError "[CONTROL] the forbidden-prefix matcher flags \
+      TauCeti.ModelTheory.Infinitary.Semantics"
 
 run_cmd do
   let env ← getEnv
@@ -195,7 +213,7 @@ run_cmd do
   let cl := importClosure env target
   unless cl.contains `InfinitaryLogic.Lomega1omega.Theory do
     throwError "[MISSING ROUTE] Lomega1omega.Theory is not in the closure of {target}"
-  let hits := cl.toList.filter fun m => forbiddenPrefixes.any (·.isPrefixOf m)
+  let hits := cl.toList.filter isForbiddenModule
   unless hits.isEmpty do
     throwError "[BROAD CONE] the closure of {target} reaches {hits}"
 

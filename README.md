@@ -107,7 +107,7 @@ modules live in the separate non-default `InfinitaryLogicWIP` target, so they ne
 
 | Directory | Contents |
 |---|---|
-| `Infinitary/` | carrier transport (`reindex`, `iInfAlong`) and the carrier-generic quantifier rank, moved from the former Mathlib fork |
+| (from TauCeti) | carrier transport (`reindex`, `iInfAlong`) and the carrier-generic quantifier rank: `TauCeti.ModelTheory.Infinitary.{Reindex, CodedConnectives, QuantifierRank}`, which replaced this repository's former `Infinitary/` directory |
 | `Lomega1omega/` | the Lω₁ω layer over [TauCeti](https://github.com/TauCetiProject/TauCeti)'s fixed-carrier infinitary syntax and semantics — operations, fragments, polarity, quantifier rank, the `Σ^in_α`/`Π^in_α` hierarchy |
 | `Scott/`, `Karp/` | atomic diagrams, back-and-forth equivalence, Scott formulas and sentences, rank and height, and Montalbán's explicit Scott sentence from orbit formulas; Karp's theorem |
 | `ScottProcess/` | Larson's Scott processes: the free array (extension sets, vertical and horizontal projections, their laws), the Scott-process axioms with their first consequences, the semantic entries of tuples with the Scott process of an infinite relational structure and their bridge to back-and-forth equivalence, and the stabilization and rank of a process with its comparison to the orbit ranks and the internal Scott rank |

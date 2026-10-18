@@ -6,14 +6,14 @@ defaultTargets = ["InfinitaryLogic"]
 # Deliberate compatibility choice for the TauCeti migration: this package's files are not
 # module-system files (`module` header), while upstream Mathlib declares itself designed for the
 # module system. Lake would otherwise warn on every such import. This opt-out suppresses exactly
-# that warning class (Lake's `allowNonModules`, Lake/Config/LeanConfig.lean at v4.35.0) and nothing
-# else; converting this package to the module system is a separate decision.
+# that warning class (Lake's `allowNonModules`, Lake/Config/LeanConfig.lean at v4.36.0-rc1) and
+# nothing else; converting this package to the module system is a separate decision.
 allowNonModules = true
 
 [[require]]
 name = "LeanArchitect"
 git = "https://github.com/hanwenzhu/LeanArchitect.git"
-rev = "9f3bb53916b9d6fa05b7777389e1844f82b1c9a6"
+rev = "48fbd05b1dacba016a774a496a054ce6cbcc04c7"
 
 [[require]]
 name = "checkdecls"
@@ -25,7 +25,7 @@ rev = "3d425859e73fcfbef85b9638c2a91708ef4a22d4"
 [[require]]
 name = "TauCeti"
 git = "https://github.com/TauCetiProject/TauCeti"
-rev = "097067f7f49ad5b97b6e0bb696f4a99575516e54"
+rev = "971a6dd3fade73f7d148d66a289bf9dc75d8b933"
 
 # Mathlib last so its dependency versions take precedence over transitive ones
 # (e.g. batteries / Cli pulled in by LeanArchitect, and TauCeti's floating `master`),
@@ -33,7 +33,7 @@ rev = "097067f7f49ad5b97b6e0bb696f4a99575516e54"
 [[require]]
 name = "mathlib"
 git = "https://github.com/leanprover-community/mathlib4"
-rev = "cfc55fc58714a59dc06e6e79edc6d1d95140d3c2"
+rev = "2e318faecff7d70d4e0cf8cc875104424a737355"
 
 [[lean_lib]]
 name = "InfinitaryLogic"

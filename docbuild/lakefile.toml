@@ -7,9 +7,9 @@ packagesDir = "../.lake/packages"
 name = "InfinitaryLogic"
 path = "../"
 
-# Pinned to doc-gen4's v4.35.0 revision, matching the root toolchain.
+# Pinned to doc-gen4's v4.36.0-rc1 revision, matching the root toolchain.
 # Bump this together with the root toolchain.
 [[require]]
 scope = "leanprover"
 name = "doc-gen4"
-rev = "0e1ffe2e4ba5ecfdfaf15c65b8d3805dbb7134ae"
+rev = "0656b7ebd305f089c8d6bd8684a0797f19414cc2"

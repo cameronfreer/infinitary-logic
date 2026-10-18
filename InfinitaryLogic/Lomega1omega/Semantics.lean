@@ -273,14 +273,14 @@ variable {φ : L.Formulaω α} {v : α → M}
 
 /-! #### Simp normal form at the formula level
 
-TauCeti's `FormulaInf.realize_def` is a `@[simp]` lemma, so a plain `simp` rewrites
-`Formulaω.Realize φ v` for an opaque `φ` to `BoundedFormulaInf.Realize φ v default`; likewise
-`SentenceInf.realize_def` for `Sentenceω.Realize`. The project's formula-level normal form is kept
-only for the 17 lemmas tagged `@[simp high]`: the eight below, and nine in
-`Lomega1omega/Operations.lean`, `Lomega1omega/InfiniteAxiom.lean`,
-`Scott/MontalbanSentence.lean` and `Scott/OrbitParameters.lean`. A formula-level lemma at
-default priority, or a formula-level hypothesis `h` in `simp [h]`, loses to the bridge; apply it
-with `rw` or `simp only` before a full `simp`. -/
+TauCeti's bridges `FormulaInf.realize_def` and `SentenceInf.realize_def` are `@[simp low]`, so the
+formula-level simp lemmas below, and those in `Lomega1omega/Operations.lean`,
+`Lomega1omega/InfiniteAxiom.lean`, `Scott/MontalbanSentence.lean` and
+`Scott/OrbitParameters.lean`, apply at default priority before a plain `simp` lowers
+`Formulaω.Realize φ v` to `BoundedFormulaInf.Realize φ v default` (likewise for
+`Sentenceω.Realize`). The bridges still lower any formula-level realization that no
+formula-level lemma matches, for instance one of an opaque `φ`, so no global formula-level normal
+form is assumed. -/
 
 /-- The level-crossing lemma: formula realization *is* bounded-formula realization at the empty
 tuple.
@@ -297,32 +297,32 @@ theorem realize_def (φ : L.Formulaω α) (v : α → M) :
   (FormulaInf.realize_def φ v).trans
     (iff_of_eq (congrArg (BoundedFormulaInf.Realize φ v) (Subsingleton.elim _ _)))
 
-@[simp high] -- outranks TauCeti's simp `FormulaInf.realize_def`, which would pre-empt it
+@[simp]
 theorem realize_not : Realize φ.not v ↔ ¬Realize φ v := BoundedFormulaω.realize_not φ
 
-@[simp high] -- outranks TauCeti's simp `FormulaInf.realize_def`, which would pre-empt it
+@[simp]
 theorem realize_bot : Realize (⊥ : L.Formulaω α) v ↔ False := BoundedFormulaω.realize_bot
 
-@[simp high] -- outranks TauCeti's simp `FormulaInf.realize_def`, which would pre-empt it
+@[simp]
 theorem realize_top : Realize (⊤ : L.Formulaω α) v ↔ True := BoundedFormulaω.realize_top
 
-@[simp high] -- outranks TauCeti's simp `FormulaInf.realize_def`, which would pre-empt it
+@[simp]
 theorem realize_imp (φ ψ : L.Formulaω α) :
     Realize (φ.imp ψ) v ↔ (Realize φ v → Realize ψ v) := BoundedFormulaω.realize_imp φ ψ
 
-@[simp high] -- outranks TauCeti's simp `FormulaInf.realize_def`, which would pre-empt it
+@[simp]
 theorem realize_inf (φ ψ : L.Formulaω α) :
     Realize (φ ⊓ ψ) v ↔ Realize φ v ∧ Realize ψ v := BoundedFormulaω.realize_inf φ ψ
 
-@[simp high] -- outranks TauCeti's simp `FormulaInf.realize_def`, which would pre-empt it
+@[simp]
 theorem realize_sup (φ ψ : L.Formulaω α) :
     Realize (φ ⊔ ψ) v ↔ Realize φ v ∨ Realize ψ v := BoundedFormulaω.realize_sup φ ψ
 
-@[simp high] -- outranks TauCeti's simp `FormulaInf.realize_def`, which would pre-empt it
+@[simp]
 theorem realize_einf {ι : Type*} [Encodable ι] (φs : ι → L.Formulaω α) :
     Realize (BoundedFormulaω.einf φs) v ↔ ∀ i, Realize (φs i) v := BoundedFormulaω.realize_einf φs
 
-@[simp high] -- outranks TauCeti's simp `FormulaInf.realize_def`, which would pre-empt it
+@[simp]
 theorem realize_esup {ι : Type*} [Encodable ι] (φs : ι → L.Formulaω α) :
     Realize (BoundedFormulaω.esup φs) v ↔ ∃ i, Realize (φs i) v := BoundedFormulaω.realize_esup φs
 

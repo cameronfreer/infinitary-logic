@@ -577,7 +577,6 @@ def ordinalCountabilityClosure : List Name := ilm [`OrdinalCountability, `Ordina
 /-- The exact project closure of `Lomega1omega.QuantifierRank`. -/
 def quantifierRankClosure : List Name := ilm
   [`Lomega1omega.Operations, `Lomega1omega.QuantifierRank, `Lomega1omega.Semantics,
-   `Infinitary.QuantifierRank, `Infinitary.Reindex,
    `Lomega1omega.Syntax, `Util]
 
 /-- The exact project closure of `Descriptive.ScottDefinability`, measured when the wrapper
@@ -599,7 +598,6 @@ def scottDefinabilityClosure : List Name := ilm
    `Lomega1omega.Entailment, `Lomega1omega.FiniteQuantification, `Lomega1omega.Fragment,
    `Lomega1omega.OpenBoundsSemantics, `Lomega1omega.Operations, `Lomega1omega.QuantifierClass,
    `Lomega1omega.QuantifierRank, `Lomega1omega.Semantics, `Lomega1omega.Syntax,
-   `Infinitary.QuantifierRank, `Infinitary.Reindex,
    `Lomega1omega.Theory, `Methods.ConstantAbstraction, `Methods.ConstantInstances,
    `Methods.ConstantSupport, `Methods.EM.FragmentAdapter, `Methods.EM.Indiscernible,
    `Methods.EM.Realization, `Methods.EM.TailAdapter, `Methods.EM.Template,

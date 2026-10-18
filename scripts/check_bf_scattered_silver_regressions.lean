@@ -40,10 +40,11 @@ All three public theorems are *applied*, not only listed for their axioms.
   or `silver_core_polish`) directly (`[DUPLICATED STEP]`): Silver enters only through the step.
   Positive control: the same check sees the step itself apply Silver.
 * **Separate from the counting layer.**  The `InfinitaryLogic` import closure of
-  `Conditional.BFScatteredSilver` is exactly the pinned list `allowedClosure` (60 modules,
+  `Conditional.BFScatteredSilver` is exactly the pinned list `allowedClosure` (58 modules,
   `[CLOSURE DRIFT]` otherwise; 57 before the per-level step moved to `Conditional.MorleyPerfect`,
-  which added one module, and 58 before carrier transport and quantifier rank moved into
-  `Infinitary/`, which added two); it does **not** contain
+  which added one module; the two `Infinitary/` modules of carrier transport and quantifier rank,
+  which briefly made it 60, are now TauCeti's and outside the `InfinitaryLogic` part); it does
+  **not** contain
   `Descriptive.ScatteredCounting` or `Scott.IsolatingLevel` (`[LAYERING]`).  The converse import
   boundary, that `Descriptive.ScatteredCounting` reaches no `Conditional` module, is asserted by
   `check_scattered_counting_regressions.lean`.
@@ -302,7 +303,6 @@ def allowedClosure : List Name :=
    `InfinitaryLogic.Descriptive.Topology, `InfinitaryLogic.Karp.CarrierTheorem,
    `InfinitaryLogic.Karp.PotentialIso, `InfinitaryLogic.Lomega1omega.OpenBoundsSemantics,
    `InfinitaryLogic.Lomega1omega.Operations, `InfinitaryLogic.Lomega1omega.QuantifierRank,
-   `InfinitaryLogic.Infinitary.QuantifierRank, `InfinitaryLogic.Infinitary.Reindex,
    `InfinitaryLogic.Lomega1omega.Semantics, `InfinitaryLogic.Lomega1omega.Syntax,
    `InfinitaryLogic.Lomega1omega.Theory, `InfinitaryLogic.ModelTheory.CountingCountable,
    `InfinitaryLogic.ModelTheory.CountingModels, `InfinitaryLogic.ModelTheory.MorleyCounting,
@@ -342,8 +342,8 @@ run_cmd do
   unless extra.isEmpty && missing.isEmpty do
     throwError "[CLOSURE DRIFT] the InfinitaryLogic closure of {targetModule} is {ilModules}; \
       update allowedClosure deliberately (extra {extra}, missing {missing})"
-  unless ilModules.length == 60 do
-    throwError "[CLOSURE DRIFT] expected 60 InfinitaryLogic modules, found {ilModules.length}"
+  unless ilModules.length == 58 do
+    throwError "[CLOSURE DRIFT] expected 58 InfinitaryLogic modules, found {ilModules.length}"
   -- the three theorems are exactly the public declarations of the module
   let pub := (env.header.moduleData[idx.toNat]!).constNames.toList.filter fun n ↦
     !n.isInternalDetail

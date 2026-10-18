@@ -124,7 +124,7 @@ def existsOrbitParams {k n : ℕ} (θ : L.Formulaω (Fin k)) (ψ : L.Formulaω (
     (θ.mapFreeVars (Fin.natAdd n) ⊓ ψ.mapFreeVars (finAddFlip : Fin (k + n) ≃ Fin (n + k)))
 
 /-- `existsOrbitParams θ ψ` holds of `b` iff some `c` satisfies `θ` and `ψ` holds of `c⌢b`. -/
-@[simp high] -- outranks TauCeti's simp `FormulaInf.realize_def`, which would pre-empt it
+@[simp]
 theorem realize_existsOrbitParams {M : Type w} [L.Structure M] {k n : ℕ}
     (θ : L.Formulaω (Fin k)) (ψ : L.Formulaω (Fin (k + n))) (b : Fin n → M) :
     (existsOrbitParams θ ψ).Realize b ↔

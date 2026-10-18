@@ -37,8 +37,9 @@ Regression guard for the witnessed Morley counting theorems and the per-level Si
   `counting_fin_models_countable_or_perfect`, which applies Silver to isomorphism itself
   (`[DUPLICATED STEP]` otherwise).
 * **Import closure unchanged.**  The `InfinitaryLogic` closure of `Conditional.MorleyPerfect` has
-  exactly 53 modules: 51, as before the step was extracted, plus the two `Infinitary/` modules of
-  carrier transport and quantifier rank (`[CLOSURE DRIFT]` otherwise).
+  exactly 51 modules, as before the step was extracted (`[CLOSURE DRIFT]` otherwise); the two
+  `Infinitary/` modules of carrier transport and quantifier rank, which briefly made it 53, are
+  now TauCeti's and outside the `InfinitaryLogic` part.
 * **Standard axioms** (`propext`, `Classical.choice`, `Quot.sound`) for the five declarations and
   the declarations listed in `guardDecls`; the remaining helpers of this guard (`uR`, `symIdx`,
   `continuous_cantorCode`, `not_countable_cantor`) are not listed and are covered indirectly,
@@ -434,8 +435,8 @@ run_cmd do
   -- CLOSURE: unchanged by the extraction
   let ilModules := (importClosure env targetModule).toList.filter fun m ↦
     (`InfinitaryLogic).isPrefixOf m
-  unless ilModules.length == 53 do
-    throwError "[CLOSURE DRIFT] expected 53 InfinitaryLogic modules in the closure of \
+  unless ilModules.length == 51 do
+    throwError "[CLOSURE DRIFT] expected 51 InfinitaryLogic modules in the closure of \
       {targetModule}, found {ilModules.length}: {ilModules}"
   -- AXIOMS
   let audited := pins.map (·.1) ++ guardDecls

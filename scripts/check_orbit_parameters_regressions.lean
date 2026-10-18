@@ -449,7 +449,6 @@ def expectedClosure : List Name :=
   [`InfinitaryLogic.Util, `InfinitaryLogic.Lomega1omega.Syntax,
    `InfinitaryLogic.Lomega1omega.Semantics, `InfinitaryLogic.Lomega1omega.Operations,
    `InfinitaryLogic.Lomega1omega.OpenBoundsSemantics, `InfinitaryLogic.Lomega1omega.QuantifierRank,
-   `InfinitaryLogic.Infinitary.QuantifierRank, `InfinitaryLogic.Infinitary.Reindex,
    `InfinitaryLogic.Lomega1omega.Theory, `InfinitaryLogic.Scott.AtomicDiagram,
    `InfinitaryLogic.Scott.BackAndForth, `InfinitaryLogic.Scott.BFEquivRelabel,
    `InfinitaryLogic.Scott.Formula, `InfinitaryLogic.Scott.Sentence,

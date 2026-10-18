@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Cameron Freer
 -/
 import InfinitaryLogic.Lomega1omega.Semantics
-import InfinitaryLogic.Infinitary.Reindex
+import TauCeti.ModelTheory.Infinitary.CodedConnectives
 
 /-!
 # Countable connectives over arbitrary countable index types
@@ -22,7 +22,7 @@ is a subtype of realized types, landing in `Type (max u v)` — be universe-poly
 Both definitions are noncomputable: `Encodable.ofCountable` upgrades `[Countable ι]` to an
 encoding by choice. Padding handles the empty index uniformly, an empty `ι` padding every
 branch, so no case split is needed and each realization lemma is `realize_iInfAlong` or
-`realize_iSupAlong` (`Infinitary/Reindex.lean`) applied directly.
+`realize_iSupAlong` (`TauCeti.ModelTheory.Infinitary.CodedConnectives`) applied directly.
 
 Only the realization lemmas are provided. No syntactic naturality API is built here: the
 encoding is noncanonical, so definitional commutation statements would be unpleasant —

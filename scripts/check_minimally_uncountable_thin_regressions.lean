@@ -12,8 +12,8 @@ Regression guard for thinness from sentence cuts
   dependency, not merely tolerated, and it is a separate check from the axiom audit.  No
   dependency-free claim is made for this module.
 * **Exact import closure.**  The `InfinitaryLogic` closure of
-  `Descriptive.MinimallyUncountableThin` is exactly `allowedClosure` (131 modules: the closures
-  of `Descriptive.MinimallyUncountable` (33) and `Descriptive.SmallVocabularyTransport` (117),
+  `Descriptive.MinimallyUncountableThin` is exactly `allowedClosure` (129 modules: the closures
+  of `Descriptive.MinimallyUncountable` (33) and `Descriptive.SmallVocabularyTransport` (115),
   overlapping in 20, plus the module), and it is checked to be that union.  It contains
   `Descriptive.MinimallyUncountable` and does **not** contain `Descriptive.MinimallyUnbounded`
   or `Descriptive.ScatteredCounting` (so the isolating-rank contract is not imported), nor any
@@ -188,7 +188,6 @@ def allowedClosure : List Name :=
    `InfinitaryLogic.Lomega1omega.Fragment, `InfinitaryLogic.Lomega1omega.OpenBoundsSemantics,
    `InfinitaryLogic.Lomega1omega.Operations, `InfinitaryLogic.Lomega1omega.QuantifierClass,
    `InfinitaryLogic.Lomega1omega.QuantifierRank, `InfinitaryLogic.Lomega1omega.Semantics,
-   `InfinitaryLogic.Infinitary.QuantifierRank, `InfinitaryLogic.Infinitary.Reindex,
    `InfinitaryLogic.Lomega1omega.Syntax, `InfinitaryLogic.Lomega1omega.Theory,
    `InfinitaryLogic.Methods.ConstantAbstraction, `InfinitaryLogic.Methods.ConstantInstances,
    `InfinitaryLogic.Methods.ConstantSupport, `InfinitaryLogic.Methods.EM.FragmentAdapter,
@@ -284,13 +283,13 @@ run_cmd do
   unless ilModules.contains `InfinitaryLogic.Descriptive.MinimallyUncountable do
     throwError "[CLOSURE DRIFT] the closure of {targetModule} misses MinimallyUncountable"
   checkExact targetModule ilModules allowedClosure
-  unless ilModules.length == 131 do
-    throwError "[CLOSURE DRIFT] expected 131 InfinitaryLogic modules, found {ilModules.length}"
+  unless ilModules.length == 129 do
+    throwError "[CLOSURE DRIFT] expected 129 InfinitaryLogic modules, found {ilModules.length}"
   let parts := [`InfinitaryLogic.Descriptive.MinimallyUncountable,
     `InfinitaryLogic.Descriptive.SmallVocabularyTransport]
   let psizes := parts.map fun p ↦ (ilClosure env p).length
-  unless psizes == [33, 117] do
-    throwError "[CLOSURE DRIFT] the closures of {parts} have sizes {psizes}, not [33, 117]"
+  unless psizes == [33, 115] do
+    throwError "[CLOSURE DRIFT] the closures of {parts} have sizes {psizes}, not [33, 115]"
   let union := (parts.foldl (fun s p ↦ s ++ .ofList (ilClosure env p)) ({} : NameSet)).insert
     targetModule
   checkExact targetModule ilModules union.toList
