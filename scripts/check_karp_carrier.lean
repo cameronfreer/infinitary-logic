@@ -207,7 +207,8 @@ def expectedOrigin : List (Name × Name) :=
 
 /-- The in-repository copies of carrier transport and quantifier rank, deleted in favour of
 TauCeti's modules. As with `removedNames`, the assertion is absence from the environment (here
-as modules, `getModuleIdx?`), so a re-added copy fails loudly even if nothing uses it. -/
+as modules, `getModuleIdx?`), so a re-added copy fails loudly as soon as it is reachable from
+`import InfinitaryLogic`, whether or not any declaration uses it. -/
 def removedModules : List Name :=
   [`InfinitaryLogic.Infinitary.QuantifierRank, `InfinitaryLogic.Infinitary.Reindex]
 
