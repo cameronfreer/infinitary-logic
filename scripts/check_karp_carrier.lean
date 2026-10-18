@@ -1,7 +1,7 @@
 /-
 Acceptance guard for the fixed-carrier Karp formulation.
 
-Two jobs, neither of which an axiom scan can do.
+Four jobs, none of which an axiom scan can do.
 
 1. ELABORATION GATES — the formulation's claims are about *signatures*, so they are checked by
    elaborating them, not by inspecting proofs:
@@ -27,6 +27,13 @@ Two jobs, neither of which an axiom scan can do.
    Theorem proof bodies are reached via `.thmInfo`/`.opaqueInfo`: `ConstantInfo.value?` exposes
    only `def` bodies, so matching on it alone would silently skip every theorem and hide a
    legacy dependency sitting in a proof.
+
+4. UPSTREAM ORIGIN — the carrier machinery the cones are required to contain is TauCeti's, not a
+   local copy: each name in `expectedOrigin` must resolve and be declared in the named TauCeti
+   module (`[ORIGIN]` on an unresolved name, on a missing module, or on any other module), and
+   the deleted in-repository copies `InfinitaryLogic.Infinitary.QuantifierRank` and
+   `InfinitaryLogic.Infinitary.Reindex` must be absent from the environment as modules
+   (`[NOT REMOVED]`).
 
 Run with: lake env lean scripts/check_karp_carrier.lean
 -/
@@ -172,7 +179,7 @@ def requiredWitness : List Name :=
    `FirstOrder.Language.BoundedFormulaInf]
 
 /-- The agreement theorem must run on the carrier-generic rank `BoundedFormulaInf.qrank`
-(`InfinitaryLogic/Infinitary/QuantifierRank.lean`), not on an ω-only copy of it. -/
+(`TauCeti.ModelTheory.Infinitary.QuantifierRank`), not on an ω-only copy of it. -/
 def rankWitness : List Name :=
   [`FirstOrder.Language.BoundedFormulaInf.qrank,
    `FirstOrder.Language.BFEquiv]
@@ -187,6 +194,23 @@ def guardedRoots : List Name :=
 /-- The rank-bounded agreement theorem, guarded on the same terms plus the rank witnesses. -/
 def rankRoots : List Name := [`FirstOrder.Language.BFEquiv_implies_agreeQR]
 
+/-- UPSTREAM ORIGIN: each witness of the cones above, paired with the TauCeti module that must
+declare it. A local redefinition, or a move to another module, fails `[ORIGIN]`. -/
+def expectedOrigin : List (Name × Name) :=
+  [(`FirstOrder.Language.BoundedFormulaInf.qrank, `TauCeti.ModelTheory.Infinitary.QuantifierRank),
+   (`FirstOrder.Language.BoundedFormulaInf.reindex, `TauCeti.ModelTheory.Infinitary.Reindex),
+   (`FirstOrder.Language.BoundedFormulaInf.iInfAlong,
+     `TauCeti.ModelTheory.Infinitary.CodedConnectives),
+   (`FirstOrder.Language.BoundedFormulaInf.realize_iInfAlong,
+     `TauCeti.ModelTheory.Infinitary.CodedConnectives),
+   (`TauCeti.IndexCoding, `TauCeti.ModelTheory.Infinitary.IndexCoding)]
+
+/-- The in-repository copies of carrier transport and quantifier rank, deleted in favour of
+TauCeti's modules. As with `removedNames`, the assertion is absence from the environment (here
+as modules, `getModuleIdx?`), so a re-added copy fails loudly even if nothing uses it. -/
+def removedModules : List Name :=
+  [`InfinitaryLogic.Infinitary.QuantifierRank, `InfinitaryLogic.Infinitary.Reindex]
+
 run_cmd do
   let env ← getEnv
   -- zero-occurrence check: the old implementation must be gone, not merely unreferenced
@@ -194,6 +218,20 @@ run_cmd do
   unless survivors.isEmpty do
     throwError "[NOT REMOVED] the old Karp implementation is still in the environment: \
       {survivors}"
+  -- the deleted in-repository copies of carrier transport and quantifier rank must be gone
+  let survivingModules := removedModules.filter fun m => (env.getModuleIdx? m).isSome
+  unless survivingModules.isEmpty do
+    throwError "[NOT REMOVED] the deleted in-repository modules are still in the environment: \
+      {survivingModules}"
+  -- upstream origin: every name resolves and is declared in the expected TauCeti module
+  for (n, expected) in expectedOrigin do
+    unless (env.find? n).isSome do
+      throwError "[ORIGIN] {n} does not resolve in the environment"
+    match env.getModuleFor? n with
+    | none => throwError "[ORIGIN] no module is recorded for {n}"
+    | some m =>
+      unless m == expected do
+        throwError "[ORIGIN] {n} is declared in {m}, expected {expected}"
   for root in guardedRoots do
     unless (env.find? root).isSome do throwError "root declaration {root} not found"
     let deps := transitiveDeps env root
@@ -215,6 +253,7 @@ run_cmd do
     let missing := rankWitness.filter fun r => !deps.contains r
     unless missing.isEmpty do
       throwError "[MISSING WITNESS] {root} does not consume the carrier-generic rank \
-        (Infinitary/QuantifierRank.lean): {missing}"
-  logInfo "Karp carrier guard: OK (elaboration gates pass; old implementation absent; cones \
-    consume IndexCoding/iInfAlong and no legacy syntax)"
+        (TauCeti.ModelTheory.Infinitary.QuantifierRank): {missing}"
+  logInfo "Karp carrier guard: OK (elaboration gates pass; old implementation and deleted \
+    in-repository modules absent; cones consume IndexCoding/iInfAlong and no legacy syntax; \
+    the witnesses are declared in their TauCeti modules)"

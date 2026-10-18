@@ -5,7 +5,7 @@ Authors: Cameron Freer
 -/
 import InfinitaryLogic.Lomega1omega.Semantics
 import InfinitaryLogic.Lomega1omega.Operations
-import InfinitaryLogic.Infinitary.QuantifierRank
+import TauCeti.ModelTheory.Infinitary.QuantifierRank
 import Mathlib.SetTheory.Ordinal.Family
 import Mathlib.SetTheory.Cardinal.Regular
 
@@ -57,11 +57,12 @@ open FirstOrder Structure Ordinal
 Because the rank is valued in the carrier's own ordinal universe, the `ℕ` specialization
 lands in `Ordinal.{0}` exactly — no lifting, which is what Scott analysis needs.
 
-This is an `abbrev`, so it is the carrier-generic rank of `Infinitary/QuantifierRank.lean`
-rather than a parallel copy of it (gated by `rfl` below). The ω-facing lemmas beneath keep their
-historical statements: `qrank_all` and `qrank_ex` are still stated with `+ 1` rather than
-`Order.succ`, so downstream sees no proposition-level change. Only code that relied on the old
-definition unfolding by `rfl` is affected.
+This is an `abbrev`, so it is the carrier-generic rank of
+`TauCeti.ModelTheory.Infinitary.QuantifierRank` rather than a parallel copy of it (gated by
+`rfl` below). The ω-facing lemmas beneath keep their historical statements: `qrank_all` and
+`qrank_ex` are still stated with `+ 1` rather than `Order.succ`, so downstream sees no
+proposition-level change. Only code that relied on the old definition unfolding by `rfl` is
+affected.
 
 The quantifier rank of an `Lω₁ω` formula is always a countable ordinal (`< ω₁`):
 `BoundedFormulaω.qrank_lt_omega1`. -/

@@ -6,7 +6,8 @@ Authors: Cameron Freer
 import InfinitaryLogic.Karp.PotentialIso
 import InfinitaryLogic.Scott.AtomicDiagram
 import InfinitaryLogic.Scott.BackAndForth
-import InfinitaryLogic.Infinitary.QuantifierRank
+import TauCeti.ModelTheory.Infinitary.QuantifierRank
+import TauCeti.ModelTheory.Infinitary.CodedConnectives
 import Architect
 
 /-!
