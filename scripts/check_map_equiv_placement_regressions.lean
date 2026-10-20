@@ -25,7 +25,15 @@ only `InfinitaryLogic.Scott.BFEquivRelabel` and checks:
 * **Import closure** of `Scott/BFEquivRelabel`: its `InfinitaryLogic` closure is exactly
   `Util`, `Lomega1omega.{Syntax, Semantics, Operations}`, `Scott.AtomicDiagram`,
   `Scott.BackAndForth` and the module itself; as an extra, no `Karp`, descriptive, model-theory
-  or method module, and not `Scott/OrbitRank`.
+  or method module, and not `Scott/OrbitRank`.  Upstream (TauCeti), the closure may not reach
+  the Karp-layer prefixes `BackAndForth.{TupleSystem, PotentialIso, Presentation, AllLevels,
+  Countable, Karp}` or the orbit-rank prefixes `Scott.{Rank, CompleteGraphSum}` (tier R, in the
+  same check), nor, because the whitelist excludes their counterparts, `Scott.Formula`,
+  `Scott.{Stabilization, PureSet}`, `Infinitary.QuantifierRank` or `Scott.{Sentence,
+  PotentialIso}` (tier W, a separate check over the full closure).  Both matchers are controlled
+  on every frozen prefix, a child and a component-wise lookalike of each, and the permitted
+  names `BackAndForth.{AtomicType, Equivalence}`, `Scott.AtomicDiagram` and
+  `Infinitary.Semantics`.
 
 The declarations use only the standard axioms.
 
@@ -131,10 +139,73 @@ where
           | none => []
         go (deps ++ rest) (seen.insert m)
 
+/-- Tier R upstream prefixes (TauCeti): the counterparts of `InfinitaryLogic.Karp` ("must keep
+`Karp` out of its closure") and of `Scott/OrbitRank` ("not `Scott/OrbitRank`"): the
+potential-isomorphism layer, the forward Karp theorem and the orbit ranks upstream. -/
+def upstreamForbiddenPrefixes : List Name :=
+  [`TauCeti.ModelTheory.BackAndForth.TupleSystem, `TauCeti.ModelTheory.BackAndForth.PotentialIso,
+   `TauCeti.ModelTheory.BackAndForth.Presentation, `TauCeti.ModelTheory.BackAndForth.AllLevels,
+   `TauCeti.ModelTheory.BackAndForth.Countable, `TauCeti.ModelTheory.BackAndForth.Karp,
+   `TauCeti.ModelTheory.Scott.Rank, `TauCeti.ModelTheory.Scott.CompleteGraphSum]
+
 /-- Module-name prefixes no module of the closure may have. -/
 def forbiddenPrefixes : List Name :=
   [`InfinitaryLogic.Karp, `InfinitaryLogic.Descriptive, `InfinitaryLogic.ModelTheory,
-   `InfinitaryLogic.Methods]
+   `InfinitaryLogic.Methods] ++ upstreamForbiddenPrefixes
+
+/-- The matcher of the closure check: a forbidden prefix is a component-wise prefix of the
+module's name, or the module is `Scott/OrbitRank`.  The closure walk is over all module names,
+`TauCeti.*` included. -/
+def isForbiddenModule (m : Name) : Bool :=
+  forbiddenPrefixes.any (·.isPrefixOf m) || m == `InfinitaryLogic.Scott.OrbitRank
+
+/-- Tier W (whitelist gap repair, in scope by ruling D2 of 2026-10-19): TauCeti modules whose
+`InfinitaryLogic` counterparts (`Scott.Formula`, the internal stabilization of `Scott.Sentence`,
+`Lomega1omega.QuantifierRank`, Scott sentences) are absent from `allowedClosure`, which cannot
+see a TauCeti module.  Matched over the full closure. -/
+def upstreamWhitelistGapPrefixes : List Name :=
+  [`TauCeti.ModelTheory.Scott.Formula, `TauCeti.ModelTheory.Scott.Stabilization,
+   `TauCeti.ModelTheory.Scott.PureSet, `TauCeti.ModelTheory.Infinitary.QuantifierRank,
+   `TauCeti.ModelTheory.Scott.Sentence, `TauCeti.ModelTheory.Scott.PotentialIso]
+
+/-- The matcher of the tier-W check: a module is forbidden when a tier-W prefix is a
+component-wise prefix of its name. -/
+def isForbiddenUpstreamGap (m : Name) : Bool :=
+  upstreamWhitelistGapPrefixes.any (·.isPrefixOf m)
+
+/-- A component-wise lookalike of a prefix: its last component with `X` appended
+(`TauCeti.ModelTheory.Scott` ↦ `TauCeti.ModelTheory.ScottX`).  It shares the prefix as text and
+is not a component-wise descendant, so a component-wise matcher must not flag it. -/
+def controlLookalike : Name → Name
+  | .str p s => .str p (s ++ "X")
+  | n => n
+
+/-- `[CONTROL]` on one upstream matcher in one mode (`label`): the matcher flags every frozen
+prefix of `ps` and a child of each, and flags neither the lookalike of any prefix nor any name
+of `permitted` (the permitted list of this matcher and mode only).  The two lists must have
+exactly `size` and `permittedSize` entries, so a truncated list fails loudly. -/
+def upstreamControl (label : String) (isForbidden : Name → Bool) (ps : List Name) (size : Nat)
+    (permitted : List Name) (permittedSize : Nat) : Elab.Command.CommandElabM Unit := do
+  unless ps.length == size do
+    throwError "[CONTROL] {label}: {ps.length} frozen prefixes, expected {size}"
+  unless permitted.length == permittedSize do
+    throwError "[CONTROL] {label}: {permitted.length} permitted names, expected {permittedSize}"
+  for p in ps do
+    for m in [p, .str p "ControlChild"] do
+      unless isForbidden m do
+        throwError "[CONTROL] {label}: the upstream matcher does not flag {m}"
+  for m in ps.map controlLookalike ++ permitted do
+    if isForbidden m then
+      throwError "[CONTROL] {label}: the upstream matcher flags {m}"
+
+-- [CONTROL] on both upstream matchers, each with the guard's permitted list (shared)
+run_cmd do
+  upstreamControl "closure matcher (tier R)" isForbiddenModule upstreamForbiddenPrefixes 8
+    [`TauCeti.ModelTheory.BackAndForth.AtomicType, `TauCeti.ModelTheory.BackAndForth.Equivalence,
+     `TauCeti.ModelTheory.Scott.AtomicDiagram, `TauCeti.ModelTheory.Infinitary.Semantics] 4
+  upstreamControl "tier-W matcher" isForbiddenUpstreamGap upstreamWhitelistGapPrefixes 6
+    [`TauCeti.ModelTheory.BackAndForth.AtomicType, `TauCeti.ModelTheory.BackAndForth.Equivalence,
+     `TauCeti.ModelTheory.Scott.AtomicDiagram, `TauCeti.ModelTheory.Infinitary.Semantics] 4
 
 /-- The exact `InfinitaryLogic` import closure of `Scott/BFEquivRelabel`.  Extending it is a
 deliberate decision: a consumer under an exact-closure guard (such as `Descriptive/BFSeparation`)
@@ -164,10 +235,13 @@ run_cmd do
   let cl := importClosure env target
   for m in [`InfinitaryLogic.Scott.AtomicDiagram, `InfinitaryLogic.Scott.BackAndForth] do
     unless cl.contains m do throwError "[MISSING ROUTE] {m} is not in the closure of {target}"
-  let hits := cl.toList.filter fun m ↦
-    forbiddenPrefixes.any (·.isPrefixOf m) || m == `InfinitaryLogic.Scott.OrbitRank
+  let hits := cl.toList.filter isForbiddenModule
   unless hits.isEmpty do
     throwError "[BROAD CONE] the closure of {target} reaches {hits}"
+  -- tier W, over the full closure
+  let gapHits := cl.toList.filter isForbiddenUpstreamGap
+  unless gapHits.isEmpty do
+    throwError "[BROAD CONE] the closure of {target} reaches {gapHits}"
   let ilModules := cl.toList.filter fun m ↦ (`InfinitaryLogic).isPrefixOf m
   let extra := ilModules.filter fun m ↦ !allowedClosure.contains m
   let missing := allowedClosure.filter fun m ↦ !ilModules.contains m
@@ -199,4 +273,5 @@ run_cmd do
     swap, the atomic type of (0, 1) carried into \
     ULift.{1} N; InfinitaryLogic import closure of Scott/BFEquivRelabel exactly the 7 listed \
     modules, without Karp, descriptive, model-theory or method modules and without \
-    Scott/OrbitRank; standard axioms)"
+    Scott/OrbitRank, and no upstream Karp-layer, orbit-rank, Scott-formula, stabilization, \
+    quantifier-rank or Scott-sentence module; standard axioms)"

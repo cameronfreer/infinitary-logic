@@ -16,7 +16,10 @@ it should not have to import descriptive set theory or any logic.  It used to li
 * **Home module**: the lemma is declared in `InfinitaryLogic.Topology.Perfect`.
 * **Import closure**: the `InfinitaryLogic` closure of `Topology/Perfect` is exactly the module
   itself; no Scott, descriptive, model-theory, Karp, Lω₁ω, methods, admissible or conditional
-  module.
+  module.  The module has Mathlib imports only, so no `TauCeti` module either (ruling D1 of
+  2026-10-19: the whole `TauCeti` prefix is forbidden); the matcher is controlled on the frozen
+  prefix, a child, the component-wise lookalike `TauCetiX`, and the permitted names
+  `Mathlib.Topology.MetricSpace.Perfect` and `InfinitaryLogic.Topology.Perfect`.
 
 The declarations use only the standard axioms.
 
@@ -71,11 +74,51 @@ where
           | none => []
         go (deps ++ rest) (seen.insert m)
 
+/-- Tier R upstream prefix: all of `TauCeti`.  The module is "a module with Mathlib imports
+only" (ruling D1 of 2026-10-19), so no TauCeti module may enter its closure. -/
+def upstreamForbiddenPrefixes : List Name :=
+  [`TauCeti]
+
 /-- Module-name prefixes no module of the closure may have. -/
 def forbiddenPrefixes : List Name :=
   [`InfinitaryLogic.Scott, `InfinitaryLogic.Descriptive, `InfinitaryLogic.ModelTheory,
    `InfinitaryLogic.Karp, `InfinitaryLogic.Lomega1omega, `InfinitaryLogic.Methods,
-   `InfinitaryLogic.Admissible, `InfinitaryLogic.Conditional]
+   `InfinitaryLogic.Admissible, `InfinitaryLogic.Conditional] ++ upstreamForbiddenPrefixes
+
+/-- The matcher of the closure check: a module is forbidden when a forbidden prefix is a
+component-wise prefix of its name.  The closure walk is over all module names, `TauCeti.*`
+included. -/
+def isForbiddenModule (m : Name) : Bool := forbiddenPrefixes.any (·.isPrefixOf m)
+
+/-- A component-wise lookalike of a prefix: its last component with `X` appended
+(`TauCeti.ModelTheory.Scott` ↦ `TauCeti.ModelTheory.ScottX`).  It shares the prefix as text and
+is not a component-wise descendant, so a component-wise matcher must not flag it. -/
+def controlLookalike : Name → Name
+  | .str p s => .str p (s ++ "X")
+  | n => n
+
+/-- `[CONTROL]` on one upstream matcher in one mode (`label`): the matcher flags every frozen
+prefix of `ps` and a child of each, and flags neither the lookalike of any prefix nor any name
+of `permitted` (the permitted list of this matcher and mode only).  The two lists must have
+exactly `size` and `permittedSize` entries, so a truncated list fails loudly. -/
+def upstreamControl (label : String) (isForbidden : Name → Bool) (ps : List Name) (size : Nat)
+    (permitted : List Name) (permittedSize : Nat) : Elab.Command.CommandElabM Unit := do
+  unless ps.length == size do
+    throwError "[CONTROL] {label}: {ps.length} frozen prefixes, expected {size}"
+  unless permitted.length == permittedSize do
+    throwError "[CONTROL] {label}: {permitted.length} permitted names, expected {permittedSize}"
+  for p in ps do
+    for m in [p, .str p "ControlChild"] do
+      unless isForbidden m do
+        throwError "[CONTROL] {label}: the upstream matcher does not flag {m}"
+  for m in ps.map controlLookalike ++ permitted do
+    if isForbidden m then
+      throwError "[CONTROL] {label}: the upstream matcher flags {m}"
+
+-- [CONTROL] on the closure matcher
+run_cmd do
+  upstreamControl "closure matcher" isForbiddenModule upstreamForbiddenPrefixes 1
+    [`Mathlib.Topology.MetricSpace.Perfect, `InfinitaryLogic.Topology.Perfect] 2
 
 /-- The exact `InfinitaryLogic` import closure of `Topology/Perfect`.  Extending it is a
 deliberate decision: update this list together with the module docstring. -/
@@ -93,7 +136,7 @@ run_cmd do
   unless ci.levelParams.length == 1 do
     throwError "[UNIVERSES] {d} has universe parameters {ci.levelParams}, expected exactly one"
   let cl := importClosure env home
-  let hits := cl.toList.filter fun m ↦ forbiddenPrefixes.any (·.isPrefixOf m)
+  let hits := cl.toList.filter isForbiddenModule
   unless hits.isEmpty do
     throwError "[BROAD CONE] the closure of {home} reaches {hits}"
   let ilModules := cl.toList.filter fun m ↦ (`InfinitaryLogic).isPrefixOf m
@@ -122,5 +165,5 @@ run_cmd do
     (level-parameter count), the carrier's first (explicit instantiation); applied: the real \
     line has size continuum; InfinitaryLogic import \
     closure of Topology/Perfect exactly the module itself, without Scott, descriptive, \
-    model-theory, Karp, Lomega1omega, methods, admissible or conditional modules; standard \
-    axioms)"
+    model-theory, Karp, Lomega1omega, methods, admissible or conditional modules, and no \
+    upstream TauCeti module; standard axioms)"

@@ -48,7 +48,12 @@ Every exported theorem is *applied*, not only listed for its axioms.
   (`[CLOSURE DRIFT]` otherwise), none of `Scott/OrbitRank`, `Scott/OrbitRankStabilization`,
   `Scott/OrbitFormulaThreshold`, `Scott/Height*`, `Scott/Rank` (all present in this
   environment, so the check is not vacuous); `Scott.OrbitFormulaThreshold` reaches
-  `Scott/OrbitRank` and not `Scott/Sentence`.
+  `Scott/OrbitRank` and not `Scott/Sentence`.  Upstream (TauCeti), no orbit-rank module
+  `Scott.{Rank, CompleteGraphSum}` either (a separate check over the full closure: these modules
+  are not in this environment).  Internal stabilization, defined in the permitted
+  `Scott.Sentence`, Scott sentences, the Karp layer and the quantifier rank stay permitted
+  upstream.  The matcher is controlled on every frozen prefix, a child and a component-wise
+  lookalike of each, and on those permitted names.
 
 The exported and guard declarations use only the standard axioms.
 
@@ -534,6 +539,52 @@ def forbiddenRecognitionPrefixes : List Name :=
    `InfinitaryLogic.Scott.OrbitFormulaThreshold, `InfinitaryLogic.Scott.Height,
    `InfinitaryLogic.Scott.Rank]
 
+/-- Tier R upstream prefixes (TauCeti): orbit ranks and their relation to stabilization ("orbit
+ranks, orbit-rank stabilization").  A separate list, not appended to
+`forbiddenRecognitionPrefixes`, whose entries must exist in this environment; matched over the
+full closure. -/
+def upstreamForbiddenPrefixes : List Name :=
+  [`TauCeti.ModelTheory.Scott.Rank, `TauCeti.ModelTheory.Scott.CompleteGraphSum]
+
+/-- The matcher of the upstream check: a module is forbidden when an upstream prefix is a
+component-wise prefix of its name.  The walk is over the full closure, `TauCeti.*` included. -/
+def isForbiddenUpstream (m : Name) : Bool := upstreamForbiddenPrefixes.any (·.isPrefixOf m)
+
+/-- A component-wise lookalike of a prefix: its last component with `X` appended
+(`TauCeti.ModelTheory.Scott` ↦ `TauCeti.ModelTheory.ScottX`).  It shares the prefix as text and
+is not a component-wise descendant, so a component-wise matcher must not flag it. -/
+def controlLookalike : Name → Name
+  | .str p s => .str p (s ++ "X")
+  | n => n
+
+/-- `[CONTROL]` on one upstream matcher in one mode (`label`): the matcher flags every frozen
+prefix of `ps` and a child of each, and flags neither the lookalike of any prefix nor any name
+of `permitted` (the permitted list of this matcher and mode only).  The two lists must have
+exactly `size` and `permittedSize` entries, so a truncated list fails loudly. -/
+def upstreamControl (label : String) (isForbidden : Name → Bool) (ps : List Name) (size : Nat)
+    (permitted : List Name) (permittedSize : Nat) : Elab.Command.CommandElabM Unit := do
+  unless ps.length == size do
+    throwError "[CONTROL] {label}: {ps.length} frozen prefixes, expected {size}"
+  unless permitted.length == permittedSize do
+    throwError "[CONTROL] {label}: {permitted.length} permitted names, expected {permittedSize}"
+  for p in ps do
+    for m in [p, .str p "ControlChild"] do
+      unless isForbidden m do
+        throwError "[CONTROL] {label}: the upstream matcher does not flag {m}"
+  for m in ps.map controlLookalike ++ permitted do
+    if isForbidden m then
+      throwError "[CONTROL] {label}: the upstream matcher flags {m}"
+
+-- [CONTROL] on the upstream matcher
+run_cmd do
+  upstreamControl "upstream matcher" isForbiddenUpstream upstreamForbiddenPrefixes 2
+    [`TauCeti.ModelTheory.Scott.Stabilization, `TauCeti.ModelTheory.Scott.PureSet,
+     `TauCeti.ModelTheory.Scott.Sentence, `TauCeti.ModelTheory.Scott.PotentialIso,
+     `TauCeti.ModelTheory.BackAndForth.Karp, `TauCeti.ModelTheory.BackAndForth.TupleSystem,
+     `TauCeti.ModelTheory.BackAndForth.PotentialIso, `TauCeti.ModelTheory.BackAndForth.Presentation,
+     `TauCeti.ModelTheory.BackAndForth.AllLevels, `TauCeti.ModelTheory.BackAndForth.Countable,
+     `TauCeti.ModelTheory.Infinitary.QuantifierRank] 11
+
 run_cmd do
   let env ← getEnv
   -- the forbidden modules are in this environment, so the check below is not vacuous
@@ -547,6 +598,10 @@ run_cmd do
   let hits := cl.toList.filter fun m ↦ forbiddenRecognitionPrefixes.any (·.isPrefixOf m)
   unless hits.isEmpty do
     throwError "[BROAD CONE] the closure of {target} reaches {hits}"
+  -- the upstream orbit-rank prefixes, over the full closure
+  let upstreamHits := cl.toList.filter isForbiddenUpstream
+  unless upstreamHits.isEmpty do
+    throwError "[BROAD CONE] the closure of {target} reaches {upstreamHits}"
   let il := cl.toList.filter (`InfinitaryLogic).isPrefixOf
   let extra := il.filter fun m ↦ !expectedRecognitionClosure.contains m
   let missing := expectedRecognitionClosure.filter fun m ↦ !cl.contains m
@@ -605,4 +660,5 @@ run_cmd do
     exactly 1; the singleton with a repeated tuple; recognition from the rank-one empty-model \
     sentence in the empty language, on PEmpty at Type 3, in Language.{1, 2}, and at omega 1; \
     the Fin 0 companions on the empty-model formula and on the Montalban sentence of N built from \
-    the pattern formulas; exact import closure of Scott.SentenceRecognition; standard axioms)"
+    the pattern formulas; exact import closure of Scott.SentenceRecognition, and no upstream \
+    orbit-rank module; standard axioms)"

@@ -60,6 +60,17 @@ Every public declaration of the module is *applied*, not only listed for its axi
   `Admissible`, `Conditional`, `ScottProcess` or `WIP` module, not
   `Descriptive.BFScatteredSentence`, and no module whose name contains `LopezEscobar` or
   `SmallVocabulary` (`[BROAD CONE]`).
+* **Upstream (TauCeti), over the full closure.**  As `Karp.PotentialIso` is the only `Karp`
+  module, the only upstream Karp-layer module forbidden is the forward Karp theorem
+  `BackAndForth.Karp`, the counterpart of `Karp.CarrierTheorem` (tier R, `[KARP DRIFT]`); the
+  counterparts of `Karp.PotentialIso`, `BackAndForth.{TupleSystem, PotentialIso, Presentation,
+  AllLevels, Countable}`, are permitted.  Because the whitelist excludes their counterparts,
+  `Infinitary.QuantifierRank` and the orbit ranks `Scott.{Rank, CompleteGraphSum}` are
+  forbidden too (tier W, `[BROAD CONE]`).  Both matchers are controlled on every frozen prefix,
+  a child and a component-wise lookalike of each, and on the permitted names (the five
+  potential-isomorphism counterparts, `Scott.{Sentence, PotentialIso}`, `Scott.AtomicDiagram`,
+  `Scott.Formula`, `Scott.{Stabilization, PureSet}`, `BackAndForth.{AtomicType, Equivalence}`
+  and `Infinitary.Semantics`).
 * **Standard axioms** for every declaration of the module (enumerated from the environment) and
   every declaration of this guard.  The OK line is printed only after the closure and axiom
   checks.
@@ -411,6 +422,80 @@ def forbiddenPrefixes : List Name :=
 /-- Substrings no module of the closure may contain. -/
 def forbiddenSubstrings : List String := ["LopezEscobar", "SmallVocabulary"]
 
+/-- Tier R upstream prefix (TauCeti): the forward Karp theorem, the counterpart of
+`Karp.CarrierTheorem`.  The contract permits `Karp.PotentialIso` and no other `Karp` module
+("it is the only `Karp` module"), so only this upstream Karp-layer module is forbidden. -/
+def upstreamKarpPrefixes : List Name :=
+  [`TauCeti.ModelTheory.BackAndForth.Karp]
+
+/-- The upstream counterparts of `Karp.PotentialIso`, which the contract permits.  Not a
+forbidden list: the control asserts each of them, and a child, unflagged. -/
+def upstreamPotentialIsoCounterparts : List Name :=
+  [`TauCeti.ModelTheory.BackAndForth.TupleSystem, `TauCeti.ModelTheory.BackAndForth.PotentialIso,
+   `TauCeti.ModelTheory.BackAndForth.Presentation, `TauCeti.ModelTheory.BackAndForth.AllLevels,
+   `TauCeti.ModelTheory.BackAndForth.Countable]
+
+/-- Tier W (whitelist gap repair, in scope by ruling D2 of 2026-10-19): TauCeti modules whose
+`InfinitaryLogic` counterparts (`Lomega1omega.QuantifierRank`, `Scott.OrbitRank`) are absent
+from `allowedClosure`, which cannot see a TauCeti module.  Matched over the full closure. -/
+def upstreamWhitelistGapPrefixes : List Name :=
+  [`TauCeti.ModelTheory.Infinitary.QuantifierRank, `TauCeti.ModelTheory.Scott.Rank,
+   `TauCeti.ModelTheory.Scott.CompleteGraphSum]
+
+/-- The matcher of the upstream Karp check (`[KARP DRIFT]`). -/
+def isUpstreamKarpModule (m : Name) : Bool := upstreamKarpPrefixes.any (·.isPrefixOf m)
+
+/-- The matcher of the tier-W check (`[BROAD CONE]`). -/
+def isForbiddenUpstreamGap (m : Name) : Bool :=
+  upstreamWhitelistGapPrefixes.any (·.isPrefixOf m)
+
+/-- The permitted upstream names asserted unflagged by both matchers. -/
+def upstreamPermittedControls : List Name :=
+  upstreamPotentialIsoCounterparts ++
+  [`TauCeti.ModelTheory.Scott.Sentence, `TauCeti.ModelTheory.Scott.PotentialIso,
+   `TauCeti.ModelTheory.Scott.AtomicDiagram, `TauCeti.ModelTheory.Scott.Formula,
+   `TauCeti.ModelTheory.Scott.Stabilization, `TauCeti.ModelTheory.Scott.PureSet,
+   `TauCeti.ModelTheory.BackAndForth.AtomicType, `TauCeti.ModelTheory.BackAndForth.Equivalence,
+   `TauCeti.ModelTheory.Infinitary.Semantics]
+
+/-- A component-wise lookalike of a prefix: its last component with `X` appended
+(`TauCeti.ModelTheory.Scott` ↦ `TauCeti.ModelTheory.ScottX`).  It shares the prefix as text and
+is not a component-wise descendant, so a component-wise matcher must not flag it. -/
+def controlLookalike : Name → Name
+  | .str p s => .str p (s ++ "X")
+  | n => n
+
+/-- `[CONTROL]` on one upstream matcher in one mode (`label`): the matcher flags every frozen
+prefix of `ps` and a child of each, and flags neither the lookalike of any prefix nor any name
+of `permitted` (the permitted list of this matcher and mode only).  The two lists must have
+exactly `size` and `permittedSize` entries, so a truncated list fails loudly. -/
+def upstreamControl (label : String) (isForbidden : Name → Bool) (ps : List Name) (size : Nat)
+    (permitted : List Name) (permittedSize : Nat) : Elab.Command.CommandElabM Unit := do
+  unless ps.length == size do
+    throwError "[CONTROL] {label}: {ps.length} frozen prefixes, expected {size}"
+  unless permitted.length == permittedSize do
+    throwError "[CONTROL] {label}: {permitted.length} permitted names, expected {permittedSize}"
+  for p in ps do
+    for m in [p, .str p "ControlChild"] do
+      unless isForbidden m do
+        throwError "[CONTROL] {label}: the upstream matcher does not flag {m}"
+  for m in ps.map controlLookalike ++ permitted do
+    if isForbidden m then
+      throwError "[CONTROL] {label}: the upstream matcher flags {m}"
+
+-- [CONTROL] on both upstream matchers, each with the guard's permitted list (shared), and the
+-- children of the permitted potential-isomorphism counterparts
+run_cmd do
+  let permitted := upstreamPermittedControls
+  upstreamControl "upstream Karp matcher (tier R)" isUpstreamKarpModule upstreamKarpPrefixes 1
+    permitted 14
+  upstreamControl "tier-W matcher" isForbiddenUpstreamGap upstreamWhitelistGapPrefixes 3
+    permitted 14
+  for p in upstreamPotentialIsoCounterparts do
+    let m := Name.str p "ControlChild"
+    if isUpstreamKarpModule m || isForbiddenUpstreamGap m then
+      throwError "[CONTROL] an upstream matcher flags {m}"
+
 /-- The exact `InfinitaryLogic` import closure of `Descriptive.MinimallyUnbounded`.
 `Karp.PotentialIso` enters through `Descriptive.ScatteredCounting` and `Scott.Sentence`. -/
 def allowedClosure : List Name :=
@@ -470,6 +555,11 @@ run_cmd do
     forbiddenSubstrings.any fun s ↦ (m.toString.splitOn s).length ≠ 1
   unless hits.isEmpty do
     throwError "[BROAD CONE] the closure of {targetModule} reaches {hits}"
+  -- tier W, over the full closure (the checks here otherwise see only the IL part)
+  let fullClosure := (importClosure env targetModule).toList
+  let gapHits := fullClosure.filter isForbiddenUpstreamGap
+  unless gapHits.isEmpty do
+    throwError "[BROAD CONE] the closure of {targetModule} reaches {gapHits}"
   checkExact targetModule ilModules allowedClosure
   unless ilModules.length == 40 do
     throwError "[CLOSURE DRIFT] expected 40 InfinitaryLogic modules, found {ilModules.length}"
@@ -485,6 +575,11 @@ run_cmd do
   let karp := ilModules.filter (`InfinitaryLogic.Karp).isPrefixOf
   unless karp == [`InfinitaryLogic.Karp.PotentialIso] do
     throwError "[KARP DRIFT] the Karp modules of the closure are {karp}"
+  -- upstream: the forward Karp theorem is forbidden, the potential-isomorphism layer is not
+  let upstreamKarp := fullClosure.filter isUpstreamKarpModule
+  unless upstreamKarp.isEmpty do
+    throwError "[KARP DRIFT] the closure of {targetModule} reaches upstream Karp modules \
+      {upstreamKarp}; only the counterparts of Karp.PotentialIso are permitted"
   -- axioms: every declaration of the module and the guard's declarations
   let enumerated := (env.header.moduleData[idx.toNat]!).constNames.toList
   let audited := enumerated ++ guardDecls
@@ -506,7 +601,9 @@ run_cmd do
     ({ilModules.length} modules, the union of ScatteredCounting and MinimallyUncountable plus \
     the module), Karp.PotentialIso its only Karp module (by import), no ModelTheory, Methods, \
     Admissible, Conditional, ScottProcess, WIP, BFScatteredSentence, LopezEscobar or \
-    SmallVocabulary module; standard axioms for {audited.length} declarations; BFScattered \
+    SmallVocabulary module, and no upstream forward-Karp, quantifier-rank or orbit-rank module \
+    (the upstream potential-isomorphism counterparts permitted); \
+    standard axioms for {audited.length} declarations; BFScattered \
     necessary for the boundedness comparison: in the language of countably many nullary \
     symbols, the constant rank 0 and its inflation are isolating, one bounded and one not on \
     all codes, so the boundedness comparison and boundedRankOn_iff_countable fail without \

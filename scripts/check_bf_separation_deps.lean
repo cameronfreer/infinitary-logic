@@ -16,7 +16,12 @@ cannot pass vacuously.
   `check_morley_hanf_deps.lean`), contains no forbidden name and no constant declared in an
   `InfinitaryLogic` module whose name contains a forbidden substring or a component starting
   with `PC`.  Mathlib modules are exempt (`Mathlib.ModelTheory` is the first-order structure
-  library every coded structure uses).
+  library every coded structure uses).  Upstream (TauCeti), no constant is declared in a module
+  under the Karp-layer prefixes `BackAndForth.{TupleSystem, PotentialIso, Presentation,
+  AllLevels, Countable, Karp}` (an extra disjunct outside the `InfinitaryLogic` gate; these
+  modules are not in this environment, so the disjunct is tested by its matcher control: every
+  frozen prefix, a child and a component-wise lookalike of each, and the permitted names
+  `BackAndForth.{AtomicType, Equivalence}`, `Scott.AtomicDiagram` and `Infinitary.Semantics`).
 * **The cones use the descriptive route.**  Each cone contains
   `KleeneBrouwer.analytic_tree_rank_bounded`, `hasInfiniteBranch_bfTree_iff` and
   `lt_treeHeight_bfTree_of_codeBFEquiv`, and the two corollaries' cones contain
@@ -84,11 +89,56 @@ def forbiddenModuleSub : List String :=
    "WellOrderBridge", "AnalyticWellOrderBoundedness", "TreeCodes", "SmallVocabulary",
    "Interpolation", "Henkin", "Karp", "Methods", "ModelTheory", "WellOrder", "Code"]
 
-/-- Whether an `InfinitaryLogic` module name is forbidden. -/
+/-- Tier R upstream prefixes (TauCeti): the counterparts of the `Karp` modules the substring
+`"Karp"` forbids: the potential-isomorphism layer and the forward Karp theorem upstream.  An
+extra disjunct of `forbiddenModule`, outside its `InfinitaryLogic` gate. -/
+def upstreamForbiddenPrefixes : List Name :=
+  [`TauCeti.ModelTheory.BackAndForth.TupleSystem, `TauCeti.ModelTheory.BackAndForth.PotentialIso,
+   `TauCeti.ModelTheory.BackAndForth.Presentation, `TauCeti.ModelTheory.BackAndForth.AllLevels,
+   `TauCeti.ModelTheory.BackAndForth.Countable, `TauCeti.ModelTheory.BackAndForth.Karp]
+
+/-- The matcher of the upstream disjunct: an upstream prefix is a component-wise prefix of the
+module's name. -/
+def isForbiddenUpstream (m : Name) : Bool := upstreamForbiddenPrefixes.any (·.isPrefixOf m)
+
+/-- A component-wise lookalike of a prefix: its last component with `X` appended
+(`TauCeti.ModelTheory.Scott` ↦ `TauCeti.ModelTheory.ScottX`).  It shares the prefix as text and
+is not a component-wise descendant, so a component-wise matcher must not flag it. -/
+def controlLookalike : Name → Name
+  | .str p s => .str p (s ++ "X")
+  | n => n
+
+/-- `[CONTROL]` on one upstream matcher in one mode (`label`): the matcher flags every frozen
+prefix of `ps` and a child of each, and flags neither the lookalike of any prefix nor any name
+of `permitted` (the permitted list of this matcher and mode only).  The two lists must have
+exactly `size` and `permittedSize` entries, so a truncated list fails loudly. -/
+def upstreamControl (label : String) (isForbidden : Name → Bool) (ps : List Name) (size : Nat)
+    (permitted : List Name) (permittedSize : Nat) : Elab.Command.CommandElabM Unit := do
+  unless ps.length == size do
+    throwError "[CONTROL] {label}: {ps.length} frozen prefixes, expected {size}"
+  unless permitted.length == permittedSize do
+    throwError "[CONTROL] {label}: {permitted.length} permitted names, expected {permittedSize}"
+  for p in ps do
+    for m in [p, .str p "ControlChild"] do
+      unless isForbidden m do
+        throwError "[CONTROL] {label}: the upstream matcher does not flag {m}"
+  for m in ps.map controlLookalike ++ permitted do
+    if isForbidden m then
+      throwError "[CONTROL] {label}: the upstream matcher flags {m}"
+
+-- [CONTROL] on the upstream matcher
+run_cmd do
+  upstreamControl "upstream matcher" isForbiddenUpstream upstreamForbiddenPrefixes 6
+    [`TauCeti.ModelTheory.BackAndForth.AtomicType, `TauCeti.ModelTheory.BackAndForth.Equivalence,
+     `TauCeti.ModelTheory.Scott.AtomicDiagram, `TauCeti.ModelTheory.Infinitary.Semantics] 4
+
+/-- Whether an `InfinitaryLogic` module name is forbidden.  Upstream Karp-layer modules
+are forbidden too (`isForbiddenUpstream`, outside the gate). -/
 def forbiddenModule (m : Name) : Bool :=
   (`InfinitaryLogic).isPrefixOf m &&
     (m.components.any (fun c ↦ c.toString.startsWith "PC") ||
       forbiddenModuleSub.any fun s ↦ (m.toString.splitOn s).length ≠ 1)
+  || isForbiddenUpstream m
 
 /-- The transitive constant cone of `root`, following `ConstantInfo.getUsedConstantsAsSet`
 (types and values), as in `check_morley_hanf_deps.lean`. -/
@@ -188,5 +238,5 @@ run_cmd do
   logInfo m!"bf separation dependency guard: OK ({forbiddenNames.length} forbidden declarations \
     and {forbiddenMods.length} forbidden modules present in the full library; root cones of \
     {sizes.toList} constants avoid them and contain the tree-boundedness, branch and height \
-    witnesses; the proof-only negative control through wellOrder_type_boundedness is flagged; \
-    standard axioms)"
+    witnesses, with no constant from an upstream Karp-layer module; the proof-only negative \
+    control through wellOrder_type_boundedness is flagged; standard axioms)"

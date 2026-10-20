@@ -42,7 +42,13 @@ All three public theorems are *applied*, not only listed for their axioms.
   `allowedClosure` below (`[CLOSURE DRIFT]` otherwise); it contains `Karp.PotentialIso` through
   `Scott.Sentence`, which is inherent to `Scott.RefinementCount`, and no `Descriptive`,
   `ModelTheory`, `Methods`, `Admissible`, `Conditional`, `ScottProcess` or `WIP` module
-  (`[BROAD CONE]` otherwise).
+  (`[BROAD CONE]` otherwise).  The whitelist cannot see a TauCeti module, so a separate check
+  over the full closure forbids the upstream modules whose `InfinitaryLogic` counterparts the
+  whitelist excludes (tier W): `Infinitary.QuantifierRank`, the forward Karp theorem
+  `BackAndForth.Karp`, and the orbit ranks `Scott.{Rank, CompleteGraphSum}`.  The upstream
+  counterparts of the whitelisted `Karp.PotentialIso`, `Scott.Sentence` and `Scott.Formula`
+  stay permitted, and the matcher is controlled on every frozen prefix, a child and a
+  component-wise lookalike of each, and on those permitted names.
 
 Every declaration of the module (enumerated from the environment, and a fixed list that must be
 present) and every declaration of this guard uses only the standard axioms.  The closure check
@@ -349,6 +355,58 @@ def allowedClosure : List Name :=
    `InfinitaryLogic.Lomega1omega.OpenBoundsSemantics, `InfinitaryLogic.OrdinalUtil,
    `InfinitaryLogic.Util]
 
+/-- Tier W (whitelist gap repair, in scope by ruling D2 of 2026-10-19): TauCeti modules whose
+`InfinitaryLogic` counterparts (`Lomega1omega.QuantifierRank`, `Karp.CarrierTheorem`,
+`Scott.OrbitRank`) are absent from `allowedClosure`, which cannot see a TauCeti module.
+Matched over the full closure. -/
+def upstreamWhitelistGapPrefixes : List Name :=
+  [`TauCeti.ModelTheory.Infinitary.QuantifierRank, `TauCeti.ModelTheory.BackAndForth.Karp,
+   `TauCeti.ModelTheory.Scott.Rank, `TauCeti.ModelTheory.Scott.CompleteGraphSum]
+
+/-- The upstream counterparts of whitelisted modules (`Karp.PotentialIso`, `Scott.Sentence`,
+`Scott.Formula`) and other permitted upstream modules: asserted unflagged by the control. -/
+def upstreamPermittedControls : List Name :=
+  [`TauCeti.ModelTheory.BackAndForth.TupleSystem, `TauCeti.ModelTheory.BackAndForth.PotentialIso,
+   `TauCeti.ModelTheory.BackAndForth.Presentation, `TauCeti.ModelTheory.BackAndForth.AllLevels,
+   `TauCeti.ModelTheory.BackAndForth.Countable, `TauCeti.ModelTheory.Scott.Sentence,
+   `TauCeti.ModelTheory.Scott.PotentialIso, `TauCeti.ModelTheory.Scott.Formula,
+   `TauCeti.ModelTheory.Scott.Stabilization, `TauCeti.ModelTheory.Scott.PureSet,
+   `TauCeti.ModelTheory.BackAndForth.Equivalence, `TauCeti.ModelTheory.Infinitary.Semantics]
+
+/-- The matcher of the upstream check: a module is forbidden when a tier-W prefix is a
+component-wise prefix of its name.  The walk is over the full closure, `TauCeti.*` included. -/
+def isForbiddenUpstream (m : Name) : Bool := upstreamWhitelistGapPrefixes.any (·.isPrefixOf m)
+
+/-- A component-wise lookalike of a prefix: its last component with `X` appended
+(`TauCeti.ModelTheory.Scott` ↦ `TauCeti.ModelTheory.ScottX`).  It shares the prefix as text and
+is not a component-wise descendant, so a component-wise matcher must not flag it. -/
+def controlLookalike : Name → Name
+  | .str p s => .str p (s ++ "X")
+  | n => n
+
+/-- `[CONTROL]` on one upstream matcher in one mode (`label`): the matcher flags every frozen
+prefix of `ps` and a child of each, and flags neither the lookalike of any prefix nor any name
+of `permitted` (the permitted list of this matcher and mode only).  The two lists must have
+exactly `size` and `permittedSize` entries, so a truncated list fails loudly. -/
+def upstreamControl (label : String) (isForbidden : Name → Bool) (ps : List Name) (size : Nat)
+    (permitted : List Name) (permittedSize : Nat) : Elab.Command.CommandElabM Unit := do
+  unless ps.length == size do
+    throwError "[CONTROL] {label}: {ps.length} frozen prefixes, expected {size}"
+  unless permitted.length == permittedSize do
+    throwError "[CONTROL] {label}: {permitted.length} permitted names, expected {permittedSize}"
+  for p in ps do
+    for m in [p, .str p "ControlChild"] do
+      unless isForbidden m do
+        throwError "[CONTROL] {label}: the upstream matcher does not flag {m}"
+  for m in ps.map controlLookalike ++ permitted do
+    if isForbidden m then
+      throwError "[CONTROL] {label}: the upstream matcher flags {m}"
+
+-- [CONTROL] on the upstream matcher
+run_cmd do
+  upstreamControl "upstream matcher" isForbiddenUpstream upstreamWhitelistGapPrefixes 4
+    upstreamPermittedControls 12
+
 /-- The public declarations of the module that must be present. -/
 def moduleDecls : List Name :=
   [`exists_isolating_level, `exists_isolating_level_iff,
@@ -378,6 +436,10 @@ run_cmd do
   let hits := ilModules.filter fun m ↦ forbiddenPrefixes.any (·.isPrefixOf m)
   unless hits.isEmpty do
     throwError "[BROAD CONE] the closure of {target} reaches {hits}"
+  -- tier W, over the full closure (the check above sees only the IL part)
+  let upstreamHits := cl.toList.filter isForbiddenUpstream
+  unless upstreamHits.isEmpty do
+    throwError "[BROAD CONE] the closure of {target} reaches {upstreamHits}"
   let extra := ilModules.filter fun m ↦ !allowedClosure.contains m
   let missing := allowedClosure.filter fun m ↦ !ilModules.contains m
   unless extra.isEmpty && missing.isEmpty do
@@ -402,4 +464,5 @@ run_cmd do
     contrapositive on the countable pure family; Type 1 carriers with explicit universes; \
     exact import closure \
     ({ilModules.length} modules) without Scott-process, descriptive, method, model-theory, \
-    admissible, conditional or WIP modules; standard axioms)"
+    admissible, conditional or WIP modules, and no upstream quantifier-rank, forward-Karp or \
+    orbit-rank module; standard axioms)"

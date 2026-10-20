@@ -54,7 +54,12 @@ Two separate tests about the eventual-invariance premise, which must not be conf
 
 * **Import closure.**  The `InfinitaryLogic` closure of the module is exactly `UniformFixation`,
   `OrdinalCountability` and `OrdinalUtil` (`[CLOSURE DRIFT]` otherwise), with no `Scott`,
-  `Descriptive`, `ModelTheory`, `Karp` or `Lomega1omega` module.
+  `Descriptive`, `ModelTheory`, `Karp` or `Lomega1omega` module.  The `InfinitaryLogic` checks
+  cannot see a TauCeti module, so a separate check over the full closure forbids TauCeti's
+  infinitary-logic (`TauCeti.ModelTheory.Infinitary`), `Scott` and `BackAndForth` prefixes
+  (ruling D1 of 2026-10-19); its matcher is controlled on every frozen prefix, a child and a
+  component-wise lookalike of each, and the permitted names `TauCeti.SetTheory.Ordinal.Family`,
+  `InfinitaryLogic.OrdinalCountability` and `Mathlib.Order.ScottContinuity`.
 
 Every declaration of the module (enumerated from the environment, and a fixed list that must
 be present) and every declaration of this guard uses only the standard axioms.  The closure
@@ -512,6 +517,47 @@ def allowedClosure : List Name :=
   [`InfinitaryLogic.UniformFixation, `InfinitaryLogic.OrdinalCountability,
    `InfinitaryLogic.OrdinalUtil]
 
+/-- Tier R upstream prefixes (TauCeti): all of the infinitary-logic namespace, with the Scott and
+back-and-forth layers ("no `Scott`, …, `Karp` or `Lomega1omega` module"; ruling D1 of
+2026-10-19).  Matched over the full closure, not the `InfinitaryLogic` part. -/
+def upstreamForbiddenPrefixes : List Name :=
+  [`TauCeti.ModelTheory.Infinitary, `TauCeti.ModelTheory.Scott, `TauCeti.ModelTheory.BackAndForth]
+
+/-- The matcher of the upstream check: a module is forbidden when an upstream prefix is a
+component-wise prefix of its name.  The walk is over the full closure, `TauCeti.*` included. -/
+def isForbiddenUpstream (m : Name) : Bool := upstreamForbiddenPrefixes.any (·.isPrefixOf m)
+
+/-- A component-wise lookalike of a prefix: its last component with `X` appended
+(`TauCeti.ModelTheory.Scott` ↦ `TauCeti.ModelTheory.ScottX`).  It shares the prefix as text and
+is not a component-wise descendant, so a component-wise matcher must not flag it. -/
+def controlLookalike : Name → Name
+  | .str p s => .str p (s ++ "X")
+  | n => n
+
+/-- `[CONTROL]` on one upstream matcher in one mode (`label`): the matcher flags every frozen
+prefix of `ps` and a child of each, and flags neither the lookalike of any prefix nor any name
+of `permitted` (the permitted list of this matcher and mode only).  The two lists must have
+exactly `size` and `permittedSize` entries, so a truncated list fails loudly. -/
+def upstreamControl (label : String) (isForbidden : Name → Bool) (ps : List Name) (size : Nat)
+    (permitted : List Name) (permittedSize : Nat) : Elab.Command.CommandElabM Unit := do
+  unless ps.length == size do
+    throwError "[CONTROL] {label}: {ps.length} frozen prefixes, expected {size}"
+  unless permitted.length == permittedSize do
+    throwError "[CONTROL] {label}: {permitted.length} permitted names, expected {permittedSize}"
+  for p in ps do
+    for m in [p, .str p "ControlChild"] do
+      unless isForbidden m do
+        throwError "[CONTROL] {label}: the upstream matcher does not flag {m}"
+  for m in ps.map controlLookalike ++ permitted do
+    if isForbidden m then
+      throwError "[CONTROL] {label}: the upstream matcher flags {m}"
+
+-- [CONTROL] on the upstream matcher
+run_cmd do
+  upstreamControl "upstream matcher" isForbiddenUpstream upstreamForbiddenPrefixes 3
+    [`TauCeti.SetTheory.Ordinal.Family, `InfinitaryLogic.OrdinalCountability,
+     `Mathlib.Order.ScottContinuity] 3
+
 /-- The public declarations of the module that must be present. -/
 def moduleDecls : List Name :=
   [`StageProjection, `StageProjection.project_project, `CountablyFixedProjection,
@@ -567,6 +613,10 @@ run_cmd do
   let hits := ilModules.filter fun m ↦ forbiddenPrefixes.any (·.isPrefixOf m)
   unless hits.isEmpty do
     throwError "[BROAD CONE] the closure of {target} reaches {hits}"
+  -- the upstream prefixes, over the full closure (the check above sees only the IL part)
+  let upstreamHits := cl.toList.filter isForbiddenUpstream
+  unless upstreamHits.isEmpty do
+    throwError "[BROAD CONE] the closure of {target} reaches {upstreamHits}"
   let extra := ilModules.filter fun m ↦ !allowedClosure.contains m
   let missing := allowedClosure.filter fun m ↦ !ilModules.contains m
   unless extra.isEmpty && missing.isEmpty do
@@ -590,5 +640,6 @@ run_cmd do
     label rank; swapped quantifier order refuted (uniformity across presentations); bare \
     value: existence survives, also at the explicit eventual-value stage (countable when \
     bundled), the explicit formula fails (the witness pins the explicit bound); import \
-    closure exactly {allowedClosure}; standard axioms on \
+    closure exactly {allowedClosure}, and no upstream infinitary-logic, Scott or \
+    back-and-forth module; standard axioms on \
     {enumerated.length} module declarations and {guardDecls.length} guard declarations)"

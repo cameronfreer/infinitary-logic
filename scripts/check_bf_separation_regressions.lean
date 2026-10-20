@@ -25,6 +25,14 @@ Every public theorem is *applied*, not only listed for its axioms.
   it contains `BFTree`, `AnalyticTreeBoundedness`, `KleeneBrouwer` and `StructureIsoSetoid`, and
   no module whose name contains a López–Escobar, invariant-separation, PC-class, well-order,
   tree-code, vocabulary, coding, interpolation, Henkin, Karp, methods or model-theory substring.
+  Over the full closure, no upstream (TauCeti) module under the Karp-layer prefixes
+  `BackAndForth.{TupleSystem, PotentialIso, Presentation, AllLevels, Countable, Karp}` (tier R:
+  no `Karp`), nor, because the whitelist excludes their `InfinitaryLogic` counterparts,
+  `Scott.Formula`, `Scott.{Stabilization, PureSet}`, `Infinitary.QuantifierRank`,
+  `Scott.{Sentence, PotentialIso}` or `Scott.{Rank, CompleteGraphSum}` (tier W).  The matcher
+  is controlled on every frozen prefix, a child and a component-wise lookalike of each, and the
+  permitted names `BackAndForth.{AtomicType, Equivalence}`, `Scott.AtomicDiagram` and
+  `Infinitary.Semantics` (reached legitimately, as their counterparts are).
 
 Run with: lake env lean scripts/check_bf_separation_regressions.lean
 -/
@@ -320,6 +328,62 @@ def allowedClosure : List Name :=
    `InfinitaryLogic.Descriptive.AnalyticTreeBoundedness,
    `InfinitaryLogic.Descriptive.AnalyticClosure, `InfinitaryLogic.Descriptive.BFSeparation]
 
+/-- Tier R upstream prefixes (TauCeti): the counterparts of `InfinitaryLogic.Karp`, which the
+rationale forbids ("no `Karp` … module"): the potential-isomorphism layer and the forward Karp
+theorem upstream.  Matched over the full closure. -/
+def upstreamForbiddenPrefixes : List Name :=
+  [`TauCeti.ModelTheory.BackAndForth.TupleSystem, `TauCeti.ModelTheory.BackAndForth.PotentialIso,
+   `TauCeti.ModelTheory.BackAndForth.Presentation, `TauCeti.ModelTheory.BackAndForth.AllLevels,
+   `TauCeti.ModelTheory.BackAndForth.Countable, `TauCeti.ModelTheory.BackAndForth.Karp]
+
+/-- Tier W (whitelist gap repair, in scope by ruling D2 of 2026-10-19): TauCeti modules whose
+`InfinitaryLogic` counterparts (`Scott.Formula`, the internal stabilization of `Scott.Sentence`,
+`Lomega1omega.QuantifierRank`, Scott sentences, orbit ranks) are absent from `allowedClosure`,
+which cannot see a TauCeti module.  Matched over the full closure. -/
+def upstreamWhitelistGapPrefixes : List Name :=
+  [`TauCeti.ModelTheory.Scott.Formula, `TauCeti.ModelTheory.Scott.Stabilization,
+   `TauCeti.ModelTheory.Scott.PureSet, `TauCeti.ModelTheory.Infinitary.QuantifierRank,
+   `TauCeti.ModelTheory.Scott.Sentence, `TauCeti.ModelTheory.Scott.PotentialIso,
+   `TauCeti.ModelTheory.Scott.Rank, `TauCeti.ModelTheory.Scott.CompleteGraphSum]
+
+/-- The matcher of the upstream check (tiers R and W in one filter): a module is forbidden when
+an upstream prefix is a component-wise prefix of its name.  The walk is over the full closure,
+`TauCeti.*` included. -/
+def isForbiddenUpstream (m : Name) : Bool :=
+  (upstreamForbiddenPrefixes ++ upstreamWhitelistGapPrefixes).any (·.isPrefixOf m)
+
+/-- A component-wise lookalike of a prefix: its last component with `X` appended
+(`TauCeti.ModelTheory.Scott` ↦ `TauCeti.ModelTheory.ScottX`).  It shares the prefix as text and
+is not a component-wise descendant, so a component-wise matcher must not flag it. -/
+def controlLookalike : Name → Name
+  | .str p s => .str p (s ++ "X")
+  | n => n
+
+/-- `[CONTROL]` on one upstream matcher in one mode (`label`): the matcher flags every frozen
+prefix of `ps` and a child of each, and flags neither the lookalike of any prefix nor any name
+of `permitted` (the permitted list of this matcher and mode only).  The two lists must have
+exactly `size` and `permittedSize` entries, so a truncated list fails loudly. -/
+def upstreamControl (label : String) (isForbidden : Name → Bool) (ps : List Name) (size : Nat)
+    (permitted : List Name) (permittedSize : Nat) : Elab.Command.CommandElabM Unit := do
+  unless ps.length == size do
+    throwError "[CONTROL] {label}: {ps.length} frozen prefixes, expected {size}"
+  unless permitted.length == permittedSize do
+    throwError "[CONTROL] {label}: {permitted.length} permitted names, expected {permittedSize}"
+  for p in ps do
+    for m in [p, .str p "ControlChild"] do
+      unless isForbidden m do
+        throwError "[CONTROL] {label}: the upstream matcher does not flag {m}"
+  for m in ps.map controlLookalike ++ permitted do
+    if isForbidden m then
+      throwError "[CONTROL] {label}: the upstream matcher flags {m}"
+
+-- [CONTROL] on the upstream matcher (tiers R and W)
+run_cmd do
+  upstreamControl "upstream matcher" isForbiddenUpstream
+    (upstreamForbiddenPrefixes ++ upstreamWhitelistGapPrefixes) 14
+    [`TauCeti.ModelTheory.BackAndForth.AtomicType, `TauCeti.ModelTheory.BackAndForth.Equivalence,
+     `TauCeti.ModelTheory.Scott.AtomicDiagram, `TauCeti.ModelTheory.Infinitary.Semantics] 4
+
 run_cmd do
   let env ← getEnv
   let target := `InfinitaryLogic.Descriptive.BFSeparation
@@ -336,6 +400,10 @@ run_cmd do
     hasPCComponent m || forbiddenModuleSub.any fun s ↦ (m.toString.splitOn s).length ≠ 1
   unless hits.isEmpty do
     throwError "[BROAD CONE] the closure of {target} reaches {hits}"
+  -- the upstream prefixes (tiers R and W), over the full closure
+  let upstreamHits := cl.toList.filter isForbiddenUpstream
+  unless upstreamHits.isEmpty do
+    throwError "[BROAD CONE] the closure of {target} reaches {upstreamHits}"
   let extra := ilModules.filter fun m ↦ !allowedClosure.contains m
   let missing := allowedClosure.filter fun m ↦ !ilModules.contains m
   unless extra.isEmpty && missing.isEmpty do
@@ -348,4 +416,5 @@ run_cmd do
     language, a closed one and an open one, separated at a countable level that is at least 1; \
     standard axioms; import closure of {ilModules.length} InfinitaryLogic modules, exactly as \
     listed, with no coding, separation, PC-class, well-order, vocabulary, interpolation, Henkin, \
-    Karp, methods or model-theory module)"
+    Karp, methods or model-theory module, and no upstream Karp-layer, Scott-formula, \
+    stabilization, quantifier-rank, Scott-sentence or orbit-rank module)"

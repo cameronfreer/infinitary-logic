@@ -51,6 +51,18 @@ that closure each declaration actually uses.
   is not a forbidden substring here: `Karp.PotentialIso` is imported by `Scott.Sentence` and is
   reached by the instance and the bridge; instead, `Karp` constants are confined to those two
   cones and to the module `Karp.PotentialIso` (`[KARP DRIFT]`).
+* **Upstream (TauCeti) counterparts.**  The contract cones reach no constant declared under the
+  internal-stabilization prefixes `Scott.{Stabilization, PureSet}`, the Scott-sentence prefixes
+  `Scott.{Sentence, PotentialIso}`, or any upstream Karp-layer prefix (`[CONTRACT DRIFT]`).  The
+  Karp confinement holds upstream too (`[KARP DRIFT]`): no cone reaches the forward Karp theorem
+  `BackAndForth.Karp`, the counterpart of `Karp.CarrierTheorem`, and only the instance and the
+  bridge may reach the counterparts of `Karp.PotentialIso`, `BackAndForth.{TupleSystem,
+  PotentialIso, Presentation, AllLevels, Countable}`, exactly as they may reach
+  `Karp.PotentialIso`.  The matchers are controlled per matcher and per mode: the contract
+  matcher, and the confinement matcher outside and inside the two `karpRoots`, each on every
+  frozen prefix of that mode, a child and a component-wise lookalike of each, and on that
+  mode's own permitted names (`Scott.Formula`, `BackAndForth.Equivalence`, `Scott.AtomicDiagram`;
+  inside `karpRoots` also the five potential-isomorphism counterparts and a child of each).
 * **Transitive positive controls.**  `stabilizesAt_of_equiv` is reached from the instance only
   through `codeStabilizationOrdinal_congr`; `stabilizationOrdinal_spec` is reached from the
   bridge only through `exists_isolating_level`; `mk_le_aleph_one_of_countable_fibers` is reached
@@ -175,6 +187,83 @@ def stabilizationNames : List Name :=
 def contractForbiddenModules : List Name :=
   ilm [`Scott.Sentence, `Scott.RefinementCount, `Scott.IsolatingLevel, `Scott.BFEquivRelabel,
     `Descriptive.BFConcentration]
+
+/-- Upstream (TauCeti) counterparts of `Karp.PotentialIso` (the potential-isomorphism layer):
+permitted in the two `karpRoots` cones, forbidden in every other cone. -/
+def upstreamPotentialIsoPrefixes : List Name :=
+  [`TauCeti.ModelTheory.BackAndForth.TupleSystem, `TauCeti.ModelTheory.BackAndForth.PotentialIso,
+   `TauCeti.ModelTheory.BackAndForth.Presentation, `TauCeti.ModelTheory.BackAndForth.AllLevels,
+   `TauCeti.ModelTheory.BackAndForth.Countable]
+
+/-- Upstream (TauCeti) counterpart of `Karp.CarrierTheorem` (the forward Karp theorem):
+forbidden in every cone. -/
+def upstreamCarrierPrefixes : List Name :=
+  [`TauCeti.ModelTheory.BackAndForth.Karp]
+
+/-- Upstream (TauCeti) counterparts of `Scott.Sentence` (internal stabilization, Scott
+sentences): forbidden in the contract cones ("The contract layer uses no stabilization
+ordinal … no constant declared in `Scott.Sentence`"). -/
+def upstreamContractOnlyPrefixes : List Name :=
+  [`TauCeti.ModelTheory.Scott.Stabilization, `TauCeti.ModelTheory.Scott.PureSet,
+   `TauCeti.ModelTheory.Scott.Sentence, `TauCeti.ModelTheory.Scott.PotentialIso]
+
+/-- The contract matcher: every upstream list (the contract cones are strictly Karp-free). -/
+def isUpstreamContractForbidden (m : Name) : Bool :=
+  (upstreamPotentialIsoPrefixes ++ upstreamCarrierPrefixes ++ upstreamContractOnlyPrefixes).any
+    (·.isPrefixOf m)
+
+/-- The Karp-confinement matcher: the forward Karp theorem everywhere, and the
+potential-isomorphism counterparts outside the two `karpRoots` cones. -/
+def isUpstreamKarpConfined (inKarpRoot : Bool) (m : Name) : Bool :=
+  upstreamCarrierPrefixes.any (·.isPrefixOf m) ||
+    (!inKarpRoot && upstreamPotentialIsoPrefixes.any (·.isPrefixOf m))
+
+/-- A component-wise lookalike of a prefix: its last component with `X` appended
+(`TauCeti.ModelTheory.Scott` ↦ `TauCeti.ModelTheory.ScottX`).  It shares the prefix as text and
+is not a component-wise descendant, so a component-wise matcher must not flag it. -/
+def controlLookalike : Name → Name
+  | .str p s => .str p (s ++ "X")
+  | n => n
+
+/-- `[CONTROL]` on one upstream matcher in one mode (`label`): the matcher flags every frozen
+prefix of `ps` and a child of each, and flags neither the lookalike of any prefix nor any name
+of `permitted` (the permitted list of this matcher and mode only).  The two lists must have
+exactly `size` and `permittedSize` entries, so a truncated list fails loudly. -/
+def upstreamControl (label : String) (isForbidden : Name → Bool) (ps : List Name) (size : Nat)
+    (permitted : List Name) (permittedSize : Nat) : Elab.Command.CommandElabM Unit := do
+  unless ps.length == size do
+    throwError "[CONTROL] {label}: {ps.length} frozen prefixes, expected {size}"
+  unless permitted.length == permittedSize do
+    throwError "[CONTROL] {label}: {permitted.length} permitted names, expected {permittedSize}"
+  for p in ps do
+    for m in [p, .str p "ControlChild"] do
+      unless isForbidden m do
+        throwError "[CONTROL] {label}: the upstream matcher does not flag {m}"
+  for m in ps.map controlLookalike ++ permitted do
+    if isForbidden m then
+      throwError "[CONTROL] {label}: the upstream matcher flags {m}"
+
+-- [CONTROL] per matcher and per mode, each with its own permitted list
+run_cmd do
+  let base : List Name :=
+    [`TauCeti.ModelTheory.Scott.Formula, `TauCeti.ModelTheory.BackAndForth.Equivalence,
+     `TauCeti.ModelTheory.Scott.AtomicDiagram]
+  upstreamControl "contract matcher" isUpstreamContractForbidden
+    (upstreamPotentialIsoPrefixes ++ upstreamCarrierPrefixes ++ upstreamContractOnlyPrefixes) 10
+    base 3
+  upstreamControl "confinement matcher outside karpRoots" (isUpstreamKarpConfined false)
+    (upstreamPotentialIsoPrefixes ++ upstreamCarrierPrefixes) 6 base 3
+  upstreamControl "confinement matcher inside karpRoots" (isUpstreamKarpConfined true)
+    upstreamCarrierPrefixes 1
+    (base ++ upstreamPotentialIsoPrefixes ++
+      upstreamPotentialIsoPrefixes.map (Name.str · "ControlChild")) 13
+
+/-- The constants of a cone declared in a module satisfying `p`, with their module. -/
+def upstreamHits (env : Environment) (c : NameSet) (p : Name → Bool) : List (Name × Name) :=
+  c.toList.filterMap fun n ↦ do
+    let idx ← env.getModuleIdxFor? n
+    let m := env.header.moduleNames[idx.toNat]!
+    if p m then some (n, m) else none
 
 /-- Constants confined to the cone of the family bridge. -/
 def familyNames : List Name :=
@@ -419,6 +508,10 @@ run_cmd do
       let karp := prefixHits env c `InfinitaryLogic.Karp
       unless karp.isEmpty do
         throwError "[CONTRACT DRIFT] the cone of {root} reaches Karp: {karp.take 10}"
+      -- upstream: no stabilization, Scott-sentence or Karp-layer constant
+      let upstream := upstreamHits env c isUpstreamContractForbidden
+      unless upstream.isEmpty do
+        throwError "[CONTRACT DRIFT] the cone of {root} reaches upstream {upstream.take 10}"
     -- the congruence lemma needs no countability: nothing from RefinementCount
     if root == congrRoot then
       let hitsR := (moduleHits env c (ilm [`Scott.RefinementCount, `Scott.IsolatingLevel])).filter
@@ -450,6 +543,11 @@ run_cmd do
       throwError "[KARP DRIFT] the cone of {root} reaches {karp.take 10}"
     if !karpRoots.contains root && !karp.isEmpty then
       throwError "[KARP DRIFT] the cone of {root} reaches {karp.take 10}"
+    -- upstream: no forward Karp theorem anywhere; the potential-isomorphism counterparts only
+    -- in the instance and the bridge
+    let upstreamKarp := upstreamHits env c (isUpstreamKarpConfined (karpRoots.contains root))
+    unless upstreamKarp.isEmpty do
+      throwError "[KARP DRIFT] the cone of {root} reaches {upstreamKarp.take 10}"
   -- TRANSITIVE POSITIVE CONTROLS: reached only through intermediate declarations
   let checkTransitive (root w : Name) : Elab.Command.CommandElabM Unit := do
     let some ci := env.find? root | throwError "[UNKNOWN ROOT] {root}"
@@ -483,7 +581,9 @@ run_cmd do
     OrdinalCountability exactly in mk_isoClasses_le_aleph_one, mk_isoClasses_eq_aleph_one and \
     countable_isoClasses_iff_bounded; exists_isolating_level, CodeBFEquiv.of_iso and \
     BFEquiv.map_equiv only in the family bridge; Karp.PotentialIso only in the instance and the \
-    bridge; no Conditional constant and none of {silverNames.length} Silver declarations; \
+    bridge, and so its upstream counterparts, with no upstream forward-Karp constant anywhere \
+    and no upstream stabilization, Scott-sentence or Karp-layer constant in the contract \
+    cones; no Conditional constant and none of {silverNames.length} Silver declarations; \
     {forbiddenNames.length} forbidden declarations and {forbiddenMods.length} forbidden modules \
     present and avoided; transitive controls; exclusion checks shown to flag a root; standard \
     axioms from the cones, agreeing with collectAxioms; the custom-axiom controls and the Silver \

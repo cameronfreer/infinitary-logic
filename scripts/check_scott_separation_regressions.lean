@@ -46,11 +46,15 @@ Every exported declaration is *applied*, not only listed for its axioms.
   no `FirstOrder` constant and no constant of a project module other than `OrdinalCountability`;
   the cones of the wrapper and of `qrank_lt_omega1` contain no constant of a `Scott`,
   `ScottProcess`, `Karp`, `Descriptive.BFEquivBorel` or `Conditional` module and no
-  Scott-sentence, back-and-forth or potential-isomorphism name.  Positive controls: a guard
-  theorem using `scottSentence_characterizes` is flagged by the generic check, and the
-  consumer-chain regression is flagged by the wrapper check, its cone containing
-  `scottSentence_characterizes` and `Karp` constants.  The cones of the imported modules are not
-  the cones of the proofs: the wrapper's module imports the Scott and Karp theory.
+  Scott-sentence, back-and-forth or potential-isomorphism name; upstream (TauCeti), no constant
+  of a module under the `Scott` or `BackAndForth` prefix (the module matcher is controlled on
+  every frozen prefix, a child and a component-wise lookalike of each, and the permitted names
+  `Infinitary.QuantifierRank`, `Infinitary.Semantics` and `Mathlib.Order.ScottContinuity`).
+  Positive controls: a guard theorem using `scottSentence_characterizes` is flagged by the
+  generic check, and the consumer-chain regression is flagged by the wrapper check, its cone
+  containing `scottSentence_characterizes` and `Karp` constants.  The cones of the imported
+  modules are not the cones of the proofs: the wrapper's module imports the Scott and Karp
+  theory.
 * **Placement.**  Each export is declared in its intended module.
 
 All exported declarations and all guard declarations use only the standard axioms (a separate
@@ -652,9 +656,50 @@ def placement : List (List Name × Name) :=
    (qrankRoots, `InfinitaryLogic.Lomega1omega.QuantifierRank),
    (wrapperRoots, `InfinitaryLogic.Descriptive.ScottDefinability)]
 
+/-- Tier R upstream prefixes (TauCeti): the Scott and back-and-forth layers ("no constant of a
+`Scott`, … `Karp` … module and no … back-and-forth or potential-isomorphism name"). -/
+def upstreamForbiddenPrefixes : List Name :=
+  [`TauCeti.ModelTheory.Scott, `TauCeti.ModelTheory.BackAndForth]
+
 /-- Module prefixes the cones of the wrapper and of the countable rank may not reach. -/
 def forbiddenModulePrefixes : List Name :=
-  ilm [`Scott, `ScottProcess, `Karp, `Descriptive.BFEquivBorel, `Conditional]
+  ilm [`Scott, `ScottProcess, `Karp, `Descriptive.BFEquivBorel, `Conditional] ++
+    upstreamForbiddenPrefixes
+
+/-- The module matcher of the wrapper and countable-rank cones: a forbidden prefix is a
+component-wise prefix of the module's name. -/
+def isForbiddenScottModule (m : Name) : Bool := forbiddenModulePrefixes.any (·.isPrefixOf m)
+
+/-- A component-wise lookalike of a prefix: its last component with `X` appended
+(`TauCeti.ModelTheory.Scott` ↦ `TauCeti.ModelTheory.ScottX`).  It shares the prefix as text and
+is not a component-wise descendant, so a component-wise matcher must not flag it. -/
+def controlLookalike : Name → Name
+  | .str p s => .str p (s ++ "X")
+  | n => n
+
+/-- `[CONTROL]` on one upstream matcher in one mode (`label`): the matcher flags every frozen
+prefix of `ps` and a child of each, and flags neither the lookalike of any prefix nor any name
+of `permitted` (the permitted list of this matcher and mode only).  The two lists must have
+exactly `size` and `permittedSize` entries, so a truncated list fails loudly. -/
+def upstreamControl (label : String) (isForbidden : Name → Bool) (ps : List Name) (size : Nat)
+    (permitted : List Name) (permittedSize : Nat) : Elab.Command.CommandElabM Unit := do
+  unless ps.length == size do
+    throwError "[CONTROL] {label}: {ps.length} frozen prefixes, expected {size}"
+  unless permitted.length == permittedSize do
+    throwError "[CONTROL] {label}: {permitted.length} permitted names, expected {permittedSize}"
+  for p in ps do
+    for m in [p, .str p "ControlChild"] do
+      unless isForbidden m do
+        throwError "[CONTROL] {label}: the upstream matcher does not flag {m}"
+  for m in ps.map controlLookalike ++ permitted do
+    if isForbidden m then
+      throwError "[CONTROL] {label}: the upstream matcher flags {m}"
+
+-- [CONTROL] on the module matcher
+run_cmd do
+  upstreamControl "module matcher" isForbiddenScottModule upstreamForbiddenPrefixes 2
+    [`TauCeti.ModelTheory.Infinitary.QuantifierRank, `TauCeti.ModelTheory.Infinitary.Semantics,
+     `Mathlib.Order.ScottContinuity] 3
 
 /-- Name fragments the cones of the wrapper and of the countable rank may not contain. -/
 def forbiddenNameFragments : List String :=
@@ -737,7 +782,7 @@ def genericViolations (env : Environment) (c : NameSet) : List Name × List (Nam
 def scottViolations (env : Environment) (c : NameSet) : List (Name × Name) × List Name :=
   (c.toList.filterMap fun n ↦ do
      let m ← moduleOf env n
-     if forbiddenModulePrefixes.any (·.isPrefixOf m) then some (n, m) else none,
+     if isForbiddenScottModule m then some (n, m) else none,
    c.toList.filter fun n ↦
      forbiddenNameFragments.any fun s ↦ (n.toString.splitOn s).length ≠ 1)
 
@@ -826,5 +871,6 @@ run_cmd do
     consumer call shape and the per-class shape (loss witnesses at countable stages) through \
     isolatedPresentation_of_surjective, the global loss premise shown inconsistent; \
     exact closures of OrdinalCountability, Lomega1omega.QuantifierRank and \
-    Descriptive.ScottDefinability; generic cones logic-free and wrapper cones Scott-free, with \
-    positive controls; placement; standard axioms)"
+    Descriptive.ScottDefinability; generic cones logic-free and wrapper cones Scott-free \
+    (upstream Scott and back-and-forth modules included), with positive controls; placement; \
+    standard axioms)"
