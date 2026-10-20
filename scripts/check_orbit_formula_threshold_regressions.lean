@@ -35,7 +35,15 @@ Every public theorem is *applied*, not only listed for its axioms.
   `Ordinal.lift.{1}`) and to `rank_le_of_orbitRank_le` (with termination).
 * **Import closure** of the core module: it reaches the forward Karp lemma
   (`Karp/CarrierTheorem`) and the orbit-rank API (`Scott/OrbitRank`), and neither the Scott
-  process, nor Scott sentences, nor descriptive, admissible, method or model-theory modules.
+  process, nor Scott sentences, nor descriptive, admissible, method or model-theory modules;
+  upstream (TauCeti), no Scott-sentence module `Scott.{Sentence, PotentialIso}`.  The upstream
+  counterparts of what the core requires (the orbit ranks `Scott.{Rank, CompleteGraphSum}`, the
+  internal stabilization they import, the Karp layer, the quantifier rank) stay permitted.  The
+  host `Lomega1omega.QuantifierRank` reaches no `Scott`, `Karp` or process module, and no
+  upstream module under TauCeti's `Scott` or `BackAndForth` prefix.  Each matcher is controlled
+  on every frozen prefix, a child and a component-wise lookalike of each, and on its own
+  permitted names: the core's are under `Scott` or `BackAndForth`, which the host forbids, so
+  the two lists are never mixed.
 
 The headline declarations use only the standard axioms.
 
@@ -304,12 +312,73 @@ where
           | none => []
         go (deps ++ rest) (seen.insert m)
 
+/-- Tier R upstream prefixes of the core (TauCeti): Scott sentences ("nor Scott sentences").
+Upstream `Scott.Rank` is the counterpart of the required `Scott.OrbitRank`, not of the
+forbidden cross-structure `Scott.Rank`, and is not added. -/
+def upstreamCoreForbiddenPrefixes : List Name :=
+  [`TauCeti.ModelTheory.Scott.Sentence, `TauCeti.ModelTheory.Scott.PotentialIso]
+
 /-- Module-name prefixes no module of the core closure may have. -/
 def forbiddenCorePrefixes : List Name :=
   [`InfinitaryLogic.ScottProcess, `InfinitaryLogic.Scott.Sentence, `InfinitaryLogic.Scott.Rank,
    `InfinitaryLogic.Scott.Code, `InfinitaryLogic.Descriptive, `InfinitaryLogic.Admissible,
    `InfinitaryLogic.Methods, `InfinitaryLogic.ModelTheory, `InfinitaryLogic.Conditional,
-   `InfinitaryLogic.WIP]
+   `InfinitaryLogic.WIP] ++ upstreamCoreForbiddenPrefixes
+
+/-- The matcher of the core check: a forbidden prefix is a component-wise prefix of the module's
+name.  The closure walk is over all module names, `TauCeti.*` included. -/
+def isForbiddenCoreModule (m : Name) : Bool := forbiddenCorePrefixes.any (·.isPrefixOf m)
+
+/-- Tier R upstream prefixes of the host (TauCeti): the Scott and back-and-forth layers ("no
+Scott, Karp or process module"). -/
+def upstreamHostForbiddenPrefixes : List Name :=
+  [`TauCeti.ModelTheory.Scott, `TauCeti.ModelTheory.BackAndForth]
+
+/-- Module-name prefixes no module of the host's closure may have. -/
+def hostForbiddenPrefixes : List Name :=
+  [`InfinitaryLogic.Scott, `InfinitaryLogic.Karp, `InfinitaryLogic.ScottProcess] ++
+    upstreamHostForbiddenPrefixes
+
+/-- The matcher of the host check. -/
+def isForbiddenHostModule (m : Name) : Bool := hostForbiddenPrefixes.any (·.isPrefixOf m)
+
+/-- A component-wise lookalike of a prefix: its last component with `X` appended
+(`TauCeti.ModelTheory.Scott` ↦ `TauCeti.ModelTheory.ScottX`).  It shares the prefix as text and
+is not a component-wise descendant, so a component-wise matcher must not flag it. -/
+def controlLookalike : Name → Name
+  | .str p s => .str p (s ++ "X")
+  | n => n
+
+/-- `[CONTROL]` on one upstream matcher in one mode (`label`): the matcher flags every frozen
+prefix of `ps` and a child of each, and flags neither the lookalike of any prefix nor any name
+of `permitted` (the permitted list of this matcher and mode only).  The two lists must have
+exactly `size` and `permittedSize` entries, so a truncated list fails loudly. -/
+def upstreamControl (label : String) (isForbidden : Name → Bool) (ps : List Name) (size : Nat)
+    (permitted : List Name) (permittedSize : Nat) : Elab.Command.CommandElabM Unit := do
+  unless ps.length == size do
+    throwError "[CONTROL] {label}: {ps.length} frozen prefixes, expected {size}"
+  unless permitted.length == permittedSize do
+    throwError "[CONTROL] {label}: {permitted.length} permitted names, expected {permittedSize}"
+  for p in ps do
+    for m in [p, .str p "ControlChild"] do
+      unless isForbidden m do
+        throwError "[CONTROL] {label}: the upstream matcher does not flag {m}"
+  for m in ps.map controlLookalike ++ permitted do
+    if isForbidden m then
+      throwError "[CONTROL] {label}: the upstream matcher flags {m}"
+
+-- [CONTROL] on both matchers, each with its own permitted list
+run_cmd do
+  upstreamControl "core matcher" isForbiddenCoreModule upstreamCoreForbiddenPrefixes 2
+    [`TauCeti.ModelTheory.Scott.Rank, `TauCeti.ModelTheory.Scott.CompleteGraphSum,
+     `TauCeti.ModelTheory.Scott.Stabilization, `TauCeti.ModelTheory.Scott.PureSet,
+     `TauCeti.ModelTheory.Infinitary.QuantifierRank, `TauCeti.ModelTheory.BackAndForth.Karp,
+     `TauCeti.ModelTheory.BackAndForth.TupleSystem, `TauCeti.ModelTheory.BackAndForth.PotentialIso,
+     `TauCeti.ModelTheory.BackAndForth.Presentation, `TauCeti.ModelTheory.BackAndForth.AllLevels,
+     `TauCeti.ModelTheory.BackAndForth.Countable] 11
+  upstreamControl "host matcher" isForbiddenHostModule upstreamHostForbiddenPrefixes 2
+    [`TauCeti.ModelTheory.Infinitary.QuantifierRank, `TauCeti.ModelTheory.Infinitary.Semantics,
+     `Mathlib.Order.ScottContinuity] 3
 
 run_cmd do
   let env ← getEnv
@@ -320,14 +389,12 @@ run_cmd do
   for m in [`InfinitaryLogic.Karp.CarrierTheorem, `InfinitaryLogic.Scott.OrbitRank,
             `InfinitaryLogic.Lomega1omega.QuantifierRank] do
     unless cl.contains m do throwError "[MISSING ROUTE] {m} is not in the closure of {target}"
-  let hits := cl.toList.filter fun m => forbiddenCorePrefixes.any (·.isPrefixOf m)
+  let hits := cl.toList.filter isForbiddenCoreModule
   unless hits.isEmpty do
     throwError "[BROAD CONE] the closure of {target} reaches {hits}"
   -- A1's host stays in the light quantifier-rank layer: no Scott, Karp or process module.
   let host := `InfinitaryLogic.Lomega1omega.QuantifierRank
-  let hostHits := (importClosure env host).toList.filter fun m =>
-    [`InfinitaryLogic.Scott, `InfinitaryLogic.Karp, `InfinitaryLogic.ScottProcess].any
-      (·.isPrefixOf m)
+  let hostHits := (importClosure env host).toList.filter isForbiddenHostModule
   unless hostHits.isEmpty do
     throwError "[HEAVY HOST] the closure of {host} reaches {hostHits}"
 
@@ -367,5 +434,6 @@ run_cmd do
     language and carrier; internal rank at most omega on Ordinal.{0} (library value 1), Fin 3 \
     and Empty; the exact-omega carrier: finite orbit ranks without a uniform finite bound; \
     composition with stabilizesAt_of_orbitRank_le and rank_le_of_orbitRank_le on Ordinal.{0}; \
-    core import closure without the Scott process, Scott sentences or application modules; \
-    standard axioms)"
+    core import closure without the Scott process, Scott sentences or application modules, \
+    upstream included; host closure without Scott, Karp, process or upstream Scott or \
+    back-and-forth modules; standard axioms)"

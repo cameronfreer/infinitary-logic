@@ -25,7 +25,13 @@ vacuously; import names are not taken as evidence of proof independence, nor the
   **transitively**: it refers to `BFEquiv_implies_agree_formulas_omega`
   (`Scott/QuantifierRank`), none of its direct references is declared in a Karp module, and the
   module check must still flag its cone, so the check tests the walk and not only the module
-  of the root or of its direct references.
+  of the root or of its direct references.  Upstream (TauCeti), no constant is declared
+  in a module under the Karp-layer prefixes `BackAndForth.{TupleSystem, PotentialIso,
+  Presentation, AllLevels, Countable, Karp}` either (an extra disjunct of the module check;
+  these modules are not in this environment, so the disjunct is tested by its matcher control:
+  every frozen prefix, a child and a component-wise lookalike of each, and the permitted names
+  `Infinitary.QuantifierRank`, `Scott.AtomicDiagram`, `BackAndForth.Equivalence` and
+  `Infinitary.Semantics`).
 * **Standard axioms**, read off the cone itself (every `axiom` reached through a type or a body,
   opaque bodies included) and cross-checked against `collectAxioms`: only `propext`,
   `Classical.choice` and `Quot.sound`.
@@ -61,6 +67,18 @@ def karpPrefix : Name := `InfinitaryLogic.Karp
 def karpModules : List Name :=
   [`InfinitaryLogic.Karp.PotentialIso, `InfinitaryLogic.Karp.CarrierTheorem,
    `InfinitaryLogic.Karp.CountableCorollary]
+
+/-- Tier R upstream prefixes (TauCeti): the counterparts of `InfinitaryLogic.Karp` ("No Karp"):
+the potential-isomorphism layer and the forward Karp theorem upstream.  An extra disjunct of the
+module check; `karpModules` and its existence check are untouched. -/
+def upstreamForbiddenPrefixes : List Name :=
+  [`TauCeti.ModelTheory.BackAndForth.TupleSystem, `TauCeti.ModelTheory.BackAndForth.PotentialIso,
+   `TauCeti.ModelTheory.BackAndForth.Presentation, `TauCeti.ModelTheory.BackAndForth.AllLevels,
+   `TauCeti.ModelTheory.BackAndForth.Countable, `TauCeti.ModelTheory.BackAndForth.Karp]
+
+/-- The matcher of the upstream disjunct: an upstream prefix is a component-wise prefix of the
+module's name. -/
+def isForbiddenUpstream (m : Name) : Bool := upstreamForbiddenPrefixes.any (·.isPrefixOf m)
 
 /-- The positive control of the module check: the forward Karp lemma. -/
 def karpControl : Name := `FirstOrder.Language.BFEquiv_implies_agreeQR
@@ -116,7 +134,38 @@ def karpHits (env : Environment) (c : NameSet) : List (Name × Name) :=
   c.toList.filterMap fun n ↦ do
     let idx ← env.getModuleIdxFor? n
     let m := env.header.moduleNames[idx.toNat]!
-    if karpPrefix.isPrefixOf m then some (n, m) else none
+    if karpPrefix.isPrefixOf m || isForbiddenUpstream m then some (n, m) else none
+
+/-- A component-wise lookalike of a prefix: its last component with `X` appended
+(`TauCeti.ModelTheory.Scott` ↦ `TauCeti.ModelTheory.ScottX`).  It shares the prefix as text and
+is not a component-wise descendant, so a component-wise matcher must not flag it. -/
+def controlLookalike : Name → Name
+  | .str p s => .str p (s ++ "X")
+  | n => n
+
+/-- `[CONTROL]` on one upstream matcher in one mode (`label`): the matcher flags every frozen
+prefix of `ps` and a child of each, and flags neither the lookalike of any prefix nor any name
+of `permitted` (the permitted list of this matcher and mode only).  The two lists must have
+exactly `size` and `permittedSize` entries, so a truncated list fails loudly. -/
+def upstreamControl (label : String) (isForbidden : Name → Bool) (ps : List Name) (size : Nat)
+    (permitted : List Name) (permittedSize : Nat) : Elab.Command.CommandElabM Unit := do
+  unless ps.length == size do
+    throwError "[CONTROL] {label}: {ps.length} frozen prefixes, expected {size}"
+  unless permitted.length == permittedSize do
+    throwError "[CONTROL] {label}: {permitted.length} permitted names, expected {permittedSize}"
+  for p in ps do
+    for m in [p, .str p "ControlChild"] do
+      unless isForbidden m do
+        throwError "[CONTROL] {label}: the upstream matcher does not flag {m}"
+  for m in ps.map controlLookalike ++ permitted do
+    if isForbidden m then
+      throwError "[CONTROL] {label}: the upstream matcher flags {m}"
+
+-- [CONTROL] on the upstream matcher
+run_cmd do
+  upstreamControl "upstream matcher" isForbiddenUpstream upstreamForbiddenPrefixes 6
+    [`TauCeti.ModelTheory.Infinitary.QuantifierRank, `TauCeti.ModelTheory.Scott.AtomicDiagram,
+     `TauCeti.ModelTheory.BackAndForth.Equivalence, `TauCeti.ModelTheory.Infinitary.Semantics] 4
 
 /-- Whether a name has a string component containing `qrank`. -/
 def mentionsQrank (n : Name) : Bool :=
@@ -231,7 +280,8 @@ run_cmd do
       throwError "[QRANK] the cone of {root} reaches {qh.take 10}"
   logInfo m!"orbit-parameters dependency guard: OK (cones {sizes.toList}; each through \
     BoundedFormulaω.realize_equiv, Formulaω.realize_comp_equiv and realize_existsOrbitParams, \
-    with no constant from a Karp module and no qrank declaration; both checks flag their \
+    with no constant from a Karp module (upstream Karp-layer modules included) and no qrank \
+    declaration; both checks flag their \
     positive controls, the Karp check also through a guard-local control reaching Karp only \
     transitively; standard axioms \
     from the cones, agreeing with collectAxioms; the custom-axiom controls in a proof, an opaque \

@@ -28,7 +28,12 @@ names are not taken as evidence of proof independence, nor the converse.
   `Scott/Height*` or `Scott/Rank`.  The forbidden modules are asserted to be in the environment,
   and the *same* module check is asserted to flag every part-A and first-order cone, through
   `Scott/OrbitRank` itself wherever the orbit-rank API is required, so it cannot pass
-  vacuously.
+  vacuously.  Upstream (TauCeti), no part-B constant is declared in a module under the
+  orbit-rank prefixes `Scott.{Rank, CompleteGraphSum}` either (an extra disjunct of the module
+  check; these modules are not in this environment, so the disjunct is tested by its matcher
+  control: every frozen prefix, a child and a component-wise lookalike of each, and the
+  permitted names: internal stabilization, Scott sentences, the Karp layer and the quantifier
+  rank upstream, whose counterparts part B uses).
 * **Standard axioms**, read off the cone itself (every `axiom` reached through a type or a body,
   opaque bodies included) and cross-checked against `collectAxioms`: only `propext`,
   `Classical.choice` and `Quot.sound`.
@@ -106,6 +111,51 @@ def forbiddenPrefixes : List Name :=
    `InfinitaryLogic.Scott.OrbitFormulaThreshold, `InfinitaryLogic.Scott.Height,
    `InfinitaryLogic.Scott.Rank]
 
+/-- Tier R upstream prefixes (TauCeti): orbit ranks and their relation to stabilization ("Part
+B avoids orbit ranks and heights").  Not appended to `forbiddenPrefixes`, whose entries must
+exist in this environment; an extra disjunct of the module check. -/
+def upstreamForbiddenPrefixes : List Name :=
+  [`TauCeti.ModelTheory.Scott.Rank, `TauCeti.ModelTheory.Scott.CompleteGraphSum]
+
+/-- The matcher of the upstream disjunct: an upstream prefix is a component-wise prefix of the
+module's name. -/
+def isForbiddenUpstream (m : Name) : Bool := upstreamForbiddenPrefixes.any (·.isPrefixOf m)
+
+/-- A component-wise lookalike of a prefix: its last component with `X` appended
+(`TauCeti.ModelTheory.Scott` ↦ `TauCeti.ModelTheory.ScottX`).  It shares the prefix as text and
+is not a component-wise descendant, so a component-wise matcher must not flag it. -/
+def controlLookalike : Name → Name
+  | .str p s => .str p (s ++ "X")
+  | n => n
+
+/-- `[CONTROL]` on one upstream matcher in one mode (`label`): the matcher flags every frozen
+prefix of `ps` and a child of each, and flags neither the lookalike of any prefix nor any name
+of `permitted` (the permitted list of this matcher and mode only).  The two lists must have
+exactly `size` and `permittedSize` entries, so a truncated list fails loudly. -/
+def upstreamControl (label : String) (isForbidden : Name → Bool) (ps : List Name) (size : Nat)
+    (permitted : List Name) (permittedSize : Nat) : Elab.Command.CommandElabM Unit := do
+  unless ps.length == size do
+    throwError "[CONTROL] {label}: {ps.length} frozen prefixes, expected {size}"
+  unless permitted.length == permittedSize do
+    throwError "[CONTROL] {label}: {permitted.length} permitted names, expected {permittedSize}"
+  for p in ps do
+    for m in [p, .str p "ControlChild"] do
+      unless isForbidden m do
+        throwError "[CONTROL] {label}: the upstream matcher does not flag {m}"
+  for m in ps.map controlLookalike ++ permitted do
+    if isForbidden m then
+      throwError "[CONTROL] {label}: the upstream matcher flags {m}"
+
+-- [CONTROL] on the upstream matcher
+run_cmd do
+  upstreamControl "upstream matcher" isForbiddenUpstream upstreamForbiddenPrefixes 2
+    [`TauCeti.ModelTheory.Scott.Stabilization, `TauCeti.ModelTheory.Scott.PureSet,
+     `TauCeti.ModelTheory.Scott.Sentence, `TauCeti.ModelTheory.Scott.PotentialIso,
+     `TauCeti.ModelTheory.BackAndForth.Karp, `TauCeti.ModelTheory.BackAndForth.TupleSystem,
+     `TauCeti.ModelTheory.BackAndForth.PotentialIso, `TauCeti.ModelTheory.BackAndForth.Presentation,
+     `TauCeti.ModelTheory.BackAndForth.AllLevels, `TauCeti.ModelTheory.BackAndForth.Countable,
+     `TauCeti.ModelTheory.Infinitary.QuantifierRank] 11
+
 /-- The standard axioms. -/
 def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
 
@@ -154,7 +204,8 @@ def forbiddenHits (env : Environment) (c : NameSet) : List (Name × Name) :=
   c.toList.filterMap fun n ↦ do
     let idx ← env.getModuleIdxFor? n
     let m := env.header.moduleNames[idx.toNat]!
-    if forbiddenPrefixes.any (·.isPrefixOf m) then some (n, m) else none
+    if forbiddenPrefixes.any (·.isPrefixOf m) || isForbiddenUpstream m then some (n, m)
+    else none
 
 /-- The audit of one declaration: its cone and its nonstandard axioms, read off the cone and
 cross-checked against `collectAxioms`. -/
@@ -247,7 +298,7 @@ run_cmd do
   logInfo m!"rank adapters dependency guard: OK (cones {sizes.toList}; part A through the \
     forward Karp lemma and the orbit-rank API; part B through the forward Karp lemma (and \
     openBounds for the Sentence forms), with no constant from the orbit-rank, threshold, \
-    height or rank modules; the \
+    height or rank modules, upstream orbit-rank modules included; the \
     first-order adapters through the infinitary ones; standard axioms from the cones, agreeing \
     with collectAxioms; the custom-axiom controls in a proof, an opaque body and a type are \
     flagged)"

@@ -20,7 +20,16 @@ that the module's declarations use none of it.
   `stabilizationOrdinal`, `stabilizationOrdinal_spec`, `stabilizationOrdinal_lt_omega1'`,
   `StabilizesAt`, `codeStabilizationOrdinal` (with `_def` and `_congr`), the instance
   `isIsolatingRank_codeStabilizationOrdinal` or the family bridge
-  `exists_isolating_codeLevel_of_family` (`[KARP DRIFT]`, `[STABILIZATION DRIFT]`).
+  `exists_isolating_codeLevel_of_family` (`[KARP DRIFT]`, `[STABILIZATION DRIFT]`).  Upstream
+  (TauCeti), no cone contains a constant declared under the Karp-layer prefixes
+  `BackAndForth.{TupleSystem, PotentialIso, Presentation, AllLevels, Countable, Karp}` (with the
+  `Karp` check, and as a disjunct of the module-name check), nor under the counterparts of
+  `Scott.Sentence`: the internal-stabilization prefixes `Scott.{Stabilization, PureSet}` and the
+  Scott-sentence prefixes `Scott.{Sentence, PotentialIso}` (`[KARP DRIFT]`, alongside the
+  `Scott.Sentence` check).  One matcher covers both lists and is controlled on every frozen
+  prefix, a child and a component-wise lookalike of each, and the permitted names
+  `Scott.Formula`, `BackAndForth.{AtomicType, Equivalence}`, `Scott.AtomicDiagram` and
+  `Infinitary.Semantics`.
 * **Only the abstract contract.**  The constants declared in `Descriptive.ScatteredCounting`
   that a cone contains are among the contract API (`IsIsolatingRank`, its constructor,
   recursors and fields, `lift`, `lift_mk`, `lift_lt_omega1`, `isolates_of_le`, `countable_fiber`,
@@ -159,11 +168,69 @@ def forbiddenModuleSub : List String :=
    "Interpolation", "Henkin", "Methods", "ModelTheory", "WellOrder", "Code", "Conditional",
    "ScottProcess", "Admissible", "BFScatteredSentence", "Karp"]
 
-/-- Whether an `InfinitaryLogic` module name is forbidden. -/
+/-- Tier R upstream prefixes (TauCeti): the counterparts of the `Karp` modules ("Karp-free"):
+the potential-isomorphism layer and the forward Karp theorem upstream. -/
+def upstreamKarpPrefixes : List Name :=
+  [`TauCeti.ModelTheory.BackAndForth.TupleSystem, `TauCeti.ModelTheory.BackAndForth.PotentialIso,
+   `TauCeti.ModelTheory.BackAndForth.Presentation, `TauCeti.ModelTheory.BackAndForth.AllLevels,
+   `TauCeti.ModelTheory.BackAndForth.Countable, `TauCeti.ModelTheory.BackAndForth.Karp]
+
+/-- Tier R upstream prefixes (TauCeti): the counterparts of `Scott.Sentence`, which no cone may
+reach: the internal stabilization it defines and Scott sentences upstream.  Not appended to
+`scottForbiddenModules`, whose entries must exist in this environment. -/
+def upstreamScottForbiddenPrefixes : List Name :=
+  [`TauCeti.ModelTheory.Scott.Stabilization, `TauCeti.ModelTheory.Scott.PureSet,
+   `TauCeti.ModelTheory.Scott.Sentence, `TauCeti.ModelTheory.Scott.PotentialIso]
+
+/-- Whether a module is under an upstream Karp-layer prefix. -/
+def isUpstreamKarpModule (m : Name) : Bool := upstreamKarpPrefixes.any (·.isPrefixOf m)
+
+/-- Whether a module is under an upstream counterpart of `Scott.Sentence`. -/
+def isUpstreamScottModule (m : Name) : Bool := upstreamScottForbiddenPrefixes.any (·.isPrefixOf m)
+
+/-- The upstream matcher: both lists. -/
+def isForbiddenUpstream (m : Name) : Bool := isUpstreamKarpModule m || isUpstreamScottModule m
+
+/-- A component-wise lookalike of a prefix: its last component with `X` appended
+(`TauCeti.ModelTheory.Scott` ↦ `TauCeti.ModelTheory.ScottX`).  It shares the prefix as text and
+is not a component-wise descendant, so a component-wise matcher must not flag it. -/
+def controlLookalike : Name → Name
+  | .str p s => .str p (s ++ "X")
+  | n => n
+
+/-- `[CONTROL]` on one upstream matcher in one mode (`label`): the matcher flags every frozen
+prefix of `ps` and a child of each, and flags neither the lookalike of any prefix nor any name
+of `permitted` (the permitted list of this matcher and mode only).  The two lists must have
+exactly `size` and `permittedSize` entries, so a truncated list fails loudly. -/
+def upstreamControl (label : String) (isForbidden : Name → Bool) (ps : List Name) (size : Nat)
+    (permitted : List Name) (permittedSize : Nat) : Elab.Command.CommandElabM Unit := do
+  unless ps.length == size do
+    throwError "[CONTROL] {label}: {ps.length} frozen prefixes, expected {size}"
+  unless permitted.length == permittedSize do
+    throwError "[CONTROL] {label}: {permitted.length} permitted names, expected {permittedSize}"
+  for p in ps do
+    for m in [p, .str p "ControlChild"] do
+      unless isForbidden m do
+        throwError "[CONTROL] {label}: the upstream matcher does not flag {m}"
+  for m in ps.map controlLookalike ++ permitted do
+    if isForbidden m then
+      throwError "[CONTROL] {label}: the upstream matcher flags {m}"
+
+-- [CONTROL] on the upstream matcher
+run_cmd do
+  upstreamControl "upstream matcher" isForbiddenUpstream
+    (upstreamKarpPrefixes ++ upstreamScottForbiddenPrefixes) 10
+    [`TauCeti.ModelTheory.Scott.Formula, `TauCeti.ModelTheory.BackAndForth.AtomicType,
+     `TauCeti.ModelTheory.BackAndForth.Equivalence, `TauCeti.ModelTheory.Scott.AtomicDiagram,
+     `TauCeti.ModelTheory.Infinitary.Semantics] 5
+
+/-- Whether an `InfinitaryLogic` module name is forbidden.  Upstream Karp-layer modules are
+forbidden too (`isUpstreamKarpModule`, outside the gate). -/
 def forbiddenModule (m : Name) : Bool :=
   (`InfinitaryLogic).isPrefixOf m &&
     (m.components.any (fun c ↦ c.toString.startsWith "PC") ||
       forbiddenModuleSub.any fun s ↦ (m.toString.splitOn s).length ≠ 1)
+  || isUpstreamKarpModule m
 
 /-- The standard axioms. -/
 def standardAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
@@ -234,12 +301,18 @@ def violations (env : Environment) (c : NameSet) : List Name × List (Name × Na
     if forbiddenModule m then some (n, m) else none
   (names, mods)
 
+/-- The constants of a cone declared in a module satisfying `p`, with their module. -/
+def upstreamHits (env : Environment) (c : NameSet) (p : Name → Bool) : List (Name × Name) :=
+  c.toList.filterMap fun n ↦ do
+    let m ← moduleOf env n
+    if p m then some (n, m) else none
+
 /-- The Karp and stabilization violations in a cone: `Karp` constants, stabilization names, and
 constants of `Scott.Sentence`, `Scott.RefinementCount` or `Scott.IsolatingLevel`. -/
 def karpViolations (env : Environment) (c : NameSet) :
     List (Name × Name) × List Name × List Name :=
-  (prefixHits env c `InfinitaryLogic.Karp, stabilizationNames.filter c.contains,
-    moduleHits env c scottForbiddenModules)
+  (prefixHits env c `InfinitaryLogic.Karp ++ upstreamHits env c isUpstreamKarpModule,
+    stabilizationNames.filter c.contains, moduleHits env c scottForbiddenModules)
 
 /-- The audit of one declaration: its cone and its nonstandard axioms, read off the cone and
 cross-checked against `collectAxioms`. -/
@@ -391,6 +464,8 @@ run_cmd do
     unless kk.isEmpty do throwError "[KARP DRIFT] the cone of {root} reaches {kk.take 10}"
     unless ks.isEmpty do throwError "[STABILIZATION DRIFT] the cone of {root} contains {ks}"
     unless km.isEmpty do throwError "[KARP DRIFT] the cone of {root} reaches {km.take 10}"
+    let ku := upstreamHits env c isUpstreamScottModule
+    unless ku.isEmpty do throwError "[KARP DRIFT] the cone of {root} reaches {ku.take 10}"
     -- only the abstract contract, and exactly in the rank-independence cones
     let sc := moduleHits env c [`InfinitaryLogic.Descriptive.ScatteredCounting]
     let foreignSC := sc.filter fun n ↦ !contractAPI.contains n &&
@@ -434,6 +509,7 @@ run_cmd do
     IsIsolatingRank.countable_isoClasses_iff_bounded; OrdinalCountability exactly there; \
     required dependencies per root; no Conditional constant and none of \
     {silverNames.length} Silver declarations; {forbiddenNames.length} forbidden declarations \
-    and {forbiddenMods.length} forbidden modules present and avoided; transitive controls; \
+    and {forbiddenMods.length} forbidden modules present and avoided; no upstream Karp-layer, \
+    stabilization or Scott-sentence constant; transitive controls; \
     the exclusion checks flag the instance; standard axioms from the cones, agreeing with \
     collectAxioms; the custom-axiom, Karp and Silver controls are flagged)"

@@ -17,7 +17,16 @@ Regression guard for thinness from sentence cuts
   overlapping in 20, plus the module), and it is checked to be that union.  It contains
   `Descriptive.MinimallyUncountable` and does **not** contain `Descriptive.MinimallyUnbounded`
   or `Descriptive.ScatteredCounting` (so the isolating-rank contract is not imported), nor any
-  `Conditional`, `Admissible`, `ScottProcess` or `WIP` module.
+  `Conditional`, `Admissible`, `ScottProcess` or `WIP` module.  The whitelist cannot see a
+  TauCeti module, so a separate check over the full closure forbids the upstream modules whose
+  `InfinitaryLogic` counterparts it excludes (tier W): the internal stabilization
+  `Scott.{Stabilization, PureSet}`, the Karp layer `BackAndForth.{TupleSystem, PotentialIso,
+  Presentation, AllLevels, Countable, Karp}`, Scott sentences `Scott.{Sentence, PotentialIso}`
+  and orbit ranks `Scott.{Rank, CompleteGraphSum}`; TauCeti's quantifier rank, imported by the
+  whitelisted `Lomega1omega.QuantifierRank`, stays permitted.  The matcher is controlled on every
+  frozen prefix, a child and a component-wise lookalike of each, and the permitted names
+  `Infinitary.QuantifierRank`, `Scott.AtomicDiagram`, `Scott.Formula`, `BackAndForth.{AtomicType,
+  Equivalence}` and `Infinitary.Semantics`.
 * **Standard axioms** for both declarations and every declaration of this guard, checked with
   `collectAxioms` after the dependency and closure checks.  The OK line is printed only after
   all checks.
@@ -153,6 +162,54 @@ def forbiddenPrefixes : List Name :=
    `InfinitaryLogic.Conditional, `InfinitaryLogic.Admissible, `InfinitaryLogic.ScottProcess,
    `InfinitaryLogic.WIP]
 
+/-- Tier W (whitelist gap repair, in scope by ruling D2 of 2026-10-19): TauCeti modules whose
+`InfinitaryLogic` counterparts (the internal stabilization of `Scott.Sentence`, the `Karp`
+modules, Scott sentences, `Scott.OrbitRank`) are absent from `allowedClosure`, which cannot see
+a TauCeti module.  Matched over the full closure. -/
+def upstreamWhitelistGapPrefixes : List Name :=
+  [`TauCeti.ModelTheory.Scott.Stabilization, `TauCeti.ModelTheory.Scott.PureSet,
+   `TauCeti.ModelTheory.BackAndForth.TupleSystem, `TauCeti.ModelTheory.BackAndForth.PotentialIso,
+   `TauCeti.ModelTheory.BackAndForth.Presentation, `TauCeti.ModelTheory.BackAndForth.AllLevels,
+   `TauCeti.ModelTheory.BackAndForth.Countable, `TauCeti.ModelTheory.BackAndForth.Karp,
+   `TauCeti.ModelTheory.Scott.Sentence, `TauCeti.ModelTheory.Scott.PotentialIso,
+   `TauCeti.ModelTheory.Scott.Rank, `TauCeti.ModelTheory.Scott.CompleteGraphSum]
+
+/-- The matcher of the upstream check: a module is forbidden when a tier-W prefix is a
+component-wise prefix of its name.  The walk is over the full closure, `TauCeti.*` included. -/
+def isForbiddenUpstream (m : Name) : Bool := upstreamWhitelistGapPrefixes.any (·.isPrefixOf m)
+
+/-- A component-wise lookalike of a prefix: its last component with `X` appended
+(`TauCeti.ModelTheory.Scott` ↦ `TauCeti.ModelTheory.ScottX`).  It shares the prefix as text and
+is not a component-wise descendant, so a component-wise matcher must not flag it. -/
+def controlLookalike : Name → Name
+  | .str p s => .str p (s ++ "X")
+  | n => n
+
+/-- `[CONTROL]` on one upstream matcher in one mode (`label`): the matcher flags every frozen
+prefix of `ps` and a child of each, and flags neither the lookalike of any prefix nor any name
+of `permitted` (the permitted list of this matcher and mode only).  The two lists must have
+exactly `size` and `permittedSize` entries, so a truncated list fails loudly. -/
+def upstreamControl (label : String) (isForbidden : Name → Bool) (ps : List Name) (size : Nat)
+    (permitted : List Name) (permittedSize : Nat) : Elab.Command.CommandElabM Unit := do
+  unless ps.length == size do
+    throwError "[CONTROL] {label}: {ps.length} frozen prefixes, expected {size}"
+  unless permitted.length == permittedSize do
+    throwError "[CONTROL] {label}: {permitted.length} permitted names, expected {permittedSize}"
+  for p in ps do
+    for m in [p, .str p "ControlChild"] do
+      unless isForbidden m do
+        throwError "[CONTROL] {label}: the upstream matcher does not flag {m}"
+  for m in ps.map controlLookalike ++ permitted do
+    if isForbidden m then
+      throwError "[CONTROL] {label}: the upstream matcher flags {m}"
+
+-- [CONTROL] on the upstream matcher
+run_cmd do
+  upstreamControl "upstream matcher" isForbiddenUpstream upstreamWhitelistGapPrefixes 12
+    [`TauCeti.ModelTheory.Infinitary.QuantifierRank, `TauCeti.ModelTheory.Scott.AtomicDiagram,
+     `TauCeti.ModelTheory.Scott.Formula, `TauCeti.ModelTheory.BackAndForth.AtomicType,
+     `TauCeti.ModelTheory.BackAndForth.Equivalence, `TauCeti.ModelTheory.Infinitary.Semantics] 6
+
 /-- The exact `InfinitaryLogic` import closure of `Descriptive.MinimallyUncountableThin`. -/
 def allowedClosure : List Name :=
   [`InfinitaryLogic.Combinatorics.EndHomogeneousErdosRado,
@@ -280,6 +337,10 @@ run_cmd do
   let hits := ilModules.filter fun m ↦ forbiddenPrefixes.any (·.isPrefixOf m)
   unless hits.isEmpty do
     throwError "[BROAD CONE] the closure of {targetModule} reaches {hits}"
+  -- tier W, over the full closure (the check above sees only the IL part)
+  let upstreamHits := (importClosure env targetModule).toList.filter isForbiddenUpstream
+  unless upstreamHits.isEmpty do
+    throwError "[BROAD CONE] the closure of {targetModule} reaches {upstreamHits}"
   unless ilModules.contains `InfinitaryLogic.Descriptive.MinimallyUncountable do
     throwError "[CLOSURE DRIFT] the closure of {targetModule} misses MinimallyUncountable"
   checkExact targetModule ilModules allowedClosure
@@ -307,5 +368,6 @@ run_cmd do
     the sentence cuts and through isThinOn_of_bfScattered; dependency: lopez_escobar in both \
     proof cones (cones {sizes.toList}); exact import closure ({ilModules.length} modules, the \
     union of MinimallyUncountable and SmallVocabularyTransport plus the module) without \
-    MinimallyUnbounded, ScatteredCounting, Conditional, Admissible, ScottProcess or WIP; \
+    MinimallyUnbounded, ScatteredCounting, Conditional, Admissible, ScottProcess or WIP, and \
+    no upstream stabilization, Karp-layer, Scott-sentence or orbit-rank module; \
     standard axioms for {audited.length} declarations)"

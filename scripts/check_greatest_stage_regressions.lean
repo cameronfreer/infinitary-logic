@@ -32,8 +32,11 @@ attainment fails since `ω₁` is not a stage); the **derivation**: the constant
 contract shape contains the `ω₁` form (it is not a second proof), and the cone of the
 migration-shape regression contains the contract shape; the **exact
 import closure** of `OrdinalUtil` (itself only: no other `InfinitaryLogic` module, Mathlib
-only); **standard axioms** for the three exports and every guard declaration.  The OK line is
-printed only after the cone, closure and axiom checks.
+only, and, over the full closure, no `TauCeti` module, ruling D1 of 2026-10-19; the upstream
+matcher is controlled on the frozen prefix, a child, the lookalike `TauCetiX`, and the permitted
+names `Mathlib.SetTheory.Ordinal.Family` and `InfinitaryLogic.OrdinalUtil`); **standard
+axioms** for the three exports and every guard declaration.  The OK line is printed only
+after the cone, closure and axiom checks.
 
 Run with: lake env lean scripts/check_greatest_stage_regressions.lean
 -/
@@ -523,6 +526,46 @@ stays Mathlib-only.  Extending it is a deliberate decision.  The forbidden-prefi
 pin, so the single `[CLOSURE DRIFT]` check reports both. -/
 def allowedClosure : List Name := [`InfinitaryLogic.OrdinalUtil]
 
+/-- Tier R upstream prefix: all of `TauCeti`.  The module "stays Mathlib-only" (ruling D1 of
+2026-10-19), and the `InfinitaryLogic` pin above cannot see a TauCeti module, so this prefix is
+matched over the full closure. -/
+def upstreamForbiddenPrefixes : List Name :=
+  [`TauCeti]
+
+/-- The matcher of the upstream check: a module is forbidden when an upstream prefix is a
+component-wise prefix of its name.  The walk is over the full closure, `TauCeti.*` included. -/
+def isForbiddenUpstream (m : Name) : Bool := upstreamForbiddenPrefixes.any (·.isPrefixOf m)
+
+/-- A component-wise lookalike of a prefix: its last component with `X` appended
+(`TauCeti.ModelTheory.Scott` ↦ `TauCeti.ModelTheory.ScottX`).  It shares the prefix as text and
+is not a component-wise descendant, so a component-wise matcher must not flag it. -/
+def controlLookalike : Name → Name
+  | .str p s => .str p (s ++ "X")
+  | n => n
+
+/-- `[CONTROL]` on one upstream matcher in one mode (`label`): the matcher flags every frozen
+prefix of `ps` and a child of each, and flags neither the lookalike of any prefix nor any name
+of `permitted` (the permitted list of this matcher and mode only).  The two lists must have
+exactly `size` and `permittedSize` entries, so a truncated list fails loudly. -/
+def upstreamControl (label : String) (isForbidden : Name → Bool) (ps : List Name) (size : Nat)
+    (permitted : List Name) (permittedSize : Nat) : Elab.Command.CommandElabM Unit := do
+  unless ps.length == size do
+    throwError "[CONTROL] {label}: {ps.length} frozen prefixes, expected {size}"
+  unless permitted.length == permittedSize do
+    throwError "[CONTROL] {label}: {permitted.length} permitted names, expected {permittedSize}"
+  for p in ps do
+    for m in [p, .str p "ControlChild"] do
+      unless isForbidden m do
+        throwError "[CONTROL] {label}: the upstream matcher does not flag {m}"
+  for m in ps.map controlLookalike ++ permitted do
+    if isForbidden m then
+      throwError "[CONTROL] {label}: the upstream matcher flags {m}"
+
+-- [CONTROL] on the upstream matcher
+run_cmd do
+  upstreamControl "upstream matcher" isForbiddenUpstream upstreamForbiddenPrefixes 1
+    [`Mathlib.SetTheory.Ordinal.Family, `InfinitaryLogic.OrdinalUtil] 2
+
 -- All checks run in one command, so the OK line cannot follow a failure of any of them.
 run_cmd do
   let env ← getEnv
@@ -567,6 +610,10 @@ run_cmd do
     throwError "[CLOSURE DRIFT] the InfinitaryLogic closure of {target} is {ilModules}; it must \
       stay Mathlib-only, and every other InfinitaryLogic module is forbidden; update \
       allowedClosure deliberately (extra {extra}, missing {missing})"
+  -- Mathlib-only: no TauCeti module either, over the full closure
+  let upstreamHits := cl.toList.filter isForbiddenUpstream
+  unless upstreamHits.isEmpty do
+    throwError "[BROAD CONE] the closure of {target} reaches {upstreamHits}"
   logInfo m!"greatest stage regression guard: OK (applied: the general form and the IsGreatest \
     form at an arbitrary universe, the omega 1 form on Ordinal.\{0} with its conclusion for all \
     ξ, and the restricted shape below omega 1 by specialisation; the finite-stage \
@@ -588,5 +635,6 @@ run_cmd do
     and omega 1 forms contain the general lemma, and not conversely, the cone of the \
     contract shape contains the omega 1 form, and the cone of the migration-shape \
     regression contains the contract shape; import closure of {ilModules.length} \
-    InfinitaryLogic module, OrdinalUtil itself (Mathlib-only); \
+    InfinitaryLogic module, OrdinalUtil itself (Mathlib-only), and no upstream TauCeti \
+    module; \
     standard axioms for the three exports and all {headline.length - 3} guard declarations)"

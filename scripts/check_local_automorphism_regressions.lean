@@ -18,7 +18,11 @@ Every public theorem is *applied*, not only listed for its axioms.
 * **Import closure**: the module reaches `Lomega1omega/Theory` (and through it
   `Lomega1omega/Semantics`, the home of the isomorphism invariance
   `BoundedFormulaω.realize_equiv`) and no Scott-analysis, Karp, rank, Löwenheim–Skolem,
-  model-theory, method, descriptive, admissible or Scott-process module.
+  model-theory, method, descriptive, admissible or Scott-process module.  Upstream, no module
+  under TauCeti's `Scott` or `BackAndForth` prefix either (the Scott-analysis and back-and-forth
+  layers, part of the same exclusion); the matcher is controlled on every frozen prefix, a child
+  and a component-wise lookalike of each, and the permitted names
+  `TauCeti.ModelTheory.Infinitary.Semantics` and `Mathlib.Order.ScottContinuity`.
 
 The headline declarations use only the standard axioms.
 
@@ -177,6 +181,12 @@ where
           | none => []
         go (deps ++ rest) (seen.insert m)
 
+/-- Tier R upstream prefixes (TauCeti): the Scott-analysis and back-and-forth layers, which the
+rationale below excludes ("Scott analysis (Scott sentences, ranks, back-and-forth), Karp").
+The closure walk is over all module names, so these are matched like the others. -/
+def upstreamForbiddenPrefixes : List Name :=
+  [`TauCeti.ModelTheory.Scott, `TauCeti.ModelTheory.BackAndForth]
+
 /-- Module-name prefixes the closure may not have: Scott analysis (Scott sentences, ranks,
 back-and-forth), Karp, the quantifier-rank modules (the ω facade and the carrier-generic rank it
 specializes, now upstream in TauCeti), Löwenheim–Skolem and the rest of the model theory, and
@@ -186,7 +196,32 @@ def forbiddenPrefixes : List Name :=
    `InfinitaryLogic.Lomega1omega.QuantifierRank, `TauCeti.ModelTheory.Infinitary.QuantifierRank,
    `InfinitaryLogic.ModelTheory,
    `InfinitaryLogic.Methods, `InfinitaryLogic.Descriptive, `InfinitaryLogic.Admissible,
-   `InfinitaryLogic.Conditional, `InfinitaryLogic.WIP]
+   `InfinitaryLogic.Conditional, `InfinitaryLogic.WIP] ++ upstreamForbiddenPrefixes
+
+/-- A component-wise lookalike of a prefix: its last component with `X` appended
+(`TauCeti.ModelTheory.Scott` ↦ `TauCeti.ModelTheory.ScottX`).  It shares the prefix as text and
+is not a component-wise descendant, so a component-wise matcher must not flag it. -/
+def controlLookalike : Name → Name
+  | .str p s => .str p (s ++ "X")
+  | n => n
+
+/-- `[CONTROL]` on one upstream matcher in one mode (`label`): the matcher flags every frozen
+prefix of `ps` and a child of each, and flags neither the lookalike of any prefix nor any name
+of `permitted` (the permitted list of this matcher and mode only).  The two lists must have
+exactly `size` and `permittedSize` entries, so a truncated list fails loudly. -/
+def upstreamControl (label : String) (isForbidden : Name → Bool) (ps : List Name) (size : Nat)
+    (permitted : List Name) (permittedSize : Nat) : Elab.Command.CommandElabM Unit := do
+  unless ps.length == size do
+    throwError "[CONTROL] {label}: {ps.length} frozen prefixes, expected {size}"
+  unless permitted.length == permittedSize do
+    throwError "[CONTROL] {label}: {permitted.length} permitted names, expected {permittedSize}"
+  for p in ps do
+    for m in [p, .str p "ControlChild"] do
+      unless isForbidden m do
+        throwError "[CONTROL] {label}: the upstream matcher does not flag {m}"
+  for m in ps.map controlLookalike ++ permitted do
+    if isForbidden m then
+      throwError "[CONTROL] {label}: the upstream matcher flags {m}"
 
 /-- The matcher of the closure check: a module is forbidden when a forbidden prefix is a
 component-wise prefix of its name. The closure walk is over all module names, `TauCeti.*`
@@ -204,6 +239,10 @@ run_cmd do
   if isForbiddenModule `TauCeti.ModelTheory.Infinitary.Semantics then
     throwError "[CONTROL] the forbidden-prefix matcher flags \
       TauCeti.ModelTheory.Infinitary.Semantics"
+  -- the upstream prefixes and the pre-existing TauCeti quantifier-rank entry
+  upstreamControl "closure matcher" isForbiddenModule
+    (upstreamForbiddenPrefixes ++ [`TauCeti.ModelTheory.Infinitary.QuantifierRank]) 3
+    [`TauCeti.ModelTheory.Infinitary.Semantics, `Mathlib.Order.ScottContinuity] 2
 
 run_cmd do
   let env ← getEnv
@@ -241,4 +280,5 @@ run_cmd do
     with function symbols; the non-surjective successor of the pure set N, which \
     agrees locally with permutations, also as a self-embedding; a finite simultaneous valuation \
     on a concrete formula; import closure without Scott analysis, Karp, rank, \
-    Lowenheim-Skolem or model-theory modules; standard axioms)"
+    Lowenheim-Skolem or model-theory modules, and no upstream Scott or back-and-forth \
+    module; standard axioms)"

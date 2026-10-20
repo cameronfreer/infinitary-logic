@@ -15,7 +15,12 @@ consumes (`KleeneBrouwer`, `OrdinalUtil`).
 * standard axioms (`propext`, `Classical.choice`, `Quot.sound`);
 * minimal imports: the module's import closure reaches no coding, separation, well-order,
   model-theory, methods, interpolation, Henkin, Scott, Karp or infinitary-syntax module, and
-  among `InfinitaryLogic` modules is exactly `OrdinalUtil`, `KleeneBrouwer` and this module.
+  among `InfinitaryLogic` modules is exactly `OrdinalUtil`, `KleeneBrouwer` and this module;
+  over the full closure, no module under TauCeti's infinitary-logic
+  (`TauCeti.ModelTheory.Infinitary`), `Scott` or `BackAndForth` prefix (ruling D1 of
+  2026-10-19).  The upstream matcher is controlled on every frozen prefix, a child and a
+  component-wise lookalike of each, and the permitted names `TauCeti.SetTheory.Ordinal.Family`,
+  `InfinitaryLogic.Descriptive.KleeneBrouwer` and `Mathlib.Order.ScottContinuity`.
 
 Run with: lake env lean scripts/check_analytic_tree_boundedness_regressions.lean
 -/
@@ -284,6 +289,48 @@ def allowedClosure : List Name :=
   [`InfinitaryLogic.OrdinalUtil, `InfinitaryLogic.Descriptive.KleeneBrouwer,
    `InfinitaryLogic.Descriptive.AnalyticTreeBoundedness]
 
+/-- Tier R upstream prefixes (TauCeti): all of the infinitary-logic namespace, with the Scott and
+back-and-forth layers ("no … Scott, Karp or infinitary-syntax module"; ruling D1 of
+2026-10-19).  Matched by component-wise prefix over the full closure; the substring rule above
+stays on the `InfinitaryLogic` part. -/
+def upstreamForbiddenPrefixes : List Name :=
+  [`TauCeti.ModelTheory.Infinitary, `TauCeti.ModelTheory.Scott, `TauCeti.ModelTheory.BackAndForth]
+
+/-- The matcher of the upstream check: a module is forbidden when an upstream prefix is a
+component-wise prefix of its name.  The walk is over the full closure, `TauCeti.*` included. -/
+def isForbiddenUpstream (m : Name) : Bool := upstreamForbiddenPrefixes.any (·.isPrefixOf m)
+
+/-- A component-wise lookalike of a prefix: its last component with `X` appended
+(`TauCeti.ModelTheory.Scott` ↦ `TauCeti.ModelTheory.ScottX`).  It shares the prefix as text and
+is not a component-wise descendant, so a component-wise matcher must not flag it. -/
+def controlLookalike : Name → Name
+  | .str p s => .str p (s ++ "X")
+  | n => n
+
+/-- `[CONTROL]` on one upstream matcher in one mode (`label`): the matcher flags every frozen
+prefix of `ps` and a child of each, and flags neither the lookalike of any prefix nor any name
+of `permitted` (the permitted list of this matcher and mode only).  The two lists must have
+exactly `size` and `permittedSize` entries, so a truncated list fails loudly. -/
+def upstreamControl (label : String) (isForbidden : Name → Bool) (ps : List Name) (size : Nat)
+    (permitted : List Name) (permittedSize : Nat) : Elab.Command.CommandElabM Unit := do
+  unless ps.length == size do
+    throwError "[CONTROL] {label}: {ps.length} frozen prefixes, expected {size}"
+  unless permitted.length == permittedSize do
+    throwError "[CONTROL] {label}: {permitted.length} permitted names, expected {permittedSize}"
+  for p in ps do
+    for m in [p, .str p "ControlChild"] do
+      unless isForbidden m do
+        throwError "[CONTROL] {label}: the upstream matcher does not flag {m}"
+  for m in ps.map controlLookalike ++ permitted do
+    if isForbidden m then
+      throwError "[CONTROL] {label}: the upstream matcher flags {m}"
+
+-- [CONTROL] on the upstream matcher
+run_cmd do
+  upstreamControl "upstream matcher" isForbiddenUpstream upstreamForbiddenPrefixes 3
+    [`TauCeti.SetTheory.Ordinal.Family, `InfinitaryLogic.Descriptive.KleeneBrouwer,
+     `Mathlib.Order.ScottContinuity] 3
+
 run_cmd do
   let env ← getEnv
   let target := `InfinitaryLogic.Descriptive.AnalyticTreeBoundedness
@@ -298,6 +345,10 @@ run_cmd do
     forbiddenModuleSub.any fun s ↦ (m.toString.splitOn s).length ≠ 1
   unless hits.isEmpty do
     throwError "[BROAD CONE] the closure of {target} reaches {hits}"
+  -- the upstream prefixes, over the full closure (the check above sees only the IL part)
+  let upstreamHits := cl.toList.filter isForbiddenUpstream
+  unless upstreamHits.isEmpty do
+    throwError "[BROAD CONE] the closure of {target} reaches {upstreamHits}"
   let extra := ilModules.filter fun m ↦ !allowedClosure.contains m
   let missing := allowedClosure.filter fun m ↦ !ilModules.contains m
   unless extra.isEmpty && missing.isEmpty do
@@ -309,4 +360,5 @@ run_cmd do
     and n + 1; heights below omega_1; branches as sequences both ways; rank domination along an \
     inclusion and along a non-injective collapse; ranks along a non-injective relation \
     homomorphism; standard axioms; import closure {ilModules} with no coding, separation, \
-    well-order, interpolation, Henkin, Scott, Karp or infinitary-syntax module)"
+    well-order, interpolation, Henkin, Scott, Karp or infinitary-syntax module, and no \
+    upstream infinitary-logic, Scott or back-and-forth module)"

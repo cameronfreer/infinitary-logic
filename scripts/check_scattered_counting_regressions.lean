@@ -56,7 +56,13 @@ Every public declaration of the module is *applied*, not only listed for its axi
   nor `ModelTheory.MorleyCounting` (`[BROAD CONE]`, `[CLOSURE DRIFT]`).  (There is no module
   `Descriptive.MorleyCounting`; the counting theory is `ModelTheory.MorleyCounting`.)  The
   closures of `Scott.Sentence` (10 modules) and `Scott.RefinementCount` (12 modules) are pinned
-  exactly, so the two Scott-layer additions added no import.
+  exactly, so the two Scott-layer additions added no import.  The whitelist cannot see a
+  TauCeti module, so a separate check over the full closure forbids the upstream modules whose
+  `InfinitaryLogic` counterparts it excludes (tier W): `Infinitary.QuantifierRank`, the forward
+  Karp theorem `BackAndForth.Karp` and the orbit ranks `Scott.{Rank, CompleteGraphSum}`.  The
+  upstream counterparts of the whitelisted `Karp.PotentialIso`, `Scott.Sentence` and
+  `Scott.Formula` stay permitted, and the matcher is controlled on every frozen prefix, a child
+  and a component-wise lookalike of each, and on those permitted names.
 * **Standard axioms** for every declaration of the module (enumerated from the environment),
   the two Scott-layer additions, and every declaration of this guard.  The OK line is printed only
   after the closure and axiom checks.
@@ -471,6 +477,58 @@ def forbiddenPrefixes : List Name :=
    `InfinitaryLogic.Descriptive.BFScatteredSentence, `InfinitaryLogic.ModelTheory.MorleyCounting,
    `InfinitaryLogic.Descriptive.MorleyCounting]
 
+/-- Tier W (whitelist gap repair, in scope by ruling D2 of 2026-10-19): TauCeti modules whose
+`InfinitaryLogic` counterparts (`Lomega1omega.QuantifierRank`, `Karp.CarrierTheorem`,
+`Scott.OrbitRank`) are absent from `allowedClosure`, which cannot see a TauCeti module.
+Matched over the full closure. -/
+def upstreamWhitelistGapPrefixes : List Name :=
+  [`TauCeti.ModelTheory.Infinitary.QuantifierRank, `TauCeti.ModelTheory.BackAndForth.Karp,
+   `TauCeti.ModelTheory.Scott.Rank, `TauCeti.ModelTheory.Scott.CompleteGraphSum]
+
+/-- The upstream counterparts of whitelisted modules (`Karp.PotentialIso`, `Scott.Sentence`,
+`Scott.Formula`) and other permitted upstream modules: asserted unflagged by the control. -/
+def upstreamPermittedControls : List Name :=
+  [`TauCeti.ModelTheory.BackAndForth.TupleSystem, `TauCeti.ModelTheory.BackAndForth.PotentialIso,
+   `TauCeti.ModelTheory.BackAndForth.Presentation, `TauCeti.ModelTheory.BackAndForth.AllLevels,
+   `TauCeti.ModelTheory.BackAndForth.Countable, `TauCeti.ModelTheory.Scott.Sentence,
+   `TauCeti.ModelTheory.Scott.PotentialIso, `TauCeti.ModelTheory.Scott.Formula,
+   `TauCeti.ModelTheory.Scott.Stabilization, `TauCeti.ModelTheory.Scott.PureSet,
+   `TauCeti.ModelTheory.BackAndForth.Equivalence, `TauCeti.ModelTheory.Infinitary.Semantics]
+
+/-- The matcher of the upstream check: a module is forbidden when a tier-W prefix is a
+component-wise prefix of its name.  The walk is over the full closure, `TauCeti.*` included. -/
+def isForbiddenUpstream (m : Name) : Bool := upstreamWhitelistGapPrefixes.any (·.isPrefixOf m)
+
+/-- A component-wise lookalike of a prefix: its last component with `X` appended
+(`TauCeti.ModelTheory.Scott` ↦ `TauCeti.ModelTheory.ScottX`).  It shares the prefix as text and
+is not a component-wise descendant, so a component-wise matcher must not flag it. -/
+def controlLookalike : Name → Name
+  | .str p s => .str p (s ++ "X")
+  | n => n
+
+/-- `[CONTROL]` on one upstream matcher in one mode (`label`): the matcher flags every frozen
+prefix of `ps` and a child of each, and flags neither the lookalike of any prefix nor any name
+of `permitted` (the permitted list of this matcher and mode only).  The two lists must have
+exactly `size` and `permittedSize` entries, so a truncated list fails loudly. -/
+def upstreamControl (label : String) (isForbidden : Name → Bool) (ps : List Name) (size : Nat)
+    (permitted : List Name) (permittedSize : Nat) : Elab.Command.CommandElabM Unit := do
+  unless ps.length == size do
+    throwError "[CONTROL] {label}: {ps.length} frozen prefixes, expected {size}"
+  unless permitted.length == permittedSize do
+    throwError "[CONTROL] {label}: {permitted.length} permitted names, expected {permittedSize}"
+  for p in ps do
+    for m in [p, .str p "ControlChild"] do
+      unless isForbidden m do
+        throwError "[CONTROL] {label}: the upstream matcher does not flag {m}"
+  for m in ps.map controlLookalike ++ permitted do
+    if isForbidden m then
+      throwError "[CONTROL] {label}: the upstream matcher flags {m}"
+
+-- [CONTROL] on the upstream matcher
+run_cmd do
+  upstreamControl "upstream matcher" isForbiddenUpstream upstreamWhitelistGapPrefixes 4
+    upstreamPermittedControls 12
+
 /-- The exact `InfinitaryLogic` import closure of `Descriptive.ScatteredCounting`: the closures
 of `Descriptive.BFConcentration` (27), `Scott.IsolatingLevel` (13) and `OrdinalCountability`
 (2), overlapping in 8 modules, plus the module itself.  `Karp.PotentialIso` enters through
@@ -546,6 +604,10 @@ run_cmd do
   let hits := ilModules.filter fun m ↦ forbiddenPrefixes.any (·.isPrefixOf m)
   unless hits.isEmpty do
     throwError "[BROAD CONE] the closure of {targetModule} reaches {hits}"
+  -- tier W, over the full closure (the check above sees only the IL part)
+  let upstreamHits := (importClosure env targetModule).toList.filter isForbiddenUpstream
+  unless upstreamHits.isEmpty do
+    throwError "[BROAD CONE] the closure of {targetModule} reaches {upstreamHits}"
   checkExact targetModule ilModules allowedClosure
   unless ilModules.length == 35 do
     throwError "[CLOSURE DRIFT] expected 35 InfinitaryLogic modules, found {ilModules.length}"
@@ -586,6 +648,7 @@ run_cmd do
     declaration classified; exact import closure ({ilModules.length} modules, the union of \
     BFConcentration, IsolatingLevel and OrdinalCountability plus the module) with no \
     ModelTheory, Methods, Admissible, Conditional, ScottProcess, WIP, BFScatteredSentence or \
-    MorleyCounting module; Scott.Sentence and Scott.RefinementCount closures unchanged \
+    MorleyCounting module, and no upstream quantifier-rank, forward-Karp or orbit-rank \
+    module; Scott.Sentence and Scott.RefinementCount closures unchanged \
     ({sentenceClosure.length} and {refinementCountClosure.length} modules); standard axioms \
     for {audited.length} declarations)"

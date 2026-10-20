@@ -35,7 +35,11 @@ Every public theorem is *applied*, not only listed for its axioms.
   `countable_fibers_leastLevel` fails.
 * **Import closure** of the module: the only project module it reaches is `OrdinalUtil`, and no
   Scott, Scott-process, descriptive, model-theory, Karp, `Lω₁ω`, admissible, method, conditional
-  or work-in-progress module.
+  or work-in-progress module.  Upstream, no module under TauCeti's infinitary-logic
+  (`TauCeti.ModelTheory.Infinitary`), `Scott` or `BackAndForth` prefix either (ruling D1 of
+  2026-10-19); the matcher is controlled on every frozen prefix, a child and a component-wise
+  lookalike of each, and the permitted names `TauCeti.SetTheory.Ordinal.Family`,
+  `InfinitaryLogic.OrdinalUtil` and `Mathlib.Order.ScottContinuity`.
 
 All public declarations of the module and of this guard use only the standard axioms.
 
@@ -318,12 +322,53 @@ where
           | none => []
         go (deps ++ rest) (seen.insert m)
 
+/-- Tier R upstream prefixes (TauCeti): all of the infinitary-logic namespace, with the Scott and
+back-and-forth layers ("no Scott, …, Karp, `Lω₁ω` … module"; ruling D1 of 2026-10-19). -/
+def upstreamForbiddenPrefixes : List Name :=
+  [`TauCeti.ModelTheory.Infinitary, `TauCeti.ModelTheory.Scott, `TauCeti.ModelTheory.BackAndForth]
+
 /-- Module-name prefixes no module of the closure may have. -/
 def forbiddenPrefixes : List Name :=
   [`InfinitaryLogic.Scott, `InfinitaryLogic.ScottProcess, `InfinitaryLogic.Descriptive,
    `InfinitaryLogic.ModelTheory, `InfinitaryLogic.Karp, `InfinitaryLogic.Lomega1omega,
    `InfinitaryLogic.Admissible, `InfinitaryLogic.Methods, `InfinitaryLogic.Conditional,
-   `InfinitaryLogic.WIP]
+   `InfinitaryLogic.WIP] ++ upstreamForbiddenPrefixes
+
+/-- The matcher of the closure check: a module is forbidden when a forbidden prefix is a
+component-wise prefix of its name.  The closure walk is over all module names, `TauCeti.*`
+included. -/
+def isForbiddenModule (m : Name) : Bool := forbiddenPrefixes.any (·.isPrefixOf m)
+
+/-- A component-wise lookalike of a prefix: its last component with `X` appended
+(`TauCeti.ModelTheory.Scott` ↦ `TauCeti.ModelTheory.ScottX`).  It shares the prefix as text and
+is not a component-wise descendant, so a component-wise matcher must not flag it. -/
+def controlLookalike : Name → Name
+  | .str p s => .str p (s ++ "X")
+  | n => n
+
+/-- `[CONTROL]` on one upstream matcher in one mode (`label`): the matcher flags every frozen
+prefix of `ps` and a child of each, and flags neither the lookalike of any prefix nor any name
+of `permitted` (the permitted list of this matcher and mode only).  The two lists must have
+exactly `size` and `permittedSize` entries, so a truncated list fails loudly. -/
+def upstreamControl (label : String) (isForbidden : Name → Bool) (ps : List Name) (size : Nat)
+    (permitted : List Name) (permittedSize : Nat) : Elab.Command.CommandElabM Unit := do
+  unless ps.length == size do
+    throwError "[CONTROL] {label}: {ps.length} frozen prefixes, expected {size}"
+  unless permitted.length == permittedSize do
+    throwError "[CONTROL] {label}: {permitted.length} permitted names, expected {permittedSize}"
+  for p in ps do
+    for m in [p, .str p "ControlChild"] do
+      unless isForbidden m do
+        throwError "[CONTROL] {label}: the upstream matcher does not flag {m}"
+  for m in ps.map controlLookalike ++ permitted do
+    if isForbidden m then
+      throwError "[CONTROL] {label}: the upstream matcher flags {m}"
+
+-- [CONTROL] on the closure matcher
+run_cmd do
+  upstreamControl "closure matcher" isForbiddenModule upstreamForbiddenPrefixes 3
+    [`TauCeti.SetTheory.Ordinal.Family, `InfinitaryLogic.OrdinalUtil,
+     `Mathlib.Order.ScottContinuity] 3
 
 /-- The only project modules the closure may contain. -/
 def allowedProject : List Name :=
@@ -337,7 +382,7 @@ run_cmd do
   let cl := importClosure env target
   unless cl.contains `InfinitaryLogic.OrdinalUtil do
     throwError "[MISSING ROUTE] InfinitaryLogic.OrdinalUtil is not in the closure of {target}"
-  let hits := cl.toList.filter fun m ↦ forbiddenPrefixes.any (·.isPrefixOf m)
+  let hits := cl.toList.filter isForbiddenModule
   unless hits.isEmpty do
     throwError "[BROAD CONE] the closure of {target} reaches {hits}"
   let extra := cl.toList.filter fun m ↦
@@ -388,4 +433,5 @@ run_cmd do
     countable fibers, the tail identity and the composite bound; the covering hypothesis shown \
     necessary for each of leastLevel_mem, setOf_leastLevel_eq_subset, leastLevel_lt_omega1, \
     countable_fibers_leastLevel and rankTail_leastLevel; import closure reaching only \
-    OrdinalUtil in the project; standard axioms)"
+    OrdinalUtil in the project, and no upstream infinitary-logic, Scott or back-and-forth \
+    module; standard axioms)"

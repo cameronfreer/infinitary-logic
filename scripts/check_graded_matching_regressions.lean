@@ -38,7 +38,14 @@ Every public theorem is *applied*, not only listed for its axioms.
 * **Import closure** of the module: its only direct import is `Scott/BackAndForth`, and its
   transitive closure contains no Karp, Scott-formula, Scott-sentence, Montalbán-sentence,
   refinement-count, Scott-process, descriptive, method, model-theory, admissible or conditional
-  module.
+  module.  Upstream (TauCeti), the closure may not reach the Karp-layer prefixes
+  `BackAndForth.{TupleSystem, PotentialIso, Presentation, AllLevels, Countable, Karp}`, the
+  Scott-sentence prefixes `Scott.{Sentence, PotentialIso}`, the internal-stabilization prefixes
+  `Scott.{Stabilization, PureSet}` (the content of `Scott.Sentence` they carry) or
+  `Scott.Formula`; `BackAndForth.{AtomicType, Equivalence}` and `Scott.AtomicDiagram`, the
+  homes of what `Scott/BackAndForth` provides, stay permitted.  The matcher is controlled on
+  every frozen prefix, a child and a component-wise lookalike of each, and those permitted
+  names with `Infinitary.Semantics`.
 
 The module declarations and the guard's own declarations use only the standard axioms.
 
@@ -402,13 +409,61 @@ where
           | none => []
         go (deps ++ rest) (seen.insert m)
 
+/-- Tier R upstream prefixes (TauCeti): the counterparts of `Karp` and of the Scott-formula and
+Scott-sentence modules the rationale forbids ("no Karp, Scott-formula, Scott-sentence, …
+module"): the potential-isomorphism layer and the forward Karp theorem, Scott sentences, the
+internal stabilization defined in `Scott.Sentence`, and Scott formulas upstream. -/
+def upstreamForbiddenPrefixes : List Name :=
+  [`TauCeti.ModelTheory.BackAndForth.TupleSystem, `TauCeti.ModelTheory.BackAndForth.PotentialIso,
+   `TauCeti.ModelTheory.BackAndForth.Presentation, `TauCeti.ModelTheory.BackAndForth.AllLevels,
+   `TauCeti.ModelTheory.BackAndForth.Countable, `TauCeti.ModelTheory.BackAndForth.Karp,
+   `TauCeti.ModelTheory.Scott.Sentence, `TauCeti.ModelTheory.Scott.PotentialIso,
+   `TauCeti.ModelTheory.Scott.Stabilization, `TauCeti.ModelTheory.Scott.PureSet,
+   `TauCeti.ModelTheory.Scott.Formula]
+
 /-- Module-name prefixes no module of the closure may have. -/
 def forbiddenPrefixes : List Name :=
   [`InfinitaryLogic.Karp, `InfinitaryLogic.Scott.Formula, `InfinitaryLogic.Scott.Sentence,
    `InfinitaryLogic.Scott.MontalbanSentence, `InfinitaryLogic.Scott.RefinementCount,
    `InfinitaryLogic.ScottProcess, `InfinitaryLogic.Descriptive, `InfinitaryLogic.Methods,
    `InfinitaryLogic.ModelTheory, `InfinitaryLogic.Admissible, `InfinitaryLogic.Conditional,
-   `InfinitaryLogic.WIP]
+   `InfinitaryLogic.WIP] ++ upstreamForbiddenPrefixes
+
+/-- The matcher of the closure check: a module is forbidden when a forbidden prefix is a
+component-wise prefix of its name.  The closure walk is over all module names, `TauCeti.*`
+included. -/
+def isForbiddenModule (m : Name) : Bool := forbiddenPrefixes.any (·.isPrefixOf m)
+
+/-- A component-wise lookalike of a prefix: its last component with `X` appended
+(`TauCeti.ModelTheory.Scott` ↦ `TauCeti.ModelTheory.ScottX`).  It shares the prefix as text and
+is not a component-wise descendant, so a component-wise matcher must not flag it. -/
+def controlLookalike : Name → Name
+  | .str p s => .str p (s ++ "X")
+  | n => n
+
+/-- `[CONTROL]` on one upstream matcher in one mode (`label`): the matcher flags every frozen
+prefix of `ps` and a child of each, and flags neither the lookalike of any prefix nor any name
+of `permitted` (the permitted list of this matcher and mode only).  The two lists must have
+exactly `size` and `permittedSize` entries, so a truncated list fails loudly. -/
+def upstreamControl (label : String) (isForbidden : Name → Bool) (ps : List Name) (size : Nat)
+    (permitted : List Name) (permittedSize : Nat) : Elab.Command.CommandElabM Unit := do
+  unless ps.length == size do
+    throwError "[CONTROL] {label}: {ps.length} frozen prefixes, expected {size}"
+  unless permitted.length == permittedSize do
+    throwError "[CONTROL] {label}: {permitted.length} permitted names, expected {permittedSize}"
+  for p in ps do
+    for m in [p, .str p "ControlChild"] do
+      unless isForbidden m do
+        throwError "[CONTROL] {label}: the upstream matcher does not flag {m}"
+  for m in ps.map controlLookalike ++ permitted do
+    if isForbidden m then
+      throwError "[CONTROL] {label}: the upstream matcher flags {m}"
+
+-- [CONTROL] on the closure matcher
+run_cmd do
+  upstreamControl "closure matcher" isForbiddenModule upstreamForbiddenPrefixes 11
+    [`TauCeti.ModelTheory.BackAndForth.AtomicType, `TauCeti.ModelTheory.BackAndForth.Equivalence,
+     `TauCeti.ModelTheory.Scott.AtomicDiagram, `TauCeti.ModelTheory.Infinitary.Semantics] 4
 
 run_cmd do
   let env ← getEnv
@@ -419,7 +474,7 @@ run_cmd do
   unless direct.filter (· != `Init) == [`InfinitaryLogic.Scott.BackAndForth] do
     throwError "[DIRECT IMPORTS] {target} imports {direct}, not only Scott.BackAndForth"
   let cl := importClosure env target
-  let hits := cl.toList.filter fun m ↦ forbiddenPrefixes.any (·.isPrefixOf m)
+  let hits := cl.toList.filter isForbiddenModule
   unless hits.isEmpty do
     throwError "[BROAD CONE] the closure of {target} reaches {hits}"
 
@@ -463,5 +518,6 @@ run_cmd do
     with a seed at level 1, which are not BFEquiv at level 1; the Type 1 carrier \
     ULift Z with explicit universes, receipts in Type 1; direct import only Scott.BackAndForth, \
     closure without Karp, Scott-formula, Scott-sentence, Montalban-sentence, refinement-count, \
-    Scott-process, descriptive, method, model-theory, admissible or conditional modules; \
-    standard axioms)"
+    Scott-process, descriptive, method, model-theory, admissible or conditional modules, and \
+    no upstream Karp-layer, Scott-sentence, stabilization or Scott-formula module; standard \
+    axioms)"
